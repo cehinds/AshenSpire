@@ -4,7 +4,7 @@
 //   node --test tests/modal-manager.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom, installDom } from './helpers/dom.mjs';
 import { registerModal, registerPageChrome, resetModalState, openModals, modalOpen } from '../src/ui/modalManager.js';
 
 // A page: <html> > <body> > #app > [screen, hud], with a veil per modal in body.
@@ -21,13 +21,11 @@ function withPage(fn) {
   const screen = document.createElement('div');
   const hud = document.createElement('div');
   app.append(screen, hud);
-  const had = 'document' in globalThis;
-  const saved = globalThis.document;
-  globalThis.document = document;
+  const restoreDom = installDom(dom);
   resetModalState();
   try { return fn({ document, app, screen, hud }); } finally {
     resetModalState();
-    if (had) globalThis.document = saved; else delete globalThis.document;
+    restoreDom();
   }
 }
 
@@ -337,23 +335,63 @@ test('back: a bespoke surface above the top back-enabled entry owns the press; t
 });
 
 test('back: the shared shell pushes on open, goes back on close, and closes on browser back', async () => {
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
-  const { openModal } = await import('../src/ui/components/modalShell.js');
+  const { withModalDom } = await import('./helpers/dom.mjs');
+  const { OpenModal } = await import('../src/ui/components/modalShell.js');
   withModalDom(() => {
     withHistory(({ history, settle, userBack }) => {
       resetModalState();
       let closes = 0;
-      const first = openModal({ title: 'One', onClose: () => { closes += 1; } });
+      const first = OpenModal({ title: 'One', onClose: () => { closes += 1; } });
       assert.equal(history.pushes, 1);
       first.close();
       assert.equal(first.veil.isConnected, false, 'the veil is gone synchronously, before any popstate');
       assert.equal(history.backCalls, 1);
       settle();
-      const second = openModal({ title: 'Two', onClose: () => { closes += 1; } });
+      const second = OpenModal({ title: 'Two', onClose: () => { closes += 1; } });
       userBack();
       assert.equal(closes, 2);
       assert.equal(second.veil.isConnected, false);
       assert.equal(history.backCalls, 1, 'no extra back() after the browser popped it');
+    });
+  });
+});
+
+test('back: a ModalController door over a shell door closes on browser back; history stays balanced', async () => {
+  const { withModalDom } = await import('./helpers/dom.mjs');
+  const { OpenModal } = await import('../src/ui/components/modalShell.js');
+  const { ModalController } = await import('../src/ui/components/modalController.js');
+  withModalDom((dom) => {
+    withHistory(({ history, settle, userBack }) => {
+      resetModalState();
+      const openDoor = (onBack) => {
+        const veil = dom.document.createElement('div');
+        const panel = dom.document.createElement('section');
+        veil.appendChild(panel);
+        dom.document.body.appendChild(veil);
+        return new ModalController({ name: 'compare', veil, panel, onBack }).Open();
+      };
+      let shellCloses = 0;
+      let backs = 0;
+      const shell = OpenModal({ title: 'Armoury', onClose: () => { shellCloses += 1; } });
+      const door = openDoor(() => { backs += 1; });
+      assert.equal(history.pushes, 1, 'one sentinel for both doors');
+      userBack();
+      assert.equal(door.IsClosed(), true, 'back closes the controller door, as Escape does');
+      assert.equal(backs, 1);
+      assert.equal(shell.veil.isConnected, true, 'the shell door beneath stays');
+      assert.equal(history.pushes, 2, 'the sentinel is pushed again for the shell door');
+      userBack();
+      assert.equal(shellCloses, 1);
+      assert.equal(history.backCalls, 0, 'browser pops need no back() of our own');
+
+      const lone = openDoor(() => {});
+      assert.equal(history.pushes, 3);
+      lone.Close();
+      lone.Close();
+      assert.equal(history.backCalls, 1, 'a programmatic close goes back once');
+      settle();
+      assert.equal(history.state, null, 'no stray sentinel is left');
+      assert.equal(openModals().length, 0);
     });
   });
 });
@@ -363,12 +401,12 @@ test('back: the shared shell pushes on open, goes back on close, and closes on b
 // key the way a browser orders it (window capture, document capture, bubble).
 
 test('Escape on a shell modal closes it through the manager, once', async () => {
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
-  const { openModal } = await import('../src/ui/components/modalShell.js');
+  const { withModalDom } = await import('./helpers/dom.mjs');
+  const { OpenModal } = await import('../src/ui/components/modalShell.js');
   resetModalState();
   withModalDom((dom, win) => {
     let closes = 0;
-    const shell = openModal({ title: 'Settings', onClose: () => { closes += 1; } });
+    const shell = OpenModal({ title: 'Settings', onClose: () => { closes += 1; } });
     const event = win.press('Escape', { cancelable: true });
     assert.equal(closes, 1, 'closed once');
     assert.equal(shell.veil.isConnected, false, 'veil removed synchronously');
@@ -382,13 +420,13 @@ test('Escape on a shell modal closes it through the manager, once', async () => 
 });
 
 test('Escape closes only the top of two shell modals', async () => {
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
-  const { openModal } = await import('../src/ui/components/modalShell.js');
+  const { withModalDom } = await import('./helpers/dom.mjs');
+  const { OpenModal } = await import('../src/ui/components/modalShell.js');
   resetModalState();
   withModalDom((dom, win) => {
     const log = [];
-    const lower = openModal({ title: 'Lower', onClose: () => log.push('lower') });
-    const upper = openModal({ title: 'Upper', onClose: () => log.push('upper') });
+    const lower = OpenModal({ title: 'Lower', onClose: () => log.push('lower') });
+    const upper = OpenModal({ title: 'Upper', onClose: () => log.push('upper') });
     win.press('Escape');
     assert.deepEqual(log, ['upper']);
     assert.equal(lower.veil.isConnected, true);
@@ -399,12 +437,12 @@ test('Escape closes only the top of two shell modals', async () => {
 });
 
 test('Escape with a bespoke (no dismiss) entry on top is left alone', async () => {
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
-  const { openModal } = await import('../src/ui/components/modalShell.js');
+  const { withModalDom } = await import('./helpers/dom.mjs');
+  const { OpenModal } = await import('../src/ui/components/modalShell.js');
   resetModalState();
   withModalDom((dom, win) => {
     let closes = 0;
-    const shell = openModal({ title: 'Under', onClose: () => { closes += 1; } });
+    const shell = OpenModal({ title: 'Under', onClose: () => { closes += 1; } });
     const bespoke = dom.document.createElement('section');
     bespoke.setAttribute('aria-modal', 'true');
     dom.document.body.appendChild(bespoke);

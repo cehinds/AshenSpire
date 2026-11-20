@@ -28,7 +28,7 @@ Music tables intentionally contain no invented tracks. `musicCandidates` exposes
 Generate an exact day/night coverage report and spreadsheet exports:
 
 ```
-node tools/location-presentation-report.mjs --out docs/location-presentation/coverage.md --csv-out outputs/location-presentation-csv
+node tools/attic/location-presentation-report.mjs --out docs/location-presentation/coverage.md --csv-out outputs/location-presentation-csv
 ```
 
 CSV exports are inspection/import aids. The JSON tables remain the authored source; copy edited rows back into their corresponding table and rebuild. There is no external database migration or new audio playback in this change.

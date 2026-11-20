@@ -1,0 +1,133 @@
+{
+  "request": "Theme F (playtest 2026-11-17, items 36-45b): upgrading takes 2 clicks (confirm pressed once); selling asks for confirmation; on mobile the character step's Continue sits on the right; on mobile card text is 2pt smaller and shows in full; the event panel is smaller so the art shows; event rewards and relics use the shop's receive modal; traders vary (3-6 shelves, always armaments, cards, relics and sell, some with a blacksmith); no name button under reward cards; reward cards 25% smaller so 4 fit without scrolling; card-pick modals have less space above and below, the (i) on the top layer, the gap between cards halved; every card upgrade (skill rank-ups too) uses the blacksmith's upgrade-options modal; upgrade pickers and the deck editor list deck cards first with an in-deck marker.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "blacksmith-card-upgrade",
+      "url": "?shot=blacksmith",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1200,
+      "actions": [
+        { "click": "[data-shop-category=\"upgradeArt\"]" },
+        { "click": "#blacksmith-upgrade-card" },
+        { "wait": { "ms": 500 } },
+        { "click": ".card-upgrade-row[data-instance-id=\"gp1\"]" },
+        { "wait": { "ms": 400 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "The chosen card's options open in the picker", "selector": ".card-upgrade-modal .card-upgrade-options" },
+        { "kind": "visible", "label": "Deck cards wear the In deck marker", "selector": ".card-upgrade-row .in-deck-badge" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "A second confirmation is already open before Confirm", "selector": ".confirmation-modal" }
+      ]
+    },
+    {
+      "name": "blacksmith-card-upgrade-confirm",
+      "url": "?shot=blacksmith",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1200,
+      "actions": [
+        { "click": "[data-shop-category=\"upgradeArt\"]" },
+        { "click": "#blacksmith-upgrade-card" },
+        { "wait": { "ms": 500 } },
+        { "click": ".card-upgrade-row[data-instance-id=\"gp1\"]" },
+        { "wait": { "ms": 400 } },
+        { "click": ".card-upgrade-confirm" },
+        { "wait": { "ms": 800 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "One Confirm commits: the what-changed receipt opens", "selector": ".what-changed-modal" }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "Confirm opened a second confirmation instead of committing", "selector": ".confirmation-modal" }
+      ]
+    },
+    {
+      "name": "merchant-sell",
+      "url": "?shot=shop&shotSeed=S2",
+      "ready": ".merchant-workspace",
+      "settleMs": 1200,
+      "actions": [
+        { "click": "[data-shop-category=\"sell\"]" },
+        { "click": "[data-beat-action=\"shopSell\"]" },
+        { "wait": { "ms": 600 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Selling opens a confirmation", "selector": ".confirmation-modal" },
+        { "kind": "text", "label": "The confirmation names the sale", "selector": ".confirmation-modal", "matches": "Sell .+\\?" }
+      ],
+      "failure": []
+    },
+    {
+      "name": "trader-shelves",
+      "url": "?shot=shop&shotSeed=T3",
+      "ready": ".merchant-workspace",
+      "settleMs": 1200,
+      "actions": [],
+      "success": [
+        { "kind": "visible", "label": "Armaments are stocked", "selector": "[data-shop-category=\"weapons\"]" },
+        { "kind": "visible", "label": "Cards are stocked", "selector": "[data-shop-category=\"combatCards\"]" },
+        { "kind": "visible", "label": "Relics are stocked", "selector": "[data-shop-category=\"relics\"]" },
+        { "kind": "visible", "label": "The trader buys (Sell)", "selector": "[data-shop-category=\"sell\"]" }
+      ],
+      "failure": [
+        { "kind": "count", "label": "More than six options in all (Sell and Blacksmith counted)", "selector": ".merchant-category-dock > *", "min": 7 }
+      ]
+    },
+    {
+      "name": "reward-door",
+      "url": "?shot=reward",
+      "ready": ".reward-choice-face",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".reward-choice-option:nth-child(2) .reward-choice-face" },
+        { "wait": { "ms": 400 } }
+      ],
+      "success": [
+        { "kind": "within", "label": "The fourth reward card fits without scrolling", "selector": ".reward-choice-option:nth-child(4) .reward-choice-face", "container": ".reward-door .modal-body" },
+        { "kind": "visible", "label": "The chosen card's (i) shows", "selector": ".reward-choice-face.is-chosen > .card-info-button" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "The redundant name button is still shown", "selector": ".reward-choice-option > button.reward-pick" }
+      ]
+    },
+    {
+      "name": "skill-rank-up-picker",
+      "url": "?shot=reward&shotRankUp=1",
+      "ready": ".reward-kind[data-kind=\"skillRankUp\"]",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".reward-kind[data-kind=\"skillRankUp\"]" },
+        { "wait": { "ms": 500 } },
+        { "click": ".card-upgrade-row" },
+        { "wait": { "ms": 500 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "The rank-up opens the Blacksmith's card-upgrade modal", "selector": ".card-upgrade-modal" },
+        { "kind": "count", "label": "The chosen card's bonus options show in the option design", "selector": ".card-upgrade-option", "min": 2 },
+        { "kind": "text", "label": "The primary names the rank-up", "selector": ".card-upgrade-confirm", "includes": "Rank up" }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "The old inline bonus buttons are still used", "selector": ".reward-bonus-option" }
+      ]
+    },
+    {
+      "name": "event-panel",
+      "url": "?shot=event",
+      "ready": ".dialogue-context",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        { "kind": "visible", "label": "The event panel is on screen", "selector": ".dialogue-region" },
+        { "kind": "within", "label": "The event panel stays inside the frame", "selector": ".dialogue-region", "container": ".dialogue-screen" }
+      ],
+      "failure": []
+    }
+  ]
+}

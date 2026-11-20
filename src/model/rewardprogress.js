@@ -59,7 +59,6 @@ export function combatXpGains({ receipt = null, awards = [], levelGained = 0, le
   for (const [id, xp] of Object.entries(receipt || {})) add(id, xp);
   for (const award of awards || []) if (award) {
     add(award.skillId, award.gained);
-    for (const bonus of award.skillAwards || []) if (bonus) add(bonus.skillId, bonus.gained);
   }
   const level = Number.isFinite(levelGained) && levelGained > 0 ? Math.floor(levelGained) : 0;
   const discarded = Number.isFinite(levelDiscarded) && levelDiscarded > 0 ? Math.floor(levelDiscarded) : 0;
@@ -132,7 +131,7 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
     if (gainedOnly && !gained) continue;
     const level = skillLevel(run, track.id);
     const xp = ledger && Number.isFinite(ledger.xp) ? Math.max(0, Math.floor(ledger.xp)) : 0;
-    if (!gained && !level && !xp && !(track.kind === 'class' && run.classMasteryState)) continue; // never touched, never paid — not a row
+    if (!gained && !level && !xp) continue; // never touched, never paid — not a row
     let next = null;
     try { next = skillXpToNext(registries, track.kind, level); } catch { next = null; }
     if (!(Number.isFinite(next) && next > 0)) continue; // no curve, no row
@@ -142,7 +141,7 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
     rows.push(Object.freeze({
       kind: track.kind,
       id: track.id,
-      label: track.kind === 'class' && run.classMasteryState ? `${track.label || track.id} mastery` : track.label || track.id,
+      label: track.label || track.id,
       level,
       xp,
       xpToNext: capped ? null : next,

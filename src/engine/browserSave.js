@@ -41,7 +41,7 @@ export function createBrowserSaveManager(storage, { locks = null } = {}) {
     bankEnemyKnowledge: run => bankRunEnemyKnowledge(writer, owner, run),
     ready: owner.mutate(() => { writer.loadMeta(); return writer.hasRun() ? writer.ensureProfile() : { ok: true }; }).catch(error => ({ ok: false, reason: error.message })),
   };
-  for (const name of ['ensureProfile', 'bankClassMastery', 'recordResult', 'restoreProfile', 'startNewProfile']) {
+  for (const name of ['ensureProfile', 'recordResult', 'restoreProfile', 'startNewProfile']) {
     facade[name] = (...args) => owner.mutate(() => {
       writer.loadMeta();
       return writer[name](...args);

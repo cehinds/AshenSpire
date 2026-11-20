@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { settingsRowHtml, setSettingsControlDisabled } from '../src/ui/screens/settings.js';
 
 function stepper(dom, container, key) {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 // Replay the original route fixtures; modern character setup has separate tests.
-import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
+import { contentBundle } from '../src/content/index.js';
 import { LEGACY_ACT_BOSSES } from '../src/content/mapconfig.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';

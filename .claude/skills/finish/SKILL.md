@@ -66,14 +66,12 @@ c. Make the smallest change that fixes it; content goes in data, not code.
 d. Run only the checks DEVELOPER.md names (e.g. the `node --test` suites, content
    validation, the receipts gate) and play the affected flow. Never invent or add a
    toolchain the repo doesn't use.
-e. **Orchestrator, at landing:** write receipts and derived files with the repo's tooling, in the order the
-   CHANGELOG.md header gives, never by hand. Task agents never touch them. In this repo that means:
-   1. `node tools/launch.mjs --build-only`
-   2. set the CHANGELOG receipt to `buildordinal.json` + 1
-   3. `node tools/about-changelog.mjs --write`
-   4. rebuild
-   Parallel PRs all claim the same ordinal, so leave receipts until a PR is next
-   to merge, or re-point each one after every merge to `dev`.
+e. **Orchestrator, at landing:** follow DEVELOPER.md's canonical receipt procedure.
+   Run `node tools/jev.mjs restamp --pr <N>` to re-point the receipt at the current
+   recorded `buildordinal.json` box, then regenerate and verify as DEVELOPER.md
+   directs. Never hand-add `+1`: version/build tooling owns ordinal advancement. Task
+   agents never write receipts or derived files. Re-point each open receipt after
+   every merge to `dev`.
 f. The orchestrator opens the PR, ready for review. The body says what changed and how it was
    verified, and names anything unverified. UI changes add a screenshot or GIF
    and the component catalog per CONTRIBUTING.
@@ -93,8 +91,10 @@ into FINISH.md as blockers.
 Send the owner each PR's preview and screenshots. Under the standing merge
 approval (owner, 2026-10-13), merge a PR into `dev` once another agent or session
 has reviewed it, conflicts are resolved and fast checks are green, with no
-per-PR owner wait; then promote `dev` to `test` once per wave (CONTRIBUTING
-rule 6). Never merge to `release` or `main`; those stay owner-only.
+per-PR owner wait; then promote `dev` to `review` once per wave (CONTRIBUTING
+rule 6) and stop there. The pinned **Dev code review** session owns the read-only
+code review and the subsequent `review` to `test` promotion. Never merge to
+`release` or `main`; those stay owner-only.
 
 ## Phase 4 — Release candidate
 Freeze features (the owner cuts `release`; agents don't). Run 3 full runs per class, the soft-lock sweep, perf and
@@ -108,7 +108,7 @@ Hand the release to the owner, who cuts `release`, tags, merges to `main` and pu
 ## Guardrails
 - Never change contractual SPEC rules in a feature PR: the spec change goes first, in its own PR. Balance-number changes cite their reasoning.
 - Never skip, disable or quarantine a test. "Flake" is not a diagnosis: root-cause every red gate.
-- Force-push only on `test` or on a `feature/*` branch only you have pushed to.
+- Force-push only on a `feature/*` branch only you have pushed to.
 - Never delete CI workflows; never tag, release or publish.
 - No metric claim without a number; mark anything unverified as unverified.
 - Ask only on real design forks (e.g. a mechanic the spec doesn't define): batch them under **Owner decisions** and keep working on everything else.

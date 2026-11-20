@@ -1,8 +1,10 @@
 import { rollD20Check } from './d20Chance.js';
+import { ItemIncomingPercent } from './itemPropertyHooks.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import * as Actions from './actions.js';
 import * as Statuses from './statuses.js';
+import { ElementStatusCap } from './elementIdentity.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 import { persistentPoiseMaximum } from '../model/combatRatings.js';
@@ -72,7 +74,7 @@ export function backfillPersistentPoise(ctx, entity) {
  * the payload without emitting, so a caller can emit after its damageDealt.
  */
 export function breakPersistentWard(ctx, entity, meta = {}) {
-  const cost = Math.max(0, ctx?.ratingsRules?.breaks?.wardActionLoss ?? 1);
+  const cost = 1;
   const staminaLoss = entity.kind === 'player' ? cost : 0;
   if (staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
   // An enemy's break is TENTATIVELY interrupting; emitBreak settles the flag from what the stagger does.
@@ -176,7 +178,7 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   const whole = Math.floor(exact + 1e-9);
   const restored = Math.min(room, whole);
   const barrier = overflow ? whole - restored : 0;
-  if (missingMode) {
+  if (entity.broken) { /* nothing restored while Broken */ } else if (missingMode) {
     const missingAfter = room - restored;
     ward.value = Math.max(0, Math.min(ward.max, ward.max - missingAfter));
     // Missing is kept only while it is still above max; at or below max it is max - value again.
@@ -215,12 +217,14 @@ export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
   // A card that restores Poise fills it first; the rest becomes Block (the
   // ordinary, physical layer), as a card's Ward overflow becomes Barrier.
   const overflow = options.source === 'card';
+  // Owner, 2026-11-14: a Broken owner's Poise stays empty until Broken ends (it then refills to full); a card's Poise becomes Block.
+  if (entity.broken && !overflow) return { restored: 0, credited: 0 };
   if (!missingMode && poise.value >= poise.max && !overflow) return { restored: 0, credited: 0 };
   if (onceKey) s.wardAllowances[onceKey] = true;
   let credit = Math.max(0, nominal * (1 + finite(options.modifierPercent) / 100));
   if (options.cap !== undefined) credit = Math.min(credit, Math.max(0, options.cap));
   const valueBefore = poise.value;
-  const room = missingMode ? Math.max(0, poise.missing) : poise.max - poise.value;
+  const room = entity.broken ? 0 : missingMode ? Math.max(0, poise.missing) : poise.max - poise.value;
   const whole = Math.floor(credit + 1e-9);
   const restored = Math.min(room, whole);
   let block = overflow ? whole - restored : 0;
@@ -229,7 +233,7 @@ export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
     const cap = Statuses.getCap(ctx, entity, 'blockCap');
     if (cap != null) block = Math.min(block, Math.max(0, cap - (entity.block || 0)));
   }
-  if (missingMode) {
+  if (entity.broken) { /* nothing restored while Broken */ } else if (missingMode) {
     const missingAfter = room - restored;
     poise.value = Math.max(0, Math.min(poise.max, poise.max - missingAfter));
     if (missingAfter <= poise.max) delete poise.missing;
@@ -251,7 +255,7 @@ export function applyExpansionActiveStatus(ctx, target, id, amount, source = nul
   if (!row) return false;
   if (!target?.alive || !(amount > 0)) return true;
   target.statuses ||= {};
-  const before = stacks(target, id), add = Math.min(whole(amount), Math.max(0, row.cap - before));
+  const before = stacks(target, id), add = Math.min(whole(amount), Math.max(0, ElementStatusCap(ctx, id, row.cap) - before)); // no cap under `statusCaps: "none"` (owner 2026-11-15); Burn has none under the element rules (W25)
   if (!add) return true;
   const inst = target.statuses[id] ||= { stacks: 0 };
   inst.stacks = before + add;
@@ -297,7 +301,7 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
   let iterations = 0;
   while (gauge.value >= (stacks(target, row.activeStatus) ? row.activeThreshold : row.initialThreshold)) {
     if (++iterations > 10000) throw new Error(`Unbounded status buildup '${id}'`);
-    if (stacks(target, row.activeStatus) >= row.cap) break;
+    if (stacks(target, row.activeStatus) >= ElementStatusCap(ctx, row.activeStatus, row.cap)) break;
     const threshold = stacks(target, row.activeStatus) ? row.activeThreshold : row.initialThreshold;
     gauge.value -= threshold;
     let admitted = true;
@@ -479,8 +483,10 @@ export function consumeControlActionLoss(ctx, entity) {
 }
 
 export function statusIncomingModifier(ctx, entity, profile = {}) {
-  if (!enabled(ctx)) return { percent: 0, evadeBonus: 0 };
-  const cfg = rules(ctx); let percent = 0, evadeBonus = 0;
+  // An item property's resistance or immunity to a damage type (W25 step 6) applies whatever the status rules are.
+  const itemPercent = ItemIncomingPercent(entity, profile.damageType);
+  if (!enabled(ctx)) return { percent: itemPercent, evadeBonus: 0 };
+  const cfg = rules(ctx); let percent = itemPercent, evadeBonus = 0;
   if (!entity.statusControl?.resolveActive) percent += stacks(entity, cfg.sleep.status) * cfg.sleep.damagePercentPerStack;
   if (stacks(entity, cfg.prone.status)) {
     if (profile.range === 'melee') percent += cfg.prone.meleePercent;

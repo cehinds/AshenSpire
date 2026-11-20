@@ -57,6 +57,7 @@ const TARGET_PROPERTY = Object.freeze({
   enemy: 'targeting.enemy',
   allEnemies: 'targeting.allEnemies',
   randomEnemy: 'targeting.randomEnemy',
+  otherEnemy: 'targeting.otherEnemy',
   ally: 'targeting.ally',
   allAllies: 'targeting.allAllies',
 });

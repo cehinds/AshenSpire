@@ -110,7 +110,9 @@ test('the always-on rules are not scoped to the preview attribute, and the shado
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const visuals = html.indexOf('styles/combat-visuals.css');
   assert.ok(visuals > 0, 'the always-on stylesheet is linked');
-  assert.ok(visuals < html.indexOf('styles/combat-rounds-preview.css'), 'and loads before the preview stylesheet');
+  assert.ok(!html.includes('combat-rounds-preview.css'), 'the retired preview stylesheet is not linked');
+  assert.doesNotMatch(css, /cr-followup/, 'the follow-up marks are the intent node own (.intent-followup), not a decoration');
+  assert.ok(visuals < html.indexOf('styles/hud-layout.generated.css'), 'and it loads before the generated layout');
 });
 
 // The timeline stance of a smash or sweep comes from the content's maneuver tags (`maneuver:smash`, `maneuver:sweep`),

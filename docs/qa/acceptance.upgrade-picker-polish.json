@@ -1,0 +1,512 @@
+{
+  "request": "Selecting a card opens a modal instead of expanding the row inline; the modal shows before and after and the upgrade options, with an inspect (i) button as soon as a card is selected. Row chips fit: \"0 → 1 upgrade · No charge\" and \"In deck\" are cut off (\"In de\"); use a smaller font or a tighter layout so the whole row fits at 390px. The effects line uses in-text wording (\"Add 1 card, draw\" style), not \"EFFECTS draw → addCard, draw\". \"EFFECTS\" appears once. Hold more words: adjust the font size in the picker and modal so more text fits. Upgrading still takes exactly 2 clicks: select, then confirm. Follow-up (owner screenshot of the option modal): each option's text sits left-justified at the top of the space right of the card preview, with a little margin and padding; the option's card preview looks like a real card face (cost badge, art, readable rules text); \"EFFECTS None → Hit another enemy\" reads in plain card words like \"Also hits another enemy\". Check Strike and a spell with an MP badge.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "blacksmith-picker-rows",
+      "url": "?shot=blacksmith",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": "[data-shop-category=\"upgradeArt\"]"
+        },
+        {
+          "click": "#blacksmith-upgrade-card"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The picker lists the cards",
+          "selector": ".card-upgrade-modal .card-upgrade-row"
+        },
+        {
+          "kind": "within",
+          "label": "Rallying Roar's In deck marker fits its row",
+          "selector": ".card-upgrade-row[data-instance-id=\"gp10\"] .in-deck-badge",
+          "container": ".card-upgrade-row[data-instance-id=\"gp10\"]"
+        },
+        {
+          "kind": "within",
+          "label": "Rallying Roar's price chip fits its row",
+          "selector": ".card-upgrade-row[data-instance-id=\"gp10\"] .co-chip:last-child",
+          "container": ".card-upgrade-row[data-instance-id=\"gp10\"]"
+        },
+        {
+          "kind": "within",
+          "label": "Strike's step chip fits its row",
+          "selector": ".card-upgrade-row[data-instance-id=\"gp1\"] .co-chip",
+          "container": ".card-upgrade-row[data-instance-id=\"gp1\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "A card modal is open before any card is chosen",
+          "selector": ".card-upgrade-detail-modal"
+        }
+      ]
+    },
+    {
+      "name": "blacksmith-select-opens-modal",
+      "url": "?shot=blacksmith",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": "[data-shop-category=\"upgradeArt\"]"
+        },
+        {
+          "click": "#blacksmith-upgrade-card"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".card-upgrade-row[data-instance-id=\"gp1\"]"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Choosing a card opens its own modal",
+          "selector": ".card-upgrade-detail-modal"
+        },
+        {
+          "kind": "visible",
+          "label": "The modal has the (i) at once",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-inspect"
+        },
+        {
+          "kind": "visible",
+          "label": "The modal shows the upgrade options",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-options"
+        },
+        {
+          "kind": "visible",
+          "label": "The modal shows the before and after faces",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-faces"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        },
+        {
+          "kind": "text",
+          "label": "An added effect reads in card words",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-option-changes",
+          "includes": "Also hits another enemy"
+        },
+        {
+          "kind": "text",
+          "label": "The change row says ALSO and the added words alone",
+          "selector": ".card-upgrade-detail-modal .confirmation-change-list .as-statrow",
+          "matches": "^ALSO\\s*Hits another enemy$"
+        },
+        {
+          "kind": "style",
+          "label": "The option's text is left-justified",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-option-changes",
+          "prop": "text-align",
+          "equals": "left"
+        },
+        {
+          "kind": "style",
+          "label": "The option's text sits at the top of its column",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-option-changes",
+          "prop": "align-self",
+          "equals": "flex-start"
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The row still expands inline",
+          "selector": ".option-row-detail"
+        },
+        {
+          "kind": "text",
+          "label": "Internal effect names or \"EFFECTS None →\" are shown",
+          "selector": ".card-upgrade-detail-modal",
+          "matches": "addCard|shuffleDiscardIntoDraw|otherEnemy|randomEnemy|extra target|None →"
+        },
+        {
+          "kind": "visible",
+          "label": "A second confirmation opened",
+          "selector": ".confirmation-modal"
+        }
+      ]
+    },
+    {
+      "name": "spell-upgrade",
+      "url": "?shot=blacksmith&shotDeckAdd=core.moteShield",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "[data-shop-category=\"upgradeArt\"]"
+        },
+        {
+          "click": "#blacksmith-upgrade-card"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".card-upgrade-row[data-card-id=\"core.moteShield\"]"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The spell's card modal opens",
+          "selector": ".card-upgrade-detail-modal"
+        },
+        {
+          "kind": "count",
+          "label": "Each option draws a card face",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-option-face .card",
+          "min": 2
+        },
+        {
+          "kind": "visible",
+          "label": "With the (i)",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-inspect"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "Internal effect names or \"EFFECTS None →\" are shown",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-options",
+          "matches": "addCard|changeAttribute|None →"
+        }
+      ]
+    },
+    {
+      "name": "blacksmith-inspect",
+      "url": "?shot=blacksmith",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": "[data-shop-category=\"upgradeArt\"]"
+        },
+        {
+          "click": "#blacksmith-upgrade-card"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".card-upgrade-row[data-instance-id=\"gp1\"]"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".card-upgrade-detail-modal .card-upgrade-inspect"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The (i) opens the full card",
+          "selector": ".card-inspection-modal"
+        },
+        {
+          "kind": "text",
+          "label": "It reads the upgraded card",
+          "selector": ".card-inspection-modal .modal-head-id h2",
+          "includes": "Strike+"
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "blacksmith-two-clicks",
+      "url": "?shot=blacksmith",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": "[data-shop-category=\"upgradeArt\"]"
+        },
+        {
+          "click": "#blacksmith-upgrade-card"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".card-upgrade-row[data-instance-id=\"gp1\"]"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".card-upgrade-detail-confirm"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Select then Upgrade commits: the what-changed receipt opens",
+          "selector": ".what-changed-modal"
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Upgrade opened a second confirmation",
+          "selector": ".confirmation-modal"
+        },
+        {
+          "kind": "visible",
+          "label": "The card modal stayed open after the commit",
+          "selector": ".card-upgrade-detail-modal"
+        }
+      ]
+    },
+    {
+      "name": "rest-site-upgrade",
+      "url": "?shot=rest&gameProfile=core",
+      "ready": "#upgrade-card-opt",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#upgrade-card-opt"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": ".card-upgrade-row[data-instance-id=\"gp10\"]"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The rest site's picker opens the card modal",
+          "selector": ".card-upgrade-detail-modal"
+        },
+        {
+          "kind": "visible",
+          "label": "With the (i)",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-inspect"
+        },
+        {
+          "kind": "within",
+          "label": "Strike's price chip fits its row",
+          "selector": ".card-upgrade-row[data-instance-id=\"gp1\"] .co-chip:last-child",
+          "container": ".card-upgrade-row[data-instance-id=\"gp1\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The row still expands inline",
+          "selector": ".option-row-detail"
+        }
+      ]
+    },
+    {
+      "name": "skill-rank-up",
+      "url": "?shot=reward&shotRankUp=1",
+      "ready": ".reward-kind[data-kind=\"skillRankUp\"]",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".reward-kind[data-kind=\"skillRankUp\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".card-upgrade-row"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The rank-up picker opens the card modal",
+          "selector": ".card-upgrade-detail-modal"
+        },
+        {
+          "kind": "visible",
+          "label": "With the (i)",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-inspect"
+        },
+        {
+          "kind": "count",
+          "label": "The bonus options show in the modal",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-option",
+          "min": 2
+        },
+        {
+          "kind": "text",
+          "label": "Its primary names the rank-up",
+          "selector": ".card-upgrade-detail-confirm",
+          "includes": "Rank up"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The row still expands inline",
+          "selector": ".option-row-detail"
+        }
+      ]
+    },
+    {
+      "name": "skill-rank-up-two-clicks",
+      "url": "?shot=reward&shotRankUp=1",
+      "ready": ".reward-kind[data-kind=\"skillRankUp\"]",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".reward-kind[data-kind=\"skillRankUp\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".card-upgrade-row"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".card-upgrade-detail-confirm"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Select then Rank up claims the rank-up",
+          "selector": ".reward-kind[data-kind=\"skillRankUp\"][data-state=\"taken\"]"
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The picker stayed open after the commit",
+          "selector": ".card-upgrade-modal"
+        }
+      ]
+    }
+  ]
+}

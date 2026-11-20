@@ -10,6 +10,7 @@
 
 import { buildStampHtml } from './buildstamp.js';
 import { esc } from './tooltip.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { el, html, eyebrow, ornament } from '../kit/index.js';
 
 function isActivation(input) {
@@ -26,14 +27,14 @@ function familyForPointer(event) {
 
 /** The lockup, as markup: the TitleMenu's name · subtitle · ornament · foot. */
 function lockupHtml(properties, accessibility) {
-  const rule = ornament({ class: 'startup-rule', dataset: { component: 'startup-divider' } });
-  return html(el('div', { class: 'as-titlemenu startup-mark', dataset: { component: 'startup-mark' } }, [
+  const rule = ornament({ class: 'startup-rule', dataset: { component: UI.startupDivider } });
+  return html(el('div', { class: 'as-titlemenu startup-mark', dataset: { component: UI.startupMark } }, [
     properties.overline ? eyebrow(properties.overline, { class: 'startup-overline' }) : null,
-    el('h1', { class: 'tm-name startup-wordmark', dataset: { component: 'startup-wordmark' }, text: properties.wordmark }),
-    properties.subtitle ? el('p', { class: 'tm-sub startup-subtitle', dataset: { component: 'startup-subtitle' }, text: properties.subtitle }) : null,
+    el('h1', { class: 'tm-name startup-wordmark', dataset: { component: UI.startupWordmark }, text: properties.wordmark }),
+    properties.subtitle ? el('p', { class: 'tm-sub startup-subtitle', dataset: { component: UI.startupSubtitle }, text: properties.subtitle }) : null,
     rule,
     el('p', {
-      class: 'tm-foot startup-prompt', dataset: { component: 'startup-prompt' },
+      class: 'tm-foot startup-prompt', dataset: { component: UI.startupPrompt },
       'aria-live': accessibility.promptLive, text: properties.prompts[properties.inputFamily],
     }),
   ]));
@@ -53,17 +54,17 @@ export function mountStartupGate(app, {
 
   const { properties, accessibility } = model;
   const particleHtml = properties.particles.map((particle) => (
-    `<span class="startup-ash" data-component="startup-ash-particle" data-particle="${esc(particle.id)}" style="--ash-left:${particle.leftPct}%;--ash-delay:${particle.delayMs}ms;--ash-duration:${particle.durationMs}ms;--ash-size:${particle.sizePx}px"></span>`
+    `<span class="startup-ash" data-component="${UI.startupAshParticle}" data-particle="${esc(particle.id)}" style="--ash-left:${particle.leftPct}%;--ash-delay:${particle.delayMs}ms;--ash-duration:${particle.durationMs}ms;--ash-size:${particle.sizePx}px"></span>`
   )).join('');
 
   app.innerHTML = `
-    <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
+    <section class="screen startup-gate" data-component="${UI.startupGate}" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
       <div class="tower-scene" aria-hidden="true">
         <div class="tower-exterior"><div class="tower-city-unlit"></div><div class="tower-city-lit"></div></div>
         <div class="tower-hall"><div class="tower-interior-city"></div><div class="tower-door-frame"></div></div>
       </div>
-      <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
+      <div class="startup-ash-field" data-component="${UI.startupAshField}" aria-hidden="true">${particleHtml}</div>
       ${lockupHtml(properties, accessibility)}
       ${buildStampHtml('startup')}
     </section>`;

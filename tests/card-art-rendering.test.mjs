@@ -6,7 +6,7 @@ import { applyCardArtStyle } from '../src/ui/cardArtStyle.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { ACTION_SIGILS } from '../src/content/combatSigils.js';
 import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
 

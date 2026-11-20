@@ -1,3 +1,5 @@
+import { BarrierPoisePerStack } from '../../model/combatRatings.js';
+import { FaceCostProfile } from '../../model/faceCosts.js';
 import { bindDamageReceipt, cardDamageReceipt, damageReceiptHtml } from './damageReceipt.js';
 import { bindCardComponentFailures } from '../cardArtLayers.js';
 import { baseCardPresentation } from '../../content/generated/baseCards.js';
@@ -9,11 +11,11 @@ import {applyCardAppearance} from './cardAppearance.js';
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
 import { cardActions } from '../../services/cardActions.js';
 import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
+import { CounterStackPercent } from '../models/CounterStackPercentModel.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
-// All numbers shown come from the engine: in combat, previewCard tokens
-// (live math, SPEC §3.13); outside combat, the card's own literal values via
-// computeTokenBindings. No math happens here.
+// The model supplies the displayed numbers. In combat it reads previewCard
+// tokens (SPEC §3.13). Static faces use the card definition and any supplied run rules.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
 import { playingCardModel, playingCardDefinition, playingCardClasses, staticCardTokens, combatCardType } from '../../model/playingCard.js';
@@ -47,7 +49,7 @@ import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
 import { roomyBudgetFor } from '../../model/cardFaceBudget.js';
-import { evadeGrantOnlyCard } from '../../model/fixCoreMechanics.js';
+import { evadeGrantOnlyCard, CounterStacksForCard, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 
@@ -189,6 +191,17 @@ function splitFace(html) {
   const skeleton = html.replace(TEXT_ROW, (_m, open, inner, close) => { rows.push(inner); return open + close; });
   return { skeleton, rows };
 }
+// Writes new words into a text row, replacing only the child nodes that differ: a clause that did not change
+// (and the nodes inside it) stays the node it was. Falls back to the whole row when the shapes differ.
+function writeRow(row, html) {
+  const doc = row.ownerDocument;
+  const holder = doc?.createElement?.('template');
+  if (!holder || !holder.content || typeof row.replaceChild !== 'function') { row.innerHTML = html; return; }
+  holder.innerHTML = html;
+  const next = [...holder.content.childNodes], old = [...row.childNodes];
+  if (next.length !== old.length || old.some(node => typeof node.isEqualNode !== 'function')) { row.innerHTML = html; return; }
+  next.forEach((node, i) => { if (!old[i].isEqualNode(node)) row.replaceChild(node, old[i]); });
+}
 // Moves the painted nodes of `from` into `into` when the new face html is the
 // old one or the old one with other words in its text rows. Returns the rows
 // it rewrote (empty when none), or null when the face cannot be taken over, in
@@ -216,8 +229,10 @@ function takeOverFace(into, from, prior, html, receipt) {
     const row = texts[i];
     if (row.dataset.customImage || row.querySelector('[data-card-decoration]')) return null;
   }
-  for (const node of painted) into.append(node);
-  for (const i of rewrite) texts[i].innerHTML = next.rows[i];
+  // A card taking over its own face already holds those nodes in place: moving them would remove and insert
+  // each one again (the artwork <img> with them) for no change.
+  if (into !== from) for (const node of painted) into.append(node);
+  for (const i of rewrite) writeRow(texts[i], next.rows[i]);
   return { rewrite, texts };
 }
 
@@ -247,7 +262,7 @@ export function renderCard(registries, ref, opts = {}) {
     // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
     // left. The output is byte-identical by construction: the model's bodies are
     // the ones that stood here.
-    rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def });
+    rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def, rules: opts.rules || null });
     combatProfile = combatProfileFor(def);
     combatTags = combatProfileTags(combatProfile, registries);
     expanded = opts.preview?.combatExpansionVersion === 2 || opts.rules?.combatExpansionVersion === 2
@@ -451,7 +466,9 @@ export function renderCard(registries, ref, opts = {}) {
     paintedFaces.set(el, { html: faceHtml, at, receipt: receiptKey });
     // The fitter swaps in the roomy reading as fresh nodes: their damage numbers take the receipt binding too.
     if (!receiptRebound.has(el)) { receiptRebound.add(el); el.addEventListener?.('facereadingchange', () => bindDamageReceipt(el, opts.preview)); }
-    for (const node of kept)el.append(node);
+    // The kept nodes (the key badge, the info button, the hit lane) stay where they are when the face was
+    // taken over in place; anything else rebuilt the element's children and puts them back.
+    if (!(taken && donor === el)) for (const node of kept)el.append(node);
     el.dataset.level=at;
     el.dataset.cardLayout='illustrated-v1';
     scheduleCardFits([el]);
@@ -882,7 +899,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from
   // TermRegistry — same rendered string, one authority for both.
-  const pools = liveCosts || registries.framework.costProfile(def);
+  const pools = liveCosts || FaceCostProfile(registries, def);
   // Terms are data; escape them like every other field before innerHTML.
   const word = (resource) => esc(registries.framework.resourceWord(resource));
   const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
@@ -909,12 +926,12 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, rated, id)]);
       const offense = bonuses.some(([id, amount]) => ['ar', 'pr'].includes(id) && amount > 0);
       const active = bonuses.filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + (id === 'ward' ? 'Ward rating' : id.toUpperCase()));
-      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + ({ precision: t('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + (id === 'barrier' ? amount * BarrierPoisePerStack(ctx) : amount) + ' ' + ({ precision: t('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: t('combat.protection.poise') })[id]);
       html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
         + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
-        + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less SP.'
+        + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less Stamina.'
         + (stance.maneuver === 'defend' ? ' While in Defend stance, Defend, Counter and Evade cards all take Adept discounts.' : '')
-        + (stance.maneuver === 'defend' ? ' Every play restores ' + esc(rules.defenseRestore) + ' Poise and Ward; excess becomes Block and Barrier.' : '')
+        + (stance.maneuver === 'defend' ? ' Every play restores ' + esc(rules.defenseRestore) + ' Poise and Ward; excess becomes Block and bonus Poise.' : '')
         + (magical && offense ? ' Each existing status applied gains +' + esc(rules.spellStatusStacks) + ' stack.' : '') + '</div>';
     }
   }
@@ -922,13 +939,17 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     // Core return help only where live arms the card (armsAsCoreCounter): Counter stances and spell Counters with coverage.
     const inCore = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1;
     const coreCounter = inCore && armsAsCoreCounter(registries, def);
+    const stackRules = inCore ? FixCoreCounterStacks({ combatExpansionVersion: 2, gameProfile: registries.gameProfile }) : null;
+    const counterHelp = () => stackRules
+      ? t('card.counter.help.stacks', { stackPercent: Number((stackRules.returnPerStack * 100).toPrecision(15)), stacks: CounterStacksForCard(stackRules, def.id, !!def.upgraded) })
+      : t('card.counter.help.core', { stackPercent: CounterStackPercent() });
     const coreIneligible = inCore && !coreCounter;
     if (def.counterCoverage) {
       const c = def.counterCoverage;
       const names = { physical: 'Martial', spell: 'Spell', melee: t('deckEditor.range.melee'), reach: t('deckEditor.range.reach'), ranged: t('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
       const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
-      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. ${coreCounter ? esc(t('card.counter.help.core')) : coreIneligible ? 'The prepared stance remains until another maneuver replaces it.' : 'Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.'}</div>`;
-    } else html += `<div class="combat-rule-hint">${esc(t(coreCounter ? 'card.counter.help.core' : 'card.counter.help.legacy'))}</div>`;
+      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. ${coreCounter ? esc(counterHelp()) : coreIneligible ? 'The prepared stance remains until another maneuver replaces it.' : 'Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.'}</div>`;
+    } else html += `<div class="combat-rule-hint">${esc(coreCounter ? counterHelp() : t('card.counter.help.legacy'))}</div>`;
   }
   if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => t('deckEditor.range.' + range)).join(' + '))}.</div>`;
   if (identity.cardCategory === 'stance') {

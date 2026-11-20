@@ -65,7 +65,7 @@
   },
   "fellWardenBrand": {
     "name": "Fell Warden Brand",
-    "text": "Whenever an enemy Staggers, draw 2 cards."
+    "text": "Whenever an enemy is Broken, draw 2 cards."
   },
   "bloodiedTalisman": {
     "name": "Bloodied Talisman",
@@ -133,7 +133,7 @@
   },
   "vigilantHalo": {
     "name": "Vigilant Halo",
-    "text": "Whenever an enemy Staggers, heal 6 HP."
+    "text": "Whenever an enemy is Broken, heal 6 HP."
   },
   "carrionTalon": {
     "name": "Carrion Talon",
@@ -145,7 +145,7 @@
   },
   "crownOfStitches": {
     "name": "Crown of Stitches",
-    "text": "Begin each combat with 2 Strength — and 1 Frail. New limbs are heavy."
+    "text": "Begin each combat with 2 Strength and 1 Frail. New limbs are heavy."
   },
   "wardenHorn": {
     "name": "Warden Horn",
@@ -181,7 +181,7 @@
   },
   "hollowedHorn": {
     "name": "Hollowed Horn",
-    "text": "Whenever an enemy Staggers, apply 1 Vulnerable to ALL enemies."
+    "text": "Whenever an enemy is Broken, apply 1 Vulnerable to ALL enemies."
   },
   "gildedTear": {
     "name": "Gilded Tear",
@@ -193,7 +193,7 @@
   },
   "howlingStandard": {
     "name": "Howling Standard",
-    "text": "Whenever an enemy Staggers, gain 1 Strength."
+    "text": "Whenever an enemy is Broken, gain 1 Strength."
   },
   "emberwickCharm": {
     "name": "Emberwick Charm",
@@ -294,5 +294,25 @@
   "brimmingGourd": {
     "name": "Brimming Gourd",
     "text": "Picking it up refills your flasks."
+  },
+  "basicTraining": {
+    "name": "Basic Training",
+    "text": "Deck editing adds any number of Basic martial cards (unranked)."
+  },
+  "graduate": {
+    "name": "Graduate",
+    "text": "Deck editing adds any number of cantrips (unranked spells)."
+  },
+  "threadbareSatchel": {
+    "name": "Threadbare Satchel",
+    "text": "Your deck may be 1 card smaller."
+  },
+  "asceticsCord": {
+    "name": "Ascetic's Cord",
+    "text": "Your deck may be 1 card smaller."
+  },
+  "pruningHook": {
+    "name": "Pruning Hook",
+    "text": "Your deck may be 1 card smaller."
   }
 }

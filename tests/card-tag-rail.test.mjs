@@ -8,7 +8,7 @@ import { contentBundle } from '../src/content/index.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { playingCardModel } from '../src/model/playingCard.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 
 const reg=createRegistries(contentBundle);
 const model=(...ids)=>({tags:ids.map(id=>({id,label:id.split(':').at(-1)}))});

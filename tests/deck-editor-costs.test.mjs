@@ -10,15 +10,15 @@ const rel = 'ui/presentation/deckEditorCosts.json';
 const authored = JSON.parse(readFileSync(new URL('../content/config/ui/presentation/deckEditorCosts.json', import.meta.url), 'utf8'));
 const groups = authored.components.resourceGroups;
 const separate = [
-  { id: 'mana', label: 'MP', resources: ['mana'] },
-  { id: 'stamina', label: 'SP', resources: ['stamina'] },
+  { id: 'mana', label: 'Mana', resources: ['mana'] },
+  { id: 'stamina', label: 'Stamina', resources: ['stamina'] },
 ];
 const legacy = [separate[0], { ...separate[1], resources: ['action', 'stamina'] }];
 
-test('authored default shows canonical SP after MP without double-counting the action alias', () => {
+test('authored default shows canonical Stamina after Mana without double-counting the action alias', () => {
   const profile = Object.freeze({ action: 2, mana: 3, stamina: 2, variable: false });
   assert.deepEqual(deckEditorCosts(profile, groups).map(({ id, label, value }) => ({ id, label, value })), [
-    { id: 'mana', label: 'MP', value: 3 }, { id: 'stamina', label: 'SP', value: 2 },
+    { id: 'mana', label: 'Mana', value: 3 }, { id: 'stamina', label: 'Stamina', value: 2 },
   ]);
   assert.equal(profile.action, 2);
   assert.deepEqual(deckEditorCosts(profile, legacy).map(badge => badge.value), [3, 2]);

@@ -5,11 +5,12 @@ import assert from 'node:assert/strict';
 import { createRunState } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { createRng } from '../src/engine/rng.js';
-import { core2Profile, core2Registries } from './helpers/core2.mjs';
+import { legacyCoreProfile, legacyCoreRegistries } from './helpers/legacy-core-profile.mjs';
 import { deckCopyLimit } from '../src/model/deckRules.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 
-const profile = core2Profile(), registries = core2Registries();
+// Pinned to the pre-rest Core (Armoury deck door, unlimited Basics/Cantrips): a saved run keeps that pinned profile. The shipped Core mints nothing (tests/core-deck-edit-at-rest.test.mjs).
+const profile = legacyCoreProfile(), registries = legacyCoreRegistries(profile);
 // Copy limits read the collected-card ledger: each card is collected first, as a reward claim does.
 const live = (classId, ids) => {
   const run = createRunState({ registries, seed: 511, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });

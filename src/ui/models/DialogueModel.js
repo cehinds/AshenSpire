@@ -67,6 +67,7 @@ export function dialogueModel({ eventId, title = '', text = '', speaker, portrai
       choiceId: String(response.choiceId),
       label: String(response.label ?? ''),
       affordable: response.affordable !== false,
+      unmet: response.unmet ? String(response.unmet) : null,
       binding: !!response.binding,
       resultText: String(response.resultText ?? ''),
     })))
@@ -242,14 +243,18 @@ export function dialogueEntrance(layout, { reducedMotion = false, replay = true 
  * physical minimum and the scene absorbs the shortfall.
  * frame: { width, height, zoom, rem } in local px, as combat passes it.
  */
-export function dialogueBands(frame, layout, parent, compact = false) {
+export function dialogueBands(frame, layout, parent, compact = false, fine = false) {
   // A COMPACT HOST GETS A DIFFERENT SPLIT, not a squeezed one. The shared HUD
   // draws two rows of facts; a 10% band holds them on a desktop and not on a
   // phone, where 10% of 824px is 82px against 96px of readable rows — and a
   // band that cannot hold its rows pushes the relic belt onto the meters.
   // The room comes from the context band, which on a phone had a visibly empty
   // strip under its last response (owner, 2026-09-18).
-  const shares = compact && layout.sizing.bandsCompact ? layout.sizing.bandsCompact : layout.sizing.bands;
+  // A MOUSE WINDOW IS WIDE, NOT TALL IN TEXT (owner, 2026-11-15: "so freaking big"): one line of speech in a
+  // 35% band is a mostly empty panel under a cropped scene. `bandsDesktop` (optional) gives the scene the room
+  // and the three buttons a short footer; a phone or a compact host keeps its own split.
+  const desktop = !compact && fine && layout.sizing.bandsDesktop;
+  const shares = desktop ? layout.sizing.bandsDesktop : compact && layout.sizing.bandsCompact ? layout.sizing.bandsCompact : layout.sizing.bands;
   const sum = shares.hud + shares.scene + shares.context + shares.footer;
   if (Math.abs(sum - 100) > 1e-9) throw new Error(`dialogue band shares sum to ${sum}, not 100`);
   const plan = shares === layout.sizing.bands ? layout : { ...layout, sizing: { ...layout.sizing, bands: shares } };

@@ -124,7 +124,7 @@ export function combatTargetAnchors({ width, height, targets, size = COMBAT_TARG
             ...blockers.flatMap(o => [o.left-source.width/2-2,o.right+source.width/2+2])])]
             .filter(x => Math.abs(x-source.x)<=shiftLimit && x-source.width/2>=0
               && x+source.width/2<=width)
-            .toSorted((a,b) => Math.abs(a-source.x)-Math.abs(b-source.x) || a-b);
+            .sort((a,b) => Math.abs(a-source.x)-Math.abs(b-source.x) || a-b);
           for (const x of xs) {
             const candidate = place(source,x,blockers);
             if (better(candidate,control,source)) control = candidate;
@@ -134,7 +134,7 @@ export function combatTargetAnchors({ width, height, targets, size = COMBAT_TARG
       }
       return placed;
     };
-    const ascending = pack(controls.toSorted((a,b) => a.y-b.y));
+    const ascending = pack([...controls].sort((a,b) => a.y-b.y));
     const blocked = result => result.filter(control => control.obstructed).length;
     const shift = result => result.reduce((sum, control) => sum
       + Math.abs(control.y-controls.find(source => source.id===control.id).y),0);
@@ -146,7 +146,7 @@ export function combatTargetAnchors({ width, height, targets, size = COMBAT_TARG
     // usual placement fails or separates a cue far from its feet. Wide plates
     // get a tied floor slot before narrow targets; ordinary clear layouts keep
     // their exact anchors. Prefer fewer collisions, then less total movement.
-    const descending = pack(controls.toSorted((a,b) => b.y-a.y || b.width-a.width));
+    const descending = pack([...controls].sort((a,b) => b.y-a.y || b.width-a.width));
     const original = blocked(descending) < blocked(ascending)
       || blocked(descending)===blocked(ascending) && shift(descending)<shift(ascending)
       ? descending : ascending;
@@ -157,8 +157,8 @@ export function combatTargetAnchors({ width, height, targets, size = COMBAT_TARG
     const detached = result => result.filter(control => Math.abs(control.y
       - controls.find(source => source.id===control.id).y)>2*size).length;
     let result = original;
-    const orders = [controls.toSorted((a,b)=>a.y-b.y),
-      controls.toSorted((a,b)=>b.y-a.y||b.width-a.width)];
+    const orders = [[...controls].sort((a,b)=>a.y-b.y),
+      [...controls].sort((a,b)=>b.y-a.y||b.width-a.width)];
     const consider = repaired => {
       if (blocked(repaired)<blocked(result) || blocked(repaired)===blocked(result)
         && (detached(repaired)<detached(result) || detached(repaired)===detached(result)
@@ -309,7 +309,7 @@ function packCombatOverheadAnchors({ width, controls, inset = 6, gap = 6, ribbon
     // Actors of different stature can have unrelated overhead bands.
     // Only vertically intersecting controls need horizontal clearance.
     const bands = [];
-    for (const control of group.toSorted((a, b) => (a.top ?? 0) - (b.top ?? 0))) {
+    for (const control of [...group].sort((a, b) => (a.top ?? 0) - (b.top ?? 0))) {
       let band = bands.at(-1);
       if (!band || (control.top ?? -Infinity) >= band.bottom) {
         band = { controls: [], bottom: control.bottom ?? Infinity }; bands.push(band);

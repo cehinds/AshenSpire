@@ -6,6 +6,13 @@ import { cardKind } from './tree.js';
 export const CARD_ACTION_CLASSES = Object.freeze(['reaver', 'rogue', 'starseer', 'herald']);
 export const CARD_ACTIONS = Object.freeze(['attack', 'smash', 'sweep', 'counter', 'defend', 'spell', 'ranged', 'rangedMagic']);
 
+/** A card whose only work is Evade stacks (and moving between rows), like Dodge Roll; Block, damage or draws make it mixed. */
+export function IsPureEvadeCard(card = {}) {
+  const effects = card.effects || [];
+  return effects.some(effect => effect.op === 'applyStatus' && effect.status === 'evade')
+    && effects.every(effect => effect.op === 'moveEngagement' || (effect.op === 'applyStatus' && effect.status === 'evade'));
+}
+
 /** Class defaults: equipment and damage colour do not select choreography. */
 export function cardActionFor(card = {}, classId) {
   if (!CARD_ACTION_CLASSES.includes(classId)) return null;
@@ -15,7 +22,7 @@ export function cardActionFor(card = {}, classId) {
   const tags = new Set(ids || []);
   if (cardPreparationCategory(card)) return 'spell';
   if (profile.maneuver === 'ranged') return profile.camp === 'spell' || tags.has('source:spell') ? 'rangedMagic' : 'ranged';
-  if (profile.camp === 'physical' && isPureDodge(card)) return 'evade';
+  if (profile.camp === 'physical' && (isPureDodge(card) || IsPureEvadeCard(card))) return 'evade';
   if (profile.maneuver === 'counter' || profile.maneuver === 'defend') return profile.maneuver;
   if (profile.camp === 'spell' || tags.has('source:spell')) return 'spell';
   if (['attack', 'smash', 'sweep'].includes(profile.maneuver)) return profile.maneuver;

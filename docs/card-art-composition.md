@@ -60,14 +60,28 @@ the whole assembly and follows the existing Legacy/outline fallback.
 
 ## Applied card-art review
 
-The approved review assigns layered art to all 156 current card IDs without a
-dedicated illustration. `asset-data/card-art/reviewed-library.json` is the
+The approved review assigns layered art to all 175 current card IDs without a
+dedicated illustration (the 19 theme G cards of the 2026-11-17 playtest reuse an
+approved recipe of the same kind unchanged). `asset-data/card-art/reviewed-library.json` is the
 editable approval snapshot: it retains the source combat tags, chosen rule,
 up to four visual cues, source references and every independent layer transform.
 `node tools/export-reviewed-card-art.mjs` compiles it into the runtime module;
 `--check` verifies reproducibility. These are approved results of the tag formula,
 not new combat rules. New cards still use the live formula below until reviewed.
 Rank variants share their approved base artwork.
+
+### Effect layers (`fx:` tags)
+
+Every presentation `fx:` tag (`content/source/nodes.csv`) other than `fx:heal` and
+`fx:cleanse`, which select utility objects, has one effect layer in the library's
+`effectLayers` table: an already-approved PNG (a status mark, a symbol or an effect
+cutout), placed in one shared upper-right slot, screened at 0.42 opacity. The exporter
+compiles each like a recipe layer into `reviewedCardArtCatalog.effectLayers`
+(sprite id `fx-<name>`). Procedural Simple art paints at most one, above the weapon
+and status cues, only while action, elements and statuses leave a visual identity
+free (four in all); it joins the semantic cache key and `visualCues`, and rank
+scales its opacity like the other decorative layers. Adding a tag's layer is a row in
+that table plus `node tools/export-reviewed-card-art.mjs`; no PNG is repainted.
 
 `playingCardArt` selects these recipes only in Reviewed mode, for reviewed cards
 without dedicated art and without equipment profiles. Existing dedicated-art
@@ -102,8 +116,8 @@ Simple artwork now renders the approved revision-14 cutouts as independent PNG l
 Edit `asset-data/card-art/layered-selection.json` to choose approved composition codes for combat identities. Run:
 
 ```
-node tools/export-layered-card-art.mjs
-node tools/export-layered-card-art.mjs --check
+node tools/attic/export-layered-card-art.mjs
+node tools/attic/export-layered-card-art.mjs --check
 ```
 
 The exporter selects 28 compositions and 44 component PNGs from `docs/design/new-card-art/cutout-manifest.json`, verifies their hashes, and copies them unchanged into `assets-display/card-cutouts/`. It writes the readable `asset-data/card-art/layered-runtime.json` and its synchronous browser-module twin, `src/content/layeredCardArt.generated.js`. The full proposal library stays separate from the runtime subset.

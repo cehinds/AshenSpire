@@ -1,0 +1,59 @@
+{
+  "request": "these long comments are rediculuous / code base looks hideous (refactor the modal components and reward screen: JSON-driven modal hierarchy, PascalCase exports, clean formatting, with no visible change)",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "reward-door",
+      "url": "?shot=reward&shotReward=configured",
+      "ready": ".reward-choice-option",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "wait": {
+            "ms": 300
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Reward options are drawn",
+          "selector": ".reward-choice-option",
+          "min": 1
+        },
+        {
+          "kind": "visible",
+          "label": "Modal head is shown",
+          "selector": ".modal-head"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "No reward options drawn",
+          "selector": ".reward-choice-option",
+          "eq": 0
+        }
+      ]
+    }
+  ]
+}

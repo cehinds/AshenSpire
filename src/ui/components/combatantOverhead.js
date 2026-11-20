@@ -1,10 +1,12 @@
 import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
-import { combatIntentPresentation } from '../models/CombatIntentModel.js';
-import { intentIcon } from './intentIcon.js';
+import { combatIntentPresentation, IntentPoiseRead } from '../models/CombatIntentModel.js';
+import { IntentPoiseMark } from './intentPoiseMark.js';
+import { intentIcon, FluxIcon, FLUX_ELEMENT_SCHOOL } from './intentIcon.js';
 import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
 import { setAttr, setData, onLive } from '../domWrite.js';
+import { StanceBenefitTip, FluxTip, AdvancedTip } from '../models/StanceBenefitModel.js';
 
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
@@ -65,8 +67,9 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   const followUps = Array.isArray(intent?.followUps) ? intent.followUps : [];
   if (followUps.length) compact.append(intentFollowUps(followUps));
   node.append(compact);
-  const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? symbol.icon : 'unknown').join(', ')}.` : '';
-  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}${part.summary ? `. ${part.summary}` : ''}`).join('. ')}${followLabel}`);
+  const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? `${symbol.icon}${symbol.value != null ? ` ${symbol.value}` : ''}${symbol.poise ? ` (${symbol.poise.summary})` : ''}` : 'unknown').join(', ')}.` : '';
+  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}${part.summary ? `. ${part.summary}` : ''}${part.poise ? `. ${part.poise.summary}` : ''}`).join('. ')}${followLabel}`);
+  if (badge.parts.some(part => part.poise?.breaks)) node.dataset.poiseBreak = 'true';
   {
     const stanceNode = document.createElement('span');
     stanceNode.className = 'intent-stance';
@@ -83,6 +86,7 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
         const value = document.createElement('span'); value.textContent = part.value; group.append(value);
         if (part.summary) { const scope = document.createElement('small'); scope.className = 'intent-damage-scope'; scope.textContent = part.summary; group.append(scope); }
       }
+      if (part.poise) group.append(IntentPoiseMark(part.poise));
       values.append(group);
     }
     node.append(values);
@@ -96,7 +100,9 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
     const tags = intent?.profile ? combatProfileTags(intent.profile, registries) : [];
     const counter = badge.stance === 'countering' && intent.counterDamage != null
       ? `<div>Base counter damage: ${esc(intent.counterDamage)} HP${intent.counterPoiseDamage > 0 ? `, ${esc(intent.counterPoiseDamage)} Poise` : ''}. The triggering attack and defenses determine the resolved damage.</div>` : '';
-    return `${body || ''}${counter}${tags.length ? `<div class="combat-rule-hint">${tags.map(tag => `${esc(tag.label)}: ${esc(tag.blurb)}`).join('<br>')}</div>` : ''}`;
+    const poise = IntentPoiseRead(intent);
+    const poiseLine = poise ? `<div class="intent-poise-tip${poise.breaks ? ' is-break' : ''}">${esc(poise.summary)}</div>` : '';
+    return `${body || ''}${poiseLine}${counter}${tags.length ? `<div class="combat-rule-hint">${tags.map(tag => `${esc(tag.label)}: ${esc(tag.blurb)}`).join('<br>')}</div>` : ''}`;
   };
   attachTooltip(node, tooltip, { selectionFirst: true, intent: 'above', align: 'center' });
   // A visible intent is also the owning enemy's target control. Resolve that
@@ -130,10 +136,45 @@ export function playerActionIntent(profile, onTarget) {
     const group = document.createElement('span'); group.className = 'intent-action'; group.dataset.action = icon; group.dataset.valueKind = ['defend', 'counter', 'prepare'].includes(icon) ? 'count' : 'damage';
     group.append(intentIcon(icon)); row.append(group);
   }
+  // W25-F: a caster's second stance icon, the elemental flux (or the plain magic mark), drawn once beside the stance glyph; shown by SetPlayerFlux.
+  const flux = document.createElement('span'); flux.className = 'intent-action player-flux'; flux.dataset.valueKind = 'count'; flux.hidden = true;
+  for (const element of [null, ...Object.keys(FLUX_ELEMENT_SCHOOL)]) { const icon = FluxIcon(element); icon.setAttribute('hidden', ''); flux.append(icon); }
+  row.append(flux);
+  // W25-BANDS: the Advanced mark (you stand in reach of every enemy), a chevron drawn once and shown by SetPlayerAdvanced.
+  const advanced = document.createElement('span'); advanced.className = 'intent-action player-advanced'; advanced.hidden = true; advanced.textContent = '\u00bb';
+  row.append(advanced);
   node.append(row);
   onLive(node, 'click', event => { event.stopPropagation(); onTarget(); });
   setPlayerActionManeuver(node, profile);
+  // Wave 2.5: the held stance names its natural benefit (read live from the node, so a kept node shows the newest stance); W25-F adds the flux's own line when it shows.
+  attachTooltip(node, () => {
+    const tip = StanceBenefitTip(node.dataset.maneuver);
+    const view = node.dataset.flux ? { element: node.dataset.flux === 'magic' ? null : node.dataset.flux, multiplier: Number(node.dataset.fluxMultiplier) } : null;
+    const fluxTip = view ? FluxTip(view) : null;
+    const advancedTip = node.dataset.advanced ? AdvancedTip() : null;
+    return `<div class="tt-title">${esc(tip.title)}</div>${esc(tip.body)}${fluxTip ? `<div class="tt-title">${esc(fluxTip.title)}</div>${esc(fluxTip.body)}` : ''}${advancedTip ? `<div class="tt-title">${esc(advancedTip.title)}</div>${esc(advancedTip.body)}` : ''}`;
+  }, { intent: 'above', align: 'center' });
   return node;
+}
+
+/** Shows the flux icon of `view` ({ element|null, multiplier }) on a node playerActionIntent built, or hides it (view null); writes only what differs. */
+export function SetPlayerFlux(node, view) {
+  const group = node.querySelector('.player-flux');
+  if (!group) return;
+  const flux = view ? view.element || 'magic' : '';
+  setData(node, 'flux', flux);
+  setData(node, 'fluxMultiplier', view ? view.multiplier : '');
+  if (group.hidden !== !view) group.hidden = !view;
+  // An SVG has no `hidden` property, only the attribute (the stylesheet hides `.flux-icon[hidden]`).
+  for (const icon of group.querySelectorAll('.flux-icon')) { const hidden = icon.dataset.flux !== flux; if (icon.hasAttribute('hidden') !== hidden) icon.toggleAttribute('hidden', hidden); }
+}
+
+/** Shows or hides the Advanced mark of a node playerActionIntent built (W25-BANDS); writes only what differs. */
+export function SetPlayerAdvanced(node, on) {
+  const mark = node.querySelector('.player-advanced');
+  if (!mark) return;
+  setData(node, 'advanced', on ? '1' : '');
+  if (mark.hidden !== !on) mark.hidden = !on;
 }
 
 /** Shows `profile`'s glyph on a node playerActionIntent built; writes only what differs, replaces nothing. */
@@ -141,7 +182,7 @@ export function setPlayerActionManeuver(node, profile) {
   const maneuver = profile?.maneuver || 'prepare', icon = playerActionIcon(profile);
   setData(node, 'maneuver', maneuver);
   setAttr(node, 'aria-label', `Selected action: ${maneuver}`);
-  for (const group of node.querySelectorAll('.intent-action')) {
+  for (const group of node.querySelectorAll('.intent-action:not(.player-flux)')) {
     const hidden = group.dataset.action !== icon;
     if (group.hidden !== hidden) group.hidden = hidden;
   }
@@ -155,7 +196,18 @@ export function intentParts(parts = [], { unknown = false } = {}) {
   for (const part of visible) {
     const group = document.createElement('span'); group.className = 'intent-action'; group.dataset.action = part.icon;
     group.dataset.valueKind = part.valueKind || (['defend', 'counter', 'evade', 'buff', 'prepare'].includes(part.icon) ? 'count' : 'damage');
-    if (part.value != null || unknown) {
+    if (part.note && !unknown) {
+      // A charging move (owner, 2026-11-15, "icon + turn pip"): the move's icon with the number it will deal when it lands (dimmed, never 0) and a small
+      // hourglass badge with the turns left. The sentence ("Charging · in N turns") is the intent's tooltip and aria-label, not HUD text.
+      if (part.value != null && Number(part.value) !== 0) { const value = document.createElement('strong'); value.className = 'intent-action-value'; value.textContent = String(part.value); group.append(value); }
+      group.dataset.charging = 'true';
+      group.setAttribute('aria-label', part.summary || part.note);
+      group.append(intentIcon(part.icon));
+      const pip = document.createElement('span'); pip.className = 'intent-later-pip'; pip.setAttribute('aria-hidden', 'true');
+      pip.append(intentIcon('prepare'));
+      const turns = document.createElement('small'); turns.className = 'intent-later-turns'; turns.textContent = String(part.turns ?? ''); pip.append(turns);
+      group.append(pip); row.append(group); continue;
+    } else if (part.value != null || unknown) {
       const value = document.createElement('strong'); value.className = 'intent-action-value';
       value.textContent = unknown ? '?' : String(part.value);
       if (part.summary && !unknown) {
@@ -163,7 +215,11 @@ export function intentParts(parts = [], { unknown = false } = {}) {
         const scope = document.createElement('small'); scope.className = 'intent-damage-scope'; scope.textContent = part.summary; stack.append(scope); group.append(stack);
       } else group.append(value);
     }
-    group.append(intentIcon(part.icon)); row.append(group);
+    group.append(intentIcon(part.icon));
+    if (part.poise && !unknown) group.append(IntentPoiseMark(part.poise));
+    row.append(group);
   }
   return row;
 }
+
+export { IntentPoiseMark };

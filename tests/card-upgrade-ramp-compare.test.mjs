@@ -26,7 +26,7 @@ test('Flick -> Momentum keeps its 3 damage and adds the growth, with no "→ 0" 
 
 test('Brace -> Momentum keeps its 2 guard and adds the growth, with no "→ 0" row', () => {
   const changes = changesFor('core.brace');
-  assert.deepEqual(row(changes, 'GUARD'), { label: 'GUARD', before: '2', after: '2 (+1 per play)' });
+  assert.deepEqual(row(changes, 'BLOCK'), { label: 'BLOCK', before: '2', after: '2 (+1 per play)' });
   assert.equal(changes.some(c => c.after === '0'), false);
 });
 

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 test('same-maneuver preview keeps the mounted glyph and its current-selection callback', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
@@ -11,7 +11,7 @@ test('same-maneuver preview keeps the mounted glyph and its current-selection ca
   let changes = 0, made = 0;
   board.addEventListener('combatantselectionchange', event => { changes++; assert.equal(event.detail.geometry, 'overhead'); });
   const plays = [], inspections = [];
-  const scope = { combat: {}, combatEl: board, CustomEvent: dom.CustomEvent,
+  const scope = { combat: {}, PlayerFluxView: () => null, ElementFluxRules: () => null, dv: entity => entity, inPreparedStance: () => false, SetPlayerAdvanced: () => {}, SetPlayerFlux: () => {}, combatEl: board, CustomEvent: dom.CustomEvent,
     upcastRanksByCard: new Map(), resolveCombatCard: (_, inst) => inst, kindForCard: def => ({ maneuver: def.maneuver }),
     RESTING_PLAYER_ACTION: { maneuver: 'ready' }, selfArm: null,
     playCard: (...args) => plays.push(args), selectCombatant: id => inspections.push(id),

@@ -2,6 +2,8 @@
 // 2026-10-18) and half-rate sprites. The gap (500 ms) and the lunge clock (550 ms) are AUTHORED at x1 and divided by the
 // shipped combat speed (behavior.combatSpeed, x1.25 since 2026-10-26), exactly as actionPacing() does: scale = 1 / speed,
 // gap = 500 * scale, intent = one gap, lunge = 550 * scale. The probe forbids settings changes, so it reads the shipped default.
+// The first numeric readout is the HP damage number (owner's floater policy, 2026-11-07): protection and meter-only
+// plays draw none and owe none; an HP-damaging beat owes one.
 // Only declared waits/clip/receipt holds are excluded from the existing 400/750 ms responsiveness budgets.
 import { AUTOMATION_DEFAULTS, ACTION_PACING } from '../src/model/autoCombatPolicy.js';
 const SPEED = AUTOMATION_DEFAULTS.combatSpeed;
@@ -9,7 +11,7 @@ const SCALE = 1 / SPEED;
 const GAP = ACTION_PACING.stageGapMs * SCALE;
 const LUNGE = ACTION_PACING.animationStepDefaultMs * SCALE;
 const near = (a, b) => Math.abs(a - b) < 0.5;
-export function orderedImpactSample({ up, contact, number, timing, clip, holdMs = 0, stages, receipts = [] }) {
+export function orderedImpactSample({ up, contact, number, timing, clip, holdMs = 0, stages, hpDamage = false, receipts = [] }) {
   const fail = message => { throw new Error(`ordered click-impact: ${message}`); };
   if (timing?.fixCore !== true) fail('the default fixture must resolve actual Core2 mechanics');
   if (!near(timing?.spriteSpeed?.lungeMs, LUNGE)) fail(`default Normal half-rate sprite must use the ${LUNGE} ms lunge clock (550 ms at x1, scaled by the x${SPEED} default speed)`);
@@ -40,9 +42,9 @@ export function orderedImpactSample({ up, contact, number, timing, clip, holdMs 
   minimum('sprite', 'result', clip.totalMs + holdMs + GAP);
   minimum('result', 'reaction', GAP);
   minimum('reaction', 'damage', GAP);
-  const whollyMissed = receipts.some(event => event.type === 'attackMissed') && !receipts.some(event =>
-    ['attackHit', 'damageDealt', 'blockGained', 'meterGuardGained', 'ratingImpact', 'hpLost', 'healed', 'barrierGained'].includes(event.type));
-  if (number == null && !whollyMissed) fail('missing numeric readout without a wholly missed action');
+  const kinds = [...new Set(receipts.map(event => event.type))].join(', ') || 'none';
+  if (hpDamage && number == null) fail(`missing HP damage readout (receipts: ${kinds})`);
+  if (!hpDamage && number != null) fail(`a numeric readout drew without HP damage (floater policy, owner 2026-11-07; receipts: ${kinds})`);
   if (contact < times.contact - 4 || (number != null && number < times.damage - 4)) fail('readout precedes its declared stage');
   const expectedContact = 2 * GAP + clip.impactMs;
   const expectedNumber = 5 * GAP + clip.totalMs + holdMs;

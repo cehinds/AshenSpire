@@ -15,17 +15,21 @@ import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function fight(id, seed = 511) {
+// `legacy` is the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); the default is the shipped Broken rule.
+function fight(id, seed = 511, { legacy = false } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed });
   const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [id] });
+  if (legacy) combat.fixCoreRules = { ...combat.fixCoreRules, poise: { drain: 'prevented' } };
   combat.player.hp = combat.player.maxHp = 100000;
   return combat;
 }
 const settle = combat => { for (let i = 0; combat.pendingReaction && i < 50; i++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }); };
 const play = (combat, card) => { dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, ...(card.cardId === 'core.defend' ? {} : { targetId: combat.enemies[0].id }) }); settle(combat); };
-const shown = enemy => enemy.intent?.moveId ? [enemy.intent.moveId, ...(enemy.plannedMoves || []).map(row => row.moveId)] : [];
+// A Broken enemy (SPEC 17, batch 1) has lost its head: its intent reads Broken with no move, and its remaining planned follow-ups show and play.
+const shown = enemy => enemy.intent?.moveId ? [enemy.intent.moveId, ...(enemy.plannedMoves || []).map(row => row.moveId)]
+  : enemy.broken ? (enemy.plannedMoves || []).map(row => row.moveId) : [];
 // Moves the enemy committed to this turn: started moves, plus a charge it began preparing.
 function endTurn(combat) {
   const start = combat.eventLog.length;
@@ -58,16 +62,32 @@ test('shown intent and plan equal what the enemy plays, over a seeded multi-roun
   }
 });
 
-test('a Poise break that takes the head move\'s SP changes the intent during the player turn', () => {
-  const combat = fight('wanderingSoldier');
+test('a Poise break that takes the head move\'s SP changes the intent during the player turn (legacy Staggered rule)', () => {
+  const combat = fight('wanderingSoldier', 511, { legacy: true });
   const enemy = combat.enemies[0];
   assert.equal(enemy.intent.moveId, 'slash');
   assert.equal(enemy.maxStamina, 1);
+  enemy.persistentPoise.value = 5; // gear now adds Poise (8 in all); start at the old 5 so one Strike breaks it
   const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
   play(combat, strike);
   assert.ok(enemy.pendingStaminaLoss > 0, 'the Poise break owes SP');
   assert.equal(enemy.intent.moveId, null, 'the intent no longer promises a move it cannot pay for');
   assert.equal(enemy.intent.kind, 'unknown');
+  assert.deepEqual(enemy.plannedMoves, []);
+  const { started, refused } = endTurn(combat);
+  assert.deepEqual([started, refused], [[], []], 'nothing is attempted and then refused');
+});
+
+test('a Poise break makes the enemy Broken: the head is cancelled, not owed SP, and the intent reads Broken', () => {
+  const combat = fight('wanderingSoldier');
+  const enemy = combat.enemies[0];
+  assert.equal(enemy.intent.moveId, 'slash');
+  enemy.persistentPoise.value = 5; // gear now adds Poise (8 in all); start at the old 5 so one Strike breaks it
+  const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
+  play(combat, strike);
+  assert.ok(enemy.broken, 'the Poise break made the enemy Broken');
+  assert.ok(!(enemy.pendingStaminaLoss > 0), 'Broken cancels the head instead of owing SP');
+  assert.equal(enemy.intent.kind, 'staggered', 'the intent reads Broken');
   assert.deepEqual(enemy.plannedMoves, []);
   const { started, refused } = endTurn(combat);
   assert.deepEqual([started, refused], [[], []], 'nothing is attempted and then refused');

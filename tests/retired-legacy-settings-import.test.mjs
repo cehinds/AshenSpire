@@ -62,7 +62,7 @@ test('a sync profile carrying retired legacy keys loads with the warning', () =>
 test('live non-gameConfig settings round-trip through a sync profile with no retired warning', () => {
   const rows = settingsRows();
   const keys = rows.map((row) => row.key);
-  const settings = { victoryReceiptSeconds: 5, rewardBattleCards: false, deckEditing: true, levelUpValue: 4 };
+  const settings = { victoryReceiptSeconds: 5, rewardLevelCards: true, deckEditing: true, levelUpValue: 4 };
   const text = profileText(settings, keys);
   const result = profileChanges(text, contentBundle, settings, rows, keys);
   for (const [key, value] of Object.entries(settings)) assert.equal(result.changes[key], value, `${key} is kept`);
@@ -102,4 +102,24 @@ test('a stored battlefield key never drives combat, and the boot cleanup list na
   assert.equal(config.showFormationGrid, true);
   const gone = retiredStoredSettingKeys(stored);
   assert.deepEqual(gone.sort(), ['gameConfig.presentation.enemySpriteScale', 'gameConfig.presentation.formationGroups', 'gameConfig.presentation.movementEnabled', 'gameConfig.presentation.rowAScale', 'gameConfig.presentation.rowBScale']);
+});
+
+test('an old export carrying the retired Level Up feat and class-upgrade rows still imports, dropping only those keys', () => {
+  const old = JSON.stringify({ game: 'Ashen Spire', schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
+    overrides: { 'settings.rewardLevelFeats': true, 'settings.rewardLevelClassTree': false, 'settings.deckEditing': true } });
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(old, contentBundle, {}, settingsRows(), warnings, { dropRetiredLegacy: true });
+  assert.ok(!('rewardLevelFeats' in changes) && !('rewardLevelClassTree' in changes), 'the retired rows are dropped');
+  assert.equal(changes.deckEditing, true, 'live settings in the same file still apply');
+  assert.ok(warnings.includes(RETIRED_LEGACY_GROUPS_WARNING) || warnings.length >= 1, 'the drop is named');
+});
+
+test('an old export carrying a class book feat chance still imports, dropping only that key', () => {
+  const old = JSON.stringify({ game: 'Ashen Spire', schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
+    overrides: { 'gameConfig.consumables.starseerClassBook.featChance': 5, 'settings.deckEditing': true } });
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(old, contentBundle, {}, settingsRows(), warnings, { dropRetiredLegacy: true });
+  assert.ok(!Object.keys(changes).some((key) => key.includes('featChance')), 'the retired feat chance is dropped');
+  assert.equal(changes.deckEditing, true, 'live settings in the same file still apply');
+  assert.ok(warnings.length >= 1, 'the drop is named');
 });

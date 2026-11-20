@@ -4,9 +4,11 @@
 // its accuracy receipt (reactionAfterResult). Drives the shipped playTimeline under mocked timers, as beat-order does.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { playTimeline, groupBeats, setAnimSpeed, setBeatOrder } from '../src/ui/fx.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { playTimeline, groupBeats, setAnimSpeed } from '../src/ui/fx.js';
+import { withKitDom } from './helpers/dom.mjs';
 import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
+import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
+setFloaterPolicyEnabled(false); // this file tests floater sequencing for every kind; the allowlist is tests/floater-policy.test.mjs
 pinCombatPacing({ combatSpeed: 1 });
 
 const reaction = [
@@ -45,7 +47,7 @@ function drive(t, events, fn, extra = {}) {
       for (let i = 0; i < 40000 && !done; i++) t.mock.timers.tick(1);
       assert.equal(done, 1, 'the timeline completes');
       fn(timeline);
-    } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+    } finally { setAnimSpeed('normal'); }
   });
 }
 const when = (timeline, what) => timeline.find(row => row.what === what)?.at;
@@ -54,7 +56,7 @@ test('a chosen reaction plays after the Hit word and before the damage number', 
   const events = [...reaction, move, { type: 'attackHit', sourceId: 'e1', targetId: 'player' },
     { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 5, blocked: 0 }, { type: 'enemyMoveEnded', sourceId: 'e1' }];
   drive(t, events, timeline => {
-    const hit = when(timeline, 'word:hit'), anim = when(timeline, 'anim:player'), dmg = when(timeline, 'float:−5') ?? timeline.find(r => /^float:.*5$/.test(r.what) && r.what !== 'float:−1 SP')?.at;
+    const hit = when(timeline, 'word:hit'), anim = when(timeline, 'anim:player'), dmg = when(timeline, 'float:−5') ?? timeline.find(r => /^float:.*5$/.test(r.what) && r.what !== 'float:−1 Stamina')?.at;
     assert.ok(hit != null && anim != null && dmg != null, JSON.stringify(timeline));
     assert.ok(hit < anim, `Hit word (${hit}) precedes the reaction animation (${anim})`);
     assert.ok(anim < dmg, `the reaction animation (${anim}) precedes the damage number (${dmg})`);
@@ -70,7 +72,7 @@ test('a dodge turning the hit into a Miss: Miss word, then the reaction animatio
     assert.ok(miss != null && anim != null && dodged != null, JSON.stringify(timeline));
     assert.ok(miss < anim && anim < dodged, `Miss ${miss} < animation ${anim} < Dodged ${dodged}`);
     assert.equal(timeline.filter(r => r.what === 'word:missed').length, 1);
-    assert.ok(!timeline.some(r => /^float:/.test(r.what) && !/SP/.test(r.what) && !/14/.test(r.what)), 'no damage number');
+    assert.ok(!timeline.some(r => /^float:/.test(r.what) && !/Stamina/.test(r.what) && !/14/.test(r.what)), 'no damage number');
   });
 });
 
@@ -82,8 +84,8 @@ test('a declined reaction (no card played) keeps the attack beat whole', () => {
   assert.ok(!beats.some(beat => beat.resultSaid));
 });
 
-const floatsOf = timeline => timeline.filter(r => /^float:/.test(r.what) && !/SP|\+14/.test(r.what)).map(r => r.what);
-const kinds = timeline => timeline.filter(r => /^(word:(hit|missed|dodged)|anim:player|float:)/.test(r.what) && !/SP|\+14/.test(r.what)).map(r => r.what);
+const floatsOf = timeline => timeline.filter(r => /^float:/.test(r.what) && !/Stamina|\+14/.test(r.what)).map(r => r.what);
+const kinds = timeline => timeline.filter(r => /^(word:(hit|missed|dodged)|anim:player|float:)/.test(r.what) && !/Stamina|\+14/.test(r.what)).map(r => r.what);
 const hitOf = amount => [{ type: 'attackHit', sourceId: 'e1', targetId: 'player' }, { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount, blocked: 0 }];
 
 test('a multi-hit attack: every landed hit keeps its Hit word after the reaction animation', t => {
@@ -112,13 +114,6 @@ test('a reaction that cancels the attacker leaves the next enemy move whole, aft
     assert.ok(when(timeline, 'anim:player') < when(timeline, 'anim:e1'), 'the reaction plays first, then the second move plays whole (own swing)');
     assert.equal(timeline.filter(r => r.what === 'anim:e1').length, 1);
   });
-});
-
-test("the legacy 'impact' order does not swing the enemy a second time for the rest beat", t => {
-  const events = [...reaction, move, ...hitOf(5), { type: 'enemyMoveEnded', sourceId: 'e1' }];
-  drive(t, events, timeline => {
-    assert.equal(timeline.filter(r => r.what === 'anim:e1').length, 1, 'one enemy swing');
-  }, { beatOrder: 'impact' });
 });
 
 test('a failed avoidance check (avoided:false) announces nothing, so the damage still gets its Hit word', t => {

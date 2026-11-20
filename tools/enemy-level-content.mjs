@@ -6,6 +6,7 @@ import { contentBundle } from '../src/content/index.js';
 import { levelScalingReceipt } from '../src/model/levels.js';
 import { validateContent } from '../src/model/validate.js';
 import { SEATS } from '../src/content/seats.js';
+import { resolveGameProfile } from '../src/model/gameProfile.js';
 
 // Counts are the bundle's, not literals: an enemy is reachable only through
 // its encounters (SPEC §13.2), and progression groups by the seat's baseTier
@@ -97,7 +98,10 @@ const cases = [
     assert(missing.length === 0, `missing/invalid floorBand or targetBand: ${missing.join(', ')}`);
   }],
   ['every encounter target overlaps every enemy it can author', () => {
-    const enemies = new Map(contentBundle.enemies.map((enemy) => [enemy.id, enemy]));
+    // Core's enemies carry their own levels 1-5 (SPEC §17, owner 2026-11-07), and the encounters' target bands are the same map;
+    // the legacy act*Enemies.json profiles are the retired profile's. Check the enemies Core fights, falling back to the bundle's own.
+    const core = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }).content.enemies;
+    const enemies = new Map([...contentBundle.enemies, ...core].map((enemy) => [enemy.id, enemy]));
     for (const encounter of contentBundle.encounters) {
       for (const enemyId of encounter.enemies) {
         const profile = enemies.get(enemyId).levelProfile;

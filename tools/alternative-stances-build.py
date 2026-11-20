@@ -76,7 +76,7 @@ def export(actor, images, sources):
  return {'frames':frames,'sources':sources,'rig':f'pose-studio/stances/projects/{actor}/{actor}.rig.json', 'poseStudioSupported':actor in POLYGONS}
 
 def build(source_checkout, only=None):
- inventory=json.loads(subprocess.check_output(['node','tools/alternative-stances-inventory.mjs'],cwd=ROOT,text=True,encoding='utf-8'))
+ inventory=json.loads(subprocess.check_output(['node','tools/attic/alternative-stances-inventory.mjs'],cwd=ROOT,text=True,encoding='utf-8'))
  actors=json.loads((OUT/'registry.json').read_text())['actors'] if only else {}
  normalizations=json.loads((OUT/'source/normalization.json').read_text()) if only else {}
  for actor, polygons in POLYGONS.items():

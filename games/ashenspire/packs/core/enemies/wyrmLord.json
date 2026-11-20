@@ -6,6 +6,9 @@
     "tier.elite"
   ],
   "stats": {
+    "attributes": {
+      "wisdom": 2
+    },
     "attributePriority": [
       "strength",
       "dexterity",
@@ -14,8 +17,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 18,
-      "max": 19
+      "min": 4,
+      "max": 5
     },
     "poiseMax": 15,
     "spFloor": 3
@@ -26,7 +29,7 @@
     "deckSize": 6,
     "reserveSize": 0,
     "distinctCards": 5,
-    "levelRange": "18-19"
+    "levelRange": "4-5"
   },
   "equipment": [
     {

@@ -13,22 +13,24 @@ const carrierFor = id => {
   const def = applyCombatExpansionCard(resolveCard(registries, { cardId: id }));
   return { ...def, combatProfile: combatProfileFor(def) };
 };
-for (const id of ['quickstep', 'dodgeRoll', 'evasiveGuard']) {
+// W25-EvadeCards (intended by the design): the old Evade cards grant their Evade with an applyStatus effect, not a profile.evade tag.
+// Quickstep is the one that is still a Counter card; Dodge Roll and Evasive Guard are Defend cards. The tag path stays covered by the
+// legacy `pureEvade` and `magic` fixtures below, so stance entry never grants Evade a second time on top of the card's own stacks.
+for (const id of ['quickstep']) {
   const carrier = carrierFor(id), entity = { id, alive: true, statuses: {} };
   assert.equal(carrier.combatProfile.maneuver, 'counter', id + ' uses its real expanded Counter definition');
-  assert.ok(carrier.combatProfile.evade, id + ' carries authored Evade');
-  assert.deepEqual(stanceEntryBonuses(carrier), { precision: 1, evade: 1, block: 3, barrier: 0 }, id);
+  assert.ok(carrier.effects.some(effect => effect.op === 'applyStatus' && effect.status === 'evade'), id + ' grants Evade with its own effect');
+  assert.equal(carrier.combatProfile.evade, undefined, id + ' has no Evade tag to double the grant');
+  assert.deepEqual(stanceEntryBonuses(carrier), { precision: 1, evade: 0, block: 3, barrier: 0 }, id);
   ctx.queue = [];
   setCombatStance(ctx, entity, carrier);
-  // Owner 2026-11-01: Evade is a tag, never a stance. A Counter card with an evade profile plays in Counter stance
-  // and still grants its Evade stacks on entry.
   assert.equal(entity.combatStance.maneuver, 'counter');
   assert.equal(entity.combatStance.counterStance, undefined);
   assert.equal(stanceRatingBonus(ctx, entity, 'ar'), 1);
   assert.equal(stanceRatingBonus(ctx, entity, 'pr'), 0);
   assert.equal(stanceRatingBonus(ctx, entity, 'dr'), 3);
   assert.equal(ctx.queue.filter(a => a.effect.status === 'precision').length, 1);
-  assert.equal(ctx.queue.filter(a => a.effect.status === 'evade').length, 1);
+  assert.equal(ctx.queue.filter(a => a.effect.status === 'evade').length, 0);
   const entryCount = ctx.queue.length;
   setCombatStance(ctx, entity, carrier);
   assert.equal(ctx.queue.length, entryCount, id + ' repeat does not refresh entry grants');

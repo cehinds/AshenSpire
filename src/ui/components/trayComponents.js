@@ -7,7 +7,7 @@
 // a shape of its own — `.folding-tray`, `.tray-*`, `.region-fold`, `.rf-*`,
 // `[data-fold]`, `[data-collapsed]`, `[data-sized]`, `[data-tray-edge]` stay
 // on the kit elements because the tools read them.
-import { childModel } from '../models/ComponentModel.js';
+import { ChildModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { markUiComponent } from './uiComponents.js';
 import { traySizeService } from '../services/TraySizeService.js';
@@ -20,9 +20,9 @@ function countText(tray) {
 }
 
 export function renderTray(model, { onToggle = null, onSort = null, onResize = null, renderContent = null, sizeService = traySizeService } = {}) {
-  const headerModel = childModel(model, UI.trayHeader);
-  const resizeModel = childModel(model, UI.trayResizeHandle);
-  const contentModel = childModel(model, UI.trayContent);
+  const headerModel = ChildModel(model, UI.trayHeader);
+  const resizeModel = ChildModel(model, UI.trayResizeHandle);
+  const contentModel = ChildModel(model, UI.trayContent);
   const tray = model.properties;
   const state = tray.expanded ? 'open' : 'closed';
   const vertical = tray.edge === 'top' || tray.edge === 'bottom';

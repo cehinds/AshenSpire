@@ -1,5 +1,6 @@
 import {assetUrl} from '../assetmap.js';
 import {cardLayoutDocument,cardPartNodes} from './cardLayout.js';
+import {Cq,CqStyle} from '../cqCompat.js';
 
 function imageNode(href,fit){const img=document.createElement('img');img.src=assetUrl(href);img.alt='';img.setAttribute('aria-hidden','true');Object.assign(img.style,{position:'absolute',inset:'0',width:'100%',height:'100%',objectFit:fit||'contain'});return img;}
 function paint(node,visual){
@@ -17,9 +18,9 @@ function paint(node,visual){
     if(!isSvg){Object.assign(svg.style,{width:'100%',height:'100%',display:'block'});node.replaceChildren(svg);}
   }
   if(badge && badge.parentNode!==node)node.append(badge);
-  Object.assign(node.style,visual.style||{});
+  Object.assign(node.style,CqStyle(visual.style||{}));
   if(visual.visible===false)node.style.visibility='hidden';
-  if(!visual.href)for(const d of visual.decorations||[]){const child=document.createElement('span');child.setAttribute('aria-hidden','true');child.dataset.cardDecoration='true';Object.assign(child.style,d.style);node.append(child);node.dataset.cardDecorated='true';}
+  if(!visual.href)for(const d of visual.decorations||[]){const child=document.createElement('span');child.setAttribute('aria-hidden','true');child.dataset.cardDecoration='true';Object.assign(child.style,CqStyle(d.style));node.append(child);node.dataset.cardDecorated='true';}
 }
 export function applyCardAppearance(face,doc=cardLayoutDocument(face.dataset.cardLayoutId)){
   const nodes=cardPartNodes(face);
@@ -28,10 +29,10 @@ export function applyCardAppearance(face,doc=cardLayoutDocument(face.dataset.car
   face.querySelectorAll('[data-tag-id]').forEach(n=>{paint(n,doc.symbols?.tags?.[n.dataset.tagId]||doc.symbols?.tags?.[n.dataset.tagId.split(':').at(-1)]);});
   for(const [id,node] of nodes){
     const component=doc.components?.[id];
-    if(id==='action-icon'&&component?.href){paint(node.querySelector('.combat-sigil-action'),component);Object.assign(node.style,component.style||{});}
+    if(id==='action-icon'&&component?.href){paint(node.querySelector('.combat-sigil-action'),component);Object.assign(node.style,CqStyle(component.style||{}));}
     else paint(node,component);
     const text=node.matches('.ic-text')?node:node.querySelector('.ic-text');
-    if(text&&component){Object.assign(text.style,component.style||{});if(component.text){const t=component.text;text.dataset.minFont=t.minFontSize??t.fontSize??text.dataset.minFont;text.dataset.maxFont=t.maxFontSize??t.fontSize??text.dataset.maxFont;if(t.fontSize)text.style.fontSize=t.fontSize/3.6+'cqw';}}
+    if(text&&component){Object.assign(text.style,CqStyle(component.style||{}));if(component.text){const t=component.text;text.dataset.minFont=t.minFontSize??t.fontSize??text.dataset.minFont;text.dataset.maxFont=t.maxFontSize??t.fontSize??text.dataset.maxFont;if(t.fontSize)text.style.fontSize=Cq(t.fontSize/3.6+'cqw');}}
   }
   if(doc.components?.['tag-rail'])paint(face.querySelector('.card-tag-rail'),doc.components['tag-rail']);
   if(doc.components?.['rank-group'])paint(face.querySelector('.card-rank'),doc.components['rank-group']);

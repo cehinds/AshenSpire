@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { statuses } from '../src/content/statuses.js';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const MECHANICS = `${ROOT}engine/mechanics/`;
@@ -20,7 +21,7 @@ const folders = readdirSync(MECHANICS, { withFileTypes: true }).filter(d => d.is
 const manifests = Object.fromEntries(folders.map(slug => [slug, readJson(`${MECHANICS}${slug}/mechanic.json`)]));
 
 function nodeIds() {
-  const text = readFileSync(`${ROOT}content/source/nodes.csv`, 'utf8').split('\n').filter(l => !l.startsWith('#')).join('\n');
+  const text = readSourceTextSync(`${ROOT}content/source/nodes.csv`).split('\n').filter(l => !l.startsWith('#')).join('\n');
   const ids = []; let cell = '', row = [], quoted = false;
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
@@ -53,7 +54,7 @@ test('every mechanic folder has contract-valid manifest, interface, service and 
     validateGameSchema(readJson(`${MECHANICS}${slug}/${manifest.files.interface}`), SCHEMAS.interface, `${slug}/interface.json`);
     validateGameSchema(readJson(`${MECHANICS}${slug}/${manifest.files.service}`), SCHEMAS.service, `${slug}/service.json`);
     validateGameSchema(readJson(`${MECHANICS}${slug}/${manifest.files.cases}`), SCHEMAS.cases, `${slug}/cases.json`);
-    const lines = readFileSync(`${MECHANICS}${slug}/${manifest.files.guide}`, 'utf8').split('\n').filter(Boolean);
+    const lines = readSourceTextSync(`${MECHANICS}${slug}/${manifest.files.guide}`).split('\n').filter(Boolean);
     assert.ok(lines.length >= 3 && lines.length <= 6, `${slug}: guide.md is ${lines.length} lines`);
   }
 });

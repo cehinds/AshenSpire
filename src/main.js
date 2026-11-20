@@ -1,9 +1,10 @@
+import { InstallLegacyBrowserSafely } from './ui/legacyBrowser.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
-import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
-import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
+import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal, movePurchasedCardToLibrary } from './model/gameProfileRewards.js';
-import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
 import { snapshotRunForDiff } from './model/runChangeReceipt.js';
@@ -15,20 +16,12 @@ import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest
 import { retiredProfileReason } from './model/retiredProfile.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
-import { rollPendingAbilityOffers } from './model/abilityOffers.js';
 import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
-import { queueInitialProgression } from './model/initialProgression.js';
-import { isAbilitySkill } from './model/abilityGrades.js';
-import { expandedProgression } from './model/classMilestones.js';
-import { claimClassMilestoneReward, rollClassMilestoneRewards } from './model/classMilestoneOffers.js';
 import { completedRunMeta, commitRunFinishAsync } from './model/runCompletion.js';
-import { mountInitialClassMastery } from './ui/components/classMastery.js';
-import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
-import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
-import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
-import { applyCardArtStyle } from './ui/cardArtStyle.js';
+import { configureDisplaySettings, installDisplaySettings, installCardSizeResize, projectHudPresentation, applyDisplaySettings, applyUiScale } from './ui/displaySettings.js';
+import { onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
-import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
+import { onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
 import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
 import { builtInSource } from './ui/assetmap.js';
 import { mountArtLoadNotice } from './ui/components/artLoadNotice.js';
@@ -40,13 +33,7 @@ import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { quickStartRunConfig } from './model/characterCreation.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
-import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
-import { formFactorFor } from './ui/models/FormFactorModel.js';
-import { applyWireframeChoices } from './ui/wireframeChoices.js';
-import { restampModalWireframes } from './ui/components/modalShell.js';
-import { restampWorkspaceFrames } from './ui/components/w1Workspace.js';
-import { openShopCardChoice, openShopArmamentChoice } from './ui/components/shopBuyChoice.js';
-import { replanCategoryNavs } from './ui/kit/categoryNav.js';
+import { openShopCardChoice, openShopArmamentChoice, OfferReceivedItems } from './ui/components/shopBuyChoice.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -57,16 +44,14 @@ import { replanCategoryNavs } from './ui/kit/categoryNav.js';
 // backward-compatible recovery path for older saves and interrupted sessions.
 
 import { contentBundle } from './content/index.js';
-import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
-import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, retiredStoredSettingKeys } from './model/advancedConfig.js';
+import { isPoolDeckMode } from './model/cardRemoval.js';
+import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringRunSnapshotForward, configuredContentBundle } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
-import { configureTooltipSettings } from './ui/components/tooltip.js';
-import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
-import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
-import { grantSmithingReward, smithingRewardId, smithingRewardPays } from './model/smithing.js';
+import { characterLevelOf } from './model/state.js';
+import { stampDeck, carriedIds } from './model/loadout.js';
+import { grantSmithingReward, smithingRewardId } from './model/smithing.js';
 import { applyNodeRefill, refillFlasksAtActChange } from './model/nodeRefill.js';
 import { smithServicesAt } from './model/cardExtraction.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
@@ -76,45 +61,34 @@ import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { stampCombatPlaysEver, foldCombatPlaysEver } from './model/playsEver.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
-import { pendingRankUpRows, coreCardRanks, skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
-import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
-import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
-import { equippedPieces } from './model/loadout.js';
+import { pendingRankUpRows, coreCardRanks, stampSkillBonuses } from './model/skills.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { applyLevelUp, allocateAttributePoint, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
-import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint } from './model/rewardSourcePolicy.js';
-import { rollSigilDrop } from './model/sigils.js';
+import { allocateAttributePoint, awardLevelXp, combatXpReceipt } from './model/levelup.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
+import { freezeProfile } from './engine/gameProfileCombat.js';
 import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
-import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
+import { buildActMap, bossEncounterForNode } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
-import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey, isStorageFullError } from './engine/save.js';
+import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, isStorageFullError } from './engine/save.js';
 import { createBrowserSaveManager } from './engine/browserSave.js';
-import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
 import { createRunStartOwner } from './model/runStart.js';
-import { createSaveTransfer } from './engine/saveTransfer.js';
+import { CreateSaveTransfer } from './engine/saveTransfer.js';
+import { LoadSavedRunContext } from './engine/savedRunContext.js';
+import { CreateEntryCheckpoint } from './services/entryCheckpoint.js';
+import { CreateProfileBoot } from './services/profileBoot.js';
+import { CreatePreparedRun } from './services/runBirth.js';
+import { CreateRunPersistence } from './services/runPersistence.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
-import {
-  rollEncounter,
-  rollRuneReward,
-  rollCombatCardOffer,
-  rollClassDraftIds,
-  rollFlaskDrop,
-  rollRelicReward,
-  rollRelicChoices,
-  rollArmamentDrop,
-} from './engine/encounters.js';
-import { configuredShopKind } from './model/gameProfileShopKind.js';
+import { rollEncounter, rollRuneReward } from './engine/encounters.js';
+import { configuredShopKind, ConfiguredTraderOffersSmith, ConfiguredTraderDock } from './model/gameProfileShopKind.js';
 import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
-import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
+import { blacksmithVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
-import { mountMaster } from './ui/screens/master.js';
 import { shopStockKind } from './model/shopKinds.js';
-import { commitQuestEvent } from './model/marketAdditions.js';
 import { MAX_ENEMIES_PER_COMBAT } from './model/combatLimits.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
 import { CAMP_LOCATION } from './model/locations.js';
@@ -127,15 +101,17 @@ import { mountDraft } from './ui/screens/draft.js';
 import { executeRunEffects, drawCards, discardFromHand, executeAction } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
-import { mountCombatTest } from './ui/screens/combatTest.js';
-import { mountRewards } from './ui/screens/reward.js';
+import { MountRewards } from './ui/screens/reward.js';
+// After reward.js on purpose: imported earlier, its model imports change the bundle's load order and expose cyclic named imports.
+import { VictorySpoils } from './ui/components/victorySpoils.js';
+import { SyncHudCinders } from './ui/components/hudmeta.js';
 import { mountRest } from './ui/screens/rest.js';
-import { cancelDeckEdit, commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
+import { commitDeckEditDraft, deckEditBounds, deckEditingOn } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
-import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
+import { armouryHasNew, armouryOpensDeckEditor, RestOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { armouryRoute } from './model/armouryPages.js';
-import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
+import { mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
@@ -143,23 +119,19 @@ import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { mountBestiary } from './ui/screens/bestiary.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
-import { seedSettingsDefaults, seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoiceAsync } from './model/settingsDefaults.js';
+import { seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoiceAsync } from './model/settingsDefaults.js';
 import { BUILD_VERSION } from './buildversion.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
-import { applyDisplayAppearance } from './ui/displayAppearance.js';
-import { mountClassRespec } from './ui/components/classRespec.js';
-import { applyClassRespec, classRespecAvailability, resetClassTree } from './model/classRespec.js';
 import { openCharacterSheet } from './ui/screens/characterSheet.js';
-import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, resetKeys, allResettableKeys, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, resetKeys, allResettableKeys, showSettingsNotice, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, runSupportsPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
-import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
-import { openConfirmationModal } from './ui/components/confirmationModal.js';
+import { OpenConfirmationModal } from './ui/components/confirmationModal.js';
 import { runIdentity } from './ui/models/ConfirmationReviewModel.js';
 import { openNewerSaveNotice, openRefusedSaveNotice, openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
 import { loadOverRunReview } from './ui/models/ConfirmationReviewModel.js';
@@ -168,22 +140,18 @@ import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
 import { inspectControlCss } from './ui/models/InspectControlModel.js';
-import { cardLevelCssProperties, cardShapeCssProperties, cardLevelsWithOverrides, cardLevelCssPropertiesFor, cardShelfCssProperties, restingWidthPx, levelRestingWidthPx } from './ui/models/CardSizeModel.js';
-import { refreshCardDoorShape } from './ui/components/cardInspection.js';
-import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
+import { cardLevelCssProperties, cardShapeCssProperties, cardShelfCssProperties } from './ui/models/CardSizeModel.js';
+import { classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountQuitScreen } from './ui/quitGame.js';
-import { setCombatPacing } from './ui/animationPace.js';
-import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
+import { anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
-import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
+import { initAudio, resolveMusicEnabled } from './ui/audio.js';
 import { createHaptics, haptic } from './ui/haptics.js';
-import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
+import { mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
-import { resolvePerformanceMode, resolveCombatPacing, effectsEnabled, migrateEffectsSetting, motionFlags, coarsePointer } from './ui/performance.js';
+import { migrateEffectsSetting } from './ui/performance.js';
 import { clearPosePreloads } from './ui/services/posePreloads.js';
-import { scheduleCardFits } from './ui/components/card.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
-import { updateUprightGate } from './ui/components/upright.js';
 import { surfaceReport } from './ui/surfaces.js';
 // failureBanner is the ONE home for "the game says something is structurally
 // wrong" — the two boot checks below used to build that element by hand, and a
@@ -191,8 +159,10 @@ import { surfaceReport } from './ui/surfaces.js';
 import { dlog, failureBanner } from './ui/debuglog.js';
 // The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
-import { applyLoreType } from './ui/models/LoreTypeModel.js';
 import { createContentValidationCache } from './model/contentValidationCache.js';
+// Keep this import last: an earlier one reorders the production bundle's cyclic module init.
+import { SetFaceCostRunSource, SetFaceCostPricer } from './model/faceCosts.js';
+import { SpellCostAdjust } from './engine/spellCosts.js';
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
@@ -298,11 +268,11 @@ function sameRegistryProfile(a, b) {
   return a === b || (typeof a?.hash === 'string' && a.hash === b?.hash);
 }
 
-function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = registryGameProfile) {
+function rebuildRegistries(configuration = {}, gameProfile = registryGameProfile) {
   registryGameProfile = gameProfile;
   const buildKey = registryBuildKey(configuration, gameProfile);
   if (buildKey !== null && lastRegistryBuild && lastRegistryBuild.key === buildKey && sameRegistryProfile(lastRegistryBuild.profile, gameProfile)) {
-    registries = isConfiguredRun(gameProfile) ? lastRegistryBuild.registries : registriesForClassMastery(lastRegistryBuild.registries, masteryRun);
+    registries = lastRegistryBuild.registries;
     configureTooltipGlossary(registries);
     setClassGlyphs(registries.classes.all());
     return registries;
@@ -329,7 +299,6 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
   }
   registries = bindGameProfileRegistries(registries, gameProfile);
   lastRegistryBuild = (result.ok && !structuralProblems.length && buildKey !== null) ? { key: buildKey, profile: gameProfile, registries } : null;
-  if (!isConfiguredRun(gameProfile)) registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
   return registries;
@@ -345,6 +314,14 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
 // thing that makes the gate below reach every state; keep the count at one.
 const shotParams = new URLSearchParams(location.search);
 const shotState = shotParams.get('shot');
+// The dev-only photograph modules load lazily, and only for a ?shot= boot: a
+// normal boot never fetches or evaluates them. Each path is a literal so the
+// bundler can see it. Both are awaited before the first posed screen.
+const devModules = shotState ? Promise.all([
+  import('./dev/shotStates.js'),
+  import('./dev/armamentKitPreview.js'),
+]) : null;
+let devKit = null;
 // ?shotMaxPoise's parked value (see the shot=combat block): module-scoped so it
 // reaches enterCombat without touching the run — a shot lever must not leak
 // into a save. Null means "no override; derive from the loadout receipt".
@@ -441,25 +418,17 @@ if (shotState) {
   }
 }
 
-// Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
-// hook seam, so every sfx.play() call site makes sound with no change.
-// A PROFILE IS BROUGHT FORWARD BEFORE ANYTHING READS IT. The per-item rating
-// rows stopped being pluses and became the item's own values (#1242), and that
-// migration reads the item's authored rating, so it cannot be a lookup table
-// the readers each apply for themselves — one that skipped it would show a
-// different number from one that did. Rewritten once, here, so the settings
-// row, the item card, the export and the fight are looking at one key — and
-// again through the same door when a restore swaps the profile (Codex, #1273).
-function bringStoredProfileForward(meta) {
-  // Whatever the rewrite could not carry across exactly — a fractional plus, a
-  // sum past a row's ceiling, a set's Poise that is also its weight — is said
-  // here as well as at the import door, so a profile is never migrated in
-  // complete silence (review, #1242).
-  const carried = [];
-  const settings = bringProfileForward(meta, contentBundle, (brought) => saves.saveMeta(brought), carried);
-  for (const line of carried) console.warn('[advanced-config]', line);
-  return settings;
-}
+// Stored settings are migrated before profile selection and registry construction.
+const {
+  BringStoredProfileForward: bringStoredProfileForward,
+  SeedPromotedDefaults: seedPromotedDefaults,
+  DropRetiredStoredSettings: dropRetiredStoredSettings,
+} = CreateProfileBoot({
+  contentBundle,
+  saveMeta: meta => saves.saveMeta(meta),
+  warn: line => console.warn('[advanced-config]', line),
+  getPromotion: () => promotionFor(SETTINGS_DEFAULTS, promotionDebug()),
+});
 let activeMeta = saves.loadMeta();
 let activeSettings = bringStoredProfileForward(activeMeta);
 // Rendering quality folded into Effects: a saved explicit Full becomes Effects on, once.
@@ -467,29 +436,6 @@ if (migrateEffectsSetting(activeSettings)) { activeMeta.settings = activeSetting
 // Explicit preview URLs remain reproducible; otherwise use the saved rules for future runs.
 if (!profileQuery.has('gameProfile') && !profileQuery.has('wb.gameProfile') && !globalThis.__ASHEN_GAME_PROFILE_PREVIEW__) {
   selectedGameProfile = readNewGameProfile(activeSettings, selectedGameProfile);
-}
-// THE OWNER'S PROMOTED DEFAULTS (src/content/settingsDefaults.js, written by
-// tools/settings-defaults.mjs). A key the player never set starts there, and a
-// key still at an earlier promotion's value follows a new one; a key the
-// player chose is theirs. Applied before anything reads the profile.
-// The same step runs again when a restored profile replaces this one.
-function seedPromotedDefaults(meta, settings) {
-  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, promotionDebug()));
-  if (!Object.keys(seeded).length) return;
-  for (const [key, value] of Object.entries(seeded)) {
-    if (value === undefined) delete settings[key]; else settings[key] = value;
-  }
-  meta.settings = settings;
-  saves.saveMeta(meta);
-}
-// One-shot cleanup: a stored retired key (battlefield, formation, movement...) has no row to reset it,
-// so it is deleted at boot, before the choice check, whether or not the device has preferences.
-function dropRetiredStoredSettings(meta, settings) {
-  const stale = retiredStoredSettingKeys(settings);
-  if (!stale.length) return;
-  for (const key of stale) delete settings[key];
-  meta.settings = settings;
-  saves.saveMeta(meta);
 }
 dropRetiredStoredSettings(activeMeta, activeSettings);
 let settingsChoicePending = !shotState && saves.profileStatus().ok
@@ -501,8 +447,16 @@ if (!settingsChoicePending) {
 let settingsChoiceChecked = !!shotState;
 // Build (and validate) the profile a new game will play, the one showTitle
 // rebuilds with: a saved newGameProfile must not cost a second validation there.
-rebuildRegistries(activeSettings, null, selectedGameProfile);
+rebuildRegistries(activeSettings, selectedGameProfile);
 const audio = initAudio(activeSettings);
+
+// Older WebKit (iOS 15, an iPhone SE 1st gen): repair the stylesheets and add container queries and popovers
+// before the first screen renders. A no-op where the browser has them all (docs/qa/IOS15-COMPAT.md). It sits
+// after the boot-registry prefix that tests/startup-registry-flow.test.mjs evaluates on its own.
+InstallLegacyBrowserSafely();
+SetFaceCostRunSource(() => run); // faces read the shell's current run live, so no adoption or refusal path has to tell the model
+SetFaceCostPricer(SpellCostAdjust); // the model layer may not import the engine, so the shell hands it the spell cost rule
+// Route existing sound cues through the procedural audio engine.
 sfx.sink = (id) => audio.sfx(id);
 // Haptics have their own seam (ui/haptics.js), played by the call sites that
 // mean card play, damage taken and turn start; a moment with a pattern in
@@ -548,45 +502,7 @@ document.documentElement.style.setProperty('--selection-glow', selectionGlowFilt
 for (const [name, value] of Object.entries({ ...cardLevelCssProperties(), ...cardShapeCssProperties(), ...cardShelfCssProperties() })) {
   document.documentElement.style.setProperty(name, value);
 }
-const HUD_PRESENTATION = UI.hudPresentation || {};
-const projectHudToken = (key, min, max, cssName, unit) => {
-  const value = Number(HUD_PRESENTATION[key]);
-  if (!Number.isFinite(value) || value < min || value > max) {
-    throw new Error(`balance.ui.hudPresentation.${key} must be in [${min}, ${max}], got ${JSON.stringify(HUD_PRESENTATION[key])}`);
-  }
-  document.documentElement.style.setProperty(cssName, `${value}${unit}`);
-};
-projectHudToken('componentBackgroundOpacityPct', 0, 100, '--hud-component-background-opacity', '%');
-projectHudToken('metadataFontPx', 8, 24, '--hud-metadata-font-px', 'px');
-projectHudToken('beltItemGapPx', 0, 12, '--hud-belt-item-gap-px', 'px');
-projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
-projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
-projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
-projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
-projectHudToken('panelPadPx', 0, 12, '--hud-panel-pad-px', 'px');
-projectHudToken('mobilePanelPadPx', 0, 12, '--hud-mobile-panel-pad-px', 'px');
-projectHudToken('mobileControlGapPx', 0, 12, '--hud-mobile-control-gap-px', 'px');
-projectHudToken('mobileOuterPadPx', 0, 12, '--hud-mobile-outer-pad-px', 'px');
-projectHudToken('mobileRowGapPx', 0, 12, '--hud-mobile-row-gap-px', 'px');
-projectHudToken('cindersMaxWidthPct', 20, 40, '--hud-cinders-max-width', 'vw');
-projectHudToken('metadataMaxWidthPct', 20, 40, '--hud-metadata-max-width', 'vw');
-if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
-  throw new Error(`balance.ui.hudPresentation.metadataShowTotals must be boolean, got ${JSON.stringify(HUD_PRESENTATION.metadataShowTotals)}`);
-}
-document.documentElement.dataset.hudMetadataShowTotals = String(HUD_PRESENTATION.metadataShowTotals);
-const HUD_QUICK_SETTINGS = UI.hudQuickSettings || {};
-for (const [key, cssName] of [
-  ['edgeGapPx', '--hud-quick-edge-gap'],
-  ['stackGapPx', '--hud-quick-stack-gap'],
-  ['cardSizePx', '--hud-quick-card-size'],
-  ['glyphSizePx', '--hud-quick-glyph-size'],
-  ['stateDotPx', '--hud-quick-state-dot'],
-  ['activeTintPct', '--hud-quick-active-tint'],
-]) {
-  document.documentElement.style.setProperty(cssName, `${HUD_QUICK_SETTINGS[key]}px`);
-}
-document.documentElement.dataset.hudQuickCardBackground = String(HUD_QUICK_SETTINGS.showCardBackground);
-const ACCENTS = UI.accents;
+projectHudPresentation(UI);
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
 // designW off disk is measuring the tree rather than the page in front of it —
@@ -606,534 +522,22 @@ if (typeof window !== 'undefined') window.__equipCfg = registries.balance.equipm
 installHoldBeat({ root: document, at: (UI.holdBeat || {}).at || [] });
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
-let lastMusicFolder;
 // The music folder: in a build that pins packs (the web edition) it is first
 // applied once the first screen is drawn, after the load has settled; a single
 // file and the source tree apply it at once, as before (assetPacks.js musicHold).
 const bootMusic = musicHold({ configureMusic: (opts) => audio.configureMusic(opts) });
-// UI size — the whole app is zoomed by `body.style.zoom` so every fixed-px
-// element (cards, sprites, map nodes, menus) scales together. "Auto" flexes the
-// zoom with the window against a design baseline so the board fills big screens
-// and shrinks to fit small ones; S–XL are fixed overrides. Legacy numeric values
-// ('90'/'100'…) still resolve. Clamped so it never gets unusably tiny/huge.
-const UI_NAMED = UI.uiScale.named;
-
-// EldenSpire#23 — TWO baselines, ONE decider.
-//
-// The wide baseline (1200x730) is the board this game is drawn for. The narrow
-// one (430x780) is the portrait-phone board styles/combat.css lays out. No code
-// here asks "is this a phone" — a question with no honest answer, since a
-// desktop window can be 400px wide and a tablet can be 1200. The fit decides.
-//
-// WHY THIS IS ONE FUNCTION RETURNING TWO VALUES, AND NOT A CONTAINER QUERY.
-// It was a container query until Vira swept 7.8M viewports and found the band
-// this branch locked out (#24). The zoom took `max(wideFit, narrowFit)` and the
-// stylesheet independently asked whether the app's local width was <= 520. Two
-// deciders, on two different inputs, with nothing making them agree:
-//
-//   834x1194 (iPad Pro 11 portrait) — narrowFit is HEIGHT-limited, 1194/780 =
-//   1.53, so it wins; but 834/1.53 = 545 local px, which is > 520, so the
-//   stylesheet kept the WIDE layout. A board drawn for 1200px, rendered into
-//   545. END TURN under the hand: 45/45 on dev, 0/45 here. Three of four
-//   tablet shapes that work today, dead.
-//
-// That old cliff was a height-derived mode decision: when the narrow fit was
-// height-limited, localW = narrowH x w/h, so a transient browser-chrome resize
-// could cross 520 and flip the whole composition. Height still participates in
-// the zoom chosen for the current frame, but it no longer changes the mode.
-//
-// Vira's sentence, which is the whole lesson and is not paraphrased: WHEN A FIX
-// ADDS A SECOND DECIDER, THE DEFECT IS RARELY THE NEW VALUE. IT IS THAT NOTHING
-// MAKES THE TWO AGREE — AND NO SINGLE-HOME CHECK CAN SEE IT, BECAUSE THERE IS
-// NO DUPLICATED CONSTANT TO FIND. My 520 did have exactly one home. That was
-// true and it was not the point.
-//
-// So the second decider is gone rather than reconciled. This function picks the
-// mode AND the zoom together, and the stylesheet follows an attribute instead of
-// measuring anything: `:root[data-layout='narrow']`. Reconciling two deciders
-// would have needed 520 in the CSS *and* in here — the duplicated constant the
-// single-home rule exists to prevent. Removing one needs it in neither: it is
-// data, in balance.ui.uiScale, read once, right here.
-//
-// THE PROPERTY: layout mode is width-owned. `narrowMax` is a viewport-width
-// threshold, so a height-only resize cannot change `data-layout`; tools/mobilefit
-// asserts that it agrees with the rendered attribute at every shape. The zoom
-// remains height-aware and can change without changing the composition mode.
-//
-// The clamp is UNCHANGED. #23 reads as a floor bug and is not one: at 390x844
-// the wide baseline wants 0.325, the floor gives 0.62, and BOTH are wrong,
-// because both try to fit a 1200px layout onto a 390px screen.
-// EldenSpire#26 — ONE FIT PATH, and `auto` is the uncapped case of it.
-//
-// `resolveZoom()` used to return the named S/M/L/XL values straight from data
-// with no fit check at any viewport, so a fixed size could ask for more space
-// than the screen has. Sunna measured the extent rather than an instance: TEN
-// OF TWENTY-FIVE size x shape cells unreachable, and all four fixed sizes on
-// landscape 844x390 were TOTAL LOCKOUTS — turn the phone sideways, open
-// Settings, pick anything but Auto, and the fight cannot be advanced.
-// Constantine's ruling, verbatim: "clamp like auto."
-//
-// So a named size is now a CAP on the same computation, not a separate answer.
-// `layoutForCap(Infinity)` is `auto` and is byte-identical to 2c40fdb: with an
-// infinite cap every `Math.min(v, cap)` is `v`, and the recovery branch below
-// cannot be reached, because it needs the capped candidate to fail a test the
-// uncapped one passed. Vira's sweep is the proof, not this paragraph.
-//
-// WHY THE CAP CANNOT SIMPLY BE `Math.min(named, autoZoom)`. Lowering the zoom
-// RAISES the local width — localW = innerWidth / zoom — so a cap can push a
-// shape out of the narrow band. At 500x800 the uncapped fit is 1.02 (narrow,
-// 490 local px) and S = 0.85 gives 588, above narrowMax. When the UNCAPPED fit
-// would have been narrow, the recovery below settles the zoom at the smallest
-// value that keeps the band.
-//
-// WHAT THAT RECOVERY IS AND IS NOT FOR — corrected by Vira, who tested the
-// claim I had written instead of reading it. My comment implied the recovery is
-// what preserves #24's property. IT IS NOT. She deleted the branch and re-swept:
-//
-//   the zoom selects the narrow baseline  IFF  the narrow layout is active
-//
-// still holds at every cap without it, because the final unguarded return sets
-// `narrow: false` alongside a wide-baseline zoom and is therefore self-consistent
-// by arithmetic, not by that guard. What the recovery buys is OUTCOME QUALITY,
-// not the invariant: 500x800 with S gives 0.97 narrow with it and 0.62 wide
-// without, and BOTH satisfy #24 — one is usable and one is a 1200px board in
-// 806 local px. The property is upheld by every return path; the recovery is
-// upheld by nothing but its own usefulness, and that is the honest reason to
-// keep it.
-//
-// THE THIRD AND FOURTH VALUES — `compact` and `short`. They ride here and not in
-// a stylesheet for EXACTLY the reason above: a `@media (orientation: landscape)`
-// would be a second decider on a second input, which is #24 rebuilt from
-// scratch. It is also not an orientation at all — a 1024x768 tablet is landscape
-// and fine, and a 400x400 desktop window is not.
-//
-//   COMPACT <=> h is in [shortWideMinH, gateBelowH) AND the wide baseline fits
-//   SHORT   <=> h < gateBelowH AND no complete compact/narrow answer fits
-//
-// Both edges are rendered measurements in balance.js. #27 inserts the compact
-// answer where the old code raised the refusal, while preserving the refusal
-// below the compact layout's own first complete frame. CSS reads the published
-// composition and never re-asks either question.
-//
-// `vw`/`vh` are parameters so the SAME decider can be asked about a viewport
-// that does not exist yet — applyUiScale asks it about the TURNED phone before
-// the gate is allowed to say "turn your phone". Omit them and it reads the
-// window, byte-for-byte as before.
-function layoutForCap(cap, vw, vh) {
-  const given = vw != null && vh != null;
-  if (!given && typeof window === 'undefined') return { zoom: 1, narrow: false, compact: false, short: false };
-  const z = UI.uiScale;
-  const w = given ? vw : window.innerWidth, h = given ? vh : window.innerHeight;
-  const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
-  const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
-  const capped = (v) => Math.min(v, cap);
-  // One derived band and the same answer on every return path. `gateBelowH`
-  // absent (an older content bundle) means neither a compact band nor a gate;
-  // a missing threshold must never invent either at a guessed number.
-  const shortWide = (zoom) => z.gateBelowH != null && h < z.gateBelowH
-    && w / zoom >= z.designW
-    && h >= (z.shortWideMinH || 0);
-  const answer = (zoom, narrow) => {
-    const compact = !narrow && shortWide(zoom);
-    return { zoom, narrow, compact, short: z.gateBelowH != null && h < z.gateBelowH && !compact };
-  };
-
-  // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE. The wide path keeps
-  // `Math.round` byte-for-byte, because every zoom every existing player sees
-  // comes out of it. The narrow path floors, because `Math.round` can hand back
-  // a zoom LARGER than the one that fits (at 390x844 the narrow fit is 0.907,
-  // round gives 0.91, and 0.91 x 430 = 391.3 px demanded against 390 available).
-  // Flooring BOTH moved 1280x800 from 1.07 to 1.06 and turned
-  // tools/tutorial-reach.mjs red — the guard on #7.
-  const wideZoom = clamp(capped(Math.round(fitFor(z.designW, z.designH) * 100) / 100));
-  if (!(z.narrowW && z.narrowH && z.narrowMax)) return answer(wideZoom, false);
-
-  const narrowFit = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
-  const narrowZoom = clamp(capped(narrowFit));
-  if (w <= z.narrowMax) return answer(narrowZoom, true);
-
-  // Recovery: the cap, not the screen, is what pushed this out of the narrow
-  // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
-  // this test is the one that just failed. THAT IS NOW MEASURED RATHER THAN
-  // ARGUED: Vira instrumented it and the counter enters 0 times at cap
-  // Infinity and 47,790-265,908 times under the named caps. Not load-bearing
-  // for #24's property — see the header — only for the quality of the answer.
-  if (w <= z.narrowMax) return answer(narrowFit, true);
-  return answer(wideZoom, false);
-}
-
-// A named size is a CEILING the player asked for, not a value the app owes them
-// at any cost. Anything that is not a named size (incl. legacy numeric
-// '90'/'100'/'110'/'125') is Auto: the settings UI displays such values as Auto,
-// so behaving as fixed zoom made the control look dead ("scaling stopped
-// working") — balance.js records that complaint, and it is the reason the
-// settings screen now shows the value actually applied.
-function resolveLayout(uiScale, vw, vh) {
-  const key = String(uiScale == null ? 'auto' : uiScale).toLowerCase();
-  const named = key !== 'auto' ? UI_NAMED[key] : null;
-  return layoutForCap(named != null ? named : Infinity, vw, vh);
-}
-
-function applyUiScale(settings) {
-  const viewport = window.visualViewport;
-  const visibleHeight = viewport && viewport.scale === 1 ? viewport.height : window.innerHeight;
-  const view = applyViewViewport(settings.viewPreset, window.innerWidth, visibleHeight);
-  document.documentElement.style.setProperty('--visible-height', view.height + 'px');
-  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, view.width, view.height);
-  // Set as a CSS var so base.css can compensate the body's width/height for the
-  // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
-  document.body.style.zoom = '';
-  document.documentElement.style.setProperty('--ui-zoom', String(zoom));
-  // The layout mode, written by the same call that chose the zoom, so the two
-  // cannot disagree. The stylesheets key off this and measure nothing (#24).
-  document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
-  document.documentElement.setAttribute('data-composition', compact ? 'short-wide' : 'standard');
-  // The HUD form factor (docs/hud-layout-tokens.md) — which
-  // content/hud-layout/<form-factor>.json styles the combat HUD. Written here,
-  // beside data-layout, so styling has no decider of its own; it never picks
-  // the mode or the zoom above. It does change HUD geometry (the tools span
-  // and the px offset tokens), so the combat tools row and the battlefield
-  // stage observe this attribute and re-measure when it changes.
-  // Thresholds: balance.ui.uiScale.formFactor.
-  document.documentElement.setAttribute('data-form-factor',
-    view.preset === 'auto' ? formFactorFor(view.width, view.height, UI.uiScale.formFactor) : view.preset);
-  // Publish the short/refusal value from that same decider for layout consumers too.
-  // This is not another short-screen predicate: CSS reads the answer computed
-  // above, just as it reads `data-layout`. In particular, combat may let its
-  // field yield to the hand at Text XL on a fitting viewport without silently
-  // making the established upright refusal outlive (or lose) its premise.
-  document.documentElement.setAttribute('data-short', short ? 'true' : 'false');
-  // THE ORIENTATION GATE (ui/components/upright.js — the decision lives in its
-  // header, not here). Written by the SAME call that chose the zoom and the
-  // layout, from the same decider, so there is no second opinion about whether
-  // this screen is too short. The wording is derived, not guessed: ask the
-  // decider about the TURNED viewport and only then are we allowed to say "turn
-  // your phone" — a gate that tells a desktop player to rotate their monitor is
-  // a gate nobody believes the second time.
-  const turned = typeof window === 'undefined'
-    ? { short: true }
-    : resolveLayout(settings.uiScale, view.height, view.width);
-  // AND ONE CAPABILITY QUERY, FOR THE WORDS ONLY. "Turn your phone upright" read
-  // on an 800x410 DESKTOP WINDOW is a false instruction, and a screen that tells
-  // you one wrong thing is a screen you stop reading. `(pointer: coarse)` is NOT
-  // "is this a phone" — the question this file refuses to ask, because it has no
-  // honest answer — it is "is the primary pointer a finger", which is exactly the
-  // population for whom turning a device is a thing you can do. It chooses the
-  // WORDING and never the refusal: if it is wrong the player still gets a true
-  // recovery line, and the gate stands or falls on the geometry either way.
-  const coarse = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-    && window.matchMedia('(pointer: coarse)').matches;
-  // AND HIS AMENDMENT (2026-08-17): *"revert that back, or make that a
-  // configurable setting."* One row — `Display / Short-screen warning`. It is
-  // passed as its OWN argument rather than folded into `short`, deliberately:
-  // `short` is a fact about the viewport that this decider computes, and the
-  // setting is a fact about what the player asked us to do about it. Collapsing
-  // them would hide a preference inside the geometry, and the next reader of
-  // `layoutForCap` would find a `short` that is sometimes false on a short
-  // screen. `!== false` so a profile written before this row existed keeps the
-  // gate — and so does a `?shot=` boot, which by construction has no durable
-  // settings and resolves every one of them to its default.
-  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settingOn(settings, 'uprightGate') });
-}
-
-// MINIMUM TAP SIZE → `--tap-target` on <html>, read by `--tap-floor` in
-// base.css and through it by every floored rule (`.set-tab`, `.ov-tab`,
-// `.choice`, `.region-fold`). Written HERE, beside applyUiScale, because the
-// two custom properties are the same species: one number the player chose,
-// resolved once by the app and handed to the stylesheets, which measure
-// nothing. The stylesheet holds no copy of the constant — see base.css.
-//
-// LOUD ON BAD DATA (Law 1 clause 5). resolveTapSize distinguishes ABSENT (the
-// sparse store's normal state — the default, nothing to say) from PRESENT AND
-// NOT IN THE CLOSED SET (a hand-edited save, an older build, a profile
-// restored from a tree with a different set). The second still has to render
-// something and renders the default — but it says so, by name, with the value
-// it refused, in the log the player can copy out of Settings → Advanced. A
-// rejected setting that silently becomes 44 is the "it doesn't stick" bug
-// nobody can ever reproduce.
-function applyTapSize(settings) {
-  const { px, stored, bad } = resolveTapSize(settings);
-  document.documentElement.style.setProperty('--tap-target', `${px}px`);
-  // THE EXEMPT FLOOR NEVER MOVES. `--tap-floor-default-target` is the DEFAULT,
-  // not the choice: the one control whose resizing happens while it is being
-  // pressed holds still at it (Marina's ruling). Written from the same `def`
-  // the row's own default reads, so this is the same 44 asked a second question
-  // and not a second copy of it. See styles/base.css for the pair.
-  document.documentElement.style.setProperty('--tap-floor-default-target', `${UI.tapSize.def}px`);
-  if (bad) {
-    const msg = `settings.tapFloor: stored value ${JSON.stringify(stored)} is not one of `
-      + `${UI.tapSize.sizes.join(', ')} — applying the default ${px} and saying so`;
-    dlog('ERROR', msg);
-    console.warn(msg);
-  }
-}
-
-// Re-flex Auto sizing whenever the window changes. Only recomputes for Auto and
-// only touches the zoom, so it's cheap. Also re-applies shortly after boot and
-// on `load` — some environments report tiny window dims until layout settles,
-// which would otherwise freeze Auto at the clamp floor.
-let uiResizeTimer = null;
-function reflexAutoScale() {
-  // Re-applied for EVERY uiScale setting, not only Auto. The zoom does not move
-  // for a fixed size, but the MODE does: innerWidth changes on resize while the
-  // zoom stays put, so the local width crosses narrowMax with nothing else
-  // changing. Gating this on Auto left the attribute stale at exactly the
-  // shapes a fixed size is most likely to be small in (#24).
-  applyUiScale((saves.loadMeta().settings) || {});
-}
-if (typeof window !== 'undefined') {
-  window.addEventListener('resize', () => {
-    clearTimeout(uiResizeTimer);
-    uiResizeTimer = setTimeout(reflexAutoScale, 150);
-  });
-  window.visualViewport?.addEventListener('resize', () => {
-    clearTimeout(uiResizeTimer);
-    uiResizeTimer = setTimeout(reflexAutoScale, 150);
-  });
-  window.addEventListener('load', reflexAutoScale);
-  setTimeout(reflexAutoScale, 300);
-}
-
-// A resize fires many times a second; most of the card-size properties come out
-// the same each time, and rewriting an unchanged custom property still dirties
-// style for the whole page. Write only what differs.
-function setRootPropertyIfChanged(name, value) {
-  const style = document.documentElement.style;
-  if (style.getPropertyValue(name) !== String(value)) style.setProperty(name, value);
-}
-// CARD SIZE IS TUNABLE WHILE YOU LOOK AT A CARD. The authored table in
-// content/config/ui/components/card.json is the default and the only thing
-// that ships; Settings > Advanced > Card size lays an override over it, and
-// re-projecting the same custom properties here means a slider moves every
-// card on screen rather than waiting for a reload. A set of numbers that
-// breaks `glance < focus < inspect` is refused by the model and the authored
-// table stands — the console says which key was wrong rather than the cards
-// silently going back to normal.
-function applyCardSizeSettings(settings) {
-  const { levels, refused } = cardLevelsWithOverrides(settings);
-  for (const [name, value] of Object.entries(cardLevelCssPropertiesFor(levels))) {
-    setRootPropertyIfChanged(name, value);
-  }
-  // A RESTING CARD IS SIZED FOR THE VIEWPORT IT IS RESTING IN. `glance` is the
-  // browsing size and `glance.variants.mobile` is that size on a phone; the
-  // chosen one is written to the SAME property name, so a card, a stylesheet
-  // and a tool all keep asking one question. Redeclaring `--card-w-glance`
-  // inside a media query would have been the later-rule-wins shape that has
-  // already produced three defects in this component.
-  const resting = restingWidthPx(resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels);
-  setRootPropertyIfChanged('--card-w-glance', `${resting}px`);
-  // Focus and inspect rest the same way: the phone keeps its `mobile` variant, a desktop gets the authored (20% larger) width.
-  for (const level of ['focus', 'inspect']) {
-    setRootPropertyIfChanged(`--card-w-${level}`, `${levelRestingWidthPx(level, resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels)}px`);
-  }
-  // The shelf floors its tracks at a legible width; that floor cannot stand
-  // above the resting card it floors, so it is re-projected against the width
-  // just chosen rather than left at the authored one.
-  for (const [name, value] of Object.entries(cardShelfCssProperties(undefined, resting))) {
-    setRootPropertyIfChanged(name, value);
-  }
-  // The door's threshold reads `--card-w-inspect`, which has just moved. Its
-  // observer only sees the layout's own box change, and the modal layout is
-  // 100% x 100% — so a door standing open would keep its old shape until a
-  // resize or a reopen. Tell it the term it depends on has changed.
-  refreshCardDoorShape();
-  // A REFUSAL HAS TO ANSWER, NOT JUST BE LOGGED. The slider keeps the number
-  // that was typed, the game quietly goes back to the authored table, and the
-  // export copies the authored values — so from the player's chair the control
-  // moved and nothing happened. `showSettingsNotice` exists for exactly this
-  // ("a refused write can answer instead of being a silent no-op", #67), and
-  // leaving this one to `console.warn` reintroduced the defect that helper was
-  // written to prevent. It is a no-op when Settings is not open, which is the
-  // right shape for a refusal resolved at boot rather than at a slider.
-  if (refused) {
-    console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
-    showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`, 'card-size');
-  } else {
-    // A refusal that has been resolved must stop being announced: moving a
-    // slider back into a valid ladder left the old notice standing while the
-    // tuned sizes were actually in force.
-    clearSettingsNotice('card-size');
-  }
-}
-
-function applyDisplaySettings(settings) {
-  applyCardArtStyle(settings);
-  applyDisplayAppearance(settings);
-  // Art quality: lay a local high-res source over the built-in art, or clear
-  // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
-  // resolves use the new tier, and anything the source lacks stays built-in.
-  applyArtQuality(settings);
-  // Auto / Light / High: which pack the web edition loads (src/ui/artTier.js).
-  // A change in play reloads the indexes; a single file and the source tree
-  // pin no packs and this does nothing.
-  applyArtTier(settings);
-  applyHudVisibility(document.documentElement, settings);
-  applyCardSizeSettings(settings);
-  const advancedPresentation = presentationConfig(settings);
-  document.documentElement.dataset.formationSettings = JSON.stringify(advancedPresentation);
-  document.documentElement.dataset.formationMovement = String(advancedPresentation.movementEnabled);
-  document.documentElement.style.setProperty('--selection-color', advancedPresentation.selectionColor);
-  document.documentElement.dataset.formationGrid = String(advancedPresentation.showFormationGrid);
-  const rootStyle = document.documentElement.style;
-  rootStyle.setProperty('--settings-window-width', `calc(${advancedPresentation.settingsWidthPercent} * var(--view-vw, 1vw))`);
-  rootStyle.setProperty('--settings-window-height', `calc(${advancedPresentation.settingsHeightPercent} * var(--view-vh, 1dvh))`);
-  document.documentElement.dataset.playerSpawnRow = advancedPresentation.playerSpawnRow;
-  document.documentElement.dataset.enemySpawnRow = advancedPresentation.enemySpawnRow;
-  document.documentElement.dataset.playerSpawnColumn = advancedPresentation.playerSpawnColumn;
-  document.documentElement.dataset.enemySpawnColumn = advancedPresentation.enemySpawnColumn;
-  const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
-  document.documentElement.dataset.performance = quality;
-  // Effects (owner, 2026-10-30): `data-performance` stays the CSS hook (lite = off);
-  // `data-effects` is its readable alias. The fighter-motion options are body
-  // classes (`motion-attack-off`, ...), each independent of Effects.
-  document.documentElement.dataset.effects = effectsEnabled(settings) ? 'on' : 'off';
-  const motion = motionFlags(settings);
-  for (const kind of Object.keys(motion)) document.body.classList.toggle(`motion-${kind}-off`, !motion[kind]);
-  if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
-  configureTooltipSettings(settings);
-  setSpritesEnabled(settings.useSprites !== false);
-  document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
-  // High contrast is ON unless the player turned it off. Asked rather than
-  // hand-written (`settingOn`, src/ui/screens/settings.js) because a sparse
-  // store makes the polarity part of the default: `=== true` here silently
-  // re-declares `def: false` there, and the pair drifts with nothing checking.
-  document.body.classList.toggle('hi-contrast', settingOn(settings, 'highContrast'));
-  // Text size sets the root font-size %; because all type + component dimensions
-  // are rem, one value rescales the whole UI (base.css). Legacy boolean largeText
-  // maps to L. Stacks with --ui-zoom (which additionally scales px hairlines).
-  const TEXT_SIZES = UI.textSize;
-  const storedText = String(settings.textSize || '').toUpperCase();
-  const tKey = storedText === 'M' || storedText === 'AUTO' ? null
-    : TEXT_SIZES[storedText] ? storedText
-      : (settings.largeText === true ? 'L' : null);
-  if (tKey) document.documentElement.style.fontSize = TEXT_SIZES[tKey];
-  else document.documentElement.style.removeProperty('font-size');
-  document.body.classList.toggle('no-shake', settings.screenShake === false);
-  // Card colour motif: mode on the root as a data attr, wash depth as a var, so
-  // switching is a re-paint with no re-render. Both defaults live in balance.ui.
-  const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
-  document.documentElement.dataset.cardMotif = motif;
-  // Hand layout (C2) — same shape as cardMotif, one line up: the word's one
-  // home is balance.ui.handLayout, a stored choice outside the closed set
-  // lands on that default, and the renderer (combat's renderHand + the narrow
-  // CSS) keys off this attribute and reads the word nowhere else. Garbage is
-  // SAID, not swallowed — a player whose stored setting rotted should not
-  // find the hand silently rearranged (same contract as tapFloor above).
-  const handLayout = UI.handLayoutModes.includes(settings.handLayout) ? settings.handLayout : UI.handLayout;
-  if (settings.handLayout != null && handLayout !== settings.handLayout) {
-    const msg = `settings.handLayout: stored value ${JSON.stringify(settings.handLayout)} is not one of `
-      + `${UI.handLayoutModes.join(', ')} — applying the default '${handLayout}' and saying so`;
-    dlog('ERROR', msg);
-    console.warn(msg);
-  }
-  document.documentElement.dataset.handLayout = handLayout;
-  document.documentElement.dataset.armamentsPresentation = resolveArmamentsPresentation(settings);
-  document.documentElement.dataset.armamentsPhonePlacement = resolveArmamentsPhonePlacement(settings);
-  const strengths = UI.cardMotifStrength;
-  const sKey = strengths[settings.cardMotifStrength] != null ? settings.cardMotifStrength : 'normal';
-  document.documentElement.style.setProperty('--card-motif-strength', String(strengths[sKey]));
-  document.body.classList.toggle('cb-safe', settings.colorblindSafe === true);
-  document.body.classList.toggle('reduce-flashes', settings.reduceFlashes === true);
-  document.body.classList.toggle('readable-ui', settings.readableHeadings === true);
-  // Card lore type (Advanced → Text & lore): words on <html>, read by kit.css.
-  applyLoreType(settings);
-  document.body.classList.toggle('hide-hints', settings.controlHints === false);
-  // A profile that never touched the row — or holds a value the row does not
-  // offer — gets the row's default (compact), as the settings screen shows it.
-  const densityRow = settingsRow('mapHeaderDensity');
-  const density = densityRow.choices.includes(settings.mapHeaderDensity) ? settings.mapHeaderDensity : densityRow.def;
-  document.body.classList.toggle('map-compact', density === 'compact');
-  document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
-  document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed !== true);
-  // The quick-menu experiment. Handed to the component the same way input.js is
-  // handed its bindings, so no screen has to thread `meta` down just to ask which
-  // variant is running. `settingOn` because the store is sparse and the default
-  // is part of the answer (see its own docstring).
-  setQuickNav({ mode: settings.quickNav });
-  // Walked-node fade → data attr on the root; styles/map.css carries the ladder.
-  // Same shape as `ambient` below: an unknown stored value lands on the default
-  // rather than on a silent no-fade, and the default here restates the settings
-  // row's `def` the way every fallback in this function does.
-  const wf = ['off', 'subtle', 'half', 'strong'].includes(settings.walkedFade) ? settings.walkedFade : 'half';
-  document.documentElement.dataset.walkedFade = wf;
-  // Ambient effects level → data attr read by the title screen (ember count) + CSS.
-  const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
-  document.documentElement.dataset.ambient = quality === 'lite' ? 'off' : amb;
-  // Accent theme → CSS variables on the root (falls back to gold).
-  const accent = ACCENTS[settings.accent] || ACCENTS.gold;
-  const root = document.documentElement.style;
-  root.setProperty('--gold', accent.hex);
-  root.setProperty('--accent-rgb', accent.rgb);
-  // UI size — zoom the whole app (see applyUiScale). Auto flexes with the window.
-  applyUiScale(settings);
-  // Minimum tap size — the floor every floored rule is measured from. AFTER
-  // applyUiScale for readability only: `--tap-floor` divides one by the other
-  // at use time, so neither write depends on the other's order.
-  applyTapSize(settings);
-  setAnimSpeed(resolveCombatPacing(settings, coarsePointer()));
-  setCombatPacing(settings);
-  // A cleared key (a Reset, a profile that leaves it out) means the default:
-  // setVolumes ignores a missing field, so say the default out loud.
-  audio.setVolumes({
-    ...settings,
-    musicEnabled: resolveMusicEnabled(settings),
-    musicVolume: settings.musicVolume ?? AUDIO_DEFAULTS.musicVolume,
-    sfxVolume: settings.sfxVolume ?? AUDIO_DEFAULTS.sfxVolume,
-    muteAudio: settings.muteAudio === true,
-  });
-  scheduleCardFits(document.querySelectorAll('.card'));
-  // Re-point external music only when the folder actually changed (avoids
-  // re-fetching the manifest on every unrelated settings tweak). Blank means the
-  // shipped score (content/music.js SHIPPED_MUSIC_FOLDER: the common pack's
-  // objects in the web edition, the music/ folder beside a single file) when
-  // served over http(s); a file:// page cannot fetch it and keeps the synth.
-  // That holds for a double-clicked web edition too (docs/EXTERNAL-ASSETS-PLAN.md
-  // §3.9, step 4): its art, tiles and fonts load from the objects beside it,
-  // but Web Audio cannot play a file: track (a CORS-mode load Chrome refuses,
-  // or silence without one), so the score stays synthesized there.
-  const served = /^https?:$/.test(globalThis.location?.protocol || '');
-  const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');
-  // Only the shipped score is read through the asset index; a folder the
-  // player typed is fetched by its literal path, even one spelled `music/`.
-  const indexed = !settings.musicFolder && served;
-  const musicKey = `${indexed ? 'shipped' : 'custom'}:${folder}`;
-  if (musicKey !== lastMusicFolder) {
-    lastMusicFolder = musicKey;
-    bootMusic.apply(folder, { indexed });
-  }
-  // THE WIREFRAME CHOICES (Settings → Advanced → Wireframes). One word per
-  // choice on the root, read by the modal shell, the kit's category navigation,
-  // the W1 workspace frame and the scene fitter — the same shape as cardMotif
-  // above. Then the three surfaces that can be ON SCREEN while the answer
-  // changes are re-resolved in place: Settings is itself a W1 door, and an
-  // answer a player cannot see land is an answer they cannot judge. Everything
-  // else takes its word the next time it draws.
-  //
-  // AFTER applyUiScale AND applyTapSize, and that order is load-bearing: the
-  // category navigation re-measures against `--ui-zoom` and the rail item's
-  // tap floor, so re-planning before those two are written would judge this
-  // pass against the last pass's numbers (review, 2026-09-20). It is last in
-  // this function for a second reason: nothing below it can be skipped by a
-  // throw from a door that is already on screen.
-  applyWireframeChoices(settings);
-  restampModalWireframes(document);
-  restampWorkspaceFrames(document);
-  replanCategoryNavs();
-}
+// The display-settings cluster (UI scale, layout, tap size, card size,
+// applyDisplaySettings) lives in ui/displaySettings.js; hand it what it needs.
+configureDisplaySettings({ ui: UI, audio, bootMusic, saves, getActiveSettings: () => activeSettings });
+installDisplaySettings();
 // A new high-res source (Art quality) must not be undercut by pose preloads,
 // which are keyed by pose, not URL, and would keep serving the old art.
 // The pose preloads start over; reaverAttack.js and combatEffectSprites.js
 // reset their own warmers through whenArtSourceChanges.
 onArtSourceChange(() => clearPosePreloads());
 applyDisplaySettings(activeSettings);
-// The resting width depends on the viewport, so it is re-resolved when the
-// viewport changes — a phone rotated into landscape crosses the compact
-// breakpoint, and a desktop window dragged narrow crosses it too.
-let cardSizeResizeTimer = 0;
-window.addEventListener('resize', () => {
-  clearTimeout(cardSizeResizeTimer);
-  cardSizeResizeTimer = setTimeout(() => applyCardSizeSettings(activeSettings), 150);
-});
+// The resting width follows the viewport (see installCardSizeResize).
+installCardSizeResize();
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that
@@ -1175,7 +579,7 @@ function applyRestoredSettings(restored) {
 // 2026-08-07; her tail now names the crisis screen's own route, so it is true
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
-  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
+  'This works right now, but it won\u2019t survive a restart. Your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -1183,21 +587,7 @@ let rng = null;
 let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 + slots)
 let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback increments once
 
-// Autosave the current run to its slot (after every committed choice).
-function persist() {
-  if (!shotState) refreshRunClassMastery(run, saves.loadMeta(), registries);
-  // The derived skill bonus is restamped at every save, so a level, a new card
-  // or a swapped hand shows on the faces the next screen draws (SPEC §13.4o).
-  stampSkillBonuses(registries, run);
-  saves.saveRun(run, rng, activeSlot);
-}
-
-// ---- A FAILED AUTOSAVE NEVER UNDOES A LEGAL MOVE (browser storage full) -------
-// Combat v2 saves the accepted candidate BEFORE the engine adopts it, and a save
-// that threw refused the move: with localStorage full ("exceeded the quota")
-// every attack and End Turn was silently dropped. The run in memory is
-// authoritative, so a combat checkpoint that cannot land is reported and the
-// move stands. (Explicit Save still reports failure: saveNow below.)
+// Accepted play survives an autosave failure. Explicit Save has its own retry.
 const SAVE_WARNING_REPEAT_MS = 30000;
 const SAVE_WARNING_SHOWN_MS = 9000;
 let lastSaveWarningAt = -Infinity;
@@ -1208,47 +598,32 @@ function reportAutosaveFailure(error, now = Date.now()) {
   if (now - lastSaveWarningAt < SAVE_WARNING_REPEAT_MS) return false;
   lastSaveWarningAt = now;
   const body = full
-    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
+    ? ' \u00b7 Couldn\u2019t save: browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
     : ` \u00b7 Couldn\u2019t save (${(error && error.message) || 'storage error'}). Your game continues.`;
   const key = full ? 'save:storage-full' : 'save:failed';
   const banner = failureBanner(key, 'COULDN\u2019T SAVE', body);
-  // failureBanner hands back an existing banner when the stack is full: only
-  // auto-remove the one that is ours, never an unrelated failure.
+  // A full banner stack can return another banner. Only remove the one we own.
   if (banner && banner.dataset?.failureKey === key) {
-    // Float over the top edge for its few seconds: left in the page flow it
-    // pushes the fight down and the End Turn button off a phone screen.
     if (banner.style) Object.assign(banner.style, { position: 'fixed', top: '0', left: '0', right: '0', margin: '0', zIndex: '1000', backgroundColor: '#17110a' });
     if (typeof setTimeout === 'function') setTimeout(() => banner.remove?.(), SAVE_WARNING_SHOWN_MS);
   }
   return true;
 }
 
-// persist() that reports a failed autosave instead of throwing: for the victory
-// path, where a full store must never strand the reward screen.
-function persistOrWarn() {
-  try { persist(); return true; } catch (error) { reportAutosaveFailure(error); return false; }
-}
-// The same, for doors that read a `false` return as "the save was refused" and
-// roll the claim back (reward screens, victory receipts): returns nothing, so a
-// full store never undoes a claim or a skip.
-function persistContinuing() { persistOrWarn(); }
-
-// The combat checkpoint's save door (commitExpansionCandidate's saveCandidate):
-// a throw becomes a reported, non-durable commit, never a refused action.
-function saveCombatCandidate(next, committedRng) {
-  try {
-    saves.saveRun(next, committedRng, activeSlot);
-    return { ok: true };
-  } catch (error) {
-    reportAutosaveFailure(error);
-    return { ok: true, durable: false };
-  }
-}
+const {
+  Persist: persist, PersistOrWarn: persistOrWarn, PersistContinuing: persistContinuing,
+  SaveCombatCandidate: saveCombatCandidate,
+} = CreateRunPersistence({
+  readCurrent: () => ({ registries, run, rng, slot: activeSlot }),
+  stampSkillBonuses,
+  saveRun: (value, sourceRng, slot) => saves.saveRun(value, sourceRng, slot),
+  reportFailure: reportAutosaveFailure,
+});
 
 // The run the way its save slot names it (W2e's target line, W1r's, W2d's).
 function runIdentityParts() {
   return {
-    className: run && registries.classes.has(run.class) ? registries.classes.get(run.class).name : run?.class,
+    className: run && registries.classes.has(run.class) ? CharacterDisplayName(run.customization?.name, registries.classes.get(run.class).name) : run?.class,
     slot: activeSlot,
     facts: run ? slotFacts({ actNumber: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp }) : '',
   };
@@ -1284,7 +659,7 @@ function newRun(config) {
   const asked = config.seedString || randomSeedString();
   const why = seedProblem(asked);
   if (why) {
-    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))} — ${why}`);
+    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))}: ${why}`);
     console.error('[seed] refused at newRun:', { seedString: config.seedString, why });
     return Promise.resolve({ ok: false, reason: why });
   }
@@ -1311,46 +686,19 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null }) {
+function beginPreparedRun({ classId, seedString, customization, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null, startingCards = null }) {
   resetArmouryTraySession();
-  // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
-  // change. It read:
-  //
-  //     try  { seed = seedFromString(seedString || randomSeedString()); }
-  //     catch { seed = seedFromString(randomSeedString()); }  // invalid chars → fresh seed
-  //
-  // A throw swallowed and replaced with Math.random(). Six boots of one URL,
-  // six different maps, nothing said — while the tooltip on the very field the
-  // seed was typed into promised "the same seed gives the same map, the same
-  // shops and the same cards." Constantine asked for repeatable short runs; a
-  // seed with a hyphen in it was never one.
-  //
-  // The three seed fields refuse before this is reached (ui/components/
-  // seedfield.js), so a problem arriving HERE means a caller that bypassed a
-  // field — which is precisely the thing that has to be visible rather than
-  // absorbed. It banners by name and starts NO run: starting the wrong run is
-  // the failure being fixed, and a reroll is how it hid.
-  //
-  // It banners rather than throwing, for the reason stated at the surfaces
-  // check at the top of this file: an uncaught throw on a boot/start path is
-  // the blank screen of #77, and a blank screen is a worse failure than the one
-  // it reports. Banner, name, console — and the screen the player is on stays.
+  // A caller that bypassed the seed field still gets a refusal without a reroll.
   const asked = seedString || randomSeedString();
   const why = seedProblem(asked);
   if (why) {
     failureBanner('run:seed', 'THIS SEED CANNOT START A RUN',
-      ` · ${JSON.stringify(String(seedString))} — ${why}\n`
+      ` · ${JSON.stringify(String(seedString))}: ${why}\n`
       + ' · No run was started, and nothing was rerolled: a different map under the same seed is the defect this refuses.');
     console.error('[seed] refused at newRun:', { seedString, why });
     return;
   }
-  // THE PROFILE IS OLDER THAN THE CLIMB (M7 — "profile should be able to be
-  // created before first run, not after"). Here, not on the customize screen's
-  // first click: that screen's own Back button promises "Nothing here is saved",
-  // and a profile written when a class card is highlighted would make its
-  // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
-  // and it is one line above the run being made, so the write order is the ask.
-  // A refused seed returns above and creates nothing.
+  // Profile creation has succeeded. Select the slot only after validating its seed.
   activeSlot = slot;
   const seed = seedFromString(asked);
   const legacyArcaneShot = shotState === 'combat' && shotParams.get('shotArcane') === 'matrix';
@@ -1383,64 +731,19 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // the old Exposure states; the pose must also carry their older rules.
   // Core 2 keeps breakMeterVersion 2 (its run is expanded whatever the shot asks).
   if (legacyArcaneShot && !configuredProfile) delete configSnapshot.breakMeterVersion;
-  rebuildRegistries(configSnapshot, null, gameProfile);
+  rebuildRegistries(configSnapshot, gameProfile);
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
-  run = createRunState({
-    seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion,
+  const prepared = CreatePreparedRun({
+    seed, registries, gameProfile, profileMeta: saves.loadMeta(), configSnapshot, combatExpansionVersion,
     enemyKnowledgeVersion: configuredProfile ? undefined : enemyKnowledgeVersion,
     reactionRulesVersion: configuredProfile ? undefined : reactionRulesVersion,
+    classId, customization, custom, startingKitId, startingHands, startingArmourId,
+    startingRelicId, startingAbilityIds, attributeMode, attributes, deckEdit, startingCards, settings: saves.loadMeta().settings || {}, quickStart,
   });
-  // Core 2 creation: the deck edited on the review step (a beginDeckEdit snapshot) replaces the starting deck piles.
-  if (deckEdit && isConfiguredRun(run)) cancelDeckEdit(run, deckEdit);
-  run.advancedConfigSnapshot = configSnapshot;
-  run.seedString = seedToString(seed);
-  // What the player chose to begin this climb, saved with the run so the
-  // game-over screen can offer Run again with the same choices after any
-  // reload. The STARTING attributes, not the levelled ones; the game profile
-  // is already run.gameProfile. A run saved before this field has no Run again.
-  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, ...(deckEdit ? { deckEdit } : {}) });
-  run.customization = customization || { name: 'Forsaken', glyph: 'sword', tint: 'gold' };
-  run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
-  if (quickStart) run.quickStart = true;
-  if (!shotState && !isConfiguredRun(run)) {
-    openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
-    openRunEnemyKnowledge(run, { receiptId: run.classMasteryState.receiptId, bankable: true });
-    registries = registriesForClassMastery(registries, run);
-  }
-  run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
-  run.path = [];
-  run.seenEvents = [];
-  run.lastEncounters = [];
-  rng = createRng(seed);
-  // SPEC §13.4: the seats this climb visits, drawn ONCE on the `seats` stream.
-  // A pinned first seat (Custom Run) rotates the same draw, so the pin changes
-  // nothing any later stream rolls. createRunState gave the default order; this
-  // is the one line that makes a new run open wherever the light never reached.
-  run.seatOrder = drawSeatOrder(registries, rng, { firstSeat: run.custom.firstSeat || null });
+  run = prepared.run;
+  rng = prepared.rng;
 
-  // Keepsake: a one-time bundle of run-level effects (content/keepsakes.js).
-  const keepsake = !isConfiguredRun(run) && (registries.characterCreation.keepsakes || []).find((k) => k.id === keepsakeId);
-  if (keepsake && keepsake.effects.length) {
-    executeRunEffects({ run, registries, rng }, keepsake.effects);
-  }
-
-  // Sealed and Draft start from a dealt deck rather than the composed one.
-  const deckMode = run.custom.deckMode || 'standard';
-  if (deckMode === 'sealed') {
-    run.deck = createDeck(sealedDeckIds(classId), createIdGen('rc'));
-  } else if (deckMode === 'draft') {
-    run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
-  }
-  // The dealt deck replaced the composed one, attack slots and all, so its
-  // birth attack quota is what it holds (none), not the composed deck's; else
-  // the first full restamp (an Armoury swap, a reload) refuses the run.
-  if (isPoolDeckMode(run)) {
-    run.equipmentAttackSlotCount = dealtAttackSlotCount(run.deck);
-    run.poolDeckRule = POOL_DECK_RULE;
-  }
-
-  if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
+  if (run.custom.deckMode === 'draft') return showDraft();
   startClimb({ skipOpening });
 }
 
@@ -1483,21 +786,6 @@ function showPrologue() {
   });
 }
 
-// Sealed: keep a small basic core, fill the rest with random pool cards.
-function sealedDeckIds(classId) {
-  const pool = registries.classes.get(classId).cardPool.slice();
-  const ids = ['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'];
-  for (let i = 0; i < 3 && pool.length; i++) {
-    const id = rng.pick('misc', pool);
-    pool.splice(pool.indexOf(id), 1);
-    ids.push(id);
-  }
-  return ids;
-}
-function draftBaseIds() {
-  return ['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'];
-}
-
 // Generate the current act's map and pre-roll every '?' node (stream
 // 'events') so outcomes are seed-determined and the Sealstone Key can
 // reveal them (SPEC §6).
@@ -1536,27 +824,12 @@ function refusedRunLanding(slot) {
   openNewerSaveNotice({ slot });
 }
 
-// THE LIVE RUN IS SWAPPED ONLY AFTER A LOAD SUCCEEDS. Both loadRun passes
-// land in a local; `run`, `activeSlot`, the Armoury tray and the registries
-// (rebuilt for the slot's own snapshot between the passes) are the climb in
-// hand until the second pass hands back a run. A refusal restores the
-// registries and calls `onRefused` — the title by default; the in-run Load
-// door passes its own, which keeps the run on screen (confirmSlotLoad).
+// A refusal keeps the current run and registries. The title is the default
+// landing; the in-run Load door keeps the existing run on screen.
 let terminalResume = null;
 function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } = {}) {
   if (terminalResume) return terminalResume;
-  const liveRegistries = registries, liveGameProfile = registryGameProfile;
-  const refused = () => {
-    // rebuildRegistries sets registryGameProfile before it can throw, so the
-    // profile is restored on every refusal, not only when the registries moved.
-    registryGameProfile = liveGameProfile;
-    if (registries !== liveRegistries) {
-      registries = liveRegistries;
-      configureTooltipGlossary(registries);
-      setClassGlyphs(registries.classes.all());
-    }
-    return onRefused(slot);
-  };
+  const refused = () => onRefused(slot);
   // A refusal lands first (the title, or the in-run Load door), then says why:
   // the Settings notice when a host is mounted, else the title's failure banner,
   // the same fallback the run-start path uses. The save is never touched.
@@ -1575,21 +848,23 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     if (!showSettingsNotice(message, 'profile')) failureBanner(`run:resume:${error.message}`, 'THIS SAVE COULD NOT BE RESTORED', ` · ${error.message}`);
     return landed;
   };
-  let savedGameProfile;
-  try { savedGameProfile = saves.peekRunGameProfile(slot); }
-  catch (error) { return refuseWith(error); }
-  const retiredReason = saves.hasRun(slot) ? retiredProfileReason(savedGameProfile) : null;
-  if (retiredReason) return refuseRetired(retiredReason);
-  const loadGameProfile = savedGameProfile || resolveGameProfile('default'); // an empty slot only; loadRun reports it empty
-  let authoredRegistries;
-  try { authoredRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile)), loadGameProfile); }
-  catch (error) { return refuseWith(error); }
-  let loaded = saves.loadRun(authoredRegistries, slot);
-  if (!loaded) return saves.runStatus().reason?.startsWith('retired game mode') ? refuseRetired(saves.runStatus().reason) : refused();
-  try { rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, null, loadGameProfile); }
-  catch (error) { return refuseWith(error); }
-  loaded = saves.loadRun(registries, slot);
-  if (!loaded) return refused();
+  let context;
+  try {
+    context = LoadSavedRunContext(saves, slot, {
+      validate: (profile, configuration, authored) => cachedContentValidation(profile, configuration, authored).result,
+    });
+  } catch (error) { return refuseWith(error); }
+  if (!context.run) {
+    const retired = context.retiredReason || (context.reason?.startsWith('retired game mode') && context.reason);
+    return retired ? refuseRetired(retired) : refused();
+  }
+  const { run: loaded, gameProfile, configuration } = context;
+  registries = context.registries;
+  registryGameProfile = gameProfile;
+  const buildKey = registryBuildKey(configuration, gameProfile);
+  lastRegistryBuild = buildKey !== null ? { key: buildKey, profile: gameProfile, registries } : null;
+  configureTooltipGlossary(registries);
+  setClassGlyphs(registries.classes.all());
   // The load is certain from here; a caller that must tear down what the
   // refusal would have returned to (the in-run overlay) does it now, not before.
   onLoaded?.();
@@ -1597,8 +872,6 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   activeSlot = slot;
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = loaded;
-  if (!isConfiguredRun(run)) refreshRunClassMastery(run, saves.loadMeta(), registries);
-  if (!isConfiguredRun(run)) registries = registriesForClassMastery(registries, run);
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
   // already left it out, so this only says so — on the channel boot uses for
@@ -1627,8 +900,6 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     showGameProfileReward();
   } else if (run.gameProfileOpenShop) {
     showShop();
-  } else if (run.pendingReward) {
-    mountPendingReward();
   } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
     // carry the encounter receipt still use the deterministic restart path.
@@ -1655,7 +926,7 @@ function saveSlotRecords() {
     slot,
     summary: summary && {
       ...summary,
-      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
+      className: registries.classes.has(summary.class) ? CharacterDisplayName(summary.customization?.name, registries.classes.get(summary.class).name) : summary.class,
     },
   }));
 }
@@ -1679,7 +950,7 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     facts: summary ? slotFacts(summary) : null,
     seed: summary?.seedString ?? null,
   });
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: review.question,
     target: review.target,
     message: review.message,
@@ -1722,7 +993,7 @@ function loadActiveSlot({ returnFocusElement } = {}) {
 }
 
 function quitWithoutSaving({ returnFocusElement } = {}) {
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: 'Quit without saving?',
     // W2e: the run this leaves, named the way its save slot names it.
     target: run ? runIdentity({
@@ -1902,7 +1173,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     showStartupGate();
     return;
   }
-  rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
+  rebuildRegistries(saves.loadMeta().settings || {}, selectedGameProfile);
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
@@ -2106,9 +1377,9 @@ function refreshAfterImport() {
 }
 
 function showOfflinePlay() {
-  const transfer = createSaveTransfer(bootStorage, registries);
-  const ownedTransfer = { ...transfer, restore: text => saves.withProfile
-    ? saves.withProfile(() => transfer.restore(text)) : transfer.restore(text) };
+  const transfer = CreateSaveTransfer(bootStorage);
+  const ownedTransfer = { ...transfer, Restore: text => saves.withProfile
+    ? saves.withProfile(() => transfer.Restore(text)) : transfer.Restore(text) };
   openOfflinePlay({ transfer: ownedTransfer, onImported: refreshAfterImport, assertImportAllowed: () => {
     if (run) throw new Error('Return to the title screen before importing saves.');
     let persistent = false;
@@ -2163,31 +1434,20 @@ function showArmoury(request = '', returnTo = showMap) {
     },
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
-    onProgression: isConfiguredRun(run) ? null : () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
-    onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards,
-      onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null }),
-    onClassRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null,
+    onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards }),
   });
 }
 
 // The Progression hub opens over the current screen. Which character-level rewards it lists are the player's own
 // Settings → Advanced → Rewards answers, the ones the level door reads.
-function showClassRespec(returnTo = () => showArmoury({ destination: 'character' }), opener) {
-  return resetClassTree(registries,run,{openRespec:()=>mountClassRespec({registries,run,meta:saves.loadMeta(),opener,
-    onApply:preview=>applyClassRespec(registries,run,preview,{saveCandidate:candidate=>saves.saveRun(candidate,rng,activeSlot)}),
-    onClose:returnTo})});
-}
 function showCharacterSheet(opener, options = {}) {
   if (!run) return null;
   const settings = saves.loadMeta().settings || {};
   return openCharacterSheet({
     registries, run, opener, settings, onChange: persist,
-    onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec() : null,
     ...options,
     offers: {
       statPoints: settingOn(settings, 'rewardLevelStatPoints'),
-      feats: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelFeats'),
-      classTree: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelClassTree'),
       levelCards: settingOn(settings, 'rewardLevelCards'),
       pointsPerLevel: resolveLevelUpValue(settings),
     },
@@ -2203,7 +1463,9 @@ function showCharacterSheet(opener, options = {}) {
 function deckDoors(services = null) {
   const settings = saves.loadMeta().settings || {};
   const doors = deckEditorDoors({ settings, inCombat: false, services });
-  // D10/D15: Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
+  // Core 2 (editorWhere 'rest'): the deck is edited only at a rest site, whatever the player's location setting says.
+  if (RestOpensDeckEditor(run)) return Object.freeze({ armoury: false, rest: deckEditingOn(settings) });
+  // D10/D15: an older Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
   return armouryOpensDeckEditor(run, settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
@@ -2243,7 +1505,7 @@ function showCombatDeckEditor(combat, nodeId, encounterId) {
       try {
         commitDeckEditDraft(registries, owner, draft, settings);
         commitCombatSnapshot({ run: owner, combat, nodeId, encounterId });
-        supersedePendingEntryCheckpoint();
+        entryCheckpoint.Supersede();
         persist();
         showSettingsNotice('Deck saved. Changes apply next encounter; current combat piles stay unchanged.');
       } catch (error) {
@@ -2352,57 +1614,7 @@ function runResult(victory) {
   };
 }
 
-/**
- * Close out a run: record it, advance the durable progress tally, and hand back
- * anything newly earned. Kept in one place so a defeat and a victory can never
- * disagree about what counts.
- */
-/**
- * rollDrop(source) → armament id | null — a PURE roll, nothing stored.
- *
- * It used to be REMEMBERED: the roll itself pushed the piece into run storage
- * and meta.found, before the reward menu ever mounted. That made the menu's
- * armament row a lie three ways at once — Skip could not leave it, manual
- * Continue could not leave it, and NEW could never show on first discovery,
- * because the ownership comparison ran against a found set the roll had
- * already written (Aurora's merge review on #290 at f29d468; Codex
- * 4989824448). Persistence now lives in collectArmament, reached only through
- * the reward screen's take/apply path — tap, or auto-collect at Continue.
- * The exclusion inputs (found, carried) are read-only here.
- */
-function rollDrop(source) {
-  const meta = saves.loadMeta();
-  const id = rollArmamentDrop(registries, rng, {
-    source,
-    found: meta.found || [],
-    carried: carriedIds(run.loadout),
-  });
-  return id; // the roll is PURE: collection persists (collectArmament), not discovery
-}
-
-/**
- * collectArmament(id, source) — the one home of the armament bargain, fired
- * when the player TAKES the row (or auto-collect takes it for them): the piece
- * goes into this run's storage so you can use it now, and into the profile's
- * found set so it stays available in every run after — a climb that ends badly
- * still widens the wardrobe. What was never taken was never found: a skipped
- * or left-behind piece stays out of meta.found and can drop again.
- */
-function collectArmament(id, source) {
-  if (!id) return false;
-  // COLLECTION IS GATED ON THE STORE LANDING (the b6b7df0 review's P1):
-  // addToStorage returns false at the cap and on a duplicate, and a found
-  // entry for a piece the bag refused is a poisoned record — claimed but not
-  // stored, and excluded from every future drop. The menu derives the same
-  // boundary up front (rewardplan's 'storage' blockedBy), so this gate is
-  // the depth behind that face — same array, its own answer.
-  const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
-  if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
-  recordCollectedArmament(id, source);
-  return true;
-}
-
-// Called only after collection or a committed trader purchase stored the item.
+// Called only after a committed trader purchase stored the item.
 function recordCollectedArmament(id, source) {
   if (!carriedIds(run.loadout).includes(id)) return;
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
@@ -2423,36 +1635,28 @@ function recordCollectedArmament(id, source) {
   return true;
 }
 
-/** A treasure node's Smithing Stone door (SPEC §15.3); null when it pays nothing. */
-function treasureSmithingReward() {
-  if (!smithingRewardPays(registries, 'treasure')) return null;
-  return grantSmithingReward(registries, run, 'treasure', smithingRewardId(run, 'treasure'), rng);
-}
-
+/**
+ * Close out a run: record it, advance the durable progress tally, and hand back
+ * anything newly earned. Kept in one place so a defeat and a victory can never
+ * disagree about what counts.
+ */
 async function finishRun(victory) {
   const finishedRun = run, finishedSlot = activeSlot, finishedRegistries = registries, finishedRng = rng;
   const owned = () => run === finishedRun && activeSlot === finishedSlot;
   const checkpoint = () => {
     if (!owned()) throw new Error('The active run changed while completion was pending.');
-    if (!shotState && !isConfiguredRun(finishedRun)) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
     stampSkillBonuses(finishedRegistries, finishedRun);
     saves.saveRun(finishedRun, finishedRng, finishedSlot);
   };
   const resultRecord = { ...runResult(victory), gameProfile: finishedRun.gameProfile, runId: finishedRun.runId };
   return commitRunFinishAsync(finishedRun, {
     victory,
-    finishId: finishedRun.runId || finishedRun.classMasteryState?.receiptId || crypto.randomUUID(),
+    finishId: finishedRun.runId || crypto.randomUUID(),
     checkpoint,
     bank: async () => {
       const knowledge = saves.bankEnemyKnowledge ? await saves.bankEnemyKnowledge(finishedRun) : { ok: true };
       if (!knowledge.ok) throw new Error(`Enemy learning was not saved: ${knowledge.reason}`);
       checkpoint();
-      if (!hasClassMastery(finishedRun)) return;
-      const bank = await saves.bankClassMastery(finishedRun, finishedRegistries);
-      if (!bank.ok) throw new Error(`Class mastery was not saved: ${bank.reason}`);
-      adoptClassMasteryProfile(finishedRun, bank.meta);
-      checkpoint();
-      if (bank.warning && owned()) showSettingsNotice(bank.warning, 'profile');
     },
     complete: (pending) => saves.withProfile ? saves.withProfile(writer => {
       if (!owned()) throw new Error('The active run changed while completion was pending.');
@@ -2496,7 +1700,7 @@ async function showFinishedRun(victory) {
 }
 
 function showCustomize(slot = 1, catalog = false) {
-  rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
+  rebuildRegistries(saves.loadMeta().settings || {}, selectedGameProfile);
   if (isConfiguredRun(selectedGameProfile) && !gameModule(selectedGameProfile, 'class-selection')) {
     const defaultClass = gameContent(selectedGameProfile, 'classes')[0];
     return startRunInSlot({ classId: defaultClass.id, seedString: randomSeedString(), gameProfile: selectedGameProfile }, slot);
@@ -2634,8 +1838,6 @@ function showMap(opts) {
     const menu = document.createElement('button'); menu.textContent = 'Menu'; menu.onclick = () => showOverlay(); screen.append(menu);
     app.append(screen); return;
   }
-  if (!isConfiguredRun(run) && run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
-  if (!isConfiguredRun(run)) queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
   const suggested = run.quickStart && !run.mapNodeId
@@ -2688,7 +1890,7 @@ function enterNode(nodeId) {
     if (res.kind === 'event') {
       run.seenEvents.push(res.eventId);
       persist();
-      return showEvent(res.eventId);
+      return afterEntryPaint(() => showEvent(res.eventId));
     }
     kind = res.kind; // fight | shrine | treasure
   }
@@ -2705,41 +1907,13 @@ function enterNode(nodeId) {
       persist();
       // An Unknown node's rest outcome is the field camp (proposal §7.4): a
       // small rest and no services. A shrine node is the Shrine.
-      return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
+      return afterEntryPaint(() => showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine'));
     case 'merchant': {
-      if (isConfiguredRun(run)) {
-        if (!gameModule(run, 'shops')) { persist(); return showMap(); }
-        run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return showShop();
-      }
-      // A classic merchant rolls its kind first (SPEC §14.2, `shopOffers`); the
-      // shipped weights make every one a market with every shelf out, drawing
-      // nothing new, so a seed's shelves are what they always were.
-      // Greedy Merchants and Hoarder scale every price it lays out, the
-      // market additions included (SPEC §14.3).
-      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant' });
-      // Does a smith travel with him? Rolled once here, on the smith's own
-      // stream (balance.smithing.services.offeredAt.merchant), and kept with
-      // the stock so leaving and re-entering the screen does not roll again.
-      // A merchant that turned out to be a blacksmith (SPEC §14.2) is the smith;
-      // no add-on is rolled for it.
-      // Nor for one that turned out to be a wise master (SPEC §14.5).
-      if (stock.kind !== 'blacksmith' && stock.kind !== 'master') stock.smith = smithServicesAt(registries, 'merchant', rng);
-      run.shopStock = stock;
-      persist();
-      return showShop();
+      if (!gameModule(run, 'shops')) { persist(); return showMap(); }
+      run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return afterEntryPaint(() => showShop());
     }
     case 'treasure': {
-      if (isConfiguredRun(run)) return beginGameProfileReward({ source: 'treasure', after: 'map' });
-      const relicId = rollRelicReward(registries, rng, run.relics);
-      const armamentId = rollDrop('treasure');
-      // Treasure pays Smithing Stones through the combat door's faucet (SPEC
-      // §15.3), and only when its tables pay anything: both ship at 0, so no
-      // zero-amount claim is written and a save is unchanged.
-      const smithingStoneReceipt = treasureSmithingReward();
-      // SPEC §15.4: the treasure CHECKPOINTS its offer (beginPendingReward),
-      // as the legacy dungeon's treasure door does, so a reload remounts an
-      // unclaimed sigil row instead of losing it.
-      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
+      return afterEntryPaint(() => beginGameProfileReward({ source: 'treasure', after: 'map' }));
     }
     default:
       throw new Error(`Unknown node kind '${kind}'`);
@@ -2772,9 +1946,8 @@ function combatMods(pool, encounter = null) {
 // (aria-busy marks the wait) and a second tap in that gap is ignored. Capture
 // states stay synchronous.
 let fightEntryPending = false;
-function startFight(pool, nodeId) {
-  if (fightEntryPending) return;
-  if (shotState || typeof requestAnimationFrame !== 'function') return startFightNow(pool, nodeId);
+function afterEntryPaint(action) {
+  if (shotState || typeof requestAnimationFrame !== 'function') return action();
   const owner = run;
   fightEntryPending = true;
   app.setAttribute('aria-busy', 'true');
@@ -2782,8 +1955,13 @@ function startFight(pool, nodeId) {
     fightEntryPending = false;
     app.removeAttribute('aria-busy');
     if (run !== owner) return;
-    startFightNow(pool, nodeId);
+    action();
   }, 0));
+  return undefined;
+}
+function startFight(pool, nodeId) {
+  if (fightEntryPending) return;
+  return afterEntryPaint(() => startFightNow(pool, nodeId));
 }
 
 function startFightNow(pool, nodeId) {
@@ -2850,6 +2028,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     playerStatuses: cm.playerStatuses,
   });
   stampCombatPlaysEver(run, combat); // pile copies carry the deck copy's lifetime plays (Honed cards)
+  // The live fight's rules are never edited once it starts: freezing them lets the rules cache key them by identity and a preview share them by reference.
+  if (combat.fixCoreRules) freezeProfile(combat.fixCoreRules);
   if (combat.combatExpansionVersion === 2) {
     const durable = candidate => {
       const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,
@@ -2884,11 +2064,11 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
         const checkpointRng = createRng(rng.seed, entryRng.getCounters());
         rng.restoreCounters(entryRng.getCounters());
         combat.rng = rng;
-        pendingEntryCheckpoint = { run, combat, durable, checkpointRng, nodeId, encounterId, timer: 0 };
+        entryCheckpoint.Queue({ run, combat, durable, checkpointRng, nodeId, encounterId });
       }
     }
     combat.beforeCombatCommit = candidate => {
-      flushPendingEntryCheckpoint();
+      entryCheckpoint.Flush();
       return durable(candidate);
     };
     if (combat.result) return onCombatEnd(combat.result, combat, enc);
@@ -2911,7 +2091,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   // a deck too small to reach the asked hand refuses rather than photograph an
   // eight-card hand labelled ten — a silent shortfall here would quietly turn
   // every downstream sliver measurement into a fact about a different hand.
-  if (shotState === 'combat' && shotParams.get('shotKit') === '1') drawArmamentKitPreview(combat);
+  if (shotState === 'combat' && shotParams.get('shotKit') === '1') devKit.drawArmamentKitPreview(combat);
   if (shotState === 'combat' && shotParams.has('shotExpansion')) {
     // Memory-only QA pose. Cards still play through the production interpreter.
     const ids = ['emberDart', 'barrageCounter', 'rimeNeedle', 'drowsingMote', 'shieldBash', 'dodgeRoll', 'blightedTransmute', 'shatterOpportunity'];
@@ -3005,12 +2185,12 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     quickControls: quickMenuControls,
     onSave: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
-      supersedePendingEntryCheckpoint();
+      entryCheckpoint.Supersede();
       return saveNow();
     },
     onQuit: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
-      supersedePendingEntryCheckpoint();
+      entryCheckpoint.Supersede();
       persist();
       showCollapsedTitle();
     },
@@ -3032,49 +2212,18 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       }
     );
   }
-  schedulePendingEntryCheckpoint();
+  entryCheckpoint.Schedule();
 }
 
-// THE QUEUED ENTRY CHECKPOINT (see enterCombat). One at a time; it belongs to
-// the run and fight that queued it and drops itself if either is gone.
-let pendingEntryCheckpoint = null;
-function flushPendingEntryCheckpoint() {
-  const pending = pendingEntryCheckpoint;
-  if (!pending) return false;
-  pendingEntryCheckpoint = null;
-  clearTimeout(pending.timer);
-  const entered = run?.combatEntered;
-  if (run !== pending.run || pending.combat.result || !entered || entered.snapshot
-    || entered.nodeId !== pending.nodeId || entered.encounterId !== pending.encounterId) return false;
-  const liveRng = pending.combat.rng;
-  pending.combat.rng = pending.checkpointRng;
-  try { pending.durable(pending.combat); }
-  catch (error) {
-    // Keep it queued: with no entry snapshot on disk, the first action's save
-    // would otherwise become the checkpoint. The next commit retries it first.
-    if (!pendingEntryCheckpoint) pendingEntryCheckpoint = pending;
-    throw error;
-  } finally { pending.combat.rng = liveRng; }
-  return true;
-}
-function flushPendingEntryCheckpointSafely() {
-  try { flushPendingEntryCheckpoint(); }
-  catch (error) { showSettingsNotice(error.message || 'The combat could not be saved.'); }
-}
-function schedulePendingEntryCheckpoint() {
-  const pending = pendingEntryCheckpoint;
-  if (!pending) return;
-  pending.timer = setTimeout(() => { if (pendingEntryCheckpoint === pending) flushPendingEntryCheckpointSafely(); }, 500);
-  requestAnimationFrame(() => setTimeout(() => { if (pendingEntryCheckpoint === pending) flushPendingEntryCheckpointSafely(); }, 0));
-}
-// An explicit save or quit writes the exact current snapshot, which replaces
-// the queued entry one.
-function supersedePendingEntryCheckpoint() {
-  if (pendingEntryCheckpoint) clearTimeout(pendingEntryCheckpoint.timer);
-  pendingEntryCheckpoint = null;
-}
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPendingEntryCheckpointSafely(); });
-window.addEventListener('pagehide', flushPendingEntryCheckpointSafely);
+const entryCheckpoint = CreateEntryCheckpoint({
+  getRun: () => run,
+  clearTimer: timer => clearTimeout(timer),
+  setTimer: (callback, delay) => setTimeout(callback, delay),
+  requestFrame: callback => requestAnimationFrame(callback),
+  reportFailure: error => showSettingsNotice(error.message || 'The combat could not be saved.'),
+});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') entryCheckpoint.FlushSafely(); });
+window.addEventListener('pagehide', entryCheckpoint.FlushSafely);
 
 /**
  * THE FIGHT'S TITLE, ONE HOME: the spoils door is headed with it and the
@@ -3113,59 +2262,39 @@ async function onCombatEnd(result, combat, enc) {
     character: { ...run.level },
     tracks: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) => [id, { level: row.level || 0, xp: row.xp || 0 }])),
   };
-  const pendingBefore = pendingLevelCount(registries, run);
-  // Every level waits for its press (SPEC §13.4o): XP is always banked, and the
-  // reward door's Level up claims it. No setting applies a level on its own.
-  const manualLevelUp = !isConfiguredRun(run);
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
   const configuredProgression = isConfiguredRun(run);
   const skillProgression = configuredSkillProgression(run);
-  const skillStateBefore = skillProgression ? { classMasteryState: structuredClone(run.classMasteryState) } : null;
   const trackReceipt = configuredProgression && !skillProgression ? {} : skillXpReceipt(combat);
   for (const [skillId, amount] of Object.entries(trackReceipt)) {
-    const kind = skillKindOf(registries, skillId);
-    const bonus = kind === 'armour' ? 'armourXp' : 'weaponXp';
-    trackReceipt[skillId] = Math.floor(amount * featMultiplier(run, bonus));
+    trackReceipt[skillId] = Math.floor(amount);
   }
   const configuredAwards = skillProgression ? settleConfiguredSkillProgression(registries, run, combat, {
-    receipt: trackReceipt, victory: result === 'victory', pool: enc.pool, classMultiplier: featMultiplier(run, 'classXp'),
+    receipt: trackReceipt, victory: result === 'victory', pool: enc.pool, classMultiplier: 1,
   }) : null;
   const trackAwards = configuredAwards?.trackAwards || (!configuredProgression
-    ? applySkillXp(registries, run, trackReceipt, { bank: manualLevelUp }) : []);
+    ? applySkillXp(registries, run, trackReceipt) : []);
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
-  const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') }));
+  const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, multiplier: 1 }));
   const progression = skillProgression ? skillLevelNotices(registries, [classAward, ...trackAwards], {
-    run, beforeState: skillStateBefore,
+    run,
     usedArmaments: combat.skillXp?.[combat.playerKey || 'player']?.usedArmaments || [],
   }) : [];
   // Character XP is paid now; the level and its stat points wait for the blue
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
-    characterMultiplier: featMultiplier(run, 'characterXp') * (configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1),
+    characterMultiplier: configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1,
   });
   const levelXp = isConfiguredRun(run) && !configuredCharacterLevels(run) ? 0 : xpReceipt.total;
-  const levelAward = manualLevelUp
-    ? bankLevelXp(registries, run, levelXp)
-    : awardLevelXp(registries, run, levelXp, {
-      pointsPerLevel: configuredProgression ? gameModule(run, 'progression')?.attributePointsPerLevel || 0 : resolveLevelUpValue(saves.loadMeta().settings),
-      grantStats: configuredProgression ? !!gameModule(run, 'stats') : settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
-    });
-  const levelsEarned = manualLevelUp
-    ? Math.max(0, levelAward.pendingLevelUps - pendingBefore)
-    : levelAward.levelUps;
-  // THE RECEIPT THE SPOILS DOOR SHOWS (model/rewardprogress.js). Every ledger
-  // above were paid before the door opens, so the screen cannot re-derive what
-  // this fight paid — it is handed the amounts, on the offer, where the
-  // pending-reward checkpoint persists them and a reload resumes the same
-  // sentence. Ledger state is read live from the run; only the GAIN is kept,
-  // and it is the amount each award SAYS it paid, never a second reading of
-  // the same numbers beside it.
-  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained, levelDiscarded: levelAward.discarded });
-  const levelChoices = rollLevelChoices(levelsEarned);
+  const levelAward = awardLevelXp(registries, run, levelXp, {
+    pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0,
+    grantStats: !!gameModule(run, 'stats'),
+  });
+  const levelsEarned = levelAward.levelUps;
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   if (!configuredProgression) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
@@ -3183,7 +2312,6 @@ async function onCombatEnd(result, combat, enc) {
   // A won fight restores its authored after-combat
   // percent of each pool (0 at the defaults, model/recoveryRules.js).
   applyAfterCombatRecovery(run);
-  if (result === 'victory') run.hp = Math.min(run.maxHp, run.hp + 5 * featStacks(run, 'vitalRenewal'));
 
   // A breath between the last blow and the spoils (components/victoryBeat.js):
   // the combat screen is still mounted here, so the beat stands over it and
@@ -3198,395 +2326,18 @@ async function onCombatEnd(result, combat, enc) {
   // boundary below. A reload therefore resumes the reward menu instead of
   // losing either the Stone or the other spoils.
 
-  if (configuredProgression) {
-    // The receipt reflects the settled (rate-scaled) awards, never raw combat XP.
-    const victoryReceipt = { title: victoryTitle(enc), xpBefore, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}),
-      xpGains: combatXpGains({ awards: [classAward, ...trackAwards], levelGained: levelAward.gained }) };
-    run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
-    const boss = enc.pool === 'boss';
-    if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
-    if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
-    return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt });
-  }
-
-  if (enc.pool === 'boss') {
-    run.bossesBeaten = run.bossesBeaten || [];
-    for (const id of enc.enemies) if (!run.bossesBeaten.includes(id)) run.bossesBeaten.push(id);
-    // …and the item types in hand as it fell (plan phase 5c, bossWithGroup).
-    run.bossGroups = run.bossGroups || {};
-    const held = [...new Set(equippedPieces(registries, run.loadout, run.class).flatMap((piece) => piece.itemTypeTags || []))];
-    for (const id of enc.enemies) run.bossGroups[id] = [...new Set([...(run.bossGroups[id] || []), ...held])];
-    if (run.actNumber >= 3) {
-      // The Blighted Valkyrie falls: the Sovereign Ember is restored.
-      audio.music('victory');
-      return showFinishedRun(true);
-    }
-    // Act boss down: boss rewards, then the climb continues.
-    // A boss always drops an armament — unless you already own every one it
-    // could give, in which case it pays out instead of dropping nothing.
-    const bossArmament = rollDrop('boss');
-    const drops = registries.balance.equipment.drops || {};
-    const bossDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
-    const bossClassDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
-    // A boss offers up to balance.rewards.bossRelicChoices relics to pick ONE
-    // from; one relic (or none) keeps the single relicId shape.
-    const bossRelics = rollRelicChoices(registries, rng, run.relics, { rarities: ['boss'], count: Math.max(1, registries.balance.rewards.bossRelicChoices ?? 3) });
-    const bossRewards = {
-      title: victoryTitle(enc),
-      cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
-      classDrafts: bossClassDrafts,
-      skillDrafts: bossDrafts,
-      skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
-      skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
-      skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
-      ...rollCardRows('boss', levelsEarned),
-      ...(bossRelics.length > 1 ? { relicChoices: bossRelics } : { relicId: bossRelics[0] ?? null }),
-      ...sigilOffer('boss'),
-      armamentId: bossArmament,
-      smithingStoneReceipt,
-      xpGains,
-      xpReceipt,
-      xpBefore,
-      levelChoices,
-      characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
-    };
-    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: 'advanceAct' });
-  }
-
-  // Skill and class level rewards are independent of the combat card roll.
-  const drafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
-  const classDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
-  const rewards = {
-    title: victoryTitle(enc),
-    cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
-    classDrafts,
-    skillDrafts: drafts,
-    skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
-    skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
-    skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
-    ...rollCardRows(enc.pool, levelsEarned),
-    flaskId: rollFlaskDrop(registries, rng, run),
-    relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
-    // SPEC §15.4: a legendary sigil, on its own `sigils` stream (0 ships: none).
-    ...sigilOffer(enc.pool),
-    // Elites are the mid-run source of armaments; ordinary fights are not by
-    // default (balance.equipment.drops.chance.normal ships at 0, which rolls
-    // nothing — SPEC §15.3 — until the owner raises it).
-    armamentId: rollDrop(enc.pool),
-    smithingStoneReceipt,
-    xpGains,
-    xpReceipt,
-    xpBefore,
-    levelChoices,
-    characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
-  };
-  beginPendingReward(withSourceBonuses(rewards), { source: enc.pool, after: 'map' });
-
-  function withSourceBonuses(offer) {
-    return runSourceRewardOffer(registries, rng, run, offer, {
-      pool: enc.pool, includeBanked: manualLevelUp, levelsGained: classAward?.levelUps || 0, meta:saves.loadMeta(),
-    });
-  }
-}
-
-/**
- * The spoils' card rows (SPEC §15.1): the independent combat card offer,
- * unless the schedule turns it off for this pool or its chance misses,
- * and a level card per level this fight bought when `onLevelUp` is on. The
- * decision is engine/encounters.js rollCombatCardOffer's; this hands it the
- * run's facts and returns the offer fields (`cardIds`, and `cardMissed` /
- * `levelCards` only when they say something, so the shipped schedule writes
- * the offer it wrote before).
- */
-function rollCardRows(pool, levelUps) {
-  return rollCombatCardOffer(registries, rng, {
-    classId: run.class, pool, relicIds: run.relics, draftWaiting: false, combatExpansionVersion: run.combatExpansionVersion || 1,
-    levelUps: settingOn(saves.loadMeta().settings, 'rewardLevelCards') ? levelUps : 0,
-  }).rewards;
-}
-
-function rollLevelChoices(levelsEarned) {
-  if (isConfiguredRun(run)) return [];
-  const settings = saves.loadMeta().settings || {};
-  const offerFeats = settingOn(settings, 'rewardLevelFeats');
-  const offerClassTree = settingOn(settings, 'rewardLevelClassTree');
-  if (!offerFeats && !offerClassTree) return [];
-  const out = [];
-  const firstRewardLevel = run.level.level;
-  for (let ordinal = 0; ordinal < levelsEarned; ordinal++) {
-    const options = [];
-    if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
-    if (offerClassTree && !run.classUnequipped) {
-      const masteryLevel = run.skills?.[classSkillId(run.class)]?.level || 0;
-      const level = hasClassMastery(run) ? masteryLevel : Math.max(masteryLevel, firstRewardLevel + ordinal + 1);
-      options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
-        .map((id) => ({ kind: 'classNode', id })));
-    }
-    if (options.length) out.push({ ordinal, options });
-  }
-  return out;
-}
-
-/**
- * The drafts the ledger has queued, one per track with a draft pending and at
- * most balance.skill.draftsPerCombat per track per door (the rest wait for
- * the next fight); a track whose schools offer nothing rolls no row and keeps
- * its draft. Rolled on the 'cardRewards' stream the card offer would have
- * used, at the door's own odds (the boss's at a boss door).
- */
-function rollSkillDrafts(pool, includeBanked = false) {
-  const perDoor = registries.balance.skill.draftsPerCombat;
-  const out = [];
-  for (const track of skillTracks(registries)) {
-    const row = run.skills && run.skills[track.id];
-    if (!row) continue;
-    const queued = row.pendingDrafts || 0;
-    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
-    if (expandedProgression(run) && isAbilitySkill(track.id)) {
-      out.push(...rollPendingAbilityOffers(registries,rng,run,{skillId:track.id,banked,limit:perDoor}));
-      continue;
-    }
-    for (let i = 0; i < Math.min(perDoor, queued + banked); i++) {
-      const level = i < queued ? Math.max(1,row.level - queued + i + 1) : row.level + i - queued + 1;
-      const cardIds = rollGuaranteedSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool });
-      // Each offered card arrives at its own rank (SPEC §13.4o), rolled now so
-      // the offer, its save and its reload all show the same card.
-      if (cardIds.length) out.push({ skillId: track.id, level, cardIds, ranks: cardIds.map(() => rollDraftRank(registries, rng, level)), claimOrdinal: i < queued ? 0 : i - queued + 1 });
-    }
-  }
-  return out;
-}
-
-/**
- * The rank-ups the ledger has queued (SPEC §13.4o): one per level of a
- * card-school track, offered beside that level's draft and on the same
- * terms (`draftsPerCombat` per door, banked levels counted when the door
- * claims them). No roll: the cards it chooses among are the run's own.
- */
-function rollSkillRankUps(includeBanked = false) {
-  const perDoor = registries.balance.skill.draftsPerCombat;
-  const out = [];
-  for (const track of skillTracks(registries)) {
-    const row = run.skills && run.skills[track.id];
-    if (!row) continue;
-    if (expandedProgression(run) && isAbilitySkill(track.id)) continue;
-    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
-    // The queued ones stand now; a banked level adds one when its claim
-    // reaches a level that queues one (from 2 on), keyed by that claim.
-    const entries = [
-      ...Array.from({ length: row.pendingRankUps || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
-      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
-        .filter((entry) => skillLevelQueuesRankUp(track.kind, entry.level)),
-    ];
-    for (const entry of entries.slice(0, perDoor)) out.push({ skillId: track.id, ...entry });
-  }
-  return out;
-}
-
-/**
- * The attribute picks the ledger has queued (SPEC §13.4o, every 4th level of a
- * track with a linked attribute set), offered beside that level's draft on the
- * same terms; banked levels count when the door claims them.
- */
-function rollSkillAttributes(includeBanked = false) {
-  const perDoor = registries.balance.skill.draftsPerCombat;
-  const out = [];
-  for (const track of skillTracks(registries)) {
-    const row = run.skills && run.skills[track.id];
-    if (expandedProgression(run) && track.kind === 'class') continue;
-    const attributeIds = skillLinkedAttributes(registries, track.id);
-    if (!row || !attributeIds.length) continue;
-    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
-    const entries = [
-      ...Array.from({ length: row.pendingAttributePicks || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
-      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
-        .filter((entry) => skillLevelQueuesAttributePick(registries, track.id, entry.level)),
-    ];
-    for (const entry of entries.slice(0, perDoor)) out.push({ skillId: track.id, ...entry, attributeIds });
-  }
-  return out;
-}
-
-/**
- * The skill-feat picks the ledger has queued (SPEC §13.4o, every 2nd level of
- * a track that authors feats), offered with the track's untaken feats open at
- * that level; a level with none open waits in the ledger.
- */
-function rollSkillFeats(includeBanked = false) {
-  const perDoor = registries.balance.skill.draftsPerCombat;
-  const out = [];
-  for (const track of skillTracks(registries)) {
-    const row = run.skills && run.skills[track.id];
-    if (!row) continue;
-    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
-    const entries = [
-      ...Array.from({ length: row.pendingSkillFeats || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
-      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
-        .filter((entry) => skillLevelQueuesSkillFeat(registries, track.id, entry.level)),
-    ];
-    if (expandedProgression(run) && track.kind === 'class') continue;
-    // One door never offers a feat twice (two rows could otherwise share the
-    // only one, and the second could never land), and a pick with no feat
-    // open does not use up the door's slot.
-    const offered = new Set();
-    let rows = 0;
-    for (const entry of entries) {
-      if (rows >= perDoor) break;
-      const featIds = skillFeatOptions(run, track.id, entry.level, registries).filter((id) => !offered.has(id));
-      if (!featIds.length) continue;
-      featIds.forEach((id) => offered.add(id));
-      out.push({ skillId: track.id, ...entry, featIds });
-      rows += 1;
-    }
-  }
-  return out;
-}
-
-/**
- * The class draft the ledger has queued (plan phase 5b): a pick from the
- * class tree per class level climbed, ONE per door — a second roll at the
- * same door would read the same picks and could offer the first row's node
- * again, or the node the first pick excludes (the review of #1192). The rest
- * of the queue waits for the next fight; a level whose tier offers nothing
- * draftable keeps its draft.
- */
-function rollClassDrafts(includeBanked = false) {
-  if (run.classUnequipped) return [];
-  const row = run.skills && run.skills[classSkillId(run.class)];
-  if (!row) return [];
-  const banked = includeBanked ? pendingSkillLevelCount(registries, run, classSkillId(run.class)) : 0;
-  if (!(row.pendingDrafts > 0 || banked > 0)) return [];
-  const level = row.level + banked;
-  const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level });
-  return nodeIds.length ? [{ classId: run.class, level, nodeIds, claimOrdinal: row.pendingDrafts > 0 ? 0 : 1 }] : [];
-}
-
-function beginPendingReward(rewards, { source, after }) {
-  rewards = configuredRewardOffer(rewards, source);
-  rewards = mergeProgressionRewards(run.deferredProgression, rewards, run, {
-    manual: true,
-    characterStart: rewards.characterRewardStart ?? run.level?.level ?? 1,
-  });
-  const { available, deferred } = partitionProgressionRewards(rewards, run);
-  run.pendingReward = pendingRewardCheckpoint(available, { source, after });
-  if (Object.keys(deferred).length) run.deferredProgression = deferred;
-  else delete run.deferredProgression;
-  persistOrWarn();
-  return mountPendingReward();
-}
-
-// SPEC §15.4: a legendary sigil drop for this pool, on its own `sigils`
-// stream. The offer carries `sigilId` only when one dropped, so with the
-// shipped chances of 0 every offer is the one it was before, and no stream moves.
-function sigilOffer(pool) {
-  const sigilId = rollSigilDrop(registries, rng, run, pool);
-  return sigilId ? { sigilId } : {};
-}
-
-function configuredRewardOffer(rewards, source) {
-  const settings = saves.loadMeta().settings || {};
-  return rewardOfferForSource(rewards, source, (key) => settingOn(settings, key));
-}
-
-function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
-  if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
-  // Older pending saves used per-door claim counters. Convert those offers once
-  // to absolute levels before they can be deferred to a different victory.
-  const baseRun = { ...run, skills: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) =>
-    [id, { ...row, level: Math.max(0, row.level - (checkpoint.skillClaims?.[id] || 0)) }])) };
-  checkpoint.rewards = mergeProgressionRewards({}, checkpoint.rewards, baseRun, {
-    manual: pendingLevelCount(registries, run) > 0 || (checkpoint.levelClaims || 0) > 0,
-    characterStart: Math.max(1, (run.level?.level || 1) - (checkpoint.levelClaims || 0)),
-  });
-  return mountRewards(app, {
-    registries,
-    run,
-    saves,
-    rng,
-    rewards: checkpoint.rewards,
-    checkpoint,
-    onClaimLevel: () => claimBankedLevel(registries, run, {
-      pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
-      grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
-    }),
-    onClaimSkill: async (skillId) => {
-      const claimRun = run, claimRegistries = registries;
-      const needsBank = hasClassMastery(claimRun) && skillId.startsWith('class:') && claimRun.classMasteryState.bankable;
-      const candidate = needsBank ? structuredClone(claimRun) : claimRun;
-      const claim = claimBankedSkillLevel(claimRegistries, candidate, skillId);
-      if (claim && needsBank) {
-        const bank = await saves.bankClassMastery(candidate, claimRegistries);
-        if (run !== claimRun || run.pendingReward !== checkpoint) return null;
-        if (!bank.ok) {
-          showSettingsNotice(`Class level was not saved: ${bank.reason}`, 'profile');
-          return null;
-        }
-        adoptClassMasteryProfile(candidate, bank.meta);
-        for (const key of ['skills', 'classMasteryState', 'classRewardLevels', 'classMilestones']) {
-          if (Object.hasOwn(candidate, key)) claimRun[key] = candidate[key];
-        }
-        if (bank.warning) showSettingsNotice(bank.warning, 'profile');
-      }
-      if (claim && skillId === classSkillId(run.class)) {
-        run.classRewardLevels = { ...run.classRewardLevels, [run.class]: claim.after };
-        const added = mergeProgressionRewards(checkpoint.rewards,{skillDrafts:rollSkillDrafts('normal',true),classMilestoneRewards:rollClassMilestoneRewards(registries,rng,run,{banked:pendingSkillLevelCount(registries,run,skillId),meta:saves.loadMeta()})},run);
-        Object.assign(checkpoint.rewards,added);
-      }
-      return claim;
-    },
-    onClaimClassReward: (receiptId,selection) => claimClassMilestoneReward(registries,run,receiptId,selection,{meta:saves.loadMeta(),collectEquipment:ref => {
-      if (ref.startsWith('armament/')) return collectArmament(ref.slice(9),checkpoint.source);
-      const [,classId,id] = ref.split('/');
-      const piece = (registries.masterySource || registries).equipment.armour.find(row => row.classId === classId && row.id === id);
-      if (!piece) return false;
-      run.loadout.boughtArmour ||= [];
-      if (!run.loadout.boughtArmour.some(row => row.classId === classId && row.id === id)) run.loadout.boughtArmour.push({classId,id});
-      return true;
-    }}),
-    onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
-    onCollectArmament: (id) => collectArmament(id, checkpoint.source),
-    onPersist: persistContinuing,
-    onDone: () => {
-      const after = checkpoint.after;
-      const saved = mergeProgressionRewards(run.deferredProgression, unclaimedProgressionRewards(checkpoint), run);
-      if (Object.keys(saved).length) run.deferredProgression = saved;
-      else delete run.deferredProgression;
-      delete run.pendingReward;
-      if (returnTo) {
-        persistOrWarn();
-        app.querySelector('.reward-veil')?.remove();
-        return returnTo();
-      }
-      rewardDoneCount++;
-      if (after === 'advanceAct') advanceAct();
-      else {
-        persistOrWarn();
-        showMap();
-      }
-    },
-  });
-}
-
-function showCharacterProgression(returnTo) {
-  if (isConfiguredRun(run)) return showCharacterSheet(null, { onClose: returnTo });
-  if (run.pendingReward) return mountPendingReward();
-  const settings = saves.loadMeta().settings || {};
-  const rewards = mergeProgressionRewards(run.deferredProgression, {
-    title: 'Level up & rewards', xpGains: { level: 0, tracks: {} },
-    skillDrafts: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('normal', true) : [],
-    skillRankUps: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(true) : [],
-    skillAttributes: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(true) : [],
-    skillFeats: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(true) : [],
-    classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
-    classMilestoneRewards: expandedProgression(run) ? rollClassMilestoneRewards(registries,rng,run,{banked:pendingSkillLevelCount(registries,run,classSkillId(run.class)),meta:saves.loadMeta()}) : [],
-  }, run);
-  const { available, deferred } = partitionProgressionRewards(rewards, run);
-  run.pendingReward = pendingRewardCheckpoint(available, { source: 'character', after: 'map' });
-  run.pendingReward.expanded = true;
-  if (Object.keys(deferred).length) run.deferredProgression = deferred;
-  else delete run.deferredProgression;
-  persist();
-  return mountPendingReward(run.pendingReward, returnTo);
+  // The receipt reflects the settled (rate-scaled) awards, never raw combat XP.
+  // The cinders won are paid here and written into the receipt with the new total, so the spoils line (and a reload of it)
+  // shows the number that was paid and never a live recomputation.
+  const cindersGained = Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
+  run.cinders += cindersGained;
+  const victoryReceipt = { title: victoryTitle(enc), xpBefore, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}),
+    cinders: { gained: cindersGained, total: run.cinders },
+    xpGains: combatXpGains({ awards: [classAward, ...trackAwards], levelGained: levelAward.gained }) };
+  const boss = enc.pool === 'boss';
+  if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
+  if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
+  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, pool: enc.pool, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic });
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
@@ -3646,6 +2397,8 @@ function showRest(openPanel = null, locationId = null) {
     };
     return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave, hud: roomHud(() => showRest()),
       gameProfileRest: { visit, onStrategize: strategize,
+        // Core 2: the deck door is free and is not a service, so it never touches the visit's one pick.
+        deckEditor: deckDoors().rest ? { onOpen: () => showDeckEditor(() => showRest(), true, null, 'shrine') } : null,
         onCommit: commit, onLeave: leave } });
   }
   if (locationId) restLocationId = locationId;
@@ -3740,18 +2493,26 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
-function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null } = {}) {
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false, pool = 'normal' } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
   if (noticeOnly && !progression.length && !victoryReceipt) { persistOrWarn(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
-  if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source });
-  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}) };
+  if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source, pool });
+  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}) };
   persistOrWarn(); return showGameProfileReward();
 }
 
 function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
-  if (pending.victoryReceipt) return mountRewards(app, { registries, run,
+  // Cinders are paid at combat resolution, before this door opens: the header behind it shows the purse the strip's total shows.
+  SyncHudCinders(app, run.cinders);
+  // ONE SCREEN FOR A WON FIGHT (owner requirement: victory to map in two clicks). A combat reward that carries both a victory
+  // receipt and its offer opens the offer door with the spoils strip above the choice: no receipt screen, no Continue first.
+  // Receipt-only cases (the final boss, a profile with no rewards module, a receipt with no offer) keep the receipt screen.
+  const combined = !!(pending.victoryReceipt && !pending.noticeOnly && !pending.offerDone && pending.source === 'combat'
+    && run.gameProfileRewardOffers?.[pending.offerId]);
+  if (combined) return mountGameProfileOfferDoor(pending, { combined: true });
+  if (pending.victoryReceipt) return MountRewards(app, { registries, run,
     rewards: pending.victoryReceipt, saves, receiptOnly: true,
     // Owner, 2026-10-27: earned attribute points are spent here too; each spend is saved at once.
     onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
@@ -3779,17 +2540,68 @@ function showGameProfileReward() {
     // reload after a claim resumes the same door instead of rebuilding rows from the remaining ledger.
     const rankUps = pending.rankUpRows || pendingRankUpRows(registries, run);
     if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
-    else return mountRewards(app, { registries, run, saves, rng,
+    else return MountRewards(app, { registries, run, saves, rng,
       rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rankUps) },
       checkpoint: (pending.rankUpCheckpoint ||= {}),
       onPersist: persistContinuing,
       // Rows and claims are saved at once; Continue marks the door done.
       onDone: () => { pending.rankUpsOffered = true; persistOrWarn(); showGameProfileReward(); } });
   }
+  // The combined door already took its choice (offerDone): what is left of it is the exit chain, with no second door.
+  if (pending.offerDone) return leaveRewardDoor(pending);
+  return mountGameProfileOfferDoor(pending, { combined: false });
+}
+
+// What follows a taken (or skipped) offer: Elite spoils, then level offers, then the map or the next act. Offer ids and order are fixed.
+function leaveRewardDoor(pending) {
+  const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
+  persistRewardChange(() => {
+    const live = run.gameProfilePendingReward || pending;
+    const { offerDone, ...rest } = live;
+    void offerDone;
+    delete run.gameProfilePendingReward;
+    // Elite spoils (rewards.json eliteRelic): a relic choice after the combat door, before any level offers; an empty pool skips it.
+    const eliteId = rest.eliteRelic ? `${rest.offerId}:elite` : '';
+    if (eliteId && GameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
+      run.gameProfilePendingReward = { ...rest, offerId: eliteId, source: 'elite', eliteRelic: false };
+    } else if (rest.levelOffers > 0) {
+      const offerId = `${rest.offerId}:level:${rest.levelOffers}`;
+      gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
+      run.gameProfilePendingReward = { ...rest, offerId, source: 'level', levelOffers: rest.levelOffers - 1 };
+    }
+  });
+  if (run.gameProfilePendingReward) return showGameProfileReward();
+  if (pending.after === 'advanceAct') return advanceAct();
+  showMap();
+}
+
+// W25-R: the card pick of a "Rank up a card" service (a reward option or a shop shelf): option rows of the cards that can rise.
+// Resolves with the chosen instance id; Cancel rejects with an empty message, so the door that asked stays as it was.
+function chooseRankUpCard({ price = '' } = {}) {
+  return new Promise((resolve, reject) => {
+    let picked = null;
+    OpenRankUpCardModal({ registries, run, price, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
+  });
+}
+
+// The offers door. `combined` heads it with the victory title and the spoils strip (cinders, stone, XP, points to spend).
+// The receipt is acknowledged in the same save that leaves the door, so a reload on it shows the same strip and nothing is paid twice
+// (XP, cinders and stones are paid at combat resolution, before any door opens; the receipt is only their record).
+function mountGameProfileOfferDoor(pending, { combined }) {
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
-  mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
-    onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
+  const settings = saves.loadMeta().settings || {};
+  const receipt = combined ? pending.victoryReceipt : null;
+  const spoils = receipt ? VictorySpoils(registries, run, receipt, {
+    settings, onPersist: persistContinuing,
+    onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
+  }) : null;
+  MountGameProfileOffers(app, { registries, run, settings, offer, spoils,
+    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : 'Victory rewards',
+    // W25-R: a "Rank up a card" option asks which card first (option rows); the claim carries the pick, Cancel leaves the offer open.
+    onTake: index => (offer.options[index]?.kind === 'rankUps'
+      ? chooseRankUpCard().then(instanceId => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index, { instanceId })))
+      : persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index))),
     // Owner 2026-10-18: a won card may go straight into the deck, or open the editor with it ready; a won item opens the Armoury.
     // Both doors return into the same exit as Continue, and the claim is already persisted, so a reload mid-editor lands back here.
     onAddToDeck: index => persistRewardChange(() => claimGameProfileRewardToDeck(registries, run, pending.offerId, index, saves.loadMeta().settings || {})),
@@ -3801,17 +2613,14 @@ function showGameProfileReward() {
     // Owner 2026-11-06: the Armoury opened from a reward carries the item, so choosing a slot equips THAT item (no second picker).
     onEditEquipment: (index, back) => showArmoury({ equipItemId: run.gameProfileRewardOffers[pending.offerId]?.options?.[index]?.id || '' }, back),
     onContinue: () => {
+      if (!combined) return leaveRewardDoor(pending);
+      // The choice is made: drop the receipt and mark the door done in one save, then run what follows (level notices, rank-ups, exit chain).
       persistRewardChange(() => {
-        delete run.gameProfilePendingReward;
-        if (pending.levelOffers > 0) {
-          const offerId = `${pending.offerId}:level:${pending.levelOffers}`;
-          gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
-          run.gameProfilePendingReward = { ...pending, offerId, source: 'level', levelOffers: pending.levelOffers - 1 };
-        }
+        const live = run.gameProfilePendingReward || pending;
+        delete live.victoryReceipt;
+        live.offerDone = true;
       });
-      if (pending.levelOffers > 0) return showGameProfileReward();
-      if (pending.after === 'advanceAct') return advanceAct();
-      showMap();
+      showGameProfileReward();
     } });
 }
 
@@ -3827,17 +2636,6 @@ function offerShopCardDestination(receipt) {
     onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); showShop(); },
   });
 }
-// The Master's art is already in the deck; Add to deck keeps it there, Add to library (dismissing keeps the deck) moves
-// exactly that instance. Only reached when the masterArtChoice setting is on.
-function offerMasterArtDestination(receipt) {
-  const instanceId = receipt?.instance?.instanceId;
-  if (!instanceId) return;
-  openShopCardChoice({
-    name: registries.cards.get(receipt.id)?.name || receipt.id,
-    onDeck: () => {}, onDismiss: () => {},
-    onLibrary: () => { movePurchasedCardToLibrary(registries, run, instanceId); persist(); showShop(); },
-  });
-}
 function shopArmamentBought(id) { recordCollectedArmament(id, 'shop'); offerShopEquip(id); }
 function offerShopEquip(id) {
   if (isConfiguredRun(run) && !gameModule(run, 'equipment')) return;
@@ -3846,91 +2644,41 @@ function offerShopEquip(id) {
 }
 
 function showShop() {
-  if (isConfiguredRun(run)) {
-    if (!gameModule(run, 'shops')) return showMap();
-    const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
-    run.gameProfileOpenShop = shopId;
-    // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
-    // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
-    if (configuredShopKind(run, shopId) === 'blacksmith') {
-      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
-      persist(); audio.music('shop');
-      return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
-        onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
-        onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
-    }
-    const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
-    audio.music('shop');
-    return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
-      onTake: (index, quote) => {
-        const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
-        offerShopCardDestination(receipt);
-      },
-      onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
-      onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
+  if (!gameModule(run, 'shops')) return showMap();
+  const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
+  run.gameProfileOpenShop = shopId;
+  // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
+  // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
+  // A trader that keeps a Blacksmith (playtest 2026-11-17 item 42) opens it from its dock; while it is open the visit
+  // routes there (run.gameProfileTraderSmith), and its Leave comes back to the trader with the workshop's stock kept.
+  const traderSmith = run.gameProfileTraderSmith === shopId;
+  if (traderSmith || (configuredShopKind(run, shopId) === 'blacksmith' && !run.gameProfileRewardOffers?.[`shop:${shopId}`])) {
+    if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
+    persist(); audio.music('shop');
+    return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
+      onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
+      onLeave: traderSmith
+        ? () => { delete run.gameProfileTraderSmith; persist(); showShop(); }
+        : () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
+  const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
   audio.music('shop');
-  // A blacksmith visit is a screen of its own (SPEC §14.4); the same door
-  // resumes it after a reload, since the kind rides the stock.
-  // So is a wise master's (SPEC §14.5), by the same door.
-  if (shopStockKind(run.shopStock) === 'master') {
-    return mountMaster(app, {
-      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
-      // A lesson's cards are rolled on the run's own `shopOffers` stream, at
-      // the reward door's odds (equal under Chaos Rewards).
-      rng,
-      onChanged: () => persist(),
-      onArmamentPurchased: shopArmamentBought,
-      onArtPurchased: offerMasterArtDestination,
-      onLeave: () => {
-        run.shopStock = null;
-        persist();
-        showMap();
-      },
-    });
-  }
-  if (shopStockKind(run.shopStock) === 'blacksmith') {
-    return mountBlacksmith(app, {
-      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
-      onChanged: () => persist(),
-      onArmamentPurchased: shopArmamentBought,
-      onCardPurchased: offerShopCardDestination,
-      onLeave: () => {
-        run.shopStock = null;
-        persist();
-        showMap();
-      },
-    });
-  }
-  mountShop(app, {
-    registries,
-    run,
-    hud: roomHud(showShop),
-    meta: saves.loadMeta(),
-    onChanged: () => persist(),
-    onArmamentPurchased: shopArmamentBought,
-    // A full rest bought at the market (SPEC §14.3): the inn's own visit on
-    // the run's streams, with the same heal scale and refill counts the Rest
-    // screen's visit is given (showRest).
-    restAtInn: (quote) => {
-      const healMult = 1;
-      const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
-      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts, restBonus: restRecoveryBonus() });
+  // The dock holds to the 3-6 options rule, Sell counted, for a stock saved before traders varied too.
+  const dock = ConfiguredTraderDock(run, offer.options.map(option => option.kind), { smith: ConfiguredTraderOffersSmith(run, shopId) });
+  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop), shelfKinds: dock.kinds,
+    onSmith: dock.smith ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
+    onTake: (index, quote) => {
+      // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
+      if (offer.options[index]?.kind === 'rankUps') {
+        return chooseRankUpCard({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
+          try { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist(); } finally { showShop(); }
+        }, () => {});
+      }
+      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
+      offerShopCardDestination(receipt);
     },
-    // The market's quest event (SPEC §14.3): paid and marked seen, then the
-    // visit closes exactly as Leave closes it, and the event door opens once.
-    enterQuestEvent: (quote) => {
-      const { eventId } = commitQuestEvent(registries, run, quote);
-      run.shopStock = null;
-      persist();
-      return showEvent(eventId);
-    },
-    onLeave: () => {
-      run.shopStock = null;
-      persist();
-      showMap();
-    },
-  });
+    onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
+    onLeave: () => { delete run.gameProfileOpenShop; delete run.gameProfileTraderSmith; if (shopStockKind(run.shopStock) === 'blacksmith') run.shopStock = null; persist(); showMap(); } });
 }
 
 function showEvent(eventId) {
@@ -3943,17 +2691,29 @@ function showEvent(eventId) {
     meta: saves.loadMeta(),
     rng,
     eventId,
-    onDone: () => {
-      if (run.combatEntered) {
-        // A startCombat effect stored the encounter id (string form).
-        const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
-        run.combatEntered = null;
-        return enterCombat(run.mapNodeId, encounterId);
-      }
-      persist();
-      showMap();
-    },
+    // Playtest 2026-11-17 item 41: what the choice handed over opens the shop's receive modal, one item at a time.
+    // Equipping an armament leaves for the Armoury, and its way back is this event's own way on: the what-changed
+    // receipt shows first, then the screen's own cleanup runs (`release`) before the Armoury replaces it.
+    onItemsReceived: (items, { receipt, release }) => OfferReceivedItems({ registries, run, items, settings: saves.loadMeta().settings || {},
+      onPersist: persist,
+      onEquip: id => {
+        persist();
+        const toArmoury = () => { release(); showArmoury({ equipItemId: id }, leaveEvent); };
+        if (!receipt(toArmoury)) toArmoury();
+      },
+      onDone: () => receipt() }),
+    onDone: () => leaveEvent(),
   });
+  function leaveEvent() {
+    if (run.combatEntered) {
+      // A startCombat effect stored the encounter id (string form).
+      const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
+      run.combatEntered = null;
+      return enterCombat(run.mapNodeId, encounterId);
+    }
+    persist();
+    showMap();
+  }
 }
 
 // Dev screenshot hook (?shot=map|combat|fx|death): boot straight into a seeded
@@ -4077,7 +2837,7 @@ if (shotState) {
       relics: row.relics,
       sigils: row.sigils,
       consumables: row.consumables,
-      pendingReward: row.gameProfilePendingReward || row.pendingReward || null,
+      pendingReward: row.gameProfilePendingReward || null,
       offers: row.gameProfileRewardOffers || null,
     }) : null;
     return { live: snapshot(run), saved: snapshot(saves.loadRun(registries, activeSlot)) };
@@ -4117,9 +2877,7 @@ if (shotState) {
       savedOutsideCombat: ((saves.loadMeta() || {}).settings || {}).useRestorativeFlasksOutsideCombat ?? null,
     };
   };
-  // THE SPOILS, read-only, same species again — tools/reward-collect-drive.mjs
-  // proves WHEN an armament becomes owned (meta.found) and stored (the run's
-  // loadout) around the reward menu, and a shot boot runs on MEMORY storage
+  // THE SPOILS, read-only, same species again — a shot boot runs on MEMORY storage
   // (pickStorage above), so no localStorage read can witness those writes —
   // holdconfirm's own sentence applies: "it committed" is a claim about
   // storage state, not about which screen is mounted. This reads the manager's
@@ -4142,8 +2900,8 @@ if (shotState) {
     savedDeck: [...((saved || {}).deck || [])].map((card) => card.cardId),
     smithingStones: run?.smithingStones ?? null,
     savedSmithingStones: saved?.smithingStones ?? null,
-    pendingReward: run?.pendingReward ? structuredClone(run.pendingReward) : null,
-    savedPendingReward: saved?.pendingReward ? structuredClone(saved.pendingReward) : null,
+    pendingReward: run?.gameProfilePendingReward ? structuredClone(run.gameProfilePendingReward) : null,
+    savedPendingReward: saved?.gameProfilePendingReward ? structuredClone(saved.gameProfilePendingReward) : null,
     done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
@@ -4173,678 +2931,29 @@ if (shotState) {
 // already drawn on placeholders. A single file and the source tree pin
 // nothing, and this calls showFirstScreen() at once.
 function showFirstScreen() {
-if (shotState === 'combat-test') {
-  mountCombatTest(app, { params: shotParams, meta: activeMeta });
-} else if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'master' || shotState === 'reward') {
-  // Suppress the first-run tutorial so captures show a clean board.
-  const shotMeta = saves.loadMeta();
-  shotMeta.settings.seenTutorial = true;
-  saves.saveMeta(shotMeta);
-  // `?shotSeed=<string>` — ONE MAP IS NOT THE MAP (EldenSpire#28).
-  //
-  // Every reachability measurement this repo has taken of the act map was taken
-  // on the seed literal that used to sit here, so "0 covered at 390x844" was a
-  // fact about ONE map graph. Node positions are a function of the seed; a node
-  // trapped under a floating button is a coincidence between the two; and a
-  // coincidence measured once is an anecdote. tools/mapreach.mjs sweeps seeds
-  // because of this line, and the default is unchanged so every existing
-  // capture and every existing sweep still means what it meant.
-  //
-  // Read through `shotParams`, the single const declared beside pickStorage() —
-  // NOT a fresh location.search read, which the note up there forbids, for the
-  // reason it gives: that const IS the gate's reach.
-  const shotClass = shotParams.get('shotClass');
-  newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
-  // In-memory QA fixture: earned attribute points. Feats come from actual claims.
-  if (shotParams.get('shotProgression') === '1') {
-    awardLevelXp(registries, run, levelXpToNext(registries, 1), { pointsPerLevel: 2 });
-    showMap();
+  if (!shotState) return showFirstScreenNow(null);
+  // A posed `?shot=` state waits for the lazily loaded dev modules.
+  devModules.then(([shots, kit]) => { devKit = kit; showFirstScreenNow(shots.createShotStates); });
+}
+function showFirstScreenNow(createShotStates) {
+  // The posed `?shot=` states live in src/dev/shotStates.js. The table is built
+  // here, on each call, so the ctx getters see the bindings as they stand now.
+  const shotStates = shotState ? createShotStates({
+    saves, shotParams, bootStorage, app,
+    newRun, showMap, enterCombat, startFight, showEvent, persist, showRest, showShop,
+    beginGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
+    showSettings, showStartupGate, showCustomize,
+    getRun: () => run, getRng: () => rng, getRegistries: () => registries,
+    setActiveMeta: (value) => { activeMeta = value; },
+    setActiveSettings: (value) => { activeSettings = value; },
+    setShotPoiseMaxOverride: (value) => { shotPoiseMaxOverride = value; },
+  }) : null;
+  const pose = shotStates && Object.hasOwn(shotStates, shotState) ? shotStates[shotState] : null;
+  if (pose) {
+    pose();
+    return;
   }
-  // `?shotNewerSlot=<n>` — STAND BESIDE A CLIMB FROM A NEWER BUILD. Slot n
-  // gets slot 1's own bytes (the real writer's, just persisted by newRun) with
-  // the schema one ahead, so the in-run Load door meets exactly what a newer
-  // build leaves behind (SPEC §3.12). Memory storage only: a shot boot's
-  // storage is the stub, so no durable byte is involved.
-  // tools/slot-load-door.mjs is the reader.
-  const shotNewerSlot = Number(shotParams.get('shotNewerSlot'));
-  if (Number.isInteger(shotNewerSlot) && shotNewerSlot > 1 && shotNewerSlot <= SLOTS) {
-    const bytes = JSON.parse(bootStorage.getItem(runKey(1)));
-    bootStorage.setItem(runKey(shotNewerSlot), JSON.stringify({ ...bytes, schemaVersion: bytes.schemaVersion + 1 }));
-    // The same rewrite on demand, for a newer build in another tab writing a
-    // slot while this tab's load confirmation is still open.
-    window.__shotAgeSlot = (slot) => {
-      const aged = JSON.parse(bootStorage.getItem(runKey(slot)));
-      bootStorage.setItem(runKey(slot), JSON.stringify({ ...aged, schemaVersion: aged.schemaVersion + 1 }));
-    };
-  }
-  // `?shotRefusedSlot=<n>` — STAND BESIDE A CLIMB THIS BUILD REFUSES. Slot n
-  // gets slot 1's bytes with a seat order no registry holds: slotSummary
-  // parses it (the picker offers it as a climb), loadRun's content validation
-  // refuses and archives it (SPEC §3.12). Memory storage only, as above.
-  // tools/slot-load-door.mjs is the reader.
-  const shotRefusedSlot = Number(shotParams.get('shotRefusedSlot'));
-  if (Number.isInteger(shotRefusedSlot) && shotRefusedSlot > 1 && shotRefusedSlot <= SLOTS) {
-    const bytes = JSON.parse(bootStorage.getItem(runKey(1)));
-    bootStorage.setItem(runKey(shotRefusedSlot), JSON.stringify({ ...bytes, seatOrder: ['no-such-seat'] }));
-  }
-  if (shotState === 'combat' && shotParams.get('shotKit') === '1') {
-    configureArmamentKitPreview(registries, run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
-  }
-  // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
-  //
-  // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A
-  // DIFFERENT MAXIMUM.
-  //
-  // A REACH STATE, exactly the shape and reason as `?shotAt` and `?shotEvent`
-  // below. His bar-scaling rule ("the size of that bar should scale depending on
-  // the max total") is a claim about how the HUD behaves ACROSS maxima, and no
-  // instrument could vary a maximum: every capture this repo has ever taken of
-  // the HUD was taken at the reaver's own numbers. One max is not the scale, in
-  // the same way one map is not the map. These are the levers tools/hudbars.mjs
-  // and tools/hudparity.mjs sweep, and the proof that a bar's length tracks the
-  // number is worth nothing without them.
-  //
-  // They move the RUN's fields, which are the same fields a curse and an armour
-  // mod move (actions.js runMods, loadout.js) — so a value enters through the
-  // door a real maximum enters, never through the renderer.
-  //
-  // MOVED HERE 2026-08-22 (E9 / #254) FROM INSIDE THE `combat|fx` BRANCH, and
-  // the move is the point: the map now draws the SAME HUD through the same
-  // renderer, and a lever that reaches one screen and not the other cannot ask
-  // whether the two agree — the instrument would be comparing a posed combat
-  // screen against an unposed map. One site, every `?shot=` state that shows a
-  // HUD. THE WIDENING IS REAL AND DELIBERATE: states that never read these
-  // params before (reward, shop, rest, event, death) now do. They are dev-only
-  // reach params on a boot that cannot touch a save, and a per-state allow-list
-  // here would be a second copy of the state list above.
-  const shotMaxHp = Number(shotParams.get('shotMaxHp'));
-  if (Number.isFinite(shotMaxHp) && shotMaxHp > 0) {
-    run.maxHp = Math.floor(shotMaxHp);
-    run.hp = Math.min(run.hp, run.maxHp);
-  }
-  // Current mana enters through the run, before combat entity creation; the
-  // renderer never receives a fabricated value.
-  const shotMana = Number(shotParams.get('shotMana'));
-  if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
-    run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
-  }
-  const shotMaxMana = Number(shotParams.get('shotMaxMana'));
-  if (Number.isFinite(shotMaxMana) && shotMaxMana > 0) {
-    run.maxMana = Math.floor(shotMaxMana);
-    run.mana = Math.min(run.mana, run.maxMana);
-  }
-  const shotMaxStamina = Number(shotParams.get('shotMaxStamina'));
-  if (Number.isFinite(shotMaxStamina) && shotMaxStamina > 0) {
-    run.maxStamina = Math.floor(shotMaxStamina);
-    run.stamina = Math.min(run.stamina, run.maxStamina);
-  }
-  // `newRun()` ends in `startClimb()` -> `showMap()`, so on the map state the
-  // screen is ALREADY DRAWN by the time the lines above run. Re-draw it, or the
-  // photograph shows the un-posed character while the URL says otherwise — the
-  // exact silent-lie shape that cost a whole set of E9 frames on 2026-08-22
-  // (gamedesign/sunna/log/2026/2026-08-22_the-caps-that-were-never-reachable.md).
-  // Guarded on a door actually having fired so an ordinary `?shot=map` mounts
-  // once, as it always has.
-  const posedPools = ['shotMaxHp', 'shotMana', 'shotMaxMana', 'shotMaxStamina']
-    .some((k) => shotParams.has(k));
-  if (posedPools && shotState === 'map') showMap();
-  // `?shotCarried=<flaskId,...>` — CARRY POTIONS ON THE MAP. The map pose
-  // carries none, so its Potions minis and the run HUD's carried icons had
-  // nothing to open; tools/flask-menu-probe.mjs compares their menus with the
-  // shared plan. Unknown ids are skipped; the map is redrawn, as above.
-  const shotCarried = shotState === 'map' ? shotParams.get('shotCarried') : null;
-  if (shotCarried) {
-    run.flasks = shotCarried.split(',').filter((id) => registries.flasks.has(id)).map((flaskId) => ({ flaskId }));
-    showMap();
-  }
-  // `?shotAt=<nodeId|floor:N>` — STAND SOMEWHERE ON THE MAP.
-  //
-  // A REACH STATE, same shape and same reason as `?shotEvent` above. Every map
-  // measurement this repo has ever taken was taken at the entrance row, because
-  // that is the only map position any instrument could open — so "the framing
-  // hides a next-step option" was 12 numbers about one screen out of thirteen.
-  // The framing MID-CLIMB is a different problem with a different shape (the
-  // fan-out from one node, not the spread of the doors), and it could not be
-  // measured at all. `floor:N` picks a node on that floor rather than naming an
-  // id, so a sweep can walk the act without knowing the graph first.
-  //
-  // `?shotStorage=full` — STAND AT THE CAP.
-  //
-  // A REACH STATE, the same shape and reason as `?shotMaxHp`: the full-bag
-  // refusal (the ninth armament against an 8-slot cap) is a claim about how
-  // the reward menu behaves AT the storage boundary, and no instrument could
-  // fill a bag — a fresh shot run always has room, so every capture ever
-  // taken of the armament row was taken with slots free, and "refused
-  // legibly" and "silently claimed-but-not-stored" read identically (#290
-  // review at b6b7df0: collectArmament ignored addToStorage's false and
-  // could poison meta.found with a piece the bag refused). The bag fills
-  // THROUGH THE REAL WRITER — addToStorage, the same door every real drop
-  // enters, its own cap and duplicate rules deciding what fits — never by
-  // assigning the array.
-  if ((shotState === 'map' || shotState === 'reward') && shotParams.get('shotStorage') === 'full') {
-    const cap = registries.balance.equipment.storageSlots || 8;
-    for (const piece of registries.equipment.armaments) {
-      if ((run.loadout.storage || []).length >= cap) break;
-      addToStorage(run.loadout, piece.id, cap);
-    }
-  }
-  const shotAt = shotState === 'map' ? shotParams.get('shotAt') : null;
-  if (shotAt) {
-    const g = run.mapGraph;
-    const byFloor = /^floor:(\d+)$/.exec(shotAt);
-    const at = byFloor
-      ? Object.values(g.nodes).filter((n) => n.floor === Number(byFloor[1])).map((n) => n.id)[0]
-      : (g.nodes[shotAt] ? shotAt : null);
-    if (!at) throw new Error(`?shotAt=${shotAt}: no such node in this act. Use a node id (n4_2) or floor:N — a silent fallback here would report a framing measured somewhere else.`);
-    run.mapNodeId = at;
-    run.floor = g.nodes[at].floor;
-    run.path = [at];
-    showMap();
-  }
-  // `?shotWalk=<n>` — STAND SOMEWHERE WITH A TRAIL BEHIND YOU.
-  //
-  // A REACH STATE, and the third of the same shape (`?shotEvent`, `?shotAt`).
-  // `?shotAt` teleports: it sets `run.path = [at]`, a path of length one, which
-  // is the right answer for a FRAMING measurement and the wrong one for
-  // everything about fog. Fog is a function of the trail — "previously visited
-  // locations remain revealed" — so a map posed with no history can only ever
-  // photograph the first frame of it, and the one claim worth photographing is
-  // that the light MOVES and the trail STAYS.
-  //
-  // It walks the graph rather than naming nodes: from the first entrance, take
-  // the lowest-numbered `next` each step, n times. Deterministic given the seed,
-  // so two runs of the camera produce the same picture; and it uses the graph's
-  // own edges, so a walk this produces is a walk a player could have taken —
-  // a hand-written path list would eventually name an edge that does not exist
-  // and pose a state the game cannot reach.
-  const shotWalk = shotState === 'map' ? shotParams.get('shotWalk') : null;
-  if (shotWalk != null) {
-    if (shotAt) throw new Error('?shotWalk and ?shotAt both set: they pose the same thing two ways. Use one — shotAt teleports, shotWalk leaves a trail.');
-    const steps = Number(shotWalk);
-    if (!Number.isInteger(steps) || steps < 1) {
-      throw new Error(`?shotWalk=${shotWalk}: needs a positive whole number of steps. A silent fallback would photograph a different map than the one asked for.`);
-    }
-    const g = run.mapGraph;
-    let id = [...g.startIds].sort()[0];
-    const walked = [id];
-    for (let i = 1; i < steps; i++) {
-      const next = [...(g.nodes[id].next || [])].sort();
-      // Running out of graph is LOUD. A walk that quietly stopped short would
-      // hand back a screenshot of floor 4 labelled floor 9, and the reader would
-      // have no way to tell.
-      if (!next.length) throw new Error(`?shotWalk=${steps}: this act runs out at step ${i} (${id} has nowhere to go). The boss is the last node; ask for fewer steps.`);
-      id = next[0];
-      walked.push(id);
-    }
-    run.mapNodeId = id;
-    run.floor = g.nodes[id].floor;
-    run.path = walked;
-    showMap();
-  }
-  if (shotState === 'death') {
-    // A run that ended on floor 4 with a few fights behind it, so the stats
-    // table has real numbers under the title instead of a row of zeroes.
-    run.floor = 4;
-    run.stats.fightsWon = 3;
-    run.stats.damageDealt = 214;
-    run.stats.damageTaken = 96;
-    run.stats.lastHit = { sourceId: 'e1', sourceName: 'Ash Warden', move: 'Cleave', amount: 14 };
-    run.hp = 0;
-    mountGameOver(app, { registries, game: run, victory: false, earned: [], onTitle: showTitle, onHistory: showHistory, onRunAgain: showTitle });
-  } else if (shotState === 'victory') {
-    // The other end of the same door as ?shot=death: the run won, the stats
-    // real, the deck the class's own — so the victory face is photographed
-    // rather than trusted from the defeat one.
-    run.floor = run.mapGraph ? run.mapGraph.floors : 12;
-    run.stats.fightsWon = 11;
-    run.stats.damageDealt = 640;
-    run.stats.damageTaken = 212;
-    mountGameOver(app, { registries, game: run, victory: true, earned: [{ name: 'Twinblade', kind: 'armament' }], onTitle: showTitle, onHistory: showHistory, onRunAgain: showTitle });
-  } else if (shotState === 'boss') {
-    // Straight into the act-1 boss; the intro card is held for the camera.
-    enterCombat(run.mapGraph.startIds[0], 'bossOmen');
-  } else if (shotState === 'event') {
-    // A REACH STATE, and the precedent is `rest` directly below — added for the
-    // identical reason and quoting its own words: "one state for the one screen
-    // being fixed, so the fix has a picture instead of an assertion." The event
-    // screen is one of the screens no instrument this repo owns can open, which
-    // is why 24 of 24 of its choice bars sat under the tap floor with nothing
-    // ever regressing against it (Sunna's run-loop sweep). That COUNT is the
-    // census card and is not touched here.
-    //
-    // `graveOfTheNameless` on purpose: three choices, and the last one is
-    // "Leave" sitting 9-11 px under a choice with a real and irreversible
-    // consequence. It is the exact adjacency the fix is about, so the picture
-    // shows the thing rather than a friendlier event that happens to have three
-    // bars. `?shotEvent=<id>` overrides it, through the one `shotParams` const.
-    const evId = shotParams.get('shotEvent') || 'graveOfTheNameless';
-    showEvent(evId);
-  } else if (shotState === 'rest' || shotState === 'smith') {
-    if (isConfiguredRun(run)) {
-      const node = Object.values(run.mapGraph.nodes).find(row => row.type === 'shrine');
-      if (!node) throw new Error('Configured rest screenshot requires an authored rest node');
-      run.mapNodeId = node.id; run.floor = node.floor;
-      run.path = screenshotRoutePath(run.mapGraph, node.id);
-      // A bounded, ephemeral earned-point fixture goes through the production
-      // XP/claim ledger; arbitrary unearned attribute allocations are not posed.
-      const rawPoints = shotParams.get('shotRestPoints');
-      if (rawPoints !== null) {
-        const points = Number(rawPoints);
-        if (!Number.isInteger(points) || ![0, 1].includes(points)) throw new Error('?shotRestPoints: expected exactly 0 or 1');
-        if (points === 1) {
-          bankLevelXp(registries, run, levelXpToNext(registries, run.level.level));
-          claimBankedLevel(registries, run, { pointsPerLevel: 1 });
-        }
-      }
-      if (shotParams.get('shotRestState') === 'wounded') {
-        run.hp = Math.max(1, Math.floor(run.maxHp * .6)); run.mana = 0; run.stamina = 0;
-        if (run.flaskCharges) { run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0; }
-      }
-      if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
-      persist(); showRest(); return;
-    }
-    // A REACH STATE, not the denominator. Constantine could not scroll the
-    // Smith grid on a phone; the reason nobody caught it is that the Shrine is
-    // one of seven player-facing screens no instrument we own can open, so
-    // there was never a baseline to regress against. That COUNT — sixteen
-    // screens mounted against nine ?shot= states — is Bjorn's card and is not
-    // touched here. This is one state for the one screen being fixed, so the
-    // fix has a picture instead of an assertion.
-    //
-    // POSED MID-CLIMB ON PURPOSE, because the defect is a function of HOW MANY
-    // cards the grid holds and a fresh 10-card deck may not overflow at all.
-    // Ten more from the class's own authored pool, in authored order — no rng,
-    // so the grid photographs identically every run — gives the twenty-card
-    // deck the bug was reproduced on.
-    run.floor = 8;
-    // An isolated wounded arrival exercises the real recovery preview and
-    // commitment; it never touches the player's durable saves.
-    if (shotParams.get('shotRestState') === 'wounded') {
-      run.hp = Math.max(1, Math.floor(run.maxHp * .6));
-      run.mana = 0;
-    }
-    run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
-    // `?shotSmithingStones=0|1` — stand on both sides of the Smith affordability
-    // edge without writing durable storage. The accepted values are deliberately
-    // closed to the owner-approved issue #211 economy: this reach door cannot
-    // pose a purse the shipped faucet/cost table cannot currently produce.
-    const shotSmithingStonesRaw = shotParams.get('shotSmithingStones');
-    if (shotSmithingStonesRaw != null) {
-      const shotSmithingStones = Number(shotSmithingStonesRaw);
-      if (!Number.isInteger(shotSmithingStones) || ![0, 1].includes(shotSmithingStones)) {
-        throw new Error(`?shotSmithingStones=${shotSmithingStonesRaw}: expected exactly 0 or 1. A silent fallback would photograph the wrong affordability state.`);
-      }
-      run.smithingStones = shotSmithingStones;
-    }
-    // AND A PURSE THAT CAN PAY, for the reason `?shot=shop` twelve lines below
-    // already states about its own remove grid: a fresh run has earned no
-    // point, so the Level up panel this state now has to reach mounts LOCKED,
-    // and a photograph of a greyed-out feature is a green on nothing. Same
-    // posing discipline as the twenty-card deck above — enough to reach the
-    // control, no rng, identical every run. Five points waiting on the ledger
-    // (plan phase 6): what five levels grant, without the fights.
-    run.level.unspentPoints = Math.max(run.level.unspentPoints || 0, 5);
-    // `?shot=smith` — THE SAME SHRINE WITH THE UPGRADE TRANSACTION OPEN. The
-    // Smith is a modal over the Shrine, not a screen of its own, so the review
-    // of 2026-09-11 could not photograph it: `?shot=smith` was not a state and
-    // fell through to the title. One Stone so the upgrade is affordable and
-    // the modal opens on an offer, not a refusal.
-    if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
-    showRest(shotState === 'smith' ? 'smith' : null);
-  } else if (shotState === 'shop') {
-    if (isConfiguredRun(run)) {
-      if (!gameModule(run, 'shops')) throw new Error('Configured shop screenshot requires shops to be enabled');
-      const nodes = Object.values(run.mapGraph.nodes);
-      const node = nodes.find(row => row.actualType === 'shop' || row.resolved?.kind === 'merchant') || run.mapGraph.nodes[run.mapGraph.startIds[0]];
-      run.mapNodeId = node.id; run.floor = node.floor;
-      run.path = screenshotRoutePath(run.mapGraph, node.id);
-      run.cinders = 999;
-      run.gameProfileOpenShop = `${run.actNumber}:${node.id}`;
-      persist(); showShop(); return;
-    }
-    // A REACH STATE, and the fourth of the same shape (`?shotEvent`, `?shotAt`,
-    // `?shot=rest`). The merchant is one of the screens no instrument this repo
-    // owns can open, which is why "burn a card out of the deck for good, one
-    // tap, no confirm" sat in shipped code with nobody's number against it —
-    // the same reason the Shrine's Smith grid overflowed a phone unseen.
-    //
-    // POSED WITH A DECK WORTH REMOVING FROM and a purse that can pay: the
-    // remove grid only renders at `cinders >= removeCost && deck.length > 1`,
-    // so a fresh run (0 cinders) mounts the screen with the one control this
-    // state exists to reach ABSENT — a green on nothing, which is the
-    // wrong-place empty SOP 2 calls malformed.
-    run.floor = 8;
-    run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
-    run.cinders = 999;
-    // AND ONE FLASK IN THE POSE (E2 / #247), same discipline as ?shot=combat's
-    // two: the SELL bar's shelf is the player's own goods, and a fresh run
-    // owns nothing the merchant prices (the starter relic is deliberately
-    // unpriced) — so without this line the one control `shopSell` arms is
-    // ABSENT on the only screen the census can open, and "not wired" and
-    // "nothing to sell" read identically. One flask, authored id, no rng.
-    run.flasks.push({ flaskId: 'crimsonFlask' });
-    run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
-    if (new URLSearchParams(location.search).has('shotLibrary')) {
-      const books = registries.consumables.all().filter((row) => row.kind === 'skillBook');
-      run.consumables = Object.fromEntries(books.map((book) => [book.id, 1]));
-      run.shopStock.offerings = ['skillBooks'];
-      run.shopStock.skillBooks = books.map((book) => ({ id: book.id, cost: book.cost }));
-    }
-    showShop();
-  } else if (shotState === 'blacksmith') {
-    // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the
-    // smith's visit, posed so each service has something to act on — a purse
-    // of stones and cinders, a carried katana (an art to lift out and an
-    // armament to cut a slot into) and a sigil to set. Which offerings are
-    // out is the harness's own settings door (?shotSettings, Advanced → Shops).
-    run.cinders = 2000;
-    run.smithingStones = 12;
-    if (isConfiguredRun(run)) {
-      // A Core run reaches the Blacksmith through the configured shop door: pose the node as `?shot=shop` does, and
-      // showShop opens the Blacksmith because the stock rides run.shopStock.
-      if (!gameModule(run, 'shops')) throw new Error('Configured blacksmith screenshot requires shops to be enabled');
-      const node = Object.values(run.mapGraph.nodes).find(row => row.actualType === 'shop' || row.resolved?.kind === 'merchant') || run.mapGraph.nodes[run.mapGraph.startIds[0]];
-      run.mapNodeId = node.id; run.floor = node.floor;
-      run.path = screenshotRoutePath(run.mapGraph, node.id);
-      run.gameProfileOpenShop = `${run.actNumber}:${node.id}`;
-    }
-    run.loadout.storage.push('katana');
-    run.sigils = [registries.sigils.all()[0].id];
-    run.shopStock = buildBlacksmithStock(registries, rng, run);
-    showShop();
-  } else if (shotState === 'master') {
-    // THE WISE MASTER (SPEC §14.5), a reach state beside `?shot=blacksmith`:
-    // a master visit posed so each service has something to act on — a
-    // purse of cinders, a skill book to sell, and the first two tracks of the
-    // master the visit picks at level 2 (a respec to make). Which offerings
-    // are out is the harness's own settings door (?shotSettings, Advanced →
-    // Shops).
-    run.cinders = 2000;
-    run.consumables = { [registries.consumables.all().find((def) => def.kind === 'skillBook').id]: 1 };
-    run.shopStock = buildMasterStock(registries, rng, run);
-    for (const skillId of registries.shops.masters.find((row) => row.id === run.shopStock.masterId).skills.slice(0, 2)) {
-      run.skills = { ...run.skills, [skillId]: { xp: 0, level: 2, pendingDrafts: 0 } };
-    }
-    showShop();
-  } else if (shotState === 'reward') {
-    if (shotParams.get('shotReward') === 'configured') {
-      if (!isConfiguredRun(run)) throw new Error('Configured reward shot requires a configured game profile.');
-      // Enter the production offer/save/renderer callbacks; do not pose an
-      // alternate UI or grant a preselected option for this reach state.
-      beginGameProfileReward({ source: 'combat', after: 'map' });
-    } else {
-    // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
-    // as `?shot=rest` and `?shot=shop` above: a screen without a ?shot= state
-    // is a screen no instrument owns — release-shots derives its denominator
-    // from the states this file declares and screenreach can only reach a
-    // screen that has one.
-    //
-    // POSED WITH EVERY KIND PRESENT, AUTHORED, NO RNG IN THE OFFER — the menu
-    // photographs identically every run, at its max edge (five rows: cinders,
-    // a three-card choice, flask, armament, relic). `?shotReward=empty` poses
-    // the other edge (no kinds, bare Continue), because a menu's zero case is
-    // where a derivation quietly draws furniture for absent rewards.
-    // The armament is authored, not rolled: the pose wants the same five rows
-    // in every capture, and a rolled id would vary with the seed. Collection
-    // still runs through the SAME collector the real sites hand in — the roll
-    // is pure now (rollDrop), so what a pose and a real reward share is the
-    // whole take/apply path, and what they differ in is only where the offer's
-    // ids came from. tools/reward-collect-drive.mjs exercises the real
-    // rollDrop → mountRewards door; this pose is for photographs.
-    const pose = shotParams.get('shotReward') || 'full';
-    const smithingStoneReceipt = pose === 'empty'
-      ? null
-      : grantSmithingReward(registries, run, 'elite', 'shot:reward', rng);
-    // `?shotReward=draft` poses a skill draft in the card row's seat (plan
-    // phase 4b): the ledger is given the queued draft the row spends, so the
-    // take runs the real door, and the cards are the pool's first three of
-    // the track's schools — authored order, no roll.
-    // THE PROGRESSION PANEL WANTS LEDGERS TO DRAW (2026-09-20): the pose gives
-    // the run an authored character level and three touched tracks, so the
-    // bars, the levels and the gain lines photograph identically every run —
-    // the same reason the offer's ids are authored rather than rolled. The
-    // draft pose's own ledger write below still wins for its track.
-    if (pose !== 'empty') {
-      run.level = { xp: 40, level: 1, unspentPoints: 0 };
-      run.skills = {
-        'item:blade': { xp: 18, level: 2, pendingDrafts: 0 },
-        'armour:heavy': { xp: 6, level: 1, pendingDrafts: 0 },
-        [`class:${run.class}`]: { xp: 20, level: 1, pendingDrafts: 0 },
-        'item:shield': { xp: 4, level: 0, pendingDrafts: 0 },
-        ...(run.skills || {}),
-      };
-    }
-    if (pose === 'level') {
-      run.level.xp = levelXpToNext(registries, 1) + 25;
-      run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 2) + 18, level: 2, pendingDrafts: 0 };
-    }
-    if (pose === 'refill') {
-      // Two banked levels on each track, so the refill pose shows a second Level up.
-      run.level.xp = levelXpToNext(registries, 1) + levelXpToNext(registries, 2) + 95;
-      run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 0) + skillXpToNext(registries, 'weapon', 1) + 55, level: 0, pendingDrafts: 0 };
-    }
-    if (pose === 'draft') {
-      run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
-    }
-    const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, 'item:blade')) : null;
-    const shotReceipt = pose === 'receipt' ? { total: 65, rows: [
-      { kind: 'power', amount: 25 },
-      { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 12 },
-      { kind: 'enemy', name: 'Ash Warden', level: 3, amount: 18 },
-      { kind: 'enemy', name: 'Blight Hound', level: 1, amount: 4 },
-      { kind: 'enemy', name: 'Ash Warden', level: 2, amount: 3 },
-      { kind: 'enemy', name: 'Blight Hound', level: 1, amount: 2 },
-      { kind: 'enemy', name: 'Ash Warden', level: 1, amount: 1 },
-    ] } : pose === 'level' ? { total: levelXpToNext(registries, 1) - 15, rows: [
-      { kind: 'power', amount: levelXpToNext(registries, 1) - 55 },
-      { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 12 },
-      { kind: 'enemy', name: 'Ash Warden', level: 3, amount: 28 },
-    ] } : { total: 24, rows: [
-      { kind: 'power', amount: 16 }, { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 8 },
-    ] };
-    const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
-      title: 'VICTORY',
-      cinders: 32,
-      ...(pose === 'draft' ? {
-        skillDrafts: [{ skillId: 'item:blade', level: 2, cardIds: registries.classes.get(run.class).cardPool.filter((id) => (registries.cards.get(id).tags || []).some((t) => draftSchools.has(t))).slice(0, 3) }],
-        cardIds: [],
-      } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
-      flaskId: 'crimsonFlask',
-      // `?shotReward=bossRelics` poses a boss victory's relic choice (SPEC §6).
-      ...(pose === 'bossRelics' ? { relicChoices: ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'] } : { relicId: 'forsakenMedallion' }),
-      armamentId: 'greatsword',
-      smithingStoneReceipt,
-      // What the fight paid, authored like the rest of the pose.
-      xpGains: { level: shotReceipt.total, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
-      xpReceipt: shotReceipt,
-      ...(pose === 'level' ? {
-        levelChoices: [{ ordinal: 0, options: [
-          { kind: 'feat', id: 'fieldStudy' },
-          { kind: 'feat', id: 'weaponDrill' },
-          { kind: 'feat', id: 'vitalRenewal' },
-        ] }],
-        skillDrafts: [{ skillId: 'item:blade', level: 3, claimOrdinal: 1,
-          cardIds: registries.classes.get(run.class).cardPool.filter((id) =>
-            (registries.cards.get(id).tags || []).some((tag) => skillSchools(registries, run.loadout, 'item:blade').includes(tag))).slice(0, 3) }],
-        xpGains: { level: levelXpToNext(registries, 1) - 15, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
-        xpBefore: { character: { level: 1, xp: 40 }, tracks: { 'item:blade': { level: 2, xp: 0 }, [`class:${run.class}`]: { level: 1, xp: 10 } } },
-      } : {}),
-    };
-    if (pose === 'pending' || pose === 'level' || pose === 'receipt' || pose === 'refill') {
-      beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
-      // Cross the ordinary load door in the same ephemeral shot store. This is
-      // the interruption/reload proof: the mounted row below comes from saved
-      // pendingReward bytes, not the just-rolled local object.
-      resumeRun(activeSlot);
-    } else {
-      mountRewards(app, {
-        registries, run, saves, rng,
-        onCollectArmament: (id) => collectArmament(id, 'showcase'),
-        onPersist: persist,
-        rewards: shotOffer,
-        onDone: () => { rewardDoneCount++; showMap(); },
-      });
-    }
-    }
-  } else if (shotState === 'combat' || shotState === 'fx') {
-    // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
-    // four POOL doors (which sit above the shot branches, right after newRun,
-    // because the map reads them too) there is no run field to write: the
-    // player's poise max
-    // is derived per fight from the loadout (engine/combat.js reads the
-    // equipment threshold receipt at entity creation). So this door enters at
-    // the receipt's OUTPUT seam — the explicit override createCombat already
-    // owns (Law 0 clause 3: an override is data), one stage above the entity,
-    // which is where ?shotMaxHp sits relative to the derived-stat formula IT
-    // bypasses. Module-scoped, never written to the run: a shot lever must not
-    // leak into a save. 0 is a legal value on purpose — it poses the refusal
-    // (no vessel, the bar ABSENT), which is A11's zero edge.
-    const shotMaxPoise = Number(shotParams.get('shotMaxPoise'));
-    if (shotParams.has('shotMaxPoise') && Number.isFinite(shotMaxPoise) && shotMaxPoise >= 0) {
-      shotPoiseMaxOverride = Math.floor(shotMaxPoise);
-    }
-    // TWO FLASKS IN THE POSE, ONE OF EACH KIND, AND IT IS NOT DRESSING. A
-    // drunk flask does not come back this climb, and `useFlask` is a row in the
-    // second-beat table — but a board with an EMPTY flask row draws no flask
-    // control at all, so the census could not tell "this action is not wired"
-    // from "this pose has nothing to press". Those two readings are opposite
-    // and looked identical. An untargeted flask owes a hold, a targeted one
-    // does not (it enters aim mode, which is already a second beat), so the
-    // pose carries one of each and the check sees both cells of the row.
-    run.flasks = [{ flaskId: 'crimsonFlask' }, { flaskId: 'blightCoating' }];
-    const g = run.mapGraph;
-    // A seeded start can resolve to an event. This fixture promises combat,
-    // so select an actual fight and enter through the production fight door.
-    const isFight = node => ['monster', 'fight', 'elite'].includes(node.type) || node.resolved?.kind === 'fight';
-    const node = g.startIds.map(id => g.nodes[id]).find(isFight)
-      || Object.values(g.nodes).find(isFight) || g.nodes[g.startIds[0]];
-    // Presentation-only QA overrides stay inside the existing memory-only shot gate.
-    // They exercise the production selector and renderer, without altering saves.
-    if (shotParams.has('shotLayeredScene')) node.layeredSceneId = shotParams.get('shotLayeredScene');
-    if (shotParams.has('shotTime')) run.presentationTimeId = shotParams.get('shotTime');
-    if (shotParams.has('shotWeather')) run.presentationWeatherId = shotParams.get('shotWeather');
-    run.mapNodeId = node.id; run.floor = node.floor;
-    run.path = screenshotRoutePath(g, node.id);
-    if (shotParams.get('shotArcane') === 'matrix') enterCombat(node.id, 'packHunt');
-    else startFight(node.type === 'elite' ? 'elite' : 'normal', node.id);
-    if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
-  }
-} else if (shotState === 'compendium') {
-  // A ?shot= STATE, AND THAT IS THE POINT (Marina's condition on #78, and Rune's
-  // census). tools/release-shots.mjs derives its denominator from the states
-  // this file declares, and tools/screenreach.mjs can only reach a screen that
-  // has one — so a new screen without a shot state is a screen no instrument
-  // owns, which is the eight the census already counts. The seeded variant
-  // (?shot=compendium&shotFound=…) photographs the other edge: what the screen
-  // looks like once pieces are yours. Both edges, both shapes.
-  const found = new URLSearchParams(location.search).get('shotFound');
-  const meta = saves.loadMeta();
-  if (found != null) meta.found = found ? found.split(',') : [];
-  mountCompendium(app, { registries, meta, onBack: showTitle });
-} else if (shotState === 'startup') {
-  showStartupGate({ forcedFamily: shotParams.get('shotInput') || '' });
-} else if (shotState === 'title') {
-  // A REACH STATE, the same shape as `?shot=rest` and for the same sentence:
-  // one state for the one screen being watched, so the watch has a measurement
-  // instead of a faith. `deleteSave` is a second beat this game has had since
-  // the title screen shipped — a two-click arm in title.js's own hand until
-  // 2026-08-14, the shared machinery's hold since — and its row in
-  // src/model/secondbeat.js spent a week saying "no ?shot= state reaches a
-  // title screen with saved runs on it". This is that state, and it is what
-  // made the collapse safe to make.
-  //
-  // THE SAVE IS REAL AND ENTERS BY THE REAL DOORS: newRun → ensureProfile →
-  // startClimb → persist() → saves.saveRun writes the run into (memory)
-  // storage, and showTitle surfaces it back through saves.listSlots →
-  // slotSummary reading those bytes — the same writer and the same reader a
-  // player's save walks. Nothing is posed into the DOM; the occupied slot is
-  // the storage speaking.
-  newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
-  showTitle();
-} else if (shotState === 'profile') {
-  // A REACH STATE for title-screen Profile (`profileRestore` in secondbeat.js —
-  // the inline .prof-confirm box). The set-aside profile is real and set aside
-  // BY THE REAL ACT that sets one aside: ensureProfile writes profile A
-  // through the real writer, startNewProfile archives it through
-  // replacePrimaryWith — the one path allowed to replace the primary — and
-  // the drawer entry the screen lists is that archive read back through
-  // saves.listArchives. The instrument still opens the section by the
-  // player's own door: Profile on the title screen.
-  saves.ensureProfile();
-  // A PROFILE THE PLAYER HAS TOUCHED, not a second fresh one. Two untouched
-  // profiles are the same bytes, and the archive de-duplicates by content
-  // (save.js archiveMeta): restoring A over an identical B set B aside INTO
-  // A's own entry — the drawer read "seen 2 times" instead of growing, and
-  // tools/holdconfirm.mjs read "entries 1 -> 1" as a restore that set nothing
-  // aside. A real outgoing profile is never byte-identical to the one it
-  // replaces (it carries its results), so the pose writes one setting through
-  // the real writer — the default value, so nothing behaves differently — and
-  // the two profiles are distinct the way two real ones are. ONLY WHEN THE
-  // PROFILE IS UNTOUCHED: ?shotSettings has already written the settings an
-  // instrument asked for (holdConfirm 'off' or 'long' on this very screen),
-  // and those bytes already make the profile distinct — overwriting them
-  // would pose the default where the caller asked for an edge (Codex, #537).
-  {
-    const posed = saves.loadMeta();
-    if (!Object.keys(posed.settings || {}).length) saves.saveMeta({ ...posed, settings: { holdConfirm: 'normal' } });
-  }
-  saves.startNewProfile();
-  showTitle();
-  showProfile();
-} else if (shotState === 'crisis') {
-  // The worst morning (`freshProfile` in secondbeat.js — the .confirm-fresh
-  // modal). The torn bytes were planted at the storage seam beside
-  // pickStorage(), BEFORE the manager's first read — see the comment there
-  // for why that is the real door. From here the boot is exactly a player's:
-  // showTitle → showProfileNoticeIfNeeded → profileStatus().ok is false →
-  // mountProfileNotice. Nothing on this branch mentions the notice screen.
-  showTitle();
-} else if (shotState === 'history') {
-  // Run history with runs IN it, written through the real recorder
-  // (saves.recordResult → the same bytes finishRun writes), so the screen is
-  // read back the way a player's is. Three results, one of them custom, so
-  // the win-rate line, the per-class chips and the excluded tag all show.
-  saves.recordResult({ victory: true, className: 'Reaver', act: 3, floor: 12, fightsWon: 11, seed: 'SHOWCASE' });
-  saves.recordResult({ victory: false, className: 'Starseer', act: 1, floor: 4, fightsWon: 3, seed: 'GOLDBOUGH' });
-  saves.recordResult({ victory: false, className: 'Reaver', act: 2, floor: 7, fightsWon: 6, seed: 'ASHFALL', custom: true, ascension: 2 });
-  showHistory();
-} else if (shotState === 'about') {
-  // Settings → About, opened through the real door: the category rides in
-  // the profile the way a player's last-chosen tab does (settings.js CAT_KEY),
-  // posed here into the ephemeral shot store, and Settings opens from the
-  // title as it does for a player.
-  {
-    const posed = saves.loadMeta();
-    saves.saveMeta({ ...posed, settings: { ...(posed.settings || {}), settingsCategory: 'About' } });
-    activeMeta = saves.loadMeta();
-    activeSettings = activeMeta.settings || (activeMeta.settings = {});
-  }
-  showTitle();
-  showSettings();
-} else if (shotState === 'prologue') {
-  newRun({classId:shotParams.get('class') || 'reaver', customization:{name:'Forsaken',tint:'gold'}, seedString:'SHOWCASE'});
-} else if (shotState === 'settings') {
-  // Advanced configuration, through the same modal and profile settings path a
-  // player uses. shotSettings may choose a subsection or tune a row.
-  {
-    const posed = saves.loadMeta();
-    saves.saveMeta({ ...posed, settings: {
-      ...(posed.settings || {}), settingsCategory: 'Advanced',
-      settingsAdvancedCategory: posed.settings?.settingsAdvancedCategory || 'Progression',
-    } });
-    activeMeta = saves.loadMeta();
-    activeSettings = activeMeta.settings || (activeMeta.settings = {});
-  }
-  showTitle();
-  showSettings();
-} else if (shotState === 'customize' || shotState === 'components') {
-  // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
-  // and #29's own boundary records what that cost: no sweep can open a screen
-  // it cannot reach, so customize went unexamined for the whole week combat
-  // was measured three times over. A seed is passed rather than randomised so
-  // the seed field photographs the same on every run.
-  showCustomize(1, shotState === 'components');
-} else if (pageDebug() && autoLoadEnabled()) {
+if (pageDebug() && autoLoadEnabled()) {
   // YOUR DEFAULTS FROM GITHUB (Settings → Advanced → Defaults & sync). Only on
   // a debug build, only when this device opted in, and never for a photograph
   // (a posed ?shot= state takes the branches above). The title — Continue and

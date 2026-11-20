@@ -186,6 +186,7 @@ player's piles).
 | `targeting.enemy` | 0 | SP | Not carried by a card today; the base. |
 | `targeting.ally` | 0 | SP | Not carried by a card today; the base. |
 | `targeting.randomEnemy` | 1 | SP | Not carried by a card today; between single and area. |
+| `targeting.otherEnemy` | 1 | SP | An upgrade's second target: one other enemy than the aimed one; priced like a random enemy. |
 | `targeting.allEnemies` | 2 | SP | Not carried by a card today; as targeting:area. |
 | `targeting.allAllies` | 2 | SP | Every ally at once; as targeting:area. |
 
@@ -212,6 +213,7 @@ player's piles).
 | `pierce` | 1 | SP | A piercing weapon: 1. |
 | `precision` | 1 | SP | A precise technique: 1. |
 | `guard` | 0 | SP | An archetype chip, not a power. |
+| `retreat` | 0 | SP | A movement card's identity chip, like `guard`; the card's 1 SP cost prices the step back, the tag adds no power. |
 | `bow` | 0 | SP | The range weight prices a bow. |
 | `ranged` | 0 | SP | The range weight prices it. |
 | `flourish` | 0 | SP | An archetype chip. |
@@ -382,6 +384,12 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 | `confused` | 2 | card | The owner's floor for a status. |
 | `slowed` | 2 | card | The owner's floor for a status. |
 | `entombed` | 2 | card | The owner's floor for a status. |
+| `chill` | 2 | card | The owner's floor for a status. |
+| `freeze` | 2 | card | The owner's floor for a status. |
+| `brittle` | 2 | card | The owner's floor for a status. |
+| `shock` | 2 | card | The owner's floor for a status. |
+| `knockback` | 2 | card | The owner's floor for a status. |
+| `necroticBuildup` | 2 | card | The owner's floor for a status. |
 
 ## Outliers
 

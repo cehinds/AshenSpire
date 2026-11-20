@@ -296,8 +296,8 @@ tools/session.mjs and tools/runsim.mjs — so combat never writes a run.
 package and weapon-art cards name their piece by the bare id the loadout
 stamps, normalised through `cardMounts.ownerItemRef`. ALL THREE ARMOUR TRACKS
 ARE DORMANT today: heavy's `impactDealt` fires for enemies only until phase 8
-gives the player poise, and light's `attackEvaded` fires only under a
-foundation ruleset, which no shipped door passes; the focus track's buildup
+gives the player poise, and light's `attackEvaded` fired only under the
+removed foundation ruleset (#2633), so it stays dormant; the focus track's buildup
 is live. Balance rows are named for what they are (`impactPerXp`, `evadeXp`,
 `buildupPerXp`) rather than the proposal's "1 per 5" prose. The combat
 snapshot carries the ledger and the receipt, so a fight resumed from a save
@@ -312,7 +312,7 @@ it (4b). SPEC §13.4d; engine test 85.
 |---|---|
 | `rollSkillDraftIds(registries, rng, {skillId, level})` beside `rollCardRewardIds` (`src/engine/encounters.js:62`): filters the reward pool by group tag, unlocks rarity by `balance.skill.rarityUnlock`, weights by existing odds | |
 | Reward literal in `src/main.js:1936` gains one `skillDraft` row per skill with `pendingDrafts > 0`, capped by `draftsPerCombat`; `REWARD_KIND_ORDER` (`src/model/rewardplan.js:31`) places it where the class-card row sits and the class-card row is omitted when a skill draft is present | |
-| `mountRewards` (`src/ui/screens/reward.js:67`) renders the skill draft with the same pick-1-of-N component | |
+| `MountRewards` (`src/ui/screens/reward.js:67`) renders the skill draft with the same pick-1-of-N component | |
 | Auto-upgrade: on a skill reaching a `balance.skill.upgradeAt` level, every collection card tagged with the group gets `upgraded: true` | `skills.js` |
 | Smithing: `armamentLevels` tier is derived from skill level; `smithingStones` become a `skipToNextMilestone` purchase; `balance.smithing` rows re-pointed | `src/model/armamentSmithing` and the rest screen's smith panel |
 
@@ -525,8 +525,7 @@ the new opcode `arcaneBuildup` and target `otherEnemies`, carriers by item
 the brand overcharge, the branch rings out); the player's poise meter via
 `dealPoiseDamage` and `staggerPlayer`, `balance.stagger.player { actionLoss,
 statuses }` (a status map, so the engine names no status), the receipt's
-Constitution term as `balance.poise.playerPerConstitution`; outside the
-foundation ruleset (the shipped fight has none) an enemy blow that draws
+Constitution term as `balance.poise.playerPerConstitution`; an enemy blow that draws
 blood rocks the player by `balance.poise.playerImpactPerHit`. Two deviations,
 both deferred to phase 9 on purpose: the signature arts cost 1 stamina / 1
 Mana, not 2 / 2 — under the current tiers the Reaver and the Rogue start

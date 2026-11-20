@@ -7,7 +7,7 @@ import { renderCard, cardDetailHtml, setHandFaceBudget } from '../src/ui/compone
 import { illustratedCardHtml } from '../src/ui/components/illustratedCard.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Every ordinary face uses the same bounded projection; Information stays complete.
 const reg = createRegistries(contentBundle);

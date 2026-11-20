@@ -12,7 +12,7 @@ import { renderCard } from '../src/ui/components/card.js';
 import { mountHand } from '../src/ui/components/hand.js';
 import { openBoundCardInspection } from '../src/ui/components/cardInspection.js';
 import { clearSelection, resetSelection } from '../src/ui/components/cardSelection.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 
 const registries = createRegistries(contentBundle);
 const player = {
@@ -125,3 +125,23 @@ test('without liveWiring a changed signature still rebuilds (the co-op hand wire
   hand.render({ cards: [entry(inst, preview, false, { play: true })] });
   assert.notEqual(handEl.children[0], first);
 }, { liveWiring: false }));
+
+test('a refresh moves no child of the card: every node keeps its place and identity, the art image included', () => withHand(({ hand, handEl }) => {
+  const calm = fightWith();
+  const strong = fightWith([['player', 'strength', 3], ['enemy', 'vulnerable', 3]]);
+  const inst = calm.piles.hand.find(card => JSON.stringify(previewCard(calm, card.instanceId)) !== JSON.stringify(previewCard(strong, card.instanceId)));
+  hand.render({ cards: [entry(inst, previewCard(calm, inst.instanceId), true, { play: true })] });
+  const first = handEl.children[0];
+  const before = [...first.children];
+  assert.ok(before.length >= 1, 'the card holds its face');
+  // Counts every insertion or removal the refresh makes in the card's own child list.
+  let moves = 0;
+  for (const name of ['append', 'appendChild', 'insertBefore', 'removeChild']) {
+    const original = first[name];
+    first[name] = function (...args) { moves++; return original.apply(this, args); };
+  }
+  hand.render({ cards: [entry(inst, previewCard(strong, inst.instanceId), false, { play: 'Not enough stamina for this card.' })] });
+  assert.equal(handEl.children[0], first);
+  assert.deepEqual([...first.children], before, 'the same child nodes in the same order');
+  assert.equal(moves, 0, 'none was removed or inserted again');
+}));

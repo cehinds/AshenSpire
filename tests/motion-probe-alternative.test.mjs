@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom, installDom } from './helpers/dom.mjs';
 import { alternativeSprite } from '../src/ui/alternativeArt.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
@@ -15,8 +15,8 @@ const idleSource = source.slice(source.indexOf('async function idle('), source.i
 async function inspect({ moving = false, imageMotion = false, duplicate = false, flat = false, opacityOnly = false,
   scriptMove = false, scale = false, unloaded = false, transparent = false, canvas = false,
   blank = false, lateBlank = false, pixelChange = false } = {}) {
-  const dom=rewardDom(),oldDocument=globalThis.document,oldImage=globalThis.Image;
-  globalThis.document=dom.document;globalThis.Image=function Image(){return dom.document.createElement('img');};
+  const dom=rewardDom(),restoreDom=installDom(dom),oldImage=globalThis.Image;
+  globalThis.Image=function Image(){return dom.document.createElement('img');};
   let frames=0,reads=0;
   try {
     const figure=alternativeSprite('reaver-default','player');
@@ -45,7 +45,7 @@ async function inspect({ moving = false, imageMotion = false, duplicate = false,
     const verdicts=[];const idle=runInNewContext(`${idleSource}\nidle`,{check:(ok,label,detail)=>verdicts.push({ok,label,detail})});
     await idle({evaluate:expression=>runInNewContext(expression,browser)},'IDLE');
     return {verdicts,frames,reads};
-  }finally{if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;if(oldImage===undefined)delete globalThis.Image;else globalThis.Image=oldImage;}
+  }finally{restoreDom();if(oldImage===undefined)delete globalThis.Image;else globalThis.Image=oldImage;}
 }
 
 test('every figure style holds still without a shared idle clock; bounded action CSS remains',async()=>{

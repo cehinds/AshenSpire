@@ -30,7 +30,7 @@ id,name,kind,hand,rarity,geom,scale,metal,accent,attackProfile,guardProfile,tech
 straightSword,Straight Sword,weapon,either,common,sword,1.00,B8B0A0,C9A227,bladeAttack,weaponGuard,weaponTechnique,,,Honest steel. It asks nothing clever of you.,10,,5,2,2,5,1,0,straightSwordInventory2026,slashing,melee,metal
 greatsword,Greatsword,weapon,either,uncommon,colossal,1.00,B8B0A0,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.cost=+1|strike.poise=+3,,"Slow, and it does not care.",7,,8,4,2,8,1,0,,slashing,melee,metal
 dagger,Dagger,weapon,either,common,dagger,1.00,C0B8A6,C9A227,daggerPierceAttack,weaponGuard,weaponTechnique,strike.hits=2,,Two cuts where one would do.,10,,3,1,2,3,1,0,,piercing,melee,metal
-shortbow,Shortbow,weapon,either,common,dagger,1.00,C0B8A6,C9A227,bowPierceAttack,weaponGuard,bowTechnique,,,A compact ash-wood bow bound for a quick draw.,10,dagger,2,1,2,2,1,0,,piercing,ranged,
+shortbow,Shortbow,weapon,either,common,dagger,1.00,C0B8A6,C9A227,bowPierceAttack,weaponGuard,bowTechnique,,,A compact ash-wood bow bound for a quick draw.,10,dagger,2,1,2,2,1,0,,piercing,reach,
 katana,Katana,weapon,either,uncommon,curved,1.00,C6BEAC,C9502E,bladeAttack,weaponGuard,weaponTechnique,strike.bleed=+2,,"A long curve, and a long grudge.",7,,5,2,2,5,1,0,,slashing,melee,metal
 halberd,Halberd,weapon,either,uncommon,polearm,1.00,A8A090,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.cost=+1|strike.poise=+4,,Reach enough to keep the dead at arm's length.,7,,7,4,2,7,1,0,,slashing,reach,metal
 warhammer,Warhammer,weapon,either,uncommon,hammer,1.00,8E8678,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.poise=+6,,Poise is a fiction. This is the argument.,7,,9,3,2,9,1,0,,blunt,melee,metal

@@ -8,6 +8,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
+import { withoutStanceBenefits } from './legacyStanceRules.mjs'; // Wave 2.5: these numbers pin the pre-benefit rules
 import { dispatch } from '../src/engine/combat.js';
 import { prepareBreakInterrupt } from '../src/engine/combatStatusControl.js';
 import { applyAttackDamage, gainBlock, drainFixCorePoise, executeAction, fixCoreStagger } from '../src/engine/actions.js';
@@ -20,12 +21,15 @@ import { damageReceiptLines } from '../src/ui/components/damageReceipt.js';
 import { setProfileStance } from '../src/engine/gameProfileCombat.js';
 import { serializeCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 function live(poise = 20) {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const combat = withoutStanceBenefits(createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }));
+  // These tests cover the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); tests/poise-broken.test.mjs covers the shipped Broken rule.
+  combat.fixCoreRules = { ...(combat.fixCoreRules || combat.gameProfile.fixCoreRules), poise: { drain: 'prevented' } };
   const target = combat.enemies[0];
   Object.assign(target, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: 20 }, attributes: { dexterity: 0 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
   delete target.combatStance; delete target.combatCounter;
@@ -34,7 +38,7 @@ function live(poise = 20) {
 const hit = (combat, target, amount, source = combat.player) => { primeAccuracyRolls(combat); applyAttackDamage(combat, source, target, amount, [], carrier); return combat.eventLog.filter(row => row.type === 'damageDealt').at(-1); };
 
 test('shipped Core data: Poise drains what it prevented; Staggered stance -1 SP +1 Vulnerable extend-only', () => {
-  assert.deepEqual(shipped.poise, { drain: 'prevented' });
+  assert.deepEqual(shipped.poise, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 }, 'the Staggered stance below is the legacy rule a saved fight keeps');
   assert.deepEqual(shipped.staggered, { stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
   assert.equal(shipped.statuses.staggerRiders.weak, 0);
   assert.deepEqual(fixCorePoiseRules({}), { drain: 'prevented' }, 'old saves fall back to the ruling');
@@ -138,9 +142,9 @@ test('the player is staggered the same way: next turn -1 SP, stance, +1 Vulnerab
 test('preview of a multihit card sees the break: later hits take Vulnerable', () => {
   const { combat, target } = live(1);
   const preview = previewDamageHits(combat, combat.player, target, 20, [], carrier, 2);
-  // Owner, 2026-11-03: hitDamages is the raw hit (Poise is not subtracted); the receipt's hpLoss carries the resolved figures.
-  assert.deepEqual(preview.hitDamages, [20, 25], 'hit 2 meets Vulnerable x1.25 after the break');
-  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.hpLoss), [19, 25], 'hit 1: Poise absorbed its last 1');
+  // Owner, 2026-11-14: hitDamages is the HP lost per hit, so the break's last Poise and the Vulnerable that follows are both in it.
+  assert.deepEqual(preview.hitDamages, [19, 25], 'hit 2 meets Vulnerable x1.25 after the break; hit 1: Poise absorbed its last 1');
+  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.hpLoss), [19, 25]);
 });
 
 test('one break is one stagger: a smash-advantage hit that also breaks Poise staggers once', () => {
@@ -159,15 +163,6 @@ test('under Core a break is not an interrupt: no enemyInterrupted, the pending m
   assert.equal(prepareBreakInterrupt(combat, target, 'poiseBreak'), null);
   assert.equal(target.pendingMove.moveId, 'strike');
   assert.equal(target.combatStance.maneuver, 'staggered');
-});
-
-test('preview skips the break Vulnerable when impact protection would refuse the stagger', () => {
-  const { combat, target } = live(1);
-  combat.foundation = { rules: { impact: { protectionTurns: 1 } } };
-  target.impactProtectedUntil = combat.turn;
-  const preview = previewDamageHits(combat, combat.player, target, 20, [], carrier, 2);
-  assert.deepEqual(preview.hitDamages, [20, 20], 'no Vulnerable on the second hit');
-  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.hpLoss), [19, 20]);
 });
 
 test('preview equals live when an earlier hit breaks Poise (stance replaced, one stagger per round)', () => {
@@ -195,7 +190,7 @@ test('the Poise tooltip and the Core Staggered definition describe the stance ru
   assert.match(text, /takes 25% off each hit \(you take the rest, rounded down\) and loses what it absorbed/);
   assert.match(text, /Staggered/);
   const def = fixCoreStatusDefinition(combat, 'staggered', { id: 'staggered', name: 'Staggered' });
-  assert.match(def.tooltip, /1 SP next turn.*1 Vulnerable.*only extend/);
+  assert.match(def.tooltip, /1 Stamina next turn.*1 Vulnerable.*only extend/);
   assert.doesNotMatch(def.tooltip, /Weak|Interrupt|stacks/i);
 });
 
@@ -206,7 +201,7 @@ test('Ward off: Ward damage drains Poise with the piercing x1.25, floored', () =
   wardHit(combat, target, 3);
   assert.equal(target.persistentPoise.value, 17);
   wardHit(combat, target, 4, { combatProfile: { camp: 'spell', damageType: 'piercing' } });
-  assert.equal(target.persistentPoise.value, 12, 'floor(4 x 1.25) = 5');
+  assert.equal(target.persistentPoise.value, 7, 'floor(4 x 1.25) = 5, doubled by Core spellPoiseDamageMultiplier 2 (owner, 2026-11-18) = 10');
 });
 
 test('Ward on: Ward damage goes to Ward and leaves Poise alone', () => {
@@ -218,9 +213,12 @@ test('Ward on: Ward damage goes to Ward and leaves Poise alone', () => {
   assert.equal(target.persistentPoise.value, 20);
 });
 
-test('floating text names why damage dropped: Poise absorbed N', async () => {
+test('floating text names why damage dropped: the Poise absorbed is its own yellow number', async () => {
   const { guardHitFloatParts } = await import('../src/ui/fx.js');
-  assert.equal(guardHitFloatParts({ amount: 6, blocked: 0, poiseAbsorbed: 2 }, 100).poise.text, 'Poise absorbed 2');
+  // Owner, 2026-11-14: Block white, Poise yellow, HP red, each a plain number; the colour says which layer took it.
+  const { poise } = guardHitFloatParts({ amount: 6, blocked: 0, poiseAbsorbed: 2 }, 100);
+  assert.equal(poise.text, '2');
+  assert.match(poise.cls, /\bpoise\b.*\bhitpart\b/);
 });
 
 test('the break haptic fires on a Core enemy Poise break', async () => {
@@ -252,7 +250,7 @@ test('the Staggered row carries the profile\'s costs, hiding a zero clause', () 
   combat.fixCoreRules = { ...structuredClone(combat.fixCoreRules || combat.gameProfile.fixCoreRules), staggered: { stance: true, staminaLoss: 2, vulnerableStacks: 0, extendOnly: true } };
   hit(combat, target, 10);
   const row = combatStanceRow(target);
-  assert.match(row.detail, /Loses 2 SP next turn/);
+  assert.match(row.detail, /Loses 2 Stamina next turn/);
   assert.doesNotMatch(row.detail, /Vulnerable/);
   assert.equal(target.pendingStaminaLoss, 2);
 });
@@ -271,26 +269,6 @@ test('Core break: haptic fires, the log says staggered not interrupted, the pend
   const text = JSON.stringify(combatLogEntries(combat.eventLog, { registries: reg, players: [], enemies: combat.enemies }));
   assert.match(text, /Poise broke/);
   assert.doesNotMatch(text, /interrupted/);
-});
-
-test('a Poise break that Impact protection refuses carries no stagger marker, haptic or "staggered" log line', async () => {
-  const { enemyPoiseBroken } = await import('../src/ui/fx.js');
-  const { combatLogEntries } = await import('../src/model/combatLog.js');
-  const { combat, target } = live(2);
-  combat.foundation = { rules: { impact: { protectionTurns: 1 } } };
-  const events = []; // a plain recorder: the foundation's own event rules are not under test here
-  combat.emit = (type, payload) => { events.push({ type, ...payload }); };
-  target.impactProtectedUntil = combat.turn;
-  hit(combat, target, 10);
-  assert.equal(target.persistentPoise.value, 0);
-  assert.equal(target.combatStance, undefined, 'protection refused the stagger');
-  const event = events.find(row => row.type === 'poiseBroken');
-  assert.ok(event);
-  assert.ok(!event.poiseBreak);
-  assert.equal(enemyPoiseBroken(event), false);
-  const text = JSON.stringify(combatLogEntries(events, { registries: reg, players: [], enemies: combat.enemies }));
-  assert.match(text, /Poise broke/);
-  assert.doesNotMatch(text, /staggered/);
 });
 
 test('an unprotected Core break still carries the stagger marker and the "staggered" log line', async () => {

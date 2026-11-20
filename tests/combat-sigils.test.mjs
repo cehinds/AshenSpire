@@ -107,7 +107,7 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
     assert.ok(Object.isFrozen(model.sigils));
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
   }
-  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','spell','status','sweep']); assert.equal(schools.size, 9);
+  assert.deepEqual([...actions].sort(), ['attack','counter','defense','power','skill','smash','spell','status','sweep']); assert.equal(schools.size, 9);
 });
 
 test('approved solid footer symbols stay distinct and have a visible action name', () => {
@@ -186,7 +186,7 @@ test('the rail shows each trait once with its value, and a trait without a symbo
 test('a selected tag symbol explains itself with its name, count and blurb from uiStrings', async () => {
   const { cardTagRailHtml: rail } = await import('../src/ui/components/cardTagSymbols.js');
   const html = rail([{ id: 'trait:flux', label: 'Flux', count: 1, blurb: 'On hit: N Ward damage, or double the Ward damage the card already deals.' }]);
-  assert.ok(html.includes('data-tip="Flux 1 — On hit: 1 Ward damage, or double the Ward damage the card already deals."'), html);
+  assert.ok(html.includes('data-tip="Flux 1. On hit: 1 Ward damage, or double the Ward damage the card already deals."'), html);
   const tooltip = (await import('node:fs')).readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8');
   assert.match(tooltip, /\.card-tag-symbol\[data-tip\]/, 'the shared explain handler takes tag symbols');
 });

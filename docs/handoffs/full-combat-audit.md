@@ -96,7 +96,7 @@ Durable files:
 These historical entries explain the state at pause; they are **not current exact-head green claims**:
 
 - d43 feature preview: https://github.com/cehinds/AshenSpire/actions/runs/38659819675 — pending/active at pause.
-- d43 real hosted proof: https://github.com/cehinds/AshenSpire/actions/runs/38659820168 — pending/active at pause. Workflow `.github/workflows/combat-audit-hosted-preview.yml` is fixed-branch, read-only, separate from publication; its helper verifies the actual public wrapper/iframe, compiled bytes/identity, Quit/Return and screenshots without injecting fixtures.
+- d43 real hosted proof: https://github.com/cehinds/AshenSpire/actions/runs/38659820168 — pending/active at pause. Workflow `.github/workflows/combat-audit-hosted-preview.yml` (deleted in M10; its branch no longer exists) was fixed-branch, read-only, separate from publication; its helper verifies the actual public wrapper/iframe, compiled bytes/identity, Quit/Return and screenshots without injecting fixtures.
 - Earlier041 feature preview: https://github.com/cehinds/AshenSpire/actions/runs/38658664143 . This is an earlier run, not d43 proof.
 - Last verified download backup, source7067 publication: https://github.com/cehinds/AshenSpire/actions/runs/38656806560/artifacts/11937487358 . Extract `AshenSpire-dev-preview.html`.
 - Intended hosted Play URL: https://cehinds.github.io/AshenSpire/branches/feature/FullCombatAudit/latest/ . **NOT VERIFIED at pause.** Local proxy returned CONNECT403; remote real-browser proof was pending. Do not present it as working based only on deploy metadata. Do not bypass network policy.

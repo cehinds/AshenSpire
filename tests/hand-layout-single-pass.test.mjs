@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { mountHand } from '../src/ui/components/hand.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 
 const registries = createRegistries(contentBundle);
 const ids = ['a', 'b', 'c'];

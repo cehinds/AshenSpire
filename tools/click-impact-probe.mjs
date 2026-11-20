@@ -5,13 +5,16 @@ import { assertSourceDisplayArt, readLoadedSourceBody } from './source-display-a
 // independently checked four 500 ms waits, the active authored half-rate clip,
 // and hit-stop derived from this action's committed receipts. Every sample must
 // retain intent (with its cost) → action (then the stance) → sprite → contact → reaction → damage → HUD → resolution.
-// Missing or shortened waits, missing readouts and missing samples fail.
+// Missing or shortened waits, missing HP damage readouts and missing samples fail.
 //
-// The Core entry matchup can put a melee card outside the enemy's spell range.
-// One real hostile action is still required and its committed miss is reported
-// without inventing a number. Numeric samples also include immediate protection
-// cards; later hostile candidates must have a positive public preview chance.
-// Optional enemy-turn reactions are declined through their visible Back button.
+// Numeric readouts are HP damage numbers only (owner's 2026-11-07 floater policy):
+// Block, heal, Poise, Ward, Barrier and pierce numbers no longer draw. Protection and
+// meter-only plays are contact samples without a number and owe none; a beat that dealt
+// HP damage owes one. The Core entry matchup can put a melee card outside the enemy's
+// spell range: one real hostile action is still required and its committed miss is
+// reported without inventing a number. While numbers are short, a hostile card with a
+// positive public preview chance is preferred, since only HP damage yields a number.
+// Optional enemy-turn reactions are declined through their visible Skip button.
 // No engine action, settings change, injected state or synthetic click is used.
 //
 // Each input, contact and numeric readout is associated with this player's
@@ -23,14 +26,13 @@ import { assertSourceDisplayArt, readLoadedSourceBody } from './source-display-a
 //
 //   CHROME=/path/to/chrome node tools/click-impact-probe.mjs [--rounds 1] [--plays 5]
 
-import { CORE_ENTRY_SEED } from './core-entry-fixture.mjs';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { pointerTargetExpression } from './pointer-target.mjs';
-import { judgeRounds } from './click-impact-rounds.mjs';
+import { judgeRounds, MIN_PLAYS } from './click-impact-rounds.mjs';
 import { orderedImpactSample } from './click-impact-stages.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -54,7 +56,9 @@ const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i +
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const PLAYS = Number(argOf('--plays') || 5);
 const ROUNDS = Math.max(1, Math.floor(Number(argOf('--rounds') || 2)) || 1);
-const SEED = Number(argOf('--seed') || CORE_ENTRY_SEED);
+// The timing fixture starts against a Briar Hermit with Sweep and Strike in hand.
+// The quick-start input fixture's hand can end its first fight in two hits.
+const SEED = Number(argOf('--seed') || 97);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function connectCdp(wsUrl, pageErrors = []) {
@@ -155,6 +159,50 @@ async function main() {
   };
 
 
+  // The hand fans and lifts cards under the pointer, and neighbours overlap, so a cold press at a
+  // point measured earlier can land on the neighbour. Hover the point, let the hand settle, re-measure,
+  // and require the hit to be inside the intended card before pressing; then require that card to be
+  // the selected one (or already played), deselecting a wrong pick and retrying a bounded number of times.
+  const clickCard = async (sel, label, expectedInstanceId, playedBefore) => {
+    const debug = args.includes('--debug');
+    const measureCard = () => evalIn(`(() => {
+      const card = document.querySelector(${JSON.stringify(sel)});
+      if (!card) return null;
+      const { x, y } = ${pointerTargetExpression(sel)};
+      const hit = document.elementFromPoint(x, y);
+      return { x, y, ok: !!hit && card.contains(hit), hit: hit?.outerHTML.slice(0, 160) || null, card: card.outerHTML.slice(0, 160) };
+    })()`);
+    const settleHand = () => evalIn(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => resolve(true), 150))))`);
+    const escape = async () => {
+      for (const type of ['keyDown', 'keyUp']) await cdp.send('Input.dispatchKeyEvent', { type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 }, S);
+    };
+    for (let attempt = 0; attempt <= 2; attempt += 1) {
+      let pt = await measureCard();
+      if (!pt) throw new Error(`no element for ${label} (${sel})`);
+      let stable = false;
+      for (let tries = 0; tries < 4 && !stable; tries += 1) {
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pt.x, y: pt.y }, S);
+        await settleHand();
+        const again = await measureCard();
+        if (!again) throw new Error(`no element for ${label} (${sel})`);
+        pt = again;
+        if (again.ok) stable = true;
+        else if (debug) console.log('    input', label, 'hit is off the card, re-measuring', JSON.stringify(again));
+      }
+      if (!stable) throw new Error(`${label}: the point (${pt.x}, ${pt.y}) hits ${pt.hit} instead of the intended card ${pt.card}`);
+      if (debug) console.log('    input', label, sel, JSON.stringify(pt));
+      await clickAt(pt.x, pt.y);
+      await wait(150);
+      const state = await evalIn(`({ played: window.__combat?.player?.counters?.cardsPlayedThisCombat || 0, selected: [...document.querySelectorAll('.hand .card.selected')].map(c => c.dataset.instanceId) })`);
+      if (state.played > playedBefore || (state.selected.length === 1 && state.selected[0] === expectedInstanceId)) return;
+      if (debug) console.log('    input', label, `selection is [${state.selected}], not ${expectedInstanceId}; deselecting and retrying (${attempt + 1}/2)`);
+      if (attempt === 2) break;
+      if (state.selected.length) await escape();
+      await wait(200);
+    }
+    throw new Error(`${label}: the intended card ${expectedInstanceId} never became the selected one`);
+  };
+
   const measure = async () => {
     await openPage();
     await cdp.send('Page.navigate', { url: base }, S);
@@ -167,13 +215,10 @@ async function main() {
     }
     await until(`!!document.querySelector('.title-menu .slot-new:not([disabled])')`, 'New Game');
     await click('.title-menu .slot-new', 'New Game');
-    await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the slot picker');
-    await click('[data-title-action="modal-continue"]', 'Create character');
-    await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the slot review');
-    await click('[data-title-action="review-new"]', 'Start');
+    // A fresh profile opens creation directly: no slot picker or slot review.
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'Core class creation');
     await click('#cz-classes .cz-class', 'Reaver');
-    await click('#cz-next', 'Review');
+    await click('#cz-next', 'Customise');
     await until(`document.querySelector('.cz-railed')?.dataset.creationStage === 'review'`, 'Core review');
     await click('#seed-input', 'seed field');
     for (const type of ['keyDown','keyUp']) await cdp.send('Input.dispatchKeyEvent', { type, key: 'a', code: 'KeyA', modifiers: 2, windowsVirtualKeyCode: 65 }, S);
@@ -222,15 +267,14 @@ async function main() {
     }
 
     // The page's own clock: pointer releases and visible damage/protection.
-    // Dedicated Poise/Ward payloads can update a bar without a damage float.
+    // Only HP damage floats (`dmg`) count; the Poise/Ward meters are not drawn.
     await evalIn(`(async () => {
       const { stageFor } = await import('/src/ui/services/PoseAnimator.js');
       const { actionPacing } = await import('/src/ui/animationPace.js');
       const { fixCoreEnabled } = await import('/src/model/fixCoreMechanics.js');
       const { ACTION_PACING } = await import('/src/model/autoCombatPolicy.js');
       window.__impactTiming = { ...actionPacing(), playbackRate: ACTION_PACING.spritePlaybackRate, fixCore: fixCoreEnabled(window.__combat) };
-      const meters = () => JSON.stringify([...document.querySelectorAll('.combatant [data-res=poise], .combatant [data-res=ward]')].map(e => [e.closest('[data-eid]')?.dataset.eid, e.dataset.res, e.dataset.cur, e.dataset.max]));
-      window.__impact = { ups: [], floats: [], contacts: [], floatOwners: [], contactOwners: [], clips: [], meterState: meters(), measureMeters: false };
+      window.__impact = { ups: [], floats: [], contacts: [], floatOwners: [], contactOwners: [], clips: [] };
       const trace = [];
       trace.push = (...rows) => {
         const length = Array.prototype.push.apply(trace, rows);
@@ -252,12 +296,9 @@ async function main() {
           window.__impact.contacts.push(t); window.__impact.contactOwners.push(owner('contact'));
         }
         for (const m of list) for (const n of m.addedNodes || []) {
-          if (n.nodeType === 1 && n.classList.contains('float-num') && /\\b(dmg|blk|poise|ward|barrier)\\b/.test(n.className)) float();
+          if (n.nodeType === 1 && n.classList.contains('float-num') && /\\bdmg\\b/.test(n.className)) float();
         }
-        const nextMeters = meters();
-        if (window.__impact.measureMeters && nextMeters !== window.__impact.meterState) float();
-        window.__impact.meterState = nextMeters;
-      }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-cur', 'data-max', 'data-contact'] });
+      }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-contact'] });
       return true;
     })()`);
 
@@ -281,23 +322,40 @@ async function main() {
         const combat = window.__combat;
         const hand = [...document.querySelectorAll('.hand .card')];
         hand.forEach((c) => delete c.dataset.ciCard);
-        const pick = hand.find(c => {
+        const hostileOf = def => immediateCardEffects(def).some(effect => ['damage', 'poiseDamage', 'wardDamage'].includes(effect.op) && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(effect.target));
+        const damaging = def => immediateCardEffects(def).some(effect => effect.op === 'damage' && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(effect.target));
+        const eligible = c => {
           if (c.classList.contains('unaffordable')) return false;
           const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId);
           if (!inst) return false;
           const def = resolveCombatCard(combat, inst);
           if (!hasImmediateCombatImpact(def)) return false;
-          const hostile = immediateCardEffects(def).some(effect => ['damage', 'poiseDamage', 'wardDamage'].includes(effect.op) && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(effect.target));
+          const hostile = hostileOf(def);
           // Prove a real hostile action once, including a legitimate range
           // miss. Later samples need a possible hit or immediate protection.
           return !hostile || ${hostileProofs === 0} || combat.enemies.some(enemy => enemy.alive && previewCardHit(combat, inst.instanceId, enemy.id)?.hitChance > 0);
+        };
+        // Only HP damage draws a number now: while numbers are short, prefer a card that can deal it.
+        const canDamage = c => { const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId); return !!inst && damaging(resolveCombatCard(combat, inst)) && combat.enemies.some(enemy => enemy.alive && previewCardHit(combat, inst.instanceId, enemy.id)?.hitChance > 0); };
+        const { resolvedCardPlayCosts } = await import('/src/engine/combat.js');
+        const { chooseImpactPlay } = await import('/tools/click-impact-rounds.mjs');
+        const living = combat.enemies.filter(enemy => enemy.alive);
+        const candidates = hand.map(c => {
+          const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId);
+          const def = inst && resolveCombatCard(combat, inst);
+          const ok = eligible(c);
+          const hits = ok && def ? immediateCardEffects(def).filter(e => e.op === 'damage' && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(e.target)) : [];
+          const damage = hits.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+          // Conservative: one living enemy whose HP the card's listed damage reaches.
+          const lethal = ok && living.length === 1 && hits.length > 0 && damage >= living[0].hp;
+          return { id: c, eligible: ok, canDamage: ok && canDamage(c), cost: ok && def ? (Number(resolvedCardPlayCosts(combat, def).stamina) || 0) : 0, damage, lethal };
         });
+        const pick = chooseImpactPlay(candidates, { numbersShort: ${numbers.length < PLAYS}, samplesShort: ${samples.length < PLAYS} })?.id;
         if (!pick) return false;
         pick.dataset.ciCard = 'true';
         return { cardId: pick.dataset.cardId, instanceId: pick.dataset.instanceId,
           maneuver: pick.dataset.combatManeuver,
-          hostile: immediateCardEffects(resolveCombatCard(combat, combat.piles.hand.find(card => card.instanceId === pick.dataset.instanceId))).some(effect => ['damage', 'poiseDamage', 'wardDamage'].includes(effect.op) && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(effect.target)),
-          meterImpact: immediateCardEffects(resolveCombatCard(combat, combat.piles.hand.find(card => card.instanceId === pick.dataset.instanceId))).some(effect => ['poiseDamage', 'wardDamage'].includes(effect.op)) };
+          hostile: hostileOf(resolveCombatCard(combat, combat.piles.hand.find(card => card.instanceId === pick.dataset.instanceId))) };
       })()`);
       lastPicked = picked;
       if (args.includes('--debug')) console.log('    picked', JSON.stringify(picked));
@@ -307,11 +365,11 @@ async function main() {
         // burning every sampling attempt on that same unchanged hand.
         const turn = await evalIn(`window.__combat.turn`);
         for (let attempt = 0; attempt < 3 && await evalIn(`window.__combat?.turn === ${turn} && window.__combat?.phase === 'player'`); attempt += 1) {
-          const pt = await evalIn(`(() => { const el = document.querySelector('.combat .end-turn'); const r = el?.getBoundingClientRect(); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2, hold: Number(el.dataset.holdMs) || 600 } : null; })()`);
+          const pt = await evalIn(`(() => { const el = document.querySelector('.combat .end-turn'); const r = el?.getBoundingClientRect(); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2, hold: Number(el.dataset.holdMs) || 0 } : null; })()`);
           if (!pt) throw new Error('no End Turn');
           await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pt.x, y: pt.y }, S);
           await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
-          await wait(pt.hold + 250);
+          await wait(pt.hold ? pt.hold + 250 : 60);
           await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
           const transitionEnd = Date.now() + 4000;
           while (Date.now() < transitionEnd) {
@@ -323,19 +381,19 @@ async function main() {
         while (Date.now() < deadline) {
           if (await evalIn(`window.__combat?.result != null || (window.__combat?.turn > ${turn} && (${idle}))`)) break;
           const decline = '.reaction-choice [data-control-role="exit"]';
-          if (await evalIn(`!!document.querySelector('${decline}')`)) await click(decline, 'Back from the optional defensive reaction');
+          if (await evalIn(`!!document.querySelector('${decline}')`)) await click(decline, 'Skip the optional defensive reaction');
           else await wait(100);
         }
         await until(`window.__combat?.result != null || (window.__combat?.turn > ${turn} && (${idle}))`, `turn ${turn + 1} or the fight's end`, 1000);
         continue;
       }
       const before = await played();
-      const mark = await evalIn(`(() => { window.__impact.measureMeters = ${!!picked.meterImpact}; window.__impact.logIndex = window.__combat.eventLog.length; return performance.now(); })()`);
+      const mark = await evalIn(`(() => { window.__impact.logIndex = window.__combat.eventLog.length; return performance.now(); })()`);
       // Park the pointer off the hand so a hover lift or tooltip from the last
       // play does not cover the next card.
       await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 700, y: 120 }, S);
       await wait(250);
-      await click('[data-ci-card="true"]', 'an immediate-impact card', false);
+      await clickCard('[data-ci-card="true"]', 'an immediate-impact card', picked.instanceId, before);
       const t0 = Date.now();
       while (Date.now() - t0 < 3000 && (await played()) === before) {
         if (await evalIn(`!!document.querySelector('.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])')`)) { await click('.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])', 'its legal enemy target', false); break; }
@@ -357,8 +415,10 @@ async function main() {
         const { hitStopMsFor } = await import('/src/content/combatFeel.js');
         const { groupBeats, guardHitFloatParts } = await import('/src/ui/fx.js');
         const beat = groupBeats(window.__combat.eventLog.slice(window.__impact.logIndex)).find(beat => beat.events.some(e => e.type === 'cardPlayed' && e.cardInstanceId === ${JSON.stringify(picked.instanceId)}));
-        const holdMs = (beat?.events || []).filter(e => e.type === 'damageDealt').reduce((sum, e) => sum + hitStopMsFor(guardHitFloatParts(e).residual, (e.targetId === 'player' ? window.__combat.player : window.__combat.enemies.find(enemy => enemy.id === e.targetId))?.maxHp || 0) * window.__impactTiming.scale, 0);
-        return { up, contact: c, number: f ?? null, receipts: (beat?.events || []).map(({ type }) => ({ type })), timing: window.__impactTiming, holdMs,
+        const maxHpOf = e => (e.targetId === 'player' ? window.__combat.player : window.__combat.enemies.find(enemy => enemy.id === e.targetId))?.maxHp || 0;
+        const holdMs = (beat?.events || []).filter(e => e.type === 'damageDealt').reduce((sum, e) => sum + hitStopMsFor(guardHitFloatParts(e).residual, maxHpOf(e)) * window.__impactTiming.scale, 0);
+        const hpDamage = (beat?.events || []).some(e => e.type === 'damageDealt' && guardHitFloatParts(e).residual > 0);
+        return { up, contact: c, number: f ?? null, hpDamage, receipts: (beat?.events || []).map(({ type }) => ({ type })), timing: window.__impactTiming, holdMs,
           clip: window.__impact.clips.find(clip => clip.at > ${mark}),
           stages };
       })()`);
@@ -367,9 +427,11 @@ async function main() {
         samples.push(sample.contactOverhead);
         if (sample.number != null) numbers.push(sample.numberOverhead);
         if (picked.hostile) hostileProofs++;
-        console.log(`    play ${samples.length}: contact ${sample.contact} ms (authored ${sample.expectedContact}, overhead ${sample.contactOverhead}), ${sample.number == null ? 'no numeric readout (committed miss)' : `number ${sample.number} ms (authored ${sample.expectedNumber}, overhead ${sample.numberOverhead})`} (${picked.cardId}${picked.maneuver === 'counter' ? ', Counter protection' : ''})`);
+        console.log(`    play ${samples.length}: contact ${sample.contact} ms (authored ${sample.expectedContact}, overhead ${sample.contactOverhead}), ${sample.number == null ? 'no numeric readout (no HP damage)' : `number ${sample.number} ms (authored ${sample.expectedNumber}, overhead ${sample.numberOverhead})`} (${picked.cardId}${picked.maneuver === 'counter' ? ', Counter protection' : ''})`);
       } else if (args.includes('--debug')) console.log('    unmeasured', JSON.stringify(await evalIn(`({ floats: window.__impact.floats.filter(t => t > ${mark}), contacts: window.__impact.contacts.filter(t => t > ${mark}), clips: window.__impact.clips.filter(c => c.at > ${mark}), stages: window.__fx.trace.filter(([at]) => at > ${mark}) })`)));
     }
+    const ended = await evalIn(`window.__combat?.result ?? null`);
+    if (ended != null && (samples.length < MIN_PLAYS || numbers.length < MIN_PLAYS)) console.error(`click-impact-probe: the fight ended (${JSON.stringify(ended)}) after ${await played()} plays`);
     await cdp.send('Target.closeTarget', { targetId }).catch(() => null);
     if (!hostileProofs) throw new Error('no real hostile action completed its contact and stage proof');
     return { samples, numbers };
@@ -377,7 +439,7 @@ async function main() {
 
   try {
     const { exitCode } = await judgeRounds(measure, { rounds: ROUNDS, budgetMs: BUDGET_MS, numberBudgetMs: NUMBER_BUDGET_MS });
-    console.log('  boundary: real Chromium headless, 1440x900, default Normal Core2; raw latency reported, declared waits/clip/receipt holds excluded only from 400/750 ms overhead gates. Mouse clicks only; hostile stage proof and numeric protection/HP readouts required.');
+    console.log('  boundary: real Chromium headless, 1440x900, default Normal Core2; raw latency reported, declared waits/clip/receipt holds excluded only from 400/750 ms overhead gates. Mouse clicks only; hostile stage proof and HP damage readouts required (protection plays are contact samples without a number).');
     console.log('  Not checked: touch input, slow or fast pacing, phone layouts, or classes other than the Quick start one.');
     process.exitCode = exitCode;
   } catch (e) {
@@ -391,7 +453,7 @@ async function main() {
       targetablePlayer: !!document.querySelector('.player.targetable'),
       cardsPlayed: window.__combat?.player?.counters?.cardsPlayedThisCombat,
       phase: window.__combat?.phase, player: { energy: window.__combat?.player?.energy, stamina: window.__combat?.player?.stamina, mana: window.__combat?.player?.mana, statuses: window.__combat?.player?.statuses },
-      modal: document.querySelector(".card-choice, .confirmation-modal")?.innerText,
+      modal: document.querySelector(".card-choice, .option-choice, .confirmation-modal")?.innerText,
       body: document.body.innerText.slice(-2500),
     })`).catch(() => null)));
     process.exitCode = 1;

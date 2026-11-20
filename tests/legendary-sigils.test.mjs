@@ -16,11 +16,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { sigils as shippedSigils } from '../src/content/sigils.js';
-import { shops as shippedShops } from '../src/content/shops.js';
 import { createRegistries, carrierRules } from '../src/model/registries.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
-import { buildMarketStock, buildBlacksmithStock } from '../src/engine/shopKinds.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { syncLoadoutProperties } from '../src/engine/properties.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -29,12 +27,9 @@ import { createRunState, RUN_SCHEMA_VERSION, validateRunShape } from '../src/mod
 import { validateContent } from '../src/model/validate.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 import { REWARD_KIND_ORDER, rewardPlan } from '../src/model/rewardplan.js';
-import {
-  attuneSigil, unattuneSigil, legendarySigilIds, sigilDropPool, rollSigilDrop, attuneMaxOf, sigilRarityProblems,
-} from '../src/model/sigils.js';
-import { sigilPurchasePlan } from '../src/model/marketAdditions.js';
-import { pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { attuneSigil, unattuneSigil, legendarySigilIds, sigilDropPool, rollSigilDrop, attuneMaxOf, sigilRarityProblems } from '../src/model/sigils.js';
+import { pendingRewardCheckpoint } from './helpers/pending-reward-checkpoint.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { mountEquipment } from '../src/ui/screens/equipment.js';
 
 const REG = createRegistries(contentBundle);
@@ -331,30 +326,6 @@ test('the panel\'s buttons are at least 48 CSS px on a coarse pointer and 44 oth
 // Never shop stock
 // ---------------------------------------------------------------------------
 
-test('FINISH: market and blacksmith stock over 200 seeds never offers a legendary sigil', () => {
-  const out = registriesWith({
-    'gameConfig.shops.market.sigils.chance': 100,
-    ...Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100])),
-  });
-  let sigilShelves = 0;
-  for (let seed = 1; seed <= 200; seed++) {
-    const run = freshRun(out, seed);
-    const market = buildMarketStock(out, createRng(seed), run, { meta: {} });
-    for (const offer of market.sigils || []) assert.ok(!LEGENDARIES.includes(offer.id), `seed ${seed}: market offered ${offer.id}`);
-    if ((market.sigils || []).length) sigilShelves += 1;
-    const smith = buildBlacksmithStock(out, createRng(seed), run);
-    for (const value of Object.values(smith)) {
-      if (Array.isArray(value)) for (const offer of value) assert.ok(!(offer && LEGENDARIES.includes(offer.id)), `seed ${seed}: blacksmith offered ${offer.id}`);
-    }
-  }
-  assert.ok(sigilShelves > 0, 'the market laid out sigil shelves to check');
-  // Even with every non-legendary owned, the shelf draws no legendary.
-  const run = freshRun(out, 3);
-  run.sigils = shippedSigils.filter((row) => row.rarity !== 'legendary').map((row) => row.id);
-  const market = buildMarketStock(out, createRng(3), run, { meta: {} });
-  assert.deepEqual((market.sigils || []).filter((offer) => LEGENDARIES.includes(offer.id)), []);
-});
-
 // ---------------------------------------------------------------------------
 // The drop
 // ---------------------------------------------------------------------------
@@ -362,7 +333,7 @@ test('FINISH: market and blacksmith stock over 200 seeds never offers a legendar
 test('the `sigils` stream retains its appended index after later stream additions', () => {
   assert.equal(STREAM_NAMES.indexOf('sigils'), 16);
   assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
-  assert.deepEqual(STREAM_NAMES.slice(16), ['sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds', 'combatContest']);
+  assert.deepEqual(STREAM_NAMES.slice(16), ['sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds', 'combatContest', 'elements']);
 });
 
 test('FINISH: with defaults no sigil ever drops and no stream counter moves', () => {
@@ -422,45 +393,6 @@ test('the reward menu: a sigil row follows the relic row, and taking it adds the
   assert.equal(plan.rows[1].key, 'sigil');
   assert.equal(plan.rows[1].sigilId, VIGIL);
   assert.deepEqual(rewardPlan({}, {}).rows, []);
-});
-
-test('main.js rolls the drop at a won fight, a non-terminal boss and the treasure door, and never before the last boss ends the run', () => {
-  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /function sigilOffer\(pool\) \{\s*const sigilId = rollSigilDrop\(registries, rng, run, pool\);\s*return sigilId \? \{ sigilId \} : \{\};/, 'an offer carries sigilId only when one dropped');
-  assert.equal((main.match(/\.\.\.sigilOffer\('treasure'\)/g) || []).length, 1, 'the treasure door rolls');
-  assert.match(main, /\.\.\.sigilOffer\(enc\.pool\)/);
-  const finish = main.indexOf('return showFinishedRun(true);', main.indexOf("if (enc.pool === 'boss')"));
-  const bossRoll = main.indexOf("...sigilOffer('boss')");
-  assert.ok(finish > 0 && bossRoll > finish, 'the boss roll sits after the terminal victory returns');
-  const reward = readFileSync(new URL('../src/ui/screens/reward.js', import.meta.url), 'utf8');
-  assert.match(reward, /sigil\(row\)/, 'the reward screen collects a sigil row');
-});
-
-test('the map treasure checkpoints its offer: claimed straight through or after a reload, the unclaimed sigil row survives', () => {
-  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  const door = main.slice(main.indexOf("case 'treasure': {"), main.indexOf("default:\n      throw new Error(`Unknown node kind"));
-  assert.ok(door.includes('beginPendingReward('), 'the map treasure checkpoints its offer');
-  assert.ok(!door.includes('mountRewards('), 'and never mounts an unsaved offer');
-  const boss = registriesWith({ [DROP_KEY('treasure')]: 100 });
-  for (const reloadFirst of [false, true]) {
-    const run = freshRun(boss, 13);
-    const rng = createRng(13);
-    const sigilId = rollSigilDrop(boss, rng, run, 'treasure');
-    assert.ok(LEGENDARIES.includes(sigilId));
-    // The door checkpoints (main.js case 'treasure').
-    run.pendingReward = pendingRewardCheckpoint({ sigilId, title: 'TREASURE' }, { source: 'treasure', after: 'map' });
-    let live = run;
-    if (reloadFirst) {
-      const back = reload(run, boss);
-      assert.ok(back.run, back.status.reason);
-      live = back.run;
-      assert.equal(live.pendingReward.rewards.sigilId, sigilId, 'the unclaimed sigil row survives the reload');
-    }
-    // Take the sigil and Continue (mountPendingReward's onDone).
-    live.sigils = [...live.sigils, live.pendingReward.rewards.sigilId];
-    delete live.pendingReward;
-    assert.ok(live.sigils.includes(sigilId));
-  }
 });
 
 // ---------------------------------------------------------------------------
@@ -549,7 +481,6 @@ test('rarity at every door: no never-legendary position may hold a legendary, at
   const L = LEGENDARIES[0];
   const cases = [
     ['sigilSlots', (run) => { run.sigils = [L]; run.sigilSlots = { 'armament/straightSword': [L] }; }],
-    ['shopStock.sigils', (run) => { run.shopStock = { ...buildMarketStock(REG, createRng(3), run, { meta: {} }), sigils: [{ id: L, cost: 10 }] }; }],
   ];
   for (const [path, edit] of cases) {
     const run = freshRun();
@@ -571,12 +502,3 @@ test('rarity at every door: no never-legendary position may hold a legendary, at
   assert.deepEqual(sigilRarityProblems(REG, either), []);
 });
 
-test('defence in depth: sigilPurchasePlan refuses a legendary by name', () => {
-  const run = freshRun();
-  run.cinders = 9999;
-  const offer = { id: LEGENDARIES[0], cost: 10 };
-  run.shopStock = { ...buildMarketStock(REG, createRng(3), run, { meta: {} }), offerings: ['sigils'], sigils: [offer] };
-  const plan = sigilPurchasePlan(REG, run, offer);
-  assert.equal(plan.ok, false);
-  assert.match(plan.reason, new RegExp(REG.sigils.get(LEGENDARIES[0]).name));
-});

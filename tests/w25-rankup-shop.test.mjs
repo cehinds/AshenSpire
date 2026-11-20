@@ -1,0 +1,111 @@
+// W25-R: some shops stock "Rank up a card" at the Blacksmith's price (15% of shops); buying asks for the card.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { configuredContentBundle } from '../src/model/advancedConfig.js';
+import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { createRng } from '../src/engine/rng.js';
+import { gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
+import { InstanceRank, RankUpCandidates } from '../src/model/rankUpService.js';
+import { ConfiguredTraderCategories } from '../src/model/gameProfileShopKind.js';
+import { gameContent } from '../src/model/gameProfile.js';
+import '../src/engine/runCombat.js';
+
+const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
+const registries = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), {})), profile);
+const newRun = (seed = 9) => createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup-shop' });
+const shelf = (stock) => stock.options.findIndex((option) => option.kind === 'rankUps');
+
+function shopWithRankUp(run) {
+  for (let n = 0; n < 400; n += 1) {
+    const stock = gameProfileShopStock(registries, run, createRng(run.seed), { shopId: `1:s${n}` });
+    if (shelf(stock) >= 0) return { shopId: `1:s${n}`, stock };
+    delete run.gameProfileRewardOffers[`shop:1:s${n}`];
+  }
+  assert.fail('no shop stocked a rank-up in 400 tries');
+}
+
+test('about 15% of shops stock a rank-up, the same ones every time the seed is replayed', () => {
+  const run = newRun(21);
+  const stocked = (r) => Array.from({ length: 400 }, (_, n) => {
+    const stock = gameProfileShopStock(registries, r, createRng(r.seed), { shopId: `1:s${n}` });
+    const has = shelf(stock) >= 0;
+    delete r.gameProfileRewardOffers[`shop:1:s${n}`];
+    return has;
+  });
+  const first = stocked(run), second = stocked(newRun(21));
+  assert.deepEqual(first, second);
+  const rate = first.filter(Boolean).length / 4;
+  assert.ok(rate > 10 && rate < 21, `rate ${rate}`);
+});
+
+test('the shelf costs the Blacksmith price and rides the saved stock: a reload neither adds nor drops it', () => {
+  const run = newRun(21);
+  const { shopId, stock } = shopWithRankUp(run);
+  const at = shelf(stock);
+  assert.equal(stock.options[at].price, 120);
+  assert.equal(gameProfileShopPurchasePlan(registries, run, shopId, at).price, 120);
+  const again = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
+  assert.equal(again.options.filter((option) => option.kind === 'rankUps').length, 1);
+  // A stock saved before this service has no shelf and never grows one.
+  const old = newRun(21);
+  const plain = gameProfileShopStock(registries, old, createRng(old.seed), { shopId: '1:old' });
+  const copy = structuredClone(plain);
+  copy.options = copy.options.filter((option) => option.kind !== 'rankUps');
+  old.gameProfileRewardOffers['shop:1:old'] = copy;
+  assert.equal(gameProfileShopStock(registries, old, createRng(old.seed), { shopId: '1:old' }).options.length, copy.options.length);
+});
+
+test('buying raises the chosen card, takes the cinders once, and stocks no replacement', () => {
+  const run = newRun(21);
+  const { shopId, stock } = shopWithRankUp(run);
+  const at = shelf(stock);
+  run.cinders = 500;
+  const card = RankUpCandidates(registries, run)[0];
+  const rank = InstanceRank(card), options = stock.options.length;
+  const quote = gameProfileShopPurchasePlan(registries, run, shopId, at);
+  assert.equal(quote.ok, true, quote.reason);
+  assert.throws(() => purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), quote), /Choose a card/);
+  assert.equal(run.cinders, 500, 'a refused purchase spends nothing');
+  const receipt = purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), { ...quote, instanceId: card.instanceId });
+  assert.deepEqual([receipt.kind, receipt.price, receipt.rank], ['rankUps', 120, rank + 1]);
+  assert.equal(run.cinders, 380);
+  assert.equal(InstanceRank(RankUpCandidates(registries, run).find((row) => row.instanceId === card.instanceId)), rank + 1);
+  const after = run.gameProfileRewardOffers[`shop:${shopId}`];
+  assert.equal(after.options.length, options, 'nothing restocked');
+  assert.ok(after.taken.includes(at));
+  assert.equal(gameProfileShopPurchasePlan(registries, run, shopId, at).ok, false, 'sold out');
+  assert.ok(!Object.keys(run.gameProfileShopPurchasePrices || {}).some((key) => key.startsWith('rankUps')), 'no resale ceiling for a service');
+});
+
+test('a short purse refuses it', () => {
+  const run = newRun(21);
+  const { shopId, stock } = shopWithRankUp(run);
+  run.cinders = 119;
+  const quote = gameProfileShopPurchasePlan(registries, run, shopId, shelf(stock));
+  assert.equal(quote.ok, false);
+  assert.match(quote.reason, /Insufficient cinders/);
+});
+
+test('a fresh stock with the rank-up shelf takes one more than a plain stock, so the shelf never costs a real item; a saved stock is unchanged', () => {
+  const plainRun = newRun(21);
+  const plain = gameProfileShopStock(registries, plainRun, createRng(plainRun.seed), { shopId: '1:plain' });
+  assert.equal(shelf(plain), -1);
+  const run = newRun(21);
+  const { shopId, stock } = shopWithRankUp(run);
+  const real = stock.options.filter((option) => option.kind !== 'rankUps').length;
+  assert.equal(stock.options.length, real + 1);
+  // Traders vary (playtest 2026-11-17 item 42): a plain stock for THIS shop is its own shelves times the shelf size.
+  // The rank-up shelf is one of the trader's dock options, so a shop that stocks it makes room among its shelves.
+  const shelves = (id, rankUpShelf) => ConfiguredTraderCategories(run, id, gameContent(run, 'rewards').categories, { rankUpShelf }).length;
+  assert.equal(plain.takeCount, 3 * shelves('1:plain', false));
+  const plainHere = 3 * shelves(shopId, true);
+  assert.equal(stock.takeCount, plainHere + 1);
+  assert.ok(stock.takeCount >= real + 1, 'every real item and the shelf can all be bought');
+  assert.equal(run.gameProfileRewardOffers[`shop:${shopId}`].takeCount, plainHere + 1);
+  const again = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
+  assert.equal(again.takeCount, plainHere + 1, 'a reload does not raise it again');
+});

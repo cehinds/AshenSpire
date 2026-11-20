@@ -39,7 +39,7 @@ test('real canonical starter loadouts opt in with their derived grip mode',async
 });
 
 test('class stage contact waits for the actual cue and restores current holds without gaining Reaver reactions',async()=>{
-  const {rewardDom}=await import('./helpers/reward-dom.mjs');
+  const {rewardDom}=await import('./helpers/dom.mjs');
   const {createAlternativeCardStage}=await import('../src/ui/alternativeCardStage.js');
   const {classSmashAnimations}=await import('../src/content/classSmashAnimations.js');
   const {alternativeCardAnimations}=await import('../src/content/alternativeCardAnimations.js');

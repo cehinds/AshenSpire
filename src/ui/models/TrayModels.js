@@ -1,5 +1,5 @@
 import { behaviorModel } from './BehaviorModel.js';
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
 const EDGES = Object.freeze(['top', 'right', 'bottom', 'left']);
@@ -15,7 +15,7 @@ function trayHeaderModel({ id, name, count, itemType, summary, edge, expanded, s
     command: 'sort-tray',
     payload: { id },
   }));
-  return componentModel(UI.trayHeader, {
+  return ComponentModel(UI.trayHeader, {
     variant: edge,
     properties: { id, name, count, itemType, summary, edge, expanded, sortable, sortLabel },
     accessibility: { label: summary || `${name}, ${count} ${itemType}${count === 1 ? '' : 's'}` },
@@ -24,7 +24,7 @@ function trayHeaderModel({ id, name, count, itemType, summary, edge, expanded, s
 }
 
 function trayContentModel({ id, edge, expanded, items }) {
-  return componentModel(UI.trayContent, {
+  return ComponentModel(UI.trayContent, {
     variant: edge,
     properties: { id, expanded },
     children: items,
@@ -32,7 +32,7 @@ function trayContentModel({ id, edge, expanded, items }) {
 }
 
 function trayResizeHandleModel({ id, edge, expanded, resizable }) {
-  return componentModel(UI.trayResizeHandle, {
+  return ComponentModel(UI.trayResizeHandle, {
     variant: edge,
     properties: { id, edge, expanded, resizable },
     accessibility: {
@@ -67,7 +67,7 @@ export function trayModel({
   if (!EDGES.includes(edge)) throw new Error(`${id} tray edge must be one of ${EDGES.join(', ')}`);
   if (!Number.isInteger(count) || count < 0) throw new Error(`${id} tray count must be a non-negative integer`);
   if (!Number.isFinite(minExpandedSize) || minExpandedSize < 96) throw new Error(`${id} tray minimum expanded size must be at least 96`);
-  return componentModel(UI.foldingTray, {
+  return ComponentModel(UI.foldingTray, {
     variant: edge,
     properties: { id, name, count, itemType, summary: String(summary || ''), edge, expanded: !!expanded, sortable: !!sortable, sortLabel, resizable: !!resizable, minExpandedSize },
     accessibility: { role: 'region', label: name },

@@ -40,10 +40,82 @@ function assertDeepFrozen(value, path) {
 }
 
 test('the real tree compiles clean and the generated module is current', () => {
-  const result = compileEntries(realEntries());
+  const result = compileEntries(realEntries(), { requireInteractionConfigs: true });
   assert.deepEqual(result.errors, []);
   assert.equal(generate(result), lf(readFileSync(join(ROOT, GENERATED), 'utf8')), 'run node tools/config-build.mjs');
   assert.deepEqual(result.config, JSON.parse(JSON.stringify(uiConfig)));
+});
+
+test('inspection gesture and Undo defaults are compiled into their existing presentation owners', () => {
+  assert.deepEqual(uiConfig.presentation.combatInspection.behavior, { holdMs: 600, movementTolerancePx: 8 });
+  assert.deepEqual(uiConfig.presentation.settingsUndo.behavior, { windowMs: 8000 });
+  assert.deepEqual(uiConfig.presentation.armamentRadial.behavior, { holdMs: 360 });
+  const result = compileEntries(realEntries(), { requireInteractionConfigs: true });
+  assert.deepEqual(result.config.presentation.combatInspection.behavior, uiConfig.presentation.combatInspection.behavior);
+  assert.deepEqual(result.config.presentation.settingsUndo.behavior, uiConfig.presentation.settingsUndo.behavior);
+});
+
+test('active interaction configs accept nondefault consumer values without a second resolver', () => {
+  const changes = new Map([
+    ['ui/presentation/combatInspection.json', (data) => { data.behavior.holdMs = 450; data.behavior.movementTolerancePx = 12; }],
+    ['ui/presentation/settingsUndo.json', (data) => { data.behavior.windowMs = 5000; }],
+  ]);
+  const entries = realEntries().map((entry) => {
+    const mutate = changes.get(entry.rel);
+    if (!mutate) return entry;
+    const data = JSON.parse(entry.text);
+    mutate(data);
+    return { ...entry, text: JSON.stringify(data, null, 2) };
+  });
+  const result = compileEntries(entries, { requireInteractionConfigs: true });
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.config.presentation.combatInspection.behavior, { holdMs: 450, movementTolerancePx: 12 });
+  assert.deepEqual(result.config.presentation.settingsUndo.behavior, { windowMs: 5000 });
+});
+
+test('the complete authored tree requires every direct-consumer interaction config', () => {
+  const entries = realEntries().filter((entry) => entry.rel !== 'ui/presentation/settingsUndo.json');
+  const { errors } = compileEntries(entries, { requireInteractionConfigs: true });
+  assert.ok(errors.includes('content/config/ui/presentation/settingsUndo.json: required presentation interaction config is missing'));
+  assert.ok(!compileEntries(entries).errors.some((error) => error.includes('required presentation interaction config')),
+    'partial pure compiler fixtures remain usable without complete-tree enforcement');
+});
+
+test('effect-plane z-index config refuses missing, unknown, and misordered layers', () => {
+  const file = 'ui/presentation/combatEffectPlayback.json';
+  const cases = [
+    [planted(file, (d) => { delete d.layering.effectPlanes.card; }), 'layering.effectPlanes.card is required'],
+    [planted(file, (d) => { d.layering.effectPlanes.relic = {}; }), 'layering.effectPlanes.relic is unknown'],
+    [planted(file, (d) => { d.layering.effectPlanes.card.extra = 1; }), 'layering.effectPlanes.card.extra is unknown'],
+    [planted(file, (d) => { d.layering.effectPlanes.combatant.frontZIndex = '2'; }), 'combatant.frontZIndex must be an integer z-index'],
+    [planted(file, (d) => { d.layering.effectPlanes.card.behindZIndex = 3; }), 'card.behindZIndex must be below frontZIndex'],
+  ];
+  for (const [entries, message] of cases) {
+    assert.ok(compileEntries(entries).errors.some((error) => error.includes(message)), message);
+  }
+  assert.deepEqual(compileEntries(realEntries()).errors, []);
+});
+
+test('interaction config refuses missing, unknown, and out-of-range tunables', () => {
+  const cases = [
+    [planted('ui/presentation/combatInspection.json', (d) => { delete d.behavior.holdMs; }), 'behavior.holdMs is required'],
+    [planted('ui/presentation/combatInspection.json', (d) => { d.behavior.extra = 1; }), 'behavior.extra is unknown'],
+    [planted('ui/presentation/combatInspection.json', (d) => { d.behavior.holdMs = 0; }), 'behavior.holdMs must be a positive safe integer'],
+    [planted('ui/presentation/combatInspection.json', (d) => { d.behavior.holdMs = 2_147_483_648; }), 'behavior.holdMs must be a positive safe integer'],
+    [planted('ui/presentation/combatInspection.json', (d) => { d.behavior.movementTolerancePx = -1; }), 'behavior.movementTolerancePx must be a finite nonnegative number'],
+    [planted('ui/presentation/settingsUndo.json', (d) => { d.behavior.windowMs = 1.5; }), 'behavior.windowMs must be a positive safe integer'],
+    [planted('ui/presentation/armamentRadial.json', (d) => { d.behavior.holdMs = -360; }), 'behavior.holdMs must be a positive safe integer'],
+  ];
+  for (const [entries, message] of cases) {
+    assert.ok(compileEntries(entries).errors.some((error) => error.includes(message)), message);
+  }
+  const missingHold = planted('ui/presentation/combatInspection.json', (d) => { delete d.behavior.holdMs; });
+  assert.ok(!compileEntries(missingHold).errors.some((error) => error.includes('holdMs must be')), 'a missing field has one actionable diagnostic');
+  const malformedPresent = planted('ui/presentation/combatInspection.json', () => {});
+  malformedPresent.find((entry) => entry.rel === 'ui/presentation/combatInspection.json').text = '{';
+  const malformedErrors = compileEntries(malformedPresent, { requireInteractionConfigs: true }).errors;
+  assert.ok(malformedErrors.some((error) => error.includes('not valid JSON')));
+  assert.ok(!malformedErrors.some((error) => error.includes('combatInspection.json: required presentation interaction config')), 'present malformed source is not also called missing');
 });
 
 test('uiConfig mirrors the folders, holds only resolved values, and is deep-frozen', () => {
@@ -64,7 +136,7 @@ test('the W4 parent and combat scene carry the contract values', () => {
     layering: { plate: { bleedFraction: 0.02 } },
   });
   assert.deepEqual(w4a.sizing.bands, { hud: 6, scene: 61, context: 20, footer: 13 });
-  assert.equal(w4a.sizing.floorPercent, 80);
+  assert.equal(w4a.sizing.floorPercent, 75);
   assert.deepEqual(w4a.layering.layers.map((l) => [l.id, l.z, l.enabled]), [
     ['skyline', 1, true], ['floor', 2, true], ['actors', 3, true], ['targets', 4, true],
     ['context', 5, true], ['hud', 6, true], ['footer', 6, true], ['effects', 7, true],
@@ -74,16 +146,17 @@ test('the W4 parent and combat scene carry the contract values', () => {
 test('the W4c dialogue scene resolves to exactly the authored contract', () => {
   assert.deepEqual(uiConfig.scenes.w4c, {
     sizing: {
-      bands: { hud: 10, scene: 40, context: 35, footer: 15 },
-      bandsCompact: { hud: 12, scene: 40, context: 33, footer: 15 },
-      floorPercent: 60,
+      bands: { hud: 10, scene: 47, context: 28, footer: 15 },
+      bandsCompact: { hud: 12, scene: 46, context: 27, footer: 15 },
+      bandsDesktop: { hud: 9, scene: 63, context: 20, footer: 8 },
+      floorPercent: 75,
       portraitSlot: { widthVw: 20, compactWidthVw: 30 },
       context: {
         widthVw: 95, captionLines: 3, captionLineHeight: 1.45,
-        titleRem: 0.95, titleLineHeight: 1.45, textRem: 0.9, paddingRem: 0.5, gapRem: 0.25,
+        titleRem: 0.85, titleLineHeight: 1.45, textRem: 0.8, paddingRem: 0.5, gapRem: 0.25,
       },
       responses: {
-        fontRem: 0.85, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2,
+        fontRem: 0.78, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2,
         minHeightRem: 2.75, maxHeightRem: 5.5,
       },
       hud: { compactBelowHeightPx: 500 },
@@ -138,6 +211,8 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
 // #1117 ADDS to it and changes nothing in it: the lane rule, the listener's
 // floor, the HUD's compact threshold and the response-hint switch are new
 // keys; every value #1106 shipped is still here, in the same order.
+// Playtest 2026-11-17 item 40 changed seven numbers (the w4c bands and the context, title and reply type) on the
+// owner's ask: the event panel is smaller so the art shows. Keys and their order are unchanged.
 test('the W4 scenes equal what #1106 shipped, plus the keys #1117 added, key order included', () => {
   const shipped = JSON.parse(readFileSync(new URL('./fixtures/w4-scene-config-1106.json', import.meta.url), 'utf8'));
   const ours = { w4: uiConfig.scenes.w4, w4c: uiConfig.scenes.w4c };
@@ -192,7 +267,7 @@ test('token groups refuse unknown keys, bad values and unordered layers by name'
   refusedWith(planted('ui/tokens.json', (d) => { d.touch.minGapPx.home = 'styles/base.css'; }),
     tk + 'touch.minGapPx.home needs a css name');
   refusedWith(planted('ui/tokens.json', (d) => { d.sizing = {}; }),
-    tk + 'tokens.json holds only "vars" and the token groups type, layer, motion, touch, not "sizing"');
+    tk + 'tokens.json holds only "vars" and the token groups type, layer, motion, touch, color, not "sizing"');
   refusedWith(planted('ui/tokens.json', (d) => { d.vars.layer = 1; }),
     tk + 'vars.layer: "layer" is a token group name — rename the variable');
 });

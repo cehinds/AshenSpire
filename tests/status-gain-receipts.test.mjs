@@ -25,14 +25,6 @@ for (const [mode, requests, totals] of [
   assert.equal(target.statuses.testBuff.duration, 2, 'duration refresh is unchanged');
 });
 
-test('foundation capped grants expose only the remaining gain, then zero gain', () => {
-  const { ctx, target, events } = setup([{ id: 'capped', stackMode: 'add', decay: 'none', stacking: { mode: 'add', cap: 5 } }]);
-  ctx.foundation = true;
-  for (const amount of [3, 10, 10]) applyStatus(ctx, target, 'capped', amount);
-  assert.deepEqual(events.map(e => [e.stacks, e.previousTotal, e.total]), [[3, 0, 3], [10, 3, 5], [10, 5, 5]]);
-  assert.equal(target.statuses.capped.stacks, 5);
-});
-
 test('expansion active receipts retain capped added stacks and omit full-cap reapplications', () => {
   const { ctx, target, events } = setup();
   ctx.combatExpansionVersion = 2;

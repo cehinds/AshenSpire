@@ -2,7 +2,7 @@
 // adapters execute ordinary effects and apply statusChanges; these functions
 // never mutate actors, spend resources, roll randomness or execute reactions.
 // Chance checks take a d20 roll (owner, 2026-11-01) and pass on roll >= 21 - round(chance% / 5).
-import { chanceToD20Target } from '../engine/d20Chance.js';
+import { chanceToD20Target } from './d20Chance.js';
 const stacksOf = instance => Math.max(0, Number(typeof instance === 'number' ? instance : instance?.stacks) || 0);
 const idOf = actor => actor?.id ?? actor?.actorId ?? 'player';
 const tagsOf = card => card?.cardTags ?? card?.tags ?? [];
@@ -142,6 +142,12 @@ export function proposalHitRules({ actor, target, card, amount, damageType, camp
     if (!reactive && b.kind === 'outgoingMultiplier' && (!b.directOnly || direct)) outgoingMultiplier *= b.multiplier;
     if (b.kind === 'weaponBonus' && direct && !reactive && hasAnyTag(card, b.requiredTags))
       out.effects.push(effect(actor, target, { op: 'damage', amount: b.amount, damageType: b.damageType, camp: b.camp, proposalReactive: true }));
+  }
+  // Item properties on the player (W25 step 6): a typed packet on each melee weapon hit, and a status on each hit.
+  if (direct && !reactive && actor?.itemProps) {
+    for (const b of actor.itemProps.weaponBonuses || []) if (hasAnyTag(card, ['classification.attack']) && !tagsOf(card).includes('camp:spell') && (!range || range === 'melee'))
+      out.effects.push(effect(actor, target, { op: 'damage', amount: b.amount, damageType: b.damageType, camp: 'spell', proposalReactive: true }));
+    for (const b of actor.itemProps.onHit || []) out.effects.push(effect(actor, target, { op: 'applyStatus', status: b.status, stacks: b.stacks }));
   }
   out.amount = damageQuantity(out.amount * outgoingMultiplier);
   let incomingCap = Infinity, healingMultiplier = null;

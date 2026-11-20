@@ -24,12 +24,13 @@
 // reload reopens the exchange at its first beat. A run-HUD remount keeps the
 // beat and the answered state, so a flask drunk after answering can never
 // offer the responses a second time, and it does not replay the entrance.
-import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
+import { commitEventChoice, choiceAffordable, ChoiceUnmetRequirement } from '../../engine/quests.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
 import { speakerPortraitAsset } from '../../content/speakerArt.js';
 import { availableEventChoices } from '../../model/quests.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
+import { ReceivedItems } from '../../model/receivedItems.js';
 import { figureSpec } from '../../model/loadout.js';
 import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -39,7 +40,7 @@ import {
 import { w4Parent, w4cLayout } from '../sceneConfig.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { el, modalFooter, button, prose } from '../kit/index.js';
-import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
 import { wireDialogueStage } from '../components/dialogueStage.js';
 import { enemySprite, playerSprite } from '../assets.js';
@@ -78,7 +79,8 @@ export function mountDialogue(app, options) {
   const responses = () => availableEventChoices(options.definition ? def.choices : eventChoicesWithHistory(def), run).map(({ choice }) => ({
     choiceId: choice.id,
     label: choice.label,
-    affordable: choiceAffordable(choice, run),
+    affordable: choiceAffordable(choice, run, registries),
+    unmet: ChoiceUnmetRequirement(choice, run, registries),
     binding: isBindingChoice(choice, registries),
     resultText: choice.resultText,
   }));
@@ -217,8 +219,15 @@ export function mountDialogue(app, options) {
       const receipt = options.commitChoice ? options.commitChoice(step.command) : commitEventChoice({ run, registries, rng }, step.command);
       state = dialogueStep(view(), state, { type: 'resolved', choiceId: receipt.choice.id, resultText: receipt.choice.resultText }).state;
       render();
+      // The header shows the cinders and HP the choice just paid or took, on this same screen.
+      if (hudShown) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: '', hud, remount: () => mountDialogue(app, { ...options, dialogueState: state, entrancePlayed: true }) });
       // The what-changed receipt, over the resolved line the dialogue now shows (an empty diff opens nothing).
-      showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '' });
+      // An item the choice handed over opens the shop's receive modal first (playtest 2026-11-17 item 41).
+      // `release` is the dialogue's own exit cleanup, for a host that leaves it (Equip opens the Armoury).
+      const showReceipt = (onClose = null) => showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '', onClose });
+      const release = () => { teardown(); clearTimeout(entranceTimer); stage.release(); };
+      const items = options.onItemsReceived ? ReceivedItems(registries, before, run) : [];
+      if (items.length) options.onItemsReceived(items, { receipt: showReceipt, release }); else showReceipt();
       return;
     }
     render();
@@ -241,7 +250,7 @@ export function mountDialogue(app, options) {
     if (response.binding) btn.dataset.binding = '1';
     if (!response.affordable) {
       btn.dataset.requires = '1';
-      const reason = t('dialogue.cannotAfford');
+      const reason = response.unmet === 'rankableCard' ? t('event.noRankableCard') : t('dialogue.cannotAfford');
       if (tooltipHints) {
         btn.title = `${response.label} — ${reason}`;
         btn.setAttribute('aria-description', reason);
@@ -251,17 +260,8 @@ export function mountDialogue(app, options) {
       return btn;
     }
     if (!entered) return btn;
-    if (tooltipHints && response.binding) {
-      const held = t('dialogue.respond.hold');
-      btn.title = `${response.label} — ${held}`;
-      btn.setAttribute('aria-description', held);
-    }
     disarmers.push(arm(btn, 'eventChoice', {
       ctx: { binding: response.binding },
-      showHint: !tooltipHints,
-      question: t('dialogue.respond.question', { label: response.label }),
-      detailHtml: response.resultText ? `<p>${esc(response.resultText)}</p>` : '',
-      confirmLabel: t('dialogue.respond.confirm'),
       onConfirm: () => dispatch({ type: 'respond', choiceId: response.choiceId }),
     }));
     return btn;
@@ -283,6 +283,7 @@ export function mountDialogue(app, options) {
     // The responses form one grid; the stage picks its columns and placement
     // so that up to behavior.maxVisibleResponses fit without scrolling.
     responseBox.replaceChildren(...v.responses.map(responseButton));
+    stage.apply(); // re-measures the band split too: a desktop context panel is sized to this beat's text
     stage.fitResponses();
     // The footer is drawn at t=0 but opens only when the context has appeared.
     back.disabled = !entered || !v.controls.back.enabled;

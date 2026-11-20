@@ -5,7 +5,7 @@ import { activeIn, HAND_SLOT_IDS } from './zones.js';
 export function abilityOfferPool(registries, run, skillId, rank, { classLevel = null } = {}) {
   const rules = registries.balance.progression;
   const lessons = new Set(rules.lessons[skillId] || []);
-  const source = registries.masterySource || registries;
+  const source = registries;
   const level = classLevel ?? run.skills?.[`class:${run.class}`]?.level ?? 0;
   const refs = new Set([...source.classes.get(run.class).cardPool, ...lessons]);
   const held = Object.values(HAND_SLOT_IDS).map(slot => activeIn(run.loadout, slot)).filter(Boolean);
@@ -38,7 +38,7 @@ export function rollAbilityOffer(registries, rng, run, { skillId, level, gradeLe
   if (pool.length < rules.draftSize) return null;
   const owned = new Set([...(run.deck || []), ...(run.sideboard || [])].map(inst => `${inst.cardId}:${inst.abilityRank ?? 0}`));
   const before = rng.getCounters();
-  const source = registries.masterySource || registries;
+  const source = registries;
   const familyPool = [...new Map(pool.map(id => [source.cards.get(id).abilityFamily || id,id])).values()];
   if (familyPool.length < rules.draftSize) return null;
   const fresh = familyPool.filter(id => !owned.has(`${id}:${rank}`));

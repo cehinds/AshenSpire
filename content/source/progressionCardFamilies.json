@@ -453,8 +453,169 @@
     "primary": "block",
     "hits": 1,
     "abilityRank": 3,
-    "primaryValues": [6,8,10,13,16,20],
-    "actionCosts": [1,1,1,1,2,2]
+    "grades": [
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "evade",
+            "stacks": {
+              "f": "metric",
+              "metric": "evadeStackGain",
+              "of": "self",
+              "per": 2
+            }
+          },
+          {
+            "op": "changeAttribute",
+            "target": "self",
+            "attribute": "intelligence",
+            "amount": 1,
+            "thisTurn": true
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "evade",
+            "stacks": {
+              "f": "metric",
+              "metric": "evadeStackGain",
+              "of": "self",
+              "per": 2
+            }
+          },
+          {
+            "op": "changeAttribute",
+            "target": "self",
+            "attribute": "intelligence",
+            "amount": 1,
+            "thisTurn": true
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "evade",
+            "stacks": {
+              "f": "metric",
+              "metric": "evadeStackGain",
+              "of": "self",
+              "per": 2
+            }
+          },
+          {
+            "op": "changeAttribute",
+            "target": "self",
+            "attribute": "intelligence",
+            "amount": 1,
+            "thisTurn": true
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "evade",
+            "stacks": {
+              "f": "metric",
+              "metric": "evadeStackGain",
+              "of": "self",
+              "per": 2
+            }
+          },
+          {
+            "op": "changeAttribute",
+            "target": "self",
+            "attribute": "intelligence",
+            "amount": 1,
+            "thisTurn": true
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "evade",
+            "stacks": {
+              "f": "metric",
+              "metric": "evadeStackGain",
+              "of": "self",
+              "per": 2
+            }
+          },
+          {
+            "op": "changeAttribute",
+            "target": "self",
+            "attribute": "intelligence",
+            "amount": 1,
+            "thisTurn": true
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          }
+        ]
+      },
+      {
+        "actionCost": 1,
+        "manaCost": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "evade",
+            "stacks": {
+              "f": "metric",
+              "metric": "evadeStackGain",
+              "of": "self",
+              "per": 2
+            }
+          },
+          {
+            "op": "changeAttribute",
+            "target": "self",
+            "attribute": "intelligence",
+            "amount": 1,
+            "thisTurn": true
+          },
+          {
+            "op": "block",
+            "target": "self",
+            "amount": 2,
+            "oncePerTurn": "grade-block"
+          },
+          {
+            "op": "draw",
+            "amount": 1,
+            "oncePerTurn": "grade-draw"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "progression-carrion-cut",

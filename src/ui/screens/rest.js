@@ -30,7 +30,7 @@ import { beatArmer } from '../../framework/optionDecision.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } from '../../model/gracerefill.js';
-import { renderStatAllocationCard } from '../components/statAllocationCard.js';
+import { RenderStatAllocationCard } from '../components/statAllocationCard.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
@@ -49,7 +49,6 @@ import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFo
 // Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
 import { t, tFull, has } from '../strings.js';
-import { restReview } from '../models/ConfirmationReviewModel.js';
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -81,7 +80,7 @@ function refillLineHtml(registries, refill) {
     const named = [...byId].map(([id, n]) => `${n} × ${flaskIdentityHtml(registries.flasks.get(id))}`);
     said.push(`Flasks refilled: ${named.join(', ')}.`);
   }
-  for (const s of refill.shortfalls) said.push(`Flask slots full — ${s.short} not given.`);
+  for (const s of refill.shortfalls) said.push(`Flask slots full. ${s.short} not given.`);
   if (!said.length) return '';
   return `<p class="rest-refill">${said.join(' ')}</p>`;
 }
@@ -215,7 +214,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
           <div class="glyph">${engravedIconHtml('rest')}</div>
           <div class="cp-body">
             <h3>${esc(t('rest.eyebrow'))}</h3>
-            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
+            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore. You stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
           </div>
         </div>
         <!-- THE OFFER PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
@@ -396,8 +395,6 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
       restOption.click();
     });
     arm(restOption, 'shrineRest', {
-      // W2a: question, the Shrine and the pools it acts on, the exact recovery.
-      ...restReview({ shrine: locationTitle(stay.locationId), heal, manaGain, hp: run.hp, maxHp: run.maxHp, mana: run.mana, maxMana: run.maxMana, multiUse }),
       onConfirm: () => {
         // The rules fire (`rested`), the pools move through the engine's
         // opcodes; this screen writes nothing to the run itself.
@@ -539,7 +536,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
         }
       } else {
         shrineScreen.inert = true;
-        allocation = renderStatAllocationCard(app, spec);
+        allocation = RenderStatAllocationCard(app, spec);
         allocation.card.classList.add('level-up-modal');
         allocation.card.querySelector('.se-pool').after(el('div', { html: levelLineHtml }));
         allocation.card.addEventListener('keydown', (event) => {

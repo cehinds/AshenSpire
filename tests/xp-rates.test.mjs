@@ -104,19 +104,14 @@ test('enemy equipment gives a small additive combat-power bonus in the real figh
     combatLevelXp(registries, { victory: true, enemies: encounter }), 'the combat-power setting reaches XP');
 });
 
-test('SPEC §13.4o caps: a skill stops at 10 and the class track at 20, banking the XP past the cap', async () => {
-  const { awardSkillXp, bankSkillXp, claimBankedSkillLevel, pendingSkillLevelCount, skillMaxLevel } = await import('../src/model/skills.js');
+test('SPEC §13.4o caps: a skill stops at 10 and the class track at 20, keeping the XP past the cap', async () => {
+  const { awardSkillXp, skillMaxLevel } = await import('../src/model/skills.js');
   assert.equal(skillMaxLevel(registries, 'weapon'), 10);
   assert.equal(skillMaxLevel(registries, 'class'), 20);
   const run = { skills: {}, deck: [] };
   awardSkillXp(registries, run, 'item:blade', 1_000_000);
   assert.equal(run.skills['item:blade'].level, 10, 'the award climbs no further than the cap');
   assert.equal(run.skills['item:blade'].xp, 1_000_000 - 100275, 'the XP past it stays on the ledger');
-  const banked = { skills: {}, deck: [] };
-  bankSkillXp(registries, banked, 'item:blade', 1_000_000);
-  assert.equal(pendingSkillLevelCount(registries, banked, 'item:blade'), 10, 'only ten levels are ever waiting');
-  for (let i = 0; i < 10; i++) assert.ok(claimBankedSkillLevel(registries, banked, 'item:blade'));
-  assert.equal(claimBankedSkillLevel(registries, banked, 'item:blade'), null, 'level 10 claims no eleventh');
 });
 
 test('SPEC §13.4o caps read as capped everywhere: reward bar, Character row, Settings rows', async () => {

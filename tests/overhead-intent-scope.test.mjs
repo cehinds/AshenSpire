@@ -1,7 +1,7 @@
 // DOM wiring only: packaged browser QA verifies painted width/overlap.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { combatantIntent } from '../src/ui/components/combatantOverhead.js';
 
 const multi = { kind: 'attack', moveId: 'flurry', damage: 5, hits: 3,

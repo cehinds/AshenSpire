@@ -1,5 +1,5 @@
 import { unusedInstanceId as unusedInstanceId_ } from './cardInstanceIdentity.js';
-import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
+import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCopyLimit_, ItemUnlimitedCardIds } from './deckCopyLimit.js';
 // src/model/deckRules.js — the deck editor's rules, without its screen (SPEC §14.1).
 //
 // Pure model: settings and a run in, answers and one-step edits out. The
@@ -21,6 +21,7 @@ import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds, recordCollectedCards } from './collectedCards.js';
+import { DeckMinDelta as DeckMinDelta_, LevelMinDeckDelta as LevelMinDeckDelta_, ReducedDeckMinimum } from './deckMinimumRules.js';
 
 const D = deckRules.defaults;
 
@@ -56,19 +57,25 @@ export function deckSettingsProblems(settings) {
  * deckEditBounds(settings) → { min, max, problem }; max is Infinity when
  * unlimited, and `problem` is the Settings refusal when max sits below min.
  */
-export function deckEditBounds(settings) {
+export function deckEditBounds(settings, minDelta = 0) {
   const problems = deckSettingsProblems(settings);
   if (problems.length) {
     let min = D.deckMinSize;
     try { ({ min } = readBounds(settings)); } catch { /* fall back to the default */ }
     return { min, max: min, problem: problems[0].message };
   }
-  return { ...readBounds(settings), problem: '' };
+  const bounds = readBounds(settings);
+  // A deck-size item property (W25 step 6) lowers the minimum, never below 0.
+  return { ...bounds, min: ReducedDeckMinimum(bounds.min, minDelta), problem: '' };
 }
 
+/** What lowers the editor's minimum (model/deckMinimumRules.js), re-exported for the editor's callers. */
+export const LevelMinDeckDelta = LevelMinDeckDelta_;
+export const DeckMinDelta = DeckMinDelta_;
+
 /** deckEditRefusal(count, settings) → '' when the editor may confirm, else one sentence. */
-export function deckEditRefusal(count, settings) {
-  const { min, max, problem } = deckEditBounds(settings);
+export function deckEditRefusal(count, settings, minDelta = 0) {
+  const { min, max, problem } = deckEditBounds(settings, minDelta);
   if (problem) return problem;
   const cards = (n) => `${n} card${n === 1 ? '' : 's'}`;
   if (count < min) return `Your deck has ${cards(count)}; it needs at least ${min}.`;
@@ -106,6 +113,12 @@ export function basicCardIds(run) {
  * configured profiles retain their existing ownedOnlyCollection policy.
  */
 export function unlimitedCardIds(run) {
+  const base = policyUnlimitedCardIds(run);
+  // A held relic or item property opens the collected own-class Basic cards or cantrips (ItemUnlimitedCardIds).
+  const extra = ItemUnlimitedCardIds(run);
+  return extra.length ? [...new Set([...base, ...extra])] : base;
+}
+function policyUnlimitedCardIds(run) {
   if (hasCollectedCardPolicy(run)) return basicCardIds(run);
   if (gameModule(run, 'cards')?.mode === 'configured'
     && gameModule(run, 'deck-training')?.mode === 'configured'
@@ -362,7 +375,7 @@ export function cancelDeckEdit(run, snapshot) {
 
 /** Commit a validated editor draft without touching current combat piles. */
 export function commitDeckEditDraft(registries, run, edited, settings = {}) {
-  const refusal = deckEditRefusal(edited.deck?.length || 0, settings);
+  const refusal = deckEditRefusal(edited.deck?.length || 0, settings, DeckMinDelta(run));
   if (refusal) throw new Error(refusal);
   if (hasCollectedCardPolicy(run) && edited.collectedCardIds !== undefined
     && (!Array.isArray(edited.collectedCardIds) || JSON.stringify([...edited.collectedCardIds].sort()) !== JSON.stringify(knownCollectedCardIds(run).sort()))) throw new Error('Deck editing cannot modify collection knowledge');

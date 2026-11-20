@@ -15,7 +15,7 @@ export function combatActionIdentity(beat, registries, enemyFor = () => null) {
   const carrier = card || move;
   const maneuver = beat.kind === 'counter' ? 'counter' : event.combatProfile?.maneuver || (carrier && combatProfileFor(carrier).maneuver);
   const type = ['attack', 'smash', 'defend', 'counter', 'sweep', 'evade'].includes(maneuver)
-    ? t(`stance.name.${maneuver}`) : maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null;
+    ? t(`stance.name.${maneuver === 'evade' ? 'defend' : maneuver}`) : maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null;
   const name = carrier?.name || event.cardName || event.moveName || event.name || moveLabel(event.moveId);
   const instance = event.cardInstance;
   const committed = instance && Object.hasOwn(instance, 'usedArmamentId');

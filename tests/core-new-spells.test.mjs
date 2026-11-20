@@ -22,13 +22,20 @@ const BY_CLASS = {
 };
 const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
+
+// The reward pool's playableOnly rule uses the run's maximum Mana. Stock Core runs start with 1 MP.
+const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
   return run;
 };
-const offered = (classId, seed, floor) => gameProfileRewardOffers(registries, live(classId, seed, floor), createRng(seed + 50000), { offerId: 'b3' })
-  .options.filter(option => option.kind === 'combatCards').map(option => option.id);
+const offered = (classId, seed, floor, withoutCardId) => {
+  const run = live(classId, seed, floor);
+  if (withoutCardId) run.deck = run.deck.filter(card => card.cardId !== withoutCardId);
+  return gameProfileRewardOffers(registries, run, createRng(seed + 50000), { offerId: 'b3' })
+    .options.filter(option => option.kind === 'combatCards').map(option => option.id);
+};
 
 test('every new spell is authored in its class, costs mana, is not a cantrip, and has a rarity of uncommon or rare', () => {
   for (const [cls, list] of Object.entries(BY_CLASS)) for (const id of list) {
@@ -115,15 +122,24 @@ test('Magic classes see their new spells more often at depth 4+ than at depth 1-
   console.log(`new-spell share of card offers: ${report.join('; ')}`);
 });
 
-test('offers never cross classes: Magic spells only reach their own class, colorless reach everyone, Martial never sees a Magic card', () => {
+test('each class sees only payable spells from its own class or colorless', () => {
   const magic = { starseer: BY_CLASS.starseer, herald: BY_CLASS.herald };
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
-    const seen = new Set();
-    for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) seen.add(id);
+    const seen = new Set(), counts = new Map();
+    for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) { seen.add(id); counts.set(id, (counts.get(id) || 0) + 1); }
+    const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(magic)) for (const id of list) {
-      if (owner === classId) assert.ok(seen.has(id), `${classId} never offered its own ${id}`);
-      else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
+      // Compare Sanctified Ward against itself on the same seeds so rarity, card type and pool changes cannot distort the ownership check.
+      if (owner !== classId) assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
+      else if (!payable(classId, id)) assert.ok(!seen.has(id), `${classId} was offered unpayable ${id}`);
+      else if (starter.has(id)) {
+        let unownedCount = 0;
+        for (let seed = 1; seed <= 600; seed++) if (offered(classId, seed, 1 + (seed % 6), id).includes(id)) unownedCount++;
+        const ownedCount = counts.get(id) || 0;
+        assert.ok(ownedCount * 3 < unownedCount, `${classId} was offered ${id} ${ownedCount} times when owned and ${unownedCount} when unowned`);
+      }
+      else assert.ok(seen.has(id), `${classId} never offered its own payable ${id}`);
     }
-    for (const id of BY_CLASS.colorless) assert.ok(seen.has(id), `${classId} never offered colorless ${id}`);
+    for (const id of BY_CLASS.colorless) assert.ok(payable(classId, id) ? seen.has(id) : !seen.has(id), `${classId} colorless ${id}: offered only when payable`);
   }
 });

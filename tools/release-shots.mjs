@@ -77,7 +77,7 @@
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -122,9 +122,19 @@ const SHAPES = [
 const EXCLUDED_STATES = {};
 
 /** The states the APP actually has, read from src/main.js — never retyped. */
+// The ?shot= states are declared in two places: the comparisons left in
+// src/main.js, and the table keys of src/dev/shotStates.js (the pose ladder
+// moved there; its entries read `    map: () => poseRunState('map'),`).
+function shotStateNames(mainSrc) {
+  const poses = resolve(ROOT, 'src', 'dev', 'shotStates.js');
+  const posesSrc = existsSync(poses) ? readFileSync(poses, 'utf8') : '';
+  const names = [...mainSrc.matchAll(/shotState === '([a-z]+)'/g), ...posesSrc.matchAll(/^ {4}([a-z]+): \(\) =>/gm)];
+  return [...new Set(names.map((m) => m[1]))].sort();
+}
+
 function appShotStates() {
   const src = readFileSync(resolve(ROOT, 'src', 'main.js'), 'utf8');
-  return [...new Set([...src.matchAll(/shotState === '([a-z]+)'/g)].map((m) => m[1]))].sort();
+  return shotStateNames(src);
 }
 
 // Each screen: how to reach it on the BUILT artifact, and the landmark that
@@ -163,9 +173,6 @@ const SCREENS = [
   // The blacksmith (SPEC §14.4, §14.6 step 6): the atlas smith's own screen,
   // its rail drawn from the offerings the visit laid out.
   { name: 'blacksmith', query: '?shot=blacksmith', landmark: '.blacksmith-workspace .shop-rail [data-shop-category]', state: 'blacksmith' },
-  // The wise master (SPEC §14.5, §14.6 step 7): a master visit's own screen,
-  // its rail drawn from the offerings the visit laid out.
-  { name: 'master', query: '?shot=master', landmark: '.master-workspace .shop-rail [data-shop-category]', state: 'master' },
   // The event screen. Rune added `?shot=event` in the tap-size work (#104) and
   // did not register it here, so THIS TOOL REFUSED TO RUN at `52e0bc1` —
   // "1 app shot state neither photographed nor excluded: event" — and
@@ -296,21 +303,9 @@ const SCREENS = [
   // of assertions, and this tool went RED the moment the state joined the
   // derived denominator unphotographed (Saga's review of #290, comment
   // 5364846139 — the refusal was correct, same as `event` at 52e0bc1).
-  // Both edges, because the menu's whole subject is derivation from the offer:
-  //   full   every kind present — five rows in REWARD_KIND_ORDER. The landmark
-  //          is the LAST row in that order (relic): the menu renders in
-  //          sequence, so the last kind standing proves the derivation walked
-  //          the whole offer, where any earlier row would go green on a menu
-  //          that stopped short.
-  //   empty  no kinds — the zero edge, where a derivation quietly draws
-  //          furniture for absent rewards. The landmark is Continue, the one
-  //          control the card's contract keeps ALWAYS pressable; zero-row
-  //          proof is a count and lives in the driven walkthrough, not in a
-  //          presence landmark.
-  { name: 'reward', query: '?shot=reward', landmark: '.reward-kind[data-kind="relic"]', state: 'reward' },
-  { name: 'reward-empty', query: '?shot=reward&shotReward=empty', landmark: '#reward-continue' },
-  // draft: a skill draft in the card row's seat (plan phase 4b).
-  { name: 'reward-draft', query: '?shot=reward&shotReward=draft', landmark: '.reward-kind[data-kind="skillDraft"]' },
+  // Core's configured reward door, mounted through the production offer/save/renderer callbacks (the legacy
+  // ?shotReward=full|empty|draft poses went with the legacy reward door). The landmark is the door itself.
+  { name: 'reward', query: '?shot=reward', landmark: '.reward-door', state: 'reward' },
   // --- driven: no ?shot= state exists for any of these ---
   {
     name: 'armoury', query: '?shot=combat', landmark: '.armoury, .equip-screen, .equipment',

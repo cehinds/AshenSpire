@@ -1,10 +1,20 @@
 import { previewIntent } from '../../engine/combat.js';
-import { captureEnemyIntent } from '../../engine/enemyIntentReceipt.js';
-import { projectEnemyIntentDamage } from '../../engine/enemyIntentProjection.js';
+import { captureEnemyIntent, PresentEnemyIntentReceipt } from '../../engine/enemyIntentReceipt.js';
+import { projectEnemyIntentDamage, ProjectPlannedMoveDamage } from '../../engine/enemyIntentProjection.js';
+import { EnemyChargingState } from '../../engine/enemyCharging.js';
 
 // Apply the production observer gate before inspecting the queued payload.
 // A reaction pause belongs to one pending contact, not the full original move.
 export function projectCombatIntent(combat, enemyInstanceId) {
+  const intent = projectUncharged(combat, enemyInstanceId);
+  if (intent.hidden || intent.revealed === false || intent.kind === 'staggered') return intent;
+  // Owner, 2026-11-14: a delayed move that does not land this turn says so (Charging, turns left, the Block it gains now); its damage number
+  // is the later one and reads as such. The turn it lands it is an ordinary attack.
+  const charging = EnemyChargingState(combat, combat.enemies.find(row => row.id === enemyInstanceId));
+  return charging ? { ...intent, charging } : intent;
+}
+
+function projectUncharged(combat, enemyInstanceId) {
   const intent = previewIntent(combat, enemyInstanceId);
   if (intent.hidden || intent.revealed === false || intent.kind === 'staggered') return intent;
   const enemy = combat.enemies.find(row => row.id === enemyInstanceId);
@@ -15,8 +25,15 @@ export function projectCombatIntent(combat, enemyInstanceId) {
     // A response with a nested card/discard choice temporarily owns the live
     // queue; the unanswered incoming contact waits in its saved resume queue.
     : combat.reactionResume?.queue?.find(queuedContact);
-  if (action) return captureEnemyIntent(combat, enemy, action) || intent;
+  if (action) return PresentEnemyIntentReceipt(captureEnemyIntent(combat, enemy, action)) || intent;
   return projectEnemyIntentDamage(combat, enemy, intent);
+}
+
+// The HP the player loses from the enemy's planned follow-up `index`, after its head and the follow-ups before it (null: no number).
+// The caller has already passed the observer gate for that slot (a follow-up symbol that reads as an action).
+export function ProjectPlannedFollowUpDamage(combat, enemyInstanceId, index) {
+  const enemy = combat.enemies.find(row => row.id === enemyInstanceId);
+  return enemy?.alive ? ProjectPlannedMoveDamage(combat, enemy, index) : null;
 }
 
 // Playback advances only on public receipts. Clear a consumed contact before
@@ -51,19 +68,23 @@ export function applyCombatIntentReceipt(entities, event, deferred = null, later
   const clears = event.type === 'enemyMoveEnded' || actor.intentInFlight
     && (event.type === 'damageDealt' || event.type === 'attackMissed' || event.type === 'attackEvaded'
       || event.type === 'combatAvoidanceResolved' && event.avoided);
-  if (deferred && !announces && clears && !event.reaction && later && announcesNextContact(later, event.sourceId)) return;
+  if (deferred && !announces && clears && !event.reaction && later && announcesNextContact(later, event.sourceId)) {
+    // The move is over and the same actor announces another one: park a promotion (see flushDeferredIntentClears).
+    if (event.type === 'enemyMoveEnded') deferred.set(event.sourceId, { type: 'intentPromote', sourceId: event.sourceId });
+    return;
+  }
   if (deferred && !announces && clears) {
     deferred.set(event.sourceId, event);
     return;
   }
   if (event.type === 'enemyActorTurnStarted') {
-    actor.intentPreview = event.intentPreview || { ...event.intent, profile: event.intent?.combatProfile || {}, revealed: true, hidden: false };
+    actor.intentPreview = PresentEnemyIntentReceipt(event.intentPreview) || { ...event.intent, profile: event.intent?.combatProfile || {}, revealed: true, hidden: false };
     actor.intentInFlight = false;
     delete actor.intentBeforeReaction;
   } else if (['combatContactPrepared', 'combatHitStarted', 'enemyMoveStarted'].includes(event.type)) {
     if (event.type === 'enemyMoveStarted' && !event.reaction) delete actor.intentBeforeReaction;
     if (event.reaction && !actor.intentBeforeReaction) actor.intentBeforeReaction = actor.intentPreview;
-    if (event.intentPreview) actor.intentPreview = event.intentPreview;
+    if (event.intentPreview) actor.intentPreview = PresentEnemyIntentReceipt(event.intentPreview);
     actor.intentInFlight = true;
   } else if (event.type === 'combatCounterTriggered' && event.sourceKind === 'enemy') {
     actor.intentBeforeReaction ||= actor.intentPreview;
@@ -81,11 +102,24 @@ export function applyCombatIntentReceipt(entities, event, deferred = null, later
   }
 }
 
-/** Apply the clears parked by applyCombatIntentReceipt(..., deferred), then empty the map. */
-export function flushDeferredIntentClears(entities, deferred) {
+/**
+ * Apply the clears parked by applyCombatIntentReceipt(..., deferred), then empty the map. A parked promotion
+ * (`intentPromote`, the move ended and the actor announces its next one) calls promote(actorId), which moves the next
+ * planned move into the head slot; without it, or when it declines, the head stays as it did before promotion existed.
+ * Returns true when something on screen changed.
+ */
+export function flushDeferredIntentClears(entities, deferred, promote = null) {
   if (!deferred?.size) return false;
   const parked = [...deferred.values()];
   deferred.clear();
-  for (const event of parked) applyCombatIntentReceipt(entities, event);
-  return true;
+  let changed = false;
+  for (const event of parked) {
+    if (event.type === 'intentPromote') {
+      if (promote?.(event.sourceId)) changed = true;
+      continue;
+    }
+    applyCombatIntentReceipt(entities, event);
+    changed = true;
+  }
+  return changed;
 }

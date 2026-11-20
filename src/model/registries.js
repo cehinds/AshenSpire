@@ -1,7 +1,7 @@
 import { applyBaseManaPolicy } from './cardManaPolicy.js';
 import { cardRank, primaryEffectIndex, rankBonus, rankedEffects } from './cardRank.js';
 export { cardRank, primaryEffectIndex, rankBonus };
-import { applyUpgradeSteps, upgradeStepsOf, upgradeCount, upgradeSignature } from './cardUpgrade.js';
+import { applyUpgradeSteps, upgradeStepsOf, upgradeCount, upgradeSignature, ApplyDrawbackSteps } from './cardUpgrade.js';
 import { applyAbilityGrade } from './abilityGrades.js';
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -290,11 +290,7 @@ export function createRegistries(contentBundle) {
   registries.eventSpeakers = deepFreeze({ ...(bundle.eventSpeakers || {}) });
   registries.speakers = makeRegistry('speaker', bundle.speakers || []);
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
-  // Keepsakes are tagged like everything else; they just live one level down.
   const creation = { ...(bundle.characterCreation || {}) };
-  if (stamped.has('characterCreation.keepsakes')) {
-    creation.keepsakes = stamped.get('characterCreation.keepsakes');
-  }
   registries.characterCreation = deepFreeze(creation);
   // One object, not a copied settings shadow. The run snapshots the resolved
   // result; authoring and validation still point at this exact content object.
@@ -578,6 +574,11 @@ export function passiveFlag(registries, relicIds, key, mounts = null) {
 
 // Cache resolved upgrade merges per registries object.
 const resolveCache = new WeakMap();
+// A run keeps resolving new keys (play counts, upgrades, mods), so the per-registries map is bounded: at the cap it
+// is emptied before the next insert. Every entry is derivable, so a clear costs a re-resolve and nothing else.
+const RESOLVE_CACHE_LIMIT = 4096;
+/** Entries held for these registries (test and diagnostics reader). */
+export const resolveCacheSize = (registries) => resolveCache.get(registries)?.size ?? 0;
 
 /**
  * resolveCard(registries, cardInstanceOrRef) → effective (frozen) card def.
@@ -609,6 +610,27 @@ function derivedActionCost(def, authored, rank = 0) {
 // rank counts from 1, so its rank above the base is rank − 1.
 const costRankOf = (usesAbilityGrade, base, rank) => (usesAbilityGrade ? Math.max(0, Number(base.abilityRank) || 0) : Math.max(0, rank - 1));
 
+// The hot path resolves the same few registry definitions thousands of times, so the two derived bases below are
+// built once per definition. Keyed on the definition's identity (frozen registry rows never change), then, for the
+// grade, on the rank; a per-call spread (`stable` false) is built fresh as before.
+const singleBreakBases = new WeakMap();
+function singleBreakBase(authored, stable) {
+  if (!stable) return deepFreeze({ ...authored, ...authored.singleBreak });
+  let base = singleBreakBases.get(authored);
+  if (!base) singleBreakBases.set(authored, (base = deepFreeze({ ...authored, ...authored.singleBreak })));
+  return base;
+}
+const gradedBases = new WeakMap();
+function gradedBase(legacyBase, abilityRank, stable) {
+  if (!stable) return deepFreeze(applyAbilityGrade(legacyBase, abilityRank));
+  let byRank = gradedBases.get(legacyBase);
+  if (!byRank) gradedBases.set(legacyBase, (byRank = new Map()));
+  const key = String(abilityRank);
+  let base = byRank.get(key);
+  if (!base) byRank.set(key, (base = deepFreeze(applyAbilityGrade(legacyBase, abilityRank))));
+  return base;
+}
+
 export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
   return resolveCardAuthored(registries, instanceOrRef, breakMeterVersion);
 }
@@ -621,9 +643,10 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // A legacy card keeps only a summary written for its legacy face; the current card's faceTemplate describes other effects.
   const legacyResolved = instanceOrRef.legacyAbility && (definition.legacyFace ? {...definition,...definition.legacyFace,gradeProfiles:undefined} : definition !== registries.cards.get(cardId) ? definition : null);
   const authored = legacyResolved ? {...legacyResolved,faceTemplate:definition.legacyFace?.faceTemplate} : definition;
-  const legacyBase = breakMeterVersion === 1 && authored.singleBreak ? deepFreeze({ ...authored, ...authored.singleBreak }) : authored;
+  const stable = !legacyResolved; // a legacy spread is per call; only a registry definition may be memoised on identity
+  const legacyBase = breakMeterVersion === 1 && authored.singleBreak ? singleBreakBase(authored, stable) : authored;
   const usesAbilityGrade = Array.isArray(authored.gradeProfiles) && (instanceOrRef.abilityRank !== undefined || instanceOrRef.rank === undefined);
-  const base = usesAbilityGrade ? deepFreeze(applyAbilityGrade(legacyBase, instanceOrRef.abilityRank)) : legacyBase;
+  const base = usesAbilityGrade ? gradedBase(legacyBase, instanceOrRef.abilityRank, stable) : legacyBase;
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
   const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
@@ -633,11 +656,10 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
     || Number.isFinite(instanceOrRef.magicShare) || typeof instanceOrRef.physicalDamageType === 'string';
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
-  const passiveBlock = cardPassiveBlock(instanceOrRef);
   // Ramp (SPEC §4.3): a card whose base or upgrade grows with its uses; the run-wide count rides on the instance.
   const hasRamp = mayRamp(definition);
   const playsEver = rampsByRun(definition) ? playsEverOf(instanceOrRef) : 0;
-  if (!hasRamp && !upgradeCount(instanceOrRef) && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
+  if (!hasRamp && !upgradeCount(instanceOrRef) && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -647,7 +669,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${upgradeSignature(instanceOrRef)}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|pe${playsEver}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
+  const key = `${cardId}|${upgradeSignature(instanceOrRef)}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|pe${playsEver}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -662,6 +684,8 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   let result = usesAbilityGrade ? base : cardForSchool(base, school);
   if (result !== base) result = deepFreeze(result);
   if (upgradeCount(instanceOrRef) && !usesAbilityGrade) result = mergeUpgrade(result, upgradeStepsOf(instanceOrRef));
+  // A ranked ability card's grade owns its numbers; only a drawback-removal step applies to it (review of #2819).
+  else if (upgradeCount(instanceOrRef)) result = deepFreeze(ApplyDrawbackSteps(result, upgradeStepsOf(instanceOrRef)));
   result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
   if (profileId) result = applyBasicCardProfile(result, profile, fixCoreRegistries(registries));
   result = applyBaseManaPolicy(registries, result);
@@ -699,10 +723,9 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // bonus, adds 1 to the card's primary number, so the play, the preview and
   // the card face all read the same value.
   if (!usesAbilityGrade && (rank > 1 || skillBonus > 0)) result = applyCardRank(result, rank, skillBonus);
-  // A passive tag's Block (SPEC §13.4o) lands on the finished face too.
-  if (passiveBlock > 0) result = applyPassiveBlock(result, passiveBlock);
   // Ramp lands last, after rank and upgrade growth, so the base amount it wraps is still a plain number.
   if (result.ramp) result = deepFreeze(applyRamp(result, playsEver, tagService(registries).idsOf('card', result)));
+  if (cache.size >= RESOLVE_CACHE_LIMIT) cache.clear();
   cache.set(key, result);
   return result;
 }
@@ -715,33 +738,6 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
 export function cardSkillBonus(instance) {
   const bonus = instance && instance.skillBonus;
   return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
-}
-
-/**
- * cardPassiveBlock(instance) → the Block the run's passive tags add to the
- * instance (SPEC §13.4o), 0 when absent. Derived, never chosen: `skills.js
- * stampSkillBonuses` writes it from the run's skill feats.
- */
-export function cardPassiveBlock(instance) {
-  const bonus = instance && instance.passiveBlock;
-  return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
-}
-
-/**
- * passiveBlockIndex(card) → the effect a passive Block lands on: the card's
- * first unconditional Block with a numeric amount, or -1. Once per card, so a
- * card with two Blocks gains it once.
- */
-export function passiveBlockIndex(card) {
-  return ((card && card.effects) || []).findIndex((effect) => effect && !effect.if && effect.op === 'block' && typeof effect.amount === 'number');
-}
-
-/** applyPassiveBlock(card, amount) → the face with `amount` added to that Block. */
-export function applyPassiveBlock(card, amount) {
-  const index = passiveBlockIndex(card);
-  if (index === -1 || !amount) return card;
-  const effects = card.effects.map((effect, i) => (i === index ? { ...effect, amount: effect.amount + amount } : effect));
-  return deepFreeze({ ...card, effects });
 }
 
 /**

@@ -80,8 +80,8 @@ export function extendRangeEnvelope(ctx,source,actions,contacts,{preview=false,c
   const hooks=Triggers.rangeHookSources(ctx,source,sourceStatuses(ctx,source,actions));
   if (!hooks.some(({trigger})=>(trigger.do || []).some(effect=>hostile.has(effect.op) && !['self','owner','player','ally','allAllies'].includes(effect.target)))) return null;
   const sourceContact=(target,card,effect,id)=>Engagement.rangeSourceContact(ctx,source,target,card,effect,id);
-  const maxEvents=ctx.foundation?.rules?.triggers?.maxEvents || combatRules.triggers.maxEvents;
-  const maxDepth=ctx.foundation?.rules?.triggers?.maxDepth || combatRules.triggers.maxDepth;
+  const maxEvents=combatRules.triggers.maxEvents;
+  const maxDepth=combatRules.triggers.maxDepth;
   const visit=(site,card,path=[])=>{
     if(sites.length>maxEvents || edges.length>maxEvents || path.length>maxDepth) throw Rules.playRefusal('This action has an unbounded range-trigger envelope','range');
     const target=find(ctx,site.targetKey);

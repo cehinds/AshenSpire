@@ -156,6 +156,14 @@
     }
   },
   "eligibility": {
+    "playableOnly": true,
+    "excludeCardIds": [
+      "core.guidingWhisper",
+      "base.evade",
+      "base.buff-ally",
+      "base.drain-allies",
+      "base.guard-allies"
+    ],
     "weapons": {
       "groups": [
         "straightSwords",
@@ -188,21 +196,59 @@
       ]
     },
     "relics": {
+      "allow": [
+        "goldenSprout",
+        "whetstoneFragment",
+        "cinderPouch",
+        "goldleafCharm",
+        "crackedLantern",
+        "sacrificialKnife",
+        "curedHide",
+        "ivoryComb",
+        "emberwickCharm",
+        "carrionMorsel",
+        "crackedTear",
+        "fellWardenBrand",
+        "twinnedArmor",
+        "blightTouchedIdol",
+        "pearlOfSagacity",
+        "blessedDew",
+        "azureSigil",
+        "saltedRelic",
+        "hollowedHorn",
+        "gildedTear",
+        "goldboughSapling",
+        "flayersCenser",
+        "vigilantHalo",
+        "carrionTalon",
+        "emberIdol",
+        "forsakenWarflag",
+        "wrathCoil",
+        "brimmingGourd",
+        "basicTraining",
+        "graduate",
+        "threadbareSatchel",
+        "asceticsCord",
+        "pruningHook"
+      ],
       "pools": [
         "core2"
       ],
       "weights": {
-        "brimmingGourd": 20
+        "brimmingGourd": 1
       },
       "combatIds": [
         "brimmingGourd"
       ]
     }
   },
+  "eliteRelic": {
+    "choices": 2
+  },
   "rewardGroups": [
     {
       "id": "cards",
-      "weight": 66,
+      "weight": 96,
       "categories": [
         "combatCards"
       ]
@@ -216,21 +262,21 @@
     },
     {
       "id": "potions",
-      "weight": 18,
+      "weight": 0,
       "categories": [
         "potions"
       ]
     },
     {
       "id": "flaskRelic",
-      "weight": 2,
+      "weight": 0,
       "categories": [
         "relics"
       ]
     },
     {
       "id": "weapons",
-      "weight": 10,
+      "weight": 0,
       "categories": [
         "weapons"
       ]
@@ -268,5 +314,13 @@
         "potions"
       ]
     }
-  ]
+  ],
+  "rankUp": {
+    "chancePct": {
+      "normal": 5,
+      "elite": 25,
+      "boss": 25
+    },
+    "bonusPickPct": 25
+  }
 }

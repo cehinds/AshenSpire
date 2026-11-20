@@ -281,7 +281,7 @@
     "equipmentPower": 0.4,
     "size": "medium",
     "tint": "var(--frost)",
-    "name": "Living Armor",
+    "name": "Living Armour",
     "hp": [
       36,
       40

@@ -49,7 +49,7 @@ test('display scenery respects quality, desktop eligibility and Auto resource pr
     for (const choice of [ART_AUTO, ART_HIGH]) {
       settings[ART_QUALITY_KEY] = choice;
       await applyArtTier(settings, noPacks);
-      assert(scenePaths(alternativeBackdropHtml()).every(path => path.endsWith('-mobile.webp')), `${factor}/${choice}`);
+      assert(scenePaths(alternativeBackdropHtml()).every(path => !path.endsWith('-mobile.webp')), `${factor}/${choice}: phones get full scene art (#2799)`);
     }
   }
   doc.documentElement.dataset.formFactor = 'widescreen';
@@ -67,7 +67,7 @@ test('display scenery respects quality, desktop eligibility and Auto resource pr
   doc.documentElement.dataset.layout = 'narrow';
   settings[ART_QUALITY_KEY] = ART_HIGH;
   await applyArtTier(settings, noPacks);
-  assert(scenePaths(alternativeBackdropHtml()).every(path => path.endsWith('-mobile.webp')), 'legacy narrow callers remain phone-only even on High');
+  assert(scenePaths(alternativeBackdropHtml()).every(path => !path.endsWith('-mobile.webp')), 'narrow callers on High get full scene art (#2799)');
 });
 
 test('an already mounted scene switches sources on art preference changes and releases its listener', async t => {
@@ -99,10 +99,15 @@ test('an already mounted scene switches sources on art preference changes and re
   assert(groups.every(group => !group.firstElementChild.attrs.href.endsWith('-mobile.webp')));
   doc.documentElement.dataset.formFactor = 'tablet';
   doc.dispatchEvent(new Event(ART_SOURCE_EVENT));
-  assert(groups.every(group => group.firstElementChild.attrs.href.endsWith('-mobile.webp')), 'source arrival reads current form factor');
+  assert(groups.every(group => !group.firstElementChild.attrs.href.endsWith('-mobile.webp')), 'source arrival on a tablet keeps full scene art on Auto (#2799)');
   assert.deepEqual(geometry(), before);
+  settings[ART_QUALITY_KEY] = ART_LIGHT;
+  await applyArtTier(settings, noPacks);
+  assert(groups.every(group => group.firstElementChild.attrs.href.endsWith('-mobile.webp')), 'Light still selects the small files');
   release();
   assert.equal(handlers.size, 0);
+  settings[ART_QUALITY_KEY] = ART_AUTO;
+  await applyArtTier(settings, noPacks);
   doc.documentElement.dataset.formFactor = 'desktop';
   doc.dispatchEvent(new Event(ART_SOURCE_EVENT));
   assert(groups.every(group => group.firstElementChild.attrs.href.endsWith('-mobile.webp')), 'disposed scene no longer handles source events');

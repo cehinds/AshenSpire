@@ -31,7 +31,6 @@ import { reconcileRunLoadoutHp } from './loadout.js';
 import { note } from './healLedger.js';
 import { enemyCombatPower } from './combatPower.js';
 import { xpStepCost } from './xpCurve.js';
-import { linkedAttributes, spendAttributePick } from './skills.js';
 import { effectiveAshenBlightAttributes } from './ashenBlight.js';
 
 /** The authored tables, or the shape of them, so a bundle without them fails
@@ -140,55 +139,6 @@ function pointsFor(registries, pointsPerLevel) {
   return Number.isInteger(pointsPerLevel) && pointsPerLevel > 0 ? pointsPerLevel : authored;
 }
 
-/** How many levels the banked XP can pay for without changing the displayed level. */
-export function pendingLevelCount(registries, run) {
-  const row = levelOf(run);
-  const ceiling = grantTable(registries).maxLevels;
-  let level = characterLevel(run);
-  let xp = Number.isSafeInteger(row.xp) ? Math.max(0, row.xp) : 0;
-  let count = 0;
-  while ((!Number.isInteger(ceiling) || level < ceiling) && xp >= xpToNext(registries, level)) {
-    xp -= xpToNext(registries, level);
-    level += 1;
-    count += 1;
-  }
-  return count;
-}
-
-/** Pay XP now; leave level, stat points, and derived pools unchanged until claimed. */
-export function bankLevelXp(registries, run, amount) {
-  if (!run) throw new Error('bankLevelXp: no run');
-  if (!run.level || typeof run.level !== 'object') run.level = emptyLevel();
-  const before = characterLevel(run);
-  const gain = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
-  // The per-fight cap counts only the levels this fight's XP earns: the levels
-  // banked XP already pays for (pendingLevelCount) start the count after them.
-  const fightFrom = before + pendingLevelCount(registries, run);
-  const discarded = gain ? climbLevels(registries, { level: before, xp: run.level.xp, gain, fightFrom }).discarded : 0;
-  if (gain) run.level.xp += gain - discarded;
-  return { before, after: before, levelUps: 0, pendingLevelUps: pendingLevelCount(registries, run), points: 0, thresholds: 0, gained: gain, discarded };
-}
-
-/** Commit exactly one earned level, leaving any excess XP banked for the next claim. */
-export function claimBankedLevel(registries, run, { pointsPerLevel = null, grantStats = true } = {}) {
-  if (!run || pendingLevelCount(registries, run) < 1) return null;
-  const before = characterLevel(run);
-  const cost = xpToNext(registries, before);
-  const configured = gameModule(run,'progression');
-  const points = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
-  run.level.xp -= cost;
-  run.level.level = before + 1;
-  run.level.unspentPoints += points;
-  const thresholds = rederivePools(registries, run, `level ${before} → ${run.level.level}`);
-  note(run, {
-    kind: 'write', site: 'levelup.js:claimBankedLevel', field: 'level',
-    was: { level: before, unspentPoints: run.level.unspentPoints - points },
-    now: { level: run.level.level, unspentPoints: run.level.unspentPoints },
-    why: `${cost} banked XP spent; ${points} point(s) granted`,
-  });
-  return { before, after: run.level.level, points, spent: cost, thresholds, remaining: pendingLevelCount(registries, run) };
-}
-
 /**
  * climbLevels(registries, { level, xp, gain }) → { level, xp, levelUps, capped, cappedBy, discarded }
  * — THE CLIMB, pure: `gain` XP added to a ledger at `level` with `xp` banked,
@@ -201,18 +151,14 @@ export function claimBankedLevel(registries, run, { pointsPerLevel = null, grant
  *     most one XP short of the next step and a progress bar never reads past
  *     full.
  * `capped` says a ceiling, not the XP, stopped the climb, and `cappedBy`
- * which: 'level' (maxLevels) or 'fight' (maxLevelsPerFight). `fightFrom`
- * (default `level`) is the level the allowance counts from, so levels the
- * ledger already paid for before this award do not use it up. `discarded` is
+ * which: 'level' (maxLevels) or 'fight' (maxLevelsPerFight). `discarded` is
  * the XP the per-fight cap threw away (0 otherwise). `awardLevelXp`
  * writes this to the run; `levelPace` reads it for the Levelling preview, so
  * the preview cannot describe a climb play does not make.
  */
-export function climbLevels(registries, { level = 1, xp = 0, gain = 0, fightFrom = null } = {}) {
+export function climbLevels(registries, { level = 1, xp = 0, gain = 0 } = {}) {
   const start = Number.isInteger(level) && level >= 1 ? level : 1;
-  // The level the per-award allowance counts from: `start` unless the caller
-  // says XP already banked pays for levels first (bankLevelXp).
-  const from = Number.isInteger(fightFrom) && fightFrom >= start ? fightFrom : start;
+  const from = start;
   const t = grantTable(registries);
   const ceiling = Number.isInteger(t.maxLevels) ? t.maxLevels : null;
   const perAward = perAwardCap(registries);
@@ -446,68 +392,4 @@ export function applyLevelUp(registries, run, attributeId) {
 export function allocateAttributePoint(registries, run, attributeId) {
   if (gameProfileServiceActive(run, 'levelUp')) return applyLevelUp(registries, run, attributeId);
   return withGameProfileService(run, 'levelUp', () => applyLevelUp(registries, run, attributeId));
-}
-
-/**
- * applySkillAttribute(registries, run, skillId, attributeId) → the attribute's
- * new value, or null (nothing written) when the track has no pick queued or
- * the attribute is not in its linked set (SPEC §13.4o, every 4th level). The
- * point is recorded in `run.skillAttributePoints`, which the load door adds to
- * the levelled points it judges the allocation against, and the pools are
- * re-derived exactly as a levelled point re-derives them. `offered` (the saved
- * offer's own list) is honoured when given, so an offer rolled before the
- * linked set changed still lands what it promised.
- */
-export function applySkillAttribute(registries, run, skillId, attributeId, { offered = null } = {}) {
-  const allowed = Array.isArray(offered) && offered.length ? offered : linkedAttributes(registries, skillId);
-  if (!allowed.includes(attributeId) || !orderedAttributes(registries).some((attr) => attr.id === attributeId)) return null;
-  if (!run.attributes || !Number.isFinite(run.attributes[attributeId])) return null;
-  if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) return null;
-  if (!spendAttributePick(run, skillId)) return null;
-  run.attributes[attributeId] += 1;
-  run.skillAttributePoints = (Number.isInteger(run.skillAttributePoints) ? run.skillAttributePoints : 0) + 1;
-  // Which track granted which point, so a respec can take its own back.
-  const grants = run.skillAttributeGrants && typeof run.skillAttributeGrants === 'object' ? run.skillAttributeGrants : {};
-  run.skillAttributeGrants = { ...grants, [skillId]: [...(grants[skillId] || []), attributeId] };
-  rederivePools(registries, run, `skill point on ${attributeId}`);
-  note(run, {
-    kind: 'write',
-    site: 'levelup.js:applySkillAttribute',
-    field: `attributes.${attributeId}`,
-    was: run.attributes[attributeId] - 1,
-    now: run.attributes[attributeId],
-    why: `a ${skillId} level's attribute pick (${run.skillAttributePoints} skill points in total); pools re-derived from the run's own snapshot (maxHp ${run.maxHp})`,
-  });
-  return run.attributes[attributeId];
-}
-
-/**
- * withdrawSkillAttributes(registries, run, skillId) → the attribute ids taken
- * back: every point the track's picks granted (owner ruling, 2026-10-05: a
- * respec withdraws them, FINISH D13a). The points leave the attributes and
- * `skillAttributePoints` together, so the load door's allocation check still
- * balances, and the pools are re-derived once. A save from before the record
- * existed has nothing to name and keeps its points.
- */
-export function withdrawSkillAttributes(registries, run, skillId) {
-  const granted = run.skillAttributeGrants && Array.isArray(run.skillAttributeGrants[skillId]) ? run.skillAttributeGrants[skillId] : [];
-  if (!granted.length) return [];
-  // Only a point actually taken off an attribute leaves the count, so a record
-  // naming an unknown id cannot unbalance the load door's allocation check.
-  let taken = 0;
-  for (const id of granted) if (Number.isFinite(run.attributes?.[id])) { run.attributes[id] -= 1; taken += 1; }
-  run.skillAttributePoints = Math.max(0, (run.skillAttributePoints || 0) - taken);
-  const rest = { ...run.skillAttributeGrants };
-  delete rest[skillId];
-  if (Object.keys(rest).length) run.skillAttributeGrants = rest; else delete run.skillAttributeGrants;
-  rederivePools(registries, run, `respec withdrew ${granted.length} ${skillId} point(s)`);
-  note(run, {
-    kind: 'write',
-    site: 'levelup.js:withdrawSkillAttributes',
-    field: 'attributes',
-    was: undefined,
-    now: granted,
-    why: `a respec of ${skillId} withdrew the attribute points its picks granted (${run.skillAttributePoints} skill points remain)`,
-  });
-  return granted;
 }

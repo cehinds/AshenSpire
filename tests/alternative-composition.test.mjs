@@ -244,8 +244,9 @@ test('composed party feet stand inside their strip, not on its edge, at every pr
 test('the grid rises above the hand so the lowest party cell holds its feet above the hand top', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   const [width, height, handTop] = [390, 488.36, 431];
+  // The hand-strip lift is the stage's 'none' drawing; 'handTop' (the default) places the lead by the cards instead (stage-extent.test.mjs).
   const run = top => alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
-    friends: ['p'], enemies: ['a'] }), width, height, true, { formFactor: 'mobile', handTop: top });
+    friends: ['p'], enemies: ['a'] }), width, height, true, { formFactor: 'mobile', handTop: top, stageExtent: { mode: 'none' } });
   const low = plan => plan.visualCells.filter(cell => cell.side === 'player').reduce((a, b) => b.box.top > a.box.top ? b : a);
   const before = low(run(null)).box, after = low(run(handTop)).box;
   assert.ok(before.top + before.height * (1 - grid.footInCellFraction) > handTop, 'without the hand the cell\'s feet would stand under it');
@@ -269,7 +270,9 @@ test('composed feet stand footInCellFraction above the drawn cell bottom for a s
     for (const size of fit) {
       const { top, height: strip } = actors.find(a => a.slot.id === size.id).slot.box;
       assert.ok(size.ground > top + 1 && size.ground < top + strip - 1, `${width}x${height} ${size.id} foot ${size.ground} inside cell ${top}..${top + strip}`);
-      assert.ok(Math.abs(top + strip - size.ground - grid.footInCellFraction * strip) < 1e-6 || (size.id === 'p' && size.ground <= handTop), `${width}x${height} ${size.id} foot at the configured fraction or the hand top`);
+      // Owner 2026-11-13's thinner phone strips (doubled team gap) let the shadow's inset clamp raise a foot a few px
+      // above the configured fraction; it may raise it (still inside the cell, asserted above), never lower it.
+      assert.ok(size.ground <= top + strip - grid.footInCellFraction * strip + 1e-6 || (size.id === 'p' && size.ground <= handTop), `${width}x${height} ${size.id} foot at or above the configured fraction, or at the hand top`);
       if (size.id === 'p') assert.ok(size.ground <= handTop + 1e-6, 'the player never stands inside the hand');
     }
   }

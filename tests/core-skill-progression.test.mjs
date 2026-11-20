@@ -4,15 +4,17 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat as createRunCombatWithBenefits } from '../src/engine/runCombat.js';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
+// These numbers pin the pre-Wave-2.5 arithmetic, so the fight plays the rules of one created before the stance benefits (tests/stance-benefits.test.mjs owns those).
+const createRunCombat = (...args) => withoutStanceBenefits(createRunCombatWithBenefits(...args));
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
 import { awardSkillXp, xpToNext, skillBonusFor } from '../src/model/skills.js';
 import { resolveCard } from '../src/model/registries.js';
-import { openRunClassMastery, registriesForClassMastery, recordClassMasteryXp } from '../src/model/classMasteryRun.js';
-import { allocateAttributePoint } from '../src/model/levelup.js';
+import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
@@ -25,13 +27,13 @@ import { foldCombatPlaysEver } from '../src/model/playsEver.js';
 import { isConfiguredRun } from '../src/model/gameProfileRun.js';
 import { gameModule } from '../src/model/gameProfile.js';
 import { skillKindOf, coreCardRanks, pendingRankUpRows } from '../src/model/skills.js';
-import { featMultiplier } from '../src/model/feats.js';
-import { awardLevelXp, pendingLevelCount, combatXpReceipt } from '../src/model/levelup.js';
+import { awardLevelXp, combatXpReceipt } from '../src/model/levelup.js';
 import { combatXpGains } from '../src/model/rewardprogress.js';
 import { validateRunShape } from '../src/model/state.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { MountRewards } from '../src/ui/screens/reward.js';
+import { withKitDom } from './helpers/dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
+import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
 
 const profile = resolveGameProfile('core');
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -40,6 +42,9 @@ function live(classId = 'reaver') {
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   // A second, different group must not gain XP merely by being equipped.
   run.loadout.sets.leftHand[0] = 'roundShield';
+  // Owner, 2026-11-17 (gear `statPoints`): the Round Shield grants CON +1, so the pools re-derive (max HP 50 -> 55) as an
+  // equip would, and a save of this run then loads.
+  rederivePools(reg, run, 'test');
   const combat = createRunCombat({ registries: reg, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
   return { run, combat };
 }
@@ -72,7 +77,8 @@ test('live Core implicit Strike pays its used weapon group; previews and unused 
   const committed = combat.eventLog.find(event => event.type === 'cardPlayed').cardInstance;
   assert.equal(committed.usedArmamentId, 'greatsword');
   assert.equal(committed.sourceArmamentId, undefined, 'receipt identity cannot alter rating scope');
-  assert.equal(hit.amount, 9, 'attribution does not scope or change the existing damage rating');
+  // Strike's base 6 halves to 3 (Core base-damage scale 0.5), + AR 4 + 1 stance/status AR = 8, x0.7 player side scale (owner, 2026-11-18) = 5.6, then Poise protection = 4.
+  assert.equal(hit.amount, 4, 'attribution does not scope or change the existing damage rating');
   assert.ok(skillXpReceipt(combat)['item:blade'] > 0);
   assert.equal(skillXpReceipt(combat)['item:shield'], undefined);
   recordSkillXp(combat, { type: 'combatEnd', victory: true });
@@ -283,22 +289,6 @@ test('school milestones report resolved old/new card numbers, multilevel gains a
   assert.equal(effects.nextMilestone, null, 'the level cap cannot promise a further bonus');
 });
 
-test('mastery summaries report only newly available authored unlocks and preserve veteran unlocks', () => {
-  const source = createRegistries(contentBundle);
-  const run = createRunState({ registries: source, seed: 511, classId: 'reaver' });
-  openRunClassMastery(source, run, {}, { receiptId: 'effect-test' });
-  const scoped = registriesForClassMastery(source, run);
-  const beforeState = { classMasteryState: structuredClone(run.classMasteryState) };
-  const cost = xpToNext(scoped, 'class', 0);
-  recordClassMasteryXp(run, 'reaver', cost);
-  const award = awardSkillXp(scoped, run, 'class:reaver', cost, { queueRewards: false });
-  const changes = skillLevelNotices(scoped, [award], { run, beforeState })[0].effects.changes;
-  assert.ok(changes.length > 0);
-  assert.ok(changes.every(change => change.kind === 'unlock' && change.before === 'Locked' && change.after === 'Available'));
-  const veteran = { classMasteryState: structuredClone(run.classMasteryState) };
-  assert.deepEqual(skillLevelNotices(scoped, [award], { run, beforeState: veteran })[0].effects.changes, [], 'already unlocked rows are not newly awarded');
-});
-
 test('shared schools count simultaneous gains once and skip rounded multihit non-benefits', () => {
   const source = createRegistries(contentBundle);
   const run = createRunState({ registries: source, seed: 511, classId: 'reaver' });
@@ -329,8 +319,9 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   run.combatPendingOutcome = { result: 'defeat' };
   const saves = createSaveManager(createMemoryStorage());
   const screens = [], notices = [], deps = { runCombatEnd, foldCombatPlaysEver, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
-    skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
-    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier };
+    skillXpReceipt, skillKindOf, settleConfiguredSkillProgression, skillLevelNotices,
+    combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier,
+    SyncHudCinders: () => {} };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
@@ -342,7 +333,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
     const advanceAct = () => { throw Error('Defeat cannot advance act'); };
     const gameProfileRewardOffers = () => { throw Error('Defeat cannot roll rewards'); };
     const mountGameProfileLevelUp = (_app, model) => notices.push(model);
-    ${body('async function onCombatEnd(', '\n/**\n * The spoils')}
+    ${body('async function onCombatEnd(', '\n// ---- non-combat nodes')}
     ${body('function beginGameProfileReward(', '\nfunction showShop(')}
     return { settle: () => onCombatEnd('defeat', combat, { pool: 'normal' }), resume: showGameProfileReward,
       emptyDefeat: () => beginGameProfileReward({ after: 'defeat', noticeOnly: true }) };
@@ -432,6 +423,7 @@ test('Core character levels follow the bundle; earned points stay claimable on o
   const old = structuredClone(run);
   old.gameProfile.modules.progression.characterLevels = false; // snapshot from the skill-only era
   old.level = { level: 3, xp: 200, unspentPoints: 2 };
+  pinLegacyRests(old); // Level Up is no longer a shipped rest service; a run pinned before the one-pick rest keeps it
   assert.equal(configuredCharacterLevels(old), false);
   old.mapNodeId = 'rest-test';
   old.mapGraph = { nodes: { 'rest-test': { id: 'rest-test', type: 'shrine', actualType: 'rest' } } };
@@ -457,6 +449,9 @@ test('a Core fight pays character XP, levels, and the rest offers and commits Le
   assert.ok(run.level.unspentPoints > 0, 'the level queues attribute points');
   run.mapNodeId = 'rest-test';
   run.mapGraph = { nodes: { 'rest-test': { id: 'rest-test', type: 'shrine', actualType: 'rest' } } };
+  // The shipped one-pick rest has no Level Up service; a run pinned before it (legacy rests) still offers and commits it.
+  assert.equal(gameProfileRestModel(reg, run, beginGameProfileRest(structuredClone(run))).services.some(r => r.id === 'levelUp'), false, 'shipped rests offer no Level Up');
+  pinLegacyRests(run);
   const visit = beginGameProfileRest(run);
   const row = gameProfileRestModel(reg, run, visit).services.find(r => r.id === 'levelUp');
   assert.ok(row && row.available, 'Level Up is offered at the rest');
@@ -504,7 +499,7 @@ test('Core Victory bars resume the paid slow-rate receipt and Continue acknowled
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
     let continues = 0, refuse = true;
-    mountRewards(app, { registries: reg, run: loaded, rewards: pending.victoryReceipt, receiptOnly: true,
+    MountRewards(app, { registries: reg, run: loaded, rewards: pending.victoryReceipt, receiptOnly: true,
       onDone() {
         // Reentrant activation during a screen transition cannot acknowledge twice.
         app.querySelector('#reward-continue').click();
@@ -541,7 +536,7 @@ test('Core Victory receipt draws the Character bar alone and Continue still work
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
     let done = 0;
-    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone: () => done++,
+    MountRewards(app, { registries: reg, run, receiptOnly: true, onDone: () => done++,
       rewards: { title: 'Victory', xpGains: { level: 40, tracks: { 'item:blade': 5, 'class:reaver': 9 } }, xpBefore: { character: { ...run.level }, tracks: {} } } });
     assert.equal(app.querySelectorAll('.reward-progress-row').length, 1);
     assert.ok(app.querySelector('[role="progressbar"][data-track="character"]'));
@@ -553,17 +548,21 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
   const { run } = live();
   run.level.unspentPoints = 2;
   const strength = run.attributes.strength, hp = run.hp;
-  withKitDom(({ document }) => {
+  withModalDom(() => {
     document.documentElement ??= document.body;
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
     let saves = 0;
-    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {}, onPersist: () => { saves++; },
+    MountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {}, onPersist: () => { saves++; },
       onAllocateStat: id => allocateAttributePoint(reg, run, id),
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
-    const add = app.querySelector('.reward-stat-row .reward-stat-add');
-    assert.ok(add, 'the receipt offers the allocation section');
-    app.querySelectorAll('.reward-stat-row')[0].querySelector('.reward-stat-add').click();
+    assert.equal(app.querySelector('.reward-stat-allocation'), null, 'no inline allocation panel');
+    const open = app.querySelector('#reward-stat-points');
+    assert.ok(open, 'the receipt offers the level-up button');
+    open.click();
+    assert.ok(document.querySelector('.cc-stat-modal'), 'the level-up modal opens');
+    document.querySelector('[data-stat-id="strength"][data-stat-action="increase"]').click();
+    document.querySelector('[data-stat-done]').click();
     assert.equal(run.level.unspentPoints, 1);
     assert.equal(saves, 1);
     assert.equal(Object.values(run.attributes).reduce((a, b) => a + b), 7);
@@ -575,9 +574,9 @@ test('Core Victory receipt spends an earned attribute point and saves it at once
     document.documentElement ??= document.body;
     document.body.classList.add('reduced-motion');
     const app = document.createElement('main'); document.body.append(app);
-    mountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {},
+    MountRewards(app, { registries: reg, run, receiptOnly: true, onDone() {},
       rewards: { title: 'Victory', xpGains: { level: 10, tracks: {} }, xpBefore: { character: { ...run.level }, tracks: {} } } });
-    assert.equal(app.querySelector('.reward-stat-allocation'), null);
+    assert.equal(app.querySelector('#reward-stat-points'), null);
   });
 });
 
@@ -591,11 +590,15 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   const saves = createSaveManager(createMemoryStorage());
   const receipts = [], offers = [];
   const deps = { runCombatEnd, foldCombatPlaysEver, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
-    skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
-    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
+    skillXpReceipt, skillKindOf, settleConfiguredSkillProgression, skillLevelNotices,
+    combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
     acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers, coreCardRanks, pendingRankUpRows,
     // Core pays the §15.3 stone door too since #2392; a normal pool pays 0 and writes its claim.
-    grantSmithingReward, smithingRewardId };
+    grantSmithingReward, smithingRewardId,
+    // The one victory screen (W2-E): the combined door asks VictorySpoils for its strip; a marker stands in for it here.
+    VictorySpoils: (_registries, _run, receipt) => ({ spoilsFor: receipt }),
+    // The header purse sync draws nothing without a document.
+    SyncHudCinders: () => {} };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'receipts', 'offers', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;
@@ -603,24 +606,25 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     const persistOrWarn = () => { persist(); return true; }, persistContinuing = () => { persistOrWarn(); };
     const audio = {}, sfx = { play() {} }, sendLanStatus = () => {};
     const rollLevelChoices = () => [], victoryTitle = () => 'VICTORY', victoryBeat = async () => {};
-    const applyAfterCombatRecovery = () => {}, featStacks = () => 0;
+    const applyAfterCombatRecovery = () => {};
     const rollRuneReward = () => 0;
     const showFinishedRun = () => { throw Error('ordinary victory must not finish the run'); };
     const showMap = () => {}, advanceAct = () => {};
-    const mountRewards = (_app, model) => receipts.push(model);
+    const MountRewards = (_app, model) => receipts.push(model);
     const mountGameProfileLevelUp = () => { throw Error('small award must not cross levels'); };
     const deckDoors = () => ({});
-    const mountGameProfileOffers = (_app, model) => offers.push(model);
-    const transactReward = () => {}, deckEditBounds = () => ({ max: 30 });
-    ${body('async function onCombatEnd(', '\n/**\n * The spoils')}
+    const MountGameProfileOffers = (_app, model) => offers.push(model);
+    const transactReward = (_run, _offerId, change) => { change(); persist(); }, deckEditBounds = () => ({ max: 30 });
+    ${body('async function onCombatEnd(', '\n// ---- non-combat nodes')}
     ${body('function beginGameProfileReward(', '\nfunction showShop(')}
     return { settle: () => onCombatEnd('victory', combat, { pool: 'normal', enemies: ['wanderingSoldier'] }), resume: showGameProfileReward };
   `)(deps, run, combat, reg, saves, receipts, offers);
   const main = make(run);
   await main.settle();
-  assert.equal(receipts.length, 1);
-  assert.equal(receipts[0].receiptOnly, true);
-  assert.equal(offers.length, 0, 'the existing Victory modal precedes the offer');
+  assert.equal(receipts.length, 0, 'a receipt with an offer opens no receipt screen of its own');
+  assert.equal(offers.length, 1, 'the victory receipt and the offer are ONE door');
+  assert.equal(offers[0].title, 'VICTORY');
+  assert.ok(offers[0].spoils?.spoilsFor?.xpGains, 'the door carries the spoils strip built from the saved receipt');
   const paid = structuredClone(run.skills);
   const saved = saves.loadRun(reg);
   assert.ok(saved, saves.runStatus().reason);
@@ -630,15 +634,16 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   assert.equal(gain.tracks['class:reaver'], paid['class:reaver'].xp);
   assert.equal(gain.tracks['item:shield'], undefined);
   await main.settle();
-  assert.equal(receipts.length, 1, 'duplicate combat callback cannot pay or reopen');
+  assert.equal(offers.length, 1, 'duplicate combat callback cannot pay or reopen');
   const resumed = make(saved); resumed.resume();
-  assert.equal(receipts.length, 2);
-  receipts[1].onDone();
-  assert.equal(offers.length, 1);
-  assert.equal(saves.loadRun(reg).gameProfilePendingReward.victoryReceipt, undefined);
-  assert.deepEqual(saved.skills, paid);
-  resumed.resume();
-  assert.equal(receipts.length, 2, 'acknowledged receipt stays closed');
+  assert.equal(offers.length, 2, 'a reload resumes the same combined door');
+  assert.equal(offers[1].spoils.spoilsFor.xpGains.tracks['item:blade'], paid['item:blade'].xp, 'with the same saved receipt');
+  assert.equal(receipts.length, 0);
+  // Leaving the door acknowledges the receipt in the same save and runs what follows (here: the map, nothing else owed).
+  offers[1].onContinue();
+  assert.equal(saves.loadRun(reg).gameProfilePendingReward?.victoryReceipt, undefined);
+  assert.deepEqual(saved.skills, paid, 'XP is never paid twice');
+  assert.equal(receipts.length, 0, 'no receipt screen after the choice');
 });
 
 test('a won Core fight silences level notices after the receipt; a defeat keeps them', async () => {

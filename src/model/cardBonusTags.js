@@ -1,8 +1,9 @@
+import { BarrierPoisePerStack } from './combatRatings.js';
 import { statusPresentationDefinition } from './statusPresentation.js';
 import { cardSummaryContext } from './playingCard.js';
 import { withChargedEffects } from './cardFaceText.js';
 import { stanceEntryBonuses } from './stanceRules.js';
-import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
+import { fixCoreEnabled, evadeGrantOnlyCard, FixCoreHitRollOff } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 
 // Quantified self benefits belong to the shared tag rail. Keep separate grants
@@ -14,7 +15,7 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
   const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules,
     gameProfile: rules?.gameProfile ?? registries?.gameProfile, fixCoreRules: rules?.fixCoreRules };
   const core = fixCoreEnabled(ctx), facts = new Map();
-  const protection = { block: { name: 'Block' }, barrier: { name: 'Barrier' } };
+  const protection = { block: { name: 'Block' }, barrier: { name: 'Poise' } };
   const definition = status => registries.statuses.has(status) ? registries.statuses.get(status) : protection[status];
   const add = (status, fact) => {
     if (!definition(status)) return;
@@ -38,8 +39,9 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
         && metric.metric === 'evadeStackGain' && metric.of === 'self'
         && Object.keys(metric).every(key => ['f', 'metric', 'of'].includes(key))) {
       const accuracy = fixCoreRules(ctx, { id: 'card-face' }, def).accuracy;
-      count = accuracy.evadeStackBase;
-      formula = accuracy.evadeStackDex ? `${accuracy.evadeStackDex === 1 ? '' : accuracy.evadeStackDex + '× '}DEX` : null;
+      const certain = FixCoreHitRollOff({ accuracy });
+      count = certain ? accuracy.evadeStacksPerCard ?? 1 : accuracy.evadeStackBase;
+      formula = !certain && accuracy.evadeStackDex ? `${accuracy.evadeStackDex === 1 ? '' : accuracy.evadeStackDex + '× '}DEX` : null;
     }
     if (!simple || count === undefined) continue;
     add(effect.status, { count, formula,
@@ -62,7 +64,7 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
       }
       const live = status === 'precision' && core && Number.isInteger(preview?.entryPrecision) ? preview.entryPrecision : null;
       const formula = null; // the entry grant is exactly the authored stacks (owner, 2026-10-31); the stat mix is Precision, not a stack count
-      const count = live ?? base, name = definition(status)?.name || status;
+      const count = live ?? (status === 'barrier' ? base * BarrierPoisePerStack(registries) : base), name = definition(status)?.name || status; // Barrier stacks read as Poise (owner, 2026-11-15)
       add(status, { count, formula, entry: status,
         text: `On changing stance, gain ${count}${formula ? ' + ' + formula : ''} ${name}. Repeating the same stance grants none.` });
     }
@@ -72,7 +74,9 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
     // A pure Evade card prints its short grant in the body; its keyword tag
     // keeps the explanation without repeating the quantity.
     const bodyGrant = core && evadeGrantOnlyCard(def);
-    const single = !bodyGrant && grants.length === 1 ? grants[0] : null;
+    // A body line that says "Evade N." keeps the tag's explanation without repeating the quantity or hiding that line.
+    const bodyEvade = status === 'evade' && grants.some(grant => grant.index !== undefined);
+    const single = !bodyGrant && !bodyEvade && grants.length === 1 ? grants[0] : null;
     return { id: `${protection[status] ? 'effect' : 'status'}:${status}`, label: resolved.name,
       blurb: [...grants.map(grant => grant.text), resolved.tooltip || resolved.name].join(' '),
       ...(single ? { count: single.count, ...(single.formula ? { countFormula: single.formula } : {}) } : {}),

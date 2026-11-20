@@ -42,6 +42,7 @@ import { padGlyph } from './uiContent.js';
 import { topVeil } from './components/veil.js';
 import { PRESS_EVENT, RELEASE_EVENT } from './gesture.js';
 import { t } from './strings.js';
+import { IsPopoverOpen } from './popoverPolyfill.js';
 
 const FOCUS_SELECTOR = [
   'summary',
@@ -56,7 +57,6 @@ const FOCUS_SELECTOR = [
   '.slot-new',
   '.class-pick:not(.locked)', // character creation + custom-run class picks
   '.cz-opt',
-  '.cz-keepsake',
   '.cr-class',
   '.mod-chip',
   'input[type="range"]',
@@ -832,12 +832,10 @@ let backAim = null;
 // hide the button. Review of #1463 (Codex).
 const LIGHT_DISMISS = new Set(['', 'auto', 'hint']);
 function openPopover(root) {
-  try {
-    return [...root.querySelectorAll('[popover]:popover-open')]
-      .find((el) => LIGHT_DISMISS.has(String(el.getAttribute('popover') ?? '').trim().toLowerCase())) || null;
-  } catch {
-    return null; // a DOM without the pseudo-class has no native popover either
-  }
+  // `:popover-open` is a SyntaxError for querySelectorAll before Safari 17, so ask each [popover] instead
+  // (IsPopoverOpen answers for the polyfill, src/ui/popoverPolyfill.js).
+  return [...root.querySelectorAll('[popover]')].filter(IsPopoverOpen)
+    .find((el) => LIGHT_DISMISS.has(String(el.getAttribute('popover') ?? '').trim().toLowerCase())) || null;
 }
 function backIn(root) {
   return [...root.querySelectorAll(BACK_SELECTOR)]
@@ -857,7 +855,7 @@ function onBackKey(ev) {
   setTimeout(() => {
     if (ev.defaultPrevented) return;
     if (aim.popover) {
-      if (!ev.isTrusted && aim.popover.isConnected && aim.popover.matches?.(':popover-open')) aim.popover.hidePopover?.();
+      if (!ev.isTrusted && aim.popover.isConnected && IsPopoverOpen(aim.popover)) aim.popover.hidePopover?.();
       return;
     }
     // The Back pressed is the one the player was looking at when they pressed:

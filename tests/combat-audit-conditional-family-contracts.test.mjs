@@ -36,8 +36,8 @@ for (const mode of ['native', 'bundled']) test(`five remaining predicate familie
     'Iron Resolve:5/9 selected Block +3entry +5restore, plus2Bulwarkskillhook only in Bulwark');
   assert.equal(iron[1].expected.contributions.find(c => c.kind === 'bulwark-skill-hook').block, 2);
   const executioner = paired('executioner');
-  assert.deepEqual(executioner.map(row => row.before.target.hp - row.after.target.hp), [18, 67],
-    'Executioner uses projected18/45, with floor45×1.5 only on the Staggered branch');
+  assert.deepEqual(executioner.map(row => row.before.target.hp - row.after.target.hp), [18, 40],
+    'Executioner uses projected18/27, with floor27×1.5 only on the Staggered branch (Broken bonus nerfed 25 to 15)');
   assert.ok(executioner.every(row => row.selectedTargetId === 'e2'));
   assert.equal(executioner[1].after.target.statuses.staggered.stacks, 1);
   const ward = paired('umbralWard');

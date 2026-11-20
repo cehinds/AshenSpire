@@ -36,6 +36,7 @@
       },
       "statureCap": 1.15,
       "combatantScale": 0.5866,
+      "playerBodyScale": 1.6,
       "overlapAllowance": 0.4,
       "edgeMarginPx": 6,
       "minCommonFactor": 0.35
@@ -88,6 +89,11 @@
       "footprintInsetPx": 6,
       "footInCellFraction": 0.35,
       "handLiftMaxFraction": 0.12,
+      "stageExtent": {
+        "mode": "handTop",
+        "handGapPx": 8,
+        "fixedExtraFraction": 0.2
+      },
       "playerBelowFootPx": 32,
       "shortBelowPx": 280,
       "short": {
@@ -212,9 +218,9 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.28,
           "skew": 0.15,
-          "top": 0.5,
-          "rowHeight": 0.095,
-          "teamGapRows": 1.0
+          "top": 0.4,
+          "rowHeight": 0.052,
+          "teamGapRows": 7.5
         },
         "tablet": {
           "left": 0.06,
@@ -224,9 +230,23 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.26,
           "skew": 0.32,
-          "top": 0.41,
-          "rowHeight": 0.12,
-          "teamGapRows": 0.8
+          "top": 0.44,
+          "rowHeight": 0.066,
+          "teamGapRows": 4.364
+        },
+        "widescreen": {
+          "left": 0.1125,
+          "right": 0.7875,
+          "enemyTop": 0.45,
+          "enemyRowHeight": 0.11,
+          "playerTop": 0.68,
+          "playerRowHeight": 0.26,
+          "skew": 0.6,
+          "top": 0.44,
+          "rowHeight": 0.066,
+          "hudWidthFraction": 1,
+          "hudCenterOnBody": true,
+          "teamGapRows": 4.364
         },
         "desktop": {
           "left": 0.1125,
@@ -236,19 +256,29 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.26,
           "skew": 0.6,
-          "top": 0.41,
-          "rowHeight": 0.12,
+          "top": 0.44,
+          "rowHeight": 0.066,
           "hudWidthFraction": 1,
           "hudCenterOnBody": true,
-          "teamGapRows": 0.8
+          "teamGapRows": 4.364
         }
       },
       "miniHudInsetPx": 0,
-      "miniHudGroupHeightPx": 61,
+      "miniHudGroupHeightPx": 78,
       "desktopMiniHudGroupHeightPx": 96,
-      "desktopShortMiniHudGroupHeightPx": 80,
+      "desktopShortMiniHudGroupHeightPx": 84,
       "desktopMiniHudBandOverlapPx": 30,
       "miniHudSpriteGapPx": 5,
+      "playerMiniHudSpriteGapPx": 10,
+      "playerMiniHudDropFraction": 0.5,
+      "playerHud": {
+        "placement": "beside",
+        "gapPx": 10,
+        "topFraction": 0.15,
+        "maxWidthPx": 320,
+        "minWidthPx": 150,
+        "edgeMarginPx": 8
+      },
       "miniHud": {
         "designWidthPx": 140,
         "baseFontPx": 13,

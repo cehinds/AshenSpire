@@ -103,26 +103,39 @@
     "icon": "madness",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 1
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
       },
       {
-        "op": "dodgeRoll",
-        "target": "self"
+        "op": "block",
+        "target": "self",
+        "amount": 2
       }
     ],
-    "textTemplate": "Gain {block} Block, then roll to evade: on a success, gain Block equal to the dodge.",
+    "textTemplate": "Gain {evade} Evade. Gain {block} Block.",
     "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 3
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
         },
         {
-          "op": "dodgeRoll",
-          "target": "self"
+          "op": "block",
+          "target": "self",
+          "amount": 2
         }
       ]
     }
@@ -137,39 +150,69 @@
     "flavor": "Tumble of the ship-breakers.\n\nLearned upon hulls that shift with every tide at the Grave of Ships. The hulls were already rotting at anchor when the trade stopped, and on the night of the Burning, every hold went warm at once.\n\nGull-Bet's gang opened the holds the following spring. She has not said what was inside.",
     "keywords": [],
     "icon": "motion",
-    "weightClassPriced": true,
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 3
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
       },
       {
-        "op": "gainPoise",
+        "op": "moveEngagement",
         "target": "self",
-        "amount": 3
+        "bands": -1,
+        "mode": "advance"
       },
       {
-        "op": "gainWard",
+        "op": "moveEngagement",
         "target": "self",
-        "amount": 3
+        "bands": 1,
+        "mode": "retreat"
       }
     ],
-    "textTemplate": "Gain {block} Block, {gainPoise} Poise and {gainWard} Ward. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina.",
-    "singleBreak": {
+    "textTemplate": "Gain {evade} Evade. Choose: Advance or Retreat.",
+    "choiceModes": [
+      {
+        "id": "advance",
+        "name": "Advance",
+        "tooltip": "Step in: every enemy is within your reach."
+      },
+      {
+        "id": "retreat",
+        "name": "Retreat",
+        "tooltip": "Step back out of the enemy's reach."
+      }
+    ],
+    "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 3
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
         },
         {
-          "op": "gainPoise",
+          "op": "moveEngagement",
           "target": "self",
-          "amount": 3
+          "bands": -1,
+          "mode": "advance"
+        },
+        {
+          "op": "moveEngagement",
+          "target": "self",
+          "bands": 1,
+          "mode": "retreat"
         }
-      ],
-      "textTemplate": "Gain {block} Block and {gainPoise} Poise guard. Light: 1 Stamina. Medium: 1 Stamina. Heavy: 2 Stamina."
+      ]
     }
   },
   {
@@ -311,26 +354,47 @@
     "cost": 1,
     "type": "skill",
     "flavor": "Footwork of the Bastion's hired blades.\n\nAfter the Burning the weald's spring would not turn, and green came up between the courtyard flags. The sellswords learned short, flat steps upon the moss. The Wardens, who never stood where the footing was worst, did not.\n\nThe steps are counted to a dawn peal that brings no dawn.",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "icon": "motion",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 6
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 2
       },
       {
         "op": "draw",
         "amount": 1
       }
     ],
-    "textTemplate": "Gain {block} Block. Draw {draw} card.",
+    "textTemplate": "Gain {evade} Evade. Prepare Melee Counter: return {damage} damage. Draw {draw} card. Exhaust.",
     "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 8
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 2
         },
         {
           "op": "draw",
@@ -1069,7 +1133,7 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage. If the target is Staggered: apply {bleed} Bleed.",
+    "textTemplate": "Deal {damage} damage. If the target is Broken: apply {bleed} Bleed.",
     "upgrade": {
       "effects": [
         {
@@ -1148,7 +1212,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 25,
+        "amount": 15,
         "if": {
           "p": "hasStatus",
           "of": "target",
@@ -1156,8 +1220,8 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage. If the target is Staggered: deal {damage.2} instead.",
-    "faceTemplate": ["Deal {damage} damage.", "Staggered: deal {damage.2} instead."],
+    "textTemplate": "Deal {damage} damage. If the target is Broken: deal {damage.2} instead.",
+    "faceTemplate": ["Deal {damage} damage.", "Broken: deal {damage.2} instead."],
     "upgrade": {
       "effects": [
         {
@@ -1176,7 +1240,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 32,
+          "amount": 19,
           "if": {
             "p": "hasStatus",
             "of": "target",
@@ -1791,7 +1855,7 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Staggered: deal {poiseDamage.2} more Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Broken: deal {poiseDamage.2} more Poise damage.",
     "upgrade": {
       "effects": [
         {
@@ -1888,7 +1952,7 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Staggered: apply {bleed} Bleed.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Broken: apply {bleed} Bleed.",
     "upgrade": {
       "effects": [
         {
@@ -2172,5 +2236,214 @@
         }
       ]
     }
+  },
+  {
+    "id": "steelResolve",
+    "name": "Steel Resolve",
+    "class": "reaver",
+    "rarity": "uncommon",
+    "cost": 2,
+    "type": "skill",
+    "flavor": "A soldier's breath held before the charge.\n\nWardens of the Bastion taught recruits to lock the jaw and count to four before a push. The count steadied the hand and stilled the knees. Old sergeants swore it was worth a second sword at the wall.\n\nMost of them died counting.",
+    "keywords": [
+      "exhaust"
+    ],
+    "icon": "audio",
+    "textTemplate": "Gain {strength} Strength. Exhaust.",
+    "faceTemplate": [
+      "Gain {strength} Strength."
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 2
+      }
+    ],
+    "upgrade": {
+      "cost": 1
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "ironHide",
+    "name": "Iron Hide",
+    "class": "reaver",
+    "rarity": "common",
+    "cost": 1,
+    "type": "skill",
+    "flavor": "Scale stitched into a gambeson, one row at a time.\n\nBorder smiths sold the rows singly, so a poor soldier could armour himself by the season. A full coat took years of wages. The richest wardens wore patched hides of a dozen colours.\n\nEach new row cost more than the last.",
+    "keywords": [],
+    "icon": "shield",
+    "textTemplate": "Gain {dexterity} Dexterity. Costs 1 more each play.",
+    "faceTemplate": [
+      "Gain {dexterity} Dexterity.",
+      "Costs 1 more each play."
+    ],
+    "costGrowth": {
+      "stamina": 1,
+      "perUse": 1,
+      "max": 2
+    },
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "dexterity",
+        "stacks": 2
+      }
+    ],
+    "upgrade": {
+      "cost": 0
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "openingCut",
+    "name": "Opening Cut",
+    "class": "reaver",
+    "rarity": "common",
+    "cost": 1,
+    "type": "attack",
+    "flavor": "The first stroke, aimed at a guard not yet raised.\n\nDuel-masters of the Marches called it rude and taught it anyway. A fighter caught standing still was a fighter already half beaten. Their students learned to watch the feet, never the eyes.\n\nThe masters died standing still, mostly.",
+    "keywords": [],
+    "icon": "smith",
+    "textTemplate": "Deal {damage} damage. If the target is Idle: it loses {loseHp} HP, ignoring Block.",
+    "faceTemplate": [
+      "Deal {damage} damage.",
+      "Idle target: loses {loseHp} HP."
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "loseHp",
+        "target": "enemy",
+        "amount": 3,
+        "if": {
+          "p": "inStance",
+          "of": "target",
+          "stance": "idle",
+          "snapshot": "beforePlay"
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 5
+        },
+        {
+          "op": "loseHp",
+          "target": "enemy",
+          "amount": 4,
+          "if": {
+            "p": "inStance",
+            "of": "target",
+            "stance": "idle",
+            "snapshot": "beforePlay"
+          }
+        }
+      ]
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "holdTheLine",
+    "name": "Hold the Line",
+    "class": "reaver",
+    "rarity": "common",
+    "cost": 1,
+    "type": "attack",
+    "flavor": "A strike thrown from behind a set shield.\n\nBastion drill had one rule above all others: never drop the guard to swing. Wardens hit with the shield rim and the short haft, and kept the wall whole. The line held for a hundred winters.\n\nThen it held for one more.",
+    "keywords": [],
+    "icon": "shield",
+    "textTemplate": "Deal {damage} damage. If in Defense: gain {block} Block.",
+    "faceTemplate": [
+      "Deal {damage} damage.",
+      "In Defense: {block} Block."
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 5,
+        "if": {
+          "p": "inStance",
+          "of": "self",
+          "stance": "defend",
+          "snapshot": "beforePlay"
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 7,
+          "if": {
+            "p": "inStance",
+            "of": "self",
+            "stance": "defend",
+            "snapshot": "beforePlay"
+          }
+        }
+      ]
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "lungingThrust",
+    "name": "Lunging Thrust",
+    "class": "reaver",
+    "rarity": "uncommon",
+    "cost": 1,
+    "type": "attack",
+    "flavor": "A long thrust from a soldier who keeps his distance.\n\nPikemen of the river ford fought from the second rank, reaching past the shields of the first. Up close their weapons were useless. At a spear's length, nothing crossed the ford alive for three long summers.\n\nThe fourth summer, the river dried.",
+    "keywords": [],
+    "icon": "smith",
+    "textTemplate": "Reach only. Deal {damage} damage.",
+    "faceTemplate": [
+      "Reach only.",
+      "Deal {damage} damage."
+    ],
+    "playIf": {
+      "p": "atRange",
+      "range": "reach"
+    },
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 6
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 8
+        }
+      ]
+    },
+    "minCombatExpansionVersion": 2
   }
 ]

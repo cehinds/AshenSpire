@@ -7,7 +7,7 @@ import { statProjection, handResourceRows, withHandResources, startingResourceRo
 import { classChoiceCard, classUnfold, classResourceGrid } from '../src/ui/components/creationCards.js';
 import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDetail } from '../src/ui/components/creationPreviewDetails.js';
 import { relicText } from '../src/ui/components/card.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const registries = createRegistries(contentBundle);
 const run = createRunState({ registries, classId: 'reaver', seed: 7 });

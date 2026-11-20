@@ -7,7 +7,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, cardPlayCosts } from '../src/engine/combat.js';
 import { grantAbilityCharge } from '../src/engine/abilityRiders.js';
 import { renderCard } from '../src/ui/components/card.js';
-import { cardMarkupDom } from './helpers/card-markup-dom.mjs';
+import { cardMarkupDom } from './helpers/dom.mjs';
 
 Object.assign(globalThis, cardMarkupDom());
 const staminaRestore = { id: 'funded-stamina-fixture', name: 'Funded Stamina', type: 'skill',

@@ -504,7 +504,7 @@ export function restampSmithingCards(registries, run, cards = run.deck || []) {
   return cards;
 }
 
-/** Host-side, revalidated generic commit. `free` is for event/keepsake grants. */
+/** Host-side, revalidated generic commit. `free` is for event grants. */
 export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined, purse = 'stones', stoneDiscount = 0, maxTier = null } = {}) {
   if (gameModule(run, 'rest')?.mode === 'configured' && !gameProfileServiceActive(run, 'smith')) throw new Error('Configured equipment upgrades require a committed Smith rest service');
   const itemRef = typeof requestedItemRef === 'string' && requestedItemRef.includes('/')

@@ -279,7 +279,7 @@ export const SAFE_STAMP_FOLLOWUP_SUBJECTS = new Set([
 ]);
 // version-advance.yml's commit (tools/version-advance.mjs advanceSubject). It writes its own
 // box and is bot-authored, so a stamp with one on top is still the stamp for the tip.
-export const VERSION_ADVANCE_SUBJECT = /^version-advance: \d+\.\d+\.\d+ after (?:release|main) [0-9a-f]{7,40} \[version-advance\]$/;
+export const VERSION_ADVANCE_SUBJECT = /^version-advance: \d+\.\d+\.\d+ after (?:release|main|test) [0-9a-f]{7,40} \[version-advance\]$/;
 export const WORKFLOW_PATH = '.github/workflows/build-stamp.yml';
 export function isStampCommit(author, subject) {
   return author === BOT_AUTHOR && STAMP_SUBJECT.test(subject);
@@ -708,6 +708,8 @@ function selftest() {
     stampIsCurrent([{ sha: 'v', author: BOT_AUTHOR, subject: VA }, STAMP]) === true);
   check('current: a stamp with version-advance and readme-sync above it',
     stampIsCurrent([{ sha: 'r', author: BOT_AUTHOR, subject: README }, { sha: 'v', author: BOT_AUTHOR, subject: VA }, STAMP]) === true);
+  check('current: a stamp with a test-build version-advance commit above it',
+    stampIsCurrent([{ sha: 'v', author: BOT_AUTHOR, subject: 'version-advance: 0.7.4 after test ' + 'a'.repeat(40) + ' [version-advance]' }, STAMP]) === true);
   check('not current: a human commit with the version-advance subject',
     stampIsCurrent([{ sha: 'v', author: 'dev', subject: VA }, STAMP]) === false);
   check('not current: a bot commit that merely mentions version-advance',

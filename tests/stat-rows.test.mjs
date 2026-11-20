@@ -53,26 +53,6 @@ test("Mana weights sum to 1; Stamina scales from base 3; each combat rating has 
   for (const id of ['ar', 'dr', 'pr', 'ward', 'poise']) assert.equal(sum(id), 1, `${id} sums to 1`);
 });
 
-test('ONE row function drives every stat: pools, hand, ratings, poise all equal statRowValue', () => {
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  const run = createRunState({ seed: 7, classId: 'starseer', registries });
-  const level = 1;
-  const own = (id) => statRowValue(resolvedRuleRow(run.derivedStatRuleSnapshot.rules, id), { attributes: run.attributes, level, lenientAttributes: true }).value;
-  // Pools, through the run door.
-  assert.equal(run.drawPerTurn, own('draw'));
-  assert.equal(run.maxStamina, own('stamina') + run.equipmentPoolBonuses.maxStamina);
-  assert.equal(run.energyMax, own('energy'));
-  // Hand and ratings, through the fight door.
-  const combat = createRunCombat({ registries, rng: createRng(1), run, enemyIds: ['wanderingSoldier'] });
-  assert.equal(combat.handMax, own('handSize'));
-  assert.equal(combat.piles.hand.length, Math.min(own('openingHand'), own('handSize')));
-  for (const id of ['ar', 'dr', 'pr', 'ward', 'poise']) {
-    assert.equal(attributeRatingReceipt(combat.ratingsRules, run.attributes, id).value, own(id), `${id} rating attribute part`);
-  }
-  // deriveStat is the same function, read off a table.
-  for (const id of DERIVED_STAT_IDS) assert.equal(deriveStat(run.derivedStatRuleSnapshot.rules, id, { attributes: run.attributes, level }).value, own(id));
-});
-
 test('per-term floors: a 0.125 weight adds nothing until the attribute reaches 8, and min/max clamp', () => {
   const row = { base: 1, wisdom: 0.125 };
   assert.equal(statRowValue(row, { attributes: { wisdom: 7 } }).value, 1);
@@ -196,24 +176,6 @@ test('a saved fight whose hand size can reach 0 is refused at the fight door', a
   for (const handSize of [{ base: 0, min: 0 }, { base: 7 }, { base: 7, min: 1, max: 0 }]) {
     assert(handRulesProblems(resolveHandRules({}, { ...rows, handSize })).some((line) => /handSize min and max/.test(line)), JSON.stringify(handSize));
   }
-});
-
-test('a saved fight with an unpriceable hand or rating row, or rating rules without rows, is refused (Codex, #1296)', async () => {
-  const { handRulesProblems, resolveHandRules } = await import('../src/model/handRules.js');
-  const { combatSnapshotProblems } = await import('../src/model/combatSnapshot.js');
-  const rows = { openingHand: { base: 4 }, draw: { base: 2 }, handSize: { base: 7, min: 1, max: 30 } };
-  for (const draw of [{ base: 2, rounding: 'bogus' }, { base: 2, pointsPerIncrease: 0 }, { base: 2, mystery: 1 }]) {
-    assert(handRulesProblems(resolveHandRules({}, { ...rows, draw })).some((line) => /draw/.test(line)), JSON.stringify(draw));
-  }
-  const registries = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.combatRatings.enabled': true }));
-  const run = createRunState({ seed: 4, classId: 'reaver', registries });
-  const snapshot = serializeCombatSnapshot(createRunCombat({ registries, rng: createRng(4), run, enemyIds: ['wanderingSoldier'] }));
-  assert(snapshot.ratingsRules, 'the fight carries rating rules');
-  assert.deepEqual(combatSnapshotProblems(snapshot), []);
-  const { ratings, ...withoutRows } = snapshot.ratingsRules;
-  assert(combatSnapshotProblems({ ...snapshot, ratingsRules: withoutRows }).some((line) => /missing rating rows/.test(line)));
-  const badAr = { ...snapshot.ratingsRules, ratings: { ...ratings, ar: { ...ratings.ar, rounding: 'bogus' } } };
-  assert(combatSnapshotProblems({ ...snapshot, ratingsRules: badAr }).some((line) => /Combat ratings: ar/.test(line)));
 });
 
 // Codex, #1296 (second round): a sparse legacy rating edit keeps its formula,

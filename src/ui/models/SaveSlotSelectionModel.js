@@ -2,8 +2,9 @@
 // The selected card, primary-action availability, and command target are one
 // immutable projection so the screen cannot render three different answers.
 import { behaviorModel } from './BehaviorModel.js';
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { t } from '../strings.js';
 
 const VALID_KINDS = Object.freeze(['load', 'new']);
 
@@ -26,7 +27,7 @@ export function saveSlotSelectionModel(slots, { kind, selectedSlot = null, allow
   // selection fails closed instead of silently targeting a different slot.
   const selected = selectedSlot == null ? preferred : requested;
 
-  const slotModels = records.map((record) => componentModel(UI.titleSaveSlot, {
+  const slotModels = records.map((record) => ComponentModel(UI.titleSaveSlot, {
     variant: record.hasSave ? 'occupied' : 'empty',
     properties: {
       slot: record.slot,
@@ -46,12 +47,12 @@ export function saveSlotSelectionModel(slots, { kind, selectedSlot = null, allow
     })] : [],
   }));
   const actionSlot = selected?.slot ?? null;
-  const actionModel = componentModel(UI.titleModalContinueControl, {
+  const actionModel = ComponentModel(UI.titleModalContinueControl, {
     variant: kind,
     properties: {
       enabled: actionSlot != null,
       slot: actionSlot,
-      label: 'CONTINUE',
+      label: t('common.continue'),
     },
     accessibility: { role: 'button', disabled: actionSlot == null },
     behaviors: actionSlot == null ? [] : [behaviorModel(`${kind}-selected-save-slot`, {
@@ -61,7 +62,7 @@ export function saveSlotSelectionModel(slots, { kind, selectedSlot = null, allow
     })],
   });
 
-  return componentModel(UI.titleSaveSlotList, {
+  return ComponentModel(UI.titleSaveSlotList, {
     variant: kind,
     properties: {
       kind,

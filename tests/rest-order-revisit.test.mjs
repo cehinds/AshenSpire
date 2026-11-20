@@ -8,7 +8,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createLocationVisit } from '../src/engine/locations.js';
 import { mountRest } from '../src/ui/screens/rest.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 let FixtureEvent = null;
 

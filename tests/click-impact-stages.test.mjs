@@ -9,7 +9,7 @@ const GAP = ACTION_PACING.stageGapMs * SCALE, LUNGE = ACTION_PACING.animationSte
 const SPRITE = 10 + 2 * GAP, RESULT = SPRITE + 390 + 60 + GAP, DAMAGE = RESULT + 2 * GAP;
 const fixture = () => ({ up: 0, contact: SPRITE + 200, number: DAMAGE,
   timing: { intentMs: GAP, wordMs: GAP, afterSpriteMs: GAP, resultMs: GAP, reactionMs: GAP, damageMs: GAP, resetMs: GAP, scale: SCALE, playbackRate: 0.5, spriteSpeed: { lungeMs: LUNGE }, fixCore: true },
-  clip: { impactMs: 195, totalMs: 390, activeMs: 390 }, holdMs: 60,
+  clip: { impactMs: 195, totalMs: 390, activeMs: 390 }, holdMs: 60, hpDamage: true,
   stages: ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'].map((name, i) => [[10, 10 + GAP, SPRITE, SPRITE + 195, RESULT, RESULT + GAP, DAMAGE, DAMAGE, DAMAGE + GAP][i], name, 'player']),
 });
 
@@ -53,20 +53,22 @@ test('late timers retain all their extra time in the overhead, rather than expan
   assert.ok(measured.numberOverhead > 750);
 });
 
-test('a committed hostile miss proves contact and stages without fabricating a number', () => {
-  const sample = fixture(); sample.number = null;
-  assert.throws(() => orderedImpactSample(sample), /without a wholly missed action/);
-  sample.receipts = [{ type: 'attackMissed' }];
-  const measured = orderedImpactSample(sample);
-  assert.equal(measured.number, null); assert.equal(measured.numberOverhead, null);
-  assert.equal(measured.contactOverhead, 15);
+test('an HP-damaging beat owes a number', () => {
+  const sample = fixture(); sample.number = null; sample.receipts = [{ type: 'damageDealt' }];
+  assert.throws(() => orderedImpactSample(sample), /missing HP damage readout/);
 });
 
-test('one missed hit cannot excuse missing numbers from another hit or protection payload', () => {
-  for (const type of ['attackHit', 'damageDealt', 'blockGained', 'meterGuardGained', 'ratingImpact']) {
-    const sample = fixture(); sample.number = null;
-    sample.receipts = [{ type: 'attackMissed' }, { type }];
-    assert.throws(() => orderedImpactSample(sample), /without a wholly missed action/);
+test('a number without HP damage breaks the floater policy', () => {
+  const sample = fixture(); sample.hpDamage = false; sample.receipts = [{ type: 'blockGained' }];
+  assert.throws(() => orderedImpactSample(sample), /numeric readout drew without HP damage/);
+});
+
+test('protection, meter-only and missed plays prove contact and stages without a number', () => {
+  for (const type of ['blockGained', 'attackMissed', 'meterGuardGained']) {
+    const sample = fixture(); sample.number = null; sample.hpDamage = false; sample.receipts = [{ type }];
+    const measured = orderedImpactSample(sample);
+    assert.equal(measured.number, null); assert.equal(measured.numberOverhead, null);
+    assert.equal(measured.contactOverhead, 15);
   }
 });
 

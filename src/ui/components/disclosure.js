@@ -92,7 +92,7 @@
 // grows a second renderer.
 //
 // THIS BRANCH IS THREE LINES AND IT IS WHY THERE IS NO SECOND FILE. The
-// creation screen's KEEPSAKE / SIGIL / TINT / SPRITE rows fold by the same
+// creation screen's SIGIL / TINT / SPRITE rows fold by the same
 // face, the same tap, and the same published state as D26's stat entries.
 // tools/handrenderers.mjs is already counting what a second hand renderer cost
 // this house; tools/onefold.mjs counts the same debt here, and goes red on a
@@ -331,8 +331,7 @@ export function mountDisclosure(host, entries, {
   // INLINE display, NOT the hidden attribute, and the choice is a measured
   // one (E4): `[hidden]`'s UA rule is `display: none` at attribute-selector
   // specificity, and the adopted pickers carry author display rules at the
-  // same specificity (`.cz-opts { display: flex }`, `.class-row`,
-  // `.cz-keepsakes`) — author origin wins, so `hidden` on these nodes paints
+  // same specificity (`.cz-opts { display: flex }`, `.class-row`) — author origin wins, so `hidden` on these nodes paints
   // ANYWAY. Watched red through creationbrief before this line: five shut
   // sections with every option on the glass. An inline style loses to
   // nothing but !important, which nothing here uses. The attribute is still

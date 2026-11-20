@@ -19,7 +19,7 @@ import { assetUrl } from '../assetmap.js';
 // draws nothing for them and no stylesheet may any more.
 import { esc } from './tooltip.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
-import { childModel, optionalChildModel } from '../models/ComponentModel.js';
+import { ChildModel, OptionalChildModel } from '../models/ComponentModel.js';
 import { el, html, iconButton } from '../kit/index.js';
 
 function attrsOf(componentAttrs) {
@@ -32,7 +32,7 @@ function attrsOf(componentAttrs) {
 
 // Render an optional child through `render`, or nothing when it is filtered out.
 const part = (parent, component, render, variant = null) => {
-  const child = optionalChildModel(parent, component, variant);
+  const child = OptionalChildModel(parent, component, variant);
   return child ? render(child) : '';
 };
 
@@ -59,6 +59,16 @@ export function cindersCounterHtml(model) {
   ])));
 }
 
+/** SyncHudCinders(root, cinders) — write the current purse into every cinders counter already drawn inside `root`. */
+export function SyncHudCinders(root, cinders) {
+  for (const counter of root?.querySelectorAll?.('[data-ui-component="cinders-counter"]') || []) {
+    const value = counter.querySelector('.cv');
+    if (value) value.textContent = String(cinders);
+    const label = counter.getAttribute('aria-label');
+    if (label) counter.setAttribute('aria-label', label.replace(/^[\d,.]+/, String(cinders)));
+  }
+}
+
 // A field's value, then its detail when it has one (the act's seat name).
 function metadataFieldHtml(model) {
   const { label, value, detail = null } = model.properties;
@@ -76,8 +86,8 @@ export function buildMetadataTrailHtml(model) {
     ...attrsOf(uiComponentAttrs(model.component, model.variant)),
     class: 'hud-run-meta as-statstrip trail', 'aria-label': model.properties.label,
   }, [
-    metadataFieldHtml(childModel(model, UI.metadataField, 'act')),
-    metadataFieldHtml(childModel(model, UI.metadataField, 'floor')),
+    metadataFieldHtml(ChildModel(model, UI.metadataField, 'act')),
+    metadataFieldHtml(ChildModel(model, UI.metadataField, 'floor')),
   ]));
 }
 
@@ -89,7 +99,7 @@ export function runHeaderStripHtml(model) {
 }
 
 export function vitalsPanelHtml(model) {
-  const meter = childModel(model, UI.resourceMeter);
+  const meter = ChildModel(model, UI.resourceMeter);
   return `<section class="hud-vitals-panel grow" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health">
     <div class="resbars-host" ${uiComponentAttrs(meter.component, meter.variant)}></div>
   </section>`;
@@ -136,8 +146,8 @@ export function primaryHudRowHtml(model) {
 }
 
 export function inventoryBeltHtml(model) {
-  const relics = optionalChildModel(model, UI.relicTray);
-  const potions = optionalChildModel(model, UI.potionTray);
+  const relics = OptionalChildModel(model, UI.relicTray);
+  const potions = OptionalChildModel(model, UI.potionTray);
   // Both are the shared icon tray (components/iconTray.js): one row of round
   // icons that never wraps, the combatant card's status row its reference.
   // relicRail.js and runHud.js fill them. The shared grid seats this belt

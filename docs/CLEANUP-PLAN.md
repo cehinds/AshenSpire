@@ -38,7 +38,7 @@ Runs after Phase 3 step 3 (legacy removal), so dead branches are deleted rather 
 | 10 | `src/main.js` (5,300 lines): boot, routing, run flow, shot fixtures | split by responsibility | todo |
 | 11 | `src/ui/screens/settings.js` (4,300 lines) | one module per settings section | todo |
 | 12 | `src/ui/screens/combat.js` (3,900 lines) | hand, enemies, targeting, playback | todo |
-| 13 | `src/model/loadout.js` (3,900 lines) | by concern | todo |
+| 13 | `src/model/loadout.js` (3,900 lines) | by concern | done: `src/model/loadout/*.js` behind the `loadout.js` door |
 | 14 | Repo root: stray `*-preview.html`, `scratch/` | superseded by Phase 3, step 2 | moved |
 
 ## Phase 3 — Core only, standalone modules, JSON-driven, Unity-port ready

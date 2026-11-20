@@ -3,6 +3,8 @@ import { footerLayoutModel, footerText, footerStaminaLayers } from '../models/Fo
 import { assetUrl } from '../assetmap.js';
 import { esc } from './tooltip.js';
 import { t } from '../strings.js';
+import { setAttr } from '../domWrite.js';
+import { measureThenMutate } from '../frameMeasure.js';
 
 const plan = footerLayoutModel(footerLayout);
 const selectors = { sp: '.energy-orb', draw: '.pile.draw', end: '.end-turn', discard: '.pile.spent', potions: '.combat-potions' };
@@ -10,7 +12,7 @@ const states = new WeakMap();
 export function paintFooterOrb(orb, resource, urls) {
   if (!orb.closest?.('[data-footer-art]')) return false;
   const canvas = orb.querySelector(':scope > svg'), b = plan.groups.sp.bounds;
-  canvas.setAttribute('viewBox', `${b.x} ${b.y} ${b.w} ${b.h}`);
+  setAttr(canvas, 'viewBox', `${b.x} ${b.y} ${b.w} ${b.h}`);
   canvas.innerHTML = footerStaminaLayers(footerLayout, resource).map(n => `<image data-orb-part="${esc(n.asset)}" href="${esc(urls[n.asset])}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="xMidYMid meet"/>`).join('');
   return true;
 }
@@ -71,31 +73,37 @@ export function installFooterArt(row) {
 // uncapped.
 const pendingCaps = new Map();
 const pendingCompactRows = new Set();
-let capFrame = 0;
-function capLongWords() {
-  capFrame = 0;
+// The measurements are one job of frameMeasure's shared read phase: every reader queued for the frame reads, then every
+// writer writes, so this frame's one flush serves them all. A compact line that already holds a fitted font-size is
+// reset to measure its natural width, and re-fitted, inside this one task: never cleared at queue time, which would
+// paint a frame at the natural size before the next frame's job ran.
+let capQueued = false;
+function readCaps() {
+  capQueued = false;
   const list = [...pendingCaps].filter(([node]) => node.isConnected);
   pendingCaps.clear();
   const long = list.filter(([node, w]) => node.getComputedTextLength() > w);
-  for (const [node, w] of long) node.setAttribute('textLength', String(w));
-  // Marked only once measured: a word dropped here because it was detached is
-  // measured again by the next paint that finds it.
-  for (const [node] of list) node.dataset.measured = 'true';
   const lines = [...pendingCompactRows].filter(row => row.isConnected && row.dataset.footerCompact === 'true')
     .flatMap(row => [...row.querySelectorAll('.footer-compact-line')]);
   pendingCompactRows.clear();
-  for (const line of lines) line.style.removeProperty('font-size');
+  for (const line of lines) if (line.style.fontSize) line.style.removeProperty('font-size');
   const sizes = lines.map(line => ({ line, width: line.getBoundingClientRect().width,
     available: line.parentElement.getBoundingClientRect().width,
     font: parseFloat(getComputedStyle(line).fontSize) }));
-  for (const { line, width, available, font } of sizes) {
-    if (width > available && available > 0) line.style.fontSize = `${font * available / width}px`;
-  }
+  return () => {
+    for (const [node, w] of long) setAttr(node, 'textLength', w);
+    // Marked only once measured: a word dropped here because it was detached is
+    // measured again by the next paint that finds it.
+    for (const [node] of list) node.dataset.measured = 'true';
+    for (const { line, width, available, font } of sizes) {
+      if (width > available && available > 0) line.style.fontSize = `${font * available / width}px`;
+    }
+  };
 }
 function scheduleCaps() {
-  if ((!pendingCaps.size && !pendingCompactRows.size) || capFrame) return;
-  if (typeof requestAnimationFrame !== 'function') { capLongWords(); return; }
-  capFrame = requestAnimationFrame(capLongWords);
+  if ((!pendingCaps.size && !pendingCompactRows.size) || capQueued) return;
+  capQueued = true;
+  measureThenMutate(readCaps, readCaps);
 }
 // The layout adapter calls this after resizing; count changes use the same
 // batch. Measure complete lines so Discard/Exhaust never break inside a word.
@@ -108,7 +116,7 @@ export function paintFooterArt(row, values = {}) {
   if (!row?.dataset?.footerArt) return;
   installFooterArt(row);
   if (!row) return;
-  const next = { ...states.get(row), endTurn: t('combat.endTurn'), drawLabel: 'DRAW', spLabel: 'SP', discardLabel: t('combat.discard'), exhaustLabel: t('combat.exhaust'), potions: t('potions.run.title'), ...values };
+  const next = { ...states.get(row), endTurn: t('combat.endTurn'), drawLabel: 'DRAW', spLabel: 'Stamina', discardLabel: t('combat.discard'), exhaustLabel: t('combat.exhaust'), potions: t('potions.run.title'), ...values };
   states.set(row, next);
   const textNodes = new Map([...row.querySelectorAll('[data-footer-text]')].map(node => [node.dataset.footerText, node]));
   for (const group of Object.values(plan.groups)) for (const item of group.items) {
@@ -121,8 +129,10 @@ export function paintFooterArt(row, values = {}) {
     }
   }
   scheduleCaps();
-  row.querySelector('.end-turn')?.setAttribute('aria-label', next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn);
-  row.querySelector('.combat-potions')?.setAttribute('aria-label', next.potions);
+  const endTurnButton = row.querySelector('.end-turn');
+  if (endTurnButton) setAttr(endTurnButton, 'aria-label', next.endTurnAria || (next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn));
+  const potionsButton = row.querySelector('.combat-potions');
+  if (potionsButton) setAttr(potionsButton, 'aria-label', next.potions);
   // The authored face remains separate from these readable narrow-host labels.
   // The key sits on its own line under the words, as the full label's key does.
   for (const [role, text] of Object.entries({ draw: `${next.draw ?? 0} Draw`, end: next.endTurnKey ? `${next.endTurn}\n${next.endTurnKey}` : next.endTurn, discard: `${t('combat.discard')} ${next.discard ?? 0}\n${t('combat.exhaust')} ${next.exhaust ?? 0}`, potions: next.potions })) {
@@ -139,5 +149,5 @@ export function paintFooterArt(row, values = {}) {
   }
   fitFooterCompactLabels(row);
   // Refresh references after switching between light and high-resolution packs.
-  for (const image of row.querySelectorAll('[data-footer-asset]')) image.setAttribute('href', assetUrl(footerAssets[image.dataset.footerAsset]));
+  for (const image of row.querySelectorAll('[data-footer-asset]')) setAttr(image, 'href', assetUrl(footerAssets[image.dataset.footerAsset]));
 }

@@ -1,0 +1,26 @@
+{
+  "id": "status.shock",
+  "tag": "status.shock",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Shock",
+  "description": "Each stack: +5% lightning damage taken, and a 5% chance to lose an action at its next turn (a chance, never previewed). One stack wears off each turn. At most 10.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.shock"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/elementIdentity.js",
+    "symbol": "ElementReceiptStages"
+  }
+}

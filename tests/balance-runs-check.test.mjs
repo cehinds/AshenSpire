@@ -5,13 +5,13 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { recordedMultiplierProblems } from '../tools/balance-runs-check.mjs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 const REG = createRegistries(contentBundle);
-const recorded = readFileSync(new URL('../docs/balance-runs.md', import.meta.url), 'utf8');
+const recorded = readSourceTextSync(new URL('../docs/balance-runs.md', import.meta.url));
 const withBalance = (patch) => ({ ...REG, balance: { ...REG.balance, ...patch } });
 
 test('the committed report agrees with the live seat and boss tiers', () => {

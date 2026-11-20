@@ -5,7 +5,8 @@
 //      figure (within 8px) with its bottom above the figure's head; the player's HUD stands right of the figure.
 //   2. Selecting cards, playing one for damage and ending the turn leave every HUD box where it was and replace no HUD node (a
 //      MutationObserver over the combat root counts node adds and removes inside the HUD subtrees).
-//   3. Every HUD is as wide as its cell (within 2px) at 390x844 and 1280x800, and no HUD text overflows its box.
+//   3. Every HUD is one fixed width (owner 2026-11-07: a layout token, not its cell's width) at 390x844 and 1280x800, neighbouring
+//      enemy HUDs do not overlap, and no HUD text overflows its box.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { serve } from '../tools/serve.mjs';
@@ -40,7 +41,7 @@ const swaps = page => page.evaluate(() => window.__hudSwaps);
 const geometry = page => page.evaluate(() => [...document.querySelectorAll('.combatant')].filter(frame => !frame.classList.contains('dead')).map(frame => {
   const sprite = frame.querySelector('.sprite').getBoundingClientRect(), id = frame.dataset.eid, role = frame.classList.contains('player') ? 'player' : 'enemy';
   const polygon = JSON.parse(frame.dataset.targetHudCellPolygon || 'null');
-  const cellWidth = polygon ? polygon[2][0] - polygon[3][0] : null;
+  const cellWidth = polygon ? (polygon[2][0] - polygon[3][0]) * (Number(document.documentElement.dataset.viewScale) || 1) : null; // canvas px to the real px of getBoundingClientRect
   const rack = frame.querySelector(':scope > .target-hud-overhead-meters')?.getBoundingClientRect();
   const shell = document.querySelector(`.target-hud-detail[data-eid="${id}"]`), panel = shell?.querySelector('.target-hud-panel').getBoundingClientRect();
   const box = shell?.getBoundingClientRect();
@@ -66,7 +67,7 @@ const overflow = page => page.evaluate(() => {
 });
 
 try {
-  for (const [width, height] of [[390, 844], [1280, 800]]) for (const enemies of [1, 3]) {
+  for (const [width, height] of [[390, 844], [1280, 800]]) for (const enemies of [1, 2, 3]) {
     const page = await board(width, height, enemies), tag = `${width}x${height} ${enemies}e`;
     let geo = await geometry(page);
     // Armed: every legal enemy's panel shows.
@@ -76,7 +77,8 @@ try {
     const player = geo.find(g => g.role === 'player');
     for (const g of geo) {
       assert.ok(g.cellWidth > 20, `${tag} ${g.id}: the cell width is published`);
-      assert.ok(Math.abs(g.rack.width - g.cellWidth) <= 2, `${tag} ${g.id}: the mini HUD is as wide as its cell (${g.rack.width.toFixed(1)} vs ${g.cellWidth.toFixed(1)})`);
+      // Owner 2026-11-07 (backlog #11): one fixed width for every combatant (a layout token), not its cell's width.
+      assert.ok(Math.abs(g.rack.width - geo[0].rack.width) <= 1, `${tag} ${g.id}: every mini HUD is the same fixed width (${g.rack.width.toFixed(1)} vs ${geo[0].rack.width.toFixed(1)})`);
       if (g.panel?.visible) assert.ok(Math.abs(g.panel.width - g.cellWidth) <= 2, `${tag} ${g.id}: the panel is as wide as its cell (${g.panel.width.toFixed(1)} vs ${g.cellWidth.toFixed(1)})`);
       if (g.role === 'enemy') {
         assert.ok(Math.abs(g.rack.x - g.figureX) <= 8, `${tag} ${g.id}: the rack is centred on its figure (${g.rack.x.toFixed(1)} vs ${g.figureX.toFixed(1)})`);
@@ -87,7 +89,10 @@ try {
         }
       }
     }
-    assert.ok(player.panel.left >= player.spriteRight - 8 || player.panel.left >= player.figureX, `${tag}: the player HUD stands right of the figure`);
+    const enemyRacks = geo.filter(g => g.role === 'enemy').map(g => g.rack).sort((a, b) => a.x - b.x);
+    // Three enemy lanes on a phone are narrower than the fixed width (owner 2026-11-07: fixed, compact); two must clear each other.
+    if (width > 600 || enemies <= 2) for (let i = 1; i < enemyRacks.length; i++) assert.ok(enemyRacks[i].x - enemyRacks[i].width / 2 >= enemyRacks[i - 1].x + enemyRacks[i - 1].width / 2 - 1, `${tag}: neighbouring enemy HUDs do not overlap`);
+    assert.ok(player.rack.x - player.rack.width / 2 >= player.spriteRight - 8 || player.rack.x >= player.figureX, `${tag}: the player mini HUD stands right of the figure (rack x ${player.rack.x.toFixed(1)}, figure ${player.figureX.toFixed(1)})`);
     assert.deepEqual(await overflow(page), [], `${tag}: no HUD text overflows`);
     // Select, play and (phone only, to bound the run) end the turn: nothing moves, nothing is replaced.
     await watch(page);
@@ -103,25 +108,29 @@ try {
     const hp = await page.evaluate(() => window.__combat.enemies.map(enemy => enemy.hp));
     assert.ok(hp.reduce((a, b) => a + b, 0) < hpBefore.reduce((a, b) => a + b, 0), `${tag}: the card dealt damage (${hpBefore} -> ${hp})`);
     assert.equal(await swaps(page), 0, `${tag}: a damaging play replaces no HUD node`);
-    assert.deepEqual(await rects(page), before, `${tag}: a damaging play moves no HUD box`);
+    // The player's own mini HUD may gain a row when a play grants it a resource (a visible meter, not a redraw), so the
+    // static-position check after a play covers the enemy HUD boxes and the player's centre column.
+    const enemyOnly = rows => rows.filter(row => !/:player$/.test(row[0]));
+    assert.deepEqual(enemyOnly(await rects(page)), enemyOnly(before), `${tag}: a damaging play moves no enemy HUD box`);
     assert.deepEqual(await overflow(page), [], `${tag}: no HUD text overflows after a play`);
-    // A status gained mid-fight grows an enemy's panel upward; its Inspect control moves with it and stays inside its top-right corner.
-    await click(page, page.locator('.hand .card[data-card-id="core.strike"]').first()); await page.waitForTimeout(1200);
-    const inspectInside = () => page.evaluate(() => {
-      const shell = document.querySelector('.target-hud-detail[data-role="enemy"].visible'); if (!shell) return null;
-      const panel = shell.querySelector('.target-hud-panel').getBoundingClientRect(), info = document.querySelector(`.target-hud-inspect-info[data-eid="${shell.dataset.eid}"]`).getBoundingClientRect();
-      return { statuses: shell.querySelectorAll('.status-icon').length, insideX: info.left >= panel.left - 1 && info.right <= panel.right + 1, insideY: info.top >= panel.top - 1 && info.bottom <= panel.bottom + 1, right: panel.right - info.right, top: info.top - panel.top, panelTop: panel.top };
+    // Owner 2026-11-07: no selected panel exists; the overhead mini HUD (HP bar + intent) is the only HUD and stays static.
+    const mini = () => page.evaluate(() => {
+      const frame = document.querySelector('.combatant.enemy:not(.dead)'), rack = frame?.querySelector(':scope > .target-hud-overhead-meters'); if (!rack) return null;
+      const r = rack.getBoundingClientRect();
+      return { statuses: rack.querySelectorAll('.status-icon').length, intent: !!rack.querySelector('.intent'), left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, vw: innerWidth, vh: innerHeight,
+        panels: document.querySelectorAll('.target-hud-detail.visible, .target-hud-selected, .target-hud-focused').length };
     });
-    const bare = await inspectInside();
-    assert.ok(bare, `${tag}: an enemy panel is showing before the status`);
+    const bare = await mini();
+    assert.ok(bare && bare.intent, `${tag}: an enemy mini HUD with its intent is showing`);
+    assert.equal(bare.panels, 0, `${tag}: no selected target-hud-detail panel is visible`);
     {
       await page.evaluate(() => { const enemy = window.__combat.enemies.find(e => e.alive); enemy.statuses = { ...(enemy.statuses || {}), weak: { stacks: 3 } }; window.__renderCombatForShot?.(); });
       await page.waitForTimeout(1200);
-      const grown = await inspectInside();
-      assert.ok(grown.statuses > 0, `${tag}: the status shows in the panel`);
-      assert.ok(grown.panelTop <= bare.panelTop + 0.5, `${tag}: the enemy's panel grew upward (or stayed against the edge) when the status appeared (${bare.panelTop} -> ${grown.panelTop})`);
-      assert.ok(grown.insideX && grown.insideY, `${tag}: the Inspect control stays inside its panel after a status appears (${JSON.stringify(grown)})`);
-      assert.ok(Math.abs(grown.top - bare.top) < 2 && Math.abs(grown.right - bare.right) < 2, `${tag}: and in the same corner (${JSON.stringify([bare, grown])})`);
+      const grown = await mini();
+      assert.ok(grown && grown.intent, `${tag}: the mini HUD still shows its intent after a status appears`);
+      assert.equal(grown.panels, 0, `${tag}: still no selected panel after a status appears`);
+      assert.ok(Math.abs(grown.top - bare.top) < 2 && Math.abs(grown.width - bare.width) < 2, `${tag}: the mini HUD stays static when a status appears (${JSON.stringify([bare, grown])})`);
+      assert.ok(grown.left >= -0.5 && grown.right <= grown.vw + 0.5 && grown.top >= -0.5 && grown.bottom <= grown.vh, `${tag}: the mini HUD stays inside the field`);
     }
     await page.close();
   }
@@ -130,43 +139,88 @@ try {
   for (const seed of ['PERF1', 'PERF2']) for (const [width, height] of [[390, 844], [1280, 800]]) {
     const page = await board(width, height, null, seed), tag = `${width}x${height} seed ${seed}`;
     await click(page, page.locator('.hand .card[data-card-id="core.strike"]').first()); await page.waitForTimeout(1200);
-    const rows = await page.evaluate(() => [...document.querySelectorAll('.combatant')].map(frame => {
+    const rows = await page.evaluate(() => [...document.querySelectorAll('.combatant:not(.dead)')].map(frame => {
       const id = frame.dataset.eid, polygon = JSON.parse(frame.dataset.targetHudCellPolygon || 'null');
-      const shell = document.querySelector(`.target-hud-detail[data-eid="${id}"]`), info = document.querySelector(`.target-hud-inspect-info[data-eid="${id}"]`);
-      const panel = shell?.querySelector('.target-hud-panel').getBoundingClientRect(), box = info?.getBoundingClientRect();
-      return { id, cell: frame.dataset.formationCell, cellWidth: polygon && polygon[2][0] - polygon[3][0], shown: shell?.classList.contains('visible'),
-        width: shell?.getBoundingClientRect().width, panel: panel && { left: panel.left, right: panel.right, top: panel.top, bottom: panel.bottom }, info: box && { left: box.left, right: box.right, top: box.top, bottom: box.bottom } };
+      const rack = frame.querySelector(':scope > .target-hud-overhead-meters'), box = rack?.getBoundingClientRect();
+      return { id, cell: frame.dataset.formationCell, cellWidth: polygon && (polygon[2][0] - polygon[3][0]) * (Number(document.documentElement.dataset.viewScale) || 1), intent: !!rack?.querySelector('.intent, .player-action-intent'),
+        hp: !!rack?.querySelector('.as-meter, [data-meter-row="hp"], .meters'), box: box && { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width }, vw: innerWidth, vh: innerHeight };
     }));
     const player = rows.find(row => row.id === 'player');
     assert.ok(player?.cellWidth > 20, `${tag}: the player's cell width is published (cell ${player?.cell})`);
-    // Armed with a Strike, every living enemy is a legal target, so every enemy's panel shows (a row that does not is a failure,
-    // not a row to skip). Width is the `.target-hud-detail` shell's, as in the blocks above.
-    for (const row of rows.filter(row => row.id !== 'player')) assert.ok(row.shown, `${tag} ${row.id} (${row.cell}): the enemy's panel shows once a Strike is armed`);
-    assert.ok(rows.some(row => row.id !== 'player' && row.shown), `${tag}: at least one enemy panel was checked`);
-    for (const row of rows.filter(row => row.shown)) {
+    // Armed with a Strike no selected panel opens; every figure keeps its mini HUD (HP bar, plus an intent for enemies), all one fixed width.
+    assert.equal(await page.locator('.target-hud-detail.visible').count(), 0, `${tag}: no selected panel once a Strike is armed`);
+    assert.ok(rows.some(row => row.id !== 'player'), `${tag}: at least one enemy was checked`);
+    for (const row of rows) {
       const name = `${tag} ${row.id} (${row.cell})`;
-      assert.ok(row.panel && row.info, `${name}: its panel and Inspect control exist`);
-      assert.ok(Math.abs(row.width - row.cellWidth) <= 2, `${name}: panel ${row.width.toFixed(1)} is as wide as its cell ${row.cellWidth.toFixed(1)}`);
-      assert.ok(row.info.left >= row.panel.left - 1 && row.info.right <= row.panel.right + 1 && row.info.top >= row.panel.top - 1 && row.info.bottom <= row.panel.bottom + 1,
-        `${name}: Inspect ${JSON.stringify(row.info)} is inside its panel ${JSON.stringify(row.panel)}`);
-      assert.ok(row.panel.right - row.info.right <= 7 && row.info.top - row.panel.top <= 7,
-        `${name}: Inspect stands in the panel's top-right corner (${(row.panel.right - row.info.right).toFixed(1)} from the right, ${(row.info.top - row.panel.top).toFixed(1)} from the top)`);
+      assert.ok(row.box && row.hp, `${name}: its mini HUD (HP bar) exists`);
+      if (row.id !== 'player') assert.ok(row.intent, `${name}: the enemy mini HUD shows its intent`);
+      assert.ok(Math.abs(row.box.width - rows[0].box.width) <= 1, `${name}: mini HUD ${row.box.width.toFixed(1)} is the one fixed width (${rows[0].box.width.toFixed(1)})`);
+      if (row.id !== 'player' && width > 600) assert.ok(row.box.width <= row.cellWidth + 2, `${name}: an enemy mini HUD ${row.box.width.toFixed(1)} fits its cell ${row.cellWidth.toFixed(1)}`);
+      assert.ok(row.box.left >= -1 && row.box.right <= row.vw + 1 && row.box.top >= -1 && row.box.bottom <= row.vh, `${name}: mini HUD ${JSON.stringify(row.box)} is inside the field`);
     }
-    assert.ok(rows.some(row => row.id === 'player' && row.shown), `${tag}: the player's panel is showing`);
+    await page.close();
+  }
+  // Owner 2026-11-07: the badge row never runs past the HP bar, on any form factor; surplus statuses collapse into +N.
+  for (const [width, height] of [[390, 844], [1280, 800]]) {
+    const page = await board(width, height, 2);
+    await page.evaluate(() => { const enemy = window.__combat.enemies.find(e => e.alive); enemy.statuses = { ...(enemy.statuses || {}) }; for (const id of ['weak', 'vulnerable', 'frail', 'burn', 'dexterity', 'madness', 'frost', 'zealotry']) enemy.statuses[id] = { stacks: 1, duration: 2 }; window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(1500);
+    const rows = await page.evaluate(() => [...document.querySelectorAll('.combatant > .target-hud-overhead-meters')].map(rack => {
+      const bar = rack.querySelector('.combat-health-meter .m-track').getBoundingClientRect(), badges = rack.querySelector('.combat-health-badges').getBoundingClientRect();
+      const reach = Math.max(badges.right, ...[...rack.querySelectorAll('.combat-health-badges *')].map(n => n.getBoundingClientRect().right));
+      return { bar: bar.width, badges: badges.width, right: reach, barRight: bar.right, icons: rack.querySelectorAll('.statuses .status-icon').length };
+    }));
+    assert.ok(rows.some(r => r.icons >= 2), `${width}: statuses render in the badge row`);
+    for (const r of rows) { assert.ok(r.badges <= r.bar + 1, `${width}: badge row ${r.badges.toFixed(1)} is within the bar width ${r.bar.toFixed(1)}`); assert.ok(r.right <= r.barRight + 1, `${width}: no badge past the bar right edge (${r.right.toFixed(1)} vs ${r.barRight.toFixed(1)})`); }
+    await page.close();
+  }
+  // Owner 2026-11-07: a phone enemy with Evade, Ward and Precision (Block 0) and three more statuses: the badges and the tray share one
+  // capacity, so nothing crosses the bar's right edge and the +N tile stays whole (badges that do not fit collapse into it).
+  {
+    const page = await board(390, 844, 2);
+    await page.evaluate(() => { const e = window.__combat.enemies.find(x => x.alive); e.block = 0; e.persistentWard = { value: 5 };
+      e.statuses = { evade: { stacks: 2 }, precision: { stacks: 2 }, weak: { stacks: 1, duration: 2 }, vulnerable: { stacks: 1, duration: 2 }, frail: { stacks: 1, duration: 2 } }; window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(1500);
+    const m = await page.evaluate(() => { const rack = [...document.querySelectorAll('.combatant.enemy > .target-hud-overhead-meters')].find(r => r.querySelector('.statuses .status-icon, .statuses .status-overflow'));
+      const bar = rack.querySelector('.combat-health-meter .m-track').getBoundingClientRect(), more = rack.querySelector('.status-overflow')?.getBoundingClientRect();
+      const drawn = [...rack.querySelectorAll('.combat-health-badges > .combat-health-badge, .combat-health-badges > .statuses > *')].map(n => n.getBoundingClientRect()).filter(r => r.width > 0);
+      return { barRight: bar.right, right: Math.max(...drawn.map(r => r.right)), more: more && { left: more.left, right: more.right, width: more.width, height: more.height } }; });
+    assert.ok(m.right <= m.barRight + 0.5, `phone: nothing crosses the bar's right edge (${m.right.toFixed(1)} vs ${m.barRight.toFixed(1)})`);
+    assert.ok(m.more && m.more.width > 8 && Math.abs(m.more.width - m.more.height) <= 1.5 && m.more.right <= m.barRight + 0.5, 'phone: the +N tile is drawn whole');
+    await page.close();
+  }
+  // Owner rule (2026-11-06): a value change adds and removes no node, with overflowing statuses too (the tray is not morphed with the meters),
+  // and keyboard focus on the +N tile survives.
+  for (const [width, height] of [[390, 844], [1280, 800]]) {
+    const page = await board(width, height, 2);
+    await page.evaluate(() => { const e = window.__combat.enemies.find(x => x.alive); e.statuses = { ...(e.statuses || {}) };
+      for (const id of ['weak', 'vulnerable', 'frail', 'burn', 'dexterity', 'madness', 'frost', 'zealotry']) e.statuses[id] = { stacks: 1, duration: 2 }; window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(1500);
+    const more = page.locator('.combatant.enemy .statuses .status-overflow').first();
+    assert.equal(await more.count(), 1, `${width}: statuses overflow into +N`);
+    await more.focus();
+    await watch(page);
+    const before = await rects(page);
+    await page.evaluate(() => { const e = window.__combat.enemies.find(x => x.alive); e.hp = Math.max(1, e.hp - 3); window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(800);
+    await page.evaluate(() => { const e = window.__combat.enemies.find(x => x.alive); e.block = 9; window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(800);
+    assert.equal(await swaps(page), 0, `${width}: an HP change and a Block change add or remove no HUD node with overflowing statuses`);
+    const racksOnly = rows => rows.filter(row => !/^target-hud-panel/.test(row[0])); // the detail panel is retired and never shown
+    assert.deepEqual(racksOnly(await rects(page)), racksOnly(before), `${width}: and move no HUD box`);
+    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('status-overflow')), true, `${width}: focus on +N survives`);
     await page.close();
   }
   // A panel already pushed against the top edge keeps its top on screen when a status grows it (short landscape phone).
   {
     const page = await board(844, 390, 3);
     await click(page, page.locator('.hand .card[data-card-id="core.strike"]').first()); await page.waitForTimeout(1200);
-    const tops = () => page.evaluate(() => [...document.querySelectorAll('.target-hud-detail[data-role="enemy"].visible')].map(shell => {
-      const box = shell.getBoundingClientRect(), info = document.querySelector(`.target-hud-inspect-info[data-eid="${shell.dataset.eid}"]`).getBoundingClientRect();
-      return { top: box.top, infoInside: info.top >= box.top - 1 && info.bottom <= box.bottom + 1 };
-    }));
-    assert.ok((await tops()).length > 0, 'landscape: enemy panels show');
+    const tops = () => page.evaluate(() => [...document.querySelectorAll('.combatant.enemy:not(.dead) > .target-hud-overhead-meters')].map(rack => ({ top: rack.getBoundingClientRect().top, intent: !!rack.querySelector('.intent') })));
+    assert.ok((await tops()).length > 0, 'landscape: enemy mini HUDs show');
+    assert.equal(await page.locator('.target-hud-detail.visible').count(), 0, 'landscape: no selected panel');
     await page.evaluate(() => { for (const enemy of window.__combat.enemies) if (enemy.alive) enemy.statuses = { ...(enemy.statuses || {}), weak: { stacks: 2 }, vulnerable: { stacks: 2 } }; window.__renderCombatForShot?.(); });
     await page.waitForTimeout(1200);
-    for (const { top, infoInside } of await tops()) { assert.ok(top >= -0.5, `landscape: a grown panel's top ${top} stays on screen`); assert.ok(infoInside, 'landscape: Inspect stays inside the grown panel'); }
+    for (const { top, intent } of await tops()) { assert.ok(top >= -0.5, `landscape: a mini HUD's top ${top} stays on screen`); assert.ok(intent, 'landscape: the mini HUD keeps its intent'); }
     await page.close();
   }
   console.log('combat-hud-static ok');

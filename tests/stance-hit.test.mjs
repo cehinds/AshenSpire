@@ -7,7 +7,6 @@ import { contentBundle } from '../src/content/index.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createCombat, dispatch, previewCardHit } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { syncWardMaximum, syncPoiseMaximum } from '../src/engine/combatPools.js';
 import { executeAction } from '../src/engine/actions.js';
@@ -83,7 +82,7 @@ test('advantage modes enumerate every two-die outcome with any natural twenty au
 
 test('one committed miss gates every contact and hostile pressure/status', () => {
   const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
-    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   const target = ctx.enemies[0]; target.evasion = 0; target.statuses = {}; delete target.combatStance;
   target.ratings = { ...target.ratings, ward: 30, poise: 100 };
@@ -107,7 +106,7 @@ test('one committed miss gates every contact and hostile pressure/status', () =>
 });
 test('Smash pressure planning excludes later oncePerTurn rejection without spending live budget', () => {
   const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
-    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   const target = ctx.enemies[0]; target.evasion = 0; target.statuses = {}; target.combatStance = { maneuver: 'casting', camp: 'spell' };
   target.ratings = { ...target.ratings, ward: 30, poise: 100 };
@@ -147,7 +146,7 @@ test('Target is authored and compiled for Hex only, without school inference', (
 test('Spell status bonus follows configured authored payloads for Casting and magic Counter only', () => {
   for (const [maneuver, camp, expected] of [['casting', 'spell', 5], ['counter', 'spell', 5], ['attack', 'spell', 3], ['defend', 'spell', 3], ['counter', 'physical', 3]]) {
     const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
-      ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+      enemyIds: ['wanderingSoldier'],
       player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
     ctx.stanceRules = { spellStatusStacks: 2 };
     ctx.player.combatStance = { maneuver, camp }; ctx.player.statuses = {};
@@ -162,7 +161,7 @@ test('Spell status bonus follows configured authored payloads for Casting and ma
 
 test('a hostile status removal without damage still creates exactly one Accuracy decision', () => {
   const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
-    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   const target = ctx.enemies[0]; target.statuses.strength = { stacks: 3 }; delete target.combatStance;
   let draws = 0; ctx.rng.int = stream => { if (stream === 'combatAvoidance') draws++; return 1; };
@@ -176,7 +175,7 @@ test('a hostile status removal without damage still creates exactly one Accuracy
 test('Cinder Sigil automatic fire Burn stays four while queued authored Burn gains the Spell bonus', () => {
   for (const [authored, expected] of [[false, 4], [true, 5]]) {
     const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
-      ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+      enemyIds: ['wanderingSoldier'],
       player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
     const target = ctx.enemies[0]; target.hp = target.maxHp = 500; target.block = target.barrier = 0;
     target.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 }; target.persistentWard = { max: 0, value: 0 }; target.combatTraits = {};
@@ -199,7 +198,7 @@ test('Cinder Sigil automatic fire Burn stays four while queued authored Burn gai
 
 test('selected-card hit preview includes entry Precision once and matches the played hit', () => {
   const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2, reactionRulesVersion: 1,
-    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    enemyIds: ['wanderingSoldier'],
     player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId: 'strike', instanceId: 'first', upgraded: false }] } });
   ctx.player.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
@@ -287,7 +286,7 @@ test('expanded dodgeRoll opcode prepares an Evade used by the shared accuracy ch
 
 test('restoring a valid v2 snapshot retains a usable prepared Evade', () => {
   const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
-    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    enemyIds: ['wanderingSoldier'],
     player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10,
       energyMax: 10, drawPerTurn: 1, deck: [] } });
   const enemy = ctx.enemies[0];

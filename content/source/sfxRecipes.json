@@ -92,9 +92,6 @@
   "shrine": [
     { "kind": "tone", "type": "sine", "freq": 392, "to": 588, "dur": 0.6, "peak": 0.3 }
   ],
-  "buy": [
-    { "kind": "tone", "type": "triangle", "freq": 700, "to": 1050, "dur": 0.16, "peak": 0.35 }
-  ],
   "rewardTake": [
     { "kind": "tone", "type": "sine", "freq": 520, "to": 780, "dur": 0.14, "peak": 0.3 }
   ],

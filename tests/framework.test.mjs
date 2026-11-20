@@ -553,7 +553,9 @@ test('compiled tooltips resolve every word through TermRegistry', () => {
 // ---- the runtime bridge (ported legacy consumers) ---------------------------
 
 const { createRegistries, resolveCard } = await import('../src/model/registries.js');
-const LEGACY_REG = createRegistries(contentBundle);
+// W25-EvadeCards: Dodge Roll and Evasive Guard no longer ship as a flat guard and a roll, so the weight-class and roll paths run against the legacy fixture (tests/helpers/legacy-dodge-cards.mjs).
+const { legacyDodgeRegistries } = await import('./helpers/legacy-dodge-cards.mjs');
+const LEGACY_REG = legacyDodgeRegistries();
 
 // The import boundary refuses a malformed armament row instead of carrying it
 // into a candidate the gate would then call clean (review on #519).
@@ -792,12 +794,6 @@ test('the status-semantics door forwards shipped state, results and errors', () 
     read();
     eq(reads[3].instance, null, 'final decay removes the status');
     eq(reads[3].anyFlag, false, 'expired status no longer supplies a combat flag');
-    ctx.foundation = {};
-    api.applyStatus(ctx, player, 'clocked', 2, player);
-    api.advanceStatusClock(ctx, player, 'enemyTurnEnd');
-    eq(api.getStacks(player, 'clocked'), 2, 'another clock cannot expire the application');
-    api.advanceStatusClock(ctx, player, 'ownerTurnEnd');
-    eq(api.hasStatus(player, 'clocked'), false, 'the authored clock expires the application');
     const error = assertThrows(() => api.applyStatus(ctx, player, 'missing'), /Unknown status: missing/);
     return { reads, player, events, error: { name: error.name, message: error.message } };
   };

@@ -2,9 +2,9 @@
 // Merge a promoted test snapshot into existing alternative pairs. No force
 // pushes, conflict strategies, cherry-picks, or writes to the primary branches.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, appendFileSync, existsSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, appendFileSync, existsSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { alternativePairs } from './alternative-branches.mjs';
 
@@ -33,9 +33,8 @@ export function mergeAlternative(repo, source, target, { regenerate = false } = 
   if (spawnSync('git', ['-C', repo, 'merge-base', '--is-ancestor', target, source]).status === 0) return git(repo, 'rev-parse', source);
   const { protectedFiles, overlaps } = protectedPaths(repo, source, target);
   if (overlaps.length) throw new Error(`Refusing ${target}: shared updates overlap alternative changes:\n${overlaps.join('\n')}`);
-  const scratch = process.platform === 'win32' ? 'D:/repos/.codex/worktrees' : tmpdir();
-  mkdirSync(scratch, { recursive: true });
-  const parent = mkdtempSync(join(scratch, 'ashen-alternative-'));
+  const scratch = realpathSync.native(tmpdir());
+  const parent = realpathSync.native(mkdtempSync(join(scratch, 'ashen-alternative-')));
   const worktree = join(parent, 'checkout');
   let added = false;
   try {
@@ -87,6 +86,10 @@ export function mergeAlternative(repo, source, target, { regenerate = false } = 
     }
     return git(worktree, 'rev-parse', 'HEAD');
   } finally {
+    // Only remove the exact temporary directory and checkout we created. An
+    // alias substituted during the merge must never redirect recursive cleanup.
+    if (dirname(parent) !== scratch || realpathSync.native(parent) !== parent) throw new Error('Alternative scratch ownership changed before cleanup');
+    if (added && realpathSync.native(worktree) !== worktree) throw new Error('Alternative checkout ownership changed before cleanup');
     if (added) git(repo, 'worktree', 'remove', '--force', worktree);
     rmSync(parent, { recursive: true, force: true });
   }

@@ -55,11 +55,11 @@ Authoring tools (Pose Studio, Workbench, editor, UI Studio) live on the `tools-a
 
 ## Run & test
 
-`package.json` (no dependencies, no `"type"` field) gives the common commands
+`package.json` (no dependencies, `"type": "module"`; `tools/hud-component-studio/` has its own `{"type":"commonjs"}` package.json for its UMD files) gives the common commands
 short names: `npm start` (launch), `npm run build:standalone` (`launch.mjs --build-only`; not named `build`, so a hosting platform that auto-runs a `build` script does nothing here),
 `npm run serve`, `npm test` (the fast core lane) and `npm run test:all` (the full `tests/run-node.mjs` merge gate), the checks
 `npm run validate:ui|validate:maps|validate:config|build:game|plantsites|receipts`,
-and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
+`npm run test:pr` (the PR gate's two test lanes in `tests.yml`: the core lane, then every discovered test but the slow ones, unsharded, each under `tools/verdict.mjs`; it stops at the first red lane and does not run the gate's receipt-order checks, `node tools/about-changelog.mjs --check-order --pending auto`, or the other PR workflows), and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
 tool, what it does and who calls it: [tools/README.md](tools/README.md).
 
 **`styles/tokens.generated.css` is generated** from the design tokens in
@@ -100,7 +100,7 @@ pull requests that landed, regenerates `src/content/changelog.generated.js`, and
 commits those three files to `dev` as `build: stamp <release>.<ordinal>
 [build-stamp]`. On a pull request and on `dev`, `dev-preview.yml` tolerates a
 rebuild that changes only those two derived files; test, release and main still
-require the rebuild to change nothing. Promotion from `dev` to `test` waits for
+require the rebuild to change nothing. Promotion from `dev` to `review` (and so on to `test`) waits for
 the build-stamp run on the `dev` tip to succeed, and for that tip to be the stamp
 commit or a later docs-only bot commit, since `test`'s strict check would otherwise
 refuse the promotion. After a successful stamp push, build-stamp dispatches
@@ -176,10 +176,10 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `pages-builds.yml` → per-branch build at `branches/<branch>/latest/` (`build.txt` as text, played by a sandboxed wrapper that keeps no progress) for each open same-repo `feature/*`, `fix/*`, `chore/*` PR into `dev` (after its `dev preview` run; a failed or cancelled preview removes the stale build, since only a successful run for the PR's current head is published; removed on close), plus a PR comment with the link | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AI-Art` on branch `ashenspire`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → pin bump: pushes `bot/art-pin-<tag>` and opens its pull request into `dev` with `ART_REPO_WRITE_TOKEN`, so CI runs on it (schedule every 6 h, dispatch, `art-release` event; not a gate) | — | — | — | — |
-| `alternative-sync.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
+| `sync-dev-to-alternative-dev.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
 | `architecture-sync.yml` → refreshes `docs/ARCHITECTURE-CURRENT-DEV.md` (not a gate) | — | yes (push to `dev`) | — | — |
 | `readme-sync.yml` → refreshes the README generated regions with `--write` (not a gate) | — | yes (push to `dev`) | — | — |
-| `sync-alternatives.yml` → syncs the alternative pairs and dispatches their checks (not a gate) | — | — | yes | — |
+| `sync-test-to-alternatives.yml` → syncs the alternative pairs and dispatches their checks (not a gate) | — | — | yes | — |
 | `worker-branch-cleanup.yml` → deletes origin `worker/**` branches merged into `test` (not a gate) | — | — | yes | — |
 | `restore-test-branch.yml` → recreates `test` from `release` when it is deleted (not a gate) | — | — | — | — |
 
@@ -392,7 +392,6 @@ in place and pose preloads are dropped. The setting is `LOCAL_ONLY_KEYS` in
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 
-The opt-in combat workshop is documented in [docs/COMBAT-WORKSHOP.md](docs/COMBAT-WORKSHOP.md).
 Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.md](docs/COMBAT-TAG-SOURCES.md).
 Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
 `--check` verifies complete attack-source mappings and the review table.
@@ -408,10 +407,6 @@ compiles it into `src/config/generated/ui.js` (`uiConfig`), and
 the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
 a compatibility shim composed from `uiConfig`, so change the JSON, never the
 shim or the generated module.
-`node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
-and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
-three-build policy through the actual combat engine. Ordinary runs do not select
-this ruleset yet. See the workshop's remaining content-expansion gate.
 
 Boss destinations are assigned when an act map is created. `bossIds` lists the
 terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
@@ -428,7 +423,7 @@ for content-update regressions in save restoration.
 Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
 moves, phases, seeded encounter reachability and ten named boss locations.
 `node tests/branchingBosses.test.mjs` covers map and save compatibility.
-`node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
+`node tools/attic/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
 using trusted desktop and phone inputs, including OS and in-game Reduced motion.
 `node tools/motion-probe.mjs` boots `?shot=combat&shotSeed=MOTION1` in Chromium
 and checks that every combatant has visible, loaded artwork that holds still at
@@ -444,7 +439,7 @@ by its end event), and no script flipbook or tween (3+ changes to one element
 inside 1 s) may run. A motion-on turn is the control that proves the sampler sees both
 kinds. A hand with no Attack is passed with End Turn until one is drawn (the
 selftest runs one plant and its clean copy at `--seed T14`, an all-Skill opening hand). `--selftest` plants sixteen known-bads through `doorplant.mjs` (CI runs them in 3 shards, `--shard i/3`).
-`node tools/perf-probe.mjs [--runs N] [--scenario combat,map,hand,transitions]` measures mobile performance (390x844, 4x CPU throttle, real touch input): frame times, long tasks, layout/paint totals, a CPU profile and the DOM census per scenario, median of N runs; it measures only and writes raw JSON outside the tree (baseline: docs/PERF-MOBILE-BASELINE.md).
+`node tools/attic/perf-probe.mjs [--runs N] [--scenario combat,map,hand,transitions]` measures mobile performance (390x844, 4x CPU throttle, real touch input): frame times, long tasks, layout/paint totals, a CPU profile and the DOM census per scenario, median of N runs; it measures only and writes raw JSON outside the tree (baseline: docs/PERF-MOBILE-BASELINE.md).
 Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in
@@ -481,7 +476,7 @@ stages expose their existing authored idle bounds. The shared formation fit
 reduces all art together when space is limited, retaining per-row depth and
 ground anchors. Names, health bars and their inspection targets do not shrink.
 Run `node --test tests/combat-sprite-scale.test.mjs` and
-`node tools/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
+`node tools/attic/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
 `COMBAT_QA_OUT` for screenshots outside the checkout. The browser check needs
 Playwright and Edge and covers elite/boss ratios, feet, health bars, card
 selection and returning from an enemy turn at desktop and narrow widths.
@@ -532,9 +527,9 @@ holds — the merchant's shelves, a mount's deck list — is authored once at
 `.card-shelf` in styles/kit.css, and checked by
 `node --test tests/card-shelf.test.mjs`. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
-Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
+Combat HUD regression checks: `node tools/attic/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and
-separate pile tabs. `node tools/ui-sweep.mjs --out docs/sweep` photographs every
+separate pile tabs. `node tools/attic/ui-sweep.mjs --out docs/sweep` photographs every
 room at a desk and a phone width and asserts the facts the 2026-09-11 review's
 fixes stand on (the run band on every room, wrapped event choices, the phone
 action row, the map camera under reduced motion). `node tools/screenreach.mjs --only 390x650` checks reachable
@@ -793,7 +788,7 @@ node -e "const b=require('fs').readFileSync(process.argv[1]);let cr=0,lf=0;for(c
 ## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
 
 Every merged pull request must be named by an entry in
-[CHANGELOG.md](CHANGELOG.md) before that work is promoted from `dev` to `test`.
+[CHANGELOG.md](CHANGELOG.md) before that work is promoted from `dev` to `review`.
 The changelog you can read inside the game is a projection of that file (#189),
 so a merge with no receipt is missing for a **player**, not only for the
 repository.
@@ -853,7 +848,7 @@ src/model/    schemas, registries, formulas, validation, state (headless)
 src/content/  pure data — every card/status/enemy/relic and every tuning number
 ```
 
-`tests/layering.test.mjs` enforces that `src/engine/`, `src/model/` and `engine/` import nothing from `src/ui/` or `src/main.js` and use no browser globals; `src/ui/strings.js` and `src/ui/sha256.js` are one-line shims over `src/model/strings.js` and `src/model/sha256.js`, so the rules layer can use them.
+`tests/layering.test.mjs` enforces that `src/engine/`, `src/model/` and `engine/` import nothing from `src/ui/` or `src/main.js` and use no browser globals; `src/ui/strings.js` and `src/ui/sha256.js` are one-line shims over `src/model/strings.js` and `src/model/sha256.js`, so the rules layer can use them. It also checks layer rank (`docs/ARCHITECTURE-MAP.md`, *Layer rank*): a relative import may not point to a higher rank, and today's inversions sit in a shrinking `KNOWN_INVERSIONS` list that fails on any new one and on any entry that no longer occurs.
 
 Rules that keep this honest:
 
@@ -934,7 +929,7 @@ Run at least:
 ```bash
 node tools/content-build.mjs --check
 node tools/ui-components.mjs --selftest
-node tools/tray-components.mjs
+node tools/attic/tray-components.mjs
 node tests/run-node.mjs
 ```
 
@@ -980,10 +975,10 @@ Load-review path at desktop and phone sizes, plus its copied-tree known-bad
 corpus:
 
 ```bash
-node tools/combat-save.mjs
-node tools/combat-save.mjs --selftest
+node tools/attic/combat-save.mjs
+node tools/attic/combat-save.mjs --selftest
 # after the one authorized artifact regeneration:
-node tools/combat-save.mjs --artifact --screenshots
+node tools/attic/combat-save.mjs --artifact --screenshots
 ```
 
 ## HUD layout tokens (`content/hud-layout/<form-factor>.json`)
@@ -1144,6 +1139,10 @@ should appear in rewards. Notes:
   `"stacks": { "f": "add", "args": [1] }` — see Rallying Standard.
 - `upgrade` is a partial override: present fields replace base ones;
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
+- `playIf` (optional predicate) gates the play itself, read against the aimed
+  enemy (Lunging Thrust: `{ "p": "atRange", "range": "reach" }`). Conditions on
+  stance or status read `"snapshot": "beforePlay"` so the card's own stance change
+  or first hit cannot decide them (SPEC §3.6, §4.8b).
 - `onTurnEndInHand` (optional effect list) fires at the player's turn end for
   each copy still in hand, before the hand is discarded — Guilt's
   `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in
@@ -1287,7 +1286,7 @@ validation refusals and the dialogue model.
 | Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner, ally, otherEnemies |
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, missingMana, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
-| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
+| Predicates | `PREDICATES` | inStance (`of`, `snapshot`, `idle`), atRange, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
 | Relic passives | `PASSIVE_KEYS` | arBonus, drBonus, prBonus, poiseBonus, wardBonus, runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
@@ -1317,7 +1316,7 @@ timeline per beat, `playEventCues` for instant playback and a fresh fight's
 opening (a boss fight's waits for its name splash to close);
 `playEventCues` stings once per turn. `node --test tests/sound-tiers.test.mjs`
 covers them, including the opening turn;
-`node tools/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
+`node tools/attic/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
 a remounted one, and a fresh boss fight behind its splash
 (`?shot=boss&shotBossHold=0` lets the splash close).
 
@@ -1406,7 +1405,7 @@ itself; read them there.
 ### Character-creation component catalog
 
 Open `?shot=components` on a served checkout to see the Class, Attributes,
-Keepsake, Equipment, Feats, Spells, and Review sections as interactive reference specimens.
+Equipment, Feats, Spells, and Review sections as interactive reference specimens.
 The catalog moves the production panels into labeled folios; it does not keep a
 second copy of their markup or content. Select **Assign Points** to inspect its
 live dialog and refusal states. `node tools/character-creation-check.mjs`
@@ -1418,7 +1417,7 @@ Every folio has a direct `#folio-<component-id>` link. The new page heading,
 panel, choice tile, material/trim/body layers, navigation, and canonical feat
 browser are mounted through `src/ui/catalog/creationSpecimens.js` using their
 production renderers. Feat inspection grants nothing with the current allowance
-of zero. `node tools/character-creation-components-qa.mjs --out /tmp/creation-components`
+of zero. `node tools/attic/character-creation-components-qa.mjs --out /tmp/creation-components`
 captures each registered specimen at desktop and phone widths and checks DOM
 identity, layout fit, runtime errors, and interaction state. Add `--artifact`
 to check the frozen `build/download/AshenSpire.html` build after integration.
@@ -1550,7 +1549,7 @@ Combat cards select before committing. A selected card retains its fan position 
 
 Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
 
-Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
+Combatant overhead UI: `node tools/attic/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
 
 ## Opening sequence
 
@@ -1611,11 +1610,11 @@ Old saves bypass the opening. The completion callback persists before revealing
 the map. `tests/prologue.test.mjs` covers configuration/preset imports, source
 immutability, class lines, destination, and interrupted save recovery.
 ### Ratings and starting pools
-Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its stat row — the same nine fields everywhere (Base, STR, DEX, CON, WIS, INT, Per level, Min, Max) — and its constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js (the stat-row editors), src/model/statRows.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: src/engine/combatRatings.js. New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs.
+Settings → Advanced → Progression controls starting stat pools, class attributes and flasks, level-up and experience. Advanced → Stats is the one home for what those points turn into: one topic per trait (Actions, Draw & hand, HP, Stamina, Mana, Poise, Ward, AR, DR, PR) holding its stat row — the same nine fields everywhere (Base, STR, DEX, CON, WIS, INT, Per level, Min, Max) — and its constants, then the resistance, impact, break, status and per-source tables. Each trait topic shows a live worked example from src/ui/models/StatsPreviewModel.js. Source models: src/model/startingStatConfig.js (the stat-row editors), src/model/statRows.js, src/model/handRules.js and src/model/combatRatings.js; grouping: src/ui/models/AdvancedSettingsGroups.js; engine integration: the meter-guard helper in src/engine/combatRatings.js (the ratings-meter rules were removed in #2633). New runs snapshot configuration; saved combat snapshots preserve both meters and fractional buildup. Validate with node --test tests/starting-stat-config.test.mjs tests/combat-ratings.test.mjs tests/hand-rules.test.mjs tests/advanced-config.test.mjs tests/advanced-settings-groups.test.mjs.
 
 ### Combat hit-stop validation
 
-Run `node --test tests/combat-feel.test.mjs` for damage thresholds, multi-hit holds, impact haptics, skip cleanup and motion settings. Run `node tools/combat-feel-probe.mjs` with an existing Playwright installation (`PLAYWRIGHT_MODULE`) for production target recoil CSS and painted frame stability at 1440x900 and 390x844. `COMBAT_FEEL_OUT` selects the screenshot directory. The browser probe uses staged production figures; physical-device and subjective visual acceptance remain separate.
+Run `node --test tests/combat-feel.test.mjs` for damage thresholds, multi-hit holds, impact haptics, skip cleanup and motion settings. Run `node tools/attic/combat-feel-probe.mjs` with an existing Playwright installation (`PLAYWRIGHT_MODULE`) for production target recoil CSS and painted frame stability at 1440x900 and 390x844. `COMBAT_FEEL_OUT` selects the screenshot directory. The browser probe uses staged production figures; physical-device and subjective visual acceptance remain separate.
 
 ### Alternative combat art
 
@@ -1638,7 +1637,7 @@ presentation; dialogue keeps its existing portraits. These are idle images,
 with no action/hand anchors, pose strips or invented animation coverage.
 
 Check `node --test tests/alternative-art.test.mjs tests/environment-art.test.mjs
-tests/alternative-formation.test.mjs`. `node tools/alternative-art-qa.mjs` walks
+tests/alternative-formation.test.mjs`. `node tools/attic/alternative-art-qa.mjs` walks
 all 32 settings at desktop and phone sizes, a mounted resize, and real
 Quick start/card/end-turn interactions. Set `PLAYWRIGHT_MODULE`, `CHROME`, and
 `COMBAT_ART_OUT` as needed; `COMBAT_ART_URL` plus `--play-only` checks a built
@@ -1656,6 +1655,17 @@ unique key and equals the enemy's `id`). The sheets are the source of truth for 
 - **Deck:** `deck` is the current deck, one reference per copy (repeat a ref for more copies). `reserve` is the cards it gains mid-fight (`enemy.unlockCards`); each reserve card must also be listed in a `behaviour.phases[].unlockCards` (and the reverse), or `--check` fails, because only a phase brings a reserve card into play. `ai` holds the planner hints per card.
 - **Everything else:** `behaviour` (weaknesses, range fields, phases, firstCard, arcaneExposure, blighted, presentation). Unknown keys anywhere else (top level, `stats`) are rejected by `--check`. Unknown fields under `behaviour` pass straight through to the row, so new enemy fields (for example `element`, `startStatuses`) live there. `keyOrder` only keeps the row's key order stable; leave it.
 - **References** carry a type prefix: `card:<enemyCards id>`, `gear:<gear id>`, `relic:<enemyRelics id>`, and `enemy:<id>` (reference table only). `enemies/_reference.md` and `_reference.json` (generated) list what every id means.
+
+Shared enemy IDs, HP ranges, legacy move payloads and AI weights live in
+`content/source/act<N>Enemies.json`. The Core sheets own Core stats, equipment, deck and adapter hints.
+`games/ashenspire/packs/core/enemyCards.json` owns the referenced cards’ effects and prices.
+At registry creation, the Core profile overlays the authored closing and retreat cards and their range data.
+Each `ai` hint can reference a shared or declared range move with `legacyMove`.
+`coreOffense: "card"` takes damage and hit count from one integer damage effect on an owned card.
+`coreSp: "card"` takes its nonnegative integer stamina cost. Either opt-in works without a closing move.
+`aiWeight` is a finite nonnegative weight and `maxConsecutive` is a positive integer when supplied.
+The sheet checker names invalid hint fields and the runtime adapter checks the resolved card payload.
+Author card hints only under `ai`. The sheet checker refuses `behaviour.cardHints` so it cannot replace them.
 
 After editing, run `node tools/enemy-sheets.mjs --write` (part of `node tools/jev.mjs regen`, which then also runs `tools/derived-tables.mjs`; run that yourself if you used --write alone); `--check` runs in `jev checks --fast`
 and rejects unknown refs, duplicate ids and a stale `characters.json`. `--extract --force` rebuilds sheets from `characters.json` (use it if another tool, such as `tools/enemy-decks-convert.mjs`, rewrote the rows). Deleting a sheet and running `--write` removes that enemy.

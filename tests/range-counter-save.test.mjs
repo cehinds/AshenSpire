@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { legacyRules } from './legacyHitRules.mjs';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -21,8 +23,10 @@ function fixture({ die = 20, count = 4 } = {}) {
   const profile = structuredClone(resolveGameProfile('core'));
   // The incoming three-contact Slash pays its two-SP minimum plus two-band
   // Advance. Supply four actual SP before its first plan is built.
-  profile.modules.characters.tagRules['tier.minion'].pools.sp += 4;
+  profile.modules.characters.tagRules['tier.minion'].pools.sp += 3; // was 4 before the level budget (owner, 2026-11-07) gave a level-1 minion one more SP
   profile.content.cards.find(card => card.id === 'core.counter').effects.unshift({ op: 'discard', choose: true, amount: 1 });
+  // This suite pins seeded misses (die 1), so its profile carries the rules of one saved before the 2026-11-14 ruling: the d20 is rolled.
+  profile.fixCoreRules = legacyRules(fixCoreMechanics);
   delete profile.hash; profile.hash = gameDigest(profile);
   const base = bindGameProfileRegistries(createRegistries(withWeaponRack(applyGameProfileToContent(contentBundle, profile))), profile);
   const registries = { ...base, enemies: { ...base.enemies, get(id) {

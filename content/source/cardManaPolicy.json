@@ -5,5 +5,6 @@
   "weaponArtTags": ["extractable"],
   "excludedSpellTypes": ["power", "status", "curse", "consumable"],
   "equipmentBasicRoles": ["attack", "guard"],
+  "manaFreeCards": ["quickstep"],
   "respectDisabledMana": true
 }

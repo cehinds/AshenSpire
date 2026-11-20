@@ -12,7 +12,7 @@ const mechanic='defense.wardProtection';
 function fixture() {
   const root=mkdtempSync(join(tmpdir(),'ashen mechanic compatibility '));
   const copy=file=>{mkdirSync(dirname(join(root,file)),{recursive:true});cpSync(join(repo,file),join(root,file),{recursive:true});};
-  for(const file of ['content/source/fixCoreMechanics.json','src/model/mechanicsKernel.js','src/model/formulas.js','src/model/fixCoreMechanics.js',`engine/mechanics/${mechanic}`])copy(file);
+  for(const file of ['content/source/fixCoreMechanics.json','engine/runtime/bindings.mjs','src/model/formulas.js','src/model/fixCoreMechanics.js',`engine/mechanics/${mechanic}`])copy(file);
   const index='engine/mechanics/index.json';
   writeFileSync(join(root,index),JSON.stringify({format:'ashen.mechanics-index@1',mechanics:[{id:mechanic,tag:'defense:wardProtection',family:'defense',portability:'portable',modules:['effects']}]}));
   return root;
@@ -33,8 +33,8 @@ const changes=[
   ['class attachment eligibility',root=>editJSON(root,`engine/mechanics/${mechanic}/mechanic.json`,manifest=>{manifest.attaches=manifest.attaches.filter(kind=>kind!=='character');})],
   ['status attachment eligibility',root=>editJSON(root,`engine/mechanics/${mechanic}/mechanic.json`,manifest=>{manifest.attaches=manifest.attaches.filter(kind=>kind!=='status');})],
   ['behavior tag registration',root=>editJSON(root,'engine/mechanics/index.json',index=>{index.mechanics[0].tag='defense:renamedProtection';})],
-  ...['mechanicsKernel','formulas','fixCoreMechanics'].map(name=>[`live ${name} evaluator`,root=>{
-    const file=join(root,`src/model/${name}.js`);writeFileSync(file,readFileSync(file,'utf8')+'\nexport const compatibilityProbe = 1;\n');
+  ...[['mechanicsKernel','engine/runtime/bindings.mjs'],['formulas','src/model/formulas.js'],['fixCoreMechanics','src/model/fixCoreMechanics.js']].map(([name,path])=>[`live ${name} evaluator`,root=>{
+    const file=join(root,path);writeFileSync(file,readFileSync(file,'utf8')+'\nexport const compatibilityProbe = 1;\n');
   }]),
 ];
 for(const [label,change] of changes)test(`${label} changes runtimeHash and rejects a save pinned to old rules`,()=>{
@@ -62,7 +62,7 @@ test('guides, mechanic cases, unrelated source and JSON whitespace do not invali
     assert.equal(actual.path,MECHANIC_RUNTIME_PATH);
     const artifacts=collectMechanicsRuntimeArtifacts();
     assert.ok(artifacts.some(row=>row.path==='engine/mechanics/combat.statuses/service.json'));
-    assert.ok(artifacts.some(row=>row.path==='src/model/mechanicsKernel.js'));
+    assert.ok(artifacts.some(row=>row.path==='engine/runtime/bindings.mjs'));
     assert.ok(artifacts.every(row=>!row.path.endsWith('guide.md')&&!row.path.endsWith('cases.json')));
   } finally {rmSync(root,{recursive:true,force:true});}
 });

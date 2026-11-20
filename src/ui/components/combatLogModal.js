@@ -9,7 +9,7 @@
 import { damageReceiptLines } from './damageReceipt.js';
 import { rollReceiptLines } from './rollReceipt.js';
 import { el, button } from '../kit/index.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { t, tFull } from '../strings.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { openConsoleLog } from '../debuglog.js';
@@ -96,7 +96,7 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
     get isConnected() { return !!currentOpener?.isConnected; },
     focus(options) { currentOpener?.focus?.(options); },
   };
-  const modal = openModal({
+  const modal = OpenModal({
     name: 'combat-log', size: 'xl', className: 'combat-log-modal', title: t('combat.log.title'),
     titleId: 'combat-log-modal-title', body: list, secondary: [closeButton, detailButton, consoleButton], opener: openerRef, onClose: () => { consoleModal?.close(); onClose?.(); },
   });

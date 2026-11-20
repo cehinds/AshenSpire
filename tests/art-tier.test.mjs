@@ -258,3 +258,11 @@ test('a tier switch in play refills the CSS assets from the new tier (step 3b)',
   assert.match(styles[0].textContent, new RegExp(C), 'a failed switch leaves the CSS as it was');
   fresh();
 });
+
+test('phone scenery: full art on Auto unless Data Saver or low memory', async () => {
+  const { SceneryFullArt } = await import('../src/ui/artTier.js');
+  assert.equal(SceneryFullArt({ nav: {} }), true);
+  assert.equal(SceneryFullArt({ nav: { deviceMemory: 8 } }), true);
+  assert.equal(SceneryFullArt({ nav: { deviceMemory: 2 } }), false);
+  assert.equal(SceneryFullArt({ nav: { connection: { saveData: true } } }), false);
+});

@@ -73,7 +73,7 @@ const SHOTS = [
   // default, which is a visible artifact change and Constantine's to see coming. The
   // list is right now; the folder is still stale, which was already true and recorded.
   { name: 'death', query: '?shot=death' }, // YOU PERISHED — the worst contrast in the game
-  { name: 'victory-receipt', query: 'build/AshenSpire.html?shot=reward&shotReward=receipt' }, // itemized character XP in the built game
+  { name: 'reward', query: 'build/AshenSpire.html?shot=reward' }, // Core's configured reward door in the built game
   // Added 2026-09-03 (AS-HD-040). ?shot=customize has existed in src/main.js all
   // along and was never captured — so the ONE screen that draws the class figure
   // at full size had no photographic coverage at all. The class sprites were

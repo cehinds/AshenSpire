@@ -11,7 +11,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { fixCoreRules as uncached } from '../src/model/fixCoreMechanics.js';
-import { fixCoreRules as cached, clearFixCoreRulesCache, fixCoreRulesCacheSize } from '../src/model/fixCoreRulesCache.js';
+import { fixCoreRules as cached, keyFor, clearFixCoreRulesCache, fixCoreRulesCacheSize } from '../src/model/fixCoreRulesCache.js';
 
 function fight() {
   const profile = resolveGameProfile('default');
@@ -148,4 +148,59 @@ test('editing one fight\'s rules in place never leaks into another fight that re
     
   }
   assert.deepEqual(cached(b, b.player), baseline, 'b still reads its own, unedited rules');
+});
+
+// Identity-keyed rules text (fixCoreRulesCache.rawText): only for a deeply frozen rules object.
+function deepFreezeRules(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) { Object.freeze(value); for (const inner of Object.values(value)) deepFreezeRules(inner); }
+  return value;
+}
+
+test('frozen rules: a cache hit equals a fresh compute across a played turn, and advancing state misses', () => {
+  clearFixCoreRulesCache();
+  const combat = fight();
+  deepFreezeRules(combat.fixCoreRules);
+  const check = (entity, carrier) => {
+    const first = cached(combat, entity, carrier), again = cached(combat, entity, carrier); // miss or hit, then a hit
+    assert.deepEqual(first, uncached(combat, entity, carrier));
+    assert.deepEqual(again, uncached(combat, entity, carrier));
+  };
+  check(combat.player); check(combat.enemies[0]);
+  for (const card of [...combat.piles.hand]) {
+    try { dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id }); } catch { /* unaffordable */ }
+    check(combat.player); check(combat.enemies[0]); check(combat.player, card);
+  }
+  const before = keyFor(combat, combat.player);
+  const owner = combat.playerIdForEntity?.(combat.player) || combat.player.id;
+  combat.propertyMounts = { ...(combat.propertyMounts || {}), [owner]: { probe: { kind: 'feat', name: 'Probe', mechanicTags: ['probe:tag'] } } };
+  assert.notEqual(keyFor(combat, combat.player), before, 'a new mount changes the key');
+  assert.deepEqual(cached(combat, combat.player), uncached(combat, combat.player));
+});
+
+test('frozen rules text equals the unfrozen key; partly frozen rules are never trusted by identity', () => {
+  const frozen = fight(), loose = fight();
+  deepFreezeRules(frozen.fixCoreRules);
+  assert.equal(keyFor(frozen, frozen.player), keyFor(loose, loose.player), 'same key text with or without the freeze');
+  assert.equal(keyFor(frozen, frozen.player), keyFor(frozen, frozen.player));
+  const shallow = fight();
+  Object.freeze(shallow.fixCoreRules);
+  const k1 = keyFor(shallow, shallow.player);
+  shallow.fixCoreRules.accuracy.baseAC += 5;
+  assert.notEqual(keyFor(shallow, shallow.player), k1, 'an edit under a shallow freeze is still seen');
+  assert.deepEqual(cached(shallow, shallow.player), uncached(shallow, shallow.player));
+  const swapped = structuredClone(frozen.fixCoreRules); swapped.accuracy.baseAC += 5; frozen.fixCoreRules = deepFreezeRules(swapped);
+  assert.notEqual(keyFor(frozen, frozen.player), keyFor(loose, loose.player), 'replacing a frozen rules object is a new key');
+  assert.deepEqual(cached(frozen, frozen.player), uncached(frozen, frozen.player));
+});
+
+test('a candidate shares frozen rules by reference and still clones unfrozen rules', async () => {
+  const { candidateState } = await import('../src/engine/combatRules.js');
+  const combat = fight();
+  const loose = candidateState(combat, { detached: true });
+  assert.notEqual(loose.fixCoreRules, combat.fixCoreRules, 'unfrozen rules are cloned');
+  assert.deepEqual(loose.fixCoreRules, combat.fixCoreRules);
+  deepFreezeRules(combat.fixCoreRules);
+  const shared = candidateState(combat, { detached: true });
+  assert.equal(shared.fixCoreRules, combat.fixCoreRules, 'frozen rules are shared');
+  assert.deepEqual(cached(shared, shared.player), uncached(combat, combat.player));
 });

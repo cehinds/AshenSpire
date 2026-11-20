@@ -1,3 +1,4 @@
+import { FaceCostProfile } from '../../model/faceCosts.js';
 import { cardCutoutUrl } from '../layeredCardArt.js';
 import { matchViewMedia } from '../viewViewport.js';
 import { anchorLocalBox } from '../fx.js';
@@ -29,8 +30,8 @@ import { progressionTip } from '../components/progressionCards.js';
 // map's own hotkeys stand down while it is open (components/veil.js).
 
 import { el, button } from '../kit/index.js';
-import { bindModalDismiss, modalFooter, modalHead } from '../components/modalShell.js';
-import { openConfirmationModal, closeConfirmationModal } from '../components/confirmationModal.js';
+import { BindModalDismiss, ModalFooter, ModalHead } from '../components/modalShell.js';
+import { OpenConfirmationModal, CloseConfirmationModal } from '../components/confirmationModal.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit, rankZeroLabelId } from '../models/DeckEditorModel.js';
@@ -51,6 +52,7 @@ import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
 import { deckEditorCollectionRows } from '../models/deckEditorCollectionRows.js';
 import { deckEditorCosts, deckEditorResourceGroups } from '../models/deckEditorCosts.js';
+import { MarkSelected } from '../selection.js';
 
 // Standard-mapping pad buttons the editor reads directly while a row is held
 // (input.js hands every other press to the focus cursor and the bindings).
@@ -186,7 +188,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       draw();
     }, `sort:${s.id}`));
     const details = el('details', { class: 'deck-editor-tools', open: filtersOpen }, [
-      el('summary', { text: t('deckEditor.filters') }),
+      // A small icon button (owner, 2026-11-15); the word stays for assistive technology and the tooltip.
+      el('summary', { title: t('deckEditor.filters'), 'aria-label': t('deckEditor.filters'), class: 'deck-editor-filter-toggle' }, [
+        el('span', { class: 'deck-editor-filter-glyph', 'aria-hidden': 'true', html: '<svg viewBox="0 0 16 16" width="16" height="16" focusable="false"><path d="M1.5 2.5h13L9.5 8.8V14l-3-1.7V8.8z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>' }),
+        el('span', { class: 'sr-only', text: t('deckEditor.filters') }),
+      ]),
       el('div', { class: 'deck-editor-chips', role: 'group', 'aria-label': t('deckEditor.filters') }, [
         el('span', { class: 'deck-editor-chips-label', text: t('deckEditor.filters') }), ...filterChips,
       ]),
@@ -241,10 +247,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     inspectOrigin = source;
     if (open) { mobileView = 'inspect'; }
     panel.dataset.mobileView = mobileView;
-    for (const node of panel.querySelectorAll('.deck-editor-main')) {
-      const on = node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source;
-      node.setAttribute('aria-pressed', String(on));
-    }
+    MarkSelected(
+      panel.querySelectorAll('.deck-editor-main'),
+      node => node.dataset.selectionKey === selected.key && node.dataset.selectionSource === source,
+      { className: null },
+    );
     const inspector = panel.querySelector('.deck-editor-inspector');
     if (inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
     syncPanes();
@@ -417,7 +424,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // own counts are its meta line, never a badge.
   const typeName = row => row.cardCategory[0].toUpperCase() + row.cardCategory.slice(1);
   function rowCosts(row, lead = []) {
-    const pools = registries.framework.costProfile(resolveCard(registries, row.ref));
+    const pools = FaceCostProfile(registries, resolveCard(registries, row.ref));
     return el('span', { class: 'deck-editor-costs' }, [...lead, ...deckEditorCosts(pools).map(({id, label, value, art}) =>
       el('span', { class: `deck-editor-cost resource-${id}${art ? ' illustrated' : ''}`, title: `${label}: ${value}`,
         'aria-label': `${label}: ${value}` }, [
@@ -566,8 +573,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       minus.addEventListener('click', () => { if (tile.removable) { focusKey = minus.dataset.focusKey; remove(tile.removeInstanceId); } });
       list.appendChild(el('div', {
         class: `deck-editor-item deck-editor-tile${tile.addable ? '' : ' spent'}${tile.equipmentEligible === false ? ' equipment-missing' : ''}`, role: 'listitem',
-        dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false' },
-      }, [main, el('div', { class: 'deck-editor-actions' }, [
+        dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false', inDeck: tile.inDeck > 0 ? 'true' : 'false' },
+      }, [tile.inDeck > 0 ? el('span', { class: 'in-deck-badge', text: t('cardUpgrade.row.inDeck') }) : null, main, el('div', { class: 'deck-editor-actions' }, [
         minus, (() => {
           const count = stepperCount(tile);
           return el('span', { class: 'deck-editor-stepper-count', text: stepperText(count), title: stepperSpoken(count), 'aria-label': stepperSpoken(count) });
@@ -791,7 +798,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           panes: '[ ]', filter: actionLabel('deck'), move: actionLabel('endTurn'), done: actionLabel('menu'), cancel: actionLabel('cancel'),
         }),
     });
-    const foot = modalFooter({ secondary: [cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
+    const foot = ModalFooter({ secondary: [cancel], primary: done, className: 'deck-editor-foot', size: 'medium' });
     return el('div', { class: 'deck-editor-footer' }, [refusal,
       el('div', { class: 'deck-editor-feedback', hidden: !success, role: 'status', 'aria-live': 'polite', text: success }), keys, foot]);
   }
@@ -819,7 +826,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (!panel.replaceChildren) panel.innerHTML = '';
     panel.dataset.mobileView = mobileView;
     if (onNavigate) {
-      const head = modalHead({ tabs: [
+      const head = ModalHead({ tabs: [
         { id: 'character', label: t('progression.tab.character') }, { id: 'armory', label: t('armoury.hub.armory') }, { id: 'deck', label: t('armoury.hub.deck'), selected: true },
       ], showMenuButton: false, onClose: requestClose, onTab: id => {
         if (id === 'deck') return;
@@ -983,7 +990,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (closeConfirmationOpen) return;
     if (!session.canUndo) { doCancel(); return; }
     closeConfirmationOpen = true;
-    openConfirmationModal({ title: t('deckEditor.closeUnsaved.title'),
+    OpenConfirmationModal({ title: t('deckEditor.closeUnsaved.title'),
       message: t('deckEditor.closeUnsaved.message'),
       confirmLabel: t('deckEditor.closeUnsaved.discard'), cancelLabel: t('deckEditor.closeUnsaved.keepEditing'),
       tone: 'danger', onConfirm: () => { closeConfirmationOpen = false; doCancel(); },
@@ -1082,10 +1089,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     sibling.setAttribute('inert', '');
     madeInert.push(sibling);
   }
-  const releaseDismiss = bindModalDismiss({ veil: root, panel, close: requestClose });
+  const releaseDismiss = BindModalDismiss({ veil: root, panel, close: requestClose });
 
   function close() {
-    if (closeConfirmationOpen) { closeConfirmationModal({ restoreFocus: false }); closeConfirmationOpen = false; }
+    if (closeConfirmationOpen) { CloseConfirmationModal({ restoreFocus: false }); closeConfirmationOpen = false; }
     previewFitObserver?.disconnect();
     previewFitObserver = null;
     animationPreview?.dispose();

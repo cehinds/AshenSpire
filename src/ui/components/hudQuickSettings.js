@@ -4,11 +4,12 @@ import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 // IconButtons (display, audio) in the same cluster as Armoury and the menu, at the same
 // size and inset. State is `aria-pressed` + `.on`; the sentence a player needs
 // when fullscreen is refused is a StatusText that appears beside them.
-import { childModel } from '../models/ComponentModel.js';
+import { ChildModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { uiComponentAttrs } from './uiComponents.js';
 import { fullscreenCapability, isFullscreen, toggleFullscreen } from '../screens/settings.js';
 import { musicQuickSettingsPlan } from '../models/HudQuickSettingsModel.js';
+import { MarkSelected } from '../selection.js';
 import { esc } from './tooltip.js';
 
 let releaseActiveStack = null;
@@ -42,8 +43,8 @@ function controlHtml(model, action, active) {
 
 export function hudQuickSettingsHtml(model) {
   if (!model.properties.enabled) return '';
-  const fullscreen = childModel(model, UI.fullscreenControl);
-  const music = childModel(model, UI.musicControl);
+  const fullscreen = ChildModel(model, UI.fullscreenControl);
+  const music = ChildModel(model, UI.musicControl);
   return `<aside class="hud-quick-settings as-cluster" data-hud-quick-settings data-place="${model.properties.place}" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick display and audio settings">
     ${controlHtml(fullscreen, 'fullscreen', false)}
     ${controlHtml(music, 'music', music.properties.active)}
@@ -74,8 +75,7 @@ function syncFullscreen(stack) {
   if (!button) return;
   const capability = fullscreenCapability();
   const active = isFullscreen();
-  button.classList.toggle('on', active);
-  button.setAttribute('aria-pressed', String(active));
+  MarkSelected(button, active, { className: 'on' });
   const label = capability.supported
     ? (active ? 'Exit fullscreen' : 'Enter fullscreen')
     : 'Fullscreen unavailable in this browser';
@@ -94,8 +94,7 @@ function syncMusic(stack, settings) {
   const button = stack.querySelector('[data-hud-quick-action="music"]');
   if (!button) return;
   const plan = musicQuickSettingsPlan(settings);
-  button.classList.toggle('on', plan.active);
-  button.setAttribute('aria-pressed', String(plan.active));
+  MarkSelected(button, plan.active, { className: 'on' });
   button.setAttribute('aria-label', plan.label);
   button.title = plan.label;
   button.replaceChildren(engravedIcon('audio') || t('settings.row.muteAudio'));

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 
 const core = resolveGameProfile('core');
@@ -17,7 +17,7 @@ test('selecting a reward card keeps the door and card nodes and updates selectio
   try {
     const app = document.createElement('main'); document.body.append(app);
     const offer = { id: 'in-place', options: [{ kind: 'combatCards', id: 'core.strike' }, { kind: 'combatCards', id: 'core.defend' }], taken: [], claimed: null, takeCount: 1 };
-    mountGameProfileOffers(app, { registries, run: { class: 'reaver', deck: [] }, offer, title: 'Reward',
+    MountGameProfileOffers(app, { registries, run: { class: 'reaver', deck: [] }, offer, title: 'Reward',
       onTake() {}, onContinue() {}, onAddToDeck() {}, onEditDeck() {}, canEditDeck: true });
     const door = app.querySelector('.reward-door');
     const strip = app.querySelector('.reward-row');

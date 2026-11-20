@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
-const tool = readFileSync(new URL('../tools/hybrid-input-parity.mjs', import.meta.url), 'utf8');
-const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+const tool = readSourceTextSync(new URL('../tools/hybrid-input-parity.mjs', import.meta.url));
+const screen = readSourceTextSync(new URL('../src/ui/screens/combat.js', import.meta.url));
 
 test('card-drag receipts count discard separately from the combined Discard/Exhaust control', () => {
-  const drag = readFileSync(new URL('../tools/card-drag-targeting.mjs', import.meta.url), 'utf8');
+  const drag = readSourceTextSync(new URL('../tools/card-drag-targeting.mjs', import.meta.url));
   const expression = drag.match(/const state = \(\) => ev\(`([\s\S]*?)`\);/)?.[1];
   const legalJudge = drag.match(/ok\((legalEnd\.discard === before\.discard \+ 1),/)?.[1];
   const illegalJudge = drag.match(/ok\((illegalEnd\.discard === beforeBad\.discard && illegalEnd\.energy === beforeBad\.energy),/)?.[1];

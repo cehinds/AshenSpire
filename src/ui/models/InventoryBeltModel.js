@@ -1,4 +1,4 @@
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { itemTrayModel } from './HudPrimitiveModels.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
@@ -6,7 +6,7 @@ import { UI_COMPONENTS as UI } from './UiComponentId.js';
 // only where RunHudLayerModel allows it, never in combat, whose footer owns
 // the one Potions control (WGC11 listing WGH8).
 export function inventoryBeltModel(place, layers = { relics: true, potions: true }) {
-  return componentModel(UI.inventoryBelt, {
+  return ComponentModel(UI.inventoryBelt, {
     variant: place,
     children: [
       ...(layers.relics ? [itemTrayModel(UI.relicTray, 'relic', 'mount-relic-items')] : []),

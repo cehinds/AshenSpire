@@ -7,7 +7,7 @@
     "cards": {
       "version": "1.0.0",
       "settings": {
-        "editorWhere": "noncombat"
+        "editorWhere": "rest"
       }
     },
     "resources": {
@@ -18,7 +18,9 @@
     },
     "stats": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "secondaryPolicy": "primaryOnly"
+      }
     },
     "defenses": {
       "version": "1.0.0",
@@ -32,7 +34,12 @@
       "version": "1.0.0",
       "settings": {
         "fixCoreVersion": 1,
-        "core2ActionRulesVersion": 2
+        "core2ActionRulesVersion": 2,
+        "baseDamageMultiplier": 0.5,
+        "playerDamageMultiplier": 0.7,
+        "enemyDamageMultiplier": 0.7,
+        "blockGainMultiplier": 0.7,
+        "spellPoiseDamageMultiplier": 2
       }
     },
     "statuses": {
@@ -60,6 +67,16 @@
           "perRank": 1,
           "perRankStat": "dr",
           "rarityBonus": {}
+        },
+        "statPoints": {
+          "attributes": {
+            "common": 1,
+            "uncommon": 2,
+            "rare": 2,
+            "epic": 3
+          },
+          "perRank": 1,
+          "poiseMin": 1
         }
       }
     },
@@ -119,7 +136,26 @@
     },
     "enemies": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "effectiveLevelByAct": {
+          "elite": [
+            2,
+            4,
+            6
+          ],
+          "boss": [
+            4,
+            6,
+            8
+          ]
+        },
+        "effectiveLevelHp": true,
+        "hpScaleByTier": {
+          "minion": 0.385,
+          "elite": 0.42,
+          "boss": 0.455
+        }
+      }
     },
     "formation": {
       "version": "1.0.0",
@@ -158,56 +194,7 @@
       "version": "1.0.0",
       "settings": {
         "ownedOnlyCollection": true,
-        "unlimited": [
-          {
-            "id": "basicTraining",
-            "requiresTag": "training.basic",
-            "pools": [
-              "strike",
-              "defend",
-              "counter",
-              "smash",
-              "sweep",
-              "evade",
-              "jab",
-              "gash",
-              "pommelStrike",
-              "steadyGuard",
-              "drivingThrust",
-              "expose",
-              "hammerBlow",
-              "rendingSmash",
-              "wideSweep",
-              "reapingArc"
-            ],
-            "cards": {
-              "rarity": [
-                "starter"
-              ],
-              "tagsAny": [
-                "maneuver:attack",
-                "maneuver:defend",
-                "maneuver:counter",
-                "maneuver:smash",
-                "maneuver:sweep"
-              ]
-            }
-          },
-          {
-            "id": "graduate",
-            "requiresTag": "training.graduate",
-            "pools": [],
-            "excludeCards": [
-              "core.mendingTouch",
-              "core.steadyHands"
-            ],
-            "cards": {
-              "tagsAll": [
-                "rank.cantrip"
-              ]
-            }
-          }
-        ]
+        "unlimited": []
       }
     },
     "card-pools": {
@@ -247,7 +234,14 @@
         "shopShare": "shopShare",
         "requirePrebossRest": "requirePrebossRest",
         "maxBranches": "maxBranches",
-        "startNodeRefills": "startNodeRefills"
+        "fogRevealRests": "fogRevealRests",
+        "fogTrailOnly": "fogTrailOnly",
+        "startNodeRefills": "startNodeRefills",
+        "typeWeights": "typeWeights",
+        "variedNeighbours": "variedNeighbours",
+        "shopsPerBranch": "shopsPerBranch",
+        "forkPercent": "forkPercent",
+        "crossLinkPercent": "crossLinkPercent"
       }
     },
     {

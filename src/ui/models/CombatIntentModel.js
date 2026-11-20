@@ -17,6 +17,15 @@ export function combatIntentPresentation(intent = {}) {
       stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : magic ? 'cast' : 'prepare', value: null }],
       damageClass: attacking ? 'physical' : magic ? 'magic' : null };
   }
+  // A promoted follow-up (IntentFollowUpModel.PromoteFollowUp) is the next move shown in the head slot before its
+  // own event: its icon only if the observer's read of it passed (no value, no stance beyond the icon's), else "?".
+  if (intent.promoted) {
+    const icon = typeof intent.icon === 'string' && intent.icon ? intent.icon : null;
+    if (!icon) return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown', damageClass: null };
+    // The family and title the real (known) presentation gives that maneuver: sweeps and ranged attacks read as Attacking.
+    const family = PROMOTED_FAMILY[icon] || 'preparing';
+    return { visibility: 'partial', title: capitalize(family), stance: family, parts: [{ icon, value: null }], damageClass: null };
+  }
   const stance = combatIntentStance(intent);
   const partial = intent.hidden === true;
   const unknown = !partial && (!intent.kind || intent.kind === 'unknown' || intent.moveId === null) && intent.kind !== 'staggered';
@@ -32,8 +41,12 @@ export function combatIntentPresentation(intent = {}) {
   }
   // Interrupted turns retain their status in the tooltip; their badge simply
   // reports that the enemy is preparing, rather than claiming an attack.
-  if (intent.kind === 'staggered') return { visibility: 'partial', title: partialTitle('preparing'), stance: 'preparing',
-    parts: [{ icon: 'prepare', value: null }], damageClass: null };
+  // A staggered enemy's action was cancelled: it reads Staggered, with no number and no "?" (owner, 2026-11-14).
+  if (intent.kind === 'staggered') return { visibility: 'partial', title: t('combat.intent.staggered'), stance: 'preparing',
+    parts: [{ icon: 'prepare', value: null, staggered: true }], damageClass: null };
+  // A delayed move that does not land this turn: "Charging", the turns left, whatever it gains now as this turn's effect, and its number as the
+  // later one, small and not tinted as incoming damage (owner, 2026-11-14). The turn it lands it is read as the attack it is.
+  if (intent.charging) return chargingPresentation(intent);
   const family = intent.kind === 'buff' ? 'buffing' : ['ranged', 'sweeping'].includes(stance) ? 'attacking'
     : stance === 'preparing' ? (intent.kind === 'buff' ? 'buffing' : 'casting') : stance;
   const projectedDamage = intent.projectedDamage || null;
@@ -50,12 +63,50 @@ export function combatIntentPresentation(intent = {}) {
     : family === 'attacking' ? [part('attack', damage)]
     : [part(family === 'buffing' ? 'buff' : 'cast', family === 'buffing' ? null : damage)];
   if (damageRead) for (const part of parts) if (part.value === damage) part.summary = damageRead.summary;
+  // Owner, 2026-11-17 ("it's hard for the player to know how much poise damage they are taking"): the attack's number carries the Poise the
+  // player loses beside it, and whether that breaks the player's Poise (projectedPoise, the same forecast as the HP number).
+  const poise = IntentPoiseRead(intent);
+  if (poise) { const head = parts.find(part => part.value === damage && damage != null); if (head) head.poise = poise; }
   // A movement move (an Advance or a Retreat) reads as what it does, not as a generic buff.
   const movement = family === 'buffing' ? (intent.actionEffects || []).find(effect => effect?.op === 'moveEngagement') : null;
   const title = movement ? t(movement.bands > 0 ? 'combat.intent.retreating' : 'combat.intent.advancing') : capitalize(family);
   return { visibility: 'known', title, stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
 }
 
+/**
+ * The Poise an attacking intent costs the player: { value, breaks, mayBreak, summary } or null (no forecast, or it costs no Poise and breaks nothing).
+ * `summary` is the plain sentence the tooltip and the aria-label read, e.g. "6 damage, 3 Poise (breaks your Poise)".
+ */
+export function IntentPoiseRead(intent) {
+  if (!intent || intent.hidden || intent.revealed === false || intent.charging) return null;
+  const damage = intent.projectedDamage?.label ?? (intent.damage != null ? String(intent.totalDamage ?? intent.damage) : null);
+  return PoiseRead(intent.projectedPoise, damage);
+}
+
+/** The read of one Poise forecast ({ min, max, label, breaks, mayBreak }) beside an HP label; null when it costs no Poise and breaks nothing. */
+export function PoiseRead(poise, damage) {
+  if (!poise || !(poise.max > 0 || poise.mayBreak)) return null;
+  const breakNote = poise.breaks ? t('combat.intent.poiseBreaks') : poise.mayBreak ? t('combat.intent.poiseMayBreak') : '';
+  const value = poise.label.replaceAll('–', '-');
+  return { value, breaks: !!poise.breaks, mayBreak: !!poise.mayBreak,
+    summary: t('combat.intent.poiseSummary', { damage: damage ?? '?', poise: value }) + (breakNote ? ` ${breakNote}` : '') };
+}
+
+export const ChargingWhen = turns => turns === 1 ? t('combat.intent.inOneTurn') : t('combat.intent.inManyTurns', { turns });
+
+function chargingPresentation(intent) {
+  const { turnsLeft, block } = intent.charging, when = ChargingWhen(turnsLeft);
+  const later = intentDamageRead(intent)?.label ?? null;
+  const parts = [];
+  if (block != null) parts.push({ icon: 'defend', value: String(block) });
+  parts.push(later != null
+    ? { icon: 'attack', value: later, valueKind: 'later', turns: turnsLeft, note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingAria', { amount: later, when }) }
+    : { icon: 'prepare', value: null, turns: turnsLeft, note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingNote', { when }) });
+  return { visibility: 'known', title: t('combat.intent.charging'), stance: 'preparing', parts, damageClass: null, charging: intent.charging };
+}
+
+const PROMOTED_FAMILY = Object.freeze({ attack: 'attacking', smash: 'smashing', counter: 'countering', defend: 'defending',
+  evade: 'defending', buff: 'buffing', cast: 'casting', prepare: 'preparing' });
 const capitalize = value => value.charAt(0).toUpperCase() + value.slice(1);
 const partialTitle = stance => t('combat.intent.partial', { stance: capitalize(stance) });
 const SPELL_CAMPS = Object.freeze(['spell', 'spells', 'magic']);
@@ -75,10 +126,30 @@ export function intentDamageRead(intent) {
   const hits = Array.isArray(intent.hitDamages) && intent.hitDamages.length ? intent.hitDamages : Array.from({ length: Math.max(1, intent.hits || 1) }, () => intent.damage);
   const same = hits.every(n => n === hits[0]);
   const label = hits.length === 1 && intent.projectedDamage ? intent.projectedDamage.label : same ? `${hits[0]}${hits.length > 1 ? `×${hits.length}` : ''}`
-    : hits.length <= 3 ? hits.join('+') : `${Math.min(...hits)}–${Math.max(...hits)}×${hits.length}`;
-  const bounds = intent.projectedDamage?.label || (intent.hpLossBounds ? intent.hpLossBounds[0] === intent.hpLossBounds[1] ? String(intent.hpLossBounds[1]) : intent.hpLossBounds.join('–') : String(intent.totalDamage ?? hits.reduce((a, b) => a + b, 0)));
+    : hits.length <= 3 ? hits.join('+') : `${Math.min(...hits)}-${Math.max(...hits)}×${hits.length}`;
+  const bounds = intent.projectedDamage?.label || (intent.hpLossBounds ? intent.hpLossBounds[0] === intent.hpLossBounds[1] ? String(intent.hpLossBounds[1]) : intent.hpLossBounds.join('-') : String(intent.totalDamage ?? hits.reduce((a, b) => a + b, 0)));
   const basis = intent.projectedDamage?.basis === 'hp' || intent.damageBasis === 'hp' || intent.hpLossBounds ? t('combat.intent.damageHp') : t('combat.intent.damageBeforeBlock');
   return { label, summary: intent.damageScope === 'contact'
     ? t('combat.intent.damageContact', { index: (intent.contactIndex || 0) + 1, count: intent.contactCount || 1, amount: bounds, basis })
     : t('combat.intent.damageTotal', { amount: bounds, basis }) };
+}
+
+// Owner, 2026-11-14: planned follow-ups of the SAME stance as the head show their own number beside the icon (the HP the player loses from
+// each, given the actions before it). `priceAt(i)` quotes follow-up i ({ label } or null). The run ends at the first follow-up that is a
+// different stance, unread, or unpriced; a Charging head keeps its presentation. Returns copies of the symbols, never the originals.
+export function SameStanceNumbers(headPart, symbols = [], priceAt) {
+  // A damaging spell is drawn with the cast icon at the head, but its stance row reads as an attack (iconForStance).
+  // A Broken enemy lost only its head (it reads Staggered): its plan still plays, so the run starts at the first follow-up when that one is priced
+  // (a legacy Staggered enemy skips its turn and prices nothing, so its run ends there).
+  const broken = headPart?.staggered && symbols[0]?.kind === 'action' && ['attack', 'smash'].includes(symbols[0].icon);
+  const icon = broken ? symbols[0].icon : headPart?.icon === 'cast' && headPart.value != null ? 'attack' : headPart?.icon;
+  let run = broken || (['attack', 'smash'].includes(icon) && headPart.valueKind !== 'later' && headPart.value != null);
+  return symbols.map((symbol, i) => {
+    if (!run || symbol.kind !== 'action' || symbol.icon !== icon) { run = false; return { ...symbol }; }
+    const price = priceAt(i);
+    if (price?.label == null) { run = false; return { ...symbol }; }
+    // Owner, 2026-11-17: each follow-up carries the Poise it takes too, after the moves before it, and BREAKS YOU when it is the one that breaks.
+    const poise = PoiseRead(price.poise, String(price.label));
+    return { ...symbol, value: String(price.label), ...(poise ? { poise } : {}) };
+  });
 }

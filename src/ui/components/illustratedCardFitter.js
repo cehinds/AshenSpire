@@ -1,10 +1,15 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
+import {setData,setStyle} from '../domWrite.js';
 import {layoutMetrics} from '../layoutMetrics.js';
 import {uiConfig} from '../../config/generated/ui.js';
 import {FACE_BUDGET} from '../../model/cardFaceBudget.js';
 // Tunables live in content/config/ui/components/card.json (components.rulesFace.rulesText).
 const FACE_TEXT=uiConfig.components.card.components?.rulesFace?.rulesText||{};
 const RULES_MIN_PX=Number(FACE_TEXT.minPx)||6;
+// On a phone (playtest 2026-11-17 item 39) card rules text runs phoneShrinkPt (CSS points, 4/3 px each) smaller and
+// shows in full: no two-line glance budget, the rules fill their bay instead.
+const PHONE_SHRINK_PX=(Number(FACE_TEXT.phoneShrinkPt)||0)*4/3;
+const isPhoneLayout=()=>typeof document!=='undefined'&&document.documentElement?.dataset?.formFactor==='mobile';
 const LINE_HEIGHT_FLOOR=Number(FACE_TEXT.lineHeightFloor)||0.92;
 const LINE_HEIGHT_STEP=Number(FACE_TEXT.lineHeightStep)||0.04;
 const ruleGeometry = new WeakMap();
@@ -44,10 +49,11 @@ export function showReading(text,reading){
   text.dataset.faceReading='roomy';
   return true;
 }
-// The roomy reading's smallest font (layout px): FACE_BUDGET.minScale of the face's own full size, and never under
-// FACE_BUDGET.minPx on screen; a face whose full size is already below that keeps its full size as the floor.
-export function roomyFloor(high,low,zoom){
-  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(FACE_BUDGET.minPx/zoom,high)));
+// The roomy reading uses the configured floor with the same phone reduction as the compact reading.
+// A face whose full size is already below that keeps its full size as the floor.
+export function roomyFloor(high,low,zoom,phoneShrink=0){
+  const minimumOnScreen=FACE_BUDGET.minPx-phoneShrink;
+  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(minimumOnScreen/zoom,high)));
 }
 const GLANCE_LINES = 2;
 // A face's fit is a pure function of its width, its text, its line budgets, the
@@ -73,7 +79,7 @@ function fitSignature(face, width) {
   const { fontSize, zoom } = layoutMetrics();
   const texts = [...face.querySelectorAll('.ic-text[data-auto-fit="true"]')]
     .map(text => `${text.dataset.maxLines}|${text.dataset.minFont}|${text.dataset.maxFont}|${text.dataset.cardBinding}`);
-  return [width, fontEpoch, fontSize, zoom, face.className, face.parentElement?.className, face.dataset.designWidth,
+  return [width, fontEpoch, fontSize, zoom, isPhoneLayout() ? 'phone' : '', face.className, face.parentElement?.className, face.dataset.designWidth,
     face.dataset.fullRules, face.dataset.cardLayoutId, face.querySelector('[data-face-overflow="true"]') ? 1 : 0,
     face.textContent, texts.join(',')].join('\u0001');
 }
@@ -135,6 +141,8 @@ export function fitIllustratedCards(cards) {
   const signatures=faces.map((face,i)=>widths[i]?fitSignature(face,widths[i]):null);
   const texts=[],skipped=new Set();
   const { zoom } = layoutMetrics();
+  const phone=isPhoneLayout();
+  const phoneShrink=phone?PHONE_SHRINK_PX:0;
   faces.forEach((face,i)=>{
     if(!widths[i])return;
     if(fitSignatures.get(face)===signatures[i]){skipped.add(face);return;}
@@ -156,7 +164,7 @@ export function fitIllustratedCards(cards) {
       // A glance face shows its rules in one or two rendered lines; the font
       // shrinks (to the readable floor) to get there. Rules that still need more
       // keep their real words (owner 2026-11-02: no Inspect replacement text).
-      if(row.compact&&!bounded)row.lines=GLANCE_LINES;
+      if(row.compact&&!bounded&&!phone)row.lines=GLANCE_LINES;
       if(bounded){
         for(const clause of clauses)clause.style.display='';
       }
@@ -186,8 +194,8 @@ export function fitIllustratedCards(cards) {
       // Rules shrink until they fit their box, down to the configured on-screen
       // floor (rulesText.minPx). They used to stop at eleven on-screen pixels
       // and then overflow the parchment on a phone-sized card (owner 2026-11-04).
-      row.low=rules?RULES_MIN_PX/zoom:Number(text.dataset.minFont)*scale;
-      row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale);
+      row.low=rules?Math.max(1,RULES_MIN_PX-phoneShrink)/zoom:Number(text.dataset.minFont)*scale;
+      row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale-(rules?phoneShrink/zoom:0));
       texts.push(row);
     }
   });
@@ -209,7 +217,7 @@ export function fitIllustratedCards(cards) {
   // them all, read them all, put back the ones that did not fit) so a hand costs two layouts, not two per card.
   const roomyRows=texts.filter(row=>row.hasRoomy);
   for(const row of roomyRows){
-    row.floor=roomyFloor(row.high,row.low,zoom);
+    row.floor=roomyFloor(row.high,row.low,zoom,phoneShrink);
     showReading(row.text,'roomy');
     Object.assign(row.text.style,{maxHeight:'none',lineHeight:String(row.lineHeight),fontSize:row.floor+'px',webkitLineClamp:'unset'});
   }
@@ -250,12 +258,12 @@ export function fitIllustratedCards(cards) {
     fitResults.set(row.fitKey,row.result);
   }
   for(const row of texts){
-    row.text.style.fontSize=row.result+'px';
+    setStyle(row.text,'fontSize',row.result+'px');
     row.overflow=row.compact&&(row.hasHiddenRules||row.hasHiddenLines);
-    row.text.style.webkitLineClamp=row.rules?'unset':String(row.lines);
-    row.text.style.display='block';
-    row.text.dataset.fittedFont=String(row.result/row.scale);
-    if(row.compact)row.face.dataset.rulesOverflow=String(row.overflow);
+    setStyle(row.text,'webkitLineClamp',row.rules?'unset':String(row.lines));
+    setStyle(row.text,'display','block');
+    setData(row.text,'fittedFont',String(row.result/row.scale));
+    if(row.compact)setData(row.face,'rulesOverflow',String(row.overflow));
   }
   // Last resorts for rules that still overflow at the smallest size: tighten the
   // line height, then clamp with an ellipsis. Text never leaves the parchment.
@@ -266,16 +274,16 @@ export function fitIllustratedCards(cards) {
   const overBudget=row=>row.text.scrollHeight>row.boxHeight+1||row.text.scrollWidth>row.text.clientWidth+1;
   for(const row of bounded){
     row.omitSecondary=overBudget(row)||Boolean(row.clipped);
-    if(row.omitSecondary||row.hasHiddenRules)row.face.dataset.faceOmitted='true';
-    row.face.dataset.rulesExpanded='false';
-    row.face.dataset.rulesDense='false';
-    row.face.dataset.rulesNarrowFit=String(row.omitSecondary);
-    row.face.dataset.rulesOverflow=String(row.omitSecondary||row.hasHiddenRules);
-    row.text.dataset.rulesComplete=String(!row.omitSecondary&&!row.hasHiddenRules);
+    if(row.omitSecondary||row.hasHiddenRules)setData(row.face,'faceOmitted','true');
+    setData(row.face,'rulesExpanded','false');
+    setData(row.face,'rulesDense','false');
+    setData(row.face,'rulesNarrowFit',String(row.omitSecondary));
+    setData(row.face,'rulesOverflow',String(row.omitSecondary||row.hasHiddenRules));
+    setData(row.text,'rulesComplete',String(!row.omitSecondary&&!row.hasHiddenRules));
   }
   for(const row of rules){
-    row.face.dataset.rulesExpanded='false';
-    row.face.dataset.rulesNarrowFit='false';
+    setData(row.face,'rulesExpanded','false');
+    setData(row.face,'rulesNarrowFit','false');
   }
   // Content beyond the readable floor remains available through inspection.
   for(const row of rules){
@@ -289,10 +297,10 @@ export function fitIllustratedCards(cards) {
       ||row.text.scrollWidth>row.text.clientWidth+1);
   }
   for(const row of rules){
-    row.text.style.maxHeight='100%';
-    row.layer.style.justifyContent=row.overflow?'flex-start':'';
-    row.text.dataset.rulesComplete=String(!row.overflow);
-    row.face.dataset.rulesOverflow=String(row.overflow);
+    setStyle(row.text,'maxHeight','100%');
+    setStyle(row.layer,'justifyContent',row.overflow?'flex-start':'');
+    setData(row.text,'rulesComplete',String(!row.overflow));
+    setData(row.face,'rulesOverflow',String(row.overflow));
   }
   applyCardLayouts(faces.filter(face=>!skipped.has(face)));
   faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,fitSignature(face,widths[i]));});

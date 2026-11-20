@@ -330,6 +330,17 @@ jobs:
             echo "main still tracks AshenSpire.html — the generator hydrates it from git"
             exit 0
           fi
+          # Reuse only the exact main commit already published, after its HTML,
+          # download and complete asset closure verify against main's manifest.
+          # No match (3) retains the strict source rebuild below; corrupt matching
+          # data is fatal. This never substitutes a newer art release for main's pin.
+          if node tools/restore-published-main.mjs --out "$RUNNER_TEMP/main-build"; then
+            echo "MAIN_BUILD_ARGS=--main-build $RUNNER_TEMP/main-build" >> "$GITHUB_ENV"
+            exit 0
+          else
+            restore_status=$?
+            if [ "$restore_status" -ne 3 ]; then exit "$restore_status"; fi
+          fi
           git worktree add --detach "$RUNNER_TEMP/main" origin/main
           # The probe prints `fetch` (schema 2), `legacy` (no pin, or schema 1),
           # or fails: a pin that does not parse, or names a schema this workflow

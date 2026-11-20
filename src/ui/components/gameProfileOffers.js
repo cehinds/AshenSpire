@@ -1,179 +1,862 @@
 import { renderCard } from './card.js';
 import { renderEquipmentCard } from './equipmentCard.js';
 import { renderCollectibleCard } from './collectibleCard.js';
-import { mountRewardDoor, replaceRewardFoot } from './rewardDoor.js';
+import { RenderRankUpOfferCard } from './rankUpOfferCard.js';
+import { MountRewardDoor, ReplaceRewardFoot } from './rewardDoor.js';
 import { clearSelection } from './cardSelection.js';
 import { openBoundCardInspection } from './cardInspection.js';
-import { el, button, modalFooter } from '../kit/index.js';
-import { t } from '../strings.js';
+import { el as buildElement, button, modalFooter } from '../kit/index.js';
+import { t as translate } from '../strings.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
+import { OfferPicksLeft } from '../../model/gameProfileRewards.js';
 import { armouryOpensDeckEditor, noncombatEditing } from '../../model/armouryRules.js';
+import { ModalModelFor } from '../models/ModalModel.js';
+import { ActivateOnKey, MarkSelected } from '../selection.js';
 
-// Presentation ownership stays outside the serializable run and offer data.
-const rewardDoorOwners = new WeakMap();
+const CARD_KINDS = Object.freeze([
+    'combatCards',
+    'weaponArts',
+]);
+const EQUIPMENT_KINDS = Object.freeze([
+    'weapons',
+    'armor',
+]);
+const WEAPON_KIND = 'weapons';
+const RANK_UP_KIND = 'rankUps';
+const RELIC_KIND = 'relics';
+const POTION_KIND = 'potions';
 
-// Configured mixed rewards share the full-game reward door, option columns,
-// card faces and explicit selection/confirmation. Claims remain host-owned.
-export function mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck = null, addRefusal = null, onEditDeck = null, canEditDeck = false, deckMax = null, onEditEquipment = null, canEditEquipment = false }) {
-  clearSelection();
-  let presentation = rewardDoorOwners.get(run);
-  if (!presentation || presentation.offerId !== offer.id) {
-    presentation = { offerId: offer.id, owner: {} };
-    rewardDoorOwners.set(run, presentation);
-  }
-  const strip = el('div', { class: 'reward-row reward-choice-grid', role: 'radiogroup', 'aria-label': t('reward.card.aria') });
-  strip.style.setProperty('--choice-count', String(offer.options.length));
-  // The copy follows the cards module's whole editor policy (not the rest services): the Armoury when it opens the deck editor,
-  // no editing promise when non-combat editing is on but the editor is disabled, otherwise Strategize.
-  const note = el('p', { class: 'reward-note', text: t(!noncombatEditing(run) ? 'reward.configured.note' : armouryOpensDeckEditor(run, settings) ? 'reward.configured.noteArmoury' : 'reward.configured.noteNoEditor', { count: offer.takeCount }) });
-  const status = el('p', { class: 'reward-confirm-status', role: 'alert' });
-  const confirm = button({ label: t('common.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true });
-  const inspect = button({ label: t('deckEditor.inspectAction'), id: 'reward-inspect', disabled: true });
-  inspect.addEventListener('click', () => {
-    if (!pending && !completed && selected !== null) openBoundCardInspection(choices[selected].face, inspect);
-  });
-  // Owner 2026-10-18: reviewing a card offers "Add to deck" and (when a deck door is open) "Edit deck".
-  const editDeck = button({ label: t('reward.configured.editDeck'), id: 'reward-edit-deck', className: 'reward-edit-deck' });
-  const equip = button({ label: t('reward.configured.equipNow'), id: 'reward-equip-now', className: 'reward-equip-now' });
-  equip.hidden = true;
-  const keep = button({ label: t('reward.configured.addToLibrary'), id: 'reward-keep', className: 'reward-keep' });
-  editDeck.hidden = true; keep.hidden = true;
-  const next = button({ label: t('common.skip'), id: 'reward-continue', className: 'danger' });
-  let selected = null;
-  let pending = false;
-  let reviewing = false;
-  let completed = false;
-  let addToDeckMode = false;
-  const choices = [];
-  function select(index) {
-    if (pending || reviewing || completed || offer.claimed !== null || offer.taken.includes(index)) return;
-    selected = index;
-    for (const [at, { face, control }] of choices.entries()) {
-      const chosen = at === selected;
-      face.classList.toggle('reward-selected', chosen); face.classList.toggle('is-chosen', chosen);
-      control.classList.toggle('is-chosen', chosen); control.setAttribute('aria-checked', String(chosen));
+const CONFIRM_LABEL_KEY = 'common.confirm';
+const SKIP_LABEL_KEY = 'common.skip';
+const CHOSEN_CLASS = 'is-chosen';
+const REWARD_SURFACE = 'reward';
+const GLANCE_LEVEL = 'glance';
+
+const READ_ONLY_FACE_OPTIONS = Object.freeze({
+    interactive: false,
+    inspection: true,
+    actionOwnsTouch: true,
+    level: GLANCE_LEVEL,
+});
+const READ_ONLY_REWARD_FACE_OPTIONS = Object.freeze({
+    ...READ_ONLY_FACE_OPTIONS,
+    surface: REWARD_SURFACE,
+});
+
+const doorPresentationByRun = new WeakMap();
+
+function isCardKind(kind)
+{
+    return CARD_KINDS.includes(kind);
+}
+
+function isEquipmentKind(kind)
+{
+    return EQUIPMENT_KINDS.includes(kind);
+}
+
+function applyRadioRole(face, label, isDisabled, onPick)
+{
+    face.setAttribute('role', 'radio');
+    face.setAttribute('aria-checked', 'false');
+    face.setAttribute('aria-label', label);
+    if (isDisabled)
+    {
+        face.setAttribute('aria-disabled', 'true');
+        return;
     }
-    confirm.disabled = false; inspect.disabled = false;
-    inspect.setAttribute('aria-label', t('deckEditor.inspectNamed', { name: choices[index].control.textContent }));
-    status.textContent = '';
-    syncCardActions();
-  }
-  // Owner 2026-11-02: a selected card shows exactly [Edit deck, Add to library, Add to deck] at once (no review step);
-  // the card face's own inspection door replaces the Inspect button. Other kinds keep Confirm / Inspect.
-  function syncCardActions() {
-    const cardMode = !!(onAddToDeck && cardPick());
-    const changed = cardMode !== addToDeckMode;
-    addToDeckMode = cardMode;
-    inspect.hidden = cardMode;
-    editDeck.hidden = !(cardMode && onEditDeck && canEditDeck);
-    keep.hidden = !cardMode;
-    confirm.textContent = t(cardMode ? 'reward.configured.addToDeck' : 'common.confirm');
-    const refusal = cardMode && addRefusal ? addRefusal(selected) : '';
-    confirm.disabled = !!refusal;
-    if (refusal) status.textContent = refusalText(refusal);
-    if (changed) mountFoot(); // selecting a card must not rebuild the door: only the footer's buttons change
-  }
-  for (const [index, option] of offer.options.entries()) {
-    const card = ['combatCards', 'weaponArts'].includes(option.kind);
-    const equipment = ['weapons', 'armor'].includes(option.kind);
-    const definition = card ? registries.cards.get(option.id)
-      : option.kind === 'relics' ? registries.relics.get(option.id)
-      : option.kind === 'potions' ? registries.flasks.get(option.id)
-      : option.kind === 'weapons' ? registries.equipment.armaments.find(item => item.id === option.id)
-      : registries.equipment.armour.find(item => item.id === option.id && item.classId === run.class);
-    const unavailable = offer.taken.includes(index) || offer.claimed !== null;
-    const column = el('div', { class: `reward-choice-option${unavailable ? ' is-owned' : ''}`, dataset: { pickId: String(index) } });
-    const face = card ? renderCard(registries, { cardId: option.id, instanceId: `offer:${index}`, upgraded: false, ...(option.rank > 1 ? { rank: option.rank } : {}) }, {
-      rules: run, surface: 'reward', level: 'glance', actionOwnsTouch: true,
-      // The selected card shows the same (i) badge as the combat hand; it is the way in to the inspector.
-      infoBadge: true,
-      // Reading a reward never chooses it; the chooser owns that action.
-      only: [],
-    }) : equipment ? renderEquipmentCard(registries, definition, { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance', surface: 'reward' }).card
-      : renderCollectibleCard(registries, definition, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance' }).card;
-    face.classList.add('reward-choice-face'); face.dataset.pickId = String(index);
-    // First tap selects; a tap on the already-selected card face opens the inspector (owner, 2026-11-05).
-    if (!unavailable) face.addEventListener('click', () => {
-      if (card && selected === index && !pending && !reviewing && !completed) openBoundCardInspection(face, face);
-      else select(index);
+    face.tabIndex = 0;
+    ActivateOnKey(
+        face,
+        () => onPick(),
+        {
+            canActivate: (event) => event.target === face,
+        },
+    );
+}
+
+function findOptionDefinition(registries, activeRun, option)
+{
+    if (isCardKind(option.kind))
+    {
+        return registries.cards.get(option.id);
+    }
+    switch (option.kind)
+    {
+        case RANK_UP_KIND:
+            return { name: translate('rankUp.name') };
+        case RELIC_KIND:
+            return registries.relics.get(option.id);
+        case POTION_KIND:
+            return registries.flasks.get(option.id);
+        case WEAPON_KIND:
+            return registries.equipment.armaments.find((armament) => armament.id === option.id);
+        default:
+            return registries.equipment.armour.find((armour) =>
+            {
+                return armour.id === option.id
+                    && armour.classId === activeRun.class;
+            });
+    }
+}
+
+function buildCardOptionFace(registries, activeRun, option, optionIndex)
+{
+    const rankFields = option.rank > 1
+        ? {
+            rank: option.rank,
+        }
+        : {};
+    return renderCard(
+        registries,
+        {
+            cardId: option.id,
+            instanceId: `offer:${optionIndex}`,
+            upgraded: false,
+            ...rankFields,
+        },
+        {
+            rules: activeRun,
+            surface: REWARD_SURFACE,
+            level: GLANCE_LEVEL,
+            actionOwnsTouch: true,
+            infoBadge: true,
+            only: [],
+        },
+    );
+}
+
+function buildCollectibleOptionFace(registries, option, definition)
+{
+    const collectibleLabel = option.kind === POTION_KIND
+        ? 'Potion'
+        : 'Relic';
+    return renderCollectibleCard(
+        registries,
+        definition,
+        collectibleLabel,
+        READ_ONLY_FACE_OPTIONS,
+    ).card;
+}
+
+function buildOptionFace(registries, activeRun, option, optionIndex, definition)
+{
+    if (isCardKind(option.kind))
+    {
+        return buildCardOptionFace(registries, activeRun, option, optionIndex);
+    }
+    if (option.kind === RANK_UP_KIND)
+    {
+        return RenderRankUpOfferCard(registries, READ_ONLY_REWARD_FACE_OPTIONS).card;
+    }
+    if (isEquipmentKind(option.kind))
+    {
+        return renderEquipmentCard(registries, definition, READ_ONLY_REWARD_FACE_OPTIONS).card;
+    }
+    return buildCollectibleOptionFace(registries, option, definition);
+}
+
+function findOrCreateDoorPresentation(activeRun, offerId)
+{
+    let presentation = doorPresentationByRun.get(activeRun);
+    if (
+        !presentation
+        || presentation.offerId !== offerId
+    )
+    {
+        presentation = {
+            offerId,
+            owner: {},
+        };
+        doorPresentationByRun.set(activeRun, presentation);
+    }
+    return presentation;
+}
+
+function buildChoiceStrip(ariaKey, choiceCount)
+{
+    const choiceStrip = buildElement('div', {
+        class: 'reward-row reward-choice-grid',
+        role: 'radiogroup',
+        'aria-label': translate(ariaKey),
     });
-    const control = button({ label: definition.name, disabled: unavailable, className: 'class-pick reward-node reward-pick reward-choice-button', attrs: { type: 'button', role: 'radio', 'aria-checked': 'false', dataset: { pickId: String(index) } } });
-    control.addEventListener('click', () => select(index));
-    column.append(face, control); strip.append(column); choices.push({ face, control });
-  }
-  const cardPick = () => selected !== null && ['combatCards', 'weaponArts'].includes(offer.options[selected]?.kind);
-  const resetReview = () => {
-    reviewing = false; addToDeckMode = false;
-    for (const [index, { control }] of choices.entries()) control.disabled = offer.taken.includes(index) || offer.claimed !== null;
-    equip.hidden = true; status.textContent = '';
-    confirm.disabled = selected === null;
-    mountDoor();
-  };
-  next.addEventListener('click', () => {
-    if (pending || completed) return;
-    if (reviewing) {
-      resetReview();
-      for (const column of strip.children) column.hidden = false;
-      confirm.textContent = t('common.confirm');
-      next.textContent = t('common.skip');
-      return;
+    choiceStrip.style.setProperty(
+        '--choice-count',
+        String(choiceCount),
+    );
+    return choiceStrip;
+}
+
+function buildRewardNote(offer, defaultNoteKey)
+{
+    const hasBonus = offer.options.some((option) => option.bonus);
+    const noteKey = hasBonus ? 'reward.configured.noteBonus' : defaultNoteKey;
+    return buildElement('p', {
+        class: 'reward-note',
+        text: translate(noteKey, {
+            count: offer.takeCount,
+        }),
+    });
+}
+
+function buildStatusLine()
+{
+    return buildElement('p', {
+        class: 'reward-confirm-status',
+        role: 'alert',
+    });
+}
+
+function buildConfirmButton()
+{
+    return button({
+        label: translate(CONFIRM_LABEL_KEY),
+        weight: 'primary',
+        id: 'reward-card-confirm',
+        className: 'reward-confirm',
+        disabled: true,
+    });
+}
+
+function buildInspectButton()
+{
+    return button({
+        label: translate('deckEditor.inspectAction'),
+        id: 'reward-inspect',
+        disabled: true,
+    });
+}
+
+function buildSecondaryButtons()
+{
+    const editDeckButton = button({
+        label: translate('reward.configured.editDeck'),
+        id: 'reward-edit-deck',
+        className: 'reward-edit-deck',
+    });
+    const equipButton = button({
+        label: translate('reward.configured.equipNow'),
+        id: 'reward-equip-now',
+        className: 'reward-equip-now',
+    });
+    equipButton.hidden = true;
+    const keepButton = button({
+        label: translate('reward.configured.addToLibrary'),
+        id: 'reward-keep',
+        className: 'reward-keep',
+    });
+    editDeckButton.hidden = true;
+    keepButton.hidden = true;
+    const skipButton = button({
+        label: translate(SKIP_LABEL_KEY),
+        id: 'reward-continue',
+        className: 'danger',
+    });
+    return {
+        editDeckButton,
+        equipButton,
+        keepButton,
+        skipButton,
+    };
+}
+
+function buildChoiceColumn(optionIndex, isSpent)
+{
+    const ownedClass = isSpent
+        ? ' is-owned'
+        : '';
+    return buildElement('div', {
+        class: `reward-choice-option${ownedClass}`,
+        dataset: {
+            pickId: String(optionIndex),
+        },
+    });
+}
+
+function readChoiceLabel(option, definition)
+{
+    return option.bonus
+        ? translate('rankUp.bonusLabel', {
+            name: definition.name,
+        })
+        : definition.name;
+}
+
+function buildChoiceControl(choiceLabel, isSpent, optionIndex)
+{
+    return button({
+        label: choiceLabel,
+        disabled: isSpent,
+        className: 'class-pick reward-node reward-pick reward-choice-button',
+        attrs: {
+            type: 'button',
+            role: 'radio',
+            'aria-checked': 'false',
+            dataset: {
+                pickId: String(optionIndex),
+            },
+        },
+    });
+}
+
+export function RewardDoorCopy(offer, activeRun, settings)
+{
+    const offersCard = offer.options.some((option) => isCardKind(option.kind));
+    const noteKey = !offersCard
+        ? 'reward.configured.noteItems'
+        : !noncombatEditing(activeRun)
+        ? 'reward.configured.note'
+        : armouryOpensDeckEditor(activeRun, settings)
+        ? 'reward.configured.noteArmoury'
+        : 'reward.configured.noteNoEditor';
+    return {
+        aria: offersCard ? 'reward.card.aria' : 'reward.choice.aria',
+        note: noteKey,
+    };
+}
+
+export function MountGameProfileOffers(appRoot, {
+    registries,
+    run: activeRun,
+    offer,
+    title,
+    onTake,
+    onContinue,
+    settings,
+    onAddToDeck = null,
+    addRefusal = null,
+    onEditDeck = null,
+    canEditDeck = false,
+    deckMax = null,
+    onEditEquipment = null,
+    canEditEquipment = false,
+    spoils = null,
+})
+{
+    clearSelection();
+    const presentation = findOrCreateDoorPresentation(activeRun, offer.id);
+    const doorCopy = RewardDoorCopy(
+        offer,
+        activeRun,
+        settings,
+    );
+    const choiceStrip = buildChoiceStrip(doorCopy.aria, offer.options.length);
+    const rewardNote = buildRewardNote(offer, doorCopy.note);
+    const statusLine = buildStatusLine();
+    const confirmButton = buildConfirmButton();
+    const inspectButton = buildInspectButton();
+    inspectButton.addEventListener('click', inspectSelectedChoice);
+    const {
+        editDeckButton,
+        equipButton,
+        keepButton,
+        skipButton,
+    } = buildSecondaryButtons();
+
+    let selectedIndex = null;
+    let isClaimPending = false;
+    let isReviewing = false;
+    let isCompleted = false;
+    let isAddToDeckMode = false;
+    const choices = [];
+    const isFaceRadio = !ModalModelFor('reward').showNameButton;
+
+    appendChoices();
+    skipButton.addEventListener('click', handleSkipClick);
+    confirmButton.addEventListener('click', handleConfirmClick);
+    keepButton.addEventListener('click', () => commitPick(takeOptionIfUntaken));
+    equipButton.addEventListener('click', () =>
+    {
+        return commitPick(takeOptionIfUntaken, openEquipmentEditor);
+    });
+    editDeckButton.addEventListener('click', () =>
+    {
+        return commitPick(takeOptionIfUntaken, openDeckEditor);
+    });
+    renderDoor();
+
+    function inspectSelectedChoice()
+    {
+        if (
+            !isClaimPending
+            && !isCompleted
+            && selectedIndex !== null
+        )
+        {
+            openBoundCardInspection(choices[selectedIndex].face, inspectButton);
+        }
     }
-    try { onContinue(); completed = true; }
-    catch (error) { status.textContent = error.message; }
-  });
-  // After a claim: leave when the offer is spent, else show the next pick. Also the way back from the deck editor.
-  function proceed() {
-    try {
-      if (offer.claimed !== null || offer.taken.length >= Math.min(offer.takeCount, offer.options.length)) {
-        onContinue();
-        completed = true;
-      } else {
-        mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck, addRefusal, onEditDeck, canEditDeck, deckMax, onEditEquipment, canEditEquipment });
-      }
-    } catch (error) {
-      inspect.disabled = completed; strip.inert = completed;
-      status.textContent = error.message; pending = false; confirm.disabled = false; next.disabled = false; editDeck.disabled = false; equip.disabled = false; keep.disabled = false;
+
+    function isOptionSpent(optionIndex)
+    {
+        if (
+            offer.taken.includes(optionIndex)
+            || offer.claimed !== null
+        )
+        {
+            return true;
+        }
+        if (offer.options[optionIndex]?.bonus)
+        {
+            return false;
+        }
+        const offerWithoutBonus = {
+            ...offer,
+            options: offer.options.filter((option) => !option.bonus),
+            taken: offer.taken.filter((takenIndex) => !offer.options[takenIndex]?.bonus),
+        };
+        return OfferPicksLeft(offerWithoutBonus) < 1;
     }
-  }
-  async function commit(take, afterClaim = proceed) {
-    if (pending || completed || selected === null) return;
-    inspect.disabled = true; strip.inert = true;
-    pending = true; confirm.disabled = true; next.disabled = true; editDeck.disabled = true; equip.disabled = true; keep.disabled = true;
-    try {
-      const updated = await take(selected);
-      if (updated?.id === offer.id) offer = updated;
-      afterClaim();
-    } catch (error) {
-      pending = false; inspect.disabled = completed; strip.inert = completed;
-      status.textContent = error.message;
-      confirm.disabled = false; next.disabled = false; editDeck.disabled = false; equip.disabled = false; keep.disabled = false;
-    } finally { if (!completed && afterClaim === proceed) pending = false; }
-  }
-  const claimOnly = index => offer.taken.includes(index) ? undefined : onTake(index);
-  const refusalText = code => code === 'full' ? t('reward.configured.deckFull', { max: deckMax ?? '' }) : t('reward.configured.deckLimit');
-  confirm.addEventListener('click', () => {
-    if (pending || completed || selected === null || confirm.disabled) return;
-    if (addToDeckMode) return commit(index => onAddToDeck(index));
-    if (!reviewing) {
-      reviewing = true;
-      // Keep the selected face's Information control available in review.
-      for (const { control } of choices) control.disabled = true;
-      for (const column of strip.children) column.hidden = Number(column.dataset.pickId) !== selected;
-      next.textContent = t('common.back');
-      confirm.textContent = t('common.continue');
-      equip.hidden = !(onEditEquipment && canEditEquipment && ['weapons', 'armor'].includes(offer.options[selected]?.kind));
-      mountDoor(); return;
+
+    function readSelectedKind()
+    {
+        return offer.options[selectedIndex]?.kind;
     }
-    return commit(claimOnly);
-  });
-  keep.addEventListener('click', () => commit(claimOnly));
-  equip.addEventListener('click', () => commit(claimOnly, () => onEditEquipment(selected, proceed)));
-  editDeck.addEventListener('click', () => commit(claimOnly, () => onEditDeck(selected, proceed)));
-  // The footer drops hidden buttons when built, so the door is rebuilt (same owner: in place) whenever the review changes them.
-  const buildFoot = () => modalFooter({ secondary: [next, inspect, equip, editDeck, keep], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' });
-  function mountDoor() {
-    mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: buildFoot() });
-  }
-  // Swap only the footer in the open door; falls back to a full mount when no door of this owner is open.
-  function mountFoot() { if (!replaceRewardFoot(app, presentation.owner, buildFoot())) mountDoor(); }
-  mountDoor();
+
+    function isCardPicked()
+    {
+        return selectedIndex !== null
+            && isCardKind(readSelectedKind());
+    }
+
+    function setFooterButtonsDisabled(isDisabled)
+    {
+        confirmButton.disabled = isDisabled;
+        skipButton.disabled = isDisabled;
+        editDeckButton.disabled = isDisabled;
+        equipButton.disabled = isDisabled;
+        keepButton.disabled = isDisabled;
+    }
+
+    function lockForClaim()
+    {
+        inspectButton.disabled = true;
+        choiceStrip.inert = true;
+        isClaimPending = true;
+        setFooterButtonsDisabled(true);
+    }
+
+    function recoverFromClaimFailure(error)
+    {
+        isClaimPending = false;
+        inspectButton.disabled = isCompleted;
+        choiceStrip.inert = isCompleted;
+        statusLine.textContent = error.message;
+        setFooterButtonsDisabled(false);
+    }
+
+    function showChoiceColumns(onlyIndex = null)
+    {
+        for (const column of choiceStrip.children)
+        {
+            column.hidden = onlyIndex !== null
+                && Number(column.dataset.pickId) !== onlyIndex;
+        }
+    }
+
+    function markChosenChoice()
+    {
+        for (const [choiceIndex, { face, control }] of choices.entries())
+        {
+            const isChosen = choiceIndex === selectedIndex;
+            MarkSelected(
+                face,
+                isChosen,
+                {
+                    className: [
+                        'reward-selected',
+                        CHOSEN_CLASS,
+                    ],
+                    ariaAttribute: isFaceRadio
+                        ? 'aria-checked'
+                        : null,
+                },
+            );
+            MarkSelected(
+                control,
+                isChosen,
+                {
+                    className: CHOSEN_CLASS,
+                    ariaAttribute: 'aria-checked',
+                },
+            );
+        }
+    }
+
+    function selectOption(optionIndex)
+    {
+        if (
+            isClaimPending
+            || isReviewing
+            || isCompleted
+            || isOptionSpent(optionIndex)
+        )
+        {
+            return;
+        }
+
+        selectedIndex = optionIndex;
+        markChosenChoice();
+        confirmButton.disabled = false;
+        inspectButton.disabled = false;
+        const inspectLabel = translate('deckEditor.inspectNamed', {
+            name: choices[optionIndex].control.textContent,
+        });
+        inspectButton.setAttribute('aria-label', inspectLabel);
+        statusLine.textContent = '';
+        updateCardActions();
+    }
+
+    function updateCardActions()
+    {
+        const isCardMode = !!(
+            onAddToDeck
+            && isCardPicked()
+        );
+        const hasModeChanged = isCardMode !== isAddToDeckMode;
+        isAddToDeckMode = isCardMode;
+        inspectButton.hidden = isCardMode;
+        editDeckButton.hidden = !(
+            isCardMode
+            && onEditDeck
+            && canEditDeck
+        );
+        keepButton.hidden = !isCardMode;
+        const confirmLabelKey = isCardMode
+            ? 'reward.configured.addToDeck'
+            : CONFIRM_LABEL_KEY;
+        confirmButton.textContent = translate(confirmLabelKey);
+        const canBeRefused = isCardMode
+            && addRefusal;
+        const refusalCode = canBeRefused
+            ? addRefusal(selectedIndex)
+            : '';
+        confirmButton.disabled = !!refusalCode;
+        if (refusalCode)
+        {
+            statusLine.textContent = describeRefusal(refusalCode);
+        }
+        if (hasModeChanged)
+        {
+            renderFoot();
+        }
+    }
+
+    function buildChoiceFace(option, optionIndex, definition)
+    {
+        const face = buildOptionFace(registries, activeRun, option, optionIndex, definition);
+        face.classList.add('reward-choice-face');
+        face.dataset.pickId = String(optionIndex);
+        return face;
+    }
+
+    function appendChoice(option, optionIndex)
+    {
+        const definition = findOptionDefinition(registries, activeRun, option);
+        const isSpent = isOptionSpent(optionIndex);
+        const column = buildChoiceColumn(optionIndex, isSpent);
+        const face = buildChoiceFace(option, optionIndex, definition);
+        if (!isSpent)
+        {
+            face.addEventListener('click', () =>
+            {
+                selectOption(optionIndex);
+            });
+        }
+        const choiceLabel = readChoiceLabel(option, definition);
+        if (isFaceRadio)
+        {
+            applyRadioRole(face, choiceLabel, isSpent, () => selectOption(optionIndex));
+        }
+        const control = buildChoiceControl(choiceLabel, isSpent, optionIndex);
+        control.addEventListener('click', () => selectOption(optionIndex));
+        column.append(face, control);
+        choiceStrip.append(column);
+        choices.push({
+            face,
+            control,
+        });
+    }
+
+    function appendChoices()
+    {
+        for (const [optionIndex, option] of offer.options.entries())
+        {
+            appendChoice(option, optionIndex);
+        }
+    }
+
+    function resetReviewState()
+    {
+        isReviewing = false;
+        isAddToDeckMode = false;
+        for (const [optionIndex, { control }] of choices.entries())
+        {
+            control.disabled = isOptionSpent(optionIndex);
+        }
+        equipButton.hidden = true;
+        statusLine.textContent = '';
+        confirmButton.disabled = selectedIndex === null;
+        renderDoor();
+    }
+
+    function returnFromReview()
+    {
+        resetReviewState();
+        showChoiceColumns();
+        confirmButton.textContent = translate(CONFIRM_LABEL_KEY);
+        skipButton.textContent = translate(SKIP_LABEL_KEY);
+    }
+
+    function leaveOffer()
+    {
+        try
+        {
+            onContinue();
+            isCompleted = true;
+        }
+        catch (error)
+        {
+            statusLine.textContent = error.message;
+        }
+    }
+
+    function confirmLeavingWithoutReward()
+    {
+        OpenConfirmationModal({
+            title: translate('reward.leave.question'),
+            message: translate('reward.leave.message'),
+            confirmLabel: translate('reward.leave.confirm'),
+            cancelLabel: translate('reward.leave.take'),
+            returnFocusElement: skipButton,
+            onConfirm: leaveOffer,
+        });
+    }
+
+    function handleSkipClick()
+    {
+        if (
+            isClaimPending
+            || isCompleted
+        )
+        {
+            return;
+        }
+        if (isReviewing)
+        {
+            returnFromReview();
+            return;
+        }
+
+        const isLeavingWithChoiceOpen = offer.claimed === null
+            && !offer.taken.length
+            && offer.options.length;
+        if (isLeavingWithChoiceOpen)
+        {
+            confirmLeavingWithoutReward();
+            return;
+        }
+        leaveOffer();
+    }
+
+    function remountWithLatestOffer()
+    {
+        MountGameProfileOffers(appRoot, {
+            registries,
+            run: activeRun,
+            offer,
+            title,
+            onTake,
+            onContinue,
+            settings,
+            onAddToDeck,
+            addRefusal,
+            onEditDeck,
+            canEditDeck,
+            deckMax,
+            onEditEquipment,
+            canEditEquipment,
+            spoils,
+        });
+    }
+
+    function continueAfterClaim()
+    {
+        try
+        {
+            if (
+                offer.claimed !== null
+                || OfferPicksLeft(offer) < 1
+            )
+            {
+                onContinue();
+                isCompleted = true;
+            }
+            else
+            {
+                remountWithLatestOffer();
+            }
+        }
+        catch (error)
+        {
+            recoverFromClaimFailure(error);
+        }
+    }
+
+    async function commitPick(claimOption, afterClaim = continueAfterClaim)
+    {
+        if (
+            isClaimPending
+            || isCompleted
+            || selectedIndex === null
+        )
+        {
+            return;
+        }
+        lockForClaim();
+        try
+        {
+            const updatedOffer = await claimOption(selectedIndex);
+            if (updatedOffer?.id === offer.id)
+            {
+                offer = updatedOffer;
+            }
+            afterClaim();
+        }
+        catch (error)
+        {
+            recoverFromClaimFailure(error);
+        }
+        finally
+        {
+            if (
+                !isCompleted
+                && afterClaim === continueAfterClaim
+            )
+            {
+                isClaimPending = false;
+            }
+        }
+    }
+
+    function takeOptionIfUntaken(optionIndex)
+    {
+        return offer.taken.includes(optionIndex)
+            ? undefined
+            : onTake(optionIndex);
+    }
+
+    function describeRefusal(refusalCode)
+    {
+        return refusalCode === 'full'
+            ? translate('reward.configured.deckFull', {
+                max: deckMax ?? '',
+            })
+            : translate('reward.configured.deckLimit');
+    }
+
+    function startReview()
+    {
+        isReviewing = true;
+        for (const { control } of choices)
+        {
+            control.disabled = true;
+        }
+        showChoiceColumns(selectedIndex);
+        skipButton.textContent = translate('common.back');
+        confirmButton.textContent = translate('common.continue');
+        const canEquipSelection = onEditEquipment
+            && canEditEquipment
+            && isEquipmentKind(readSelectedKind());
+        equipButton.hidden = !canEquipSelection;
+        renderDoor();
+    }
+
+    function handleConfirmClick()
+    {
+        if (
+            isClaimPending
+            || isCompleted
+            || selectedIndex === null
+            || confirmButton.disabled
+        )
+        {
+            return;
+        }
+
+        if (isAddToDeckMode)
+        {
+            return commitPick((optionIndex) => onAddToDeck(optionIndex));
+        }
+
+        const hasNothingToReview = !isReviewing
+            && !isCardPicked()
+            && !isEquipmentKind(readSelectedKind());
+        if (hasNothingToReview)
+        {
+            return commitPick(takeOptionIfUntaken);
+        }
+
+        if (!isReviewing)
+        {
+            startReview();
+            return;
+        }
+        return commitPick(takeOptionIfUntaken);
+    }
+
+    function openEquipmentEditor()
+    {
+        return onEditEquipment(selectedIndex, continueAfterClaim);
+    }
+
+    function openDeckEditor()
+    {
+        return onEditDeck(selectedIndex, continueAfterClaim);
+    }
+
+    function buildFooter()
+    {
+        return modalFooter({
+            secondary: [
+                skipButton,
+                inspectButton,
+                equipButton,
+                editDeckButton,
+                keepButton,
+            ],
+            primary: confirmButton,
+            className: 'reward-foot reward-chooser-foot',
+            size: 'medium',
+        });
+    }
+
+    function renderDoor()
+    {
+        MountRewardDoor(appRoot, {
+            owner: presentation.owner,
+            title,
+            body: [
+                spoils,
+                rewardNote,
+                choiceStrip,
+                statusLine,
+            ],
+            foot: buildFooter(),
+        });
+    }
+
+    function renderFoot()
+    {
+        const footer = buildFooter();
+        const wasReplaced = ReplaceRewardFoot(
+            appRoot,
+            presentation.owner,
+            footer,
+        );
+        if (!wasReplaced)
+        {
+            renderDoor();
+        }
+    }
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { mountTutorial } from '../src/ui/components/tutorial.js';
 
 for (const [name, marker] of [

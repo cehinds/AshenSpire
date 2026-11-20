@@ -26,12 +26,11 @@ export const consumables = [
   ...consumableBooks,
   ...classes.map((cls) => ({
     ...book(`${cls.id}ClassBook`, `${cls.name} Class Book`, `class:${cls.id}`, { xp: 40, cost: 180, sellValue: 140 }),
-    learnClass: cls.id, combatCardChance: 25, featChance: 5,
-    blurb: `Gain {xp} ${cls.name} XP and learn its class card if new. Each reading has a {combatCardChance}% combat-card chance and an independent {featChance}% feat chance.`,
-    masteryBlurb: `Learn the ${cls.name} class card if new. Each reading has a {combatCardChance}% combat-card chance and an independent {featChance}% feat chance. Class mastery advances through fights and quests.`,
+    learnClass: cls.id, combatCardChance: 25,
+    blurb: `Gain {xp} ${cls.name} XP and learn its class card if new. Each reading has a {combatCardChance}% combat-card chance.`,
+    masteryBlurb: `Learn the ${cls.name} class card if new. Each reading has a {combatCardChance}% combat-card chance. Class mastery advances through fights and quests.`,
     [NOTE]: { xp: XP, cost: COST, sellValue: SELL,
-      combatCardChance: 'Percent chance that reading this class book grants one combat card from its class pool. Independent of the feat roll; 0 disables and 100 guarantees a card when the pool is available.',
-      featChance: 'Percent chance that reading this class book grants one feat. Independent of the combat-card roll; 0 disables and 100 guarantees a feat.' },
+      combatCardChance: 'Percent chance that reading this class book grants one combat card from its class pool. 0 disables and 100 guarantees a card when the pool is available.' },
   })),
   ...consumableTokens,
 ];

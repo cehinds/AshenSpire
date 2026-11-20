@@ -4,7 +4,7 @@
 // applied in resolveCard beside the rank, and carried into combat.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
+import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard, primaryEffectIndex } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { awardSkillXp, xpToNext, stampSkillBonuses, skillBonusFor, skillSchools } from '../src/model/skills.js';
@@ -33,10 +33,10 @@ test('the flat is floor(level / flatEvery) for each track whose schools a card c
 });
 
 test('the face, the play and the rank all read one number', () => {
-  const base = resolveCard(registries, { cardId: 'rend' });
+  const base = resolveCard(registries, { cardId: 'gorefireSlash' });
   const i = primaryEffectIndex(base);
-  assert.equal(resolveCard(registries, { cardId: 'rend', skillBonus: 2 }).effects[i].amount, base.effects[i].amount + 2);
-  assert.equal(resolveCard(registries, { cardId: 'rend', rank: 3, skillBonus: 1 }).effects[i].amount, base.effects[i].amount + 3, 'rank and flat stack');
+  assert.equal(resolveCard(registries, { cardId: 'gorefireSlash', skillBonus: 2 }).effects[i].amount, base.effects[i].amount + 2);
+  assert.equal(resolveCard(registries, { cardId: 'gorefireSlash', rank: 3, skillBonus: 1 }).effects[i].amount, base.effects[i].amount + 3, 'rank and flat stack');
   // Relative to the resolved base: the cost formula may scale the face (SPEC §4.3a); the flat +1 adds on top.
   const cuts = resolveCard(registries, { cardId: 'thousandCutsRogue' }).effects[0].amount;
   assert.equal(resolveCard(registries, { cardId: 'thousandCutsRogue', skillBonus: 1 }).effects[0].amount, cuts + 1, 'a multi-hit card splits it, rounded up');
@@ -78,27 +78,3 @@ test('a card earns the sum of its tracks\' flats, and never past the cap', async
   assert.equal(skillBonusFor(capped, flood, { cardId: 'rend' }), MAX_SKILL_BONUS, 'no setting stamps what a save refuses');
 });
 
-test('the level popup counts the cards a claim actually raised', async () => {
-  const { mountRewards } = await import('../src/ui/screens/reward.js');
-  const { rewardDom } = await import('./helpers/reward-dom.mjs');
-  const { bankSkillXp, claimBankedSkillLevel } = await import('../src/model/skills.js');
-  const dom = rewardDom();
-  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
-  try {
-    const app = document.createElement('main'); document.body.append(app);
-    const run = createRunState({ seed: 4, classId: 'reaver', registries });
-    toLevel(run, 4);
-    run.deck = [{ instanceId: 'r', cardId: 'rend', upgraded: false }, { instanceId: 'd', cardId: 'defend', upgraded: false }];
-    bankSkillXp(registries, run, BLADE, xpToNext(registries, 'weapon', 4));
-    mountRewards(app, { registries, run, onDone() {}, onPersist: () => stampSkillBonuses(registries, run),
-      onClaimSkill: (id) => claimBankedSkillLevel(registries, run, id),
-      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
-      rewards: { xpGains: { level: 0, tracks: { [BLADE]: 1 } } } });
-    app.querySelector(`.reward-level-up[data-track="${BLADE}"]`).click();
-    const summary = app.querySelector('.reward-level-summary').textContent;
-    const expected = run.deck.filter((c) => skillBonusFor(registries, run, c) > 0).length;
-    assert.ok(expected >= 1);
-    assert.match(summary, new RegExp(`${expected} cards? gains? \\+1\\.`));
-  } finally { Object.assign(globalThis, saved); }
-});

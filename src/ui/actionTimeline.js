@@ -45,21 +45,23 @@ export function runActionTimeline(beats, hooks, timingIn, {
     if (now() >= watchdogDeadline) { finish(true, true); return; }
     if (index >= beats.length) { finish(); return; }
     const beat = beats[index++];
+    // A beat may run on its own pacing (the enemies' turn: hooks.timingFor); the rest of the timeline keeps `timing`.
+    const T = { ...timing, ...(safe(() => hooks.timingFor?.(beat)) || {}) };
     if (beat.banner || !beat.actorId || beat.kind === 'reveal') {
       stage('intent', beat, () => hooks.onIntent?.(beat));
       stage('damage', beat, () => hooks.onNumbers?.(beat));
       stage('hud', beat, () => hooks.onApply?.(beat));
       stage('resolution', beat, () => hooks.onResolution?.(beat));
-      schedule(next, beat.banner ? timing.bannerMs : timing.stepMs);
+      schedule(next, beat.banner ? T.bannerMs : T.stepMs);
       return;
     }
     stage('intent', beat, () => hooks.onIntent?.(beat));
     // The action word belongs to the same stage as the intent: no gap when intentMs is 0.
-    const act = fn => timing.intentMs > 0 ? schedule(fn, timing.intentMs) : fn();
+    const act = fn => T.intentMs > 0 ? schedule(fn, T.intentMs) : fn();
     act(() => {
       stage('action', beat, () => hooks.onAction?.(beat));
       schedule(() => {
-        actor = stage('sprite', beat, () => hooks.onSprite?.(beat, timing.spriteSpeed));
+        actor = stage('sprite', beat, () => hooks.onSprite?.(beat, T.spriteSpeed));
         const spriteStart = now();
         const impact = Math.max(0, Number(actor?.impactMs) || 0);
         const total = Math.max(impact, Number(actor?.totalMs) || 0);
@@ -84,7 +86,7 @@ export function runActionTimeline(beats, hooks, timingIn, {
             cancelActor();
             if (beat.telegraph) {
               stage('resolution', beat, () => hooks.onResolution?.(beat));
-              schedule(next, Math.max(timing.resetMs, timing.stepMs));
+              schedule(next, Math.max(T.resetMs, T.stepMs));
               return;
             }
             schedule(() => {
@@ -98,27 +100,28 @@ export function runActionTimeline(beats, hooks, timingIn, {
                 schedule(() => {
                   const reactionLife = Number(stage('reaction', group, () => hooks.onReaction?.(group))) || 0;
                   // Nominal reaction and damage waits were reserved per group.
-                  creditWatchdog(Math.max(0, reactionLife - timing.reactionMs - timing.damageMs));
+                  creditWatchdog(Math.max(0, reactionLife - T.reactionMs - T.damageMs));
                   schedule(() => {
                     stage('damage', group, () => hooks.onNumbers?.(group));
                     // Yield a task so numbers paint before replacement of the HUD.
                     schedule(() => {
                       stage('hud', group, () => hooks.onApply?.(group));
-                      const rest = Math.max(timing.damageMs, reactionLife - timing.reactionMs);
+                      const rest = Math.max(T.damageMs, reactionLife - T.reactionMs);
                       if (groupIndex < groups.length) { schedule(react, rest); return; }
                       schedule(() => {
                         stage('resolution', beat, () => hooks.onResolution?.(beat));
-                        schedule(next, Math.max(timing.resetMs, timing.stepMs));
+                        schedule(next, Math.max(T.resetMs, T.stepMs));
                       }, rest);
                     });
-                  }, timing.reactionMs);
-                }, timing.resultMs);
+                  }, T.reactionMs);
+                }, T.resultMs);
               };
               react();
-            }, timing.afterSpriteMs);
-          }, remaining);
+            }, T.afterSpriteMs);
+          // A wind-up is held for at most the pacing's telegraph length (telegraphMs; 0 = the whole clip).
+          }, beat.telegraph && T.telegraphMs > 0 ? Math.min(remaining, T.telegraphMs) : remaining);
         }, impact);
-      }, beat.prepared ? 0 : timing.wordMs);
+      }, beat.prepared ? 0 : T.wordMs);
     });
   };
   // Budget derives from every added wait and the caller's real authored clip

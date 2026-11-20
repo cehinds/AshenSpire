@@ -10,13 +10,13 @@
         "frozen": false,
         "values": {
           "1": {
-            "__string": "ACT I — THE FALLOW MARCHES"
+            "__string": "ACT I: THE FALLOW MARCHES"
           },
           "2": {
-            "__string": "ACT II — THE STITCHED COURT"
+            "__string": "ACT II: THE STITCHED COURT"
           },
           "3": {
-            "__string": "ACT III — THE ASHEN CROWN"
+            "__string": "ACT III: THE ASHEN CROWN"
           }
         }
       },
@@ -1130,7 +1130,7 @@
                 "__string": "Monster"
               },
               "blurb": {
-                "__string": "A fight — cinders and a card reward."
+                "__string": "A fight for cinders and a card reward."
               }
             }
           },
@@ -1149,7 +1149,7 @@
                 "__string": "Monster"
               },
               "blurb": {
-                "__string": "A fight — cinders and a card reward."
+                "__string": "A fight for cinders and a card reward."
               }
             }
           },
@@ -1806,16 +1806,16 @@
         "frozen": false
       },
       "actTitle([1])": {
-        "__string": "ACT I — THE FALLOW MARCHES"
+        "__string": "ACT I: THE FALLOW MARCHES"
       },
       "actTitle([2])": {
-        "__string": "ACT II — THE STITCHED COURT"
+        "__string": "ACT II: THE STITCHED COURT"
       },
       "actTitle([7])": {
-        "__string": "ACT I — THE FALLOW MARCHES · CYCLE 3"
+        "__string": "ACT I: THE FALLOW MARCHES · CYCLE 3"
       },
       "actTitle([4,\"The Pale Marches\"])": {
-        "__string": "ACT I — THE PALE MARCHES · CYCLE 2"
+        "__string": "ACT I: THE PALE MARCHES · CYCLE 2"
       },
       "actPlate([7,3])": {
         "__number": "1"
@@ -3627,10 +3627,10 @@
         "__string": "<div class=\"tt-title\">Intent: Unknown</div>"
       },
       "intentTooltip([{\"kind\":\"staggered\"}])": {
-        "__string": "<div class=\"tt-title\">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage."
+        "__string": "<div class=\"tt-title\">Staggered</div>Poise broken. This enemy's turn is skipped and it takes +50% damage."
       },
       "intentTooltip([{\"damage\":5,\"hits\":2,\"totalDamage\":10,\"pending\":true}])": {
-        "__string": "<div class=\"tt-title\">Intent: Attack</div>Attacking you for <b>5 × 2 (10 total)</b> damage (modifiers included).<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it."
+        "__string": "<div class=\"tt-title\">Intent: Attack</div>Attacking you for <b>5 × 2 (10 total)</b> damage (modifiers included).<br><b>Committed:</b> this delayed attack lands this coming turn. Stagger cancels it."
       },
       "intentTooltip([{\"damage\":5,\"hits\":1,\"delayed\":true},{\"victim\":\"each hero\"}])": {
         "__string": "<div class=\"tt-title\">Intent: Attack</div>Attacking each hero for <b>5</b> damage (modifiers included).<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it."
@@ -6542,7 +6542,7 @@
         "frozen": true
       },
       "MAP_TERRAIN_REVEAL_RADIUS": {
-        "__number": "74"
+        "__number": "100"
       },
       "MEGA_MAPS": {
         "__array": [

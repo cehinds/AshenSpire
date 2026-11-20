@@ -1,0 +1,26 @@
+{
+  "id": "status.brittle",
+  "tag": "status.brittle",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Brittle",
+  "description": "The next hit it takes deals x1.5 damage, then Brittle ends.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.brittle"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/elementIdentity.js",
+    "symbol": "ElementReceiptStages"
+  }
+}

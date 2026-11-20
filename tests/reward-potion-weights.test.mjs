@@ -45,8 +45,10 @@ test('shop stock offers a held potion far less often than an unheld one, but not
   const none = ratio(shopPotionCounts(registries, []));
   assert.ok(none.held / none.mean > 0.7, `nothing held: ${none.held} vs ${none.mean}`);
 });
+// Owner 2026-11-14: the shipped combat door has no potions, so this test gives combat the explicit legacy mix.
+const LEGACY_GROUPS = [['cards', 66, 'combatCards'], ['weaponArts', 4, 'weaponArts'], ['potions', 18, 'potions'], ['flaskRelic', 2, 'relics'], ['weapons', 10, 'weapons'], ['retired', 0, 'armor']].map(([id, weight, category]) => ({ id, weight, categories: [category] }));
 test('chests and combat rewards use the same weighting', () => {
-  const registries = build({ 'reward-ranks': { stanceCoverage: { enabled: false, reservedSlots: 0, preferTiers: ['basic'], excludePools: ['special'] } }, rewards: { offerCount: 1 } });
+  const registries = build({ 'reward-ranks': { stanceCoverage: { enabled: false, reservedSlots: 0, preferTiers: ['basic'], excludePools: ['special'] } }, rewards: { offerCount: 1, rewardGroups: LEGACY_GROUPS } });
   for (const source of ['treasure', 'combat']) {
     let held = 0, other = 0;
     const run = fresh(registries, 1, [HELD]);

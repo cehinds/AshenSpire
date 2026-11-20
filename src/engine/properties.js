@@ -231,30 +231,6 @@ export function syncClassProperties(combat, entity) {
   if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
 }
 
-/** Selected class feats are held until deselected; sync also removes stale mounts. */
-export function featCarrier(registries, featId, ownerKey) {
-  const def = registries.classSkillFeats?.find(row => row.id === featId);
-  const tagIds = def?.propertyTags || [];
-  return tagIds.length || hasMechanics(def) ? { ...mechanicMetadata(def), kind: 'feat', id: featId, instanceId: featId, ownerKey, tagIds: [...tagIds] } : null;
-}
-
-export function syncFeatProperties(combat, entity, featIds) {
-  const owner = entity || combat?.player;
-  if (!owner || !combat) return;
-  const ownerKey = Triggers.triggerOwnerKey(combat, owner);
-  const seat = combat.players instanceof Map ? [...combat.players.values()].find(row => row.entity === owner) : null;
-  const ids = featIds ?? seat?.skillFeats ?? owner.skillFeats ?? combat.skillFeats ?? [];
-  const wanted = [...new Set(ids)].map(id => featCarrier(combat.registries, id, ownerKey)).filter(Boolean);
-  const keys = new Set(wanted.map(propertySourceKey));
-  const current = combat.propertyMounts?.[ownerKey] || {};
-  for (const [key, mount] of Object.entries(current)) {
-    if (mount.kind === 'feat' && !keys.has(key)) unmountProperties(combat, { ...mount, ownerKey, tagIds: [] });
-  }
-  for (const carrier of wanted) {
-    if (!combat.propertyMounts?.[ownerKey]?.[propertySourceKey(carrier)]) mountProperties(combat, carrier);
-  }
-}
-
 /**
  * companionCarrier(registries, companionId, ownerKey) → the carrier a
  * travelling companion presents (SPEC §14.3), or null when it confers

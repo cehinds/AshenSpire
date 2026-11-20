@@ -13,7 +13,7 @@ test('the actual selected action resolves effective equipment tags and the chose
   const calls=[],actions=[],events=[];
   const leading={append:action=>actions.push(action)};
   const player={querySelector:selector=>({'.combatant-leading':leading}[selector] || null)};
-  const context={combat:{},upcastRanksByCard:new Map([[inst.instanceId,ranks]]),combatProfileFor,kindForCard,
+  const context={combat:{},PlayerFluxView:()=>null,ElementFluxRules:()=>null,dv:entity=>entity,inPreparedStance:()=>false,SetPlayerFlux:()=>{},SetPlayerAdvanced:()=>{},upcastRanksByCard:new Map([[inst.instanceId,ranks]]),combatProfileFor,kindForCard,
     resolveCombatCard:(combat,instance,options)=>{
       assert.equal(combat,context.combat);assert.equal(instance,inst);assert.equal(options.upcastRanks,ranks);
       calls.push('resolve');
@@ -37,7 +37,7 @@ test('both real selection/render callers pass the instance; a kept glyph node is
   const previous={dataset:{maneuver:'attack'},remove:()=>calls.push('removed')};
   const player={querySelector:selector=>({'.combatant-leading':leading,'.player-action-intent':previous}[selector] || null)};
   const shown=[];
-  const context={upcastRanksByCard:new Map(),resolveCombatCard:()=>assert.fail('no carrier to resolve'),
+  const context={combat:{},PlayerFluxView:()=>null,ElementFluxRules:()=>null,dv:entity=>entity,inPreparedStance:()=>false,SetPlayerFlux:()=>{},SetPlayerAdvanced:()=>{},upcastRanksByCard:new Map(),resolveCombatCard:()=>assert.fail('no carrier to resolve'),
     combatProfileFor,kindForCard,RESTING_PLAYER_ACTION:{maneuver:'ready'},
     playerActionIntent:()=>assert.fail('a node is built once, at mount'),
     setPlayerActionManeuver:(node,profile)=>{assert.equal(node,previous);shown.push(profile);},

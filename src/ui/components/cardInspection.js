@@ -1,9 +1,10 @@
 import { logicalViewport } from '../viewViewport.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard, clearSelection } from './cardSelection.js';
 import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel.js';
+import { setAttr } from '../domWrite.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
 // ./cardSelection.js. They were two module-level `let`s here — shared by every
@@ -319,7 +320,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   // W1o: the header close is the way out. The footer holds only applicable
   // actions — one fills it — and a read-only door has no footer at all, not a
   // redundant Back beside the close it duplicates.
-  const shell = openModal({ title, size: 'lg',
+  const shell = OpenModal({ title, size: 'lg',
     className: 'card-inspection-modal', opener, deferFocus: true, deferLift,
     primary: buttons[0] || null,
     secondary: buttons.slice(1),
@@ -344,13 +345,6 @@ export function openCardInspection({ title, card, details, opener, actions = nul
       commit();
     });
   }
-  shell.panel.addEventListener('keydown', event => {
-    if (event.key !== 'Tab') return;
-    const targets = [...shell.panel.querySelectorAll('button:not([disabled]), [tabindex="0"], a[href]')].filter(el => el.getClientRects().length);
-    const first = targets[0], last = targets.at(-1);
-    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
-  });
   return shell;
 }
 
@@ -418,7 +412,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     // Keep combat.css's `.hand[data-has-selection]` (the old `.hand:has(.selected)`) true to the DOM.
     const hand = card.closest('.hand');
     if (hand && hand.getAttribute('data-has-selection') === 'true' && !hand.querySelector('.selected')) hand.setAttribute('data-has-selection', 'false');
-    card.setAttribute('aria-pressed', 'false');
+    setAttr(card, 'aria-pressed', 'false');
     card.removeAttribute('aria-current');
     // HOW A FACE LEARNS IT MUST SAY LESS AGAIN. A card's presentation level
     // (src/model/cardFields.js) is `focus` while it is lit and its floor when
@@ -434,8 +428,8 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   const select = () => {
     lightCard(identity, douse);
     card.classList.add('inspection-selected');
-    card.setAttribute('aria-pressed', 'true');
-    card.setAttribute('aria-current', 'true');
+    setAttr(card, 'aria-pressed', 'true');
+    setAttr(card, 'aria-current', 'true');
     card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
   };
   // A HOLD THAT BECOMES A DRAG TAKES ITS LIGHT BACK. A combat card's hold
@@ -511,8 +505,8 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   if (litCard() === identity) {
     lightCard(identity, douse);
     card.classList.add('inspection-selected');
-    card.setAttribute('aria-pressed', 'true');
-    card.setAttribute('aria-current', 'true');
+    setAttr(card, 'aria-pressed', 'true');
+    setAttr(card, 'aria-current', 'true');
   }
   if (info) card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });

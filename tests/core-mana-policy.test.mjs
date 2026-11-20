@@ -9,6 +9,8 @@ import { createRng } from '../src/engine/rng.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { getStacks } from '../src/engine/statuses.js';
+import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
+import { rederivePools } from '../src/model/levelup.js';
 const registries = core2Registries();
 function fresh(classId = 'reaver', reg = registries) {
   return createRunState({ seed: 73, classId, registries: reg, runId: 'mana-policy-test',
@@ -26,8 +28,14 @@ function fight(cardId, classId = 'reaver', reg = registries) {
   return { combat, card };
 }
 
-test('core Reaver starts with one MP and an earned WIS point still adds exactly one maximum MP', () => {
-  const run = fresh(); assert.equal(run.maxMana, 1); assert.equal(run.mana, 1);
+// Owner, 2026-11-17: MP grows with the greater of INT and WIS, with the first increase at 4.
+test('core Reaver starts with one MP and an earned fourth WIS adds exactly one maximum MP', () => {
+  // Level Up is no longer a shipped rest service; a run pinned to the pre-one-pick rests keeps it.
+  const run = pinLegacyRests(fresh()); assert.equal(run.maxMana, 1); assert.equal(run.mana, 1);
+  assert.equal(run.attributes.wisdom, 1);
+  run.attributes.intelligence = 3; run.attributes.wisdom = 3;
+  rederivePools(registries, run, 'test');
+  assert.equal(run.maxMana, 1, 'INT 3 and WIS 3 leave Mana at the base');
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
   beginGameProfileRest(run, '1:' + run.mapNodeId); run.level.unspentPoints = 1;
   commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });
@@ -58,14 +66,15 @@ test('Sundering Art preview, affordability and actual combat payment use the sam
   assert.ok(combat.eventLog.some(event => event.type === 'cardPlayed' && event.cardInstanceId === card.instanceId));
 });
 
-test('Star Spark pays one MP and actually applies two decaying Vulnerable stacks', () => {
+// Owner, 2026-11-15 (W25-F): every spell costs 1 more Mana, so Star Spark's printed 1 MP is paid as 2 (no Focus armament here; the Focus discount has its own test).
+test('Star Spark pays two MP (one printed, one spell surcharge) and actually applies two decaying Vulnerable stacks', () => {
   const { combat, card } = fight('core.starseerSpecial', 'starseer');
   // Magic spends Poise 1:1 (owner, 2026-10-31), so the spell would empty the soldier's Poise 5 and the break's Staggered adds a third Vulnerable.
   // A deep pool keeps this test about the card's own two stacks.
   combat.enemies[0].persistentPoise = { value: 100, max: 100 };
   const before = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
-  assert.equal(combat.player.mana, before - 1);
+  assert.equal(combat.player.mana, before - 2);
   assert.equal(getStacks(combat.enemies[0], 'vulnerable'), 2);
   assert.equal(registries.statuses.get('vulnerable').modifiers.damageTakenMult, 1.25);
   assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');

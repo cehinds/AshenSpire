@@ -33,6 +33,7 @@ cost.action,term.action,term.tooltip.action,
 cost.stamina,term.stamina,term.tooltip.stamina,
 cost.mana,term.mana,term.tooltip.mana,
 cost.alternative,term.alternativeCost,term.tooltip.alternativeCost,
+cost.manaOnly,term.manaOnly,term.tooltip.manaOnly,
 lifecycle.innate,term.innate,term.tooltip.innate,
 lifecycle.retain,term.retain,term.tooltip.retain,
 lifecycle.recall,term.recall,term.tooltip.recall,
@@ -56,6 +57,7 @@ targeting.self,term.targetSelf,term.tooltip.targetSelf,
 targeting.enemy,term.targetEnemy,term.tooltip.targetEnemy,
 targeting.allEnemies,term.targetAllEnemies,term.tooltip.targetAllEnemies,
 targeting.randomEnemy,term.targetRandomEnemy,term.tooltip.targetRandomEnemy,
+targeting.otherEnemy,term.targetOtherEnemy,term.tooltip.targetOtherEnemy,
 targeting.ally,term.targetAlly,term.tooltip.targetAlly,
 targeting.allAllies,term.targetAllAllies,term.tooltip.targetAllAllies,
 internal.unplayable,term.unplayable,term.tooltip.unplayable,
@@ -85,7 +87,7 @@ quickHands,,,"Begin each combat with {prepared} Prepared."
 secondWind,,,"The first card you exhaust each turn draws {draw} card."
 honedEdge,,,"Your attacks while Prepared apply {bleed} Bleed."
 poisonedPouch,,,"Your attacks while Prepared apply {venom} Venom."
-assassin,,,"When an enemy staggers, gain {prepared} Prepared and draw {draw} card."
+assassin,,,"When an enemy becomes Broken, gain {prepared} Prepared and draw {draw} card."
 shadow,,,"At the start of your turn, gain {block} Block."
 partingBlow,,,"Leaving a stance deals {damage} damage to a random enemy."
 ironRebuke,,,"While in Brace, losing HP deals {damage} damage to a random enemy."
@@ -94,7 +96,7 @@ mendingGrip,,,"The first stance you enter each turn heals {heal}."
 spentStars,,,"The first card you exhaust each turn restores {restoreMana} Mana."
 fallingStar,,,"The first time you restore Mana each turn, deal {damage} damage to a random enemy."
 lodestarPull,,,"Begin each combat with {vulnerable} Vulnerable on every enemy."
-shardHunger,,,"Whenever an enemy Staggers, restore {restoreMana} Mana."
+shardHunger,,,"Whenever an enemy becomes Broken, restore {restoreMana} Mana."
 burningGrace,,,"Whenever you heal, deal {damage} damage to a random enemy."
 dazzlingLight,,,"The first time you heal each turn, apply {weak} Weak to every enemy."
 anointedBlade,,,"The first time you heal each combat, gain {strength} Strength."
@@ -129,7 +131,7 @@ feat:last-rampart,,,"At {hpPct}% HP or lower, your first Guard card each turn gr
 feat:war-cadence,,,"After your second Heavy card in a turn, gain {block} Block, once per turn."
 feat:broad-sentence,,,Your first attack that hits all living enemies each turn deals +{damage} damage to each target.
 feat:ember-sovereign,,,"Once per turn, a Crown of Cinders charge gains +{damage} damage before it is consumed."
-feat:dread-of-the-hammer,,,Your first Heavy attack against a Staggered target each turn deals +{damage} damage.
+feat:dread-of-the-hammer,,,Your first Heavy attack against a Broken target each turn deals +{damage} damage.
 feat:scarred-oath,,,"Your first Guard card after losing HP since your previous turn began grants +{block} Block, once per turn."
 feat:harvest-the-wound,,,"Your first credited kill of an enemy with Bleed buildup heals {heal} HP, once per combat."
 feat:orbit-keeper,,,Your first Starstone spell following another spell each turn deals +{damage} direct damage.

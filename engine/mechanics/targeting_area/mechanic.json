@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/proposalStatusRules.js",
-    "symbol": "proposalTargetRules"
+    "file": "src/model/elementIdentityRules.js",
+    "symbol": "HitsAllTargets"
   }
 }

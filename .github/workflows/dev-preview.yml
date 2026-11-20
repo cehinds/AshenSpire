@@ -202,6 +202,9 @@ jobs:
       # That merge's own push starts build-stamp, which re-dispatches this workflow for its
       # stamp, so the artifact for the final tip still appears. The strict guarantee stays
       # at test, where a promoted tree must already carry the box it ships.
+      # Restamped feature/fix/chore heads also build through workflow_dispatch:
+      # the bot cannot start a PR run. They have the same two generated outputs
+      # as PR builds. Other refs, including review, stay strict.
       - name: The rebuild changed nothing committed
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -210,7 +213,7 @@ jobs:
           set -euo pipefail
           git status --porcelain
           case "$EVENT_NAME:$REF_NAME" in
-            pull_request:*|push:dev|push:alternative/dev|push:alternative/*/dev|workflow_dispatch:dev|workflow_dispatch:alternative/dev|workflow_dispatch:alternative/*/dev)
+            pull_request:*|push:dev|push:alternative/dev|push:alternative/*/dev|workflow_dispatch:dev|workflow_dispatch:alternative/dev|workflow_dispatch:alternative/*/dev|workflow_dispatch:[Ff][Ee][Aa][Tt][Uu][Rr][Ee]/*|workflow_dispatch:[Ff][Ii][Xx]/*|workflow_dispatch:[Cc][Hh][Oo][Rr][Ee]/*)
               unexpected="$(git status --porcelain --untracked-files=all | cut -c4- | grep -Ev '^(buildordinal\.json|src/content/changelog\.generated\.js)$' || true)"
               if [ -n "$unexpected" ]; then
                 echo "::error::The rebuild changed files other than the build's own outputs:"

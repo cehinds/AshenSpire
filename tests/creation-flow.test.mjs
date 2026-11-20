@@ -9,11 +9,11 @@ import {creationCategories,creationFlowCategories,creationHasSpells,creationAbil
 const registries=createRegistries(contentBundle);
 const birth=classId=>createRunState({registries,classId,seed:42});
 test('creation follows authored pages and omits only Spells for noncasting class metadata',()=>{
- assert.deepEqual([...creationCategories()],['class','attributes','keepsake','equipment','feats','spells','review']);
+ assert.deepEqual([...creationCategories()],['class','attributes','equipment','feats','spells','review']);
  for(const cls of registries.classes.all()){
   const expected=cls.tags.includes('item:magic-focus')||registries.characterCreation.classes[cls.id].startingAbility?.skillId==='item:magic-focus';
   assert.equal(creationHasSpells(registries,cls.id),expected);
-  const flow=creationFlowCategories(registries,cls.id);assert.equal(flow.includes('spells'),expected);assert.equal(flow.length,expected?7:6);
+  const flow=creationFlowCategories(registries,cls.id);assert.equal(flow.includes('spells'),expected);assert.equal(flow.length,expected?6:5);
   assert.equal(creationFooterPlan({categories:flow,current:'equipment'}).next,'feats');
   assert.equal(creationFooterPlan({categories:flow,current:'feats'}).next,expected?'spells':'review');
  }
@@ -36,6 +36,6 @@ test('ability selections retain legal distinct families, cap count and clear sta
 });
 test('birth and Quick Start retain existing zero-feat and omitted-ability contracts',()=>{
  const quick=quickStartRunConfig(registries);assert.equal(Object.hasOwn(quick,'startingAbilityIds'),false);assert.equal(Object.hasOwn(quick,'startingFeatIds'),false);
- const run=createRunState({registries,seed:42,...quick});assert.deepEqual(run.feats,[]);assert.equal(run.level.level,1);
- for(const cls of registries.classes.all())assert.deepEqual(birth(cls.id).feats,[]);
+ const run=createRunState({registries,seed:42,...quick});assert.equal(run.feats,undefined);assert.equal(run.level.level,1);
+ for(const cls of registries.classes.all())assert.equal(birth(cls.id).feats,undefined);
 });

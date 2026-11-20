@@ -6,7 +6,7 @@
 // its box takes the viewBox's own aspect, so that stretch is a no-op.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 function buildRow(dom) {
   const doc = dom.document;

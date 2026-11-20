@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
-const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
-const qa = readFileSync(new URL('../tools/combat-layer-qa.mjs', import.meta.url), 'utf8');
-const css = readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8');
+const stage = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
+const qa = readSourceTextSync(new URL('../tools/combat-layer-qa.mjs', import.meta.url));
+const css = readSourceTextSync(new URL('../styles/combat-layers.css', import.meta.url));
 
 test('stage composes with the perspective-grid composition only (Classic layout removed 2026-11-03)', () => {
   assert.match(stage, /alternativeCombatComposition as combatComposition/);

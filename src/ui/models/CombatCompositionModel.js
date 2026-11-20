@@ -25,22 +25,19 @@ export function stableCombatArtwork(previous, key, sizes) {
   return previous?.key === key ? previous : { key, sizes: sizes.map(size => ({ ...size })) };
 }
 
-// The line the backdrop camera frames its ground anchor on. A fit may carry
-// its own `sceneryGround` (a short portrait phone keeps the near-row framing,
-// with its horizon and landmark in view, while its enemies stand further back).
-export function combatSceneryGround(sizes, actors, fallback) {
+function nearestEnemyGround(sizes, actors, fallback, groundField) {
   const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
-  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.sceneryGround ?? size.ground))
-    .map(size => size.sceneryGround ?? size.ground);
+  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size[groundField] ?? size.ground))
+    .map(size => size[groundField] ?? size.ground);
   return grounds.length ? Math.min(...grounds) : fallback;
 }
 
-// The farthest-back enemy foot line, which the backdrop keeps on its floor.
+export function combatSceneryGround(sizes, actors, fallback) {
+  return nearestEnemyGround(sizes, actors, fallback, 'sceneryGround');
+}
+
 export function combatStandingGround(sizes, actors, fallback) {
-  const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
-  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size.standingGround ?? size.ground))
-    .map(size => size.standingGround ?? size.ground);
-  return grounds.length ? Math.min(...grounds) : fallback;
+  return nearestEnemyGround(sizes, actors, fallback, 'standingGround');
 }
 
 // Attach the foreground player's feet to the battlefield edge, above the
@@ -70,7 +67,8 @@ export function alternativeCombatComposition(options) {
 // The perspective grid places every body on its cell's foot anchor: the
 // sprite's feet stand on the cell's shadow. The shared fit already sized each
 // body to its lane and its headroom; composition only keeps it in the field.
-function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true }) {
+// `unit`: real px per authored px (the combat canvas's fit in the stage), applied to the authored edge gap and insets.
+function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true, unit = 1 }) {
   // Once the sizing rule slid any figure to clear a neighbour, its x for every
   // figure is authoritative: the cell footprint clamp below would pull a
   // neighbour back across the cleared gap.
@@ -83,7 +81,7 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
     // The sizing rule may have slid a figure sideways to clear a neighbour
     // (size.x); the foot inset then only keeps the ground inside the cell.
     const moved = (size.slid === true || trustSizeX) && Number.isFinite(size.x);
-    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, moved ? size.x : actor.slot.x));
+    const x = Math.max(halfWidth + 6 * unit, Math.min(width - halfWidth - 6 * unit, moved ? size.x : actor.slot.x));
     // Owner 2026-11-06: every figure's feet (its shadow's centre) stand inside the DRAWN cell, footInCellFraction of
     // the cell's height above its bottom line, never on a line. The drawn cell is the slot's own box.
     // The party keeps its own x (its fit already cleared its neighbours); only the ground moves.
@@ -91,8 +89,8 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
     const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
     const box = actor.slot.box;
     const wanted = box ? { ...actor.slot, ground: box.top + box.height * (1 - grid.footInCellFraction) } : actor.slot;
-    const inner = box ? insetPerspectiveFootprint(wanted, { width: halfWidth * 2, height: shadowHeight }) : null;
-    const stripFits = inner && box.height >= shadowHeight + 2 * grid.footprintInsetPx;
+    const inner = box ? insetPerspectiveFootprint(wanted, { width: halfWidth * 2, height: shadowHeight, inset: grid.footprintInsetPx * unit }) : null;
+    const stripFits = inner && box.height >= shadowHeight + 2 * grid.footprintInsetPx * unit;
     // A strip too short for the shadow plus both insets (a landscape phone's 9px strip) stands the foot at its middle, so it stays inside.
     const ground = inner ? (stripFits ? inner.ground : box.top + box.height / 2) : actor.slot.ground;
     const foot = inner ? (actor.side === 'enemy' ? { x: inner.x, ground } : { x, ground }) : { x, ground };
@@ -111,7 +109,7 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
   });
   for (const band of bands.values()) {
     if (band.length < 2) continue;
-    separateRow(band, width);
+    separateRow(band, width, undefined, unit);
     for (const row of band) row.size.x = row.x;
   }
   return placed;

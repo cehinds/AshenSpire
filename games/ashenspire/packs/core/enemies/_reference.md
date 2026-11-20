@@ -30,7 +30,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:hollowAstronomer | The Hollow Astronomer | boss |
 | enemy:huskBrute | Husk Brute | minion |
 | enemy:lanternMoth | Lantern Moth | minion |
-| enemy:livingArmor | Living Armor | minion |
+| enemy:livingArmor | Living Armour | minion |
 | enemy:marrowOrganist | The Marrow Organist | boss |
 | enemy:mirrorScribe | Mirror Scribe | minion |
 | enemy:stitchCrab | Stitch Crab | minion |
@@ -200,9 +200,9 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:straightSword | Straight Sword | rightHand | weapon | common | sword |
 | gear:greatsword | Greatsword | rightHand | weapon | uncommon | greatsword, heavy, stagger |
 | gear:dagger | Dagger | rightHand | weapon | common | dagger, flurry, throw |
-| gear:shortbow | Shortbow | rightHand | weapon | common | bow |
+| gear:shortbow | Shortbow | rightHand | weapon | common | bow, retreat |
 | gear:katana | Katana | rightHand | weapon | uncommon | katana, bleed |
-| gear:halberd | Halberd | rightHand | weapon | uncommon | polearm, heavy, stagger |
+| gear:halberd | Halberd | rightHand | weapon | uncommon | polearm, heavy, stagger, retreat |
 | gear:warhammer | Warhammer | rightHand | weapon | uncommon | hammer, stagger |
 | gear:twinblade | Twinblade | rightHand | weapon | rare | twinblade, flurry, light |
 | gear:battleaxe | Battleaxe | rightHand | weapon | common | axe, heavy |
@@ -216,11 +216,11 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:parryDagger | Parrying Dagger | leftHand | shield | uncommon | parryingDagger, stagger |
 | gear:ashStaff | Ash Staff | rightHand | staff | common | staff |
 | gear:starstoneStaff | Starstone Staff | rightHand | staff | uncommon | staff, frost |
-| gear:boneSceptre | Bone Sceptre | rightHand | staff | uncommon | sceptre, blight |
-| gear:emberlightSceptre | Emberlight Sceptre | rightHand | staff | rare | sceptre |
+| gear:boneSceptre | Bone Sceptre | rightHand | staff | uncommon | sceptre, blight, retreat |
+| gear:emberlightSceptre | Emberlight Sceptre | rightHand | staff | rare | sceptre, retreat |
 | gear:goldboughBranch | Goldbough Branch | rightHand | staff | rare | staff, regen |
 | gear:blightRod | Blight Rod | rightHand | staff | uncommon | rod, blight |
-| gear:gorefireBrand | Gorefire Brand | rightHand | staff | rare | sceptre, burn, bleed |
+| gear:gorefireBrand | Gorefire Brand | rightHand | staff | rare | sceptre, burn, bleed, retreat |
 | gear:wyrmhornStaff | Wyrmhorn Staff | rightHand | staff | rare | staff, stagger, insanity |
 | gear:frostSpear | Frost Spear | rightHand | weapon | uncommon | spear, frost |
 | gear:cinderAxe | Cinder Axe | rightHand | weapon | uncommon | axe, heavy, burn |

@@ -23,7 +23,7 @@ export function enemyActionEffectText(effect, registries) {
   if (effect.op === 'wardDamage') return `${value(effect.amount)} Ward damage to ${target}`;
   if (effect.op === 'buildup') return `Build ${value(effect.amount)} ${registries?.statuses?.get(effect.status)?.name || words(effect.status)} on ${target}`;
   if (effect.op === 'removeStatus') return `Remove ${registries?.statuses?.get(effect.status)?.name || words(effect.status)} from ${target}`;
-  if (effect.op === 'restoreMana' || effect.op === 'restoreStamina') return `Restore ${value(effect.amount)} ${effect.op === 'restoreMana' ? 'MP' : 'SP'} to ${target}`;
+  if (effect.op === 'restoreMana' || effect.op === 'restoreStamina') return `Restore ${value(effect.amount)} ${effect.op === 'restoreMana' ? 'Mana' : 'Stamina'} to ${target}`;
   // Unsupported future operations stay named without exposing executable source.
   return `${words(effect.op)}${effect.amount == null ? '' : ` ${value(effect.amount)}`} (${target})`;
 }
@@ -86,8 +86,9 @@ export function enemyMoveCards(def, { enemy = null, preview = null, registries =
     if (move.maxConsecutive != null) meta.push(`At most ${move.maxConsecutive} consecutive selections`);
     if (tags.length) meta.push(`Tags: ${tags.map(words).join(', ')}`);
     if (combatTags.length) meta.push(combatTags.map(tag => tag.label).join(' · '));
+    const effectLines = [...pieces];
     pieces.push(...combatTags.filter(tag => tag.blurb).map(tag => `${tag.label}: ${tag.blurb}`));
     return { id: `${def.id}:${moveId}`, moveId, name: move.name || words(moveId), active, locked,
-      tags, combatTags, profile, intent: move.intent, detail: pieces.join(' · ') || words(move.intent), meta: meta.join(' · ') };
+      tags, combatTags, profile, intent: move.intent, detail: pieces.join(' · ') || words(move.intent), effectLines, meta: meta.join(' · ') };
   });
 }

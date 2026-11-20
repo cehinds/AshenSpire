@@ -40,6 +40,8 @@ function fixture(code = rendering, wrote = {}) {
     battlefieldStage: { refresh() { fits.push({ handWidth, handReceipt, toolsTop, controlsReady, toolsReady, badgesReady }); events.push('fit'); } },
     formationMovement: { refresh: () => events.push('formation') },
     applyTargetLayer: () => events.push('targets'), refreshAim: () => events.push('aim'),
+    // The enemy intent rows slide back on screen after the fit (playtest 2026-11-17); a read-then-write pass, no fit.
+    KeepIntentRowsInside: () => events.push('intent-rows'),
     // The Combat Rounds Preview's screen layer (SPEC 4.11). It only adds marks and changes no layout, so it is a
     // no-op here and leaves the recorded order above unchanged.
     decorateRoundsScreen: () => {}, decorateCombatRoundsScreen: () => {}, previewMemo: {}, targetedEnemyId: () => null, lastTargetId: null, combatEl: null,
@@ -53,7 +55,7 @@ function fixture(code = rendering, wrote = {}) {
 test('the actual full combat render fits once after hand layout and measured incoming footer tools', () => {
   const probe = fixture(); probe.api.render();
   assert.deepEqual(probe.fits, [{handWidth:390,handReceipt:390,toolsTop:744,controlsReady:true,toolsReady:true,badgesReady:true}]);
-  assert.deepEqual(probe.events, ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','measure-tools','fit','formation','targets','aim','hint','automation']);
+  assert.deepEqual(probe.events, ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','measure-tools','fit','formation','targets','intent-rows','aim','hint','automation']);
   assert.equal(probe.field.dataset.playerCell, 'A1');
   assert.deepEqual(JSON.parse(probe.field.dataset.formationOccupancy),[{id:'player',cell:'A1',side:'player'}]);
 });
@@ -82,8 +84,7 @@ test('the actual tools geometry flush cancels its queued measure and publishes z
   const tools = readFileSync(new URL('../src/ui/components/combatTools.js', import.meta.url), 'utf8');
   const begin = tools.indexOf('  let frame = 0, entryKey');
   const end = tools.indexOf('  const observer =', begin);
-  const callbacks = new Map(), canceled = [], properties = new Map();
-  let id = 0;
+  const callbacks = new Map(), properties = new Map();
   const hand={getBoundingClientRect:()=>({width:390,right:390,top:356.5775146484375})};
   const root = {isConnected:true,style:{setProperty:(key,value)=>properties.set(key,value)},dataset:{},getBoundingClientRect:()=>({height:60,top:500})};
   const combatEl = {dataset:{desktopFooter:'false'},clientWidth:390/.83,getBoundingClientRect:()=>({left:0,top:0,bottom:844,width:390}),
@@ -95,17 +96,17 @@ test('the actual tools geometry flush cancels its queued measure and publishes z
     window:{}, innerWidth:390, drag:null, snapHeights:()=>({Small:125}), VIEWPORT_ORIGIN:{},
     anchorLocalBox:(_host,rect,{zoom})=>({left:rect.left/zoom,top:rect.top/zoom,width:rect.width/zoom,height:rect.height/zoom}),
     getComputedStyle:()=>({getPropertyValue:key=>key==='--combat-tools-gap'?'8':'136'}),
-    requestAnimationFrame:fn=>{callbacks.set(++id,fn);return id;},
-    cancelAnimationFrame:key=>{canceled.push(key);callbacks.delete(key);},
+    measureThenMutate:(key,read)=>{callbacks.set(key,read);},
   });
   api.schedule(); api.flushGeometry();
-  assert.deepEqual(canceled,[1]); assert.equal(callbacks.size,0);
+  // The flush ran the pass itself; the job it left queued reads nothing (a flushed pass is not repeated).
+  assert.equal(callbacks.size,1); assert.equal([...callbacks.values()][0](),null);
   assert.equal(properties.get('--combat-tools-reserve'),'0px');
   assert.equal(properties.get('--combat-log-button-width'),'100px','Deck placement reads the log width in local layout units');
   assert.equal(root.style.width,'auto','corners follow the combat screen rather than current fan width');
   assert.equal(root.style.left,'16px'); assert.equal(root.style.right,'16px');
   assert.ok(Math.abs(parseFloat(root.style.top)*.83-(820-60-4/.83))<1e-9, 'row clears the measured footer controls');
-  api.schedule(); assert.equal(callbacks.size,1,'ordinary observer updates still schedule normally');
+  api.schedule(); assert.equal(typeof [...callbacks.values()][0](),'function','ordinary observer updates still schedule normally');
 });
 
 test('tools-first ordering cannot inspect the incoming card obstacle receipt',()=>{
@@ -117,8 +118,8 @@ test('tools-first ordering cannot inspect the incoming card obstacle receipt',()
 
 // finishRender: the end of a played-out sequence. Same order as render(); the tools measure and the full
 // battlefield fit run only when a stage slot, the top bar or the hand's fan wrote.
-const FINISH_QUIET = ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','formation','targets','aim','hint','automation'];
-const FINISH_MOVED = ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','measure-tools','fit','formation','targets','aim','hint','automation'];
+const FINISH_QUIET = ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','formation','targets','intent-rows','aim','hint','automation'];
+const FINISH_MOVED = ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','measure-tools','fit','formation','targets','intent-rows','aim','hint','automation'];
 
 test('finishRender skips the tools measure and the battlefield fit when nothing that can move the board wrote', () => {
   for (const wrote of [{}, { hand: undefined }, { hand: { reshaped: false, rebuilt: 2 } }, { player: false, enemies: false, topbar: false }]) {

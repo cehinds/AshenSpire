@@ -12,11 +12,13 @@ import { stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../src/m
 import { attackHitPreview, resolveAttackHit, effectiveEvasion, evadeStackGain, precisionStatMix, precisionEntryGrant } from '../src/engine/stanceHit.js';
 import { rollKnowledgeRead } from '../src/model/enemyIntentKnowledge.js';
 import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
+import { legacyRules } from './legacyHitRules.mjs';
 
 function setup() {
  const ctx=createCombat({registries:createRegistries(contentBundle),rng:createRng(123),combatExpansionVersion:2,enemyIds:['wanderingSoldier'],
   player:{classId:'rogue',maxHp:100,hp:100,maxMana:10,mana:10,maxStamina:10,stamina:10,energyMax:10,drawPerTurn:1,deck:[]}});
- ctx.fixCoreRules=structuredClone(fixCoreRules(ctx));
+ // These suites price the d20 and the perception check, so their fights carry the rules of one saved before the 2026-11-14 ruling (tests/core-attacks-hit.test.mjs and core-intents-exact cover the shipped rules).
+ ctx.fixCoreRules=legacyRules(fixCoreRules(ctx));
  ctx.player.ratings={ar:8,dr:5,pr:2,ward:0,poise:0};ctx.player.statuses={};delete ctx.player.combatStance;
  const enemy=ctx.enemies[0];enemy.statuses={};enemy.attributes={dexterity:4};enemy.block=0;enemy.combatStance={maneuver:'attack',camp:'physical',range:'melee'};
  return {ctx,enemy};
@@ -103,10 +105,14 @@ test('fixed Evasion retains DEX at zero stacks and applies gear once',()=>{
  ctx.fixCoreRules.accuracy.baseAC=2;ctx.fixCoreRules.accuracy.evasionBase=4;
  assert.equal(evasion(2),16,'the locked FixCore evasionBase/baseAC no longer feed Evasion; the editable accuracy block in mechanics.json does');
 });
-test('shipped Evade grants exactly three stacks for every DEX value (owner, 2026-10-25)',()=>{
+test('legacy Evade grants exactly three stacks for every DEX value (owner, 2026-10-25); the shipped rules grant one (2026-11-14)',()=>{
  const {ctx}=setup();
  for(const dexterity of [0,2,17,100]) {
   ctx.player.attributes={dexterity};assert.equal(evadeStackGain(ctx,ctx.player),3);
+ }
+ const shipped=structuredClone(fixCoreRules({combatExpansionVersion:2}));
+ for(const dexterity of [0,2,17,100]) {
+  ctx.player.attributes={dexterity};ctx.fixCoreRules=shipped;assert.equal(evadeStackGain(ctx,ctx.player),1);
  }
 });
 test('Precision entry grants exactly 1 stack; DEX 2, level 1 gives mix 2 and Precision 1 + 2 + 1 = 4 (owner, 2026-10-31)',()=>{

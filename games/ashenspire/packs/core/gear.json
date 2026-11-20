@@ -27,7 +27,9 @@
       "heavy",
       "stagger"
     ],
-    "points": {},
+    "points": {
+      "strength": 3
+    },
     "source": {
       "file": "content/source/weapons.csv",
       "id": "greatsword"
@@ -46,7 +48,10 @@
       "flurry",
       "throw"
     ],
-    "points": {},
+    "points": {
+      "dexterity": 1,
+      "strength": 1
+    },
     "source": {
       "file": "content/source/weapons.csv",
       "id": "dagger"
@@ -61,7 +66,8 @@
     "kind": "weapon",
     "rarity": "common",
     "tags": [
-      "bow"
+      "bow",
+      "retreat"
     ],
     "points": {
       "dexterity": 1
@@ -70,7 +76,7 @@
       "file": "content/source/weapons.csv",
       "id": "shortbow"
     },
-    "range": "ranged"
+    "range": "reach"
   },
   {
     "id": "katana",
@@ -99,7 +105,8 @@
     "tags": [
       "polearm",
       "heavy",
-      "stagger"
+      "stagger",
+      "retreat"
     ],
     "points": {},
     "source": {
@@ -352,10 +359,12 @@
     "rarity": "uncommon",
     "tags": [
       "sceptre",
-      "blight"
+      "blight",
+      "retreat"
     ],
     "points": {
-      "intelligence": 1
+      "intelligence": 2,
+      "wisdom": 1
     },
     "source": {
       "file": "content/source/weapons.csv",
@@ -376,7 +385,8 @@
     "kind": "staff",
     "rarity": "rare",
     "tags": [
-      "sceptre"
+      "sceptre",
+      "retreat"
     ],
     "points": {
       "intelligence": 1
@@ -435,7 +445,8 @@
     "tags": [
       "sceptre",
       "burn",
-      "bleed"
+      "bleed",
+      "retreat"
     ],
     "points": {},
     "source": {

@@ -8,7 +8,7 @@
 // every living enemy. The old sprite-overlaid combatantInspectControl stays gone.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { combatantInfo } from '../src/ui/components/combatantOverhead.js';
 
 const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
@@ -29,7 +29,7 @@ check(() => assert.ok(nameAt >= 0, 'the enemy-name handler exists'));
 const nameHandler = combat.slice(nameAt, combat.indexOf('};', nameAt));
 check(() => assert.match(nameHandler, /if \(selected\) playCard\(selected, enemy\.id\);\s*else if \(selectedFlask != null\) useFlask\(selectedFlask, enemy\.id\);\s*else openCombatantDoor\(combatantSubject\('enemy', enemy\), nm\);/));
 check(() => assert.doesNotMatch(nameHandler, /selectCombatant/, 'the name must not merely select (core does that)'));
-check(() => assert.match(combat, /nm\.setAttribute\('aria-label', `\$\{def\.name\} — the full read`\)/));
+check(() => assert.match(combat, /nm\.setAttribute\('aria-label', `\$\{def\.name\}: the full read`\)/));
 check(() => assert.match(combat, /nm\.addEventListener\('click', openThisRead\);/));
 check(() => assert.match(combat, /nm\.addEventListener\('keydown', \(event\) => \{\s*if \(event\.key !== 'Enter' && event\.key !== ' '\) return;\s*event\.preventDefault\(\);\s*openThisRead\(event\);/));
 // The frame (left core) click still selects when unarmed.

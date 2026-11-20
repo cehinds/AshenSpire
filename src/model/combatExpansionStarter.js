@@ -3,7 +3,7 @@ import { combatProfileFor } from './combatCardProfile.js';
 import { applyCombatExpansionMartial } from '../content/combatExpansionMartial.js';
 import { orderStartingDeck, stampDeck } from './loadout.js';
 
-const REQUIRED = { attack: 'strike', smash: 'bashingBlow', counter: 'dodgeRoll' };
+const REQUIRED = { attack: 'strike', smash: 'bashingBlow', counter: 'guardCounter' };
 const isFiller = card => !card.grantSource && ['attack', 'guard'].includes(card.equipmentRole);
 const profileOf = (registries, instance) => combatProfileFor(applyCombatExpansionMartial(resolveCard(registries, instance)));
 

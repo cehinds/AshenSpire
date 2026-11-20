@@ -1,6 +1,5 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { cardShelf, cardShelfWidthPx } from './CardSizeModel.js';
-import { MARKET_ADDITIONS } from '../../model/marketStock.js';
 
 // W1d / W1v: THE MERCHANT AS A WORKSPACE. A category rail beside (or above) one
 // active pane; the pane shows the category's offers with a price and an
@@ -9,96 +8,6 @@ import { MARKET_ADDITIONS } from '../../model/marketStock.js';
 // here reads the run, rolls stock or prices anything. The screen projects the
 // saved stock and the existing purchase plans into plain facts and asks this
 // file how to present them.
-
-/** The rail, in order. Direct card purchases are retired; books teach cards.
- * Legacy card stock remains serialized for save and seeded-stock compatibility.
- * `sell` exists only while the player's toggle is on. */
-export const SHOP_CATEGORIES = Object.freeze(['armaments', 'relics', 'flasks', 'services', 'sell']);
-
-/**
- * The rail this visit shows. `offered` is the set of offering ids the visit
- * laid out (SPEC §14.2; absent: every shelf, as before shop kinds): a shelf
- * that did not come up has no rail item at all. `services` says whether the
- * Services pane holds anything — the Remove offering, or a smith the merchant
- * keeps.
- */
-export function shopCategories({ sellOn = true, offered = null, services = true } = {}) {
-  const has = (key) => !offered || (offered instanceof Set ? offered.has(key) : offered.includes(key));
-  const base = SHOP_CATEGORIES.filter((key) => {
-    if (key === 'sell') return sellOn;
-    if (key === 'services') return services;
-    return has(key);
-  });
-  // The market additions (SPEC §14.3) each have a rail item only when this
-  // visit laid them out — never for a stock that names no offerings, which
-  // was saved before any addition could be — and stand after the flasks.
-  const additions = offered ? MARKET_ADDITION_CATEGORIES.filter(has) : [];
-  const at = base.findIndex((key) => key === 'services' || key === 'sell');
-  return Object.freeze(at < 0 ? [...base, ...additions] : [...base.slice(0, at), ...additions, ...base.slice(at)]);
-}
-
-/** The market additions' rail items, keyed by their offering ids (SPEC §14.3): the one list, model/marketStock.js. */
-export const MARKET_ADDITION_CATEGORIES = MARKET_ADDITIONS;
-
-/**
- * The {Status} line a category carries on its rail item and its pane head.
- * `offered` counts the offers on the shelf; `available` those the player can
- * take now (sell and services read it). Returns a string id and its tokens.
- */
-export function shopCategoryStatus(key, { offered = 0, available = 0 } = {}) {
-  if (key === 'sell') return available ? { id: 'shop.status.willTake', tokens: { n: available } } : { id: 'shop.status.nothingWanted', tokens: null };
-  if (key === 'services') return { id: 'shop.status.servicesOpen', tokens: { n: available, total: offered } };
-  return offered ? { id: 'shop.status.forSale', tokens: { n: offered } } : { id: 'shop.status.soldOut', tokens: null };
-}
-
-/**
- * Stable offer identities: kind, id, and the occurrence of that id on the
- * shelf. Never a bare index, so a purchase that shifts the shelf cannot make
- * a stale selection point at a different item.
- */
-export function offerRefs(kind, ids = []) {
-  const seen = new Map();
-  return Object.freeze(ids.map((id) => {
-    const n = seen.get(id) || 0;
-    seen.set(id, n + 1);
-    return `${kind}:${id}#${n}`;
-  }));
-}
-
-/**
- * Keep the selection while its offer is still on the shelf; otherwise take
- * the offer now standing where it stood (the next one along after a
- * purchase), clamped to the shelf. A shelf visited for the first time
- * selects its first offer the player can take (`available`), else its
- * first offer; an empty shelf selects nothing.
- */
-export function resolveShopSelection(refs = [], previous = null, available = refs) {
-  if (!refs.length) return null;
-  if (previous && previous.ref && refs.includes(previous.ref)) return previous.ref;
-  if (previous && Number.isInteger(previous.index)) return refs[Math.min(Math.max(previous.index, 0), refs.length - 1)];
-  return available.find((ref) => refs.includes(ref)) || refs[0];
-}
-
-/**
- * Availability with each offer, only from facts the existing plans supply: a
- * plan's own refusal wins, then a full flask belt, then the price against the
- * purse. A sale has no price to afford (`price: null`).
- */
-export function offerAvailability({ price = null, cinders = 0, reason = null, capacityFull = false } = {}) {
-  if (reason) return Object.freeze({ available: false, because: 'plan', reason });
-  if (capacityFull) return Object.freeze({ available: false, because: 'capacity', reason: null });
-  if (price != null && !(cinders >= price)) return Object.freeze({ available: false, because: 'cinders', reason: null });
-  return Object.freeze({ available: true, because: null, reason: null });
-}
-
-/**
- * The W0 footer for the selected offer: Leave bottom-left and the offer's
- * action bottom-right; with nothing selected, or an offer whose action lives
- * in the pane, Leave alone spans the footer.
- */
-export function shopFooterActions(selected = null) {
-  return Object.freeze(selected && selected.action ? ['leave', 'primary'] : ['leave']);
-}
 
 /**
  * THE OFFERS COLUMN IS WIDE ENOUGH FOR A SHELF OF CARDS, not a bare fraction.

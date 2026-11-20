@@ -3,13 +3,13 @@
 // combat tag of the tag model.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { MANEUVER_SP_FLOORS, SWEEP_UNSCALED_OPS, COST_BUDGET, COST_TAGS, RANGE_TAGS, RANGE_WEIGHTS, STATUS_STACK_CAP, STATUS_WEIGHT, STATUS_WEIGHTS } from '../src/content/actionCosts.js';
 import { statuses } from '../src/content/statuses.js';
 import { tagsAllowedFor } from '../src/content/tags.js';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
-const doc = readFileSync(fileURLToPath(new URL('../docs/alternative-combat-rounds/COST-WEIGHTS.md', import.meta.url)), 'utf8');
+const doc = readSourceTextSync(fileURLToPath(new URL('../docs/alternative-combat-rounds/COST-WEIGHTS.md', import.meta.url)));
 const section = (title) => {
   const start = doc.indexOf(`\n## ${title}\n`);
   assert.ok(start >= 0, `the doc has a "${title}" section`);

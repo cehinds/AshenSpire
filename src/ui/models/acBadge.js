@@ -1,6 +1,7 @@
 import { t, tFull, tTip } from '../strings.js';
 import { effectiveEvasion } from '../../engine/stanceHit.js';
-import { fixCoreEnabled } from '../../model/fixCoreMechanics.js';
+import { fixCoreEnabled, FixCoreHitRollOff } from '../../model/fixCoreMechanics.js';
+import { fixCoreRules } from '../../model/fixCoreRulesCache.js';
 
 // The player's AC badge (owner 2026-11-01): the Evasion DC an enemy hit roll must reach, "vs Evasion N" in the hit receipt.
 // The number comes from the engine's own effectiveEvasion (floored under FixCore exactly as attackHitPreview floors it); nothing
@@ -11,6 +12,8 @@ const shown = (ctx, value) => fixCoreEnabled(ctx) ? Math.floor(value) : value;
 export function acFor(ctx, entity) {
   // Evasion is a fixed DC only under FixCore (the same gate stanceHit.js uses); elsewhere the hit roll is not 'd20 + Precision >= AC'.
   if (!ctx || ctx.combatExpansionVersion !== 2 || !fixCoreEnabled(ctx) || entity?.kind !== 'player') return null;
+  // With no hit roll (accuracy.hitRoll false) there is no DC to reach: the badge would promise a roll that never happens.
+  if (FixCoreHitRollOff(fixCoreRules(ctx, entity))) return null;
   const value = shown(ctx, effectiveEvasion(ctx, entity));
   const without = shown(ctx, effectiveEvasion(ctx, entity, { evadeDisabled: true }));
   return { value, evade: value - without, base: without };

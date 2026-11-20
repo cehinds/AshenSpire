@@ -21,6 +21,9 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRunState } from '../src/model/state.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 let fails = 0;
@@ -235,6 +238,24 @@ if (process.argv.includes('--eol-selftest')) {
   process.exit(fails ? 1 : 0);
 }
 
+// Exercise every current class/starting-kit combination explicitly: the retired
+// class-mastery validator no longer composes decks as a side effect of validation.
+// This same pure harness runs with native ESM and the bundled model exports.
+function startingDecks(bundle, makeRegistries, makeRun) {
+  const registries = makeRegistries(bundle);
+  const profileMeta = {
+    discoveredArmaments: registries.equipment.armaments.map(row => row.id),
+    gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } },
+  };
+  return bundle.classes.flatMap(cls => {
+    const kits = (bundle.equipment?.startingKits || []).filter(kit => kit.classId === cls.id);
+    return (kits.length ? kits : [{ id: null }]).map(kit => {
+      const run = makeRun({ registries, classId: cls.id, startingKitId: kit.id ?? undefined, seed: 0, profileMeta });
+      return { classId: cls.id, kitId: kit.id, deck: run.deck };
+    });
+  });
+}
+
 // Execute the real bundled model factories/loader, with only the UI entry
 // replaced by a headless check. Native ESM live bindings masked the former
 // loadout -> validate -> classMasteryContent -> state -> loadout cycle; the
@@ -244,69 +265,35 @@ function bundledStartingDecks(html, { restoreCycle = false } = {}) {
   if (!match) return { ok: false, why: 'no bundled script' };
   let script = match[1].replace(/"data:[^"\\\n\r]*"/g, '"data:"');
   if (restoreCycle) {
-    const start = script.indexOf('"src/model/loadout.js": function');
+    const start = script.indexOf('"src/model/loadout/applyCardMods.js": function');
     const end = script.indexOf('\n},\n"', start);
-    if (start < 0 || end < 0) return { ok: false, why: 'loadout factory not found' };
+    if (start < 0 || end < 0) return { ok: false, why: 'applyCardMods factory not found' };
     const body = script.slice(start, end);
     const leaf = 'require("src/model/tokens.js")';
     if (!body.includes(leaf)) return { ok: false, why: 'token leaf import not found' };
     script = script.slice(0, start) + body.replace(leaf, 'require("src/model/validate.js")') + script.slice(end);
+    // The retired classMasteryContent import supplied validate -> state. Restore
+    // that causal edge only in this mutant, or the first edge no longer cycles.
+    const validator = script.indexOf('"src/model/validate.js": function');
+    const opening = validator < 0 ? -1 : script.indexOf('\n', validator);
+    if (opening < 0) return { ok: false, why: 'validator factory not found' };
+    script = script.slice(0, opening + 1) + 'require("src/model/state.js");\n' + script.slice(opening + 1);
   }
   const entry = '  require("src/main.js");\n})();';
   if (!script.endsWith(entry + '\n') && !script.trimEnd().endsWith(entry)) return { ok: false, why: 'runtime entry not found' };
   script = script.replace(entry, `  require("src/model/loadout.js");
   var bundle = require("src/content/index.js").contentBundle;
   globalThis.startingDeckValidation = require("src/model/validate.js").validateContent(bundle);
+  globalThis.startingDecks = (${startingDecks.toString()})(bundle,
+    require("src/model/registries.js").createRegistries, require("src/model/state.js").createRunState);
 })();`);
   const context = vm.createContext({ console, structuredClone });
   try {
     new vm.Script(script, { filename: 'bundled-starting-decks' }).runInContext(context, { timeout: 30000 });
     const result = context.startingDeckValidation;
-    return { ok: result?.ok === true, why: JSON.stringify(result?.errors ?? result) };
+    return { ok: result?.ok === true && context.startingDecks?.length > 0 && context.startingDecks.every(row => row.deck.length > 0),
+      why: JSON.stringify(result?.errors ?? result), decks: context.startingDecks };
   } catch (error) { return { ok: false, why: error.message }; }
-}
-
-// Exercise the shipped loader, not native ESM live bindings. Mastery loads
-// first on the affected reward path; the old back-edge froze its exports
-// before initialization. Restore that edge to prove the probe catches it.
-function bundledSkillClaims(html, { restoreCycle = false } = {}) {
-  let script = /<script>([\s\S]*?)<\/script>/.exec(html)?.[1];
-  if (!script) return { ok: false, why: 'no bundled script' };
-  script = script.replace(/"data:[^"\\\n\r]*"/g, '"data:"');
-  if (restoreCycle) {
-    const start = script.indexOf('"src/model/classMasteryRun.js": function');
-    const end = script.indexOf('\n},\n"', start);
-    const body = script.slice(start, end);
-    const leaf = 'require("src/model/abilitySkillActivation.js")';
-    if (start < 0 || end < 0 || !body.includes(leaf)) return { ok: false, why: 'activation leaf not found' };
-    script = script.slice(0, start) + body.replace(leaf, 'require("src/model/skills.js")') + script.slice(end);
-  }
-  const entry = '  require("src/main.js");\n})();';
-  if (!script.trimEnd().endsWith(entry)) return { ok: false, why: 'runtime entry not found' };
-  script = script.replace(entry, `
-  const mastery = require("src/model/classMasteryRun.js");
-  const skills = require("src/model/skills.js");
-  const bundle = require("src/content/index.js").contentBundle;
-  const registries = require("src/model/registries.js").createRegistries(bundle);
-  const run = require("src/model/state.js").createRunState({seed: 7172, classId: 'starseer', registries});
-  mastery.openRunClassMastery(registries, run, {}, {receiptId: 'bundled-skill-claim'});
-  const scoped = mastery.registriesForClassMastery(registries, run);
-  for (const [id, kind] of [['class:starseer','class'], ['item:magic-focus','focus'], ['item:blade','weapon'], ['combatManeuvers','ability']]) {
-    skills.activateAbilitySkill(run, id);
-    const before = run.skills[id]?.level || 0;
-    const cost = skills.xpToNext(scoped, kind, before);
-    if (kind === 'class') mastery.recordClassMasteryXp(run, 'starseer', cost + 7);
-    skills.bankSkillXp(scoped, run, id, cost + 7);
-    const claim = skills.claimBankedSkillLevel(scoped, run, id);
-    if (!claim || claim.after !== claim.before + 1 || run.skills[id].xp < 7) throw new Error('claim failed: ' + id);
-  }
-  globalThis.skillClaimsPassed = true;
-})();`);
-  const context = vm.createContext({console, structuredClone});
-  try {
-    new vm.Script(script, {filename: 'bundled-skill-claims'}).runInContext(context, {timeout: 30000});
-    return {ok: context.skillClaimsPassed === true};
-  } catch (error) { return {ok: false, why: error.message}; }
 }
 
 // ---- 1. The control: an untouched tree still builds -------------------------
@@ -342,16 +329,16 @@ function bundledSkillClaims(html, { restoreCycle = false } = {}) {
       check('control: portable branch artwork matches every selected-source catalog hash',
         mismatches.length === 0, `${mismatches.length} missing or changed: ${mismatches.map(([file]) => file).join(', ')}`);
     }
+    const native = startingDecks(contentBundle, createRegistries, createRunState);
+    check('control: native ESM composes every current starting deck',
+      native.length > 0 && native.every(row => row.deck.length > 0));
     const clean = bundledStartingDecks(html);
-    check('control: bundled content validation composes every starting deck', clean.ok, clean.why);
+    check('control: bundled content validation and every starting deck succeed', clean.ok, clean.why);
+    check('control: native ESM and bundled starting decks agree exactly',
+      clean.ok && JSON.stringify(clean.decks) === JSON.stringify(native), clean.why);
     const planted = bundledStartingDecks(html, { restoreCycle: true });
     check('control: restoring the validator import catches the captured createLoadout cycle',
       !planted.ok && /createLoadout is not a function/.test(planted.why), planted.why);
-    const claims = bundledSkillClaims(html);
-    check('control: bundled class, focus, weapon and maneuver Level Up claims succeed', claims.ok, claims.why);
-    const capturedMastery = bundledSkillClaims(html, {restoreCycle: true});
-    check('control: restoring the mastery/skills cycle reproduces hasClassMastery failure',
-      !capturedMastery.ok && /hasClassMastery is not a function/.test(capturedMastery.why), capturedMastery.why);
   }
   rmSync(dir, { recursive: true, force: true });
 })();
@@ -716,7 +703,12 @@ const PROBE_PARAM = ["  ['require', 'require'],", "  ['require', 'require'],\n  
 (() => {
   const dir = sandbox();
   patchTool(dir, ...PROBE_PARAM);
-  const ok = patchTool(dir, '    ${MODULE_CALL}', '    factory(module, module.exports, require);');
+  // Keep both loader variants and the dynamic variant's error memoization;
+  // hardcode only their invocation, so the fourth formal loses its argument.
+  const callSite = '    ${hasDynamicImports ? `try { ${MODULE_CALL} } catch (error) { __errors[id] = error; throw error; }` : MODULE_CALL}';
+  const hardcoded = callSite.replace('${MODULE_CALL}', 'factory(module, module.exports, require);')
+    .replace(': MODULE_CALL}', ': "factory(module, module.exports, require);"}');
+  const ok = patchTool(dir, callSite, hardcoded);
   check('5f: fixture could re-hardcode the call site', ok);
   const r = build(dir);
   check('5f: the build still succeeds — the disagreement is SILENT, which is the point',

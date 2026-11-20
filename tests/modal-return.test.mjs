@@ -6,7 +6,7 @@ import '../src/engine/runCombat.js';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
-import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
+import { CloseConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { pushModalParent, modalParent, dropModalParent, returnToModalParent, modalParentLabel, resetModalParents, flushModalReturns } from '../src/ui/modalReturn.js';
 import { t } from '../src/ui/strings.js';
 import { resetModalState } from '../src/ui/modalManager.js';
@@ -36,15 +36,15 @@ test('the parent closing on its own forgets it and its children: nothing reopens
 });
 
 test('the Back label names the place that opened the flow', () => {
-  assert.equal(modalParentLabel({ place: t('common.place.blacksmith') }), 'Back to Blacksmith');
-  assert.equal(modalParentLabel({ place: t('common.place.shrine') }), 'Back to Shrine');
-  assert.equal(modalParentLabel({ place: t('common.place.merchant') }), 'Back to Merchant');
+  assert.equal(modalParentLabel({ place: t('common.place.blacksmith') }), 'Back');
+  assert.equal(modalParentLabel({ place: t('common.place.shrine') }), 'Back');
+  assert.equal(modalParentLabel({ place: t('common.place.merchant') }), 'Back');
   assert.equal(modalParentLabel(null), t('common.back'));
 });
 
 test('Blacksmith card list: confirm lands back on a refreshed list, Back exits fully', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(async (dom) => {
     resetModalParents(); resetModalState();
     // Timers the shell sets run inside this DOM (withKitDom restores the globals when the callback returns).
@@ -58,7 +58,7 @@ test('Blacksmith card list: confirm lands back on a refreshed list, Back exits f
     const open = (focus) => {
       opens++;
       let door;
-      door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), {
+      door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), {
         registries, meta: {}, focusInstanceId: focus,
         parent: { place: t('common.place.blacksmith'), reopen: open },
         onSelect: (id) => door.update(cardUpgradeModel(registries, run, id)), onBack() { backs++; }, onConfirm(id) { confirmed = id; },
@@ -66,10 +66,10 @@ test('Blacksmith card list: confirm lands back on a refreshed list, Back exits f
       return door;
     };
     open(null);
-    assert.equal(host.querySelector('.smith-back').textContent.trim(), 'Back to Blacksmith');
+    assert.equal(host.querySelector('.smith-back').textContent.trim(), 'Back');
     // The row's own review confirms: the list closes, commits, and reopens.
     host.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`).click();
-    dom.document.querySelector('.confirmation-modal .confirmation-confirm').click();
+    host.querySelector('.card-upgrade-confirm').click(); // one click commits (playtest 2026-11-17 item 36)
     assert.equal(confirmed, strike.instanceId);
     flushModalReturns(); drain();
     assert.equal(opens, 2, 'the list was drawn again');
@@ -80,13 +80,13 @@ test('Blacksmith card list: confirm lands back on a refreshed list, Back exits f
     assert.equal(backs, 1); assert.equal(opens, 2);
     assert.equal(modalParent(), null);
     drain(); globalThis.setTimeout = realSet;
-    closeConfirmationModal();
+    CloseConfirmationModal();
   });
 });
 
 test('the row refocused by the return is marked quiet (no tooltip); a plain focus is not', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   const tooltip = await import('node:fs').then((fs) => fs.readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8'));
   assert.match(tooltip, /if \(el\.dataset\.quietFocus\) return;/, 'the tooltip skips a quiet focus');
   const microtasks = []; const realQ = globalThis.queueMicrotask;
@@ -96,7 +96,7 @@ test('the row refocused by the return is marked quiet (no tooltip); a plain focu
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     const strike = run.deck.find((c) => c.cardId === 'core.strike');
     globalThis.queueMicrotask = (fn) => microtasks.push(fn);
-    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, focusInstanceId: strike.instanceId, onSelect() {}, onBack() {}, onConfirm() {} });
+    const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, focusInstanceId: strike.instanceId, onSelect() {}, onBack() {}, onConfirm() {} });
     microtasks.splice(0).forEach((fn) => fn());
     globalThis.queueMicrotask = realQ;
     const other = host.querySelector(`.card-upgrade-row:not([data-instance-id="${strike.instanceId}"])`);
@@ -107,8 +107,8 @@ test('the row refocused by the return is marked quiet (no tooltip); a plain focu
 });
 
 test('a refused confirm (false or a throw) does not reopen the list over the refusal', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
-  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   const attempt = (result) => {
     let opens = 0;
     withKitDom((dom) => {
@@ -120,16 +120,16 @@ test('a refused confirm (false or a throw) does not reopen the list over the ref
         const host = dom.document.createElement('main'); dom.document.body.append(host);
         const strike = run.deck.find((c) => c.cardId === 'core.strike');
         let door;
-        const open = () => { opens++; door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), {
+        const open = () => { opens++; door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), {
           registries, meta: {}, parent: { place: 'Blacksmith', reopen: open },
           onSelect: (id) => door.update(cardUpgradeModel(registries, run, id)), onBack() {},
           onConfirm() { if (result === 'throw') throw new Error('refused'); return result; } }); };
         open();
         host.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`).click();
-        try { dom.document.querySelector('.confirmation-modal .confirmation-confirm').click(); } catch { /* the throw surfaces here */ }
+        try { host.querySelector('.card-upgrade-confirm').click(); } catch { /* the throw surfaces here */ }
         flushModalReturns();
         while (timers.length) timers.shift()();
-        closeConfirmationModal();
+        CloseConfirmationModal();
       } finally { globalThis.setTimeout = realSet; }
     });
     return opens;

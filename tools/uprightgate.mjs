@@ -365,7 +365,7 @@ if (process.argv.includes('--selftest')) {
         // everywhere is the refusal that outlived its premise. Green on W and G,
         // red only because something checks that the refusal STOPS.
         name: 'the gate stands on every shape — a refusal with a dead premise',
-        file: 'src/main.js',
+        file: 'src/ui/displaySettings.js',
         find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
         replace: '  updateUprightGate({ short: true, offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
         expectRed: /GATE STANDS WHERE NOTHING WALLS/,
@@ -375,7 +375,7 @@ if (process.argv.includes('--selftest')) {
         // not seen; force it to the wrong one and the tool must catch the lie by
         // going and looking at the turned viewport.
         name: 'the advice stops being derived — it always says "turn your phone"',
-        file: 'src/main.js',
+        file: 'src/ui/displaySettings.js',
         find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
         replace: '  updateUprightGate({ short, offerRotate: true, enabled: settingOn(settings, \'uprightGate\') });',
         expectRed: /(ADVICE IS FALSE|says 'rotate')/,
@@ -394,7 +394,7 @@ if (process.argv.includes('--selftest')) {
         // build of this feature is a combat-only gate — it fixes the screenshot
         // and lets the player start a run they cannot finish.
         name: 'the gate is combat-only — the player is let in at the door',
-        file: 'src/main.js',
+        file: 'src/ui/displaySettings.js',
         find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
         replace: '  updateUprightGate({ short: short && !!document.querySelector(\'.combat\'), offerRotate: !turned.short && coarse, enabled: settingOn(settings, \'uprightGate\') });',
         expectRed: /THE GATE IS NOT GLOBAL/,

@@ -69,9 +69,9 @@ try {
             document.documentElement.scrollWidth -
             document.documentElement.clientWidth,
           player: many(".combatant.player .sprite")[0],
-          playerHud: many(".combatant.player .combatant-mini-hud")[0],
+          playerHud: many(".combatant.player > .target-hud-overhead-meters")[0],
           enemies: many(".combatant:not(.player) .sprite"),
-          enemyMeters: many(".combatant.enemy .meters"),
+          enemyMeters: many(".combatant.enemy > .target-hud-overhead-meters"),
           shadows: [...document.querySelectorAll(".combatant .sprite")].map(
             (n) => ({
               eid: n.closest("[data-eid]").dataset.eid,
@@ -80,7 +80,7 @@ try {
               ),
             }),
           ),
-          hud: many(".combatant-mini-hud"),
+          hud: many(".combatant > .target-hud-overhead-meters"),
           cards: many(".hand .card"),
           footer: many(".end-turn"),
           tools: many('[data-combat-tool="log"],[data-combat-tool="reaction"]'),
@@ -93,19 +93,16 @@ try {
           Math.abs(m.player.width / 141.8 - 1.5) < 0.04,
           "player artwork grows1.5×",
         );
-        assert.ok(
-          Math.abs(m.playerHud.width / 134.4 - 1.5) < 0.04,
-          "player miniHUD grows independently1.5×",
-        );
+        // Owner 2026-11-07 (backlog #11): every mini HUD is one fixed width (a layout token), the player's and the enemies'.
+        for (const meter of m.enemyMeters)
+          assert.ok(
+            Math.abs(meter.width - m.playerHud.width) <= 1,
+            "enemy and player mini HUDs share one fixed width",
+          );
         for (const enemy of m.enemies)
           assert.ok(
             Math.abs(enemy.width - 151.7) < 4,
             "default enemy artwork preserves approved size",
-          );
-        for (const meter of m.enemyMeters)
-          assert.ok(
-            Math.abs(meter.width / 104 - 1.5) < 0.04,
-            "enemy miniHUD grows1.5×",
           );
       }
       assert.ok(m.cards.length, "real hand rendered");
@@ -198,8 +195,12 @@ try {
         };
         await clickArt();
         assert.equal(await actor.getAttribute("aria-pressed"), "true");
-        // The enemy name text is gone (its intent took the slot, owner 2026-11-06): the read opens from the panel's Inspect control.
-        await p.locator('.target-hud-inspect-info:visible, .combatant.enemy[data-eid="e3"] .combatant-info:visible').last().click();
+        // No selected panel and no name text (owner 2026-11-07): the read opens from the existing inspect door, a ~650 ms hold on the figure.
+        const art = await actor.locator(".sprite").boundingBox();
+        await p.mouse.move(art.x + art.width / 2, art.y + art.height / 2);
+        await p.mouse.down();
+        await p.waitForTimeout(650);
+        await p.mouse.up();
         await p.locator(".combatant-inspector-body").waitFor();
         await p.keyboard.press("Escape");
         const before = await p.evaluate(() =>

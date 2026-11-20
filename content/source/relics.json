@@ -184,7 +184,7 @@
     "name": "Fell Warden Brand",
     "rarity": "uncommon",
     "icon": "relic",
-    "textTemplate": "Whenever an enemy Staggers, draw {draw} cards."
+    "textTemplate": "Whenever an enemy is Broken, draw {draw} cards."
   },
   {
     "id": "bloodiedTalisman",
@@ -205,7 +205,7 @@
   },
   {
     "id": "twinnedArmor",
-    "name": "Twinned Armor",
+    "name": "Twinned Armour",
     "rarity": "uncommon",
     "icon": "armour",
     "textTemplate": "Every 10th card you play each combat: gain {block} Block."
@@ -325,7 +325,7 @@
     "name": "Vigilant Halo",
     "rarity": "rare",
     "icon": "skill",
-    "textTemplate": "Whenever an enemy Staggers, heal {heal} HP.",
+    "textTemplate": "Whenever an enemy is Broken, heal {heal} HP.",
     "flavor": "It hovers a hand above your head, waiting for you to earn it."
   },
   {
@@ -349,7 +349,7 @@
     "name": "Crown of Stitches",
     "rarity": "boss",
     "icon": "relic",
-    "textTemplate": "Begin each combat with {strength} Strength — and {frail} Frail. New limbs are heavy.",
+    "textTemplate": "Begin each combat with {strength} Strength and {frail} Frail. New limbs are heavy.",
     "flavor": "It fits. That is the worst part."
   },
   {
@@ -424,7 +424,7 @@
     "name": "Hollowed Horn",
     "rarity": "uncommon",
     "icon": "audio",
-    "textTemplate": "Whenever an enemy Staggers, apply {vulnerable} Vulnerable to ALL enemies.",
+    "textTemplate": "Whenever an enemy is Broken, apply {vulnerable} Vulnerable to ALL enemies.",
     "flavor": "It sounds only once. Everything still standing flinches."
   },
   {
@@ -448,7 +448,7 @@
     "name": "Howling Standard",
     "rarity": "rare",
     "icon": "combat",
-    "textTemplate": "Whenever an enemy Staggers, gain {strength} Strength.",
+    "textTemplate": "Whenever an enemy is Broken, gain {strength} Strength.",
     "flavor": "It has not fallen in a hundred routs. It does not intend to start with yours."
   },
   {
@@ -579,5 +579,60 @@
     },
     "textTemplate": "Power cards cost 1 less (minimum 0). Gain 35% fewer Cinders from combats.",
     "flavor": "The crown accepts your future earnings. It never asks what you will eat."
+  },
+  {
+    "id": "basicTraining",
+    "name": "Basic Training",
+    "rarity": "uncommon",
+    "icon": "relic",
+    "properties": [
+      "unlimitedBasics"
+    ],
+    "textTemplate": "Deck editing adds any number of Basic martial cards (unranked).",
+    "flavor": "Drilled until the motion forgets it was ever learned."
+  },
+  {
+    "id": "graduate",
+    "name": "Graduate",
+    "rarity": "uncommon",
+    "icon": "mana",
+    "properties": [
+      "unlimitedCantrips"
+    ],
+    "textTemplate": "Deck editing adds any number of cantrips (unranked spells).",
+    "flavor": "The seal on the scroll is cracked from being shown so often."
+  },
+  {
+    "id": "threadbareSatchel",
+    "name": "Threadbare Satchel",
+    "rarity": "common",
+    "icon": "relic",
+    "properties": [
+      "deckSlot1"
+    ],
+    "textTemplate": "Your deck may be 1 card smaller.",
+    "flavor": "It holds less than it used to. So do you."
+  },
+  {
+    "id": "asceticsCord",
+    "name": "Ascetic's Cord",
+    "rarity": "uncommon",
+    "icon": "relic",
+    "properties": [
+      "deckSlot1"
+    ],
+    "textTemplate": "Your deck may be 1 card smaller.",
+    "flavor": "Knotted once for every thing given up."
+  },
+  {
+    "id": "pruningHook",
+    "name": "Pruning Hook",
+    "rarity": "rare",
+    "icon": "relic",
+    "properties": [
+      "deckSlot1"
+    ],
+    "textTemplate": "Your deck may be 1 card smaller.",
+    "flavor": "Cut back the weak growth, and the rest bears fruit."
   }
 ]

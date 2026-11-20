@@ -1,4 +1,5 @@
 import { fixCoreEnabled, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
+import { ItemStatusStacks } from './itemPropertyHooks.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mechanics } from '../framework/data/mechanics.js';
 // src/engine/statuses.js — generic status-model interpreter (SPEC §3.7)
@@ -21,8 +22,6 @@ import { mechanics } from '../framework/data/mechanics.js';
 // Headless: no document/window/localStorage/timers.
 
 import { MODIFIER_KEYS } from '../model/schemas.js';
-import { resolveStackApplications, stackMagnitude } from '../model/combatRules.js';
-import { ratingValue } from '../model/combatRatings.js';
 import * as Control from './combatStatusControl.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 import { weaknessStackBonus } from './weaknesses.js';
@@ -55,6 +54,9 @@ function syncPoolsAfterStatus(ctx, target) {
  * meter onFill (SPEC §3.7). Emits statusApplied (and meterFilled on fill).
  */
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null, options = {}) {
+  // An item property can make a status smaller on the player (W25 step 6); one shortened to nothing is not applied.
+  const shortened = ItemStatusStacks(target, statusId, stacks);
+  if (shortened !== stacks) { if (shortened <= 0) return; stacks = shortened; }
   // Damp (SPEC 4.7): Burn applied to a Damp holder is halved.
   if (statusId === 'burn' && fixCoreEnabled(ctx)) stacks = dampBurnStacks(target, stacks);
   const before = getStacks(target, statusId);
@@ -81,19 +83,6 @@ function applyStatusRaw(ctx, target, statusId, stacks = 1, source = null) {
   const previousTotal = getStacks(target, statusId);
   const wasAbsent = previousTotal <= 0;
   let amount = Math.floor(stacks);
-  const weights = ctx.ratingsRules?.statuses?.[statusId];
-  if (weights && target.ratings && source && source.id !== target.id && amount > 0) {
-    const resistance = ratingValue(ctx, target, 'poise') * weights.poise + ratingValue(ctx, target, 'ward') * weights.ward;
-    const cfg = ctx.ratingsRules.resistance;
-    const reduction = Math.min(cfg.maximum, resistance / (cfg.statusK + resistance));
-    target.ratingBuildupRemainders ||= {};
-    const exact = amount * (1 - reduction) + (target.ratingBuildupRemainders[statusId] || 0);
-    const applied = Math.floor(exact + 1e-9);
-    target.ratingBuildupRemainders[statusId] = Math.max(0, exact - applied);
-    ctx.emit('procResisted', { targetId: target.id, status: statusId, blocked: amount - applied, applied });
-    amount = applied;
-    if (!amount) return;
-  }
   if (amount <= 0 && def.stackMode !== 'unique') return;
 
   // Threshold-proc resistance (#61): a carried resist status blocks part of
@@ -125,12 +114,7 @@ function applyStatusRaw(ctx, target, statusId, stacks = 1, source = null) {
     else if (def.proc) inst.meter = { value: 0, max: def.proc.threshold };
   }
 
-  if (ctx.foundation && def.stacking && !inst.meter) {
-    const rule = def.stacking;
-    const sourceId = ctx.playerIdForEntity?.(source) || source?.id || 'environment';
-    inst.applications = resolveStackApplications(inst.applications || [], { sourceId, value: amount, expires: rule.duration ?? null }, rule);
-    inst.stacks = stackMagnitude(inst.applications, rule.mode, rule.cap);
-  } else switch (def.stackMode) {
+  switch (def.stackMode) {
     case 'add':
       if (inst.meter) inst.meter.value += amount;
       else inst.stacks += amount;
@@ -148,7 +132,7 @@ function applyStatusRaw(ctx, target, statusId, stacks = 1, source = null) {
   }
 
   // Re-applying a duration status adds stacks (above) AND refreshes duration.
-  if (!(ctx.foundation && def.stacking) && isDurationDecay(def.decay)) {
+  if (isDurationDecay(def.decay)) {
     inst.duration = def.decay.duration;
   }
 
@@ -195,7 +179,7 @@ function checkProcFill(ctx, entity, statusId, def, inst, source) {
     poiseDamage: p.poiseDamage || 0,
     stagger: !!p.stagger,
   });
-  const enq = (effect) => ctx.enqueue({ effect, source: entity, owner: entity, target: entity, meta: { killReceipt, ...(ctx.foundation ? { foundationAncestry: [...(ctx._foundationAncestry || []), `proc:${statusId}`] } : {}) } });
+  const enq = (effect) => ctx.enqueue({ effect, source: entity, owner: entity, target: entity, meta: { killReceipt } });
   enq({ op: 'loseHp', target: 'self', amount: burst, cause: `proc:${statusId}` });
   if (p.poiseDamage > 0 && entity.kind === 'enemy') enq({ op: 'poiseDamage', amount: p.poiseDamage });
   if (p.stagger && entity.kind === 'enemy') enq({ op: 'stagger' });
@@ -229,7 +213,7 @@ function checkMeterFill(ctx, entity, statusId, def, inst) {
       inst.meter.max = Math.ceil(inst.meter.max * growth);
     }
     for (const eff of def.meter.onFill || []) {
-      ctx.enqueue({ effect: eff, source: entity, owner: entity, target: entity, meta: ctx.foundation ? { foundationAncestry: [...(ctx._foundationAncestry || []), `meter:${statusId}`] } : {} });
+      ctx.enqueue({ effect: eff, source: entity, owner: entity, target: entity, meta: {} });
     }
   }
 }
@@ -249,16 +233,6 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
     const holder = instance.meter || instance;
     holder[field] = Math.max(0, holder[field] - opts.amount);
     if (instance.persistentStacks !== undefined) instance.persistentStacks = Math.min(instance.persistentStacks, holder[field]);
-    if (instance.applications) {
-      const rule = ctx.registries.statuses.get(statusId).stacking;
-      let remaining = holder[field];
-      instance.applications = instance.applications.map(a => {
-        const value = Math.min(a.value, remaining);
-        if (rule?.mode !== 'strongest') remaining -= value;
-        return { ...a, value };
-      }).filter(a => a.value > 0);
-      instance.stacks = stackMagnitude(instance.applications, rule.mode, rule.cap);
-    }
     if (holder[field] > 0) {
       if (['consumed', 'ownerTurnStart', 'ownerTurnEnd'].includes(opts.reason)) ctx.emit('statusRemoved', { targetId: target.id, status: statusId, amount: before - getStacks(target, statusId), reason: opts.reason });
       return;
@@ -269,6 +243,24 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
   if (!opts.silent) {
     ctx.emit('statusExpired', { targetId: target.id, status: statusId, reason: opts.reason || 'removed' });
   }
+}
+
+/** ClearTurnBoosts(ctx, entity) — remove the stacks a `thisTurn` applyStatus granted, at the end of the owner's turn. */
+export function ClearTurnBoosts(ctx, entity) {
+  const boosts = entity.turnBoosts;
+  if (!boosts) return;
+  const bases = entity.turnBoostBases || {};
+  for (const [statusId, stacks] of Object.entries(boosts)) {
+    const inst = entity.statuses?.[statusId];
+    if (!inst) continue;
+    // Remove at most the boost still present: a loss since the grant takes the boost first, so stacks the owner held
+    // before it (or gained since, without `thisTurn`) are never eaten. A boost saved without a base keeps the old subtraction.
+    const present = Number.isFinite(bases[statusId]) ? Math.max(0, Math.min(stacks, inst.stacks - bases[statusId])) : stacks;
+    inst.stacks -= present;
+    if (getStacks(entity, statusId) <= 0) removeStatus(ctx, entity, statusId, { reason: 'expired' });
+  }
+  delete entity.turnBoosts;
+  delete entity.turnBoostBases;
 }
 
 /**
@@ -285,7 +277,6 @@ export function decayAtTurnEnd(ctx, entity) {
     const def = statusDefinition(ctx, statusId);
     // Precision decays only under Core 2, at turn start (decayAtTurnStart); legacy Precision never decays.
     if (statusId === 'precision') continue;
-    if (ctx.foundation && def.stacking) continue;
     if (def.decay === 'perTurnEnd') {
       if (inst.meter) inst.meter.value -= 1;
       else inst.stacks -= 1;
@@ -300,20 +291,6 @@ export function decayAtTurnEnd(ctx, entity) {
         removeStatus(ctx, entity, statusId, { reason: 'expired' });
       }
     }
-  }
-}
-
-/** Explicit per-application expiry; strongest sources can become visible again. */
-export function advanceStatusClock(ctx, entity, clock) {
-  if (!ctx.foundation) return;
-  for (const [id, inst] of Object.entries(entity.statuses)) {
-    const rule = ctx.registries.statuses.get(id).stacking;
-    if (!rule || rule.duration == null || (rule.clock || 'ownerTurnEnd') !== clock) continue;
-    inst.applications = (inst.applications || []).map((a) => ({ ...a, expires: a.expires - 1 })).filter((a) => a.expires > 0);
-    inst.stacks = stackMagnitude(inst.applications, rule.mode, rule.cap);
-    // One expiring application can drop a Ward or Poise bonus while others survive: the pool follows at once.
-    syncPoolsAfterStatus(ctx, entity);
-    if (!inst.applications.length) removeStatus(ctx, entity, id, { reason: 'expired' });
   }
 }
 

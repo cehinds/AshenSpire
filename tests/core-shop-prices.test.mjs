@@ -12,6 +12,8 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 const table = profile.content.shops.priceTable;
 const fresh = seed => createRunState({ seed, classId: 'reaver', registries });
 const rangeOf = (option, run) => {
+  // W25-R: the rank-up service is priced at the Blacksmith's own rank-up price, not from the item price table.
+  if (option.kind === 'rankUps') return [profile.content.shops.blacksmith.prices.rankUp, profile.content.shops.blacksmith.prices.rankUp];
   const kind = { combatCards: 'card', weaponArts: 'weaponArt', relics: 'relic', weapons: 'armament', armor: 'armour', potions: 'flask' }[option.kind];
   const def = option.kind === 'combatCards' || option.kind === 'weaponArts' ? registries.cards.get(option.id)
     : option.kind === 'relics' ? registries.relics.get(option.id) : option.kind === 'potions' ? registries.flasks.get(option.id)

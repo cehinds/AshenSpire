@@ -14,7 +14,8 @@
     },
     "secondaryPolicy": {
       "enum": [
-        "legacyAdapter"
+        "legacyAdapter",
+        "primaryOnly"
       ]
     }
   },

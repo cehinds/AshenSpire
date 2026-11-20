@@ -6,7 +6,10 @@ import { live, baseRegistries, registries } from './helpers/fixcore-combat-rules
 import { dispatch } from '../src/engine/combat.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat as createRunCombatWithBenefits } from '../src/engine/runCombat.js';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
+// These numbers pin the pre-Wave-2.5 arithmetic, so the fight plays the rules of one created before the stance benefits (tests/stance-benefits.test.mjs owns those).
+const createRunCombat = (...args) => withoutStanceBenefits(createRunCombatWithBenefits(...args));
 import { guardHitFloatParts, outcomeKindForEvent } from '../src/ui/fx.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
@@ -18,7 +21,7 @@ const unlocks = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c']
 const settle = combat => { while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }); };
 const plain = { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 };
 
-test('Rogue dagger strike (12) against Block 50 loses floor(0.2 x 12) = 2 HP', () => {
+test('Rogue dagger strike (7) against Block 50 loses floor(0.2 x 7) = 1 HP', () => {
   const run = createRunState({ registries, classId: 'rogue', seed: 511, profileMeta: unlocks });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const enemy = combat.enemies[0];
@@ -28,10 +31,10 @@ test('Rogue dagger strike (12) against Block 50 loses floor(0.2 x 12) = 2 HP', (
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: enemy.id });
   const hit = combat.eventLog.slice(start).find(e => e.type === 'damageDealt' && e.targetId === enemy.id);
-  assert.equal(hit.amount, 12, 'fixture: the dagger strike deals 12');
-  assert.equal(500 - enemy.hp, 2);
-  assert.equal(hit.blocked, 10);
-  assert.equal(enemy.block, 38, 'Block is spent as the same hit without pierce would spend it (12)');
+  assert.equal(hit.amount, 7, 'fixture: the dagger strike deals 7');
+  assert.equal(500 - enemy.hp, 1);
+  assert.equal(hit.blocked, 6);
+  assert.equal(enemy.block, 43, 'Block is spent as the same hit without pierce would spend it (7)');
 });
 
 // An enemy whose Slash is a piercing action of `damage` x `hits`.
@@ -42,14 +45,15 @@ const pierceRegistries = (damage, hits) => Object.freeze({ ...baseRegistries, en
       tags: [...(row.moves.slash.tags || []).filter(tag => !tag.startsWith('damage:')), 'damage:piercing'] } } } : row;
   } } });
 
-function enemyPierce({ damage, hits, block, poise }) { return enemyHit(pierceRegistries(damage, hits), { hits, block, poise }); }
+// `damage` is the hit after Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the move is authored at twice it.
+function enemyPierce({ damage, hits, block, poise }) { return enemyHit(pierceRegistries(damage * 2, hits), { hits, block, poise }); }
 function enemyHit(regs, { hits, block, poise }) {
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: unlocks });
   const combat = createRunCombat({ registries: regs, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const enemy = combat.enemies[0];
   Object.assign(combat.player, { hp: 100, maxHp: 100, block, barrier: 0, statuses: {}, ratings: { ...plain, poise: 10 }, ratingSources: [{ name: 'Fixture', kind: 'attribute', ...plain, poise: 10 }],
     persistentPoise: { value: poise, max: Math.max(poise, 10) } });
-  delete combat.player.combatStance;
+  delete combat.player.combatStance; delete combat.player.broken;
   Object.assign(enemy, { maxStamina: hits, stamina: hits, statuses: {}, ratings: { ...plain }, ratingSources: [], basePrecisionBonus: 1000 });
   enemy.intent = { ...enemy.intent, moveId: 'slash' }; enemy.plannedMoves = [];
   combat.piles.hand = [];
@@ -105,7 +109,7 @@ test('only what Block would have soaked is pierced: with Block 0 a pierce hit is
   assert.equal(guardHitFloatParts(pierceHit.hits[0]).pierced, null);
   // The same 14 slashing hit: identical HP loss and Poise.
   const plainRegistries = Object.freeze({ ...baseRegistries, enemies: { ...baseRegistries.enemies, has: id => baseRegistries.enemies.has(id),
-    get: id => { const row = baseRegistries.enemies.get(id); return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 14, hits: 1 } } } : row; } } });
+    get: id => { const row = baseRegistries.enemies.get(id); return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 28, hits: 1 } } } : row; } } }); // 28 halves to 14
   assert.equal(pierceHit.hits[0].hpLoss, enemyHit(plainRegistries, { hits: 1, block: 0, poise: 8 }).hits[0].hpLoss, 'a pierce hit never deals less HP than the same hit without pierce');
 });
 
@@ -123,7 +127,8 @@ test('the pierced part is not double-counted by Poise: what Block leaves of the 
 test('the Pierced float and the log line show the pierced amount and what Poise took', () => {
   const { hits } = enemyPierce({ damage: 14, hits: 1, block: 40, poise: 8 });
   assert.equal(guardHitFloatParts(hits[0]).pierced.text, 'Pierced 3');
-  assert.equal(outcomeKindForEvent(hits[0]), null, 'a fully absorbed pierced hit keeps its floats instead of a lone BLOCKED word');
+  // Owner, 2026-11-14: a hit that cost no HP shows the fully-absorbed word, a pierced one included (the Pierced float stays in the part list and the log).
+  assert.equal(outcomeKindForEvent(hits[0]), 'blocked', 'a fully absorbed pierced hit shows the BLOCKED word');
   const line = JSON.stringify(combatLogEntries([hits[0]], { registries: baseRegistries }));
   assert.match(line, /Pierced 3 \(Poise took 3\)/);
 });
@@ -156,6 +161,7 @@ test('property: over a grid of damage, Block and Poise, pierce never lowers HP l
       const mk = damageType => ({ combatProfile: { camp: 'physical', maneuver, damageType, range: 'melee' }, skipRatingBonus: true });
       const target = ctx => {
         Object.assign(ctx.player, { block, hp: 100, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: 30 } });
+        delete ctx.player.broken; // the fixture is reused across the grid: a previous cell may have broken it
         if (stance) ctx.player.combatStance = { ...stance }; else delete ctx.player.combatStance;
         return ctx;
       };
@@ -185,7 +191,7 @@ test('property: over multi-hit actions (2-4 hits, mixed damage, Ward on and off)
     ctx.fixCoreRules = { ...structuredClone(ctx.fixCoreRules || ctx.gameProfile.fixCoreRules), ward: { enabled: ward } };
     Object.assign(ctx.player, { hp: 200, maxHp: 200, block, barrier, statuses: {}, persistentPoise: { value: poise, max: 30 },
       persistentWard: { value: ward ? 4 : 0, max: 10 } });
-    delete ctx.player.combatStance; delete ctx.player.combatCounter;
+    delete ctx.player.combatStance; delete ctx.player.combatCounter; delete ctx.player.broken;
     return ctx;
   };
   for (const hits of [2, 3, 4]) for (const dmg of [3, 5, 10]) for (const share of [0, 0.4])

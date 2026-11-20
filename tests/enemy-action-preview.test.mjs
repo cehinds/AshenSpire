@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { productionBundle } from './helpers/production-bundle.mjs';
-import { hitAsLayered } from '../src/model/combatLog.js';
 const require = productionBundle();
 const { contentBundle } = require('src/content/index.js');
 const { createRegistries } = require('src/model/registries.js');
@@ -23,6 +22,8 @@ function fixture(enemyId, moveId, normalize = true) {
       basePrecisionBonus: 1000, attributes: { dexterity: 0 }, persistentPoise: { value: 0, max: 0 } });
     delete entity.combatStance; delete entity.combatCounter;
   }
+  // The normalized player holds no stance (Idle); these cases pin the authored per-hit amounts, so the Idle stance weakness (theme B, 2026-11-17) is left out.
+  if (normalize) delete combat.fixCoreRules?.stanceBenefits?.neutral?.damageTakenMultiplier;
   const move = registries.enemies.get(enemyId).moves[moveId];
   const projection = previewEnemyAction(combat, enemy, moveId);
   enemy.intent = { kind: move.intent, moveId, damage: move.damage ?? null, hits: move.hits ?? 1, combatProfile: projection.profile };
@@ -36,15 +37,19 @@ for (const [enemyId, moveId] of [['stitchedKing', 'graspingHands'], ['blightedVa
   test(`bundled authored ${enemyId}/${moveId} keeps per-hit amounts through previews, execution and floats`, () => {
     const { combat, enemy, move } = fixture(enemyId, moveId);
     const view = previewIntent(combat, enemy.id);
-    assert.deepEqual(Array.from(view.hitDamages), Array(move.hits).fill(move.damage));
-    assert.equal(view.totalDamage, move.damage * move.hits);
+    // Core scales an enemy move's base damage too (effects.baseDamageMultiplier, rounded up; owner, 2026-11-17).
+    // Then the enemy side scale (effects.enemyDamageMultiplier, floored, never 0 for a positive hit; owner, 2026-11-18).
+    const scaled = Math.ceil(move.damage * (profile.modules.effects.baseDamageMultiplier ?? 1));
+    const perHit = Math.max(1, Math.floor(scaled * (profile.modules.effects.enemyDamageMultiplier ?? 1)));
+    assert.deepEqual(Array.from(view.hitDamages), Array(move.hits).fill(perHit));
+    assert.equal(view.totalDamage, perHit * move.hits);
     assert.equal(view.damageReceipt.totalDamage, view.totalDamage);
     dispatch(combat, { type: 'setReactions', enabled: false });
     const before = combat.eventLog.length;
     dispatch(combat, { type: 'endTurn' });
     const damage = combat.eventLog.slice(before).filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id && e.targetId === combat.player.id);
     assert.deepEqual(damage.map(e => e.hpLoss), view.hitDamages);
-    assert.deepEqual(damage.map(e => guardHitFloatParts(e).damage?.text ?? null), damage.map(e => e.hpLoss > 0 ? `-${hitAsLayered(e)}` : null), 'the float is the full hit, shown only when HP was lost');
+    assert.deepEqual(damage.map(e => guardHitFloatParts(e).damage?.text ?? null), damage.map(e => e.hpLoss > 0 ? `-${e.hpLoss}` : null), 'the float is the HP lost, shown only when HP was lost');
     assert.equal(combat.player.hp, 1000 - view.totalDamage);
   });
 }

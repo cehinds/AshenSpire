@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { targetBodyHudPlacement } from '../src/ui/models/TargetHudModel.js';
+import { CanvasBox } from '../src/ui/viewViewport.js';
 import { currentSpriteBodyBounds } from '../src/ui/components/combatSpriteGeometry.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { combatantBodyMutation } from '../src/ui/components/battlefieldStage.js';
@@ -25,7 +26,7 @@ test('native mini and selected intent follow true pose body heads at every form 
     const combat = { querySelector: () => null };
     const field = { querySelectorAll: () => [frame], closest: () => combat };
     const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-      uiZoom: () => zoom, field, schedule() {}, scheduleArt() {}, targetBodyHudPlacement, separateRackedIntents() {},
+      uiZoom: () => zoom, CanvasBox, field, fieldSizeKey: null, schedule() {}, scheduleArt() {}, targetBodyHudPlacement, separateRackedIntents() {},
       // Desktop draws the taller group (owner 2026-10-28): the stage's helper returns its own height there.
       miniHudGroupHeight: grid => formFactor === 'desktop' ? 96 : grid.miniHudGroupHeightPx,
       uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
@@ -100,7 +101,7 @@ test('every target body is measured before inherited HUD coordinates are written
   // A partially mounted combatant has no sprite yet and must stay untouched.
   frames.push({ querySelector: () => null });
   const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-    uiZoom: () => 1.25, field: { getBoundingClientRect: () => ({ left: 0, right: 390 }), querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
+    uiZoom: () => 1.25, CanvasBox, fieldSizeKey: null, field: { getBoundingClientRect: () => ({ left: 0, right: 390 }), querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
     schedule() {}, scheduleArt() {}, invalidateSpriteRects() {}, readHitBadges: () => null, targetBodyHudPlacement, separateRackedIntents() {}, miniHudGroupHeight: grid => grid.miniHudGroupHeightPx,
     uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
     currentSpriteBodyBounds: sprite => ({ headY: 400, feetY: 560, top: 380, left: sprite.id * 50, right: sprite.id * 50 + 40 }),
@@ -144,4 +145,42 @@ test('detailed HUD selection coalesces its board fit without losing legacy synch
     assert.equal(fits, detailed ? 0 : 1, 'legacy Info controls keep their synchronous first placement');
     assert.equal(queued, 1, 'both presentations refit before their next paint');
   }
+});
+
+// SPEC (owner, 2026-11-17, item 33): the player's HUD sits halfway between its place above the head and the head.
+test('a drop fraction lowers the rack that share of the way toward the head', async () => {
+  const { targetBodyHudPlacement } = await import('../src/ui/models/TargetHudModel.js');
+  const { uiConfig: config } = await import('../src/config/generated/ui.js');
+  const body = { top: 300, headY: 300, left: 100, right: 200 }, frame = { top: 0, left: 0 };
+  const above = targetBodyHudPlacement({ body, frame, groupHeight: 80, gap: 10 });
+  const halfway = targetBodyHudPlacement({ body, frame, groupHeight: 80, gap: 10, drop: .5 });
+  assert.equal(above.miniTop, 210);
+  assert.equal(halfway.miniTop, (210 + 300) / 2, 'halfway from the old top to the head');
+  assert.equal(halfway.selectedTop - above.selectedTop, 45, 'the selected intent moves with it');
+  const drop = config.presentation.combatFormationModel.positioning.perspectiveGrid.playerMiniHudDropFraction;
+  assert.equal(drop, .5, 'SPEC: the player HUD is lowered halfway from its 10 px gap above the art toward the art top');
+});
+
+// SPEC (owner, 2026-11-17): the player's HUD stands beside the figure, right of its drawn art, at a readable width.
+test('the player HUD beside the figure takes the room to the field edge, within its bounds', async () => {
+  const { PlayerHudBeside } = await import('../src/ui/models/TargetHudModel.js');
+  const { uiConfig: config } = await import('../src/config/generated/ui.js');
+  const hud = config.presentation.combatFormationModel.positioning.perspectiveGrid.playerHud;
+  assert.equal(hud.placement, 'beside');
+  const body = { top: 300, headY: 300, bottom: 500, left: 0, right: 170 }, frame = { top: 100, left: 40 };
+  const phone = PlayerHudBeside({ body, frame, fieldRight: 390, gap: 10, topFraction: 0.15, maxWidth: 320, minWidth: 150, margin: 8 });
+  assert.equal(phone.left, 140, 'gap right of the art, in the frame\'s local px');
+  assert.equal(phone.top, 230, 'topFraction of the body below the head');
+  assert.equal(phone.width, 390 - 8 - 180, 'the room to the field edge');
+  assert.equal(PlayerHudBeside({ body, frame, fieldRight: 1280, maxWidth: 320 }).width, 320, 'capped at maxWidth');
+  assert.equal(phone.side, 'right');
+  // Codex on #2824: the rightmost lane leaves no room on the right, so the HUD stands left of the art; with no room
+  // on either side it is null and the HUD stays above the head.
+  const rightLane = { top: 300, headY: 300, bottom: 500, left: 220, right: 380 };
+  const left = PlayerHudBeside({ body: rightLane, frame: { top: 100, left: 260 }, fieldLeft: 0, fieldRight: 390, gap: 10, minWidth: 150, maxWidth: 320, margin: 8 });
+  assert.equal(left.side, 'left');
+  assert.equal(left.width, 220 - 10 - 8, 'the room to the left field edge');
+  assert.equal(left.left, 8 - 260, 'its right edge gap left of the art, its left edge on the margin');
+  assert.equal(PlayerHudBeside({ body: { ...rightLane, left: 100 }, frame, fieldLeft: 0, fieldRight: 390, minWidth: 150 }), null, 'no side has room');
+  assert.equal(PlayerHudBeside({ body, frame, fieldRight: 390, zoom: 2 }).left, 70, 'local px take the zoom');
 });

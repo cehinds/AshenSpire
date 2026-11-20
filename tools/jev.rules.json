@@ -101,7 +101,7 @@
       "deterministic": true,
       "action": "manual",
       "command": "",
-      "note": "Dispatch new host ops outside the runOpcode switch (see runGuardStackOpcode)."
+      "note": "Dispatch new host ops outside the OPCODE_HANDLERS map (see runGuardStackOpcode)."
     }
   ]
 }

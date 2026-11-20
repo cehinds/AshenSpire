@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { chip, meter, el, glyph } from '../src/ui/kit/index.js';
 import { arrangeMerchantOffer } from '../src/ui/components/merchantOffer.js';
 

@@ -149,6 +149,34 @@ function verifyContent(content) {
     for (const key of ['cost','staminaCost','manaCost']) if (!(key === 'cost' && row[key] === 'X') && (!Number.isSafeInteger(row[key]) || row[key] < 0)) fail(`$/content/cards/${row.id}/${key}`, 'expected nonnegative integer price');
     for (const [i,effect] of (row.effects || []).entries()) if ((effect.amount !== undefined || ['damage','block'].includes(effect.op)) && !adapterAmount(effect.amount)) fail(`$/content/cards/${row.id}/effects/${i}/amount`, 'expected nonnegative finite adapter amount');
   }
+  // Owner, 2026-11-17: Core HP = 30 + 5 x (CON + level). `poolBases` sets a pool's base for every class (poolBasesByClass still wins
+  // for its class); `levelGrowth` sets a pool's growth per level after the first.
+  for (const key of ['poolBases', 'levelGrowth']) {
+    if (content.stats[key] === undefined) continue;
+    if (!record(content.stats[key])) fail(`$/content/stats/${key}`, 'expected pool map');
+    for (const [pool, value] of Object.entries(content.stats[key])) {
+      if (!['hp', 'mana', 'stamina'].includes(pool) || !Number.isFinite(value) || value < 0) fail(`$/content/stats/${key}/${pool}`, 'expected known pool and nonnegative finite number');
+    }
+  }
+  // Owner, 2026-11-17: `pointsPerIncrease` sets how many attribute points one +1 of a pool costs (Core: 3 for SP and MP).
+  if (content.stats.pointsPerIncrease !== undefined) {
+    if (!record(content.stats.pointsPerIncrease)) fail('$/content/stats/pointsPerIncrease', 'expected pool map');
+    for (const [pool, value] of Object.entries(content.stats.pointsPerIncrease)) {
+      if (!['hp', 'mp', 'sp'].includes(pool) || !Number.isSafeInteger(value) || value < 1) fail(`$/content/stats/pointsPerIncrease/${pool}`, 'expected hp, mp or sp and a positive integer');
+    }
+  }
+  if (content.stats.attributeBaseline !== undefined) {
+    if (!record(content.stats.attributeBaseline)) fail('$/content/stats/attributeBaseline', 'expected pool map');
+    for (const [pool, value] of Object.entries(content.stats.attributeBaseline)) {
+      if (!['hp', 'mp', 'sp'].includes(pool) || !Number.isSafeInteger(value) || value < 0) fail(`$/content/stats/attributeBaseline/${pool}`, 'expected hp, mp or sp and a nonnegative integer');
+    }
+  }
+  if (content.stats.maxOf !== undefined) {
+    if (!record(content.stats.maxOf)) fail('$/content/stats/maxOf', 'expected pool map');
+    for (const [pool, ids] of Object.entries(content.stats.maxOf)) {
+      if (!['hp', 'mp', 'sp'].includes(pool) || !Array.isArray(ids) || ids.length < 2 || !ids.every(id => ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].includes(id))) fail(`$/content/stats/maxOf/${pool}`, 'expected hp, mp or sp and two or more attribute ids');
+    }
+  }
   if (content.stats.poolBasesByClass !== undefined) {
     if (!record(content.stats.poolBasesByClass)) fail('$/content/stats/poolBasesByClass', 'expected class pool-base map');
     for (const [classId, pools] of Object.entries(content.stats.poolBasesByClass)) {
@@ -215,8 +243,34 @@ export function armorBudgetFor(item, settings, rank = item.rank ?? 1) {
   const b = settings.armorBudget;
   return b.baseline + (rank - 1) * (b.perRank ?? 0) + (b.rarityBonus && Object.hasOwn(b.rarityBonus, item.rarity) ? b.rarityBonus[item.rarity] : 0);
 }
+// Owner, 2026-11-17 (`statPoints`, Core): armour and armaments grant attribute points and a Poise value, never AR or DR.
+// The item as found carries `attributes[rarity]` points (1 to 3), split by its bonus weights; each rank above its own
+// (a Smith tier) adds `perRank` more. Its Poise points are the Poise share of its ratings weights times its ratings
+// pool, rounded, and at least `poiseMin`. Tag costs are not charged; authored attribute and Poise points are kept.
+function resolveStatPointGear(item, settings, rank) {
+  const rule = settings.statPoints;
+  const authored = Object.fromEntries(GEAR_KEYS.map(k => [k, item.points?.[k] || 0]));
+  const authoredAttributes = GEAR_ATTRIBUTES.reduce((s, k) => s + authored[k], 0);
+  const found = Math.max(authoredAttributes, rule.attributes[item.rarity] ?? 0);
+  const total = found + Math.max(0, rank - (item.rank ?? 1)) * (rule.perRank ?? 0);
+  const onlyAttributes = weights => Object.fromEntries(Object.entries(weights).filter(([k, v]) => GEAR_ATTRIBUTES.includes(k) && v > 0));
+  let bonusWeights = onlyAttributes(gearWeights(item, settings, 'bonus'));
+  if (!Object.keys(bonusWeights).length) bonusWeights = onlyAttributes(settings.weights.global.bonus || {});
+  const chosen = Object.entries(bonusWeights).sort((a, b) => b[1] - a[1]).slice(0, settings.maxAttributes);
+  const fill = gearSplit(total - authoredAttributes, Object.fromEntries(chosen));
+  const ratingsWeights = gearWeights(item, settings, 'ratings');
+  const ratingsSum = Object.values(ratingsWeights).reduce((s, v) => s + Math.max(0, v), 0);
+  const ratingsPool = settings.fillTo === 'none' ? 0 : (settings.poolSizes.ratings[item.rarity] || { min: 0, max: 0 })[settings.fillTo === 'min' ? 'min' : 'max'];
+  const poise = authored.poise || Math.max(rule.poiseMin ?? 0, Math.round(ratingsPool * (ratingsSum ? Math.max(0, ratingsWeights.poise || 0) / ratingsSum : 0)));
+  const points = Object.fromEntries(GEAR_KEYS.map(k => [k, GEAR_ATTRIBUTES.includes(k) ? authored[k] + (fill[k] || 0) : k === 'poise' ? poise : 0]));
+  const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * (settings.pointValues[k] ?? 0)]));
+  const modifiers = (item.tags || []).map(t => settings.tags[t]).filter(r => r?.modifier).map(r => `${r.modifier}=${r.amount >= 0 ? '+' : ''}${r.amount}`);
+  const size = pool => settings.poolSizes[pool][item.rarity] || { min: 0, max: 0 };
+  return { id: item.id, rank, budget: null, points, values, tags: [...(item.tags || [])], modifiers, tagCost: 0, statPoints: { found, total, poise }, pools: { ratings: size('ratings'), bonus: size('bonus'), merged: settings.poolSizes.merged?.[item.rarity] || null, mode: 'statPoints' } };
+}
 export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) {
   if (!Number.isSafeInteger(rank) || rank < 1) throw new Error('Gear rank must be a positive integer');
+  if (settings.statPoints) return resolveStatPointGear(item, settings, rank);
   const armorBudget = item.kind === 'armor' && settings.armorBudget
     ? armorBudgetFor(item, settings, rank) : null;
   const size = pool => settings.poolSizes[pool][item.rarity] || { min: 0, max: 0 };
@@ -295,6 +349,13 @@ function verifyGearContent(content, settings) {
     const cost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
     const armorBudget = item.kind === 'armor' && settings.armorBudget ? armorBudgetFor(item, settings) : null;
     if (item.rank !== undefined && (!Number.isSafeInteger(item.rank) || item.rank < 1)) fail(`${at}/rank`, 'expected positive integer rank');
+    // Under `statPoints` (owner, 2026-11-17) the item's points are not drawn from a pool: it grants its rarity's attribute points and
+    // a Poise value, and any authored rating other than Poise (Wayfarer Plate's legacy DR) is ignored by the resolver.
+    if (settings.statPoints) {
+      const cap = Math.max(0, ...Object.values(settings.statPoints.attributes));
+      if (setB > cap) fail(`${at}/points`, `set points exceed the pool (statPoints: at most ${cap} attribute points)`);
+      continue;
+    }
     // A shield's rank adds perRank points to its merged pool (resolveGearItem); allow what it can spend.
     const shieldTierPoints = item.kind === 'shield' && settings.armorBudget ? ((item.rank ?? 1) - 1) * (settings.armorBudget.perRank ?? 0) : 0;
     const whole = armorBudget ?? shieldTierPoints + (settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max);
@@ -302,24 +363,43 @@ function verifyGearContent(content, settings) {
   }
 }
 // Enemies module (docs/plans/enemy-decks.md): enemies are characters with decks. Refuses unknown
-// card/gear/relic references, decks outside the configured bounds, attribute totals outside the
-// tier budget, and any deck card the enemy's own pools can never pay for.
+// card/gear/relic references, decks outside the configured bounds, attribute totals off the level budget
+// (SPEC §17), and any deck card the enemy's own pools can never pay for.
 const ENEMY_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 // Same shape as the player's derived-stat rows (src/content/derivedStats.js): base, plus each
 // attribute's contribution and the level term, each floored on its own (owner 2026-10-17:
 // HP, SP and MP from attributes and level via statRules).
 // Pass enemyItemBonuses() as `bonus` to include gear and relics.
 // Enemy attributes (owner 2026-10-17): points the row sets in `attributes` are kept; the rest of the
-// tier budget is split by `attributePriority` (rank weights from `priorityWeights`), respecting caps.
+// level budget is split by `attributePriority` (rank weights from `priorityWeights`), respecting caps.
 // `variance` moves up to N points between the top `among` priorities, seeded, so copies differ.
 function enemyAttributeWeights(row, settings) {
   const fill = settings.attributeFill, order = row.attributePriority || fill.defaultPriority, ranks = row.priorityWeights || fill.priorityWeights;
   return Object.fromEntries(order.map((id, i) => [id, ranks[i] ?? 0]));
 }
+// Owner 2026-11-07 (SPEC §17, Enemy levels and stat budget): an enemy's attribute budget is the Core player's
+// starting budget plus `attributePointsPerLevel` for each level after the first. Both are read from config.
+// Authored points and explicit tag budgets still win. Historical run snapshots
+// retain tier budgets; only the new unbudgeted enemy tags use player progression.
+export function enemyAttributeBudget(row, settings, level = enemyLevel(row, settings)) {
+  if (Number.isSafeInteger(row.attributePoints)) return row.attributePoints;
+  if (characterTags(row).some(tag => settings.tagRules?.[tag]?.attributeBudget)) {
+    return characterRule(row, settings).attributeBudget[1];
+  }
+  const player = settings.tagRules?.['character.player']?.attributeBudget;
+  if (!player) return characterRule(row, settings).attributeBudget[1];
+  const perLevel = Number.isFinite(settings.attributePointsPerLevel) ? settings.attributePointsPerLevel : 1;
+  return player[1] + perLevel * (Math.max(1, level) - 1);
+}
+// The lowest each own attribute may be: the larger of the configured floor and the authored points.
+function enemyAttributeMinimums(row, settings) {
+  const floor = settings.attributeFill?.floor ?? 0;
+  return Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(floor, row.attributes?.[id] || 0)]));
+}
 export function resolveEnemyAttributes(row, settings, seed = null) {
   const fill = settings.attributeFill, tier = characterRule(row, settings);
-  const budget = Number.isSafeInteger(row.attributePoints) ? row.attributePoints : tier.attributeBudget[1];
-  const set = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, row.attributes?.[id] || 0]));
+  const budget = enemyAttributeBudget(row, settings);
+  const set = enemyAttributeMinimums(row, settings);
   const out = { ...set }, caps = { ...fill.caps, ...(row.attributeCaps || {}) };
   let weights = enemyAttributeWeights(row, settings), left = budget - Object.values(set).reduce((a, b) => a + b, 0);
   for (let guard = 0; left > 0 && guard < 10; guard++) {
@@ -344,7 +424,7 @@ export function resolveEnemyAttributes(row, settings, seed = null) {
 // Every attribute spread variance can produce (for validation): the base plus each single-point move.
 export function enemyAttributeOutcomes(row, settings) {
   const fill = settings.attributeFill, v = { points: 0, among: 2, ...(settings.variance || {}), ...(row.variance || {}) }, base = resolveEnemyAttributes(row, settings);
-  const outcomes = [base];
+  const outcomes = [base], minimum = enemyAttributeMinimums(row, settings);
   if (!settings.variance || !v.points || !characterRule(row, settings).variance) return outcomes;
   const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = { ...fill.caps, ...(row.attributeCaps || {}) };
   // Track unique spreads only: many move orders reach the same spread, and expanding duplicates grows
@@ -354,7 +434,7 @@ export function enemyAttributeOutcomes(row, settings) {
   for (let step = 0; step < v.points && frontier.length; step++) {
     const next = [];
     for (const a of frontier) for (const from of order) for (const to of order) {
-      if (from === to || a[from] <= (row.attributes?.[from] || 0) || (caps[to] !== undefined && a[to] >= caps[to])) continue;
+      if (from === to || a[from] <= minimum[from] || (caps[to] !== undefined && a[to] >= caps[to])) continue;
       const moved = { ...a, [from]: a[from] - 1, [to]: a[to] + 1 }, key = canonicalGameJSON(moved);
       if (!seen.has(key)) { seen.add(key); next.push(moved); outcomes.push(moved); }
     }
@@ -379,6 +459,16 @@ export function characterRule(row, settings) {
     if (r.variance) rule.variance = true;
   }
   return rule;
+}
+// Owner, 2026-11-17 (enemies `effectiveLevelByAct`, Core): an elite or boss fights at its tier's level for the act
+// (Core: elites 2 / 4 / 6, bosses 4 / 6 / 8 in Acts 1 / 2 / 3; past the table the last entry holds). null when the
+// tier has no row, so a normal enemy keeps its own level. `row.tier` or its `tier.<id>` tag names the tier.
+export function enemyEffectiveLevel(row, settings, act) {
+  const tier = row?.tier || characterTags(row || {}).find(tag => tag.startsWith('tier.'))?.slice(5);
+  const levels = settings?.effectiveLevelByAct?.[tier];
+  if (!Array.isArray(levels) || !levels.length) return null;
+  const index = Math.min(levels.length, Math.max(1, Number.isSafeInteger(act) ? act : 1)) - 1;
+  return levels[index];
 }
 export function enemyLevel(row, settings) {
   if (Number.isSafeInteger(row.level)) return Math.max(1, row.level);
@@ -411,7 +501,7 @@ export function enemyItemBonuses(row, content = {}, gearSettings = null) {
   return bonus;
 }
 // Authored `attributeOffset` (owner, 2026-10-25): added to each enemy attribute AFTER gear and relic bonuses, floored at 0.
-// Validation keeps checking the own points against the tier budget before the offset.
+// Validation keeps checking the own points against the level budget before the offset.
 // Players have no tier and are never offset.
 export function enemyAttributeTotal(row, settings, id, own, bonus = null) {
   const offset = row?.tier ? settings.attributeOffset?.[id] || 0 : 0;
@@ -498,6 +588,7 @@ export function characterSettings(modules) {
   return { ...(modules.enemies || {}), ...(modules.characters || {}),
     healRules: modules['heal-rules'] || null, stagger: modules.stagger || null, visibility: modules['enemy-visibility'] || null,
     equipment: modules['enemy-relics']?.equipment || null, variance: modules['attribute-variance'] || null,
+    attributePointsPerLevel: modules.progression?.attributePointsPerLevel ?? 1,
     deckEditing: modules['deck-training'] || null, cardPoolRules: modules['card-pools'] || null, rewardRanks: modules['reward-ranks'] || null };
 }
 // characters.json (owner 2026-10-17): players and enemies in one shape; tags decide which block applies.
@@ -602,8 +693,8 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
     if (!settings.include.includes(row.tier)) fail(`${at}/tier`, 'unknown or excluded tier');
     if (row.attributes !== undefined && (!record(row.attributes) || Object.keys(row.attributes).some(k => !ENEMY_ATTRIBUTES.includes(k)) || Object.values(row.attributes).some(n => !Number.isSafeInteger(n) || n < 0))) fail(`${at}/attributes`, 'expected nonnegative integer attributes');
     for (const id of row.attributePriority || []) if (!ENEMY_ATTRIBUTES.includes(id)) fail(`${at}/attributePriority`, `unknown attribute '${id}'`);
-    const total = Object.values(resolveEnemyAttributes(row, settings)).reduce((a, b) => a + b, 0);
-    if (total < tier.attributeBudget[0] || total > tier.attributeBudget[1]) fail(`${at}/attributes`, `total ${total} outside ${row.tier} budget`);
+    const total = Object.values(resolveEnemyAttributes(row, settings)).reduce((a, b) => a + b, 0), budget = enemyAttributeBudget(row, settings);
+    if (total !== budget) fail(`${at}/attributes`, `total ${total} outside level ${enemyLevel(row, settings)} budget ${budget}`);
     if (!Array.isArray(row.defaultDeck)) fail(`${at}/defaultDeck`, 'expected defaultDeck array');
     for (const list of ['defaultGear', 'defaultRelics']) {
       const entries = row[list] || [];
@@ -640,7 +731,7 @@ function verifySettings(modules, instances = {}) {
     if (modules.routes.requirePrebossRest && !restFloors.includes(prebossNodes)) fail('$/modules/routes/restFloors', 'requirePrebossRest requires the final preboss depth to be a rest');
   }
   // A one-service visit needs a deck-free fallback so a visit can always be spent; "all" visits heal on arrival, so any list will do.
-  if (modules.rest?.mode === 'configured' && modules.rest.servicesPerVisit === 1 && !modules.rest.services.includes('strategize')) fail('$/modules/rest/services', 'Strategize recovery fallback is required by this adapter');
+  if (modules.rest?.mode === 'configured' && modules.rest.servicesPerVisit === 1 && !modules.rest.services.includes('strategize') && !modules.rest.services.includes('rest')) fail('$/modules/rest/services', 'Strategize recovery fallback is required by this adapter');
   if (modules.rewards && modules.rewards.takeCount > modules.rewards.offerCount) fail('$/modules/rewards/takeCount', 'cannot exceed offerCount');
   if (modules.stances && modules.stances.minimumHitChance > modules.stances.maximumHitChance) fail('$/modules/stances/minimumHitChance','must not exceed maximumHitChance');
 }

@@ -212,7 +212,7 @@ async function boot(context, classId) {
 
 async function fixture(page, row) {
   return page.evaluate(async ({ source, row }) => {
-    const [{ createRunCombat }, { resolveCombatCard }, { previewCard, cardChoicePlan, dispatch }, { cardTargetPlan }, { assertFoundationPlayable, candidateState }, { controlGate }] = await Promise.all([
+    const [{ createRunCombat }, { resolveCombatCard }, { previewCard, cardChoicePlan, dispatch }, { cardTargetPlan }, { candidateState }, { controlGate }] = await Promise.all([
       import(source + 'engine/runCombat.js'), import(source + 'engine/combatExpansion.js'), import(source + 'engine/combat.js'),
       import(source + 'model/cardTargets.js'), import(source + 'engine/combatRules.js'), import(source + 'engine/combatStatusControl.js')]);
     const c = window.__combat;
@@ -270,7 +270,6 @@ async function fixture(page, row) {
     if (preview.costIsX && !row.deniedCost) { c.player.energy = 3; preview = previewCard(c, inst.instanceId, undefined, row.upcastTier); }
     let refused = c.registries.framework.isUnplayable(def) ? 'authored unplayable card' : null;
     if (!controlGate(c, c.player, def).allowed) refused = 'active control restriction';
-    try { assertFoundationPlayable(c, def); } catch (error) { refused = error.message; }
     const choice = cardChoicePlan(c, inst.instanceId);
     const plan = cardTargetPlan({ ...def, combatPreview: preview }, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
     window.__auditOracle = candidateState(c);
@@ -406,7 +405,10 @@ async function play(page, device, row, before) {
   else {
     await tap(page, page.locator('.combatant.player .player-action-intent'), device);
   }
-  if (before.choice) await tap(page, page.locator('.card-choice [data-choice]:not([disabled])').first(), device);
+  if (before.choice) {
+    await tap(page, page.locator('.card-choice [data-choice]:not([disabled])').first(), device);
+    await tap(page, page.locator('.card-choice .modal-foot button', { hasText: 'Choose' }), device);
+  }
   await page.waitForFunction(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed' && e.cardInstanceId === window.__auditInstanceId), null, { timeout: 10000 });
   if (row.curated) {
     await page.waitForFunction(() => !!document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage?.presentation?.action, null, { timeout: 5000 });
@@ -481,7 +483,10 @@ async function endTurnAndPlayNext(page, device, row) {
   await tap(page, page.locator(`.hand .card[data-instance-id="${next.instanceId}"]`), device);
   if (next.needsTarget) await tap(page, page.locator('.enemy-target-button:not([disabled])').first(), device);
   else await tap(page, page.locator('.combatant.player .player-action-intent'), device);
-  if (next.choice) await tap(page, page.locator(`.card-choice [data-choice="${next.choice}"]`), device);
+  if (next.choice) {
+    await tap(page, page.locator(`.card-choice [data-choice="${next.choice}"]`), device);
+    await tap(page, page.locator('.card-choice .modal-foot button', { hasText: 'Choose' }), device);
+  }
   await page.waitForFunction(id => window.__combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === id), next.instanceId, { timeout: 10000 });
   choices.push(...await finishPending(page, device));
   return { discardIds, choices, recovered, next };
@@ -692,7 +697,8 @@ try {
               await page.screenshot({ path: resolve(out, `${device}-${classId}-victory-reward.png`) });
               await tap(page, page.locator('#reward-continue'), device);
               await tap(page, page.locator('.confirmation-modal .confirmation-confirm'), device);
-              await page.waitForFunction(done => window.__spoils().done === done + 1 && !window.__spoils().pendingReward, before.done, { timeout: 15000 });
+              // Core reward door: rewardDoneCount never moves, so completion is the live and saved receipts both clearing.
+              await page.waitForFunction(() => { const s = window.__spoils(); return !s.pendingReward && !s.savedPendingReward; }, null, { timeout: 15000 });
               const after = await page.evaluate(() => window.__spoils());
               assert.equal(after.savedPendingReward, null, 'reward completion clears persisted receipt');
               entry.reward = { before, after };

@@ -8,7 +8,10 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
+import { createRunCombat as createRunCombatWithBenefits } from './withoutWeaknesses.mjs';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
+// These numbers pin the pre-Wave-2.5 arithmetic, so the fight plays the rules of one created before the stance benefits (tests/stance-benefits.test.mjs owns those).
+const createRunCombat = (...args) => withoutStanceBenefits(createRunCombatWithBenefits(...args));
 import { applyAttackDamage } from '../src/engine/actions.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
@@ -17,13 +20,16 @@ import { combatLogEntries } from '../src/model/combatLog.js';
 import { damageReceiptLines } from '../src/ui/components/damageReceipt.js';
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
 const attack = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 function live({ stance = 'defend', block = 10, poise = 20, vulnerable = 0 } = {}) {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  // These tests cover the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); tests/poise-broken.test.mjs covers the shipped Broken rule.
+  combat.fixCoreRules = { ...(combat.fixCoreRules || combat.gameProfile.fixCoreRules), poise: { drain: 'prevented' } };
   const target = combat.enemies[0];
   Object.assign(target, { hp: 500, maxHp: 500, block, barrier: 0, statuses: vulnerable ? { vulnerable: { stacks: vulnerable } } : {}, persistentPoise: { value: poise, max: 20 }, attributes: { dexterity: 0 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
   delete target.combatCounter;
@@ -131,7 +137,8 @@ test('intent projection: a multi-hit Smash loses its stance bonus once an earlie
   assert.equal(shown.max, 15);
   const preview = previewDamageHits(combat, enemy, combat.player, 4, smashTags, enemy.intent, 3);
   assert.equal(preview.hpLoss, shown.max);
-  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.poiseDamage ?? 0), [2, 1, 0], 'the broken stance stops the Smash Poise-damage rider');
+  // Live play drains 3 -> 1 -> 0 (a Core hit applies no damage-type rider; checked against applyAttackDamage below), so the preview does the same.
+  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.poiseDamage ?? 0), [2, 1, 0], 'the Smash Poise-damage rider, then the last Poise point, then nothing left to take');
   for (let i = 0; i < 3; i++) { primeAccuracyRolls(combat); applyAttackDamage(combat, enemy, combat.player, 4, smashTags, enemy.intent); }
   assert.equal(100 - combat.player.hp, shown.max);
 });

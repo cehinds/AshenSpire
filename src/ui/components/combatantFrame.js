@@ -5,9 +5,19 @@ import { markSpriteArt } from './spriteArtFlags.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
 import { markBuilt, reconcileList } from '../domWrite.js';
-import { refreshIconTray } from './iconTray.js';
+import { refreshIconTray, fitBadgeRowTray } from './iconTray.js';
 
 const ownedClasses = new WeakMap();
+
+// The HUD's status tray lives in the meters' badge row (components/combatHealth.js), beside the defense badges. It is a node of its own,
+// reconciled by the statuses slot, and marked so a morph of the meters (an HP or Block change) leaves it where it stands.
+const badgeRowOf = (frame) => frame.querySelector('.combat-health-badges');
+function seatStatuses(frame, trays) {
+  const row = badgeRowOf(frame);
+  if (!row) return false;
+  for (const tray of trays) row.appendChild(tray);
+  return true;
+}
 
 // WCI1/WCI2: the nameplate sits in the card directly above the meters (HP
 // first); the sprite host is the combatant's artwork, standing on its baseline.
@@ -41,8 +51,8 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(frame.classList.contains('enemy') ? leadingHost : widget,
-    trailing.filter(n => n?.classList.contains('statuses')));
+  const trays = trailing.filter(n => n?.classList.contains('statuses'));
+  if (!seatStatuses(frame, trays)) appendAll(frame.classList.contains('enemy') ? leadingHost : widget, trays);
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   if (action) leadingHost.appendChild(action);
   if (actionFocused) action.focus({ preventScroll: true });
@@ -74,7 +84,8 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
   const card = frame.querySelector('.combatant-card');
   const spriteHost = [...card.children].find(node => node.classList.contains('sprite'));
   const widget = isPlayer ? [...leadingHost.children].find(node => node.classList.contains('combatant-mini-hud')) : card;
-  const statusHost = !isPlayer ? leadingHost : widget;
+  // The player has no selected panel, so its status tray lives in its overhead rack (under the HP row) while the rack exists.
+  const statusHostBefore = !isPlayer ? leadingHost : (rack || widget);
   const isStatuses = (node) => node.classList?.contains('statuses');
   const isAction = (node) => node.classList?.contains('player-action-intent');
   const isIntent = (node) => node.classList?.contains('intent');
@@ -84,7 +95,7 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
   const find = (host, test) => kids(host).find(test) || null;
   const isLeading = (node) => node !== widget && !isStatuses(node) && !isAction(node);
   // Without the rack (the target HUD is off) the slots are replaced as they always were.
-  if (!rack) return replaceSlots({ leadingHost, widget, spriteHost, statusHost, isPlayer, leading, name, meters, statuses, chips });
+  if (!rack) return replaceSlots({ leadingHost, widget, spriteHost, statusHost: badgeRowOf(frame) || statusHostBefore, isPlayer, leading, name, meters, statuses, chips });
   let swaps = 0;
   if (leading !== undefined) {
     const next = leading.filter(Boolean);
@@ -103,13 +114,21 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
   if (meters !== undefined) {
     const host = rack || widget, live = find(host, isMeters) || (rack ? find(widget, isMeters) : null);
     const anchor = rack ? null : (() => { const nameNode = find(widget, isName); return nameNode ? nameNode.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling); })();
+    // The tray rides in the badge row; a morph keeps it (data-morph-keep), a replaced meters strip hands it to the new row, fitted at once.
+    const keptTray = live ? live.querySelector('.statuses') : null;
     swaps += reconcileList(live ? live.parentNode : host, live ? [live] : [], meters ? [meters] : [], anchor, { morphable: meterMorphable });
+    const newRow = badgeRowOf(frame);
+    // Reparenting keeps the tray's fitted cache (its full item list); the refit below works from it, never from the collapsed DOM.
+    if (keptTray && newRow && !newRow.contains(keptTray)) newRow.appendChild(keptTray);
   }
   if (statuses !== undefined) {
     // The status tray stays; its icons are written in place and only a status gained or lost adds or removes one.
     const list = statuses ? [].concat(statuses).filter(Boolean) : [];
+    const statusHost = badgeRowOf(frame) || statusHostBefore;
     let anchor;
-    if (statusHost === leadingHost) anchor = find(leadingHost, isAction);
+    if (statusHost === badgeRowOf(frame)) anchor = null;
+    else if (statusHost === leadingHost) anchor = find(leadingHost, isAction);
+    else if (statusHost === rack) anchor = null;
     else {
       const holder = find(widget, isMeters) || find(widget, isName);
       anchor = holder ? holder.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling);
@@ -119,8 +138,14 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
     if (live.includes(anchor)) anchor = live.at(-1).nextSibling;
     const changed = reconcileList(statusHost, live, list, anchor);
     swaps += changed;
+    if (statusHost === rack) markRackStatuses(rack);
     // A tray whose icons were added, removed or replaced must not fit from its old items.
     if (changed) live.forEach((tray, index) => { if (tray.isConnected !== false && list[index]) refreshIconTray(tray, list[index]); });
+  }
+  // The badges that show decide how much room the status tray has: refit it now, not at the next stage pass.
+  if (meters !== undefined || statuses !== undefined) {
+    const row = badgeRowOf(frame), tray = row?.querySelector(':scope > .statuses');
+    if (tray && frame.isConnected) fitBadgeRowTray(tray);
   }
   if (chips !== undefined) {
     for (const node of kids(widget)) {
@@ -152,16 +177,25 @@ function replaceSlots({ leadingHost, widget, spriteHost, statusHost, isPlayer, l
     }
   }
   if (meters !== undefined) {
-    find(widget, isMeters)?.remove();
+    const oldMeters = find(widget, isMeters);
+    const tray = oldMeters?.querySelector('.statuses');
+    oldMeters?.remove();
     if (meters) {
       const anchor = find(widget, isName);
       widget.insertBefore(meters, anchor ? anchor.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling));
+      const row = meters.querySelector?.('.combat-health-badges');
+      if (tray && row && statuses === undefined) row.appendChild(tray);
     }
   }
   if (statuses !== undefined) {
+    // The host was picked before the meters were replaced; a new meters strip carries its own badge row.
+    const freshRow = meters?.querySelector?.('.combat-health-badges');
+    if (freshRow) statusHost = freshRow;
     for (const node of kids(statusHost)) if (isStatuses(node)) node.remove();
     const list = statuses ? [].concat(statuses).filter(Boolean) : [];
-    if (statusHost === leadingHost) {
+    if (statusHost.classList?.contains('combat-health-badges')) {
+      for (const node of list) statusHost.appendChild(node);
+    } else if (statusHost === leadingHost) {
       const action = find(leadingHost, isAction);
       for (const node of list) leadingHost.insertBefore(node, action);
     } else {
@@ -266,11 +300,11 @@ export function combatantFrame({
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(role === 'enemy' ? leadingHost : widget,
-    trailing.filter(n => n?.classList.contains('statuses')));
-  appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   stack.appendChild(card);
   frame.appendChild(stack);
+  const trays = trailing.filter(n => n?.classList.contains('statuses'));
+  if (!seatStatuses(frame, trays)) appendAll(role === 'enemy' ? leadingHost : widget, trays);
+  appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   // Remember what the builder wrote on each slot node, so a later in-place update drops only what the builder dropped.
   for (const node of [...leading, name, meters, ...trailing]) if (node) markBuilt(node);
   return frame;
@@ -279,6 +313,8 @@ export function combatantFrame({
 // The contextual desktop HUD keeps only HP beside the overhead intent. Move
 // the shared live meter nodes, including their tooltips, instead of cloning a
 // second health display or changing the sprite's frame geometry.
+// The player's tray in its rack is styled like a selected panel's `.target-hud-statuses`.
+const markRackStatuses = rack => { for (const tray of rack.querySelectorAll(':scope > .statuses')) tray.classList.add('target-hud-statuses'); };
 export function setCombatantTargetHud(frame, enabled) {
   const leading = frame.querySelector('.combatant-leading');
   const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
@@ -286,16 +322,20 @@ export function setCombatantTargetHud(frame, enabled) {
   if (enabled) {
     if (rack) {
       for (const intent of leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) rack.prepend(intent);
+      if (frame.classList.contains('player')) { rack.append(...leading.querySelectorAll('.combatant-mini-hud > .statuses')); markRackStatuses(rack); }
       return;
     }
     const meters = frame.querySelector('.combatant-card .meters, .combatant-mini-hud .meters');
     if (!meters) return;
     for (const slot of [meters, ...frame.querySelectorAll('.nm')]) { slot.style.removeProperty('transform'); slot.style.removeProperty('translate'); slot.style.removeProperty('position'); slot.style.removeProperty('left'); slot.style.removeProperty('top'); }
     const host = document.createElement('div'); host.className = 'target-hud-overhead-meters';
-    host.append(...leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent'), meters); frame.append(host);
+    host.append(...leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent'), meters);
+    if (frame.classList.contains('player')) host.append(...leading.querySelectorAll('.combatant-mini-hud > .statuses'));
+    frame.append(host); markRackStatuses(host);
   } else if (rack) {
     const parent = frame.classList.contains('player') ? leading.querySelector('.combatant-mini-hud') : frame.querySelector('.combatant-card');
     for (const intent of rack.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) leading.append(intent);
+    for (const tray of rack.querySelectorAll(':scope > .statuses')) tray.classList.remove('target-hud-statuses');
     if (parent) parent.append(...rack.childNodes);
     rack.remove();
   }

@@ -9,7 +9,8 @@
 // ONE SCREEN, ONE MODAL (owner, 2026-11-04). The desk is the list. Tapping a row opens that row's upgrade
 // confirmation modal straight away; there is no detail view and no Back button inside the desk.
 import { el, button } from '../kit/index.js';
-import { modalFooter } from './modalShell.js';
+import { ModalFooter } from './modalShell.js';
+import { ModalController } from './modalController.js';
 
 /** A row's art in the editor's own `.deck-editor-art` slot (the host's ArtWell: its painted asset, or its glyph). */
 export function deskArt(node) {
@@ -47,8 +48,11 @@ export function deskRow({ tag = 'div', className = '', attrs = {}, art, name, ba
  * not in the page.
  *
  * `title` / `titleId`: the heading. `listLabel`: the list's accessible name. `backLabel`: the footer's way out.
+ * `name`, `returnFocus`, `onBack`, `onClosing`: the desk's ModalController (Escape, the veil, close and focus return).
  */
-export function mountUpgradeDesk(host, { title, titleId, listLabel, backLabel, kind = 'upgrade' }) {
+export function mountUpgradeDesk(host, {
+  title, titleId, listLabel, backLabel, kind = 'upgrade', name = 'upgrade-desk', returnFocus = null, onBack = null, onClosing = null,
+}) {
   const veil = el('div', { class: 'modal-veil deck-editor-veil upgrade-desk-veil smith-modal-veil' });
   const panel = el('section', {
     class: `deck-editor deck-editor-reading-desk upgrade-desk upgrade-desk-${kind}`, role: 'dialog', 'aria-modal': 'true',
@@ -69,9 +73,12 @@ export function mountUpgradeDesk(host, { title, titleId, listLabel, backLabel, k
 
   const backBtn = button({ label: backLabel, role: 'exit', className: 'deck-editor-cancel smith-back' });
   const confirmBtn = button({ label: '', weight: 'primary', className: 'deck-editor-done smith-confirm' });
-  const foot = modalFooter({ secondary: [backBtn], className: 'deck-editor-foot smith-modal-footer', size: 'medium' });
+  const foot = ModalFooter({ secondary: [backBtn], className: 'deck-editor-foot smith-modal-footer', size: 'medium' });
   panel.append(head, panes, el('div', { class: 'deck-editor-footer' }, foot));
   host.appendChild(veil);
+  const controller = new ModalController({ name, veil, panel, returnFocus, onBack, onClosing }).Open();
+  backBtn.addEventListener('click', () => controller.BackOut());
+  closeBtn.addEventListener('click', () => controller.BackOut());
 
   /** Arrow keys walk the rows, as the editor's list does under the focus cursor. */
   list.addEventListener('keydown', (event) => {
@@ -85,7 +92,7 @@ export function mountUpgradeDesk(host, { title, titleId, listLabel, backLabel, k
   });
 
   return {
-    veil, panel, head, purse, closeBtn, list, backBtn, confirmBtn,
+    veil, panel, head, purse, closeBtn, list, backBtn, confirmBtn, controller,
     /** Replace the list's rows (each a `deskRow().item`). */
     setRows(items) { list.replaceChildren(...items); },
   };

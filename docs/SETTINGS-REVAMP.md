@@ -115,7 +115,7 @@ All ten suggestions from the first pass have been built.
 3. **Named profiles**: profiles are stored as `settings-profiles/<name>.json`.
    Defaults & sync lists the existing ones on its branch. Pick one, or type a
    new name; the file is created on the first save.
-4. **Build-time defaults**: run `node tools/settings-defaults.mjs <profile.json>`
+4. **Build-time defaults**: run `node tools/attic/settings-defaults.mjs <profile.json>`
    to write `src/content/settingsDefaults.js`. The file passes through the same
    import checks as a normal import, and screen-size keys are left out. What a
    player sees at startup:

@@ -11,8 +11,10 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { enemyMoveSp, enemyMoveQuote, extendEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
+import { withoutBands } from './legacyBandsRules.mjs';
+import { BandsEnemyPhaseRangeState } from '../src/engine/bandRows.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function fight(id = 'fellWarden') {
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });
@@ -35,13 +37,29 @@ test('multi-hit floors apply after discounts to authored and derived prices, inc
   assert.equal(enemyMoveSp(def.moves.hammerToss, options), 1, 'an old active fight retains its old price');
 });
 
-test('native Core plans use actual maxima, include Advance and expose every committed follow-up', () => {
+// Legacy (pre-rows) arithmetic: the plan is quoted against the live range, so a back-row melee opener carries its paid Advance (dragon Claws 2 + 1).
+test('native Core plans use actual maxima, include Advance and expose every committed follow-up (legacy, no rows)', () => {
+  for (const id of ['wanderingSoldier', 'fellWarden', 'thornMatriarch', 'ashheartDragon', 'glassRegent']) {
+    const combat = withoutBands(() => fight(id)), enemy = combat.enemies[0], def = registries.enemies.get(id);
+    const plan = enemyPlanActions(combat, enemy);
+    const entries = enemy.intent.moveId ? [enemy.intent.moveId, ...enemy.plannedMoves.map(entry => entry.moveId)] : [];
+    assert.deepEqual(plan.map(entry => entry.id), entries, id);
+    const total = entries.reduce((sum, moveId) => sum + enemyMoveQuote(def.moves[moveId], { enemy, moveId, combat }).totalSp, 0);
+    assert.ok(total <= enemy.maxStamina, `${id}: ${entries} costs ${total}, actual pool ${enemy.maxStamina}`);
+    assert.equal(enemy.stamina, enemy.maxStamina, 'forecasting spends nothing');
+  }
+});
+
+// Rows (2026-11-15): a plan is priced against the bands as they stand at the coming enemy phase. A lone back-row enemy steps forward at the phase
+// start, so the dragon's Claws (2 SP) carry no Advance there and fit its 2 SP pool; the live quote (2 + 1) is not what the enemy pays.
+test('rows plans are priced at the enemy phase: every shown entry fits the pool and equals its projected quote', () => {
   for (const id of ['wanderingSoldier', 'fellWarden', 'thornMatriarch', 'ashheartDragon', 'glassRegent']) {
     const combat = fight(id), enemy = combat.enemies[0], def = registries.enemies.get(id);
     const plan = enemyPlanActions(combat, enemy);
     const entries = enemy.intent.moveId ? [enemy.intent.moveId, ...enemy.plannedMoves.map(entry => entry.moveId)] : [];
     assert.deepEqual(plan.map(entry => entry.id), entries, id);
-    const total = entries.reduce((sum, moveId) => sum + enemyMoveQuote(def.moves[moveId], { enemy, moveId, combat }).totalSp, 0);
+    const pricing = { ...combat, rangeState: BandsEnemyPhaseRangeState(combat) };
+    const total = entries.reduce((sum, moveId) => sum + enemyMoveQuote(def.moves[moveId], { enemy, moveId, combat: pricing }).totalSp, 0);
     assert.ok(total <= enemy.maxStamina, `${id}: ${entries} costs ${total}, actual pool ${enemy.maxStamina}`);
     assert.equal(enemy.stamina, enemy.maxStamina, 'forecasting spends nothing');
   }

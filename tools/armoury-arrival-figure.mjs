@@ -1,9 +1,8 @@
-// Armoury tab reachability and visible character/card geometry in a real browser.
+// Armoury page reachability and visible character/card geometry in a real browser.
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
-import { wireframeUi } from '../src/content/wireframeUi.js';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 function connectCdp(wsUrl) {
@@ -127,31 +126,26 @@ try {
     await wait(900);
     await ev('window.dispatchEvent(new KeyboardEvent("keydown", { key: "r", bubbles: true }))');
     await until('!!document.querySelector(".armoury")');
-    gate(await ev('document.querySelector(".armoury").dataset.page === "rack"'), `${width}: Equipment is the default tab`);
-    for (const tab of ['grid', 'rack', 'hybrid', 'cards']) {
-      await ev(`document.querySelector('.armoury [data-member="${tab}"]').click()`);
-      await wait(200);
-      gate(await ev(`document.querySelector('.armoury [data-member="${tab}"]').getAttribute('aria-selected') === 'true'`), `${width}: ${tab} tab opens`);
-      gate(await ev('(()=>{const e=document.querySelector(".armoury-shell-body");return e.scrollWidth <= e.clientWidth+1})()'), `${width}: ${tab} stays within the modal width`);
-      if (tab === 'grid') {
-        gate(await ev('!document.querySelector(".armoury-inventory")'), `${width}: Character contains no inventory list`);
-        const reading = await ev(PROBE);
-        gate(reading.figure?.area > 0 && reading.figureVisible?.area >= reading.figure.area * .95, `${width}: character figure is visible without clipping`);
-      }
-      if (tab === 'cards') {
-        const reading = await ev(`(()=>{const cards=[...document.querySelectorAll('.armoury-card-gallery > .card')];const first=cards[0];const r=first?.getBoundingClientRect();const body=document.querySelector('.armoury-shell-body').getBoundingClientRect();const rules=first?.querySelector('[data-card-binding="rules"], .ctext');return {count:cards.length,ratio:r?.width/r?.height,visible:r?.top>=body.top && r?.bottom<=body.bottom,rulesPresent:!!rules,text:rules?parseFloat(getComputedStyle(rules).fontSize)*parseFloat(getComputedStyle(document.body).zoom || '1'):0};})()`);
-        gate(reading.count > 5, `${width}: deck gallery contains the class and equipment cards`);
-        gate(Math.abs(reading.ratio - wireframeUi.card.ratio) < .02 && reading.visible, `${width}: first card keeps its profile and is fully visible`);
-        gate(reading.rulesPresent, `${width}: card has a live rules text layer`);
-        gate(reading.text >= 14.9, `${width}: card body text has a 15px reading floor`);
-      }
-    }
+    // The Armoury has no grid/rack/hybrid/cards switcher since 2237f4e89e and
+    // 307bab431b. It has the Character / Armory / Deck hub tabs (equipment.js
+    // onTab) and opens on the Armory page, data-page="rack"; the Character tab
+    // is data-page="grid", the only page that draws the figure.
+    const fits = '(()=>{const e=document.querySelector(".armoury-shell-body");return e.scrollWidth <= e.clientWidth+1})()';
+    gate(await ev('document.querySelector(".armoury").dataset.page === "rack"'), `${width}: Equipment is the default page`);
+    gate(await ev(fits), `${width}: the default page stays within the modal width`);
+    await ev('document.querySelector(\'.armoury-head [data-modal-tab="character"]\').click()');
+    await wait(200);
+    gate(await ev('document.querySelector(".armoury").dataset.page === "grid"'), `${width}: the Character tab opens`);
+    gate(await ev(fits), `${width}: the Character page stays within the modal width`);
+    gate(await ev('!document.querySelector(".armoury-inventory")'), `${width}: Character contains no inventory list`);
+    const reading = await ev(PROBE);
+    gate(reading.figure?.area > 0 && reading.figureVisible?.area >= reading.figure.area * .95, `${width}: character figure is visible without clipping`);
   }
 } catch (error) { failures++; console.error(error); }
 finally {
   cdp?.close(); if (browser) await browser.close(); if (server) await new Promise(resolve => server.server.close(resolve));
   console.log('BOUNDARY: DOM-driven tab clicks and geometry in Chromium at three widths; pointer hit testing is covered by the separate Playwright preview checks.');
-  if (failures) console.log(`${checks - failures}/${checks} Armoury tab checks passed.`);
+  if (failures) console.log(`${checks - failures}/${checks} Armoury checks passed.`);
   else console.log(`armoury-arrival-figure: OK — ${checks} checks passed`);
   process.exitCode = failures ? 1 : 0;
 }

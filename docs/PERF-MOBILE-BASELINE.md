@@ -1,7 +1,7 @@
 # Mobile performance baseline
 
 Measured 2026-10-29 on `worker/MobilePerf/measure` (dev `3274760120`) with
-`node tools/perf-probe.mjs --runs 3`. **Measure only: nothing here is fixed.**
+`node tools/attic/perf-probe.mjs --runs 3`. **Measure only: nothing here is fixed.**
 This is the profile of docs/FINISH.md §7 ("60 fps on a low-end phone profile",
 RELEASE-CHECKLIST G20): Chromium, 390x844 at 3x, touch, **4x CPU throttle**,
 fixed seed `PERF1`, `?shot=` doors (Core profile, memory storage), real touch
@@ -124,12 +124,12 @@ Fixes 1 to 3 together aim at about -2.2 to -2.7 s of the 10.8 s busy window (abo
 and about half of the 5.7 s of blocking, the first step to "2x smoother". Fixes 4 to 8
 carry the hand and transitions scenarios the rest of the way.
 
-Proposed acceptance for "2x smoother" at this profile, on `node tools/perf-probe.mjs`:
+Proposed acceptance for "2x smoother" at this profile, on `node tools/attic/perf-probe.mjs`:
 combat p95 frame <= 100 ms (now 217) and frames over 33 ms <= 8% (now 17%);
 combat long-task blocking <= 2.8 s (now 5.7 s); hand p95 <= 33 ms (now 50);
 map and transitions no worse than now.
 
-Deciding these on one run is noise. Certify with `node tools/perf-probe.mjs --certify`
+Deciding these on one run is noise. Certify with `node tools/attic/perf-probe.mjs --certify`
 (combat and hand, 5 runs, no CPU profile): it prints per-run rows, the trimmed median
 (min and max dropped), the min-max spread, the counts of frames over 33 and 100 ms next to
 the percentages, and PASS/FAIL per target on the trimmed median. A fixed JS loop is timed

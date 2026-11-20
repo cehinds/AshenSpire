@@ -34,7 +34,7 @@ export function configureTooltipGlossary(registries) {
     // Classification tags explain themselves where rendered. Matching their
     // ordinary words in prose ("decay", "heavy") would invent unrelated links.
     add(t('combat.protection.block'), 'Absorbs attack damage. Expires at the start of its owner’s turn unless an effect preserves it.');
-    add('Poise', 'Poise damage builds toward an enemy’s Stagger threshold.');
+    add('Poise', 'Poise damage empties an enemy’s Poise bar; an empty bar is a Break.');
     const names = [...terms.keys()].sort((a, b) => b.length - a.length);
     const pattern = names.length ? new RegExp(`\\b(${names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'gi') : null;
     readings.set(registries, text => {

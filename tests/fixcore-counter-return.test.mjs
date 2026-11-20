@@ -8,12 +8,16 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState, enemyMoveDamage } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat as createRunCombatWithBenefits } from '../src/engine/runCombat.js';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
+// These numbers pin the pre-Wave-2.5 arithmetic, so the fight plays the rules of one created before the stance benefits (tests/stance-benefits.test.mjs owns those).
+const createRunCombat = (...args) => withoutStanceBenefits(createRunCombatWithBenefits(...args));
 import { dispatch } from '../src/engine/combat.js';
 import { counterReturn, counterBeats } from '../src/engine/counterRule.js';
 import { expandedEnemyMove, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Pins this file's SPEC worked examples (a Counter, Poise or Smash rule, not damage scale): the Core 0.5 base-damage scale is off here.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const houndBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'blightHound' ? { ...row, firstMove: 'lunge' } : row) };
 const mantisBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'cinderMantis' ? { ...row, firstMove: 'scythePair' } : row) };
 const wyrmBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'wyrmLord' ? { ...row, firstMove: 'tailSweep' } : row) };
@@ -23,6 +27,8 @@ const reg = regs.wanderingSoldier;
 function live(enemyId = 'wanderingSoldier') {
   const run = createRunState({ registries: regs[enemyId], classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: regs[enemyId], run, rng: createRng(511), enemyIds: [enemyId] });
+  // W25-F legacy fixture: these tests price the printed Counter costs; the spell cost rule (+1 MP) has its own tests (spell-costs-flux.test.mjs).
+  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
   const enemy = combat.enemies[0];
   // The Counter's return is an attack with its own opposed roll, so the player needs the same flat Precision (below).
   combat.player.basePrecisionBonus = 1000;
@@ -228,7 +234,7 @@ test('a Core Counter return ignores the target\'s Vulnerable: 8 incoming (base 4
   assert.equal(receipt.hpLoss, 6);
 });
 
-import { counterPreviewAgainst } from '../src/engine/counterRule.js';
+import { CounterPreviewAgainst } from '../src/engine/combatCounterPreview.js';
 import { previewIntent } from '../src/engine/combat.js';
 test('a per-hit Counter preview covers the current contact, while saved whole-root policy covers both', () => {
   const { combat, enemy } = live('cinderMantis');
@@ -236,13 +242,13 @@ test('a per-hit Counter preview covers the current contact, while saved whole-ro
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   Object.assign(combat.player, { block: 0, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 2, max: 20 } });
   assert.equal(enemy.intent.moveId, 'scythePair');
-  const row = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
+  const row = CounterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
   // Re-pin (SPEC §17, stacks rule): no Counter armed, so no base and no stacks: only the advantage share floor(0.25 x 5) = 1 returns, Poise floor(0.5 x 1) = 0.
   assert.equal(row.hits, 1);
   assert.equal(row.incoming, 5);
   assert.equal(row.hp, 1); assert.equal(row.poise, 0); assert.equal(row.block, 1);
   delete combat.reactionRules.contactPolicy;
-  const historical = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
+  const historical = CounterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
   assert.equal(historical.hits, 2);
   assert.equal(historical.incoming, 10, 'Vulnerable from the Poise break lands only after hit 2 completes');
   assert.equal(historical.hp, 2); assert.equal(historical.poise, 0); assert.equal(historical.block, 2);
@@ -259,15 +265,42 @@ test('the Counter preview carries the return\'s Poise damage and the Block it ad
 
 import { cardDetailHtml } from '../src/ui/components/card.js';
 import { t } from '../src/ui/strings.js';
-test('the Counter help is profile-aware: Core 2 says 10% of the incoming hit per Counter stack, legacy keeps Guard or Ward absorption', () => {
+import { mechanics } from '../src/framework/data/mechanics.js';
+import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
+import { withoutCounterStackDefaults } from './legacyHitRules.mjs';
+import { fixCoreMechanics as shippedRules } from '../src/content/generated/fixCoreMechanics.js';
+import { CounterStackPercent } from '../src/ui/models/CounterStackPercentModel.js';
+test('the Counter help is profile-aware: Core 2 says what a stack returns, a fight before batch 5 keeps the Block-as-stacks wording, legacy keeps Block or Ward absorption', () => {
   const core = cardDetailHtml(reg, { cardId: 'core.counter' });
-  assert.ok(core.includes(t('card.counter.help.core')) || /Counter coverage/.test(core), 'Core reads its own wording or coverage');
-  assert.doesNotMatch(core, /after full Guard or Ward absorption/);
-  assert.match(t('card.counter.help.core'), /10% of the incoming damage per Counter stack/);
-  assert.match(t('card.counter.help.legacy'), /after full Guard or Ward absorption/);
+  assert.ok(core.includes(t('card.counter.help.stacks', { stackPercent: 10, stacks: 1 })), 'Core reads the card-stack wording with its own grant');
+  assert.match(core, /Playing it grants 1 Counter\. Each covered hit that lands returns the card's damage plus 10% of that hit per Counter held/);
+  assert.doesNotMatch(core, /after full Block or Ward absorption/);
+  const older = withoutCounterStackDefaults(() => cardDetailHtml(reg, { cardId: 'core.counter' }));
+  assert.ok(older.includes(t('card.counter.help.core', { stackPercent: CounterStackPercent() })) || /Counter coverage/.test(older), 'a fight before batch 5 reads its own wording');
+  assert.match(t('card.counter.help.core', { stackPercent: CounterStackPercent() }), /10% of the incoming damage per Counter stack/);
+  assert.match(t('card.counter.help.legacy'), /after full Block or Ward absorption/);
   const legacyReg = createRegistries(contentBundle);
   const legacyCounter = contentBundle.cards.find(c => c.combatProfile?.maneuver === 'counter' && !c.counterCoverage);
-  if (legacyCounter) assert.match(cardDetailHtml(legacyReg, { cardId: legacyCounter.id }), /after full Guard or Ward absorption/);
+  if (legacyCounter) assert.match(cardDetailHtml(legacyReg, { cardId: legacyCounter.id }), /after full Block or Ward absorption/);
+});
+
+test('Core card and health Counter copy share the configured percentage without float artifacts', () => {
+  const original = shippedRules.counter.returnPerStack;
+  try {
+    shippedRules.counter.returnPerStack = 0.29;
+    assert.match(cardDetailHtml(reg, { cardId: 'core.counter' }), /29% of that hit per Counter held/);
+    shippedRules.counter.returnPerStack = 0.304;
+    assert.match(cardDetailHtml(reg, { cardId: 'core.counter' }), /30\.4% of that hit per Counter held/);
+  } finally { shippedRules.counter.returnPerStack = original; }
+  // The Block-as-stacks wording of an earlier fight still follows mechanics.counter.stackFraction.
+  const held = mechanics.counter.stackFraction;
+  try {
+    mechanics.counter.stackFraction = 0.29;
+    assert.match(withoutCounterStackDefaults(() => cardDetailHtml(reg, { cardId: 'core.counter' })), /29% of the incoming damage per Counter stack/);
+    assert.match(combatHealthModel({ counterStacks: 1 }).badges.find(row => row.kind === 'counter').help, /29%/);
+    mechanics.counter.stackFraction = 0.304;
+    assert.equal(CounterStackPercent(), 30.4);
+  } finally { mechanics.counter.stackFraction = held; }
 });
 
 test('the Counter face token reads the return (13), not the post-protection HP loss', () => {
@@ -453,8 +486,8 @@ test('Counters with authored coverage get eligibility-aware help and keep the co
   const html = cardDetailHtml(regs.wanderingSoldier, { cardId: 'frostCounter' });
   assert.match(html, /Counter coverage:/);
   // frostCounter is a spell Counter that arms in Core (owner 2026-10-19), so the help promises the Core return.
-  assert.match(html, /10% of the incoming damage per Counter stack/);
-  assert.match(cardDetailHtml(regs.wanderingSoldier, { cardId: 'core.counter' }), /10% of the incoming damage per Counter stack/);
+  assert.match(html, /10% of that hit per Counter held/);
+  assert.match(cardDetailHtml(regs.wanderingSoldier, { cardId: 'core.counter' }), /10% of that hit per Counter held/);
   assert.doesNotMatch(html, /requires all damage and status pressure resisted|after all covered damage and status pressure is resisted/);
 });
 
@@ -621,7 +654,9 @@ function armedThen(...cardIds) {
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
   const events = combat.eventLog.slice(start);
-  assert.ok(events.some(e => e.type === 'damageDealt' && e.targetId === 'player'), 'the enemy Attack landed ');
+  // An Evade card's stack cancels that Attack (owner, 2026-11-14: no hit roll), so only the other lines see it land.
+  if (cardIds.includes('core.evade')) assert.ok(events.some(e => e.type === 'attackMissed' && e.missReason === 'evaded'), 'the enemy Attack was evaded');
+  else assert.ok(events.some(e => e.type === 'damageDealt' && e.targetId === 'player'), 'the enemy Attack landed ');
   return events.filter(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter');
 }
 
@@ -666,14 +701,15 @@ test('an armed spell Counter survives save: snapshot validates, restores armed, 
   assert.ok(combatSnapshotProblems(old).some(p => p.includes('armedAtCardCount')));
 });
 
-test('Core: a spell Counter face with no revealed attack reads the half-incoming rule, not the authored 1 Poise / 2 Ward', () => {
+test('Core: a spell Counter face with no revealed attack describes a return without inventing a fixed fraction', () => {
   const { combat } = live();
   combat.piles.hand.push({ instanceId: 'cq1', cardId: 'frostCounter' });
   combat.enemies[0].intent.damage = null;
   const view = previewCard(combat, 'cq1');
   const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
-  assert.match(text, /Return half incoming damage and Poise/);
-  assert.doesNotMatch(text, /\d Poise(?! and)|\d Ward damage/, text);
+  assert.match(text, /Return damage and Poise/);
+  // "Gain N Poise" is the Barrier line (owner, 2026-11-15); only a fixed Poise fraction of the return would be wrong here.
+  assert.doesNotMatch(text, /(?<!Gain )\b\d+ Poise(?! and)|\d Ward damage/, text);
 });
 
 // A Core profile may override the stances module (engine/modules/stances/guide.md): omit prepared or counter.
@@ -696,10 +732,10 @@ for (const [name, include] of [['prepared', ['attack', 'smash', 'defend', 'count
     assert.ok(view.counterReturn?.uncovered === true || !view.counterReturn, 'no computed return promised');
     assert.ok(!(view.counterReturn?.hp > 0), 'preview promises no return');
     const text = (cardFaceLines(view.resolvedDefinition, view, registries) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
-    assert.doesNotMatch(text, /Return half incoming damage and Poise/);
+    assert.doesNotMatch(text, /Return damage and Poise/);
     enemy.intent.damage = null;
     const bare = previewCard(combat, 'co1');
-    assert.doesNotMatch((cardFaceLines(bare.resolvedDefinition, bare, registries) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, ''), /Return half incoming damage and Poise/);
+    assert.doesNotMatch((cardFaceLines(bare.resolvedDefinition, bare, registries) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, ''), /Return damage and Poise/);
     enemy.intent.damage = 8;
     dispatch(combat, { type: 'playCard', cardInstanceId: 'co1' });
     Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });

@@ -3,7 +3,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { live, baseRegistries as fixCoreRegistries } from './helpers/fixcore-combat-rules.mjs';
 import { cardPlayCosts } from '../src/engine/combat.js';
 import { core2ActionPolicyEnabled } from '../src/model/core2ActionPolicy.js';
@@ -329,7 +328,7 @@ test('multi-hit floor: 1 SP per hit unless the card costs mana or has finesse, c
 });
 
 test('Core 2 prices multi-hit cards per hit; legacy keeps its price and no profile scales damage with the floor', () => {
-  const legacy = createRegistries(legacyContentBundle);
+  const legacy = createRegistries(contentBundle);
   const damageOf = (def) => def.effects.filter((e) => e.op === 'damage').map((e) => e.amount);
   // [card, legacy SP, legacy MP, Core 2 paid SP]: Executioner's 10/25 is one hit; Thousand Cuts' prepared volley is
   // its own branch (6, not 12); Twinblade Flurry costs Mana, so its three hits floor at max(3 - 2, 1) = 1 and its

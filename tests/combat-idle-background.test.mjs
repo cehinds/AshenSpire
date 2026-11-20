@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { ObserveCombatMount } from '../src/ui/components/combatMount.js';
 
 const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
 
@@ -21,20 +22,46 @@ test('combat.js starts no interval at all', () => {
 });
 
 test('leaving the combat screen disarms End Turn, whose hold door listens on window', () => {
-  const unmount = source.slice(source.indexOf('const pagerVeilObserver = new MutationObserver'), source.indexOf("combatEl.dataset.handPagerOwner = 'active'"));
+  const unmount = source.slice(source.indexOf('function releaseCombatMount()'), source.indexOf('ObserveCombatMount(app, combatEl'));
+  assert.match(source, /ObserveCombatMount\(app, combatEl, \{[^}]*onDetach: releaseCombatMount/);
   assert.match(unmount, /endTurnBeat\?\.\(\); endTurnBeat = null;/);
 });
 
 test('the reward Continue door is disarmed before a repaint re-arms it and when the screen is left', () => {
   const reward = readFileSync(new URL('../src/ui/screens/reward.js', import.meta.url), 'utf8');
-  assert.match(reward, /disarmContinue\?\.\(\);\s*disarmContinue = beatArmer\(meta, registries\)\(cont, 'rewardContinue'/);
-  assert.match(reward, /onDone\(chosenCardId\);\s*disarmContinue\?\.\(\); disarmContinue = null;/);
+  assert.match(reward, /disarmContinue\?\.\(\);\s*disarmContinue = beatArmer\(meta, registries\)\(\w+, 'rewardContinue'/);
+  assert.match(reward, /onDone\(\);\s*disarmContinue\?\.\(\);\s*disarmContinue = null;/);
 });
 
 test('the hand pager re-syncs only when a veil is added or removed, not on every body mutation', () => {
-  const observer = source.slice(source.indexOf('const isVeilNode'), source.indexOf("combatEl.dataset.handPagerOwner = 'active'"));
-  assert.match(observer, /records\.some\(touchesVeil\)/);
-  assert.match(observer, /classList\.contains\('modal-veil'\)/);
+  const body = {};
+  const combat = { isConnected: true, dataset: {}, ownerDocument: { body } };
+  const replacement = { isConnected: true, dataset: { handPagerOwner: 'active' } };
+  let current = combat;
+  const app = { querySelector: () => current };
+  let notify, refreshes = 0, releases = 0, disconnects = 0;
+  class Observer {
+    constructor(callback) { notify = callback; }
+    observe(root, options) { assert.equal(root, body); assert.deepEqual(options, { childList: true, subtree: true }); }
+    disconnect() { disconnects++; }
+  }
+  ObserveCombatMount(app, combat, {
+    Observer, onVeilChange: () => refreshes++, onDetach: () => releases++,
+  });
+  const node = veil => ({ nodeType: 1, classList: { contains: name => veil && name === 'modal-veil' } });
+  notify([{ addedNodes: [node(false)], removedNodes: [] }]);
+  assert.equal(refreshes, 0);
+  notify([{ addedNodes: [node(true)], removedNodes: [] }]);
+  notify([{ addedNodes: [], removedNodes: [node(true)] }]);
+  assert.equal(refreshes, 2);
+  assert.equal(combat.dataset.handPagerOwner, 'active');
+
+  current = replacement;
+  notify([{ addedNodes: [node(true)], removedNodes: [] }]);
+  notify([]);
+  assert.deepEqual([releases, disconnects, refreshes], [1, 1, 2]);
+  assert.equal(combat.dataset.handPagerOwner, undefined);
+  assert.equal(replacement.dataset.handPagerOwner, 'active');
 });
 
 test('the focus-memory watcher arms no timer while nothing is remembered', () => {

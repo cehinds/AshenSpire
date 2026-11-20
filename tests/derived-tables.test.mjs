@@ -5,8 +5,8 @@ import { readFileSync } from 'node:fs';
 import { buildDerivedTables } from '../tools/derived-tables.mjs';
 
 const tables = buildDerivedTables();
-// Enemy attributes carry the authored attributeOffset after gear and relics (owner, 2026-10-25); players do not.
-const offset = { strength: -2, constitution: -2, dexterity: -2 };
+// Enemy attributes carry any configured attributeOffset after gear and relics; none is configured since 2026-11-07 (SPEC §17).
+const offset = {};
 const read = file => readFileSync(new URL(`../games/ashenspire/derived/${file}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 
 test('derived tables are current (run node tools/derived-tables.mjs)', () => {

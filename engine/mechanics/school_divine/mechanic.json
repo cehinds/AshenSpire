@@ -21,6 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/combatCardProfile.js"
+    "file": "src/engine/elementIdentity.js",
+    "symbol": "ElementReceiptStages"
   }
 }

@@ -88,6 +88,8 @@
 }
 .combat[data-layout='formation'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-info-row.hud-cinders-strip {
   grid-area: purse; align-self: center; margin: 0; translate: none;
+  /* Wave 2: the Cinders chip keeps the same inset from the buttons as they keep from each other. */
+  margin-inline-end: var(--hud-quick-tile-gap);
 }
 .combat[data-layout='formation'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-control-grid {
   align-self: center; translate: none;
@@ -102,6 +104,12 @@
    stops short of the turn ribbon. Tablet and landscape phone keep the full header. */
 .combat[data-layout='formation'][data-desktop-footer='true'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] > .hud-top {
   zoom: 0.8;
+}
+/* Wave 2 (wording): the zoom shrinks the header's buttons with the rest, so the 44 px tap size is divided by it as well (and by the page fit scale of the 1440 px combat canvas):
+   each top-bar button measures 44 px effective, the same as on every other screen. */
+:root .combat[data-layout='formation'][data-desktop-footer='true'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] > .hud-top .illustrated-hud-button.topbar-btn {
+  width: calc(44px / var(--ui-zoom, 1) / var(--view-fit, 1) / 0.8); height: calc(44px / var(--ui-zoom, 1) / var(--view-fit, 1) / 0.8);
+  min-width: calc(44px / var(--ui-zoom, 1) / var(--view-fit, 1) / 0.8); min-height: calc(44px / var(--ui-zoom, 1) / var(--view-fit, 1) / 0.8);
 }
 .combat[data-layout='formation'][data-desktop-footer='true'][data-desktop-header='true'][data-header-row='single'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] :is(.hud-vitals-panel,.hud-bottom) {
   max-width: calc(var(--desktop-header-left-width, 100%) / 0.8);

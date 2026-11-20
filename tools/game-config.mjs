@@ -7,6 +7,7 @@ import { holdForCli } from './lib/build-lock.mjs';
 import { catalogJSONExpression } from './catalog-json.mjs';
 import { compileBaseCards, BASE_CARD_OUTPUT } from './base-cards.mjs';
 import { resolveGameAuthor, canonicalGameJSON, gameDigest, dataClone } from '../engine/kernel/gameConfig.js';
+import { coreContentBundle } from '../src/content/index.js';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const GENERATED = 'src/content/generated/gameProfiles.js';
 const LOCK = 'games/ashenspire/game.lock.json';
@@ -18,11 +19,11 @@ function referenced(base,path) { if (typeof path !== 'string') throw new Error(`
 // browser. The generated data mirrors are derived from the canonical JSON.
 const MECHANIC_RUNTIME_SOURCES = Object.freeze([
   'content/source/fixCoreMechanics.json',
-  'src/model/mechanicsKernel.js',
+  'engine/runtime/bindings.mjs',
   'src/model/formulas.js',
   'src/model/fixCoreMechanics.js',
 ]);
-export const MECHANIC_RUNTIME_PATH = 'engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + src/model/{mechanicsKernel,formulas,fixCoreMechanics}.js';
+export const MECHANIC_RUNTIME_PATH = 'engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js';
 
 // Cases and guides are authoring/test evidence, not executable rules. Hash the
 // registered definitions explicitly so a JSON-only tuning or attachment-policy
@@ -46,6 +47,46 @@ export function collectMechanicsRuntimeArtifacts(root = ROOT) {
     }
   }
   return [...new Set(paths)].sort().map(path=>artifact(path,'ashen.mechanics-runtime','1.0.0',root));
+}
+
+function sharedCardVariant(card, sp, mp) {
+  const { upgrade, costGrowth } = card;
+  const upgradeSp = !sp && upgrade?.staminaCost > 0;
+  const upgradeMp = !mp && upgrade?.manaCost > 0;
+  const growthSp = !sp && costGrowth?.stamina;
+  const growthMp = !mp && costGrowth?.mana;
+  return {
+    ...(!sp && card.staminaCost > 0 && { cost: 0, staminaCost: 0 }),
+    ...(!mp && card.manaCost > 0 && { manaCost: 0 }),
+    ...((upgradeSp || upgradeMp) && { upgrade: { ...upgrade, ...(upgradeSp && { cost: 0, staminaCost: 0 }), ...(upgradeMp && { manaCost: 0 }) } }),
+    ...((growthSp || growthMp) && { costGrowth: { ...costGrowth, ...(growthSp && { stamina: 0 }), ...(growthMp && { mana: 0 }) } }),
+  };
+}
+
+// Core pins only explicitly admitted shared definitions, with tags and damage exposure from the normal content build.
+function appendSharedCards(pack, content, packPath) {
+  if (pack.sharedCardIds === undefined) return;
+  if (!Array.isArray(pack.sharedCardIds) || !Array.isArray(content.cards) || !content.resourceVariants) {
+    throw new Error(`${packPath}: sharedCardIds requires cards and resourceVariants`);
+  }
+  const source = new Map(coreContentBundle.cards.map(card => [card.id, card]));
+  const used = new Set(content.cards.map(card => card.id));
+  for (const id of pack.sharedCardIds) {
+    if (used.has(id)) throw new Error(`${packPath}: duplicate shared card '${id}'`);
+    const def = source.get(id);
+    if (def?.minCombatExpansionVersion !== 2) throw new Error(`${packPath}: unknown expanded shared card '${id}'`);
+    const tags = coreContentBundle.tagging.filter(row => row.family === 'card' && row.objectId === id).map(row => row.tagId);
+    const card = { ...def, tags, costRule: 'fixed', staminaCost: def.staminaCost ?? def.cost, manaCost: def.manaCost ?? 0 };
+    if (def.upgrade?.cost !== undefined) card.upgrade = { ...def.upgrade, staminaCost: def.upgrade.staminaCost ?? def.upgrade.cost };
+    content.cards.push(card);
+    const variants = {
+      none: sharedCardVariant(card, false, false),
+      sp: sharedCardVariant(card, true, false),
+      mp: sharedCardVariant(card, false, true),
+    };
+    content.resourceVariants[id] = Object.fromEntries(Object.entries(variants).filter(([, override]) => Object.keys(override).length));
+    used.add(id);
+  }
 }
 
 export function loadGameProfileCatalog() {
@@ -85,6 +126,7 @@ export function loadGameProfileCatalog() {
       if(pack.id!==ref.id || pack.version!==ref.version) throw new Error(`${packPath}: exact pack identity/version mismatch`);
       const content={},artifacts=[artifact(packPath,pack.id,pack.version)];
       for(const [kind,file] of Object.entries(pack.content)) { const source=referenced(packPath,file);content[kind]=json(source);artifacts.push(artifact(source,pack.id,pack.version)); }
+      appendSharedCards(pack, content, packPath);
       catalog.packs[key]={manifest:pack,content,artifacts};
     }
   }

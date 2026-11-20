@@ -6,7 +6,7 @@ import { createRunState } from '../src/model/state.js';
 import { snapshotRunForDiff, diffRunSnapshots } from '../src/model/runChangeReceipt.js';
 import { nextUpgradeStep } from '../src/model/cardUpgradeLimits.js';
 import { openWhatChangedModal } from '../src/ui/components/whatChangedModal.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 

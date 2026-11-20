@@ -9,6 +9,7 @@
 // card definition and preview from its own state (the engine in solo, the seat snapshot in
 // co-op) and hands them in through `readers`.
 
+import { BarrierPoiseFactor } from '../../model/combatRatings.js';
 import { cardSummaryContext, combatCardSummary } from '../../model/playingCard.js';
 import { cardFaceLines, withChargedEffects } from '../../model/cardFaceText.js';
 import { isSpellCard } from '../../model/combatCardProfile.js';
@@ -33,7 +34,7 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
   const counter = profile?.maneuver === 'counter';
   const baseOf = (effect, index) => {
     const token = bindings.find(row => row.index === index && row.field === 'amount')?.token;
-    return typeof tokens[token] === 'number' ? tokens[token] : typeof effect.amount === 'number' ? effect.amount : undefined;
+    return typeof tokens[token] === 'number' ? tokens[token] : typeof effect.amount === 'number' ? effect.amount * BarrierPoiseFactor(effect, registries) : undefined; // Barrier stacks read as Poise (owner, 2026-11-15)
   };
   const groups = new Map();
   const add = (key, effect, row) => {

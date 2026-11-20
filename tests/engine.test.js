@@ -49,7 +49,6 @@ import {
   rollRuneReward,
   rollCardRewardIds,
   rollSkillDraftIds,
-  rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
   buildShopStock,
@@ -67,7 +66,6 @@ import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain, domainsFor } from '../src/content/tags.js';
 import { SFX_RECIPES, resolveRecipe } from '../src/content/sfx.js';
 import { weapons } from '../src/content/generated/weapons.js';
-import { KEEPSAKES } from '../src/content/keepsakes.js';
 import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
@@ -82,7 +80,7 @@ import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/mod
 import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS, skillSchools, rarityUnlockedAt, spendSkillDraft } from '../src/model/skills.js';
 import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skillXp.js';
 import { classCard, runClassIdentity } from '../src/model/classCard.js';
-import { classTreeRows, tierOpensAt, classDraftPool, pickClassNode, awardClassXp, coreTagsTreeProblems, staleCoreTags } from '../src/model/classTree.js';
+import { classTreeRows, awardClassXp, coreTagsTreeProblems, staleCoreTags } from '../src/model/classTree.js';
 import { classCarrier } from '../src/engine/properties.js';
 import { swapRunClass, peakClassLevel } from '../src/model/classSwap.js';
 import { bornClassOf } from '../src/model/startingKits.js';
@@ -1659,28 +1657,33 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rn3.flaskCharges.manaCurrent, manaBefore - 1, 'out-of-combat use spends its charge without touching utility slots');
   });
 
-  // ---- 19. Keepsakes (character creation boons) -------------------------------------------
-  test('19. keepsakes: effect lists validate and apply as run effects', () => {
-    // Every keepsake's effects must pass the same closed-set validation as events.
-    const probe = withKindRows({ ...contentBundle, events: [...contentBundle.events, ...KEEPSAKES.map((k) => ({
+  // ---- 19. Run effects (the removed keepsake boons, kept as plain effect lists) ---------------
+  test('19. run effects: cinder, flask-capacity and smithing effect lists validate and apply', () => {
+    const BOONS = [
+      { id: 'oldCinder', name: 'Old Cinder', effects: [{ op: 'addCinders', amount: 50 }] },
+      { id: 'travelersFlask', name: "Traveler's Flask", effects: [{ op: 'addFlaskCapacity', kind: 'hp', amount: 1 }] },
+      { id: 'whetstoneMemory', name: 'Whetstone Memory', effects: [{ op: 'upgradeCard', card: 'strike' }] },
+    ];
+    // Every effect list must pass the same closed-set validation as events.
+    const probe = withKindRows({ ...contentBundle, events: [...contentBundle.events, ...BOONS.map((k) => ({
       id: `ks_${k.id}`, name: k.name, text: 'probe',
       choices: [{ label: 'x', effects: k.effects, resultText: 'x' }],
     }))] });
     const v = validateContent(probe);
-    assert(v.ok, `keepsake effects invalid: ${v.errors.map((e) => e.path + ': ' + e.msg).join(' | ')}`);
+    assert(v.ok, `effects invalid: ${v.errors.map((e) => e.path + ': ' + e.msg).join(' | ')}`);
 
     // Measured from the run's own opening purse and flask ledger: a run no
     // longer opens at zero cinders or four charges (startingCinders 20,
-    // flaskCapacity 3 since 2026-09-24), and the keepsake is what ADDS.
+    // flaskCapacity 3 since 2026-09-24), and the effect is what ADDS.
     const rn = createRunState({ seed: 11, classId: 'reaver', registries: REG });
     const openingCinders = rn.cinders;
     const openingFlask = { ...rn.flaskCharges };
-    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldCinder').effects);
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, BOONS.find((k) => k.id === 'oldCinder').effects);
     eq(rn.cinders - openingCinders, 50, 'Old Cinder grants 50 cinders');
-    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'travelersFlask').effects);
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, BOONS.find((k) => k.id === 'travelersFlask').effects);
     eq(rn.flaskCharges.capacity, openingFlask.capacity + 1, "Traveler's Flask raises fixed charge capacity");
     eq(rn.flaskCharges.hp, openingFlask.hp + 1, "Traveler's Flask allocates the added charge to Crimson");
-    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, BOONS.find((k) => k.id === 'whetstoneMemory').effects);
     eq(rn.itemUpgradeLevels['armament/straightSword'], 1, 'Whetstone Memory promotes the sourced Straight Sword package');
     assert(rn.deck.filter((c) => c.cardId === 'strike' && c.sourceArmamentId === 'straightSword').every((c) => c.smithingLevel === 1 && !c.upgraded),
       'Whetstone Memory upgrades every sourced Strike through equipment authority, not per-copy flags');
@@ -1983,11 +1986,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
   });
 
-  test("23. 'ally' target falls back to self in solo; co-op cards validate", () => {
-    // Solo: no teammate exists, so Rallying Banner's ally-block lands on the player.
+  test("23. 'ally' target reaches no one in solo; co-op cards validate", () => {
+    // Owner 2026-11-17: no ally mechanics exist yet. Solo, Rallying Banner's ally Block lands on no one (it used to fall back to the player).
     const c = makeCombat({ deck: ['rallyingBanner', 'strike', 'strike', 'strike', 'strike'] });
     playFromHand(c, 'rallyingBanner');
-    eq(c.player.block, 10, "ally-targeted Block resolves to the player when there's no ally");
+    eq(c.player.block, 0, "ally-targeted Block reaches no one when there's no ally");
     // The co-op set is registered, special-rarity (kept out of pools/shops).
     for (const id of ['rallyingBanner', 'sharedFlame', 'ashOath']) {
       assert(REG.cards.has(id), `co-op card '${id}' registered`);
@@ -2506,7 +2509,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       `a relabelled item type is refused by name — said ${JSON.stringify(said.slice(0, 160))}`);
     const piece = (createRegistries(renamed).equipment.armour || [])
       .find((p) => (p.itemTypes || []).some((t) => t.tag === 'item:armor'));
-    eq(piece.itemTypes.find((t) => t.tag === 'item:armor').label, 'Armor',
+    eq(piece.itemTypes.find((t) => t.tag === 'item:armor').label, 'Armour',
       'and the stamp is what it was refused for disagreeing with');
     // Two derivations of one label, held to each other directly rather than
     // through the rows that happen to be shipped.
@@ -7357,7 +7360,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const quick = display.find((r) => r.key === 'quickNav');
     eq(quick.def, 'mirror', 'fresh Quick Menu state promotes Mirror while preserving explicit legacy choices');
-    eq(quick.choices.join(','), 'off,mirror,switcher', 'Quick menu exposes legacy Off plus Mirror and Switcher');
+    eq(quick.choices.join(','), 'off,mirror,switcher', 'Menu navigation exposes legacy Off plus Mirror and Switcher');
     eq(display.some((r) => r.key === 'quickNavFixedEnds'), false,
       'the internal row order is not exposed as a redundant second setting');
 
@@ -7481,7 +7484,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       armamentId: 'greatsword',
     };
     const continueBeat = beatFor('rewardContinue');
-    eq(continueBeat.form, 'hold', 'reward Continue is registered in the shared second-beat table as a hold');
+    eq(continueBeat.form, 'none', 'reward Continue is registered in the shared second-beat table as a tap (it asks once, in the reward screens, only while a reward is unclaimed)');
+    eq(continueBeat.tap, true, 'and says so on its row');
     eq(continueBeat.surface, 'reward', 'the census can route the registered action to the reward surface');
     plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
     eq(plan.rows.length, 5, 'five reward kinds derive five rows');
@@ -7834,11 +7838,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         `a duplicate ${role} role is rejected before rendering singleton equipment disclosures`);
     }
 
-    const malformedKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedKeepsakes.characterCreation.keepsakes = {};
-    const keepsakeValidation = validateContent(malformedKeepsakes);
+    const retiredKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    retiredKeepsakes.characterCreation.keepsakes = [];
+    const keepsakeValidation = validateContent(retiredKeepsakes);
     assert(!keepsakeValidation.ok && keepsakeValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
-      'a non-array keepsake roster reports its JSON path instead of throwing');
+      'a keepsake roster is retired: authoring one reports its JSON path as an unknown field');
 
     const malformedClass = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
     malformedClass.characterCreation.classes.reaver = null;
@@ -7853,13 +7857,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(!choiceValidation.ok && choiceValidation.errors.some((e) => e.path.includes(`characterCreation.classes.reaver.${field}`)),
         `a non-array ${field} roster reports its JSON path instead of throwing`);
     }
-
-    const malformedKeepsakeRows = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedKeepsakeRows.characterCreation.keepsakes[0] = null;
-    malformedKeepsakeRows.characterCreation.keepsakes[1].effects = {};
-    const keepsakeRowValidation = validateContent(malformedKeepsakeRows);
-    assert(!keepsakeRowValidation.ok && keepsakeRowValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
-      'null and malformed keepsake rows report their JSON paths instead of throwing during effect validation');
 
     for (const [label, mutate] of [
       ['class', (bundle) => { bundle.classes[0] = null; }],
@@ -8248,8 +8245,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
     const danglingSaves = createSaveManager(danglingStorage);
     eq(danglingSaves.loadRun(REG), null, 'the real load door refuses dangling exact-snapshot content');
-    assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
-      'the dangling exact-snapshot refusal names the affected card pile');
+    assert(danglingSaves.runStatus().reason?.includes("piles.hand[0].cardId 'removedByContentPatch' is unknown"),
+      'the dangling exact-snapshot refusal names the exact pile row and missing card');
 
     const checkpointRun = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed, classId: 'reaver', registries: REG });
     checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };
@@ -9100,31 +9097,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const rows = classTreeRows(REG, 'reaver');
     eq(rows.length, 10, 'the reaver tree has ten nodes'); eq(new Set(rows.map((r) => r.tier)).size, 3, 'in three tiers');
     eq([1, 2, 3].map((t) => rows.filter((r) => r.tier === t).length).join(','), '4,4,2', 'four at tier 1, four at tier 2, the subclass pair at tier 3');
-    eq(tierOpensAt(REG, 1), c.tierAt[0]); eq(tierOpensAt(REG, 3), c.tierAt[2]); eq(tierOpensAt(REG, 9), Infinity, 'a tier the table has not got never opens');
     for (const cls of REG.classes.all()) assert(classTreeRows(REG, cls.id).some((r) => r.tier === 3), `${cls.id} has a subclass tier`);
-    // THE POOL: what a class at a level may draft, given what it picked.
-    eq(classDraftPool(REG, 'reaver', [], 0).length, 0, 'level 0 opens nothing');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[0]).join(','), 'ironFooting,bloodTempo,partingBlow,ironRebuke', 'tier 1 at its level');
-    eq(classDraftPool(REG, 'reaver', ['ironFooting'], c.tierAt[0]).join(','), 'bloodTempo,partingBlow,ironRebuke', 'a picked node leaves the pool');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[2]).length, 10, 'every tier open at the top level');
-    eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('bulwarkKing'), false, 'the other subclass is excluded once one is picked');
-    eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('ironFooting'), true, 'the lower tiers stay open');
-    // THE ROLL: draftSize distinct nodes on the cardRewards stream; an empty pool draws nothing.
-    const roll = rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: [], level: c.tierAt[2] });
-    eq(roll.length, REG.balance.skill.draftSize); eq(new Set(roll).size, roll.length, 'distinct');
-    assert(roll.every((id) => rows.some((r) => r.nodeId === id)), 'every pick is a reaver node');
-    const rngEmpty = createRng(9); const before = JSON.stringify(rngEmpty.getCounters());
-    eq(rollClassDraftIds(REG, rngEmpty, { classId: 'reaver', coreTags: [], level: 0 }).length, 0); eq(JSON.stringify(rngEmpty.getCounters()), before, 'nothing drawn for nothing');
-    eq(rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: ['ironFooting', 'bloodTempo', 'partingBlow'], level: c.tierAt[0] }).join(','), 'ironRebuke', 'a pool smaller than the draft is the whole pool');
     // THE PICK writes the core card's own tags, and only what the tree allows.
     const run = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.coreTags), '[]', 'a fresh run has picked nothing'); eq(JSON.stringify(run.zones.coreTags), '[]', 'and the core zone projects it');
-    eq(pickClassNode(REG, run, 'ironFooting'), false, 'level 0 may pick nothing');
     awardSkillXp(REG, run, 'class:reaver', xpToNext(REG, 'class', 0));
     eq(skillLevel(run, 'class:reaver'), 1);
-    eq(pickClassNode(REG, run, 'warlord'), false, 'a tier not yet open is refused');
-    eq(pickClassNode(REG, run, 'ironFooting'), true, 'a tier-1 node is picked');
-    eq(pickClassNode(REG, run, 'ironFooting'), false, 'and not twice');
+    run.coreTags.push('ironFooting');
     syncZones(run); eq(run.zones.coreTags.join(','), 'ironFooting', 'the projection follows');
     const saved = JSON.parse(serializeRun(run)); eq(saved.coreTags.join(','), 'ironFooting', 'the pick rides the save');
     assert(/coreTags\[0\] must be a non-empty node id/.test(validateRunShape({ ...run, coreTags: [3] }).join('|')), 'a malformed pick is refused by name');
@@ -9257,7 +9236,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE SWAP replaces the core card and prunes what the new class has no seat for.
     const run = createRunState({ seed: 0x5c5c, classId: 'reaver', registries: REG });
     awardSkillXp(REG, run, 'item:blade', 50); awardSkillXp(REG, run, 'class:reaver', xpToNext(REG, 'class', 0));
-    eq(pickClassNode(REG, run, 'ironFooting'), true);
+    run.coreTags.push('ironFooting');
     const deckBefore = run.deck.map((c) => c.instanceId).join(','); const relicsBefore = run.relics.join(',');
     run.loadout.sets.armor[0] = 'vigil'; // a set the Reaver earned; the Rogue has no row for it
     const bladeBeforeSwap = structuredClone(run.skills['item:blade']);

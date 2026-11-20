@@ -3,8 +3,8 @@
   "tag": "item:armor",
   "version": "1.0.0",
   "family": "item",
-  "label": "Armor",
-  "description": "What this piece IS: the Armoury and the smith name it Armor.",
+  "label": "Armour",
+  "description": "What this piece IS: the Armoury and the smith name it Armour.",
   "attaches": [
     "gear"
   ],

@@ -8,7 +8,8 @@ import { createCombat, dispatch, previewCard, getEntity } from '../src/engine/co
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { createRng } from '../src/engine/rng.js';
 import { groupBeats } from '../src/ui/fx.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { ApplyCombatBeat } from '../src/ui/models/CombatPlaybackModel.js';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Owner 2026-11-05: "When drawing cards, my hand would change." Run the shipped renderHand and applyBeatToDisp over the
 // real engine's End Turn receipts, beat by beat, and read the painted hand after each beat. The old hand holds through
@@ -33,6 +34,7 @@ function fixture(document, { retain = false } = {}) {
   node('turn-ribbon', combatEl);
   const painted = () => hand.children.map(c => c.dataset.instanceId);
   const context = {
+    paidAtCommit: new WeakSet(),
     combat, registries, combatEl, document, CSS: { escape: value => value }, console,
     selected: null, selfArm: null, selectedFlask: null, lastTargetId: combat.enemies[0].id,
     playbackEvents: [], heldTurnHand: null, playQueue: [], disp: null, busy: true, enemyPlayback: false, upcastPreviewRefresh: false,
@@ -40,7 +42,7 @@ function fixture(document, { retain = false } = {}) {
     resolveCombatCard, previewCard, getEntity, esc: String, $: selector => combatEl.querySelector(selector), readSettings: () => ({}),
     stackedCardIds: () => new Set(), isUnplayable: () => false, playAvailability: () => true, inspectionPlayAction: () => ({}),
     syncHandPager() {}, syncHitChances() {}, inputBusy: () => false, cardTargets: () => ({ legalIds: [] }),
-    reduceFollowRows() {}, applyCombatIntentReceipt() {}, applyCombatDisplayReceipt: () => false,
+    ApplyCombatBeat, reduceFollowRows() {}, projectCombatIntent: () => null,
     handStrip: { render({ cards }) {
       // The strip keeps an existing card's element and order, and appends a new one (reconcileHandOrder).
       const have = new Map(hand.children.map(c => [c.dataset.instanceId, c]));

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "maneuver",
   "label": "Smash",
-  "description": "Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it.",
+  "description": "Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it. Stance benefit: +50% Poise damage.",
   "attaches": [
     "card"
   ],
@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/combatRounds/stance.js",
-    "symbol": "stanceFor"
+    "file": "src/model/actionCosts.js",
+    "symbol": "actionStance"
   }
 }

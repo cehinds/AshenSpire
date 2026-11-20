@@ -32,42 +32,40 @@ try {
       assert.ok(await locator.evaluate((node, point) => node.contains(document.elementFromPoint(point.x, point.y)), { x, y }), 'the native tap reaches the intended detail');
       await page.touchscreen.tap(x, y);
     };
+    // Owner 2026-11-07: no selected target-HUD panel exists. While a card is armed the enemy shows the targeting state on its
+    // combatant (target-hud-candidate) and keeps its overhead mini HUD; reading goes through the
+    // existing inspect door (a ~650 ms press-and-hold on the figure, combat.js wireCombatantContext).
     const select = async () => {
       await tap(page.locator('.hand .card[data-card-id="core.strike"]').first().locator('.hand-hit-lane'));
       await page.waitForFunction(() => document.querySelector('.hand .card.selected[data-card-id="core.strike"]'));
-      await page.locator('.target-hud-detail[data-eid="e1"][data-targeting="true"].visible:not(.leaving)').waitFor();
+      await page.locator('.combatant.enemy[data-eid="e1"].target-hud-candidate').waitFor();
     };
-    const panel = page.locator('.target-hud-detail[data-eid="e1"].visible:not(.leaving)');
-    const tooltip = page.locator('#tooltip[data-open="true"]');
+    const enemy = page.locator('.combatant.enemy[data-eid="e1"]');
+    const mini = enemy.locator(':scope > .target-hud-overhead-meters');
     await select();
+    assert.equal(await page.locator('.target-hud-detail.visible').count(), 0, 'no selected panel opens while armed');
+    await mini.waitFor({ state: 'visible' });
     const before = await state();
-    await tap(panel.locator('.target-hud-statuses .status-icon[data-status-id="crimsonBlight"]'));
-    assert.deepEqual(await state(), before, 'an armed status tap preserves selected card, resources, piles and action counts');
-    await tooltip.waitFor({ state: 'visible' });
-    assert.match(await tooltip.innerText(), /Crimson Blight/i, 'the real status tooltip remains usable');
-    await page.keyboard.press('Escape');
-    // Escape closes the reading tooltip without changing the armed card.
-    assert.deepEqual(await state(), before);
-    // The panel is name, HP and stats only (owner 2026-10-26): its intent strip is gone and the
-    // badge over the figure is a target door, so the armed reading surface that remains besides the
-    // statuses is the Info door.
+    // The existing inspect door: press and hold the enemy figure. It reads the enemy and leaves the armed card armed.
     const inspector = page.locator('.combatant-inspector-body');
-    await tap(page.locator('.combat > .target-hud-inspect-info[data-eid="e1"]'));
-    assert.deepEqual(await state(), before, 'an armed Info tap reads rather than committing the selected card');
-    await inspector.waitFor({ state: 'visible' });
+    const figure = await enemy.locator('.sprite').boundingBox(); assert.ok(figure);
+    await page.mouse.move(figure.x + figure.width / 2, figure.y + figure.height / 2); await page.mouse.down(); await page.waitForTimeout(650); await page.mouse.up();
+    await inspector.first().waitFor({ state: 'visible' });
+    assert.equal(await inspector.count(), 1, 'exactly one inspector modal opens');
+    assert.deepEqual(await state(), before, 'an armed inspect hold reads rather than committing or cancelling the selected card');
     assert.ok((await inspector.innerText()).trim(), 'the combatant inspector shows its reading');
     await page.keyboard.press('Escape');
     await inspector.waitFor({ state: 'detached' });
-    assert.deepEqual(await state(), before);
-    await tap(panel.locator('.target-hud-name'));
+    assert.deepEqual(await state(), before, 'closing the inspector leaves the card armed');
+    await tap(enemy.locator('.sprite'));
     await page.waitForFunction(n => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length === n + 1, before.plays);
     await page.waitForFunction(() => !document.querySelector('.hand')?.inert && !document.querySelector('.hand .card.selected'));
     await select();
     const second = await state();
-    await tap(panel.locator('.target-hud-meters .as-meter[data-res="hp"]'));
+    await tap(mini.locator('[data-res="hp"], .as-meter, .meters').first());
     await page.waitForFunction(n => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length === n + 1, second.plays);
     assert.deepEqual(errors, []);
-    console.log(`PASS ${width}x${height}: armed status/Info explain without committing; name/HP each commit once`);
+    console.log(`PASS ${width}x${height}: armed inspect hold explain without committing; figure and mini HUD each commit once`);
     await page.close();
   }
 } finally { await browser.close(); server.server.close(); }

@@ -158,7 +158,7 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'painted footer artwork has a broken source while its live text survives',
         edits: [{ file: 'src/ui/components/footerArt.js', find: 'href="${esc(assetUrl(footerAssets[n.asset]))}"', replace: 'href="data:image/png;base64,broken"' },
-          { file: 'src/ui/components/footerArt.js', find: "image.setAttribute('href', assetUrl(footerAssets[image.dataset.footerAsset]))", replace: "image.setAttribute('href', 'data:image/png;base64,broken')" }],
+          { file: 'src/ui/components/footerArt.js', find: "setAttr(image, 'href', assetUrl(footerAssets[image.dataset.footerAsset]))", replace: "image.setAttribute('href', 'data:image/png;base64,broken')" }],
         expectRed: /BAD\s+H3 /,
       },
       {
@@ -173,21 +173,31 @@ if (process.argv.includes('--selftest')) {
       },
       {
         // Shift the grid footer into the fitted cards; the old drop token no
-        // longer positions this row under formation.
+        // longer positions this row under formation. 20px, not 100px: at
+        // -100px the hand-hit-lane is drawn over END TURN and the 390 row
+        // measures ZERO controls, so H3 fires (with H2) and H1 has no chip to
+        // overlap and stays silent, which made this plant red for the wrong
+        // reason. 20px lifts the row so cards lie ON END TURN while it is
+        // still measurable, so H1 is the red (H2 also fires, as any rise
+        // touches the battlefield).
         name: 'the row rises into the hand-area and the cards lie on it',
         edits: [{
           file: 'styles/kit.css',
-          append: ":root .combat[data-layout='formation'] > .hand-area > .combat-action-row { transform: translateY(-100px) !important; }",
+          append: ":root .combat[data-layout='formation'] > .hand-area > .combat-action-row { transform: translateY(-20px) !important; }",
         }],
         expectRed: /BAD\s+H1 /,
       },
       {
         // Fitted cards use --hand-card-y, not the old transform fan. Push their
-        // actual top positions down onto the action row.
+        // actual top positions down onto the action row. 30px, not 100px: at
+        // +100px the cards cover every control, so the row measures ZERO
+        // controls (H3/H6 fire, H1 has no chip to overlap and stays silent),
+        // which made this plant red for the wrong reason. 30px lands cards ON
+        // END TURN while it is still measurable, so H1 is the red.
         name: 'the fitted cards hang down over the action row',
         edits: [{
           file: 'styles/kit.css',
-          append: ":root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { top: calc(var(--hand-card-y) + 100px) !important; }",
+          append: ":root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { top: calc(var(--hand-card-y) + 30px) !important; }",
         }],
         expectRed: /BAD\s+H1 /,
       },
@@ -277,7 +287,7 @@ if (process.argv.includes('--selftest')) {
         name: 'END TURN loses authored text fitting and the rebound key overflows its control',
         edits: [{
           file: 'src/ui/components/footerArt.js',
-          find: "for (const [node, w] of long) node.setAttribute('textLength', String(w));",
+          find: "for (const [node, w] of long) setAttr(node, 'textLength', w);",
           replace: "for (const [node] of list) if (node.dataset.footerBinding === 'endTurnKey') { node.removeAttribute('textLength'); node.setAttribute('font-size', '200'); }",
         }],
         expectRed: /BAD\s+H3 1200x730 WIDE/,

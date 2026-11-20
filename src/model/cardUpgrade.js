@@ -1,4 +1,5 @@
 import { RANGES } from './combatRanges.js';
+import { SplitAfter } from './splitAfter.js';
 import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
 
 // A card definition with its authored upgrade merged over the base. A leaf
@@ -39,7 +40,9 @@ export function upgradedDefinition(base) {
 //                                  and allEnemies (amount x0.75 up, or x1.25 up), `damageSchool` sets the
 //                                  card's damage school (a magical property), with the `exposureBuildupPerHit` an
 //                                  authored card of that school carries (balance.exposure.buildupPerManaSpell)
-export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag']);
+//   fx { fx, ... }                 an effect-menu step (W25, owner 2026-11-14), see FX_KINDS below
+//   combo { steps }                two effects in one upgrade slot (a later upgrade's 20% roll): every inner step is an fx or a basic step
+export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag', 'fx', 'combo', 'attr']);
 // The tag vocabulary a `tag` step may write: ranges from combatRanges.js, the rest mirrors combatCardProfile.js
 // (tests/core-card-upgrade-choices-tags.test.mjs pins the mirror to the exported sets).
 // The words are split from one string on purpose: tools/mechanics-generate.mjs takes a file that quotes a bare
@@ -66,6 +69,20 @@ export const ELEMENT_IDENTITY = Object.freeze({
 });
 export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
+// The effect menu. Each id adds one effect the card did not have: block (n), draw (n), cycle (discard n then draw n),
+// cull (exhaust a card, draw 2), copy (add a copy of this card to the discard pile), shuffle (discard into draw),
+// retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR, DEX, INT or WIS
+// for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait), counter (+1 Counter stack a play; a Counter
+// card only, offered while its whole grant stays within the 1..3 a card may give: Wave 2 batch 5).
+// unethereal (drop Ethereal) and steady (stop a rising cost) ease a drawback (playtest 2026-11-17, theme C).
+export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter unethereal steady'));
+export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
+// A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
+// fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
+// The run-long attribute upgrade (`{ k: 'attr', stat, n }`) offers only these two, and only on a spell.
+export const RUN_ATTRIBUTE_STATS = Object.freeze(words('intelligence wisdom'));
+export const BOOST_DURATIONS = Object.freeze(words('turn fight'));
+
 
 const AUTHORED_ONLY = Object.freeze([Object.freeze({ k: 'authored' })]);
 
@@ -98,6 +115,20 @@ export function upgradeSignature(instance) {
   if (!steps.length) return '0';
   if (steps.length === 1 && steps[0].k === 'authored') return '1';
   return steps.map((s) => Object.entries(s).map(([key, value]) => `${key}=${value}`).join(',')).join(';');
+}
+
+/**
+ * DeckAttributeBonuses(deck) -> `{ intelligence, wisdom }` the run gains from the run-long attribute upgrades on the cards in the deck.
+ * Read from the deck every time, so a card that leaves it takes its bonus along.
+ */
+export function DeckAttributeBonuses(deck) {
+  const out = {};
+  for (const card of deck || []) {
+    for (const step of FlatSteps(upgradeStepsOf(card))) {
+      if (step && step.k === 'attr' && RUN_ATTRIBUTE_STATS.includes(step.stat) && Number.isInteger(step.n) && step.n > 0) out[step.stat] = (out[step.stat] || 0) + step.n;
+    }
+  }
+  return out;
 }
 
 const CONDITION_KEYS = ['when', 'if', 'condition', 'unless', 'repeat'];
@@ -163,6 +194,8 @@ function applyStep(card, step) {
       }
       break;
     }
+    // A run-long attribute (W25-L): +n INT or WIS for the run while this card is in the deck (DeckAttributeBonuses). It changes no play of the card itself.
+    case 'attr': out.runAttributeBonus = { ...(card.runAttributeBonus || {}), [step.stat]: ((card.runAttributeBonus || {})[step.stat] || 0) + step.n }; break;
     case 'poise': {
       const index = firstPlainIndex(effects, 'poiseDamage');
       if (index >= 0) effects[index].amount += step.n;
@@ -209,8 +242,79 @@ function applyStep(card, step) {
       if (Number.isFinite(step.magicShare)) out.magicShare = step.magicShare;
       break;
     }
+    case 'fx':
+      out = applyFx(out, step);
+      break;
+    case 'combo':
+      for (const inner of step.steps) out = applyStep(out, inner);
+      break;
     default:
       throw new Error(`Unknown card upgrade step '${step.k}'`);
+  }
+  return out;
+}
+
+const KEYWORD_OF = { retain: 'retain', innate: 'innate' };
+// The lifecycle tag a keyword carries. Built, not quoted: tools/mechanics-generate.mjs names the first file quoting a tag as the code
+// that runs it, and the Exhaust and Ethereal rules run in the engine (actions.js, combat.js endPlayerTurn), not in this upgrade step.
+const lifecycleTag = (word) => ['lifecycle', word].join('.');
+// A step that eases a drawback also drops the sentence and face line that named it, so the text follows the data (review of #2819).
+// Base cards draw their authored text and face lines (baseCardPresentation), so both are rewritten here, not only the derived face.
+const DRAWBACK_TEXT = Object.freeze({
+  unexhaust: /^Exhaust\.?$/i,
+  unethereal: /^Ethereal\.?$/i,
+  steady: /Stamina each play|per prior play/i,
+});
+function dropDrawbackText(out, card, fx) {
+  const pattern = DRAWBACK_TEXT[fx];
+  if (typeof card.textTemplate === 'string') {
+    const sentences = SplitAfter(card.textTemplate, /\.\s+/);
+    const kept = sentences.filter((sentence) => !pattern.test(sentence.trim()));
+    if (kept.length) out.textTemplate = kept.join(' ');
+  }
+  if (Array.isArray(card.faceTemplate)) {
+    const kept = card.faceTemplate.filter((line) => !pattern.test(line.trim()));
+    if (kept.length) out.faceTemplate = kept;
+  }
+}
+const reactionTag = 'trait:reaction';
+// One effect-menu step on a card (an `fx` step). New effects are appended, so the card's own effects keep their indices.
+function applyFx(card, step) {
+  const effects = (card.effects || []).map((effect) => ({ ...effect }));
+  const out = { ...card, effects };
+  const addTag = (tag) => { for (const key of ['tags', 'cardTags'].filter((k) => Array.isArray(card[k])).concat(Array.isArray(card.tags) || Array.isArray(card.cardTags) ? [] : ['tags'])) out[key] = [...new Set([...(card[key] || []), tag])]; };
+  const dropTag = (tag) => { for (const key of ['tags', 'cardTags']) if (Array.isArray(card[key])) out[key] = card[key].filter((t) => t !== tag); };
+  switch (step.fx) {
+    case 'block': effects.push({ op: 'block', target: 'self', amount: step.n }); break;
+    case 'draw': {
+      const index = firstPlainIndex(effects, 'draw');
+      if (index >= 0) effects[index].amount += step.n; else effects.push({ op: 'draw', amount: step.n });
+      break;
+    }
+    case 'cycle': effects.push({ op: 'discard', amount: step.n, choose: true }, { op: 'draw', amount: step.n }); break;
+    case 'cull': effects.push({ op: 'exhaust', amount: 1 }, { op: 'draw', amount: 2 }); break;
+    case 'copy': effects.push({ op: 'addCard', card: card.id, count: 1, pile: 'discard' }); break;
+    case 'shuffle': effects.push({ op: 'shuffleDiscardIntoDraw' }); break;
+    case 'retain': case 'innate': out.keywords = [...new Set([...(card.keywords || []), KEYWORD_OF[step.fx]])]; break;
+    case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag(lifecycleTag('exhaust')); dropDrawbackText(out, card, step.fx); break;
+    case 'unethereal': out.keywords = (card.keywords || []).filter((word) => word !== 'ethereal'); dropTag(lifecycleTag('ethereal')); dropDrawbackText(out, card, step.fx); break;
+    // A rising cost (costGrowth) stops: the card keeps its printed cost on every play.
+    case 'steady': out.costGrowth = { stamina: 0, mana: 0 }; dropDrawbackText(out, card, step.fx); break;
+    case 'holdOne': effects.push({ op: 'retain', amount: 1 }); break;
+    case 'boost':
+      // A step with no `until` is a legacy STR / DEX "this turn" boost: the status it always was. Every other boost changes the live attribute (engine/liveStats.js).
+      if (step.until === undefined && ['strength', 'dexterity'].includes(step.stat)) effects.push({ op: 'applyStatus', target: 'self', status: step.stat, stacks: step.n, thisTurn: true });
+      else effects.push({ op: 'changeAttribute', target: 'self', attribute: step.stat, amount: step.n, ...(step.until === 'fight' ? {} : { thisTurn: true }) });
+      break;
+    // A step rolled from 2026-11-14 carries `other`: one OTHER enemy, never the main target. A step saved before it keeps a random enemy.
+    case 'target': {
+      const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && e.target === 'enemy');
+      if (index >= 0) effects.push({ op: 'damage', target: step.other ? 'otherEnemy' : 'randomEnemy', amount: Math.max(1, Math.ceil(effects[index].amount / 2)) });
+      break;
+    }
+    case 'reaction': addTag(reactionTag); break;
+    case 'counter': effects.push({ op: 'gainCounterStacks', target: 'self', amount: step.n }); break;
+    default: throw new Error(`Unknown card upgrade effect '${step.fx}'`);
   }
   return out;
 }
@@ -221,6 +325,18 @@ function applyStep(card, step) {
  * old behaviour, name included); a rolled first step starts from the base.
  * One upgrade is named `Name+` (or the authored name); N >= 2 is `Name+N`.
  */
+/** The steps with each `combo` replaced by its inner steps (a combo is two effects in one slot). */
+export const FlatSteps = (steps) => (steps || []).flatMap((step) => (step && step.k === 'combo' && Array.isArray(step.steps) ? step.steps : [step]));
+
+/** The rolled steps that only remove a drawback (keyword or rising cost). They are the steps a ranked ability card can take: its grade
+ * table owns its numbers, so no other step applies, but these never touch a number (review of #2819: the offer must equal the effect). */
+export const DrawbackSteps = Object.freeze(['unexhaust', 'unethereal', 'steady']);
+/** A ranked ability card's grade face with its drawback-removal steps applied; every other step is the grade table's to own. */
+export function ApplyDrawbackSteps(card, steps) {
+  const easing = FlatSteps(steps || []).filter((step) => step && step.k === 'fx' && DrawbackSteps.includes(step.fx));
+  return easing.reduce((out, step) => applyFx(out, step), card);
+}
+
 export function applyUpgradeSteps(base, steps) {
   if (!Array.isArray(steps) || !steps.length) return base;
   let card = steps[0].k === 'authored'
@@ -232,7 +348,7 @@ export function applyUpgradeSteps(base, steps) {
   }
   // Cantrips and basics cost no Mana (SPEC, card upgrades): a rank-down step zeroes the copy's Mana, whatever the
   // order of the steps, so a saved instance resolves the same way (no migration).
-  if (steps.some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) {
+  if (FlatSteps(steps).some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) {
     card.manaCost = 0;
     // Zeroing Mana also drops the Mana offset of the Core 2 multi-hit Stamina floor, so the engine could charge more
     // than the face prints: print the floor instead, so face, preview and combat agree.
@@ -270,6 +386,24 @@ export function upgradeStepsProblems(instance, path) {
     if (step.k === 'cost' && step.n !== undefined && !isCount(step.n, 9)) bad('n');
     if (step.k === 'hits' && !(isCount(step.hits, 3) && step.hits >= 2)) bad('hits');
     if (step.k === 'hits' && !isCount(step.per)) bad('per');
+    if (step.k === 'fx') {
+      if (!FX_KINDS.includes(step.fx)) bad('fx');
+      if (['block', 'draw', 'cycle', 'boost'].includes(step.fx) && !isCount(step.n, 20)) bad('n');
+      if (step.fx === 'counter' && !isCount(step.n, 3)) bad('n');
+      if (step.fx === 'boost' && !BOOST_STATS.includes(step.stat)) bad('stat');
+      if (step.fx === 'boost' && step.until !== undefined && !BOOST_DURATIONS.includes(step.until)) bad('until');
+      if (step.fx === 'boost' && step.until === undefined && !['strength', 'dexterity'].includes(step.stat)) bad('until');
+    }
+    if (step.k === 'attr') {
+      if (!RUN_ATTRIBUTE_STATS.includes(step.stat)) bad('stat');
+      if (!isCount(step.n, 3)) bad('n');
+    }
+    if (step.k === 'combo') {
+      const inner = step.steps;
+      if (!(Array.isArray(inner) && inner.length >= 2 && inner.length <= 2)) bad('steps');
+      else upgradeStepsProblems({ upgraded: true, upgradeSteps: inner }, `${at}.steps`).forEach((problem) => problems.push(problem));
+      if (Array.isArray(inner) && inner.some((s) => s && (s.k === 'combo' || s.k === 'authored'))) bad('steps');
+    }
     if (step.k === 'tag') {
       if (step.tag === undefined && step.retarget === undefined && step.damageSchool === undefined) bad('tag');
       if (step.damage !== undefined && !Object.values(ELEMENT_IDENTITY).some((identity) => identity.damage === step.damage)) bad('damage');

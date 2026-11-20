@@ -9,7 +9,7 @@ import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight
 import { playingCardModel } from '../src/model/playingCard.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { upcastChoicePlan } from '../src/ui/components/upcastChoice.js';
-import { cardMarkupDom } from './helpers/card-markup-dom.mjs';
+import { cardMarkupDom } from './helpers/dom.mjs';
 
 // Record the production renderer's resource markup, not browser geometry.
 Object.assign(globalThis, cardMarkupDom());

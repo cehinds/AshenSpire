@@ -5,7 +5,10 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
+import { createRunCombat as createRunCombatWithBenefits } from './withoutWeaknesses.mjs';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
+// These numbers pin the pre-Wave-2.5 arithmetic, so the fight plays the rules of one created before the stance benefits (tests/stance-benefits.test.mjs owns those).
+const createRunCombat = (...args) => withoutStanceBenefits(createRunCombatWithBenefits(...args));
 import { dispatch,previewCard } from '../src/engine/combat.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { applyAttackDamage,executeRunEffects,gainBlock } from '../src/engine/actions.js';
@@ -16,11 +19,14 @@ import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
 import { attackHitPreview } from '../src/engine/stanceHit.js';
 import { chargeFlaskId,utilityFlaskIds } from '../src/model/gracerefill.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{}});
+import { withLegacyDefaults } from './legacyHitRules.mjs';
+const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{effects:{playerDamageMultiplier:1,enemyDamageMultiplier:1,blockGainMultiplier:1}}});
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 function live(classId='reaver') {
  const run=createRunState({registries:reg,classId,seed:511,profileMeta:{gameProfileUnlocks:{core:{completedRunIds:['a','b','c']}}}});
- const combat=createRunCombat({registries:reg,run,rng:createRng(511),enemyIds:['wanderingSoldier']});
+ // These suites price the d20, the perception check and the three-stack Evade, so the fight is created with the rules of one saved before the
+ // 2026-11-14 ruling (no hitRoll / perception.roll keys); tests/core-attacks-hit.test.mjs and core-intents-exact.test.mjs cover the shipped rules.
+ const combat=withLegacyDefaults(()=>createRunCombat({registries:reg,run,rng:createRng(511),enemyIds:['wanderingSoldier']}));
  // Ward is toggled off in shipped data (owner, 2026-10-18); these tests exercise the Ward path, so switch it on.
  combat.fixCoreRules={...structuredClone(combat.fixCoreRules||combat.gameProfile.fixCoreRules),ward:{enabled:true}};
  combat.player.persistentWard={value:20,max:20};
@@ -56,27 +62,36 @@ test('actual card dispatch matches selected target receipt and card face after e
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewCard(combat,card.instanceId,target.id).values.find(v=>v.op==='damage');
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
- // Owner, 2026-11-03: the quote is the raw hit (before Block 3 and Poise); the receipt's totalDamage is the resolved HP loss.
- assert.ok(preview.totalDamage>preview.damageReceipt.totalDamage,'the raw quote is not cut by Block or Poise');
+ // Owner, 2026-11-14: the per-target quote is the HP the hit will cost (after Block 3 and Poise), the same as the receipt's totalDamage;
+ // `totalDamage` on the row is the card FACE (attacker side), which Block and Poise do not cut.
+ assert.equal(preview.perTargetHitDamages[target.id].reduce((a,b)=>a+b,0),preview.damageReceipt.totalDamage,'the quote is already cut by Block and Poise');
+ assert.equal(preview.totalDamage,preview.faceValue*preview.hits,'the face is the attacker-side number');
  const hp=target.hp;dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId:target.id});
  assert.equal(hp-combat.enemies[0].hp,preview.damageReceipt.totalDamage);
  const receipt=combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt;
  assert.equal(receipt.totalDamage,preview.damageReceipt.totalDamage);
  assert.ok(receipt.hits[0].sources.some(row=>row.id.startsWith('ar:')));
 });
-test('mixed multihit receipt spends Block Ward and Poise sequentially (no numeric Barrier pool) and previews without RNG',()=>{
- const {combat,target}=live();Object.assign(target,{block:12,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
+// Wave 3: a Poise break makes the target Broken (hits x1.5, `poise.breakRule: "broken"`); a fight saved before that keeps the Staggered
+// Vulnerable (x1.25), so the legacy case pins the rules to `{ drain: 'prevented' }` as the fight was created.
+function mixedMultihit(legacy){
+ const {combat,target}=live();if(legacy)combat.fixCoreRules={...combat.fixCoreRules,poise:{drain:'prevented'}};
+ // Base 40 is halved by the Core 0.5 base-damage scale to an incoming 20, so the hits still reach Ward and Poise after Block 12.
+ const third=legacy?25:30,total=legacy?50:55;
+ Object.assign(target,{block:12,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
  const carrier={skipRatingBonus:true,magicShare:.5,combatProfile:{camp:'physical',maneuver:'attack',range:'melee',damageComponents:[{damageType:'blunt',share:.5},{damageType:'magic',share:.5}]}};
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
- const preview=previewDamageHits(combat,combat.player,target,20,[],carrier,3);
+ const preview=previewDamageHits(combat,combat.player,target,40,[],carrier,3);
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
- // Owner, 2026-11-03: hitDamages is the raw hit; the resolved HP loss per hit is the receipt's hpLoss.
- assert.deepEqual(preview.hitDamages,[20,20,25]);assert.equal(preview.totalDamage,65);// the Poise break after hit 2 leaves Vulnerable x1.25 for hit 3
- assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),[6,19,25]);assert.equal(preview.hpLoss,50);// hit 2 meets 1 Poise (capped)
- const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,20,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
- assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),preview.hitDamages);assert.equal(500-target.hp,50);
+ // Owner, 2026-11-14: hitDamages is the HP lost per hit (the receipt's hpLoss); the incoming hit before defences is the receipt's `incoming`.
+ assert.deepEqual(preview.hitDamages,[6,19,third]);assert.equal(preview.totalDamage,total);// the Poise break after hit 2 leaves the break bonus for hit 3; hit 2 meets 1 Poise (capped)
+ assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),[6,19,third]);assert.equal(preview.hpLoss,total);
+ const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,40,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
+ assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),[20,20,third]);assert.equal(500-target.hp,total);
  assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[12,0,2,0],[0,0,0,1],[0,0,0,0]]);
-});
+}
+test('mixed multihit receipt spends Block Ward and Poise sequentially (no numeric Barrier pool) and previews without RNG (Broken rule)',()=>mixedMultihit(false));
+test('mixed multihit receipt, legacy Staggered rule (a fight saved before Broken): the third hit carries Vulnerable x1.25',()=>mixedMultihit(true));
 test('Magic Adept prepared spell stance matches casting cards for the MP discount',()=>{
  const {combat}=live('starseer');const card={resourceCosts:{sp:0,mp:3},combatProfile:{camp:'spell',maneuver:'casting',range:'melee'}};
  setProfileStance(combat,combat.player,{...card});
@@ -257,11 +272,11 @@ test('fractional offense reaches final rounding without a fabricated status modi
  target.statuses={};combat.player.statuses={};
  const receipt=profileDamageReceipt(combat,combat.player,target,13,card);
  const sources=receipt.damageReceipt.hits[0].sources;
- // Owner 2026-10-18: no decimals. The chain floors once; the stance line shows its running floor (13 x 1.25 = 16.25 -> 16) and there is no separate rounding line.
- assert.ok(sources.some(row=>row.id==='matching-stance' && row.effective===16 && Number.isInteger(row.amount)));
+ // Owner 2026-10-18: no decimals. The chain floors once; the stance line shows its running floor (13 halved by the Core base-damage scale, rounded up, = 7; 7 x 1.25 = 8.75 -> 8) and there is no separate rounding line.
+ assert.ok(sources.some(row=>row.id==='matching-stance' && row.effective===8 && Number.isInteger(row.amount)));
  assert.equal(sources.some(row=>row.id==='status-rules'),false);
  assert.equal(sources.some(row=>row.id==='quantity-rounding'),false);
- assert.equal(receipt.damageReceipt.hits[0].incoming,16);
+ assert.equal(receipt.damageReceipt.hits[0].incoming,8);
  const before=target.hp;primeAccuracyRolls(combat);
  applyAttackDamage(combat,combat.player,target,13,[],card);
  assert.equal(before-target.hp,receipt.hpLoss);
@@ -269,13 +284,15 @@ test('fractional offense reaches final rounding without a fabricated status modi
 test('the Evade card outside combat fills its {evade} token with a phrase, never a raw token',async()=>{
  const {staticCardTokens,playingCardModel}=await import('../src/model/playingCard.js');
  const def=reg.cards.get('core.evade');
- assert.equal(staticCardTokens(def).evade,'3');
- assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'3');
+ // Owner, 2026-11-14: with no hit roll one Evade card is one stack.
+ assert.equal(staticCardTokens(def).evade,'1');
+ assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'1');
 });
 test('the off-combat Evade phrase follows the configured gain, card overrides included',async()=>{
  const {staticCardTokens}=await import('../src/model/playingCard.js');
  const def=reg.cards.get('core.evade');
- const scoped=(base,dex)=>({...def,mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:base,evadeStackDex:dex}}]});
+ const scoped=(base,dex)=>({...def,mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{hitRoll:true,evadeStackBase:base,evadeStackDex:dex}}]});
+ assert.equal(staticCardTokens({...def,mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStacksPerCard:4}}]},reg).evade,'4','the shipped per-card grant is configurable');
  assert.equal(staticCardTokens(scoped(1,1),reg).evade,'1 plus DEX');
  assert.equal(staticCardTokens(scoped(3,2),reg).evade,'3 plus 2× DEX');
  assert.equal(staticCardTokens(scoped(2,0),reg).evade,'2');

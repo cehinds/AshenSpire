@@ -53,7 +53,7 @@ if (args.includes('--selftest')) {
   const sourcePlants = [
     {
       name: 'the layout answer stops publishing the compact composition',
-      file: 'src/main.js',
+      file: 'src/ui/displaySettings.js',
       find: "  document.documentElement.setAttribute('data-composition', compact ? 'short-wide' : 'standard');",
       replace: "  document.documentElement.setAttribute('data-composition', 'standard'); // plant: stale composition",
       expectRed: /FAIL .*844x344.*composition=standard/,
@@ -67,9 +67,11 @@ if (args.includes('--selftest')) {
     },
     {
       name: 'live resize leaves the short-wide answer stale',
-      file: 'src/main.js',
-      find: "  window.addEventListener('resize', () => {",
-      replace: "  window.addEventListener('resize-plant', () => {",
+      file: 'src/ui/displaySettings.js',
+      // The zoom listener in installDisplaySettings (4-space indent, followed by
+      // the uiResizeTimer line), not the card-size listener in installCardSizeResize.
+      find: "    window.addEventListener('resize', () => {\n      clearTimeout(uiResizeTimer);",
+      replace: "    window.addEventListener('resize-plant', () => {\n      clearTimeout(uiResizeTimer);",
       expectRed: /FAIL live resize/,
     },
     {

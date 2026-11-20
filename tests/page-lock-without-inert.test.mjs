@@ -5,7 +5,7 @@
 //   node --test tests/page-lock-without-inert.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { registerModal, resetModalState } from '../src/ui/modalManager.js';
 
 function scene(fn) {

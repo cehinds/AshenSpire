@@ -621,7 +621,6 @@ classification
   strike
   guard
   weaponArt
-  keepsake {What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.}
   enemy {What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.}
   armament {What a armament is. Every object in the armament collection carries this, and nothing outside it may.}
   armour {What a armour is. Every object in the armour collection carries this, and nothing outside it may.}

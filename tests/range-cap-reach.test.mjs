@@ -121,7 +121,9 @@ test('an upgrade never offers Reach to Ranged under the cap, and still offers Me
     }
     return seen;
   };
-  assert.ok(offers('reach', undefined).has('range:ranged'), 'uncapped control offers reach to ranged');
+  // The owner removed ranged cards (2026-11-14, SPEC 17 "Range"): a range change is melee or reach, so even an uncapped roll never offers ranged.
+  assert.ok(!offers('reach', undefined).has('range:ranged'), 'uncapped: the ranged band is never offered');
+  assert.ok(offers('reach', undefined).has('range:melee'), 'uncapped control still offers a range change');
   assert.ok(!offers('reach', 'reach').has('range:ranged'));
   assert.ok(offers('melee', 'reach').has('range:reach'));
   // The run's own policy is the limit source: nextUpgradeOptions passes it through.
@@ -130,6 +132,6 @@ test('an upgrade never offers Reach to Ranged under the cap, and still offers Me
   const ranged = (policy) => { let found = false; for (let seed = 0; seed < 200; seed++) {
     const steps = nextUpgradeOptions({ ...run, seed, rangePolicy: policy }, instance, base, registries, 12, { noAuthored: true });
     if (steps.some(step => step.tag === 'range:ranged')) found = true; } return found; };
-  assert.equal(ranged(noCap()), true, 'no cap: the roll can offer ranged');
+  assert.equal(ranged(noCap()), false, 'no cap: ranged is no longer a band an upgrade offers');
   assert.equal(ranged(run.rangePolicy), false, 'Core cap: never');
 });

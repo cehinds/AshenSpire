@@ -5,7 +5,9 @@ import { createZipFlow } from '../offlineZipFlow.js';
 import { t } from '../strings.js';
 import { makeAvailableOffline, offlineState, offlineSupport, removeOfflineCopy } from '../offlineInstall.js';
 import { button, el, openModal } from '../kit/index.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
+import { AbortWithin } from '../abortWithin.js';
+import { CreateBusyLock } from '../pressable.js';
 
 function saveFile(blob, name) {
   const url = URL.createObjectURL(blob);
@@ -121,10 +123,12 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   const reload = button({ label: 'Reload game', id: 'offline-reload' }); reload.hidden = true;
   const file = el('input', { type: 'file', accept: '.json,application/json', hidden: true });
   const done = button({ label: 'Done', weight: 'primary' });
-  let manifest = null, prepared = null, busy = false;
+  let manifest = null, prepared = null;
+  const releaseLock = CreateBusyLock();
+  const releaseControls = [check, download, branch, zipButton];
   const controller = new AbortController();
   const request = async url => {
-    const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(offlinePlay.requestTimeoutMs)]) });
+    const response = await fetch(url, { cache: 'no-store', signal: AbortWithin(controller.signal, offlinePlay.requestTimeoutMs) });
     if (!response.ok) throw new Error('This branch download is unavailable. Try another branch or check again when online.');
     return response;
   };
@@ -146,20 +150,22 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
         zipBox, zipNone,
         ...(keep ? [keep] : []),
         el('h3', { text: 'Move your saves' }),
-        el('p', { class: 'set-note', text: `A backup includes your profile and all ${transfer.slotCount} save slots. Import replaces them in this browser. Existing archives stay here. Import from the title screen.` }),
+        el('p', { class: 'set-note', text: `A backup includes your profile and all ${transfer.SlotCount} save slots. Import replaces them in this browser. Existing archives stay here. Import from the title screen.` }),
         el('div', { class: 'offline-actions' }, [exportSave, importSave, recovery, reload]), file, status);
     }, primary: done });
   done.addEventListener('click', door.close);
   // An import changes the profile under the open game. The panel closes first, so the
   // caller's refresh (or the default reload) never runs with this modal still registered.
   const imported = () => { door.close(); onImported(); };
-  recovery.hidden = !transfer.previous();
+  recovery.hidden = !transfer.Previous();
   const showRelease = data => {
     const size = data.bytes === null ? 'Size available after preparation' : `${(data.bytes / 1024 / 1024).toFixed(1)} MB`;
     release.textContent = `${offlinePlay.branches.find(item => item.id === branch.value).label} build: ${data.version} · ${size}. ${data.version === BUILD_VERSION ? 'You have this version.' : 'Export your saves before switching versions.'}`;
   };
-  const refreshRelease = async () => {
-    if (busy) return; busy = true; check.disabled = true; download.disabled = true; branch.disabled = true; zipButton.disabled = true;
+  const restoreAfterCheck = () => { check.disabled = false; branch.disabled = false; zipButton.disabled = !zip.plan; };
+  const restoreAfterZip = () => { zipButton.disabled = !zip.plan; download.disabled = !manifest; check.disabled = false; branch.disabled = false; };
+  const restoreAfterDownload = () => { download.disabled = false; check.disabled = false; branch.disabled = false; zipButton.disabled = !zip.plan; };
+  const refreshRelease = () => releaseLock.Run(releaseControls, async () => {
     zip.reset(); zipBox.hidden = true; zipNone.hidden = true; zipProgress.hidden = true; zipStatus.textContent = '';
     zipButton.textContent = t('offline.zip.button');
     manifest = null; progressGroup.hidden = true; direct.hidden = true; direct.removeAttribute('href');
@@ -182,8 +188,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       showRelease(data);
       download.disabled = false; status.textContent = '';
     } catch (error) { release.textContent = 'Could not check the release. Connect to the internet and try Check for updates.'; status.textContent = error.message; }
-    finally { busy = false; check.disabled = false; branch.disabled = false; zipButton.disabled = !zip.plan; }
-  };
+  }, restoreAfterCheck);
   // The zip is offered for a pack-shaped build only; a build.json that names
   // one badly hides it (and the single-file download above still stands).
   function showZip(raw, selected) {
@@ -194,17 +199,16 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     zipBox.hidden = false;
   }
   zipButton.addEventListener('click', async () => {
-    if (busy || !zip.plan) return;
-    busy = true; zipButton.disabled = true; download.disabled = true; check.disabled = true; branch.disabled = true;
-    try {
+    if (releaseLock.IsBusy() || !zip.plan) return;
+    await releaseLock.Run(releaseControls, async () => {
       if (!zip.prepared) { zipProgress.hidden = false; zipProgress.removeAttribute('value'); }
       if (await zip.run() === 'failed') zipProgress.hidden = true;
-    } finally { busy = false; zipButton.disabled = !zip.plan; download.disabled = !manifest; check.disabled = false; branch.disabled = false; }
+    }, restoreAfterZip);
   });
   check.addEventListener('click', refreshRelease);
   branch.addEventListener('change', refreshRelease);
   download.addEventListener('click', async () => {
-    if (busy || !manifest) return;
+    if (releaseLock.IsBusy() || !manifest) return;
     if (prepared) {
       // Saving stays within a fresh click, even when fetching a large build
       // took longer than the browser's transient user-activation window.
@@ -212,45 +216,45 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       status.textContent = 'Save requested. Open the HTML file from your Downloads folder.';
       return;
     }
-    busy = true; download.disabled = true; check.disabled = true; branch.disabled = true; zipButton.disabled = true;
-    progressGroup.hidden = true;
-    let writer = null;
-    try {
-      // Ask during the click's activation window, before waiting for any network I/O.
-      if (typeof window.showSaveFilePicker === 'function') {
-        status.textContent = 'Choose where to save the game…';
-        const handle = await window.showSaveFilePicker({ suggestedName: manifest.filename,
-          types: [{ description: 'HTML game', accept: { 'text/html': ['.html'] } }] });
-        controller.signal.throwIfAborted();
-        writer = await handle.createWritable();
-      }
-      controller.signal.throwIfAborted();
-      status.textContent = 'Downloading the game… keep this panel open.';
-      progressGroup.hidden = false; progress.removeAttribute('value'); progressText.textContent = 'Connecting…';
-      const result = await receiveDownload(await request(manifest.url), { bytes: manifest.bytes, sha256: manifest.sha256, writer,
-        onProgress: (received, total) => {
+    await releaseLock.Run(releaseControls, async () => {
+      progressGroup.hidden = true;
+      let writer = null;
+      try {
+        // Ask during the click's activation window, before waiting for any network I/O.
+        if (typeof window.showSaveFilePicker === 'function') {
+          status.textContent = 'Choose where to save the game…';
+          const handle = await window.showSaveFilePicker({ suggestedName: manifest.filename,
+            types: [{ description: 'HTML game', accept: { 'text/html': ['.html'] } }] });
           controller.signal.throwIfAborted();
-          const amount = (received / 1024 / 1024).toFixed(1);
-          if (total !== null) {
-            progress.value = Math.min(100, received / total * 100);
-            progressText.textContent = `${Math.floor(progress.value)}% · ${amount} / ${(total / 1024 / 1024).toFixed(1)} MB`;
-          } else { progress.removeAttribute('value'); progressText.textContent = `${amount} MB downloaded · total size unknown`; }
-        } });
-      controller.signal.throwIfAborted();
-      if (writer) { status.textContent = 'Finishing file save…'; await writer.close(); writer = null; }
-      else { prepared = result.blob; saveFile(prepared, manifest.filename); download.textContent = offlinePlay.saveDownloadLabel; }
-      manifest.bytes = result.bytes; showRelease(manifest); progress.value = 100;
-      progressText.textContent = `100% · ${(result.bytes / 1024 / 1024).toFixed(1)} MB downloaded`;
-      status.textContent = prepared ? 'Download sent to your browser. If it did not save, choose Save game file to retry.' : 'Game saved to your chosen location. Open the HTML file to play.';
-    } catch (error) {
-      if (writer) await writer.abort().catch(() => {});
-      status.textContent = error.name === 'AbortError' ? 'Download canceled. No completed game file was saved.' : error.message;
-    }
-    finally { busy = false; download.disabled = false; check.disabled = false; branch.disabled = false; zipButton.disabled = !zip.plan; }
+          writer = await handle.createWritable();
+        }
+        controller.signal.throwIfAborted();
+        status.textContent = 'Downloading the game… keep this panel open.';
+        progressGroup.hidden = false; progress.removeAttribute('value'); progressText.textContent = 'Connecting…';
+        const result = await receiveDownload(await request(manifest.url), { bytes: manifest.bytes, sha256: manifest.sha256, writer,
+          onProgress: (received, total) => {
+            controller.signal.throwIfAborted();
+            const amount = (received / 1024 / 1024).toFixed(1);
+            if (total !== null) {
+              progress.value = Math.min(100, received / total * 100);
+              progressText.textContent = `${Math.floor(progress.value)}% · ${amount} / ${(total / 1024 / 1024).toFixed(1)} MB`;
+            } else { progress.removeAttribute('value'); progressText.textContent = `${amount} MB downloaded · total size unknown`; }
+          } });
+        controller.signal.throwIfAborted();
+        if (writer) { status.textContent = 'Finishing file save…'; await writer.close(); writer = null; }
+        else { prepared = result.blob; saveFile(prepared, manifest.filename); download.textContent = offlinePlay.saveDownloadLabel; }
+        manifest.bytes = result.bytes; showRelease(manifest); progress.value = 100;
+        progressText.textContent = `100% · ${(result.bytes / 1024 / 1024).toFixed(1)} MB downloaded`;
+        status.textContent = prepared ? 'Download sent to your browser. If it did not save, choose Save game file to retry.' : 'Game saved to your chosen location. Open the HTML file to play.';
+      } catch (error) {
+        if (writer) await writer.abort().catch(() => {});
+        status.textContent = error.name === 'AbortError' ? 'Download canceled. No completed game file was saved.' : error.message;
+      }
+    }, restoreAfterDownload);
   });
   const exportText = (text, name) => saveFile(new Blob([text], { type: 'application/json' }), name);
-  exportSave.addEventListener('click', () => { try { exportText(transfer.createBackup(), 'AshenSpire-saves.json'); status.textContent = 'Save backup downloaded.'; } catch (error) { status.textContent = error.message; } });
-  recovery.addEventListener('click', () => { try { exportText(transfer.previous(), 'AshenSpire-previous-saves.json'); } catch (error) { status.textContent = error.message; } });
+  exportSave.addEventListener('click', () => { try { exportText(transfer.CreateBackup(), 'AshenSpire-saves.json'); status.textContent = 'Save backup downloaded.'; } catch (error) { status.textContent = error.message; } });
+  recovery.addEventListener('click', () => { try { exportText(transfer.Previous(), 'AshenSpire-previous-saves.json'); } catch (error) { status.textContent = error.message; } });
   importSave.addEventListener('click', () => {
     try { assertImportAllowed(); file.value = ''; file.click(); }
     catch (error) { status.textContent = error.message; }
@@ -259,19 +263,19 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     const selected = file.files?.[0]; if (!selected) return;
     try {
       if (selected.size > offlinePlay.maxSaveBytes) throw new Error('Save file is too large.');
-      const text = await selected.text(); const preview = transfer.inspect(text);
+      const text = await selected.text(); const preview = transfer.Inspect(text);
       const count = preview.slots.filter(slot => slot.summary).length;
-      openConfirmationModal({ title: 'Replace this browser’s saves?',
+      OpenConfirmationModal({ title: 'Replace this browser’s saves?',
         message: `This backup contains ${count} saved run${count === 1 ? '' : 's'}${preview.hasProfile ? ' and a profile' : ' and no profile'}.`,
         consequence: `All ${preview.slots.length} slots and the profile will be replaced. A previous-save backup is kept first. The game returns to the title with the imported saves.`,
         confirmLabel: 'Import saves', onConfirm: async () => {
           try {
             assertImportAllowed();
-            await transfer.restore(text); status.textContent = 'Saves imported.';
+            await transfer.Restore(text); status.textContent = 'Saves imported.';
             reload.hidden = false; importSave.disabled = true; reload.focus();
             imported();
           } catch (error) { status.textContent = error.message; }
-          recovery.hidden = !transfer.previous();
+          recovery.hidden = !transfer.Previous();
         } });
     } catch (error) { status.textContent = error.message; }
   });

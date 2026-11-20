@@ -17,8 +17,6 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { hasClassMastery, recordClassMasteryXp } from '../model/classMasteryRun.js';
-import { bankSkillXp, classSkillId } from '../model/skills.js';
 import { executeRunEffects } from './actions.js';
 import {
   availableEventChoices,
@@ -27,13 +25,24 @@ import {
   questsCompletedBy,
 } from '../model/quests.js';
 import { eventChoicesWithHistory } from '../content/events.js';
+import { RankUpCandidates } from '../model/rankUpService.js';
 
-/** A choice's price, read the one way both event screens read it. */
-export function choiceAffordable(choice, run) {
+/**
+ * Why a choice is closed to this run right now: 'cinders' (the price is not in the purse), 'rankableCard' (it ranks a card up and no card
+ * can rise), or null (open). The engine and both event screens read this one function, so they agree. `registries` is needed only for
+ * the rankableCard requirement; without it that requirement is not judged.
+ */
+export function ChoiceUnmetRequirement(choice, run, registries = null) {
   const requires = choice && choice.requires;
-  if (!requires) return true;
-  if (typeof requires.cinders === 'number' && !(run.cinders >= requires.cinders)) return false;
-  return true;
+  if (!requires) return null;
+  if (typeof requires.cinders === 'number' && !(run.cinders >= requires.cinders)) return 'cinders';
+  if (requires.rankableCard === true && registries && !RankUpCandidates(registries, run).length) return 'rankableCard';
+  return null;
+}
+
+/** A choice's price and requirements, read the one way both event screens read it. */
+export function choiceAffordable(choice, run, registries = null) {
+  return ChoiceUnmetRequirement(choice, run, registries) === null;
 }
 
 /**
@@ -47,11 +56,6 @@ export function choiceAffordable(choice, run) {
 export function completeQuest(ctx, { questId, source } = {}) {
   const record = recordQuestCompletion(ctx.run, { questId, source });
   if (!record) return null;
-  if (hasClassMastery(ctx.run) && !ctx.run.classUnequipped) {
-    const amount = ctx.registries.balance.classMastery.pay.perQuest;
-    recordClassMasteryXp(ctx.run, ctx.run.class, amount);
-    bankSkillXp(ctx.registries, ctx.run, classSkillId(ctx.run.class), amount);
-  }
   const event = Object.freeze({ type: 'questCompleted', questId, source });
   if (typeof ctx.emit === 'function') ctx.emit('questCompleted', { questId, source });
   return { record, event };
@@ -75,7 +79,7 @@ export function commitEventChoice(ctx, { eventId, choiceId } = {}) {
   if (!availableEventChoices([choice], run).length) {
     throw new Error(`commitEventChoice: '${eventId}/${choiceId}' is not open to this run's history`);
   }
-  if (!choiceAffordable(choice, run)) {
+  if (!choiceAffordable(choice, run, registries)) {
     throw new Error(`commitEventChoice: '${eventId}/${choiceId}' costs more than the run holds`);
   }
   // 1. effects, 2. the history row, 3. the completion check — in that order.

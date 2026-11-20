@@ -1,54 +1,111 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { CreateEntryCheckpoint } from '../src/services/entryCheckpoint.js';
 
-// The queued entry checkpoint (main.js): sliced out and run against a fake run,
-// so the save-before-first-action invariant (SPEC §3.12) is pinned headlessly.
-const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-const start = main.indexOf('let pendingEntryCheckpoint = null;');
-const end = main.indexOf("document.addEventListener('visibilitychange'", start);
-assert.ok(start > 0 && end > start, 'the queued checkpoint block is present');
-
-function harness() {
-  const notices = [];
-  const env = { run: null, notices };
-  const make = new Function('env', 'showSettingsNotice', 'clearTimeout', 'setTimeout', 'requestAnimationFrame', `
-    let run; const setRun = r => { run = r; };
-    ${main.slice(start, end)}
-    return { setRun, queue: p => { pendingEntryCheckpoint = p; }, pending: () => pendingEntryCheckpoint,
-      flush: flushPendingEntryCheckpoint, flushSafely: flushPendingEntryCheckpointSafely, supersede: supersedePendingEntryCheckpoint };`);
-  return { api: make(env, msg => notices.push(msg), () => {}, () => 0, () => 0), notices };
-}
-function fixture(api, durable) {
-  const run = { combatEntered: { nodeId: 'n1', encounterId: 'e1', snapshot: null } };
-  const combat = { rng: 'live', result: null };
-  api.setRun(run);
-  api.queue({ run, combat, durable, checkpointRng: 'entry', nodeId: 'n1', encounterId: 'e1', timer: 0 });
-  return { run, combat };
+function harness()
+{
+    let run, nextTimer = 0;
+    const notices = [], timers = new Map(), frames = [], cleared = [];
+    const owner = CreateEntryCheckpoint({
+        getRun: () => run,
+        reportFailure: error => notices.push(error.message),
+        clearTimer: id => cleared.push(id),
+        setTimer(callback, delay)
+        {
+            const id = ++nextTimer;
+            timers.set(id, { callback, delay });
+            return id;
+        },
+        requestFrame: callback => frames.push(callback),
+    });
+    return { owner, notices, timers, frames, cleared, setRun: value => { run = value; } };
 }
 
-test('a flush saves the entry state with the frozen entry counters and restores the live rng', () => {
-  const { api } = harness(); const seen = [];
-  const { combat } = fixture(api, c => seen.push(c.rng));
-  assert.equal(api.flush(), true);
-  assert.deepEqual(seen, ['entry']); assert.equal(combat.rng, 'live'); assert.equal(api.pending(), null);
+function queue(h, durable)
+{
+    const run = { combatEntered: { nodeId: 'n1', encounterId: 'e1', snapshot: null } };
+    const combat = { rng: 'live', result: null };
+    h.setRun(run);
+    h.owner.Queue({ run, combat, durable, checkpointRng: 'entry', nodeId: 'n1', encounterId: 'e1' });
+    return { run, combat };
+}
+
+test('paint and the 500 ms fallback share one entry with frozen RNG', () =>
+{
+    const h = harness(), seen = [];
+    const { combat } = queue(h, candidate =>
+    {
+        seen.push(candidate.rng);
+        return { ok: true, durable: false };
+    });
+    h.owner.Schedule();
+    assert.equal(h.timers.get(1).delay, 500);
+    assert.equal(h.frames.length, 1);
+    h.frames[0]();
+    assert.equal(h.timers.get(2).delay, 0);
+    h.timers.get(2).callback();
+    h.timers.get(1).callback();
+    assert.deepEqual(seen, ['entry']);
+    assert.deepEqual(h.cleared, [1]);
+    assert.equal(combat.rng, 'live');
+    assert.equal(h.owner.Flush(), false, 'a nonthrowing non-durable result consumes the entry');
 });
 
-test('a failed flush stays queued, so the next commit retries it before saving its own state', () => {
-  const { api, notices } = harness(); let fail = true; const seen = [];
-  fixture(api, c => { if (fail) throw new Error('quota'); seen.push(c.rng); });
-  api.flushSafely();
-  assert.deepEqual(notices, ['quota']); assert.ok(api.pending(), 'still queued after a failure');
-  assert.throws(() => api.flush(), /quota/); assert.ok(api.pending());
-  fail = false; assert.equal(api.flush(), true); assert.deepEqual(seen, ['entry']);
+test('a failed flush restores RNG and retries before the next write', () =>
+{
+    const h = harness(), seen = [];
+    let fail = true;
+    const { combat } = queue(h, candidate =>
+    {
+        if (fail)
+        {
+            throw new Error('quota');
+        }
+        seen.push(candidate.rng);
+    });
+    h.owner.Schedule();
+    h.timers.get(1).callback();
+    assert.deepEqual(h.notices, ['quota']);
+    assert.equal(combat.rng, 'live');
+    assert.throws(() => h.owner.Flush(), /quota/);
+    fail = false;
+    assert.equal(h.owner.Flush(), true);
+    assert.deepEqual(seen, ['entry']);
+    assert.equal(combat.rng, 'live');
 });
 
-test('a changed run, an existing snapshot or an explicit save drops the queued checkpoint', () => {
-  const { api } = harness(); let writes = 0;
-  fixture(api, () => writes++); api.setRun({ combatEntered: null });
-  assert.equal(api.flush(), false);
-  const { run } = fixture(api, () => writes++); run.combatEntered.snapshot = {};
-  assert.equal(api.flush(), false);
-  fixture(api, () => writes++); api.supersede();
-  assert.equal(api.pending(), null); assert.equal(writes, 0);
+test('an older throw and its callbacks cannot overwrite or flush a replacement', () =>
+{
+    const h = harness(), seen = [];
+    const first = queue(h, () =>
+    {
+        queue(h, candidate => seen.push(candidate.rng));
+        throw new Error('old entry failed');
+    });
+    h.owner.Schedule();
+    assert.throws(() => h.owner.Flush(), /old entry failed/);
+    assert.equal(first.combat.rng, 'live');
+    h.frames[0]();
+    h.timers.get(1).callback();
+    h.timers.get(2).callback();
+    assert.deepEqual(seen, []);
+    assert.equal(h.owner.Flush(), true);
+    assert.deepEqual(seen, ['entry']);
+});
+
+test('a different run at the same encounter, a changed fight, and explicit save discard the entry', () =>
+{
+    const h = harness();
+    for (const change of [
+        ({ run }) => h.setRun(structuredClone(run)),
+        ({ run }) => { run.combatEntered.snapshot = {}; },
+        ({ run }) => { run.combatEntered.nodeId = 'other'; },
+        ({ run }) => { run.combatEntered.encounterId = 'other'; },
+        ({ combat }) => { combat.result = 'victory'; },
+        () => h.owner.Supersede(),
+    ])
+    {
+        change(queue(h, () => assert.fail('stale entry must not write')));
+        assert.equal(h.owner.Flush(), false);
+    }
 });

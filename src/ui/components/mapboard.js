@@ -135,7 +135,7 @@ function indexNodes(nodes) {
 
 // Journey pairs, not visited nodes: revisiting a junction must retain every
 // actually traversed edge without exposing its untraveled branches.
-export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, authoredMap = null, laneEdge = new Set(), px, py }) {
+export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, authoredMap = null, laneEdge = new Set(), allRoutes = false, px, py }) {
   const byId = Object.fromEntries(nodes.map(node => [node.id, node]));
   const pairs = new Set();
   const key = (a, b) => JSON.stringify([a, b]);
@@ -146,12 +146,17 @@ export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, aut
     for (const toId of node.next || []) {
       const to = byId[toId];
       if (!to || !isDrawn(toId)) continue;
-      if (!pairs.has(key(node.id, toId)) && !(authoredMap && pairs.has(key(toId, node.id)))) continue;
+      const travelled = pairs.has(key(node.id, toId)) || !!(authoredMap && pairs.has(key(toId, node.id)));
+      if (!travelled && !allRoutes) continue;
       const route = authoredMap?.routes.find(row => row.a === node.id && row.b === toId || row.b === node.id && row.a === toId);
       if (route && route.a !== node.id) continue;
       const isLane = laneEdge.has(`${node.id}>${toId}`) || (authoredMap && laneEdge.has(`${toId}>${node.id}`));
       const tag = route ? 'polyline' : 'line';
       const coords = route ? `points="${route.points.map(point => point.join(',')).join(' ')}"` : `x1="${px(node)}" y1="${py(node)}" x2="${px(to)}" y2="${py(to)}"`;
+      if (!travelled) {
+        html += `<${tag} vector-effect="non-scaling-stroke" class="map-edge${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
+        continue;
+      }
       html += `<${tag} class="map-route-outline" vector-effect="non-scaling-stroke" ${coords}/>`;
       html += `<${tag} vector-effect="non-scaling-stroke" class="map-edge traveled${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
     }
@@ -303,7 +308,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const fog = mode === 'fog';
   const know = mapKnowledge({
     graph: map,
-    run: { path: viewer.path || [], mapNodeId: current },
+    run: { path: viewer.path || [], mapNodeId: current, gameProfile: viewer.gameProfile },
     mode,
     reveal,
   });
@@ -341,7 +346,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // AN EDGE NEEDS BOTH ITS ENDS. Under fog the nodes one step past the split are
   // hidden, so their edges are not drawn either — the line stops where the light
   // does. In `path` mode nothing is hidden and this filter is the identity.
-  const edgeSvg = mapTravelEdgesHtml({ nodes, path: viewer.path || [], isDrawn, authoredMap: act.authoredMap, laneEdge, px, py });
+  const edgeSvg = mapTravelEdgesHtml({ nodes, path: viewer.path || [], isDrawn, authoredMap: act.authoredMap, laneEdge, allRoutes: !!viewer.allRoutes && !act.authoredMap, px, py });
 
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
@@ -1137,7 +1142,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       const hClipped = Math.max(hOverL, hOverR) > 0.5;
       clipNote.hidden = !hClipped;
       clipNote.textContent = !hClipped ? ''
-        : `A path runs off screen to the ${hOverR >= hOverL ? 'right' : 'left'} — zoom out (−) or press ⊙ to bring it back.`;
+        : `A path runs off screen to the ${hOverR >= hOverL ? 'right' : 'left'}. Zoom out (−) or press ⊙ to bring it back.`;
     }
     if (over > 0.5 && !warnedClipped) {
       warnedClipped = true;
@@ -1174,7 +1179,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     const meets = px + 0.5 >= target;
     tapNote.hidden = meets;
     tapNote.textContent = meets ? ''
-      : `Map nodes are ${Math.round(px)} px here — under your ${target} px minimum tap size. Zoom in (+) to grow them.`;
+      : `Map nodes are ${Math.round(px)} px here, under your ${target} px minimum tap size. Zoom in (+) to grow them.`;
   }
 
   function setZoom(next, keepCenter = true) {
@@ -1295,10 +1300,23 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // where the finger put it (map.js), but a later re-fit (#1142) must still
   // keep that node in the band the tray leaves visible, so the look is
   // recorded exactly as centerOnNode records it, and the camera stays put.
-  function holdLook(id, { inset = 0 } = {}) {
+  //
+  // `keepRestored` is the tray that opens AT MOUNT over a camera that was just
+  // restored (the preselected start node, after Armaments closes or on Continue).
+  // The restore was clamped to a box without the tray's room at the foot, so the
+  // box grows by it and the saved pan is written again, and the write is
+  // recorded as the restore's own so the viewport watch finishes it at the
+  // saved shape rather than re-fitting over the player's pan.
+  function holdLook(id, { inset = 0, keepRestored = false } = {}) {
     if (!byId[id]) return;
     insetBottom = Math.max(0, typeof inset === 'function' ? inset() : inset);
     look = { id, inset };
+    if (keepRestored && restored && !restorePending) {
+      sizeSvg();
+      scroll.scrollLeft = Math.min(Math.max(0, scroll.scrollWidth - scroll.clientWidth), restored.scrollLeft);
+      scroll.scrollTop = Math.min(Math.max(0, scroll.scrollHeight - scroll.clientHeight), restored.scrollTop);
+      restoreWrite = { left: scroll.scrollLeft, top: scroll.scrollTop };
+    }
   }
   // Closing a tray that never moved the camera forgets its look without
   // re-framing, so the view the player is looking at does not jump.

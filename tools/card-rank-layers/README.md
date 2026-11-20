@@ -36,10 +36,10 @@ local server started with `--editor-write`. Export also downloads the same JSON.
 
 Desktop and phone examples, and the full-corpus browser checks, are not kept in
 the tree (removed 2026-10-11; see git history). Reproduce the corpus
-checks with `node tools/card-sigils-qa.mjs`, writing to `SIGIL_QA_OUT`.
+checks with `node tools/attic/card-sigils-qa.mjs`, writing to `SIGIL_QA_OUT`.
 
 Regenerate the six illustrations and their desktop/phone checks with
-`node tools/card-rank-layers-qa.mjs`. Use `ASHEN_ART_SOURCE=cache` with the
+`node tools/attic/card-rank-layers-qa.mjs`. Use `ASHEN_ART_SOURCE=cache` with the
 published pin, `PLAYWRIGHT_MODULE` for Playwright and `CHROME` for the browser
 when these are not on the default module/executable paths.
 

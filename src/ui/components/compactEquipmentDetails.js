@@ -1,6 +1,7 @@
 import { viewViewportBox } from '../viewViewport.js';
 import { equipmentDetails } from './equipmentCard.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { IsPopoverOpen } from '../popoverPolyfill.js';
 import { t } from '../strings.js';
 
 // A connected element owns the observers and popover, including across stage changes.
@@ -18,7 +19,7 @@ class CreationTagRow extends HTMLElement {
       this.popup.setAttribute('aria-label', t('equipment.tags.more.aria'));
       this.append(this.more, this.popup);
       const open = () => {
-        if (this.popup.matches(':popover-open')) return;
+        if (IsPopoverOpen(this.popup)) return;
         this.popup.replaceChildren();
         const explanation = document.createElement('p');
         explanation.className = 'cc-tag-explanation';
@@ -43,7 +44,7 @@ class CreationTagRow extends HTMLElement {
       };
       this.more.addEventListener('click', open);
       this.more.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') open(); });
-      this.popup.addEventListener('toggle', () => this.more.setAttribute('aria-expanded', String(this.popup.matches(':popover-open'))));
+      this.popup.addEventListener('toggle', () => this.more.setAttribute('aria-expanded', String(IsPopoverOpen(this.popup))));
     }
     this.observer = new ResizeObserver(() => this.fit());
     this.observer.observe(this);
@@ -51,7 +52,7 @@ class CreationTagRow extends HTMLElement {
   }
   fit() {
     if (!this.clientWidth) return;
-    if (this.popup.matches(':popover-open')) this.popup.hidePopover();
+    if (IsPopoverOpen(this.popup)) this.popup.hidePopover();
     this.tags.forEach(tag => { tag.hidden = false; });
     this.more.hidden = true;
     if (this.scrollWidth <= this.clientWidth + 1) return;
@@ -66,7 +67,7 @@ class CreationTagRow extends HTMLElement {
   }
   disconnectedCallback() {
     this.observer?.disconnect();
-    if (this.popup?.matches(':popover-open')) this.popup.hidePopover();
+    if (IsPopoverOpen(this.popup)) this.popup.hidePopover();
   }
 }
 

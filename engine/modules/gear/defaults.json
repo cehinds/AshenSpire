@@ -660,6 +660,15 @@
         "ratings": {},
         "bonus": {}
       }
+    },
+    "retreat": {
+      "group": "effect",
+      "cost": 0,
+      "priority": 0,
+      "weights": {
+        "ratings": {},
+        "bonus": {}
+      }
     }
   },
   "weights": {

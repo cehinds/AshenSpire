@@ -20,7 +20,17 @@ function fight() {
   const run = createRunState({ registries, classId: 'reaver', seed: 'PVT' });
   return createRunCombat({ registries, run, rng: createRng('PVT'), enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
 }
-const idOf = (combat, cardId) => combat.piles.hand.find(c => c.cardId === cardId).instanceId;
+// The opening hand is a draw of the 11-card Core 2 starter, so a card the test needs is moved into the hand when it was not drawn.
+const idOf = (combat, cardId) => {
+  let card = combat.piles.hand.find(c => c.cardId === cardId);
+  if (!card) {
+    const pile = combat.piles.draw.some(c => c.cardId === cardId) ? combat.piles.draw : combat.piles.discard;
+    const at = pile.findIndex(c => c.cardId === cardId);
+    card = pile.splice(at, 1)[0];
+    combat.piles.hand.push(card);
+  }
+  return card.instanceId;
+};
 
 test('a hand quote follows the fight: player status, target status, spent stamina, aimed target', () => {
   const combat = fight();

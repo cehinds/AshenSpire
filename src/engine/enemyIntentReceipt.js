@@ -9,6 +9,10 @@ import { enemyMoveDamage } from '../model/state.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import * as IntentProjection from './enemyIntentProjection.js';
 
+// Live playback can use the Poise prediction calculated at the action boundary.
+// Only the existing receipt fields belong in event logs and saved reactions.
+const displayedPoise = new WeakMap();
+
 export function captureEnemyIntent(ctx, enemy, action = null) {
   // Co-op keeps its existing observer-specific projection; one shared event
   // must not expose another seat's private read or defender state.
@@ -45,5 +49,19 @@ export function captureEnemyIntent(ctx, enemy, action = null) {
   for (const key of ['damage', 'hits', 'hitDamages', 'totalDamage', 'hpLoss', 'hpLossBounds', 'hitChance', 'uncertain'])
     if (values[key] !== undefined) out[key] = values[key];
   out.damageBasis = fixCoreEnabled(ctx) ? 'hp' : 'beforeBlock';
-  return IntentProjection.projectEnemyIntentDamage(ctx, enemy, out, { action, base, hits, move });
+  const { projectedPoise, ...receipt } = IntentProjection.projectEnemyIntentDamage(ctx, enemy, out, { action, base, hits, move });
+  if (projectedPoise) displayedPoise.set(receipt, projectedPoise);
+  return receipt;
+}
+
+export function PresentEnemyIntentReceipt(receipt) {
+  const projectedPoise = displayedPoise.get(receipt);
+  return projectedPoise ? { ...receipt, projectedPoise } : receipt;
+}
+
+/** The HP a captured intent says the player loses in all, or null when it states none (the number a prompt or a log line can print). */
+export function IncomingHpLoss(intent) {
+  const projected = intent?.projectedDamage;
+  if (projected && Number.isFinite(projected.max) && projected.basis === 'hp') return projected.max;
+  return Number.isFinite(intent?.hpLoss) ? intent.hpLoss : null;
 }

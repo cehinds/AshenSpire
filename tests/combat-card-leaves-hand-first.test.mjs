@@ -7,7 +7,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard, getEntity } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { createRng } from '../src/engine/rng.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // "When playing a card remove the card from hand first and then play animations."
 // Run the shipped renderHand and playCard against the real engine and the kit DOM fixture:
@@ -44,6 +44,7 @@ function fixture(document, { energy } = {}) {
     unplayableReason: () => null, cardTargets: () => ({ legalIds: combat.enemies.map(e => e.id) }),
     upcastOptions: () => [], cardChoicePlan: () => null, resolveCard: () => ({}),
     takeSnapshot: () => ({ ents: {}, hand: [...combat.piles.hand], handPreviews: new Map(combat.piles.hand.map(c => [c.instanceId, previewCard(combat, c.instanceId)])) }),
+    payPlayAtCommit() {}, // the commit-time payment has its own test: tests/combat-play-pays-first.test.mjs
     flyCard: () => timeline.push('fly'), sfx: { play() {} }, haptic: { play() {} }, t: x => x,
     render() { timeline.push('render'); }, renderPlayQueue() {}, queueToast: { show: text => timeline.push('toast:' + text) },
     commitEndTurn: () => timeline.push('end-turn'),

@@ -31,9 +31,14 @@ export function activeCombatStance(entity) {
 export function combatStanceRow(entity) {
   const stance = activeCombatStance(entity);
   if (!stance) return null;
+  // Wave 3: a Poise break is Broken (poise.breakRule "broken"): the owner loses its next action and takes x1.5 until it ends, then Poise refills.
+  if (stance.broken) return {
+    id: 'combat-stance', kind: 'stance', maneuver: 'staggered', name: 'Broken',
+    detail: `Poise broke. Loses its next action. Takes ×${stance.damageMultiplier ?? 1.5} damage until it ends, then Poise refills to full.`,
+  };
   if (stance.staggered) return {
     id: 'combat-stance', kind: 'stance', maneuver: 'staggered', name: 'Staggered stance',
-    detail: ['Poise broke.', stance.staminaLoss > 0 ? `Loses ${stance.staminaLoss} SP next turn.` : '',
+    detail: ['Poise broke.', stance.staminaLoss > 0 ? `Loses ${stance.staminaLoss} Stamina next turn.` : '',
       stance.vulnerableStacks > 0 ? `Gains ${stance.vulnerableStacks} Vulnerable (repeat breaks only lengthen it).` : '', 'Holds until its next turn begins.'].filter(Boolean).join(' '),
   };
   const sigil = ACTION_SIGILS[stance.maneuver];

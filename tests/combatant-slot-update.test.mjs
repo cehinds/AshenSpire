@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatantFrame, updateCombatantFrame, updateCombatantSlots } from '../src/ui/components/combatantFrame.js';
 import { applyDisplayAppearance } from '../src/ui/displayAppearance.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Slot-level updates must leave the frame exactly as a fresh combatantFrame() would
 // be for the same slots: same nodes, same order, same attributes.
@@ -101,4 +101,20 @@ test('a class-only slot write leaves the target-HUD rack untouched', () => withK
   assert.ok(frame.classList.contains('dead'));
   assert.equal(frame.querySelector('.target-hud-overhead-meters').outerHTML, rack.outerHTML);
   assert.notEqual(frame.outerHTML, html);
+}));
+
+// Review on #2709: with no rack, one render that replaces the meters AND the statuses must seat the new tray in the
+// NEW meters' badge row, not in the detached old one.
+test('no rack: meters and statuses replaced together land the tray in the new badge row', () => withKitDom(({ document }) => {
+  const el = (tag, className) => { const n = document.createElement(tag); n.className = className; return n; };
+  const metersWithRow = () => { const m = el('div', 'meters'); m.appendChild(el('div', 'combat-health-badges')); return m; };
+  const tray = () => el('div', 'statuses');
+  const first = metersWithRow(), firstTray = tray();
+  first.firstChild.appendChild(firstTray);
+  const frame = combatantFrame({ role: 'enemy', entityId: 'e1', sprite: el('div', 'art'), name: el('div', 'nm'), meters: first, trailing: [] });
+  document.body.appendChild(frame);
+  const nextMeters = metersWithRow(), nextTray = tray();
+  updateCombatantSlots(frame, { meters: nextMeters, statuses: [nextTray] });
+  assert.equal(nextTray.parentNode, nextMeters.querySelector('.combat-health-badges'));
+  assert.ok(frame.contains(nextTray), 'the new tray is on the frame');
 }));

@@ -12,7 +12,7 @@
 // THE DOOR. A normal boot of the SOURCE tree (no `?shot=`, so durable
 // localStorage, the startup gate and the real title), served the way
 // `node tools/launch.mjs` serves local play: tools/serve.mjs. Every step is a trusted CDP pointer press on the control a player
-// presses (a hold where the control owes one: End Turn, Continue):
+// presses (every confirm that survives is a destructive one the walk never meets, so all are one tap):
 //
 //   TITLE      the startup gate, then the title's New Game door (slot 1).
 //   CLASS      character creation walked step by step (Class, Character,
@@ -36,7 +36,7 @@
 //              dungeon, whose rooms are walked the same way to its boss. Fights after
 //              the first are resolved through the debug handle
 //              `window.__combat` (the enemies' hp set to 0, then End Turn
-//              held — the same handle tools/reward-collect-drive.mjs uses):
+//              held — the same handle the combat audit uses):
 //              the first fight already proved play, and the walk proves the
 //              doors between floors.
 //   BOSS       the boss fight, known by its splash (intro.js; counted by a
@@ -70,6 +70,7 @@ import { resolve } from 'node:path';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { seedFromString, seedToString } from '../src/engine/rng.js';
+import { STEP_ARRIVAL_GUARD_MS } from '../src/ui/stepArrivalGuard.js';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const argv = process.argv.slice(2);
@@ -226,8 +227,17 @@ async function until(expression, what, ms = 20000) {
   }
   throw new Error(`timed out after ${ms} ms waiting for ${what}; screen ${JSON.stringify(await ev(SCREEN))}`);
 }
+function visibleRewardChoice(doc, selector) {
+  return Array.from(doc.querySelectorAll(selector)).find((choice) => {
+    if (choice.disabled || choice.getAttribute('aria-disabled') === 'true') return false;
+    const { width, height } = choice.getBoundingClientRect();
+    return width > 0 && height > 0 && doc.defaultView.getComputedStyle(choice).visibility === 'visible';
+  });
+}
 const point = (selector) => ev(`(() => {
-  const el = document.querySelector(${JSON.stringify(selector)});
+  const selector = ${JSON.stringify(selector)};
+  const el = ${selector === DOORS.chooserFace || selector === DOORS.chooserName
+    ? `(${visibleRewardChoice})(document, selector)` : 'document.querySelector(selector)'};
   if (!el) return null;
   el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
   const b = el.getBoundingClientRect();
@@ -268,15 +278,12 @@ function startingAbilityChoice({ continueBlocked, choices = [] }, selections = 0
 async function newGameFromTitle(label) {
   await until(`!!document.querySelector('.title-menu .slot-new')`, `the title's New Game door (${label})`);
   await press('.title-menu .slot-new');
-  await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the new-slot modal');
-  await press('[data-title-action="modal-continue"]');
-  await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the new-slot decision door');
-  await press('[data-title-action="review-new"]');
+  // A fresh profile has no slot to choose: New Game opens creation for slot 1 at once.
   await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage of character creation');
   const className = await ev(`document.querySelector('#cz-classes .cz-class').textContent.trim().replace(/^\\W+/, '').split(/(?=[A-Z][a-z]+ )/)[0]`);
   await press('#cz-classes .cz-class');
   await press('#cz-next');
-  // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
+  // The staged flow (Class -> Attributes -> Equipment -> Feats ->
   // Spells for casters -> Review): each stage is the `.cz-railed` panel's
   // data-creation-stage, and Next (#cz-next) leaves it.
   const onStage = (stage) => `document.querySelector('.cz-railed')?.dataset.creationStage === '${stage}'`;
@@ -293,9 +300,6 @@ async function newGameFromTitle(label) {
     // Standard's mode id is `lean` (see map-camera-persistence.mjs).
     const mode = await ev(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
     if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-    await press('#cz-next');
-    await until(onStage('keepsake'), 'the Keepsake stage');
-    await press('#cz-keepsakes [data-keepsake-id]');
     await press('#cz-next');
     await until(onStage('equipment'), 'the Equipment stage');
     await openFace('armour');
@@ -341,6 +345,7 @@ async function newGameFromTitle(label) {
   await wait(150);
   const typed = await ev(`document.querySelector('#seed-input').value`);
   await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin to accept the character');
+  await wait(STEP_ARRIVAL_GUARD_MS);
   await press('#cz-start');
   await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-scroll .map-node'))`, 'the opening or the map', MOUNT_MS);
   if (await ev(`(() => { const s = [...document.querySelectorAll('.prologue-screen .prologue-controls button')].find((c) => !c.hidden && /skip/i.test(c.textContent)); if (!s) return false; s.dataset.fullRunSkip = '1'; return true; })()`)) {
@@ -356,7 +361,8 @@ async function newGameFromTitle(label) {
 // ---- the map: one floor --------------------------------------------------------
 const reachable = () => ev(`[...document.querySelectorAll('.map-scroll .map-node.reachable')].map((n) => ({ id: n.dataset.node, visited: n.classList.contains('visited') || n.classList.contains('current'), type: ${JSON.stringify(NODE_ORDER)}.find((t) => n.classList.contains(t)) || 'unknown' }))`);
 async function enterNode(node) {
-  await press(`.map-node[data-node="${node.id}"]`);
+  // A new run's single start node is preselected (its tray is already open); pressing it again would travel at once.
+  if (!(await ev(`document.querySelector('.map-node.selected')?.dataset.node === ${JSON.stringify(node.id)}`))) await press(`.map-node[data-node="${node.id}"]`);
   // Select, then Enter once the tray has slid open (map.js W4b).
   await until(`document.querySelector('.map-tray')?.dataset.shown === 'true' && !document.querySelector('#map-enter')?.disabled`, `the tray's Enter for ${node.id}`, 5000);
   // The tray is `shown` before its reveal has finished sliding (and the board
@@ -373,15 +379,16 @@ async function enterNode(node) {
 // ---- combat -------------------------------------------------------------------
 const COMBAT_READY = `!!window.__combat && !!document.querySelector('.combat .end-turn') && !document.querySelector('.end-turn').disabled && window.__combat.phase === 'player'`;
 const combatOver = `!document.querySelector('.combat') || !!document.querySelector('.reward-veil') || !!document.querySelector('#to-title')`;
-// End Turn owes a hold (secondbeat.js). A hold that lands while a card is
-// still selected for targeting is spent on the selection, so a turn that has
-// not moved on after the hold is held again (at most END_TURN_HOLDS times).
+// End Turn commits on one tap (secondbeat.js `tap: true`, owner 2026-11-14). A
+// press that lands while a card is still selected for targeting is spent on
+// the selection, so a turn that has not moved on is pressed again (at most
+// END_TURN_HOLDS times).
 const END_TURN_HOLDS = 3;
 async function endTurn() {
   const turn = await ev('window.__combat.turn');
   const moved = `(${combatOver}) || window.__combat.turn > ${turn} || window.__combat.phase !== 'player'`;
   for (let i = 0; i < END_TURN_HOLDS; i++) {
-    await press('.end-turn', { hold: true, ms: 1000 });
+    await press('.end-turn');
     if (await ev(`(async () => { const end = Date.now() + 4000; while (Date.now() < end) { if (${moved}) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`)) break;
   }
   // The enemy turn can pause for an optional defensive reaction. Decline via
@@ -435,7 +442,7 @@ async function resolveFight() {
   await until(`(${combatOver}) || (${COMBAT_READY})`, 'the player turn', 30000);
   await skipTutorial();
   await ev(`(() => { for (const e of window.__combat.enemies) { e.hp = 0; e.alive = false; } return true; })()`);
-  await press('.end-turn', { hold: true });
+  await press('.end-turn');
   await until(combatOver, 'the fight to end', 40000);
 }
 
@@ -453,7 +460,8 @@ const DOORS = {
   levelOffer: `.reward-menu .reward-level-offer`,
   levelContinue: `#reward-level-continue`,
   chooserConfirm: `#reward-card-confirm:not([disabled])`,
-  chooserPick: `.reward-row .reward-pick`,
+  chooserFace: `.reward-row .reward-choice-face[role="radio"]`,
+  chooserName: `.reward-row button.reward-pick`,
   levelUp: `.reward-level-up:not([disabled])`,
   rewardBack: `#reward-back`,
   rewardExpand: `#reward-expand:not([disabled])`,
@@ -466,7 +474,16 @@ const DOORS = {
   shrineLeave: `#shrine-leave`,
   confirm: `.confirm-modal [data-confirm="yes"], .as-modal .primary`,
 };
-const SNAPSHOT = `(() => { const out = {}; for (const [k, sel] of Object.entries(${JSON.stringify(DOORS)})) out[k] = !!document.querySelector(sel); out.combat = ${COMBAT_READY}; return out; })()`;
+const SNAPSHOT = `(() => {
+  const out = {};
+  const visibleChoice = ${visibleRewardChoice};
+  for (const [k, sel] of Object.entries(${JSON.stringify(DOORS)})) {
+    out[k] = k === 'chooserFace' || k === 'chooserName'
+      ? !!visibleChoice(document, sel) : !!document.querySelector(sel);
+  }
+  out.combat = ${COMBAT_READY};
+  return out;
+})()`;
 // One snapshot → { done: 'map' | 'gameover' | 'combat' }, { press, hold?, ms? },
 // or { wait: why } (an animation or refill the screen is still running).
 function pickDoor(d) {
@@ -478,7 +495,8 @@ function pickDoor(d) {
     // An open chooser (a level card or draft the walk opened from the menu):
     // its first offer, then Confirm.
     if (d.chooserConfirm) return { press: DOORS.chooserConfirm };
-    if (d.chooserPick) return { press: DOORS.chooserPick };
+    if (d.chooserFace) return { press: DOORS.chooserFace };
+    if (d.chooserName) return { press: DOORS.chooserName };
     // A detail view (no chooser) goes back to the menu.
     if (d.rewardBack) return { press: DOORS.rewardBack };
     // A level waiting to be claimed holds Continue (reward.js): claim it.
@@ -490,16 +508,16 @@ function pickDoor(d) {
     // The victory card's Continue opens the spoils once its XP has counted;
     // the spoils' Continue (a hold) collects and leaves.
     if (d.rewardExpand) return { press: DOORS.rewardExpand };
-    if (d.rewardContinue) return { press: DOORS.rewardContinue, hold: true };
+    if (d.rewardContinue) return { press: DOORS.rewardContinue };
     return { wait: 'the reward (XP count, refill, or a disabled Continue)' };
   }
   // A dialogue room (a legacy dungeon's rooms): the first response it offers
-  // (held: a binding one owes a hold), then Continue.
-  if (d.dialogueResponse) return { press: DOORS.dialogueResponse, hold: true, ms: 1000 };
+  // (one tap), then Continue.
+  if (d.dialogueResponse) return { press: DOORS.dialogueResponse };
   if (d.dialogueContinue) return { press: DOORS.dialogueContinue };
   // An Event's Continue is disabled until a response is taken (event.js).
-  if (d.eventContinue) return { press: DOORS.eventContinue, hold: true };
-  if (d.choice) return { press: DOORS.choice, hold: true };
+  if (d.eventContinue) return { press: DOORS.eventContinue };
+  if (d.choice) return { press: DOORS.choice };
   if (d.leaveShop) return { press: DOORS.leaveShop, hold: true };
   if (d.shrineLeave) return { press: DOORS.shrineLeave, hold: true };
   if (d.confirm) return { press: DOORS.confirm };
@@ -545,8 +563,9 @@ if (argv.includes('--selftest')) {
     ['an Event after a response: Continue', D({ eventContinue: true, choice: false }), DOORS.eventContinue],
     ['a reward holding Continue for a level: claim it', D({ rewardVeil: true, veil: true, levelUp: true }), DOORS.levelUp],
     ['a reward whose level button is still refilling: wait', D({ rewardVeil: true, veil: true }), 'wait'],
-    ['the level chooser before a pick: the first offer', D({ rewardVeil: true, veil: true, chooserPick: true, rewardBack: true }), DOORS.chooserPick],
-    ['the level chooser after a pick: Confirm, not Back', D({ rewardVeil: true, veil: true, chooserPick: true, chooserConfirm: true, rewardBack: true }), DOORS.chooserConfirm],
+    ['a face-only level chooser: the card radio', D({ rewardVeil: true, veil: true, chooserFace: true, rewardBack: true }), DOORS.chooserFace],
+    ['a named level chooser: the name button', D({ rewardVeil: true, veil: true, chooserName: true, rewardBack: true }), DOORS.chooserName],
+    ['the level chooser after a pick: Confirm, not Back', D({ rewardVeil: true, veil: true, chooserFace: true, chooserName: true, chooserConfirm: true, rewardBack: true }), DOORS.chooserConfirm],
     ['a claimed level\'s reward waiting in the menu: open it', D({ rewardVeil: true, veil: true, levelOffer: true, rewardContinue: true }), DOORS.levelOffer],
     ['a level popup with its rewards taken: Continue', D({ rewardVeil: true, veil: true, levelContinue: true }), DOORS.levelContinue],
     ['the spoils with Continue enabled', D({ rewardVeil: true, veil: true, rewardContinue: true }), DOORS.rewardContinue],
@@ -554,6 +573,24 @@ if (argv.includes('--selftest')) {
     ['a mastery choice over the map owns the next input', D({ classMastery: true, map: true, veil: true }), DOORS.classMastery],
     ['the map under no veil', D({ map: true }), 'map'],
   ];
+  const rewardChoice = (id, { disabled = false, spent = false, width = 150, visibility = 'visible' } = {}) => ({
+    id, disabled, visibility,
+    getAttribute: (attr) => attr === 'aria-disabled' && spent ? 'true' : null,
+    getBoundingClientRect: () => ({ width, height: width }),
+  });
+  const chooser = (faces, names) => ({
+    querySelectorAll: (selector) => selector === DOORS.chooserFace ? faces : names,
+    defaultView: { getComputedStyle: (choice) => ({ visibility: choice.visibility }) },
+  });
+  const faceOnly = chooser([rewardChoice('spent face', { spent: true }), rewardChoice('live face')],
+    [rewardChoice('hidden name', { width: 0 })]);
+  const named = chooser([], [rewardChoice('spent name', { disabled: true }),
+    rewardChoice('invisible name', { visibility: 'hidden' }), rewardChoice('live name')]);
+  plants.push(
+    ['chooser: skips a spent radio', 'live face', null, visibleRewardChoice(faceOnly, DOORS.chooserFace)?.id],
+    ['chooser: a zero-size name has no pointer target', false, null, Boolean(visibleRewardChoice(faceOnly, DOORS.chooserName))],
+    ['chooser: skips disabled and invisible names', 'live name', null, visibleRewardChoice(named, DOORS.chooserName)?.id],
+  );
   // Doors the game mounts DISABLED (event.js Continue until a response,
   // reward.js Continue while a level waits, the victory card's Continue while
   // XP counts, a chooser's Confirm before a pick) are only doors when enabled.

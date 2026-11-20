@@ -162,6 +162,10 @@
       "weight": 1,
       "side": "sp"
     },
+    "targeting.otherEnemy": {
+      "weight": 1,
+      "side": "sp"
+    },
     "targeting.allEnemies": {
       "weight": 2,
       "side": "sp"
@@ -231,6 +235,10 @@
       "side": "sp"
     },
     "guard": {
+      "weight": 0,
+      "side": "sp"
+    },
+    "retreat": {
       "weight": 0,
       "side": "sp"
     },

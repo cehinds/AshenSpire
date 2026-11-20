@@ -1,7 +1,7 @@
 import { uiIconText } from '../../content/uiIcons.js';
+import { CreateStepArrivalGuard } from '../stepArrivalGuard.js';
 import { groupCardVariants } from '../../model/cardGroups.js';
 import { uiZoom } from '../fx.js';
-import { masteryClassSummary } from '../components/classMastery.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
@@ -19,7 +19,7 @@ import { paintedPresentation } from '../paintedOutfits.js';
 // ladder and never leaves the glass. Every section is a Pane; the class
 // chooser is a Split (preview pane, handle, OptionCards in a list or a grid);
 // the character's name and seed are Row·setting fields; modes and sprite
-// styles are Segmented; sigils and tints are Swatches; keepsakes, relics and
+// styles are Segmented; sigils and tints are Swatches; relics and
 // classes are OptionCards; primary stats are the D26 fold faces carrying kit
 // Rows; and the point-buy is the md door through the one door-opener. The
 // hooks the instruments read (`.screen.customize`, `.cz-scroll`, `.cz-actions`,
@@ -48,13 +48,13 @@ import {
 import { pieceChip, setPieceChipChosen } from './equipment.js';
 import { relicText, renderCard as renderCardFace, scheduleCardFits } from '../components/card.js';
 import { bindCardInspection, openCardInspection } from '../components/cardInspection.js';
-import { renderStatAllocationCard } from '../components/statAllocationCard.js';
+import { RenderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
   primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton,
-  tintChoiceButton, sigilChoiceButton, characterSigilPreview, keepsakeChoiceButton, viewModeToggle,
+  tintChoiceButton, sigilChoiceButton, characterSigilPreview, viewModeToggle,
   booleanSettingToggle, classChoiceCard, classPreviewPane, classUnfold, classResourceGrid, relicChoiceButton,
   selectionSectionFace,
 } from '../components/creationCards.js';
@@ -77,25 +77,38 @@ import { gameContent } from '../../model/gameProfile.js';
 import { mountDeckEditor } from './deckEditor.js';
 import { armouryOpensDeckEditor } from '../../model/armouryRules.js';
 import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
-import { activeAdeptTraining } from '../../model/deckCopyLimit.js';
+import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
+import { ApplyStartingDeckChoice, StartingPoolCounts, StartingPoolIds } from '../../model/startingDeckChoice.js';
+import { OpenStartingCardsChooser } from '../components/startingCardsChooser.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
+import { IsPopoverOpen } from '../popoverPolyfill.js';
+import { ColorMix } from '../colorMixCompat.js';
+import { ActivateOnKey, MarkSelected } from '../selection.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
   hp: 'HP',
-  mana: 'MP',
-  stamina: 'SP',
+  mana: 'Mana',
+  stamina: 'Stamina',
   energy: 'AP',
 });
 const CREATION_INSPECTION_LABELS = Object.freeze({
   hp: 'Health Points (HP)',
-  mana: 'Mana Points (MP)',
-  stamina: 'Stamina Points (SP)',
+  mana: 'Mana',
+  stamina: 'Stamina',
   energy: 'Action Points (AP)',
   ar: 'Attack Rating (AR)',
   dr: 'Defense Rating (DR)',
   pr: 'Potency Rating (PR)',
   openingHand: t('statsPreview.overview.openingHand'),
   draw: 'Cards drawn each turn',
+});
+const CHOICE_BY_INSPECTION = Object.freeze({
+  shouldFocusChoice: true,
+  shouldAdvanceSection: false,
+});
+const CHOICE_BY_BUTTON = Object.freeze({
+  shouldFocusChoice: false,
+  shouldAdvanceSection: true,
 });
 
 function creationDerivedLabel(entry) {
@@ -148,7 +161,6 @@ export function mountCustomize(app, {
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
     spriteStyle: DEFAULT_SPRITE_STYLE,
-    keepsakeId: defaults.keepsakeId,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
     startingSlotChoices: {},
@@ -212,7 +224,6 @@ export function mountCustomize(app, {
       el('section', { id: 'cz-tint-group', class: 'cc-character-picker' }, el('div', { id: 'cz-tints', class: 'as-swatches cz-opts' })),
     ]),
   ]);
-  const keepsakeGroup = el('section', { id: 'cz-keepsake-group', class: 'cc-character-picker' }, options([], { id: 'cz-keepsakes', class: 'cz-keepsakes' }));
   const statsSide = el('div', { class: 'as-stack cc-stats-side' }, [
     nameRow,
     el('div', { id: 'cz-character-fold', class: 'cc-character-fold cz-disc' }, [
@@ -253,7 +264,6 @@ export function mountCustomize(app, {
       el('div', { class: 'as-splitbody cc-character-grid', dataset: { spriteSide: spriteSide } },
         spriteSide === 'left' ? [previewSide, statsSide] : [statsSide, previewSide]),
     ]),
-    keepsake: el('section', { id: 'cz-keepsake-panel', class: 'as-pane flush cz-stage' }, keepsakeGroup),
     feats: el('section', { id: 'cz-feats-panel', class: 'as-pane flush cz-stage' }, el('div', { id: 'cz-feat-browser-host' })),
     spells: el('section', { id: 'cz-spells-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { id: 'cz-spells-heading' }),
@@ -358,7 +368,7 @@ export function mountCustomize(app, {
     // an open by any other route — the keyboard, a future invoker — is placed
     // too rather than left wherever it was last.
     headTools.addEventListener('toggle', (event) => {
-      menu.setAttribute('aria-expanded', String(headTools.matches(':popover-open')));
+      menu.setAttribute('aria-expanded', String(IsPopoverOpen(headTools)));
       if (event.newState !== 'open') return;
       // A DROPDOWN HANGING OFF ITS BUTTON, THROUGH THE ONE HOME FOR THAT.
       // This used to be its own arithmetic, and it read the zoom off the WRONG
@@ -395,6 +405,7 @@ export function mountCustomize(app, {
   const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back', attrs: { 'data-back': '' } });
   const next = button({ label: t('creation.next'), id: 'cz-next', weight: 'primary', className: 'cz-next-stage' });
   const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
+  const stepArrival = CreateStepArrivalGuard();
   const foot = modalFooter({ note: catalog ? 'Choose your path. The spire remembers.' : '', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
   if (!catalog) foot.querySelector('.modal-foot-actions').insertBefore(next, start);
   const body = el('div', { class: 'modal-body cz-scroll' }, [
@@ -550,11 +561,10 @@ export function mountCustomize(app, {
   // foot and the section can never disagree about what is missing.
   function classProblem() { return state.classChosen && eligibleClass(state.classId) ? null : t('creation.reason.class'); }
   function modeProblem() { return state.attributeMode ? null : t('creation.reason.statMode'); }
-  function keepsakeProblem() { return state.keepsakeId ? null : t('creation.reason.keepsake'); }
   function armourProblem() { return state.startingArmourId ? null : t('creation.reason.armour'); }
   /** The stats step: the mode, then a complete and legal allocation. */
   function statsStepProblem() { return modeProblem() || allocationProblem(); }
-  function characterProblem() { return statsStepProblem() || keepsakeProblem(); }
+  function characterProblem() { return statsStepProblem(); }
   function abilitiesProblem() { return startingAbilityProblem(registries, previewRun(), state.startingAbilityIds, meta.settings || {}); }
   function equipmentProblem() { return armourProblem() || handsProblem() || (startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'combatManeuvers' ? abilitiesProblem() : null); }
   function spellsProblem() { return startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'item:magic-focus' ? abilitiesProblem() : null; }
@@ -603,11 +613,14 @@ export function mountCustomize(app, {
 
   // Core 2's review step opens the deck editor on the starting deck; the edit is kept per class and sent with Begin.
   let deckEdit = null;
+  // Core's starting-card choice (owner, 2026-11-17): { classId, counts }, kept per class and sent with Begin.
+  let startingCards = null;
   function previewRun() {
     if (fixedCreation) {
       const base = createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
       // A deck edited from the review step rides on top of the class's starting deck (owner, 2026-11-06).
       if (deckEdit?.classId === state.classId) cancelDeckEdit(base, deckEdit.snapshot);
+      if (startingCards?.classId === state.classId) ApplyStartingDeckChoice(base, startingCards.counts, meta.settings || {});
       return base;
     }
     // Validate the live allocation independently of weapon requirements.
@@ -661,7 +674,7 @@ export function mountCustomize(app, {
     refreshAbilitySelection();
     // The tint is the player's own choice, so the well's edge wears it.
     portrait.style.borderColor = tintCss(state.tint);
-    portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
+    portrait.style.boxShadow = ColorMix(`0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`);
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
       ? (state.spriteStyle === 'classic'
         ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic')
@@ -716,8 +729,8 @@ export function mountCustomize(app, {
       const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
       if (card) {
         const unfold = classUnfold({ cls, sprite, resources, relic,
-          adept: activeAdeptTraining({ gameProfile, class: cls.id }),
-          visual: classGlyph(cls.id), mastery: fixedCreation ? null : masteryClassSummary(registries, meta, cls.id), onRelicInspect: inspectRelic });
+          adept: UnlimitedAdeptTraining({ gameProfile, class: cls.id }),
+          visual: classGlyph(cls.id), onRelicInspect: inspectRelic });
         card.classList.add('unfolded');
         card.append(unfold);
       }
@@ -772,7 +785,7 @@ export function mountCustomize(app, {
     // allocation was committed the editor was unreachable, so a player who
     // reached the Equipment step and was told "Ash Staff needs intelligence 8
     // — you have 3" had no path back to the stats short of changing class
-    // (which discards keepsake, armour, hands and relic) or leaving creation
+    // (which discards armour, hands and relic) or leaving creation
     // (review, #1217). This button is that path, and it is a revision: the
     // committed numbers are on the steppers and Cancel puts them back.
     const editPoints = el('button', {
@@ -803,10 +816,11 @@ export function mountCustomize(app, {
     });
   }
 
-  /** Stats settled: fold Primary Stats, unfold Keepsake, put the cursor there. */
-  function advanceToKeepsake({ focus = true } = {}) {
-    if (!catalog) activate('keepsake');
-    if (focus) queueMicrotask(() => focusElement($('#cz-keepsakes .cz-keepsake')));
+  /** Stats settled: fold Primary Stats, open the next step, put the cursor there. */
+  function advanceAfterStats({ focus = true } = {}) {
+    if (catalog) return;
+    if (focus) advanceFrom('attributes');
+    else if (categories.includes('attributes')) { const to = creationStep(categories, 'attributes', 1); if (to) activate(to); }
   }
 
   // THE POINT-BUY IS A DOOR. Opened by the one door-opener (through the shared
@@ -919,7 +933,7 @@ export function mountCustomize(app, {
       }
       renderCharacterPreview(); updateStartRefusal();
     };
-    const allocation = renderStatAllocationCard(app, {
+    const allocation = RenderStatAllocationCard(app, {
       title: 'Assign points',
       remaining: remainingPoints(),
       modal: true,
@@ -936,7 +950,7 @@ export function mountCustomize(app, {
         if (outcome === 'reopen') return;
         if (outcome === 'done') {
           renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-          advanceToKeepsake({ focus: restore });
+          advanceAfterStats({ focus: restore });
           return;
         }
         // CANCEL UNDOES THE WAY IN. Creation offers one mode since the
@@ -973,7 +987,7 @@ export function mountCustomize(app, {
     pointBuy = door;
     // Green at 0 points with a legal spread. Weapon requirements are the hand
     // step's question, asked there (handProblem) and at Begin (flowProblem).
-    refreshDone = refusesWhen(allocation.done, allocationProblem, 'Apply these stats and choose a keepsake');
+    refreshDone = refusesWhen(allocation.done, allocationProblem, 'Apply these stats');
     allocation.done.addEventListener('click', () => {
       if (allocationProblem()) return;
       door.outcome = 'done';
@@ -1012,7 +1026,6 @@ export function mountCustomize(app, {
       selected: state.classChosen && cls.id === state.classId,
       expanded: !catalog && creationClassPreview() === 'unfold',
       visual: classGlyph(cls.id),
-      mastery: fixedCreation ? null : masteryClassSummary(registries, meta, cls.id),
       locked: !eligibleClass(cls.id),
       lockIcon: fixedCreation && profileClassUnlocks && !eligibleClass(cls.id),
       hint: eligibleClass(cls.id) ? null : profileClassUnlocks
@@ -1056,9 +1069,6 @@ export function mountCustomize(app, {
     })));
     $('#cz-glyphs').replaceChildren(...PORTRAIT_GLYPHS.map((glyph) => sigilChoiceButton(glyph, glyph === state.glyph, () => {
       state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces();
-    })));
-    $('#cz-keepsakes').replaceChildren(...registries.characterCreation.keepsakes.map((keepsake) => keepsakeChoiceButton(keepsake, keepsake.id === state.keepsakeId, () => {
-      state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces(); updateStartRefusal();
     })));
   }
 
@@ -1211,7 +1221,7 @@ export function mountCustomize(app, {
           // Hew — is the named card behind the fold.
           const kinds = new Set(preview.cards.map(({ ref }) => ref.cardId).filter(Boolean));
           const summary = preview.cards.length
-            ? `Adds ${preview.total} ${preview.total === 1 ? 'card' : 'cards'}`
+            ? t('creation.startingCards.adds', { count: preview.total, plural: preview.total === 1 ? '' : 's' })
               + (kinds.size ? ` · ${kinds.size} ${kinds.size === 1 ? 'kind' : 'kinds'}` : '')
             : 'Adds no combat cards with the other hand as it stands';
           const fold = el('details', { class: 'cc-starting-fold' });
@@ -1287,6 +1297,26 @@ export function mountCustomize(app, {
         }
         showDetails(piece);
       };
+      const STARTING_CHOICE_WRITERS = {
+        relic: (piece) => { state.startingRelicId = piece.id; },
+        armour: (piece) => { state.startingArmourId = piece.id; },
+        hand: (piece) => { state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id); },
+      };
+      const writeStartingChoice = (piece) => {
+        const writeChoice = STARTING_CHOICE_WRITERS[section.kind];
+        if (writeChoice) writeChoice(piece);
+        else state.startingSlotChoices[section.id] = piece.id;
+      };
+      const selectStartingPiece = (piece, { shouldFocusChoice, shouldAdvanceSection }) => {
+        writeStartingChoice(piece);
+        for (const refresh of refreshers) refresh();
+        if (shouldFocusChoice) focusChoice(piece);
+        renderEquipmentSummary();
+        renderCharacterPreview();
+        refreshFaces();
+        updateStartRefusal();
+        if (shouldAdvanceSection) advanceEquipment(section.id);
+      };
       for (const piece of section.choices) {
         // THE VIEW SELECTS A LEVEL; it does not own a field set. Grid is a
         // wall of candidates to tell apart, so it asks for `glance`; list is
@@ -1297,31 +1327,15 @@ export function mountCustomize(app, {
         const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null, level: 'glance' });
         const face = chipButton.querySelector('.equipment-poker-card');
         choiceRows.push({ piece, node: chipButton, face });
-        face.addEventListener('cardinspectionselect', () => {
-          if (section.kind === 'relic') state.startingRelicId = piece.id;
-          else if (section.kind === 'armour') state.startingArmourId = piece.id;
-          else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
-          else state.startingSlotChoices[section.id] = piece.id;
-          for (const refresh of refreshers) refresh();
-          focusChoice(piece); renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-        });
-        face.addEventListener('keydown', event => {
-          if (event.target.classList.contains('equipment-poker-card') && ['Enter', ' '].includes(event.key)) {
-            event.preventDefault(); face.dispatchEvent(new CustomEvent('cardinspectionselect'));
-          }
+        face.addEventListener('cardinspectionselect', () => selectStartingPiece(piece, CHOICE_BY_INSPECTION));
+        ActivateOnKey(face, () => face.dispatchEvent(new CustomEvent('cardinspectionselect')), {
+          canActivate: event => event.target.classList.contains('equipment-poker-card'),
         });
         markUiComponent(chipButton, UI.equipmentChoiceCard, section.id);
         if (section.kind === 'armour') chipButton.dataset.startingArmourId = piece.id;
         else if (section.kind === 'hand') { chipButton.dataset.hand = section.slot; chipButton.dataset.armamentId = piece.id || 'empty-hand'; }
         else chipButton.dataset.startingSlotItemId = piece.id;
-        chipButton.querySelector('.equipment-choose').addEventListener('click', () => {
-          if (section.kind === 'relic') state.startingRelicId = piece.id;
-          else if (section.kind === 'armour') state.startingArmourId = piece.id;
-          else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
-          else state.startingSlotChoices[section.id] = piece.id;
-          for (const refresh of refreshers) refresh();
-          renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
-        });
+        chipButton.querySelector('.equipment-choose').addEventListener('click', () => selectStartingPiece(piece, CHOICE_BY_BUTTON));
         box.appendChild(chipButton);
       }
       const refresh = () => {
@@ -1472,7 +1486,7 @@ export function mountCustomize(app, {
     ]);
     if (!inspection) {
       bindCardInspection(card, {
-        title: `${name} — ${cls.name}`,
+        title: `${name} (${cls.name})`,
         identity: 'creation-character-summary',
         open: opener => {
           const explained = resources.filter((entry) => entry.explanation);
@@ -1484,7 +1498,7 @@ export function mountCustomize(app, {
             ])),
           ]);
           return openCardInspection({
-            title: `${name} — ${cls.name}`,
+            title: `${name} (${cls.name})`,
             card: characterSummaryCard(run, projection, true),
             details,
             opener,
@@ -1663,7 +1677,6 @@ export function mountCustomize(app, {
       const arms = registries.equipment.armaments;
       return `${selectedName(state.startingHands.leftHand, arms, 'Empty Hand')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty Hand')}`;
     } },
-    { key: 'keepsake', label: t('creation.section.keepsake'), node: panels.keepsake, value: () => selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || UNCHOSEN },
     { key: 'feats', label: t('creation.section.feats'), node: panels.feats, value: () => t('creation.feats.none') },
     { key: 'spells', label: t('creation.section.spells'), node: panels.spells, value: () => state.startingAbilityIds.map(id => registries.cards.get(id).name).join(' / ') || UNCHOSEN },
     { key: 'review', label: t('creation.section.review'), node: panels.review, value: () => seedInput.value.trim() || '—' },
@@ -1702,16 +1715,8 @@ export function mountCustomize(app, {
     });
     const disclosureHost = el('div', { class: 'cc-character-fold cc-catalog-specimen cz-disc' });
     const disclosureStat = el('div', { class: 'cc-character-picker' }, primaryStatCard(specimenAttributes[0]));
-    const disclosureKeepsake = options([], { class: 'cc-character-picker cz-keepsakes' });
-    let disclosureKeepsakeId = registries.characterCreation.keepsakes[0].id;
-    const drawDisclosureKeepsakes = () => disclosureKeepsake.replaceChildren(...registries.characterCreation.keepsakes.slice(0, 2).map((keepsake) => keepsakeChoiceButton(
-      keepsake, keepsake.id === disclosureKeepsakeId,
-      () => { disclosureKeepsakeId = keepsake.id; drawDisclosureKeepsakes(); },
-    )));
-    drawDisclosureKeepsakes();
     const disclosureSpecimen = mountDisclosure(disclosureHost, [
       { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: t('creation.section.primary'), value: 'Assign points' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
-      { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: t('creation.section.keepsake'), value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
     ]);
     markUiComponent(disclosureHost, UI.characterDisclosure);
     disclosureSpecimen.open('sample-primary');
@@ -1830,9 +1835,6 @@ export function mountCustomize(app, {
       { key: 'sigil-choice', label: 'Sigil choice', node: choiceSpecimen(
         'as-swatches cz-opts', PORTRAIT_GLYPHS, (glyph) => glyph, sigilChoiceButton, state.glyph,
       ) },
-      { key: 'keepsake-choice', label: 'Keepsake card', node: choiceSpecimen(
-        'as-options cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
-      ) },
       { key: 'equipment-choice-card', label: 'Equipment choice card (grid view)', node: armourSpecimen },
       { key: 'equipment-choice-card-list', label: 'Equipment choice card (list view)', node: armourListSpecimen },
       { key: 'card-presentation-levels', label: 'Card presentation levels', node: levelSpecimen },
@@ -1872,12 +1874,29 @@ export function mountCustomize(app, {
     applyColumns();
   }
 
+  function openStartingCards() {
+    const draft = createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
+    const counts = startingCards?.classId === state.classId ? startingCards.counts : StartingPoolCounts(draft);
+    OpenStartingCardsChooser({ registries, run: draft, counts, settings: meta.settings || {},
+      opener: $('#cz-review-edit [data-creation-edit="startingCards"]'),
+      onDone: (chosen) => {
+        startingCards = { classId: state.classId, counts: chosen };
+        // The deck editor's snapshot was taken on the old starting cards; the new choice replaces it.
+        deckEdit = null;
+        fillSummary($('#cz-review-summary'));
+        focusElement($('#cz-review-edit [data-creation-edit="startingCards"]'));
+      },
+    });
+  }
+
   function openCreationDeckEditor() {
     const draft = previewRun();
     mountDeckEditor(document.body, {
       registries, run: draft, settings: meta.settings || {},
       onDone: () => {
         deckEdit = { classId: state.classId, snapshot: beginDeckEdit(draft) };
+        // The editor's snapshot already holds the chosen starting cards; it replaces the choice.
+        startingCards = null;
         fillSummary($('#cz-review-summary'));
         focusElement($('#cz-review-edit [data-creation-edit="deck"]'));
       },
@@ -1893,7 +1912,6 @@ export function mountCustomize(app, {
       seatFace('primary', statBox.querySelector('.cc-mode-select'));
       return null; // seatFace seats the cursor itself
     },
-    keepsake: () => $('#cz-keepsakes .cz-keepsake'),
     spells: () => $('#cz-spell-choices .cc-ability-choose'),
     equipment: () => {
       openEquipmentSection(equipmentSectionViews[0]?.id);
@@ -1904,7 +1922,7 @@ export function mountCustomize(app, {
   // back otherwise; Next refuses with the current category's unmet step and
   // lands the cursor on the next question; Begin takes over on Review.
   const activeEquipmentProblem = () => { const section = equipmentSectionViews.find(row => row.id === equipmentFold?.openKey); return !section?.nextId ? equipmentProblem() : section?.kind === 'ability' ? abilitiesProblem() : section?.kind === 'armour' ? armourProblem() : section?.kind === 'hand' ? handProblem(section.slot) : null; };
-  const stageProblems = { class: classProblem, attributes: statsStepProblem, keepsake: keepsakeProblem, equipment: activeEquipmentProblem, feats: () => null, spells: spellsProblem, review: () => null };
+  const stageProblems = { class: classProblem, attributes: statsStepProblem, equipment: activeEquipmentProblem, feats: () => null, spells: spellsProblem, review: () => null };
   let current = categories[0];
   const categoryLabel = (id) => t(`creation.category.${id}`);
   refreshCreationNavigation = () => {
@@ -1917,12 +1935,7 @@ export function mountCustomize(app, {
   function selectRailItem(member) {
     currentStepIndicator.textContent = t('creation.step.progress', { index: categories.indexOf(member) + 1, count: categories.length, category: categoryLabel(member) });
     paneHost.setAttribute('aria-labelledby', `cz-tab-${member}`);
-    for (const item of railItems) {
-      const on = item.dataset.member === member;
-      item.classList.toggle('on', on);
-      item.setAttribute('aria-selected', String(on));
-      if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
-    }
+    MarkSelected(railItems, item => item.dataset.member === member, { className: 'on', ariaAttribute: 'aria-selected', ariaCurrent: 'true' });
   }
   function activate(id) {
     if (id === 'character') id = 'attributes';
@@ -1938,7 +1951,13 @@ export function mountCustomize(app, {
     if (id === 'feats') renderFeats();
     const plan = creationFooterPlan({ categories, current: id });
     next.hidden = plan.primary !== 'next';
-    start.hidden = plan.primary !== 'begin';
+    start.hidden = plan.primary !== 'begin' && !plan.quickBegin;
+    // Class step of the two-stage flow: Begin is the primary, Next is "Customise".
+    next.textContent = plan.quickBegin ? t('creation.customise') : t('creation.next');
+    next.classList.toggle('primary', !plan.quickBegin);
+    // The green fill hangs on cz-next-stage; Customise is the neutral secondary beside the primary Begin.
+    next.classList.toggle('cz-next-stage', !plan.quickBegin);
+    next.dataset.controlRole = plan.quickBegin ? 'utility' : 'primary';
     railed.dataset.creationStage = id;
     railed.dataset.creationStepIndex = String(categories.indexOf(id) + 1);
     railed.dataset.creationStepCount = String(categories.length);
@@ -1951,17 +1970,28 @@ export function mountCustomize(app, {
         if (fixedCreation && category === 'class') {
           // Core 2: the review's class button is the deck door; the class itself is changed on the Class step, not from here.
           // It follows the same gate as the Armory's deck door: the profile's editor and the deck-editing setting.
-          if (!armouryOpensDeckEditor(previewRun(), meta.settings || {})) return null;
-          const editDeck = button({ label: t('creation.review.editDeck'), weight: 'secondary' });
-          editDeck.dataset.creationEdit = 'deck';
-          editDeck.addEventListener('click', openCreationDeckEditor);
-          return editDeck;
+          // Core's starting-card chooser (owner, 2026-11-17) sits beside it whenever the profile has a pool.
+          const preview = previewRun();
+          const doors = [];
+          if (StartingPoolIds(preview).length) {
+            const choose = button({ label: t('creation.startingCards.button'), weight: 'secondary' });
+            choose.dataset.creationEdit = 'startingCards';
+            choose.addEventListener('click', openStartingCards);
+            doors.push(choose);
+          }
+          if (armouryOpensDeckEditor(preview, meta.settings || {})) {
+            const editDeck = button({ label: t('creation.review.editDeck'), weight: 'secondary' });
+            editDeck.dataset.creationEdit = 'deck';
+            editDeck.addEventListener('click', openCreationDeckEditor);
+            doors.push(editDeck);
+          }
+          return doors.length ? doors : null;
         }
         const edit = button({ label: t('creation.review.edit', { category: categoryLabel(category) }), weight: 'secondary' });
         edit.dataset.creationEdit = category;
         edit.addEventListener('click', () => { activate(category); const target = openInside[category]?.() || paneHost.querySelector('button:not([disabled]), input, select'); if (target) queueMicrotask(() => focusElement(target)); });
         return edit;
-      }).filter(Boolean));
+      }).flat().filter(Boolean));
     }
     // Begin's refresh too: its visible reason follows it in and out of view.
     updateStartRefusal();
@@ -2003,18 +2033,19 @@ export function mountCustomize(app, {
       const to = creationStep(categories, current, 1);
       return t('creation.next.tip', { category: to ? categoryLabel(to) : '' });
     }));
-    next.addEventListener('click', () => {
+    next.addEventListener('click', (event) => {
       if (current === 'equipment') { equipmentNodes.get(equipmentFold?.openKey)?.querySelector('.cc-equipment-continue')?.click(); return; }
+      stepArrival.arrived(event.timeStamp);
       advanceFrom(current);
     });
     refreshCreationNavigation();
     activate(categories[0]);
   }
   const primaryContinue = $('.cc-primary-continue');
-  gateRefreshers.push(refusesWhen(primaryContinue, statsStepProblem, 'On to the keepsake.'));
+  gateRefreshers.push(refusesWhen(primaryContinue, statsStepProblem, 'On to the next step.'));
   primaryContinue.addEventListener('click', () => {
     if (statsStepProblem()) return;
-    advanceToKeepsake();
+    advanceAfterStats();
   });
 
   nameInput.addEventListener('input', () => { state.name = nameInput.value.trim() || 'Forsaken'; refreshFaces(); });
@@ -2028,17 +2059,17 @@ export function mountCustomize(app, {
   const beginProblem = () => seed.problem() || (gated ? flowProblem() : statsProblem());
   const refreshStart = refusesWhen(start, beginProblem, () => {
     const cls = registries.classes.get(state.classId);
-    const keepsake = registries.characterCreation.keepsakes.find((row) => row.id === state.keepsakeId);
-    return `Begin as <b>${esc(cls.name)}</b>${keepsake ? ` with <b>${esc(keepsake.name)}</b>` : ''}.`;
+    return `Begin as <b>${esc(cls.name)}</b>.`;
   });
   updateStartRefusal = () => { refreshStart(); refreshGates(); };
   attachTooltip(back, () => {
     const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
     return plan.back === 'leave' ? t('creation.leave.tip') : t('creation.previous.tip', { category: categoryLabel(plan.previous) });
   });
-  back.addEventListener('click', () => {
+  back.addEventListener('click', (event) => {
     const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
     if (plan.back === 'leave') return onBack();
+    stepArrival.arrived(event.timeStamp);
     activate(plan.previous);
     queueMicrotask(() => focusElement(paneHost.querySelector('button:not([disabled]), input, select')));
   });
@@ -2047,14 +2078,16 @@ export function mountCustomize(app, {
     close.addEventListener('click', onBack);
   }
   let startPending = false;
-  start.addEventListener('click', async () => {
+  start.addEventListener('click', async (event) => {
+    // Review rendering can delay delivery of the second press. Compare when the presses happened.
+    if (!stepArrival.allows(event.timeStamp)) return;
     if (startPending || beginProblem()) return;
     startPending = true; start.disabled = true;
-    try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}) } : {
+    try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}),
+      ...(startingCards?.classId === state.classId ? { startingCards: { ...startingCards.counts } } : {}) } : {
       classId: state.classId,
       seedString: seedInput.value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
-      keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,
       startingHands: { ...state.startingHands },
       startingAbilityIds: [...state.startingAbilityIds],

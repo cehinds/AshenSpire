@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 // Run the actual hold and pointer-lifecycle owners. Only DOM and the animation
 // clock are replaced; pointerdown/move/up/cancel drive the production handlers.

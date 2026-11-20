@@ -69,7 +69,7 @@ Also resolved here: #484 — `hpPerConTier` was authored on every class and read
 ## D. The owner's feedback ("the thirteen", `docs/asks/asks-ledger.md`)
 
 *Swept against the live issues on 2026-09-02. The ledger itself is a preservation mirror and PASSES its own
-local check 10/10 (`node tools/asks-ledger.mjs --check`); the `--github` compare needs a token this sandbox
+local check 10/10 (`node tools/attic/asks-ledger.mjs --check`); the `--github` compare needs a token this sandbox
 does not hold, so the issue states below were read one by one through the API. The mirror does not resolve,
 approve or close an ask, and neither does this table: where an ask is shipped but its issue is open, the close
 is the owner's.*

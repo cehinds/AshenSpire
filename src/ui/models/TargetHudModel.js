@@ -34,20 +34,19 @@ export function playerHudPlacement({ anchor, width, height, gap, bounds }) {
 
 // One stable-target clock, including leave grace. Updating content for the
 // same IDs does not restart dwell; a switch is one delay, never exit+enter.
-// Owner 2026-11-05: the player's selected HUD is on at all times and the mini overhead bar never shows for the player.
-// Presentation only: a pinned player is not an eligible or focused target, and enemies keep mini-until-selected.
-export const targetHudPinnedIds = entries => [...entries].filter(entry => entry.role === 'player').map(entry => entry.id);
-export function targetHudDesiredIds({ entries: all, eligible = [], focused = null, hover = null, focusWithin = null }) {
-  const entries = [...all], known = new Set(entries.map(entry => entry.id));
-  return [...new Set([...targetHudPinnedIds(entries), ...eligible, focused, hover, focusWithin].filter(id => known.has(id)))];
-}
-// True while a player frame shows its panel only because it is pinned: its sprite glow and floor tint stay off.
-export const targetHudPinnedOnly = ({ entries, id, eligible = [], focused = null, hover = null, focusWithin = null }) =>
-  targetHudPinnedIds([...entries]).includes(id) && ![...eligible, focused, hover, focusWithin].includes(id);
-// The floor tint marks a target being acted on or read, so the pinned panel alone adds none.
-export function targetHudTintIds({ entries: all, shown = [], eligible = [], focused = null, hover = null, focusWithin = null }) {
-  const pinned = targetHudPinnedIds([...all]), asked = [...eligible, focused, hover, focusWithin];
-  return [...new Set([...shown, ...eligible, focused].filter(Boolean))].filter(id => !pinned.includes(id) || asked.includes(id));
+// Owner 2026-11-07: "Disable select HUD and just do mini HUD ... Bring back the player's health bar and disable the mini select HUD."
+// The player's figure carries only its overhead mini HUD (HP bar + intent), like an enemy before it is selected; it is never
+// pinned and never gets a selected panel; since 2026-11-07 neither does any enemy. (Supersedes the 2026-11-05 always-selected rule.)
+export const targetHudPinnedIds = () => [];
+// Owner 2026-11-07: "the current hud is fine, just remove the selected hud." No selected target-HUD panel opens for any
+// combatant (selected, hovered, focused or targeted); every combatant keeps only its overhead mini HUD.
+export function targetHudDesiredIds() { return []; }
+// Nothing is pinned any more, so no frame is "pinned only"; kept for callers.
+export const targetHudPinnedOnly = () => false;
+// The floor tint marks a target being acted on or read.
+export function targetHudTintIds({ entries: all, shown = [], eligible = [], focused = null }) {
+  void all;
+  return [...new Set([...shown, ...eligible, focused].filter(Boolean))];
 }
 
 export function createTargetHudDwell({ onChange, delay = targetHudConfig().motion.dwellMs, schedule = setTimeout, cancel = clearTimeout }) {
@@ -81,9 +80,36 @@ export function targetHudMatchup(action, intent, rules = {}) {
 
 // Body landmarks exclude raised weapons and transparent stage canvas. Both
 // readouts retain a fixed physical gap when a true pose changes its head.
-export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHeight = 37, gap = 5, zoom = 1 }) {
+// `drop` lowers the rack that fraction of the way from its place above the head toward the head itself (0 keeps it
+// wholly above; the player's 0.5 sets it halfway, playtest 2026-11-17).
+// The player's HUD beside the figure (owner, 2026-11-17): it stands `gap` right of the drawn art, its top `topFraction` of
+// the body's height below the head, and takes the room to the field's right edge (less `margin`) up to `maxWidth`. Where
+// that room is under `minWidth` (the rightmost lane) it stands left of the art instead, taking the room to the field's
+// left edge; where neither side has `minWidth`, it returns null and the caller keeps the HUD above the head. Inputs are
+// screen px (the authored ones scaled by the caller); the result is the frame's local px.
+export function PlayerHudBeside({ body, frame, fieldLeft = -Infinity, fieldRight, gap = 10, topFraction = 0.15, maxWidth = 320, minWidth = 140, margin = 8, zoom = 1 })
+{
   const head = Number.isFinite(body.headY) ? body.headY : body.top;
-  return { miniTop: (head - frame.top - gap - groupHeight) / zoom,
-    selectedTop: (head - frame.top - gap - intentHeight) / zoom,
+  const height = Math.max(0, body.bottom - head);
+  const top = (head + height * topFraction - frame.top) / zoom;
+  const rightRoom = fieldRight - margin - (body.right + gap);
+  if (rightRoom >= minWidth)
+  {
+    return { side: 'right', left: (body.right + gap - frame.left) / zoom, top, width: Math.min(maxWidth, rightRoom) / zoom };
+  }
+  const leftRoom = body.left - gap - (fieldLeft + margin);
+  if (leftRoom >= minWidth)
+  {
+    const width = Math.min(maxWidth, leftRoom);
+    return { side: 'left', left: (body.left - gap - width - frame.left) / zoom, top, width: width / zoom };
+  }
+  return null;
+}
+
+export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHeight = 37, gap = 5, zoom = 1, drop = 0 }) {
+  const head = Number.isFinite(body.headY) ? body.headY : body.top;
+  const lowered = (gap + groupHeight) * Math.min(1, Math.max(0, drop));
+  return { miniTop: (head - frame.top - gap - groupHeight + lowered) / zoom,
+    selectedTop: (head - frame.top - gap - intentHeight + lowered) / zoom,
     center: ((body.left + body.right) / 2 - frame.left) / zoom };
 }

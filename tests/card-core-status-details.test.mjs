@@ -7,10 +7,10 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { previewCard } from '../src/engine/combat.js';
-import { applyStatus, decayAtTurnStart, decayAtTurnEnd, advanceStatusClock, statusDefinition } from '../src/engine/statuses.js';
+import { applyStatus, decayAtTurnStart, decayAtTurnEnd, statusDefinition } from '../src/engine/statuses.js';
 import { cardDetailHtml } from '../src/ui/components/card.js';
 import { statusTooltipText, statusInstancePresentation } from '../src/ui/uiContent.js';
-import { createFoundation } from '../src/engine/combatRules.js';
+
 import { combatRules } from '../src/content/combatRules.js';
 import { combatStatusPresentationRegistries } from '../src/ui/models/CombatStatusPresentationModel.js';
 import { activeCombatAbilities } from '../src/ui/components/combatAbilities.js';
@@ -147,30 +147,12 @@ test('Core-only status wording adapts custom timers without changing versioned d
   assert.match(original.tooltip, /after 3 turns\. Re-applying adds stacks and refreshes/);
 });
 
-test('Core foundation stacking keeps its application cap/clock together with Core decay', () => {
-  const { combat, reg, inst } = fixture({ amount: 2, mode: 'unique',
-    stacking: { mode: 'add', cap: 7, duration: 2, clock: 'ownerTurnEnd' } });
-  combat.foundation = createFoundation(combatRules);
-  applyStatus(combat, combat.player, 'weak', 5); applyStatus(combat, combat.player, 'weak', 5);
-  assert.equal(combat.player.statuses.weak.stacks, 7);
-  const text = weakInfo(reg, inst, previewCard(combat, inst.instanceId));
-  assert.match(text, /adds to the stack total up to 7/);
-  assert.match(text, /Application timer: 2 ticks at the end/);
-  assert.match(text, /decreases by 2 at the start/);
-  assert.doesNotMatch(text, /up to 3|Does not stack/);
-  combat.turn++; decayAtTurnStart(combat, combat.player);
-  assert.equal(combat.player.statuses.weak.stacks, 5);
-  advanceStatusClock(combat, combat.player, 'ownerTurnEnd');
-  advanceStatusClock(combat, combat.player, 'ownerTurnEnd');
-  assert.equal(combat.player.statuses.weak, undefined);
-});
-
-test('Core duration clocks tick once at owner turn start and retain non-overridden expansion caps', () => {
+test('Core duration clocks tick once at owner turn start and, with statusCaps none, expansion statuses hold every stack applied', () => {
   const { combat } = fixture({ amount: 2 });
   applyStatus(combat, combat.player, 'crimsonBlight', 5);
-  assert.equal(combat.player.statuses.crimsonBlight.stacks, 3);
+  assert.equal(combat.player.statuses.crimsonBlight.stacks, 5, 'no max stack count (owner 2026-11-15): shown = held');
   const text = statusTooltipText(core.statuses.get('crimsonBlight'), combat);
-  assert.match(text, /stack total up to 3/);
+  assert.doesNotMatch(text, /stack total up to/, 'the tooltip states no cap');
   assert.match(text, /3 ticks at the start/);
   assert.doesNotMatch(text, /owner turn ends/);
   combat.turn++; decayAtTurnStart(combat, combat.player);
@@ -184,7 +166,7 @@ test('Core Precision loses a stack at owner turn start, preserves Persistent gra
   applyStatus(combat, combat.player, 'precision', 2, combat.player, { tags: ['trait:persistent'] });
   applyStatus(combat, combat.player, 'precision', 3);
   const text = statusTooltipText(core.statuses.get('precision'), combat);
-  assert.match(text, /^Each stack adds 1 Precision\. Loses 3 stacks at the start of your turn\./);
+  assert.match(text, /^Precision does nothing under the current rules: every attack lands unless the target has Evade\. Loses 3 stacks at the start of the owner.s turn\./);
   assert.match(text, /Temporary stacks lose 3 at the start of the owner's turn; Persistent stacks remain\./);
   assert.doesNotMatch(text, /decreases by 1/);
   assert.doesNotMatch(text, /expire at the end of the owner's turn|multiple of your Precision/);
@@ -253,6 +235,53 @@ test('disabled Core retains a custom expansion cap and explicit off overrides re
   assert.match(tooltip, /stack total up to 5/);
   assert.match(tooltip, /decreases by 1 at the end/);
   assert.doesNotMatch(tooltip, /Attack rating ×|at the start/);
+});
+
+// Custom callers may replace the status override or the whole expansion table.
+for (const viaExpansion of [false, true]) test(`public previews refresh mutable status rules (expansion table=${viaExpansion})`, () => {
+  const { combat, reg, inst } = fixture();
+  combat.fixCoreRules.enabled = false;
+  const source = combat.combatStatusRules = structuredClone(combat.combatExpansionRules.statuses);
+  if (viaExpansion) {
+    delete combat.combatStatusRules;
+    combat.combatExpansionRules = Object.freeze({ ...combat.combatExpansionRules, statuses: source });
+  }
+  source.statuses.weak.cap = 3;
+  const first = previewCard(combat, inst.instanceId);
+  assert.equal(first.combatStatusRules.statuses.weak.cap, 3);
+  source.statuses.weak.cap = 5;
+  const second = previewCard(combat, inst.instanceId);
+  assert.equal(second.combatStatusRules.statuses.weak.cap, 5);
+  assert.match(weakInfo(reg, inst, second), /stack total up to 5/);
+  assert.equal(first.combatStatusRules.statuses.weak.cap, 3, 'the earlier receipt stays detached');
+  assert.throws(() => { second.combatStatusRules.statuses.weak.cap = 9; }, TypeError);
+  assert.equal(source.statuses.weak.cap, 5, 'preview readers cannot change combat rules');
+  assert.equal(Object.isFrozen(source.statuses.weak), false, 'previewing does not freeze caller-owned rules');
+});
+
+for (const viaExpansion of [false, true]) test(`a shallow-frozen status root cannot share mutable children (expansion table=${viaExpansion})`, () => {
+  const { combat, inst } = fixture();
+  const source = structuredClone(combat.combatExpansionRules.statuses);
+  source.statuses.weak.cap = 3;
+  combat.combatStatusRules = Object.freeze(source);
+  if (viaExpansion) {
+    delete combat.combatStatusRules;
+    combat.combatExpansionRules = Object.freeze({ ...combat.combatExpansionRules, statuses: source });
+  }
+  const first = previewCard(combat, inst.instanceId);
+  assert.notStrictEqual(first.combatStatusRules.statuses.weak, source.statuses.weak);
+  assert.throws(() => { first.combatStatusRules.statuses.weak.cap = 9; }, TypeError);
+  assert.equal(source.statuses.weak.cap, 3);
+  source.statuses.weak.cap = 5;
+  assert.equal(previewCard(combat, inst.instanceId).combatStatusRules.statuses.weak.cap, 5);
+  assert.equal(first.combatStatusRules.statuses.weak.cap, 3);
+});
+
+test('public previews reuse the default deeply frozen status graph', () => {
+  const { combat, inst } = fixture();
+  const source = combat.combatExpansionRules.statuses;
+  assert.strictEqual(previewCard(combat, inst.instanceId).combatStatusRules, source);
+  assert.strictEqual(previewCard(combat, inst.instanceId).combatStatusRules, source);
 });
 
 test('no-preview inspection still uses a known Core profile or actual supplied run rules', () => {

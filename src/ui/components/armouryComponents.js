@@ -5,18 +5,18 @@ import { swapOnError } from '../artFallback.js';
 import { assetUrl } from '../assetmap.js';
 // src/ui/components/armouryComponents.js — the Armoury's renderers, on the kit.
 //
-// The shell is the kit's door (modalHead tabs, the close IconButton, the body
+// The shell is the kit's door (ModalHead tabs, the close IconButton, the body
 // under the hairline). Every part inside is a kit piece: an inventory row is an
 // OptionCard face (kit §03 `face`) with its category as a Tag and its count and
 // equipped state as StatePills; the open item is an ArtWell beside a DetailCard
 // of facts; a set cell is an OptionCard with an ArtWell. `.armoury-*`,
 // `.inventory-*`, `.equip-slot`, `.es-*` stay on the kit elements because the
 // tools read them; styles/kit.css draws nothing for those names.
-import { childModel, descendantModel } from '../models/ComponentModel.js';
+import { ChildModel, DescendantModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
-import { modalHead, stampModalSize } from './modalShell.js';
+import { ModalHead, StampModalSize } from './modalShell.js';
 import {
   el, blocker, face, pill, tagChip, artWell, titleS, eyebrow, prose, flavour, kitLine, kitItem, optionCard, options, statusText,
   modalFooter,
@@ -31,11 +31,11 @@ export function renderArmouryOverlay(model) {
 }
 
 export function renderArmouryPanel(model, wrap, { back = null, primary = null, tabs = null, onTab = null } = {}) {
-  const header = childModel(model, UI.armouryHeader);
-  const body = descendantModel(model, UI.armouryBody);
-  const inventory = descendantModel(model, UI.armouryInventory);
-  const cards = descendantModel(model, UI.armouryCardStrip);
-  const stats = descendantModel(model, UI.armouryStatsPanel);
+  const header = ChildModel(model, UI.armouryHeader);
+  const body = DescendantModel(model, UI.armouryBody);
+  const inventory = DescendantModel(model, UI.armouryInventory);
+  const cards = DescendantModel(model, UI.armouryCardStrip);
+  const stats = DescendantModel(model, UI.armouryStatsPanel);
   // The shared header holds Character / Armory / Edit Deck; there is no second
   // view switcher under it (the dropdown was retired 2026-11-05). The Armory
   // page is one scrolling body: equipment on top, the Inventory below.
@@ -63,7 +63,7 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
   if (model.properties.notice) {
     pane.prepend(blocker(model.properties.notice, { attrs: { class: 'armoury-notice', role: 'status' } }));
   }
-  const head = modalHead({
+  const head = ModalHead({
     title: header.properties.title, tabs, onTab,
     titleId: 'armoury-title',
     showMenuButton: false,
@@ -79,7 +79,7 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
   // W1e's rung through the shell's one stamp rather than a literal in the
   // markup above, so the Armoury answers the modal width choice (Settings →
   // Advanced → Wireframes → Modals) like every other door.
-  stampModalSize(panel, 'xl');
+  StampModalSize(panel, 'xl');
   // The footer: Back bottom-left, the primary bottom-right; alone, Back spans
   // the foot. `setPrimary` swaps the primary slot when the selection changes.
   const setPrimary = (primaryNode) => {

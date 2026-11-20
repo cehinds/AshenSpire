@@ -2,7 +2,7 @@ import { friendlyTargetPlan } from './friendlyTargets.js';
 import { immediateCardEffects } from './combatCardEffects.js';
 export { immediateCardEffects };
 
-const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies']);
+const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies', 'otherEnemy']);
 
 // Explicit destinations must agree with the card, even when an effect would
 // otherwise ignore the supplied entity and fall back to its source/first foe.

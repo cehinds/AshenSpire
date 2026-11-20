@@ -2,9 +2,12 @@
 // `reflectStacks`), not statuses: absent means 0, the cap and fractions are data (content/framework/mechanics.json
 // `counter` / `reflect`), and they clear only when the fight ends (a fresh entity carries none). Pure helpers.
 import { mechanics } from '../framework/data/mechanics.js';
+import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
+import { COUNTER_STACK_SAFETY_CEILING } from '../model/combatTacticsRules.js';
+import { FixCoreCounterStacks, CounterStacksForCard } from '../model/fixCoreMechanics.js';
 
 /** Safety ceiling for a stack count in memory and in a save; not a game rule. */
-export const STACK_CEILING = 999;
+export const STACK_CEILING = COUNTER_STACK_SAFETY_CEILING;
 const whole = value => Math.max(0, Math.floor(Number(value) || 0));
 
 export const counterStackCount = entity => whole(entity?.counterStacks);
@@ -27,7 +30,8 @@ export function gainCounterStacks(ctx, entity, amount) {
 export function gainReflectStacks(ctx, entity, amount) {
   if (!entity) return 0;
   const before = reflectStackCount(entity);
-  const next = Math.min(mechanics.reflect.stackCap, before + whole(amount));
+  // No rule cap under `statusCaps: "none"` (owner 2026-11-15); a fight saved without it keeps mechanics.reflect.stackCap.
+  const next = Math.min(StatusCapsLifted(ctx) ? STACK_CEILING : mechanics.reflect.stackCap, before + whole(amount));
   if (next === before) return 0;
   entity.reflectStacks = next;
   ctx?.emit?.('reflectStacksChanged', { targetId: entity.id, stacks: next, amount: next - before,
@@ -47,8 +51,8 @@ export function spendReflectStacks(ctx, entity, amount = 1) {
 }
 
 /** The part of one incoming hit a Counter with `stacks` returns: floor(stacks x stackFraction x incoming). */
-export const counterStackReturn = (stacks, incoming) =>
-  Math.floor(whole(stacks) * mechanics.counter.stackFraction * Math.max(0, Math.floor(Number(incoming) || 0)) + 1e-9);
+export const counterStackReturn = (stacks, incoming, fraction = mechanics.counter.stackFraction) =>
+  Math.floor(whole(stacks) * fraction * Math.max(0, Math.floor(Number(incoming) || 0)) + 1e-9);
 
 /** Reflect's fraction for `stacks`, capped: the share removed from a hit (reduce) or sent back (return). */
 export const reflectReduceFraction = stacks => Math.min(mechanics.reflect.reduceCap, whole(stacks) * mechanics.reflect.reducePerStack);
@@ -67,10 +71,29 @@ export const reflectReturned = (original, stacks) => Math.floor(whole(original) 
 export function decayCounterStacks(ctx, entity) {
   const before = counterStackCount(entity);
   if (!before) return 0;
-  const next = Math.max(0, before - whole(mechanics.counter.decayPerTurn));
+  const next = Math.max(0, before - whole(FixCoreCounterStacks(ctx)?.decayPerTurn ?? mechanics.counter.decayPerTurn));
   if (next === before) return 0;
   if (next === 0) delete entity.counterStacks; else entity.counterStacks = next;
   ctx?.emit?.('counterStacksChanged', { targetId: entity.id, stacks: next, amount: next - before, decay: true,
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
+  return before - next;
+}
+
+/**
+ * The stacks one Counter play grants under the card-stack rule (owner 2026-11-15): stacksByCard[id] (else stacksPerCard), +stacksUpgradeBonus when the card is
+ * upgraded, clamped to 1..stacksMax. 0 when the fight plays the Block-as-stacks rule (the caller then reads the Block held). Each grant is clamped; stacks held are not.
+ */
+export function CounterStackGrant(ctx, card) {
+  return CounterStacksForCard(FixCoreCounterStacks(ctx), card?.cardId || card?.id, !!card?.upgraded);
+}
+
+/** Removes Counter stacks (a covered hit spends consumePerHit); returns the number removed. Emits counterStacksChanged. */
+export function SpendCounterStacks(ctx, entity, amount = 1) {
+  const before = counterStackCount(entity);
+  const next = Math.max(0, before - whole(amount));
+  if (next === before) return 0;
+  if (next === 0) delete entity.counterStacks; else entity.counterStacks = next;
+  ctx?.emit?.('counterStacksChanged', { targetId: entity.id, stacks: next, amount: next - before, consumed: true,
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
   return before - next;
 }

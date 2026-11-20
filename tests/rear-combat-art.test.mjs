@@ -8,7 +8,7 @@ import { alternativeSelectedStances as stances } from '../src/content/alternativ
 import { ANIM_SPEEDS, getAnimSpeed, setAnimSpeed } from '../src/ui/animationPace.js';
 import { getAnimSpeed as effectSpeed, setAnimSpeed as setEffectSpeed } from '../src/ui/fx.js';
 import { withAlternativeArt } from '../tools/asset-pack.mjs';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
 
 test('rear class choreography follows resolved cards with stationary guard and ranged families', () => {

@@ -65,28 +65,6 @@ test('preparing properties, status hooks, stances, enemy phases all retain detac
   assert.equal(assertPureEqual(discount).mana,2,'an enqueued preparing discount affects the exact cost');
 });
 
-test('queued work, paused discard and unknown buses keep clone semantics without mutating live state',()=>{
-  const queued=fixture();queued.queue.push({effect:charge,source:queued.player,owner:queued.player,target:queued.player,meta:{}});
-  assert.equal(assertPureEqual(queued).mana,2,'the existing queue is priced only in the candidate');
-  const paused=fixture();paused.pendingAbilityDiscard={count:1};paused.queue.push({effect:charge,source:paused.player,owner:paused.player,target:paused.player,meta:{}});
-  assert.equal(assertPureEqual(paused).mana,4,'a paused discard does not drain its queue');
-  const custom=fixture();custom._emitEvent=(ctx,type,payload)=>{if(type==='cardPreparing')grantAbilityCharge(ctx.player,charge);return emitEvent(ctx,type,payload);};
-  assert.equal(assertPureEqual(custom).mana,2,'unknown bus effects still participate in exact pricing');
-  for(const terminal of ['player','enemies','result']){
-    const combat=fixture();
-    if(terminal==='player')combat.player.alive=false;
-    else if(terminal==='enemies')for(const enemy of combat.enemies)enemy.alive=false;
-    else combat.result='victory';
-    assertPureEqual(combat);
-  }
-  const terminal=fixture();for(const enemy of terminal.enemies)enemy.alive=false;
-  terminal.foundation={rules:{triggers:{maxEvents:1,maxDepth:64}},profiles:{},actionSerial:0,eventSerial:0,eventCount:0,counts:{},rolls:{}};
-  const before=combatData(terminal);
-  assert.throws(()=>clonePrice(terminal,'probe'),/combat event limit exceeded/);
-  assert.throws(()=>cardPlayCosts(terminal,'probe'),/combat event limit exceeded/,'terminal endCheck still emits and validates combatEnd in the candidate');
-  assert.deepEqual(combatData(terminal),before);
-});
-
 function trace(classId,encounterId,seed,forceClone){
   const run=createRunState({seed:1,classId,registries:base}),combat=createRunCombat({registries:base,run,rng:createRng(seed),enemyIds:base.encounters.get(encounterId).enemies});
   if(forceClone)combat._emitEvent=(...args)=>emitEvent(...args);

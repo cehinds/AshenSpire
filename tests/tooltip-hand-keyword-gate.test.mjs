@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 // Exercise the real tooltip handlers with deterministic clocks. This fixture
 // makes no browser layout or trusted pointer-delivery claims.

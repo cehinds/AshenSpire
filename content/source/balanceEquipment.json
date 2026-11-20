@@ -66,7 +66,7 @@
       "perItem": 1,
       "kind": "granted",
       "$note": {
-        "enabled": "Open mounts on an item beyond the ones it was authored with — the seam a later rune feature needs. Off is the shipped game.",
+        "enabled": "Open mounts on an item beyond the ones it was authored with, the seam a later rune feature needs. Off is the shipped game.",
         "perItem": "How many extra mounts each item gets when that is on."
       }
     }
@@ -134,7 +134,7 @@
     "consolationCinders": 40,
     "$note": {
       "enabled": "Whether nodes drop armaments at all.",
-      "requireFound": "A piece must be found before it can be equipped. Off makes every authored armament available from the start — a sandbox for testing the mod system without playing for it.",
+      "requireFound": "A piece must be found before it can be equipped. Off makes every authored armament available from the start (a sandbox for testing the mod system without playing for it).",
       "permanentOnFind": "A found piece is remembered across runs, so a climb that ends badly still widens the wardrobe.",
       "preferUnfound": "Drops prefer a piece you have never held, a duplicate being a non-event.",
       "consolationCinders": "Cinders handed over instead when there is nothing new left for a drop to give."

@@ -6,20 +6,24 @@ import { setData } from '../src/ui/domWrite.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, previewCard, previewCardHit } from '../src/engine/combat.js';
+import { PlayConditionTargetPlan } from '../src/engine/cardBehavior.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardTargetPlan } from '../src/model/cardTargets.js';
 import { cardAffectsEnemies, hitBadgeTargetIds } from '../src/model/hitBadge.js';
 import { rangeHitLabel } from '../src/ui/models/CombatRangeActionModel.js';
+import { FixCoreHitRollOff, fixCoreEnabled } from '../src/model/fixCoreMechanics.js';
+import { TargetQuote } from '../src/ui/models/TargetQuoteModel.js';
+import { t } from '../src/ui/strings.js';
 import { upcastOptions } from '../src/model/upcasting.js';
 import { upcastChoicePlan } from '../src/ui/components/upcastChoice.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Run the shipped screen functions, real engine quotes and the repository DOM
 // fixture. The full mount requires browser geometry/art; this fixture claims
 // ordering, emitted UI content and live quote freshness, not native hit testing.
 const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-const names = ['renderHand', 'syncCardSelection', 'syncHitChances', 'hitChanceBadge', 'cardTargets', 'wireUpcastControl', 'previewAimedTarget'];
+const names = ['renderHand', 'syncCardSelection', 'syncHitChances', 'hitChanceBadge', 'quoteReferenceId', 'targetQuoteFor', 'targetQuoteBadge', 'cardTargets', 'wireUpcastControl', 'previewAimedTarget'];
 const shipped = names.map(name => {
   const start = source.indexOf(`  function ${name}(`), end = source.indexOf('\n  }', start);
   assert.ok(start >= 0 && end > start, name);
@@ -46,8 +50,8 @@ function fixture(document) {
     selected: 'spark-1', selfArm: null, selectedFlask: null, lastTargetId: combat.enemies[0].id,
     heldTurnHand: null, playQueue: [], inputBusy: () => false, disp: null, busy: false, enemyPlayback: false, upcastPreviewRefresh: false,
     handRenderKey: null, handPreviewCache: { stateKey: null, cards: new Map() }, upcastRanksByCard: new Map(), rangeRoutesByCard: new Map(),
-    resolveCombatCard, previewCard, previewCardHit, cardTargetPlan, cardAffectsEnemies, hitBadgeTargetIds,
-    rangeHitLabel, upcastOptions, upcastChoicePlan, esc: value => String(value),
+    resolveCombatCard, previewCard, previewCardHit, cardTargetPlan, PlayConditionTargetPlan, cardAffectsEnemies, hitBadgeTargetIds,
+    rangeHitLabel, FixCoreHitRollOff, fixCoreEnabled, TargetQuote, t, upcastOptions, upcastChoicePlan, esc: value => String(value),
     findInst: id => combat.piles.hand.find(card => card.instanceId === id),
     getEntity: (_combat, id) => [combat.player, ...combat.enemies].find(entity => entity.id === id),
     $: selector => combatEl.querySelector(selector), readSettings: () => ({}),
@@ -137,7 +141,7 @@ test('full board render publishes one fresh quote after hand costs and HP change
     renderEnemies: options => { assert.equal(options.refreshTargets, false); f.calls.push('enemies'); },
     syncEditLock() {}, renderPotionTray() {}, renderTopbar() {}, renderControls() {}, renderCombatTools() {},
     combatTools: { flushGeometry: () => f.calls.push('tools-fit') }, formationMovement: null,
-    scheduleAutoCombat() {}, applyTargetLayer: () => f.calls.push('targets'),
+    scheduleAutoCombat() {}, applyTargetLayer: () => f.calls.push('targets'), KeepIntentRowsInside() {},
   });
   c.battlefieldStage.refresh = () => f.calls.push('field-fit');
   const renderSource = ['renderCombatantStage', 'render'].map(name => {

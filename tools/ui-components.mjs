@@ -2,9 +2,10 @@
 // Reusable UI component contract: stable semantic ids, one shared Map/Combat
 // HUD composition, one player/enemy Combatant Frame, and no simulation state
 // imported into component modules.
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { UI_COMPONENTS } from '../src/ui/models/UiComponentId.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -50,7 +51,7 @@ const REQUIRED_IDS = Object.freeze([
   'selection-section-face', 'primary-stat-card', 'resource-strip', 'mode-choice',
   'stat-allocation-row', 'shrine-option-card', 'smith-upgrade-modal',
   'smith-candidate-card', 'smith-upgrade-preview',
-  'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
+  'sprite-choice', 'tint-choice', 'sigil-choice',
   'equipment-choice-card', 'relic-choice-card',
 ]);
 
@@ -540,10 +541,12 @@ export function receipt() {
     saveSlotSelector: read('src/ui/components/saveSlotSelector.js'),
     balance: read('content/source/balanceUi.json'),
     main: read('src/main.js'),
+    displaySettings: read('src/ui/displaySettings.js'),
     runHud: read('src/ui/components/runHud.js'),
     shop: read('src/ui/screens/shop.js'),
     event: read('src/ui/screens/event.js'),
-    validate: read('src/model/validate.js'),
+    // validate.js is an orchestrator now; its section validators live in src/model/validate/.
+    validate: [read('src/model/validate.js'), ...readdirSync(resolve(ROOT, 'src/model/validate')).sort().map((f) => read(`src/model/validate/${f}`))].join('\n'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
     // The combat action row's one home since 2026-10-01.
@@ -553,6 +556,8 @@ export function receipt() {
     controls: read('src/ui/screens/controls.js'),
     input: read('src/ui/input.js'),
     equipment: read('src/ui/screens/equipment.js'),
+    armouryStatsModel: read('src/ui/models/ArmouryStatsModel.js'),
+    armouryInventory: read('src/ui/components/armouryInventory.js'),
     css: read('styles/combat.css'),
     kit: read('styles/kit.css'),
     hudVisibility: read('styles/hud-visibility.css'),
@@ -580,20 +585,23 @@ export function findings(r) {
       || !/export function wireHudQuickSettings/.test(r.quickSettings)) {
     bad.push('C2 the shared HUD is no longer composed from exported reusable assets');
   }
-  // C3 — ONE COMPOSITION. Combat renders `hudShellHtml(runHudViewModel({…}))`
+  // C3 — ONE COMPOSITION. Combat renders `hudShellHtml(RunHudViewModel({…}))`
   // itself; the map and the three rooms (merchant, Shrine, event) render it
   // through components/runHud.js, which is the same call behind one function.
   // Each consumer is named so a room that grows its own band goes red here.
   const composes = (text) => /import \{ hudShellHtml \}/.test(text)
-    && /import \{ runHudViewModel \}/.test(text)
-    && /hudShellHtml\(runHudViewModel\(\{/.test(text);
+    && /import \{ RunHudViewModel \}/.test(text)
+    && /hudShellHtml\(RunHudViewModel\(\{/.test(text);
   const viaRunHud = (text) => /import \{ runHudHtml, wireRunHud \} from '(?:\.\.\/components\/|\.\/)runHud\.js'/.test(text)
     && /\$\{[^`]*runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
+  // The configured shop builds its band from a detached node (`band.innerHTML = runHudHtml({…})`), not a template string.
+  const viaRunHudCall = (text) => /import \{ runHudHtml, wireRunHud \} from '(?:\.\.\/components\/|\.\/)runHud\.js'/.test(text)
+    && /runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
   // Both Rest service policies compose through the same room frame; require
   // the complete chain so a new bare profile screen cannot pass by importing it.
   const viaRestFrame = (text) => /import \{[^}]*\bmountRestFrame\b[^}]*\} from '(?:\.\.\/components\/|\.\/)restFrame\.js'/.test(text)
     && /mountRestFrame\(app, \{/.test(text);
-  if (!composes(r.combat) || !composes(r.runHud) || ![r.map, r.restFrame, r.shop].every(viaRunHud)
+  if (!composes(r.combat) || !composes(r.runHud) || ![r.map, r.restFrame].every(viaRunHud) || !viaRunHudCall(r.shop)
       || ![r.rest, r.configuredRest].every(viaRestFrame)
       || !/runHudHtml\(\{/.test(r.event) || !/wireRunHud\(app, \{/.test(r.event)) {
     bad.push('C3 Map and Combat no longer consume the same shared HUD composition');
@@ -626,7 +634,7 @@ export function findings(r) {
   if (/buildStampHtml/.test(r.hud)
       || !/class: 'as-chip hud-class'/.test(r.hud)
       || !/class: 'hud-run-meta as-statstrip trail'/.test(r.hud)
-      || !/childModel\(model, UI\.metadataField, 'act'\)[\s\S]*childModel\(model, UI\.metadataField, 'floor'\)/.test(r.hud)
+      || !/ChildModel\(model, UI\.metadataField, 'act'\)[\s\S]*ChildModel\(model, UI\.metadataField, 'floor'\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
       || !/\.as-statstrip, \.as-kitline \{ display: flex; flex-wrap: wrap;/.test(r.kit)
       || /\.hud-run-meta[^{]*\{/.test(r.css + r.uiCss)) {
@@ -683,7 +691,7 @@ export function findings(r) {
       || !/UI\.armouryPanel/.test(r.armouryModels)
       || !/UI\.equipmentSlot/.test(r.armouryModels)
       || !/UI\.armouryInventory/.test(r.armouryModels)
-      || !/UI\.equipmentComparison/.test(r.equipment)) {
+      || !/UI\.equipmentComparison/.test(r.armouryInventory)) {
     bad.push('C8 menu and Armoury composition lacks stable component references');
   }
   if (!/\n\.player-zone\s*\{[^}]*justify-content:\s*center;/.test(r.css)
@@ -706,14 +714,20 @@ export function findings(r) {
     'title-modal-actions', 'title-modal-back-control', 'title-modal-continue-control',
   ];
   if (!/export function startupGateModel/.test(r.startupGateModel)
-      || !/componentModel\(UI\.startupGate/.test(r.startupGateModel)
+      || !/ComponentModel\(UI\.startupGate/.test(r.startupGateModel)
       || !/export function mountStartupGate/.test(r.startupGate)
       || !/buildStampHtml\('startup'\)/.test(r.startupGate)
       // The gate's lockup is built by the kit's element factory now
       // (src/ui/kit/index.js `el`), which spells the same attribute as
       // `dataset: { component: '<id>' }`; the ash field and the section are
       // still template strings. Either spelling is the one attribute.
-      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`))
+      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`)
+        || (() => {
+          // A constant spelling counts only if the registry still maps it to this exact id.
+          const key = id.replace(/-(\w)/g, (_, c) => c.toUpperCase());
+          return UI_COMPONENTS[key] === id
+            && (r.startupGate.includes(`component: UI.${key}`) || r.startupGate.includes(`data-component="\${UI.${key}}"`));
+        })())
       || !titleParts.every((id) => mentionsId(r.title + r.saveSlotSelector, id))
       || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))
@@ -723,7 +737,7 @@ export function findings(r) {
   if (!/"hudPresentation":\s*\{[\s\S]*"componentBackgroundOpacityPct":\s*0,[\s\S]*"metadataFontPx":\s*11,[\s\S]*"beltItemGapPx":\s*2,[\s\S]*"portraitScale":\s*0\.58,[\s\S]*"primaryRowGapPx":\s*4,[\s\S]*"controlGapPx":\s*0,[\s\S]*"resourceRowGapPx":\s*3,[\s\S]*"panelPadPx":\s*0,[\s\S]*"mobilePanelPadPx":\s*0,[\s\S]*"mobileControlGapPx":\s*1,[\s\S]*"mobileOuterPadPx":\s*4,[\s\S]*"mobileRowGapPx":\s*3,[\s\S]*"cindersMaxWidthPct":\s*30,[\s\S]*"metadataMaxWidthPct":\s*30,[\s\S]*"metadataShowTotals":\s*false[\s\S]*\}/.test(r.balance)
       || !/"hudQuickSettings":\s*\{[\s\S]*"places":\s*\["title", "map", "combat"\],[\s\S]*"edgeGapPx":\s*4,[\s\S]*"stackGapPx":\s*0,[\s\S]*"cardSizePx":\s*40,[\s\S]*"glyphSizePx":\s*28,[\s\S]*"stateDotPx":\s*6,[\s\S]*"activeTintPct":\s*14,[\s\S]*"showCardBackground":\s*true,[\s\S]*"showLabels":\s*false[\s\S]*\}/.test(r.balance)
       || !/\.resbars\[data-surface="main"\]\s*\{[^}]*gap:\s*calc\(var\(--hud-resource-row-gap-px\)\s*\/\s*var\(--ui-zoom, 1\)\);/.test(r.kit)
-      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-panel-pad-px', '--hud-mobile-panel-pad-px', '--hud-mobile-control-gap-px', '--hud-mobile-outer-pad-px', '--hud-mobile-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-card-size', '--hud-quick-glyph-size', '--hud-quick-state-dot', '--hud-quick-active-tint'].every((name) => r.main.includes(`'${name}'`))
+      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-panel-pad-px', '--hud-mobile-panel-pad-px', '--hud-mobile-control-gap-px', '--hud-mobile-outer-pad-px', '--hud-mobile-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-card-size', '--hud-quick-glyph-size', '--hud-quick-state-dot', '--hud-quick-active-tint'].every((name) => r.displaySettings.includes(`'${name}'`))
       || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'panelPadPx', 'mobilePanelPadPx', 'mobileControlGapPx', 'mobileOuterPadPx', 'mobileRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'cardSizePx', 'glyphSizePx', 'stateDotPx', 'activeTintPct', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
   }
@@ -779,10 +793,10 @@ export function findings(r) {
       || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
-  if (!/export function componentModel/.test(r.componentModel)
+  if (!/export function ComponentModel/.test(r.componentModel)
       || !/Object\.freeze\(\{[\s\S]*component,[\s\S]*properties:[\s\S]*tokens:[\s\S]*accessibility:[\s\S]*behaviors:[\s\S]*children:/.test(r.componentModel)
       || !/export function behaviorModel/.test(r.behaviorModel)
-      || !/export function runHudViewModel/.test(r.hudViewModel)
+      || !/export function RunHudViewModel/.test(r.hudViewModel)
       // The composition is four children since 2026-09-05, not five: the
       // fullscreen/music pair left the band ("the full screen and music buttons
       // don't need to be there since we have it in the quick and main menu
@@ -876,19 +890,19 @@ export function findings(r) {
     'primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
     'classChoiceCard', 'classPreviewPane', 'classResourceGrid', 'selectionSectionFace',
     'modeChoiceButton', 'spriteChoiceButton', 'tintChoiceButton', 'sigilChoiceButton',
-    'keepsakeChoiceButton', 'relicChoiceButton',
+    'relicChoiceButton',
   ];
   const creationIds = [
     'character-disclosure', 'class-preview-pane', 'class-resource-grid', 'class-choice-card',
     'view-mode-toggle', 'boolean-setting-toggle', 'selection-section-face', 'primary-stat-card',
     'stat-allocation-row', 'shrine-option-card', 'resource-strip', 'mode-choice',
-    'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
+    'sprite-choice', 'tint-choice', 'sigil-choice',
     'equipment-choice-card', 'relic-choice-card',
   ];
   if (!creationExports.every((name) => r.creationCards.includes(`export function ${name}`))
       || !['primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
         'classChoiceCard', 'classPreviewPane', 'classResourceGrid', 'selectionSectionFace',
-        'modeChoice', 'spriteChoice', 'tintChoice', 'sigilChoice', 'keepsakeChoice',
+        'modeChoice', 'spriteChoice', 'tintChoice', 'sigilChoice',
         'relicChoiceCard'].every((name) => r.creationCards.includes(`UI.${name}`))
       || !/UI\.characterDisclosure/.test(r.customize)
       || !/UI\.equipmentChoiceCard/.test(r.customize)
@@ -906,7 +920,7 @@ export function findings(r) {
       || !/UI\.shrineOptionCard/.test(r.rest)
       || !/attributeCardModels\(registries, state\.attributes,/.test(r.customize)
       || !/attributeCardModels\(registries, values,/.test(r.rest)
-      || !/attributeCardModels\(registries, run\.attributes/.test(r.equipment)
+      || !/attributeCardModels\(registries, run\.attributes/.test(r.armouryStatsModel)
       || !creationIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');
@@ -948,9 +962,9 @@ export function findings(r) {
   }
   if (!/export function saveSlotSelectionModel/.test(r.saveSlotSelectionModel)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleSaveSlotList/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleSaveSlot,/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleModalContinueControl/.test(r.saveSlotSelectionModel)
+      || !/ComponentModel\(UI\.titleSaveSlotList/.test(r.saveSlotSelectionModel)
+      || !/ComponentModel\(UI\.titleSaveSlot,/.test(r.saveSlotSelectionModel)
+      || !/ComponentModel\(UI\.titleModalContinueControl/.test(r.saveSlotSelectionModel)
       || !/command: 'select-save-slot'/.test(r.saveSlotSelectionModel)
       || !/command: kind === 'new' \|\| !selected\.hasSave \? 'create-in-save-slot' : 'load-save-slot'/.test(r.saveSlotSelectionModel)
       || !/import \{ saveSlotSelectionModel \}/.test(r.title)
@@ -964,7 +978,9 @@ export function findings(r) {
       || !/capture\.onCancel\?\.\(\)/.test(r.input)
       || !/UI\.controlsRebindCapture/.test(r.controls)
       || !/UI\.controlsKeyRebindControl/.test(r.controls)
-      || !/onCancel:[\s\S]*reset\(btn, 'Key'\)[\s\S]*btn\.focus/.test(r.controls)
+      || !/captureNextKey\(onCaptured, \{ onCancel \}\),\s*shouldRestoreFocus: true/.test(r.controls)
+      || !/const finishCapture = \(btn, rebindKind\) => \{\s*reset\(btn, idleLabelOf\(btn\)\);[\s\S]*?if \(rebindKind\.shouldRestoreFocus\) btn\.focus/.test(r.controls)
+      || !/\}, \(\) => finishCapture\(btn, rebindKind\)\);/.test(r.controls)
       || !controlsIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))) {
     bad.push('C21 Controls rebind capture lost its stable ids or armed-Escape ownership contract');
@@ -986,11 +1002,11 @@ function selftest() {
     ['detach Rest from the shared room frame', 'C3 ', (r) => ({ ...r, rest: r.rest.replace('mountRestFrame(app, {', 'mountBareRest(app, {') })],
     ['detach configured Rest from the shared room frame', 'C3 ', (r) => ({ ...r, configuredRest: r.configuredRest.replace('mountRestFrame(app, {', 'mountBareRest(app, {') })],
     ['give the shared Rest frame its own HUD', 'C3 ', (r) => ({ ...r, restFrame: r.restFrame.replace('wireRunHud(app, {', 'wireRestBand(app, {') })],
-    ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(runHudViewModel({', 'ownShell({') })],
+    ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(RunHudViewModel({', 'ownShell({') })],
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace("const box = record ? record.box : combatantFrame(slots);", "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void slots;") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['import run state into the Armoury models beside their art resolvers', 'C5 ', (r) => ({ ...r, armouryModels: `import { resourceBarPlan } from '../../model/resources.js';\n${r.armouryModels}` })],
-    ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],
+    ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("ChildModel(model, UI.metadataField, 'floor')", "ChildModel(model, UI.metadataField, 'seed')") })],
     // Substitutes the declaration whatever its authored value, so this plant
     // site cannot drift out from under the corpus the way the check above did.
     ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/--hud-quick-tile-size:[^;]+;/, '--hud-quick-tile-size: var(--iconbtn-size);') })],

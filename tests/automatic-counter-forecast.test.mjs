@@ -27,7 +27,10 @@ const registries = { ...base, enemies: { ...base.enemies, get(id) {
 function fixture({ spent = false } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'automatic-counter-forecast' });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
-  assert.equal(combat.enemies[0].maxStamina, 2);
+  { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; } // pins the pre-Wave-2.5 arithmetic (see tests/legacyStanceRules.mjs)
+  // ...and the owner-cycle budget of a fight created before the Counter-stack rule (Wave 2 batch 5 has no budget: every landed covered hit answers while stacks last).
+  { const counter = { ...combat.fixCoreRules.counter }; for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete counter[key]; combat.fixCoreRules = { ...combat.fixCoreRules, counter }; }
+  assert.equal(combat.enemies[0].maxStamina, 3);
   assert.equal(combat.enemies[0].intent.moveId, 'slash');
   for (const entity of [combat.player, ...combat.enemies]) {
     Object.assign(entity, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: {}, ratingSources: [],
@@ -46,11 +49,14 @@ for (const spent of [false, true]) test(`bundled full-action forecast retains th
   const combat = fixture({ spent }), enemy = combat.enemies[0];
   const before = JSON.stringify({ player: combat.player, enemy, queue: combat.queue, log: combat.eventLog, rng: combat.rng.getCounters() });
   const forecast = captureEnemyIntent(combat, enemy);
-  // Owner, 2026-11-03: the forecast is the raw hit (20 each), whatever the Counter stance and its Block do; the real HP loss
-  // (what the Counter owner-cycle budget changes) is checked against the damageDealt events below.
-  const expected = spent ? [15, 15, 15] : [12, 15, 15];
-  assert.deepEqual(Array.from(forecast.hitDamages), [20, 20, 20]);
-  assert.equal(forecast.totalDamage, 60);
+  // Owner, 2026-11-14: the forecast is the HP lost per hit, the Counter stance and its Block included (what the Counter owner-cycle
+  // budget changes); the damageDealt events below are the same numbers. The Core base-damage scale halves the Slash's 20 to 10 a
+  // contact; the Counter stance cuts it to 7, and an unspent Counter's Block takes one more off the first hit (owner, 2026-11-17).
+  // Owner, 2026-11-18: the enemy side scale takes the 10 to 7 and the Counter stance cuts that to 5; an unspent Counter's Block (a share of the scaled hit,
+  // not scaled again) takes one more off the first hit.
+  const expected = spent ? [5, 5, 5] : [4, 5, 5];
+  assert.deepEqual(Array.from(forecast.hitDamages), expected);
+  assert.equal(forecast.totalDamage, expected.reduce((a, b) => a + b, 0));
   assert.equal(forecast.hpLoss, expected.reduce((a, b) => a + b, 0), 'the forecast still knows the real HP loss');
   assert.equal(JSON.stringify({ player: combat.player, enemy, queue: combat.queue, log: combat.eventLog, rng: combat.rng.getCounters() }), before);
   assert.deepEqual(captureEnemyIntent(combat, enemy), forecast);

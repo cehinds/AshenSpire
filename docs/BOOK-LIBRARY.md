@@ -73,7 +73,7 @@ controls use live content values.
 
 The asset kit lives in AshenSpire-art; see `BOOK-ART.md`. Learning
 tests: `tests/book-learning.test.mjs`; rendered checks:
-`tools/book-learning-browser.mjs` and `tools/book-library-built-browser.mjs`.
+`tools/book-learning-browser.mjs` and `tools/attic/book-library-built-browser.mjs`.
 Screenshots and machine-readable receipts are in `docs/preview/book-library/qa/learning-*`.
 
 Preview: `/docs/preview/book-library/preview.html?library=1` seeds a disposable

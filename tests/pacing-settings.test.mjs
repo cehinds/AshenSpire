@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { settingsRows, resetKeys, commitNumberRow } from '../src/ui/screens/settings.js';
 import { profileKeys } from '../src/model/settingsSync.js';
 import { actionPacing, setAnimSpeed, setCombatPacing } from '../src/ui/animationPace.js';
+import { ACTION_PACING } from '../src/model/autoCombatPolicy.js';
 
 const row = key => settingsRows().find(r => r.key === key);
 
@@ -136,18 +137,35 @@ test('a failed timing reset restores both the preset and control value', async (
 
 test('enemy pacing is its own pair of settings, both 750 ms by default, and moves only enemy timing', async () => {
   const { floaterStaggerMs } = await import('../src/ui/animationPace.js');
+  const turn = ACTION_PACING.enemyTurn;
+  const floaterShare = turn.floaterIntervalMs / ACTION_PACING.enemyFloaterIntervalDefaultMs;
+  const clipShare = ACTION_PACING.spritePlaybackRate / turn.spritePlaybackRate;
   setAnimSpeed('normal'); setCombatPacing();
   assert.equal(floaterStaggerMs(), 750);
-  assert.equal(floaterStaggerMs({ enemy: true }), 750, 'the enemy default equals the player default');
-  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, actionPacing().spriteSpeed.lungeMs, 'same default animation');
+  assert.equal(floaterStaggerMs({ enemy: true }), Math.round(750 * floaterShare), 'the enemies act on motion.enemyTurn: a shorter floater interval than the player\'s');
+  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, Math.round(actionPacing().spriteSpeed.lungeMs * clipShare), 'the same animation step, played at the enemy clip rate');
   setCombatPacing({ enemyAttackMs: 1500, enemyFloaterIntervalMs: 375 });
-  assert.equal(floaterStaggerMs({ enemy: true }), 375);
+  assert.equal(floaterStaggerMs({ enemy: true }), Math.round(375 * floaterShare));
   assert.equal(floaterStaggerMs(), 750, 'the player interval is untouched');
-  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, 2 * actionPacing().spriteSpeed.lungeMs);
+  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, Math.round(2 * actionPacing().spriteSpeed.lungeMs * clipShare));
   setCombatPacing({ enemyAttackMs: 1, enemyFloaterIntervalMs: 99999 });
   assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs > 0, true);
-  assert.equal(floaterStaggerMs({ enemy: true }), 3000, 'bounded to 3000 ms');
+  assert.equal(floaterStaggerMs({ enemy: true }), Math.round(3000 * floaterShare), 'the setting is bounded to 3000 ms before the enemy turn pacing scales it');
   setCombatPacing();
+});
+
+test('the enemies\' turn runs on its own, shorter stage gaps; the player\'s plays keep the pinned stages', () => {
+  setAnimSpeed('normal'); setCombatPacing();
+  const turn = ACTION_PACING.enemyTurn, player = actionPacing(), enemy = actionPacing({ enemy: true });
+  assert.equal(player.gapMs, ACTION_PACING.stageGapMs * 0.8, 'the player stage gap is unchanged (500 ms at the default speed 1.25)');
+  assert.equal(enemy.gapMs, turn.stageGapMs * 0.8, 'the enemy stage gap is motion.enemyTurn.stageGapMs at the same speed');
+  assert.ok(enemy.gapMs < player.gapMs && enemy.bannerMs < player.bannerMs && enemy.telegraphMs > 0 && player.telegraphMs === 0);
+  setCombatPacing({ combatStepPause: 1000 });
+  assert.equal(actionPacing({ enemy: true }).gapMs, 2 * enemy.gapMs, 'the Pause between steps row still scales the enemy gap');
+  setCombatPacing({ combatSpeed: 2.5 });
+  assert.ok(actionPacing({ enemy: true }).gapMs < enemy.gapMs, 'a faster Combat speed is still faster for the enemies');
+  setCombatPacing();
+  assert.deepEqual([...Object.keys(actionPacing({ reduced: true, enemy: true }))].filter(k => /Ms$/.test(k) && actionPacing({ reduced: true, enemy: true })[k] !== 0), [], 'reduced motion removes every enemy wait too');
 });
 
 test('the enemy pacing rows are persisted Combat settings with 750 ms defaults', () => {

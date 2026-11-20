@@ -175,7 +175,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 9
+          "amount": 18
         },
         {
           "op": "applyStatus",
@@ -263,6 +263,7 @@
       "sp": 1,
       "mp": 0,
       "tags": [
+        "rank.cantrip",
         "camp:spell",
         "maneuver:casting",
         "classification.skill"

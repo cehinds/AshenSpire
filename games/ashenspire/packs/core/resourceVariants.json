@@ -285,6 +285,50 @@
       "manaCost": 0
     }
   },
+  "core.retreat": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    }
+  },
+  "core.upsetRanks": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    }
+  },
   "core.closingDodge": {
     "none": {
       "cost": 0,
@@ -314,8 +358,8 @@
       "manaCost": 0
     },
     "sp": {
-      "cost": 4,
-      "staminaCost": 4,
+      "cost": 1,
+      "staminaCost": 1,
       "manaCost": 0
     },
     "mp": {
@@ -324,8 +368,8 @@
       "manaCost": 0
     },
     "sp,mp": {
-      "cost": 4,
-      "staminaCost": 4,
+      "cost": 1,
+      "staminaCost": 1,
       "manaCost": 0
     }
   },
@@ -1040,19 +1084,19 @@
       "manaCost": 0
     },
     "sp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 2,
+      "staminaCost": 2,
       "manaCost": 0
     },
     "mp": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 1
+      "manaCost": 0
     },
     "sp,mp": {
-      "cost": 1,
-      "staminaCost": 1,
-      "manaCost": 1
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
     }
   },
   "core.rallyingRoar": {
@@ -1062,19 +1106,19 @@
       "manaCost": 0
     },
     "sp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 2,
+      "staminaCost": 2,
       "manaCost": 0
     },
     "mp": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 1
+      "manaCost": 0
     },
     "sp,mp": {
-      "cost": 1,
-      "staminaCost": 1,
-      "manaCost": 1
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
     }
   },
   "core.venomedEdge": {
@@ -1713,6 +1757,204 @@
       "cost": 1,
       "staminaCost": 1,
       "manaCost": 0
+    }
+  },
+  "core.pyreLash": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    }
+  },
+  "core.conflagration": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    }
+  },
+  "core.forkedBolt": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    }
+  },
+  "core.stormcall": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    }
+  },
+  "core.glacialSpike": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    }
+  },
+  "core.radiantVerdict": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    }
+  },
+  "core.witherDraught": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    }
+  },
+  "core.batteringGale": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 1
+    }
+  },
+  "core.openArchive": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 2
     }
   }
 }

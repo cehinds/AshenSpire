@@ -1,8 +1,9 @@
 import { resolveVariable, nodeTokens } from './tree.js';
 
 // SPEC §13.4p: absence of the run/fight stamp always keeps the older rules.
+// Version 1 means one break meter (Poise); the stamp alone decides, ratings are gone.
 export function usesSingleBreakMeter(context) {
-  return !!context?.ratingsRules && context.ratingsRules.enabled !== false && context.breakMeterVersion === 1;
+  return context?.breakMeterVersion === 1;
 }
 
 export function breakMeterIds(context) {

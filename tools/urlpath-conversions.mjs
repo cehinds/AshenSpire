@@ -88,6 +88,7 @@ function headerKeywordBefore(tokens, keyword, before = tokens.length) {
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
   for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    if (entry.name === 'node_modules' && entry.isDirectory()) continue;
     const path = join(dir, entry.name);
     if (entry.isDirectory()) walk(path, out);
     else if (/\.(?:mjs|js)$/.test(entry.name)) out.push(path);
@@ -1829,6 +1830,13 @@ function selftest() {
   copyFileSync(join(fixtureRoot, 'handrolled_url.mjs'), copiedUrl);
   copyFileSync(join(fixtureRoot, 'handrolled_path.mjs'), copiedPath);
   try {
+    const vendor = join(spaced, 'tools', 'fixture', 'node_modules', 'vendor');
+    mkdirSync(vendor, { recursive: true });
+    copyFileSync(copiedPath, join(vendor, 'bad.mjs'));
+    copyFileSync(copiedPath, join(spaced, 'tools', 'authored.mjs'));
+    const source = collect(spaced, { dirs: ['tools'] });
+    say(source.files === 1 && source.findings.length === 1 && source.findings[0].path === 'tools/authored.mjs',
+      'installed packages are skipped but authored tool conversions are checked', JSON.stringify(source));
     const urlRun = runFixture(copiedUrl, spaced);
     say(urlRun.code === 0 && urlRun.out.trim() === '', 'spaced cwd makes the hand-rolled main guard observably silent', `exit ${urlRun.code}, output ${JSON.stringify(urlRun.out.trim())}`);
     const pathRun = runFixture(copiedPath, spaced);

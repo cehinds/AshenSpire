@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 // The HUD-follow loop ends early after two unmoved frames, but not right after a pose class lands: an eased
 // lunge reads the same as rest for its first frame, and stopping there left the HUD behind for the whole lunge.
 // Runs the shipped window, early-stop and settle code with stub geometry.
-const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
 const start = source.indexOf('  const TRACK_WINDOW_MS');
 const end = source.indexOf('\n  }\n', source.indexOf('  function trackPlayerHud()', start)) + 4;
 assert.ok(start > 0 && end > start);

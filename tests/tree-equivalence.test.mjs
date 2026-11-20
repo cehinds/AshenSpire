@@ -80,6 +80,10 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   // Core 2's approved Adept name changes only the Cantrip blurb; its stable
   // tag identity and all other registered metadata remain under this proof.
   const tacticalMetadata = {
+    // Wave 2 (wording): British spelling for what the player reads; the ids stay item:armor, from:armor, twinnedArmor.
+    'item:armor': { label: 'Armour', blurb: 'What this piece IS: the Armoury and the smith name it Armour.' },
+    'from:armor': { label: 'Armour' },
+    'twinnedArmor': { label: 'Twinned Armour', blurb: 'What Twinned Armour does when the fight gives it its moment.' },
     'rank.cantrip': { blurb: 'Basic spell eligible for Magic Adept deck copies.' },
     'source:spell': { glyph: '✧' },
     'camp:spell': { glyph: '✧' },
@@ -94,6 +98,14 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     'damage:arcane': { label: 'Force', blurb: 'Strips 2 Ward once per action; bypasses melee Counter.' },
     'damage:sacred': { label: 'Holy', blurb: 'Removes 1 hostile debuff from the attacker after a Health hit.' },
     'damage:decay': { label: 'Necrotic', blurb: 'Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.' },
+    // No dashes in player text (2026-11-17, chore/EventCopy): the em dash in these blurbs became a colon or full stop.
+    'blade': { blurb: 'Steel and edge: direct weapon work.' },
+    'starstone': { blurb: 'Astral sorcery: charges and combos.' },
+    'flourish': { blurb: 'Finesse: footwork and multi-hit.' },
+    'basic': { blurb: "Everybody's: on the shelf without being found." },
+    'extractable': { blurb: "A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it today." },
+    'bound': { blurb: 'Carries its own cards. They arrive with the piece and are named in equipmentGrants.csv.' },
+    'construct': { blurb: 'Built, not born. No blood to let.' },
   };
   // Also check approved metadata for named tactical tags added after the fixture.
   for (const [id, fields] of Object.entries(tacticalMetadata)) {
@@ -106,12 +118,19 @@ test('registered tags retain identity, approved tactical metadata changes are ex
       assert.equal(t[field], tacticalMetadata[old.id]?.[field] ?? old[field], `tag '${old.id}'.${field}`);
     }
   }
+  // No dashes in player text (2026-11-17, chore/EventCopy): these root blurbs lost their em dash; nothing else moved.
+  const approvedDomainBlurbs = {
+    card: 'What a card IS: its school, form and feel. Carried by cards, by the classes that lean on them, and by the equipment that rewrites them.',
+    run: 'Run structure: what an event, an encounter or an unlock is about.',
+    grantSource: "Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these. The `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry.",
+    property: "What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one. What the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS.",
+  };
   const domains = new Map(TAG_DOMAINS.map((d) => [d.id, d]));
   for (const old of pre.tagDomains) {
     const d = domains.get(old.id);
     assert.ok(d, `domain '${old.id}' is still a root`);
     assert.equal(d.label, old.label, `domain '${old.id}'.label`);
-    assert.equal(d.blurb, old.blurb, `domain '${old.id}'.blurb`);
+    assert.equal(d.blurb, approvedDomainBlurbs[old.id] ?? old.blurb, `domain '${old.id}'.blurb`);
   }
   const pairs = new Set(TAG_FAMILY_DOMAINS.map((r) => `${r.family}|${r.domain}`));
   for (const old of pre.tagFamilyDomains) assert.ok(pairs.has(`${old.family}|${old.domain}`), `pairing ${old.family}×${old.domain} is derived`);
@@ -173,9 +192,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     assert.equal(tag.domain, 'technique');
     assert.ok(tag.label && tag.blurb && tag.glyph && tag.color, `${id} has visible presentation and an authored description`);
   }
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse', 'retreat'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
     'every tag that joined is a framework node, named property, Bow, approved ability, named tactical identity or exact FixCore identity');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', 'retreat', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 
@@ -201,7 +220,7 @@ test('every object states exactly one kind, the one its collection and type name
   assert.equal(contentBundle.enemyMoves.length, 105, 'the scoped enemy move collection contains all 105 authored actions');
   // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).
   const canonicalCollections = [contentBundle.cards, contentBundle.classes, contentBundle.relics,
-    contentBundle.flasks, contentBundle.characterCreation.keepsakes, contentBundle.events,
+    contentBundle.flasks, contentBundle.events,
     contentBundle.encounters, contentBundle.enemies, contentBundle.equipment.armaments,
     contentBundle.equipment.armour, contentBundle.equipment.basicCardProfiles,
     contentBundle.equipment.slots, contentBundle.equipment.startingKits, contentBundle.unlocks,

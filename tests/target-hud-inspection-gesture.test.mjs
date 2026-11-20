@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { uiConfig } from '../src/config/generated/ui.js';
 
 // Execute the shipped gesture handlers and teardown with a deterministic clock.
 // No substitute activation handler or reimplementation decides suppression.
@@ -32,7 +33,7 @@ function fixture({ armed = true } = {}) {
     click() { click(null, 0); },
   };
   const scope = {
-    document, window, entries: new Map([['e1', { inspect: () => reads.push(time) }]]), eligible: armed ? ['e1'] : [],
+    uiConfig, document, window, entries: new Map([['e1', { inspect: () => reads.push(time) }]]), eligible: armed ? ['e1'] : [],
     canInspect: () => ready, onActivate: id => plays.push(id), hideTooltip() {}, performance: { now: () => time },
     setTimeout(fn) { const id = ++serial; timers.set(id, fn); return id; }, clearTimeout(id) { timers.delete(id); },
     gestures: new AbortController(), disposed: false, dwell: { dispose() {} }, raf: null, cancelAnimationFrame() {},
@@ -175,7 +176,7 @@ test('an independently eligible target keeps precedence within an accepted click
 
 test('Enter on a focused target HUD panel is left to the panel; the cursor card is not pressed', async () => {
   const { initInput, focusElement, clearFocus } = await import('../src/ui/input.js');
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document, Event }, _window, listeners) => {
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
     const previousStyle = globalThis.getComputedStyle;
@@ -210,7 +211,7 @@ test('Enter on a focused target HUD panel is left to the panel; the cursor card 
 });
 
 test('an inspection-door panel is one button and keeps its content as its name', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document }) => {
     const shell = document.createElement('section'); shell.className = 'target-hud-detail';
     shell.setAttribute('aria-label', 'Hound details');

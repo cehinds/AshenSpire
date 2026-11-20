@@ -126,7 +126,9 @@ try {
     const rest = await evaluate(restingCamera);
     await evaluate(`(() => {
       const lit = [...document.querySelectorAll('.map-node.reachable')];
-      lit[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      // The single start node of a new run arrives preselected; tapping a
+      // selected node again travels into it, so tap only an unselected one.
+      if (!lit.some((n) => n.classList.contains('selected'))) lit[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       return true;
     })()`);
     await wait(200);
@@ -142,6 +144,13 @@ try {
       return true;
     })()`);
     await wait(700);
+    // The start node of a new run is preselected, so no earlier pick spent the
+    // click the port swallows after a pan; if the tray is still open, the
+    // away-tap was that swallowed one, and it is repeated once.
+    if (await evaluate(`!!document.querySelector('.map-node.selected')`)) {
+      await evaluate(`document.querySelector('.map-scroll').dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))`);
+      await wait(700);
+    }
 
     // #1168'S OTHER HALF: THE CAMERA MOVING ITSELF. Everything above proves the
     // PLAYER can pan both axes; this proves the board can. Selecting a node

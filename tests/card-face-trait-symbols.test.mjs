@@ -9,7 +9,7 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 // The game draws a projected definition (reaction rules v2 traitValues) through the preview.
 const previewOf = cardId => ({ combatExpansionVersion: 2, cost: 1, manaCost: 0, tokens: {}, values: [],
   resolvedDefinition: applyCardTraits(applyCombatExpansionCard(reg.cards.get(cardId))) });
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const reg = createRegistries(contentBundle);
 

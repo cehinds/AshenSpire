@@ -50,14 +50,8 @@
       1,
       0
     ],
-    "caps": {
-      "constitution": 1
-    }
-  },
-  "attributeOffset": {
-    "strength": -2,
-    "constitution": -2,
-    "dexterity": -2
+    "caps": {},
+    "floor": 1
   },
   "penaltyFloor": {
     "sp": 1,
@@ -97,10 +91,6 @@
         "mp": 1
       },
       "hand": 2,
-      "attributeBudget": [
-        2,
-        2
-      ],
       "deckSize": [
         2,
         8
@@ -114,10 +104,6 @@
         "mp": 1
       },
       "hand": 3,
-      "attributeBudget": [
-        4,
-        4
-      ],
       "deckSize": [
         3,
         10
@@ -131,10 +117,6 @@
         "mp": 1
       },
       "hand": 4,
-      "attributeBudget": [
-        6,
-        6
-      ],
       "deckSize": [
         4,
         14

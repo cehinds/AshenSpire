@@ -14,6 +14,20 @@
 
 export const MIN_PLAYS = 3;
 
+// The probe's choice among the eligible cards of one hand; pure so it is testable without a browser.
+// Each candidate is { id, eligible, canDamage, cost, damage, lethal } (cost: stamina price,
+// damage: previewed HP damage, lethal: the play could kill the last living enemy). While HP
+// damage numbers are short, a card that can deal damage is preferred; among those the cheapest,
+// then the weakest, keeps the fight alive longest. A play that could end the fight is chosen
+// only while the samples are collected when nothing else is eligible. Never keyed on a card id.
+export function chooseImpactPlay(candidates, { numbersShort = true, samplesShort = true } = {}) {
+  const cheap = (a, b) => (a.cost - b.cost) || (a.damage - b.damage);
+  const ok = candidates.filter((c) => c.eligible);
+  const pool = samplesShort || numbersShort ? ok.filter((c) => !c.lethal) : ok;
+  const pickFrom = (list) => (numbersShort && [...list].filter((c) => c.canDamage).sort(cheap)[0]) || [...list].sort(cheap)[0] || null;
+  return pickFrom(pool) || pickFrom(ok);
+}
+
 export const median = (xs) => {
   const s = [...xs].sort((a, b) => a - b);
   return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;

@@ -32,7 +32,8 @@ test('compact hand leaves the footer tool and Grid rows below its resting cards'
   assert.match(hand, /const toolsHeight = 0;/, 'the toolbar is outside the fan, so no row is reserved above it');
   assert.match(tools, /const footerControls = combatEl.querySelector\('\.combat-action-row'\)/, 'tools dock against the footer rather than the hand top');
   for (const zoom of [.74, 1, 1.2]) for (const count of [3, 5, 7]) {
-    const input = { width: 390 / zoom, height: 250 / zoom, count, zoom, compact: true, formFactor: 'mobile' };
+    // Wave 2 (sizes): the phone hand band is 34% of the screen up to 290px (compactCombat.handMaximumPx) so a 160px face fits.
+    const input = { width: 390 / zoom, height: 290 / zoom, count, zoom, compact: true, formFactor: 'mobile' };
     const plan = responsiveHandLayout(input, handLayout(input));
     const bottom = Math.max(...plan.cards.map(card => {
       const radians = card.angle * Math.PI / 180;
@@ -77,7 +78,7 @@ test('a tap on a playable card plays it only when its target is unambiguous (own
   assert.match(wire, /const tap = \(\) => \{[\s\S]*?if \(!affordable\) \{[\s\S]*?return;\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(oneTapPlays\(\)\) \{ play\(\); return; \}\s*if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/, 'after the unaffordable branch, a tap plays when unambiguous (selected by a hold or not) or selects');
   assert.doesNotMatch(wire, /lastConfirmTap|performance\.now\(\)/, 'no timing window: the tap after the selecting tap carries no timestamp');
   assert.match(wire, /if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}\s*(?:\/\/[^\n]*\n\s*)*play\(\);\s*\};/, 'with one-tap off the first tap selects and the NEXT tap on the selected card plays, however long after (owner 14:15)');
-  assert.match(read('../src/ui/screens/settings.js'), /key: 'oneTapPlay', def: false/, 'the setting is offered, default off');
+  assert.match(read('../src/ui/models/SettingsRowsModel.js'), /key: 'oneTapPlay', def: false/, 'the setting is offered, default off');
 });
 
 test('One-tap play reads the setting live, so a mid-combat toggle changes the next tap', () => {

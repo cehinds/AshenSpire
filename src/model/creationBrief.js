@@ -68,7 +68,7 @@ function requirementLines(registries, piece, attributes) {
   return receipt.requirements.map((row) => {
     const def = registries.attributes.get(row.attributeId);
     const met = Number.isFinite(row.actual) && row.actual >= row.required;
-    return `Needs ${def.shortLabel} ${row.required} — you have ${row.actual == null ? '—' : row.actual}${met ? '' : ' (short)'}`;
+    return `Needs ${def.shortLabel} ${row.required}, you have ${row.actual == null ? '—' : row.actual}${met ? '' : ' (short)'}`;
   });
 }
 

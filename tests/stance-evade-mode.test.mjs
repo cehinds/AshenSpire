@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
+import { legacyCrawlingRegistries } from './helpers/legacy-crawling-shot.mjs';
 import { executeAction } from '../src/engine/actions.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -12,7 +13,8 @@ import { attackHitPreview, resolveAttackHit } from '../src/engine/stanceHit.js';
 import { createRng } from '../src/engine/rng.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
-const registries = createRegistries(contentBundle);
+// Crawling Shot is the legacy fixture (tests/helpers/legacy-crawling-shot.mjs): the shipped card no longer prepares a conditional Evade.
+const registries = legacyCrawlingRegistries();
 function playCrawlingShot(prone) {
   const ctx = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'rogue', maxHp: 100, hp: 100,

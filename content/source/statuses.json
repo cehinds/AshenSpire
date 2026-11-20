@@ -95,7 +95,7 @@
         ]
       }
     },
-    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, plus {proc.poiseDamage} Poise damage — then the build-up resets to zero. Fleshy targets briefly resist further Bleed after a burst."
+    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, plus {proc.poiseDamage} Poise damage. Then the build-up resets to zero. Fleshy targets briefly resist further Bleed after a burst."
   },
   {
     "id": "frost",
@@ -566,7 +566,7 @@
   },
   {
     "id": "astralArmor",
-    "name": "Astral Armor",
+    "name": "Astral Armour",
     "icon": "progression",
     "stackMode": "add",
     "decay": "none",
@@ -1224,7 +1224,7 @@
         ]
       }
     ],
-    "tooltip": "When an enemy staggers, become Prepared and draw 1 card per stack."
+    "tooltip": "When an enemy is Broken, become Prepared and draw 1 card per stack."
   },
   {
     "id": "envenom",
@@ -1322,17 +1322,17 @@
     "tint": "#a066e0",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose 1 stack at the start of your turn.",
+    "tooltip": "Ward gives Poise: each stack adds 5 maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest, then HP. Lose 1 stack at the start of your turn.",
     "sharedWord": true
   },
   {
     "id": "barrier",
-    "name": "Barrier",
+    "name": "Bonus Poise",
     "icon": "skill",
     "tint": "#6fa8ff",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Each stack gives +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",
+    "tooltip": "Poise gained above your maximum. Each stack is +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",
     "sharedWord": true
   },
   {
@@ -1361,5 +1361,59 @@
     "stackMode": "add",
     "decay": "none",
     "tooltip": "Each stack fully absorbs one lightning hit and is lost doing so."
+  },
+  {
+    "id": "shock",
+    "name": "Shock",
+    "icon": "motion",
+    "tint": "#e8d46a",
+    "stackMode": "add",
+    "decay": "perTurnEnd",
+    "tooltip": "Each stack: +5% lightning damage taken, and a 5% chance to lose an action at its next turn (a chance, never previewed). One stack wears off each turn. At most 10."
+  },
+  {
+    "id": "chill",
+    "name": "Chill",
+    "icon": "frost",
+    "tint": "#8fd0ff",
+    "stackMode": "add",
+    "decay": "perTurnEnd",
+    "tooltip": "Each stack: -5% damage dealt. Every 3 stacks, its next turn starts with 1 less Stamina. One stack wears off each turn."
+  },
+  {
+    "id": "freeze",
+    "name": "Freeze",
+    "icon": "frost",
+    "tint": "#bfe6ff",
+    "stackMode": "add",
+    "decay": "none",
+    "tooltip": "A Poise break on a Chilled unit froze it: it loses its next action."
+  },
+  {
+    "id": "brittle",
+    "name": "Brittle",
+    "icon": "poise",
+    "tint": "#d8efff",
+    "stackMode": "add",
+    "decay": "none",
+    "tooltip": "The next hit it takes deals x1.5 damage, then Brittle ends."
+  },
+  {
+    "id": "necroticBuildup",
+    "name": "Necrotic build-up",
+    "icon": "blight",
+    "tint": "#7a4fa3",
+    "stackMode": "add",
+    "decay": "none",
+    "tooltip": "When the build-up reaches the holder's current HP, it dies at the end of its own turn, bosses included. Only added by a necrotic hit while its Poise is broken. Lasts the whole fight."
+  },
+  {
+    "id": "knockback",
+    "name": "Knockback",
+    "icon": "motion",
+    "tint": "#c9a36a",
+    "stackMode": "unique",
+    "decay": "none",
+    "tooltip": "Knocked back: it must Advance (pay its Advance cost) before its next melee move."
   }
 ]

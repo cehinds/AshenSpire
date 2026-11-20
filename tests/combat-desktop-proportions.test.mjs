@@ -18,7 +18,9 @@ const gridFor = (width, height, narrow) => {
 
 // The grid still receives the layout flag, plus the explicit camera profile.
 test('the formation grid still follows the layout mode, as it did before the change', () => {
-  assert.match(stageSource, /alternativeFormation\(plan, fieldRect\.width, fieldRect\.height, document\.documentElement\.dataset\.layout === 'narrow', \{ \.\.\.presentation, handTop: Number\.isFinite\(planHandTop\) \? planHandTop : null, formFactor: document\.documentElement\.dataset\.formFactor \}\)/);
+  // The field and the hand's top arrive in canvas px (over the canvas fit, planFit); the plan is scaled back after.
+  // The resting cards' top (stageExtent, 2026-11-17) rides along in the same canvas px.
+  assert.match(stageSource, /alternativeFormation\(plan, fieldRect\.width \/ planFit, fieldRect\.height \/ planFit, document\.documentElement\.dataset\.layout === 'narrow', \{ \.\.\.presentation, handTop: Number\.isFinite\(planHandTop\) \? planHandTop \/ planFit : null,\n\s*handCardsTop: Number\.isFinite\(planCardsTop\) \? planCardsTop \/ planFit : null, formFactor: document\.documentElement\.dataset\.formFactor \}\);\n\s*ScaleFormationPlan\(plan, planFit\);/);
 });
 
 // The caller, not allocateCombatBands, decides the form factor's bands: combatLayout.js

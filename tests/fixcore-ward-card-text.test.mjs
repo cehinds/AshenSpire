@@ -8,6 +8,8 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { combatCardSummary } from '../src/model/playingCard.js';
 import { wardReadsAsPoise, poiseMergeGroups } from '../src/model/wardOffCardText.js';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
+import { legacyRules } from './legacyHitRules.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -32,7 +34,9 @@ test('merge groups: Ward and Poise damage on one target merge; other targets and
 });
 
 test('Core: a Ward damage face reads Poise damage; Current keeps Ward damage', () => {
-  assert.deepEqual(plain(cardFaceLines(WARD, null, core)), ['8 Poise', 'Entry: +1 Precision']);
+  // Owner, 2026-11-14: no Entry Precision line while the hit roll is off; a fight whose rules lack hitRoll keeps it.
+  assert.deepEqual(plain(cardFaceLines(WARD, null, core)), ['8 Poise']);
+  assert.deepEqual(plain(cardFaceLines(WARD, null, core, { fixCoreRules: legacyRules(fixCoreMechanics) })), ['8 Poise', 'Entry: +1 Precision']);
   assert.deepEqual(plain(cardFaceLines(WARD, null, current)), ['Inflict 8 Ward damage']);
 });
 

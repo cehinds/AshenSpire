@@ -6,7 +6,7 @@
 // the Cancel that restores both piles, the attack-slot allocation, the guard
 // instances and the mint counter; and which doors the settings open.
 //
-// The DOM half (the production screen over tests/helpers/reward-dom.mjs): a
+// The DOM half (the production screen over tests/helpers/dom.mjs): a
 // card added and removed by tap, by the ＋/－ buttons, and by a keyboard and a
 // gamepad dispatch; Done disabled with the refusal as visible text; Cancel
 // through the screen; Armoury under `free`, with no map-header door; the
@@ -21,7 +21,7 @@ import { locationServices, locationTags } from '../src/model/locations.js';
 import { deckEditorModel, deckEditorDoors, deckVariantKey, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
 import { deckEditorCollectionRows } from '../src/ui/models/deckEditorCollectionRows.js';
 import { setKeyBindings } from '../src/ui/input.js';
-import { withModalDom as withBaseDom } from './helpers/modal-dom.mjs';
+import { withModalDom as withBaseDom } from './helpers/dom.mjs';
 
 // The shared discard confirmation owns a short input-shield timer. Keep it
 // inside this synchronous DOM fixture instead of leaking into the next test.
@@ -59,7 +59,7 @@ test('the counter reads "N / min–max" and the refusal is the rules\' sentence'
   const run = freshRun();
   const n = run.deck.length;
   const inside = deckEditorModel({ registries: REG, run, settings: { deckMinSize: 1 } });
-  assert.equal(inside.counter.text, `${n} / 1–∞`);
+  assert.equal(inside.counter.text, `${n} / 1-∞`);
   assert.equal(inside.counter.outOfBounds, false);
   assert.equal(inside.done.disabled, false);
   const out = deckEditorModel({ registries: REG, run, settings: { deckMinSize: n + 5 } });
@@ -68,7 +68,7 @@ test('the counter reads "N / min–max" and the refusal is the rules\' sentence'
   assert.match(out.done.refusal, new RegExp(`\\b${n}\\b`));
   assert.match(out.done.refusal, new RegExp(`\\b${n + 5}\\b`));
   const capped = deckEditorModel({ registries: REG, run, settings: { deckMinSize: 1, deckMaxUnlimited: false, deckMaxSize: n + 2 } });
-  assert.equal(capped.counter.text, `${n} / 1–${n + 2}`);
+  assert.equal(capped.counter.text, `${n} / 1-${n + 2}`);
 });
 
 test('the curve counts the whole deck; filters and sort shape only the lists', () => {
@@ -208,7 +208,8 @@ test('an equipped run never splits a role basic: its upgrade comes from the sour
   const edit = openDeckEdit(REG, run, {});
   edit.remove(strike.instanceId);
   const model = deckEditorModel({ registries: REG, run, settings: {} });
-  assert.deepEqual(model.collection.filter((tile) => tile.source === 'basic').map((tile) => tile.key), ['basic:attack', 'basic:guard'],
+  // Sorted: the collection lists deck cards first (playtest 2026-11-17 item 45b), and this asks only which tiles exist.
+  assert.deepEqual(model.collection.filter((tile) => tile.source === 'basic').map((tile) => tile.key).sort(), ['basic:attack', 'basic:guard'],
     'stampDeck restamps every attack copy from its weapon, so there is no kept variant to choose');
   assert.equal(edit.add('basic:attack').ok, true);
   const slots = [...run.deck, ...run.sideboard].map((c) => c.equipmentAttackSlotId).filter(Boolean);
@@ -357,7 +358,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
     const counter = () => root.querySelector('.deck-editor-counter');
     const refusal = () => root.querySelector('#deck-editor-refusal');
     const doneButton = () => root.querySelector('#deck-editor-done');
-    assert.equal(counter().textContent, `${n} / ${n}–∞`);
+    assert.equal(counter().textContent, `${n} / ${n}-∞`);
     assert.equal(doneButton().disabled, false);
 
     // Selection is read-only. Only the explicit inspector action changes a copy.
@@ -367,7 +368,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
     openInspector(root.querySelector('.deck-editor-row .deck-editor-main[aria-pressed="true"]'));
     root.querySelector('[data-focus-key="selected-remove"]').click();
     assert.equal(run.deck.length, n - 1);
-    assert.equal(counter().textContent, `${n - 1} / ${n}–∞`);
+    assert.equal(counter().textContent, `${n - 1} / ${n}-∞`);
     assert.equal(counter().dataset.state, 'out');
     assert.equal(doneButton().disabled, true, 'Done is disabled out of bounds');
     assert.equal(doneButton().getAttribute('aria-disabled'), 'true');
@@ -1611,12 +1612,10 @@ test('DOM: a Counter shows a range only when its reply deals damage (v2)', async
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
     const rangeOf = (cardId) => row(cardId)?.querySelector('.deck-editor-range')?.dataset.range;
-    // Version-two Poise replies are offensive payloads and show their return range.
-    assert.equal(rangeOf('evasiveGuard'), 'melee', 'Evasive Guard returns Poise at Melee');
-    assert.equal(rangeOf('backstep'), 'melee', 'Backstep returns Poise at Melee');
-    // Dodge Roll and Quickstep reply with 3 damage (counterPayload hp 3), so they read Melee.
-    assert.equal(rangeOf('dodgeRoll'), 'melee', 'Dodge Roll replies with 3 damage');
-    assert.equal(rangeOf('quickstep'), 'melee', 'Quickstep replies with 3 damage');
+    // W25-EvadeCards (2026-11-15): Evasive Guard, Backstep and Dodge Roll add Evade stacks and carry no reply, so they show no return range.
+    for (const cardId of ['evasiveGuard', 'backstep', 'dodgeRoll']) assert.equal(rangeOf(cardId), undefined, `${cardId} has no reply range`);
+    // Quickstep adds a Counter stack that returns damage, so it reads Melee.
+    assert.equal(rangeOf('quickstep'), 'melee', 'Quickstep replies with its Counter stack');
     // Guard Counter's reply is a damage effect, so it keeps its Melee range.
     assert.equal(rangeOf('guardCounter'), 'melee', 'Guard Counter deals damage');
     editor.close();
@@ -1700,4 +1699,13 @@ test('Reading Desk: Cancel and Escape guard edits, Keep editing preserves them, 
     editor.root.querySelector('#deck-editor-done').click();
     assert.equal(saved, 1);
   });
+});
+
+test('the collection lists cards in the deck first, then the library (playtest 2026-11-17 item 45b)', () => {
+  const run = freshRun();
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  const inDeck = model.collection.map((tile) => tile.inDeck > 0);
+  const firstLibrary = inDeck.indexOf(false);
+  assert.ok(inDeck.includes(true), 'the fresh deck has collection tiles');
+  if (firstLibrary >= 0) assert.ok(inDeck.slice(firstLibrary).every((flag) => !flag), 'no deck card after the first library card');
 });

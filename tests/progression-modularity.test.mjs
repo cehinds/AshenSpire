@@ -9,7 +9,6 @@ import { composeProgressionContent } from '../src/model/progressionContent.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { classMilestoneOptions } from '../src/model/classMilestoneOffers.js';
 const modules = [cards, feats, relics];
 const options = { rules: contentBundle.balance.progression, unlocks: progressionUnlocks, knownModules: modules };
 
@@ -30,7 +29,6 @@ for (let mask = 0; mask < 8; mask++) test(`card/feat/relic module combination ${
     if (!installed) {
       assert.ok(!bundle.tagging.some(row => row.family === family && ids.has(row.objectId)));
       assert.ok(!bundle.classMastery.some(row => ids.has(row.ref)));
-      assert.ok(!classMilestoneOptions(reg, run, kind, 20).some(id => ids.has(id)));
     }
   }
 });

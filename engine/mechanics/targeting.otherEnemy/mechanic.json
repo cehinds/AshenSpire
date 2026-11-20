@@ -1,0 +1,26 @@
+{
+  "id": "targeting.otherEnemy",
+  "tag": "targeting.otherEnemy",
+  "version": "1.0.0",
+  "family": "targeting",
+  "label": "OtherEnemy",
+  "description": "Tag targeting.otherEnemy in the targeting family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "targeting.otherEnemy"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "resolveRawTargets"
+  }
+}

@@ -3,13 +3,13 @@
 // token-bearing job may run on, so the file is read as written.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const art = readFileSync(join(ROOT, '.github/workflows/art-migrate.yml'), 'utf8');
-const pages = readFileSync(join(ROOT, '.github/workflows/pages-builds.yml'), 'utf8');
+const art = readSourceTextSync(join(ROOT, '.github/workflows/art-migrate.yml'));
+const pages = readSourceTextSync(join(ROOT, '.github/workflows/pages-builds.yml'));
 
 test('shared art intake targets ashenspire and pin discovery excludes other projects', () => {
   assert.match(art, /ART_REPO: cehinds\/AI-Art/);
@@ -24,7 +24,7 @@ test('shared art intake targets ashenspire and pin discovery excludes other proj
 });
 
 test('Windows art PR validation only runs the offline chooser tests with read permission', () => {
-  const workflow = readFileSync(join(ROOT, '.github/workflows/windows-art-options.yml'), 'utf8');
+  const workflow = readSourceTextSync(join(ROOT, '.github/workflows/windows-art-options.yml'));
   assert.match(workflow, /\n  pull_request:\n/);
   assert.match(workflow, /permissions:\n  contents: read\n/);
   assert.match(workflow, /runs-on: windows-latest/);
@@ -158,14 +158,14 @@ test('pages: the newest run for the head SHA must itself be the success', () => 
 });
 
 test('pages: branch previews match feature, fix and chore prefixes in any case (Chore/X too)', () => {
-  const wf = readFileSync(new URL('../.github/workflows/pages-builds.yml', import.meta.url), 'utf8');
+  const wf = readSourceTextSync(new URL('../.github/workflows/pages-builds.yml', import.meta.url));
   const filters = wf.match(/test\("\^\(feature\|fix\|chore\)\/"[^)]*\)/g) || [];
   assert.ok(filters.length >= 3, `expected the three PR-branch filters, found ${filters.length}`);
   for (const f of filters) assert.match(f, /; "i"\)$/, `case-sensitive branch filter: ${f}`);
 });
 
 test('pages: the dev-preview workflow_run trigger admits feature/, fix/, chore/ branches in any case (branch filters are case-sensitive)', () => {
-  const wf = readFileSync(new URL('../.github/workflows/pages-builds.yml', import.meta.url), 'utf8');
+  const wf = readSourceTextSync(new URL('../.github/workflows/pages-builds.yml', import.meta.url));
   const line = wf.match(/workflow_run:[\s\S]*?branches: \[(.*)\]\s*$/m)?.[1] ?? '';
   const globs = [...line.matchAll(/'([^']+)'/g)].map(m => m[1]).filter(g => !g.startsWith('alternative/'));
   // GitHub filter globs: [..] is a one-character class, ** matches the rest.
@@ -180,7 +180,7 @@ test('pages: the dev-preview workflow_run trigger admits feature/, fix/, chore/ 
 // pages-builds publishes dev from the build-stamp run that follows the push, never from the push
 // itself. The guards are GitHub expressions, so each one is evaluated against the events it must
 // admit and refuse, not only matched as text. The translation covers the operators these guards use.
-const stampFile = readFileSync(join(ROOT, '.github/workflows/build-stamp.yml'), 'utf8');
+const stampFile = readSourceTextSync(join(ROOT, '.github/workflows/build-stamp.yml'));
 
 // The text of a job's `if:` (a single line, or a folded `>-` block whose lines are indented deeper).
 function jobIf(job) {

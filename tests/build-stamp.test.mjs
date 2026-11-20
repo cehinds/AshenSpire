@@ -402,7 +402,7 @@ test('build-stamp.yml never kills a running stamp, and states that a later run c
 test('dev-preview ignores only the two derived files on PRs and dev, and stays strict on promoted branches', () => {
   const step = DEV_PREVIEW.slice(DEV_PREVIEW.indexOf('- name: The rebuild changed nothing committed'));
   const body = step.slice(0, step.indexOf('\n      # #498'));
-  assert.match(body, /pull_request:\*\|push:dev\|push:alternative\/dev\|push:alternative\/\*\/dev\|workflow_dispatch:dev\|workflow_dispatch:alternative\/dev\|workflow_dispatch:alternative\/\*\/dev\)/, 'a dispatch on dev takes the relaxed branch too');
+  assert.match(body, /pull_request:\*\|push:dev\|push:alternative\/dev\|push:alternative\/\*\/dev\|workflow_dispatch:dev\|workflow_dispatch:alternative\/dev\|workflow_dispatch:alternative\/\*\/dev[|)]/, 'a dispatch on dev takes the relaxed branch too');
   assert.match(body, /grep -Ev '\^\(buildordinal\\\.json\|src\/content\/changelog\\\.generated\\\.js\)\$'/);
   assert.match(body, /\*\)\n {14}test -z "\$\(git status --porcelain\)" ;;/, 'every other ref keeps the strict check');
 });

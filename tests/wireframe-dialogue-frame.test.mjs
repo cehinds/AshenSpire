@@ -157,9 +157,9 @@ test('the frame vars refuse a config that cannot draw, by name', () => {
 
 test('the dialogue floor is the layout\'s floorPercent of its scene window; combat keeps its own', () => {
   const config = dialogueSceneConfig(W4C_LAYOUT, W4_PARENT, wireframeUi.scene);
-  assert.equal(config.floorFraction, 0.6);
+  assert.equal(config.floorFraction, 0.75);
   assert.equal(config.bleedFraction, W4_PARENT.layering.plate.bleedFraction);
-  assert.equal(wireframeUi.scene.floorFraction, 0.8, 'combat\'s battlefield is untouched');
+  assert.equal(wireframeUi.scene.floorFraction, 0.75, 'combat\'s battlefield is untouched');
   assert.deepEqual({ ...config, floorFraction: wireframeUi.scene.floorFraction }, { ...wireframeUi.scene });
 });
 
@@ -174,8 +174,8 @@ test('the plate is fitted to the scene window and runs on behind the frame\'s ot
     const [x, y, w] = window.skyline.viewBox;
     const scale = window.skyline.scale;
     assert.ok(framed.aligned, `${width}x${height} aligns the ground line`);
-    assert.ok(near(framed.frame.floorLine, bands.hud + bands.scene * (1 - 0.6)), 'floor line: window top + 40% of the window');
-    if (width === 1280) assert.ok(near(framed.frame.floorLine, 208), 'y 208 at 1280x800');
+    assert.ok(near(framed.frame.floorLine, bands.hud + bands.scene * (1 - 0.75)), 'floor line: window top + 25% of the window');
+    if (width === 1280) assert.ok(near(framed.frame.floorLine, 160), 'y 160 at 1280x800');
     const [fx, fy, fw, fh] = framed.frame.viewBox;
     assert.ok(near(fx, x) && near(fw, w), 'the same horizontal crop and scale as the window fit');
     assert.ok(near(fy, y - bands.hud / scale), 'extended up behind the HUD');
@@ -453,7 +453,10 @@ test('a compact host takes the compact band plan, and both plans sum to 100', ()
   assert.ok(near(roomy.hud, frame.height * 0.10), 'a roomy host keeps the 10% band');
   assert.ok(near(compact.hud, frame.height * 0.12), 'a compact host gets 12%');
   assert.ok(compact.hud > roomy.hud && compact.context < roomy.context, 'the room comes from the context band');
-  for (const shares of [W4C_LAYOUT.sizing.bands, W4C_LAYOUT.sizing.bandsCompact]) {
+  const desktop = dialogueBands({ width: 1800, height: 880, zoom: 1.1, rem: 16 }, W4C_LAYOUT, W4_PARENT, false, true);
+  assert.ok(near(desktop.scene, 880 * 0.59) && near(desktop.footer, 880 * 0.08), 'a fine-pointer desktop host gives the scene the room and the footer one short row');
+  assert.ok(near(dialogueBands(frame, W4C_LAYOUT, W4_PARENT, true, true).hud, frame.height * 0.12), 'a compact host ignores the desktop split');
+  for (const shares of [W4C_LAYOUT.sizing.bands, W4C_LAYOUT.sizing.bandsCompact, W4C_LAYOUT.sizing.bandsDesktop]) {
     assert.equal(shares.hud + shares.scene + shares.context + shares.footer, 100);
   }
   assert.throws(

@@ -1,5 +1,5 @@
 # Reach (`range:reach`)
-At reach: past arm's length but not yet ranged.
+Hits either row at its normal cost.
 - Carried by: cards.
-- Lives in: `src/engine/cardZones.js` (`validateZoneEffect`).
+- Lives in: `src/engine/bandRows.js` (`DefaultEnemyRow`).
 - Portability: legacy (service.json is empty until the behaviour moves to catalog ops).

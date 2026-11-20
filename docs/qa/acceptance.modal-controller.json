@@ -1,0 +1,499 @@
+{
+  "request": "Route the Armoury equip-compare, the Smith upgrade desk (Rest and Blacksmith), book reading / class-book receipt and the upgrade desk through the shared ModalController, and drop the redundant Tab traps in the profile archive, the profile notice and card inspection. Escape closes or goes back as before, a backdrop click closes only when the press began on the backdrop, focus returns to the opener, Tab stays inside, the browser back button closes these doors like Escape, and nothing looks different.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "rest-smith-desk-open",
+      "url": "?shot=rest",
+      "ready": "#smith-opt",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#smith-opt"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Smith upgrade desk (Rest, Smith option) is on screen",
+          "selector": ".smith-upgrade-modal"
+        },
+        {
+          "kind": "within",
+          "label": "Smith upgrade desk (Rest, Smith option) stays inside the viewport veil",
+          "selector": ".smith-upgrade-modal",
+          "container": ".upgrade-desk-veil"
+        },
+        {
+          "kind": "count",
+          "label": "The door is a modal dialog",
+          "selector": ".smith-upgrade-modal[role=\"dialog\"][aria-modal=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "More than one copy of the door is open",
+          "selector": ".smith-upgrade-modal",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "rest-smith-desk-escape",
+      "url": "?shot=rest",
+      "ready": "#smith-opt",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#smith-opt"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "key": "Escape"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "hidden",
+          "label": "Escape closes the Smith upgrade desk (Rest, Smith option)",
+          "selector": ".smith-upgrade-modal"
+        },
+        {
+          "kind": "visible",
+          "label": "The Shrine is still on screen",
+          "selector": ".rest-door"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The door is still open after Escape",
+          "selector": ".smith-upgrade-modal"
+        }
+      ]
+    },
+    {
+      "name": "armoury-equip-compare-open",
+      "url": "?shot=blacksmith",
+      "ready": "#shop-cat-armaments",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#shop-cat-armaments"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": "button.merchant-offer-action:visible:has-text(\"Buy\")"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "click": ".what-changed-modal .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".shop-buy-choice .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 1500
+          }
+        },
+        {
+          "click": ".equip-slot-choice [data-slot-option]"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "click": ".equip-slot-choice .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Armoury equip-compare (Blacksmith buy, equip, occupied slot) is on screen",
+          "selector": ".equip-compare-modal"
+        },
+        {
+          "kind": "within",
+          "label": "Armoury equip-compare (Blacksmith buy, equip, occupied slot) stays inside the viewport veil",
+          "selector": ".equip-compare-modal",
+          "container": ".equip-compare-veil"
+        },
+        {
+          "kind": "count",
+          "label": "The door is a modal dialog",
+          "selector": ".equip-compare-modal[role=\"dialog\"][aria-modal=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "More than one copy of the door is open",
+          "selector": ".equip-compare-modal",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "armoury-equip-compare-escape",
+      "url": "?shot=blacksmith",
+      "ready": "#shop-cat-armaments",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "#shop-cat-armaments"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": "button.merchant-offer-action:visible:has-text(\"Buy\")"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "click": ".what-changed-modal .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".shop-buy-choice .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 1500
+          }
+        },
+        {
+          "click": ".equip-slot-choice [data-slot-option]"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "click": ".equip-slot-choice .modal-foot button.primary"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "key": "Escape"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "hidden",
+          "label": "Escape closes the Armoury equip-compare (Blacksmith buy, equip, occupied slot)",
+          "selector": ".equip-compare-modal"
+        },
+        {
+          "kind": "visible",
+          "label": "The Armoury is still open behind the compare door",
+          "selector": ".modal.armoury"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The door is still open after Escape",
+          "selector": ".equip-compare-modal"
+        }
+      ]
+    },
+    {
+      "name": "profile-notice-fresh-open",
+      "url": "?shot=crisis",
+      "ready": ".fresh",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".fresh"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Profile notice: Start a new profile confirm is on screen",
+          "selector": ".confirm-fresh .modal.confirm-box"
+        },
+        {
+          "kind": "within",
+          "label": "Profile notice: Start a new profile confirm stays inside the viewport veil",
+          "selector": ".confirm-fresh .modal.confirm-box",
+          "container": ".modal-veil.confirm-fresh"
+        },
+        {
+          "kind": "count",
+          "label": "The door is a modal dialog",
+          "selector": ".confirm-fresh .modal.confirm-box[role=\"dialog\"][aria-modal=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "More than one copy of the door is open",
+          "selector": ".confirm-fresh .modal.confirm-box",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "profile-notice-fresh-escape",
+      "url": "?shot=crisis",
+      "ready": ".fresh",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": ".fresh"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "key": "Escape"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "hidden",
+          "label": "Escape closes the Profile notice: Start a new profile confirm",
+          "selector": ".confirm-fresh .modal.confirm-box"
+        },
+        {
+          "kind": "visible",
+          "label": "The profile notice is still on screen",
+          "selector": ".fresh"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The door is still open after Escape",
+          "selector": ".confirm-fresh .modal.confirm-box"
+        }
+      ]
+    },
+    {
+      "name": "profile-archive-open",
+      "url": "?shot=profile",
+      "ready": ".profile-archive-modal",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Profile archive door (title Profile) is on screen",
+          "selector": ".profile-archive-modal"
+        },
+        {
+          "kind": "within",
+          "label": "Profile archive door (title Profile) stays inside the viewport veil",
+          "selector": ".profile-archive-modal",
+          "container": ".modal-veil:has(.profile-archive-modal)"
+        },
+        {
+          "kind": "count",
+          "label": "The door is a modal dialog",
+          "selector": ".profile-archive-modal[role=\"dialog\"][aria-modal=\"true\"]",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "More than one copy of the door is open",
+          "selector": ".profile-archive-modal",
+          "min": 2
+        }
+      ]
+    },
+    {
+      "name": "profile-archive-escape",
+      "url": "?shot=profile",
+      "ready": ".profile-archive-modal",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "key": "Escape"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "hidden",
+          "label": "Escape closes the Profile archive door (title Profile)",
+          "selector": ".profile-archive-modal"
+        },
+        {
+          "kind": "visible",
+          "label": "The title menu is still on screen",
+          "selector": "#new-game"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The door is still open after Escape",
+          "selector": ".profile-archive-modal"
+        }
+      ]
+    }
+  ]
+}

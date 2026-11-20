@@ -1,0 +1,26 @@
+{
+  "id": "status.knockback",
+  "tag": "status.knockback",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Knockback",
+  "description": "Knocked back: it must Advance (pay its Advance cost) before its next melee move.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.knockback"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/elementIdentity.js",
+    "symbol": "OnPoiseBreak"
+  }
+}

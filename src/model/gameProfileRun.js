@@ -3,9 +3,13 @@ export { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes };
 import { deriveStat } from './derivedStats.js';
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
+import { PrAttributeView } from './fixCoreMechanics.js';
 import { upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
+import { ItemFamily } from './itemPicks.js';
+import { CLASS_LEVEL_BONUS_VERSION } from './classLevelBonus.js';
 
-export const isConfiguredRun = (subject) => (subject?.gameProfile || subject)?.foundation?.mode === 'configured';
+const STAT_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+export const isConfiguredRun =(subject) => (subject?.gameProfile || subject)?.foundation?.mode === 'configured';
 export const gameProfileAttributes = (subject, classId) => gameContent(subject, 'classAttributes')?.[classId];
 
 export function gameProfileClassAvailable(subject, meta = {}, classId) {
@@ -61,15 +65,42 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
   for (const [id, base] of Object.entries(stats.poolBasesByClass?.[classId] || {})) rows[id] = {
     ...(rows[id] || {}), base,
   };
+  // Owner, 2026-11-17: under `secondaryPolicy: "primaryOnly"` a row levelGains names reads only the attributes it lists
+  // (AR from STR, DR from DEX, Stamina from CON, Mana from WIS); every other attribute weight of that row is zeroed.
+  if (stats.secondaryPolicy === 'primaryOnly') {
+    for (const row of Object.values(rows)) for (const attribute of STAT_ATTRIBUTES) if (!Object.hasOwn(row, attribute)) row[attribute] = 0;
+  }
+  // How many attribute points one +1 of a pool costs, the points it counts from, and the attributes it reads the highest of
+  // (owner, 2026-11-17: SP = 3 + floor((DEX - 1) / 3), MP = 1 + floor((max(INT, WIS) - 1) / 3)).
+  for (const [name, points] of Object.entries(stats.pointsPerIncrease || {})) {
+    const id = aliases[name] || name;
+    rows[id] = { ...(rows[id] || {}), pointsPerIncrease: points };
+  }
+  for (const [name, baseline] of Object.entries(stats.attributeBaseline || {})) {
+    const id = aliases[name] || name;
+    rows[id] = { ...(rows[id] || {}), attributeBaseline: baseline };
+  }
+  for (const [name, ids] of Object.entries(stats.maxOf || {})) {
+    const id = aliases[name] || name;
+    rows[id] = { ...(rows[id] || {}), maxOf: [...ids] };
+  }
   for (const id of ['openingHand', 'draw']) rows[id] = {
     ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0,
     byClass: {},
   };
-  return { ...options, explicitOverride: {
-    ...(options.explicitOverride || {}), rules: {
-      ...(options.explicitOverride?.rules || {}), ...rows,
-    },
-  } };
+  // Every class's pool base and per-level growth (owner, 2026-11-17: HP = 30 + 5 x (CON + level) is base 35, CON 5 and 5 per level
+  // after the first). A run layer, not the explicit override, so a relic's flat bonus still adds to the base.
+  const pools = {};
+  for (const [id, base] of Object.entries(stats.poolBases || {})) pools[id] = { ...(pools[id] || {}), base };
+  for (const [id, perLevel] of Object.entries(stats.levelGrowth || {})) pools[id] = { ...(pools[id] || {}), perLevel };
+  const runModifiers = Array.isArray(options.runModifiers) ? options.runModifiers : options.runModifiers ? [options.runModifiers] : [];
+  return { ...options,
+    ...(Object.keys(pools).length ? { runModifiers: [...runModifiers, { rules: pools }] } : {}),
+    explicitOverride: {
+      ...(options.explicitOverride || {}), rules: {
+        ...(options.explicitOverride?.rules || {}), ...rows,
+      },
+    } };
 }
 
 export function initializeGameProfileRun(registries, run, { profileMeta = {} } = {}) {
@@ -85,9 +116,10 @@ export function initializeGameProfileRun(registries, run, { profileMeta = {} } =
   run.deck = ids.map((cardId, i) => ({ instanceId: `gp${i + 1}`, cardId, upgraded: false }));
   run.sideboard = [];
   run.equipmentAttackSlotCount = 0;
-  run.feats = [];
   run.skills = {};
   run.coreTags = [];
+  // A run born from today pays the odd-level class bonus; an older save carries no field and gets none.
+  if (gameModule(run, 'progression')?.characterLevels) run.classLevelBonusVersion = CLASS_LEVEL_BONUS_VERSION;
 }
 
 // Synchronous internal service scope; low-level mutation doors cannot bypass rest.
@@ -112,7 +144,7 @@ export function gameProfileRatingReceipt(registries, run) {
   const stats = gameModule(run,'stats')?.mode === 'configured';
   if (stats) for (const id of ids) {
     const table = run.derivedStatRuleSnapshot?.rules || registries.derivedStatRules;
-    const receipt = deriveStat(table,id,{attributes,classDef:registries.classes.get(run.class),level:run.level?.level || 1});
+    const receipt = deriveStat(table,id,{attributes: id === 'pr' ? PrAttributeView(run,attributes) : attributes,classDef:registries.classes.get(run.class),level:run.level?.level || 1});
     attributeReceipts[id] = receipt; totals[id] = receipt.value;
   }
   const sources = [{name:'Attributes',kind:'attribute',...totals}];
@@ -136,10 +168,13 @@ export function gameProfileRatingReceipt(registries, run) {
         else {
           const itemTier = tier(`armament/${id}`);
           weaponTier = Math.max(weaponTier,itemTier);
-          if (gameModule(run,'gear')?.armorBudget && itemTier) {
+          // Under the gear module's `statPoints` (Core, owner 2026-11-17) a tier adds attribute points to the item instead (gameProfileGear.js).
+          if (gameModule(run,'gear')?.armorBudget && !gameModule(run,'gear')?.statPoints && itemTier) {
             const ar = upgradeTierBonus(gameModule(run,'equipment'),itemTier) * policy.weaponARPerTier;
-            totals.ar += ar;
-            sources.push({name:piece.name || id,kind:'equipment',sourceId:`armament/${id}`,itemId:id,slot,ar,dr:0,pr:0,ward:0,poise:0,weaponTier:itemTier});
+            // A magic weapon's tier also raises its spells: the same bonus lands in PR (W25 upgrades, step 1).
+            const pr = ItemFamily(run,`armament/${id}`) === 'magic' ? ar : 0; // a category change can make a staff martial, a sword magic
+            totals.ar += ar; totals.pr += pr;
+            sources.push({name:piece.name || id,kind:'equipment',sourceId:`armament/${id}`,itemId:id,slot,ar,dr:0,pr,ward:0,poise:0,weaponTier:itemTier});
           }
         }
       }

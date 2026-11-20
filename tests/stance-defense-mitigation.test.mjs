@@ -14,6 +14,7 @@ import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { stanceMitigation } from '../src/engine/stanceMitigation.js';
 import { previewTacticalAction } from '../src/engine/combatMatchups.js';
 import { defensiveCombatStance } from '../src/engine/concurrentStances.js';
+import { withoutStanceBenefitDefaults } from './legacyHitRules.mjs';
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
 const json = path => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
 const defaults = json('../engine/modules/stances/defaults.json');
@@ -22,6 +23,8 @@ const carrier = maneuver => ({ combatProfile: { camp: 'physical', maneuver, rang
 function context(mode = 'core') {
   const gameProfile = structuredClone(resolveGameProfile(mode));
   gameProfile.modules.stances = { ...defaults, mode: mode === 'core' ? 'configured' : 'legacy' };
+  // These tests pin the defense-mitigation stage, not damage scale: halved hits leave Block soaking whole hits, so the Core 0.5 base-damage scale is off here.
+  gameProfile.modules.effects = { ...gameProfile.modules.effects, baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 };
   return { gameProfile };
 }
 const fighter = (id, combatStance) => ({ id, kind: id === 'player' ? 'player' : 'enemy', alive: true, hp: 100, maxHp: 100, statuses: {}, block: 0, ratings: { ar: 0, dr: 0, poise: 0 }, combatStance });
@@ -52,12 +55,16 @@ test('Core winning defense mitigates exactly once before configured Block/Poise,
   assert.equal(profileDamageReceipt(ctx, source, { ...player, block: 0, gameProfilePoise: 0 }, 20, carrier('attack')).hpLoss, 20);
 });
 
-for (const mode of ['core']) test(`${mode} actual grouped damage matches green HP projection without double mitigation`, () => {
+// Owner, 2026-11-14 (Wave 2.5): the enemy's Attack stance deals +20% (8 -> 9 a hit), so the shipped Core quotes and loses 17 HP (baseline 23). A fight created
+// before the stance benefits keeps the older 14 (baseline 20): `legacy` builds it without the `stanceBenefits` rules.
+// Theme B (owner, 2026-11-17): the no-stance baseline is Idle, which takes x1.25 from every hit, so the shipped baseline is 32; the Counter-stance quote is unchanged.
+for (const [mode, legacy, expected, baseline] of [['core', false, 17, 32], ['core', true, 14, 20]]) test(`${mode}${legacy ? ' (fight before stance benefits)' : ''} actual grouped damage matches green HP projection without double mitigation`, () => {
   const { gameProfile } = context(mode);
   const original = resolveGameProfile(mode);
   const registries = mode === 'core' ? bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, original)), original) : createRegistries(contentBundle);
-  const combat = createCombat({ registries, gameProfile, rng: createRng(73), combatExpansionVersion: 2,
+  const build = () => createCombat({ registries, gameProfile, rng: createRng(73), combatExpansionVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 100, maxHp: 100, maxMana: 5, mana: 5, maxStamina: 5, stamina: 5, energyMax: 5, drawPerTurn: 1, deck: [] } });
+  const combat = legacy ? withoutStanceBenefitDefaults(build) : build();
   const enemy = combat.enemies[0];
   enemy.intent = { kind: 'attack', moveId: 'slash', damage: 8, hits: 3, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
   enemy.proposalIntentRevealedUntil = 99;
@@ -69,17 +76,15 @@ for (const mode of ['core']) test(`${mode} actual grouped damage matches green H
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   const before = JSON.stringify({ player: combat.player, enemies: combat.enemies, counters: combat.rng.getCounters() });
   const projected = projectCombatIntent(combat, enemy.id).projectedDamage;
-  // Owner, 2026-11-03: Core quotes the raw hit (3 x 8 = 24) whatever the Counter stance and Block do; the real loss is still 14.
-  // The archived 'current' profile keeps its net projection.
-  if (mode === 'core') { assert.equal(projected.max, 24); assert.equal(projected.baseline.max, 24); assert.equal(projected.tone, 'red'); }
-  else { assert.equal(projected.max, 14); assert.equal(projected.baseline.max, 20); assert.equal(projected.tone, 'green'); }
+  // Owner, 2026-11-14: Core quotes the HP the player will lose after the Counter stance and 4 Block, against the neutral-stance baseline.
+  assert.equal(projected.max, expected); assert.equal(projected.baseline.max, baseline); assert.equal(projected.tone, 'green');
   assert.equal(JSON.stringify({ player: combat.player, enemies: combat.enemies, counters: combat.rng.getCounters() }), before);
   const card = enemyMoveCarrier(enemy, registries.enemies.get(enemy.enemyId).moves.slash, 'slash', combat);
   combat.rng.int = () => 20; combat.rng.float = () => 0;
   const hp = combat.player.hp;
   enqueueExpandedAction(combat, [{ effect: { op: 'damage', target: 'player', amount: 8, hits: 3 }, source: enemy, owner: enemy, target: combat.player, card, meta: {} }], { source: enemy, target: combat.player, carrier: card });
   while (combat.queue.length) executeAction(combat, combat.queue.shift());
-  assert.equal(hp - combat.player.hp, 14, 'real HP loss is unchanged');
+  assert.equal(hp - combat.player.hp, expected, 'real HP loss is what was quoted');
 });
 
 test('missing resolved setting preserves old saves and concurrent stance chooses real mitigation', () => {

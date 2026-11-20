@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { executeAction } from '../src/engine/actions.js';
@@ -12,7 +11,7 @@ import { syncWardMaximum, syncPoiseMaximum } from '../src/engine/combatPools.js'
 const registries = createRegistries(contentBundle);
 function fixture(camp = 'physical', school) {
   const ctx = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2,
-    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 20, mana: 20,
       maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, deck: [] } });
   const actor = ctx.player;

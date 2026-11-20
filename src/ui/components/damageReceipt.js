@@ -1,5 +1,6 @@
 import { esc, attachTooltip, showTooltipFor } from './tooltip.js';
 import { t } from '../strings.js';
+import { ActivateOnKey } from '../selection.js';
 
 const number = value => Number.isFinite(value) ? String(Number(value.toFixed(4))) : '?';
 
@@ -78,22 +79,31 @@ function damageDetailTopics(hits) {
     .filter(([, text]) => text);
 }
 
+function yourDamageText(receipt) {
+  return receipt.yourHits > 1 ? t('combat.receipt.yourDamageTimes', { amount: receipt.yourDamage, count: receipt.yourHits })
+    : t('combat.receipt.yourDamage', { amount: receipt.yourDamage });
+}
+
 export function damageReceiptHtml(receipt, { targetName = null, expanded = false } = {}) {
   if (!Array.isArray(receipt?.hits) || !receipt.hits.length) return '';
   const scope = receipt.targetId ? `Against ${targetName || receipt.targetId}; on successful hits` : 'Before target defenses; on successful hits';
   const title = '<div class="tt-title">Damage calculation</div>';
-  if (expanded) return `<div class="damage-receipt">${title}<p>${esc(scope)}</p>${damageReceiptLines(receipt).map(line => `<div>${esc(line)}</div>`).join('')}</div>`;
+  // Owner, 2026-11-14: the top line is the damage the card deals from your side (the number on its face); the breakdown that follows ends on the HP lost.
+  const yours = Number.isFinite(receipt.yourDamage) ? `<p class="damage-receipt-yours">${esc(yourDamageText(receipt))}</p>` : '';
+  if (expanded) return `<div class="damage-receipt">${title}${yours}<p>${esc(scope)}</p>${damageReceiptLines(receipt).map(line => `<div>${esc(line)}</div>`).join('')}</div>`;
   const summary = `${detailNumber(receipt.totalDamage)} HP damage · ${receipt.hits.length} hit${receipt.hits.length === 1 ? '' : 's'}`;
   const topics = damageDetailTopics(receipt.hits).map(([label, text, ariaLabel]) =>
     `<span class="tooltip-keyword" tabindex="0" role="button" aria-label="${esc(ariaLabel)}" data-tip="${esc(text)}">${label}</span>`).join(' · ');
-  return `<div class="damage-receipt">${title}<p>${esc(summary)}</p><p>${esc(scope)}</p><div>${topics}</div></div>`;
+  return `<div class="damage-receipt">${title}${yours}<p>${esc(summary)}</p><p>${esc(scope)}</p><div>${topics}</div></div>`;
 }
 
 export function cardDamageReceipt(preview) {
   const receipts = (preview?.values || []).filter(entry => entry.op === 'damage' && entry.damageReceipt).map(entry => entry.damageReceipt);
   if (!receipts.length) return null;
+  const face = (preview.values || []).find(entry => entry.op === 'damage' && entry.damageReceipt && Number.isFinite(entry.faceValue));
   return { ...receipts[0], hits: receipts.flatMap(receipt => receipt.hits || []),
-    totalDamage: receipts.reduce((total, receipt) => total + (receipt.totalDamage || 0), 0) };
+    totalDamage: receipts.reduce((total, receipt) => total + (receipt.totalDamage || 0), 0),
+    ...(face ? { yourDamage: face.faceValue, yourHits: Math.max(1, Math.floor(face.hits || 1)) } : {}) };
 }
 
 export function damageNumberUnderLane(event) {
@@ -117,15 +127,8 @@ function routeHandDamageInspection() {
     hovered = next;
     hovered?.dispatchEvent(new PointerEvent('pointerenter', { pointerType: event.pointerType || 'mouse', clientX: event.clientX, clientY: event.clientY }));
   }, true);
-  document.addEventListener('pointerdown', event => {
-    if (damageNumberUnderLane(event)) event.stopImmediatePropagation();
-  }, true);
-  document.addEventListener('click', event => {
-    const number = damageNumberUnderLane(event);
-    if (!number) return;
-    event.preventDefault(); event.stopImmediatePropagation();
-    number.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  }, true);
+  // Owner, 2026-11-14: a press or click on a damage number is a press on the card (it selects it); the inspector opens from hover,
+  // keyboard focus, the touch long-press and the card's info badge, never from the click, so nothing here swallows pointerdown or click.
 }
 
 /** Mouse, focus and touch share the exact same engine calculation. */
@@ -143,13 +146,6 @@ export function bindDamageReceipt(card, preview) {
     node.setAttribute('role', 'button');
     node.setAttribute('aria-label', `${node.textContent}. Inspect damage calculation`);
     attachTooltip(node, html);
-    const inspect = event => {
-      event.stopPropagation();
-      if (event.type === 'keydown') { if (!['Enter', ' '].includes(event.key)) return; event.preventDefault(); }
-      showTooltipFor(node, html(), { intent: 'above', align: 'center' });
-    };
-    node.addEventListener('pointerdown', event => event.stopPropagation());
-    node.addEventListener('click', inspect);
-    node.addEventListener('keydown', inspect);
+    ActivateOnKey(node, () => showTooltipFor(node, html(), { intent: 'above', align: 'center' }), { shouldStopPropagation: true });
   }
 }

@@ -20,7 +20,6 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/ashenBlight.js",
-    "symbol": "ashenBlightBonuses"
+    "file": "src/engine/elementIdentity.js"
   }
 }

@@ -20,7 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/loadout.js",
+    "file": "src/model/loadout/grantSources.js",
     "symbol": "startingDeckSettings"
   }
 }

@@ -20,6 +20,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { normalizeLfText } from './working-tree-text.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const README = resolve(ROOT, 'README.md');
@@ -107,7 +108,8 @@ function main() {
     process.exitCode = 2;
     return;
   }
-  const source = readFileSync(README, 'utf8');
+  const sourceOnDisk = readFileSync(README, 'utf8');
+  const source = normalizeLfText(sourceOnDisk);
   const { text, problems } = syncText(source);
   if (problems.length) {
     for (const problem of problems) console.error(`README SYNC: ${problem}`);
@@ -119,7 +121,8 @@ function main() {
     return;
   }
   if (write) {
-    writeFileSync(README, text, 'utf8');
+    const output = sourceOnDisk.includes('\r\n') ? text.replace(/\n/g, '\r\n') : text;
+    writeFileSync(README, output, 'utf8');
     console.log('README SYNC UPDATED');
     return;
   }

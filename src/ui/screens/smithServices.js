@@ -5,7 +5,7 @@
 // the plan, the model and the modal, and the one commit call.
 import { extractionPlan, installPlan, commitExtraction, commitInstall } from '../../model/cardExtraction.js';
 import { mountServiceModel } from '../models/MountServiceModel.js';
-import { serviceIdleReason } from '../../model/blacksmith.js';
+import { shopSentence } from '../../model/shopKinds.js';
 import { mountMountServiceModal } from '../components/mountServiceModal.js';
 
 /**
@@ -22,7 +22,7 @@ export function mountServiceOffer(registries, run, service) {
     stones: plan.stones,
     cost: plan.cost,
     refusal: plan.refusal || null,
-    summary: plan.refusal ? serviceIdleReason('extractArt', run) : plan.candidates.length
+    summary: plan.refusal ? shopSentence(`blacksmith.refuse.extract.${plan.refusal}`) : plan.candidates.length
       ? `${plan.cost === 0 ? 'Free' : `${plan.cost} Smithing Stone${plan.cost === 1 ? '' : 's'}`} · ${plan.candidates.length} item${plan.candidates.length === 1 ? '' : 's'} to work on.`
       : (service === 'extract' ? 'Nothing you carry lends a card a smith can lift out.' : 'No item has an open mount, or no deck card would fit one.'),
   });

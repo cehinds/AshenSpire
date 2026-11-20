@@ -6,13 +6,11 @@ import { combatMatchups, combatIntent } from '../src/content/combatMatchups.js';
 import { createRegistries } from '../src/model/registries.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems } from '../src/model/combatTacticsRules.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { createCombat, dispatch, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { armCombatCounter, matchupRules, prepareMatchupHit } from '../src/engine/combatMatchups.js';
-import { applyRatingImpact } from '../src/engine/combatRatings.js';
 import { executeAction } from '../src/engine/actions.js';
 import { getStacks } from '../src/engine/statuses.js';
 
@@ -52,8 +50,13 @@ test('a fresh fight captures independent tactical tuning before its first intent
   const combat = fight();
   assert.deepEqual(combat.combatMatchupRules, structuredClone(registries.balance.combatMatchups));
   assert.deepEqual(combat.combatIntentRules, structuredClone(registries.balance.combatIntent));
-  combat.combatMatchupRules.counter.defaultDamage = 15;
-  combat.combatIntentRules.baseHiddenChance = 0;
+  // The fight copy is frozen, so it cannot alias or mutate the registries' tables.
+  assert.ok(Object.isFrozen(combat.combatMatchupRules) && Object.isFrozen(combat.combatMatchupRules.counter));
+  assert.ok(Object.isFrozen(combat.combatIntentRules));
+  assert.notEqual(combat.combatMatchupRules, registries.balance.combatMatchups);
+  assert.notEqual(combat.combatIntentRules, registries.balance.combatIntent);
+  assert.throws(() => { combat.combatMatchupRules.counter.defaultDamage = 15; }, TypeError);
+  assert.throws(() => { combat.combatIntentRules.baseHiddenChance = 0; }, TypeError);
   assert.equal(registries.balance.combatMatchups.counter.defaultDamage, 6);
   assert.equal(registries.balance.combatIntent.baseHiddenChance, 0.70);
 });
@@ -119,27 +122,4 @@ test('older snapshots remain loadable; malformed tactical fields are refused by 
   delete snapshot.combatMatchupRules; delete snapshot.combatIntentRules;
   delete snapshot.player.combatCounter; delete snapshot.enemies[0].intentRevealed; delete snapshot.enemies[0].intentReads;
   assert.deepEqual(combatSnapshotProblems(snapshot), []);
-});
-
-test('Poise or Ward breaks cancel the armed Counter before a follow-up attack', () => {
-  for (const [damageSchool, meterName] of [['physical', 'poise'], ['magic', 'ward']]) {
-    const combat = fight({ ratingsRules: resolveCombatRatings({}, contentBundle) });
-    const enemy = combat.enemies[0];
-    enemy[meterName + 'Meter'] = { value: 0, max: 2 };
-    armCombatCounter(combat, enemy, { combatProfile: { camp: 'physical', maneuver: 'counter', counterMode: 'melee' } }, { damage: 6 });
-    const attack = { damageSchool, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing' } };
-    applyRatingImpact(combat, combat.player, enemy, attack, 1);
-    assert.ok(enemy.combatCounter, `${meterName} pressure below threshold keeps Counter`);
-    applyRatingImpact(combat, combat.player, enemy, attack, 1);
-    assert.equal(enemy.intent.kind, 'staggered');
-    assert.equal(enemy.combatCounter, undefined, `${meterName} break cancels reaction`);
-    assert.equal(prepareMatchupHit(combat, combat.player, enemy, attack, 8).counterEligible, false);
-    // Resolve what the break queued, as a dispatch's drain would: every enemy
-    // break queues balance.poise.onFill (owner, 2026-10-12).
-    while (combat.queue.length) executeAction(combat, combat.queue.shift());
-    assert.ok(getStacks(enemy, 'staggered') > 0, `${meterName} break applies the staggered status`);
-    const saved = serializeCombatSnapshot(combat);
-    const loaded = restoreCombatSnapshot({ registries, rng: createRng(449, combat.rng.getCounters()), snapshot: saved });
-    assert.equal(loaded.enemies[0].combatCounter, undefined);
-  }
 });

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "status",
   "label": "Opportunist",
-  "description": "When an enemy staggers, become Prepared and draw 1 card per stack.",
+  "description": "When an enemy is Broken, become Prepared and draw 1 card per stack.",
   "attaches": [
     "status"
   ],

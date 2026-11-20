@@ -7,7 +7,7 @@ const entity = maneuver => ({ combatStance: maneuver ? { maneuver, camp: 'physic
 
 // Owner 2026-11-05: no stance badge in the HUD row; the stance summary stays available as data.
 test('the stance summary is still built, but the health row never carries a stance badge', () => {
-  for (const [maneuver, label] of [['attack', 'Attack'], ['counter', 'Counter'], ['evade', 'Evade']]) {
+  for (const [maneuver, label] of [['attack', 'Attack'], ['counter', 'Counter'], ['evade', 'Defense']]) {
     const stance = stanceBadgeFor(entity(maneuver), ctx);
     assert.ok(stance, maneuver);
     assert.match(stance.help, new RegExp(`^Stance: ${label}`));

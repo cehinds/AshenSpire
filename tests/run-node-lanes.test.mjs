@@ -4,10 +4,11 @@ import { readFileSync, readdirSync, existsSync, mkdirSync, mkdtempSync, writeFil
 import { join, resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const RUNNER = readFileSync(join(ROOT, 'tests/run-node.mjs'), 'utf8');
+const RUNNER = readSourceTextSync(join(ROOT, 'tests/run-node.mjs'));
 
 test('default and old lane flags retain their complete original work', () => {
   assert.deepEqual(parseRunNodeOptions([]), { core: true, selftests: true, discovered: true, shard: null, selftestGroup: null, slow: 'include' });
@@ -76,10 +77,17 @@ test('every SLOW_DISCOVERED entry names a discovered test file with a reason', (
 });
 
 test('every existing selftest site participates in the exhaustive link/other partition', () => {
-  const guards = [...RUNNER.matchAll(/if \(SELFTESTS && selftestInGroup\(options\.selftestGroup, '([^']+)'\)\)/g)].map(match => match[1]);
+  // Selftest sites are table rows (`lane: 'selftest', group: '<tool>'`, run by the
+  // one loop that applies selftestInGroup to the row's group) plus the lanes
+  // that still guard themselves with an explicit `if (SELFTESTS && ...)`.
+  const guarded = [...RUNNER.matchAll(/if \(SELFTESTS && selftestInGroup\(options\.selftestGroup, '([^']+)'\)\)/g)].map(match => match[1]);
+  const rows = [...RUNNER.matchAll(/lane: 'selftest', group: '([^']+)'/g)].map(match => match[1]);
+  const guards = [...rows, ...guarded];
   assert.equal(guards.length, 18, 'all original selftest call sites are routed');
   assert.equal(new Set(guards).size, guards.length);
-  assert.equal((RUNNER.match(/if \(SELFTESTS\b/g) || []).length, guards.length, 'no ungrouped call site');
+  assert.equal((RUNNER.match(/if \(SELFTESTS\b/g) || []).length, guarded.length, 'no ungrouped call site');
+  assert.equal((RUNNER.match(/lane: 'selftest'/g) || []).length, rows.length, 'every selftest row names its group');
+  assert.match(RUNNER, /gate\.lane === 'selftest' \? SELFTESTS && selftestInGroup\(options\.selftestGroup, gate\.group\) : CORE/, 'the table loop applies the group to every selftest row');
   const link = guards.filter(tool => selftestInGroup('link', tool));
   const other = guards.filter(tool => selftestInGroup('other', tool));
   assert.deepEqual(link, ['linkcheck']);
@@ -100,8 +108,10 @@ function fixture(run) {
   writeFileSync(join(dir, 'package.json'), '{"type":"module"}');
   copyFileSync(join(ROOT, 'tests/run-node.mjs'), join(dir, 'tests/run-node.mjs'));
   copyFileSync(join(ROOT, 'tests/run-node-lanes.mjs'), join(dir, 'tests/run-node-lanes.mjs'));
+  mkdirSync(join(dir, 'tests/helpers'));
+  copyFileSync(join(ROOT, 'tests/helpers/run-node-fixtures.mjs'), join(dir, 'tests/helpers/run-node-fixtures.mjs'));
   writeFileSync(join(dir, 'tests/engine.test.js'), 'export function runTests(){throw new Error("ENGINE_LANE_MUST_NOT_RUN")}');
-  for (const file of ['confirmation-modal', 'reward-confirm', 'card-removal-flick']) {
+  for (const file of ['confirmation-modal', 'card-removal-flick']) {
     writeFileSync(join(dir, `tests/${file}.test.mjs`), 'throw new Error("EXCLUDED_TEST_MUST_NOT_RUN");');
   }
   writeFileSync(join(dir, 'tools/bundle.test.mjs'), 'throw new Error("EXCLUDED_TEST_MUST_NOT_RUN");');
@@ -154,10 +164,10 @@ test('discovery-only keeps failed assertions, syntax errors and stale exclusions
   assert.equal(result.status, 1, result.output);
   assert.match(result.output, /SyntaxError/);
   writeFileSync(probe, "import test from 'node:test'; test('clean',()=>{});");
-  rmSync(join(dir, 'tests/reward-confirm.test.mjs'));
+  rmSync(join(dir, 'tests/card-removal-flick.test.mjs'));
   result = invoke(dir, ['--discovered-only']);
   assert.equal(result.status, 1, result.output);
-  assert.match(result.output, /NOT_SPAWNED names tests\/reward-confirm\.test\.mjs/);
+  assert.match(result.output, /NOT_SPAWNED names tests\/card-removal-flick\.test\.mjs/);
 }));
 
 test('actual link group runs only the original link verdict, and unknown remains red', () => fixture(dir => {
@@ -190,7 +200,7 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     ['ci.yml', 'test-discovered', 'test-selftests', 'test'],
     ['tests.yml', 'discovered', 'selftests', 'core'],
   ]) {
-    const workflow = readFileSync(join(ROOT, '.github/workflows', file), 'utf8');
+    const workflow = readSourceTextSync(join(ROOT, '.github/workflows', file));
     const discovery = job(workflow, discovered);
     assert.match(discovery, /timeout-minutes: 20/);
     assert.match(discovery, /fail-fast: false/);
@@ -201,7 +211,7 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     if (file === 'ci.yml') {
       assert.match(discovery, /--discovered-only --shard \$\{\{ matrix\.shard \}\}/);
       assert.match(discovery, /if: runner\.os != 'Windows'\n        run: node tools\/verdict\.mjs -- node tests\/run-node\.mjs --discovered-only --shard/);
-      assert.match(discovery, /if: runner\.os == 'Windows'\n        run: node tools\/verdict\.mjs -- node tests\/run-node\.mjs --discovered-only --no-slow --shard/);
+      assert.match(discovery, /if: runner\.os == 'Windows'\n        run: node tools\/verdict\.mjs -- node tests\/run-node\.mjs --discovered-only --no-slow --shard \$\{\{ matrix\.shard \}\}/);
       assert.doesNotMatch(discovery, /--slow-only/);
     } else {
       assert.match(discovery, /--discovered-only --no-slow --shard \$\{\{ matrix\.shard \}\}/);
@@ -209,11 +219,12 @@ test('both workflow matrices execute all discovery shards and both selftest grou
         assert.doesNotMatch(workflow, new RegExp(`^  ${gone}:\\r?$`, 'm'), `${gone} is in ci.yml's test stage, not tests.yml`);
       }
     }
-    const shards = [...discovery.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]);
-    assert.deepEqual(shards, ['0/4', '1/4', '2/4', '3/4']);
+    if (file === 'tests.yml') {
+      const shards = [...discovery.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]);
+      assert.deepEqual(shards, ['0/4', '1/4', '2/4', '3/4']);
+    }
     assert.match(discovery, /fetch-art/);
     assert.match(discovery, /Pillow==11\.1\.0/);
-    if (file === 'ci.yml') assert.match(discovery, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
     if (file === 'ci.yml') {
       const corpus = job(workflow, selftests);
       assert.match(corpus, /timeout-minutes: 20/);
@@ -227,8 +238,20 @@ test('both workflow matrices execute all discovery shards and both selftest grou
 });
 
 
-test('Windows fast shards and isolated slow jobs cover the real discovered corpus exactly once', () => {
-  const workflow = readFileSync(join(ROOT, '.github/workflows/ci.yml'), 'utf8');
+test('the configured discovery shards and isolated jobs cover the real corpus once per platform', () => {
+  const workflow = readSourceTextSync(join(ROOT, '.github/workflows/ci.yml'));
+  const discovery = job(workflow, 'test-discovered');
+  const matrix = discovery.split('      matrix:\n')[1].split('\n    steps:')[0];
+  const [axis, ...rows] = matrix.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('#'));
+  assert.equal(axis, 'include:');
+  const configured = new Map();
+  for (const row of rows) {
+    const match = /^- \{ os: ([\w-]+), shard: '(\d+\/\d+)' \}$/.exec(row);
+    assert.ok(match, `unexpected discovery matrix row: ${row}`);
+    const [, os, shard] = match;
+    if (!configured.has(os)) configured.set(os, []);
+    configured.get(os).push(shard);
+  }
   const isolated = job(workflow, 'test-discovered-slow-windows');
   assert.match(isolated, /runs-on: windows-latest/);
   assert.match(isolated, /timeout-minutes: 20/);
@@ -243,7 +266,7 @@ test('Windows fast shards and isolated slow jobs cover the real discovered corpu
   assert.deepEqual(slow.slice().sort(), [...SLOW_DISCOVERED.keys()].sort(), 'matrix is the existing closed slow set, without duplicates');
   const skipped = new Set(['node_modules', 'dist', 'build', 'scratch']);
   const elsewhere = new Set([...RUNNER.slice(RUNNER.indexOf('const NOT_SPAWNED ='), RUNNER.indexOf('const found =')).matchAll(/\['([^']+\.test\.mjs)'/g)].map(match => match[1]));
-  assert.equal(elsewhere.size, 4, 'the census retains every runner exclusion');
+  assert.equal(elsewhere.size, 3, 'the census retains every runner exclusion');
   const files = [];
   const walk = dir => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -258,13 +281,21 @@ test('Windows fast shards and isolated slow jobs cover the real discovered corpu
   walk(ROOT); files.sort();
   const eligible = files;
   const fast = discoverySpeedFiles(eligible, 'exclude');
-  const windows = [...Array.from({ length: 4 }, (_, index) => discoveryShardFiles(fast, { index, count: 4 })).flat(), ...slow];
-  assert.deepEqual(windows.slice().sort(), eligible, 'Windows runs the complete corpus');
-  assert.equal(new Set(windows).size, windows.length, 'no file runs twice');
+  const counts = { 'ubuntu-latest': 4, 'macos-latest': 4, 'windows-latest': 8 };
+  assert.deepEqual([...configured.keys()].sort(), Object.keys(counts).sort());
+  for (const [os, count] of Object.entries(counts)) {
+    const windows = os === 'windows-latest';
+    const shards = configured.get(os);
+    assert.deepEqual([...shards].sort(), Array.from({ length: count }, (_, i) => `${i}/${count}`), os);
+    const assigned = shards.flatMap(shard => discoveryShardFiles(windows ? fast : eligible,
+      parseRunNodeOptions(['--discovered-only', '--shard', shard]).shard));
+    if (windows) assigned.push(...slow);
+    assert.deepEqual(assigned.sort(), eligible, `${os} runs every eligible file exactly once`);
+  }
 });
 
 test('browser layout and startup matrices retain every shard with an independent twenty-minute bound', () => {
-  const workflow = readFileSync(join(ROOT, '.github/workflows/ci.yml'), 'utf8');
+  const workflow = readSourceTextSync(join(ROOT, '.github/workflows/ci.yml'));
   for (const [name, tool, count] of [
     ['browser-layout-plants', 'screenreach', 4],
     ['browser-startup-plants', 'startup-gate', 8],

@@ -35,18 +35,18 @@ try {
     console.log('Reward document ready');
     await page.locator('.reward-kind').first().waitFor();
     await page.evaluate(async () => {
-      const { mountRewards } = await import('/src/ui/screens/reward.js');
+      const { MountRewards } = await import('/src/ui/screens/reward.js');
       const { contentBundle } = await import('/src/content/index.js');
       const { createRegistries } = await import('/src/model/registries.js');
       const registries = createRegistries(contentBundle);
       const run = { class: 'herald', cinders: 70, deck: [], flasks: [], relics: [], coreTags: [], loadout: { storage: [] }, level: { level: 1, xp: 34, unspentPoints: 0 }, skills: {
         'class:herald': { level: 0, xp: 10 }, 'item:magic-focus': { level: 1, xp: 7, pendingDrafts: 1 }, 'combatManeuvers': { level: 1, xp: 26, pendingDrafts: 1 },
       } };
-      const rewards = { title: 'VICTORY', cinders: 56, flaskId: 'flaskOfFerocity', skillDrafts: [
-        { skillId: 'item:magic-focus', level: 1, cardIds: ['spark', 'spark', 'spark'] },
-        { skillId: 'combatManeuvers', level: 1, cardIds: ['strike', 'strike', 'strike'] },
+      const rewards = { title: 'VICTORY', skillRankUps: [
+        { skillId: 'item:magic-focus', level: 1, claimOrdinal: 0 },
+        { skillId: 'combatManeuvers', level: 1, claimOrdinal: 0 },
       ], xpGains: { level: 34, tracks: { 'class:herald': 10, 'item:magic-focus': 7, combatManeuvers: 26 } } };
-      mountRewards(document.querySelector('#app'), { registries, run, rewards, checkpoint: { rewards, expanded: true }, saves: { loadMeta: () => ({ settings: { optionDecision: { rewardContinue: 'instant' } } }) }, onDone() {} });
+      MountRewards(document.querySelector('#app'), { registries, run, rewards, checkpoint: { rewards, expanded: true }, saves: { loadMeta: () => ({ settings: { optionDecision: { rewardContinue: 'instant' } } }) }, onDone() {} });
     });
     await page.evaluate(async () => {
       await document.fonts.ready;

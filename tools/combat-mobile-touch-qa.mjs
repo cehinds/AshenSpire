@@ -49,7 +49,7 @@ try {
       const end = Date.now() + 25000;
       while (Date.now() < end) {
         if (await page.locator('.confirmation-confirm').count()) await tap('.confirmation-confirm');
-        const back = page.locator('.reaction-choice').getByRole('button', { name: 'Back', exact: true }).last();
+        const back = page.locator('.reaction-choice').getByRole('button', { name: 'Skip', exact: true }).last();
         if (await back.isVisible().catch(() => false)) await back.tap();
         if (await page.evaluate(turn => window.__combat.turn > turn && window.__combat.phase === 'player', turn)) {
           await page.waitForTimeout(1800);

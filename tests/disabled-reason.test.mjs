@@ -17,7 +17,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const REG = createRegistries(contentBundle);
 const noteOf = (control) => {
@@ -55,13 +55,13 @@ test('refusesWhen: the tooltip reason is also visible text, and follows the cont
   const { refusesWhen } = await import('../src/ui/components/refusal.js');
   const { button } = await import('../src/ui/kit/index.js');
   withKitDom((dom) => {
-    let problem = 'Choose a keepsake.';
+    let problem = 'Choose a class.';
     const start = button({ label: 'Begin', weight: 'primary' });
     dom.document.body.replaceChildren(start);
     const refresh = refusesWhen(start, () => problem, 'Begin.');
     const note = noteOf(start);
     assert.ok(shows(note), 'a refusing control shows its reason');
-    assert.equal(note.textContent, 'Choose a keepsake.');
+    assert.equal(note.textContent, 'Choose a class.');
     start.hidden = true; refresh();
     assert.equal(note.hidden, true, 'a hidden control shows no reason');
     start.hidden = false; problem = null; refresh();
@@ -81,7 +81,9 @@ test('titleMenu: a disabled entry with a reason wears it as text', async () => {
   });
 });
 
-test('event screen: Continue before a response is taken says why, as text', async () => {
+// Owner, 2026-11-17: the event screen shows no disabled Continue and no "Choose a response first." hint; Continue
+// appears, enabled, once a response is taken.
+test('event screen: Continue is absent until a response is taken, so no refusal is shown', async () => {
   const { mountEvent } = await import('../src/ui/screens/event.js');
   withKitDom((dom) => {
     const app = dom.document.createElement('main');
@@ -89,10 +91,9 @@ test('event screen: Continue before a response is taken says why, as text', asyn
     const run = createRunState({ seed: 7, classId: 'reaver', registries: REG });
     mountEvent(app, { registries: REG, run, meta: { settings: {} }, rng: createRng(3), eventId: 'abandonedCart', onDone() {} });
     const cont = app.querySelector('#event-continue');
-    assert.equal(cont.disabled, true);
-    const note = noteOf(cont);
-    assert.ok(shows(note), 'the reason is shown');
-    assert.match(note.textContent, /response/i);
+    assert.equal(cont.hidden, true, 'Continue is not shown before a response');
+    assert.equal(cont.closest('.modal-foot').hidden, true, 'and its foot takes no room');
+    assert.equal(app.querySelector('.as-reasonnote'), null, 'no refusal hint stands in its place');
   });
 });
 
@@ -129,38 +130,3 @@ test('a hidden button row takes its reason line with it (review of #1459: charac
   assert.match(css, /\[hidden\]\s*\+\s*\.as-reasonnote/, 'a row hidden after the paint still takes the line (adjacent-sibling rule)');
 });
 
-test('reward menu: unclaimed levels keep Continue available and explain that rewards are saved', async () => {
-  const { mountRewards } = await import('../src/ui/screens/reward.js');
-  const { xpToNext } = await import('../src/model/levelup.js');
-  const { unclaimedProgressionRewards } = await import('../src/model/deferredProgression.js');
-  const { pendingRewardCheckpoint } = await import('../src/model/rewardSourcePolicy.js');
-  withKitDom((dom) => {
-    const app = dom.document.createElement('main');
-    dom.document.body.replaceChildren(app);
-    const run = createRunState({ seed: 7, classId: 'reaver', registries: REG });
-    run.level = { ...(run.level || {}), level: 3, xp: xpToNext(REG, 3) + 5, unspentPoints: 0 };
-    const rewards = { xpGains: { level: 30, tracks: {} }, levelCards: [{ ordinal: 0, requiredLevel: 4, cardIds: ['rend', 'stomp'] }] };
-    const checkpoint = pendingRewardCheckpoint(rewards, { source: 'normal', after: 'map' });
-    checkpoint.expanded = true;
-    const beforeLevel = { ...run.level };
-    const beforeDeck = [...run.deck];
-    let exited = false;
-    mountRewards(app, {
-      registries: REG, run, rewards, checkpoint,
-      onDone() { run.deferredProgression = unclaimedProgressionRewards(checkpoint); exited = true; app.remove(); },
-      saves: { loadMeta: () => ({ settings: { rewardCollect: 'auto', levelUpRefillSeconds: 0 } }) },
-    });
-    const cont = app.querySelector('#reward-continue');
-    try {
-      assert.equal(cont.disabled, false, 'a waiting level must not hold Continue');
-      assert.equal(shows(noteOf(cont)), false, 'an available exit has no stale refusal');
-      assert.match(app.querySelector('.modal-foot-note span').textContent, /unfinished levels and level rewards are saved/i);
-      cont.click();
-      assert.equal(exited, true, 'the player can actually leave');
-      assert.deepEqual(run.level, beforeLevel, 'leaving does not claim or spend the banked level');
-      assert.deepEqual(run.deck, beforeDeck, 'auto collect cannot select a deferred level card');
-      assert.deepEqual(run.deferredProgression.levelCards[0].cardIds, ['rend', 'stomp']);
-      assert.equal(run.deferredProgression.levelCards[0].requiredLevel, 4);
-    } finally { app.remove(); }
-  });
-});

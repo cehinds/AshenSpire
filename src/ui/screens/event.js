@@ -8,7 +8,7 @@
 // A quest chain's step is spoken instead (proposal §7.5): mountEvent hands it
 // to the dialogue screen, and only one-off events keep this W1u choice body.
 
-import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
+import { commitEventChoice, choiceAffordable, ChoiceUnmetRequirement } from '../../engine/quests.js';
 import { mountDialogue } from './dialogue.js';
 import { scenePainting } from '../components/scenePainting.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
@@ -20,15 +20,15 @@ import { isEngaged, focusFirst } from '../input.js';
 import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, questChainForEvent } from '../../model/quests.js';
 import { beatArmer } from '../../framework/optionDecision.js';
-import { el, modalFooter, artWell, prose, options, optionCard, button } from '../kit/index.js';
-import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { el, modalFooter, prose, options, optionCard, button } from '../kit/index.js';
+import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
 import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
+import { ReceivedItems } from '../../model/receivedItems.js';
 import { assetUrl } from '../assetmap.js';
-import { reasonWhenDisabled } from '../components/refusal.js';
 
 export function mountEvent(app, opts) {
   // `opts`, not `options`: the kit's `options()` list helper is imported above,
@@ -74,13 +74,17 @@ export function mountEvent(app, opts) {
   if (hud) app.insertAdjacentHTML('afterbegin', runHudHtml({ registries, run, meta, place: 'event', headerClass: 'map-header room-header' }));
   const screen = el('div', { class: 'screen event-screen room-screen' });
   app.appendChild(screen);
-  screen.appendChild(scenePainting('event'));
+  // The image is the event's own art when it has one, large at the top (owner, 2026-11-17: at least half the
+  // height); otherwise the event scene painting. The body no longer repeats it in a small art well.
+  const painting = scenePainting('event');
+  if (eventArt) painting.querySelector('img').src = assetUrl(eventArt);
+  painting.dataset.eventArt = eventArt ? 'event' : 'scene';
+  screen.appendChild(painting);
   const door = mountChoiceBody(screen, {
     className: 'event-door',
-    eyebrow: 'Event',
+    // No "EVENT" eyebrow (owner, 2026-11-17): the title alone heads the door.
     title: def.name,
     choices: el('div', { class: 'choice-body-narrative event-narrative' }, [
-      artWell(eventArt ? { src: assetUrl(eventArt), alt: '' } : { glyph: def.art || 'relic' }),
       prose(def.text),
     ]),
     consequences: el('div', { class: 'choice-body-responses event-responses' },
@@ -152,12 +156,13 @@ export function mountEvent(app, opts) {
     // a curse in it and the hold is already there.
     const binding = isBindingChoice(choice, registries);
     if (binding) btn.dataset.binding = '1';
-    const affordable = choiceAffordable(choice, run);
+    const unmet = ChoiceUnmetRequirement(choice, run, registries);
+    const affordable = unmet === null;
     responses.push({ index: i, affordable, priced: !!choice.requires, binding });
 
     if (!affordable) {
       btn.disabled = true;
-      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: 'Cannot afford' }));
+      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: unmet === 'rankableCard' ? t('event.noRankableCard') : 'Cannot afford' }));
     } else {
       // THE EVENT DOOR (engine/quests.js): effects, then the history row, then
       // the quest completion check — one writer for all three, shared with the
@@ -166,36 +171,41 @@ export function mountEvent(app, opts) {
         const before = snapshotRunForDiff(run);
         commitEventChoice({ run, registries, rng }, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
-        // The what-changed receipt over the result; a pure flavour choice (empty diff) opens nothing.
-        showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '' });
+        // The header shows the cinders and HP the choice just paid or took, on this same screen.
+        if (hud) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: 'map-header room-header', hud, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
+        // A card, armament or relic the choice handed over opens the shop's receive modal first (playtest 2026-11-17
+        // item 41); then the what-changed receipt over the result (a pure flavour choice, an empty diff, opens nothing).
+        // `receipt(onClose)` reports whether it opened; `release` is this screen's own cleanup before the host leaves it.
+        const receipt = (onClose = null) => showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '', onClose });
+        const items = opts.onItemsReceived ? ReceivedItems(registries, before, run) : [];
+        if (items.length) opts.onItemsReceived(items, { receipt, release: () => {} }); else receipt();
       };
-      // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
-      // CHARACTERISTIC of the choice, derived from its own ops
-      // (model/consequence.js); the beat is derived from that characteristic
-      // (model/secondbeat.js). The HOLD hint, the fill, the dial and the "off"
-      // position all moved into the machinery with it — a bar that cannot be
-      // pressed still never gets armed, because this branch is the affordable
-      // one and always was.
+      // A choice commits on one tap (the eventChoice row in model/secondbeat.js
+      // says `tap: true`; owner, 2026-11-14). Whether a choice binds is still a
+      // characteristic derived from its ops (model/consequence.js) and rides in
+      // the ctx so the audit record keeps it; it no longer picks a hold.
       disarmers.push(arm(btn, 'eventChoice', {
         ctx: { binding },
-        question: t('dialogue.respond.question', { label: choice.label || choice.text || t('event.defaultOption') }),
-        detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
-        confirmLabel: 'CHOOSE',
         onConfirm: commit,
       }));
     }
     box.appendChild(btn);
   });
   setChoiceStatus(door, status(eventResponseStatus(responses)));
-  // Continue is in the foot from the start and allowed only once a response
-  // is taken; until then it is disabled, never a way out.
+  // Continue appears only once a response is taken (owner, 2026-11-17: no always-visible disabled Continue and no
+  // "Choose a response first." hint); until then the foot is empty and the responses are the only way on.
   cont.addEventListener('click', () => { if (!cont.disabled) onDone(); });
-  // Until then the reason stands under it as text (FINISH §6), not only a grey button.
-  const contReason = reasonWhenDisabled(cont, () => t('event.continue.reason'));
-  contReason();
+  setContinueShown(false);
 
   // Smart default (keyboard/gamepad): land on the first available choice.
   if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
+
+  // The foot (and Continue in it) is taken out of the layout until a response is taken.
+  function setContinueShown(shown) {
+    const foot = cont.closest('.modal-foot');
+    if (foot) foot.hidden = !shown;
+    cont.hidden = !shown;
+  }
 
   function showResult(text) {
     // Every armed bar is torn down before the box is emptied. `box.innerHTML =
@@ -210,7 +220,7 @@ export function mountEvent(app, opts) {
     setChoiceStatus(door, status(eventResponseStatus(responses, { resolved: true })));
     cont.textContent = run.combatEntered ? t('event.continue.combat') : t('event.continue');
     cont.disabled = false;
-    contReason();
+    setContinueShown(true);
     if (isEngaged()) setTimeout(() => focusFirst('.event-door .modal-foot button'), 0);
   }
 }

@@ -6,7 +6,7 @@ import { immediateCardEffects } from './combatCardEffects.js';
 // before source-side self effects are considered. An AoE/random strike may
 // heal, block, exhaust, or otherwise affect its source without becoming a
 // friendly-target transaction.
-const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies']);
+const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies', 'otherEnemy']);
 
 // Authoritative previews include temporary charges on the resolved grade.
 export function cardNeedsEnemyTarget(def) {

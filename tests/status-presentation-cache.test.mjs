@@ -5,7 +5,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
-import { fixCoreEnabled, fixCoreStatusDefinition } from '../src/model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreHitRollOff } from '../src/model/fixCoreMechanics.js';
+import { legacyRules } from './legacyHitRules.mjs';
 import { fixCoreRules } from '../src/model/fixCoreRulesCache.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { statusPresentationDefinition as cached, statusPresentationCacheSize, clearStatusPresentationCache } from '../src/model/statusPresentation.js';
@@ -13,16 +14,22 @@ import { statusPresentationDefinition as cached, statusPresentationCacheSize, cl
 const weak = { id: 'weak', name: 'Weak', tooltip: 'Legacy.', modifiers: { damageDealtMult: .75 } };
 const thorn = { id: 'thorn', name: 'Thorn', tooltip: 'Thorny.', modifiers: { damageDealtMult: .75 } };
 const evade = { id: 'evade', name: 'Evasion', tooltip: 'Legacy 3 Evasion per stack.', effects: [{ op: 'noop' }] };
-const registries = { statuses: { get: id => [weak, evade].find(row => row.id === id), all: () => [weak, evade] } };
-const ctxWith = (rules = structuredClone(fixCoreMechanics)) => ({ combatExpansionVersion: 2, fixCoreRules: rules, registries });
+const precision = { id: 'precision', name: 'Precision', tooltip: 'Legacy precision.' };
+const registries = { statuses: { get: id => [weak, evade, precision].find(row => row.id === id), all: () => [weak, evade, precision] } };
+// The Evasion wording below belongs to a fight that still rolls (saved before the 2026-11-14 ruling); `shipped` builds the new rules.
+const ctxWith = (rules = legacyRules(fixCoreMechanics)) => ({ combatExpansionVersion: 2, fixCoreRules: rules, registries });
 // The reference: what the code did before the cache.
 const uncached = (ctx, id, definition, holder = null) => {
   let resolved = fixCoreStatusDefinition(ctx, id, definition, holder);
   // Core 2 accuracy: Precision and Evade wording come from mechanics.accuracy and the effective statuses rules.
   if (resolved !== definition && fixCoreEnabled(ctx) && definition && typeof definition === 'object') {
-    if (id === 'precision') resolved = { ...resolved, tooltip: mechanics.accuracy.precisionTooltip, description: mechanics.accuracy.precisionTooltip };
+    if (id === 'precision') {
+      const text = mechanics.accuracy.precisionTooltip.replace(/\{(precisionStackValue|precisionDecayPerTurn)\}/g,
+        (_, key) => String(mechanics.accuracy[key]));
+      resolved = { ...resolved, tooltip: text, description: text };
+    }
     else if (id === 'evade') {
-      const text = `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll. Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
+      const text = `${FixCoreHitRollOff(fixCoreRules(ctx, holder)) ? 'The next attack against you misses.' : `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll.`} Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
       resolved = { ...resolved, tooltip: text, description: text };
     }
   }
@@ -42,14 +49,60 @@ test('cached presentation equals the uncached one for each status and holder, on
   clearStatusPresentationCache();
   const ctx = ctxWith();
   const scoped = { id: 'e2', mechanicBindings: [{ tag: 'combat:statuses', parameters: { decayAmount: 3 } }] };
+  let firstPassSize = 0;
   for (let pass = 0; pass < 2; pass++) {
     agree(ctx, 'weak', weak);
     agree(ctx, 'evade', evade);
+    agree(ctx, 'precision', precision);
     agree(ctx, 'evade', evade, scoped);
     agree(ctx, 'evade', evade, { id: 'e1' });
+    if (pass === 0) firstPassSize = statusPresentationCacheSize();
   }
   assert.match(cached(ctx, 'evade', evade, scoped).tooltip, new RegExp(`^Each stack adds ${mechanics.accuracy.evadePerStack} Evasion\\..*Lose 3 stack`));
-  assert.ok(statusPresentationCacheSize() >= 3 && statusPresentationCacheSize() <= 4, 'repeat calls share entries');
+  assert.ok(firstPassSize >= 4, 'each distinct status/holder input has an entry');
+  assert.equal(statusPresentationCacheSize(), firstPassSize, 'repeat calls share entries');
+});
+
+test('Precision wording resolves its two live values and invalidates only its relevant cache input', () => {
+  clearStatusPresentationCache();
+  const ctx = ctxWith();
+  const original = {
+    tooltip: mechanics.accuracy.precisionTooltip,
+    value: mechanics.accuracy.precisionStackValue,
+    decay: mechanics.accuracy.precisionDecayPerTurn,
+  };
+  try {
+    mechanics.accuracy.precisionTooltip = 'Each stack adds {precisionStackValue} Precision; loses {precisionDecayPerTurn}.';
+    mechanics.accuracy.precisionStackValue = 2;
+    mechanics.accuracy.precisionDecayPerTurn = 4;
+    assert.equal(cached(ctx, 'precision', precision).tooltip, 'Each stack adds 2 Precision; loses 4.');
+    agree(ctx, 'precision', precision);
+
+    mechanics.accuracy.precisionDecayPerTurn = 6;
+    assert.equal(cached(ctx, 'precision', precision).tooltip, 'Each stack adds 2 Precision; loses 6.', 'changed decay invalidates the cached wording');
+    agree(ctx, 'precision', precision);
+  } finally {
+    mechanics.accuracy.precisionTooltip = original.tooltip;
+    mechanics.accuracy.precisionStackValue = original.value;
+    mechanics.accuracy.precisionDecayPerTurn = original.decay;
+    clearStatusPresentationCache();
+  }
+});
+
+test('Evade wording cache also follows its live per-stack Accuracy value', () => {
+  clearStatusPresentationCache();
+  const ctx = ctxWith();
+  const original = mechanics.accuracy.evadePerStack;
+  try {
+    const before = cached(ctx, 'evade', evade).tooltip;
+    mechanics.accuracy.evadePerStack = original + 2;
+    const after = cached(ctx, 'evade', evade).tooltip;
+    assert.notEqual(after, before);
+    assert.match(after, new RegExp(`Each stack adds ${original + 2} Evasion`));
+  } finally {
+    mechanics.accuracy.evadePerStack = original;
+    clearStatusPresentationCache();
+  }
 });
 
 test('a broken key would be seen: every input the answer reads changes the answer on the next call', () => {
@@ -112,4 +165,12 @@ test('callers cannot corrupt a later caller: fresh top level, frozen nested valu
   const before = statusPresentationCacheSize();
   try { cached(bad, 'evade', evade); } catch { /* the uncached path throws too */ }
   assert.equal(statusPresentationCacheSize(), before, 'a failing call stores nothing');
+});
+
+test('the shipped rules word Evade as a cancelled next attack, and the cache keeps both wordings apart', () => {
+  clearStatusPresentationCache();
+  const shipped = ctxWith(structuredClone(fixCoreMechanics)), legacy = ctxWith();
+  agree(shipped, 'evade', evade); agree(legacy, 'evade', evade);
+  assert.match(cached(shipped, 'evade', evade).tooltip, /^The next attack against you misses\./);
+  assert.match(cached(legacy, 'evade', evade).tooltip, /^Each stack adds \d+ Evasion\./);
 });

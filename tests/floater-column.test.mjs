@@ -8,7 +8,9 @@ import { floatNum, callout, clearCallouts, floaterLanesFit, setAnimSpeed } from 
 import { floaterLifeMs, floaterStaggerMs, setCombatPacing } from '../src/ui/animationPace.js';
 import { FLOATER_STACK } from '../src/ui/floaterStack.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
+import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
+setFloaterPolicyEnabled(false); // this file tests the floater mechanics for every kind; the allowlist is tests/floater-policy.test.mjs
 
 const GAP = FLOATER_STACK.floaterLineGapPx;
 // A layer and anchors with fixed boxes; every element measures 40 x 20. `spawns` records each floater as it joins the layer.
@@ -155,13 +157,13 @@ test('words and numbers share one column and one clock', (t) => setup(t, ({ fx, 
 
 test('words waiting together spawn by priority; a number keeps its place', (t) => setup(t, ({ fx, a, spawns }) => {
   callout(fx, a, 'e1', 'staggered');                  // spawns now
-  callout(fx, a, 'e1', 'blocked');
+  callout(fx, a, 'e1', 'countered'); // BLOCKED no longer draws (screen-reader only, 2026-11-14), so another mid-rank word stands in
   floatNum(fx, a, '-4', 'heal');
   callout(fx, a, 'e1', 'status:burn');
   callout(fx, a, 'e1', 'resisted');
   advance(t, floaterStaggerMs() * 4);
-  // waiting: blocked(2), number, burn(6), resisted(1) -> ranked slots hold burn, blocked, resisted around the number
-  assert.deepEqual(spawns.map((s) => s.node.dataset.calloutKind ?? s.node.textContent), ['staggered', 'status:burn', '-4', 'blocked', 'resisted']);
+  // waiting: countered(3), number, burn(6), resisted(1) -> ranked slots hold burn, countered, resisted around the number
+  assert.deepEqual(spawns.map((s) => s.node.dataset.calloutKind ?? s.node.textContent), ['staggered', 'status:burn', '-4', 'countered', 'resisted']);
 }));
 
 test('a skip drops the waiting floaters and the visible words; visible numbers keep their life', (t) => setup(t, ({ fx, a, spawns }) => {
@@ -275,7 +277,7 @@ test('a floater\'s sound plays when it spawns, not when it queued', (t) => setup
 }));
 
 test('a rebuilt figure (new element, same data-eid) receives the floaters that were waiting', (t) => setup(t, ({ fx, a, spawns }) => {
-  const figure = () => ({ box: a.box, isConnected: true, closest: () => ({ dataset: { eid: 'player' } }) });
+  const figure = () => ({ box: a.box, isConnected: true, closest: (selector) => selector === '.enemy-row' ? null : { dataset: { eid: 'player' } } });
   const first = figure(), second = figure();
   Object.defineProperty(fx, 'ownerDocument', { value: { querySelector: (sel) => (sel.includes('data-eid="player"') ? second : null) } });
   floatNum(fx, first, '+1', 'blk'); floatNum(fx, first, '+2', 'blk');
@@ -286,7 +288,7 @@ test('a rebuilt figure (new element, same data-eid) receives the floaters that w
 }));
 
 test('a queued callout word survives a figure rebuild and spawns at the new sprite', (t) => setup(t, ({ fx, a, spawns }) => {
-  const figure = (left) => ({ getBoundingClientRect: () => ({ ...a.box, left, right: left + a.box.width, bottom: a.box.top + a.box.height }), isConnected: true, closest: () => ({ dataset: { eid: 'player' } }) });
+  const figure = (left) => ({ getBoundingClientRect: () => ({ ...a.box, left, right: left + a.box.width, bottom: a.box.top + a.box.height }), isConnected: true, closest: (selector) => selector === '.enemy-row' ? null : { dataset: { eid: 'player' } } });
   const first = figure(100), second = figure(300);
   Object.defineProperty(fx, 'ownerDocument', { value: { querySelector: (sel) => (sel.includes('data-eid="player"') ? second : null) } });
   floatNum(fx, first, '+1', 'blk');
@@ -299,7 +301,7 @@ test('a queued callout word survives a figure rebuild and spawns at the new spri
 }));
 
 test('after a rebuild the new sprite shares the old column: one sequence, not two', (t) => setup(t, ({ fx, a, spawns }) => {
-  const figure = () => ({ getBoundingClientRect: () => ({ ...a.box, right: 180, bottom: 320 }), isConnected: true, closest: () => ({ dataset: { eid: 'player' } }) });
+  const figure = () => ({ getBoundingClientRect: () => ({ ...a.box, right: 180, bottom: 320 }), isConnected: true, closest: (selector) => selector === '.enemy-row' ? null : { dataset: { eid: 'player' } } });
   const first = figure(), second = figure();
   Object.defineProperty(fx, 'ownerDocument', { value: { querySelector: () => second } });
   floatNum(fx, first, '+1', 'blk');

@@ -45,7 +45,7 @@ export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bes
       Array.isArray(def.hp) && { label: 'Base HP', value: `${def.hp[0]}–${def.hp[1]}` },
       def.poiseMax != null && { label: 'Base Poise', value: String(def.poiseMax) },
       { label: 'Base Ward rating', value: String(def.poiseMax || 1) },
-      { label: 'Base armor class', value: words(defenses?.armorClass || 'medium') },
+      { label: 'Base armour class', value: words(defenses?.armorClass || 'medium') },
       ...Object.keys(def.damageResistanceBySchool || {}).map(school => ({ label: `${words(school)} resistance`, value: `${Math.round((1 - schoolResistanceMultiplier({ ratingsRules }, def, school)) * 100)}%` })),
       ...Object.entries(defenses?.flat || {}).map(([type, amount]) => ({ label: `${words(type)} flat resistance`, value: `${amount} point${amount === 1 ? '' : 's'}` })),
       ...Object.entries(defenses?.weak || {}).map(([type, amount]) => ({ label: `${words(type)} weakness`, value: `${amount}%` })),

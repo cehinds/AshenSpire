@@ -37,7 +37,7 @@ test('enemy SP, MP and card costs are only reachable through the visibility quer
 });
 
 test('the index file is current', () => {
-  assert.equal(readFileSync(`${root}${INDEX_FILE}`, 'utf8'), indexText(result.index));
+  assert.equal(readFileSync(`${root}${INDEX_FILE}`, 'utf8').replace(/\r\n/g, '\n'), indexText(result.index));
   assert.equal(result.index.format, 'ashen.ui-index@1');
 });
 
@@ -47,9 +47,11 @@ test('the index file is current', () => {
 function plantedErrors(edit = () => {}) {
   const dir = mkdtempSync(path.join(tmpdir(), 'ui-plant-'));
   try {
-    for (const link of ['content', 'src', 'art-manifest.json']) symlinkSync(`${root}${link}`, path.join(dir, link));
+    const directoryLink = (target, link) => symlinkSync(target, link, process.platform === 'win32' ? 'junction' : 'dir');
+    for (const link of ['content', 'src']) directoryLink(`${root}${link}`, path.join(dir, link));
+    cpSync(`${root}art-manifest.json`, path.join(dir, 'art-manifest.json'));
     mkdirSync(path.join(dir, 'engine/ui'), { recursive: true });
-    for (const link of ['contracts', 'runtime']) symlinkSync(`${root}engine/${link}`, path.join(dir, 'engine', link));
+    for (const link of ['contracts', 'runtime']) directoryLink(`${root}engine/${link}`, path.join(dir, 'engine', link));
     cpSync(`${root}engine/ui/components`, path.join(dir, 'engine/ui/components'), { recursive: true });
     cpSync(`${root}engine/ui/commands.json`, path.join(dir, 'engine/ui/commands.json'));
     mkdirSync(path.join(dir, 'games/ashenspire'), { recursive: true });

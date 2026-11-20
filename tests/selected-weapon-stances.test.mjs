@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import {selectedWeaponCounterOrigins,selectedWeaponSequence,selectedWeaponSequenceTiming} from '../src/model/selectedWeaponSequences.js';
 import { selectedWeaponProfileFor, selectedWeaponStanceFor, selectedWeaponReactionFor, REAVER_GREATSWORD_PILOT as pilot } from '../src/model/selectedWeaponStances.js';
 import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
@@ -39,20 +39,19 @@ function resolvedDodgeCards() {
   return {combat,instances:[dodge,evasive],definitions:[dodge,evasive].map(instance=>resolveCombatCard(combat,instance))};
 }
 
-test('resolved starter Dodge chooses Evade preparation while mixed Evasive Guard keeps its authored Counter', () => {
+// W25-EvadeCards (intended by the design): Dodge Roll and Evasive Guard are Defend cards that grant Evade stacks, not Counter cards.
+test('resolved starter Dodge chooses Evade preparation while mixed Evasive Guard keeps its Defend pose', () => {
   const {combat,instances,definitions}=resolvedDodgeCards();
   for(const [index,definition] of definitions.entries()) {
-    const expected=index===0?'evade':'counter';
-    assert.equal(combatProfileFor(definition).maneuver,'counter');
-    assert.equal(kindForCard(definition).maneuver,'counter','the intent glyph retains authored identity');
-    assert.equal(isPureDodge(definition),index===0);
+    const expected=index===0?'evade':'defend';
+    assert.equal(combatProfileFor(definition).maneuver,'defend');
+    assert.equal(kindForCard(definition).maneuver,'defend','the intent glyph retains authored identity');
     const before=structuredClone(definition);
     const stance=selectedWeaponStanceFor({profile:pilot,stance:stanceForCard(definition),card:definition,entity:combat.player});
     assert.equal(stance,expected);
     assert.deepEqual(definition,before,'selecting a painting does not mutate mechanics or payloads');
     const plan=resolveCombatAnimation(definition,[],{classId:'reaver',combatExpansionVersion:2});
-    assert.deepEqual([plan.technique,plan.rest],index===0?['evade','evade']:['counterPrepare','counter']);
-    assert.equal(resolveCombatAnimation(definition,[],{classId:'reaver',combatExpansionVersion:2,counterTriggered:true}).technique,'counter');
+    assert.deepEqual([plan.technique,plan.rest],index===0?['evade','evade']:['defend','defend']);
     combat.player.energy=combat.player.stamina=combat.player.mana=20;
     const out=dispatch(combat,{type:'playCard',cardInstanceId:instances[index].instanceId,targetId:combat.player.id});
     const receipt=out.events.find(event=>event.type==='cardPlayed');
@@ -61,7 +60,7 @@ test('resolved starter Dodge chooses Evade preparation while mixed Evasive Guard
     assert.deepEqual(snapshot.cardTags,receipt.cardTags);
     assert.deepEqual(snapshot.effects,definition.effects);
     assert.deepEqual(snapshot.counterPayload,definition.counterPayload);
-    assert.equal(kindForCard(snapshot).maneuver,'counter');
+    assert.equal(kindForCard(snapshot).maneuver,'defend');
     assert.equal(selectedWeaponStanceFor({profile:pilot,stance:stanceForCard(snapshot),card:snapshot,entity:combat.player}),expected);
   }
 });
@@ -232,7 +231,7 @@ test('selected holds preserve existing returns and finite reactions restore the 
       stage.play('counter',260);advance(60);
       assert.equal(stage.pose,'reaver.counter.contact','both cards retain the full Counter retaliation');
       advance(210);
-      assert.equal(stage.pose,index===0?'stance-evade':'stance-counter','retaliation restores the current selected hold');
+      assert.equal(stage.pose,index===0?'stance-evade':'stance-defend','retaliation restores the current selected hold');
     }
     for(const origin of ['offensive','defend','counter','smash','sweep','evade']) {
       stage.settle();stage.setStance(origin);

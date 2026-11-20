@@ -5,7 +5,10 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
+import { createRunCombat as createRunCombatWithBenefits } from './withoutWeaknesses.mjs';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
+// These numbers pin the pre-Wave-2.5 arithmetic, so the fight plays the rules of one created before the stance benefits (tests/stance-benefits.test.mjs owns those).
+const createRunCombat = (...args) => withoutStanceBenefits(createRunCombatWithBenefits(...args));
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { configuredModule, profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { stanceRulesFor } from '../src/model/stanceRules.js';
@@ -14,9 +17,10 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 // Owner, 2026-10-19: AR, DR, PR and Poise still apply to cards in Core, and spell effectiveness still uses PR.
 // Each rating comes from the CHARACTER (derived-stat rows: STR -> AR, DEX -> DR, INT -> PR, CON -> Poise) and from
-// EQUIPMENT (weapon AR, Smith tiers, armor/shield DR and Poise, staff PR). Every source is raised on its own, in a fresh
+// EQUIPMENT (owner, 2026-11-17, gear `statPoints`: gear and Smith tiers grant attribute points and Poise, never AR, DR or PR, so a
+// weapon's STR, a shield's or armor's DEX, a staff's INT and armor/shield Poise reach the ratings through the rows above). Every source is raised on its own, in a fresh
 // Core run, and the card value must move by the configured weight, in the preview and in live combat alike.
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const N = 3;
 
@@ -48,10 +52,14 @@ function damage(w, cardId) {
   const hp = target.hp;
   dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: target.id });
   const live = combat.eventLog.filter(row => row.type === 'damageDealt').at(-1).damageReceipt;
-  const out = { incoming: value.damageReceipt.hits[0].incoming, liveIncoming: live.hits[0].incoming, preview: value.damageReceipt.totalDamage, liveLoss: hp - target.hp }; // Owner, 2026-11-03: totalDamage is the raw quote; the receipt total is the resolved HP loss.
+  const out = { incoming: value.damageReceipt.hits[0].incoming, liveIncoming: live.hits[0].incoming, preview: value.damageReceipt.totalDamage, liveLoss: hp - target.hp }; // Owner, 2026-11-14: totalDamage is the HP quote; the receipt total is the resolved HP loss.
   assert.equal(out.liveIncoming, out.incoming, `${cardId}: live incoming matches the preview`);
   assert.equal(out.liveLoss, out.preview, `${cardId}: live HP loss matches the preview`);
-  assert.equal(value.hitDamages[0], out.liveIncoming, `${cardId}: the raw quote is the full hit that lands`);
+  // Owner, 2026-11-14: the quote is the HP the first hit costs; the full incoming hit is the receipt's `incoming`.
+  // Owner, 2026-11-14 (face rule): `hitDamages` is the card FACE (your side + the reference enemy's Vulnerable/weakness, no defences);
+  // the per-target quote (`perTargetHitDamages`) is the HP lost.
+  assert.equal(value.perTargetHitDamages[target.id][0], live.hits[0].hpLoss, `${cardId}: the quote is the HP the first hit costs`);
+  assert.equal(value.hitDamages[0], value.faceValue, `${cardId}: the face is the attacker-side number`);
   return out;
 }
 // One Block card (Defend, or Counter's Block): preview value against the Block actually gained live.
@@ -78,11 +86,13 @@ const sources = {
   dr: [
     ['DEX (stat)', 'reaver', stat('dexterity')],
     ['armor (Warden)', 'reaver', run => { run.loadout.sets.armor[0] = 'warden'; }],
-    ['shield (Tower Shield)', 'reaver', run => { run.loadout.sets.leftHand[0] = 'towerShield'; }],
+    // The Buckler's attribute point is DEX; the Tower Shield's is CON, which reaches Poise only (owner, 2026-11-17).
+    ['shield (Buckler)', 'reaver', run => { run.loadout.sets.leftHand[0] = 'buckler'; }],
   ],
   pr: [
     ['INT (stat)', 'starseer', stat('intelligence')],
-    ['staff (Emberlight Sceptre)', 'starseer', run => { run.loadout.sets.rightHand[0] = 'emberlightSceptre'; }],
+    // The Reaver swaps its greatsword (STR) for the sceptre (INT): the Starseer's own bone sceptre grants the same INT, so a swap there moves nothing.
+    ['staff (Emberlight Sceptre)', 'reaver', run => { run.loadout.sets.rightHand[0] = 'emberlightSceptre'; }],
   ],
   poise: [
     ['CON (stat)', 'reaver', stat('constitution')],
@@ -143,13 +153,21 @@ test('Counter keeps its printed Block plus DR plus the Counter stance DR bonus (
   const stanceDR = stanceRulesFor(w.combat).defensiveRating; // Counter is a defensive stance
   assert.equal(block(w, 'core.counter'), Math.floor(printed + (r.dr + stanceDR) * weights(w.combat).dr));
 });
-test('Core armor Smith tiers follow the armor budget (D14: flat across ranks), not a flat DR per tier', () => {
-  // Owner question raised by the ratings audit: if armor Smith tiers should add DR, armorBudget.perRank must say so.
-  const perRank = profile.modules.gear.armorBudget.perRank || 0;
+test('Core armor Smith tiers add attribute points (gear statPoints), not a flat DR per tier', () => {
+  // Owner question raised by the ratings audit: if armor Smith tiers should add DR, armorBudget.perRank must say so. Under the gear
+  // module's `statPoints` (owner, 2026-11-17) a tier adds attribute points instead, so DR moves only with the DEX those points buy.
+  const statPoints = profile.modules.gear.statPoints;
+  const perRank = statPoints ? 0 : profile.modules.gear.armorBudget.perRank || 0;
   // Reaver starts with no armor ('default' is an empty set), so wear a real Reaver armor in both worlds.
   const wear = run => { run.loadout.sets.armor = ['warden']; };
   const base = world('reaver', wear), up = world('reaver', run => { wear(run); run.itemUpgradeLevels['armor/reaver/warden'] = 2; });
   const delta = ratings(up).dr - ratings(base).dr;
+  if (statPoints) {
+    const points = w => Object.values(w.combat.player.attributes).reduce((sum, value) => sum + value, 0);
+    assert.ok(points(up) > points(base), 'the tier adds attribute points');
+    assert.equal(delta, up.combat.player.attributes.dexterity - base.combat.player.attributes.dexterity, 'DR moves only with DEX, no flat DR per tier');
+    return;
+  }
   if (perRank > 0) assert.ok(delta > 0, 'a configured armor rank budget must reach DR'); else assert.equal(delta, 0);
 });
 
@@ -175,13 +193,19 @@ for (const src of sources.pr) {
     });
   });
 }
-for (const [label, mutate] of [['STR (stat)', stat('strength')], ['weapon Smith tier', run => { run.itemUpgradeLevels['armament/boneSceptre'] = 2; }]]) {
-  test(`AR (${label}) does not change the Arcane Spark cantrip`, () => {
-    const base = world('starseer'), up = world('starseer', mutate);
-    assert.ok(ratings(up).ar > ratings(base).ar && ratings(up).pr === ratings(base).pr, 'AR up, PR unchanged');
-    assert.equal(damage(up, 'core.cantrip').incoming, damage(base, 'core.cantrip').incoming);
-  });
-}
+test('AR (STR (stat)) does not change the Arcane Spark cantrip', () => {
+  const base = world('starseer'), up = world('starseer', stat('strength'));
+  assert.ok(ratings(up).ar > ratings(base).ar && ratings(up).pr === ratings(base).pr, 'AR up, PR unchanged');
+  assert.equal(damage(up, 'core.cantrip').incoming, damage(base, 'core.cantrip').incoming);
+});
+// Upgrades branch, 2026-11-14: a staff Smith tier raised its PR together with its AR. Owner, 2026-11-17 (gear `statPoints`): a tier adds
+// attribute points instead (the bone sceptre's go to INT and WIS), so PR rises through INT and AR does not move. The spell follows the PR gain.
+test('a staff Smith tier raises PR through its attribute points, not AR, and moves the Arcane Spark cantrip by the PR weight', () => {
+  const base = world('starseer'), up = world('starseer', run => { run.itemUpgradeLevels['armament/boneSceptre'] = 2; });
+  assert.ok(ratings(up).pr > ratings(base).pr && ratings(up).ar === ratings(base).ar, 'PR rises, AR does not');
+  const delta = ratings(up).pr - ratings(base).pr;
+  assert.equal(damage(up, 'core.cantrip').incoming - damage(base, 'core.cantrip').incoming, Math.floor(delta * weights(up.combat).pr));
+});
 test('PR (INT) does not change a physical attack card', () => {
   const base = world('reaver'), up = world('reaver', stat('intelligence'));
   assert.ok(ratings(up).pr > ratings(base).pr && ratings(up).ar === ratings(base).ar);

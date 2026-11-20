@@ -9,8 +9,6 @@ import { createRng } from '../src/engine/rng.js';
 import { beforeReactionAction } from '../src/engine/combatReactions.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { applyAttackDamage } from '../src/engine/actions.js';
-import { combatRules } from '../src/content/combatRules.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 
 const SLASH = { intent: 'attack', damage: 1, hits: 2, weight: 1 };
 const SWEEP = ['camp:physical', 'maneuver:sweep', 'range:melee', 'targeting:single'];
@@ -90,7 +88,7 @@ test('the reported refusal names the card it came from, not the first candidate'
   assert.deepEqual(row.cardIds, ['guardCounter', 'whirlingGuard']);
   const registries = createRegistries(contentBundle);
   assert.deepEqual(combatLogEntries(events, { registries }).map(entry => entry.text).filter(text => text.startsWith('Not enough')),
-    [`Not enough SP to Sweep (need ${row.need}, have 0).`]);
+    [`Not enough Stamina to Sweep (need ${row.need}, have 0).`]);
 });
 
 test('the Reaction switch off reports switchOff only to a seat holding a candidate', () => {
@@ -221,7 +219,7 @@ test('v2: a lethal Smash still reports Guard broken without applying break Poise
 
 test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or synchronous', () => {
   const registries = createRegistries(contentBundle);
-  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+  const c = createCombat({ registries, rng: createRng(50),
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
       energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
   const enemy = c.enemies[0];
@@ -232,13 +230,13 @@ test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or sync
   assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, sourceId, poise }) => ({ targetId, sourceId, poise })),
     [{ targetId: 'e1', sourceId: 'player', poise: 3 }]);
   // The bonus is nominal (Poise Guard may absorb it), so the log claims pressure, not damage taken.
-  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => / Guard!/.test(text)),
-    ["Forsaken's attack broke Enemy's Guard! (+3 Poise pressure)"]);
+  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => / Block!/.test(text)),
+    ["Forsaken's attack broke Enemy's Block! (+3 Poise pressure)"]);
 });
 
 test('v1: a lethal Smash still reports Guard broken without applying break Poise to the dead target', () => {
   const registries = createRegistries(contentBundle);
-  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+  const c = createCombat({ registries, rng: createRng(50),
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
       energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
   const enemy = c.enemies[0];
@@ -255,7 +253,7 @@ test('v1: a lethal Smash still reports Guard broken without applying break Poise
 
 test('v1: a Smash with a zero break bonus still reports the Guard break, with no Poise claim', () => {
   const registries = createRegistries(contentBundle);
-  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+  const c = createCombat({ registries, rng: createRng(50),
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
       energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
   const enemy = c.enemies[0];
@@ -264,8 +262,8 @@ test('v1: a Smash with a zero break bonus still reports the Guard break, with no
   applyAttackDamage(c, c.player, enemy, 5, [], { combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'slashing', breakPoiseBonus: 0 },
     attack: { source: 'weapon', damageType: 'slashing' }, combatRiderTargets: [] });
   assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, poise }) => ({ targetId, poise })), [{ targetId: 'e1', poise: 0 }]);
-  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => / Guard!/.test(text)),
-    ["Forsaken's attack broke Enemy's Guard!"]);
+  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => / Block!/.test(text)),
+    ["Forsaken's attack broke Enemy's Block!"]);
   assert.equal(enemy.poiseMeter?.value, poiseBefore, 'no bonus Poise was applied');
 });
 
@@ -288,7 +286,7 @@ test('v2: a lethal Smash that breaks Guard still emits combatGuardBroken once, w
 
 test('v1: a lethal Smash that breaks Guard emits combatGuardBroken once and queues no bonus Poise', () => {
   const registries = createRegistries(contentBundle);
-  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+  const c = createCombat({ registries, rng: createRng(50),
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
       energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
   const enemy = c.enemies[0];
@@ -308,11 +306,11 @@ test('v1: a lethal Smash that breaks Guard emits combatGuardBroken once and queu
 
 test('v1: a Smash into an armed Counter breaks Guard through the synchronous door once', () => {
   const profile = { camp: 'physical', maneuver: 'smash', damageType: 'slashing' };
-  const registries = createRegistries({ ...legacyContentBundle,
-    cards: legacyContentBundle.cards.map(card => card.id === 'kilnCleave' ? { ...card,
+  const registries = createRegistries({ ...contentBundle,
+    cards: contentBundle.cards.map(card => card.id === 'kilnCleave' ? { ...card,
       effects: [{ op: 'damage', target: 'enemy', amount: 4, combatProfile: profile }] } : card),
-    enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy) });
-  const c = createCombat({ registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null,
+    enemies: contentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy) });
+  const c = createCombat({ registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'],
     player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20, energyMax: 10, drawPerTurn: 1,
       deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] } });
   const enemy = c.enemies[0];

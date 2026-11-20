@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { renderCard } from '../src/ui/components/card.js';
-import { cardMarkupDom } from './helpers/card-markup-dom.mjs';
+import { cardMarkupDom } from './helpers/dom.mjs';
 
 // Exercise the real renderer with production registries. This records markup;
 // it does not claim to test browser geometry or accessibility trees.

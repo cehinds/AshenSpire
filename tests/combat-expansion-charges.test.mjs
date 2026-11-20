@@ -43,5 +43,5 @@ test('all eight combination cards carry explicit gates, costs and finite owner-t
   }
   for (const id of ['emberCovenant', 'shatterOpportunity']) assert(byId.get(id).comboHook.oncePerTurn);
   assert.equal(byId.get('lowGuardRiposte').pronePoiseBonus, 2);
-  assert.equal(byId.get('crawlingShot').evade.whileStatus, 'prone');
+  assert.deepEqual(byId.get('crawlingShot').effects.map(effect => effect.op), ['damage', 'applyStatus', 'moveEngagement'], 'W25-EvadeCards: a shot, Evade, Retreat');
 });

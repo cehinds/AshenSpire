@@ -15,6 +15,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { STEP_ARRIVAL_GUARD_MS } from '../src/ui/stepArrivalGuard.js';
 
 const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const ROOT = resolve(HERE, '..');
@@ -218,7 +219,12 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
       await wait(400); // the watch debounces 100 ms
       const changedState = await readState();
       // The open tray: select a reachable node through the map's own pick.
+      // The single start node is preselected and its tray already open on
+      // arrival; a second tap on a selected node would close it, so tap only
+      // when no node is selected yet.
       const picked = await evaluate(`(() => {
+        const chosen = document.querySelector('.map-node.selected');
+        if (chosen && document.querySelector('.map-tray')?.dataset.shown === 'true') return chosen.dataset.node;
         const node = document.querySelector('.map-node.reachable');
         if (!node) return null;
         node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -570,20 +576,15 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
       await evaluate(`document.querySelector('.startup-gate').click()`);
       await waitFor('the real folded title (flush case)', `!!document.querySelector('.title-menu .slot-new')`);
       await evaluate(`document.querySelector('.title-menu .slot-new').click()`);
-      await waitFor('the new-slot modal (flush case)', `!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`);
-      await press('[data-title-action="modal-continue"]');
-      // Continue only opens the slot's decision door ("Start in slot n?"); its
-      // primary, Start (review-new), is the press that commits the new climb.
-      await waitFor('the new-slot decision door (flush case)', `!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`);
-      await press('[data-title-action="review-new"]');
+      // A fresh profile opens creation directly: no slot picker or decision door.
       await waitFor('character creation (flush case)', `!!document.querySelector('#cz-start:not([disabled])')`);
-      // Creation is a staged flow — Class, Attributes, Keepsake, Equipment,
+      // Creation is a staged flow — Class, Attributes, Equipment,
       // Feats, Spells (casters), Review (see tools/quick-start-inputs.mjs) —
       // gated step by step (781da54a): Begin refuses until a class, a stat
-      // mode, a keepsake and starting armour are chosen. Each stage is the
+      // mode and starting armour are chosen. Each stage is the
       // `.cz-railed` panel's data-creation-stage, and Next (#cz-next) leaves
       // it. Walk the steps a player walks: the first class, Next, Standard
-      // stats on the Attributes stage, Next, the first keepsake, Next, the
+      // stats on the Attributes stage, Next, the
       // first armour. A fold is opened before tapping inside it, and OPEN
       // MEANS OPEN, NOT TOGGLE: each fold is a <details>, so a press on an
       // open face would close it.
@@ -609,9 +610,6 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
         // "Standard"); a value the select does not offer leaves it unanswered.
         const mode = await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'lean'; select.dispatchEvent(new Event('change', { bubbles: true })); return select.value; })()`);
         if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-        await press('#cz-next');
-        await waitFor('the Keepsake stage (flush case)', onStage('keepsake'));
-        await press('#cz-keepsakes [data-keepsake-id]');
         await press('#cz-next');
         await waitFor('the Equipment stage (flush case)', onStage('equipment'));
         await openFace('armour');
@@ -646,6 +644,8 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
         const refusal = await evaluate(`document.querySelector('#cz-start')?.dataset.refusal || null`);
         throw new Error(`${error.message}; Begin refuses: ${JSON.stringify(refusal)}`);
       });
+      // Review can be ready while its forward-press guard is still active.
+      await wait(STEP_ARRIVAL_GUARD_MS);
       await press('#cz-start');
       // Skip the opening sequence through its real door, then choose each
       // required mastery tier before the map can accept camera input.

@@ -1,4 +1,4 @@
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { trayModel } from './TrayModels.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { t } from '../strings.js';
@@ -21,7 +21,7 @@ export function combatantInspectorModel({
     resizable: false,
     items: [],
   });
-  return componentModel(UI.combatantInspector, {
+  return ComponentModel(UI.combatantInspector, {
     variant: edge,
     properties: {
       role,

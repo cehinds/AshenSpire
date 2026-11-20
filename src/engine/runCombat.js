@@ -1,6 +1,8 @@
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
-import { gameModule } from '../model/gameProfile.js';
+import { gameModule, gameContent } from '../model/gameProfile.js';
+import { characterSettings, enemyEffectiveLevel } from '../../engine/kernel/gameConfig.js';
 import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../model/gameProfileRun.js';
+import { ItemPropertySummary } from '../model/itemProperties.js';
 import { configuredCombat, configuredModule } from './gameProfileCombat.js';
 // engine/runCombat.js — the one door a run's fight is built through.
 //
@@ -25,21 +27,27 @@ import { resolveCombatCard } from './combatExpansion.js';
 import { bindCoreSmithingEngine } from '../model/smithingCore.js';
 import { runHandRules } from '../model/handRules.js';
 import { playInDeckOrder } from '../model/deckRules.js';
-import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { isPoolDeckMode } from '../model/cardRemoval.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart, manaAtCombatEnd, manaDeficitAtCombatEnd } from '../framework/resources.js';
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
 import { resolveEnemyLevel } from '../model/levels.js';
-import { stampSkillBonuses, critRulesFor } from '../model/skills.js';
+import { stampSkillBonuses } from '../model/skills.js';
 import { openKnowledgeEncounter } from '../model/enemyKnowledgeRun.js';
 import { emptyEnemyKnowledge, mergeEnemyKnowledge } from '../model/enemyKnowledgeProfile.js';
 import { limitEnemyIds } from '../model/combatLimits.js';
 import { reconcileCombatKnowledge } from './enemyKnowledge.js';
+import { RestoreLiveStats } from './liveStats.js';
 import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
   return enemyIds.map((enemyId, index) => {
+    // A Core elite or boss fights at its tier's level for this act (enemies.effectiveLevelByAct, owner 2026-11-17).
+    const act = Number.isSafeInteger(run.actNumber) && run.actNumber > 0 ? run.actNumber : 1;
+    const settings = run.gameProfile?.modules ? characterSettings(run.gameProfile.modules) : null;
+    const row = settings?.effectiveLevelByAct ? (gameContent(run, 'enemies') || []).find(entry => entry.id === enemyId) : null;
+    const effective = row ? enemyEffectiveLevel(row, settings, act) : null;
+    if (effective !== null) return effective;
     const profile = registries.enemies.get(enemyId)?.levelProfile;
     if (!profile) return 1;
     return resolveEnemyLevel(profile, {
@@ -77,8 +85,6 @@ export function runCombatPlayer(run) {
     // is the one its character sheet shows (plan phase 9).
     derivedStatRuleSnapshot: run.derivedStatRuleSnapshot,
     skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
-    skillFeats: Array.isArray(run.skillFeats) ? [...run.skillFeats] : [],
-    critRules: critRulesFor(run.skillFeats), // the skill feats' critical hits (SPEC §13.4o)
     coreTags: run.coreTags, // the class tree's picks, mounted with the class card (plan phase 5b)
     maxHp: run.maxHp,
     hp: run.hp,
@@ -152,7 +158,6 @@ export function createRunCombat({
     // hand among them), or for a run born before ruleset 7 the retired homes it
     // was priced by (model/statRows.js). Snapshotted into the fight, so a saved
     // fight keeps the hand it was born with.
-    ratingsRules: ratingsConfigFor(registries, run) || null,
     breakMeterVersion: run.advancedConfigSnapshot?.breakMeterVersion,
     handRules: runHandRules(registries, run, settings),
     // Play in deck order (SPEC §14.1): read here, once, like the other rules.
@@ -162,9 +167,11 @@ export function createRunCombat({
     player: { ...runCombatPlayer(run),
       ...(configuredRatings ? { ratings: configuredRatings.totals, ratingSources: configuredRatings.sources,
         attributes: gameProfileEffectiveAttributes(registries, run),
+        itemProps: ItemPropertySummary(run), // W25 step 6: what the gear and relics set for this fight
         baseEvasionBonus: configuredRatings.baseEvasionBonus, basePrecisionBonus: configuredRatings.basePrecisionBonus } : {}),
       ...player },
     enemyIds,
+    enemyRows: encounter?.rows || [],
     enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),
     hpMult,
     enemyDamageMult,
@@ -186,6 +193,7 @@ export function createRunCombat({
 
 /** Write what a fight leaves behind back onto the run (live onCombatEnd's first half). */
 export function runCombatEnd(run, combat) {
+  RestoreLiveStats(combat); // a fight that ended another way still hands the run its fight-start maxima (idempotent)
   if(combat.proposalRewards && !combat.proposalRewards.settled) {run.cinders=(run.cinders || 0)+Math.max(0,combat.proposalRewards.cinders || 0);combat.proposalRewards.settled=true;}
   reconcileCombatKnowledge(run, combat);
   // Headless callers can finish without taking a combat checkpoint. Persist

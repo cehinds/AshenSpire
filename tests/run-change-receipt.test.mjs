@@ -17,7 +17,7 @@ test('no change is an empty frozen diff', () => {
 test('stat and resource rows carry before, after and delta', () => {
   const d = diff(newRun(), (r) => { r.hp -= 5; r.cinders += 12; r.smithingStones += 1; });
   assert.deepEqual(d.rows.map((r) => [r.kind, r.label, r.before, r.after, r.delta]).sort(), [
-    ['resource', 'CINDERS', '20', '32', 12], ['resource', 'SMITHING STONES', '0', '1', 1], ['stat', 'HP', '71', '66', -5]].sort());
+    ['resource', 'CINDERS', '20', '32', 12], ['resource', 'SMITHING STONES', '0', '1', 1], ['stat', 'HP', '50', '45', -5]].sort()); // Reaver level-1 max HP 50: 30 + 5 x (CON + level)
 });
 test('a relic gained and lost', () => {
   const run = newRun();
@@ -105,8 +105,8 @@ test('a ramped card upgraded after plays shows the faces the live resolver gives
 test('an acquired upgraded card carries the face of the owned instance, not the base definition', async () => {
   const { projectGameCard } = await import('../src/model/gameProfile.js');
   const run = newRun();
-  const probe = run.deck.find((c) => c.cardId === 'core.strike');
-  const got = { instanceId: 'got1', cardId: 'core.strike', upgraded: true, upgradeSteps: [nextUpgradeStep(run, probe, registries.cards.get('core.strike'), registries)] };
+  // An explicit number step: the first rolled step of the Wave 2 menu can be a tag (range, school) that leaves the effects as authored.
+  const got = { instanceId: 'got1', cardId: 'core.strike', upgraded: true, upgradeSteps: [{ k: 'dmg', n: 2 }] };
   const d = diff(run, (r) => { r.deck.push(got); });
   const row = d.rows.find((r) => r.instanceId === 'got1');
   assert.deepEqual(JSON.parse(JSON.stringify(row.face)), JSON.parse(JSON.stringify(projectGameCard(run, structuredClone(got)))));

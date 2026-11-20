@@ -5,6 +5,13 @@ import * as policy from '../src/model/autoCombatPolicy.js';
 import { resolveCombatAutomation } from '../src/model/autoCombatPolicy.js';
 import { settingsRows } from '../src/ui/screens/settings.js';
 import { profileKeys } from '../src/model/settingsSync.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRunState } from '../src/model/state.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { dispatch, cardChoicePlan } from '../src/engine/combat.js';
+import { AutoCardChoice } from '../src/model/cardChoices.js';
 
 test('policy defaults are off, ×1.25, offense, 550 ms animation and a half-second delay', () => {
   assert.deepEqual(resolveCombatAutomation(), { enabled: false, speed: 1.25, preference: 'offense', autoSpeed: 1.5, animationMs: 550, enemyAttackMs: 750, enemyFloaterIntervalMs: 750, delayMs: 500 });
@@ -70,4 +77,24 @@ test('the combat preference row is shown now that auto battle plays cards with i
 test('the auto combat setting says it also plays cards and ends the turn', () => {
   const note = settingsRows().find(row => row.key === 'autoCombat').note;
   assert.match(note, /reaction/i); assert.match(note, /plays your cards/i); assert.doesNotMatch(note, /never plays/i);
+});
+
+// W25-EvadeCards: Dodge Roll is the unarmed fallback card and offers Advance or Retreat; auto battle plays it with its first mode, the same as a headless play.
+test('auto battle plays a card of named modes with its first mode and still leaves a stance choice to the player', () => {
+  assert.deepEqual(AutoCardChoice(null), { playable: true, choice: null });
+  assert.deepEqual(AutoCardChoice({ kind: 'stance', options: [{ id: 'a' }] }), { playable: false, choice: null });
+  const registries = createRegistries(contentBundle);
+  const run = createRunState({ registries, classId: 'reaver', seed: 11, combatExpansionVersion: 2 });
+  const combat = createRunCombat({ registries, run, rng: createRng(11), enemyIds: ['wanderingSoldier'] });
+  combat.piles.hand.push({ instanceId: 'dodge', cardId: 'dodgeRoll' }, { instanceId: 'vow', cardId: 'warriorsVow' });
+  const dodge = AutoCardChoice(cardChoicePlan(combat, 'dodge'));
+  assert.deepEqual(dodge, { playable: true, choice: 'advance' }, 'Dodge Roll is playable with its first mode, Advance');
+  combat.player.energy = combat.player.stamina = 9;
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'dodge', targetId: combat.player.id, choice: dodge.choice });
+  assert.ok(out.events.some(event => event.type === 'cardPlayed'), 'the engine accepts the auto choice');
+  assert.equal(AutoCardChoice(cardChoicePlan(combat, 'vow')).playable, false, "Warrior's Vow asks for a stance, so auto battle leaves it");
+  const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const play = screen.slice(screen.indexOf('function autoPlayStep'), screen.indexOf('function scheduleAutoCombat'));
+  assert.ok(play.includes('AutoCardChoice(') && play.includes('playCard(picked.id, targetId, info.choice, info.rank)'), 'the screen passes the auto choice to playCard');
+  assert.ok(!play.includes('!cardChoicePlan(combat, inst.instanceId)'), 'a choice card is no longer skipped outright');
 });

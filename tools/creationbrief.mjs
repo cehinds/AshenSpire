@@ -189,7 +189,6 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const FOLDED = [
   { key: 'pick:class', label: 'CLASS', box: '#cz-classes', options: '.cz-class', arrives: 'open' },
   { key: 'pick:kit', label: 'STARTING KIT', box: '#cz-kits', options: '.cz-opt', arrives: 'shut' },
-  { key: 'pick:keepsake', label: 'KEEPSAKE', box: '#cz-keepsakes', options: '.cz-keepsake', arrives: 'shut' },
   { key: 'pick:sigil', label: 'SIGIL', box: '#cz-glyphs', options: '.cz-opt', arrives: 'shut' },
   { key: 'pick:tint', label: 'TINT', box: '#cz-tints', options: '.cz-opt', arrives: 'shut' },
   { key: 'pick:sprite', label: 'SPRITE', box: '#cz-styles', options: '.cz-opt', arrives: 'shut' },
@@ -1091,7 +1090,7 @@ const PLANTS = [
     file: 'src/ui/screens/customize.js',
     from: `      if (!cursorWasInside) return;
       const dest = next
-        ? (next.box.querySelector('.chosen') || next.box.querySelector('.cz-opt, .cz-class, .cz-keepsake'))
+        ? (next.box.querySelector('.chosen') || next.box.querySelector('.cz-opt, .cz-class'))
         : app.querySelector('#cz-start');
       if (dest) focusElement(dest);`,
     to: "      // planted: the pick hides the cursor's element and hands it no destination — the shipped P2",

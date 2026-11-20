@@ -60,25 +60,43 @@ of the compatibility surface.
 
 | Composition/component role | AshenSpire owner | Boundary |
 |---|---|---|
+| Configuration | `src/config/` | Authored and generated config; imports nothing (rank 0) |
+| Kernel and runtime | `engine/` | Root kernel, runtime interpreter, mechanics/UI contracts, and Unity export; headless, below `src/model/` |
 | Domain models and contracts | `src/model/` | Schemas, state, formulas, validation, and read models; no DOM |
-| Headless simulation/services | `src/engine/` | Game operations, orchestration, RNG, and persistence; no browser host |
-| Transport adapter | `src/net/lan.js` | Browser-side LAN discovery, hosting requests, and lobby WebSocket adapter; no game rules |
+| Framework | `src/framework/` | Reusable game-framework pieces beside the model; imports no `src/ui/` |
+| Headless simulation | `src/engine/` | Game operations, orchestration, RNG, and persistence; no browser host |
+| Services | `src/services/` | Headless services beside the engine |
 | Screen hosts / presenters | `src/ui/screens/` | Projects snapshots, chooses composition, and binds semantic commands |
 | Presentation projections | `src/ui/viewModels/` | Domain-to-screen projection and composition of reusable models |
 | Component models and behaviors | `src/ui/models/` | Immutable serializable presentation and interaction records |
 | DOM components / observers | `src/ui/components/` | Markup, DOM ownership, lifecycle/event adapters, and rendering |
 | Configuration and domain data | `src/content/`, `content/source/` | Pure definitions, balance, JSON, and CSV; no runtime orchestration |
 | Assets | `assets/`, `styles/`, `music/` | Player-facing media and presentation resources |
+| Dev screens | `src/dev/` | Dev- and test-only screens; top layer, nothing imports them |
 | Composition root | `src/main.js` | Wires the layers together; contains no reusable domain owner |
 | Verification | `tests/`, `tools/` | Headless behavior checks, browser witnesses, build and support tools |
 
-Dependencies continue to point from presenters/components to engine, model,
-content, and transport; from engine to model/content; and from model to content
-where definitions are required. The composition root may also query transport
-availability. Transport does not belong to the engine and does not own game
-rules. Shared contracts belong in `src/model/`; creating parallel
+Dependencies point from presenters/components to engine, model, and content;
+from engine to model/content; and from model to content where definitions are
+required. Shared contracts belong in `src/model/`; creating parallel
 `application/`, `infrastructure/`, or `interfaces/` trees without a concrete
 seam would split one source of truth.
+
+### Layer rank
+
+Lowest first:
+
+0. `src/config/`
+1. `src/content/`
+2. `engine/` (root kernel)
+3. `src/model/` and `src/framework/` (peers; either may import the other)
+4. `src/engine/` and `src/services/` (peers)
+5. `src/ui/`, `src/main.js`, `src/dev/` and any other `src/*` file (top)
+
+An import points from a higher rank to a lower or equal rank, and
+`src/framework/` imports no `src/ui/`. `tests/layering.test.mjs` enforces this
+with a shrinking `KNOWN_INVERSIONS` list: a new inversion fails, and a listed
+one that no longer occurs must be deleted.
 
 ## Root allowlist
 

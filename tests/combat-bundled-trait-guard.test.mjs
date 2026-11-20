@@ -27,7 +27,7 @@ function fixture({ reaction = true } = {}) {
   const player = { classId: 'starseer', maxHp: 100, hp: 100, combatExpansionVersion: 2,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: cardIds.length,
     deck: cardIds.map(cardId => ({ cardId, instanceId: cardId })) };
-  const options = { registries, rng: createRng(701), ratingsRules: resolveCombatRatings({}, contentBundle),
+  const options = { registries, rng: createRng(701), 
     combatExpansionVersion: 2, reactionRulesVersion: 2, enemyIds: ['wanderingSoldier'] };
   const combat = createCombat({ ...options, player });
   const enemy = combat.enemies[0];
@@ -67,38 +67,6 @@ function assertSettled(combat, turn) {
   assert.equal(combat.reactionStack, undefined);
   assert.equal(combat.queue.length, 0);
 }
-
-test(`bundled solo Quickstep resolves Defend Guard and leaves the next EndTurn usable`, () => {
-  const combat = fixture();
-  send(combat, { type: 'endTurn' });
-  const offer = combat.pendingReaction;
-  const quickstep = offer.options.find(option => option.play.cardInstanceId === 'quickstep');
-  assert.ok(quickstep, 'Quickstep is offered as a defensive reaction');
-  assert.doesNotThrow(() => {
-    send(combat, { type: 'chooseReaction', offerId: offer.id, optionId: quickstep.id });
-    passReactions(combat);
-  });
-  assertSettled(combat, 2);
-  assert.equal(incomingHits(combat).length, 2);
-  assert.equal(combat.eventLog.filter(event => event.type === 'cardPlayed' && event.cardId === 'quickstep').length, 1);
-  assert.equal(guardEvents(combat).length, 1, 'two incoming hits spend the Defend Guard only once');
-  assert.equal(guardEvents(combat)[0].amount, 1);
-  assert.equal(combat.player.combatTraitGuard, undefined);
-  send(combat, { type: 'endTurn' });
-  passReactions(combat);
-  assertSettled(combat, 3);
-  assert.equal(guardEvents(combat).length, 1);
-});
-
-test(`bundled solo ordinary EndTurn resolves Defend Guard without a reaction card`, () => {
-  const combat = fixture({ reaction: false });
-  assert.doesNotThrow(() => send(combat, { type: 'endTurn' }));
-  assertSettled(combat, 2);
-  assert.equal(incomingHits(combat).length, 2);
-  assert.equal(guardEvents(combat).length, 1);
-  assert.equal(guardEvents(combat)[0].amount, 1);
-  assert.equal(combat.player.combatTraitGuard, undefined);
-});
 
 test('bundled rated Counterstrike recalculates the reply rating and queues its expanded return', () => {
   const matchups = require('src/engine/combatMatchups.js');

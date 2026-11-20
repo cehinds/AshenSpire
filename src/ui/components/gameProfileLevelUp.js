@@ -1,4 +1,4 @@
-import { mountRewardDoor } from './rewardDoor.js';
+import { MountRewardDoor } from './rewardDoor.js';
 import { el, button, modalFooter } from '../kit/index.js';
 import { t } from '../strings.js';
 import { skillLevelNotices } from '../../model/gameProfileProgression.js';
@@ -34,7 +34,7 @@ export function mountGameProfileLevelUp(app, { rows, registries, run, onContinue
     onContinue();
     acknowledged = true;
   });
-  return mountRewardDoor(app, {
+  return MountRewardDoor(app, {
     owner: rows,
     eyebrow: t('reward.level.eyebrow'),
     title: t('reward.level.button'),

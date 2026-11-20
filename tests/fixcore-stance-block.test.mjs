@@ -5,7 +5,10 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat as createRunCombatWithBenefits } from '../src/engine/runCombat.js';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
+// These numbers pin the pre-Wave-2.5 arithmetic, so the fight plays the rules of one created before the stance benefits (tests/stance-benefits.test.mjs owns those).
+const createRunCombat = (...args) => withoutStanceBenefits(createRunCombatWithBenefits(...args));
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { dispatch,previewCard } from '../src/engine/combat.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
@@ -15,7 +18,7 @@ import { gameProfileEquipmentReceipt,gameProfileEffectiveAttributes,gameProfileR
 import { rollKnowledgeRead } from '../src/model/enemyIntentKnowledge.js';
 import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
 import { attackHitPreview } from '../src/engine/stanceHit.js';
-const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{}});
+const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{effects:{playerDamageMultiplier:1,enemyDamageMultiplier:1,blockGainMultiplier:1}}});
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 function liveCore() {
  const run=createRunState({registries:reg,classId:'reaver',seed:511,profileMeta:{gameProfileUnlocks:{core:{completedRunIds:['a','b','c']}}}});

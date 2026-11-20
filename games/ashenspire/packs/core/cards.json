@@ -196,7 +196,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 18
       },
       {
         "op": "applyStatus",
@@ -302,7 +302,11 @@
       "stance": "evade"
     },
     "textTemplate": "Gain {evade} Evade.",
-    "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
+    "flavor": "Core adapter fixture. Evade is available in rewards, never starter.",
+    "upgrade": {
+      "cost": 2,
+      "staminaCost": 2
+    }
   },
   {
     "id": "core.cantrip",
@@ -356,11 +360,12 @@
       }
     ],
     "tags": [
+      "rank.cantrip",
       "camp:spell",
       "maneuver:casting",
       "classification.skill"
     ],
-    "textTemplate": "Gain {restoreMana} Mana.",
+    "textTemplate": "Restore {restoreMana} Mana.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
   {
@@ -387,6 +392,61 @@
       "classification.skill"
     ],
     "textTemplate": "Close one band."
+  },
+  {
+    "id": "core.retreat",
+    "name": "Retreat",
+    "class": "colorless",
+    "rarity": "special",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [
+      "ethereal",
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "self",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill"
+    ],
+    "textTemplate": "Step back."
+  },
+  {
+    "id": "core.upsetRanks",
+    "name": "Upset the Ranks",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "swapRows",
+        "target": "enemy"
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill"
+    ],
+    "textTemplate": "Swap the target's row with the nearest enemy in the other row.",
+    "flavor": "Shove the archer to the front and the brute to the back."
   },
   {
     "id": "core.closingDodge",
@@ -426,20 +486,26 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evade.\nClose one band."
+    "textTemplate": "Gain {evade} Evade.\nClose one band.",
+    "upgrade": {
+      "cost": 3,
+      "staminaCost": 3
+    }
   },
   {
     "id": "core.backstep",
     "name": "Backstep",
     "class": "colorless",
     "rarity": "uncommon",
-    "cost": 4,
-    "staminaCost": 4,
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
     "icon": "evade",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "applyStatus",
@@ -453,20 +519,65 @@
       },
       {
         "op": "moveEngagement",
-        "target": "enemy",
+        "target": "self",
         "bands": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "prepared",
+        "stacks": {
+          "f": "add",
+          "args": [
+            1
+          ]
+        }
       }
     ],
     "tags": [
       "camp:physical",
       "maneuver:defend",
       "classification.skill",
-      "trait:reaction"
+      "trait:reaction",
+      "lifecycle.exhaust"
     ],
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evade.\nRetreat one band."
+    "textTemplate": "Gain {evade} Evade. Retreat. Become Prepared. Exhaust.",
+    "upgrade": {
+      "keywords": [],
+      "textTemplate": "Gain {evade} Evade. Retreat. Become Prepared.",
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "moveEngagement",
+          "target": "self",
+          "bands": 1
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "prepared",
+          "stacks": {
+            "f": "add",
+            "args": [
+              1
+            ]
+          }
+        }
+      ]
+    }
   },
   {
     "id": "core.jab",
@@ -496,7 +607,8 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack"
+      "classification.attack",
+      "trait:reaction"
     ],
     "textTemplate": "Deal {damage} damage. Apply {weak} Weak.",
     "upgrade": {
@@ -590,6 +702,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -597,7 +715,7 @@
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {weak} Weak.",
     "upgrade": {
       "effects": [
         {
@@ -609,6 +727,12 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 1
         }
       ]
     },
@@ -637,12 +761,6 @@
       {
         "op": "draw",
         "amount": 1
-      },
-      {
-        "op": "applyStatus",
-        "target": "self",
-        "status": "precision",
-        "stacks": 1
       }
     ],
     "tags": [
@@ -651,7 +769,7 @@
       "classification.skill",
       "trait:reaction"
     ],
-    "textTemplate": "Gain {block} Block. Draw {draw} card. Gain {precision} Precision.",
+    "textTemplate": "Gain {block} Block. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
@@ -662,12 +780,6 @@
         {
           "op": "draw",
           "amount": 1
-        },
-        {
-          "op": "applyStatus",
-          "target": "self",
-          "status": "precision",
-          "stacks": 1
         }
       ]
     },
@@ -695,6 +807,12 @@
         "op": "damage",
         "target": "enemy",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "bleed",
+        "stacks": 2
       }
     ],
     "tags": [
@@ -702,7 +820,7 @@
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Close one band. Deal {damage} damage.",
+    "textTemplate": "Close one band. Deal {damage} damage. Apply {bleed} Bleed.",
     "upgrade": {
       "effects": [
         {
@@ -714,6 +832,12 @@
           "op": "damage",
           "target": "enemy",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "bleed",
+          "stacks": 2
         }
       ]
     },
@@ -845,6 +969,12 @@
         "op": "heal",
         "target": "self",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -857,13 +987,19 @@
       "fx:heal",
       "lifecycle.exhaust"
     ],
-    "textTemplate": "Heal {heal} HP. Exhaust.",
+    "textTemplate": "Heal {heal} HP. Gain {regen} Regen. Exhaust.",
     "upgrade": {
       "effects": [
         {
           "op": "heal",
           "target": "self",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 1
         }
       ]
     },
@@ -890,12 +1026,6 @@
         "op": "restoreMana",
         "target": "self",
         "amount": 1
-      },
-      {
-        "op": "applyStatus",
-        "target": "self",
-        "status": "precision",
-        "stacks": 2
       }
     ],
     "tags": [
@@ -905,7 +1035,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Draw {draw} card. Gain {restoreMana} Mana. Gain {precision} Precision.",
+    "textTemplate": "Draw {draw} card. Restore {restoreMana} Mana.",
     "upgrade": {
       "effects": [
         {
@@ -916,15 +1046,9 @@
           "op": "restoreMana",
           "target": "self",
           "amount": 1
-        },
-        {
-          "op": "applyStatus",
-          "target": "self",
-          "status": "precision",
-          "stacks": 2
         }
       ],
-      "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana. Gain {precision} Precision."
+      "textTemplate": "Draw {draw} cards. Restore {restoreMana} Mana."
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
@@ -1001,6 +1125,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -1008,7 +1138,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
@@ -1019,7 +1149,13 @@
         {
           "op": "poiseDamage",
           "target": "enemy",
-          "amount": 8
+          "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 1
         }
       ]
     },
@@ -1230,7 +1366,7 @@
         {
           "op": "poiseDamage",
           "target": "enemy",
-          "amount": 4
+          "amount": 3
         }
       ]
     },
@@ -1284,7 +1420,7 @@
         {
           "op": "poiseDamage",
           "target": "enemy",
-          "amount": 8
+          "amount": 6
         },
         {
           "op": "applyStatus",
@@ -1320,6 +1456,12 @@
         "op": "poiseDamage",
         "target": "allEnemies",
         "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "bleed",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -1328,7 +1470,7 @@
       "classification.attack",
       "targeting:area"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage to ALL enemies.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage to ALL enemies. Apply {bleed} Bleed to ALL enemies.",
     "upgrade": {
       "effects": [
         {
@@ -1340,6 +1482,12 @@
           "op": "poiseDamage",
           "target": "allEnemies",
           "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "bleed",
+          "stacks": 1
         }
       ]
     },
@@ -1425,6 +1573,10 @@
         "op": "moveEngagement",
         "target": "enemy",
         "bands": 1
+      },
+      {
+        "op": "draw",
+        "amount": 1
       }
     ],
     "tags": [
@@ -1432,7 +1584,7 @@
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Retreat one band.",
+    "textTemplate": "Deal {damage} damage. Retreat one band. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
@@ -1444,6 +1596,10 @@
           "op": "moveEngagement",
           "target": "enemy",
           "bands": 1
+        },
+        {
+          "op": "draw",
+          "amount": 1
         }
       ]
     },
@@ -1523,12 +1679,6 @@
         "op": "block",
         "target": "self",
         "amount": 3
-      },
-      {
-        "op": "applyStatus",
-        "target": "self",
-        "status": "precision",
-        "stacks": 1
       }
     ],
     "tags": [
@@ -1538,7 +1688,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Draw {draw} card. Gain {block} Block. Gain {precision} Precision.",
+    "textTemplate": "Draw {draw} card. Gain {block} Block.",
     "upgrade": {
       "effects": [
         {
@@ -1549,12 +1699,6 @@
           "op": "block",
           "target": "self",
           "amount": 5
-        },
-        {
-          "op": "applyStatus",
-          "target": "self",
-          "status": "precision",
-          "stacks": 1
         }
       ]
     },
@@ -1614,7 +1758,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 8
+        "amount": 16
       },
       {
         "op": "applyStatus",
@@ -1636,7 +1780,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 11
+          "amount": 22
         },
         {
           "op": "applyStatus",
@@ -1666,12 +1810,18 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12
+        "amount": 24
       },
       {
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "chill",
+        "stacks": 2
       }
     ],
     "tags": [
@@ -1680,18 +1830,24 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 16
+          "amount": 32
         },
         {
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "chill",
+          "stacks": 2
         }
       ]
     },
@@ -1715,7 +1871,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 9
+        "amount": 18
       },
       {
         "op": "applyStatus",
@@ -1736,7 +1892,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13
+          "amount": 26
         },
         {
           "op": "applyStatus",
@@ -1764,9 +1920,21 @@
     "keywords": [],
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 4,
+        "nonlethal": true
+      },
+      {
         "op": "damage",
         "target": "enemy",
-        "amount": 30
+        "amount": 60
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 3
       }
     ],
     "tags": [
@@ -1775,13 +1943,20 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
     "upgrade": {
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 38
+          "amount": 76
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 3
         }
       ]
     },
@@ -1901,7 +2076,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 10
+        "amount": 20
       },
       {
         "op": "applyStatus",
@@ -1928,7 +2103,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 13
+          "amount": 26
         },
         {
           "op": "applyStatus",
@@ -2009,7 +2184,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 14
       },
       {
         "op": "restoreMana",
@@ -2023,13 +2198,13 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Gain {restoreMana} Mana.",
+    "textTemplate": "Deal {damage} damage. Restore {restoreMana} Mana.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 20
         },
         {
           "op": "restoreMana",
@@ -2058,7 +2233,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 3
+        "amount": 6
       },
       {
         "op": "applyStatus",
@@ -2080,7 +2255,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 5
+          "amount": 10
         },
         {
           "op": "applyStatus",
@@ -2100,8 +2275,8 @@
     "class": "reaver",
     "rarity": "rare",
     "cost": 1,
-    "staminaCost": 1,
-    "manaCost": 1,
+    "staminaCost": 2,
+    "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
@@ -2116,6 +2291,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 8
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 2
       }
     ],
     "tags": [
@@ -2123,7 +2304,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
@@ -2134,7 +2315,13 @@
         {
           "op": "poiseDamage",
           "target": "enemy",
-          "amount": 10
+          "amount": 8
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 2
         }
       ]
     },
@@ -2148,8 +2335,8 @@
     "class": "reaver",
     "rarity": "uncommon",
     "cost": 1,
-    "staminaCost": 1,
-    "manaCost": 1,
+    "staminaCost": 2,
+    "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
     "icon": "shield",
@@ -2306,7 +2493,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 6
+        "amount": 12
       },
       {
         "op": "applyStatus",
@@ -2328,7 +2515,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 9
+          "amount": 18
         },
         {
           "op": "applyStatus",
@@ -2358,7 +2545,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 7
+        "amount": 14
       },
       {
         "op": "draw",
@@ -2377,7 +2564,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 20
         },
         {
           "op": "draw",
@@ -2405,7 +2592,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 5
+        "amount": 10
       },
       {
         "op": "applyStatus",
@@ -2426,7 +2613,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 7
+          "amount": 14
         },
         {
           "op": "applyStatus",
@@ -2456,12 +2643,18 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 8
+        "amount": 16
       },
       {
         "op": "block",
         "target": "self",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -2470,18 +2663,24 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Gain {block} Block.",
+    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 10
+          "amount": 20
         },
         {
           "op": "block",
           "target": "self",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 1
         }
       ]
     },
@@ -2557,7 +2756,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 12
       },
       {
         "op": "poiseDamage",
@@ -2583,7 +2782,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 8
+          "amount": 16
         },
         {
           "op": "poiseDamage",
@@ -2660,9 +2859,10 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack"
+      "classification.attack",
+      "range:reach"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Deal {damage} damage at Reach.",
     "upgrade": {
       "effects": [
         {
@@ -2853,7 +3053,7 @@
       {
         "op": "applyStatus",
         "target": "enemy",
-        "status": "frost",
+        "status": "chill",
         "stacks": 3
       }
     ],
@@ -2865,7 +3065,7 @@
       "school:frost",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {frost} Frost.",
+    "textTemplate": "Deal {damage} damage. Apply {chill} Chill.",
     "upgrade": {
       "effects": [
         {
@@ -2876,7 +3076,7 @@
         {
           "op": "applyStatus",
           "target": "enemy",
-          "status": "frost",
+          "status": "chill",
           "stacks": 4
         }
       ]
@@ -3023,7 +3223,7 @@
       "classification.skill",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block, {barrier} Barrier and {ward} Ward. Draw {draw} card.",
+    "textTemplate": "Gain {block} Block, {barrier} Poise and {ward} Ward. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
@@ -3074,6 +3274,12 @@
         "target": "enemy",
         "status": "weak",
         "stacks": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 1
       }
     ],
     "mirrors": "attack",
@@ -3085,7 +3291,7 @@
       "school:fire",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {weak} Weak.",
+    "textTemplate": "Deal {damage} damage. Apply {weak} Weak. Apply {burn} Burn.",
     "upgrade": {
       "effects": [
         {
@@ -3098,6 +3304,12 @@
           "target": "enemy",
           "status": "weak",
           "stacks": 2
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 1
         }
       ]
     },
@@ -3125,8 +3337,8 @@
       },
       {
         "op": "applyStatus",
-        "target": "self",
-        "status": "precision",
+        "target": "enemy",
+        "status": "burn",
         "stacks": 1
       }
     ],
@@ -3140,7 +3352,7 @@
       "rank.cantrip",
       "range:melee"
     ],
-    "textTemplate": "Deal {damage} damage. Gain {precision} Precision.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
     "upgrade": {
       "effects": [
         {
@@ -3150,8 +3362,8 @@
         },
         {
           "op": "applyStatus",
-          "target": "self",
-          "status": "precision",
+          "target": "enemy",
+          "status": "burn",
           "stacks": 2
         }
       ]
@@ -3177,6 +3389,12 @@
         "op": "block",
         "target": "self",
         "amount": 5
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -3187,13 +3405,19 @@
       "school:fire",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block.",
+    "textTemplate": "Gain {block} Block. Apply {burn} Burn.",
     "upgrade": {
       "effects": [
         {
           "op": "block",
           "target": "self",
           "amount": 7
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 1
         }
       ]
     },
@@ -3220,7 +3444,7 @@
       {
         "op": "applyStatus",
         "target": "enemy",
-        "status": "frost",
+        "status": "chill",
         "stacks": 1
       },
       {
@@ -3239,7 +3463,7 @@
       "school:frost",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {frost} Frost. Apply {weak} Weak.",
+    "textTemplate": "Deal {damage} damage. Apply {chill} Chill. Apply {weak} Weak.",
     "upgrade": {
       "effects": [
         {
@@ -3250,7 +3474,7 @@
         {
           "op": "applyStatus",
           "target": "enemy",
-          "status": "frost",
+          "status": "chill",
           "stacks": 2
         },
         {
@@ -3286,7 +3510,7 @@
       {
         "op": "applyStatus",
         "target": "enemy",
-        "status": "frost",
+        "status": "chill",
         "stacks": 2
       },
       {
@@ -3306,7 +3530,7 @@
       "rank.cantrip",
       "range:melee"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {frost} Frost. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Deal {damage} damage. Apply {chill} Chill. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
@@ -3317,7 +3541,7 @@
         {
           "op": "applyStatus",
           "target": "enemy",
-          "status": "frost",
+          "status": "chill",
           "stacks": 3
         },
         {
@@ -3405,6 +3629,12 @@
         "target": "self",
         "status": "precision",
         "stacks": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -3415,7 +3645,7 @@
       "school:divine",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {precision} Precision.",
+    "textTemplate": "Gain {precision} Precision. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {
@@ -3423,6 +3653,12 @@
           "target": "self",
           "status": "precision",
           "stacks": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 1
         }
       ]
     },
@@ -3450,6 +3686,12 @@
         "op": "gainBarrier",
         "target": "self",
         "amount": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -3460,7 +3702,7 @@
       "school:divine",
       "rank.cantrip"
     ],
-    "textTemplate": "Gain {block} Block and {gainBarrier} Barrier.",
+    "textTemplate": "Gain {block} Block and {gainBarrier} Poise. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {
@@ -3472,6 +3714,12 @@
           "op": "gainBarrier",
           "target": "self",
           "amount": 1
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 1
         }
       ]
     },
@@ -3494,6 +3742,12 @@
         "op": "damage",
         "target": "enemy",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "mirrors": "attack",
@@ -3505,13 +3759,19 @@
       "school:divine",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Deal {damage} damage. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 2
         }
       ]
     },
@@ -3559,13 +3819,13 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 3
+          "amount": 4
         },
         {
           "op": "applyStatus",
           "target": "enemy",
           "status": "venom",
-          "stacks": 4
+          "stacks": 3
         }
       ]
     },
@@ -3703,6 +3963,12 @@
         "target": "enemy",
         "status": "bleed",
         "stacks": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
       }
     ],
     "mirrors": "attack",
@@ -3714,7 +3980,7 @@
       "school:decay",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed.",
+    "textTemplate": "Deal {damage} damage. Apply {bleed} Bleed. Apply {weak} Weak.",
     "upgrade": {
       "effects": [
         {
@@ -3727,6 +3993,12 @@
           "target": "enemy",
           "status": "bleed",
           "stacks": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 1
         }
       ]
     },
@@ -3756,6 +4028,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "venom",
+        "stacks": 1
       }
     ],
     "mirrors": "attack",
@@ -3767,7 +4045,7 @@
       "school:decay",
       "rank.cantrip"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {venom} Venom.",
     "upgrade": {
       "effects": [
         {
@@ -3779,6 +4057,12 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "venom",
+          "stacks": 1
         }
       ]
     },
@@ -3932,5 +4216,542 @@
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.pyreLash",
+    "name": "Pyre Lash",
+    "class": "starseer",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2,
+        "nonlethal": true
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 21
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:fire",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
+    "upgrade": {
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 29
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "A whip of pyre-smoke, drawn from the Spire's lowest hearth.\nIt costs no breath, only the Mana the flame was promised.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.conflagration",
+    "name": "Conflagration",
+    "class": "starseer",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 15
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "burn",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:fire",
+      "targeting:area",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 27
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "burn",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "The whole landing catches at once.\nThe Ashen Choir sang it down in four verses, and the fourth was never finished.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.forkedBolt",
+    "name": "Forked Bolt",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2,
+        "nonlethal": true
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 24
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "shock",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:lightning",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} Lightning damage. Apply {shock} Shock. Lose {loseHp} HP.",
+    "upgrade": {
+      "textTemplate": "Deal {damage} Lightning damage. Apply {shock} Shock.",
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 29
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "shock",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "The bolt finds the iron in a man before he knows he carries it.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.stormcall",
+    "name": "Stormcall",
+    "class": "starseer",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 18
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "shock",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:lightning",
+      "targeting:area",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 27
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "shock",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Called from the broken lenses of the old Observatory.\nThe sky answered, and did not ask what it was answering.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.glacialSpike",
+    "name": "Glacial Spike",
+    "class": "starseer",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2,
+        "nonlethal": true
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 17
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "chill",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:frost",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill. Lose {loseHp} HP.",
+    "upgrade": {
+      "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill.",
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 22
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "chill",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "One needle of the deep winter, thrown by a hand that stayed warm.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.radiantVerdict",
+    "name": "Radiant Verdict",
+    "class": "herald",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 3,
+        "nonlethal": true
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 30
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 10
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:divine",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Lose {loseHp} HP.",
+    "upgrade": {
+      "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 46
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 14
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Spoken once, and the room agrees with it.\nThe Chapel's censor struck the word from the record. The word did not strike back.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.witherDraught",
+    "name": "Wither Draught",
+    "class": "herald",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2,
+        "nonlethal": true
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 24
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "necroticBlight",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:decay",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {necroticBlight} Necrotic Blight. Lose {loseHp} HP.",
+    "upgrade": {
+      "textTemplate": "Deal {damage} damage. Apply {necroticBlight} Necrotic Blight.",
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 29
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "necroticBlight",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Drunk from the cup the Chapel keeps for those it cannot bury.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.batteringGale",
+    "name": "Battering Gale",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 2,
+        "nonlethal": true
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 15
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 12
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:force",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Lose {loseHp} HP.",
+    "faceTemplate": ["Deal {damage} damage.", "Deal {poiseDamage} Poise damage.", "Lose {loseHp} HP."],
+    "upgrade": {
+      "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+      "faceTemplate": ["Deal {damage} damage.", "Deal {poiseDamage} Poise damage."],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 20
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 16
+        }
+      ]
+    },
+    "flavor": "A wind with a shoulder in it.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.openArchive",
+    "name": "Open the Archive",
+    "class": "colorless",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "draw",
+        "amount": 5
+      },
+      {
+        "op": "restoreMana",
+        "target": "self",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "cost.manaOnly",
+      "lifecycle.exhaust"
+    ],
+    "textTemplate": "Draw {draw} cards. Restore {restoreMana} Mana. Exhaust.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "draw",
+          "amount": 7
+        },
+        {
+          "op": "restoreMana",
+          "target": "self",
+          "amount": 3
+        }
+      ]
+    },
+    "flavor": "Every catalogue the Astronomer sealed, open at once.\nThe reader pays in Mana and keeps what the pages give back."
   }
 ]

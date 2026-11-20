@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { createMemoryStorage, createSaveManager, isStorageFullError } from '../src/engine/save.js';
+import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
+import { CreateRunPersistence } from '../src/services/runPersistence.js';
 import { createBrowserSaveManager } from '../src/engine/browserSave.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
@@ -15,9 +16,6 @@ import { openRunEnemyKnowledge } from '../src/model/enemyKnowledgeRun.js';
 const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
 const wrapper = source.match(/const durable = candidate => \{([\s\S]*?)\n    \};\n    if \(!savedSnapshot\)/)?.[1];
 assert.ok(wrapper, 'the production expanded combat save wrapper is present');
-// The wrapper's save door (saveCombatCandidate / reportAutosaveFailure) is the shipped text too.
-const saveDoor = source.slice(source.indexOf('const SAVE_WARNING_REPEAT_MS'), source.indexOf('// The run the way its save slot names it'));
-assert.ok(saveDoor.includes('function saveCombatCandidate'), 'the production combat save door is present');
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
 function fixture(knowledge) {
@@ -38,10 +36,17 @@ function fixture(knowledge) {
   run.combatEntered = { nodeId, encounterId };
   const combat = createRunCombat({ registries, run, rng,
     enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
-  const durable = new Function('run', 'rng', 'activeSlot', 'nodeId', 'encounterId',
-    'saves', 'commitExpansionCandidate', 'showSettingsNotice', 'isStorageFullError', 'dlog', 'failureBanner',
-    `${saveDoor}\nreturn candidate => {${wrapper}}`)(run, rng, 1, nodeId, encounterId,
-    saves, commitExpansionCandidate, message => notices.push(message), isStorageFullError, () => {}, () => null);
+  const reportAutosaveFailure = error => notices.push(error.message);
+  const persistence = CreateRunPersistence({
+    readCurrent: () => ({ slot: 1 }),
+    stampSkillBonuses: () => assert.fail('combat candidate saves do not restamp skills'),
+    saveRun: saves.saveRun,
+    reportFailure: reportAutosaveFailure,
+  });
+  const durable = new Function('run', 'activeSlot', 'nodeId', 'encounterId',
+    'saves', 'commitExpansionCandidate', 'showSettingsNotice', 'saveCombatCandidate', 'reportAutosaveFailure',
+    `return candidate => {${wrapper}}`)(run, 1, nodeId, encounterId,
+    saves, commitExpansionCandidate, message => notices.push(message), persistence.SaveCombatCandidate, reportAutosaveFailure);
   durable(combat); combat.beforeCombatCommit = durable;
   return { registries, run, rng, combat, saves, notices, banks: () => banks };
 }

@@ -2,7 +2,7 @@ import { engravedIcon } from './engravedIcon.js';
 import { uiIconText } from '../../content/uiIcons.js';
 import { button, el, statusText } from '../kit/index.js';
 import { t } from '../strings.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 
 /** Small art target; the complete description and original visual stay inspectable. */
 export function merchantThumbnail({ visual, detail = visual, name, desc = '', inspect = null }) {
@@ -13,7 +13,7 @@ export function merchantThumbnail({ visual, detail = visual, name, desc = '', in
     event.stopPropagation();
     if (inspect) { inspect(); return; }
     const back = button({ label: t('shop.back'), role: 'exit' });
-    const shell = openModal({ title: name, bodyClassName: 'merchant-inspection', body: host => {
+    const shell = OpenModal({ title: name, bodyClassName: 'merchant-inspection', body: host => {
       host.append(detail, el('p', { text: desc }));
     }, secondary: [back] });
     back.addEventListener('click', shell.close);

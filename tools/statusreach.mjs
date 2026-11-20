@@ -224,6 +224,42 @@ export const CODE_APPLIERS = [
     needle: `applyStatus(ctx, enemy, row.status, row.stacks`,
     why: 'an enemy row\'s authored startStatuses (Stitch Crab opens Damp, SPEC 4.7) is seeded at spawn',
   },
+  {
+    status: 'shock',
+    file: 'src/engine/elementIdentity.js',
+    needle: `addCapped(ctx, target, 'shock'`,
+    why: 'a lightning hit that breaks Poise adds Shock = max(INT, WIS) (element rules, W25)',
+  },
+  {
+    status: 'chill',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'chill'`,
+    why: 'every frost hit applies Chill (element rules, W25)',
+  },
+  {
+    status: 'freeze',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'freeze'`,
+    why: 'a frost Poise break on a Chilled target Freezes it (element rules, W25)',
+  },
+  {
+    status: 'brittle',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'brittle'`,
+    why: 'a frost Poise break on a Chilled target makes it Brittle (element rules, W25)',
+  },
+  {
+    status: 'necroticBuildup',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'necroticBuildup'`,
+    why: 'every necrotic hit adds build-up (element rules, W25)',
+  },
+  {
+    status: 'knockback',
+    file: 'src/engine/elementIdentity.js',
+    needle: `Statuses.applyStatus(ctx, target, 'knockback'`,
+    why: 'a force Poise break knocks the target back (element rules, W25)',
+  },
 ];
 
 // The op that applies a status. One string, in one place, on purpose — this is
@@ -373,6 +409,8 @@ export function statusReach(bundle, opts = {}) {
     if (profile.camp === 'spell' && stanceRulesFor(stanceContext).spellStatusStacks > 0
       && (carrier.effects || []).some(effect => ['applyStatus', 'buildup'].includes(effect.op)
         && effect.chance !== 0 && positive(effect.stacks ?? effect.amount ?? 1))) note('precision', `R8 authored spell status ${where}`);
+    // An Evade card (W25-EvadeCards) grants its stacks with its own applyStatus effect rather than a stance-entry tag; it still carries Evade.
+    if ((carrier.effects || []).some(effect => effect.op === 'applyStatus' && effect.status === 'evade' && effect.chance !== 0 && positive(effect.stacks ?? effect.amount ?? 1))) note('evade', `R8 authored Evade status ${where}`);
     const damaging = positive(carrier.damage) || [...(carrier.effects || []), ...(carrier.upgrade?.effects || [])]
       .some(effect => effect.op === 'damage' && positive(effect.amount));
     const type = expansionMatchups.damageAliases?.[profile.damageType] || profile.damageType;

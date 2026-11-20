@@ -1,4 +1,3 @@
-import { masteryUnlockName, registriesForClassMastery } from '../../model/classMasteryRun.js';
 import { abilityRankAt, isAbilitySkill } from '../../model/abilityGrades.js';
 import { classRewardBudget, expandedProgression } from '../../model/classMilestones.js';
 // src/ui/models/CharacterSheetModel.js — the Character sheet's two ladders,
@@ -8,7 +7,7 @@ import { classRewardBudget, expandedProgression } from '../../model/classMilesto
 // THIS MODULE READS, IT NEVER WRITES. Every number comes from the functions
 // that pay the reward: the XP steps from levelup.js / skills.js `xpToNext`,
 // the cadences from skills.js's own predicates (`levelQueuesRankUp`,
-// `levelQueuesSkillFeat`, `levelQueuesAttributePick`) and balance.skill's
+// `levelQueuesAttributePick`) and balance.skill's
 // rows, the pool growth from the run's own derived-stat snapshot at its own
 // attributes, the deck floor from loadout.js `deckMinimum`. So the sheet
 // cannot promise a reward the level door does not give: a balance edit moves
@@ -20,13 +19,18 @@ import { classRewardBudget, expandedProgression } from '../../model/classMilesto
 
 import { characterLevel, levelOf, xpToNext as levelXpToNext } from '../../model/levelup.js';
 import {
-  classSkillId, levelQueuesAttributePick, levelQueuesRankUp, levelQueuesSkillFeat, linkedAttributes,
-  rankUpKind, skillLevel, skillMaxLevel, skillTracks, trackSkillFeats, xpToNext as skillXpToNext,
+  classSkillId, levelQueuesAttributePick, levelQueuesRankUp, linkedAttributes,
+  rankUpKind, skillLevel, skillMaxLevel, skillTracks, xpToNext as skillXpToNext,
 } from '../../model/skills.js';
 import { classTreeRows } from '../../model/classTree.js';
 import { deriveStat } from '../../model/derivedStats.js';
 import { deckMinimum } from '../../model/loadout.js';
 import { orderedAttributes } from '../../model/attributes.js';
+import { gameModule } from '../../model/gameProfile.js';
+import { ClassBonusApplies, ClassBonusAttribute, ClassBonusCount, IsClassBonusLevel } from '../../model/classLevelBonus.js';
+import { classLevelBonuses } from '../../content/classLevelBonuses.js';
+import { CoreDeckMinimum } from '../../model/deckMinimumRules.js';
+import { deckRules } from '../../content/deckRules.js';
 
 /** The derived pools a character level can move, in the order the sheet lists them. */
 export const LEVEL_STATS = Object.freeze(['hp', 'stamina', 'mana', 'draw', 'handSize']);
@@ -45,9 +49,8 @@ const skillRows = (registries) => balanceOf(registries).skill || {};
 // The public model also accepts the root registry. Read this character's saved
 // rules even when its caller has not already projected a mastery registry.
 export function characterSheetRegistries(registries, run) {
-  const scoped = registriesForClassMastery(registries, run);
-  return { ...scoped, progressionEnabled: expandedProgression(run),
-    balance: { ...scoped.balance, ...(run.enemyKnowledgeRules ? { enemyKnowledge: run.enemyKnowledgeRules } : {}), ...(expandedProgression(run) && run.progressionRuleSnapshot
+  return { ...registries, progressionEnabled: expandedProgression(run),
+    balance: { ...registries.balance, ...(run.enemyKnowledgeRules ? { enemyKnowledge: run.enemyKnowledgeRules } : {}), ...(expandedProgression(run) && run.progressionRuleSnapshot
       ? { progression: run.progressionRuleSnapshot } : {}) } };
 }
 
@@ -59,9 +62,9 @@ export function rowState(rowLevel, held) {
   return 'locked';
 }
 
-function poolValue(rules, statId, run, classDef, level) {
+function poolValue(rules, statId, run, classDef, level, attributes = run.attributes) {
   try {
-    const out = deriveStat(rules, statId, { attributes: run.attributes, classDef, level });
+    const out = deriveStat(rules, statId, { attributes, classDef, level });
     return out && Number.isFinite(out.value) ? out.value : null;
   } catch {
     return null; // a snapshot without that row: the level does not move it
@@ -73,7 +76,7 @@ function poolValue(rules, statId, run, classDef, level) {
  * row per level 1..maxLevel: `{ level, stepXp, totalXp, state, grants }`.
  * Level 1 is where a run starts and grants nothing.
  */
-export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) {
+export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS, settings = {}) {
   const o = { ...DEFAULT_LEVEL_OFFERS, ...(offers || {}) };
   const authoredMax = (balanceOf(registries).levelUp || {}).maxLevels;
   const maxLevel = Number.isInteger(authoredMax) && authoredMax > 0 ? authoredMax : 20;
@@ -84,6 +87,17 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) 
   const rules = run && run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rules;
   const classDef = rules && registries.classes && typeof registries.classes.get === 'function' ? registries.classes.get(run.class) : null;
   const floorAt = (level) => deckMinimum(registries, { level: { level } });
+  const coreFloorAt = (level) => CoreDeckMinimum({ ...run, level: { ...run.level, level } }, settings);
+  // Core (owner, 2026-11-17): the sheet lists what a claimed level really pays — the authored points,
+  // the pools at that level (the odd-level class bonus included), the class bonus itself, the deck
+  // minimum dropping, and the level's card choice. No feat or class-tree pick is offered there.
+  const core = !!(run && gameModule(run, 'progression')?.characterLevels);
+  const corePoints = core ? (gameModule(run, 'progression').attributePointsPerLevel || 0) : 0;
+  const bonusAttribute = core && ClassBonusApplies(run) ? ClassBonusAttribute(run.class) : null;
+  const bonusLabel = bonusAttribute ? (orderedAttributes(registries).find((a) => a.id === bonusAttribute)?.label || bonusAttribute) : '';
+  const attributesAt = (level) => (bonusAttribute && run.attributes
+    ? { ...run.attributes, [bonusAttribute]: (run.attributes[bonusAttribute] || 0) + ClassBonusCount(level) * classLevelBonuses.amount }
+    : run && run.attributes);
   const rows = [];
   let total = 0;
   for (let level = 1; level <= maxLevel; level += 1) {
@@ -91,13 +105,23 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) 
     total += stepXp;
     const grants = [];
     if (level > 1) {
-      if (o.statPoints) grants.push({ kind: 'points', amount: points });
+      if (core ? corePoints > 0 : o.statPoints) grants.push({ kind: 'points', amount: core ? corePoints : points });
+      if (bonusAttribute && IsClassBonusLevel(level)) grants.push({ kind: 'classBonus', attribute: bonusLabel, amount: classLevelBonuses.amount });
       if (rules) {
         for (const stat of LEVEL_STATS) {
-          const before = poolValue(rules, stat, run, classDef, level - 1);
-          const after = poolValue(rules, stat, run, classDef, level);
+          const before = poolValue(rules, stat, run, classDef, level - 1, attributesAt(level - 1));
+          const after = poolValue(rules, stat, run, classDef, level, attributesAt(level));
           if (before != null && after != null && after > before) grants.push({ kind: 'stat', stat, amount: after - before });
         }
+      }
+      if (core) {
+        if (deckRules.minimumReductionLevels.includes(level)) {
+          const minimum = coreFloorAt(level);
+          if (minimum < coreFloorAt(level - 1)) grants.push({ kind: 'deckMinimumDown', amount: minimum });
+        }
+        grants.push({ kind: 'levelCard' });
+        rows.push(Object.freeze({ level, stepXp, totalXp: total, state: rowState(level, held), grants: Object.freeze(grants) }));
+        continue;
       }
       const floor = floorAt(level);
       if (floor > floorAt(level - 1)) grants.push({ kind: 'deckMinimum', amount: floor });
@@ -163,10 +187,6 @@ export function trackLadder(registries, run, track) {
     const grants = [];
     if (track.kind === 'class') {
       grants.push({ kind: 'classNodeDraft' });
-      if (run.classMasteryState) {
-        const names = registries.classMastery.filter(row => row.classId === classId && row.level === level).map(row => masteryUnlockName(registries, row));
-        if (names.length) grants.push({ kind: 'masteryUnlock', names });
-      }
       // The class level's source bonuses (engine/sourceRewardBonuses.js):
       // a feat choice and a class-pool card, each at its authored chance.
       if (expanded) {
@@ -192,9 +212,6 @@ export function trackLadder(registries, run, track) {
     }
     if (!ability && levelQueuesRankUp(track.kind, level)) grants.push({ kind: 'rankUp' });
     if (classId) grants.push(...tiersOpeningAt(registries, classId, level));
-    if (!(expanded && classId) && levelQueuesSkillFeat(registries, track.id, level)) {
-      grants.push({ kind: 'feat', options: Object.freeze(trackSkillFeats(track.id, !!run.classMasteryState, registries).filter((f) => f.minLevel <= level).map((f) => f.name)) });
-    }
     if (!(expanded && classId) && levelQueuesAttributePick(registries, track.id, level)) {
       grants.push({ kind: 'attribute', options: Object.freeze(linkedAttributes(registries, track.id).map((id) => attrLabels.get(id) || id)) });
     }
@@ -219,7 +236,7 @@ export function trackLadder(registries, run, track) {
  * ladder is not this character's); the own class first, then the authored
  * order.
  */
-export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OFFERS } = {}) {
+export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OFFERS, settings = {} } = {}) {
   registries = characterSheetRegistries(registries, run);
   const classId = run && !run.classUnequipped && typeof run.class === 'string' ? run.class : '';
   const ownTrackId = classId ? classSkillId(classId) : null;
@@ -228,7 +245,7 @@ export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OF
     .sort((a, b) => (b.id === ownTrackId) - (a.id === ownTrackId))
     .map((t) => trackLadder(registries, run, t));
   return Object.freeze({
-    character: characterLadder(registries, run, offers),
+    character: characterLadder(registries, run, offers, settings),
     tracks: Object.freeze(tracks),
     ownTrackId,
   });

@@ -90,8 +90,9 @@ test('Hold Block keeps all remaining protection for exactly its displayed number
       // Retention must keep that actual protection too, rather than regranting
       // or capping it at the nominal six printed on the unmodified card.
       const expectedBlock=combat.player.block;
-      assert.ok(expectedBlock>=initialBlock+6*plays);
-      assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),/Gain 6 Block\. Retain Block for 1 turn\./);
+      // Owner, 2026-11-18: the Core blockGainMultiplier (0.7) takes each printed 6 to 4 in play (the face keeps the authored number).
+      assert.ok(expectedBlock>=initialBlock+Math.floor(6*0.7)*plays);
+      assert.match(cardPlainText(reg,{cardId:'base.retain-block'}),/Gain 6 Block; keep it 1 turn\. Costs 1 more Stamina each play/);
       for(let turn=0;turn<plays;turn++){
         for(const enemy of combat.enemies){enemy.intent=null;enemy.plannedMoves=[];}
         dispatch(combat,{type:'endTurn'});
@@ -111,9 +112,9 @@ test('all three burden cards are real unplayable definitions and never normal re
     assert.equal(pack.groups['base.current-rewards'].members.includes(row.definition.id),false);
   }
 });
-test('core keeps its ten-card starter and only admits compatible rewards with active dependencies',()=>{
+test('core keeps its eleven-card starter and only admits compatible rewards with active dependencies',()=>{
   const p=profile(),reg=registries(p),run=createRunState({seed:73,classId:'reaver',registries:reg});
-  assert.equal(run.deck.length,10);assert.equal(run.deck.filter(card=>card.cardId==='greatswordSunderingHew').length,1);
+  assert.equal(run.deck.length,11);assert.equal(run.deck.filter(card=>card.cardId==='greatswordSunderingHew').length,1);
   assert.deepEqual(run.deck.filter(card=>card.cardId.startsWith('base.')).map(card=>card.cardId),[]);
   const admitted=new Set(p.content.cards.map(card=>card.id));
   assert.ok(admitted.has('base.draw'));assert.ok(admitted.has('base.foresight'));
@@ -145,7 +146,8 @@ test('current rewards can draw the expanded authored pool and preserve old balan
   const selected=new Set();
   for(let seed=1;seed<=200;seed++)for(const id of rollCardRewardIds(legacy,createRng(seed),{classId:'reaver',pool:'normal'}))if(id.startsWith('base.'))selected.add(id);
   assert.ok(selected.size>30,`${selected.size} base rewards actually drawn`);
-  for(const id of pack.groups['base.current-rewards'].members)assert.ok(legacy.classes.get('reaver').cardPool.includes(id),id);
+  // Owner 2026-11-17: cards that need allies (base.needs-allies) join no pool until ally mechanics exist.
+  for(const id of pack.groups['base.current-rewards'].members)assert.equal(legacy.classes.get('reaver').cardPool.includes(id),!pack.groups['base.needs-allies'].members.includes(id),id);
   const old=contentBundle.cards.find(row=>row.id==='greatswordSunderingHew');
   assert.deepEqual([old.cost,old.manaCost,old.effects[0].amount],[2,1,36]);
 });

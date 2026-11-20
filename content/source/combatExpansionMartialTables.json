@@ -9,15 +9,7 @@
     "aimedShot",
     "barbedArrow"
   ],
-  "evades": [
-    "evasiveGuard",
-    "dodgeRoll",
-    "quickstep",
-    "backstep",
-    "acrobaticsRogue",
-    "shadowstep",
-    "progression-nightstep"
-  ],
+  "evades": [],
   "poiseReplies": {
     "shieldBash": 4,
     "riposte": 4,
@@ -25,11 +17,6 @@
     "bindingParry": 3,
     "spikedReprisal": 5,
     "progression-crimson-reprisal": 5,
-    "evasiveGuard": 2,
-    "backstep": 3,
-    "acrobaticsRogue": 3,
-    "shadowstep": 4,
-    "progression-nightstep": 4,
     "nockAndWait": 3
   },
   "replySourceBase": {
@@ -55,26 +42,6 @@
     },
     "progression-crimson-reprisal": {
       "damage": 5,
-      "poise": 0
-    },
-    "evasiveGuard": {
-      "damage": 0,
-      "poise": 0
-    },
-    "backstep": {
-      "damage": 0,
-      "poise": 0
-    },
-    "acrobaticsRogue": {
-      "damage": 0,
-      "poise": 0
-    },
-    "shadowstep": {
-      "damage": 0,
-      "poise": 0
-    },
-    "progression-nightstep": {
-      "damage": 0,
       "poise": 0
     },
     "nockAndWait": {

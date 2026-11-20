@@ -12,7 +12,7 @@ import { renderCard } from '../src/ui/components/card.js';
 import { applyCardArtStyle, cardArtStyle } from '../src/ui/cardArtStyle.js';
 import { t, tFull } from '../src/ui/strings.js';
 import { mountProceduralBuilder } from '../src/ui/tools/cardArtProceduralBuilder.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { BUILDER_TYPES, BUILDER_ELEMENTS, BUILDER_RANK_MAX, BUILDER_PREVIEW_ID,
   normalizeBuilderInput, builderInputFromControls, createBuilderPreview, builderInputJson } from '../src/ui/tools/cardArtBuilderModel.js';
 
@@ -115,7 +115,7 @@ test('every builder type and category renders the same native Core recipe with c
       const model = playingCardModel(registries, { cardId: BUILDER_PREVIEW_ID }, { definition: preview.definition, rules: run });
       assert.deepEqual(model.costs, { variable: false, action: 0, mana: 0, stamina: 0 });
       if (type === 'evade') {
-        if (category === 'physical') assert.equal(model.stanceType, 'evade');
+        if (category === 'physical') assert.equal(model.type.subtype, 'Defense');
         assert.equal(preview.definition.evade, false);
         assert.deepEqual(preview.definition.effects, []);
         assert.doesNotMatch(markup, /Prepare one Evade/);

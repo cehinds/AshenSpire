@@ -9,6 +9,7 @@
 import { gameModule, gameContent } from './gameProfile.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { itemRefIdentity, coreGearActive } from './itemUpgrades.js';
+import { ItemFamily } from './itemPicks.js';
 import { stampCombatPlaysEver } from './playsEver.js';
 // The combat engine is bound, not imported: this module is reached from the Smith screens and from actions.js, and a
 // static import of runCombat/combat here would reorder the engine's import cycle, which the production bundler does
@@ -21,10 +22,10 @@ const previewCard = (...args) => need().previewCard(...args);
 const createRng = (...args) => need().createRng(...args);
 const resolveCombatCard = (...args) => need().resolveCombatCard(...args);
 
-const STAT_ORDER = ['ar', 'dr', 'poise', 'ward', 'hp', 'mp', 'sp', 'evasion', 'precision',
+const STAT_ORDER = ['ar', 'dr', 'pr', 'poise', 'ward', 'hp', 'mp', 'sp', 'evasion', 'precision',
   'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const STAT_LABELS = {
-  ar: 'AR', dr: 'DR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'MP', sp: 'SP', evasion: 'Evasion', precision: 'Precision',
+  ar: 'AR', dr: 'DR', pr: 'PR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'Mana', sp: 'Stamina', evasion: 'Evasion', precision: 'Precision',
   strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT',
 };
 const CARD_VALUES = [
@@ -46,15 +47,19 @@ function gearItemFor(run, itemRef) {
 }
 
 /** The item's own stat points and values at a tier, exactly as the equipped-gear receipt resolves them. */
-function itemAtTier(run, item, level) {
+function itemAtTier(run, item, level, itemRef) {
   const settings = gameModule(run, 'gear');
   // The tier's effective bonus (Core ladder: tier 1/2/3 = +1/+2/+4), not the raw tier.
   const bonus = upgradeTierBonus(gameModule(run, 'equipment'), level);
   const resolved = resolveGearItem(item, settings, { rank: (item.rank ?? 1) + bonus });
   const values = { ...resolved.values };
-  // A weapon (or staff) keeps its pool and adds weaponARPerTier AR per tier, as the rating receipt does.
-  if (item.kind !== 'armor' && item.kind !== 'shield') {
-    values.ar += bonus * (gameModule(run, 'equipment')?.upgradeBonuses?.weaponARPerTier || 0);
+  // A weapon (or staff) keeps its pool and adds weaponARPerTier AR per tier, as the rating receipt does; under `statPoints`
+  // (owner, 2026-11-17) the tier is attribute points the resolver already counted.
+  if (item.kind !== 'armor' && item.kind !== 'shield' && !settings.statPoints) {
+    const gain = bonus * (gameModule(run, 'equipment')?.upgradeBonuses?.weaponARPerTier || 0);
+    values.ar += gain;
+    // A magic weapon's tier also raises its spells (gameProfileRatingReceipt): PR rises with AR.
+    if (ItemFamily(run, itemRef) === 'magic') values.pr = (values.pr || 0) + gain;
   }
   const points = Object.values(resolved.points).reduce((sum, n) => sum + n, 0) + resolved.tagCost;
   return { values, points, budget: resolved.budget };
@@ -144,10 +149,10 @@ function liveCardValues(registries, run, itemRef, level) {
 export function coreSmithingStats(run, itemRef, currentLevel, nextLevel) {
   const item = gearItemFor(run, itemRef);
   if (!item) return [];
-  const before = itemAtTier(run, item, currentLevel), after = itemAtTier(run, item, nextLevel);
+  const before = itemAtTier(run, item, currentLevel, itemRef), after = itemAtTier(run, item, nextLevel, itemRef);
   const stats = [];
   if (item.kind === 'armor' || item.kind === 'shield') {
-    stats.push({ kind: 'budget', tag: `core:budget:${itemRef}`, label: item.kind === 'armor' ? 'Armor budget' : 'Stat points',
+    stats.push({ kind: 'budget', tag: `core:budget:${itemRef}`, label: item.kind === 'armor' ? 'Armour budget' : 'Stat points',
       before: before.budget ?? before.points, after: after.budget ?? after.points });
   }
   for (const id of STAT_ORDER) if (before.values[id] !== after.values[id]) {

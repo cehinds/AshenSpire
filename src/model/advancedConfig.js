@@ -176,6 +176,29 @@ function withoutRetiredCinderKey(entries) {
 
 const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was left out: Cinders pay the authored table. Use Rewards → Cinder gain multiplier to scale them.';
 
+// SETTINGS ROWS REMOVED WITH THE LEGACY REWARD AND SHOP MENUS. A settings export
+// or sync profile writes `settings.<key>` for every row that was set, so a file
+// exported before the rows left would be refused whole as an unknown key. Both
+// spellings (plain and `settings.`-prefixed) are DROPPED with one warning.
+const RETIRED_LEGACY_ROW_KEYS = new Set([
+  'masterArtChoice', 'levelUpAllocateStats', 'levelUpRefillPauseMs', 'levelUpRefillSeconds',
+  'rewardBattleArmaments', 'rewardBattleCards', 'rewardBattleCinders', 'rewardBattleClassDrafts',
+  'rewardBattleFlasks', 'rewardBattleRelics', 'rewardBattleSkillDrafts',
+  'rewardTreasureArmaments', 'rewardTreasureRelics',
+  'rewardLevelFeats', 'rewardLevelClassTree',
+]);
+// A class book's feat chance (`gameConfig.consumables.<book>.featChance`) went
+// with the feats: the key is per book, so it is matched by shape.
+const RETIRED_BOOK_FEAT_CHANCE = /^(?:settings\.)?gameConfig\.consumables\.[A-Za-z0-9_]+\.featChance$/;
+const RETIRED_LEGACY_ROWS_WARNING = 'Settings for the removed legacy reward and shop menus were left out. Everything else was kept.';
+
+/** withoutRetiredLegacyRows(entries, warnings) → the entries without the removed reward and shop rows, one warning. */
+function withoutRetiredLegacyRows(entries, warnings = null) {
+  const kept = entries.filter(([key]) => !RETIRED_LEGACY_ROW_KEYS.has(bareSetting(key)) && !RETIRED_BOOK_FEAT_CHANCE.test(key));
+  if (kept.length !== entries.length && Array.isArray(warnings)) warnings.push(RETIRED_LEGACY_ROWS_WARNING);
+  return kept;
+}
+
 // The skill-level card upgrade (`balance.skill.upgradeAt`) is retired for card
 // ranks (SPEC §13.4o): its leaf is gone, so a stored value is dropped from the
 // profile and skipped on import with a warning, never refused as unknown.
@@ -1161,9 +1184,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     for (const key of ['impactPerXp', 'buildupPerXp']) {
       if (Number.isFinite(skill?.xp?.[key]) && xpMultiplier > 0) skill.xp[key] /= xpMultiplier;
     }
-    for (const key of ['perWin', 'perElite', 'perBoss', 'perQuest']) {
-      if (Number.isFinite(configured.balance.classMastery?.pay?.[key])) configured.balance.classMastery.pay[key] = Math.max(0, Math.round(configured.balance.classMastery.pay[key] * xpMultiplier));
-    }
     for (const key of ['perWin', 'bossKill', 'perQuest']) {
       if (Number.isFinite(skill?.class?.xp?.[key])) skill.class.xp[key] = Math.max(0, Math.round(skill.class.xp[key] * xpMultiplier));
     }
@@ -1530,7 +1550,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // rating plusses. They are dropped with a warning, never converted, and the
   // retired opening-hand limits go with them: all BEFORE the check below that
   // refuses an unknown key by aborting the whole file.
-  const overrides = Object.fromEntries(withoutRetiredStatSettings(withoutRetiredOpeningHand(Object.entries(file.overrides), warnings), warnings));
+  const overrides = Object.fromEntries(withoutRetiredLegacyRows(withoutRetiredStatSettings(withoutRetiredOpeningHand(Object.entries(file.overrides), warnings), warnings), warnings));
   // The retired Cinder multiplier is dropped by withoutSupersededLegacy below,
   // before an unknown key could refuse the file; said here, once. The retired
   // opening-hand limits and shared opening base/attribute (which have no row)

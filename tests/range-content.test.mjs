@@ -70,15 +70,23 @@ test('Core movement cards have explicit paid movement and preserve existing Evad
   assert.equal(advance.staminaCost, 1); assert.equal(advance.rarity, 'common');
   assert.deepEqual(advance.effects, [{ op: 'moveEngagement', target: 'enemy', bands: -1 }]);
   assert.equal(advance.stanceTrigger, undefined);
-  for (const [id, bands] of [['core.closingDodge', -1], ['core.backstep', 1]]) {
+  for (const [id, bands] of [['core.closingDodge', -1]]) {
     const card = cards.find(row => row.id === id);
     assert.equal(card.staminaCost, 4); assert.equal(card.manaCost, 0); assert.equal(card.rarity, 'uncommon');
     assert.deepEqual(card.effects[0], evade.effects[0]);
     assert.deepEqual(card.effects[1], { op: 'moveEngagement', target: 'enemy', bands });
     assert.ok(card.tags.includes('trait:reaction')); assert.equal(card.stanceTrigger.stance, 'evade');
   }
+  // W25-EvadeCards (2026-11-15): Backstep is 1 Stamina: Evade, then the player Retreats one band, then becomes Prepared.
+  const backstep = cards.find(row => row.id === 'core.backstep');
+  assert.equal(backstep.staminaCost, 1); assert.equal(backstep.manaCost, 0); assert.equal(backstep.rarity, 'uncommon');
+  assert.deepEqual(backstep.effects[0], evade.effects[0]);
+  assert.deepEqual(backstep.effects[1], { op: 'moveEngagement', target: 'self', bands: 1 });
+  assert.equal(backstep.effects[2].status, 'prepared');
+  assert.ok(backstep.tags.includes('trait:reaction')); assert.equal(backstep.stanceTrigger.stance, 'evade');
   assert.equal(JSON.stringify(json(dir + 'starterDeck.json')).includes('core.advance'), false);
-  assert.equal(contentBundle.cards.find(row => row.id === 'backstep').effects.some(effect => effect.op === 'moveEngagement'), false, 'Legacy Backstep is unchanged');
+  // W25-EvadeCards: the Rogue's Backstep now retreats the player one band itself (it no longer moves nobody).
+  assert.deepEqual(contentBundle.cards.find(row => row.id === 'backstep').effects.filter(effect => effect.op === 'moveEngagement'), [{ op: 'moveEngagement', target: 'self', bands: 1 }]);
 });
 
 test('every Core enemy owns an explicitly priced closing move and authored starting range without pool changes', () => {

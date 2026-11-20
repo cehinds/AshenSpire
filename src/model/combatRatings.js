@@ -1,10 +1,10 @@
+import { DEFAULT_BARRIER_POISE_PER_STACK } from '../content/barrierPoise.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 import { gameProfileRatingReceipt } from './gameProfileRun.js';
 import { stanceRatingBonus } from './stanceRules.js';
 import { equippedPieces } from './loadout.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
-import { evaluate } from './formulas.js';
 import { cardIsMagical } from './attackCardDamage.js';
 import { attributeRatingReceipt, equipmentRatingBase, ratingAttributeIds, ratingIds } from './ratingFormula.js';
 import { STAT_ROW_KEY_PREFIX, STAT_ROW_NO_MAX } from './statRows.js';
@@ -235,13 +235,13 @@ export function combatRatingRows(bundle) {
   for (const [type, value] of Object.entries(combatRatingDefaults.damageTypes)) add(`damageTypes.${type}`, value,
     `${phrase(type)} magic share`, 'Damage types', {
       min: 0, max: 1, step: 0.05,
-      note: 'The share of a hit of this damage type that is magic: Barrier and Ward take it, Block takes the rest. 0 is all physical, 1 is all magic. A card or weapon with its own magic share overrides this for its hits.',
+      note: 'The share of a hit of this damage type that is magic: Bonus Poise and Ward take it, Block takes the rest. 0 is all physical, 1 is all magic. A card or weapon with its own magic share overrides this for its hits.',
     });
   const splitRows = { meleeSpell: 'Melee spell magic share', technique: 'Technique magic share' };
   for (const [id, label] of Object.entries(splitRows)) add(`magicSplit.${id}`, combatRatingDefaults.magicSplit[id], label, 'Damage types', {
     min: 0, max: 1, step: 0.05,
     note: id === 'meleeSpell'
-      ? 'A spell with no magic school that hits in melee with a physical damage type deals this share of its damage as magic (Barrier and Ward) and the rest as physical (Block, then Poise). A school with its own share (force: half; alteration: none) decides instead.'
+      ? 'A spell with no magic school that hits in melee with a physical damage type deals this share of its damage as magic (Bonus Poise and Ward) and the rest as physical (Block, then Poise). A school with its own share (force: half; alteration: none) decides instead.'
       : 'A martial technique with spell effects (a magic school, a magic damage type, or a spell rider) deals this share of its damage as magic and the rest as physical.',
   });
   const statusLabel = status => bundle.statuses.filter(other => other.name === status.name).length > 1 ? `${status.name} (${status.id})` : status.name;
@@ -802,44 +802,34 @@ export function persistentWardMaximum(ctx, entity) {
 /** barrierPoiseBonus(ctx, entity) → the +Poise the entity's Barrier stacks give (SPEC 4.1a): `barrier.poisePerStack` per stack, 5 by default. */
 export function barrierPoiseBonus(ctx, entity) {
   const per = ctx?.ratingsRules?.barrier?.poisePerStack;
-  return Math.max(0, Math.floor((entity?.statuses?.barrier?.stacks || 0) * (Number.isFinite(per) ? per : 5)));
+  return Math.max(0, Math.floor((entity?.statuses?.barrier?.stacks || 0) * (Number.isFinite(per) ? per : DEFAULT_BARRIER_POISE_PER_STACK))) + wardPoiseBonus(ctx, entity);
+}
+
+/**
+ * BarrierPoisePerStack(source) -> the Poise one Barrier stack gives (`barrier.poisePerStack`, 5 by default). `source` is a fight (ratingsRules),
+ * a registries object (balance.combatRatings) or null. Owner, 2026-11-15: the word Barrier leaves player text; a card that adds N Barrier
+ * stacks reads "Gain N x per Poise".
+ */
+export function BarrierPoisePerStack(source) {
+  const per = source?.ratingsRules?.barrier?.poisePerStack ?? source?.balance?.combatRatings?.barrier?.poisePerStack ?? source?.registries?.balance?.combatRatings?.barrier?.poisePerStack;
+  return Number.isFinite(per) && per > 0 ? per : DEFAULT_BARRIER_POISE_PER_STACK;
+}
+
+/** BarrierPoiseFactor(effect, source) -> the Poise per stack for an effect that adds Barrier stacks (gainBarrier, applyStatus barrier), else 1. */
+export function BarrierPoiseFactor(effect, source) {
+  return effect?.op === 'gainBarrier' || (effect?.op === 'applyStatus' && effect.status === 'barrier') ? BarrierPoisePerStack(source) : 1;
+}
+
+/** wardPoiseBonus(ctx, entity) → the +Poise the entity's Ward stacks give (owner, 2026-11-14): `ward.poisePerStack` per stack in the
+ * fight's FixCore rules, the same Poise effect Barrier is (no separate Ward pool). A fight whose rules carry no `poisePerStack`
+ * (saved before this ruling) gives none. It rides on the Poise `barrierBonus` field with Barrier's, so it is clamped the same way. */
+function wardPoiseBonus(ctx, entity) {
+  const per = ctx?.fixCoreRules?.ward?.poisePerStack;
+  return Number.isInteger(per) && per > 0 ? Math.floor((entity?.statuses?.ward?.stacks || 0) * per) : 0;
 }
 
 /** persistentPoiseMaximum(ctx, entity) → the Poise pool a combatant starts a fight with (physical only). */
 export function persistentPoiseMaximum(ctx, entity) {
   const share = ctx?.ratingsRules?.resistance?.poisePool;
   return Math.max(0, Math.floor(ratingValue(ctx, entity, 'poise') * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.poisePool)));
-}
-
-export function attackImpact(ctx, source, carrier, magical = isMagicalAttack(ctx, carrier)) {
-  const config = ctx.ratingsRules;
-  if (!config) return 0;
-  const explicit = config.attackImpact?.[carrier?.cardId];
-  if (Number.isFinite(explicit) && explicit >= 0) return explicit;
-  // A PHYSICAL HIT A WEAPON LENDS IS AS HEAVY AS THE WEAPON (SPEC §13.4): the
-  // weight category, and the per-enemy override, come before any card value,
-  // or every weapon's Strike would land with the same cost-derived number and
-  // a dagger would stagger like a warhammer.
-  if (!magical) {
-    const enemyOverride = config.enemyImpact?.[source?.enemyId];
-    if (Number.isFinite(enemyOverride) && enemyOverride >= 0) return enemyOverride;
-    const item = ctx.registries.equipment.armaments.find(p => p.id === carrier?.sourceArmamentId);
-    if (item) {
-      const w = item.weight || 0, i = config.impact;
-      return w <= i.lightMaxWeight ? i.light : w <= i.mediumMaxWeight ? i.medium : w <= i.heavyMaxWeight ? i.heavy : i.colossal;
-    }
-  }
-  // Otherwise the card's own Poise or Ward value (SPEC §3.4) is its impact.
-  // The carrier holds the RESOLVED face's values — a staff's Strike carries
-  // Ward — and the registry def is the fallback for a carrier built without.
-  const def = carrier?.cardId && ctx.registries.cards.has(carrier.cardId) ? ctx.registries.cards.get(carrier.cardId) : null;
-  const ratingValues = carrier?.cardRatingValues
-    || (carrier?.upgraded ? def?.upgrade?.cardRatingValues : null)
-    || def?.cardRatingValues;
-  const calculated = ratingValues?.[magical ? 'ward' : 'poise'];
-  if (calculated !== undefined) {
-    return Math.max(0, evaluate(calculated, { energySpent: carrier?.energySpent || 0 }));
-  }
-  if (magical) return config.impact.magic;
-  return source?.kind === 'enemy' ? config.impact.enemyPhysical : config.impact.unarmed;
 }

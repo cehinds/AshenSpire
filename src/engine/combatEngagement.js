@@ -15,6 +15,7 @@ import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
 import { evaluate } from '../model/formulas.js';
+import { BandsActive, BandsMoveEngagement, SetAdvanced, SetEnemyRow } from './bandRows.js';
 
 export function initializeCombatRange(ctx, policy = null) {
   if (!fixCoreEnabled(ctx)) return;
@@ -49,9 +50,8 @@ function rangeSourceProfile(carrier,effect) {
   return { ...combatProfileFor(carrier), ...carrier?.combatProfile, ...tagged, ...effect.combatProfile };
 }
 function committedRangeSource(ctx,source,carrier,effect,profile) {
-  // Impact-only callers can supply a protection rule fragment without a legacy
-  // foundation source table. Core still resolves its real configured armament.
-  let resolved = carrier?.resolvedRangeSource || carrier?.resolvedSource || (ctx.foundation?.profiles ? Foundation.foundationSource(ctx, source, { ...carrier, attack: effect.attack || carrier.attack }) : null);
+  // Core resolves its real configured armament.
+  let resolved = carrier?.resolvedRangeSource || carrier?.resolvedSource || null;
   if (!resolved && source.kind !== 'enemy') {
     const attack = attackDescriptor({ ...carrier, attack: effect.attack || carrier.attack });
     const kind = attack.source || (profile.camp === 'spell' ? 'spell' : 'weapon');
@@ -142,10 +142,15 @@ export function rangeHitContact(ctx, source, target, carrier) {
 }
 export function executeEngagementMovement(ctx, action) {
   if (!ctx.rangeState?.policy.enabled) return;
+  // The Retreat card (W25-BANDS): the owner steps back out of the Advance. It moves nothing else, and does nothing in a fight without rows.
+  // An Evade card's own Advance (bands -1, no target; owner 2026-11-15, W25-EvadeCards) steps the owner in the same way, also only with rows.
+  if (action.effect.target === 'self') { if (BandsActive(ctx)) SetAdvanced(ctx, action.source, action.effect.bands < 0); return; }
   let target = action.target;
   if (action.effect.target === 'pendingAttacker' && (!target || target.kind === action.source.kind)) target = ctx.enemies.find(row => row.id === ctx._reactionSourceId) || ctx._reactionSource;
   if (!target || target.kind === action.source.kind) throw Error('Engagement movement requires an opposing target');
-  ctx.rangeState = movedEngagementState(ctx.rangeState, actorRangeKey(ctx, action.source), actorRangeKey(ctx, target), action.effect.bands);
+  const before = ctx.rangeState;
+  // Rows (W25-BANDS): an enemy's move changes its own row; the player's Advance or Backstep sets or clears the Advanced state.
+  if (!BandsMoveEngagement(ctx, action.source, target, action.effect.bands)) ctx.rangeState = movedEngagementState(ctx.rangeState, actorRangeKey(ctx, action.source), actorRangeKey(ctx, target), action.effect.bands);
   ctx.emit?.('combatEngagementMoved', { sourceId: action.source.id, targetId: target.id, bands: action.effect.bands });
 }
 export function assertRangeCardEnabled(ctx, def) {
@@ -199,7 +204,10 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   const unpaidPlan = !carrier.rangePlan, prepaidPlanPending = !!carrier.rangePlan && !carrier.rangePlan.rootId;
   if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) {
     const before = ctx.rangeState;
-    ctx.rangeState = advancedEngagementState(before, plan);
+    // Rows (W25-BANDS): the Advance is the player's state (every enemy in reach, for a limited number of turn ends); an enemy that pays one steps to the front row.
+    if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') SetEnemyRow(ctx, source, 'front', 'advance');
+    else if (BandsActive(ctx) && source.kind !== 'enemy') SetAdvanced(ctx, source, true);
+    else ctx.rangeState = advancedEngagementState(before, plan);
     emitCommittedAdvance(ctx, source, before, ctx.rangeState);
   }
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };

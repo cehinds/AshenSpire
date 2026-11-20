@@ -1,23 +1,28 @@
 #!/usr/bin/env node
 // Geometry and screenshots from the real screenshot route and mountCombat.
+// Measures the player's overhead mini HUD (owner, 2026-11-07: Block as tall as HP and Poise, matching HP/Poise bars, then badges; no AC): its bars, defense
+// badges and the clearance between the rack's bottom edge and the top of the player's visible artwork (SPEC: fixed 10 canvas px gap).
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { serve } from './serve.mjs';
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+import { uiConfig } from '../src/config/generated/ui.js';
+
+const HUD_GRID = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+const playwright = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const chromium = playwright.chromium || playwright.default.chromium;
 const out = resolve(process.env.HUD_QA_OUT || 'outputs/player-hud');
 mkdirSync(out, { recursive: true });
 const server = await serve({ root: process.cwd(), port: 0, open: false });
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
-const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), fixtureBoundary: 'Production screenshot route and renderer; authored Core 2 with deterministic remaining protection and Evasion stacks. Not a recorded playthrough.', views: [], failures: [] };
+const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), fixtureBoundary: 'Production screenshot route and renderer; authored Core 2 with fixed Block, Evasion, Ward and Precision values, measured on the overhead mini HUD of the player (Block as tall as the HP and Poise bars, matching HP/Poise bars, then badges; no selected panel or AC). Not a recorded playthrough.', views: [], failures: [] };
 const views = [['mobile',390,844],['desktop',1440,900],['wide',2560,1080],['tablet',820,1180],['small',320,740]];
 // Expected values are independent fixture facts, not the UI protection model.
-// Pressure deliberately differs from remaining Poise so the old bar cannot pass.
 const fixtures = [
   { profile:'core', fixCore:true, views, wardBlock:0, barrier:0,
-    // Owner 2026-11-01: order Block, Poise, Evade, Ward, Precision; three slots, so the first two show and `+3` lists the rest.
-    expected:[['ac',null],['poise','4'],['overflow','+3'],['shield','12']], hidden:['Evade 2','Arcane Ward 5','Precision 3'], ac:true },
+    // Block occupies the tall left slot; Evade and +2 sit below the HP/Poise bars. The overflow lists Ward and Precision.
+    expected:[['shield','12'],['evade','2'],['overflow','+2']], hidden:['Ward 5','Precision 3'], ac:false },
   // The legacy (`current`) Ward case was dropped with the retired profile (owner, 2026-11-04: Core 2 only).
 ];
 try {
@@ -34,78 +39,165 @@ try {
       const { fixCoreEnabled } = await import('/src/model/fixCoreMechanics.js');
       p.block = 12; p.wardBlock = fixture.wardBlock; p.barrier = fixture.barrier;
       p.persistentWard = { value: 5, max: 5 };
-      p.persistentPoise = { value: 4, max: 20 };
-      p.poiseMeter = { value: 17, max: 31 };
       p.statuses = { ...p.statuses, evade: { stacks: 2 }, precision: { stacks: 3 } };
       window.__renderCombatForShot();
       return { fixCore:fixCoreEnabled(combat), version:combat.combatExpansionVersion,
         hp:`${p.hp}/${p.maxHp}`, block:p.block, wardBlock:p.wardBlock, barrier:p.barrier,
-        ward:p.persistentWard.value, poise:p.persistentPoise.value, pressure:p.poiseMeter.value,
+        ward:p.persistentWard.value,
         evasionStacks:p.statuses.evade.stacks };
     }, fixture);
-    await page.locator('.combatant.player .sprite').first().click();
-    await page.locator('.combatant.player.target-hud-selected').waitFor();
-    await page.locator('.target-hud-detail[data-role="player"] .target-hud-panel').waitFor();
+    // Owner 2026-11-07: the player shows only the overhead mini HUD, never a selected panel, so nothing is clicked.
+    const rackRow = '.combatant.player .target-hud-overhead-meters .combat-health-row';
+    await page.locator(rackRow).first().waitFor({ timeout: 60000 });
+    await page.locator(rackRow + ' .combat-health-meter .m-value').first().waitFor({ state: 'visible', timeout: 60000 });
     await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); });
-    await page.locator('.target-hud-detail[data-role="player"]').first().evaluate(async panel => {
+    await page.locator('.combatant.player .target-hud-overhead-meters').first().evaluate(async rack => {
       let previous = '', stable = 0;
       for (let frame = 0; frame < 180 && stable < 8; frame++) {
         await new Promise(requestAnimationFrame);
-        const rect = panel.getBoundingClientRect();
+        const rect = rack.getBoundingClientRect();
         const current = [rect.x, rect.y, rect.width, rect.height].map(n => n.toFixed(2)).join(',');
         stable = current === previous ? stable + 1 : 0;
         previous = current;
       }
-      if (stable < 8) throw new Error('selected player panel did not settle');
+      if (stable < 8) throw new Error('player overhead HUD did not settle');
     });
-    const geometry = await page.locator('.target-hud-detail[data-role="player"]').first().evaluate(panel => {
+    const geometry = await page.locator('.combatant.player .target-hud-overhead-meters').first().evaluate(rack => {
       const box = e => { const r=e.getBoundingClientRect(); return { left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height }; };
-      const detail = panel.querySelector('.target-hud-panel');
-      const hp = panel.querySelector('.combat-health-meter .m-value');
-      const text = [...panel.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e !== hp && e.getBoundingClientRect().width);
-      const hpRow = panel.querySelector('.combat-health-row');
+      const frame = rack.closest('.combatant.player');
+      const meters = rack.querySelector(':scope > .meters');
+      const hp = rack.querySelector('.combat-health-meter .m-value');
+      const text = [...rack.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e !== hp && e.getBoundingClientRect().width);
+      const hpRow = rack.querySelector('.combat-health-row');
+      const hpTrack = hpRow.querySelector('.combat-health-meter .m-track');
+      const poiseTrack = hpRow.querySelector('.combat-health-poise-bar .m-track');
+      const badgeRow = hpRow.querySelector('.combat-health-badges');
       const badges = [...hpRow.querySelectorAll('[data-defense-kind]:not([hidden])')].map(node => {
         const value = node.querySelector('.combat-health-badge-value');
         return { kind:node.dataset.defenseKind, value:value.textContent, label:node.getAttribute('aria-label'),
           box:box(node), valueBox:box(value), barrier:node.dataset.barrier || null };
       });
-      return { panel:box(detail), hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
-        resourceKinds:[...panel.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
+      // The visible artwork: the battlefield publishes its ground line and visible height in screen px; the sprite box is a cross-check.
+      // groundY and spriteVisibleHeight are field-relative canvas px; this measures in screen px, so they are scaled
+      // by the canvas fit and placed on the field's box.
+      const fit = Number(document.documentElement.dataset.viewScale) || 1, fieldTop = frame.closest('.field').getBoundingClientRect().top;
+      const groundY = fieldTop + Number(frame.dataset.groundY) * fit, visibleHeight = Number(frame.dataset.spriteVisibleHeight) * fit;
+      const sprite = frame.querySelector('.sprite');
+      const art = { groundY, visibleHeight, top:groundY - visibleHeight, spriteBox:sprite ? box(sprite) : null };
+      // The combat canvas's fit scale (1 without one): the gap is measured in canvas px.
+      const viewScale = Number(document.documentElement.dataset.viewScale) || 1;
+      const cardsTop = Math.min(...[...document.querySelectorAll('.hand .card')].map(card => card.getBoundingClientRect().top));
+      return { viewScale, cardsTop, hudSide:frame.dataset.hudSide || 'above', panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
+        hpTrack:box(hpTrack), poiseTrack:box(poiseTrack), badgeRow:box(badgeRow),
+        resourceKinds:[...rack.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
         statusTrayIds:[...document.querySelectorAll('.combatant.player .statuses [data-status-id], .combatant.player .statuses [data-status]')].map(e=>e.dataset.statusId||e.dataset.status), hasAc:!!hpRow.querySelector('.combat-health-ac'),
         text:text.map(e=>({text:e.textContent,box:box(e)})),
         order:[...hpRow.children].filter(e => !e.hidden).map(e=>e.dataset.defenseKind || e.dataset.res).filter(Boolean), viewport:{width:innerWidth,height:innerHeight} };
     });
     await page.screenshot({path:resolve(out,name+'.png')});
     await page.screenshot({path:resolve(out,name+'.jpg'),type:'jpeg',quality:85});
+    // SPEC: the gap holds including selection growth. Selecting the player (after the screenshots,
+    // which show the unselected HUD) must keep the rack's bottom the same canvas distance above the art.
+    await page.locator('.combatant.player .sprite').first().click({ force:true });
+    await page.waitForFunction(() => document.querySelector('.combatant.player')?.classList.contains('context-selected'), null, { timeout:10000 }).catch(() => {});
+    await page.waitForTimeout(600);
+    geometry.selected = await page.evaluate(() => {
+      const frame = document.querySelector('.combatant.player'), rack = frame.querySelector('.target-hud-overhead-meters');
+      return { selected:frame.classList.contains('context-selected'),
+        artTop:frame.closest('.field').getBoundingClientRect().top + (Number(frame.dataset.groundY) - Number(frame.dataset.spriteVisibleHeight)) * (Number(document.documentElement.dataset.viewScale) || 1),
+        rackBottom:rack.getBoundingClientRect().bottom, rackTop:rack.getBoundingClientRect().top };
+    });
     report.views.push({name,width,height,profile:fixture.profile,facts,geometry,errors});
     try {
       assert.equal(facts.fixCore, fixture.fixCore, name+': the authored ruleset is active');
       assert.equal(facts.version, 2, name+': expanded protection is active');
       assert.equal(geometry.hpText.replace(/\s/g,''), facts.hp, name+': HP remains its exact health fraction');
-      // The AC square shows its own number (the engine's Evasion DC), so only its presence and label are fixture facts here.
-      const seen = geometry.badges.map(({kind,value})=>[kind, kind === 'ac' ? null : value]);
-      assert.deepEqual(seen, fixture.expected, name+': Block, remaining Poise and the +N overflow, in the owner order');
+      const seen = geometry.badges.map(({kind,value})=>[kind, value]);
+      assert.deepEqual(seen, fixture.expected, name+': Block, Evade and the +N overflow, in the owner order');
       const overflow = geometry.badges.find(badge=>badge.kind==='overflow');
-      assert.equal(overflow.label, fixture.hidden.join(', '), name+': the overflow lists exact Evasion stacks, Ward and Precision');
-      assert.equal(geometry.hasAc, fixture.ac, name+': the player AC badge is present exactly under the FixCore ruleset');
-      if (fixture.ac) assert.match(geometry.badges.find(badge=>badge.kind==='ac').label, /^AC \d+ \(Evasion\)\. Enemies hit when d20 \+ their Precision ≥ \d+\./, name+': AC label');
-      assert.equal(geometry.acCaptions, fixture.ac ? 1 : 0, name+': the AC caption accompanies the AC badge');
-      assert.deepEqual(geometry.resourceKinds.filter(kind=>kind!=='hp'), [], name+': no extra pressure/resource bar replaces a defense badge');
+      assert.equal(overflow.label, fixture.hidden.join(', '), name+': the overflow lists exact Ward and Precision');
+      assert.equal(geometry.hasAc, fixture.ac, name+': the player AC badge is not drawn');
+      assert.equal(geometry.acCaptions, 0, name+': no AC caption is drawn');
+      assert.deepEqual(geometry.resourceKinds.filter(kind=>kind!=='hp'), [], name+': no extra resource row replaces the dedicated Poise bar');
+      const { hpTrack, poiseTrack, badgeRow } = geometry;
+      assert.ok(hpTrack.width > 0 && hpTrack.height > 0, name+': HP bar is visible');
+      assert.ok(Math.abs(hpTrack.width-poiseTrack.width) < 1 && Math.abs(hpTrack.height-poiseTrack.height) < 1, name+': HP and Poise bars share width and height');
+      assert.ok(Math.abs(hpTrack.left-poiseTrack.left) < 1 && Math.abs(hpTrack.left-badgeRow.left) < 1, name+': HP, Poise and badges align');
+      assert.ok(hpTrack.bottom <= poiseTrack.top && poiseTrack.bottom <= badgeRow.top, name+': HP, Poise and badges stack without overlap');
+      assert.ok(geometry.hp.left >= hpTrack.right, name+': HP fraction sits to the right of its bar');
+      assert.ok(Math.abs(geometry.hp.left-hpTrack.right-3) < 1, name+': the HP value uses only the budgeted 3px gap');
+      assert.ok(Math.abs(badgeRow.width-hpTrack.width) < 1, name+': badges stay within the fixed bar width');
       for (const badge of geometry.badges) {
-        assert.ok(badge.label?.toLowerCase().includes({ shield:'block', overflow:'evade', ac:'ac' }[badge.kind] || badge.kind), name+': accessible defense label '+badge.kind);
-        assert.ok(badge.valueBox.width > 0 && badge.valueBox.height > 0, name+': selected '+badge.kind+' value is visible');
-        assert.ok(Math.abs(badge.box.width-badge.box.height) < 1, name+': '+badge.kind+' retains its square aspect');
-        assert.ok(badge.box.left >= geometry.panel.left && badge.box.right <= geometry.panel.right && badge.box.top >= geometry.panel.top && badge.box.bottom <= geometry.panel.bottom, name+': '+badge.kind+' fits panel');
+        assert.ok(badge.label?.toLowerCase().includes({ shield:'block', overflow:'ward' }[badge.kind] || badge.kind), name+': accessible defense label '+badge.kind);
+        assert.ok(badge.valueBox.width > 0 && badge.valueBox.height > 0, name+': '+badge.kind+' value is visible');
+        if (badge.kind === 'shield') {
+          // Owner 2026-11-12: the shield is as tall as the HP and Poise bars, left of them, with the badge row below the bars.
+          assert.ok(Math.abs(badge.box.top-hpTrack.top) <= 1 && Math.abs(badge.box.bottom-poiseTrack.bottom) <= 1, name+': Block is as tall as the HP and Poise bars');
+          assert.ok(badge.box.right <= hpTrack.left, name+': Block sits left of the bars');
+          assert.ok(badgeRow.top >= poiseTrack.bottom, name+': the badge row sits below the bars');
+          const v = badge.valueBox, b = badge.box;
+          assert.ok(v.top >= b.top-0.5 && v.bottom <= b.bottom+0.5 && v.left >= b.left-0.5 && v.right <= b.right+0.5, name+': the Block value sits inside the shield');
+        } else {
+          assert.ok(Math.abs(badge.box.width-badge.box.height) < 1, name+': '+badge.kind+' retains its round badge bounds');
+          assert.ok(badge.box.left >= badgeRow.left && badge.box.right <= badgeRow.right && badge.box.top >= badgeRow.top && badge.box.bottom <= badgeRow.bottom, name+': '+badge.kind+' fits the badge row');
+        }
+        assert.ok(badge.box.left >= geometry.panel.left && badge.box.right <= geometry.panel.right && badge.box.top >= geometry.panel.top && badge.box.bottom <= geometry.panel.bottom, name+': '+badge.kind+' fits the overhead HUD');
       }
       const text = [...geometry.text, ...geometry.badges.map(badge=>({text:badge.label,box:badge.valueBox}))];
       for (const t of text) assert.ok(geometry.hp.bottom + 1 <= t.box.top || geometry.hp.right <= t.box.left || t.box.right <= geometry.hp.left, name+': HP value overlaps '+t.text);
-      assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits panel');
-      assert.ok(geometry.panel.left >= 0 && geometry.panel.right <= width && geometry.panel.top >= 0 && geometry.panel.bottom <= height, name+': panel fits viewport');
+      assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits the overhead HUD');
+      assert.ok(geometry.rack.left >= 0 && geometry.rack.right <= width && geometry.rack.top >= 0 && geometry.rack.bottom <= height, name+': overhead HUD fits viewport');
+      // SPEC (owner, 2026-11-17): the player's HUD stands beside the figure: right of the art's middle, its top no higher
+      // than the art top, its bottom above the resting cards, at least minWidthPx canvas px wide, and so it stays when the
+      // player is selected.
+      assert.ok(Number.isFinite(geometry.art.top), name+': the battlefield publishes the player art top');
+      const artMiddle = geometry.art.spriteBox ? (geometry.art.spriteBox.left + geometry.art.spriteBox.right) / 2 : -Infinity;
+      // Its side: right of the figure, or left of it in the rightmost lane (data-hud-side); with no room either side it stays above the head.
+      assert.ok(['right', 'left'].includes(geometry.hudSide), name+': the fixture lane has room beside the figure (side '+geometry.hudSide+')');
+      if (geometry.hudSide === 'right') assert.ok(geometry.rack.left >= artMiddle, name+': the HUD stands right of the figure (left '+geometry.rack.left.toFixed(1)+', art middle '+artMiddle.toFixed(1)+')');
+      else assert.ok(geometry.rack.right <= artMiddle, name+': the HUD stands left of the figure (right '+geometry.rack.right.toFixed(1)+', art middle '+artMiddle.toFixed(1)+')');
+      assert.ok(geometry.rack.top >= geometry.art.top - 0.5, name+': the HUD top is no higher than the art top');
+      assert.ok(Number.isFinite(geometry.cardsTop) && geometry.rack.bottom <= geometry.cardsTop + 0.5, name+': the HUD ends above the resting cards');
+      assert.ok(geometry.rack.width / geometry.viewScale >= HUD_GRID.playerHud.minWidthPx - 0.5, name+': the HUD is at least its minimum width');
+      assert.ok(geometry.selected.selected, name+': the player can be selected');
+      assert.ok(geometry.selected.rackTop >= geometry.selected.artTop - 0.5, name+': selected, the HUD top is still no higher than the art top');
       // Ward sits behind the +N now, so Barrier provenance is pinned on the badge itself in tests/combat-health.test.mjs.
       assert.equal(geometry.badges.some(badge=>badge.barrier), false, name+': no visible badge claims Barrier provenance');
-      assert.deepEqual(geometry.order, fixture.ac ? ['ac','poise','overflow','shield','hp'] : ['shield','poise','overflow','hp'], name+': defense order');
+      assert.deepEqual(geometry.order, ['shield','hp','poise'], name+': Block precedes the HP and Poise bars');
       assert.ok(!geometry.statusTrayIds.some(id=>['evade','precision'].includes(id)), name+': Evade and Precision live only in the defense badges, not the status tray');
       assert.deepEqual(errors, [], name+': no browser errors');
+    } catch(error) { report.failures.push(error.message); }
+    await page.close();
+  }
+  // W25-BANDS, 390x844: with a back-row enemy in the left lane (three enemies make two ranks), the player's visible HUD (bars, badges, status icons)
+  // must touch no enemy plate or sprite. Front-row sprite boxes are inset 10% a side for their transparent margin; a back-row sprite is taken whole.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+    await page.goto('http://127.0.0.1:' + server.server.address().port + '/?shot=combat&shotClass=reaver&shotExpansion=ward&gameProfile=core&shotSeed=1&shotEnemyCount=3', { timeout: 60000 });
+    await page.waitForFunction(() => !!window.__combat);
+    await page.locator('.combatant.player .target-hud-overhead-meters .combat-health-row').first().waitFor({ timeout: 60000 });
+    await page.evaluate(async () => { await document.fonts.ready; });
+    await page.waitForTimeout(1500);
+    const rows = await page.evaluate(() => {
+      const box = e => { const r = e.getBoundingClientRect(); return { l:r.left, r:r.right, t:r.top, b:r.bottom }; };
+      const rack = document.querySelector('.combatant.player .target-hud-overhead-meters');
+      const parts = [rack, ...rack.querySelectorAll('*')].filter(e => e.matches('.meters,.combat-health-row') || !e.children.length).map(box).filter(q => q.r > q.l && q.b > q.t);
+      const hud = { l:Math.min(...parts.map(q => q.l)), r:Math.max(...parts.map(q => q.r)), t:Math.min(...parts.map(q => q.t)), b:Math.max(...parts.map(q => q.b)) };
+      const hits = [], ranks = [];
+      for (const en of document.querySelectorAll('.combatant.enemy')) {
+        ranks.push(en.dataset.bandRow || '');
+        for (const sel of ['.sprite', '.target-hud-overhead-meters', '.band-row-tag']) for (const e of en.querySelectorAll(sel)) {
+          let q = box(e); if (!(q.r - q.l)) continue;
+          if (sel === '.sprite' && en.dataset.bandRow !== 'back') { const w = (q.r - q.l) * .1; q = { ...q, l:q.l + w, r:q.r - w }; }
+          if (q.r > hud.l && q.l < hud.r && q.b > hud.t && q.t < hud.b) hits.push((en.dataset.bandRow || 'single') + ' ' + sel);
+        }
+      }
+      return { hud, hits, ranks };
+    });
+    report.phoneRows = rows;
+    try {
+      assert.ok(rows.ranks.includes('back'), 'phone rows: a back-row enemy stands in the fight');
+      assert.deepEqual(rows.hits, [], 'phone rows: the player HUD intersects no enemy sprite or plate');
     } catch(error) { report.failures.push(error.message); }
     await page.close();
   }

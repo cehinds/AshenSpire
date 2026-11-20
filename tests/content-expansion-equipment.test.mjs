@@ -86,7 +86,7 @@ for (const id of ['frostSpear', 'cinderAxe', 'duskChime', 'straightSword', 'shor
 }
 // Screens must share the same identity resolution rather than rebuilding a URL
 // from reduced presentation facts (which intentionally do not contain aliases).
-for (const [file, count] of [['src/ui/assets.js', 1], ['src/ui/screens/equipment.js', 1], ['src/ui/screens/compendium.js', 2]]) {
+for (const [file, count] of [['src/ui/assets.js', 1], ['src/ui/components/armouryPicker.js', 1], ['src/ui/screens/compendium.js', 2]]) {
   const source = readFileSync(file, 'utf8');
   assert.equal(source.split('armamentIconAsset(piece)').length - 1, count, file);
   assert.ok(!source.includes('assets/equipment/icon_${'), `${file}: no bypass of authored alias`);

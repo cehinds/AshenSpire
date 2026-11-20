@@ -6,7 +6,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { mountGameOver } from '../src/ui/screens/gameover.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const REG = createRegistries(contentBundle);
 

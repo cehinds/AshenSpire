@@ -88,8 +88,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'resumeRun swaps the live run before the load succeeds',
         file: 'src/main.js',
-        find: '  let loaded = saves.loadRun(authoredRegistries, slot);',
-        replace: '  let loaded = run = saves.loadRun(authoredRegistries, slot); // slot-load-door selftest plant',
+        find: '  if (!context.run) {',
+        replace: '  run = context.run; // slot-load-door selftest plant\n  if (!context.run) {',
         expectRed: /RED SLOT-LOAD-REFUSED-KEEPS-RUN/,
       },
       {
@@ -288,7 +288,25 @@ try {
       await wait(300);
     }
   };
-  const advanceTurn = async () => {
+  // These probes end turns to make unsaved progress, and enemy attacks always land now
+  // (no hit roll), so two undefended rounds (about 34 each) take the opening 71 HP to
+  // nothing and the fight ends before the load under test. `guard` plays the hand's
+  // self-only Block cards through the real card door first, as a player would.
+  const guardHand = async () => {
+    for (let i = 0; i < 6; i += 1) {
+      const sel = await ev(`(() => {
+        const c = [...document.querySelectorAll('.hand .card')].find(el => !el.classList.contains('unaffordable')
+          && /(^|\\.)(defend|rallyingRoar)$/.test(el.dataset.cardId || ''));
+        return c ? '.hand .card[data-instance-id="' + CSS.escape(c.dataset.instanceId) + '"]' : null;
+      })()`);
+      if (!sel) return;
+      await click(sel);
+      await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'the Block card to settle');
+      await wait(300);
+    }
+  };
+  const advanceTurn = async ({ guard = false } = {}) => {
+    if (guard) await guardHand();
     const turn = await ev('window.__combat.turn');
     await click('.end-turn');
     await wait(750);
@@ -539,7 +557,7 @@ try {
     })()`);
     const entry = await snapshotWithRng();
     const entryPose = await pose();
-    await advanceTurn();
+    await advanceTurn({ guard: true });
     await ev('window.__combat.__slotLoadProbe = true');
     await openLoadSlot(1);
     await confirmIfAsked();
@@ -556,8 +574,9 @@ try {
     // Loading installs the new combat before the confirmation input shield
     // finishes closing. Wait for its actual removal before the next action.
     await until(`!document.querySelector('.modal-veil, .quick-nav-veil, .confirmation-veil')`, 'the restored entry input shield to close');
-    await advanceTurn();
-    await advanceTurn();
+    // Save after one ordinary turn, leaving another live turn to distinguish
+    // unsaved progress without requiring three undefended enemy rounds.
+    await advanceTurn({ guard: true });
     await click('#combat-menu');
     await until(`!!document.querySelector('.qn-row[data-act="save"]')`, 'the Quick Menu Save Game row');
     await click('.qn-row[data-act="save"]');
@@ -568,7 +587,7 @@ try {
     const saved = await snapshotWithRng();
     const savedPose = await pose();
     if (savedPose.turn <= 1) throw new Error('Save Game did not capture a later turn');
-    await advanceTurn();
+    await advanceTurn({ guard: true });
     const unsavedPose = await pose();
     check(unsavedPose.turn > savedPose.turn && (await snapshotWithRng()) !== saved, 'SLOT-LOAD-EXPANDED-UNSAVED',
       `the live fight advances from saved turn ${savedPose.turn} to distinct unsaved turn ${unsavedPose.turn}`);
@@ -597,8 +616,8 @@ try {
     })()`);
     const entry = await snapshotWithRng();
     if ((await pose()).turn !== 1) throw new Error('the knowledge fixture did not open on turn 1');
-    await advanceTurn();
-    await advanceTurn();
+    await advanceTurn({ guard: true });
+    await advanceTurn({ guard: true });
     const unsavedPose = await pose();
     await ev('window.__combat.__slotLoadProbe = true');
     await openLoadSlot(1);

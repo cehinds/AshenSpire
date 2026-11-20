@@ -4,6 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
+import { legacyCrawlingRegistries } from './helpers/legacy-crawling-shot.mjs';
 
 const reg = createRegistries(contentBundle);
 const card = id => applyCombatExpansionCard(reg.cards.get(id));
@@ -15,10 +16,10 @@ test('a mixed damage and poise card reads one damage line with the poise joined'
   assert.match(first, /^Inflict 7 (\w+ )?damage, 4 Poise damage$/);
 });
 
-test('a cleanse card lists its removals, its Barrier gain, and the usable-while detail last', () => {
+test('a cleanse card lists its removals, its Poise gain, and the usable-while detail last', () => {
   const all = text('sanctuaryCleanse');
   assert.ok(all.includes('Remove 1 Sleep, 1 Paralysis, 1 Dazed'), all.join(' | '));
-  assert.ok(all.includes('Gain 3 Barrier'), all.join(' | '));
+  assert.ok(all.includes('Gain 15 Poise'), all.join(' | '));
   assert.match(all.at(-1), /^Usable through Sleep, Paralysis, Dazed$/);
 });
 
@@ -53,16 +54,19 @@ test('without a preview no number is marked up or down', () => {
 });
 
 test('a Defend card labels per-play gains separately from its Entry clause', () => {
-  assert.deepEqual(text('crystalBarrier'), ['Gain 3 Barrier', 'Entry: +1 Precision, Retain']);
+  assert.deepEqual(text('crystalBarrier'), ['Gain 15 Poise', 'Entry: +1 Precision, Retain']);
   // Owner 2026-10-31: Information keeps the Entry rider; the face reading of that line drops it.
   assert.equal(lines('crystalBarrier')[1].faceHtml, 'Retain');
 });
 
 test('a conditional Evade is shown with version-two entry bonuses without duplication', () => {
-  const all = text('crawlingShot');
+  // The legacy Crawling Shot keeps the "While Prone" preparation covered (W25-EvadeCards gave the shipped card Evade stacks and a Retreat).
+  const legacy = legacyCrawlingRegistries();
+  const all = (cardFaceLines(applyCombatExpansionCard(legacy.cards.get('crawlingShot')), null, legacy) || []).map(line => line.html.replace(/<[^>]+>/g, ''));
   const evade = all.filter(line => /Prepare one Evade with Advantage/.test(line));
   assert.deepEqual(evade, ['While Prone: Prepare one Evade with Advantage']);
   assert.ok(all.some(line => line.startsWith('Entry: ')), JSON.stringify(all));
+  assert.ok(text('crawlingShot').some(line => /Evade/.test(line)) && text('crawlingShot').some(line => /\bRetreat\b/.test(line)), 'the shipped card says Evade and Retreat');
 });
 
 test('a card with an effect it cannot phrase returns null', () => {
@@ -183,7 +187,7 @@ test('custom spell Counter coverage uses compact return and protection lines', (
     assert.ok(all, id + ' uses compact lines');
     const wording = all.map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
     assert.match(wording, /Return/);
-    assert.match(wording, /Barrier/);
+    assert.match(wording, /Poise/);
     assert.doesNotMatch(wording, /after all covered damage/);
 
   }

@@ -5,6 +5,7 @@
 // itself (cardId, moveId, triggeredBy, source); when an older or thinner event
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
+import { BarrierPoisePerStack } from './combatRatings.js';
 import { t } from './strings.js';
 
 /**
@@ -22,9 +23,9 @@ import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollRec
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
   statusOnly: 'a status effect', attack: 'this attack' };
-const RESOURCE_WORDS = { stamina: 'SP', mana: 'MP' };
+const RESOURCE_WORDS = { stamina: 'Stamina', mana: 'Mana' };
 // What an engine `source` string means when no card, move or trigger raised the effect.
-const SOURCE_WORDS = { poise: 'Poise overflow', defendStance: 'Defend stance', sleep: 'Sleep', barrier: 'Barrier overflow',
+const SOURCE_WORDS = { poise: 'Poise overflow', defendStance: 'Defend stance', sleep: 'Sleep', barrier: 'Bonus Poise overflow',
   rating: 'rating change', recovery: 'Recovery', flux: 'flux' };
 // What moved a break meter, by ratingImpact `cause`; a relic or status cause names itself.
 const IMPACT_WORDS = { hit: 'the hit', poiseDamage: 'Poise damage', 'trait:impact': 'Impact', 'trait:guard': 'a Defend guard',
@@ -37,7 +38,7 @@ const row = (registry, id) => (id != null && registry?.has?.(id) ? registry.get(
 // Why an in-hand Counter or defensive Sweep was not offered (SPEC §4.10).
 function rangeReturnUnavailableText(event) {
   const reason = event.reason === 'stamina'
-    ? `not enough SP to Advance (need ${event.required}, have ${event.available})`
+    ? `not enough Stamina to Advance (need ${event.required}, have ${event.available})`
     : 'out of range';
   return `Counter return skipped: ${reason}. Defense kept.`;
 }
@@ -56,7 +57,7 @@ function reactionUnavailableText(event, { registries, source, owner }) {
     case 'notCovered': return `No reaction: Counter can't answer ${ATTACK_KIND_WORDS[event.attackKind] || 'this attack'}.`;
     case 'cost': return event.resource === 'hp'
       ? `Not enough HP to ${card?.name || 'use that card'} (need ${event.need}, have ${event.have}).`
-      : `Not enough ${RESOURCE_WORDS[event.resource] || 'SP'} to ${verb} (need ${event.need}, have ${event.have}).`;
+      : `Not enough ${RESOURCE_WORDS[event.resource] || 'Stamina'} to ${verb} (need ${event.need}, have ${event.have}).`;
     case 'switchOff': return 'No reaction: Reactions are off.';
     case 'attackerStaggered': return `No reaction: ${source} is staggered.`;
     case 'attackerControlled': return `No reaction: ${source} can't act.`;
@@ -165,7 +166,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'cardPlayed': {
         const card = row(registries?.cards, event.cardId)?.name || 'a card';
         playing = { actorKey: sourceKey, label: card === 'a card' ? null : card };
-        const costs = [`${event.staminaSpent ?? event.energySpent ?? 0} SP`, ...(event.manaSpent ? [`${event.manaSpent} MP`] : [])];
+        const costs = [`${event.staminaSpent ?? event.energySpent ?? 0} Stamina`, ...(event.manaSpent ? [`${event.manaSpent} Mana`] : [])];
         const on = event.targetId && targetKey !== sourceKey ? ` on ${target}` : '';
         text = `${source} played ${card}${event.upcastTier ? ` (Upcast ${event.upcastTier})` : ''}${on} · ${costs.join(', ')}.`;
         break;
@@ -184,11 +185,20 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       case 'combatCounterTriggered': {
         const { label } = causeOf();
-        // Core (SPEC §17, 2026-10-31): the return is the card's base damage plus stacks x 10% of the incoming hit (plus the stance-advantage share).
-        if (event.counterStacks !== undefined && event.amount > 0) {
-          const advantage = Math.max(0, event.amount - (event.counterBase || 0) - (event.counterStackShare || 0));
-          text = `${source} countered ${target}${label ? ` with ${label}` : ''} for ${event.amount} (base ${event.counterBase || 0} + stacks ${event.counterStacks}×10% of ${event.counterIncoming || 0}${advantage ? ` + advantage ${advantage}` : ''}).`;
-        } else text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
+        const withCard = label ? ` with ${label}` : '';
+        const { amount, counterBase: base, counterStackShare: share } = event;
+        if (event.wardOnly === true || !Number.isFinite(amount) || amount <= 0) {
+          text = `${source} counterattacked ${target}${withCard}.`;
+          break;
+        }
+        // A complete Core receipt records base and stack bonus. Advantage is the remainder.
+        let detail = '';
+        if (Array.isArray(event.counterHits) && event.counterHits.length > 1) detail = ` (${event.counterHits.length} hits: ${event.counterHits.map(row => row.amount).join(' + ')})`;
+        else if ([amount, base, share].every(Number.isSafeInteger) && base >= 0 && share >= 0 && base + share <= amount) {
+          const advantage = amount - base - share;
+          detail = ` (base ${base} + stack bonus ${share}${advantage ? ` + advantage ${advantage}` : ''})`;
+        }
+        text = `${source} countered ${target}${withCard} for ${amount}${detail}.`;
         break;
       }
       // SPEC §17 Contests: "Read Intent contest: 9 vs 9 · success"; the full detail itemises d20 + attributes + rank vs Poise + attributes + level.
@@ -223,7 +233,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         else if (event.fixedDefense && event.dice?.length) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
         else if (event.opposed || event.fixedDefense) {
           // Core automatic outcome: no dice were rolled, so say why instead of showing a die.
-          const why = event.missReason === 'range' ? 'out of range' : event.bypass ? 'Evasion bypassed' : 'automatic';
+          const why = event.missReason === 'range' ? 'out of range' : event.missReason === 'evaded' ? 'evaded' : event.bypass ? 'Evasion bypassed' : 'automatic';
           text = `${source} ${outcome} ${target}: ${why} · Precision ${event.accuracy ?? 0} · ${event.hitChance ?? 100}% chance.`;
         }
         else text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · stance ×${event.stanceFactor ?? 1} · ${event.hitChance ?? 100}% chance${event.missReason === 'range' ? ' (out of range)' : ''}.`;
@@ -253,14 +263,16 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
           ...(typed > 0 ? [`${kind}resisted ${typed} (${incoming} → ${layered})`] : []),
           ...(typed < 0 ? [`${kind}weakness +${-typed} (${incoming} → ${layered})`] : []),
           // Ward (SPEC 4.1a): all damage meets Poise first, then Block, then HP, so Poise is read before Block.
-          ...(event.wardRouted && poise ? [`Ward: Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
-          ...(barrier ? [`Barrier absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),
+          ...(event.wardRouted && !event.wardBlockFirst && poise ? [`Ward: Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
+          ...(barrier ? [`Bonus Poise absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),
           ...(ward ? [`Ward absorbed ${ward} (${(event.wardRemaining || 0) + ward} → ${event.wardRemaining || 0})`] : []),
           // A piercing hit: the part that went past Block, and how much of it Poise took 1:1 first.
           ...(event.pierced > 0 ? [t(event.piercePoise > 0 ? 'combat.receipt.piercedPoise' : 'combat.receipt.pierced', { n: event.pierced, poise: event.piercePoise || 0 })] : []),
           ...(blocked ? [`Block absorbed ${blocked} (${(event.blockRemaining || 0) + blocked + (event.pierced || 0)} → ${event.blockRemaining || 0})`] : []),
           // Magic hits Poise first, 1:1 (owner, 2026-10-31), before the Block it leaves.
           ...(magicPoise ? [t('combat.receipt.magicPoise', { n: magicPoise }) + ` (${(event.poiseRemaining || 0) + magicPoise + poise} → ${(event.poiseRemaining || 0) + poise})`] : []),
+          // Ward with Block-first routing (owner, 2026-11-15): Block took its share, then Poise absorbed the whole rest.
+          ...(event.wardBlockFirst && poise ? [`Ward: Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
           ...(poise && !event.wardRouted ? [`Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
           // Smash vs a defensive stance: the Poise pool loses a share of the hit; none of the hit is absorbed by it.
           ...(poiseDamage ? [`Poise damage ${poiseDamage} (${(event.poiseRemaining || 0) + poiseDamage} → ${event.poiseRemaining || 0})`] : []),
@@ -294,7 +306,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         lineReceipts = receipts;
         break;
       }
-      case 'barrierBroken': text = `${target}'s Barrier broke${paren(causeText())}.`; break;
+      case 'barrierBroken': text = `${target}'s bonus Poise broke${paren(causeText())}.`; break;
       case 'wardBroken': case 'poiseBroken': {
         const pool = event.type === 'wardBroken' ? 'Ward' : 'Poise';
         const toll = event.poiseBreak ? 'staggered' : event.poiseBreak === false ? null : event.interrupted ? 'interrupted'
@@ -310,7 +322,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
           text = `${target} restored ${event.restored} Ward (${event.value - event.restored} → ${event.value})${by ? ` from ${by.replace(/^from /, '')}` : ''}.`;
         }
         break;
-      case 'barrierGained': text = `${target} gained ${event.amount} Barrier${paren(causeText())}.`; break;
+      case 'barrierGained': text = `${target} gained ${event.amount} Poise${paren(causeText())}.`; break;
       // The break meters (stagger for Poise, disruption for Ward). One blow can move one several times
       // (its hit, its damage-type rider, its printed Poise damage, its Impact trait): `cause` says which.
       case 'ratingImpact': {
@@ -333,6 +345,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       case 'statusApplied': {
         const stacks = event.stacks > 1 ? `${event.stacks} ` : '';
+        // Barrier stacks read as the Poise they give (owner, 2026-11-15: "Gain N Poise").
+        if (event.status === 'barrier' && Number.isFinite(event.stacks)) { text = `${target} gained ${event.stacks * BarrierPoisePerStack(registries)} Poise${paren(causeText())}.`; break; }
         text = `${target} gained ${stacks}${statusName(registries, event.status)}${paren(causeText())}.`;
         break;
       }
@@ -372,7 +386,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       // `poise` is the nominal break bonus before Poise Guard absorbs any of it: pressure, not damage taken.
       case 'combatGuardBroken': {
         const who = event.sourceId || event.sourcePlayerId ? `${attackText()} broke ` : 'Broke ';
-        text = `${who}${event.targetId || event.targetPlayerId ? `${target}'s` : 'the'} Guard!${event.poise > 0 ? ` (+${event.poise} Poise pressure)` : ''}`;
+        text = `${who}${event.targetId || event.targetPlayerId ? `${target}'s` : 'the'} Block!${event.poise > 0 ? ` (+${event.poise} Poise pressure)` : ''}`;
         break;
       }
       case 'impactDealt':

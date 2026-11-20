@@ -19,8 +19,8 @@ const inst = (cardId, count) => ({ instanceId: `i-${cardId}`, cardId, ...(count 
 const blade = { id: 't.blade', name: 'Bladework', type: 'attack', rank: 1, tags: ['blade'] };
 
 test('upgradeBasic: common non-spells and cantrips only', () => {
-  for (const id of ['core.strike', 'core.hammerBlow', 'core.cinderDart', 'core.cantrip', 'core.mendingTouch']) assert.equal(upgradeBasic(def(id)), true, id);
-  for (const id of ['core.stunningBlow', 'core.ironbreaker', 'core.cometLance', 'core.starfall', 'core.reaverSpecial', 'core.starseerSpecial', 'core.manaSurge']) assert.equal(upgradeBasic(def(id)), false, id);
+  for (const id of ['core.strike', 'core.hammerBlow', 'core.cinderDart', 'core.cantrip', 'core.mendingTouch', 'core.manaSurge']) assert.equal(upgradeBasic(def(id)), true, id);
+  for (const id of ['core.stunningBlow', 'core.ironbreaker', 'core.cometLance', 'core.starfall', 'core.reaverSpecial', 'core.starseerSpecial']) assert.equal(upgradeBasic(def(id)), false, id);
   // The Adept rule is untouched: it still calls a martial uncommon Basic.
   assert.equal(basicCardKind(newRun(), def('core.stunningBlow')), 'Basic');
 });
@@ -53,13 +53,13 @@ test('upgrade number n is free while n <= F (the rank), then 1 stone', () => {
   assert.deepEqual(costs, [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, null]);
 });
 
-test('a card with no eligible step left is maxed: null cost, refused as maxed', () => {
+test('a card with no eligible step left is maxed (a power takes only a cost cut; a Strike now has a whole menu): null cost, refused as maxed', () => {
   const run = newRun(); run.smithingStones = 9;
-  const maxed = { instanceId: 'm', cardId: 'core.strike', upgraded: true, upgradeSteps: [] };
-  const strike = registries.cards.get('core.strike');
-  while (true) { const s = rollUpgradeStep(strike, maxed.upgradeSteps, maxed.upgradeSteps.length, upgradeStepRng(run.seed, 'm', maxed.upgradeSteps.length)); if (!s) break; maxed.upgradeSteps.push(s); }
+  const maxed = { instanceId: 'm', cardId: 'core.heraldSpecial', upgraded: true, upgradeSteps: [] };
+  const power = registries.cards.get('core.heraldSpecial');
+  while (true) { const s = rollUpgradeStep(power, maxed.upgradeSteps, maxed.upgradeSteps.length, upgradeStepRng(run.seed, 'm', maxed.upgradeSteps.length)); if (!s) break; maxed.upgradeSteps.push(s); }
   assert.ok(maxed.upgradeSteps.length < 10);
-  assert.equal(upgradeCost(run, maxed, strike, registries), null);
+  assert.equal(upgradeCost(run, maxed, power, registries), null);
   const verdict = canUpgrade(registries, run, maxed);
   assert.deepEqual([verdict.ok, verdict.code], [false, 'maxed']);
 });

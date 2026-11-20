@@ -11,11 +11,11 @@ test('current unreachable chance stays zero, separate from quoted after-route od
   assert.equal(rangeHitLabel(q), 'Out of range · 0%');
   assert.equal(rangeHitLabel(q, { current: false }), '73.25%');
   const plan = combatRangeActionPlan(q, { targetName: () => 'Soldier' });
-  assert.equal(plan.routes[0].label, 'Advance · +1 SP');
-  assert.equal(plan.routes[0].total, 'Total 3 SP');
+  assert.equal(plan.routes[0].label, 'Advance · +1 Stamina');
+  assert.equal(plan.routes[0].total, 'Total 3 Stamina');
   assert.match(plan.routes[0].odds[0].text, /Soldier · Reach · Out of range · 0% → After Advance 73.25%/);
   assert.equal(plan.routes[1].label, 'Throw · -1 Precision');
-  assert.equal(plan.routes[1].total, 'Total 2 SP');
+  assert.equal(plan.routes[1].total, 'Total 2 Stamina');
   assert.equal(plan.selectedRoute, 'advance', 'unaffordable Advance never silently selects Throw');
 });
 test('disabled mechanics have no attachment and a refused Throw is never repriced as Advance', () => {
@@ -23,7 +23,7 @@ test('disabled mechanics have no attachment and a refused Throw is never reprice
   const q = quote(); q.range.selectedRoute = 'throw'; q.range.routes[1].available = false; q.range.routes[1].reason = 'range';
   const plan = combatRangeActionPlan(q);
   assert.equal(plan.selectedRoute, 'throw'); assert.equal(plan.routes[1].available, false);
-  assert.equal(plan.routes[1].reason, 'Unavailable at this distance'); assert.equal(plan.routes[1].total, 'Total 2 SP');
+  assert.equal(plan.routes[1].reason, 'Unavailable at this distance'); assert.equal(plan.routes[1].total, 'Total 2 Stamina');
 });
 test('multi-target approach prints every engine-quoted target and chance', () => {
   const q = quote(); q.range.routes[0].targets.push({ ...target, targetId: 'e2', band: 2, hitChance: 41.1 });
@@ -33,7 +33,7 @@ test('multi-target approach prints every engine-quoted target and chance', () =>
 
 test('route controls keep native keyboard ownership and send only the chosen id', async () => {
   const { combatRangeAction } = await import('../src/ui/components/combatRangeAction.js');
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document, Event }) => {
     const chosen = [];
     const node = combatRangeAction(quote(), { onChoose: id => chosen.push(id) });
@@ -85,7 +85,7 @@ test('paid Counter variants show their own canonical route total and return odds
   const option = { id: 'counter-throw', name: 'Counter', play: { cardInstanceId: 'c1', rangeRoute: 'throw' }, staminaCost: 99, range: q.range };
   const summary = summarizeCardOption({ enemies: new Map([['soldier', { name: 'Soldier' }]]) }, { enemies: [{ id: 'e1', enemyId: 'soldier' }] }, option);
   assert.ok(summary.costs.includes('Throw · -1 Precision'));
-  assert.ok(summary.costs.includes('Total 2 SP'));
+  assert.ok(summary.costs.includes('Total 2 Stamina'));
   assert.match(summary.costs.join(' '), /Soldier.*Throw 66.5%/);
   assert.doesNotMatch(summary.costs.join(' '), /99/);
   assert.equal(summary.id, 'counter-throw', 'the modal still returns the engine option identity');
@@ -94,7 +94,7 @@ test('paid Counter variants show their own canonical route total and return odds
 test('window capture preserves native route Enter and route Tab cannot switch a co-op seat', async () => {
   const { initInput, focusElement, clearFocus } = await import('../src/ui/input.js');
   const { combatRangeAction } = await import('../src/ui/components/combatRangeAction.js');
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document, Event }, _window, listeners) => {
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
     const previousStyle = globalThis.getComputedStyle;
@@ -132,21 +132,21 @@ test('mixed weapon coverage never prints a false single chance or whole-attack z
   const mixed = { ...target, currentInRange: false, currentHitChance: null, currentHitChances: [0, 82.5], hitChance: null, hitChances: [68, 82.5],
     contacts: [{ currentInRange: false, inRange: true }, { currentInRange: true, inRange: true }] };
   q.range.targets = [mixed]; q.range.routes[0].targets = [mixed];
-  assert.equal(rangeHitLabel(q), '0–82.5% (varies by hit)');
-  assert.equal(rangeHitLabel(q, { current: false }), '68–82.5% (varies by hit)');
-  assert.match(combatRangeActionPlan(q).routes[0].odds[0].text, /After Advance 68–82.5% \(varies by hit\)/);
+  assert.equal(rangeHitLabel(q), '0-82.5% (varies by hit)');
+  assert.equal(rangeHitLabel(q, { current: false }), '68-82.5% (varies by hit)');
+  assert.match(combatRangeActionPlan(q).routes[0].odds[0].text, /After Advance 68-82.5% \(varies by hit\)/);
 });
 
 test('configured free Advance still appears for a partially uncovered mixed action', () => {
   const q = quote();
   const mixed = { ...target, currentInRange: true, allCurrentInRange: false, currentHitChance: null, currentHitChances: [0, 80], contacts: [{ currentInRange: false, inRange: true }, { currentInRange: true, inRange: true }] };
   q.range.targets = [mixed]; q.range.routes[0].targets = [mixed]; q.range.routes[0].advanceSp = 0;
-  assert.equal(combatRangeActionPlan(q).routes[0].label, 'Advance · +0 SP');
+  assert.equal(combatRangeActionPlan(q).routes[0].label, 'Advance · +0 Stamina');
 });
 
 test('range attachment cleanup removes resize/transition listeners, observers and pending layout', async () => {
   const { mountCombatRangeAction } = await import('../src/ui/components/combatRangeAction.js');
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document, window, Event }) => {
     const listeners = new Map(), observers = [], frames = new Set(), cancelled = [];
     let nextFrame = 0;

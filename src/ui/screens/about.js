@@ -23,6 +23,7 @@ import { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } from '../../buildversion.js
 import { CHANGELOG, PROJECT_REPOSITORY_URL } from '../../content/changelog.js';
 import { el, prose, eyebrow, titleS, button, buttonRow, statusText, flavour, fold, hairline } from '../kit/index.js';
 import { t } from '../strings.js';
+import { SplitAfter } from '../../model/splitAfter.js';
 
 /**
  * A source-server build is development by construction. A standalone bundle
@@ -91,7 +92,7 @@ export function renderAboutSection(container, {
   // form uses (that is what `--check` matches), and only the presentation
   // changes. Sentences are grouped 2/2/1 so the claim that matters most — no AI
   // while you play — lands in its own paragraph.
-  const sentences = disclosure.storeForm.split(/(?<=\.)\s+/);
+  const sentences = SplitAfter(disclosure.storeForm, /\.\s+/);
   const groups = sentences.length >= 4
     ? [sentences.slice(0, 2), sentences.slice(2, 4), sentences.slice(4)]
     : [sentences];
@@ -142,7 +143,7 @@ export function renderAboutSection(container, {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       say('Saved.');
     } catch (e) {
-      say('Couldn’t save the file here — the text above is the whole of it.');
+      say('Couldn’t save the file here. The text above is the whole of it.');
     }
   });
 }

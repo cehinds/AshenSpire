@@ -1,6 +1,6 @@
 // Reflect stacks (owner 2026-10-31, SPEC §17): `reflectStacks` on the combat entity cuts each incoming hit by
 // min(0.9, stacks x 0.3) before Block (rounded down) and sends floor(original x min(0.9, stacks x 0.3)) back at the attacker
-// as a flagged hit that cannot reflect or counter again; each reflected hit costs one stack; stacks cap at 10 and clear with the fight.
+// as a flagged hit that cannot reflect or counter again; each reflected hit costs one stack; stacks have no cap (owner 2026-11-15; a fight saved before keeps the old cap of 10) and clear with the fight.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -9,6 +9,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
+import { legacyRolls, withoutBatch2Rules } from './legacyHitRules.mjs';
 import { dispatch } from '../src/engine/combat.js';
 import { applyAttackDamage } from '../src/engine/actions.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
@@ -16,6 +17,7 @@ import { gainReflectStacks, reflectReduceFraction, reflectReturnFraction } from 
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
+import { StatusCapsLifted } from '../src/model/fixCoreMechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -84,7 +86,8 @@ test('flagged and unreflectable hits are neither cut nor returned', () => {
   const carrier = (extra = {}, traits = []) => ({ combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits }, ...extra });
   const plain = profileDamageReceipt(combat, enemy, combat.player, 20, carrier());
   assert.ok(plain.reflect, 'a plain hit reflects'); assert.equal(plain.reflect.stacks, 3);
-  assert.equal(plain.damageReceipt.hits[0].incoming, Math.floor(plain.reflect.original * (1 - 0.9)));
+  // 3 stacks cut 90%, so 10% passes. Written as /10: (1 - 0.9) is 0.0999..., which floors an exact 2 (original 20 since the halved base and the Idle weakness) to 1.
+  assert.equal(plain.damageReceipt.hits[0].incoming, Math.floor(plain.reflect.original / 10));
   for (const [label, row] of [['unreflectable', carrier({}, ['unreflectable'])], ['reflected return', carrier({ reflectedHit: true })], ['counter return', carrier({ counterReturnAttack: true })]]) {
     const receipt = profileDamageReceipt(combat, enemy, combat.player, 20, row);
     assert.equal(receipt.reflect, undefined, label);
@@ -92,14 +95,20 @@ test('flagged and unreflectable hits are neither cut nor returned', () => {
   }
 });
 
-test('Mirror Guard grants 1 Reflect; stacks cap at mechanics.reflect.stackCap', () => {
+test('Mirror Guard grants 1 Reflect; stacks have no cap under statusCaps none, and cap at mechanics.reflect.stackCap in a fight saved without it', () => {
   const { combat } = live();
   combat.piles.hand.push({ instanceId: 'mg1', cardId: 'core.mirrorGuard', upgraded: false });
   dispatch(combat, { type: 'playCard', cardInstanceId: 'mg1' });
   assert.equal(combat.player.reflectStacks, 1);
-  assert.equal(gainReflectStacks(combat, combat.player, 99), mechanics.reflect.stackCap - 1);
-  assert.equal(combat.player.reflectStacks, mechanics.reflect.stackCap);
-  assert.equal(gainReflectStacks(combat, combat.player, 1), 0);
+  assert.equal(StatusCapsLifted(combat), true);
+  assert.equal(gainReflectStacks(combat, combat.player, 99), 99);
+  assert.equal(combat.player.reflectStacks, 100);
+  const { combat: old } = live();
+  delete old.fixCoreRules.statusCaps;
+  old.player.reflectStacks = 1;
+  assert.equal(gainReflectStacks(old, old.player, 99), mechanics.reflect.stackCap - 1);
+  assert.equal(old.player.reflectStacks, mechanics.reflect.stackCap);
+  assert.equal(gainReflectStacks(old, old.player, 1), 0);
 });
 
 test('snapshots round-trip reflectStacks, load without it, and refuse a count over the cap', () => {
@@ -115,7 +124,9 @@ test('snapshots round-trip reflectStacks, load without it, and refuse a count ov
   assert.deepEqual(combatSnapshotProblems(old), [], 'absent means 0');
   old.player.reflectStacks = 25;
   assert.deepEqual(combatSnapshotProblems(old), []);
-  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.reflectStacks, mechanics.reflect.stackCap);
+  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.reflectStacks, 25, 'no cap: the count loads as saved');
+  delete old.fixCoreRules.statusCaps;
+  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.reflectStacks, mechanics.reflect.stackCap, 'a fight saved without the no-cap rule loads clamped to the old cap');
 });
 
 test('multi-hit previews spend one Reflect stack per landed hit, as live does', async () => {
@@ -202,6 +213,8 @@ test('a Reflect return that breaks the attacker\'s Poise ends its matching-stanc
   const prime = () => {
     const { combat, enemy } = live();
     combat.player.reflectStacks = 1;
+    // Enough HP that no hit is a killing blow: the stance-less player is Idle and takes x1.25 (theme B, 2026-11-17), so three hits outgrow a level-1 pool.
+    Object.assign(combat.player, { hp: 500, maxHp: 500 });
     enemy.persistentPoise = { value: 1, max: 5 };
     enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
     return { combat, enemy };
@@ -227,6 +240,7 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
   const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } };
   for (const stacks of [0, 2]) {
     const { combat, enemy } = live();
+    legacyRolls(combat); // the roll's Evasion math only prices a fight that still rolls (saved before the 2026-11-14 ruling)
     combat.player.basePrecisionBonus = 0; // the real value, not live()'s auto-hit helper
     Object.assign(enemy, { baseEvasionBonus: 0, reflectStacks: stacks || undefined });
     const liveChance = profileDamageReceipt(combat, combat.player, enemy, 20, carrier).hitChance;
@@ -238,8 +252,11 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
 
 test('Counter forecast under Reflect equals live: a return that kills the attacker forecasts no Counter; a survivable one forecasts live\'s damage', async () => {
   const { previewCard } = await import('../src/engine/combat.js');
+  // Full base damage: under Core's halving the soldier's 8 Slash returns 1, which its Poise rating absorbs, so the Reflect return could never kill.
+  const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+  const fullBase = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, fullProfile)), fullProfile);
   const run = enemyHp => {
-    const { combat, enemy } = live();
+    const { combat, enemy } = live(fullBase);
     enemy.hp = enemyHp;
     combat.player.reflectStacks = 1;
     combat.piles.hand.push({ instanceId: 'rcx', cardId: 'core.counter' });
@@ -264,9 +281,10 @@ test('Counter forecast under Reflect equals live: a return that kills the attack
 // so later hits (and the Counter Block they grant) are priced from the evolving detached attacker, not the original enemy.
 test('per-root Counter forecast prices later contacts from the Poise-broken attacker, forecast == live', async () => {
   const { previewCard } = await import('../src/engine/combat.js');
-  const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage: 20, hits: 3, weight: 45 } } } : e) };
-  const triple = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle, profile)), profile);
-  const run = poise => {
+  // Slash is authored at 40 so Core's base-damage scale (x0.5, ceil) lands each contact at the 20 these numbers were captured with.
+  const run = (poise, rules = profile, damage = 40) => {
+    const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage, hits: 3, weight: 45 } } } : e) };
+    const triple = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle, rules)), rules);
     const { combat, enemy } = live(triple);
     delete combat.reactionRules.contactPolicy;
     combat.player.reflectStacks = 1;
@@ -274,7 +292,7 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
     if (poise) { enemy.ratings = { poise }; enemy.persistentPoise = { value: poise, max: poise }; }
     enemy.combatStance = { maneuver: 'attack', camp: 'physical', range: 'melee' };
     Object.assign(enemy, { maxStamina: 3, stamina: 3, plannedMoves: [] });
-    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 20, hits: 3, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
+    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage, hits: 3, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [], stanceTrigger: false } };
     combat.piles.hand.push({ instanceId: 'rcp', cardId: 'core.counter' });
     const forecast = previewCard(combat, 'rcp').counterReturn;
     dispatch(combat, { type: 'playCard', cardInstanceId: 'rcp' });
@@ -290,7 +308,12 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
   assert.equal(broken.forecast.hp, broken.liveHp, 'Reflect breaks the attacker\'s Poise: forecast == live return damage');
   const control = run(0);
   assert.equal(control.forecast.hp, control.liveHp, 'control: nothing to break, forecast == live');
-  assert.equal(control.forecast.hp, 111, 'control forecast unchanged');
+  // With 11 stacks held (10 + the card's 1), each answered hit returns the scaled base 2 plus floor(incoming x 0.1 x stacks held), then spends one stack.
+  assert.equal(control.forecast.hp, 48, 'control forecast with the card-stack Counter rule; the enemy side x0.7 (owner, 2026-11-18) took it from 66 (19 + 25 + 22)');
+  const fullProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
+  const legacy = withoutBatch2Rules(() => run(0, fullProfile, 20));
+  assert.equal(legacy.forecast.hp, legacy.liveHp, 'pre-batch-2 rules: forecast == live');
+  assert.equal(legacy.forecast.hp, 111, 'pre-batch-2 control forecast unchanged');
   assert.ok(broken.liveHp < control.liveHp, 'the Poise break really removed the later-hit bonus');
 });
 

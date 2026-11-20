@@ -27,6 +27,8 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
+import { withGameProfileService } from '../src/model/gameProfileRun.js';
+import { applyLevelUp } from '../src/model/levelup.js';
 import { equipPiece, stampDeck, reconcileGrantedCards, isItemOwned } from '../src/model/loadout.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
@@ -42,6 +44,14 @@ const start = (classId, seed = 511) => createRunState({ registries: reg, classId
 const surges = (run) => run.deck.filter((c) => c.cardId === 'core.manaSurge');
 const owns = { has: () => true };
 const equip = (run, id) => assert.ok(equipPiece(reg, run.loadout, 'rightHand', 0, id, owns, { inCombat: false, attributes: run.attributes }));
+
+function spendEarnedPoints(registries, run, attribute, count) {
+  run.level.level += count;
+  run.level.unspentPoints += count;
+  withGameProfileService(run, 'levelUp', () => {
+    for (let point = 0; point < count; point++) applyLevelUp(registries, run, attribute);
+  });
+}
 
 test('the card is Mana Surge: 1 SP, no Mana cost, gains 2 Mana, reads "Gain 2 Mana."', async () => {
   const def = reg.cards.get('core.manaSurge');
@@ -68,13 +78,13 @@ test('fresh Core Starseer and Herald each hold exactly one granted Mana Surge; R
   for (const id of ['reaver', 'rogue']) assert.equal(surges(start(id)).length, 0, id);
 });
 
-test('Starseer replaces Resource Gain and both sceptre classes start with ten cards', () => {
+test('Starseer replaces Resource Gain and both sceptre classes start with eleven cards', () => {
   const run = start('starseer');
   assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
-  assert.equal(run.deck.length, 10, 'the starting weapon art replaces the class special');
-  assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 8);
+  assert.equal(run.deck.length, 11, 'the starting weapon art replaces the class special');
+  assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 9);
   const herald = start('herald');
-  assert.equal(herald.deck.length, 10, 'Herald trades one Ethereal for granted Mana Surge');
+  assert.equal(herald.deck.length, 11, 'Herald authors nine cards plus granted Mana Surge and Blight Touch');
   assert.equal(herald.deck.filter(c => c.cardId === 'base.ethereal').length, 2);
 });
 
@@ -120,21 +130,25 @@ test('an older Core save without the card gets it on the next reconcile', () => 
   assert.equal(JSON.parse(JSON.stringify(run)).deck.length, run.deck.length, 'JSON round trip keeps it');
 });
 
-test('playing Mana Surge in a Core fight costs 1 SP and adds 2 Mana', () => {
-  const run = start('herald');
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
-  const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
-  assert.ok(card, 'Mana Surge reaches the fight piles');
-  combat.piles.draw = combat.piles.draw.filter((c) => c !== card);
-  combat.piles.discard = combat.piles.discard.filter((c) => c !== card);
-  if (!combat.piles.hand.includes(card)) combat.piles.hand.push(card);
-  combat.player.mana = 0;
-  combat.player.stamina = Math.max(combat.player.stamina, 3);
-  const sp = combat.player.stamina;
-  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
-  assert.equal(combat.player.stamina, sp - 1, 'costs 1 SP');
-  assert.equal(combat.player.mana, 2, 'gains 2 Mana');
-});
+// As a cantrip, Mana Surge stays at 1 SP. The sceptre's Focus cancels the spell's MP surcharge.
+for (const [intelligencePoints, maxMana] of [[0, 1], [1, 2]]) {
+  test(`Mana Surge costs 1 SP and restores Mana up to the Herald's ${maxMana} MP cap`, () => {
+    const run = start('herald');
+    if (intelligencePoints) spendEarnedPoints(reg, run, 'intelligence', intelligencePoints);
+    const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+    assert.equal(combat.player.maxMana, maxMana);
+    const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
+    assert.ok(card, 'Mana Surge reaches the fight piles');
+    combat.piles.draw = combat.piles.draw.filter((c) => c !== card);
+    combat.piles.discard = combat.piles.discard.filter((c) => c !== card);
+    if (!combat.piles.hand.includes(card)) combat.piles.hand.push(card);
+    combat.player.mana = 0;
+    const sp = combat.player.stamina;
+    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
+    assert.equal(combat.player.stamina, sp - 1, 'costs 1 SP');
+    assert.equal(combat.player.mana, maxMana, 'restores as much of the 2 Mana as the pool can hold');
+  });
+}
 
 test('a mid-fight swap to a sceptre lends the card to the pile, and away again', async () => {
   const { reconcileGrantedCardsInCombat } = await import('../src/model/loadout.js');
@@ -183,11 +197,12 @@ test('an unprofiled run with a Bone Sceptre grants no Core card', () => {
 
 // The shipped setting locks combat equipment; exercise the supported intent
 // with that setting enabled, as older/configured saves can do.
-function equipmentFight(classId) {
+function equipmentFight(classId, wisdomPoints = 0) {
   const registries = { ...reg, balance: structuredClone(reg.balance) };
   registries.balance.equipment.allowChangesInCombat = true;
   registries.balance.equipment.swapEndsTurn = false;
   const run = createRunState({ registries, classId, seed: 511, profileMeta: meta });
+  if (wisdomPoints) spendEarnedPoints(registries, run, 'wisdom', wisdomPoints);
   if (classId === 'reaver') run.loadout.storage.push('boneSceptre');
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   combat.player.stamina = 99;
@@ -243,13 +258,25 @@ test('Core combat checkpoints preserve a set-aside Mana Surge', async () => {
   assert.equal(pileSurges(combat).length, 0);
 });
 
+// Mana's first increase is at max(INT, WIS) 4. Bone Sceptre takes the fresh Reaver to INT 3 and raises Draw.
+// The pool test starts at WIS 3 so the Blight Rod's +1 WIS crosses the Mana threshold.
+const POOL_PIECE = 'blightRod';
+test('Core changeEquipment: the Bone Sceptre intelligence raises Draw by 2 and moves no pool', () => {
+  const { combat, run } = equipmentFight('reaver');
+  const p = combat.player;
+  const before = { maxHp: p.maxHp, maxMana: p.maxMana, maxStamina: p.maxStamina, draw: run.drawPerTurn };
+  dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 0, pieceId: 'boneSceptre' });
+  assert.equal(p.drawPerTurn, before.draw + 2, 'the sceptre intelligence raises Draw');
+  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana, before.maxStamina], 'INT 3 is below the first Mana threshold');
+});
 for (const intent of ['changeEquipment', 'swapArmament']) {
-  test(`Core ${intent} preserves missing pools across repeated sceptre swaps and saves valid stats`, () => {
-    const { registries, run, combat } = equipmentFight('reaver');
+  test(`Core ${intent} preserves missing pools across repeated staff swaps and saves valid stats`, () => {
+    const { registries, run, combat } = equipmentFight('reaver', 2);
     registries.balance.equipment.swapCostKind = 'allowance';
     if (intent === 'swapArmament') {
-      combat.loadout.sets.rightHand[1] = 'boneSceptre';
-      combat.loadout.storage = combat.loadout.storage.filter(id => id !== 'boneSceptre');
+      combat.loadout.sets.rightHand[1] = POOL_PIECE;
+    } else {
+      combat.loadout.storage.push(POOL_PIECE);
     }
     const p = combat.player;
     const before = { maxHp: p.maxHp, maxMana: p.maxMana, maxStamina: p.maxStamina, draw: run.drawPerTurn };
@@ -259,9 +286,9 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
       for (const sceptre of [true, false]) {
         dispatch(combat, intent === 'swapArmament'
           ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
-          : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? 'boneSceptre' : 'greatsword' });
-        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the sceptre intelligence raises the saved Mana formula');
-        assert.equal(p.drawPerTurn, before.draw + (sceptre ? 2 : 0), 'the sceptre intelligence raises Draw');
+          : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? POOL_PIECE : 'greatsword' });
+        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the rod wisdom raises the saved Mana formula');
+        assert.equal(p.drawPerTurn, before.draw, 'the rod carries no intelligence, so Draw holds');
         for (const field of ['hp', 'mana', 'stamina']) {
           const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];
           assert.equal(p[field], Math.max(0, max - missing[field]), `${field} never refills a spent deficit`);
@@ -269,6 +296,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
           if (!sceptre) assert.equal(max, before[`max${field[0].toUpperCase()}${field.slice(1)}`], `${field} returns to its starting maximum`);
         }
         assert.equal(p.energyMax, p.maxStamina);
+        assert.equal(p.combatTraits, undefined, 'a Core swap leaves the legacy expansion equipment projection off, as combat creation does');
         commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
         const saves = createSaveManager(createMemoryStorage());
         saves.saveRun(run, combat.rng);
@@ -281,7 +309,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
 test('the rendered Mana Surge deck row shows the same zero Mana cost as live play', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { withModalDom } = await import('./helpers/dom.mjs');
   const run = start('herald');
   const card = surges(run)[0];
   const model = deckEditorModel({ registries: reg, run });

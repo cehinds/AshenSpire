@@ -6,26 +6,21 @@
 // bindings and queried five families, about 80 microseconds on a desktop and a
 // fifth of the engine's time on a throttled phone. The answer is a pure
 // function of the raw rules and the attachment rows, so the repeat call is
-// keyed on exactly those two inputs as JSON, never on object identity: a
+// keyed on exactly those two inputs as JSON (the rules' text is memoised by
+// identity only for a deeply frozen rules object, see rawText): a
 // status gained, a mount swapped or a rules edit changes the key and misses.
 // A failing call is never stored; a key that cannot round-trip through JSON
-// (a null, which also stands for NaN/Infinity there) is not cached at all.
+// (NaN, Infinity, or an undefined array slot, which all print as null there) is
+// not cached at all. A real null is kept: `elements.burn.cap: null` means "no cap".
 //
 // This lives beside fixCoreMechanics.js rather than inside it because that
 // file is part of the mechanics runtime hash (tools/game-config.mjs), and a
 // cache must not move the save-compatibility pin.
 import { fixCoreRules as computeFixCoreRules, fixCoreAttachments } from './fixCoreMechanics.js';
+import { deepFreeze } from '../framework/compiler.js';
 
 const CACHE_MAX = 512;
 const cache = new Map();
-
-function deepFreeze(value) {
-  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const inner of Object.values(value)) deepFreeze(inner);
-  }
-  return value;
-}
 
 // The uncached answer aliases the raw rules for every field that is not a rule
 // family (range, protectionParameters, ...). Stored as is, an entry would keep
@@ -41,11 +36,45 @@ function detach(result) {
   return out;
 }
 
+// Throws for a value JSON would turn into null by accident, so the caller skips the cache.
+function lossless(_key, value) {
+  if (typeof value === 'number' && !Number.isFinite(value)) throw new TypeError('not round-trippable');
+  if (value === undefined && Array.isArray(this)) throw new TypeError('not round-trippable');
+  return value;
+}
+
+// The raw rules are by far the largest part of the key (about 4 KB of JSON) and
+// are the same object for a whole fight, so their text is memoised per object,
+// but only when the object can never change: a deeply frozen tree. A frozen
+// object stays frozen for ever, so a positive verdict is permanent, and a
+// frozen tree can only be replaced, never edited, so a new rules object is a new
+// WeakMap key. An unfrozen (or partly frozen) tree may be edited in place, so it
+// is stringified on every call exactly as before and never trusted by identity.
+const frozenRawText = new WeakMap(); // deeply frozen rules object -> its key text (null: not JSON round-trippable)
+
+function deepFrozen(value) {
+  if (!value || typeof value !== 'object') return true;
+  if (!Object.isFrozen(value)) return false;
+  for (const inner of Object.values(value)) if (!deepFrozen(inner)) return false;
+  return true;
+}
+
+function rawText(raw) {
+  if (raw === undefined) return '0';
+  if (raw === null || typeof raw !== 'object') return JSON.stringify(raw, lossless) ?? null;
+  if (frozenRawText.has(raw)) return frozenRawText.get(raw);
+  let text;
+  try { text = JSON.stringify(raw, lossless); } catch { text = null; }
+  if (deepFrozen(raw)) frozenRawText.set(raw, text);
+  return text;
+}
+
 export function keyFor(ctx, entity, carrier) {
   try {
-    const raw = ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules;
-    const key = JSON.stringify([raw === undefined ? 0 : raw, fixCoreAttachments(ctx, entity, carrier)]);
-    return key === undefined || key.includes('null') ? null : key;
+    const raw = rawText(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules);
+    if (raw === null || raw === undefined) return null;
+    const attachments = JSON.stringify(fixCoreAttachments(ctx, entity, carrier), lossless);
+    return attachments === undefined ? null : `${raw}|${attachments}`;
   } catch { return null; }
 }
 

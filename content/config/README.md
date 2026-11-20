@@ -30,7 +30,16 @@ One JSON file per subject. The folder decides where the file appears in
 | `ui/scenes/w4c-dialogue.json` | `uiConfig.scenes.w4c` | dialogue: bands, portraits, context, footer, layers, entrance |
 | `ui/components/<name>.json` | `uiConfig.components.<name>` | a part shared by several screens (card, buttons, tooltip, HUD …) |
 | `ui/screens/<name>.json` | `uiConfig.screens.<name>` | one screen's own layout (armoury, shop, smith) |
-| `ui/presentation/<name>.json` | `uiConfig.presentation.<name>` | a presentation table a src/ module used to hold as JS (map tiles, pose states, animation families, art anchors, environments, menus) |
+| `ui/presentation/<name>.json` | `uiConfig.presentation.<name>` | a presentation table a src/ module used to hold as JS (map tiles, pose states, animation families, art anchors, environments, menus, and intentional input timings) |
+
+The `combatInspection` and `settingsUndo` presentation files own the figure-hold
+duration and movement tolerance, and the Settings Undo window. `config-build`
+requires these files in the complete tree and validates positive timer values
+against the platform timer limit and nonnegative finite pointer tolerance
+before writing generated output. Pure compiler fixtures can still compile
+partial trees without the complete-tree requirement. Hand paging remains a
+legacy implementation detail: its arrows are hidden on the active formation
+screen, so its numeric threshold is not exposed as a tuning value.
 
 A scene file's key is the text before its first `-`: `w4a-combat.json` is
 `scenes.w4a`. Components, screens and presentation files use the whole file name.

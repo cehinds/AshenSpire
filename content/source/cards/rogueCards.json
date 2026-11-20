@@ -278,9 +278,19 @@
     "flavor": "Retreat of the lower-river ice-cutters.\n\nThe cutters know which ice beneath the bridges holds and which only seems to, and sell the knowledge by the season. Their map is drawn inside a cutter's coat and passed down with it.\n\nIts present wearer says it has been wrong since the second winter.",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 6
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "moveEngagement",
+        "target": "self",
+        "bands": 1
       },
       {
         "op": "applyStatus",
@@ -294,13 +304,24 @@
         }
       }
     ],
-    "textTemplate": "Gain {block} Block. Become Prepared.",
+    "textTemplate": "Gain {evade} Evade. Retreat. Become Prepared.",
     "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 9
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "moveEngagement",
+          "target": "self",
+          "bands": 1
         },
         {
           "op": "applyStatus",
@@ -1111,9 +1132,21 @@
     "flavor": "The rooftop road of the frozen docks.\n\nBridge rail, lamp post, gutter, never the street. The Court's watch walked only the paved ways, for the paving had been blessed at the Founding and the rooftops had not.\n\nWhether the watch was pious or idle is not agreed.",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 7
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "changeAttribute",
+        "target": "self",
+        "attribute": "dexterity",
+        "amount": 1,
+        "thisTurn": true
       },
       {
         "op": "draw",
@@ -1125,17 +1158,30 @@
         "random": true
       }
     ],
-    "textTemplate": "Gain {block} Block. Draw {draw} cards. Discard 1 at random.",
+    "textTemplate": "Gain {evade} Evade. +1 DEX this turn. Draw {draw} cards. Discard 1 at random.",
     "upgrade": {
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 9
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "changeAttribute",
+          "target": "self",
+          "attribute": "dexterity",
+          "amount": 1,
+          "thisTurn": true
         },
         {
           "op": "draw",
-          "amount": 3
+          "amount": 2
         },
         {
           "op": "discard",
@@ -1294,16 +1340,27 @@
     "name": "Shadowstep",
     "class": "rogue",
     "rarity": "uncommon",
-    "cost": 1,
+    "cost": 2,
     "type": "skill",
     "keywords": [],
     "icon": "progression",
     "flavor": "Step through a pier's shadow.\n\nThe shadows beneath the bridges are let by the season, and rent is owed to whoever held the pier before. Tenancies pass down like a trade.\n\nThe oldest belongs to one not seen since the Decree. The rent is always paid.",
     "effects": [
       {
-        "op": "block",
+        "op": "applyStatus",
         "target": "self",
-        "amount": 5
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self",
+          "per": 2
+        }
+      },
+      {
+        "op": "moveEngagement",
+        "target": "self",
+        "bands": -1
       },
       {
         "op": "applyStatus",
@@ -1315,19 +1372,27 @@
             1
           ]
         }
-      },
-      {
-        "op": "draw",
-        "amount": 1
       }
     ],
-    "textTemplate": "Gain {block} Block. Become Prepared. Draw {draw} card.",
+    "textTemplate": "Gain {evade} Evade. Advance. Become Prepared.",
     "upgrade": {
+      "cost": 1,
       "effects": [
         {
-          "op": "block",
+          "op": "applyStatus",
           "target": "self",
-          "amount": 7
+          "status": "evade",
+          "stacks": {
+            "f": "metric",
+            "metric": "evadeStackGain",
+            "of": "self",
+            "per": 2
+          }
+        },
+        {
+          "op": "moveEngagement",
+          "target": "self",
+          "bands": -1
         },
         {
           "op": "applyStatus",
@@ -1339,13 +1404,10 @@
               1
             ]
           }
-        },
-        {
-          "op": "draw",
-          "amount": 1
         }
       ]
-    }
+    },
+    "costRule": "fixed"
   },
   {
     "id": "afterimageCard",
@@ -1756,8 +1818,8 @@
         }
       }
     ],
-    "textTemplate": "Whenever an enemy Staggers, become Prepared and draw a card.",
-    "faceTemplate": ["On Stagger: Prepared, draw 1."],
+    "textTemplate": "Whenever an enemy is Broken, become Prepared and draw a card.",
+    "faceTemplate": ["On Break: Prepared, draw 1."],
     "upgrade": {
       "cost": 0
     }
@@ -2508,5 +2570,203 @@
         }
       ]
     }
+  },
+  {
+    "id": "keenEdge",
+    "name": "Keen Edge",
+    "class": "rogue",
+    "rarity": "common",
+    "cost": 1,
+    "type": "skill",
+    "flavor": "A whetstone's last pass, done in the dark.\n\nCutpurses of the low quarter sharpened by feel, never by sight, so no lamp would mark them. The edge lasted one good night. By morning the steel was dull again and the purse was empty.\n\nA true thief owns only one stone.",
+    "keywords": [
+      "ethereal"
+    ],
+    "icon": "smith",
+    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal.",
+    "faceTemplate": [
+      "Gain {strength} Strength.",
+      "Gain {dexterity} Dexterity."
+    ],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "strength",
+        "stacks": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "dexterity",
+        "stacks": 1
+      }
+    ],
+    "upgrade": {
+      "keywords": [],
+      "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity."
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "breakFocus",
+    "name": "Break Focus",
+    "class": "rogue",
+    "rarity": "common",
+    "cost": 1,
+    "type": "attack",
+    "flavor": "A jab thrown at a caster's moving lips.\n\nRogues who hunted hedge-wizards learned that a spell half spoken is a spell half lost. They went for the throat, the hands, the open book. Few wizards finished a word with a dagger in the binding.\n\nThe wizards learned to whisper instead.",
+    "keywords": [],
+    "icon": "smith",
+    "textTemplate": "Deal {damage} damage. If the target is in Prepared: it loses {loseHp} HP, ignoring Block.",
+    "faceTemplate": [
+      "Deal {damage} damage.",
+      "Prepared target: loses {loseHp} HP."
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "loseHp",
+        "target": "enemy",
+        "amount": 2,
+        "if": {
+          "p": "inStance",
+          "of": "target",
+          "stance": "prepared",
+          "snapshot": "beforePlay"
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "loseHp",
+          "target": "enemy",
+          "amount": 3,
+          "if": {
+            "p": "inStance",
+            "of": "target",
+            "stance": "prepared",
+            "snapshot": "beforePlay"
+          }
+        }
+      ]
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "dirtyStrike",
+    "name": "Dirty Strike",
+    "class": "rogue",
+    "rarity": "common",
+    "cost": 1,
+    "type": "attack",
+    "flavor": "A blow struck at a foe already reeling.\n\nGutter fighters had no code. They waited for a stumble, a cough, a dropped guard, then hit low and ran. Every brawl in the low quarter ended the same way, with someone limping and someone counting coins.\n\nThe coins were rarely honest either.",
+    "keywords": [],
+    "icon": "smith",
+    "textTemplate": "Deal {damage} damage. If the target is Weak: deal {damage.2} more.",
+    "faceTemplate": [
+      "Deal {damage} damage.",
+      "Weak target: +{damage.2}."
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3,
+        "if": {
+          "p": "hasStatus",
+          "of": "target",
+          "status": "weak",
+          "snapshot": "beforePlay"
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4,
+          "if": {
+            "p": "hasStatus",
+            "of": "target",
+            "status": "weak",
+            "snapshot": "beforePlay"
+          }
+        }
+      ]
+    },
+    "minCombatExpansionVersion": 2
+  },
+  {
+    "id": "closeQuarters",
+    "name": "Close Quarters",
+    "class": "rogue",
+    "rarity": "common",
+    "cost": 1,
+    "type": "attack",
+    "flavor": "A short blade drawn when the fight comes near.\n\nRogues carried a second knife for the moment the reach ran out. Spears and staves were fine for the open road. In an alley or a stairwell, only the shortest blade still had room to work.\n\nMost alleys in the low quarter end in stairs.",
+    "keywords": [],
+    "icon": "smith",
+    "textTemplate": "Deal {damage} damage. If the target is at Melee: deal {damage.2} more.",
+    "faceTemplate": [
+      "Deal {damage} damage.",
+      "At Melee: +{damage.2}."
+    ],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3,
+        "if": {
+          "p": "atRange",
+          "range": "melee"
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4,
+          "if": {
+            "p": "atRange",
+            "range": "melee"
+          }
+        }
+      ]
+    },
+    "minCombatExpansionVersion": 2
   }
 ]

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "checkJs": false,
+    "strict": false,
+    "noImplicitAny": false,
+    "maxNodeModuleJsDepth": 0
+  },
+  "include": ["src/**/*", "engine/**/*", "games/**/*", "content/**/*", "tools/**/*", "tests/**/*", "desktop/**/*"],
+  "exclude": ["node_modules", "dist", "build", "asset-data", "assets-display", "music", "**/*.html"]
+}

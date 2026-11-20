@@ -126,7 +126,7 @@ import { beatFor } from '../../model/secondbeat.js';
 import { sfx } from '../sfx.js';
 import { dlog } from '../debuglog.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
 import { reviewEyebrow, reviewTone } from '../models/ConfirmationReviewModel.js';
 
 /** How far a finger may wander before the hold is read as a drag. */
@@ -269,11 +269,11 @@ export function armHold(btn, {
   function dress() {
     const now = msOf();
     if (now > 0) {
-      btn.classList.add('beat-hold');
-      if (feedbackHosts) btn.dataset.holdFeedback = 'delegated';
-      if (id) btn.dataset.holdAction = id;
+      if (!btn.classList.contains('beat-hold')) btn.classList.add('beat-hold');
+      if (feedbackHosts && btn.dataset.holdFeedback !== 'delegated') btn.dataset.holdFeedback = 'delegated';
+      if (id && btn.dataset.holdAction !== String(id)) btn.dataset.holdAction = id;
       if (!btn.dataset.hold) btn.dataset.hold = 'idle';
-      btn.dataset.holdMs = String(now);
+      if (btn.dataset.holdMs !== String(now)) btn.dataset.holdMs = String(now);
       if (btn.style.getPropertyValue('--hold') === '') btn.style.setProperty('--hold', '0');
       // A screen may carry the instruction in the control's tooltip and its
       // accessible description instead of a word on the face (W4c responses,
@@ -294,7 +294,7 @@ export function armHold(btn, {
         else host.appendChild(hint);
       }
     } else {
-      btn.classList.remove('beat-hold');
+      if (btn.classList.contains('beat-hold')) btn.classList.remove('beat-hold');
       delete btn.dataset.holdFeedback;
       delete btn.dataset.hold;
       delete btn.dataset.holdAction;
@@ -944,7 +944,7 @@ function reveal(panel, actions) {
  * wrong object — and a pad player picks objects exactly like everyone else.
  * Same mistake, same beat.
  */
-export function armConfirm(el, { question, detailHtml = '', confirmLabel = 'CONFIRM', onConfirm, id = null }) {
+export function armConfirm(el, { question, detailHtml = '', confirmLabel = t('common.confirm'), onConfirm, id = null }) {
   let panel = null;
 
   function close(phase) {
@@ -1097,8 +1097,12 @@ export function beatArmer(meta, registries) {
     const initial = beatFor(actionId, ctxOf());
     el.dataset.beat = initial.form;
     el.dataset.optionDecision = actionId;
-    el.dataset.optionTap = 'modal';
-    el.dataset.optionHold = dialMs > 0 ? 'commit' : 'disabled';
+    // A row that says `tap: true` (model/secondbeat.js) commits on one activation:
+    // no review, no hold, whatever the dial says. A press-and-hold is still one
+    // activation, because a zero-length press commits once on release.
+    const tapRow = () => beatFor(actionId, ctxOf()).tap === true;
+    el.dataset.optionTap = tapRow() ? 'commit' : 'modal';
+    el.dataset.optionHold = tapRow() || dialMs <= 0 ? 'disabled' : 'commit';
 
     // (Owner, 2026-10-18: a control that opts in with `tapWhenNone` and whose
     // form is 'none' owes no review at all — see `owesNoBeat` below. The
@@ -1119,7 +1123,7 @@ export function beatArmer(meta, registries) {
       const authoredDetail = authored(detailHtml);
       const authoredMessage = authored(message);
       const policy = authored(policyAction);
-      openConfirmationModal({
+      OpenConfirmationModal({
         title: authoredQuestion || `Confirm ${current.of}`,
         target: authored(target) || '',
         message: authoredMessage || (authoredQuestion
@@ -1155,7 +1159,7 @@ export function beatArmer(meta, registries) {
     // every other control: an event bar whose choice owes no beat is still an
     // option bar that offers the hold and reviews on a tap (tools/holdconfirm.mjs
     // "every option bar offers the hold shortcut").
-    const owesNoBeat = () => tapWhenNone && formNow() === 'none';
+    const owesNoBeat = () => (tapWhenNone || tapRow()) && formNow() === 'none';
     const disarm = armHold(el, {
       ms: () => (owesNoBeat() ? 0 : dialMs),
       onConfirm,

@@ -272,7 +272,14 @@ function plantBuilder(t) {
   fs.copyFileSync(path.join(repo, 'tools/lib/build-lock.mjs'), path.join(root, 'tools/lib/build-lock.mjs'));
   fs.copyFileSync(path.join(repo, 'tools/lib/process-tree.mjs'), path.join(root, 'tools/lib/process-tree.mjs'));
   fs.copyFileSync(path.join(repo, 'tools/framework-data-build.mjs'), path.join(root, 'tools/framework-data-build.mjs'));
+  fs.copyFileSync(path.join(repo, 'package.json'), path.join(root, 'package.json'));
+  fs.cpSync(path.join(repo, 'engine/kernel'), path.join(root, 'engine/kernel'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'engine/contracts'), { recursive: true });
+  const schema = 'engine/contracts/framework-combat-mechanics.schema.json';
+  fs.copyFileSync(path.join(repo, schema), path.join(root, schema));
   fs.mkdirSync(path.join(root, 'content/framework'), { recursive: true });
+  const mechanics = 'content/framework/mechanics.json';
+  fs.copyFileSync(path.join(repo, mechanics), path.join(root, mechanics));
   fs.writeFileSync(path.join(root, 'content/framework/probe.json'), '{"a": 1}\n');
   return root;
 }

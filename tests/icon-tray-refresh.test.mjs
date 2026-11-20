@@ -3,7 +3,7 @@
 // status, then refitting at another width, shows exactly the current statuses, and an overflowed tray's "+N" follows them.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { iconTray, trayIcon, setIconTrayOverflow, fitIconTray, refreshIconTray } from '../src/ui/components/iconTray.js';
 import { markBuilt } from '../src/ui/domWrite.js';
 
@@ -11,7 +11,6 @@ const ids = row => [...row.children].filter(node => node.dataset?.statusId).map(
 const more = row => [...row.children].find(node => node.className?.includes('status-overflow'))?.textContent || null;
 
 test('refreshIconTray refits a tray from its current icons', () => withKitDom(({ document }) => {
-  globalThis.document = document;
   globalThis.getComputedStyle = () => ({ fontSize: '16px', zoom: '1', getPropertyValue: () => '' });
   document.documentElement ||= document.createElement('html');
   const build = list => {

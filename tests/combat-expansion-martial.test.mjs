@@ -91,31 +91,11 @@ test('legacy Martial overlay covers its shipped physical identities and never mu
   }
 });
 
-test('a bow equipment projection keeps Ranged delivery and spell basics retain authored Spell camp', () => {
+test('a bow equipment projection keeps a Reach attack and spell basics retain authored Spell camp', () => {
   const bow = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'strike', profileId: 'bowPierceAttack' }));
-  assert.equal(combatProfileFor(bow).maneuver, 'ranged'); assert.equal(bow.range, 'reach');
+  assert.equal(combatProfileFor(bow).maneuver, 'attack'); assert.equal(bow.range, 'reach'); assert.ok(bow.tags.includes('delivery:projectile'));
   const spell = resolveCard(registries, { cardId: 'strike', profileId: 'staffMagicAttack' });
   assert.equal(applyCombatExpansionMartial(spell), spell);
-});
-
-test('Quickstep and Dodge retain authored Block plus the Martial bonus and DR and return exactly3 plus AR without restoring Ward', () => {
-  for (const id of ['quickstep', 'dodgeRoll']) {
-    const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: id, abilityRank: 0 }, 2));
-    const carrier = tacticalCarrier(def, { cardId: id, type: def.type });
-    const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
-    assert.equal(def.counterPayload.hp, 3, 'the printed return keeps its authored base');
-    const activeAr = stanceRatingBonus(f.ctx, f.target, 'ar');
-    assert.equal(activeAr, 1, 'hybrid Evade retains the Counter offensive rating');
-    assert.equal(f.target.combatCounter.payload.hp, 3 + f.target.ratings.ar + activeAr);
-    assert.equal(f.target.combatCounter.payload.poise, 3, 'absent authored Poise receives the Counter fallback');
-    assert.equal(f.target.combatStance.maneuver, 'counter');
-    assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'evade').length, 1);
-    assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'precision').length, 1,
-      'hybrid Counter grants its offensive Precision once');
-    assert.equal(support.find(effect => effect.op === 'block').amount, id === 'quickstep' ? 9 : 5, 'Quickstep retains its retuned 8 Block plus the Martial +1; Dodge retains 3 plus 2');
-    assert.ok(!support.some(effect => ['damage', 'gainWard', 'dodgeRoll'].includes(effect.op)));
-    assert.deepEqual(combatExpansionEntityProblems(f.target), []);
-  }
 });
 
 test('printed zero HP cannot invent an AR/PR return and explicit bonuses remain effective', () => {
@@ -222,10 +202,13 @@ test('player action carriers expose actual electrical equipment traits to an ene
   assert.ok(!card.combatProfile.traits.includes('conductive'));
 });
 
-test('permanent grades retain Quickstep Block, bonus draws and once-per-turn support', () => {
+test('permanent grades retain Quickstep Evade, bonus draws and once-per-turn support', () => {
   const card = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'quickstep', abilityRank: 5 }, 2));
-  assert.equal(card.effects.find(effect => effect.op === 'block' && !effect.oncePerTurn).amount, 19);
-  assert.equal(card.effects.filter(effect => effect.op === 'draw' && !effect.oncePerTurn).reduce((sum, effect) => sum + effect.amount, 0), 2);
+  // W25-EvadeCards (intended by the design): Quickstep no longer gains a base Block (it grants Evade stacks, a Counter and a draw),
+  // so there is no base Block for the grade to scale and its one authored draw is the only base draw; the grade keeps its Evade, reply damage and the once-per-turn Block and draw.
+  assert.equal(card.effects.some(effect => effect.op === 'block' && !effect.oncePerTurn), false);
+  assert.equal(card.effects.find(effect => effect.op === 'applyStatus' && effect.status === 'evade').stacks.per, 2);
+  assert.equal(card.effects.filter(effect => effect.op === 'draw' && !effect.oncePerTurn).reduce((sum, effect) => sum + effect.amount, 0), 1);
   assert.ok(card.effects.some(effect => effect.op === 'block' && effect.oncePerTurn === 'grade-block' && effect.amount === 2));
   assert.ok(card.effects.some(effect => effect.op === 'draw' && effect.oncePerTurn === 'grade-draw' && effect.amount === 1));
 });

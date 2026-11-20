@@ -10,6 +10,7 @@
 // attribute columns a pane width earns. Every number comes from
 // uiConfig.screens.creation (content/config/ui/screens/creation.json).
 import { uiConfig } from '../../config/generated/ui.js';
+import { BuildRailItems } from './railItems.js';
 
 const CONFIG = uiConfig.screens.creation;
 
@@ -72,6 +73,9 @@ export function creationFooterPlan({ categories, current }) {
     back: at === 0 ? 'leave' : 'previous',
     previous: at === 0 ? null : categories[at - 1],
     primary: last ? 'begin' : 'next',
+    // The fixed-class Core flow is Class then Review: the Class step carries
+    // Begin itself, and Next stays beside it as the secondary "Customise" door.
+    quickBegin: categories.length === 2 && categories[0] === 'class' && categories[1] === 'review' && current === 'class',
     next: last ? null : categories[at + 1],
     actions: 2,
   });
@@ -84,12 +88,10 @@ export function creationFooterPlan({ categories, current }) {
  */
 export function creationRailItems({ categories, current, labels = {}, values = {} }) {
   if (!categories.includes(current)) throw new Error(`creationRailItems: '${current}' is not a creation category`);
-  return Object.freeze(categories.map((id) => Object.freeze({
-    id,
+  return BuildRailItems(categories, current, (id) => ({
     label: labels[id] ?? id,
     value: values[id] ?? '',
-    selected: id === current,
-  })));
+  }));
 }
 
 /**

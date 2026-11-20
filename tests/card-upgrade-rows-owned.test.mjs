@@ -20,7 +20,7 @@ const withSideboardStrike = () => {
 
 test('rows: a sideboard card is offered, after the deck rows, with inDeck false', () => {
   const { run, moved } = withSideboardStrike();
-  const { rows } = cardUpgradeModel(registries, run);
+  const rows = cardUpgradeModel(registries, run).rows.filter((r) => !r.weaponBound);
   const side = rows.find((r) => r.instanceIds.includes(moved.instanceId));
   assert.ok(side, 'sideboard Strike is listed');
   assert.equal(side.inDeck, false);

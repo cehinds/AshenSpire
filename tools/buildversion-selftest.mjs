@@ -669,6 +669,46 @@ function historyCorpus() {
       'the ordinal is RAISED by hand with the source digest unchanged — it sorts higher, but no build writes a new number without a new digest', null, false],
     [null, 'green',
       'the control: the record is untouched and the digest unchanged — no build shipped, n/a', null, false],
+    [bump, 'green',
+      'a push-to-test record: the ordinal is raised by exactly one, same release, digest unchanged, HEAD subject is a version-advance test record — the licensed bump', null, false,
+      (dir) => git(dir, 'commit', '-q', '--amend', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`)],
+    [bump, 'green',
+      'a promotion MERGE brings a test record plus a docs-only commit above it; the merge parent predates the bump (+1, digest unchanged) — the record is in parent..HEAD', null, false,
+      (dir) => {
+        const p = resolve(dir, ORDINAL_HOME);
+        const rec = readFileSync(p, 'utf8');
+        git(dir, 'reset', '-q', '--hard', 'HEAD~1');
+        git(dir, 'checkout', '-q', '-b', 'side');
+        writeFileSync(p, rec, 'utf8');
+        git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`);
+        writeFileSync(resolve(dir, 'docs-only.md'), 'words\n');
+        git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'docs: words');
+        git(dir, 'checkout', '-q', 'main');
+        git(dir, 'merge', '-q', '--no-ff', '-m', 'Merge side into main', 'side');
+      }],
+    [(j) => ({ ...j, ordinal: j.ordinal + 2 }), 'green',
+      'a promotion MERGE carries TWO test records (a delayed version-advance run wrote both) and the ordinal rose by two, digest unchanged — one licensed bump per record', null, false,
+      (dir) => {
+        const p = resolve(dir, ORDINAL_HOME);
+        const two = JSON.parse(readFileSync(p, 'utf8'));
+        git(dir, 'reset', '-q', '--hard', 'HEAD~1');
+        git(dir, 'checkout', '-q', '-b', 'side2');
+        writeFileSync(p, JSON.stringify({ ...two, ordinal: two.ordinal - 1 }, null, 2) + '\n', 'utf8');
+        git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`);
+        writeFileSync(p, JSON.stringify(two, null, 2) + '\n', 'utf8');
+        git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', `version-advance: 0.7.4 after test ${'b'.repeat(40)} [version-advance]`);
+        git(dir, 'checkout', '-q', 'main');
+        git(dir, 'merge', '-q', '--no-ff', '-m', 'Merge side2 into main', 'side2');
+      }],
+    [bump, 'red',
+      'the same +1 with the digest unchanged, but HEAD is an ordinary commit and not a test record — still a hand edit', null, false,
+      (dir) => git(dir, 'commit', '-q', '--amend', '-m', 'bump the ordinal by hand')],
+    [bump, 'red',
+      'the same +1 with the digest unchanged under a release-cut record (after release, not after test) — only a test record is licensed', null, false,
+      (dir) => git(dir, 'commit', '-q', '--amend', '-m', `version-advance: 0.7.4 after release ${'a'.repeat(40)} [version-advance]`)],
+    [(j) => ({ ...j, ordinal: j.ordinal + 2 }), 'red',
+      'one test record that raises the ordinal by TWO with the digest unchanged — the licence is one bump per record', null, false,
+      (dir) => git(dir, 'commit', '-q', '--amend', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`)],
   );
 
   // THE PARENT RECORD GIT CANNOT READ. HEAD names its parent and the parent's

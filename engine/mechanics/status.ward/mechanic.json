@@ -18,6 +18,7 @@
   "presentation": {
     "icon": "status.ward"
   },
+  "authored": true,
   "portability": "legacy",
   "legacy": {
     "file": "src/engine/actions.js",

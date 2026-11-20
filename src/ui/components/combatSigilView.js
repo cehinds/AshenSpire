@@ -1,5 +1,6 @@
 import { ACTION_SIGILS, SCHOOL_SIGILS, mirrorSigil } from '../../content/combatSigils.js';
 import { esc } from './tooltip.js';
+import { t } from '../strings.js';
 
 export function sigilHtml(id, kind = 'action', { tooltip = true } = {}) {
   const catalog = kind === 'school' ? SCHOOL_SIGILS : ACTION_SIGILS;
@@ -23,7 +24,7 @@ export function sigilExplanationHtml(identity) {
     const catalog = kind === 'school' ? SCHOOL_SIGILS : ACTION_SIGILS;
     const id = kind === 'mirror' && rawId ? mirrorSigil(rawId).id : rawId;
     const mark = kind === 'mirror' && rawId ? mirrorSigil(rawId).mark : Object.hasOwn(catalog, id) ? catalog[id] : null;
-    return mark ? `<div class="inspection-sigil-row">${sigilHtml(id, kind)}<span><b>${esc(mark.label)}</b> — ${esc(mark.help)}</span></div>` : '';
+    return mark ? `<div class="inspection-sigil-row">${sigilHtml(id, kind)}<span><b>${esc(mark.label)}</b>: ${esc(mark.help)}</span></div>` : '';
   }).join('')}</div>`;
 }
 
@@ -47,7 +48,7 @@ export function compactCardRules(html) {
     .replace(/ and If /g, ' and ')
     .replace(/once per turn from this family/g, 'once per turn per family')
     .replace(/HP; the payment must leave at least one HP/g, 'HP (leave at least 1 HP)')
-    .replace(/Your next /g, 'Next ')
+    .replace(/Your next /g, t('combat.sigil.nextShort') + ' ')
     .replace(/minimum zero/g, 'min 0')
     .replace(/this charge cannot stack with itself/g, 'cannot stack with itself').trim();
 }

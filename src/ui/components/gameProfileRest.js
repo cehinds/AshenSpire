@@ -1,6 +1,7 @@
 import { t } from '../strings.js';
+import { ActivateOnKey } from '../selection.js';
 import { gameModule } from '../../model/gameProfile.js';
-import { restServicesAll, restServiceUsed } from '../../model/gameProfileRest.js';
+import { restServicesAll, restServiceUsed, RestChoiceMode } from '../../model/gameProfileRest.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection } from '../../model/statProjection.js';
 import { runHandRules } from '../../model/handRules.js';
@@ -8,11 +9,11 @@ import { esc } from './tooltip.js';
 import { engravedIconHtml } from './engravedIcon.js';
 import { recoveryLedgerHtml } from './recoveryLedger.js';
 import { mountRestFrame, restPresentation } from './restFrame.js';
-import { renderStatAllocationCard } from './statAllocationCard.js';
+import { RenderStatAllocationCard } from './statAllocationCard.js';
 import { mountSmithUpgradeModal } from './smithUpgradeModal.js';
-import { mountCardUpgradeModal } from './cardUpgradeModal.js';
+import { MountCardUpgradeModal } from './cardUpgradeModal.js';
 import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { gameProfileRestModel, gameProfileSmithModel } from '../models/GameProfileRestModel.js';
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
@@ -20,11 +21,12 @@ import { el, button, modalFooter } from '../kit/index.js';
 
 // Presentation only. The persisted run transaction owns the one-service rule,
 // final validation and every pool/flask refill; closing a review changes none.
-export function mountGameProfileRest(app, { registries, run, meta, hud, visit, onStrategize, onCommit, onLeave, remount }) {
+export function mountGameProfileRest(app, { registries, run, meta, hud, visit, onStrategize, deckEditor = null, onCommit, onLeave, remount }) {
   const model = gameProfileRestModel(registries, run, visit);
-  const icons = { strategize: 'deck', smith: 'smith', levelUp: 'progression', upgradeCard: 'deck' };
-  const optionIds = { strategize: 'strategize-opt', smith: 'smith-opt', levelUp: 'level-opt', upgradeCard: 'upgrade-card-opt' };
+  const icons = { rest: 'rest', strategize: 'deck', smith: 'smith', levelUp: 'progression', upgradeCard: 'deck' };
+  const optionIds = { rest: 'rest-opt', strategize: 'strategize-opt', smith: 'smith-opt', levelUp: 'level-opt', upgradeCard: 'upgrade-card-opt' };
   const all = restServicesAll(run); // Core: heal on arrival, every service once, only Continue leaves
+  const pick = RestChoiceMode(run); // one pick per visit; only the Rest card restores
   const usedOf = id => all ? restServiceUsed(visit, id) : visit.service === id;
   const availability = restChoiceStatus(model.services.map(service => ({ ...service, used: usedOf(service.id) })));
   const layout = restPresentation(registries).optionLayout;
@@ -44,14 +46,27 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     return markUiComponent(card, UI.shrineOptionCard, service.id === 'levelUp' ? 'level-up' : service.id);
   })));
 
+  // Core 2: editing the deck is a free door, not a service. It is open before and after the pick, never touches `visit`, and is not
+  // counted in the availability status above.
+  if (deckEditor) {
+    const deck = el('div', { class: 'class-pick', id: 'deck-opt', role: 'button', tabindex: '0', 'aria-disabled': 'false' }, [
+      el('div', { class: 'glyph', html: engravedIconHtml('deck') }),
+      el('div', { class: 'cp-body' }, [el('h3', { text: t('gameProfile.rest.service.deck') }), el('p', { text: t('gameProfile.rest.description.deck') })]),
+    ]);
+    choices.firstChild.append(markUiComponent(deck, UI.shrineOptionCard, 'deck'));
+    const open = () => invoke(() => deckEditor.onOpen());
+    deck.addEventListener('click', open);
+    ActivateOnKey(deck, open, { canActivate: event => !event.defaultPrevented });
+  }
+
   // The recovery ledger is projected from the final transaction, including
   // newly derived maxima after a selected attribute/equipment upgrade.
-  const recoveryHtml = after => recoveryLedgerHtml(run, after);
+  const recoveryHtml = after => pick ? '' : recoveryLedgerHtml(run, after);
   // Core: one line, since arrival always restores HP and MP in full. The recovery table, intro and
   // availability list are gone; each option card already says what it does or why it cannot be used.
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') }, [
     all ? el('p', { class: 'as-flavor rest-healed', dataset: { restHealed: 'true' }, text: t('gameProfile.rest.restored') })
-      : el('p', { class: 'as-flavor', text: visit.service ? t('gameProfile.rest.complete', { service: t(`gameProfile.rest.service.${visit.service}`) }) : t('gameProfile.rest.chooseOne') }),
+      : el('p', { class: 'as-flavor', text: visit.service ? t('gameProfile.rest.complete', { service: t(`gameProfile.rest.service.${visit.service}`) }) : t(pick ? 'gameProfile.rest.chooseOneRest' : 'gameProfile.rest.chooseOne') }),
   ]);
   const status = el('p', { class: 'as-status', role: 'alert' });
   consequences.append(status);
@@ -77,7 +92,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   const openSmith = () => {
     let selected = null;
     screen.inert = true;
-    const makeModel = () => gameProfileSmithModel(registries, model.smith, model.smithPreviews, selected, recoveryHtml, { all, levelUpOffered: model.services.some(service => service.id === 'levelUp') });
+    const makeModel = () => gameProfileSmithModel(registries, model.smith, model.smithPreviews, selected, recoveryHtml, { all, pick, levelUpOffered: model.services.some(service => service.id === 'levelUp') });
     const modal = mountSmithUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#smith-opt'),
       parent: shrineParent('#smith-opt'),
@@ -93,10 +108,10 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     screen.inert = true;
     const makeModel = () => cardUpgradeModel(registries, run, selected,
       { blockedReason: selected && model.cardPreviews.get(selected)?.available === false ? model.cardPreviews.get(selected).reason : '' });
-    const modal = mountCardUpgradeModal(app, makeModel(), {
+    const modal = MountCardUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#upgrade-card-opt'),
       parent: shrineParent('#upgrade-card-opt'),
-      decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
+      decisionConsequence: t(pick ? 'gameProfile.rest.upgradeCardDecisionPick' : 'gameProfile.rest.upgradeCardDecision'),
       onSelect: instanceId => { selected = instanceId; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#upgrade-card-opt')?.focus({ preventScroll: true }); },
       onConfirm: (instanceId, quote) => { screen.inert = false; return commit('upgradeCard', { instanceId, quote }); },
@@ -133,7 +148,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       if (allocation) allocation.update(spec);
       else {
         screen.inert = true;
-        allocation = renderStatAllocationCard(app, spec);
+        allocation = RenderStatAllocationCard(app, spec);
         allocation.card.classList.add('level-up-modal');
         allocation.card.querySelector('.stat-allocation-card').append(previews);
       }
@@ -146,19 +161,17 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     if (!service.available) continue;
     const option = app.querySelector(`#${optionIds[service.id]}`);
     const open = () => invoke(() => {
+      if (service.id === 'rest') return commit('rest', {});
       if (service.id === 'smith') return openSmith();
       if (service.id === 'levelUp') return openLevel();
       if (service.id === 'upgradeCard') return openUpgradeCard();
       if (gameModule(run, 'cards')) return onStrategize();
-      openConfirmationModal({ title: service.title, message: t('gameProfile.rest.chooseOne'),
+      OpenConfirmationModal({ title: service.title, message: t(pick ? 'gameProfile.rest.chooseOneRest' : 'gameProfile.rest.chooseOne'),
         detailsHtml: recoveryHtml(service.preview), confirmLabel: service.title,
         returnFocusElement: option, onConfirm: onStrategize,
       });
     });
     option.addEventListener('click', open);
-    option.addEventListener('keydown', event => {
-      if (event.defaultPrevented || !['Enter', ' '].includes(event.key)) return;
-      event.preventDefault(); open();
-    });
+    ActivateOnKey(option, open, { canActivate: event => !event.defaultPrevented });
   }
 }

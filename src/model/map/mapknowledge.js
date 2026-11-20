@@ -304,7 +304,9 @@ export const FOG_TRAIL_CLAUSE = 'Fog never closes behind you — anywhere you ha
 /**
  * litNodes({ graph, run }) → Set of ids the fog is not covering.
  *
- * THE TRAIL IS STICKY, AND THAT IS THE FIXED PART OF THIS FUNCTION.
+ * THE TRAIL IS STICKY, AND THAT IS THE FIXED PART OF THIS FUNCTION. (Under `routes.fogTrailOnly`, the Core rule since 2026-11-15, the trail
+ * itself still never goes dark, but it no longer widens: a node you stood on lights only itself and only the node you stand on opens its
+ * split, so "Fog never closes behind you" below describes the older, wider reading, which a run without the key keeps.)
  *
  *   "flashlight is nice but previously visited locations remain revealed"
  *
@@ -381,12 +383,22 @@ export function litNodes({ graph, run }) {
   for (const id of (graph.startIds || [])) add(id);
   for (const id of graph.bossIds || Object.values(graph.nodes).filter((node) => node.type === 'boss').map((node) => node.id)) add(id);
   add(graph.bossId); // legacy singular graphs
+  // routes.fogRevealRests (owner, 2026-11-15: "only unfog rest locations and locations already
+  // traveled"): every rest site of the act is lit from the start. A rule key, absent = plain fog.
+  if (gameModule(run, 'routes')?.fogRevealRests === true) {
+    for (const node of Object.values(graph.nodes)) if (node.type === 'shrine') add(node.id);
+  }
   const path = (run && run.path) || [];
-  for (const id of path) { shine(id); shrineAhead(id); }
+  // routes.fogTrailOnly (owner, 2026-11-15: "just the path you traveled"): a travelled node lights only itself; only the node
+  // you stand on opens its split, and no shrine lights the next one. A rule key; absent keeps the older fog above.
+  const trailOnly = gameModule(run, 'routes')?.fogTrailOnly === true;
+  const here = (run && run.mapNodeId) || path[path.length - 1];
+  for (const id of path) { if (trailOnly) { add(id); } else { shine(id); shrineAhead(id); } }
+  if (trailOnly && here) shine(here);
   // Belt and braces: in play `mapNodeId` is always the last element of `path`
   // (`enterNode` pushes it), but `?shotAt` poses a node without a history and a
   // hand-edited save could too. Standing somewhere always lights it AND its split.
-  if (run && run.mapNodeId) { shine(run.mapNodeId); shrineAhead(run.mapNodeId); }
+  if (run && run.mapNodeId) { shine(run.mapNodeId); if (!trailOnly) shrineAhead(run.mapNodeId); }
   return lit;
 }
 

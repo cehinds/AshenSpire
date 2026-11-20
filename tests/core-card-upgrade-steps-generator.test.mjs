@@ -118,12 +118,12 @@ test('power, status and curse cards take only cost, then are maxed (null)', () =
 });
 
 test('when nothing is eligible the card is maxed: the roll is null, never a filler step', () => {
-  const capped = dmg(6, { rarity: 'common', effects: [{ op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 }] });
+  const capped = dmg(6, { rarity: 'common', type: 'power', effects: [{ op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 }] });
   assert.equal(rollUpgradeStep(capped, [], 0, upgradeStepRng(1, 'x', 0)), null);
   // Rolling until null always ends, and never past the cap of 10 steps a card can hold.
   const steps = [];
   for (let i = 0; i < 40; i += 1) { const s = rollUpgradeStep(dmg(6), steps, steps.length, upgradeStepRng(3, 'x', steps.length)); if (!s) break; steps.push(s); }
-  assert.ok(steps.length > 0 && steps.length < 40);
+  assert.ok(steps.length > 0 && steps.length < 40, 'the menu is finite: every effect is offered once (draw up to three times)');
 });
 
 test('conditional status effects are never stacked', () => {
@@ -160,21 +160,26 @@ const tagsFor = (card) => {
 
 test('poise: +max(1, ceil 20%) and only on a card with a poiseDamage effect', () => {
   const poise = [];
-  for (let i = 0; i < 600; i += 1) for (const s of rollUpgradeOptions(withPoise(), [], 0, upgradeStepRng(i, 'x', 0), {}, 3)) if (s.k === 'poise') poise.push(s.n);
+  const plain = (extra = {}) => withPoise({ tags: ['camp:physical', 'maneuver:attack'], ...extra });
+  for (let i = 0; i < 600; i += 1) for (const s of rollUpgradeOptions(plain(), [], 0, upgradeStepRng(i, 'x', 0), {}, 3)) if (s.k === 'poise') poise.push(s.n);
   assert.ok(poise.length > 0 && poise.every((n) => n === 1));
   assert.ok(!kindsFor(dmg(8)).has('poise'));
-  const big = withPoise({ effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 20 }] });
+  // A Smash card's Poise number never reaches the engine (it is derived from the hit), so it is never offered a Poise step (W25).
+  assert.ok(!kindsFor(withPoise()).has('poise'));
+  const big = plain({ effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 20 }] });
   assert.ok(rollUpgradeOptions(big, [], 0, upgradeStepRng(1, 'x', 0), {}, 20).some((s) => s.k === 'poise' && s.n === 4));
 });
 
-test('range tag steps go melee to reach to ranged and replace the old range tag', () => {
+test('range tag steps switch melee and reach (never ranged), replace the old range tag and stop after two', () => {
   const seen = tagsFor(withPoise());
   assert.ok(seen.has('{"k":"tag","tag":"range:reach"}'));
-  assert.ok(!seen.has('{"k":"tag","tag":"range:ranged"}'));
+  assert.ok(![...seen].some((k) => k.includes('range:ranged')), 'ranged cards are gone');
   const reach = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack', 'range:reach'] }));
-  assert.ok(reach.has('{"k":"tag","tag":"range:ranged"}') && !reach.has('{"k":"tag","tag":"range:reach"}'));
+  assert.ok(reach.has('{"k":"tag","tag":"range:melee"}') && !reach.has('{"k":"tag","tag":"range:reach"}'));
   const done = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack', 'range:ranged'] }));
   assert.ok(![...done].some((k) => k.includes('range:')));
+  const twice = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'range:reach' }, { k: 'tag', tag: 'range:melee' }], 2, upgradeStepRng(1, 'x', 2), {}, 30);
+  assert.ok(!twice.some((st) => st.tag?.startsWith('range:')), 'two range changes per card at most');
   assert.ok(![...tagsFor(dmg(6, { effects: [{ op: 'block', target: 'self', amount: 5 }], type: 'skill', tags: ['camp:physical', 'maneuver:defend'] }))].some((k) => k.includes('range:')), 'a block card has no range');
 });
 
@@ -192,9 +197,9 @@ test('targeting flips single and area, the amount x0.75 up or x1.25 up, once per
   assert.ok(![...sweep].some((k) => k.includes('targeting:')), 'a sweep stays area');
 });
 
-test('maneuver swaps within attack / smash / ranged once; smash needs 2 SP; spells and others never', () => {
+test('maneuver swaps between attack and smash once (never ranged); smash needs 2 SP; spells and others never', () => {
   const seen = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack'] }));
-  assert.ok(seen.has('{"k":"tag","tag":"maneuver:smash"}') && seen.has('{"k":"tag","tag":"maneuver:ranged"}'));
+  assert.ok(seen.has('{"k":"tag","tag":"maneuver:smash"}') && !seen.has('{"k":"tag","tag":"maneuver:ranged"}'));
   const cheap = tagsFor(withPoise({ cost: 1, staminaCost: 1, tags: ['camp:physical', 'maneuver:attack'] }));
   assert.ok(!cheap.has('{"k":"tag","tag":"maneuver:smash"}'));
   assert.ok(![...tagsFor(withPoise({ tags: ['camp:spell', 'maneuver:casting'], damageSchool: 'magic' }))].some((k) => k.includes('maneuver:')));
@@ -203,25 +208,25 @@ test('maneuver swaps within attack / smash / ranged once; smash needs 2 SP; spel
   assert.ok(![...tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:sweep'] }))].some((k) => k.includes('maneuver:')));
 });
 
-test('school: spells only, any school but the current; element: physical to magic / arcane / holy / fire once', () => {
+test('no school swap is offered (it changes no play); element: physical to magic / arcane / holy / fire once', () => {
   const spell = dmg(6, { tags: ['camp:spell', 'maneuver:casting', 'school:fire'], damageSchool: 'magic', cost: 2, staminaCost: 1, manaCost: 2 });
   const seen = tagsFor(spell);
-  assert.ok(seen.has('{"k":"tag","tag":"school:frost"}') && !seen.has('{"k":"tag","tag":"school:fire"}'));
+  assert.ok(![...seen].some((k) => k.includes('"tag":"school:') && !k.includes('damageSchool')), 'a spell is not offered a bare school swap');
   assert.ok(![...tagsFor(withPoise())].some((k) => k.includes('school:') && !k.includes('damageSchool')), 'a physical card gets no school step (an element step carries its school tag)');
   assert.ok(![...seen].some((k) => k.includes('damageSchool')), 'a magic card gets no element');
   const elements = new Set([...tagsFor(withPoise())].filter((k) => k.includes('damageSchool')).map((k) => JSON.parse(k).damageSchool));
   assert.deepEqual([...elements].sort(), ['arcane', 'fire', 'holy', 'magic']);
-  const spellTwice = rollUpgradeOptions(spell, [{ k: 'tag', tag: 'school:frost' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
-  assert.ok(!spellTwice.some((s) => s.tag?.startsWith('school:')), 'a school changes once per card');
   const again = rollUpgradeOptions(withPoise(), [{ k: 'tag', damageSchool: 'fire' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
   assert.ok(!again.some((s) => s.damageSchool), 'element once per card');
 });
 
-test('rank-down adds rank.cantrip to a card that is not basic, once', () => {
-  assert.ok(tagsFor(withPoise()).has('{"k":"tag","tag":"rank.cantrip"}'));
+test('rank-down adds rank.cantrip to a card that pays Mana and is not basic, once', () => {
+  const mana = (extra = {}) => withPoise({ manaCost: 1, ...extra });
+  assert.ok(!tagsFor(withPoise()).has('{"k":"tag","tag":"rank.cantrip"}'), 'a 0-Mana card would change a tag and nothing else');
+  assert.ok(tagsFor(mana()).has('{"k":"tag","tag":"rank.cantrip"}'));
   assert.ok(!tagsFor(dmg(6, { rarity: 'common' })).has('{"k":"tag","tag":"rank.cantrip"}'), 'a common non-spell is already basic');
-  assert.ok(!tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:smash', 'rank.cantrip'] })).has('{"k":"tag","tag":"rank.cantrip"}'));
-  const again = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'rank.cantrip' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  assert.ok(!tagsFor(mana({ tags: ['camp:physical', 'maneuver:smash', 'rank.cantrip'] })).has('{"k":"tag","tag":"rank.cantrip"}'));
+  const again = rollUpgradeOptions(mana(), [{ k: 'tag', tag: 'rank.cantrip' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
   assert.ok(!again.some((s) => s.tag === 'rank.cantrip'));
 });
 
@@ -231,7 +236,7 @@ test('options are distinct, deterministic, capped at what is eligible, and the f
     const three = rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 3);
     assert.equal(three.length, 3);
     assert.equal(new Set(three.map((s) => JSON.stringify(s))).size, 3, 'distinct');
-    assert.equal(new Set(three.map((s) => (s.k === 'tag' ? `tag:${s.tag || s.damageSchool}` : s.k))).size, 3, 'distinct options');
+    assert.equal(new Set(three.map((s) => (s.k === 'tag' ? `tag:${s.tag || s.damageSchool}` : s.k === 'fx' ? `fx:${s.fx}` : s.k))).size, 3, 'distinct options');
     assert.deepEqual(three, rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 3), 'deterministic');
     assert.deepEqual(three[0], rollUpgradeStep(card, [], 0, upgradeStepRng(i, 'x', 0)), 'option 1 is the single roll');
   }
@@ -248,12 +253,12 @@ test('the tag vocabulary a step writes is the one combatCardProfile reads', asyn
   for (const card of cards) assert.equal(rollUpgradeOptions(card, [], 0, upgradeStepRng(1, 'x', 0), {}, 20).some((s) => s.tag === 'rank.cantrip') && upgradeBasic(card), false, card.id);
 });
 
-test('school change is offered to any spell-camp card, damaging or not, and never to a non-spell', () => {
+test('a school swap is no longer offered to anyone (it changes no play), but a saved one still applies', () => {
   const schoolSeen = (card) => [...tagsFor(card)].some((k) => k.includes('"tag":"school:') && !k.includes('damageSchool'));
   for (const id of ['core.mendingTouch', 'core.hexmark']) {
     const card = byId(id);
     assert.ok(card.tags.includes('camp:spell'), id);
-    assert.ok(schoolSeen(card), `${id} offers a school change`);
+    assert.ok(!schoolSeen(card), `${id} is not offered a school swap`);
     // The face stays valid: the school tag is read as the profile's school, nothing else moves.
     const face = applyUpgradeSteps(card, [{ k: 'tag', tag: 'school:frost' }]);
     assert.deepEqual(face.effects, card.effects);

@@ -2,6 +2,14 @@
   "version": "0.2.1",
   "tasks": [
     {
+      "taskLabel": "AshenSpire: Dev server (live reload)",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run dev"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
       "taskLabel": "AshenSpire: Play",
       "appliesTo": "/package.json",
       "type": "launch",
@@ -103,6 +111,54 @@
       "type": "launch",
       "command": "${env.COMSPEC}",
       "args": ["/d", "/c", "node tools/build-game.mjs"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: UI: Check screens and components",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run validate:ui"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: UI: Rebuild UI index",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/ui-validate.mjs"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: UI: Rebuild style tokens CSS",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run tokens:css"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: UI: Rebuild HUD layout CSS",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/hud-layout-css.mjs --write"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: UI: Lint styles",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run lint:style"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: PR: Fast checks (run before a pull request)",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run test:pr"],
       "workingDirectory": "${workspaceRoot}"
     }
   ]

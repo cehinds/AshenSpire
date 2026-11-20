@@ -91,7 +91,7 @@ if (process.argv.includes('--selftest')) {
         // setting not being wired.
         name: 'the floor stops answering the setting — --tap-floor pinned at 44 px',
         file: 'dist/AshenSpire.html',
-        find: '--tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));',
+        find: '--tap-floor: calc(var(--tap-cap, var(--tap-target)) / var(--ui-zoom, 1));',
         replace: '--tap-floor: 44px;',
         all: true,
         expectRed: /FAIL — \d+ finding\(s\) of \d+ cell\(s\)/,
@@ -102,7 +102,7 @@ if (process.argv.includes('--selftest')) {
         // against 44.
         name: 'the floor does not resolve at all (every height measured against nothing)',
         file: 'dist/AshenSpire.html',
-        find: '--tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));',
+        find: '--tap-floor: calc(var(--tap-cap, var(--tap-target)) / var(--ui-zoom, 1));',
         replace: '--tap-floor: var(--planted-nothing);',
         all: true,
         // Anchored on the tool's own verdict line, not on the word UNKNOWN:

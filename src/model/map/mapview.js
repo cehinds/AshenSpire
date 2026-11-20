@@ -47,7 +47,7 @@ import { balance } from '../../content/balance.js';
  * floor 2) and the fan-out margin IMPROVES (7 columns: slack 1 -> 2).
  * BOUNDARY, named: Sunna's cleared live-door reading of 54.23 device px at
  * 390 becomes ~33.5 — above every coded floor, but the re-read is hers. */
-export const COL_X = 75;
+export const COL_X = 96; // owner 2026-11-15 "spread them out": +28% from 75; wider fails the 7-column fan-out gate at 390 px
 
 /**
  * The zoom ladder — the manual control, and the bounds the computed zoom is
@@ -127,7 +127,7 @@ export const PHONE_UI_ZOOM_MIN = 0.74;
  * 46/95), and dy exceeds dx. Not fitted to a test: every floor this file
  * gates was re-run and stays green with margin printed.
  */
-export const NODE_PITCH_MIN_PX = 58;
+export const NODE_PITCH_MIN_PX = 84; // owner 2026-11-15 "spread them out": +45% from 58
 
 /**
  * Floor pitch of the SVG, derived from the device-space floor at the two

@@ -3,6 +3,7 @@ import {cardTagRailHtml} from './cardTagSymbols.js';
 import {CARD_COMPONENTS} from '../../content/cardComponents.generated.js';
 import {assetUrl} from '../assetmap.js';
 import {esc} from './tooltip.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import {playingCardArt} from '../cardArtwork.js';
 import {cardSigilsHtml} from './combatSigilView.js';
 import {fitIllustratedCards} from './illustratedCardFitter.js';
@@ -100,7 +101,10 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
       const idle=html=>html.replace(/<span class="face-line"/g,'<span data-reading-line'),
         roomyPair=l.bind==='rules'&&faceRules&&!completeRules&&roomyRules?`<template data-face-roomy>${idle(roomyRules)}</template><template data-face-compact>${idle(renderedRules)}</template>`:'';
       const text=l.bind==='rules'?renderedRules+roomyPair:values[l.bind]??esc(l.text||'');
-      const font=`font-family:${esc(l.font||'Georgia')};font-size:${(l.fontSize||20)/doc.width*100}cqw;font-weight:${esc(l.fontWeight||'normal')};text-align:${esc(l.align||'center')};color:${esc(l.color||'#eee')};`;
+      // A rules row also carries a second size that a phone shrinks by --ic-rules-shrink (playtest 2026-11-17 item 39);
+      // a browser without calc() keeps the first.
+      const authoredSize=`${(l.fontSize||20)/doc.width*100}cqw`;
+      const font=`font-family:${esc(l.font||'Georgia')};font-size:${authoredSize};${l.bind==='rules'?`font-size:calc(${authoredSize} - var(--ic-rules-shrink, 0px));`:''}font-weight:${esc(l.fontWeight||'normal')};text-align:${esc(l.align||'center')};color:${esc(l.color||'#eee')};`;
       body=`<div class="ic-text" data-card-binding="${esc(l.bind||l.id)}" data-min-font="${l.minFontSize||l.fontSize||20}" data-max-font="${l.maxFontSize||l.fontSize||20}" data-auto-fit="${l.autoFit===true}" data-max-lines="${l.maxLines||1}"${faceRules&&l.bind==='rules'?' data-face-lines="true"':''} style="${font}${l.maxLines?`display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:${Math.max(1,Math.floor(l.maxLines))};height:auto;`: ''}${l.outline?`text-shadow:1px 1px 0 ${esc(l.outline)},-1px -1px 0 ${esc(l.outline)};`:''}">${text}</div>`;
     }
     if(footer)return `<div class="ic-plane"><div class="ic-layer" data-component="${esc(l.id)}" style="${position}">${body}</div></div>`;
@@ -118,7 +122,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
   const panelTop=panel?growBox({...panel,y:panel.y-(model.sigils?doc.height*.061:0)},rulesBoxGrow()).y:doc.height*.58;
   const anchor=rankAnchor(doc,{...panel,y:panelTop});
   const r=anchor?.box,text=anchor?.text;
-  const rank=model.rankBadge?`<span class="card-rank" data-card-layer="9" data-panel-inset="${r?(r.y-panelTop)/doc.height*100:0}" title="${esc(model.rankHelp)}" style="${r?`left:${r.x/doc.width*100}%;top:${r.y/doc.height*100}%;width:${r.w/doc.width*100}%;height:${r.h/doc.width*100}cqw;transform:none;`:''}"><span class="card-rank-bar" data-component="rank-bar" aria-hidden="true"></span><span class="card-rank-text" data-component="rank-text"${text?` style="position:absolute;left:${text.x}%;top:${text.y}%;width:${text.w}%;height:${text.h}%;display:grid;place-items:center;font-size:clamp(8px,${r.h*text.h/100/1.15/doc.width*100}cqw,20px);"`:''}>${esc(model.rankBadge)}</span></span>`:'';
+  const rank=model.rankBadge?`<span class="card-rank" data-card-layer="9" data-panel-inset="${r?(r.y-panelTop)/doc.height*100:0}" title="${esc(model.rankHelp)}" style="${r?`left:${r.x/doc.width*100}%;top:${r.y/doc.height*100}%;width:${r.w/doc.width*100}%;height:${r.h/doc.width*100}cqw;transform:none;`:''}"><span class="card-rank-bar" data-component="${UI.cardRankBar}" aria-hidden="true"></span><span class="card-rank-text" data-component="${UI.cardRankText}"${text?` style="position:absolute;left:${text.x}%;top:${text.y}%;width:${text.w}%;height:${text.h}%;display:grid;place-items:center;font-size:clamp(8px,${r.h*text.h/100/1.15/doc.width*100}cqw,20px);"`:''}>${esc(model.rankBadge)}</span></span>`:'';
   const backdrops=`<div class="card-title-fade" data-card-layer="3" aria-hidden="true"></div>${model.sigils?'<div class="card-footer-backdrop" data-card-layer="3" aria-hidden="true"></div>':''}`;
   const footerTrim=model.sigils?`<div class="ic-plane" data-card-layer="4" style="z-index:4">${actionBaseFrame}</div>`:'';
   return `<div class="illustrated-card-face" data-card-layout-id="${esc(model.id)}" data-cost-layout="${costLayout}" aria-label="${esc(model.name)}" data-design-width="${doc.width}" data-full-rules="${completeRules}" data-rules-hidden="${!completeRules&&(rulesOverflow||faceLineCount>3)}" data-rules-overflow="${!completeRules&&(rulesOverflow||faceLineCount>3)}" style="--illustrated-ratio:${doc.width}/${doc.height}">${layers}${backdrops}${footerTrim}${cardTagRailHtml(model.sideTags, model.range)}${rank}</div>`;

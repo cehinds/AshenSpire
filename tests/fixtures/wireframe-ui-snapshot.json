@@ -173,7 +173,7 @@
   "scene": {
     "skyline": true,
     "floor": true,
-    "floorFraction": 0.8,
+    "floorFraction": 0.75,
     "bleedFraction": 0.02
   },
   "targetLayer": {

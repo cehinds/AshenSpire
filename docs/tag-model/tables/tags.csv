@@ -407,7 +407,6 @@ card.type.attack,type.attack,Attack,card.type,TagNode,,,,,,,,live-tag,,,classifi
 classification.strike,classification.strike,strike,classification,TagNode,,,,,,,,live-tag,,,classification.strike
 classification.guard,classification.guard,guard,classification,TagNode,,,,,,,,live-tag,,,classification.guard
 classification.weaponArt,weaponArt,weaponArt,classification,TagNode,,,,,,,,live-tag,,,classification.weaponArt
-classification.keepsake,keepsake,keepsake,classification,TagNode,,"What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.keepsake
 classification.enemy,classification.enemy,enemy,classification,TagNode,,"What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.enemy
 classification.armament,armament,armament,classification,TagNode,,"What a armament is. Every object in the armament collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armament
 classification.armour,armour,armour,classification,TagNode,,"What a armour is. Every object in the armour collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armour

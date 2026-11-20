@@ -71,7 +71,7 @@ Run an exporter from AshenSpire after reviewing its source selection, for exampl
 ```powershell
 python tools/class-smash-export.py --asset-root C:\Projects\AI-Art --check
 node tools/selected-smash-registration.mjs --asset-root C:\Projects\AI-Art --check
-node tools/export-layered-card-art.mjs --asset-root C:\Projects\AI-Art --check
+node tools/attic/export-layered-card-art.mjs --asset-root C:\Projects\AI-Art --check
 ```
 
 `--check` verifies existing outputs. Omit it only when deliberately exporting

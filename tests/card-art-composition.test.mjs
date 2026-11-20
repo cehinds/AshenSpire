@@ -79,7 +79,8 @@ test('shipped resolved cards retain their authored family', () => {
   assert.equal(pebble.maneuver, 'attack');
   assert.equal(pebble.element, 'force');
   assert.equal(pebble.componentArt.code, 'Z02');
-  assert.equal(simpleCardArt(resolveCard(registries, { cardId: 'evasiveGuard' }), { registries }).maneuver, 'evade');
+  // Owner, 2026-11-15: Evade is not a card type; a card that prepares an Evade reads as Defense on every surface.
+  assert.equal(simpleCardArt(resolveCard(registries, { cardId: 'evasiveGuard' }), { registries }).maneuver, 'defend');
   assert.equal(simpleCardArt(resolveCard(registries, { cardId: 'defend' }), { registries }).maneuver, 'defend');
 });
 test('legacy attack fallback requires an authored camp and no explicit maneuver', () => {

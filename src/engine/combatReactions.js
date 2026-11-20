@@ -102,7 +102,16 @@ function threatsFor(ctx, row, group, entries, seat) {
   return threats;
 }
 
-function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
+// The HP the player will lose from the incoming enemy action in `state` (a detached candidate once an option's cards have played), or null when
+// it cannot be read (co-op, a hidden move, no action). The same evaluator as the intent and the card face; the Counter's own Block is already in it.
+function incomingHpAfter(state, group, action) {
+  try {
+    const enemy = action && (state.enemies || []).find(row => row.id === group.sourceId);
+    const intent = enemy && IntentReceipt.captureEnemyIntent(state, enemy, action);
+    return intent ? IntentReceipt.IncomingHpLoss(intent) : null;
+  } catch { return null; }
+}
+function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null, incomingAction = null) {
   const options = [];
   let inst;
   // The refusal also names the card it came from (cardId), so the log can name it.
@@ -142,7 +151,6 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
       candidate._reactionPlaying = true; candidate._buffer = null;
       candidate._reactionSourceId = aim;
       candidate.pendingExpansionActions = 0;
-      if (candidate.foundation) { candidate.foundation.eventCount = 0; candidate.foundation.rolls = {}; candidate.foundation.counts = {}; }
       hooks.setOwner?.(candidate, seat);
       const play = { cardInstanceId: inst.instanceId, ...(aimed ? { targetId: aim } : {}),
         ...(choice ? { choice: choice.id } : {}), ...(tier ? { upcastTier: tier } : {}), ...(rangeRoute ? {rangeRoute} : {}) };
@@ -184,7 +192,10 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
           const amount = incomingAgainst(planned, enemy.id);
           if (amount > 0) incoming[enemy.id] = amount;
         }
+        // Owner, 2026-11-14: the prompt states each option's result as the HP the player will then lose from the incoming action.
+        const incomingHp = incomingHpAfter(candidate, group, incomingAction);
         options.push({ id: `${inst.instanceId}:${tier}:${choice?.id || 'default'}${rangeRoute === 'throw' ? ':throw' : ''}${aimed && enemyEntries ? `:${aim}` : ''}`, name: base.name,
+          ...(incomingHp !== null ? { incomingHp } : {}),
           cardId: inst.cardId, play, staminaCost: paid.staminaSpent ?? paid.energySpent ?? 0,
           manaCost: paid.manaSpent || 0, choiceName: choice?.label || choice?.name || null,
           ...(range ? {range} : {}), ...(captureIncoming ? { incoming } : {}), ...(enemyEntries ? { sourceId: aim } : {}) });
@@ -203,9 +214,11 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
   const seatEntries = entries.filter(entry => entry.side === 'player' && entry.ownerId === seat);
   const stackedCards = seatEntries.map(entry => (ctx.players ? ctx.players.get(seat)?.piles.hand : ctx.piles.hand)?.find(card => card.instanceId === entry.cardInstanceId))
     .filter(Boolean).map(card => resolveCombatCard(ctx, card));
+  const incomingHpDeclined = incomingHpAfter(ctx, group, incomingAction);
   if (!counterStacked && Matchups.autoCounterAvailable(ctx, owner, seatEntries.reduce((sum, entry) => sum + (entry.staminaCost || 0), 0), stackedCards)
     && threats.some(threat => threat.row.contacts.some(contact => counterCoversAttack(ctx, Matchups.autoCounterCarrier(), contact, contact.effect || 'damage')))) {
     options.push({ id: 'autoCounter', name: 'Counter', cardId: null, autoCounter: true, play: { autoCounter: true },
+      ...(incomingHpDeclined !== null ? { incomingHp: incomingHpDeclined } : {}),
       staminaCost: Matchups.autoCounterCost(), manaCost: 0, choiceName: null, ...(captureIncoming ? { incoming: {} } : {}) });
   }
   return options;
@@ -317,15 +330,16 @@ export function beforeReactionAction(ctx, action, hooks) {
     const previous = ctx.playerKey;
     hooks.setOwner?.(ctx, id);
     const refusal = {};
-    const options = optionsFor(ctx, row, group, hooks, refusal);
+    const options = optionsFor(ctx, row, group, hooks, refusal, null, action);
     hooks.setOwner?.(ctx, previous);
     if (!options.length) {
       const { reason = 'other', ...extra } = refusal;
       reportUnavailable(ctx, group, id, row, reason, extra, hooks);
       group.reactionAnswered.push(id); continue;
     }
+    const incomingHp = incomingHpAfter(ctx, group, action);
     ctx.pendingReaction = { id: `${group.key}:${id}`, groupKey: group.key, ownerId: id,
-      sourceId: group.sourceId, options, ...(group.publicIntentPreview ? { intentPreview: group.publicIntentPreview } : {}) };
+      sourceId: group.sourceId, options, ...(incomingHp !== null ? { incomingHp } : {}), ...(group.publicIntentPreview ? { intentPreview: group.publicIntentPreview } : {}) };
     ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId: group.sourceId });
     return true;
   }
@@ -355,7 +369,7 @@ function beforeStackedReaction(ctx, action, group, hooks) {
     }
   }
   const open = action.source.alive && !haltReason(ctx, action.source);
-  return offerSeats(ctx, group, ids, hooks, open);
+  return offerSeats(ctx, group, ids, hooks, open, action);
 }
 
 // Enemy reactions, playerAction window: before a player card's root group begins, the
@@ -378,7 +392,7 @@ function beforePlayerRoot(ctx, group, hooks) {
 
 // Each seat in `ids`, in order, is offered again after every card it pushes, until it
 // passes, has no option left or reaches the depth cap. Then the stack resolves.
-function offerSeats(ctx, group, ids, hooks, open) {
+function offerSeats(ctx, group, ids, hooks, open, incomingAction = null) {
   const stack = stackOf(ctx, group);
   const playerRoot = !!playerRootSeat(ctx, group);
   const cap = ctx.reactionRules.contactPolicy === 'perHit' ? 1 : group.counterReturn ? ctx.reactionRules.stack.counterReturnMaxDepth
@@ -400,7 +414,7 @@ function offerSeats(ctx, group, ids, hooks, open) {
     const previous = ctx.playerKey;
     hooks.setOwner?.(ctx, id);
     const refusal = {};
-    const options = optionsFor(ctx, row, group, hooks, refusal, id);
+    const options = optionsFor(ctx, row, group, hooks, refusal, id, incomingAction);
     hooks.setOwner?.(ctx, previous);
     if (!options.length) {
       if (!depth && row) {
@@ -411,8 +425,9 @@ function offerSeats(ctx, group, ids, hooks, open) {
     }
     // A player-card root has no enemy attacker; the offer names the top enemy entry.
     const sourceId = playerRoot ? enemyRows.at(-1).ownerId : group.sourceId;
+    const incomingHp = incomingHpAfter(ctx, group, incomingAction);
     ctx.pendingReaction = { id: `${group.key}:${id}:${depth}`, groupKey: group.key, ownerId: id,
-      sourceId, options, ...(group.publicIntentPreview ? { intentPreview: group.publicIntentPreview } : {}) };
+      sourceId, options, ...(incomingHp !== null ? { incomingHp } : {}), ...(group.publicIntentPreview ? { intentPreview: group.publicIntentPreview } : {}) };
     ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId });
     return true;
   }
@@ -491,15 +506,8 @@ function playStackEntry(ctx, group, entry, hooks) {
     }
     seats.push(ownerId);
   }
-  ctx.reactionResume = { queue: ctx.queue, foundation: ctx.foundation ? {
-    actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
-    rolls: ctx.foundation.rolls, counts: ctx.foundation.counts } : null };
+  ctx.reactionResume = { queue: ctx.queue };
   ctx.queue = [];
-  if (ctx.foundation) {
-    ctx.foundation.actionSerial = Math.max(ctx.foundation.actionSerial, ctx.foundationNextSerial || 0) + 1;
-    ctx.foundationNextSerial = ctx.foundation.actionSerial;
-    ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
-  }
   ctx._reactionPlaying = true;
   ctx._reactionSourceId = entry.sourceId || group.sourceId;
   let refusal = null;
@@ -578,15 +586,8 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
   delete ctx.pendingReaction;
   ctx.emit('combatReactionChosen', { offerId, ownerId, cardInstanceId: option?.play.cardInstanceId || null });
   if (!option) { reportRestOfRoot(ctx, group, ownerId, hooks); return; }
-  ctx.reactionResume = { queue: ctx.queue, foundation: ctx.foundation ? {
-    actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
-    rolls: ctx.foundation.rolls, counts: ctx.foundation.counts } : null };
+  ctx.reactionResume = { queue: ctx.queue };
   ctx.queue = [];
-  if (ctx.foundation) {
-    ctx.foundation.actionSerial = Math.max(ctx.foundation.actionSerial, ctx.foundationNextSerial || 0) + 1;
-    ctx.foundationNextSerial = ctx.foundation.actionSerial;
-    ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
-  }
   ctx._reactionPlaying = true;
   ctx._reactionSourceId = group.sourceId;
   const restoreRange = Engagement.incomingRangeScope(ctx,group,ctx.player);
@@ -639,7 +640,6 @@ export function restoreReactionQueue(ctx) {
   if (!ctx.reactionResume || (ctx.pendingAbilityDiscard || ctx.pendingCardChoice) || ctx.pendingAbilityPlay) return;
   const saved = ctx.reactionResume;
   ctx.queue.push(...saved.queue);
-  if (ctx.foundation && saved.foundation) Object.assign(ctx.foundation, saved.foundation);
   delete ctx.reactionResume;
   return true;
 }

@@ -1,0 +1,32 @@
+{
+  "request": "mini HUD: Block shield left, HP and Poise bars same size, badges in one row under the bars, intent left-aligned with HP bar, one fixed width",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "combat",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "wait": { "ms": 300 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Player mini HUD is on screen", "selector": ".combatant.player .target-hud-overhead-meters" },
+        { "kind": "count", "label": "Hand shows at least 3 cards", "selector": ".hand .card", "min": 3 },
+        { "kind": "count", "label": "HP and Poise bars are both present (2 bars in the player mini HUD)", "selector": ".combatant.player .target-hud-overhead-meters .as-meter", "min": 2 },
+        { "kind": "within", "label": "Player mini HUD stays inside the combat screen", "selector": ".combatant.player .target-hud-overhead-meters", "container": ".combat" },
+        { "kind": "within", "label": "Intent button sits inside the mini HUD", "selector": ".combatant.player .player-action-intent", "container": ".combatant.player .target-hud-overhead-meters" },
+        { "kind": "noOverlap", "label": "Status badges do not overlap the bars", "a": ".combatant.player .target-hud-overhead-meters .as-meters", "b": ".combatant.player .target-hud-statuses" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "Duplicate HP bars in the player mini HUD", "selector": ".combatant.player .combat-health-meter", "min": 2 },
+        { "kind": "visible", "label": "Old name label still shown in the player mini HUD", "selector": ".combatant.player .combatant-mini-hud .nm" },
+        { "kind": "count", "label": "Hand is empty", "selector": ".hand .card", "eq": 0 }
+      ]
+    }
+  ]
+}

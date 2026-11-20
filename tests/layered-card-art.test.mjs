@@ -9,7 +9,7 @@ import { cardCutoutAssets, withCardCutouts } from '../tools/card-cutout-assets.m
 import { renderCard } from '../src/ui/components/card.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { runInNewContext } from 'node:vm';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const math = {};

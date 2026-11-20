@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
@@ -8,7 +8,7 @@ import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileShopStock } from '../src/model/gameProfileRewards.js';
 import { mountConfiguredShop } from '../src/ui/screens/shop.js';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { readFileSync } from 'node:fs';
 
@@ -88,7 +88,7 @@ function mountChest() {
   const ids = ['frostNova', 'scholarsInsight', 'guardCounter'];
   const claims = [];
   const offer = { id: '1:node:treasure', options: ids.map(id => ({ kind: 'combatCards', id })), taken: [], claimed: null, takeCount: 1 };
-  mountGameProfileOffers(app, { registries, run, offer, title: 'Treasure', onTake: (...a) => claims.push(a), onContinue() {}, onAddToDeck() {} });
+  MountGameProfileOffers(app, { registries, run, offer, title: 'Treasure', onTake: (...a) => claims.push(a), onContinue() {}, onAddToDeck() {} });
   return { faces: [...app.querySelectorAll('.reward-choice-face')], ids, claims };
 }
 const chosen = faces => faces.map(face => face.classList.contains('is-chosen'));
@@ -106,13 +106,14 @@ test('chest card picks: the (i) shows on the selected card only, and opens that 
   assert.deepEqual(claims, [], 'the (i) never claims');
 }));
 
-test('chest card picks: a second tap on the selected face inspects, a tap elsewhere only selects', () => withGlobalDom(() => {
+// Owner 2026-11-18: a face tap only ever selects, even on the selected face; the (i) badge inspects.
+test('chest card picks: a tap on a face only selects, even a second tap on the selected face', () => withGlobalDom(() => {
   const { faces, claims } = mountChest();
   tap(faces[0]);
   assert.equal(modal(), null);
   tap(faces[0]);
-  assert.ok(modal(), 'second tap inspects');
-  modal().querySelector('.modal-close').click();
+  assert.equal(modal(), null, 'a second tap on the selected face does not inspect');
+  assert.deepEqual(chosen(faces), [true, false, false], 'and keeps it chosen');
   tap(faces[2]);
   assert.equal(modal(), null, 'another card only selects');
   assert.deepEqual(chosen(faces), [false, false, true]);

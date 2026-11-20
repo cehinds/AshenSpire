@@ -37,6 +37,7 @@ import { serve } from './serve.mjs';
 // VIEWPORT IS DERIVED, NOT TYPED below for why this import exists.
 import { balance } from '../src/content/balance.js';
 import { SETTINGS_DEFAULTS } from '../src/content/settingsDefaults.js';
+import { STEP_ARRIVAL_GUARD_MS } from '../src/ui/stepArrivalGuard.js';
 
 // Derived here, above --selftest, because BOTH readers need it and two reads of
 // one number is the defect this derivation exists to remove.
@@ -523,13 +524,32 @@ async function main() {
     await clickSel('.combat-potions', 'the Potions control');
     const useSel = '.combat-potion-menu .potion-use[aria-label="Use Blight Coating"]';
     await until(`!!document.querySelector(${JSON.stringify(useSel)})`, 'Blight Coating Use action');
-    const pt = await evalIn(`(() => {
+    // A form-factor canvas (Auto view in combat) keeps the document at scroll 0,0
+    // (viewViewport.js), so a scrollIntoView that moved the page is undone a
+    // frame later and a point read straight after it lands beside the button.
+    // Scroll only if the button is not already visible, then read its centre once
+    // it has held still for several frames, and hand it back only if the point
+    // really hits the button (the hit test keeps the tool honest).
+    const pt = await evalIn(`new Promise((resolve) => {
       const b = document.querySelector(${JSON.stringify(useSel)});
-      if (!b || b.disabled) return null;
-      b.scrollIntoView({ block: 'center' });
-      const r = b.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2, beat: b.dataset.beat || 'tap' };
-    })()`);
+      if (!b || b.disabled) return resolve(null);
+      const vis = () => { const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; };
+      if (!vis()) b.scrollIntoView({ block: 'nearest' });
+      let last = '', still = 0, frames = 0;
+      const tick = () => {
+        const r = b.getBoundingClientRect();
+        const key = [r.left, r.top, r.width, r.height].map(Math.round).join();
+        still = key === last ? still + 1 : 0;
+        last = key;
+        if (still >= 5 || ++frames > 300) {
+          const x = r.left + r.width / 2, y = r.top + r.height / 2;
+          const hit = document.elementFromPoint(x, y);
+          return resolve(hit && (hit === b || b.contains(hit)) ? { x, y, beat: b.dataset.beat || 'tap' } : null);
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    })`);
     if (!pt) return { armed: false, selectedCard: false, beat: null };
     if (pt.beat === 'hold') await holdAt(pt.x, pt.y);
     else await clickAt(pt.x, pt.y);
@@ -569,7 +589,7 @@ async function main() {
   // `.slot-new` on a title that answered at once and found `#cz-start` one press
   // later. The game grew a startup gate (a timed reveal), a slot picker with a
   // decision door, and a stepped character workspace whose Begin refuses until
-  // a class, a stat mode, a keepsake and starting armour are chosen — so the
+  // a class, a stat mode and starting armour are chosen — so the
   // first-run case died on "timeout: the title screen" and checked nothing.
   // The route below is the one tools/map-camera-persistence.mjs walks (same
   // selectors, same order), driven here with real clicks at real coordinates.
@@ -581,12 +601,9 @@ async function main() {
   };
   const walkNewClimb = async (seed) => {
     await clickSel('.title-menu .slot-new', 'NEW');
-    await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the new-slot picker');
-    await clickSel('[data-title-action="modal-continue"]', 'the slot picker Continue');
-    await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the new-slot decision door');
-    await clickSel('[data-title-action="review-new"]', 'Start in this slot');
+    // A fresh profile has no slot to choose: New Game opens creation for slot 1 at once.
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage');
-    // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
+    // The staged flow (Class -> Attributes -> Equipment -> Feats ->
     // Spells for casters -> Review). Each stage is the `.cz-railed` panel's
     // data-creation-stage; Next (#cz-next) is the one real click that leaves a
     // stage, and each stage is waited for by that attribute.
@@ -599,7 +616,7 @@ async function main() {
       }
     };
     await clickSel('#cz-classes .cz-class', 'the first class');
-    await clickSel('#cz-next', 'Next after Class');
+    await clickSel('#cz-next', 'Customise after Class (Begin is on the Class step; Review holds the seed)');
     // Core uses fixed starting choices and goes straight to Review. Detailed
     // creation retains the authored Attributes -> Equipment walk below.
     await until(`(${onStage('review')}) || (${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select'))`, 'Review or Attributes after Class');
@@ -607,9 +624,6 @@ async function main() {
       await openFace('primary');
       const mode = await evalIn(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
       if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-      await clickSel('#cz-next', 'Next (to Keepsake)');
-      await until(onStage('keepsake'), 'the Keepsake stage');
-      await clickSel('#cz-keepsakes [data-keepsake-id]', 'the first keepsake');
       await clickSel('#cz-next', 'Next (to Equipment)');
       await until(onStage('equipment'), 'the Equipment stage');
       await openFace('armour');
@@ -635,6 +649,8 @@ async function main() {
     // ?shot= harness uses); everything else stays at the shipped defaults.
     await evalIn(`(() => { const s = document.querySelector('#seed-input'); if (!s) return null; s.value = ${JSON.stringify(seed)}; s.dispatchEvent(new Event('input', { bubbles: true })); return s.value; })()`);
     await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && !b.disabled && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin accepting the finished character', 5000);
+    // Review can be ready while its forward-press guard is still active.
+    await wait(STEP_ARRIVAL_GUARD_MS);
     await clickSel('#cz-start', 'BEGIN THE CLIMB');
     // A new climb opens on the opening sequence before its map; Skip opening.
     await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.class-mastery-node') || document.querySelector('.map-node.reachable'))`, 'the opening sequence or the map');
@@ -849,6 +865,12 @@ async function main() {
   if (want('resize') && !rootArtifact) {
     console.log('\n  resize mid-tutorial: 2560x1440 → 1280x800');
     await boardWithTutorial({ w: 2560, h: 1440 });
+    // Combat's Auto view lays out on a fixed form-factor canvas (viewViewport.js,
+    // owner 2026-11-14), so a resize no longer moves --ui-zoom there: it moves the
+    // canvas's uniform fit (--view-fit), which is what every callout's coordinate
+    // space now follows. The case reads that instead.
+    const FIT = `parseFloat(document.documentElement.style.getPropertyValue('--view-fit'))`;
+    const fit0 = await evalIn(FIT);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }, S);
     // main.js re-flexes zoom 150 ms after the resize, the tutorial re-places at
     // 220 ms and follows the board until it holds still, the spot slides 200 ms.
@@ -856,12 +878,14 @@ async function main() {
     // loaded runner can deliver seconds after CDP sends it — so wait for the
     // re-flex to happen at all, then for rest, and read only then.
     let reflexed = false;
-    try { reflexed = await until(`parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) !== 1.7`, 'the zoom re-flex'); } catch { /* reported by the zoom check below */ }
+    try { reflexed = await until(`${FIT} !== ${fit0}`, 'the canvas re-fit'); } catch { /* reported by the zoom check below */ }
     const rest = reflexed ? await evalIn(SETTLED) : { settled: false, ms: 0 };
     const p = await evalIn(PROBE);
     const spotOn = await evalIn(SPOT_ON_TARGET);
     console.log(`    ui-zoom now ${p.zoom} · next[${p.next.left},${p.next.top}..${p.next.right},${p.next.bottom}]`);
-    ok(p.zoom === 1.07, `resize: --ui-zoom re-flexed 1.7 → 1.07 (else this case tests nothing)`);
+    const fit1 = await evalIn(FIT);
+    console.log(`    view-fit ${fit0} → ${fit1}`);
+    ok(Number.isFinite(fit0) && Number.isFinite(fit1) && reflexed && fit1 !== fit0, `resize: the combat canvas re-fit ${fit0} → ${fit1} (else this case tests nothing)`);
     ok(rest.settled, `resize: board and spotlight come to rest after the re-flex (${rest.ms} ms)`);
     ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, 'resize: both buttons still on-screen and hit-testable');
     ok(spotOn.cover > 0.5, `resize: spotlight still lands on its target (${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel})`);
@@ -1038,7 +1062,8 @@ async function main() {
     await until(`!!document.querySelector('.map-node.reachable:not(.current)')`, 'the resumed map');
     const fightSelector = await reachableFightSelector();
     if (!fightSelector) throw new Error('the resumed map has no reachable fight in the saved route');
-    await clickSel(fightSelector, 'the reachable fight node');
+    // A new run's single start node is preselected (its tray is already open); pressing it again would travel at once.
+    if (!(await evalIn(`document.querySelector(${JSON.stringify(fightSelector)})?.classList.contains('selected') === true`))) await clickSel(fightSelector, 'the reachable fight node');
     // The resumed map settles its camera and footer after it mounts; ENTER was
     // measured below the fold (top 1139 in 1080) on one run in ~6 when pressed
     // at once. Wait for it to stand on screen rather than scroll to it.
@@ -1134,6 +1159,11 @@ async function main() {
       );
 
       await pressKey('Escape', 'Escape', 27);
+      // The profile write is not synchronous any more: every profile mutation enters
+      // the origin-wide storage owner (browserSave.js, Web Locks) before its fresh
+      // read-merge-write, so the veil leaves the DOM a task or two before the meta
+      // lands. Wait for the write itself, bounded; a write that never lands still fails.
+      try { await until(`(() => { try { return JSON.parse(localStorage.getItem('sote_meta_v1') || '{}').settings?.seenTutorial === true; } catch { return false; } })()`, 'the durable seenTutorial write', 5000); } catch { /* reported by the check below */ }
       const finished = await evalIn(`({
         veil: !!document.querySelector('.tut-veil'),
         meta: localStorage.getItem('sote_meta_v1'),

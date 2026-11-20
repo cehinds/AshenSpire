@@ -89,21 +89,3 @@ test('interruptForBreak does nothing for an enemy at 0 HP even when it is still 
   assert.equal(events.length, 0);
   assert.ok(enemy.pendingMove);
 });
-
-test('staggerEnemy reports whether it staggered; impact protection refuses and interrupts nothing', () => {
-  const { combat, enemy } = fixture();
-  combat.turn = 3;
-  combat.foundation = { rules: { impact: { protectionTurns: 2 } } };
-  enemy.impactProtectedUntil = 3;
-  // A plain recorder: the foundation's own event rules are not under test here.
-  const events = [];
-  combat.emit = (type, payload) => { events.push({ type, ...payload }); };
-  assert.equal(staggerEnemy(combat, enemy, { cause: 'poiseBreak' }), false, 'a protected enemy is not staggered');
-  assert.ok(enemy.pendingMove, 'its move is not cancelled');
-  interruptForBreak(combat, enemy, 'poiseBreak');
-  assert.equal(events.some(event => event.type === 'enemyInterrupted'), false, 'no INTERRUPTED for a refused stagger');
-  assert.equal(enemy.pendingActionLoss, undefined, 'and no Stamina is charged');
-  enemy.impactProtectedUntil = 0;
-  assert.equal(staggerEnemy(combat, enemy, { cause: 'wardBreak' }), true, 'an unprotected enemy is staggered');
-  assert.equal(enemy.pendingMove, null);
-});

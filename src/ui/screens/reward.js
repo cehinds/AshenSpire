@@ -1,1723 +1,2239 @@
 import { uiIconText } from '../../content/uiIcons.js';
-import { attributePointGains, largestAttributeGain, attributeGainSummary } from '../../model/attributePointPreview.js';
-import { engravedIcon, engravedIconHtml } from '../components/engravedIcon.js';
-import { mountRewardDoor } from '../components/rewardDoor.js';
-import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
-import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
-import { masteryUnlockName } from '../../model/classMasteryRun.js';
-import { isProgressionReward, progressionRewardUnlocked } from '../../model/deferredProgression.js';
-// src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
-//
-// Constantine, 2026-08-15: "the reward should start with an initial menu of
-// reward types (card, potion, armament)" — Slay-the-Spire style. And his
-// answer on the E11 card: Continue is ALWAYS pressable and a setting decides
-// what it means — auto-collect ON takes everything, picking at random where
-// there is a choice; OFF gives only what was chosen, no nagging.
-//
-// WHAT MOVED, and why it is the whole point: the old screen APPLIED cinders,
-// relic and flask at mount — before the player saw anything — so a menu with
-// inspect-before-collect and leaving untouched rewards behind was impossible by construction.
-// Application now happens when a row is TAKEN (tap, or auto-collect at
-// Continue), through one apply function per kind. WHAT the rows are, which
-// are blocked and why, and what Continue means is model/rewardplan.js's one
-// derivation (test 61) — this screen draws rows and forwards taps; it decides
-// nothing (the rest.js/levelUpPlan precedent).
-//
-// The menu rows reuse `.class-pick` (the B9 uniform-card pattern from the
-// shrine fold) — same focus rules (input.js already lists
-// `.class-pick:not(.locked)`), same locked treatment for a blocked row, no
-// second card-button pattern in the tree. AND THE SAME MARKUP GRAMMAR: the
-// narrow layout's shared rule composes glyph + one `.cp-body` text column
-// (ui.css — "the card is auto, the text column is 1fr"), so everything but
-// the glyph rides inside `.cp-body`. The first cut emitted four bare flex
-// children and phone rows squeezed side-by-side — Codex 4989824448's
-// composition finding at b6b7df0, measured by Saga (creation's text column
-// 246.2px vs these rows' none).
-//
-// SEEN ('new' markers): "a 'new' marker on unseen cards/items/relics" — his
-// words on the card. Unseen is DERIVED (model/rewardplan.js unseenIds) from
-// what the run holds plus the profile's record: `meta.seen` (cards/relics/
-// flasks, written here best-effort on take) and `meta.found` (armaments,
-// written at COLLECTION through the handed-in collector — the roll is pure,
-// so at mount time the found set is honestly pre-drop and a first discovery
-// reads NEW; see main.js rollDrop/collectArmament and the f29d468 defect they
-// correct). Boundary, stated: other acquisition paths (shop, events, drafts)
-// do not write `meta.seen` yet, so a thing first met elsewhere can still read
-// NEW here once — the marker errs toward showing.
-//
-// PROGRESSION, BESIDE THE CLAIM. Combat banks character XP and pays skill
-// tracks before this door opens. The pending reward stores their XP receipt
-// and starting values; the green underlay moves to the new total, then the
-// yellow overlay catches it. A blue bar means the character can claim one
-// level here, with any excess XP kept for later claims.
-//
-// `saves` and `rng` are optional: co-op stubs and old callers get the dial's
-// default and a deterministic first-card pick, never a crash and never
-// Math.random — a UI pick that desyncs a seeded run is a defect.
-
+import { LevelUpPointsButton } from '../components/progressionCards.js';
+import { engravedIconHtml } from '../components/engravedIcon.js';
+import { MountRewardDoor } from '../components/rewardDoor.js';
 import { renderCard } from '../components/card.js';
 import { openBoundCardInspection } from '../components/cardInspection.js';
-import { sigilRuleText } from '../../model/sigils.js';
-import { renderEquipmentInspection } from '../components/equipmentCard.js';
-import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
-import { esc, attachTooltip, showTooltipFor } from '../components/tooltip.js';
-import { relicText, cardPlainText } from '../components/card.js';
+import { esc as escapeHtml, attachTooltip, showTooltipFor } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
+import { MarkSelected } from '../selection.js';
 import { isEngaged, focusFirst } from '../input.js';
-import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
-import { acquireFlask, flaskAcquisitionPlan, flaskSlotCap } from '../../model/gracerefill.js';
-import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { rewardPlan, rewardClaimStatus, resolveContinue, unownedRelicChoices, unseenIds, rewardNotes, CARD_CHOICE_KINDS, isRelicChoice, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
-import { orderedXpRows, xpFillDurations, scopeXpProgress } from '../../model/rewardXpPresentation.js';
+import {
+    rewardPlan,
+    rewardClaimStatus,
+    rewardNotes,
+    smithingStonesPaid,
+    smithingStoneRowCopy,
+} from '../../model/rewardplan.js';
+import {
+    orderedXpRows,
+    xpFillDurations,
+    scopeXpProgress,
+} from '../../model/rewardXpPresentation.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
-import { levelUpPlan, pendingLevelCount, applySkillAttribute } from '../../model/levelup.js';
-import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
+import {
+    victoryXpFormula,
+    victoryXpPresentation,
+    victoryXpTiming,
+} from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
-import { modEffectLines } from '../../model/loadout.js';
-import { skillTracks, spendSkillDraft, classSkillId, pendingSkillLevelCount, rankUpCandidates, raiseCardRank, skillBonusFor, passiveBlockFor, skillFeatById, takeSkillFeat } from '../../model/skills.js';
-import { pickClassNode } from '../../model/classTree.js';
-import { chooseFeat, featById } from '../../model/feats.js';
-import { nodeTokens } from '../../model/tree.js';
-import { breakPropertyRule } from '../../model/breakMeter.js';
-import { el, modalFooter, button, meter } from '../kit/index.js';
-// Every sentence this screen says is a row in content/source/uiStrings.csv.
-import { t, tFull, tTip } from '../strings.js';
+import { skillTracks, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
+import { el as buildElement, modalFooter, button } from '../kit/index.js';
+import { t as translate, tFull as translateFull, tTip as translateTip } from '../strings.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
+import { OpenConfirmationModal } from '../components/confirmationModal.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
-import { cardUpgradeChanges } from '../models/CardUpgradeModel.js';
+import { cardUpgradeChanges, RankUpUpgradeModel } from '../models/CardUpgradeModel.js';
+import { MountCardUpgradeModal } from '../components/cardUpgradeModal.js';
 import { projectGameCard } from '../../model/gameProfile.js';
 import { resolveCard } from '../../model/registries.js';
 import { clearSelection } from '../components/cardSelection.js';
-import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
+import { ownedCopies } from '../../model/deckRules.js';
 
-const KIND_GLYPHS = { cinders: 'cinders', smithingStone: 'smith', classMilestone: 'progression', classDraft: 'progression', skillDraft: 'staggered', skillRankUp: 'progression', skillAttribute: 'strength', skillFeat: 'skill', card: 'deck', levelChoice: 'vulnerable', levelCard: 'vulnerable', flask: 'flask-health', armament: 'attack', relic: 'skill', sigil: 'skill' };
+const DEFAULT_XP_SECONDS = 3;
+const MAX_XP_MILLISECONDS = 12000;
 
-// `onCollectArmament` is the armament's whole persistence, handed in by the
-// caller (main.js collectArmament): run storage + meta.found + the discovery
-// receipt. Handed in rather than done here because the persistence needs the
-// caller's run/shot context, and because a screen that decides nothing should
-// also STORE nothing itself. A caller that hands none gets reveal-only rows —
-// no such caller exists today; the boundary is named, not covered.
-export function mountRewards(app, {
-  registries, run, rewards, onDone, saves = null, rng = null,
-  onCollectArmament = null, onPersist = null, checkpoint = null,
-  onClaimLevel = null, onClaimSkill = null, onAllocateStat = null, onClaimClassReward = null,
-  receiptOnly = false,
-}) {
-  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
-  // page-wide store, and nothing in production ever emptied it — so a card
-  // whose `i` had been read kept its first beat for the life of the page, and
-  // meeting the same logical id on a later surface handed that surface a card
-  // already one beat in: its first touch acted instead of selecting.
-  clearSelection();
-  const planOptions = () => ({
-    flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
-    ...(rewards.flaskId ? { flaskCanAcquire: flaskAcquisitionPlan(registries, run, rewards.flaskId).ok } : {}),
-    // The bag's room, read from the same array addToStorage writes — one
-    // home, two questions (the model asks "is there room", the collector's
-    // own gate asks "did THIS store land"). Derived here so the ninth piece
-    // against the cap is BLOCKED before any tap, the flask shape exactly.
-    armamentSlotsFree: Math.max(
-      0,
-      (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
-    ),
-  });
-  let plan = rewardPlan(rewards, planOptions());
-  // The fight's progression reads the paid ledgers and is re-derived after a
-  // claimed character level. ONLY WHERE THERE WAS A FIGHT — the
-  // panel's whole claim is what this one moved, and a treasure room (or an
-  // offer saved before the receipt existed) moved nothing, so it draws the
-  // spoils alone rather than a heading with no gains under it.
-  // The Victory receipt (receiptOnly) draws the Character bar alone; every other door draws all bars.
-  const scoped = (value) => receiptOnly ? scopeXpProgress(value) : value;
-  let progress = rewards.xpGains || onClaimLevel ? scoped(rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity })) : null;
-  const standingProgress = !rewards.xpGains;
-  const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
-  // The Continue control's hold/key door. Each paint builds a new control, so the old one is disarmed first (its window
-  // keydown listener would otherwise outlive the detached button), and it is released when the screen is left.
-  let disarmContinue = null;
-  let xpAnimationDone = !progress || !rewards.xpBefore || !orderedXpRows(progress).length || document.body.classList.contains('reduced-motion');
-  let refill = null;
-  const animatedTracks = new Set();
-  // EVERY LEVEL WAITS FOR ITS PRESS (SPEC §13.4o). A bar's fill stops at a
-  // level and its leftover XP is held; one Level up covers that bar, and
-  // pressing it claims the level and opens `levelView`, the popup listing
-  // what this level unlocked. Continue there refills the leftover. Each
-  // claim also writes a line under the bars, and its rewards stay lifted in
-  // the list until accepted; `freshKeys` plays their arrival once.
-  const levelLog = [];
-  const freshKeys = new Set();
-  let levelView = null;
-  const unlocked = (row) => progressionRewardUnlocked(row, run);
-  const refreshProgress = () => {
-    if (checkpoint?.rewards) rewards = checkpoint.rewards;
-    plan = rewardPlan(rewards, planOptions());
-    progress = scoped(rewardProgress(registries, run, standingProgress ? null : rewards.xpGains, { maxSkills: Infinity }));
-  };
-  // All tracks finish before any claim becomes interactive. Claims never
-  // consume another track's XP or depend on which ready button was first.
-  const readyTrack = (row) => xpAnimationDone && !refill && !row.capped && (row.id === 'character'
-    ? !!onClaimLevel && pendingLevelCount(registries, run) > 0
-    : !!onClaimSkill && pendingSkillLevelCount(registries, run, row.id) > 0);
-  let receiptContinued = false;
-  let claimBonusStarts = {};
-  let claimedLevels = checkpoint?.levelClaims || 0;
-  const claimedSkills = { ...(checkpoint?.skillClaims || {}) };
-  const deferredLevelOffer = () => !!(onClaimLevel && progress?.character && (pendingLevelCount(registries, run) > 0 || claimedLevels > 0));
-  const states = {
-    ...(checkpoint?.states || {}),
-    ...(smithingStonesPaid(rewards.smithingStoneReceipt) ? { smithingStone: 'taken' } : {}),
-  }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
-  let chosenCardId = checkpoint?.chosenCardId || null;
-  // A boss victory's relic choice (SPEC §6): the one relic picked from the offer.
-  let chosenRelicId = checkpoint?.chosenRelicId || null;
-  // The skill drafts' picks, keyed by ROW KEY (plan phase 4b): one offer may
-  // carry several drafts, even for one track, so the card row's single
-  // `chosenCardId` is not their record.
-  const chosenDraftCardIds = { ...(checkpoint?.chosenDraftCardIds || {}) };
-  // The class drafts' picks (plan phase 5b), keyed by row key: tree nodes.
-  const chosenDraftNodeIds = { ...(checkpoint?.chosenDraftNodeIds || {}) };
-  // The rank-ups' picks (SPEC §13.4o), keyed by row key: the owned card raised.
-  const chosenRankUps = { ...(checkpoint?.chosenRankUps || {}) };
-  const pendingByKey = {}; // a chooser's unconfirmed selection, per row, so Back keeps it
-  const pendingBonusByKey = {}; // a rank-up's unconfirmed bonus pick (index into its options), per row
+const SKILL_RANK_UP = 'skillRankUp';
+const SMITHING_STONE = 'smithingStone';
+const KIND_GLYPHS = {
+    smithingStone: 'smith',
+    skillRankUp: 'progression',
+};
 
-  function persistProgress() {
-    if (checkpoint) {
-      checkpoint.states = { ...states };
-      checkpoint.chosenCardId = chosenCardId;
-      if (chosenRelicId || checkpoint.chosenRelicId !== undefined) checkpoint.chosenRelicId = chosenRelicId;
-      checkpoint.chosenDraftCardIds = { ...chosenDraftCardIds };
-      checkpoint.chosenDraftNodeIds = { ...chosenDraftNodeIds };
-      if (Object.keys(chosenRankUps).length || checkpoint.chosenRankUps !== undefined) checkpoint.chosenRankUps = { ...chosenRankUps };
-      if (claimedLevels || checkpoint.levelClaims !== undefined) checkpoint.levelClaims = claimedLevels;
-      if (Object.keys(claimedSkills).length || checkpoint.skillClaims !== undefined) checkpoint.skillClaims = { ...claimedSkills };
+const STATE_PENDING = 'pending';
+const STATE_TAKEN = 'taken';
+const STATE_SKIPPED = 'skipped';
+const STATE_BLOCKED = 'blocked';
+const LOCKED_STATES = new Set([
+    STATE_TAKEN,
+    STATE_BLOCKED,
+    STATE_SKIPPED,
+]);
+const STATE_COPY_IDS = {
+    taken: 'reward.state.taken',
+    blocked: 'reward.state.blocked',
+    skipped: 'reward.state.skipped',
+};
+
+const CLAIM_LAYOUT_SELECTOR = '.reward-claim-layout';
+const MENU_SELECTOR = '.reward-menu';
+const PROGRESS_PANEL_SELECTOR = '.reward-progress';
+const ANIMATED_BAR_SELECTOR = '.rp-layered-bar[data-animate="1"]';
+const UNDER_FILL_SELECTOR = '.rp-under';
+const OVER_FILL_SELECTOR = '.rp-over';
+const CONTINUE_ID = 'reward-continue';
+const CONTINUE_SELECTOR = `#${CONTINUE_ID}`;
+const CONFIRM_BUTTON_ID = 'reward-card-confirm';
+const INSPECT_BUTTON_ID = 'reward-inspect';
+const CHOSEN_CLASS = 'is-chosen';
+const SELECTED_CLASS = 'reward-selected';
+const CONTINUE_LABEL_ID = 'common.continue';
+const INSPECT_LABEL_ID = 'deckEditor.inspectAction';
+const HOLD_NOTE_ID = 'reward-hold-copy';
+const UNLOCKED_ROW_SELECTOR = '.reward-kind:not(.locked)';
+const CHOOSER_STRIP_SELECTOR = '.reward-row';
+const FOOT_SIZE = 'medium';
+const TITLE_VICTORY_ID = 'reward.title.victory';
+const SAVE_FAILED_ID = 'reward.card.saveFailed';
+const NONE_ID = 'reward.skillRankUp.none';
+const REDUCED_MOTION_CLASS = 'reduced-motion';
+
+const MORE_LABEL = '+…';
+const ARROW = ' → ';
+const MINUS = '−';
+
+const RECEIPT_HOLD_COPY = 'Experience earned in this battle.';
+const UNFINISHED_HOLD_COPY =
+    'Unfinished levels and level rewards are saved for later victories and Character.';
+const LEAVE_TOOLTIP_COPY =
+    'Leave with your chosen loot. Unfinished level rewards are saved for later.';
+const FULL_CALCULATION_TITLE = 'Full XP calculation';
+const POWER_ROW_LABEL = 'Combat-power victory bonus';
+const BONUS_ROW_LABEL = 'Character XP bonus';
+const BATTLE_ROW_LABEL = 'Battle XP';
+
+function isProgressionReward(row)
+{
+    return row.kind === SKILL_RANK_UP;
+}
+
+function readCardRank(instance)
+{
+    const hasRank = Number.isInteger(instance?.rank)
+        && instance.rank > 1;
+    return hasRank
+        ? instance.rank
+        : 1;
+}
+
+function isReducedMotion()
+{
+    return document.body.classList.contains(REDUCED_MOTION_CLASS);
+}
+
+function pauseFor(milliseconds)
+{
+    return milliseconds > 0
+        ? new Promise((resolve) => setTimeout(resolve, milliseconds))
+        : Promise.resolve();
+}
+
+function readVictoryTitle(rewards)
+{
+    return rewards.title || translate(TITLE_VICTORY_ID);
+}
+
+function rewardNoteHtml(token)
+{
+    const text = escapeHtml(translate(`reward.note.${token}`));
+    return `<p class="reward-note" data-note="${escapeHtml(token)}">${text}</p>`;
+}
+
+function skipButtonHtml(row, title)
+{
+    const label = escapeHtml(translate('reward.skip'));
+    const aria = escapeHtml(translate('reward.skip.aria', { kind: title }));
+    return `<button class="subtle reward-skip" data-skip="${escapeHtml(row.key)}"`
+        + ` data-focusable="true" aria-label="${aria}">${label}</button>`;
+}
+
+function tooltipHtml(title, body = '')
+{
+    return `<div class="tt-title">${escapeHtml(title)}</div>${escapeHtml(body)}`;
+}
+
+function formatLevel(level)
+{
+    return `Level ${level}`;
+}
+
+function setOrDeleteKey(target, key, value)
+{
+    if (value === undefined)
+    {
+        delete target[key];
     }
-    if (onPersist && onPersist() === false) throw new Error('Reward save was refused.');
-  }
-
-  // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
-  const meta = (saves && saves.loadMeta && saves.loadMeta()) || {};
-  const seenStore = meta.seen || {};
-  const marks = unseenIds(rewards, {
-    cards: new Set([...run.deck.map((c) => c.cardId), ...(run.sideboard || []).map((c) => c.cardId), ...(seenStore.cards || [])]),
-    relics: new Set([...run.relics, ...(seenStore.relics || [])]),
-    flasks: new Set([...run.flasks.map((f) => f.flaskId), ...(seenStore.flasks || [])]),
-    armaments: new Set([...(meta.found || [])]),
-  });
-
-  // Best-effort seen write on take. A quarantined profile refuses saveMeta —
-  // correctly — and the marker is a convenience, so a refusal never blocks the
-  // reward itself (the settings.js precedent for reading that result).
-  function recordSeen(kind, ids) {
-    if (!saves || !saves.saveMeta || !ids.length) return;
-    const m = saves.loadMeta() || {};
-    const seen = { ...(m.seen || {}) };
-    const key = { card: 'cards', relic: 'relics', flask: 'flasks' }[kind];
-    if (!key) return; // armaments already live in meta.found, one home
-    seen[key] = [...new Set([...(seen[key] || []), ...ids])];
-    saves.saveMeta({ ...m, seen });
-  }
-
-  // ---- one apply function per kind — tap and auto-collect share them -------
-  const apply = {
-    classMilestone(row) {
-      if (!(row.choiceIds || row.options).includes(row.choiceId) || !onClaimClassReward) return false;
-      if (!onClaimClassReward(row.receiptId, row.choiceId)) return false;
-      chosenDraftCardIds[row.key] = row.choiceId;
-      return true;
-    },
-    cinders(row) {
-      run.cinders += row.amount;
-      return true;
-    },
-    // Smithing Stones are granted and durably claimed at combat resolution,
-    // before this presentation can be interrupted. This row is informational
-    // and begins in Taken state; reaching this function would be a contract bug.
-    smithingStone() { return false; },
-    card(row) {
-      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false, ...draftInstance(row, row.cardId) });
-      chosenCardId = row.cardId;
-      return true;
-    },
-    // A level card (SPEC §15.1): taken exactly as the card offer is. Its pick
-    // is kept by row key beside the skill drafts' (one offer may carry
-    // several level cards), in the map the pending-reward save already checks.
-    levelCard(row) {
-      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false, ...draftInstance(row, row.cardId) });
-      chosenDraftCardIds[row.key] = row.cardId;
-      return true;
-    },
-    levelChoice(row) {
-      const choice = row.options.find((option) => `${option.kind}:${option.id}` === row.choiceId);
-      if (!choice) return false;
-      if (choice.kind === 'feat' ? !chooseFeat(run, choice.id)
-        : !pickClassNode(registries, run, choice.id, { levelOverride: run.level?.level || 0 })) return false;
-      chosenDraftCardIds[row.key] = row.choiceId;
-      return true;
-    },
-    // A skill draft (plan phase 4b): the card joins the deck at its rolled
-    // rank (SPEC §13.4o) and the track's queued draft is spent.
-    // A class draft (plan phase 5b): the node joins the core card's tags and
-    // the class track's queued draft is spent; a pick the tree no longer
-    // allows (or a draft the ledger no longer holds) lands nothing.
-    classDraft(row) {
-      if (!pickClassNode(registries, run, row.nodeId)) return false;
-      if (!spendSkillDraft(run, classSkillId(run.class))) { run.coreTags.pop(); return false; }
-      chosenDraftNodeIds[row.key] = row.nodeId;
-      return true;
-    },
-    skillDraft(row) {
-      if (row.choiceIds && (!row.choiceIds.includes(row.choiceId) || row.cardIds[row.choiceIds.indexOf(row.choiceId)] !== row.cardId)) return false;
-      const choice = row.choiceId || row.cardId;
-      const ability = row.offerId && run.progressionRulesVersion === 1 ? abilityDraftChoice(run.abilityOffers?.[row.offerId], choice) : null;
-      if (!spendSkillDraft(run, row.skillId, row.offerId, choice)) return false;
-      if (ability) {
-        run.deck.push({ instanceId: unusedInstanceId(run, 'r', ability.cardId), cardId: ability.cardId, upgraded: false, abilityRank: ability.abilityRank, abilityOfferId: row.offerId });
-      } else {
-        run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false, ...draftInstance(row, row.cardId) });
-      }
-      chosenDraftCardIds[row.key] = choice;
-      return true;
-    },
-    // A skill feat (SPEC §13.4o): the chosen feat of the track joins the run
-    // and the track's queued pick is spent; one already taken lands nothing.
-    skillFeat(row) {
-      const id = String(row.choiceId || '').replace(/^skillFeat:/, '');
-      if (!row.featIds.includes(id) || !takeSkillFeat(run, row.skillId, id)) return false;
-      chosenDraftCardIds[row.key] = row.choiceId;
-      return true;
-    },
-    // An attribute pick (SPEC §13.4o): +1 to the chosen linked attribute, the
-    // track's queued pick spent and the pools re-derived; refused, nothing lands.
-    skillAttribute(row) {
-      const id = String(row.choiceId || '').replace(/^attribute:/, '');
-      if (applySkillAttribute(registries, run, row.skillId, id, { offered: row.attributeIds }) == null) return false;
-      chosenDraftCardIds[row.key] = row.choiceId;
-      return true;
-    },
-    // A rank-up (SPEC §13.4o): the chosen owned card rises one rank and the
-    // track's queued rank-up is spent; a card no longer eligible lands nothing.
-    skillRankUp(row) {
-      const inst = raiseCardRank(registries, run, row.skillId, row.instanceId, row.bonusStep || null);
-      if (!inst) return false;
-      chosenRankUps[row.key] = inst.instanceId;
-      return true;
-    },
-    flask(row) {
-      if (!acquireFlask(registries, run, row.flaskId).ok) return false;
-      return true;
-    },
-    relic(row) {
-      // A boss relic choice: the picked id must be one the offer named and the
-      // run does not already hold; anything else lands nothing.
-      if (isRelicChoice(row)) {
-        const id = row.chosenRelicId;
-        if (!row.relicIds.includes(id) || run.relics.includes(id)) return false;
-        run.relics.push(id);
-        syncFlaskGrowth(registries, run);
-        chosenRelicId = id;
-        recordSeen('relic', [id]);
-        return true;
-      }
-      run.relics.push(row.relicId);
-      syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
-      recordSeen('relic', [row.relicId]);
-      return true;
-    },
-    armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
-    // SPEC §15.4: a dropped legendary sigil joins the inventory, unattuned;
-    // one the run already holds adds nothing.
-    sigil(row) {
-      if (!(run.sigils || []).includes(row.sigilId)) run.sigils = [...(run.sigils || []), row.sigilId];
-      return true;
-    },
-  };
-
-  function take(row, viaKind, { present = true } = {}) {
-    if (skillClaimPending || states[row.key]) return false;
-    // A row may say Taken only after its persistence door says it landed. The
-    // armament collector returns false at the storage/duplicate boundary; a
-    // refusal therefore cannot become a claimed-looking row (E11 review P2).
-    const raised = row.kind === 'skillRankUp' ? ownedInstance(row.instanceId) : null;
-    // An attribute pick moves attributes and every derived pool: the whole run
-    // is the record a refused save puts back.
-    const runBefore = row.kind === 'flask' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' || row.kind === 'classMilestone' || row.kind === 'skillDraft' || isRelicChoice(row) ? structuredClone(run) : null;
-    const cardBefore = row.kind === 'flask' || CARD_CHOICE_KINDS.includes(row.kind) || isRelicChoice(row) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? {
-      deck: [...run.deck], chosenCardId, chosenRelicId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
-      feats: [...(run.feats || [])],
-      // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
-      skills: row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'skillRankUp' ? structuredClone(run.skills || {}) : null,
-      rankUp: raised ? { inst: raised, rank: raised.rank, steps: raised.upgradeSteps, upgraded: raised.upgraded, chosen: { ...chosenRankUps } } : null,
-      coreTags: row.kind === 'classDraft' || row.kind === 'levelChoice' ? [...(run.coreTags || [])] : null,
-      checkpoint: checkpoint ? structuredClone(checkpoint) : null,
-    } : null;
-    if (!apply[row.kind](row)) return false;
-    states[row.key] = 'taken';
-    // Reward state and the run mutation cross one save door. A reload can now
-    // distinguish an already-applied row from an untouched one and cannot
-    // duplicate a card, currency, flask, relic, or armament.
-    try {
-      persistProgress();
-    } catch (error) {
-      if (cardBefore) {
-        run.deck.splice(0, run.deck.length, ...cardBefore.deck);
-        chosenCardId = cardBefore.chosenCardId;
-        chosenRelicId = cardBefore.chosenRelicId;
-        for (const key of Object.keys(chosenDraftCardIds)) delete chosenDraftCardIds[key];
-        Object.assign(chosenDraftCardIds, cardBefore.chosenDraft);
-        if (cardBefore.skills) run.skills = cardBefore.skills;
-        if (cardBefore.coreTags) run.coreTags = cardBefore.coreTags;
-        run.feats = cardBefore.feats;
-        for (const key of Object.keys(chosenDraftNodeIds)) delete chosenDraftNodeIds[key];
-        Object.assign(chosenDraftNodeIds, cardBefore.chosenNode);
-        if (runBefore) {
-          // The run comes back whole, but its pending reward stays the very
-          // object this door's checkpoint is (main.js mountPendingReward):
-          // restoring a clone there would leave every later save writing a
-          // copy the door no longer updates. The checkpoint is restored below.
-          const pending = run.pendingReward;
-          for (const key of Object.keys(run)) if (!Object.hasOwn(runBefore, key)) delete run[key];
-          Object.assign(run, runBefore);
-          if (pending !== undefined) run.pendingReward = pending;
-        }
-        if (cardBefore.rankUp) {
-          const { inst, rank, steps, upgraded, chosen } = cardBefore.rankUp;
-          if (rank === undefined) delete inst.rank; else inst.rank = rank;
-          if (steps === undefined) delete inst.upgradeSteps; else inst.upgradeSteps = steps;
-          if (upgraded === undefined) delete inst.upgraded; else inst.upgraded = upgraded;
-          for (const key of Object.keys(chosenRankUps)) delete chosenRankUps[key];
-          Object.assign(chosenRankUps, chosen);
-        }
-        delete states[row.key];
-        if (checkpoint) {
-          for (const key of Object.keys(checkpoint)) delete checkpoint[key];
-          Object.assign(checkpoint, cardBefore.checkpoint);
-        }
-      }
-      throw error;
+    else
+    {
+        target[key] = value;
     }
-    if (CARD_CHOICE_KINDS.includes(row.kind)) recordSeen('card', [row.cardId]);
-    if (row.kind === 'flask') recordSeen('flask', [row.flaskId]);
-    if (present) {
-      sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
-      backTo(viaKind || row.key);
+}
+
+function replaceObjectContents(target, source)
+{
+    for (const key of Object.keys(target))
+    {
+        delete target[key];
     }
-    return true;
-  }
+    Object.assign(target, source);
+}
 
-  // An attribute's display name, from the content table.
-  const attributeLabel = (id) => levelUpPlan(registries, run).attributes.find((attr) => attr.id === id)?.label || id;
-  // An owned card instance by id, in the deck or set aside.
-  const ownedInstance = (instanceId) => [...run.deck, ...(run.sideboard || [])].find((inst) => inst && inst.instanceId === instanceId) || null;
-  const instanceRank = (inst) => (Number.isInteger(inst?.rank) && inst.rank > 1 ? inst.rank : 1);
-
-  // ---- row copy: what a kind says in each state ----------------------------
-  function rowBody(row) {
-    const state = states[row.key];
-    switch (row.kind) {
-      case 'classMilestone': {
-        const cls = registries.classes.get(row.classId);
-        const kindLabel = { cards: 'card', feat: 'feat', armory: 'equipment', relic: 'relic', attribute: 'attribute' }[row.rewardKind] || row.rewardKind;
-        const title = `${cls?.name || row.classId} · Level ${row.level} · ${kindLabel}`;
-        return { title, body: state === 'taken' ? esc(classMilestoneOption(row, chosenDraftCardIds[row.key]).name)
-          : t('reward.card.chooseOne', { count: row.options.length }) };
-      }
-      case 'skillFeat': {
-        const skill = skillTracks(registries).find((track) => track.id === row.skillId);
-        const title = t('reward.skillFeat.title', { skill: esc((skill && skill.label) || row.skillId), level: row.level });
-        if (state === 'taken') {
-          const feat = skillFeatById(String(chosenDraftCardIds[row.key] || '').replace(/^skillFeat:/, ''));
-          return { title, body: t('reward.skillFeat.taken', { name: esc(feat?.name || '') }) };
-        }
-        return { title, body: row.featIds.length > 1 ? t('reward.card.chooseOne', { count: row.featIds.length }) : esc(skillFeatById(row.featIds[0])?.name || '') };
-      }
-      case 'skillAttribute': {
-        const skill = skillTracks(registries).find((track) => track.id === row.skillId);
-        const label = esc((skill && skill.label) || row.skillId);
-        const title = t('reward.skillAttribute.title', { skill: label, level: row.level });
-        const name = (id) => esc(attributeLabel(id));
-        if (state === 'taken') {
-          const id = String(chosenDraftCardIds[row.key] || '').replace(/^attribute:/, '');
-          return { title, body: t('reward.skillAttribute.raised', { attribute: name(id), value: run.attributes?.[id] ?? '' }) };
-        }
-        return { title, body: t('reward.skillAttribute.body', { attributes: row.attributeIds.map(name).join(', ') }) };
-      }
-      case 'skillRankUp': {
-        const skill = skillTracks(registries).find((track) => track.id === row.skillId);
-        const label = esc((skill && skill.label) || row.skillId);
-        const title = t('reward.skillRankUp.title', { skill: label, level: row.level });
-        if (state === 'taken') {
-          const inst = ownedInstance(chosenRankUps[row.key]);
-          const def = inst && registries.cards.get(inst.cardId);
-          return { title, body: t('reward.skillRankUp.raised', { name: esc((def && def.name) || chosenRankUps[row.key] || ''), rank: instanceRank(inst) }) };
-        }
-        return { title, body: rankUpCandidates(registries, run, row.skillId).length ? t('reward.skillRankUp.body', { skill: label }) : t('reward.skillRankUp.none', { skill: label }) };
-      }
-      case 'classDraft': {
-        const cls = registries.classes.get(row.classId);
-        const title = t('reward.classDraft.title', { class: esc((cls && cls.name) || row.classId), level: row.level });
-        if (state === 'taken') {
-          const node = (registries.nodes || []).find((n) => n && n.id === chosenDraftNodeIds[row.key]);
-          return { title, body: t('reward.classDraft.joins', { name: esc((node && node.label) || chosenDraftNodeIds[row.key]) }) };
-        }
-        return { title, body: row.choice ? t('reward.card.chooseOne', { count: row.nodeIds.length }) : t('reward.card.offered') };
-      }
-      case 'skillDraft': {
-        const skill = skillTracks(registries).find((track) => track.id === row.skillId);
-        const label = esc((skill && skill.label) || row.skillId);
-        if (state === 'taken') {
-          const chosen = chosenDraftCardIds[row.key];
-          const cardId = row.choiceIds ? row.cardIds[row.choiceIds.indexOf(chosen)] : chosen;
-          const def = registries.cards.get(cardId);
-          return { title: t('reward.skillDraft.title', { skill: label, level: row.level }), body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.key]) }) };
-        }
-        return {
-          title: t('reward.skillDraft.title', { skill: label, level: row.level }),
-          body: row.choice ? t('reward.card.chooseOne', { count: row.cardIds.length }) : t('reward.card.offered'),
-        };
-      }
-      case 'cinders':
-        return {
-          title: t('reward.cinders.title', { amount: row.amount }),
-          body: state === 'taken' ? t('reward.cinders.taken', { total: run.cinders }) : tFull('reward.cinders.title'),
-        };
-      case 'smithingStone':
-        // Ordinary stones, refined stones (SPEC §15.3), or both, on one row:
-        // title and body each name only the purse that was paid.
-        return smithingStoneRowCopy(row, t);
-      case 'card': {
-        if (state === 'taken') {
-          const def = registries.cards.get(chosenCardId);
-          return { title: t('reward.kind.card'), body: t('reward.card.joins', { name: esc((def && def.name) || chosenCardId) }) };
-        }
-        return {
-          title: t('reward.kind.card'),
-          body: row.choice ? t('reward.card.chooseOne', { count: row.cardIds.length }) : t('reward.card.offered'),
-        };
-      }
-      case 'levelCard': {
-        const title = row.source === 'class' ? 'Class technique' : t('reward.levelCard.title');
-        if (state === 'taken') {
-          const def = registries.cards.get(chosenDraftCardIds[row.key]);
-          return { title, body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.key]) }) };
-        }
-        return {
-          title,
-          body: row.choice ? t('reward.card.chooseOne', { count: row.cardIds.length }) : t('reward.card.offered'),
-        };
-      }
-      case 'levelChoice': {
-        const chosen = chosenDraftCardIds[row.key];
-        const option = row.options.find((entry) => `${entry.kind}:${entry.id}` === chosen);
-        const feat = option?.kind === 'feat' ? featById(option.id) : null;
-        const node = option?.kind === 'classNode' ? (registries.nodes || []).find((entry) => entry.id === option.id) : null;
-        return { title: row.source === 'combat' ? 'Combat feat' : row.source === 'class' ? 'Class level feat' : t('reward.level.choice.title'), body: state === 'taken'
-          ? `${esc(feat?.name || node?.label || option?.id || '')} gained.`
-          : `Choose one of ${row.options.length} ${row.source ? 'feats' : 'feats or class upgrades'}.` };
-      }
-      case 'flask': {
-        const def = registries.flasks.get(row.flaskId);
-        if (row.blockedBy === 'slots') return { title: t('reward.kind.flask'), body: t('reward.flask.blocked', { name: esc(def.name) }) };
-        // WHAT IT DOES, ON THE ROW (Constantine, 2026-09-04: "I have no idea
-        // what this potion does"). The relic row has always carried its
-        // sentence and the shop shows `textTemplate`; a flask offered as
-        // spoils showed a name and an icon alone, and Take was a blind choice.
-        // `flaskDetailLines` is that sentence's one home (components/flask.js),
-        // the same lines the flask menu and its inspect door read — not a
-        // tooltip: a player deciding whether to take it must SEE it.
-        const lines = flaskDetailLines(def).map((line) => esc(line)).join('<br>');
-        return { title: t('reward.kind.flask'), body: `<b>${flaskIdentityHtml(def)}</b>${lines ? `<br>${lines}` : ''}` };
-      }
-      case 'armament': {
-        // The copy tracks the STATE, because the state is now true: nothing is
-        // stored until the row is taken (the roll is pure — main.js rollDrop),
-        // so "Carried" before a take would be the f29d468 lie re-worded.
-        const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
-        // `a.mods` is the raw vocabulary (`strike.damage=+4`) and this line used
-        // to print it verbatim — engine keys on the screen where a reward is
-        // chosen. modEffectLines is the one home for turning them into a
-        // sentence (src/model/loadout.js).
-        const effects = modEffectLines(registries, a).join(', ');
-        const name = a ? `<b>${esc(a.name)}</b> — ${esc(effects || t('reward.armament.plain'))}` : t('reward.armament.none');
-        // A full bag reads its refusal in the flask's own idiom — the copy
-        // switches on the model's token (blockedBy), never a re-derivation.
-        if (row.blockedBy === 'storage') return { title: t('reward.kind.armament'), body: t('reward.armament.blocked', { name }) };
-        return {
-          title: t('reward.kind.armament'),
-          body: state === 'taken'
-            ? `${name}<br><span style="color:var(--muted)">${esc(t('reward.armament.carried'))}</span>`
-            : name,
-        };
-      }
-      case 'relic': {
-        // A boss relic choice (SPEC §6) names its pick once taken, and offers
-        // its count until then; a lone relicId row reads as it always has.
-        if (isRelicChoice(row)) {
-          const picked = state === 'taken' && chosenRelicId ? registries.relics.get(chosenRelicId) : null;
-          return { title: t('reward.kind.relic'), body: state === 'taken' && picked
-            ? `<b>${engravedIconHtml(picked.icon || 'relic')} ${esc(picked.name)}</b>`
-            : t('reward.card.chooseOne', { count: row.relicIds.length }) };
-        }
-        const def = registries.relics.get(row.relicId);
-        return { title: t('reward.kind.relic'), body: `<b>${engravedIconHtml(def.icon || 'relic')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
-      }
-      case 'sigil': {
-        const def = registries.sigils.get(row.sigilId);
-        return {
-          title: t('reward.kind.sigil'),
-          body: `<b>${esc(def.name)}</b> — ${esc(sigilRuleText(registries, row.sigilId) || def.blurb)}<br><span style="color:var(--muted)">${esc(t('reward.sigil.note'))}</span>`,
-        };
-      }
-      default:
-        return { title: row.kind, body: '' };
+function readProgressLabel(row)
+{
+    if (row.kind === 'character')
+    {
+        return translate('reward.progress.character');
     }
-  }
-
-  // The catalogue supplies the definition. Choice UI never invents a grant;
-  // the atomic callback checks the saved milestone receipt and applies it.
-  function classMilestoneOption(row, id) {
-    if (row.choiceIds) id = row.options[row.choiceIds.indexOf(id)];
-    let definition = null;
-    if (row.rewardKind === 'cards') definition = registries.cards?.get(id);
-    else if (row.rewardKind === 'feat') definition = registries.classSkillFeats?.find(entry => entry.id === id) || featById(id);
-    else if (row.rewardKind === 'relic') definition = registries.relics?.get(id);
-    else if (row.rewardKind === 'attribute') {
-      return { name: attributeLabel(id), text: `${run.attributes?.[id] ?? 0} → ${(run.attributes?.[id] ?? 0) + 1}` };
-    } else if (row.rewardKind === 'armory') {
-      const [kind, classOrId, armorId] = String(id).split('/');
-      const equipment = registries.equipment || {};
-      definition = kind === 'armament' ? equipment.armaments?.find(entry => entry.id === classOrId)
-        : equipment.armour?.find(entry => entry.classId === classOrId && entry.id === armorId);
+    if (row.kind === 'class')
+    {
+        return translate('reward.progress.classTrack', {
+            class: row.label,
+        });
     }
-    return { definition, name: definition?.name || definition?.label || id || '', text: row.rewardKind === 'feat' ? getFeatDescription(registries, definition) : definition?.description || definition?.textTemplate || definition?.text || '' };
-  }
+    return row.label;
+}
 
-  // One boss relic option (SPEC §6): the relic's definition, name and text.
-  function relicOption(id) {
-    const definition = registries.relics?.get(id) || null;
-    return { definition, name: definition?.name || id, text: definition ? relicText(definition, registries) : '' };
-  }
-
-  function isNew(row) {
-    switch (row.kind) {
-      case 'card':
-      case 'levelCard':
-      case 'skillDraft': return row.cardIds.some((id) => marks.cards.includes(id));
-      case 'relic': return marks.relics.length > 0;
-      case 'flask': return marks.flasks.length > 0;
-      case 'armament': return marks.armaments.length > 0;
-      default: return false;
+function readCompactRowLabel(row)
+{
+    if (row.kind === 'power')
+    {
+        return POWER_ROW_LABEL;
     }
-  }
-
-  function collectMode() {
-    const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
-    const dial = registries.balance.ui.rewardCollect || { def: 'manual', modes: ['auto', 'manual'] };
-    return dial.modes.includes(settings.rewardCollect) ? settings.rewardCollect : dial.def;
-  }
-
-  function claimLevel() {
-    if (skillClaimPending || !xpAnimationDone || refill || pendingLevelCount(registries, run) < 1 || !onClaimLevel) return;
-    const claim = onClaimLevel();
-    if (!claim) return;
-    claimedLevels += 1;
-    persistProgress();
-    refreshProgress();
-    // The row THIS claim unlocked, not the first one still waiting: earlier
-    // rewards stay pending now, so "first open row" would name an old one.
-    const open = plan.rows.filter((row) => characterLevelRow(row) && unlocked(row) && !states[row.key]);
-    const mine = open.filter((row) => row.requiredLevel === claim.after);
-    const line = `Level ${claim.after} · ${claim.points} stat point${claim.points === 1 ? '' : 's'} earned`;
-    openLevelView('character', `Level ${claim.after}`, line, line, mine.length ? mine : open.slice(0, 1));
-  }
-
-  const draftTrackId = (row) => row.kind === 'classDraft' || row.kind === 'classMilestone' ? classSkillId(row.classId) : row.skillId;
-  // The rank a drafted card was rolled at (SPEC §13.4o): the offer carries one
-  // per card, in the order of its cards; an older offer without them is rank 1.
-  const draftRank = (row, cardId, choiceId = row.choiceId || cardId) => {
-    const index = (row.choiceIds || row.cardIds || []).indexOf(choiceId);
-    const rank = Array.isArray(row.ranks) ? row.ranks[index] : 1;
-    return Number.isInteger(rank) && rank > 1 ? rank : 1;
-  };
-  const draftInstance = (row, cardId, choiceId = row.choiceId || cardId) => {
-    const index = (row.choiceIds || row.cardIds || row.options || []).indexOf(choiceId);
-    const abilityRank = row.abilityRanks?.[index];
-    if (Number.isInteger(abilityRank) && abilityRank >= 0 && abilityRank <= 5) return { abilityRank };
-    const rank = row.kind === 'skillDraft' ? draftRank(row, cardId, choiceId) : 1;
-    return rank > 1 ? { rank } : {};
-  };
-  const characterLevelRow = (row) => ['levelChoice', 'levelCard'].includes(row.kind) && !row.source;
-  const draftUnlocked = (row) => Number.isInteger(row.requiredLevel) ? unlocked(row) : !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
-
-  let skillClaimPending = false;
-  function claimSkill(skillId) {
-    if (skillClaimPending) return;
-    if (!xpAnimationDone || refill || !onClaimSkill || pendingSkillLevelCount(registries, run, skillId) < 1) return;
-    // The owned cards' skill bonus before the claim, to say which ones it raised.
-    const owned = () => [...run.deck, ...(run.sideboard || [])].filter(Boolean);
-    const bonusBefore = new Map(owned().map((inst) => [inst, skillBonusFor(registries, run, inst)]));
-    const beforeSkills = structuredClone(run.skills || {});
-    const claimHost = app.querySelector('.reward-claim-layout') || app.querySelector('.reward-door');
-    const mounted = () => claimHost?.isConnected && (app.querySelector('.reward-claim-layout') === claimHost || app.querySelector('.reward-door') === claimHost);
-    skillClaimPending = true;
-    let result;
-    try { result = onClaimSkill(skillId); } catch (error) { skillClaimPending = false; throw error; }
-    const complete = claim => {
-      skillClaimPending = false;
-      if (!mounted()) return;
-      unlockControls();
-      if (!claim) return;
-      claimBonusStarts = {};
-      for (const award of claim.skillAwards || []) {
-        if (!(award.gained > 0)) continue;
-        const before = beforeSkills[award.skillId] || { level: 0, xp: 0 };
-        rewards.xpGains ||= { level: 0, tracks: {} };
-        rewards.xpGains.tracks ||= {};
-        rewards.xpGains.tracks[award.skillId] = (rewards.xpGains.tracks[award.skillId] || 0) + award.gained;
-        claimBonusStarts[award.skillId] = before;
-        animatedTracks.add(award.skillId);
-      }
-      claimedSkills[skillId] = (claimedSkills[skillId] || 0) + 1;
-      persistProgress();
-      refreshProgress();
-      const open = plan.rows.filter((row) => draftTrackId(row) === skillId && draftUnlocked(row) && !states[row.key]);
-      const mine = open.filter((row) => row.requiredLevel === claim.after || row.claimOrdinal === claimedSkills[skillId]);
-      const label = skillTracks(registries).find((track) => track.id === skillId)?.label || skillId;
-      // Every flatEvery levels a skill's cards may gain +1 (SPEC §13.4o): said here,
-      // since the number lands on the card faces rather than as a row to take —
-      // and only for the cards it actually raised (a card sums its tracks' flats).
-      const raised = owned().filter((inst) => skillBonusFor(registries, run, inst) > (bonusBefore.get(inst) || 0)).length;
-      const unlocks = run.classMasteryState && skillId.startsWith('class:') ? registries.classMastery.filter(row => row.classId === skillId.slice(6) && row.level === claim.after).map(row => masteryUnlockName(registries, row)) : [];
-      const unlockedLine = unlocks.length ? ` Unlocked: ${unlocks.join(', ')}.` : '';
-      const flat = raised ? ` ${raised} card${raised === 1 ? '' : 's'} gain${raised === 1 ? 's' : ''} +1.` : '';
-      const mastery = run.classMasteryState && skillId.startsWith('class:');
-      openLevelView(skillId, `${label}${mastery ? ' mastery' : ''} · Level ${claim.after}`, `Your ${label}${mastery ? ' mastery' : ' skill'} is now level ${claim.after}.${flat}${unlockedLine}`, `${label} · Level ${claim.after}`, mine.length ? mine : open.slice(0, 1));
-    };
-    let unlockControls = () => {};
-    if (result?.then) {
-      const controls = [...app.querySelectorAll('button')].map(control => [control, control.disabled]);
-      const menu = app.querySelector('.reward-menu'), menuInert = menu?.inert;
-      for (const [control] of controls) control.disabled = true;
-      if (menu) menu.inert = true;
-      claimHost?.setAttribute('aria-busy', 'true');
-      unlockControls = () => { for (const [control, disabled] of controls) control.disabled = disabled; if (menu) menu.inert = menuInert; claimHost?.setAttribute('aria-busy', 'false'); };
-      return result.then(complete, error => {
-        skillClaimPending = false;
-        if (!mounted()) return;
-        unlockControls();
-        app.querySelector('.reward-menu')?.append(el('p', { role: 'status', text: error.message || 'Skill claim could not be saved.' }));
-      });
+    if (row.kind === 'enemy')
+    {
+        const enemyName = row.name || translate('combat.log.role.enemy');
+        return `${enemyName} · ${formatLevel(row.level || 1)}`;
     }
-    return complete(result);
-  }
+    return row.kind === 'bonus'
+        ? BONUS_ROW_LABEL
+        : BATTLE_ROW_LABEL;
+}
 
-  // THE LEVEL POPUP. What this claim unlocked, as the list's own blue rows:
-  // opening one goes to its chooser, and Back or a confirmed pick comes back
-  // here. Continue closes it and refills the leftover XP;
-  // anything not taken stays lifted in the list, and later in Character.
-  function openLevelView(track, title, line, logLine, rows) {
-    levelLog.push(logLine);
-    for (const row of rows) freshKeys.add(row.key);
-    levelView = { track, title, line, bonusStarts: claimBonusStarts, keys: rows.map((row) => row.key) };
-    claimBonusStarts = {};
-    renderLevelView();
-  }
-  function renderLevelView() {
-    const view = levelView;
-    const rows = view.keys.map((key) => plan.rows.find((row) => row.key === key)).filter(Boolean);
-    const done = button({ label: t('common.continue'), weight: 'primary', id: 'reward-level-continue' });
-    door({
-      eyebrow: t('reward.level.eyebrow'), title: view.title,
-      attrs: { dataset: { size: 'md', rewardLevel: view.track } },
-      body: el('div', { class: 'reward-level-claim' }, [
-        el('p', { class: 'reward-level-summary', text: view.line }),
-        rows.length ? el('div', { class: 'class-row reward-menu reward-level-rewards', html: rows.map(rowHtml).join('') }) : null,
-        statAllocationSection(),
-      ]),
-      foot: modalFooter({ primary: done, className: 'reward-foot', size: 'medium' }),
+function readOfferCopyId(row)
+{
+    if (row.kind !== SKILL_RANK_UP)
+    {
+        return 'reward.take';
+    }
+    return row.choice
+        ? 'reward.card.choose'
+        : 'reward.card.take';
+}
+
+function setBarWidths(bar, width)
+{
+    bar.querySelector(UNDER_FILL_SELECTOR).style.width = width;
+    bar.querySelector(OVER_FILL_SELECTOR).style.width = width;
+}
+
+function hasBothFills(bar)
+{
+    return Boolean(bar.querySelector(UNDER_FILL_SELECTOR))
+        && Boolean(bar.querySelector(OVER_FILL_SELECTOR));
+}
+
+function startBarFill(bar, duration, targetWidth)
+{
+    const transition = `width ${duration}ms linear`;
+    bar.getBoundingClientRect();
+    bar.querySelector(UNDER_FILL_SELECTOR).style.transition = transition;
+    bar.querySelector(OVER_FILL_SELECTOR).style.transition = transition;
+    setBarWidths(bar, targetWidth);
+}
+
+function readBarDurations(bars, totalMilliseconds)
+{
+    return xpFillDurations(
+        bars.map((bar) => ({
+            from: Number(bar.dataset.old) / 100,
+            to: Number(bar.dataset.target) / 100,
+        })),
+        totalMilliseconds,
+    );
+}
+
+function readStartPercent(row, xpBefore)
+{
+    const startsOnThisLevel = xpBefore
+        && xpBefore.level === row.level
+        && row.xpToNext;
+    return startsOnThisLevel
+        ? Math.max(0, Math.min(100, xpBefore.xp / row.xpToNext * 100))
+        : 0;
+}
+
+function buildNextLevelLabel(row)
+{
+    let nextText = translate('reward.progress.next', { level: row.level + 1 });
+    if (row.capped)
+    {
+        nextText = translate('reward.progress.capped');
+    }
+    else if (row.kind === 'character')
+    {
+        nextText = formatLevel(row.level + 1);
+    }
+    return buildElement('span', {
+        class: 'rp-next',
+        text: nextText,
     });
-    freshKeys.clear();
-    bindRows(app);
-    done.addEventListener('click', closeLevelView);
-    if (isEngaged()) setTimeout(() => focusFirst('.reward-level-rewards .reward-kind:not(.locked)') || focusFirst('#reward-level-continue'), 0);
-  }
-  function closeLevelView() {
-    const { track, bonusStarts } = levelView;
-    levelView = null;
-    refillClaim(track, () => renderMenu(), bonusStarts);
-  }
-  // Where a chooser or detail returns: the level popup that opened it, else the list.
-  const backTo = (key) => (levelView ? renderLevelView() : renderMenu(key));
+}
 
-  function refillClaim(id, after, bonuses = {}) {
-    const rows = orderedXpRows(progress);
-    const starts = { [id]: 0 };
-    for (const [track, before] of Object.entries(bonuses)) {
-      const row = rows.find(entry => entry.id === track);
-      starts[track] = row?.xpToNext && row.level === before.level
-        ? Math.max(0, Math.min(100, before.xp / row.xpToNext * 100)) : 0;
-    }
-    const seconds = settings.levelUpRefillSeconds == null ? 0.8 : Number(settings.levelUpRefillSeconds);
-    if (document.body.classList.contains('reduced-motion') || seconds === 0
-      || !rows.some(row => Object.hasOwn(starts, row.id) && row.fraction * 100 > starts[row.id])) {
-      after(); return;
-    }
-    refill = { id, starts, after, phase: 'filling' };
-    xpAnimationDone = false;
-    refreshProgressView();
-  }
+function buildProgressBar(row, label, fill)
+{
+    const under = buildElement('span', { class: 'rp-under' });
+    const over = buildElement('span', { class: 'rp-over' });
+    const shownPercent = fill.animate
+        ? fill.startPercent
+        : fill.targetPercent;
+    under.style.width = `${shownPercent}%`;
+    over.style.width = `${shownPercent}%`;
+    const xpTotal = row.xpToNext || row.xp;
+    const xpShown = Math.min(row.xp, xpTotal);
+    const isFullAtRest = !fill.animate
+        && row.fraction >= 1;
+    const readyClass = isFullAtRest
+        ? ' rp-bar-ready'
+        : '';
+    return buildElement(
+        'div',
+        {
+            class: `rp-bar rp-layered-bar${readyClass}`,
+            role: 'progressbar',
+            'aria-valuemin': '0',
+            'aria-valuemax': String(row.xpToNext || 0),
+            'aria-valuenow': String(xpShown),
+            'aria-label': `${label}: ${xpShown} / ${xpTotal} XP`,
+            dataset: {
+                animate: fill.animate ? '1' : '0',
+                target: String(fill.targetPercent),
+                old: String(fill.startPercent),
+                track: row.id,
+                kind: row.kind,
+            },
+        },
+        [
+            under,
+            over,
+            buildElement('span', {
+                class: 'rp-bar-text',
+                text: `${xpShown} / ${xpTotal}`,
+            }),
+        ],
+    );
+}
 
-  function statAllocationSection() {
-    if ((settings.levelUpAllocateStats !== true && checkpoint?.source !== 'character' && !receiptOnly) || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
-    const host = el('section', { class: 'reward-stat-allocation', 'aria-label': t('reward.level.assignStats.aria') });
-    const draw = () => {
-      const points = run.level?.unspentPoints || 0;
-      const attrs = levelUpPlan(registries, run).attributes;
-      // The largest thing one more point buys, from the live formulas (model/attributePointPreview.js).
-      const gainChip = (attrId) => {
-        const gains = attributePointGains(registries, run, attrId, { settings });
-        const top = largestAttributeGain(registries, run, attrId, { settings });
-        return top ? el('span', { class: 'reward-stat-gain', text: top.text, title: attributeGainSummary(gains) }) : null;
-      };
-      host.replaceChildren(
-        el('h3', { text: `Assign stats · ${points} point${points === 1 ? '' : 's'} available` }),
-        ...attrs.map((attr) => {
-          const id = attr.id;
-          const add = button({ label: '+', className: 'reward-stat-add', disabled: points < 1, attrs: { 'aria-label': `Increase ${attr.label}` } });
-          add.addEventListener('click', () => {
-            if (!run.level?.unspentPoints) return;
-            if (skillClaimPending) return;
-            onAllocateStat(id);
-            persistProgress();
-            draw();
-          });
-          return el('div', { class: 'reward-stat-row' }, [
-            el('span', { class: 'reward-stat-name' }, [attr.label, gainChip(attr.id)]),
-            el('span', { text: String(run.attributes?.[id] ?? 0) }),
-            add,
-          ]);
+function readLevelNowText(row)
+{
+    return row.kind === 'character'
+        ? formatLevel(row.level)
+        : translate('reward.progress.level', { level: row.level });
+}
+
+function buildGainedNode(row)
+{
+    return row.gained
+        ? buildElement('span', {
+            class: 'rp-gain',
+            text: translate('reward.progress.gained', { xp: row.gained }),
+        })
+        : null;
+}
+
+function buildDiscardedNode(row)
+{
+    return row.discarded
+        ? buildElement('span', {
+            class: 'rp-discarded',
+            title: translateFull('reward.progress.discarded', { xp: row.discarded }),
+            text: translate('reward.progress.discarded', { xp: row.discarded }),
+        })
+        : null;
+}
+
+function attachProgressTooltip(rowNode, row, label)
+{
+    attachTooltip(rowNode, () =>
+    {
+        const detail = row.capped
+            ? translateFull('reward.progress.capped')
+            : translateFull('reward.progress.xp', {
+                xp: Math.min(row.xp, row.xpToNext),
+                next: row.xpToNext,
+                level: row.level + 1,
+            });
+        return tooltipHtml(label, detail);
+    });
+}
+
+function buildRequiredChoice(claim)
+{
+    if (!claim.requiredChoice)
+    {
+        return null;
+    }
+    return buildElement(
+        'p',
+        {
+            class: 'reward-claim-required',
+            dataset: { required: claim.requiredChoice.kind },
+        },
+        [
+            buildElement('span', {
+                class: 'as-eyebrow',
+                text: translate('reward.claim.required'),
+            }),
+            buildElement('span', {
+                text: translate('reward.card.chooseOne', {
+                    count: claim.requiredChoice.count,
+                }),
+            }),
+        ],
+    );
+}
+
+function buildChooserBackButton()
+{
+    return button({
+        label: translate('common.skip'),
+        className: 'danger',
+        id: 'reward-back',
+        attrs: { 'data-back': '' },
+    });
+}
+
+function buildChooserConfirmButton()
+{
+    return button({
+        label: translate('reward.confirm'),
+        weight: 'primary',
+        id: CONFIRM_BUTTON_ID,
+        className: 'reward-confirm',
+        disabled: true,
+    });
+}
+
+function buildInspectButton()
+{
+    return button({
+        label: translate(INSPECT_LABEL_ID),
+        id: INSPECT_BUTTON_ID,
+        disabled: true,
+        attrs: { 'aria-label': translate(INSPECT_LABEL_ID) },
+    });
+}
+
+function buildConfirmStatusMessage()
+{
+    return buildElement('p', {
+        role: 'status',
+        class: 'reward-confirm-status',
+        hidden: true,
+    });
+}
+
+function buildRankBonusPanel()
+{
+    return buildElement('div', {
+        class: 'reward-rank-bonus',
+        role: 'radiogroup',
+        'aria-label': translate('reward.rankBonus.label'),
+        hidden: true,
+    });
+}
+
+function describeBonusChanges(changes)
+{
+    return changes
+        .map((change) => `${change.label} ${change.before}${ARROW}${change.after}`)
+        .join(', ');
+}
+
+function buildCompactReceiptView(presentation)
+{
+    const openButton = button({
+        label: translate(CONTINUE_LABEL_ID),
+        weight: 'primary',
+        id: 'reward-expand',
+        className: 'reward-compact-continue',
+        disabled: true,
+    });
+    const formula = buildElement('span', { class: 'reward-compact-formula' });
+    const moreButton = buildElement('button', {
+        class: 'reward-compact-more',
+        type: 'button',
+        text: MORE_LABEL,
+        'aria-label': translate('reward.xp.more.aria'),
+    });
+    moreButton.hidden = true;
+    const arithmetic = buildElement(
+        'span',
+        { class: 'reward-compact-arithmetic' },
+        [
+            formula,
+            moreButton,
+        ],
+    );
+    const totalValue = buildElement('strong', {
+        class: 'reward-compact-value',
+        text: translate('reward.xp.zero'),
+        'aria-live': 'polite',
+    });
+    const summary = buildElement('div', { class: 'reward-compact-summary' }, [
+        buildElement('span', {
+            class: 'reward-compact-heading',
+            text: translate('reward.xp.total'),
         }),
-      );
+        arithmetic,
+        totalValue,
+    ]);
+    const rowList = buildElement('ol', {
+        class: 'reward-compact-list',
+        'aria-label': translate('reward.xp.list.aria'),
+    });
+    rowList.style.setProperty('--receipt-rows', String(presentation.visibleRows));
+    return {
+        openButton,
+        formula,
+        moreButton,
+        totalValue,
+        summary,
+        rowList,
     };
-    draw();
-    return host;
-  }
+}
 
-
-  async function playXpAnimation(host) {
-    const active = () => host?.isConnected && app.querySelector('.reward-claim-layout') === host;
-    const pendingRefill = refill;
-    if (host.xpAnimationRunning) return;
-    host.xpAnimationRunning = true;
-    // DOM order is Class, Character, then skills by their current level.
-    const bars = [...host.querySelectorAll('.rp-layered-bar[data-animate="1"]')];
-    const requested = Number(pendingRefill ? settings.levelUpRefillSeconds : settings.victoryXpSeconds);
-    const total = document.body.classList.contains('reduced-motion') ? 0
-      : Math.max(0, Math.min(12000, (Number.isFinite(requested) ? requested : pendingRefill ? 0.8 : 3) * 1000));
-    const durations = xpFillDurations(bars.map(bar => ({ from: Number(bar.dataset.old) / 100, to: Number(bar.dataset.target) / 100 })), total);
-    for (const bar of bars) {
-      const duration = durations[bars.indexOf(bar)];
-      const green = bar.querySelector('.rp-under');
-      const yellow = bar.querySelector('.rp-over');
-      if (!green || !yellow) continue;
-      const target = `${bar.dataset.target}%`;
-      if (duration > 0) {
-        bar.getBoundingClientRect(); // commit the reset before starting the transition
-        green.style.transition = `width ${duration}ms linear`;
-        yellow.style.transition = `width ${duration}ms linear`;
-        green.style.width = target;
-        yellow.style.width = target;
-        await new Promise((resolve) => setTimeout(resolve, duration));
-        if (!active()) return;
-      } else {
-        green.style.width = target;
-        yellow.style.width = target;
-      }
-      if (!pendingRefill) animatedTracks.add(bar.dataset.track);
-      // Full bars turn blue immediately, but stay plain progressbars until
-      // the entire sequence has settled. Capped tracks never get a button.
-      if (Number(bar.dataset.target) >= 100) bar.classList.add('rp-bar-ready');
-    }
-    if (!active()) return;
-    host.xpAnimationRunning = false;
-    xpAnimationDone = true;
-    if (pendingRefill) {
-      pendingRefill.phase = 'settled';
-      refreshProgressView();
-      const settled = app.querySelector('.reward-claim-layout');
-      const delay = settings.levelUpRefillPauseMs == null ? 200 : Number(settings.levelUpRefillPauseMs);
-      await new Promise((resolve) => setTimeout(resolve, Math.max(0, Math.min(2000, Number.isFinite(delay) ? delay : 200))));
-      if (!settled?.isConnected || refill !== pendingRefill) return;
-      refill = null;
-      pendingRefill.after();
-    } else refreshProgressView();
-  }
-
-  // ---- THE DOOR: a decision modal OVER whatever stands beneath ---------------
-  // Constantine: victory is a modal over the battlefield, and the cinders are
-  // granted on arrival. Each view (menu, detail, chooser) is the same md door
-  // rebuilt: kit head (Eyebrow + Title, no way out but a choice), a body, and
-  // a foot on the button ladder. It lives inside `app`, so the next screen's
-  // own mount clears it exactly as it cleared the old full-screen menu.
-  //
-  // ONE DOOR PER SCREEN, its CONTENTS swapped. The veil and the door fade in
-  // when they are created (kit.css door-in), so building a new pair on every
-  // render replayed that fade on each XP tick and level claim — the flash.
-  // A later view reuses this mount's open door and replaces its head, body
-  // and foot; only a door this mount did not open is replaced whole.
-  // `doorView` counts the views, so a view's own timers can tell the door
-  // they were bound to has moved on even though the element is the same.
-  let doorView = 0;
-  const doorOwner = {};
-  function door(options) {
-    doorView += 1;
-    return mountRewardDoor(app, { owner: doorOwner, ...options });
-  }
-  function grantCinders() {
-    const row = plan.rows.find((r) => r.kind === 'cinders');
-    if (!row || states.cinders || row.blockedBy) return;
-    if (apply.cinders(row)) {
-      states.cinders = 'taken';
-      persistProgress();
-    }
-  }
-
-  // ---- the menu ------------------------------------------------------------
-  function renderMenu(focusKind = null) {
-    if (skillClaimPending) return;
-    const mode = collectMode();
-    const pending = plan.rows.filter((r) => !states[r.key] && !r.blockedBy);
-    // THE ONE-LINE NOTES (SPEC §15.1): a card chance that missed leaves no
-    // card row, and the menu says so rather than leaving a silent gap.
-    const notesHtml = rewardNotes(rewards).map((token) => `<p class="reward-note" data-note="${esc(token)}">${esc(t(`reward.note.${token}`))}</p>`).join('');
-    // Level cards are claimed from the progression bar when it is present.
-    // Older offers without an XP receipt still keep their normal reward row.
-    const rowsHtml = plan.rows.filter((row) => draftUnlocked(row)
-      && (!characterLevelRow(row) || (Number.isInteger(row.requiredLevel) ? unlocked(row) : !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key])))).map(rowHtml).join('');
-    // The button is the verb; the FootNote says what the verb does here (the
-    // E11 dial: auto-collect takes the rest, manual leaves it) and how to press.
-    const cont = button({
-      label: t('reward.continue'),
-      weight: 'primary', id: 'reward-continue', disabled: !xpAnimationDone || !!refill, attrs: {
-        'aria-describedby': 'reward-hold-copy',
-        'data-confirm-ready': String(xpAnimationDone && !refill),
-      },
+export function MountRewards(appRoot, {
+    registries,
+    run,
+    rewards,
+    onDone,
+    saves = null,
+    rng = null,
+    onPersist = null,
+    checkpoint = null,
+    onAllocateStat = null,
+    receiptOnly = false,
+})
+{
+    clearSelection();
+    const plan = rewardPlan(rewards, {
+        flaskSlotsFree: 0,
+        armamentSlotsFree: 0,
     });
-    const foot = modalFooter({ note: holdNote(), primary: cont, className: 'reward-foot', size: 'medium' });
-    const note = foot.querySelector('.modal-foot-note');
-    note.id = 'reward-hold-copy';
-    note.setAttribute('aria-live', 'polite');
-    // W1t: the choices beside their claim status, and the count in the head.
-    const claim = rewardClaimStatus(plan, states);
-    door({
-      eyebrow: plan.rows.length ? t('reward.eyebrow.claim') : t('reward.eyebrow.spoils'),
-      title: rewards.title || t('reward.title.victory'),
-      // No live region: the footer note already announces progress.
-      status: plan.rows.length ? el('span', { class: 'as-status modal-head-status',
-        text: t('reward.status.claimed', { claimed: claim.claimed, total: claim.total }) }) : null,
-      body: el('div', { class: 'reward-claim-layout', 'aria-busy': String(!xpAnimationDone || !!refill) }, [
-        el('div', { class: 'class-row reward-menu', html: rowsHtml + notesHtml }),
-        sideColumn(claim),
-        checkpoint?.source === 'character' || levelLog.length || receiptOnly ? statAllocationSection() : null,
-      ]),
-      foot,
-    });
-    const freshRow = [...freshKeys].map((key) => app.querySelector(`.reward-kind[data-key="${key}"]`)).find(Boolean);
-    freshKeys.clear();
-    freshRow?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    const xpProgress = readXpProgress();
+    const canLoadMeta = Boolean(saves?.loadMeta);
+    const settings = readSavedSettings();
+    const meta = readSavedMeta();
+    let disarmContinue = null;
+    let xpAnimationDone = !xpProgress
+        || !rewards.xpBefore
+        || !orderedXpRows(xpProgress).length
+        || isReducedMotion();
+    const animatedTracks = new Set();
+    let receiptContinued = false;
+    const stonesPaid = smithingStonesPaid(rewards.smithingStoneReceipt);
+    const paidStoneStates = stonesPaid
+        ? { smithingStone: STATE_TAKEN }
+        : {};
+    const states = {
+        ...(checkpoint?.states || {}),
+        ...paidStoneStates,
+    };
+    const chosenRankUps = { ...(checkpoint?.chosenRankUps || {}) };
+    const pendingCardIdByKey = {};
+    const pendingBonusIndexByKey = {};
+    let doorOpenCount = 0;
+    const doorOwner = {};
+    const applyRewardByKind = {
+        smithingStone()
+        {
+            return false;
+        },
+        skillRankUp(row)
+        {
+            const instance = raiseCardRank(
+                registries,
+                run,
+                row.skillId,
+                row.instanceId,
+                row.bonusStep || null,
+            );
+            if (!instance)
+            {
+                return false;
+            }
+            chosenRankUps[row.key] = instance.instanceId;
+            return true;
+        },
+    };
+    const hasUnclaimedReward = () =>
+        plan.rows.some((row) =>
+            !states[row.key]
+            && !row.blockedBy
+        );
 
-    bindLevelButtons(app);
-    app.querySelector('.reward-menu').inert = !xpAnimationDone || !!refill;
+    playVictoryAndOpenFirstScreen();
 
-    bindRows(app);
-    for (const btn of app.querySelectorAll('[data-skip]')) {
-      attachTooltip(btn, () => `<div class="tt-title">${esc(tTip('reward.skip'))}</div>${esc(tFull('reward.skip'))}`);
-      btn.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        if (skillClaimPending) return;
-        states[btn.dataset.skip] = 'skipped';
+    function readXpProgress()
+    {
+        if (!rewards.xpGains)
+        {
+            return null;
+        }
+        const gains = rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity });
+        return receiptOnly
+            ? scopeXpProgress(gains)
+            : gains;
+    }
+
+    function readSavedSettings()
+    {
+        if (!canLoadMeta)
+        {
+            return {};
+        }
+        return saves.loadMeta().settings || {};
+    }
+
+    function readSavedMeta()
+    {
+        if (!canLoadMeta)
+        {
+            return {};
+        }
+        return saves.loadMeta() || {};
+    }
+
+    function playVictoryAndOpenFirstScreen()
+    {
+        sfx.play('victory');
+        if (receiptOnly)
+        {
+            renderMenu();
+        }
+        else if (checkpoint?.expanded)
+        {
+            expandVictory();
+        }
+        else if (
+            !checkpoint?.source
+            || !rewards.xpGains
+        )
+        {
+            renderMenu();
+        }
+        else
+        {
+            renderCompactVictory();
+        }
+    }
+
+    function openDoor(doorOptions)
+    {
+        doorOpenCount += 1;
+        return MountRewardDoor(appRoot, {
+            owner: doorOwner,
+            ...doorOptions,
+        });
+    }
+
+    function expandVictory()
+    {
+        if (checkpoint)
+        {
+            checkpoint.expanded = true;
+        }
         persistProgress();
-        renderMenu(btn.dataset.skip);
-      });
+        renderMenu();
     }
 
-    attachTooltip(cont, () => (mode === 'auto'
-      ? `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Collects remaining battle loot. Unfinished level rewards are saved for later.')}`
-      : `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Leave with your chosen loot. Unfinished level rewards are saved for later.')}`));
-    const finish = () => {
-      if (skillClaimPending || !xpAnimationDone || refill) return;
-      // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
-      // closed set); the auto pick advances the same stream, so a seeded run
-      // resolves the same card every replay.
-      const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
-      // A boss relic choice can name a relic this screen already gave the run
-      // (a class milestone claimed first): auto-collect picks only what is left.
-      const rows = unownedRelicChoices(plan.rows.filter(row => !isProgressionReward(row)), run.relics);
-      const { take: offered } = resolveContinue({ rows }, states, mode, pickFn);
-      // Level cards belong to a level claim, never to auto-collect on Continue.
-      const toTake = offered.filter((row) => !isProgressionReward(row));
-      for (const row of toTake) take(row, null, { present: false });
-      if (toTake.length) sfx.play('rewardTake');
-      onDone(chosenCardId);
-      disarmContinue?.(); disarmContinue = null;
-    };
-    // The action is registered in secondbeat's enumerable table, so native
-    // keyboard/gamepad presses enter the same shared armPress door as pointer
-    // and touch; the configured dial remains the one duration authority.
-    disarmContinue?.();
-    disarmContinue = beatArmer(meta, registries)(cont, 'rewardContinue', {
-      question: t('reward.leave.question'),
-      confirmLabel: t('reward.leave.confirm'),
-      onConfirm: () => {
-        if (!receiptOnly) return finish();
-        if (receiptContinued || !xpAnimationDone || refill) return;
-        receiptContinued = true;
-        try { finish(); }
-        catch (error) {
-          receiptContinued = false;
-          note.textContent = error.message;
+    function persistProgress()
+    {
+        if (checkpoint)
+        {
+            checkpoint.states = { ...states };
+            if (
+                Object.keys(chosenRankUps).length
+                || checkpoint.chosenRankUps !== undefined
+            )
+            {
+                checkpoint.chosenRankUps = { ...chosenRankUps };
+            }
         }
-      },
-    });
-
-    followUp(app.querySelector('.reward-claim-layout'));
-    if (isEngaged()) {
-      setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-key="${focusKind}"]`))
-        || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
-    }
-  }
-
-  // ONE ROW, two screens: the victory list and a level's popup draw a
-  // reward the same way, so a level's reward reads the same in both.
-  function rowHtml(row) {
-    const state = states[row.key] || (row.blockedBy ? 'blocked' : 'pending');
-    const { title, body } = rowBody(row);
-    // A level's reward waiting to be opened stands lifted and blue; the one
-    // a claim just unlocked plays its arrival once.
-    const offer = state === 'pending' && isProgressionReward(row)
-      ? ` reward-level-offer${freshKeys.has(row.key) ? ' reward-fresh' : ''}` : '';
-    return `
-      <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}${offer}"
-           data-kind="${esc(row.kind)}" data-key="${esc(row.key)}" data-state="${esc(state)}"
-           data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
-        <div class="glyph">${engravedIconHtml(KIND_GLYPHS[row.kind]) || esc(uiIconText(KIND_GLYPHS[row.kind] || '?'))}</div>
-        <div class="cp-body">
-          <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ` <span class="chip reward-new">${esc(t('reward.card.new'))}</span>` : ''}</h3>
-          <p>${body}</p>
-          ${state === 'taken' ? `<span class="chip">${esc(t('reward.state.taken'))}</span>`
-            : state === 'blocked' ? `<span class="chip">${esc(t('reward.state.blocked'))}</span>`
-            : state === 'skipped' ? `<span class="chip">${esc(t('reward.state.skipped'))}</span>`
-            : ''}
-        </div>
-        ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.key)}" data-focusable="true" aria-label="${esc(t('reward.skip.aria', { kind: title }))}">${esc(t('reward.skip'))}</button>` : ''}
-      </div>`;
-  }
-
-  function bindRows(root) {
-    for (const el of root.querySelectorAll('.reward-kind')) {
-      const row = plan.rows.find((r) => r.key === el.dataset.key);
-      const state = el.dataset.state;
-      // Law 3 clause 4: a real tooltip, for hover AND the pad/keyboard focus
-      // cursor. The blocked row's tooltip carries the REASON (blockedBy), so
-      // the label switches on the model's token, never on a re-derivation.
-      attachTooltip(el, () => {
-        if (state === 'blocked') {
-          const blocked = row.blockedBy === 'storage' ? 'reward.blocked.storage' : 'reward.blocked.slots';
-          return `<div class="tt-title">${esc(tTip(blocked))}</div>${esc(tFull(blocked))}`;
+        if (
+            onPersist
+            && onPersist() === false
+        )
+        {
+            throw new Error('Reward save was refused.');
         }
-        if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
-        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' || isRelicChoice(row) ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
-        return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
-      });
-      if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
-      el.addEventListener('click', (ev) => {
-        if (skillClaimPending || !xpAnimationDone || refill) return;
-        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' || isRelicChoice(row)) return renderChooser(row);
-        if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
-        take(row);
-      });
     }
-  }
 
-  // The menu's foot note: what Continue does from here.
-  function holdNote() {
-    if (receiptOnly) return "Experience earned in this battle.";
-    const pending = plan.rows.filter((r) => !states[r.key] && !r.blockedBy);
-    const levelsPending = Boolean((progress?.character && pendingLevelCount(registries, run) > 0)
-      || progress?.skills.some(row => pendingSkillLevelCount(registries, run, row.id) > 0)
-      || pending.some(isProgressionReward));
-    if (levelsPending) return 'Unfinished levels and level rewards are saved for later victories and Character.';
-    if (plan.rows.every(row => states[row.key] === 'taken' || states[row.key] === 'skipped')) return t('reward.hold.complete');
-    return collectMode() === 'auto' && pending.length ? t('reward.hold.takesRest') : t('reward.hold.leavesRest');
-  }
+    function findOwnedInstance(instanceId)
+    {
+        const owned = [...run.deck, ...(run.sideboard || [])];
+        return owned.find((instance) =>
+            instance
+            && instance.instanceId === instanceId
+        ) || null;
+    }
 
-  function bindLevelButtons(root) {
-    for (const levelButton of root.querySelectorAll('.reward-level-up')) {
-      levelButton.addEventListener('click', () => levelButton.dataset.track === 'character'
-        ? claimLevel() : claimSkill(levelButton.dataset.track));
+    function readSkillLabel(skillId)
+    {
+        const skill = skillTracks(registries).find((track) => track.id === skillId);
+        return skill?.label || skillId;
     }
-  }
 
-  // What a drawn menu does next: the pending XP animation, else the next
-  // bar's turn to fill. Both are bound to THIS layout, so a later render or mount
-  // that replaces it strands the timer instead of being driven by it.
-  function followUp(host) {
-    if (!host) return;
-    if (!xpAnimationDone && progress && (rewards.xpBefore || refill)) {
-      setTimeout(() => {
-        if (host.isConnected && app.querySelector('.reward-claim-layout') === host) playXpAnimation(host);
-      }, 0);
+    function snapshotBeforeTaking(row)
+    {
+        if (row.kind !== SKILL_RANK_UP)
+        {
+            return null;
+        }
+        const raised = findOwnedInstance(row.instanceId);
+        return {
+            skills: structuredClone(run.skills || {}),
+            rankUp: raised
+                ? {
+                    instance: raised,
+                    rank: raised.rank,
+                    steps: raised.upgradeSteps,
+                    upgraded: raised.upgraded,
+                    chosen: { ...chosenRankUps },
+                }
+                : null,
+            checkpoint: checkpoint ? structuredClone(checkpoint) : null,
+        };
+    }
 
-    }
-  }
-
-  // BAR-ONLY UPDATE. An XP tick, a refill and its settle change the bars and
-  // the Level up buttons, nothing else, so they redraw the progress panel in
-  // place; the menu, its focus and its tooltips stay where they are. With no
-  // menu on screen (a chooser or detail is open) there is nothing to patch.
-  function refreshProgressView() {
-    if (skillClaimPending) return;
-    const layout = app.querySelector('.reward-claim-layout');
-    const panel = layout?.querySelector('.reward-progress');
-    const next = panel ? progressPanel() : null;
-    if (!next) { renderMenu(); return; }
-    panel.after(next);
-    panel.remove();
-    bindLevelButtons(next);
-    const menu = layout.querySelector('.reward-menu');
-    if (menu) menu.inert = !xpAnimationDone || !!refill;
-    layout.setAttribute('aria-busy', String(!xpAnimationDone || !!refill));
-    const cont = app.querySelector('#reward-continue');
-    if (cont) {
-      cont.disabled = !xpAnimationDone || !!refill;
-      cont.dataset.confirmReady = String(xpAnimationDone && !refill);
-    }
-    const note = app.querySelector('#reward-hold-copy');
-    if (note) note.textContent = holdNote();
-    // The pressed Level up went with the old panel; keep the cursor on its row.
-    const focused = document.activeElement;
-    if (isEngaged() && (!focused || focused === document.body || !focused.isConnected)) {
-      focusFirst('.reward-level-up') || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue');
-    }
-    followUp(layout);
-  }
-
-  // The lines this screen's level claims wrote, newest last.
-  function levelLogPanel() {
-    if (!levelLog.length) return null;
-    return el('ol', { class: 'reward-level-log', 'aria-label': t('reward.level.eyebrow') },
-      levelLog.map((text) => el('li', { class: 'reward-level-line', text })));
-  }
-
-  // The W1t claim-status column: every row's state, then the one choice still
-  // waiting. That optional slot collapses when nothing waits.
-  // The right-hand column: what the fight moved, then what is left to claim.
-  // One column so the two read as one ledger; null when it would be empty
-  // (a preview scene's stub run with no offer and no ledgers).
-  function sideColumn(claim) {
-    const progression = progressPanel();
-    const children = [progression, levelLogPanel(), !progression && plan.rows.length ? claimStatusPanel(claim) : null].filter(Boolean);
-    return children.length ? el('div', { class: 'reward-side' }, children) : null;
-  }
-
-  // ONE ROW OF THE PANEL: name · level · the bar · the level it fills toward ·
-  // what this fight paid. The bar is the kit meter (one meter in the tree),
-  // and its aria label is the sentence the numbers mean, because a bar with
-  // no text is a picture of progress to a screen reader.
-  function progressRow(row, label) {
-    // A CAP is the only thing that leaves a row without a next level — the
-    // model drops a track whose curve will not read rather than handing one
-    // here, so `capped` alone decides this and no re-derivation guesses.
-    const next = el('span', {
-      class: 'rp-next',
-      text: row.capped ? t('reward.progress.capped') : row.kind === 'character' ? `Level ${row.level + 1}` : t('reward.progress.next', { level: row.level + 1 }),
-    });
-    // Readiness controls the button; a settled full bar is blue independently.
-    const ready = readyTrack(row);
-    const target = row.fraction * 100;
-    const before = row.kind === 'character' ? rewards.xpBefore?.character : rewards.xpBefore?.tracks?.[row.id];
-    const refilling = refill && Object.hasOwn(refill.starts, row.id);
-    const old = refilling ? refill.starts[row.id] : before && before.level === row.level && row.xpToNext
-      ? Math.max(0, Math.min(100, before.xp / row.xpToNext * 100)) : 0;
-    const animate = refill ? refill.phase === 'filling' && refilling
-      : !xpAnimationDone && row.gained > 0 && !!before && !animatedTracks.has(row.id);
-    const waitingInitial = !xpAnimationDone && !refill && row.gained > 0 && !!before && !animatedTracks.has(row.id);
-    const under = el('span', { class: 'rp-under' });
-    const over = el('span', { class: 'rp-over' });
-    under.style.width = `${animate || waitingInitial ? old : target}%`;
-    over.style.width = `${animate || waitingInitial ? old : target}%`;
-    const bar = el('div', {
-      class: `rp-bar rp-layered-bar${!animate && !waitingInitial && row.fraction >= 1 ? ' rp-bar-ready' : ''}`,
-      role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(row.xpToNext || 0),
-      'aria-valuenow': String(Math.min(row.xp, row.xpToNext || row.xp)),
-      'aria-label': `${label}: ${Math.min(row.xp, row.xpToNext || row.xp)} / ${row.xpToNext || row.xp} XP`,
-      dataset: { animate: animate ? '1' : '0', target: String(target), old: String(old), track: row.id, kind: row.kind },
-    }, [under, over, el('span', { class: 'rp-bar-text', text: `${Math.min(row.xp, row.xpToNext || row.xp)} / ${row.xpToNext || row.xp}` })]);
-    const node = el('li', {
-      class: `reward-progress-row${ready ? ' reward-level-ready' : ''}`,
-      dataset: { kind: row.kind, track: row.id, gained: String(row.gained) },
-    }, [
-      el('span', { class: 'rp-name', text: label }),
-      el('span', { class: 'rp-level', text: row.kind === 'character' ? `Level ${row.level}` : t('reward.progress.level', { level: row.level }) }),
-      bar,
-      next,
-      ready ? button({ label: t('reward.level.button'), className: 'reward-level-up', attrs: { 'data-track': row.id, 'aria-label': `${t('reward.level.button')} ${label}` } }) : null,
-      row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
-      // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
-      row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
-    ]);
-    // The exact XP is the tooltip, not the row: the row carries the shape of
-    // the climb and the gain; the numbers are for the player who asks.
-    attachTooltip(node, () => `<div class="tt-title">${esc(label)}</div>${esc(row.capped
-      ? tFull('reward.progress.capped')
-      : tFull('reward.progress.xp', { xp: Math.min(row.xp, row.xpToNext), next: row.xpToNext, level: row.level + 1 }))}`);
-    return node;
-  }
-
-  function progressPanel() {
-    if (!progress || (!progress.character && !progress.skills.length)) return null;
-    const rows = orderedXpRows(progress).map(row => progressRow(row,
-      row.kind === 'character' ? t('reward.progress.character')
-        : row.kind === 'class' ? t('reward.progress.classTrack', { class: row.label }) : row.label));
-    return el('section', { class: 'reward-progress', 'aria-label': t('reward.progress.heading'), 'aria-busy': String(!xpAnimationDone || !!refill) }, [
-      el('h3', { class: 'as-eyebrow', text: t('reward.progress.heading') }),
-      el('ul', { class: 'reward-progress-list' }, rows),
-    ]);
-  }
-
-  function claimStatusPanel(claim) {
-    const lines = claim.rows.map((entry) => el('li', { class: 'reward-claim-row', dataset: { kind: entry.kind, key: entry.key, state: entry.state } }, [
-      el('span', { class: 'reward-claim-name', text: rowBody(plan.rows.find((row) => row.key === entry.key)).title }),
-      el('span', { class: 'reward-claim-state', text: t(entry.state === 'blocked' ? 'reward.claim.blocked' : `reward.state.${entry.state}`) }),
-    ]));
-    const required = claim.requiredChoice ? el('p', { class: 'reward-claim-required', dataset: { required: claim.requiredChoice.kind } }, [
-      el('span', { class: 'as-eyebrow', text: t('reward.claim.required') }),
-      el('span', { text: t('reward.card.chooseOne', { count: claim.requiredChoice.count }) }),
-    ]) : null;
-    return el('aside', { class: 'reward-claim-status', 'aria-label': t('reward.claim.heading') }, [
-      el('h3', { class: 'as-eyebrow', text: t('reward.claim.heading') }),
-      el('ul', { class: 'reward-claim-list' }, lines),
-      required,
-    ]);
-  }
-
-  // Potions, armaments and relics are inspect-before-collect surfaces. Opening one
-  // commits nothing; Back restores the exact menu state, and Take is the only
-  // collection door from the detail.
-  function renderDetail(row) {
-    if (skillClaimPending) return;
-    const body = rowBody(row);
-    const isFlask = row.kind === 'flask';
-    const kindLabel = t(isFlask ? 'reward.kind.potion' : row.kind === 'relic' ? 'reward.kind.relic' : 'reward.kind.armament');
-    const takeButton = button({ label: t('reward.detail.take', { kind: kindLabel.toLowerCase() }), weight: 'primary', id: 'reward-detail-take' });
-    const backButton = button({ label: t('reward.detail.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
-    const detailBody = el('div', { class: 'class-row reward-menu' });
-    const armament = !isFlask && registries.equipment.armaments.find(piece => piece.id === row.armamentId);
-    if (armament) detailBody.append(renderEquipmentInspection(registries, armament));
-    else if (row.kind === 'relic') detailBody.append(renderCollectibleInspection(registries, registries.relics.get(row.relicId), t('reward.kind.relic'), { interactive: false }));
-    else if (isFlask) detailBody.append(renderCollectibleInspection(registries, registries.flasks.get(row.flaskId), t('reward.kind.potion')));
-    else detailBody.innerHTML = `<div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
-      <div class="glyph">${engravedIconHtml(KIND_GLYPHS[row.kind]) || esc(uiIconText(KIND_GLYPHS[row.kind]))}</div>
-      <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
-    </div>`;
-    door({
-      eyebrow: t('reward.inspect.eyebrow', { kind: kindLabel.toLowerCase() }),
-      title: row.kind === 'relic' ? registries.relics.get(row.relicId).name : kindLabel,
-      attrs: { dataset: { size: 'md', rewardDetail: row.kind } },
-      body: detailBody,
-      foot: modalFooter({ secondary: [backButton], primary: takeButton, className: 'reward-foot', size: 'medium' }),
-    });
-    app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));
-    const back = app.querySelector('#reward-back');
-    attachTooltip(back, () => `<div class="tt-title">${esc(tTip('reward.detail.back'))}</div>${esc(tFull('reward.detail.back'))}`);
-    back.addEventListener('click', () => backTo(row.key));
-    if (isEngaged()) setTimeout(() => focusFirst('#reward-detail-take') || focusFirst('#reward-back'), 0);
-  }
-
-  // ---- the card chooser: select first, then explicitly confirm -------------
-  // One chooser for the card offer and for a skill draft (plan phase 4b): the
-  // row hands in its cards; which deck write Confirm makes is the row's kind.
-  function renderChooser(row = plan.rows.find((r) => r.kind === 'card')) {
-    if (skillClaimPending) return;
-    const taken = () => states[row.key];
-    const isMilestone = row.kind === 'classMilestone';
-    // A class draft chooses among tree NODES (plan phase 5b): each is a tile
-    // with the node's glyph, name and its rule's sentence, the numbers read
-    // through the node's bindings — the same selection path as a card.
-    const isNodeRow = row.kind === 'classDraft';
-    const isLevelChoice = row.kind === 'levelChoice' || row.kind === 'skillAttribute' || row.kind === 'skillFeat';
-    // A rank-up (SPEC §13.4o) chooses among the run's OWN cards, each shown
-    // at the rank it would rise to; its pick is an instance id.
-    const isRankUp = row.kind === 'skillRankUp';
-    const rankUpCards = isRankUp ? rankUpCandidates(registries, run, row.skillId) : [];
-    // A boss relic choice (SPEC §6) picks ONE of its relicIds; each option is
-    // a relic tile with the same inspection face the class relic option uses.
-    const isRelic = isRelicChoice(row);
-    const ids = isMilestone ? row.choiceIds || row.options : isRelic ? row.relicIds : isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : isRankUp ? rankUpCards.map((inst) => inst.instanceId) : row.choiceIds || row.cardIds;
-    const pickField = isRelic ? 'chosenRelicId' : isMilestone || isLevelChoice || row.choiceIds ? 'choiceId' : isNodeRow ? 'nodeId' : isRankUp ? 'instanceId' : 'cardId';
-    const backButton = button({ label: t('common.skip'), id: 'reward-back', className: 'danger', attrs: { 'data-back': '' } });
-    const confirmButton = button({
-      label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
-    });
-    const inspectionFaces = new Map();
-    const inspectButton = button({ label: t('deckEditor.inspectAction'), id: 'reward-inspect', disabled: true,
-      attrs: { 'aria-label': t('deckEditor.inspectAction') } });
-    inspectButton.hidden = isNodeRow || isLevelChoice || (isMilestone && row.rewardKind !== 'cards');
-    inspectButton.addEventListener('click', () => {
-      if (!confirming && !taken()) openBoundCardInspection(inspectionFaces.get(selectedCardId), inspectButton);
-    });
-    door({
-      eyebrow: row.kind === 'levelCard' || row.kind === 'levelChoice' ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' || isRelic || isRankUp || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? rowBody(row).title : t('reward.card.eyebrow'),
-      title: isMilestone || row.source ? rowBody(row).title : row.kind === 'levelCard' || row.kind === 'levelChoice' ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
-      body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
-      foot: modalFooter({ secondary: [backButton, inspectButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
-    });
-    const strip = app.querySelector('.reward-row');
-    if (characterLevelRow(row)) {
-      const stats = statAllocationSection();
-      if (stats) strip.after(stats);
-    }
-    let selectedCardId = pendingByKey[row.key] || null;
-    let confirming = false;
-    let reviewing = false;
-    const message = el('p', { role: 'status', class: 'reward-confirm-status', hidden: true });
-    strip.after(message);
-    // Nothing chosen yet: the reason stands under Confirm as text (FINISH §6).
-    // A press in flight is a beat, not a reason, so it stays quiet.
-    const bonusOptionsOf = (instanceId) => (isRankUp && instanceId ? rankUpBonusOptions(registries, run, ownedInstance(instanceId)) : []);
-    const needsBonus = () => !!selectedCardId && bonusOptionsOf(selectedCardId).length > 0 && !(pendingBonusByKey[row.key] >= 0);
-    const confirmReason = reasonWhenDisabled(confirmButton, () => (!selectedCardId ? t('reward.confirm.reason') : needsBonus() ? t('reward.rankBonus.reason') : null));
-    // The bonus choices under the strip: one button per option, saying what it changes on the card.
-    const bonusPanel = el('div', { class: 'reward-rank-bonus', role: 'radiogroup', 'aria-label': t('reward.rankBonus.label'), hidden: true });
-    strip.after(bonusPanel);
-    const faceOf = (instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
-    function renderBonusPanel() {
-      bonusPanel.replaceChildren();
-      const options = bonusOptionsOf(selectedCardId);
-      bonusPanel.hidden = !options.length;
-      if (!options.length) return;
-      const inst = ownedInstance(selectedCardId);
-      const before = faceOf({ ...inst, rank: instanceRank(inst) + 1 });
-      bonusPanel.appendChild(el('p', { class: 'reward-rank-bonus-title', text: t('reward.rankBonus.label') }));
-      options.forEach((option, index) => {
-        const changes = cardUpgradeChanges(registries, before, faceOf(option.after));
-        const summary = changes.map((c) => `${c.label} ${c.before} \u2192 ${c.after}`).join(', ') || t('reward.rankBonus.option', { n: index + 1 });
-        const chosen = pendingBonusByKey[row.key] === index;
-        const choice = button({ label: summary, className: `class-pick reward-bonus-option${chosen ? ' is-chosen' : ''}`,
-          attrs: { role: 'radio', 'aria-checked': String(chosen), 'aria-label': t('cardUpgrade.option.aria', { n: index + 1, total: options.length, summary }), dataset: { bonusIndex: String(index) } } });
-        choice.addEventListener('click', () => selectBonus(index));
-        bonusPanel.appendChild(choice);
-      });
-    }
-    const selectBonus = (index) => {
-      if (reviewing || confirming || taken() || !(index >= 0)) return;
-      pendingBonusByKey[row.key] = index;
-      const old = [...strip.children].find((node) => node.dataset?.pickId === selectedCardId);
-      const inst = ownedInstance(selectedCardId);
-      if (old && inst) old.replaceWith(rankUpFace(inst));
-      renderBonusPanel();
-      confirmButton.disabled = false;
-      inspectButton.disabled = !inspectionFaces.has(selectedCardId);
-      confirmReason();
-    };
-    // Choosing belongs to this screen; inspection only reads the selected face.
-    const selectCard = (cardId) => {
-      if (reviewing || confirming || taken()) return;
-      const previous = selectedCardId;
-      if (previous !== cardId) delete pendingBonusByKey[row.key]; // each card rolls its own bonuses
-      selectedCardId = cardId;
-      pendingByKey[row.key] = cardId;
-      // Candidates are found by CLASS, not by attribute: the reward door's
-      // test DOM (tests/helpers/reward-dom.mjs) keeps dataset as a plain
-      // object, and a selector on a data attribute would find nothing there.
-      for (const candidate of strip.querySelectorAll('.reward-pick')) {
-        const selected = candidate.dataset.pickId === cardId;
-        // Both, always together (#997): the lift and the shared ring.
-        // A column's text button wears the green trim only: `reward-selected`
-        // is the lift of the face above it, so one option reads as one lit card.
-        if (!candidate.classList.contains('reward-choice-button')) candidate.classList.toggle('reward-selected', selected);
-        candidate.classList.toggle('is-chosen', selected);
-        candidate.setAttribute('aria-checked', String(selected));
-      }
-      // The chosen relic's card face wears the same green trim as its button.
-      // A card face also takes the door's lift (`reward-selected`), as before.
-      for (const face of strip.querySelectorAll('.reward-choice-face')) {
-        const selected = face.dataset.pickId === cardId;
-        face.classList.toggle('reward-selected', selected);
-        face.classList.toggle('is-chosen', selected);
-      }
-      if (isRankUp) {
-        // The face of the card just left goes back to plain rank-up; the new one waits for a bonus pick.
-        const left = previous && previous !== cardId ? rankUpCards.find((inst) => inst.instanceId === previous) : null;
-        const leftNode = left ? [...strip.children].find((n) => n.dataset?.pickId === previous) : null;
-        if (leftNode) leftNode.replaceWith(rankUpFace(left));
-        renderBonusPanel();
-      }
-      confirmButton.disabled = needsBonus();
-      inspectButton.disabled = !inspectionFaces.has(selectedCardId);
-      confirmReason();
-      message.hidden = true;
-    };
-    for (const id of isMilestone && row.rewardKind !== 'cards' ? ids : []) {
-      const option = classMilestoneOption(row, id);
-      const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio',
-        'aria-checked': String(id === selectedCardId), dataset: { pickId: id } }, [
-        el('div', { class: 'cp-body' }, [el('h3', { text: option.name }), el('p', { text: option.text })]),
-      ]);
-      tile.classList.toggle('reward-selected', id === selectedCardId);
-      tile.classList.toggle('is-chosen', id === selectedCardId);
-      tile.addEventListener('click', () => selectCard(id));
-      strip.appendChild(tile);
-      if (option.definition && ['armory', 'relic'].includes(row.rewardKind)) {
-        // Read-only inspection uses the existing complete equipment/relic face.
-        // Its controls remain siblings of the choice button, never nested.
-        const inspection = row.rewardKind === 'armory' ? renderEquipmentInspection(registries, option.definition)
-          : renderCollectibleInspection(registries, option.definition, t('reward.kind.relic'), { interactive: false });
-        inspection.dataset.pickId = id;
-        tile.after(inspection);
-      }
-    }
-    if (isRelic) {
-      strip.classList.add('reward-choice-grid');
-      strip.style.setProperty('--choice-count', String(ids.length));
-    }
-    for (const id of isRelic ? ids : []) {
-      const option = relicOption(id);
-      // One column per relic: a glance face with its shared Information door,
-      // then the accessible choice radio. Reading never chooses a reward.
-      // A relic the run already holds can still be read; choosing it is disabled.
-      const owned = run.relics.includes(id);
-      const column = el('div', { class: `reward-choice-option${owned ? ' is-owned' : ''}`, dataset: { pickId: id } });
-      if (option.definition) {
-        const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance' }).card;
-        face.classList.add('reward-choice-face');
-        face.dataset.pickId = id;
-        face.classList.toggle('reward-selected', id === selectedCardId);
-        face.classList.toggle('is-chosen', id === selectedCardId);
-        inspectionFaces.set(id, face);
-        if (owned) face.classList.add('is-owned');
-        else face.addEventListener('click', () => selectCard(id));
-        column.appendChild(face);
-      }
-      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio', disabled: owned,
-        'aria-checked': String(id === selectedCardId), dataset: { pickId: id } }, [
-        el('div', { class: 'cp-body' }, [el('h3', { text: option.name }), el('p', { text: option.text })]),
-      ]);
-      tile.classList.toggle('is-chosen', id === selectedCardId);
-      if (!owned) tile.addEventListener('click', () => selectCard(id));
-      column.appendChild(tile);
-      strip.appendChild(column);
-    }
-    for (const option of isLevelChoice ? row.options : []) {
-      const choiceId = `${option.kind}:${option.id}`;
-      const feat = option.kind === 'feat' ? featById(option.id) : option.kind === 'skillFeat' ? skillFeatById(option.id) : null;
-      // An attribute pick's option (SPEC §13.4o): the attribute, now and after.
-      const attribute = option.kind === 'attribute' ? { name: attributeLabel(option.id), now: run.attributes?.[option.id] ?? 0 } : null;
-      const node = option.kind === 'classNode' ? (registries.nodes || []).find((entry) => entry.id === option.id) : null;
-      const rule = node && registries.propertyRules?.has(node.id) ? breakPropertyRule({ registries, ratingsRules: registries.balance.combatRatings, breakMeterVersion: run.advancedConfigSnapshot?.breakMeterVersion }, registries.propertyRules.get(node.id)) : null;
-      const tokens = node ? nodeTokens(registries, node.id) : {};
-      const sentence = String(rule?.textTemplate || '').replace(/\{(\w+)\}/g, (m, tok) => tokens[tok] !== undefined ? String(tokens[tok]) : m);
-      const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio',
-        'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId } }, [
-        el('div', { class: 'glyph', 'aria-hidden': 'true' }, engravedIcon(attribute ? 'strength' : feat ? 'staggered' : node?.glyph || 'progression') || uiIconText(node?.glyph || 'progression')),
-        el('div', { class: 'cp-body' }, [
-          el('h3', { text: attribute?.name || feat?.name || node?.label || option.id }),
-          el('p', { text: attribute ? `${attribute.now} → ${attribute.now + 1}` : (feat ? getFeatDescription(registries, feat) : '') || sentence || node?.blurb || '' }),
-        ]),
-      ]);
-      tile.classList.toggle('reward-selected', choiceId === selectedCardId);
-      tile.classList.toggle('is-chosen', choiceId === selectedCardId);
-      tile.addEventListener('click', () => selectCard(choiceId));
-      strip.appendChild(tile);
-    }
-    for (const nodeId of isNodeRow ? ids : []) {
-      const node = (registries.nodes || []).find((n) => n && n.id === nodeId) || { id: nodeId, label: nodeId };
-      const rule = registries.propertyRules && registries.propertyRules.has(nodeId) ? breakPropertyRule({ registries, ratingsRules: registries.balance.combatRatings, breakMeterVersion: run.advancedConfigSnapshot?.breakMeterVersion }, registries.propertyRules.get(nodeId)) : null;
-      const tokens = nodeTokens(registries, nodeId);
-      const sentence = String((rule && rule.textTemplate) || '').replace(/\{(\w+)\}/g, (m, tok) => (tokens[tok] !== undefined ? String(tokens[tok]) : m));
-      const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio', 'aria-checked': String(nodeId === selectedCardId), dataset: { pickId: nodeId, nodeId } }, [
-        el('div', { class: 'glyph', 'aria-hidden': 'true' }, engravedIcon(node.glyph || 'progression') || uiIconText(node.glyph || 'progression')),
-        el('div', { class: 'cp-body' }, [el('h3', { text: node.label }), el('p', { text: sentence || node.blurb || '' })]),
-      ]);
-      tile.classList.toggle('reward-selected', nodeId === selectedCardId);
-      tile.classList.toggle('is-chosen', nodeId === selectedCardId);
-      tile.addEventListener('click', () => selectCard(nodeId));
-      strip.appendChild(tile);
-    }
-    // A rank-up also offers 2-3 bonus options once a card is picked (owner, 2026-11-01): the card shows at its
-    // new rank, and with the chosen bonus applied once one is picked.
-    const rankUpFace = (inst) => {
-      const option = inst.instanceId === selectedCardId ? bonusOptionsOf(inst.instanceId)[pendingBonusByKey[row.key]] : null;
-      const face = renderCard(registries, option ? option.after : { ...inst, rank: instanceRank(inst) + 1 }, {
-        rules: run,
-        owned: ownedCopies(run, inst.cardId),
-        actionOwnsTouch: true,
-        surface: 'reward',
-        only: [],
-      });
-      face.dataset.cardId = inst.cardId;
-      face.dataset.pickId = inst.instanceId;
-      inspectionFaces.set(inst.instanceId, face);
-      face.classList.add('reward-pick');
-      face.setAttribute('role', 'radio');
-      face.setAttribute('aria-checked', String(inst.instanceId === selectedCardId));
-      face.classList.toggle('reward-selected', inst.instanceId === selectedCardId);
-      face.classList.toggle('is-chosen', inst.instanceId === selectedCardId);
-      face.addEventListener('click', () => selectCard(inst.instanceId));
-      return face;
-    };
-    for (const inst of rankUpCards) strip.appendChild(rankUpFace(inst));
-    if (isRankUp) renderBonusPanel();
-    if (isRankUp && !rankUpCards.length) {
-      const skill = skillTracks(registries).find((track) => track.id === row.skillId);
-      strip.appendChild(el('p', { class: 'reward-rank-none', text: t('reward.skillRankUp.none', { skill: (skill && skill.label) || row.skillId }) }));
-    }
-    for (const choiceId of isNodeRow || isLevelChoice || isRankUp || isRelic || (isMilestone && row.rewardKind !== 'cards') ? [] : ids) {
-      const cardId = (row.cardIds || row.options)[ids.indexOf(choiceId)];
-      // Card choices share the relic chooser's grid: one row of option columns,
-      // sized to the offer (kit.css reads --choice-count).
-      strip.classList.add('reward-choice-grid');
-      strip.style.setProperty('--choice-count', String(ids.length));
-      // This face only selects; collection belongs to Confirm. Inspection must
-      // not consume the touch tap before selection enables that button.
-      const grade = draftInstance(row, cardId, choiceId);
-      // The face shows what the card will be once taken: its rank and the
-      // skill bonus and passive Block it would be stamped with (SPEC §13.4o).
-      const skillBonus = skillBonusFor(registries, run, { cardId });
-      const passiveBlock = passiveBlockFor(registries, run, { cardId });
-      // One ref for the face and its text button, so both show the same rules.
-      const faceRef = { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) };
-      const face = renderCard(registries, faceRef, {
-        rules: run,
-        owned: ownedCopies(run, cardId),
-        actionOwnsTouch: true,
-        surface: 'reward',
-        infoBadge: true,
-        only: [],
-      });
-      face.dataset.cardId = cardId;
-      face.dataset.pickId = choiceId;
-      inspectionFaces.set(choiceId, face);
-      // The face is one half of its option column; the text button under it is
-      // the accessible radio (reward-pick). Both select; both take the chosen trim.
-      face.classList.add('reward-choice-face');
-      // `reward-selected` is the door's own lift; `is-chosen` is the ring the
-      // whole game now shares (kit.css). Both, always together.
-      face.classList.toggle('reward-selected', choiceId === selectedCardId);
-      face.classList.toggle('is-chosen', choiceId === selectedCardId);
-      if (marks.cards.includes(cardId)) {
-        // The marker is a RENDERED badge, not only a data attribute — Codex
-        // 4989824448's third finding: `data-new` alone had no consumer in any
-        // stylesheet or renderer, so the promise was inert pixels-wise. The
-        // attribute stays as the machine-readable hook; the chip is what the
-        // player sees. Positioned inside `.card` (its named container —
-        // position: relative, ui.css) per Law 2.
-        face.dataset.new = '1';
-        const badge = document.createElement('span');
-        badge.className = 'chip reward-new card-badge-new';
-        badge.textContent = t('reward.card.new');
-        face.appendChild(badge);
-      }
-      // First tap selects; a tap on the already-selected face opens the inspector (owner, 2026-11-05).
-      face.addEventListener('click', () => {
-        if (selectedCardId === choiceId && !confirming && !taken()) openBoundCardInspection(face, face);
-        else selectCard(choiceId);
-      });
-      // A fixed-size choice button names the card. Full rules remain in the
-      // shared inspection and in its accessible description, without clipping
-      // a paragraph into the same box as the name.
-      const effect = cardPlainText(registries, faceRef, { rules: run });
-      const tile = button({ label: registries.cards.get(cardId)?.name || cardId,
-        className: 'class-pick reward-node reward-pick reward-choice-button',
-        attrs: { role: 'radio', 'aria-checked': String(choiceId === selectedCardId),
-          'aria-description': effect, dataset: { pickId: choiceId, cardId } },
-      });
-      // The button wears the green trim only; `reward-selected` stays the
-      // card face's own lift, so one card reads as the one lit selection.
-      tile.classList.toggle('is-chosen', choiceId === selectedCardId);
-      tile.addEventListener('click', () => selectCard(choiceId));
-      const column = el('div', { class: 'reward-choice-option', dataset: { pickId: choiceId } });
-      column.append(face, tile);
-      strip.appendChild(column);
-    }
-    confirmButton.disabled = !selectedCardId || needsBonus();
-    inspectButton.disabled = !inspectionFaces.has(selectedCardId);
-    confirmReason();
-    // Confirm stages a review only. Continue is the sole persistence door;
-    // Back can change the selection without undoing inventory or class grants.
-    const commitSelection = () => {
-      if (!selectedCardId || confirming || taken()) return;
-      confirming = true;
-      inspectButton.disabled = true; strip.inert = true;
-      confirmButton.disabled = true;
-      try {
-        const cardSelection = row.kind === 'skillDraft' && row.choiceIds ? { cardId: row.cardIds[row.choiceIds.indexOf(selectedCardId)] } : {};
-        const bonusStep = isRankUp ? bonusOptionsOf(selectedCardId)[pendingBonusByKey[row.key]]?.step : undefined;
-        if (take({ ...row, ...cardSelection, ...(bonusStep ? { bonusStep } : {}), [pickField]: selectedCardId }, row.key)) return;
-        message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : row.kind === 'classDraft' ? 'reward.classDraft.spent' : isRankUp ? 'reward.skillRankUp.spent' : row.kind === 'skillAttribute' ? 'reward.skillAttribute.spent' : row.kind === 'skillFeat' ? 'reward.skillFeat.spent' : 'reward.card.alreadyTaken');
-      } catch {
-        message.textContent = t('reward.card.saveFailed');
-      }
-      message.hidden = false;
-      confirming = false;
-      inspectButton.disabled = !inspectionFaces.has(selectedCardId); strip.inert = false;
-      confirmButton.disabled = false;
-    };
-    confirmButton.addEventListener('click', () => {
-      if (!selectedCardId || confirming || taken()) return;
-      if (reviewing) return commitSelection();
-      reviewing = true;
-      confirmButton.textContent = t('common.continue');
-      backButton.textContent = t('common.back');
-      strip.setAttribute('aria-label', t('reward.confirm'));
-      // Preserve the real selected face and its authored details for review.
-      for (const option of strip.children) {
-        option.hidden = !option.matches('.reward-selected') && !option.querySelector('.reward-selected')
-          && option.dataset.pickId !== selectedCardId;
-      }
-      for (const control of strip.querySelectorAll('button.reward-pick')) control.disabled = true;
-      for (const control of bonusPanel.querySelectorAll('button')) control.disabled = true;
-    });
-    backButton.addEventListener('click', () => {
-      if (confirming || taken()) return;
-      if (reviewing) return renderChooser(row);
-      states[row.key] = 'skipped';
-      try { persistProgress(); }
-      catch {
+    function restoreSnapshot(row, snapshot)
+    {
+        run.skills = snapshot.skills;
+        if (snapshot.rankUp)
+        {
+            const {
+                instance,
+                rank,
+                steps,
+                upgraded,
+                chosen,
+            } = snapshot.rankUp;
+            setOrDeleteKey(instance, 'rank', rank);
+            setOrDeleteKey(instance, 'upgradeSteps', steps);
+            setOrDeleteKey(instance, 'upgraded', upgraded);
+            replaceObjectContents(chosenRankUps, chosen);
+        }
         delete states[row.key];
-        if (checkpoint) checkpoint.states = { ...states };
-        message.textContent = t('reward.card.saveFailed');
-        message.hidden = false;
-        return;
-      }
-      backTo(row.key);
-    });
-    if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'), 0);
-  }
-
-  function expandVictory() {
-    if (checkpoint) checkpoint.expanded = true;
-    persistProgress();
-    renderMenu();
-  }
-
-  function renderCompactVictory() {
-    const total = Math.max(0, Math.floor(Number(rewards.xpGains?.level) || 0));
-    const savedRows = rewards.xpReceipt?.rows;
-    // An older saved reward has no itemized receipt. Show its paid total as
-    // one honest row; never reconstruct enemy levels from the resumed run.
-    const rows = Array.isArray(savedRows) && savedRows.every((row) => Number.isSafeInteger(row.amount))
-      && savedRows.reduce((sum, row) => sum + row.amount, 0) === total
-      ? savedRows : [{ kind: 'legacy', amount: total }];
-    const options = victoryXpPresentation(settings, document.body.classList.contains('reduced-motion'));
-    const timing = victoryXpTiming(rows.length, options);
-    const open = button({ label: t('common.continue'), weight: 'primary', id: 'reward-expand', className: 'reward-compact-continue', disabled: true });
-    const formula = el('span', { class: 'reward-compact-formula' });
-    const more = el('button', { class: 'reward-compact-more', type: 'button', text: '+…', 'aria-label': t('reward.xp.more.aria') });
-    more.hidden = true;
-    const arithmetic = el('span', { class: 'reward-compact-arithmetic' }, [formula, more]);
-    const value = el('strong', { class: 'reward-compact-value', text: t('reward.xp.zero'), 'aria-live': 'polite' });
-    const summary = el('div', { class: 'reward-compact-summary' }, [
-      el('span', { class: 'reward-compact-heading', text: t('reward.xp.total') }), arithmetic, value,
-    ]);
-    const list = el('ol', { class: 'reward-compact-list', 'aria-label': t('reward.xp.list.aria') });
-    list.style.setProperty('--receipt-rows', String(options.visibleRows));
-    const body = el('div', { class: 'reward-compact-xp' }, [summary, list]);
-    const modal = door({ eyebrow: '', title: rewards.title || t('reward.title.victory'),
-      attrs: { dataset: { size: 'sm', victoryCompact: 'true' } }, body,
-      foot: modalFooter({ primary: open, className: 'reward-foot', size: 'medium' }),
-    });
-    const fullCalculation = () => `<div class="tt-title">Full XP calculation</div><div>${esc(victoryXpFormula(rows, rows.length, options.formulaTerms).full)}</div>`;
-    const tooltipPlacement = { intent: 'above', align: 'end', clear: modal, appearance: { maxWidthRem: 30, maxHeightRatio: 0.5 } };
-    attachTooltip(more, fullCalculation, tooltipPlacement);
-    more.addEventListener('click', () => showTooltipFor(more, fullCalculation(), tooltipPlacement));
-    let ready = false;
-    let shown = 0;
-    const view = doorView;
-    const active = () => modal.isConnected && doorView === view && app.querySelector('.reward-door') === modal;
-    const updateFormula = () => {
-      const expression = victoryXpFormula(rows, shown, options.formulaTerms);
-      formula.textContent = expression.shown;
-      more.hidden = !expression.collapsed;
-    };
-    const addRow = (row) => {
-      const label = row.kind === 'power' ? 'Combat-power victory bonus'
-        : row.kind === 'enemy' ? `${row.name || t('combat.log.role.enemy')} · Level ${row.level || 1}`
-          : row.kind === 'bonus' ? 'Character XP bonus' : 'Battle XP';
-      const amount = el('strong', { class: 'reward-compact-row-value', text: '+0' });
-      const item = el('li', { class: 'reward-compact-row' }, [
-        el('span', { class: 'reward-compact-row-label', text: label }), amount,
-      ]);
-      list.appendChild(item);
-      list.scrollTop = list.scrollHeight;
-      return amount;
-    };
-    const arm = () => {
-      if (!active()) return;
-      ready = true;
-      open.disabled = false;
-      open.classList.add('is-ready');
-      if (settings.victorySummaryMode === 'auto') expandVictory();
-    };
-    const pause = (ms) => ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
-    const count = (from, to, ms, render) => new Promise((resolve) => {
-      if (ms <= 0) { render(to); resolve(); return; }
-      const start = performance.now();
-      const frame = (now) => {
-        if (!active()) { resolve(); return; }
-        const fraction = Math.min(1, (now - start) / ms);
-        render(from + Math.round((to - from) * fraction));
-        if (fraction >= 1) resolve();
-        else requestAnimationFrame(frame);
-      };
-      requestAnimationFrame(frame);
-    });
-    const show = (row, running) => {
-      const amount = addRow(row);
-      return (next) => {
-        amount.textContent = `${next < 0 ? '−' : '+'}${Math.abs(next)}`;
-        value.textContent = `${running + next} XP`;
-      };
-    };
-    if (options.totalMs === 0) {
-      let running = 0;
-      for (const row of rows) {
-        show(row, running)(row.amount);
-        running += row.amount;
-        shown += 1;
-      }
-      updateFormula();
-      if (options.readyMs === 0) arm();
-      else setTimeout(arm, options.readyMs);
-    } else {
-      (async () => {
-        let running = 0;
-        for (const [index, row] of rows.entries()) {
-          if (!active()) return;
-          await count(0, row.amount, timing.tickMs, show(row, running));
-          if (!active()) return;
-          running += row.amount;
-          shown = index + 1;
-          updateFormula();
-          if (index < rows.length - 1) await pause(timing.pauseMs);
+        if (checkpoint)
+        {
+            replaceObjectContents(checkpoint, snapshot.checkpoint);
         }
-        await pause(options.readyMs);
-        arm();
-      })();
     }
-    open.addEventListener('click', () => { if (ready) expandVictory(); });
-    if (settings.victorySummaryMode === 'anywhere') {
-      app.querySelector('.reward-veil')?.addEventListener('click', (event) => {
-        if (ready && active() && event.target !== open && event.target !== more) expandVictory();
-      });
-    }
-  }
 
-  sfx.play('victory');
-  grantCinders();
-  if (receiptOnly) renderMenu();
-  else if (checkpoint?.expanded) expandVictory();
-  else if (!checkpoint?.source || !rewards.xpGains) renderMenu();
-  else renderCompactVictory();
+    function takeRewardRow(row, focusKey)
+    {
+        if (states[row.key])
+        {
+            return false;
+        }
+        const snapshot = snapshotBeforeTaking(row);
+        if (!applyRewardByKind[row.kind](row))
+        {
+            return false;
+        }
+        states[row.key] = STATE_TAKEN;
+        try
+        {
+            persistProgress();
+        }
+        catch (error)
+        {
+            if (snapshot)
+            {
+                restoreSnapshot(row, snapshot);
+            }
+            throw error;
+        }
+        sfx.play(`rewardTake_${row.kind}`);
+        renderMenu(focusKey || row.key);
+        return true;
+    }
+
+    function renderMenu(focusKind = null)
+    {
+        const notesHtml = rewardNotes(rewards).map(rewardNoteHtml).join('');
+        const rowsHtml = plan.rows.map(rewardRowHtml).join('');
+        const {
+            continueButton,
+            foot,
+            note,
+        } = buildMenuFoot();
+        const claim = rewardClaimStatus(plan, states);
+        const claimedStatus = buildClaimedStatus(claim);
+        const cindersLine = buildCindersLine();
+        openDoor({
+            eyebrow: translate(readMenuEyebrowId()),
+            title: readVictoryTitle(rewards),
+            status: claimedStatus,
+            body: buildClaimLayout(rowsHtml + notesHtml, claim, cindersLine),
+            foot,
+        });
+        appRoot.querySelector(MENU_SELECTOR).inert = !xpAnimationDone;
+
+        bindMenuControls(continueButton, note);
+
+        scheduleXpAnimation(appRoot.querySelector(CLAIM_LAYOUT_SELECTOR));
+        if (isEngaged())
+        {
+            setTimeout(() => focusRewardTarget(focusKind), 0);
+        }
+    }
+
+    function readMenuEyebrowId()
+    {
+        return plan.rows.length > 0
+            ? 'reward.eyebrow.claim'
+            : 'reward.eyebrow.spoils';
+    }
+
+    function buildClaimedStatus(claim)
+    {
+        if (!(plan.rows.length > 0))
+        {
+            return null;
+        }
+        return buildElement('span', {
+            class: 'as-status modal-head-status',
+            text: translate('reward.status.claimed', {
+                claimed: claim.claimed,
+                total: claim.total,
+            }),
+        });
+    }
+
+    function buildCindersLine()
+    {
+        if (
+            !receiptOnly
+            || !rewards.cinders
+        )
+        {
+            return null;
+        }
+        return buildElement('p', {
+            class: 'spoils-line spoils-cinders',
+            text: translate('reward.spoils.cinders', {
+                gained: rewards.cinders.gained,
+                total: rewards.cinders.total,
+            }),
+        });
+    }
+
+    function buildClaimLayout(menuHtml, claim, cindersLine)
+    {
+        return buildElement(
+            'div',
+            {
+                class: 'reward-claim-layout',
+                'aria-busy': String(!xpAnimationDone),
+            },
+            [
+                buildElement('div', {
+                    class: 'class-row reward-menu',
+                    html: menuHtml,
+                }),
+                buildSideColumn(claim),
+                buildStatAllocationSection(),
+                cindersLine,
+            ],
+        );
+    }
+
+    function buildStatAllocationSection()
+    {
+        if (!receiptOnly)
+        {
+            return null;
+        }
+        // Earned attribute points open the level-up modal (owner, 2026-11-17), never an inline panel.
+        if (!onAllocateStat || !(run.level?.unspentPoints > 0))
+        {
+            return null;
+        }
+        const host = buildElement('div', { class: 'spoils-points reward-stat-points' });
+        const draw = () =>
+        {
+            const points = LevelUpPointsButton(registries, run, {
+                settings,
+                onAllocateStat,
+                id: 'reward-stat-points',
+                onChange: () =>
+                {
+                    persistProgress();
+                    draw();
+                },
+            });
+            host.replaceChildren(...(points ? [points] : []));
+        };
+        draw();
+        return host;
+    }
+
+    function bindMenuControls(continueButton, note)
+    {
+        bindRewardRows(appRoot);
+        bindSkipButtons();
+        attachTooltip(continueButton, () =>
+            tooltipHtml(
+                translate('reward.continue'),
+                LEAVE_TOOLTIP_COPY,
+            ));
+        armContinue(continueButton, note);
+    }
+
+    function buildMenuFoot()
+    {
+        const continueButton = button({
+            label: translate('reward.continue'),
+            weight: 'primary',
+            id: CONTINUE_ID,
+            disabled: !xpAnimationDone,
+            attrs: {
+                'aria-describedby': HOLD_NOTE_ID,
+                'data-confirm-ready': String(xpAnimationDone),
+            },
+        });
+        const foot = modalFooter({
+            note: readHoldNote(),
+            primary: continueButton,
+            className: 'reward-foot',
+            size: FOOT_SIZE,
+        });
+        const note = foot.querySelector('.modal-foot-note');
+        note.id = HOLD_NOTE_ID;
+        note.setAttribute('aria-live', 'polite');
+        return {
+            continueButton,
+            foot,
+            note,
+        };
+    }
+
+    function readHoldNote()
+    {
+        if (receiptOnly)
+        {
+            return RECEIPT_HOLD_COPY;
+        }
+        const pendingRows = plan.rows.filter((row) =>
+            !states[row.key]
+            && !row.blockedBy
+        );
+        if (pendingRows.some(isProgressionReward))
+        {
+            return UNFINISHED_HOLD_COPY;
+        }
+        const allResolved = plan.rows.every((row) =>
+            states[row.key] === STATE_TAKEN
+            || states[row.key] === STATE_SKIPPED
+        );
+        return translate(allResolved ? 'reward.hold.complete' : 'reward.hold.leavesRest');
+    }
+
+    function focusRewardTarget(focusKind)
+    {
+        const focusedKind = focusKind
+            && focusFirst(`.reward-kind[data-key="${focusKind}"]`);
+        return focusedKind
+            || focusFirst(UNLOCKED_ROW_SELECTOR)
+            || focusFirst(CONTINUE_SELECTOR);
+    }
+
+    function describeRewardRow(row)
+    {
+        if (row.kind === SMITHING_STONE)
+        {
+            return smithingStoneRowCopy(row, translate);
+        }
+        if (row.kind !== SKILL_RANK_UP)
+        {
+            return {
+                title: row.kind,
+                body: '',
+            };
+        }
+        const label = escapeHtml(readSkillLabel(row.skillId));
+        const title = translate('reward.skillRankUp.title', {
+            skill: label,
+            level: row.level,
+        });
+        if (states[row.key] === STATE_TAKEN)
+        {
+            return {
+                title,
+                body: describeRaisedCard(row),
+            };
+        }
+        const hasCandidates = rankUpCandidates(registries, run, row.skillId).length > 0;
+        const bodyId = hasCandidates
+            ? 'reward.skillRankUp.body'
+            : NONE_ID;
+        return {
+            title,
+            body: translate(bodyId, { skill: label }),
+        };
+    }
+
+    function describeRaisedCard(row)
+    {
+        const instance = findOwnedInstance(chosenRankUps[row.key]);
+        const definition = instance
+            && registries.cards.get(instance.cardId);
+        const cardName = definition?.name
+            || chosenRankUps[row.key]
+            || '';
+        return translate('reward.skillRankUp.raised', {
+            name: escapeHtml(cardName),
+            rank: readCardRank(instance),
+        });
+    }
+
+    function readRowState(row)
+    {
+        return states[row.key] || (row.blockedBy ? STATE_BLOCKED : STATE_PENDING);
+    }
+
+    function rewardRowHtml(row)
+    {
+        const rowState = readRowState(row);
+        const { title, body } = describeRewardRow(row);
+        const isOffer = rowState === STATE_PENDING
+            && isProgressionReward(row);
+        const lockedClass = LOCKED_STATES.has(rowState) ? ' locked' : '';
+        const offerClass = isOffer ? ' reward-level-offer' : '';
+        const chipId = STATE_COPY_IDS[rowState];
+        const chip = chipId
+            ? `<span class="chip">${escapeHtml(translate(chipId))}</span>`
+            : '';
+        const skipHtml = rowState === STATE_BLOCKED
+            ? skipButtonHtml(row, title)
+            : '';
+        const glyph = engravedIconHtml(KIND_GLYPHS[row.kind])
+            || escapeHtml(uiIconText(KIND_GLYPHS[row.kind] || '?'));
+        return `
+      <div class="class-pick reward-kind${lockedClass}${offerClass}"
+           data-kind="${escapeHtml(row.kind)}" data-key="${escapeHtml(row.key)}"
+           data-state="${escapeHtml(rowState)}"
+           data-blocked-by="${escapeHtml(row.blockedBy || '')}">
+        <div class="glyph">${glyph}</div>
+        <div class="cp-body">
+          <h3>${escapeHtml(title)}</h3>
+          <p>${body}</p>
+          ${chip}
+        </div>
+        ${skipHtml}
+      </div>`;
+    }
+
+    function bindRewardRows(root)
+    {
+        for (const rowElement of root.querySelectorAll('.reward-kind'))
+        {
+            const row = plan.rows.find((candidate) => candidate.key === rowElement.dataset.key);
+            const rowState = rowElement.dataset.state;
+            attachTooltip(rowElement, () => readRowTooltip(row, rowState));
+            if (LOCKED_STATES.has(rowState))
+            {
+                continue;
+            }
+            rowElement.addEventListener('click', () => chooseRewardRow(row));
+        }
+    }
+
+    function readRowTooltip(row, rowState)
+    {
+        if (rowState === STATE_BLOCKED)
+        {
+            return tooltipHtml(
+                translateTip('reward.blocked.slots'),
+                translateFull('reward.blocked.slots'),
+            );
+        }
+        if (rowState === STATE_TAKEN)
+        {
+            return tooltipHtml(translateTip('reward.state.taken'));
+        }
+        const offerId = readOfferCopyId(row);
+        return tooltipHtml(translateTip(offerId), translateFull(offerId));
+    }
+
+    function chooseRewardRow(row)
+    {
+        if (!xpAnimationDone)
+        {
+            return;
+        }
+        if (row.kind === SKILL_RANK_UP)
+        {
+            return rankUpCandidates(registries, run, row.skillId).length
+                ? openRankUpPicker(row)
+                : renderRankUpChooser(row);
+        }
+        takeRewardRow(row);
+    }
+
+    // Playtest 2026-11-17 item 45a: a skill's rank-up is a card upgrade, so it uses the Blacksmith's card-upgrade
+    // picker (cardUpgradeModal.js): choose the card, its bonus options open under it, Rank up commits. Back closes the
+    // picker and leaves the row as it was, to take now or leave queued.
+    function openRankUpPicker(row)
+    {
+        if (states[row.key])
+        {
+            return;
+        }
+        let selection = null;
+        const faceOf = (instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
+        const readModel = () => RankUpUpgradeModel(registries, run, row.skillId, selection, { faceOf });
+        const opener = [...appRoot.querySelectorAll('.reward-kind')].find((node) => node.dataset.key === row.key) || null;
+        const picker = MountCardUpgradeModal(appRoot, readModel(), {
+            registries,
+            meta,
+            title: describeRewardRow(row).title,
+            backLabel: translate('common.back'),
+            confirmLabel: translate('rankUp.pick.confirm'),
+            returnFocusElement: opener,
+            onSelect: (instanceId) =>
+            {
+                selection = instanceId;
+                picker.update(readModel());
+            },
+            onBack: () => {},
+            onConfirm: (instanceId, plan) =>
+            {
+                const taking = {
+                    ...row,
+                    instanceId,
+                    ...(plan?.step ? { bonusStep: plan.step } : {}),
+                };
+                try
+                {
+                    return takeRewardRow(taking, row.key);
+                }
+                catch
+                {
+                    renderMenu(row.key);
+                    return false;
+                }
+            },
+        });
+    }
+
+    function bindSkipButtons()
+    {
+        for (const skipButton of appRoot.querySelectorAll('[data-skip]'))
+        {
+            attachTooltip(skipButton, () =>
+                tooltipHtml(
+                    translateTip('reward.skip'),
+                    translateFull('reward.skip'),
+                ));
+            skipButton.addEventListener('click', (event) =>
+            {
+                event.stopPropagation();
+                skipBlockedRow(skipButton.dataset.skip);
+            });
+        }
+    }
+
+    function skipBlockedRow(rowKey)
+    {
+        states[rowKey] = STATE_SKIPPED;
+        persistProgress();
+        renderMenu(rowKey);
+    }
+
+    function armContinue(continueButton, note)
+    {
+        function finishRewards()
+        {
+            if (!xpAnimationDone)
+            {
+                return;
+            }
+            onDone();
+            disarmContinue?.();
+            disarmContinue = null;
+        }
+
+        function leave()
+        {
+            if (!receiptOnly)
+            {
+                return finishRewards();
+            }
+            if (
+                receiptContinued
+                || !xpAnimationDone
+            )
+            {
+                return;
+            }
+            receiptContinued = true;
+            try
+            {
+                finishRewards();
+            }
+            catch (error)
+            {
+                receiptContinued = false;
+                note.textContent = error.message;
+            }
+        }
+
+        function confirmLeaving()
+        {
+            if (!hasUnclaimedReward())
+            {
+                return leave();
+            }
+            OpenConfirmationModal({
+                title: translate('reward.leave.question'),
+                message: translate('reward.leave.message'),
+                confirmLabel: translate('reward.leave.confirm'),
+                cancelLabel: translate('reward.leave.take'),
+                returnFocusElement: continueButton,
+                onConfirm: leave,
+            });
+        }
+
+        disarmContinue?.();
+        disarmContinue = beatArmer(meta, registries)(continueButton, 'rewardContinue', {
+            onConfirm: confirmLeaving,
+        });
+    }
+
+    function buildSideColumn(claim)
+    {
+        const progressionPanel = buildProgressPanel();
+        const showsClaimPanel = !progressionPanel
+            && plan.rows.length;
+        const claimPanel = showsClaimPanel
+            ? buildClaimStatusPanel(claim)
+            : null;
+        const panels = [progressionPanel, claimPanel].filter(Boolean);
+        return panels.length
+            ? buildElement('div', { class: 'reward-side' }, panels)
+            : null;
+    }
+
+    function buildClaimStatusPanel(claim)
+    {
+        const claimLines = claim.rows.map(buildClaimLine);
+        const requiredChoice = buildRequiredChoice(claim);
+        return buildElement(
+            'aside',
+            {
+                class: 'reward-claim-status',
+                'aria-label': translate('reward.claim.heading'),
+            },
+            [
+                buildElement('h3', {
+                    class: 'as-eyebrow',
+                    text: translate('reward.claim.heading'),
+                }),
+                buildElement('ul', { class: 'reward-claim-list' }, claimLines),
+                requiredChoice,
+            ],
+        );
+    }
+
+    function buildClaimLine(claimRow)
+    {
+        const stateId = claimRow.state === STATE_BLOCKED
+            ? 'reward.claim.blocked'
+            : `reward.state.${claimRow.state}`;
+        const planRow = plan.rows.find((row) => row.key === claimRow.key);
+        return buildElement(
+            'li',
+            {
+                class: 'reward-claim-row',
+                dataset: {
+                    kind: claimRow.kind,
+                    key: claimRow.key,
+                    state: claimRow.state,
+                },
+            },
+            [
+                buildElement('span', {
+                    class: 'reward-claim-name',
+                    text: describeRewardRow(planRow).title,
+                }),
+                buildElement('span', {
+                    class: 'reward-claim-state',
+                    text: translate(stateId),
+                }),
+            ],
+        );
+    }
+
+    function buildProgressPanel()
+    {
+        const hasNoProgress = !xpProgress
+            || (
+                !xpProgress.character
+                && !xpProgress.skills.length
+            );
+        if (hasNoProgress)
+        {
+            return null;
+        }
+        const progressRows = orderedXpRows(xpProgress)
+            .map((row) => buildProgressRow(row, readProgressLabel(row)));
+        return buildElement(
+            'section',
+            {
+                class: 'reward-progress',
+                'aria-label': translate('reward.progress.heading'),
+                'aria-busy': String(!xpAnimationDone),
+            },
+            [
+                buildElement('h3', {
+                    class: 'as-eyebrow',
+                    text: translate('reward.progress.heading'),
+                }),
+                buildElement('ul', { class: 'reward-progress-list' }, progressRows),
+            ],
+        );
+    }
+
+    function buildProgressRow(row, label)
+    {
+        const nextLevel = buildNextLevelLabel(row);
+        const targetPercent = row.fraction * 100;
+        const xpBefore = readXpBefore(row);
+        const startPercent = readStartPercent(row, xpBefore);
+        const animate = shouldAnimateBar(row, xpBefore);
+        const bar = buildProgressBar(row, label, {
+            animate,
+            startPercent,
+            targetPercent,
+        });
+        const levelNow = readLevelNowText(row);
+        const gainedNode = buildGainedNode(row);
+        const discardedNode = buildDiscardedNode(row);
+        const rowNode = buildElement(
+            'li',
+            {
+                class: 'reward-progress-row',
+                dataset: {
+                    kind: row.kind,
+                    track: row.id,
+                    gained: String(row.gained),
+                },
+            },
+            [
+                buildElement('span', {
+                    class: 'rp-name',
+                    text: label,
+                }),
+                buildElement('span', {
+                    class: 'rp-level',
+                    text: levelNow,
+                }),
+                bar,
+                nextLevel,
+                gainedNode,
+                discardedNode,
+            ],
+        );
+        attachProgressTooltip(rowNode, row, label);
+        return rowNode;
+    }
+
+    function readXpBefore(row)
+    {
+        return row.kind === 'character'
+            ? rewards.xpBefore?.character
+            : rewards.xpBefore?.tracks?.[row.id];
+    }
+
+    function shouldAnimateBar(row, xpBefore)
+    {
+        return !xpAnimationDone
+            && row.gained > 0
+            && !!xpBefore
+            && !animatedTracks.has(row.id);
+    }
+
+    function isCurrentLayout(host)
+    {
+        return host?.isConnected
+            && appRoot.querySelector(CLAIM_LAYOUT_SELECTOR) === host;
+    }
+
+    function scheduleXpAnimation(host)
+    {
+        if (
+            !host
+            || xpAnimationDone
+            || !xpProgress
+            || !rewards.xpBefore
+        )
+        {
+            return;
+        }
+        setTimeout(() =>
+        {
+            if (isCurrentLayout(host))
+            {
+                playXpAnimation(host);
+            }
+        }, 0);
+    }
+
+    function readXpFillMilliseconds()
+    {
+        const requested = Number(settings.victoryXpSeconds);
+        const seconds = Number.isFinite(requested) ? requested : DEFAULT_XP_SECONDS;
+        return isReducedMotion()
+            ? 0
+            : Math.max(0, Math.min(MAX_XP_MILLISECONDS, seconds * 1000));
+    }
+
+    async function playXpAnimation(host)
+    {
+        if (host.xpAnimationRunning)
+        {
+            return;
+        }
+        host.xpAnimationRunning = true;
+        const bars = [...host.querySelectorAll(ANIMATED_BAR_SELECTOR)];
+        const durations = readBarDurations(bars, readXpFillMilliseconds());
+        for (const [barIndex, bar] of bars.entries())
+        {
+            const duration = durations[barIndex];
+            if (!hasBothFills(bar))
+            {
+                continue;
+            }
+            const targetWidth = `${bar.dataset.target}%`;
+            if (duration > 0)
+            {
+                startBarFill(bar, duration, targetWidth);
+                await pauseFor(duration);
+                if (!isCurrentLayout(host))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                setBarWidths(bar, targetWidth);
+            }
+            markBarFilled(bar);
+        }
+        if (!isCurrentLayout(host))
+        {
+            return;
+        }
+        host.xpAnimationRunning = false;
+        xpAnimationDone = true;
+        refreshProgressView();
+    }
+
+    function markBarFilled(bar)
+    {
+        animatedTracks.add(bar.dataset.track);
+        if (Number(bar.dataset.target) >= 100)
+        {
+            bar.classList.add('rp-bar-ready');
+        }
+    }
+
+    function refreshProgressView()
+    {
+        const layout = appRoot.querySelector(CLAIM_LAYOUT_SELECTOR);
+        const panel = layout?.querySelector(PROGRESS_PANEL_SELECTOR);
+        const nextPanel = panel ? buildProgressPanel() : null;
+        if (!nextPanel)
+        {
+            renderMenu();
+            return;
+        }
+        panel.after(nextPanel);
+        panel.remove();
+        syncLayoutToXpAnimation(layout);
+        refocusWhenFocusLost();
+        scheduleXpAnimation(layout);
+    }
+
+    function syncLayoutToXpAnimation(layout)
+    {
+        const menu = layout.querySelector(MENU_SELECTOR);
+        if (menu)
+        {
+            menu.inert = !xpAnimationDone;
+        }
+        layout.setAttribute('aria-busy', String(!xpAnimationDone));
+        const continueButton = appRoot.querySelector(CONTINUE_SELECTOR);
+        if (continueButton)
+        {
+            continueButton.disabled = !xpAnimationDone;
+            continueButton.dataset.confirmReady = String(xpAnimationDone);
+        }
+        const note = appRoot.querySelector(`#${HOLD_NOTE_ID}`);
+        if (note)
+        {
+            note.textContent = readHoldNote();
+        }
+    }
+
+    function refocusWhenFocusLost()
+    {
+        const focused = document.activeElement;
+        const hasLostFocus = !focused
+            || focused === document.body
+            || !focused.isConnected;
+        if (
+            isEngaged()
+            && hasLostFocus
+        )
+        {
+            focusRewardTarget(null);
+        }
+    }
+
+    function renderRankUpChooser(row)
+    {
+        const isTaken = () => states[row.key];
+        const rankUpCards = rankUpCandidates(registries, run, row.skillId);
+        let selectedCardId = pendingCardIdByKey[row.key] || null;
+        let confirming = false;
+        let reviewing = false;
+        const inspectionFaces = new Map();
+        const backButton = buildChooserBackButton();
+        const confirmButton = buildChooserConfirmButton();
+        const inspectButton = buildInspectButton();
+        inspectButton.addEventListener('click', inspectSelectedCard);
+        openChooserDoor();
+        const strip = appRoot.querySelector(CHOOSER_STRIP_SELECTOR);
+        const message = buildConfirmStatusMessage();
+        strip.after(message);
+        const confirmReason = reasonWhenDisabled(confirmButton, readConfirmDisabledReason);
+        const bonusPanel = buildRankBonusPanel();
+        strip.after(bonusPanel);
+
+        fillCandidateStrip();
+        confirmButton.disabled = !selectedCardId
+            || needsBonus();
+        syncActionButtons();
+
+        confirmButton.addEventListener('click', pressConfirm);
+        backButton.addEventListener('click', pressBack);
+        focusChooserWhenEngaged();
+
+        function inspectSelectedCard()
+        {
+            if (
+                !confirming
+                && !isTaken()
+            )
+            {
+                openBoundCardInspection(inspectionFaces.get(selectedCardId), inspectButton);
+            }
+        }
+
+        function openChooserDoor()
+        {
+            openDoor({
+                eyebrow: describeRewardRow(row).title,
+                title: readVictoryTitle(rewards),
+                body: buildElement('div', {
+                    class: 'reward-row',
+                    role: 'radiogroup',
+                    'aria-label': translate('reward.card.aria'),
+                }),
+                foot: modalFooter({
+                    secondary: [backButton, inspectButton],
+                    primary: confirmButton,
+                    className: 'reward-foot reward-chooser-foot',
+                    size: FOOT_SIZE,
+                }),
+            });
+        }
+
+        function readConfirmDisabledReason()
+        {
+            if (!selectedCardId)
+            {
+                return translate('reward.confirm.reason');
+            }
+            return needsBonus() ? translate('reward.rankBonus.reason') : null;
+        }
+
+        function fillCandidateStrip()
+        {
+            for (const instance of rankUpCards)
+            {
+                strip.appendChild(buildRankUpFace(instance));
+            }
+            renderBonusPanel();
+            if (!rankUpCards.length)
+            {
+                strip.appendChild(buildElement('p', {
+                    class: 'reward-rank-none',
+                    text: translate(NONE_ID, { skill: readSkillLabel(row.skillId) }),
+                }));
+            }
+        }
+
+        function focusChooserWhenEngaged()
+        {
+            if (isEngaged())
+            {
+                setTimeout(
+                    () => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'),
+                    0,
+                );
+            }
+        }
+
+        function bonusOptionsOf(instanceId)
+        {
+            if (!instanceId)
+            {
+                return [];
+            }
+            return rankUpBonusOptions(registries, run, findOwnedInstance(instanceId));
+        }
+
+        function needsBonus()
+        {
+            return !!selectedCardId
+                && bonusOptionsOf(selectedCardId).length > 0
+                && !(pendingBonusIndexByKey[row.key] >= 0);
+        }
+
+        function faceOf(instance)
+        {
+            return projectGameCard(run, instance) || resolveCard(registries, instance);
+        }
+
+        function findStripFace(instanceId)
+        {
+            return [...strip.children].find((face) => face.dataset?.pickId === instanceId);
+        }
+
+        function syncActionButtons()
+        {
+            inspectButton.disabled = !inspectionFaces.has(selectedCardId);
+            confirmReason();
+        }
+
+        function renderBonusPanel()
+        {
+            bonusPanel.replaceChildren();
+            const bonusOptions = bonusOptionsOf(selectedCardId);
+            bonusPanel.hidden = !bonusOptions.length;
+            if (!bonusOptions.length)
+            {
+                return;
+            }
+            const instance = findOwnedInstance(selectedCardId);
+            const rankedFace = faceOf({
+                ...instance,
+                rank: readCardRank(instance) + 1,
+            });
+            bonusPanel.appendChild(buildElement('p', {
+                class: 'reward-rank-bonus-title',
+                text: translate('reward.rankBonus.label'),
+            }));
+            bonusOptions.forEach((bonusOption, optionIndex) =>
+            {
+                bonusPanel.appendChild(buildBonusChoice(
+                    bonusOption,
+                    optionIndex,
+                    bonusOptions.length,
+                    rankedFace,
+                ));
+            });
+        }
+
+        function buildBonusChoice(bonusOption, optionIndex, optionCount, rankedFace)
+        {
+            const changes = cardUpgradeChanges(registries, rankedFace, faceOf(bonusOption.after));
+            const summary = describeBonusChanges(changes)
+                || translate('reward.rankBonus.option', {
+                    n: optionIndex + 1,
+                });
+            const isChosen = pendingBonusIndexByKey[row.key] === optionIndex;
+            const chosenClass = isChosen
+                ? ` ${CHOSEN_CLASS}`
+                : '';
+            const choice = button({
+                label: summary,
+                className: `class-pick reward-bonus-option${chosenClass}`,
+                attrs: {
+                    role: 'radio',
+                    'aria-checked': String(isChosen),
+                    'aria-label': translate('cardUpgrade.option.aria', {
+                        n: optionIndex + 1,
+                        total: optionCount,
+                        summary,
+                    }),
+                    dataset: {
+                        bonusIndex: String(optionIndex),
+                    },
+                },
+            });
+            choice.addEventListener('click', () => selectBonus(optionIndex));
+            return choice;
+        }
+
+        function selectBonus(optionIndex)
+        {
+            if (
+                reviewing
+                || confirming
+                || isTaken()
+                || !(optionIndex >= 0)
+            )
+            {
+                return;
+            }
+            pendingBonusIndexByKey[row.key] = optionIndex;
+            const selectedFace = findStripFace(selectedCardId);
+            const instance = findOwnedInstance(selectedCardId);
+            if (
+                selectedFace
+                && instance
+            )
+            {
+                selectedFace.replaceWith(buildRankUpFace(instance));
+            }
+            renderBonusPanel();
+            confirmButton.disabled = false;
+            syncActionButtons();
+        }
+
+        function markPicks(cardId)
+        {
+            for (const pick of strip.querySelectorAll('.reward-pick'))
+            {
+                const isSelected = pick.dataset.pickId === cardId;
+                if (!pick.classList.contains('reward-choice-button'))
+                {
+                    pick.classList.toggle(SELECTED_CLASS, isSelected);
+                }
+                MarkSelected(
+                    pick,
+                    isSelected,
+                    {
+                        className: CHOSEN_CLASS,
+                        ariaAttribute: 'aria-checked',
+                    },
+                );
+            }
+            MarkSelected(
+                strip.querySelectorAll('.reward-choice-face'),
+                face => face.dataset.pickId === cardId,
+                {
+                    className: [
+                        SELECTED_CLASS,
+                        CHOSEN_CLASS,
+                    ],
+                    ariaAttribute: null,
+                },
+            );
+        }
+
+        function selectCard(cardId)
+        {
+            if (
+                reviewing
+                || confirming
+                || isTaken()
+            )
+            {
+                return;
+            }
+            const previousCardId = selectedCardId;
+            if (previousCardId !== cardId)
+            {
+                delete pendingBonusIndexByKey[row.key];
+            }
+            selectedCardId = cardId;
+            pendingCardIdByKey[row.key] = cardId;
+            markPicks(cardId);
+            restoreDeselectedFace(previousCardId, cardId);
+            renderBonusPanel();
+            confirmButton.disabled = needsBonus();
+            syncActionButtons();
+            message.hidden = true;
+        }
+
+        function restoreDeselectedFace(previousCardId, cardId)
+        {
+            const hasLeftCard = previousCardId
+                && previousCardId !== cardId;
+            const leftCard = hasLeftCard
+                ? rankUpCards.find((instance) => instance.instanceId === previousCardId)
+                : null;
+            const leftFace = leftCard
+                ? findStripFace(previousCardId)
+                : null;
+            if (leftFace)
+            {
+                leftFace.replaceWith(buildRankUpFace(leftCard));
+            }
+        }
+
+        function readShownRankUp(instance, isSelected)
+        {
+            const bonusOption = isSelected
+                ? bonusOptionsOf(instance.instanceId)[pendingBonusIndexByKey[row.key]]
+                : null;
+            return bonusOption
+                ? bonusOption.after
+                : {
+                    ...instance,
+                    rank: readCardRank(instance) + 1,
+                };
+        }
+
+        function buildRankUpFace(instance)
+        {
+            const isSelected = instance.instanceId === selectedCardId;
+            const face = renderCard(
+                registries,
+                readShownRankUp(instance, isSelected),
+                {
+                    rules: run,
+                    owned: ownedCopies(run, instance.cardId),
+                    actionOwnsTouch: true,
+                    surface: 'reward',
+                    only: [],
+                },
+            );
+            face.dataset.cardId = instance.cardId;
+            face.dataset.pickId = instance.instanceId;
+            inspectionFaces.set(instance.instanceId, face);
+            face.classList.add('reward-pick');
+            face.setAttribute('role', 'radio');
+            MarkSelected(
+                face,
+                isSelected,
+                {
+                    className: [
+                        SELECTED_CLASS,
+                        CHOSEN_CLASS,
+                    ],
+                    ariaAttribute: 'aria-checked',
+                },
+            );
+            face.addEventListener('click', () => selectCard(instance.instanceId));
+            return face;
+        }
+
+        function buildTakingRow()
+        {
+            const bonusStep = bonusOptionsOf(selectedCardId)[pendingBonusIndexByKey[row.key]]?.step;
+            return {
+                ...row,
+                ...(bonusStep ? { bonusStep } : {}),
+                instanceId: selectedCardId,
+            };
+        }
+
+        function lockChooserForCommit()
+        {
+            confirming = true;
+            inspectButton.disabled = true;
+            strip.inert = true;
+            confirmButton.disabled = true;
+        }
+
+        function unlockChooserAfterFailure()
+        {
+            message.hidden = false;
+            confirming = false;
+            inspectButton.disabled = !inspectionFaces.has(selectedCardId);
+            strip.inert = false;
+            confirmButton.disabled = false;
+        }
+
+        function commitSelection()
+        {
+            if (
+                !selectedCardId
+                || confirming
+                || isTaken()
+            )
+            {
+                return;
+            }
+            lockChooserForCommit();
+            try
+            {
+                if (takeRewardRow(buildTakingRow(), row.key))
+                {
+                    return;
+                }
+                message.textContent = translate('reward.skillRankUp.spent');
+            }
+            catch
+            {
+                message.textContent = translate(SAVE_FAILED_ID);
+            }
+            unlockChooserAfterFailure();
+        }
+
+        function enterReview()
+        {
+            reviewing = true;
+            confirmButton.textContent = translate(CONTINUE_LABEL_ID);
+            backButton.textContent = translate('common.back');
+            strip.setAttribute('aria-label', translate('reward.confirm'));
+            for (const option of strip.children)
+            {
+                option.hidden = !option.matches(`.${SELECTED_CLASS}`)
+                    && !option.querySelector(`.${SELECTED_CLASS}`)
+                    && option.dataset.pickId !== selectedCardId;
+            }
+            for (const control of strip.querySelectorAll('button.reward-pick'))
+            {
+                control.disabled = true;
+            }
+            for (const control of bonusPanel.querySelectorAll('button'))
+            {
+                control.disabled = true;
+            }
+        }
+
+        function pressConfirm()
+        {
+            if (
+                !selectedCardId
+                || confirming
+                || isTaken()
+            )
+            {
+                return;
+            }
+            if (reviewing)
+            {
+                return commitSelection();
+            }
+            enterReview();
+        }
+
+        function pressBack()
+        {
+            if (
+                confirming
+                || isTaken()
+            )
+            {
+                return;
+            }
+            if (reviewing)
+            {
+                return renderRankUpChooser(row);
+            }
+            skipRankUp();
+        }
+
+        function skipRankUp()
+        {
+            states[row.key] = STATE_SKIPPED;
+            try
+            {
+                persistProgress();
+            }
+            catch
+            {
+                delete states[row.key];
+                if (checkpoint)
+                {
+                    checkpoint.states = { ...states };
+                }
+                message.textContent = translate(SAVE_FAILED_ID);
+                message.hidden = false;
+                return;
+            }
+            renderMenu(row.key);
+        }
+    }
+
+    function readCompactReceiptRows()
+    {
+        const paidLevel = Number(rewards.xpGains?.level) || 0;
+        const total = Math.max(0, Math.floor(paidLevel));
+        const savedRows = rewards.xpReceipt?.rows;
+        const isItemized = Array.isArray(savedRows)
+            && savedRows.every((row) => Number.isSafeInteger(row.amount))
+            && savedRows.reduce((sum, row) => sum + row.amount, 0) === total;
+        return isItemized
+            ? savedRows
+            : [
+                {
+                    kind: 'legacy',
+                    amount: total,
+                },
+            ];
+    }
+
+    function renderCompactVictory()
+    {
+        const receiptRows = readCompactReceiptRows();
+        const presentation = victoryXpPresentation(settings, isReducedMotion());
+        const timing = victoryXpTiming(receiptRows.length, presentation);
+        const {
+            openButton,
+            formula,
+            moreButton,
+            totalValue,
+            summary,
+            rowList,
+        } = buildCompactReceiptView(presentation);
+        const modal = openCompactDoor();
+        const tooltipPlacement = {
+            intent: 'above',
+            align: 'end',
+            clear: modal,
+            appearance: {
+                maxWidthRem: 30,
+                maxHeightRatio: 0.5,
+            },
+        };
+        bindFullCalculation();
+        let isExpandReady = false;
+        let shownRowCount = 0;
+        const doorCountAtMount = doorOpenCount;
+
+        if (presentation.totalMs === 0)
+        {
+            showAllRowsAtOnce();
+        }
+        else
+        {
+            playReceiptRows();
+        }
+        bindExpandControls();
+
+        function openCompactDoor()
+        {
+            return openDoor({
+                eyebrow: '',
+                title: readVictoryTitle(rewards),
+                attrs: {
+                    dataset: {
+                        size: 'sm',
+                        victoryCompact: 'true',
+                    },
+                },
+                body: buildElement('div', { class: 'reward-compact-xp' }, [summary, rowList]),
+                foot: modalFooter({
+                    primary: openButton,
+                    className: 'reward-foot',
+                    size: FOOT_SIZE,
+                }),
+            });
+        }
+
+        function readFullCalculation()
+        {
+            const { full } = victoryXpFormula(
+                receiptRows,
+                receiptRows.length,
+                presentation.formulaTerms,
+            );
+            return `<div class="tt-title">${FULL_CALCULATION_TITLE}</div>`
+                + `<div>${escapeHtml(full)}</div>`;
+        }
+
+        function bindFullCalculation()
+        {
+            attachTooltip(moreButton, readFullCalculation, tooltipPlacement);
+            moreButton.addEventListener('click', () =>
+            {
+                showTooltipFor(moreButton, readFullCalculation(), tooltipPlacement);
+            });
+        }
+
+        function isCompactDoorShown()
+        {
+            return modal.isConnected
+                && doorOpenCount === doorCountAtMount
+                && appRoot.querySelector('.reward-door') === modal;
+        }
+
+        function updateFormula()
+        {
+            const expression = victoryXpFormula(
+                receiptRows,
+                shownRowCount,
+                presentation.formulaTerms,
+            );
+            formula.textContent = expression.shown;
+            moreButton.hidden = !expression.collapsed;
+        }
+
+        function appendReceiptRow(receiptRow)
+        {
+            const amount = buildElement('strong', {
+                class: 'reward-compact-row-value',
+                text: '+0',
+            });
+            const rowItem = buildElement('li', { class: 'reward-compact-row' }, [
+                buildElement('span', {
+                    class: 'reward-compact-row-label',
+                    text: readCompactRowLabel(receiptRow),
+                }),
+                amount,
+            ]);
+            rowList.appendChild(rowItem);
+            rowList.scrollTop = rowList.scrollHeight;
+            return amount;
+        }
+
+        function appendRowCounter(receiptRow, runningTotal)
+        {
+            const amount = appendReceiptRow(receiptRow);
+            return (rowAmount) =>
+            {
+                const sign = rowAmount < 0
+                    ? MINUS
+                    : '+';
+                amount.textContent = `${sign}${Math.abs(rowAmount)}`;
+                totalValue.textContent = `${runningTotal + rowAmount} XP`;
+            };
+        }
+
+        function armExpandButton()
+        {
+            if (!isCompactDoorShown())
+            {
+                return;
+            }
+            isExpandReady = true;
+            openButton.disabled = false;
+            openButton.classList.add('is-ready');
+            if (settings.victorySummaryMode === 'auto')
+            {
+                expandVictory();
+            }
+        }
+
+        function countUp(from, to, milliseconds, renderCount)
+        {
+            return new Promise((resolve) =>
+            {
+                if (milliseconds <= 0)
+                {
+                    renderCount(to);
+                    resolve();
+                    return;
+                }
+                const start = performance.now();
+                const paintFrame = (now) =>
+                {
+                    if (!isCompactDoorShown())
+                    {
+                        resolve();
+                        return;
+                    }
+                    const fraction = Math.min(1, (now - start) / milliseconds);
+                    renderCount(from + Math.round((to - from) * fraction));
+                    if (fraction >= 1)
+                    {
+                        resolve();
+                    }
+                    else
+                    {
+                        requestAnimationFrame(paintFrame);
+                    }
+                };
+                requestAnimationFrame(paintFrame);
+            });
+        }
+
+        async function playReceiptRows()
+        {
+            let runningTotal = 0;
+            for (const [rowIndex, receiptRow] of receiptRows.entries())
+            {
+                if (!isCompactDoorShown())
+                {
+                    return;
+                }
+                await countUp(
+                    0,
+                    receiptRow.amount,
+                    timing.tickMs,
+                    appendRowCounter(receiptRow, runningTotal),
+                );
+                if (!isCompactDoorShown())
+                {
+                    return;
+                }
+                runningTotal += receiptRow.amount;
+                shownRowCount = rowIndex + 1;
+                updateFormula();
+                if (rowIndex < receiptRows.length - 1)
+                {
+                    await pauseFor(timing.pauseMs);
+                }
+            }
+            await pauseFor(presentation.readyMs);
+            armExpandButton();
+        }
+
+        function showAllRowsAtOnce()
+        {
+            let runningTotal = 0;
+            for (const receiptRow of receiptRows)
+            {
+                appendRowCounter(receiptRow, runningTotal)(receiptRow.amount);
+                runningTotal += receiptRow.amount;
+                shownRowCount += 1;
+            }
+            updateFormula();
+            if (presentation.readyMs === 0)
+            {
+                armExpandButton();
+            }
+            else
+            {
+                setTimeout(armExpandButton, presentation.readyMs);
+            }
+        }
+
+        function bindExpandControls()
+        {
+            openButton.addEventListener('click', () =>
+            {
+                if (isExpandReady)
+                {
+                    expandVictory();
+                }
+            });
+            if (settings.victorySummaryMode === 'anywhere')
+            {
+                appRoot.querySelector('.reward-veil')?.addEventListener('click', (event) =>
+                {
+                    const isOnControl = event.target === openButton
+                        || event.target === moreButton;
+                    if (
+                        isExpandReady
+                        && isCompactDoorShown()
+                        && !isOnControl
+                    )
+                    {
+                        expandVictory();
+                    }
+                });
+            }
+        }
+    }
 }

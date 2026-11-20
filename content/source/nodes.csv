@@ -29,53 +29,54 @@
 #
 # columns: id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb
 id,parentId,label,color,glyph,visibility,priority,domain,aside,blurb
-card,,Card,,,,,,,"What a card IS — its school, form and feel. Carried by cards, by the classes that lean on them, and by the equipment that rewrites them."
+card,,Card,,,,,,,"What a card IS: its school, form and feel. Carried by cards, by the classes that lean on them, and by the equipment that rewrites them."
 creature,,Creature,,,,,,,"What a creature IS. Gates proc resistance, and the one domain the engine reads at runtime."
 item,,Item,,,,,,,"What a piece of gear DOES beyond its numbers, and what a run pickup is."
-run,,Run,,,,,,,"Run structure — what an event, an encounter or an unlock is about."
+run,,Run,,,,,,,"Run structure: what an event, an encounter or an unlock is about."
 itemType,,Item type,,,,,,,"What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword."
-grantSource,,Grant source,,,,,,,"Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
+grantSource,,Grant source,,,,,,,"Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these. The `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
 presentation,,Combat presentation,,,INTERNAL,0,PRESENTATION,true,Sprite selection only; never damage or resistance identity.
 attackSource,,Attack source,,,,,,,Source profile supplying an attack; separate from damage type.
 delivery,,Delivery,,,,,,,How a direct attack reaches its targets.
 damageType,,Damage type,,,,,,,Identity of a typed HP damage component.
 technique,,Technique,,,,,,,Conditions for explicit technique bonuses.
 theme,,Theme,,,,,,,Build synergies; tags alone grant no effects.
-property,,Property,,,,,,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
-blade,card,Blade,C9502E,⚔,,,,,Steel and edge — direct weapon work.
+property,,Property,,,,,,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one. What the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
+blade,card,Blade,C9502E,⚔,,,,,Steel and edge: direct weapon work.
 bow,card,Bow,7FA8C9,➶,,,,,A bow draw and arrow release.
+retreat,card,Retreat,7FA8C9,↩,,,,,"A weapon with this tag puts a free Retreat card in your hand each turn: step back out of the Advance."
 guard,card,Guard,7FA8C9,🛡,,,,,"Bracing, blocking, holding the line."
 blood,card,Blood,8A1A1A,🩸,,,,,"Bleed, and the letting of it."
 gorefire,card,Gorefire,C9502E,🔥,,,,,The blood-and-flame stance.
-starstone,card,Starstone,7FA8C9,✦,,,,,Astral sorcery — charges and combos.
+starstone,card,Starstone,7FA8C9,✦,,,,,Astral sorcery: charges and combos.
 ritual,card,Ritual,C9A227,◈,,,,,"Rites, offerings, and faith work."
 blight,card,Blight,B5541C,☣,,,,,Creeping decay.
 oath,card,Oath,C9A227,✚,,,,,"Binding, lasting commitments."
-flourish,card,Flourish,9FC3E8,✧,,,,,Finesse — footwork and multi-hit.
+flourish,card,Flourish,9FC3E8,✧,,,,,Finesse: footwork and multi-hit.
 finesse,card,Finesse,9FC3E8,✧,,,,,"Multi-hit without the per-hit SP price: the move costs its ordinary price."
 ash,card,Ash,7A6F5A,•,,,,,"Spent once, then gone to ash."
 heavy,card,Heavy,C9A227,◆,,,,,"Slow, committed, and hard to stop."
-basic,card,Basic,7A6F5A,○,,,,,Everybody's — on the shelf without being found.
+basic,card,Basic,7A6F5A,○,,,,,Everybody's: on the shelf without being found.
 rank.cantrip,card,Cantrip,7FA8C9,✦,,,,,Basic spell eligible for Magic Adept deck copies.
 pierce,card,Pierce,9FC3E8,†,,,,,A precise physical form; presentation only.
 ranged,card,Ranged,7FA8C9,➶,,,,,Authored ranged presentation; no position system.
 precision,card,Precision,C9A227,◎,,,,,Deliberate aim and finesse; presentation only.
 guile,card,Guile,647B73,◇,,,,,"Preparation, misdirection, and stolen openings."
 venom,card,Venom,7FAF63,☠,,,,,Poisons that punish enemies over time.
-extractable,card,Extractable,C9A227,⚙,,,,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today."
-bound,item,Bound,C9A227,⛓,,,,,Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.
+extractable,card,Extractable,C9A227,⚙,,,,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it today."
+bound,item,Bound,C9A227,⛓,,,,,Carries its own cards. They arrive with the piece and are named in equipmentGrants.csv.
 beast,creature,Beast,7A6F5A,🐾,,,,,"Animal, unreasoning, driven by hunger."
 humanoid,creature,Humanoid,B8B0A0,👤,,,,,"Two arms, two legs, and a reason for being here."
 undead,creature,Undead,647B73,💀,,,,,Died once and did not stay down.
-construct,creature,Construct,9FC3E8,⚙,,,,,"Built, not born — no blood to let."
+construct,creature,Construct,9FC3E8,⚙,,,,,"Built, not born. No blood to let."
 spirit,creature,Spirit,7FA8C9,👻,,,,,Untethered from the body it used to wear.
 item:blade,itemType,Blade,C9502E,⚔,,,,,What this piece IS: the Armoury and the smith name it Blade.
 item:shield,itemType,Shield,7FA8C9,🛡,,,,,What this piece IS: the Armoury and the smith name it Shield.
 item:magic-focus,itemType,Magic Focus,9FC3E8,✦,,,,,What this piece IS: the Armoury and the smith name it Magic Focus.
-item:armor,itemType,Armor,B8B0A0,▣,,,,,What this piece IS: the Armoury and the smith name it Armor.
+item:armor,itemType,Armour,B8B0A0,▣,,,,,What this piece IS: the Armoury and the smith name it Armour.
 from:global,grantSource,Global,B8B0A0,🌐,,,,,Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants.
 from:relic,grantSource,Relic,C9A227,◈,,,,,Carried in by the starting relic.
-from:armor,grantSource,Armor,7FA8C9,▣,,,,,Bound to the outfit the run begins wearing.
+from:armor,grantSource,Armour,7FA8C9,▣,,,,,Bound to the outfit the run begins wearing.
 from:weapon,grantSource,Weapon,C9502E,⚔,,,,,Bound to an armament in hand at creation.
 from:class,grantSource,Class,9FC3E8,✦,,,,,The class signature card.
 fx:blade,presentation,blade,9FC3E8,✧,,,,,blade visual identity; no combat modifier.
@@ -153,7 +154,7 @@ curedHide,property,Cured Hide,9A9A9A,🛡,,,,,What Cured Hide does when the figh
 ivoryComb,property,Ivory Comb,9A9A9A,🪮,,,,,What Ivory Comb does when the fight gives it its moment.
 fellWardenBrand,property,Fell Warden Brand,6E9C6E,🔱,,,,,What Fell Warden Brand does when the fight gives it its moment.
 bloodiedTalisman,property,Bloodied Talisman,6E9C6E,🩸,,,,,What Bloodied Talisman does when the fight gives it its moment.
-twinnedArmor,property,Twinned Armor,6E9C6E,👥,,,,,What Twinned Armor does when the fight gives it its moment.
+twinnedArmor,property,Twinned Armour,6E9C6E,👥,,,,,What Twinned Armour does when the fight gives it its moment.
 blightTouchedIdol,property,Blight-Touched Idol,6E9C6E,☣,,,,,What Blight-Touched Idol does when the fight gives it its moment.
 companion,property,Companion,B08D57,☥,,,,,"What a companion confers while it travels with you: a branch, not a tag; each companion's own node sits under it."
 hollowSquire,companion,Hollow Squire,B08D57,🛡,,,,,A squire without a knight raises a shield before you.
@@ -211,7 +212,7 @@ grimHarvest,property,Grim Harvest,9FC3E8,🩸,,,,,"What falls feeds you."
 restHpSmall,property,Small rest,7FA8C9,♨,,,,,"A rough camp's rest: a small share of your max HP back."
 restHpPartial,property,Partial rest,7FA8C9,♨,,,,,"A shrine's rest: part of your max HP back."
 restHpFull,property,Full rest,7FA8C9,♨,,,,,"A town's bed: HP to full."
-restMana,property,Mana rest,7FA8C9,◈,,,,,"Mana back by the configured mode (balance.rest.mana.mode) — the door resolves this tag to the mode's own tag, so a place that wants another amount carries restManaFlat, restManaFloor or restManaFull instead."
+restMana,property,Mana rest,7FA8C9,◈,,,,,"Mana back by the configured mode (balance.rest.mana.mode). The door resolves this tag to the mode's own tag, so a place that wants another amount carries restManaFlat, restManaFloor or restManaFull instead."
 restManaFlat,property,Flat mana rest,7FA8C9,◈,,,,,"Mana back by a fixed amount."
 restManaFloor,property,Mana rest to a floor,7FA8C9,◈,,,,,"Mana back to a floor of max, or to full when already there."
 restManaFull,property,Full mana rest,7FA8C9,◈,,,,,"Mana to full."
@@ -238,7 +239,7 @@ quickHands,property,Quick Hands,9FC3E8,🤏,,,,,"Prepared before the first card.
 secondWind,property,Second Wind,9FC3E8,💨,,,,,"What you burn, you draw."
 honedEdge,property,Honed Edge,9FC3E8,🔪,,,,,"Every prepared cut opens a vein."
 poisonedPouch,property,Poisoned Pouch,9FC3E8,☠,,,,,"The whetstone is not the only thing in the pouch."
-assassin,property,Assassin,9FC3E8,🗡,,,,,"The subclass that reads a stagger as an opening."
+assassin,property,Assassin,9FC3E8,🗡,,,,,"The subclass that reads a Break as an opening."
 shadow,property,Shadow,9FC3E8,🌑,,,,,"The subclass nothing quite reaches."
 partingBlow,property,Parting Blow,9FC3E8,⚔,,,,,"Every step out of a stance is a cut."
 ironRebuke,property,Iron Rebuke,9FC3E8,⛓,,,,,"Brace answers every wound it cannot stop."
@@ -247,7 +248,7 @@ mendingGrip,property,Mending Grip,9FC3E8,🩹,,,,,"The grip closes the wound it 
 spentStars,property,Spent Stars,9FC3E8,💫,,,,,"What burns out, burns once more."
 fallingStar,property,Falling Star,9FC3E8,☄,,,,,"The mana comes down somewhere."
 lodestarPull,property,Lodestar Pull,9FC3E8,🧲,,,,,"The shard drags the foe off its footing."
-shardHunger,property,Shard Hunger,9FC3E8,💠,,,,,"The shard drinks from a staggering foe."
+shardHunger,property,Shard Hunger,9FC3E8,💠,,,,,"The shard drinks from a Broken foe."
 burningGrace,property,Burning Grace,9FC3E8,🔥,,,,,"The warmth spills over, and scalds."
 dazzlingLight,property,Dazzling Light,9FC3E8,✨,,,,,"The litany is hard to look at."
 anointedBlade,property,Anointed Blade,9FC3E8,🗡,,,,,"The seal breaks over the edge."
@@ -285,6 +286,7 @@ cost.action,cost,action,,,PRIMARY,10,,,
 cost.stamina,cost,stamina,,,PRIMARY,11,,,
 cost.mana,cost,mana,,,PRIMARY,12,,,
 cost.alternative,cost,alternative,,,PRIMARY,13,,,
+cost.manaOnly,cost,manaOnly,,,PRIMARY,14,,,
 lifecycle,,lifecycle,,,INTERNAL,0,LIFECYCLE,,
 lifecycle.innate,lifecycle,innate,,,PRIMARY,10,,,
 lifecycle.retain,lifecycle,retain,,,PRIMARY,11,,,
@@ -312,6 +314,7 @@ targeting.self,targeting,self,,,CONTEXTUAL,10,,,
 targeting.enemy,targeting,enemy,,,CONTEXTUAL,11,,,
 targeting.allEnemies,targeting,allEnemies,,,CONTEXTUAL,12,,,
 targeting.randomEnemy,targeting,randomEnemy,,,CONTEXTUAL,13,,,
+targeting.otherEnemy,targeting,otherEnemy,,,CONTEXTUAL,16,,,
 targeting.ally,targeting,ally,,,CONTEXTUAL,14,,,
 targeting.allAllies,targeting,allAllies,,,CONTEXTUAL,15,,,
 internal,,internal,,,INTERNAL,0,INTERNAL,,
@@ -320,7 +323,6 @@ internal.upgraded,internal,upgraded,,,DEBUG,11,,,
 classification.class,classification,class,,,INTERNAL,30,,,"What a class is. Every object in the class collection carries this, and nothing outside it may."
 classification.relic,classification,relic,,,INTERNAL,30,,,"What a relic is. Every object in the relic collection carries this, and nothing outside it may."
 classification.flask,classification,flask,,,INTERNAL,30,,,"What a flask is. Every object in the flask collection carries this, and nothing outside it may."
-classification.keepsake,classification,keepsake,,,INTERNAL,30,,,"What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may."
 classification.event,classification,event,,,INTERNAL,30,,,"What a event is. Every object in the event collection carries this, and nothing outside it may."
 classification.encounter,classification,encounter,,,INTERNAL,30,,,"What a encounter is. Every object in the encounter collection carries this, and nothing outside it may."
 classification.enemy,classification,enemy,,,INTERNAL,30,,,"What a enemy is. Every object in the enemy collection carries this, and nothing outside it may."
@@ -344,7 +346,7 @@ ability:last-stand,technique,Last Stand,D7B36B,✦,,,,,Tests whether current HP 
 ability:war-tempo,technique,War Tempo,D7B36B,✦,,,,,Tests whether at least two Heavy cards have already been played by the acting player during this turn.
 ability:wide-cleave,technique,Wide Cleave,D7B36B,✦,,,,,Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag.
 ability:ember-crown,technique,Ember Crown,D7B36B,✦,,,,,Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself.
-ability:dreadweight,technique,Dreadweight,D7B36B,✦,,,,,Tests whether the selected enemy is currently Staggered before a direct hit.
+ability:dreadweight,technique,Dreadweight,D7B36B,✦,,,,,Tests whether the selected enemy is currently Broken before a direct hit.
 ability:oathscar,technique,Oathscar,D7B36B,✦,,,,,Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn.
 ability:wound-harvest,technique,Wound Harvest,D7B36B,✦,,,,,Identifies a credited kill of an enemy that had positive Bleed buildup immediately before the killing hit.
 ability:cinder-orbit,technique,Cinder Orbit,D7B36B,✦,,,,,Tests whether the immediately preceding card played this turn by the same player was a spell.
@@ -395,7 +397,7 @@ feat:last-rampart,property,Last Rampart,D7B36B,✦,,0,,,"At half HP or lower, yo
 feat:war-cadence,property,War Cadence,D7B36B,✦,,0,,,"After your second Heavy card in a turn, gain 4 Block, once per turn."
 feat:broad-sentence,property,Broad Sentence,D7B36B,✦,,0,,,Your first attack that hits all living enemies each turn deals +2 damage to each target.
 feat:ember-sovereign,property,Ember Sovereign,D7B36B,✦,,0,,,"Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed."
-feat:dread-of-the-hammer,property,Dread of the Hammer,D7B36B,✦,,0,,,Your first Heavy attack against a Staggered target each turn deals +4 damage.
+feat:dread-of-the-hammer,property,Dread of the Hammer,D7B36B,✦,,0,,,Your first Heavy attack against a Broken target each turn deals +4 damage.
 feat:scarred-oath,property,Scarred Oath,D7B36B,✦,,0,,,"Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn."
 feat:harvest-the-wound,property,Harvest the Wound,D7B36B,✦,,0,,,"Your first credited kill of an enemy with Bleed buildup heals 3 HP, once per combat."
 feat:orbit-keeper,property,Orbit Keeper,D7B36B,✦,,0,,,Your first Starstone spell following another spell each turn deals +3 direct damage.
@@ -453,12 +455,12 @@ school,,Magic school,,,,,,,Authored combat identity shared by cards and enemy mo
 counterMode,,Counter reach,,,,,,,Authored combat identity shared by cards and enemy moves.
 camp:physical,camp,Physical,D7B36B,⚔,,,,,Selects physical Guard or magical Ward combat rules.
 camp:spell,camp,Spell,9FC3E8,✧,,,,,Selects physical Guard or magical Ward combat rules.
-maneuver:attack,maneuver,Attack,D7B36B,⚔,,,,,Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy.
-maneuver:defend,maneuver,Defend,9FC3E8,🛡,,,,,Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard.
-maneuver:counter,maneuver,Counter,C8A3D8,↩,,,,,"Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter."
-maneuver:sweep,maneuver,Sweep,93C9BC,🌀,,,,,Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it.
+maneuver:attack,maneuver,Attack,D7B36B,⚔,,,,,Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy. Stance benefit: attacks deal +20% damage.
+maneuver:defend,maneuver,Defend,9FC3E8,🛡,,,,,Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard. Stance benefit: +50% Block gained and 25% less Poise damage taken.
+maneuver:counter,maneuver,Counter,C8A3D8,↩,,,,,"Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter. Stance benefit: +25% Block gained."
+maneuver:sweep,maneuver,Sweep,93C9BC,🌀,,,,,Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it. Stance benefit: none extra; a Sweep already hits every enemy in range for full damage.
 maneuver:ranged,maneuver,Ranged,AAC88A,➶,,,,,"Ranged delivery avoids melee replies. Ranged Counter, spell Counter and defensive Alteration answer it."
-maneuver:smash,maneuver,Smash,DB9871,⚒,,,,,Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it.
+maneuver:smash,maneuver,Smash,DB9871,⚒,,,,,Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it. Stance benefit: +50% Poise damage.
 school:frost,school,Frost,A6D8EF,❄,,,,,Cold control: Frost buildup rewards follow-up attacks and constrains enemy tempo.
 school:fire,school,Fire,E47C43,🔥,,,,,Fire pressure: Burn buildup keeps pressure between turns.
 school:lightning,school,Lightning,E8D46A,ϟ,,,,,Lightning disruption: Sap weakens direct attacks and enables spell follow-ups.
@@ -474,10 +476,10 @@ counter:spell,counterMode,Spell counter,D7B36B,◇,,,,,"Intercepts incoming phys
 classification.enemyMove,classification,enemyMove,,,INTERNAL,30,,,A scoped action in an enemy move table.
 range,,Range,,,,,,,Inspection details for combat techniques.
 trait,,Combat traits,,,,,,,Inspection details for combat techniques.
-maneuver:casting,maneuver,Spell,9FC3E8,✧,,,,,A spell stance. Counter coverage depends on school and delivery.
-range:melee,range,Melee,9FC3E8,◇,,,,,At melee range: within arm's length.
-range:reach,range,Reach,9FC3E8,◇,,,,,At reach: past arm's length but not yet ranged.
-range:ranged,range,Ranged,9FC3E8,◇,,,,,At ranged distance.
+maneuver:casting,maneuver,Spell,9FC3E8,✧,,,,,A spell stance. Counter coverage depends on school and delivery. Stance benefit: spells deal +25% damage.
+range:melee,range,Melee,9FC3E8,◇,,,,,"Hits the front row. A back-row target costs 1 more Stamina, and you Advance."
+range:reach,range,Reach,9FC3E8,◇,,,,,Hits either row at its normal cost.
+range:ranged,range,Ranged,9FC3E8,◇,,,,,Hits any enemy at its normal cost.
 targeting:single,targeting,Single,9FC3E8,◇,,,,,One direct target.
 targeting:area,targeting,Area,9FC3E8,◇,,,,,An area action; most Counters do not cover it.
 trait:adequateReach,trait,Adequatereach,9FC3E8,◇,,,,,Adequatereach combat interaction.
@@ -493,7 +495,7 @@ ramp.momentum,card,Momentum,9FC3E8,◇,,,,,"+N damage or Block for each earlier 
 trait:mental,trait,Mental,9FC3E8,◇,,,,,Mental combat interaction.
 trait:projectile,trait,Projectile,9FC3E8,◇,,,,,Projectile combat interaction.
 trait:persistent,trait,Persistent,9FC3E8,◇,,,,,Granted Precision survives the end of its owner's turn.
-trait:reaction,trait,Reaction,9FC3E8,◇,,,,,"Playable from hand during the opponent's turn, before the pending action resolves."
+trait:reaction,trait,Reaction,9FC3E8,◇,,,,,"Can be played on the enemy's turn, before its action lands."
 trait:reveal,trait,Reveal,9FC3E8,◇,,,,,Reveal combat interaction.
 trait:shattering,trait,Shattering,9FC3E8,◇,,,,,Shattering combat interaction.
 trait:unavoidable,trait,Unavoidable,9FC3E8,◇,,,,,Unavoidable combat interaction.

@@ -1,21 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom, installDom } from './helpers/dom.mjs';
 import { mountGameProfileSettings, readNewGameProfile } from '../src/ui/components/gameProfileSelector.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 
 const labels = { classXpMultiplier: 'Class XP multiplier', weaponXpMultiplier: 'Used weapon XP multiplier' };
 async function mounted(fn) {
   const dom = rewardDom();
-  const previous = { document: globalThis.document, Option: globalThis.Option };
-  globalThis.document = dom.document;
+  const restoreDom = installDom(dom), previousOption = globalThis.Option;
   globalThis.Option = function Option(text, value) {
     const option = dom.document.createElement('option'); option.textContent = text; option.value = value; return option;
   };
   const host = dom.document.createElement('main'); dom.document.body.append(host);
   host.replaceChildren = (...nodes) => { for (const child of [...host.children]) child.remove(); host.append(...nodes); };
   try { await fn(host, dom); }
-  finally { for (const [key, value] of Object.entries(previous)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } }
+  finally { restoreDom(); if (previousOption === undefined) delete globalThis.Option; else globalThis.Option = previousOption; }
 }
 const author = { formatVersion: 1, core: 'ashen.core@2.0.0', modules: { progression: { classXpMultiplier: 0, weaponXpMultiplier: 1.2 } } };
 const change = async (host, dom, key, value) => {

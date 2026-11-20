@@ -17,7 +17,9 @@ export function recipeText(effects, { counterMode = null } = {}) {
       case 'applyStatus': text = `Apply ${t} ${e.status} to${e.target === 'self' ? ' yourself' : target}`; break;
       case 'poiseDamage': text = counterMode ? `Prepare ${t} base reply Poise damage` : `Deal ${t} Break damage to${target}`; break;
       case 'restoreMana': text = `Restore ${t} Mana`; break;
-      case 'gainEnergy': text = `Restore ${t} Actions (Stamina)`; break;
+      case 'changeAttribute': text = `Gain +${e.amount} ${e.attribute}${e.thisTurn ? ' this turn' : ' for the fight'}`; break;
+      case 'moveEngagement': text = e.target === 'self' ? (e.bands < 0 ? 'Advance' : 'Retreat') : e.bands < 0 ? 'Close one band' : 'Retreat one band'; break;
+      case 'gainEnergy': text = `Gain ${t} Stamina`; break;
       case 'heal': text = `Heal ${t} HP`; break;
       case 'loseHp': text = `Offer ${t} HP; the payment must leave at least one HP`; break;
       case 'removeStatus': text = `Remove ${t || 'all'} ${e.status} stack(s) from yourself`; break;
@@ -36,7 +38,8 @@ function predicateText(p) {
     case 'hasStatus': return `If ${p.of === 'allEnemies' ? 'any living enemy has' : p.of === 'self' ? 'you have' : 'the target has'} ${p.status}`;
     case 'hpBelowPct': return `If ${p.of === 'target' ? 'the target is' : 'you are'} at or below half HP`;
     case 'firstCardThisTurn': return 'If this is your first card this turn';
-    case 'inStance': return `While in ${p.stance}`;
+    case 'inStance': return `${['target', 'enemy'].includes(p.of) ? 'While the target is in' : 'While in'} ${p.stance}`;
+    case 'atRange': return `If the target is at ${p.range}`;
     case 'not': return `Unless (${predicateText(p.pred)})`;
     case 'all': return p.preds.map(predicateText).join(' and ');
     case 'any': return p.preds.map(predicateText).join(' or ');
@@ -78,7 +81,9 @@ export function recipeFace(effects, { counterMode = null } = {}) {
       case 'applyStatus': options = e.target === 'self' ? [`Gain ${t} ${statusName(e.status)}`] : [`Apply ${t} ${statusName(e.status)}${all ? ' to all' : ''}`, `Apply ${t} ${statusName(e.status)}`]; break;
       case 'poiseDamage': options = counterMode ? [`Prepare ${t} reply Poise damage`] : [`Deal ${t} Poise damage`]; break;
       case 'restoreMana': options = [`Restore ${t} Mana`]; break;
-      case 'gainEnergy': options = [`Restore ${t} Stamina`]; break;
+      case 'changeAttribute': options = [`+${e.amount} ${e.attribute.slice(0, 3).toUpperCase()}${e.thisTurn ? ' this turn' : ''}`]; break;
+      case 'moveEngagement': options = [e.target === 'self' ? (e.bands < 0 ? 'Advance' : 'Retreat') : e.bands < 0 ? 'Close one band' : 'Retreat one band']; break;
+      case 'gainEnergy': options = [`Gain ${t} Stamina`]; break;
       case 'heal': options = [`Heal ${t} HP`]; break;
       case 'loseHp': options = [`Offer ${t} HP`]; break;
       case 'removeStatus': options = [`Remove ${statusName(e.status)}`]; break;

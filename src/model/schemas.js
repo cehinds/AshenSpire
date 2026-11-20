@@ -61,7 +61,9 @@ export const COMBAT_OPCODES = Object.freeze([
   'retain',
   'dodgeRoll',
   'moveEngagement',
+  'swapRows',
   'applyStatus',
+  'changeAttribute',
   'removeStatus',
   'grantCardCharge',
   'modifyCards',
@@ -92,6 +94,8 @@ export const RUN_OPCODES = Object.freeze([
   'addCardToDeck',
   'removeCardFromDeck',
   'upgradeCard',
+  // W25-R: raise one owned card's rank (Core 2); `cost` cinders are paid only when a card rises.
+  'rankUpCard',
   'addRelic',
   'addFlask',
   'addFlaskCapacity',
@@ -121,12 +125,13 @@ export const TARGETS = Object.freeze([
   // Every living enemy EXCEPT the one the firing event names (and the action's
   // own target): a break's ripple reaches the others, never the broken one.
   'otherEnemies',
+  'otherEnemy',
 ]);
 
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
   'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
-  'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
+  'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRowChanged', 'combatAdvancedChanged', 'combatRetreatGranted', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
   'evadeGained', 'attackEvaded', 'counterStacksChanged', 'reflectStacksChanged', 'reflectTriggered', 'impactDealt', 'manaRecovered',
@@ -175,6 +180,10 @@ export const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // Wave 3: the end of Broken (poise.breakRule "broken"): { targetId, targetKind }; the owner's Poise has refilled to full.
+  'brokenEnded',
+  // W25-F: the caster's elemental flux changed { targetId, element } (element null: cleared).
+  'elementFluxChanged',
   // Enemy weaknesses (SPEC 5.3): a hit met a weakness { targetId, to, effect, amount }; a weakness took enemy Mana.
   'weaknessTriggered',
   'manaLost',
@@ -246,6 +255,8 @@ export const PREDICATES = Object.freeze([
   'cardTargetsAllEnemies',
   'resourcePaid',
   'inStance',
+  // The engagement band between the owner and `of` (default the target): melee, reach or ranged.
+  'atRange',
   'hasStatus',
   'hasBlock',
   'hpBelowPct',
@@ -559,7 +570,7 @@ export const EFFECT_SPECS = Object.freeze({
   grantRollMode: { allowed: ['roll', 'advantage', 'disadvantage'], required: ['roll'], refs: {} },
   retain: { allowed: [], required: ['amount'], refs: {} },
   gainBarrier: { allowed: [], required: ['amount'], refs: {} },
-  gainCounterStacks: { allowed: [], required: [], refs: {} },
+  gainCounterStacks: { allowed: ['amount'], required: [], refs: {} },
   applyReflect: { allowed: [], required: ['amount'], refs: {} },
   wardDamage: { allowed: [], required: ['amount'], refs: {} },
   completeCombatAction: { allowed: [], required: [], refs: {} },
@@ -569,7 +580,9 @@ export const EFFECT_SPECS = Object.freeze({
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
   moveEngagement: { allowed: ['bands'], required: ['target', 'bands'], refs: {} },
-  applyStatus: { allowed: ['status', 'stacks', 'tags'], required: ['status'], refs: { status: 'statuses' } },
+  swapRows: { allowed: [], required: ['target'], refs: {} },
+  changeAttribute: { allowed: ['attribute', 'amount', 'thisTurn'], required: ['attribute', 'amount'], refs: {} },
+  applyStatus: { allowed: ['status', 'stacks', 'tags', 'thisTurn'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
   modifyCards: { allowed: ['from','selection','look','changes'], required: ['from','amount','changes'], refs: {} },
@@ -605,6 +618,7 @@ export const EFFECT_SPECS = Object.freeze({
   addCardToDeck: { allowed: ['card'], required: ['card'], refs: { card: 'cards' } },
   removeCardFromDeck: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
   upgradeCard: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
+  rankUpCard: { allowed: ['random', 'cost'], required: [], refs: {} },
   addRelic: { allowed: ['id', 'random'], required: [], refs: { id: 'relics' } },
   addFlask: { allowed: ['id', 'random'], required: [], refs: { id: 'flasks' } },
   addFlaskCapacity: { allowed: ['kind', 'amount'], required: ['kind', 'amount'], refs: {} },
@@ -889,10 +903,16 @@ export const SCHEMAS = Object.freeze({
     playLimit:opt(int),
     burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
     costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
+    // The only rolled upgrade options this card is offered, by kind (`blk`, `fx:reaction`, ...; cardUpgradeSteps.js UPGRADE_OPTION_KINDS).
+    upgradeMenu: opt(arr(str)),
     effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
+    // The card can be played only while this holds, read against the aimed (or first living) enemy (SPEC §3.6).
+    playIf: opt({k:'predicate'}),
     targetLimit: opt({k:'formulaOrNum'}),
     gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), faceTemplate: opt(arr(str)), traits: opt(any) }))),
     weightClassPriced: opt(bool),
+    // Named modes the player picks when playing (model/cardChoices.js); an effect with `mode` plays only when its mode was picked.
+    choiceModes: opt(arr(obj({ id: str, name: str, tooltip: opt(str), icon: opt(str) }))),
     type: en(...CARD_TYPES),
     attack: opt(any),
     damageSchool: opt(en(...DAMAGE_SCHOOLS)),
@@ -917,8 +937,11 @@ export const SCHEMAS = Object.freeze({
         effects: opt(effects),
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),
+        faceTemplate: opt(arr(str)),
         ramp: opt(rampNode),
         contest: opt(str),
+        // An upgrade may ease a rising cost (playtest 2026-11-17, theme C): `{ stamina: 0, mana: 0 }` stops the growth.
+        costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
       })
     ),
     icon: opt(str),
@@ -942,6 +965,10 @@ export const SCHEMAS = Object.freeze({
     // move and are not expected to — they are upgraded per copy at the smith
     // (model/itemUpgrades.js), which a global rule row cannot express.
     triggers: opt(triggersNode),
+    // Item property ids (content/source/itemProperties.json) the relic always
+    // holds: deck rules such as a lower minimum or unlimited Basics
+    // (model/itemPicks.js ItemPropertyIds reads them for `relic/<id>`).
+    properties: opt(arr(str)),
     // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
     // keys, so this node is what actually refuses a mis-spelled passive — which
     // is exactly why it must not be a second list.
@@ -1091,6 +1118,7 @@ export const SCHEMAS = Object.freeze({
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     startingRange: opt(en('melee', 'reach', 'ranged')),
+    row: opt(en('front', 'back')), // the row the enemy starts in (W25-BANDS); absent: back when it starts at reach, else front
     rangeClosingMove: opt(str),
     rangeRetreatMove: opt(str),
     rangeRoutePolicy: opt(en('advance')),
@@ -1134,6 +1162,7 @@ export const SCHEMAS = Object.freeze({
   encounter: obj({
     id: str,
     enemies: arr(ref('enemies')),
+    rows: opt(arr(en('front', 'back'))), // per-enemy starting rows, parallel to `enemies` (W25-BANDS)
     weight: num,
     minFloor: opt(int),
     pool: en(...ENCOUNTER_POOLS),
@@ -1167,7 +1196,7 @@ export const SCHEMAS = Object.freeze({
         // `requires: { hp: 50 }` type-checked, was silently ignored, and the
         // choice was always affordable. The vocabulary is closed to what the
         // evaluator can actually read; widening it is an engine change.
-        requires: opt(obj({ cinders: opt(int) })),
+        requires: opt(obj({ cinders: opt(int), rankableCard: opt(bool) })),
         effects,
         resultText: str,
       })

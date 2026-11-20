@@ -4,23 +4,20 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { awardLevelXp, xpToNext } from '../src/model/levelup.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { t } from '../src/ui/strings.js';
 
 const registries = createRegistries(contentBundle);
 
-test('Progression renders owned feats, keeps allocation separate from expansion, and commits only Done', () => {
+test('Progression keeps allocation separate from expansion, and commits only Done', () => {
   withModalDom(() => {
     const run = createRunState({ seed: 4242, classId: 'reaver', registries });
     awardLevelXp(registries, run, xpToNext(registries, 1), { pointsPerLevel: 2 });
-    run.feats = ['fieldStudy'];
-    let changes = 0;
+        let changes = 0;
     const sheet = openCharacterSheet({ registries, run, onChange: () => changes++ });
-    const ownedFeat = sheet.panel.querySelector('[data-feat="fieldStudy"]');
-    assert.equal(ownedFeat.querySelector('.progression-feat-effect').textContent, 'Gain 10% more character XP from combat.');
-    assert.equal(ownedFeat.getAttribute('data-feat-owned'), 'true');
+    assert.equal(sheet.panel.querySelector('.progression-feats'), null, 'the Feats section is retired');
     const before = { ...run.attributes };
     const expand = sheet.panel.querySelector('.progression-attributes-toggle');
     expand.click();
@@ -53,43 +50,16 @@ test('Progression renders owned feats, keeps allocation separate from expansion,
   });
 });
 
-test('Skill and feat inspection render real card references and leave progression untouched', () => {
+test('Skill inspection renders real card references and leave progression untouched', () => {
   withModalDom(() => {
     const run = createRunState({ seed: 4242, classId: 'reaver', registries });
     const before = structuredClone(run);
     const sheet = openCharacterSheet({ registries, run, tab: 'skills' });
     sheet.panel.querySelector('[data-skill="item:blade"]').click();
     assert.ok(document.querySelector('.progression-associated-cards .card'));
-    const feat = document.querySelector('.progression-inspection .progression-feat-list button');
-    assert.ok(feat.querySelector('.progression-feat-effect').textContent.includes('critical hit'));
-    assert.ok(feat.querySelector('.progression-feat-tag'));
-    feat.click();
-    assert.ok(document.querySelectorAll('.progression-inspection').length >= 2);
+    assert.equal(document.querySelector('.progression-feat-list'), null, 'skill feats are retired');
     assert.deepEqual(run, before);
     for (const close of [...document.querySelectorAll('.modal-close')].reverse()) close.click();
-  });
-});
-
-test('Progression hub hands rewards and respec to their writers after closing and keeps Back functional', () => {
-  withModalDom(() => {
-    const run = createRunState({ seed: 4242, classId: 'reaver', registries });
-    const before = structuredClone(run), events = [];
-    const open = () => openCharacterSheet({ registries, run, settings: {},
-      onClose: () => events.push('closed'), onRewards: () => events.push('rewards'),
-      onRespec: () => events.push('respec'),
-    });
-    const clickLabel = (sheet, label) => {
-      const action = [...sheet.panel.querySelectorAll('button')].find(node => node.textContent === label);
-      assert.ok(action, `missing action ${label}`);
-      action.click();
-    };
-    clickLabel(open(), t('progression.rewards'));
-    assert.deepEqual(events, ['closed', 'rewards']);
-    clickLabel(open(), t('classRespec.title'));
-    assert.deepEqual(events, ['closed', 'rewards', 'closed', 'respec']);
-    clickLabel(open(), t('common.back'));
-    assert.deepEqual(events, ['closed', 'rewards', 'closed', 'respec', 'closed']);
-    assert.deepEqual(run, before, 'opening and leaving the hub never claims or rebuilds progression');
   });
 });
 
@@ -100,13 +70,12 @@ test('configured progression opens Character directly without legacy reward or r
     const run = createRunState({ seed: 4242, classId: 'reaver', registries: coreRegistries });
     const before = structuredClone(run), events = [];
     const sheet = openCharacterSheet({ registries: coreRegistries, run, tab: 'skills',
-      onRewards: () => events.push('rewards'), onRespec: () => events.push('respec') });
+      onRewards: () => events.push('rewards') });
     assert.equal(sheet.panel.querySelector('.character-sheet-body').dataset.tab, 'character');
     const labels = [...sheet.panel.querySelectorAll('button')].map(node => node.textContent);
     assert.equal(labels.includes(t('progression.tab.skills')), false);
     assert.equal(labels.includes(t('progression.tab.class')), false);
     assert.equal(labels.includes(t('progression.rewards')), false);
-    assert.equal(labels.includes(t('classRespec.title')), false);
     assert.deepEqual(events, []);
     assert.deepEqual(run, before, 'opening the configured character page does not mutate progression');
     sheet.close();

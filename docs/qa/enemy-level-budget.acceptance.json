@@ -1,0 +1,194 @@
+{
+  "request": "Push the enemy changes and open a PR, then fix the hitbox overlap and continue the unfinished work.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "level-one",
+      "url": "?shot=combat&gameProfile=core&shotSeed=4&shotEnemies=wanderingSoldier&shotHand=5",
+      "ready": ".combatant.enemy .sprite",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".combatant.enemy .sprite",
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Inspector opens",
+          "selector": ".combatant-door"
+        },
+        {
+          "kind": "text",
+          "label": "Correct level",
+          "selector": ".combatant-door",
+          "matches": "Level 1"
+        },
+        {
+          "kind": "text",
+          "label": "Own/gear key is present",
+          "selector": "[data-fact=\"attributes\"] .r-label",
+          "includes": "Attributes (own+gear)"
+        },
+        {
+          "kind": "style",
+          "label": "Attribute label wraps",
+          "selector": "[data-fact=\"attributes\"] .r-label",
+          "prop": "white-space",
+          "equals": "normal"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Attribute label and value do not overlap",
+          "a": "[data-fact=\"attributes\"] .r-label",
+          "b": "[data-fact=\"attributes\"] .as-status"
+        },
+        {
+          "kind": "within",
+          "label": "Inspector fits viewport",
+          "selector": ".combatant-door",
+          "container": "body"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No application errors",
+          "max": 0,
+          "ignore": [
+            "^Blocked call to navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "level-five",
+      "url": "?shot=combat&gameProfile=core&shotSeed=4&shotEnemies=ashheartDragon&shotHand=5",
+      "ready": ".combatant.enemy .sprite",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "hold": {
+            "selector": ".combatant.enemy .sprite",
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Inspector opens",
+          "selector": ".combatant-door"
+        },
+        {
+          "kind": "text",
+          "label": "Correct level",
+          "selector": ".combatant-door",
+          "matches": "Level 5"
+        },
+        {
+          "kind": "text",
+          "label": "Own/gear key is present",
+          "selector": "[data-fact=\"attributes\"] .r-label",
+          "includes": "Attributes (own+gear)"
+        },
+        {
+          "kind": "style",
+          "label": "Attribute label wraps",
+          "selector": "[data-fact=\"attributes\"] .r-label",
+          "prop": "white-space",
+          "equals": "normal"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Attribute label and value do not overlap",
+          "a": "[data-fact=\"attributes\"] .r-label",
+          "b": "[data-fact=\"attributes\"] .as-status"
+        },
+        {
+          "kind": "within",
+          "label": "Inspector fits viewport",
+          "selector": ".combatant-door",
+          "container": "body"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No application errors",
+          "max": 0,
+          "ignore": [
+            "^Blocked call to navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "url": "?shot=combat&gameProfile=core&shotSeed=4&shotEnemies=wanderingSoldier,wyrmAspirant,fellWarden&shotHand=5",
+      "success": [
+        {
+          "label": "Inspected the intended enemy",
+          "includes": "Wyrm Aspirant",
+          "selector": ".combatant-door",
+          "kind": "text"
+        },
+        {
+          "label": "Empty HUD rows pass through",
+          "prop": "pointer-events",
+          "equals": "none",
+          "selector": ".combatant.player .combat-health-row",
+          "kind": "style"
+        },
+        {
+          "label": "Visible player HP stays interactive",
+          "prop": "pointer-events",
+          "equals": "auto",
+          "selector": ".combatant.player .combat-health-meter .m-track",
+          "kind": "style"
+        },
+        {
+          "label": "Inspector fits viewport",
+          "selector": ".combatant-door",
+          "kind": "within",
+          "container": "body"
+        },
+        {
+          "label": "No application errors",
+          "max": 0,
+          "ignore": [
+            "^Blocked call to navigator\\.vibrate"
+          ],
+          "kind": "consoleErrors"
+        }
+      ],
+      "name": "crowded-enemy-inspection",
+      "failure": [],
+      "actions": [
+        {
+          "hold": {
+            "ms": 800,
+            "selector": ".combatant[data-eid=\"e2\"] .sprite",
+            "position": {
+              "y": 0.6,
+              "x": 0.5
+            }
+          }
+        }
+      ],
+      "settleMs": 1600,
+      "ready": ".combatant[data-eid=\"e2\"] .sprite"
+    }
+  ]
+}

@@ -495,6 +495,10 @@ function fixture(files) {
   sh(root, 'init', '-q', '--bare', '-b', 'dev', origin);
   sh(root, 'clone', '-q', origin, work);
   sh(work, 'config', 'user.email', 'a@b.c'); sh(work, 'config', 'user.name', 'x');
+  // These fixtures assert exact merge bytes, independent of the host's Git
+  // checkout conversion policy. Keep that policy local to this throwaway clone.
+  sh(work, 'config', 'core.autocrlf', 'false');
+  sh(work, 'config', 'core.eol', 'lf');
   sh(work, 'checkout', '-q', '-B', 'dev');
   for (const [p, t] of Object.entries(files)) put(work, p, t);
   sh(work, 'add', '.'); sh(work, 'commit', '-qm', 'base'); sh(work, 'push', '-q', 'origin', 'dev');

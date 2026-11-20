@@ -57,7 +57,7 @@
 //   handed to a function; the plant is a source edit, because a source edit is
 //   how this defect class actually arrives.
 //
-//   P1 derivation cut   src/main.js stops writing <html data-hand-layout>.
+//   P1 derivation cut   src/ui/displaySettings.js stops writing <html data-hand-layout>.
 //                       Expect: check 1 red in EVERY cell, by name.
 //   P2 overlap cut      applyHandLayout stops writing the negative margin —
 //                       the flattened fan is no longer pulled inside the
@@ -153,10 +153,10 @@ function connectCdp(wsUrl) {
 const PLANTS = [
   {
     name: 'P1 derivation cut',
-    homes: ['src/main.js'],
+    homes: ['src/ui/displaySettings.js'],
     from: '  document.documentElement.dataset.handLayout = handLayout;',
     to: '  /* handlayout --selftest P1: derivation cut */',
-    what: "main.js's write of <html data-hand-layout>",
+    what: "displaySettings.js's write of <html data-hand-layout>",
     expect: 'check 1 (word) red in every cell',
     mustRed: (out) => /FAIL word:/.test(out),
     mustStay: (out) => /PASS pose:/.test(out), // the pose door is untouched

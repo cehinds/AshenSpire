@@ -11,8 +11,7 @@ const ok = (cond, what) => { checks++; assert.ok(cond, what); };
 const beat = between('onBeatApplied: (beat) => {', 'onFlush: () => {');
 ok(!/renderCombatantStage\(/.test(beat) && !/renderTopbar\(/.test(beat) && !/renderHand\(/.test(beat),
   'a beat marks pieces dirty; it does not repaint them itself');
-ok(/requestAnimationFrame\(flushBeatRender\)/.test(beat), 'non-geometry beats repaint on the next frame');
-ok(/if \(beatDirty\.geometry/.test(beat) && /flushBeatRender\(\)/.test(beat), 'geometry beats paint before their effects start');
+ok(/playback\.QueueBeatRender\(/.test(beat), 'the screen queues the dirty pieces with its playback owner');
 ok(/bloodRiteReaction/.test(beat), 'the per-beat blood rite reaction stays per beat');
 
 const geometry = between('const GEOMETRY_BEAT_EVENT', ';\n');
@@ -23,14 +22,14 @@ for (const type of ['damageDealt', 'healed', 'blockGained', 'statusApplied', 'ca
   ok(!new RegExp(geometry.match(/\/(.*)\/i/)[1], 'i').test(type), `${type} does not refit the battlefield`);
 }
 
-const flush = between('function flushBeatRender()', '  // Cosmetic animations');
+const flush = between('function renderBeat({ geometry, hand })', '  // Cosmetic animations');
 ok(/renderCombatantStage\(\{ fit: geometry \}\)/.test(flush), 'the coalesced repaint passes the geometry hint');
 ok(/if \(hand\) renderHand\(\)/.test(flush), 'the hand repaints only for card events');
 
 const flushPath = between('onFlush: () => {', '      finishPlayback');
-ok(/discardBeatRender\(\)/.test(flushPath) && /\brender\(\)/.test(flushPath), 'a skipped playback ends with the full render');
+ok(/DiscardBeatRender\(\)/.test(flushPath) && /\brender\(\)/.test(flushPath), 'a skipped playback ends with the full render');
 const finish = between('const finishPlayback = () => {', 'showPendingDiscard();');
-ok(/discardBeatRender\(\)/.test(finish) && /\bfinishRender\(\)/.test(finish) && !/\brender\(\)/.test(finish),
+ok(/DiscardBeatRender\(\)/.test(finish) && /\bfinishRender\(\)/.test(finish) && !/\brender\(\)/.test(finish),
   'a finished playback ends with the incremental finishRender, not the full render');
 const finishRender = between('  function finishRender() {', "  // The follow-up symbols and the stance outline (SPEC §4.9, §4.6a).");
 ok(/globalThis\.__perfCount\?\.\('finishRender'\)/.test(finishRender), 'finishRender reports itself to the perf counters');

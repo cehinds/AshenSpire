@@ -16,6 +16,7 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { EnemyCardHintProblems } from '../src/model/enemyProjection.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const DEFAULT_PACK = join(ROOT, 'games/ashenspire/packs/core');
@@ -38,6 +39,7 @@ export function loadPack(pack = DEFAULT_PACK) {
     cards: json(join(pack, 'enemyCards.json')),
     gear: json(join(pack, 'gear.json')),
     relics: json(join(pack, 'enemyRelics.json')),
+    sharedEnemies: [1, 2, 3].flatMap(act => json(join(ROOT, 'content/source/act' + act + 'Enemies.json'))),
   };
 }
 
@@ -97,7 +99,8 @@ function split(tag) {
 
 export function catalogOf(pack) {
   return { card: new Set(pack.cards.map(c => c.id)), gear: new Set(pack.gear.map(g => g.id)), relic: new Set(pack.relics.map(r => r.id)),
-    enemy: new Set(pack.rows.filter(r => r.tags.includes(ENEMY_TAG)).map(r => r.id)) };
+    enemy: new Set(pack.rows.filter(r => r.tags.includes(ENEMY_TAG)).map(r => r.id)),
+    enemyMoves: new Map((pack.sharedEnemies || []).map(row => [row.id, Object.keys(row.moves || {})])) };
 }
 
 function suggest(set, id) {
@@ -128,6 +131,9 @@ export function validateSheet(sheet, file, catalog) {
   problems.push(...unknownKeys(sheet.stats, STATS_KEYS, `${file} stats`, ' Extra enemy fields go under "behaviour".'));
   for (const list of ['equipment', 'relics']) (sheet[list] || []).forEach((g, i) => problems.push(...unknownKeys(g, SLOT_KEYS, `${file} ${list}[${i}]`)));
   for (const k of ['id', 'name', 'tags', 'stats', 'equipment', 'relics', 'deck', 'reserve', 'ai', 'behaviour']) if (sheet[k] === undefined) problems.push(`${file}: missing field "${k}"`);
+  if (Object.hasOwn(sheet.behaviour || {}, 'cardHints')) {
+    problems.push(at('behaviour/cardHints: author card hints under ai'));
+  }
   if (problems.length) return problems;
   if (`${sheet.id}.json` !== file) problems.push(`${file}: id "${sheet.id}" must match the file name`);
   if (!sheet.tags.includes(ENEMY_TAG)) problems.push(`${file}: tags must include ${ENEMY_TAG}`);
@@ -136,9 +142,19 @@ export function validateSheet(sheet, file, catalog) {
   sheet.relics.forEach((g, i) => problems.push(...checkRef(g.ref, 'relic', at(`relics[${i}]`), catalog)));
   sheet.deck.forEach((c, i) => problems.push(...checkRef(c, 'card', at(`deck[${i}]`), catalog)));
   sheet.reserve.forEach((c, i) => problems.push(...checkRef(c, 'card', at(`reserve[${i}]`), catalog)));
-  for (const c of Object.keys(sheet.ai)) {
-    problems.push(...checkRef(c, 'card', at(`ai key`), catalog));
-    if (!sheet.deck.includes(c) && !sheet.reserve.includes(c)) problems.push(`${file}: ai hint "${c}" is for a card in neither deck nor reserve`);
+  const sharedMoves = catalog.enemyMoves?.get(sheet.id);
+  const moveIds = sharedMoves && new Set(sharedMoves);
+  if (moveIds && sheet.behaviour?.rangeClosingMove !== undefined) {
+    moveIds.add(sheet.behaviour.rangeClosingMove);
+    if (sheet.behaviour.rangeRetreatMove !== undefined) moveIds.add(sheet.behaviour.rangeRetreatMove);
+  }
+  const hintProblems = EnemyCardHintProblems(sheet.ai, { path: at('ai'), moveIds });
+  problems.push(...hintProblems.map(({ path, message }) => path + ': ' + message));
+  if (sheet.ai && typeof sheet.ai === 'object' && !Array.isArray(sheet.ai)) {
+    for (const c of Object.keys(sheet.ai)) {
+      problems.push(...checkRef(c, 'card', at('ai key'), catalog));
+      if (!sheet.deck.includes(c) && !sheet.reserve.includes(c)) problems.push(`${file}: ai hint "${c}" is for a card in neither deck nor reserve`);
+    }
   }
   if (sheet.behaviour.firstCard !== undefined) problems.push(...checkRef(sheet.behaviour.firstCard, 'card', at('behaviour.firstCard'), catalog));
   (sheet.behaviour.phases || []).forEach((p, i) => (p.unlockCards || []).forEach((c, j) => problems.push(...checkRef(c, 'card', at(`behaviour.phases[${i}].unlockCards[${j}]`), catalog))));

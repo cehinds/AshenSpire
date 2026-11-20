@@ -24,37 +24,37 @@ function fixture() {
   return { combat, enemy };
 }
 
-// Owner, 2026-11-03: the intent shows the raw hit (13), whatever Block, Poise, Counter or reactions the player holds; only stances and
-// statuses change it. The 7/9/12 net-of-defense figures this test used to pin are now the real HP loss only (damageDealt.hpLoss).
-test('committed full-action and each contact retain the raw adjusted-AR hit, not the Block/Poise net', () => {
+// Owner, 2026-11-14 (supersedes 2026-11-03): the intent shows the HP the player will lose (6, 8 and 8 here: Slash's 5 halved by the Core
+// base-damage scale to 3, + AR 8 = 11 a hit; Block 3 and Poise 8 are spent hit by hit), the same as damageDealt.hpLoss, and refreshes as the player's Block, Poise and Counter grants change.
+test('committed full-action and each contact carry the HP lost, hit by hit', () => {
   const { combat, enemy } = fixture(); primeAccuracyRolls(combat, { count: 3 });
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
   const revealed = combat.eventLog.slice(start).find(e => e.type === 'enemyActorTurnStarted');
   assert.ok(revealed.intentPreview);
   assert.equal(revealed.intent.damage, 5, 'raw compatibility intent stays authored');
-  assert.deepEqual(revealed.intentPreview.hitDamages, [13, 13, 13]);
-  assert.equal(revealed.intentPreview.totalDamage, 39);
+  assert.deepEqual(revealed.intentPreview.hitDamages, [6, 8, 8]);
+  assert.equal(revealed.intentPreview.totalDamage, 22);
   const shown = combatIntentPresentation(revealed.intentPreview);
-  assert.equal(shown.parts[0].value, '13×3');
-  assert.match(shown.parts[0].summary, /Total.*39 damage/);
+  assert.equal(shown.parts[0].value, '6+8+8');
+  assert.match(shown.parts[0].summary, /Total.*22 damage/);
   for (let hit = 0; hit < 3; hit++) {
     const before = combat.eventLog.length;
     dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
     const events = combat.eventLog.slice(before);
     const begun = events.find(e => ['enemyMoveStarted', 'combatHitStarted'].includes(e.type));
     const damage = events.find(e => e.type === 'damageDealt' && e.sourceId === enemy.id);
-    assert.equal(begun.intentPreview.damage, 13, 'the contact shows the full hit');
-    assert.ok(damage.hpLoss < 13, 'while Block and Poise still cut the real HP loss');
+    assert.equal(begun.intentPreview.damage, damage.hpLoss, 'the contact shows the HP it costs');
+    assert.equal(damage.hpLoss, [6, 8, 8][hit], 'Block and Poise cut the early hits');
     assert.equal(begun.intentPreview.hits, 1);
     assert.equal(begun.intentPreview.contactIndex, hit);
     assert.equal(begun.intentPreview.contactCount, 3);
     const projected = begun.intentPreview.projectedDamage;
-    assert.equal(projected.max, 13, 'the pre-roll contact forecast is the raw hit');
+    assert.equal(projected.max, damage.hpLoss, 'the pre-roll contact forecast is the HP lost');
     assert.equal(combatIntentPresentation(begun.intentPreview).parts[0].value, projected.label);
     assert.match(combatIntentPresentation(begun.intentPreview).parts[0].summary, new RegExp(`Hit ${hit + 1}/3`));
   }
-  assert.equal(combat.player.hp, 72);
+  assert.equal(combat.player.hp, 78);
 });
 
 test('a freshly paid Counter refreshes only the imminent contact after its defensive grants', () => {
@@ -69,7 +69,7 @@ test('a freshly paid Counter refreshes only the imminent contact after its defen
     const events = combat.eventLog.slice(start);
     const begun = events.find(e => ['enemyMoveStarted', 'combatHitStarted'].includes(e.type));
     const damage = events.find(e => e.type === 'damageDealt' && e.sourceId === enemy.id);
-    assert.equal(begun.intentPreview.damage, 13, `paid response contact ${hit}: Counter Block does not change the shown hit`);
+    assert.equal(begun.intentPreview.damage, damage?.hpLoss ?? 0, `paid response contact ${hit}: the shown hit follows the Counter's Block into the HP lost`);
     assert.equal(begun.intentPreview.hitDamages.length, 1, 'a refresh never forecasts the whole remaining action');
   }
 });
@@ -93,7 +93,7 @@ test('all 33 ordinary, elite and boss current actions capture without changing e
 test('long varying attacks use a bounded per-hit range and retain an explicitly marked total', () => {
   const view = combatIntentPresentation({ kind: 'attack', moveId: 'long', damage: 1, hits: 10,
     hitDamages: [1,2,3,4,5,6,7,8,9,10], totalDamage: 55, damageBasis: 'hp' });
-  assert.equal(view.parts[0].value, '1–10×10');
+  assert.equal(view.parts[0].value, '1-10×10');
   assert.equal(view.parts[0].summary, 'Total 55 damage');
 });
 
@@ -111,7 +111,7 @@ test('revealing one actor never projects another unread enemy or its future choi
 });
 
 test('HUD and reaction prompt distinguish per-hit values from marked totals and current contact', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   const { combatantIntent } = await import('../src/ui/components/combatantOverhead.js');
   const { openReactionChoiceModal } = await import('../src/ui/components/reactionChoiceModal.js');
   withKitDom(({ document }) => {

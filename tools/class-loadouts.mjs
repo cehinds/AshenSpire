@@ -8,7 +8,6 @@ import { validateEquipment, stampDeck, startingDeckPlan } from '../src/model/loa
 import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 
 // DOOR. The real input is the content bundle and the model/engine modules,
@@ -60,12 +59,12 @@ if (process.argv.includes('--selftest')) {
         // defect named here is the refusal being GONE, so both sites go.
         edits: [
           {
-            file: 'src/model/loadout.js',
+            file: 'src/model/loadout/stampDeck.js',
             find: 'if (prior && next && prior.compatibility !== next.compatibility) {',
             replace: 'if (false && prior && next && prior.compatibility !== next.compatibility) {',
           },
           {
-            file: 'src/model/loadout.js',
+            file: 'src/model/loadout/stampDeck.js',
             find: 'if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
             replace: 'if (false && prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
           },
@@ -79,7 +78,7 @@ if (process.argv.includes('--selftest')) {
         // its own it is deletable without a single red, which is why it gets
         // its own plant and its own named assertion rather than sharing the
         // attack one.
-        file: 'src/model/loadout.js',
+        file: 'src/model/loadout/stampDeck.js',
         find: 'if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
         replace: 'if (false && prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
         expectRed: /FAIL a non-attack role refuses the same silent state-loss swap/,
@@ -185,7 +184,6 @@ check(standardReceipt?.base === 2 && standardReceipt.rating?.id === 'pr'
 const C = createCombat({
   registries: R,
   rng: createRng(71),
-  ratingsRules: resolveCombatRatings({}, contentBundle),
   player: {
     classId: 'starseer', attributes: starseer.attributes, maxHp: starseer.maxHp, hp: starseer.hp,
     maxMana: starseer.maxMana, mana: starseer.mana, maxStamina: starseer.maxStamina, stamina: starseer.stamina,

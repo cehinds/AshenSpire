@@ -340,7 +340,6 @@
    answer; the rows below are the ones still dealt as `.reward-row` — the
    reward door, the draft and the picks. */
   :root[data-layout='narrow'] .reward-row { flex-wrap: wrap; justify-content: center; max-width: 100%; }
-.reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 
 /* THE MERCHANT'S SHELF WRAPS — Sten, 2026-08-14, on Marina's axisfit ruling
    (shop rows 397-403px, DEFECT, dated 2026-08-16). `#shop-cards` is a
@@ -1357,6 +1356,13 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-pane-bar .deck-editor-tools { display: block; width: auto; min-width: 0; }
 .deck-editor-tools > summary { cursor: pointer; flex: none; box-sizing: border-box; display: inline-flex; align-items: center; min-height: var(--deck-editor-target); min-width: var(--deck-editor-target); padding: 0 1rem; list-style: none; border: 1px solid var(--line-soft); border-radius: 999px; color: var(--parchment); }
 .deck-editor-tools > summary::-webkit-details-marker { display: none; }
+/* The Filter control is an icon button: a 44 px target on a coarse pointer, a compact square for a mouse. */
+.deck-editor-tools > summary.deck-editor-filter-toggle { justify-content: center; padding: 0; width: var(--deck-editor-target); }
+.deck-editor-filter-glyph { display: inline-flex; width: 1.6rem; height: 1.6rem; }
+.deck-editor-filter-glyph > svg { width: 100%; height: 100%; }
+@media (pointer: fine) and (hover: hover) and (min-width: 700px) {
+  .deck-editor-tools > summary.deck-editor-filter-toggle { min-height: calc(32px / var(--ui-zoom, 1)); min-width: calc(32px / var(--ui-zoom, 1)); width: calc(32px / var(--ui-zoom, 1)); border-radius: var(--r-2); }
+}
 .deck-editor-tools[open] > summary { border-color: var(--gold); color: var(--gold); }
 /* The open filter panel spans the bar: its chip groups wrap onto full rows
    below the title and chips (display: contents keeps them in the bar's flow). */
@@ -1837,17 +1843,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
  .armoury .armament-position-actions > button, .armoury .armament-destination, .armoury .armoury-foot-action { min-height: max(var(--tap-floor, 48px), calc(48px / var(--ui-zoom, 1))); }
 }
 
-/* Class rebuild uses the shared Modal and controls at every viewport. */
-.class-respec-body { display:grid; align-content:start; gap:var(--space-md,16px); padding:16px; }
-.class-respec-body fieldset { border:1px solid var(--line,#5b5144); padding:12px; display:grid; gap:12px; min-width:0; }
-.class-respec-body label { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.class-respec-body select { min-width:0; max-width:60%; padding:8px; background:#211b15; color:var(--ink,#d7cdb7); border:1px solid var(--line,#5b5144); border-radius:6px; }
-.class-respec-tree { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
-.class-respec-tree legend { grid-column:1/-1; }
-.class-respec-tree label { justify-content:flex-start; }
-.class-respec-changes { margin:0; padding-left:24px; display:grid; gap:8px; }
-.class-respec-problems { color:var(--danger,#f0a08c); }
-@container game-viewport (max-width:600px) { .class-respec-slots label { align-items:stretch; flex-direction:column; } .class-respec-slots select { max-width:100%; width:100%; } }
 
 /* Reading Desk: a compact inspection column and one illustrated deck list. */
 .deck-editor.deck-editor-reading-desk {
@@ -1948,9 +1943,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .deck-editor-reading-desk .deck-editor-main > .deck-editor-row-rules { -webkit-line-clamp: 2; line-clamp: 2; max-height: 2.7em; }
 }
 .deck-editor-reading-desk .deck-editor-selected-buttons > .deck-editor-secondary { color: #ffd8d2; background: #792f2b; border-color: #b95e53; }
-.deck-editor-reading-desk .deck-editor-selected-buttons > .deck-editor-primary:not(:disabled) { color: #edffe9; background: #326b3b; border-color: #70a675; }
-.deck-editor-reading-desk .deck-editor-done:not(:disabled) { color: #edffe9; background: #326b3b; border-color: #70a675; }
-.deck-editor-reading-desk .deck-editor-done:disabled { color: #aaa69e; background: #3a3834; border-color: #5d5952; opacity: 1; }
+.deck-editor-reading-desk .deck-editor-selected-buttons > .deck-editor-primary:not(:disabled) { color: var(--control-positive-text); background: var(--control-positive-fill); border-color: var(--control-positive-border); }
+.deck-editor-reading-desk .deck-editor-done:not(:disabled) { color: var(--control-positive-text); background: var(--control-positive-fill); border-color: var(--control-positive-border); }
+.deck-editor-reading-desk .deck-editor-done:disabled,
+.deck-editor-reading-desk #deck-editor-done:disabled { color: #aaa69e; background: #3a3834; border-color: #5d5952; opacity: 1; }
 .deck-editor-reading-desk .deck-editor-counter[data-state="out"],
 .deck-editor-reading-desk .deck-editor-refusal { color: #ff9488; }
 .deck-editor-reading-desk .deck-editor-counter[data-state="out"] { font-weight: 700; }
@@ -1961,9 +1957,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-reading-desk .deck-editor-rules { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem .8rem; }
 .deck-editor-reading-desk .deck-editor-rules > :is(.tt-title, .ti-meta) { margin: 0; }
 .deck-editor-reading-desk .deck-editor-rules > .ctext { flex: 1 0 100%; margin: .5rem 0; }
-.deck-editor.deck-editor-reading-desk .deck-editor-selected-buttons > button.deck-editor-primary:not(:disabled):not([aria-disabled="true"]) { color: #edffe9; background-color: #326b3b; border-color: #70a675; }
-.deck-editor-reading-desk #deck-editor-done:not(:disabled) { color: #edffe9; background-color: #326b3b; border-color: #70a675; }
-.deck-editor-reading-desk #deck-editor-done:disabled { color: #aaa69e; background-color: #3a3834; border-color: #5d5952; opacity: 1; }
+.deck-editor.deck-editor-reading-desk .deck-editor-selected-buttons > button.deck-editor-primary:not(:disabled):not([aria-disabled="true"]) { color: var(--control-positive-text); background-color: var(--control-positive-fill); border-color: var(--control-positive-border); }
+.deck-editor-reading-desk #deck-editor-done:not(:disabled) { color: var(--control-positive-text); background-color: var(--control-positive-fill); border-color: var(--control-positive-border); }
 /* The live game UI zoom changes the available reading height. Preserve the
    main effect below the preview before spending remaining space on the face. */
 .deck-editor-reading-desk .deck-editor-selected-reason { display: none; }
@@ -2009,7 +2004,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .upgrade-desk .deck-editor-main.smith-candidate-card .card-upgrade-reason { color: var(--danger); }
 .upgrade-desk .deck-editor-main.smith-candidate-card.locked,
 .upgrade-desk .deck-editor-main.smith-candidate-card.is-needs-blacksmith { cursor: not-allowed; }
-.upgrade-desk .deck-editor-main.smith-candidate-card.locked { opacity: .55; }
+.upgrade-desk .deck-editor-main.smith-candidate-card.locked { opacity: var(--btn-disabled-opacity); }
 .upgrade-desk .deck-editor-tile.spent .deck-editor-name { color: inherit; }
 .upgrade-desk .deck-editor-foot { justify-content: flex-end; }
 .deck-editor.upgrade-desk .deck-editor-foot > .modal-btnrow { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
@@ -2018,3 +2013,15 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .upgrade-desk .deck-editor-main.smith-candidate-card { grid-template-columns: 4.4rem minmax(0, 1fr) auto; }
   .upgrade-desk .deck-editor-main.smith-candidate-card > .deck-editor-art { max-height: 4.4rem; }
 }
+
+/* W25-R: an item's properties on the Armoury: a chip list on the tile, a section in the item's detail. */
+.item-prop-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .6rem 0 0; padding: 0; list-style: none; }
+.item-prop-chip { padding: .15rem .6rem; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--parchment); font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); white-space: nowrap; }
+.item-prop-more { color: var(--muted); }
+.item-prop-detail { display: grid; gap: .4rem; margin-top: 1rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+.item-prop-heading { margin: 0; color: var(--gold); font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); }
+.item-prop-counts { margin: 0; color: var(--muted); font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
+.item-prop-list { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.item-prop-row { display: grid; gap: .1rem; }
+.item-prop-name { color: var(--parchment); font-size: max(1.3rem, calc(13px / var(--ui-zoom, 1))); }
+.item-prop-text { color: var(--muted); font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); line-height: 1.35; overflow-wrap: anywhere; }

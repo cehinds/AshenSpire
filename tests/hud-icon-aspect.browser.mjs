@@ -14,12 +14,15 @@ try {
     await page.waitForTimeout(1500);
     const r = await page.evaluate(() => {
       const size = e => { const b = e.getBoundingClientRect(); return [b.width, b.height]; };
-      return { badges: [...document.querySelectorAll('.target-hud-overhead-meters .combat-health-badge')].map(size),
-        // Defense (Block) is the farthest-left badge in every overhead row that has one.
-        rows: [...document.querySelectorAll('.target-hud-overhead-meters .combat-health-row')].map(row => [...row.querySelectorAll('.combat-health-badge')].map(n => [n.dataset.defenseKind, n.getBoundingClientRect().left])),
+      // Owner 2026-11-07: Block is the tall shield left of the bars (it is not a round badge); every other badge stays square.
+      return { badges: [...document.querySelectorAll('.target-hud-overhead-meters .combat-health-badge:not(.combat-health-shield)')].map(size),
+        shields: [...document.querySelectorAll('.target-hud-overhead-meters .combat-health-shield')].map(size),
+        // The Block shield is the farthest-left drawn badge in every overhead row that shows one.
+        rows: [...document.querySelectorAll('.target-hud-overhead-meters .combat-health-row')].map(row => [...row.querySelectorAll('.combat-health-badge')].filter(n => n.getBoundingClientRect().width > 0 && getComputedStyle(n).visibility !== 'hidden').map(n => [n.dataset.defenseKind, n.getBoundingClientRect().left])),
         buttons: [...document.querySelectorAll('.shared-hud .illustrated-hud-button.topbar-btn')].map(size) };
     });
     assert.ok(r.badges.length > 0 && r.buttons.length > 0, `${width}x${height}: badges and buttons render`);
+    for (const [w, h] of r.shields) assert.ok(h >= w, `${width}x${height}: the Block shield ${w}x${h} is tall`);
     for (const row of r.rows) if (row.some(([k]) => k === 'shield')) assert.equal([...row].sort((a, b) => a[1] - b[1])[0][0], 'shield', `${width}x${height}: Defense badge is leftmost`);
     if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/hud-${width}x${height}.png` });
     for (const [w, h] of [...r.badges, ...r.buttons]) assert.ok(Math.abs(w - h) <= 0.5, `${width}x${height}: ${w}x${h} is square`);

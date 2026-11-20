@@ -62,18 +62,18 @@ function groupByBand(plan) {
   return groups;
 }
 
-/** One meter: plate (name · cur/max) + well (the trough, at its data length). */
+/** One meter: plate (name · cur/max) + well (the trough, at its data length). A bar may carry a display-only `shownCur`; the printed number, tooltip and aria text use it, while `cur` (data-cur) stays the source value. */
 function unit(bar, surface, tooltipExtra, tooltips, showLabels = false) {
   const skinny = bar.weight === 'skinny';
   const node = meter({
     id: bar.id,
     label: surface === 'main' || showLabels ? bar.name : '',
-    value: `${bar.cur}/${bar.max}`,
+    value: `${bar.shownCur ?? bar.cur}/${bar.max}`,
     cur: bar.cur, max: bar.max,
     pct: bar.pct, lengthPct: bar.lengthPct,
     skinny,
     inset: surface === 'model',
-    ariaLabel: `${bar.name} ${bar.cur} of ${bar.max}`,
+    ariaLabel: `${bar.name} ${bar.shownCur ?? bar.cur} of ${bar.max}`,
     attrs: { class: 'resunit', style: { '--meter-tone': bar.tint } },
     trackAttrs: { class: `bar resbar resbar-${bar.weight}` },
   });
@@ -93,5 +93,5 @@ function unit(bar, surface, tooltipExtra, tooltips, showLabels = false) {
 function tooltipHtml(bar, tooltipExtra) {
   const extra = (tooltipExtra && tooltipExtra(bar)) || '';
   // Whatever the plate is too narrow to print, the tooltip always says.
-  return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
+  return `<div class="tt-title">${esc(bar.name)}</div>${bar.shownCur ?? bar.cur} / ${bar.max}. ${extra}`;
 }

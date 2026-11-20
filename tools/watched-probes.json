@@ -363,10 +363,10 @@
   {
    "id": "A3",
    "by": "Codex",
-   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/main.js (shotState compendium reach state)",
+   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/dev/shotStates.js (compendium reach state)",
    "anchors": [
     "cp-cell",
-    "shotState === 'compendium'"
+    "compendium: () =>"
    ],
    "screen": "Compendium content; former title entry retired by the owner five-entry menu requirement",
    "reach": [
@@ -562,7 +562,7 @@
   {
    "id": "S3",
    "by": "Bjorn",
-   "read": "src/ui/screens/settings.js (the holdConfirm row, choices derived from balance.ui.holdConfirm)",
+   "read": "src/ui/models/SettingsRowsModel.js (the holdConfirm row, choices derived from balance.ui.holdConfirm)",
    "anchors": [
     "key: 'holdConfirm'"
    ],
@@ -684,7 +684,7 @@
   {
    "id": "T3",
    "by": "Bjorn",
-   "read": "src/ui/screens/settings.js (tapFloor row) · balance.ui tap ladder 44/36/30/24",
+   "read": "src/ui/models/SettingsRowsModel.js (tapFloor row) · balance.ui tap ladder 44/36/30/24",
    "anchors": [
     "key: 'tapFloor'"
    ],
@@ -775,7 +775,7 @@
   {
    "id": "G2",
    "by": "Bjorn",
-   "read": "src/ui/screens/map.js (visited / traveled classes) · src/main.js ?shotWalk leaves a trail",
+   "read": "src/ui/screens/map.js (visited / traveled classes) · src/dev/shotStates.js ?shotWalk leaves a trail",
    "anchors": [
     "shotWalk"
    ],
@@ -871,7 +871,7 @@
   {
    "id": "G6",
    "by": "Bjorn",
-   "read": "src/ui/screens/settings.js (the mapMode A/B, ruled here and NOT on Custom Climb)",
+   "read": "src/ui/models/SettingsRowsModel.js (the mapMode A/B, ruled here and NOT on Custom Climb)",
    "anchors": [
     "mapMode"
    ],
@@ -1112,7 +1112,7 @@
    "id": "G4b",
    "extra": true,
    "by": "Bjorn",
-   "read": "src/main.js ?shotSeed — one map is not the map (EldenSpire#28)",
+   "read": "src/dev/shotStates.js ?shotSeed — one map is not the map (EldenSpire#28)",
    "anchors": [
     "shotSeed"
    ],
@@ -1208,7 +1208,7 @@
   {
    "id": "A8",
    "by": "Bjorn",
-   "read": "content/source/balanceEquipment.json (swapCostKind 'energy', swapCost 2) · src/ui/screens/settings.js (Advanced › 'Weapon swap cost', choices are rows in balance.equipment.swapCostRules)",
+   "read": "content/source/balanceEquipment.json (swapCostKind 'energy', swapCost 2) · src/ui/models/SettingsRowsModel.js (Advanced › 'Weapon swap cost', choices are rows in balance.equipment.swapCostRules)",
    "anchors": [
     "swapCostKind",
     "swapCostRules"
@@ -1256,7 +1256,7 @@
   {
    "id": "A11",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js (inventoryBlock is the one shared Inventory and data-filtered-for names the selected equipment position)",
+   "read": "src/ui/screens/equipment.js and src/ui/components/armouryInventory.js (inventoryBlock is the one shared Inventory and data-filtered-for names the selected equipment position)",
    "anchors": [
     "function inventoryBlock()",
     "box.dataset.filteredFor"

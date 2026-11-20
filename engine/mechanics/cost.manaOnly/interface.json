@@ -1,0 +1,8 @@
+{
+  "mechanic": "cost.manaOnly",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

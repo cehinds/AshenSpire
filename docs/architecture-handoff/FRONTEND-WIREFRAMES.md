@@ -304,7 +304,7 @@ Current lines refer to the source snapshot; resolve symbols again before editing
 | `src/ui/screens/shop.js:117` render block | Replace literal spacing/markup and repeated introductions with choice body composition | All operations remain available; no hidden price/eligibility info |
 | `src/ui/screens/rest.js:168` initial markup | choice body recovery/services layout, concise title and necessary status | Recovery effects clear without duplicate captions |
 | `src/ui/screens/event.js:47` header/body construction | choice body nonmodal event; title + narrative + choices; stop building then hiding a close control | Mandatory choice behavior and story content preserved |
-| `src/ui/screens/reward.js:65` mountRewards | choice body reward list and continuation with state feedback | Claim status and optional/automatic choice distinctions clear |
+| `src/ui/screens/reward.js:65` MountRewards | choice body reward list and continuation with state feedback | Claim status and optional/automatic choice distinctions clear |
 | `src/ui/screens/settings.js:617`, `:1200`, `:1525` | W1 via SettingsViewModel; metadata from normalized rows | Both entry paths have same hierarchy and behavior |
 | `src/ui/screens/equipment.js:337`, `:621` | W1/selection body panes, existing trays, no nested repeated active-view titles | All saved modes, resizing, card visibility, selection and stats retained |
 | `src/ui/screens/customize.js:51`, `:59`, `:63` | Shared step header/action row and budget; reuse allocation card | Correct choices and stats, no unnecessary heading stacks |

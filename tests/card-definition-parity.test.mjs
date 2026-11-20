@@ -17,9 +17,9 @@ for (const cardId of ['crystalBarrier', 'starbladePhalanx', 'cinderSigil', 'stri
     assert.deepEqual(playingCardModel(registries, ref, { rules }), playingCardModel(registries, ref, { definition: def }));
   });
 }
-test('reward and deck descriptions show Barrier stacks while legacy runs retain Block', () => {
+test('reward and deck descriptions show Gain N Poise (Barrier stacks x5) while legacy runs retain Block', () => {
   const ref = { cardId: 'crystalBarrier', abilityRank: 1 };
-  assert.match(cardPlainText(registries, ref, { rules }), /Gain 4 Barrier/);
+  assert.match(cardPlainText(registries, ref, { rules }), /Gain 20 Poise/);
   assert.match(cardPlainText(registries, ref, { rules: { combatExpansionVersion: 1 } }), /Block/);
   assert.deepEqual(playingCardDefinition(registries, ref), resolveCard(registries, ref));
 });

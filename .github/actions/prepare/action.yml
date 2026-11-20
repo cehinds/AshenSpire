@@ -1,0 +1,35 @@
+name: Prepare the checkout
+description: >-
+  The preamble nearly every ci.yml job repeats after actions/checkout: the Node
+  setup (.github/actions/setup-node) and then the art-pack fetch
+  (.github/actions/fetch-art). A composite cannot check out the repository that
+  contains it, so the caller still runs actions/checkout first, with its own
+  `with:` (lfs, fetch-depth, filter, sparse-checkout differ job by job).
+
+# What does NOT belong here: any step between the two (the pinned Python and
+# the card-artwork encoder of ci.yml's `test` and `test-parallel` jobs), and the
+# ART_REPO_TOKEN of the job that builds on a protected branch. A caller that
+# needs the token passes it in the env of its own fetch-art step, exactly as
+# before; this action takes no secret, so it widens no exposure.
+#
+# `fetch-art: 'false'` is for a job that needs Node but reads no art. The
+# fetch-ordering guard in tests/fetch-art.test.mjs treats such a step as no
+# fetch at all.
+inputs:
+  packs:
+    description: high, light, common, a comma list, or all (as fetch-art's `packs`)
+    required: false
+    default: all
+  fetch-art:
+    description: "'true' fetches the art packs after Node is set up; 'false' sets up Node only"
+    required: false
+    default: 'true'
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup-node
+    # The art packs, before anything builds, serves or tests this checkout (step 12).
+    - if: ${{ inputs.fetch-art == 'true' }}
+      uses: ./.github/actions/fetch-art
+      with:
+        packs: ${{ inputs.packs }}

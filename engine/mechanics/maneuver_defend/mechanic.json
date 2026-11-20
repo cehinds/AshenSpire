@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "maneuver",
   "label": "Defend",
-  "description": "Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard.",
+  "description": "Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard. Stance benefit: +50% Block gained and 25% less Poise damage taken.",
   "attaches": [
     "card"
   ],

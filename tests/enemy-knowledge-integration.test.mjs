@@ -1,4 +1,6 @@
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { legacyRules } from './legacyHitRules.mjs';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -12,7 +14,7 @@ import { dealPoiseDamage } from '../src/engine/actions.js';
 import { runCombatPlayer } from '../src/engine/runCombat.js';
 import { openRunEnemyKnowledge } from '../src/model/enemyKnowledgeRun.js';
 import { previewCard } from '../src/engine/combat.js';
-import { skillTracks, awardSkillXp, bankSkillXp, claimBankedSkillLevel } from '../src/model/skills.js';
+import { skillTracks, awardSkillXp } from '../src/model/skills.js';
 import { skillProgressRows, staleSkillTracks } from '../src/model/progression.js';
 import { characterSheetModel } from '../src/ui/models/CharacterSheetModel.js';
 import { combatEnemyKnowledgeProblems } from '../src/model/enemyKnowledgeCombat.js';
@@ -135,6 +137,8 @@ test('a committed successful evade against a multi-hit wholly unknown action cre
     firstMove: 'triple', moves: { triple: { ...attack, damage: 10, hits: 3 } } };
   const registries = createRegistries({ ...contentBundle, enemies: [...contentBundle.enemies, enemy] });
   const { combat } = fixture({ registries, enemyId: enemy.id, counter: true, responseCard: 'evasiveGuard' });
+  // W25-EvadeCards: Evasive Guard adds Evade stacks, which exist only under FixCore; this case primes the d20, so the fight carries the rules of one saved before the exact-hits ruling.
+  combat.fixCoreRules = legacyRules(fixCoreMechanics);
   combat.player.attributes.dexterity = combat.attributes.dexterity = 100;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'knowledge-counter' });
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 0);
@@ -158,8 +162,6 @@ test('Perception is visible only on opted-in runs and cannot be manually trained
   assert.ok(track.rows.every(row => row.grants.length === 0));
   const before = structuredClone(run.skills);
   assert.throws(() => awardSkillXp(registries, run, 'perception', 100));
-  assert.throws(() => bankSkillXp(registries, run, 'perception', 100));
-  assert.equal(claimBankedSkillLevel(registries, run, 'perception'), null);
   assert.deepEqual(run.skills, before);
   const legacy = createRunState({ registries, seed: 11, classId: 'reaver', enemyKnowledgeVersion: null });
   assert.equal(skillProgressRows(registries, legacy, { includeUntouched: true }).some(track => track.id === 'perception'), false);

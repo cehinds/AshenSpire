@@ -6,12 +6,11 @@
 // This is a source test: it reads title.js as text and pins that shape.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
-const SOURCE = readFileSync(
+const SOURCE = readSourceTextSync(
   fileURLToPath(new URL('../src/ui/screens/title.js', import.meta.url)),
-  'utf8',
 );
 
 // The body of a `const name = (...) => { ... };` declaration at the file's
@@ -56,9 +55,8 @@ test('renderModal() draws and wires only the modal layer', () => {
 
 // W6: the New Game door is a registered modal, and a delete from the Title
 // updates it in place instead of remounting the whole Title.
-const MAIN_SOURCE = readFileSync(
+const MAIN_SOURCE = readSourceTextSync(
   fileURLToPath(new URL('../src/main.js', import.meta.url)),
-  'utf8',
 );
 
 test('title.js registers the open New Game door with modalState.js', () => {

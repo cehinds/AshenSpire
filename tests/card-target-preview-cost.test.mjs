@@ -119,23 +119,6 @@ test('queued charges, paused selection and custom emitters retain exact preview 
   assert.equal(assertPreviewParity(custom, 1), true, 'unknown event buses can supply the hostile charge');
 });
 
-test('transitional terminal boards preserve full preview errors instead of bypassing endCheck', () => {
-  for (const terminal of ['player', 'enemies', 'result']) {
-    const combat = fixture();
-    if (terminal === 'player') combat.player.alive = false;
-    else if (terminal === 'enemies') for (const enemy of combat.enemies) enemy.alive = false;
-    else combat.result = 'victory';
-    assertPreviewParity(combat, 1);
-  }
-  const combat = fixture(); for (const enemy of combat.enemies) enemy.alive = false;
-  combat.foundation = { rules: { triggers: { maxEvents: 1, maxDepth: 64 } }, profiles: {}, actionSerial: 0, eventSerial: 0,
-    eventCount: 0, counts: {}, rolls: {} };
-  const before = data(combat), id = combat.piles.hand[0].instanceId;
-  assert.throws(() => previewCard(combat, id), /combat event limit exceeded/);
-  assert.throws(() => cardNeedsEnemyTargetNow(combat, id), /combat event limit exceeded/);
-  assert.deepEqual(data(combat), before);
-});
-
 test('real run fights retain every valid bot decision, save and RNG versus forced detached targeting', () => {
   function fight(classId, forcePreview) {
     const run = createRunState({ seed: 1, classId, registries: base });

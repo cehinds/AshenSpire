@@ -68,11 +68,50 @@ export function remainingFollowUps(plan, trace) {
  */
 export function advanceFollowUps(plan, trace) {
   if (!plan) return [];
-  if (!plan.headDone) plan.headDone = true;
+  // The row already advanced when the previous move resolved (PromoteFollowUp): this event only consumes that mark.
+  if (plan.promoted) plan.promoted = false;
+  else if (!plan.headDone) plan.headDone = true;
   else {
     plan.cursor = Math.min(plan.total, plan.cursor + 1);
   }
   return remainingFollowUps(plan, trace);
+}
+
+/**
+ * PromoteFollowUp(plan, trace) → { head, row } or null. Called once when an actor's move has resolved and its next planned move
+ * is announced (owner, 2026-11-13): the first remaining follow-up leaves the row and becomes the head, drawn as its own symbol
+ * ({ kind: 'action', icon } only if its Perception read passed, else { kind: 'unknown' }), never more than the row showed.
+ * The next `enemyMoveStarted` finds `plan.promoted` set and does not advance the row a second time.
+ */
+export function PromoteFollowUp(plan, trace) {
+  if (!plan || !plan.headDone || plan.promoted) return null;
+  const rest = remainingFollowUps(plan, trace);
+  if (!rest.length) return null;
+  plan.cursor = Math.min(plan.total, plan.cursor + 1);
+  plan.promoted = true;
+  return { head: rest[0], row: rest.slice(1) };
+}
+
+/** The head intent a promoted follow-up shows: only its icon (read) or "?", with no move, value or stance. */
+export function PromotedIntent(symbol) {
+  return { kind: 'unknown', promoted: true, icon: symbol?.kind === 'action' ? symbol.icon : null, revealed: true, hidden: false };
+}
+
+/**
+ * PromoteFollowUpRow({ disp, followMemo, followTrace }, id) → true when the actor's head was promoted on the display
+ * snapshot (its row, the memo row and its intentPreview). False leaves everything as it was.
+ */
+export function PromoteFollowUpRow({ disp, followMemo, followTrace }, id) {
+  const ent = disp?.ents?.[id];
+  if (!ent) return false;
+  const next = PromoteFollowUp(disp?.followPlans?.[id] ?? followMemo?.planFor(id), followTrace?.[id]);
+  if (!next) return false;
+  followMemo?.setRow(id, next.row);
+  ent.followUps = next.row;
+  ent.intentPreview = PromotedIntent(next.head);
+  ent.intentInFlight = false;
+  delete ent.intentBeforeReaction;
+  return true;
 }
 
 /**
@@ -109,4 +148,107 @@ export function createFollowMemo() {
     clearRow(id) { rows.delete(id); },
     clear() { rows.clear(); },
   };
+}
+
+/** Reduces each follow-up receipt once across playback and skip for this mount. */
+export function CreateFollowUpReduction(followMemo)
+{
+    const followReduced = new WeakSet();
+    return function reduceFollowRows(events, disp, followTrace)
+    {
+        for (const e of events)
+        {
+            if (followReduced.has(e))
+            {
+                continue;
+            }
+            const row = (id, symbols) =>
+            {
+                const symbolsNow = followMemo.setRow(id, symbols);
+                if (disp?.ents[id])
+                {
+                    disp.ents[id].followUps = symbolsNow;
+                }
+            };
+            switch (e.type)
+            {
+                case 'enemyMoveStarted':
+                    if (e.reaction)
+                    {
+                        continue;
+                    }
+                    // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
+                    row(
+                        e.sourceId,
+                        advanceFollowUps(
+                            disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId),
+                            followTrace?.[e.sourceId],
+                        ),
+                    );
+                    break;
+                case 'enemyBurdenBlocked':
+                case 'enemyMoveUnavailable':
+                {
+                    const id = e.sourceId ?? e.targetId;
+                    row(
+                        id,
+                        advanceFollowUps(
+                            disp?.followPlans?.[id] ?? followMemo.planFor(id),
+                            followTrace?.[id],
+                        ),
+                    );
+                    break;
+                }
+                case 'enemyPlanTrimmed':
+                {
+                    // The right-most planned moves leave the row; the row only shrinks during the enemy turn.
+                    // The underlying plan (ids and total) shrinks too, so a later enemyMoveStarted cannot rebuild a cancelled intent.
+                    const plan = disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId);
+                    if (plan)
+                    {
+                        row(
+                            e.sourceId,
+                            trimFollowUps(plan, e.dropped?.length || 0, followTrace?.[e.sourceId]),
+                        );
+                    }
+                    else
+                    {
+                        const now = followMemo.row(e.sourceId, true)
+                            ?? disp?.ents[e.sourceId]?.followUps ?? [];
+                        row(
+                            e.sourceId,
+                            now.slice(0, Math.max(0, now.length - (e.dropped?.length || 0))),
+                        );
+                    }
+                    break;
+                }
+                case 'enemyStaggered':
+                    // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
+                    if (followMemo.row(e.targetId, true)?.length || disp?.ents[e.targetId]?.followUps?.length)
+                    {
+                        row(e.targetId, []);
+                    }
+                    break;
+                case 'enemyTurnEnd':
+                case 'playerTurnStart':
+                    // The turn is over: a charge or a halt that sent no event of its own leaves the row now.
+                    followMemo.clear();
+                    for (const id of Object.keys(disp?.ents || {}))
+                    {
+                        if (disp.ents[id].followUps?.length)
+                        {
+                            disp.ents[id].followUps = [];
+                        }
+                    }
+                    break;
+                case 'enemyActorTurnStarted':
+                    // Nothing goes: the seeded row (snapshot and memo) stays until the head move or a stagger speaks, so "??" does
+                    // not blink out and back. Rows of an earlier turn are already gone (enemyTurnEnd / playerTurnStart clear them).
+                    break;
+                default:
+                    continue;
+            }
+            followReduced.add(e);
+        }
+    };
 }

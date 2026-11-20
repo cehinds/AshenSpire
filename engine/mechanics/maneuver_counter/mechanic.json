@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "maneuver",
   "label": "Counter",
-  "description": "Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter.",
+  "description": "Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter. Stance benefit: +25% Block gained.",
   "attaches": [
     "card"
   ],

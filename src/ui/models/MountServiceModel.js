@@ -88,7 +88,7 @@ export function mountServiceModel(registries, plan, selection = {}, { multiUse =
         ? armourMenuAsset(candidate.classId, piece.id)
         : armamentIconAsset(piece),
       rarity: piece.rarity || 'common',
-      kindLabel: candidate.itemKind === 'armor' ? 'Armor' : 'Armament',
+      kindLabel: candidate.itemKind === 'armor' ? 'Armour' : 'Armament',
       itemTypes: freeze((piece.itemTypes || []).map((type) => freeze({ ...type }))),
       tags: freeze([...(piece.tags || [])]),
       cost: candidate.cost,

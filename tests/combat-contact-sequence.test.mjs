@@ -5,20 +5,25 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat as createRunCombatWithBenefits } from '../src/engine/runCombat.js';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
+// These numbers pin the pre-Wave-2.5 arithmetic, so the fight plays the rules of one created before the stance benefits (tests/stance-benefits.test.mjs owns those).
+const createRunCombat = (...args) => withoutStanceBenefits(createRunCombatWithBenefits(...args));
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { reactionRulesSnapshot } from '../src/content/combatCardTraits.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { startQueuedEnemy } from '../src/engine/combatReactions.js';
 import { prepareTacticalCard, tacticalCarrier, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
-// Fund the authored three-contact Slash before the planner selects its head.
+// Fund the authored three-contact Slash before the planner selects its head. The Core 0.5 base-damage scale and the 0.7 side and Block scales are off: this file pins
+// the per-contact contract, and halved 5-damage contacts leave a Counter's floor(0.25 x hit) Block at 0.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
   characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+  effects: { baseDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 },
 } });
 const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the
@@ -36,7 +41,7 @@ function live(damage = 5, effects = undefined, enemyIds = ['wanderingSoldier']) 
   } } };
   const run = createRunState({ registries: selected, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: selected, run, rng: createRng(511), enemyIds });
-  assert.equal(combat.enemies[0].maxStamina, 2, 'the native pool is two SP');
+  assert.equal(combat.enemies[0].maxStamina, 3, 'the native pool is three SP (level 1: 5 + 1 attribute points, owner 2026-11-07)');
   // A three-contact move costs 1 SP per hit (owner, 2026-10-25): fund the fixture's slash.
   Object.assign(combat.enemies[0], { maxStamina: 3, stamina: 3, plannedMoves: [] });
   const enemy = combat.enemies[0], move = selected.enemies.get(enemy.enemyId).moves.slash;
@@ -317,16 +322,39 @@ test('Core2 next-contact forecasts survive reaction pauses and JSON reload witho
     const events = ctx.eventLog.slice(start);
     const damage = events.find(event => event.type === 'damageDealt' && event.sourceId === id);
     totalLoss += damage.amount - damage.blocked; totalRaw += damage.damageReceipt.hits[0].incoming;
-    // Owner, 2026-11-03: the displayed contact is the raw hit (the receipt's incoming, before Block/Poise/Ward), not the HP that lands.
-    assert.equal(damage.damageReceipt.hits[0].incoming, shown.projectedDamage.max, 'the displayed current-contact hit is the landed contact before Block');
+    // Owner, 2026-11-14: the displayed contact is the HP that lands (the receipt's hpLoss, after Block), the incoming hit is the receipt's `incoming`.
+    assert.equal(damage.hpLoss, shown.projectedDamage.max, 'the displayed current-contact hit is the HP the landed contact costs');
     for (const event of [prepared, ...events]) {
       applyCombatIntentReceipt(entities, event);
       if (event.type === 'damageDealt' && event.sourceId === id)
         assert.equal(entities[id].intentPreview.damage, undefined, 'the completed damage is no longer a forecast');
     }
   }
-  assert.equal(totalRaw, whole.projectedDamage.max, 'the pre-action forecast is the sum of the raw contacts');
-  assert.equal(totalLoss, 12, 'Block (12) still cuts the real HP loss of 24');
+  assert.equal(totalRaw, 24, 'the three contacts arrive as 3 x 8');
+  assert.equal(totalLoss, whole.projectedDamage.max, 'the pre-action forecast is the HP lost over the three contacts');
+  assert.equal(totalLoss, 12, 'Block (12) cuts the 24 to 12');
+});
+
+test('live and resumed contact displays show the same Poise without saving the forecast in the receipt', async () => {
+  const { projectCombatIntent, applyCombatIntentReceipt } = await import('../src/ui/models/CombatIntentProjectionModel.js');
+  const ctx = live(8);
+  counters(ctx);
+  ctx.player.persistentPoise = { value: 3, max: 8 };
+  const id = ctx.enemies[0].id;
+  dispatch(ctx, { type: 'endTurn' });
+  assert.ok(ctx.pendingReaction);
+  const shown = projectCombatIntent(ctx, id);
+  assert.ok(shown.projectedPoise.max > 0, 'the impending contact takes Poise');
+  const prepared = ctx.eventLog.findLast(event => event.type === 'combatContactPrepared');
+  assert.equal(Object.hasOwn(prepared.intentPreview, 'projectedPoise'), false);
+  const entities = { [id]: { kind: 'enemy' } };
+  applyCombatIntentReceipt(entities, prepared);
+  assert.deepEqual({ ...entities[id].intentPreview }.projectedPoise, shown.projectedPoise);
+
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
+  assert.equal(Object.hasOwn(saved.pendingReaction.intentPreview, 'projectedPoise'), false);
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), snapshot: saved });
+  assert.deepEqual(projectCombatIntent(restored, id), shown);
 });
 
 test('intent playback clears only the acting instance and restores a prepared hold after a Counter', async () => {
@@ -374,12 +402,11 @@ test('Core2 armed Counter is priced identically before the move, at the first co
   const start = ctx.eventLog.length;
   while (ctx.pendingReaction) { primeAccuracyRolls(ctx, { count: 3 }); answer(ctx); }
   const actual = ctx.eventLog.slice(start).filter(event => event.type === 'damageDealt' && event.sourceId === id);
-  // Owner, 2026-11-03: the shown hit is the raw hit, so an armed Counter prices it exactly as it was before the move was announced.
-  // The Counter stance's defensive 0.75 (20 -> 15 incoming) and its Block are defenses: the shown hit stays the raw 20.
-  assert.equal(first.projectedDamage.max, 20);
+  // Owner, 2026-11-14: the shown hit is the HP lost, so an armed Counter prices it the same before the move, at the first contact and at impact.
+  // The Counter stance's defensive 0.75 (20 -> 15 incoming) and its Block are in the number.
   assert.equal(actual[0].damageReceipt.hits[0].incoming, 15, 'the real hit is cut by the defensive stance');
-  assert.equal(before.projectedDamage.max, 60, 'the whole action is its three raw hits');
-  assert.ok(initialHp - ctx.player.hp <= before.projectedDamage.max, 'real HP loss never exceeds the shown hit');
+  assert.equal(first.projectedDamage.max, actual[0].hpLoss, 'the contact shows the HP it costs');
+  assert.equal(before.projectedDamage.max, initialHp - ctx.player.hp, 'the whole action shows the HP it costs');
 });
 
 test('completed enemy intent stays consumed while another instance pauses, and a pooled follow-up gets a fresh forecast', async () => {

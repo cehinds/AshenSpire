@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { readFileSync } from 'node:fs';
 
 // Owner 2026-11-05: "No way to inspect reward cards." The selected reward card wears the
-// hand's (i) badge; the badge, or a second tap on the selected face, opens the inspector.
+// hand's (i) badge; the badge opens the inspector; a face tap only ever selects (owner 2026-11-18).
 const registries = createRegistries(contentBundle);
 
 function withGlobalDom(fn) {
@@ -28,7 +28,7 @@ function mount() {
   const run = { class: 'reaver', deck: [], sideboard: [], cinders: 0, xp: 0, skills: {} };
   const ids = ['frostNova', 'scholarsInsight', 'guardCounter'];
   const offer = { id: 'victory-inspect', options: ids.map(id => ({ kind: 'combatCards', id })), taken: [], claimed: null, takeCount: 1 };
-  mountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards', onTake() {}, onContinue() {}, onAddToDeck() {} });
+  MountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards', onTake() {}, onContinue() {}, onAddToDeck() {} });
   return { app, faces: [...app.querySelectorAll('.reward-choice-face')], ids };
 }
 const modal = () => document.querySelector('.card-inspection-modal');
@@ -45,15 +45,14 @@ test('every reward card carries a badge, and only the selected one is shown', ()
   assert.match(css, /\.reward-door \.reward-choice-face\.is-chosen > \.card-info-button \{ visibility:visible; pointer-events:auto; \}/);
 }));
 
-test('the first face tap only selects; the second opens the inspector', () => withGlobalDom(() => {
+test('a face tap only selects, even on the selected face; it never opens the inspector', () => withGlobalDom(() => {
   const { faces } = mount();
   tap(faces[0]);
   assert.equal(modal(), null, 'first tap does not inspect');
   assert.ok(faces[0].classList.contains('reward-selected'));
   tap(faces[0]);
-  assert.ok(modal(), 'second tap on the selected face inspects');
-  modal().querySelector('.modal-close').click();
-  assert.equal(modal(), null);
+  assert.equal(modal(), null, 'a second tap on the selected face does not inspect');
+  assert.ok(faces[0].classList.contains('reward-selected'), 'and keeps it selected');
   tap(faces[2]);
   assert.equal(modal(), null, 'a tap on another card selects it, never inspects');
 }));
@@ -93,13 +92,13 @@ test('face A then name B moves the (i) to B', () => withGlobalDom(() => {
   modal().querySelector('.modal-close').click();
 }));
 
-test('tapping B face after its name select opens the inspector; A face then only selects', () => withGlobalDom(() => {
+test('tapping B face after its name select keeps B chosen without inspecting; A face then selects', () => withGlobalDom(() => {
   const { app, faces } = mount();
   names(app)[1].click();
   assert.equal(modal(), null);
   tap(faces[1]);
-  assert.ok(modal(), 'the chosen card inspects on a face tap');
-  modal().querySelector('.modal-close').click();
+  assert.equal(modal(), null, 'the chosen card does not inspect on a face tap');
+  assert.deepEqual(chosen(faces), [false, true, false]);
   tap(faces[0]);
   assert.equal(modal(), null, 'an unchosen face only selects');
   assert.deepEqual(chosen(faces), [true, false, false]);

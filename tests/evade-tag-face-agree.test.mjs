@@ -12,11 +12,17 @@ import { cardPlainText } from '../src/ui/components/card.js';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const fight = () => createRunCombat({ registries, run: createRunState({ registries, classId: 'reaver', seed: 511 }), rng: createRng(511), enemyIds: ['wanderingSoldier'] });
-const resumedAt = (combat, base) => { combat.fixCoreRules = { ...combat.fixCoreRules, accuracy: { ...combat.fixCoreRules.accuracy, evadeStackBase: base, evadeStackDex: 0 } }; return combat; };
+// A fight saved before the 2026-11-14 ruling (no hitRoll key) grants evadeStackBase stacks per Evade card; a new fight grants evadeStacksPerCard (1).
+const resumedAt = (combat, base) => {
+  const accuracy = { ...combat.fixCoreRules.accuracy, evadeStackBase: base, evadeStackDex: 0 };
+  delete accuracy.hitRoll; delete accuracy.evadeStacksPerCard;
+  combat.fixCoreRules = { ...combat.fixCoreRules, accuracy };
+  return combat;
+};
 
-for (const [label, base] of [['current fight', 3], ['resumed evadeStackBase-1 fight', 1]]) {
+for (const [label, base] of [['current fight', 1], ['resumed evadeStackBase-3 fight', 3]]) {
   test(`Evade tag and card face agree on a ${label}`, () => {
-    const combat = base === 3 ? fight() : resumedAt(fight(), 1);
+    const combat = base === 1 ? fight() : resumedAt(fight(), 3);
     for (const id of ['core.evade', 'core.closingDodge', 'core.backstep']) {
       if (!registries.cards.has(id)) continue;
       const def = registries.cards.get(id);

@@ -20,7 +20,6 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/gameProfileCombat.js",
-    "symbol": "profileHandSize"
+    "file": "src/engine/elementIdentity.js"
   }
 }

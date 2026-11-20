@@ -50,7 +50,6 @@ const riders = {
   'back-alley-cut': () => [damage(4, 'enemy', { if: { p: 'not', pred: { p: 'hasBlock', of: 'target', snapshot: 'beforePlay' } } })],
   'silent-exchange': () => [draw(2), { op: 'discard', amount: 1, choose: true }],
   'wire-snare': () => [status('bleed', 3, { if: any(has('weak'), has('vulnerable')) })],
-  nightstep: () => [charge('smoke-edge', { cardType: 'attack', cardTag: 'blade', damage: 3 })],
   'carrion-cut': () => [damage(4, 'enemy', { if: lowHp('target') })],
   twinshade: () => [],
   'last-laugh': () => [damage(4, 'enemy', { if: all(metric('tagPlays', 1, { tag: 'guile' }), metric('tagPlays', 1, { tag: 'guard' })) })],

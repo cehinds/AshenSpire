@@ -16,13 +16,16 @@ function targetChanceLabel(target, current) {
     : covered === false && !(current ? target?.currentHitChances : target?.hitChances)?.some(value => value > 0);
   return allUnreachable ? t('combat.range.outOfRange') : chanceLabel(target, current);
 }
-export function rangeHitLabel(preview, { current = true, targetId } = {}) {
+export function rangeHitLabel(preview, { current = true, targetId, certainHits = false } = {}) {
   // An insight contest has a DC, not a hit chance or a range (SPEC §17 Contests).
   if (preview?.contest) return t('combat.contest.dc', { dc: preview.contest.dc });
   const targets = preview?.range?.targets;
   const target = targetId ? targets?.find(row => row.targetId === targetId) : targets?.[0];
   const row = target ?? { inRange: preview?.inRange, currentInRange: preview?.inRange, hitChance: preview?.hitChance, currentHitChance: preview?.hitChance };
   const label = targetChanceLabel(row, current);
+  // Owner, 2026-11-14: with no hit roll a sure hit shows nothing, and a hit an Evade stack will cancel reads Evaded.
+  if (certainHits && label === percent(100)) return null;
+  if (certainHits && label === percent(0)) return t('combat.range.evaded');
   return label && target?.precisionDelta > 0 ? t('combat.range.precisionBonus', { chance: label, amount: target.precisionDelta }) : label;
 }
 const needsApproach = target => target.allCurrentInRange === false || target.currentInRange === false || target.contacts?.some(contact => contact.currentInRange === false);

@@ -71,7 +71,6 @@ export const SCREENS = [
   { id: 'combat', shot: 'combat', expect: 'none', why: 'a fight has no Back; Escape only cancels a selection and never ends the turn' },
   { id: 'smith', shot: 'smith', expect: 'peel' },
   { id: 'shop', shot: 'shop', expect: 'none', why: 'Leave ends the visit and discards the stock (D41): a commitment, not a Back' },
-  { id: 'master', shot: 'master', expect: 'none', why: 'Leave ends the visit and discards the stock (D41)' },
   { id: 'blacksmith', shot: 'blacksmith', expect: 'none', why: 'Leave ends the visit and discards the stock (D41)' },
   { id: 'rest', shot: 'rest', expect: 'none', why: 'leaving the Shrine forfeits the rest (D41)' },
   { id: 'reward', shot: 'reward', expect: 'none', why: 'leaving the rewards forfeits them (D41); their detail panes Back (tests/escape-back.test.mjs)' },

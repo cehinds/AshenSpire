@@ -9,12 +9,16 @@ test('rebuilding detailed HUD racks preserves reserved artwork headroom', () => 
   const end = source.indexOf('\n      return { slot,', start);
   assert.ok(start >= 0 && end > start, 'the actor headroom calculation exists');
   let rackMounted = true;
-  const scope = { hudWide: true, targetHud: true,
+  const scope = { hudWide: true, targetHud: true, fit: 1,
     frame: { classList: { contains: () => false }, querySelector: () => rackMounted ? {} : null },
     miniHudGroupHeight: () => 70,
     hudGrid: { miniHudSpriteGapPx: 8, desktopMiniHudBandOverlapPx: 7 } };
   const reserve = () => runInNewContext(source.slice(start, end) + '\nracked', { ...scope });
   assert.equal(reserve(), 77);
+  // The reserve is authored canvas px; under a canvas fit it is scaled into the pass's real px.
+  scope.fit = 2;
+  assert.equal(reserve(), 154, 'the reserve follows the canvas fit');
+  scope.fit = 1;
   rackMounted = false;
   assert.equal(reserve(), 77, 'a rack removed during frame rendering retains its artwork envelope');
   rackMounted = true;
@@ -39,7 +43,7 @@ test('a detailed HUD rack rebuild cannot temporarily position a legacy leading h
   const frame = { dataset: {}, querySelector: selector => selector === '.sprite' ? sprite : selector === '.combatant-leading' ? leading : null };
   const field = { querySelectorAll: () => [frame], closest: () => combat };
   const place = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-    field, invalidateSpriteRects() {}, uiZoom: () => 1, readHitBadges: () => null,
+    field, fieldSizeKey: null, invalidateSpriteRects() {}, uiZoom: () => 1, readHitBadges: () => null,
     uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: {} } } } },
     separateRackedIntents() {}, currentSpriteArtBounds: () => ({}), schedule() {}, scheduleArt() {},
     targetOverheadPlacement: () => ({ dx: 25, dy: -60 }),
@@ -71,7 +75,7 @@ test('glyph-only detailed selection coalesces overhead placement; inspection and
   const releaseStart = source.indexOf('  const release = () => {', end);
   const releaseEnd = source.indexOf('\n  detachObserver.observe', releaseStart);
   const noop = () => {}, observer = { disconnect: noop };
-  Object.assign(scope, { releaseBackdrop: noop, releaseLayeredEnvironment: noop, frameRequest: 0, trackingRequest: 0,
+  Object.assign(scope, { releaseBackdrop: noop, releaseLayeredEnvironment: noop, frameRequest: 0, trackingRequest: 0, rackRequest: 0, rackObserver: observer,
     resizeObserver: observer, layoutObserver: observer, poseObserver: observer, reducedMedia: null, reducedSettingObserver: observer,
     reconcileReducedMotion: noop, window: { removeEventListener: noop }, document: {}, fontsLoaded: noop,
     detachObserver: observer, releaseActiveStage: null });

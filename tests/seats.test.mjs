@@ -226,9 +226,9 @@ test('13.2 scenery follows the seat; the final tier\'s boss node is the causeway
 });
 
 test('13.2 the act title names the tier and the seat; without a seat the authored table still answers', () => {
-  assert.equal(actTitle(2, 'The Pale Marches'), 'ACT II — THE PALE MARCHES');
-  assert.equal(actTitle(5, 'The Cinder Reach'), 'ACT II — THE CINDER REACH · CYCLE 2');
-  assert.equal(actTitle(1), 'ACT I — THE FALLOW MARCHES');
+  assert.equal(actTitle(2, 'The Pale Marches'), 'ACT II: THE PALE MARCHES');
+  assert.equal(actTitle(5, 'The Cinder Reach'), 'ACT II: THE CINDER REACH · CYCLE 2');
+  assert.equal(actTitle(1), 'ACT I: THE FALLOW MARCHES');
 });
 
 test('seatOrderProblems names every defect', () => {

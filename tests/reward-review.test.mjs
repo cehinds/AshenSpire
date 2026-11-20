@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { runHeaderStripHtml } from '../src/ui/components/hudmeta.js';
 import { runHeaderModel } from '../src/ui/models/RunHeaderModel.js';
 
@@ -20,7 +20,7 @@ test('configured choices stage review, return to selection, commit once, and pre
       const app = document.createElement('main'); document.body.append(app);
       const offer = { id: 'exit-retry', options: [{ kind: 'combatCards', id: 'frostNova' }], taken: [], claimed: null, takeCount: 1 };
       let grants = 0, exits = 0;
-      mountGameProfileOffers(app, { registries: registriesFor('frostNova'), run: { class: 'reaver' }, offer, title: 'Reward',
+      MountGameProfileOffers(app, { registries: registriesFor('frostNova'), run: { class: 'reaver' }, offer, title: 'Reward',
         onTake(index) { grants++; offer.taken.push(index); offer.claimed = index; },
         onContinue() { exits++; if (exits === 1) throw new Error('exit save refused'); },
       });
@@ -38,7 +38,7 @@ test('configured choices stage review, return to selection, commit once, and pre
       const run = { class: 'reaver', cinders: 37, deck: [] };
       const offer = { id: cardId, options: [{ kind: 'combatCards', id: cardId }, { kind: 'combatCards', id: cardId.startsWith('core.') ? 'core.defend' : 'scholarsInsight' }], taken: [], claimed: null, takeCount: 1 };
       let writes = 0, exits = 0, refuse = true;
-      const mount = () => mountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards',
+      const mount = () => MountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards',
         onTake: index => { if (refuse) throw new Error('save refused'); writes++; run.deck.push(offer.options[index].id); offer.taken.push(index); offer.claimed = index; },
         onContinue: () => { exits++; },
       });
@@ -58,8 +58,15 @@ test('configured choices stage review, return to selection, commit once, and pre
       assert.deepEqual(run.deck, [offer.options[1].id]); assert.equal(writes, 1); assert.equal(exits, 1);
       app.remove();
       const skipApp = document.createElement('main'); document.body.append(skipApp);
-      mountGameProfileOffers(skipApp, { registries, run, offer: { ...offer, id: `${cardId}:skip`, taken: [], claimed: null }, title: 'Reward', onTake() { throw new Error('Skip must never take'); }, onContinue() { exits++; } });
-      skipApp.querySelector('#reward-continue').click(); assert.equal(run.cinders, 37); assert.equal(exits, 2); skipApp.remove();
+      MountGameProfileOffers(skipApp, { registries, run, offer: { ...offer, id: `${cardId}:skip`, taken: [], claimed: null }, title: 'Reward', onTake() { throw new Error('Skip must never take'); }, onContinue() { exits++; } });
+      // Skip with a choice still open and nothing taken asks once (owner, 2026-11-14): the modal's default answer goes back.
+      skipApp.querySelector('#reward-continue').click(); assert.equal(exits, 1, 'Skip asks before leaving');
+      assert.equal(document.querySelector('.confirmation-modal h2, .confirmation-modal [id=confirmation-modal-title]')?.textContent, 'Leave without taking a reward?');
+      assert.equal(document.querySelector('.confirmation-cancel').textContent, 'Take a reward');
+      document.querySelector('.confirmation-confirm').click();
+      assert.equal(run.cinders, 37); assert.equal(exits, 2); skipApp.remove();
+      // The confirmed modal holds a short input shield; let its timers finish while the DOM globals still stand.
+      await new Promise((resolve) => setTimeout(resolve, 800));
     }
   } finally {
     for (const [key, value] of Object.entries(before)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; }
@@ -105,7 +112,7 @@ test('cloned configured offers support partial and final claims without replayin
     const app = document.createElement('main'); document.body.append(app);
     let offer = { id: 'two', options: [{ kind: 'combatCards', id: 'frostNova' }, { kind: 'combatCards', id: 'scholarsInsight' }], taken: [], claimed: null, takeCount: 2 };
     let grants = 0, exits = 0;
-    mountGameProfileOffers(app, { registries: registriesFor('frostNova'), run: { class: 'reaver' }, offer, title: 'Reward', onTake(index) {
+    MountGameProfileOffers(app, { registries: registriesFor('frostNova'), run: { class: 'reaver' }, offer, title: 'Reward', onTake(index) {
       offer = structuredClone(offer); offer.taken.push(index); if (offer.taken.length === 2) offer.claimed = index; grants++; return offer;
     }, onContinue() { exits++; } });
     app.querySelectorAll('.reward-pick')[0].click(); app.querySelector('#reward-card-confirm').click(); app.querySelector('#reward-card-confirm').click(); await Promise.resolve();

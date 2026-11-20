@@ -24,7 +24,7 @@ test('summarizeCardOption: name, line and cost chips; a missing reader gives a n
   const full = summarizeCardOption(null, {}, option, { defOf: () => counterDef,
     previewOf: (opt) => { assert.equal(opt.play.targetId, 'e1'); return { values: [{ op: 'block', value: 7 }, { op: 'damage', value: 4 }] }; } });
   assert.equal(full.name, 'Counter');
-  assert.deepEqual(full.costs, ['2 SP', '1 MP']);
+  assert.deepEqual(full.costs, ['2 Stamina', '1 Mana']);
   assert.equal(full.line[0].dir, 'up');
   const bare = summarizeCardOption(null, {}, option);
   assert.deepEqual(bare.line, []);
@@ -38,10 +38,10 @@ test('a gain row places its number first and keeps a plain label', () => {
   assert.equal(row.before, '+');
   assert.equal(row.after, ' HP');
 });
-test('a non-spell Barrier gain is labelled Barrier, not Def', () => {
+test('a non-spell Barrier gain is labelled Poise, not Def', () => {
   const barrierDef = { id: 'testBarrier', name: 'Brace', type: 'skill', tags: ['camp:physical'], effects: [{ op: 'gainBarrier', target: 'self', amount: 4 }] };
   const rows = cardEffectLine(barrierDef, { values: [{ op: 'gainBarrier', value: 6 }] }, null);
-  assert.deepEqual(rows.map(row => [row.label, row.value, row.dir, row.before, row.after]), [['Barrier', 6, 'up', '+', ' Barrier']]);
+  assert.deepEqual(rows.map(row => [row.label, row.value, row.dir, row.before, row.after]), [['Poise', 30, 'up', '+', ' Poise']]);
 });
 test('a multi-hit card keeps its hit count after the number', () => {
   const flurry = { id: 'testFlurry', name: 'Flurry', type: 'attack', effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }] };
@@ -190,10 +190,12 @@ test('the text fallback fills template tokens with the card numbers', () => {
   const live = summarizeCardOption(registriesByProfile.current, null, { id: 'g', name: 'Guilt' }, { defOf: () => guilt, previewOf: () => ({ tokens: { loseHp: 3 }, values: [] }) });
   assert.match(live.html, /lose 3 HP/);
 });
-test('gainPoise (Dodge Roll) reads as a Poise guard gain, not Poise damage', () => {
-  const registries = registriesByProfile.current, def = registries.cards.get('dodgeRoll');
+test('gainPoise reads as a Poise guard gain, not Poise damage', () => {
+  // W25-EvadeCards (intended by the design): Dodge Roll now grants Evade and no shipped card gains Poise, so a fixture built on it stands in.
+  const registries = registriesByProfile.current;
+  const def = { ...registries.cards.get('dodgeRoll'), effects: [{ op: 'gainPoise', target: 'self', amount: 3 }], textTemplate: 'Gain {gainPoise} Poise guard.' };
   const gain = def.effects.find(effect => effect.op === 'gainPoise');
-  assert.ok(gain, 'Dodge Roll gains Poise');
+  assert.ok(gain, 'it gains Poise');
   const summary = summarizeCardOption(registries, null, { id: 'd', name: def.name }, { defOf: () => def, previewOf: () => null });
   const row = summary.line.find(part => part.label === 'poiseGuard' || /Poise guard/.test(`${part.before}${part.after}`));
   assert.ok(row, JSON.stringify(summary.line));

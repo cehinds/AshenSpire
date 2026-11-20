@@ -11,13 +11,15 @@ import { dispatch } from '../src/engine/combat.js';
 import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createSaveManager } from '../src/engine/save.js';
+import { withLegacyDefaults } from './legacyHitRules.mjs';
 
 function fixture() {
   const profile = resolveGameProfile('ashen.core@2.0.0');
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, seed: 6, classId: 'reaver' });
   const rng = createRng(run.seed);
-  const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'] });
+  // The prediction save needs an unknown read, which only a fight that still rolls perception (saved before the 2026-11-14 ruling) can have.
+  const combat = withLegacyDefaults(() => createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'] }));
   return { run, rng, combat, registries };
 }
 

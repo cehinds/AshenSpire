@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
 import { setAnimSpeed } from '../src/ui/fx.js';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';

@@ -108,6 +108,11 @@ jobs:
         run: git fetch --no-tags --depth=50 origin +refs/heads/dev:refs/remotes/origin/dev
 
       - uses: ./.github/actions/setup-node
+      - name: Check staged JavaScript API, formatting, and types
+        run: |
+          npm ci --prefix tools/code-quality --ignore-scripts --no-audit --no-fund
+          npm run code:check
+          npm --prefix tools/code-quality run selftest
       # The runner's own python3 moved to 3.14 (2026-10-25), for which Pillow 11.1.0
       # ships no wheel and the source build lacks jpeg headers. Pin the encoder's Python.
       - uses: actions/setup-python@v5

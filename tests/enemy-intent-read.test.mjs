@@ -62,3 +62,22 @@ test('the intent tooltip projects a fresh current read without opening full comb
   assert.match(tooltip, /disp\?\.ents\[enemy.id\]\?\.intentPreview/);
   assert.doesNotMatch(tooltip, /combatantSubject|enemyDeckInspection|Object\.keys/);
 });
+
+test('a move that closes a range band reads Approaching with the melee line, not the engine move name', () => {
+  const combat = { registries: { enemies: { get: () => ({ moves: { advance: { name: 'Advance', effects: [{ op: 'moveEngagement', bands: -1 }] } } }) } } };
+  const view = enemyIntentRead(combat, { enemyId: 'x' }, { preview: { kind: 'buff', moveId: 'advance', hidden: false, revealed: true, stance: 'prepared', actionEffects: [{ op: 'moveEngagement', bands: -1 }] } });
+  assert.equal(view.name, 'Approaching');
+  assert.match(view.detail, /Steps into melee range before it attacks/);
+});
+
+// Playtest 2026-11-17: the action tooltip reads one effect per line, and the tag definitions its glossary already shows are not repeated.
+test('the tooltip lines are the effects alone, one per line, without the tag definitions', () => {
+  const combat = { registries: { enemies: { get() { throw new Error('duplicate projection'); } } } };
+  const view = enemyIntentRead(combat, {}, { preview: { moveId: 'cast', revealed: true },
+    inspectedMoves: [{ moveId: 'cast', name: 'Cast', detail: '20 projected damage · Build 4 Bleed on player · Spell: Selects a rule',
+      effectLines: ['20 projected damage', 'Build 4 Bleed on player'] }] });
+  assert.deepEqual(view.lines, ['20 projected damage', 'Build 4 Bleed on player']);
+  assert.match(view.detail, /Spell: Selects a rule/, 'the joined detail still carries everything for the other readers');
+  const unread = enemyIntentRead(combat, {}, { preview: { hidden: true, label: '?' }, unknownDetail: 'Unknown' });
+  assert.deepEqual(unread.lines, ['Unknown']);
+});

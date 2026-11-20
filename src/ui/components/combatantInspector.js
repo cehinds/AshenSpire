@@ -10,13 +10,13 @@
 //   its effects   the same Rows, or one disabled Row saying there are none
 //
 // It owns no shape: the host's edge and width are tokens the model carries.
-import { childModel } from '../models/ComponentModel.js';
+import { ChildModel } from '../models/ComponentModel.js';
 import { decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
 import { renderEnemyMoveCards } from './enemyMoveCards.js';
 import { renderEnemyKnowledge, renderIntentPrediction } from './enemyKnowledge.js';
-import { projectCombatantInspector as projectSections } from '../models/CombatantInspectorSections.js';
+import { projectCombatantInspector as projectSections, ResourceWord } from '../models/CombatantInspectorSections.js';
 import { t } from '../strings.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
 
@@ -30,7 +30,7 @@ function resourceMeters(resources) {
     const node = meter({
       id: String(r.label).toLowerCase(),
       tone: String(r.label).toLowerCase(),
-      label: r.label,
+      label: ResourceWord(r.label),
       value: r.max == null ? String(r.value) : `${r.value} / ${r.max}`,
       cur: r.value, max: r.max == null ? r.value : r.max,
       pct: r.max ? Math.max(0, Math.min(100, (r.value / r.max) * 100)) : (r.value > 0 ? 100 : 0),
@@ -38,7 +38,7 @@ function resourceMeters(resources) {
       attrs: { class: 'combatant-inspector-resource' },
     });
     node.tabIndex = 0;
-    attachTooltip(node, () => `<div class="tt-title">${esc(r.label)}</div>${esc(r.value)}${r.max == null ? '' : ` / ${esc(r.max)}`}. ${r.tooltipHtml || ''}`);
+    attachTooltip(node, () => `<div class="tt-title">${esc(ResourceWord(r.label))}</div>${esc(r.value)}${r.max == null ? '' : ` / ${esc(r.max)}`}. ${r.tooltipHtml || ''}`);
     return node;
   }), { class: 'combatant-inspector-resources' });
 }
@@ -69,7 +69,7 @@ function enemyDeckSection(read) {
   if (!read) return null;
   const node = el('section', { class: 'combatant-inspector-section', dataset: { section: 'enemy-deck' } }, [
     eyebrow('Enemy deck & played cards'), hairline(),
-    statusText('Action SP includes combat modifiers. Card base shows authored SP/MP; effects use combat move rules.'),
+    statusText('Action Stamina includes combat modifiers. Card base shows authored Stamina and Mana; effects use combat move rules.'),
   ]);
   const action = (label, card, empty) => el('details', { class: 'combatant-played-card', open: true }, [
     el('summary', { text: `${label}: ${card?.name || empty}` }),
@@ -115,6 +115,7 @@ function factRows(section) {
   }
   return section.rows.map((r) => row({
     label: r.label, status: [r.value, r.detail].filter(Boolean).join(' · '), tag: 'div', className: 'combatant-inspector-row',
+    attrs: r.id ? { dataset: { fact: r.id } } : {},
   }));
 }
 
@@ -181,7 +182,7 @@ export function combatantInspectorLayout(subject, { sprite = null, previewFracti
 export function mountCombatantInspector(host, model, { onToggle = null } = {}) {
   if (!host) throw new Error('Combatant inspector requires a host');
   if (!model || model.component !== UI.combatantInspector) throw new Error('Combatant inspector requires its Component Model');
-  const tray = childModel(model, UI.foldingTray);
+  const tray = ChildModel(model, UI.foldingTray);
   host.innerHTML = '';
   host.hidden = false;
   host.className = `combatant-inspector-host ${model.properties.edge}`;

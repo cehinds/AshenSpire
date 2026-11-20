@@ -458,7 +458,11 @@ const TOGGLE_SETTING = (opener) => `(async () => {
 
 // ---------------------------------------------------------------------------
 async function persistenceProbe(cdp, base, check) {
-  const page = await openPage(cdp, base, `shot=map&${settingsQuery(false)}`);
+  // Stand mid-climb (?shotAt=floor:1): at the entrance the map preselects its one
+  // start node, and the redraw without the selection preselects that same node
+  // again, so a dropped destination would be invisible. Mid-climb nothing is
+  // preselected and the click below really chooses the destination.
+  const page = await openPage(cdp, base, `shot=map&shotAt=floor:1&${settingsQuery(false)}`);
   const { ev } = page;
   try {
     await ev(PLAN);
@@ -473,7 +477,10 @@ async function persistenceProbe(cdp, base, check) {
       await __fm.closeModal('run-potion-menu');
       const node = document.querySelector('.mapscreen .map-node.reachable');
       if (!node) return { why: 'no reachable node' };
-      node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      // A new run's one start node comes preselected with its tray opening, and
+      // a second press on a selected node travels: click only a node that is
+      // not already the selection.
+      if (!node.classList.contains('selected')) node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       const open = await __fm.until(() => document.querySelector('.map-tray')?.dataset.shown === 'true');
       // What the tray says about it: the kind's name and its lines.
       const tray = [...document.querySelectorAll('.map-context .map-context-title, .map-context .map-context-line')].map((p) => p.textContent.trim());
@@ -720,11 +727,19 @@ const COMBAT_SURFACE = `(async () => {
   const folds = () => [...document.querySelectorAll('.combat-potion-menu .potion-fold')];
   const foldBy = (key) => folds().find((f) => keyOf(f) === key);
   const counts = () => Object.fromEntries(folds().map((f) => [keyOf(f), Number(f.dataset.chargeKind ? f.dataset.charges : f.dataset.potionCount)]));
+  // By NAME (and kind: the Crimson Flask is both a charge flask and a carried potion), for what a
+  // spend leaves behind: a carried potion's key is its slot, and spending one hands its slot to
+  // the next potion, so the key cannot say what is left.
+  const nameOf = (f) => (f.querySelector('.potion-use')?.getAttribute('aria-label') || '').replace(/^Use /, '');
+  const leftOf = (name, key) => folds().filter((f) => nameOf(f) === name && key.startsWith('charge:') === !!f.dataset.chargeKind).reduce((n, f) => n + Number(f.dataset.chargeKind ? f.dataset.charges : f.dataset.potionCount), 0);
   const shown = (node) => !!node && node.isConnected && node.getClientRects().length > 0;
   await openList();
   const start = counts();
   const read = [];
-  for (const key of Object.keys(start)) {
+  // LAST FIRST: an offered Use now spends, and a carried potion's key is its slot,
+  // so spending one shifts every later slot down; walking back to front keeps each
+  // key still pointing at the potion it named.
+  for (const key of Object.keys(start).reverse()) {
     // What the fold offers, as rows in the plan's vocabulary.
     let fold = foldBy(key);
     const use = fold.querySelector('.potion-use');
@@ -747,20 +762,29 @@ const COMBAT_SURFACE = `(async () => {
       inspect = { opened: !!fold.open, card: !!detail, named: detail?.querySelector('.dc-name')?.textContent.trim() || '',
         asked: asks(), listOpen: !!document.querySelector('.combat-potion-menu') };
     }
-    // Use, on a fresh list: offered, it asks and a cancel spends nothing;
-    // refused, it asks nothing (a disabled control has no click to wait on).
+    // Use, on a fresh list. A drink commits on ONE TAP now (cd60b02a8e: only
+    // destructive actions ask, and drinking a flask is not one), so: offered, it
+    // asks nothing, closes the list and spends exactly one charge (a targeted
+    // flask arms its enemies instead and spends on the pick, so that is cancelled
+    // here and spends nothing); refused, it asks nothing and spends nothing (a
+    // disabled control has no click to wait on).
     let tried = null;
+    await __fm.until(${COMBAT_AT_REST}, 200);
     await openList();
     const b = foldBy(key)?.querySelector('.potion-use');
     if (b) {
       const refused = b.disabled;
       b.click();
-      const asked = !!(await __fm.until(asks, refused ? 6 : 40));
-      document.querySelector('.confirmation-modal .confirmation-cancel')?.click();
-      tried = { refused, asked, settled: !!(await __fm.until(() => !asks())) };
+      const asked = !!(await __fm.until(asks, refused ? 6 : 12));
+      const closed = refused ? null : !!(await __fm.until(() => !document.querySelector('.combat-potion-menu'), 40));
+      const aimed = !refused && !!document.querySelector('.enemy-row .enemy.targetable');
+      if (aimed) window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      if (asked) document.querySelector('.confirmation-modal .confirmation-cancel')?.click();
+      tried = { refused, asked, closed, aimed, settled: !!(await __fm.until(() => !asks() && !document.querySelector('.enemy-row .enemy.targetable'))) };
     }
+    await __fm.until(${COMBAT_AT_REST}, 200);
     await openList();
-    read.push({ key, name, count: start[key], rows, inspect, use: tried, after: counts()[key] ?? null });
+    read.push({ key, name, count: start[key], rows, inspect, use: tried, after: leftOf(name, key) });
   }
   await __fm.closeModal('combat-potion-menu');
   const out = { carried: [] };
@@ -769,15 +793,22 @@ const COMBAT_SURFACE = `(async () => {
 })()`;
 
 // One combat fold against the shared plan: its rows are the plan's actions,
-// and each was exercised as the plan says (Inspect inert, Use asks first).
+// and each was exercised as the plan says (Inspect inert, Use commits on one tap).
 const combatFoldWrong = (row, want) => {
   if (!row) return 'not drawn';
   if (!sameRows(row.rows, want, { reasons: false })) return 'its actions are not the plan\'s';
   const i = row.inspect;
   if (!i || !i.opened || !i.card || i.named !== row.name + ' details' || i.asked || !i.listOpen) return 'Inspect did not open the potion\'s card inertly';
   const use = want.find((a) => a.id === 'use');
-  if (!row.use || row.use.refused === use.enabled || row.use.asked !== use.enabled || !row.use.settled) return 'Use did not ask exactly when offered';
-  if (row.after !== row.count) return 'exercising its actions spent a charge';
+  // Offered: one tap, no question; it closes the list and either spends one
+  // charge (a self flask) or aims at an enemy first (a targeted one, spent on the
+  // pick). Refused: no question, no spend.
+  if (!row.use || row.use.refused === use.enabled || row.use.asked || !row.use.settled) return 'Use asked, or was not offered exactly when the plan says';
+  if (use.enabled && !row.use.closed) return 'an offered Use left the Potions list open';
+  const spent = row.count - row.after;
+  if (use.enabled && !row.use.aimed && spent !== 1) return 'an offered Use did not spend exactly one charge on one tap';
+  if (use.enabled && row.use.aimed && spent !== 0) return 'a targeted Use spent a charge before an enemy was picked';
+  if (!use.enabled && spent !== 0) return 'a refused Use spent a charge';
   return '';
 };
 
@@ -791,7 +822,7 @@ async function planProbe(cdp, base, check) {
     const page = await openPage(cdp, base, 'shot=combat');
     try {
       await page.ev(PLAN);
-      const judge = async (label) => {
+      const judge = async (label, carriedLeft) => {
         const got = await page.ev(COMBAT_SURFACE);
         for (const kind of ['hp', 'mana']) {
           const row = got[kind];
@@ -800,7 +831,7 @@ async function planProbe(cdp, base, check) {
           check(`plan: combat, ${label}, ${kind} flask: every action (${want.map((a) => a.label).join(', ')}) matches the shared plan`,
             !why, `${why} — ${JSON.stringify({ got: row, want })}`);
         }
-        // The pose carries a Crimson Flask and a Blight Coating (main.js, shot=combat).
+        // The pose carries a Crimson Flask and a Blight Coating (main.js, shot=combat); the first pass drinks the Crimson Flask.
         const carried = got.carried || [];
         const wrong = [];
         for (const row of carried) {
@@ -809,11 +840,12 @@ async function planProbe(cdp, base, check) {
           if (why) wrong.push({ why, got: row, want });
         }
         check(`plan: combat, ${label}, carried potions: each one's every action matches the shared plan`,
-          carried.length === 2 && wrong.length === 0,
+          carried.length === carriedLeft && wrong.length === 0,
           JSON.stringify({ carried: carried.map(({ name, count, rows }) => ({ name, count, rows: rows.map((r) => `${r.id}:${r.enabled}`) })), wrong }));
         return got;
       };
-      await judge('opening hand');
+      // Two carried potions at the start; the Crimson Flask's Use spends it, one tap, so one is left.
+      await judge('opening hand', 2);
       const drank = await page.ev(`(async () => {
         document.querySelector('.combat-potions').click();
         const use = await __fm.until(() => document.querySelector('.combat-potion-menu .potion-fold[data-charge-kind="mana"] .potion-use'));
@@ -824,16 +856,14 @@ async function planProbe(cdp, base, check) {
           const b = await __fm.until(() => document.querySelector('.combat-potion-menu .potion-fold[data-charge-kind="mana"] .potion-use'));
           if (!b || b.disabled) return 'Use was refused with charges left';
           b.click();
-          const yes = await __fm.until(() => document.querySelector('.confirmation-modal .confirmation-confirm'));
-          if (!yes) return 'Use opened no confirmation';
-          yes.click();
+          if (await __fm.until(() => document.querySelector('.confirmation-modal'), 12)) return 'Use asked, though a drink commits on one tap';
           await __fm.until(() => !document.querySelector('.combat-potion-menu'));
           if (!(await __fm.until(${COMBAT_AT_REST}, 200))) return 'the drink never came to rest (End Turn stayed disabled)';
         }
         return '';
       })()`);
       check('plan: combat, the Azure flask drinks to empty', drank === '', drank);
-      const empty = await judge('Azure drunk to empty');
+      const empty = await judge('Azure drunk to empty', 1);
       const emptyUse = empty.mana?.rows?.find((r) => r.id === 'use');
       check('plan: combat, Azure drunk to empty: Use is refused with its reason, as the shared plan says',
         empty.mana && empty.mana.count === 0 && emptyUse?.enabled === false && /No charges/.test(emptyUse.reason),

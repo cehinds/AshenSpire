@@ -8,13 +8,15 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { createRng } from '../src/engine/rng.js';
+import { legacyCoreProfile, legacyCoreRegistries } from './helpers/legacy-core-profile.mjs';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { deckCopyLimit } from '../src/model/deckRules.js';
-import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardOffers, gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
 import { reserveStanceCards } from '../src/model/stanceCoverage.js';
 
-const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+// Pinned to the pre-rest Core (Armoury deck door, unlimited Basics/Cantrips): a saved run keeps that pinned profile. The shipped Core mints nothing (tests/core-deck-edit-at-rest.test.mjs).
+const profile = legacyCoreProfile();
+const registries = legacyCoreRegistries(profile);
 const live = (classId, ids, seed = 611) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   executeRunEffects({ run, registries, rng: createRng(run.seed) }, ids.map(card => ({ op: 'addCardToDeck', card })));
@@ -32,7 +34,8 @@ test('Reaver and Rogue copy limits: each new Basic is unlimited, every other new
     const run = live(classId, ['core.strike', ...ALL]);
     assert.equal(deckCopyLimit(registries, 'core.strike', {}, run), Infinity);
     for (const id of BASICS) assert.equal(deckCopyLimit(registries, id, {}, run), Infinity, `${classId}/${id}`);
-    for (const id of [...HIGHER, CANTRIP]) assert.equal(deckCopyLimit(registries, id, {}, run), 1, `${classId}/${id}`);
+    // Limited to the copies owned: one added here, plus any the starter deck already holds (the Rogue starts with Feint).
+    for (const id of [...HIGHER, CANTRIP]) assert.equal(deckCopyLimit(registries, id, {}, run), run.deck.filter(card => card.cardId === id).length, `${classId}/${id}`);
   }
 });
 
@@ -67,17 +70,22 @@ test('every new card resolves at base and upgraded with its authored SP cost, a 
   for (const id of BASICS.filter(id => def(id).tags.some(tag => tag === 'maneuver:smash' || tag === 'maneuver:sweep'))) assert.equal(def(id).staminaCost, 2, `${id}: a basic smash or sweep costs 2 SP`);
 });
 
-test('offers at map depth 4+ reach every higher-rank card of each class over 600 seeds', () => {
+test('offers at map depth 4+ reach unowned higher-rank cards of each class over 1200 seeds', () => {
   const classOf = { reaver: ['core.skullsplitter', 'core.whirlwind'], rogue: ['core.feint', 'core.hitAndRun'], starseer: [], herald: [] };
   const colorless = ['core.stunningBlow', 'core.rakingSweep'];
   for (const classId of Object.keys(classOf)) {
+    const expected = [...colorless, ...classOf[classId]];
+    const starterRun = live(classId, []);
+    for (const id of expected) assert.ok(gameProfileRewardPools(registries, starterRun).combatCards.includes(id), `${classId} is eligible for ${id}`);
     const seen = new Set();
-    for (let seed = 1; seed <= 600; seed++) {
+    for (let seed = 1; seed <= 1200; seed++) {
       const run = live(classId, [], seed);
       run.floor = 4;
+      // Feint starts in the Rogue's deck. This samples reachability before the separate owned-copy weight applies.
+      run.deck = run.deck.filter(card => !expected.includes(card.cardId));
       for (const option of gameProfileRewardOffers(registries, run, createRng(seed + 40000), { offerId: 'b2' }).options) if (option.kind === 'combatCards') seen.add(option.id);
     }
-    for (const id of [...colorless, ...classOf[classId]]) assert.ok(seen.has(id), `${classId} never offered ${id}`);
+    for (const id of expected) assert.ok(seen.has(id), `${classId} never offered ${id}`);
     for (const other of Object.keys(classOf).filter(c => c !== classId)) for (const id of classOf[other]) assert.ok(!seen.has(id), `${classId} was offered ${other}'s ${id}`);
   }
 });

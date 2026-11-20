@@ -3,6 +3,7 @@ import { deckRules } from '../content/deckRules.js';
 import { gameContent } from './gameProfile.js';
 import { basicCardKind } from './basicCardRule.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds } from './collectedCards.js';
+import { ItemUnlimitedKinds } from './itemProperties.js';
 
 /** Display names share the stable saved class tags used by the copy rules. */
 export function activeAdeptTraining(run) {
@@ -12,6 +13,13 @@ export function activeAdeptTraining(run) {
   if (tags.includes('training.basic')) return { id: 'training.basic', label: 'Martial Adept', kind: 'Basic' };
   if (tags.includes('training.graduate')) return { id: 'training.graduate', label: 'Magic Adept', kind: 'Cantrip' };
   return null;
+}
+
+/** The class's Adept training only where the profile grants unlimited copies (deck-training `unlimited` rules); else null. */
+export function UnlimitedAdeptTraining(run) {
+  const adept = activeAdeptTraining(run);
+  const unlimited = run?.gameProfile?.modules?.['deck-training']?.unlimited;
+  return adept && Array.isArray(unlimited) && unlimited.length ? adept : null;
 }
 
 function eligibleAdeptDefinition(run, cardId) {
@@ -39,6 +47,25 @@ export function collectedAdeptCardIds(run) {
   return ids.filter(id => known.has(id));
 }
 
+/**
+ * ItemUnlimitedCardIds(run) → the card ids a held relic or item property (Basic Training: unranked
+ * martial; Graduate: cantrips; W25 step 6) lets deck editing add without limit. Only a definition the
+ * run has collected (Core, SPEC §14.1), of its own class or colorless, of a `deckRules.trainingRarities`
+ * rarity, and never an enemy card.
+ */
+export function ItemUnlimitedCardIds(run) {
+  const kinds = run ? ItemUnlimitedKinds(run) : [];
+  if (!kinds.length) return [];
+  const enemy = new Set((gameContent(run, 'enemyCards') || []).map((row) => row.id));
+  const collected = hasCollectedCardPolicy(run) ? new Set(knownCollectedCardIds(run)) : null;
+  return (gameContent(run, 'cards') || []).filter((card) => kinds.includes(basicCardKind(run, card))
+    && (!collected || collected.has(card.id))
+    && (!card.class || card.class === 'colorless' || card.class === run.class)
+    && deckRules.trainingRarities.includes(card.rarity || 'common')
+    && !enemy.has(card.id)).map((card) => card.id);
+}
+const itemUnlimited = (run, cardId) => ItemUnlimitedCardIds(run).includes(cardId);
+
 // The same copy rule serves acquisition and the deck editor.
 export function configuredDeckCopyLimit(run, cardId) {
   const profile = run?.gameProfile;
@@ -46,7 +73,7 @@ export function configuredDeckCopyLimit(run, cardId) {
   const row = profile.content.characters?.find(row => row.id === run.class) || { id: run.class, tags: [] };
   const owned = {};
   for (const card of [...(run.deck || []), ...(run.sideboard || [])]) owned[card.cardId] = (owned[card.cardId] || 0) + 1;
-  if (hasCollectedCardPolicy(run)) return collectedAdeptCardIds(run).includes(cardId) ? Infinity : owned[cardId] || 0;
+  if (hasCollectedCardPolicy(run)) return collectedAdeptCardIds(run).includes(cardId) || itemUnlimited(run, cardId) ? Infinity : owned[cardId] || 0;
   return configuredCopyLimit(cardId, row, profile.content, characterSettings(profile.modules), profile.modules.gear, owned);
 }
 

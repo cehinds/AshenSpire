@@ -3,15 +3,42 @@ import { activeCombatStance } from '../../model/combatTacticsDisplay.js';
 import { ACTION_SIGILS } from '../../content/combatSigils.js';
 import { stanceRatingBonus } from '../../model/stanceRules.js';
 import { mechanics } from '../../framework/data/mechanics.js';
-import { reflectReduceFraction, reflectReturnFraction } from '../../engine/guardStacks.js';
+import { reflectReducePct, reflectReturnPct } from '../../engine/guardStacks.js';
+import { CounterStackPercent } from './CounterStackPercentModel.js';
 import { healthGuardTone } from '../../model/blockPresentation.js';
 // Presentation only: callers supply the live protection values. HP fill
 // always represents health, never protection added to the health numerator.
 // Defense badges read Block (the Defense badge, owner 2026-10-18), Poise, Evade, Ward, Precision, Counter and Reflect before HP. Poise also
 // retains its gold HP trim and value/max accessible label.
+/** The Poise bar shows Poise LEFT. A `drains` bar (the Core pool) already is Poise left; a fill-up meter is inverted so the bar starts full and drains. Display only: cur and max are untouched, a 0/0 bar stays an empty trough. */
+export const PoiseBarRemaining = bar => bar.drains
+  ? { ...bar, shownCur: bar.cur }
+  : { ...bar, pct: bar.max > 0 ? Math.max(0, Math.min(100, 100 - bar.pct)) : 0, shownCur: Math.max(0, bar.max - bar.cur) };
+/** The near-break pulse: a fill-up bar at 75% or more, a draining bar at 25% or less. */
+export const PoiseNearBreak = bar => bar.id === 'poise' && bar.max > 0 && (bar.drains ? bar.cur > 0 && bar.cur <= bar.max * 0.25 : bar.cur >= bar.max * 0.75);
+/** Poise left { value, max } for the inspector rows: the Core pool when present, else the fill-up meter inverted. */
+export const PoiseLeft = (v, entity) => {
+  const pool = v?.persistentPoise || entity?.persistentPoise;
+  if (pool && typeof pool === 'object') return Number.isFinite(pool.max) && pool.max > 0 ? { value: Math.max(0, pool.value || 0), max: pool.max } : { value: 0, max: 0 };
+  const max = v?.poiseMeter?.max || entity?.poiseMeter?.max || 0;
+  return { value: Math.max(0, max - (v?.poiseMeter?.value || 0)), max };
+};
 const count = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 
-export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, reflectStacks = 0 } = {}) {
+/**
+ * Bonus Poise (Owner, 2026-11-15): Poise above the base maximum (Barrier stacks, "Gain N Poise") shown apart from it. `pool` is a Core Poise pool
+ * ({ value, max, barrierBonus }); `max` includes the bonus maximum. Returns { base, shown, bonus, max, value } while the current Poise
+ * is above the base maximum, else null (the bar and number read as usual).
+ */
+export function PoiseBonusView(pool) {
+  const bonusMax = count(pool?.barrierBonus);
+  if (!(bonusMax > 0)) return null;
+  const max = count(pool.max), value = count(pool.value), base = Math.max(0, max - bonusMax);
+  const bonus = Math.max(0, value - base);
+  return bonus > 0 ? Object.freeze({ base, shown: Math.min(value, base), bonus, max, value }) : null;
+}
+
+export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, counterDecay = mechanics.counter.decayPerTurn, enemyCounter = false, reflectStacks = 0 } = {}) {
   const shield = count(defense);
   const arcaneWard = count(ward);
   const warded = count(wardBlock);
@@ -39,9 +66,11 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStac
       ...(Number.isFinite(precision) && count(precision) > 0 ? [{ kind: 'precision', label: t('card.tags.precision'), value: count(precision) }] : []),
       // Counter and Reflect stacks (owner 2026-10-31): plain counts on the entity, shown only while above zero.
       ...(count(counterStacks) > 0 ? [{ kind: 'counter', glyph: 'riposte', label: t('combat.protection.counter'), value: count(counterStacks),
-        help: tFull('combat.protection.counter', { stacks: count(counterStacks), decay: mechanics.counter.decayPerTurn }) }] : []),
+        // An enemy's Counter badge (theme B, 2026-11-17) counts the uses of its armed Counter; its stacks add nothing to the return.
+        help: enemyCounter ? tFull('combat.protection.counterEnemy', { stacks: count(counterStacks), decay: counterDecay })
+          : tFull('combat.protection.counter', { stacks: count(counterStacks), stackPercent: CounterStackPercent(), decay: counterDecay }) }] : []),
       ...(count(reflectStacks) > 0 ? [{ kind: 'reflect', label: t('combat.protection.reflect'), value: count(reflectStacks),
-        help: tFull('combat.protection.reflect', { reduce: Math.round(100 * reflectReduceFraction(count(reflectStacks))), back: Math.round(100 * reflectReturnFraction(count(reflectStacks))) }) }] : []),
+        help: tFull('combat.protection.reflect', { reduce: reflectReducePct(count(reflectStacks)), back: reflectReturnPct(count(reflectStacks)) }) }] : []),
     ],
   });
 }
@@ -71,7 +100,7 @@ export function visibleBadges(badges, slots = BADGE_SLOTS) {
 export function stanceBadgeFor(entity, ctx) {
   const stance = activeCombatStance(entity);
   if (!stance || stance.staggered || ctx?.combatExpansionVersion !== 2) return null;
-  const label = ACTION_SIGILS[stance.maneuver]?.label || String(stance.maneuver).replace(/^\w/, c => c.toUpperCase());
+  const label = ACTION_SIGILS[stance.maneuver === 'evade' ? 'defense' : stance.maneuver]?.label || String(stance.maneuver).replace(/^\w/, c => c.toUpperCase());
   const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, { combatStance: stance }, id)])
     .filter(([, amount]) => amount > 0).map(([id, amount]) => `+${amount} ${id === 'ward' ? 'Ward' : id.toUpperCase()}`);
   return { maneuver: stance.maneuver, label, help: `Stance: ${label}${bonuses.length ? ` · ${bonuses.join(', ')}` : ''}` };

@@ -4,6 +4,10 @@ import { readFileSync } from 'node:fs';
 import { commitRunFinishAsync } from '../src/model/runCompletion.js';
 import { isConfiguredRun } from '../src/model/gameProfileRun.js';
 import { createRunStartOwner } from '../src/model/runStart.js';
+import { advancedConfigSnapshot, coreAdvancedConfigSnapshot } from '../src/model/advancedConfig.js';
+import { createRng, seedFromString, seedProblem } from '../src/engine/rng.js';
+import { CreatePreparedRun } from '../src/services/runBirth.js';
+import { core2Profile, core2Registries, core2Run } from './helpers/core2.mjs';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
 const body = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
@@ -27,10 +31,10 @@ function finishFixture({ failCheckpoint = false } = {}) {
     clearRun: slot => { cleared.push(slot); manager.clearRun(slot); }, hasRun: slot => manager.hasRun(slot),
   };
   const fixture = new Function('commitRunFinishAsync', 'saves', 'isConfiguredRun', `
-    let run = { seed: 'A', classMasteryState: { receiptId: 'A' } }, activeSlot = 1;
+    let run = { seed: 'A' }, activeSlot = 1;
     const registries = { unlocks: [] }, rng = { getCounters: () => ({}) }, shotState = false;
-    const crypto = { randomUUID: () => 'unused' };
-    const refreshRunClassMastery = () => {}, stampSkillBonuses = () => {}, hasClassMastery = () => false;
+    const crypto = { randomUUID: () => 'A' };
+    const stampSkillBonuses = () => {};
     const runResult = victory => ({ victory, seed: run.seed });
     const completedRunMeta = (registries, meta, result) => ({ meta: { results: [result] }, unlocked: [] });
     ${body('async function finishRun(', '\nasync function showFinishedRun(')}
@@ -86,6 +90,53 @@ test('actual screenshot new-run entry adopts its synchronous memory fixture befo
   assert.deepEqual(fixture.current(),{seed:'EXPLICIT',gameProfile:'current'},'an explicit profile still overrides the selected default');
 });
 
+test('a refused prepared birth leaves the previous run and RNG unadopted', async () => {
+  const notices = [], errors = [], writes = [];
+  const previousRun = core2Run(), previousRng = createRng(previousRun.seed);
+  const selectedGameProfile = core2Profile(), registries = core2Registries();
+  const saves = createSaveManager(createMemoryStorage());
+  const bindings = {
+    previousRun, previousRng, selectedGameProfile, registries,
+    saves: { ...saves, saveRun: (...args) => { writes.push(args); throw new Error('first save refused'); } },
+    createRunStartOwner, isConfiguredRun, CreatePreparedRun,
+    advancedConfigSnapshot, coreAdvancedConfigSnapshot, seedFromString, seedProblem,
+    app: { firstElementChild: {} },
+    resetArmouryTraySession: () => {}, rebuildRegistries: () => {},
+    randomSeedString: () => assert.fail('the chosen seed is valid'),
+    failureBanner: () => assert.fail('the notice owns this failure'),
+    console: { error: (...args) => errors.push(args) },
+    dlog: () => {},
+    showSettingsNotice: message => { notices.push(message); return true; },
+  };
+  const fixture = new Function(...Object.keys(bindings), `
+    const shotState = null, shotParams = new URLSearchParams('');
+    const runStartOwner = createRunStartOwner();
+    let run = previousRun, rng = previousRng, activeSlot = 1, xpCombat = {};
+    const startClimb = () => saves.saveRun(run, rng, activeSlot);
+    ${body('function newRun(', '\n// After the deck is finalized')}
+    return { start: newRun, current: () => ({ run, rng, activeSlot, xpCombat }) };
+  `)(...Object.values(bindings));
+  const result = await fixture.start({ classId: 'reaver', seedString: '511', slot: 2,
+    custom: { firstSeat: 'missing-seat' },
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /unknown first seat 'missing-seat'/);
+  assert.equal(fixture.current().run, previousRun);
+  assert.equal(fixture.current().rng, previousRng);
+  assert.equal(fixture.current().activeSlot, 2, 'slot selection still precedes birth');
+  assert.equal(fixture.current().xpCombat, null, 'combat ownership prep still precedes birth');
+  assert.deepEqual(writes, []);
+  assert.equal(notices.length, 1);
+  assert.match(notices[0], /unknown first seat 'missing-seat'/);
+  assert.equal(errors.length, 1);
+
+  const saved = await fixture.start({ classId: 'reaver', seedString: '511', slot: 2 });
+  assert.deepEqual(saved, { ok: false, reason: 'first save refused' });
+  assert.notEqual(fixture.current().run, previousRun, 'the first save runs after adoption');
+  assert.notEqual(fixture.current().rng, previousRng);
+  assert.deepEqual(writes, [[fixture.current().run, fixture.current().rng, 2]]);
+});
+
 function combatOutcomeFixture() {
   const bank = deferred(), beat = deferred(), checkpoints = [];
   const fixture = new Function('bank', 'beat', 'checkpoints', `
@@ -97,7 +148,7 @@ function combatOutcomeFixture() {
     const persistOrWarn = () => { persist(); return true; };
     const victoryBeat = () => { beats++; return beat.promise; };
     const runCombatEnd = () => { settlements++; throw new Error('Unexpected stale combat settlement'); };
-    ${body('async function onCombatEnd(', '\n/**\n * The spoils')}
+    ${body('async function onCombatEnd(', '\n// ---- non-combat nodes')}
     return { end: () => onCombatEnd('victory', xpCombat, { pool: 'normal' }),
       change: () => { run = { seed: 'B', combatPendingOutcome: { result: 'defeat' } }; activeSlot = 2; },
       facts: () => ({ beats, settlements, originalPending: !!original.combatPendingOutcome, currentPending: !!run.combatPendingOutcome }) };

@@ -1,0 +1,120 @@
+/* Lite rendering budget (iPhone SE 1st gen: A9, 2 GB, 320x568@2).
+   Loaded just before the generated HUD sheet, which index.html keeps last (tests/hud-layout-css.test.mjs). Everything here sits under
+   :root[data-performance='lite'] AND a phone layout (data-layout='narrow' or
+   data-form-factor='mobile', both written by displaySettings), so Full (Effects on)
+   and desktop Lite are untouched (owner, phones only).
+
+   Why: a CSS `filter` (drop-shadow, blur, brightness, grayscale) or a
+   `mix-blend-mode` forces its element into an offscreen render surface that is
+   re-rasterised whenever anything under it changes. On the combat screen that
+   is the sprites, the card tag symbols, the intent icons and the HP badges, all
+   at once. Lite draws the same cues with outline / box-shadow rings (a plain
+   paint, no offscreen surface) or drops them.
+
+   Rule 1 removes every filter, backdrop-filter and blend. The `:not(#lite-nofilter)`
+   adds an id's worth of specificity so it beats every class selector in the
+   other sheets, their `!important` ones included, and the inline filters that
+   scripts set (friendlyTargets, enemyPoseStage); `!important` beats keyframe
+   `filter` animations too. Rules 2 and after give back the cues that carried
+   meaning (target relationship colours, selection, danger, unaffordable). */
+
+/* 1. No filters, no backdrop filters, no blends. The prologue's art-directed
+   scene filter and tint wash (--prologue-filter, .prologue-wash) are the one
+   exception: they are the picture, drawn once, on a screen that holds nothing
+   else moving. The painted combat backdrop's SVG blurs (.alternative-scene-fill
+   and the mask's .alternative-scene-edge, SVG filter attributes) are
+   the same: static art blurred once per fit. Without them the sharp scene ends in
+   a hard rectangle against its stretched fill. The cost pennant trim keeps its
+   small painted filter to convey card rarity. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-background):not(.alternative-scene-fill):not(.alternative-scene-edge):not(.sprite .facing[style*='drop-shadow']):not(:where([data-component='flag-trim'] img)),
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
+  filter: none !important;
+}
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter),
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
+  backdrop-filter: none !important;
+}
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-wash),
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
+  mix-blend-mode: normal !important;
+}
+/* The card art's colour treatment was a `color` blend over the art; a flat
+   low-alpha tint is the nearest paint without a blend. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) [data-art-background-color] { opacity: .16; }
+
+/* 1b. Filters that HIDE or CARRY a state, kept on purpose.
+   - Compendium pieces the player has not found are drawn as a black silhouette
+     (`brightness(0) invert(1)`, kit.css; compendium.js hides them deliberately).
+     Without it the art would show, so it stays.
+   - The enemy buff aura (enemyStates.js sets one drop-shadow per theme on the
+     one `.facing` element, only while a buff is active; Effects off keeps it on
+     purpose, combat.css) is exempt in rule 1 above, not restored here. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .is-ghost > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2),
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .cp-detail:not([data-state='held']) > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2) {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* 2. Target relationship colours (green friend / yellow neutral / red foe).
+   The 1px coloured drop-shadow silhouette becomes a 1px solid outline in the
+   same colour. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat [data-target-outline='green'] { outline: calc(1.5px / var(--ui-zoom, 1)) solid var(--green); }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat [data-target-outline='yellow'] { outline: calc(1.5px / var(--ui-zoom, 1)) solid var(--gold); }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat [data-target-outline='red'] { outline: calc(1.5px / var(--ui-zoom, 1)) solid var(--ember); }
+/* The target HUD draws its own host outline instead (combat.css); keep that. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant .sprite [data-target-outline] { outline: none; }
+
+/* 2b. Target HUD: candidate / selected / focused / matchup sprites. Same
+   colours as the Full silhouettes, as an outline on the sprite box. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant.enemy:is(.targetable, .target-hud-candidate) .sprite {
+  outline: calc(1px / var(--ui-zoom, 1)) solid rgb(222 108 91 / .6); outline-offset: calc(2px / var(--ui-zoom, 1));
+}
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant.enemy:is(.target-hud-selected, .target-hud-focused) .sprite {
+  outline: calc(2px / var(--ui-zoom, 1)) solid var(--combat-matchup-color, var(--ember)); outline-offset: calc(2px / var(--ui-zoom, 1));
+}
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+  outline: calc(2px / var(--ui-zoom, 1)) solid var(--combat-matchup-color, var(--ember)); outline-offset: calc(2px / var(--ui-zoom, 1));
+}
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant.player:is(.target-hud-selected, .target-hud-focused) .sprite {
+  outline: calc(2px / var(--ui-zoom, 1)) solid rgb(135 202 255); outline-offset: calc(2px / var(--ui-zoom, 1));
+}
+
+/* 3. Selection and state on combatants: the actor's own colour (red foe, blue
+   hero, gold for a chosen skill), danger when broken. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-layout='formation'] .combatant.context-selected .sprite {
+  outline: calc(2px / var(--ui-zoom, 1)) solid var(--combatant-highlight); outline-offset: calc(2px / var(--ui-zoom, 1));
+}
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat .combatant.player.skill-selected .sprite { outline: calc(2px / var(--ui-zoom, 1)) solid var(--gold); outline-offset: calc(2px / var(--ui-zoom, 1)); }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat .combatant.broken > .sprite { outline: calc(2px / var(--ui-zoom, 1)) dashed var(--danger); outline-offset: calc(2px / var(--ui-zoom, 1)); }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat .combatant:focus-visible .sprite { outline: calc(2px / var(--ui-zoom, 1)) solid var(--gold); }
+
+/* 4. Cards: the selected / inspected glow becomes a solid ring; an unaffordable
+   card dims by opacity instead of grey + brightness. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) :is(.card.selected, .card[data-selected='true'], .as-card[data-selected='true'], .inspection-selected, .hand-info-portal) {
+  outline: calc(2px / var(--ui-zoom, 1)) solid var(--selection-color, var(--gold)); outline-offset: 0;
+}
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .hand .card.illustrated-card:is(.selected, .inspection-selected) .illustrated-card-face {
+  box-shadow: 0 0 0 calc(2px / var(--ui-zoom, 1)) var(--selection-color, var(--green));
+}
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .card.unaffordable:not(.illustrated-card) { opacity: .6; }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .card-drag-ghost[data-drop-state='illegal'] { opacity: .6; }
+
+/* 5. Map: the selected node's glow becomes a parchment stroke. */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); }
+
+/* 6. Title and startup: the dimmed city was `brightness(.28) saturate(.82)`;
+   the same darkening as a flat overlay (no second url(), which would add an ASSET_CSS slot). */
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .tower-interior-city::after {
+  content: ''; position: absolute; inset: 0; background: rgba(8, 7, 5, .72);
+}
+
+/* 7. Text shadows: the multi-layer blurred HUD shadow (--hud-text-shadow, set
+   per form factor in hud-layout.generated.css) becomes one tight shadow; the
+   title's 43px glow and 12px menu shadow shrink to a few pixels. */
+:root:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) { --hud-text-shadow: 0 1px 1px black; }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .title-glow { text-shadow: 0 0 8px color-mix(in srgb, var(--gold) 42%, transparent); }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .title-screen .as-titlemenu { text-shadow: 0 1px 2px black; }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat :is(.combat-health-badge, .combat-health-badge-value, .combat-health-counter-icon, .combat-health-evade-icon, .combat-health-precision-icon, .combat-health-reflect-icon) { text-shadow: 0 1px 0 black; }
+:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat .combat-grid-toggle { text-shadow: 0 1px 1px black; }

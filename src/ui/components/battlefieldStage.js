@@ -1,7 +1,7 @@
 import { wireLayeredEnvironment } from './layeredEnvironment.js';
 import { mobileFloorShadowTop, holdFloorShadowTop } from '../models/MobileFloorModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
-import { logicalViewport } from '../viewViewport.js';
+import { logicalViewport, CanvasBox, viewViewportBox, matchViewMedia } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
@@ -9,7 +9,7 @@ import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
-import { fitIconTray } from './iconTray.js';
+import { fitIconTray, fitBadgeRowTray } from './iconTray.js';
 import { combatSpriteRatio } from '../models/CombatSpriteScaleModel.js';
 import { stageFor } from '../services/PoseAnimator.js';
 import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds, invalidateSpriteRects, clearFrozenSpriteGeometry } from './combatSpriteGeometry.js';
@@ -20,13 +20,13 @@ import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
-import { alternativeFormation } from '../models/AlternativeFormationModel.js';
+import { alternativeFormation, ScaleFormationPlan } from '../models/AlternativeFormationModel.js';
 import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
 import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
 import { perspectiveCellContains, overheadGroupHeightPx } from '../models/AlternativeFormationModel.js';
 import { hudGeometry, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
-import { targetBodyHudPlacement, miniHudScale } from '../models/TargetHudModel.js';
+import { targetBodyHudPlacement, miniHudScale, PlayerHudBeside } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
 import { effectsOff, coarsePointer } from '../performance.js';
 import { shouldRelayout, viewportKey, isPhoneViewport, formationKey as formationKeyOf } from '../../model/relayoutGate.js';
@@ -36,8 +36,10 @@ import { setData, setStyle, setVar } from '../domWrite.js';
 // selection (a selected frame hides its meters) and would refit the settled artwork on every click.
 const miniHudGroupHeight = grid => overheadGroupHeightPx(grid, {
   wide: isWideFormFactor(document.documentElement.dataset.formFactor),
-  tall: window.matchMedia('(min-width: 1200px)').matches,
-  shortWindow: window.matchMedia('(min-width: 1200px) and (max-height: 800px)').matches });
+  // Paired with the container queries in combat-target-responsive.css: asked of the game view (the combat canvas),
+  // never the real window, so the stage's reserve and the CSS rows agree.
+  tall: matchViewMedia('(min-width: 1200px)').matches,
+  shortWindow: matchViewMedia('(min-width: 1200px) and (max-height: 800px)').matches });
 
 // These classes change controls, tint or outlines, not the figure's pose.
 // Unknown classes remain conservative: action/reaction transforms still track.
@@ -302,7 +304,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (![body.left, body.right, top, bottom].every(Number.isFinite)) return null;
       const badge = frame.querySelector(':scope > .combat-hit-chance');
       const center = (body.left + body.right) / 2;
-      const x = badge.dataset.rangeDetail === 'true' ? hitBadgeCenter({ bodyCenter: center, badgeWidth: badge.getBoundingClientRect().width, left: 8, right: globalThis.innerWidth - 8 }) : center;
+      // Kept 8 canvas px inside the canvas (its box, not the real window: a letterboxed canvas ends short of it).
+      const frameBox = viewViewportBox(), inset = 8 * CanvasBox().scale;
+      const x = badge.dataset.rangeDetail === 'true' ? hitBadgeCenter({ bodyCenter: center, badgeWidth: badge.getBoundingClientRect().width, left: frameBox.left + inset, right: frameBox.right - inset }) : center;
       return { frame, x: `${(x - box.left) / zoom}px`, y: `${((top + bottom) / 2 - box.top) / zoom}px` };
     });
     return () => {
@@ -326,15 +330,49 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // Owner (2026-11-06): the mini HUDs are fixed. Their placement depends on the layout pass (its epoch), the zoom and the
   // set of combatants, so a selection, a play or a hover repeats nothing: the pass is skipped (it was ~25 ms of forced
   // layout per card select). A pass over bodies that have not settled yet (art loading) is not remembered.
+  // A rack can grow after its pass (badge row wrapping, fonts, a status tray): its new height re-places it, else its bottom
+  // would land on the art. The first observation of a rack is its current size and changes nothing.
+  const watchedRacks = new WeakSet();
+  let rackRequest = 0;
+  // Disconnected by release() with the other observers.
+  // The field's own size is part of the pass key. Reading clientWidth/clientHeight there flushed style and layout on
+  // every call, ~30 a turn, though all but a few return at the key check. The observer reports the size after layout
+  // (it fires before paint); the first call reads it once.
+  let fieldSizeKey = null;
+  const rackObserver = new ResizeObserver(entries => {
+    // A field resize with no new layout epoch (footer or hand reshaped) re-places the overheads, as a rack resize does.
+    let fieldResized = false;
+    if (entries.some(({ target }) => target === field)) {
+      const size = `${field.clientWidth}|${field.clientHeight}`;
+      fieldResized = fieldSizeKey !== null && size !== fieldSizeKey;
+      fieldSizeKey = size;
+    }
+    const fresh = entries.filter(({ target }) => watchedRacks.has(target));
+    if (!fresh.length && !fieldResized) return;
+    cancelAnimationFrame(rackRequest);
+    rackRequest = requestAnimationFrame(() => {
+      rackRequest = 0;
+      centerTargetOverheads.placedKey = null;
+      if (field.isConnected) centerTargetOverheads();
+    });
+  });
+  rackObserver.observe(field);
+  centerTargetOverheads.watchRack = rack => {
+    if (watchedRacks.has(rack)) return;
+    rackObserver.observe(rack);
+    // The initial observation fires once; it re-places once, which is harmless and settles the first measure.
+    watchedRacks.add(rack);
+  };
   function centerTargetOverheads() {
     const zoom = uiZoom();
-    const key = [field.dataset?.layoutEpoch, zoom, field.querySelectorAll('.combatant').length, field.clientWidth, field.clientHeight].join('|');
+    const key = [field.dataset?.layoutEpoch, zoom, field.querySelectorAll('.combatant').length, fieldSizeKey ??= `${field.clientWidth}|${field.clientHeight}`].join('|');
     if (field.dataset?.layoutEpoch !== undefined && key === centerTargetOverheads.placedKey) return;
     globalThis.__perfCount?.('hudPass');
     invalidateSpriteRects();
     const commitBadges = readHitBadges();
     const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
     const racked = [], plain = [];
+    let fieldBox = null;
     for (const frame of field.querySelectorAll('.combatant')) {
       const sprite = frame.querySelector('.sprite'), leading = frame.querySelector('.combatant-leading');
       if (!sprite || !leading) continue;
@@ -343,14 +381,30 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const body = currentSpriteBodyBounds(sprite, scheduleArt);
         const intent = rack.querySelector(':scope > :is(.intent,.player-action-intent)');
         const intentBox = intent?.getBoundingClientRect(), frameBox = frame.getBoundingClientRect();
-        const intentHeight = intentBox?.height || 37;
+        // The boxes are scaled real px; the authored heights and gaps are canvas px, so they
+        // are scaled by the canvas fit (owner, 2026-11-14: only the scale follows the window).
+        const fit = CanvasBox().scale;
+        const intentHeight = intentBox?.height || 37 * fit;
         // The rack's own box is the skip key's, read here with the rest of the reads.
         const read = intent ? { frameBox, intentBox, rackBox: rack.getBoundingClientRect() } : null;
         // Owner (2026-11-06): the rack stands wholly above the head. Its own height is read, since it can run past the
         // configured group height (the HP row's padding), and the rack's bottom, not its estimate, keeps the gap.
         const rackHeight = (read ? read.rackBox : rack.getBoundingClientRect()).height || 0; // one read per rack: the intent's skip key shares it
         racked.push({ frame, body, intent, read, placement: targetBodyHudPlacement({ body, frame: frameBox,
-          groupHeight: Math.max(miniHudGroupHeight(config), rackHeight), intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
+          groupHeight: Math.max(miniHudGroupHeight(config) * fit, rackHeight), intentHeight,
+          // SPEC: the player's rack keeps a fixed 10 px gap above the art, measured on the form factor's
+          // canvas (it scales with the canvas, like every authored px here); enemies keep the configured gap.
+          gap: (frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx : config.miniHudSpriteGapPx) * fit, zoom,
+          drop: frame.classList?.contains('player') ? config.playerMiniHudDropFraction ?? 0 : 0 }) });
+        // Owner, 2026-11-17: the player's HUD stands beside the figure, at a readable size, not over its head.
+        const beside = frame.classList?.contains('player') && config.playerHud?.placement === 'beside';
+        // An authored body box is exact vertically but spans its whole canvas horizontally: the drawn art gives the right edge.
+        const art = beside ? currentSpriteArtBounds(sprite, scheduleArt) : null;
+        if (beside) racked.at(-1).beside = PlayerHudBeside({ body: { ...body, left: art.left, right: art.right }, frame: frameBox,
+          fieldLeft: (fieldBox ||= field.getBoundingClientRect()).left, fieldRight: fieldBox.right,
+          gap: config.playerHud.gapPx * fit, topFraction: config.playerHud.topFraction, maxWidth: config.playerHud.maxWidthPx * fit,
+          minWidth: config.playerHud.minWidthPx * fit, margin: config.playerHud.edgeMarginPx * fit, zoom });
+        centerTargetOverheads.watchRack?.(rack);
       // A detailed HUD rack is absent briefly while its frame is rendered.
       // Keep its settled leading host until the rack is rebuilt; placing a
       // legacy overhead here would make the controls jump between beats.
@@ -359,9 +413,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
     commitBadges?.();
     centerTargetOverheads.placedKey = racked.length && racked.every(({ body }) => body.settled !== false) && !plain.length ? key : null;
-    for (const { frame, body, placement } of racked) {
+    for (const { frame, body, placement, beside } of racked) {
+      // Where neither side has room, the HUD stays above the head (the 'above' placement and its drop).
+      if (frame.dataset.hudBeside !== String(!!beside)) frame.dataset.hudBeside = String(!!beside);
+      if (beside && frame.dataset.hudSide !== beside.side) frame.dataset.hudSide = beside.side;
+      else if (!beside && frame.dataset.hudSide) delete frame.dataset.hudSide;
+      if (beside) for (const [name, value] of [['--combat-player-hud-left', `${beside.left}px`], ['--combat-player-hud-width', `${beside.width}px`]]) {
+        if (frame.style.getPropertyValue(name) !== value) frame.style.setProperty(name, value);
+      }
       for (const [name, value] of [
-        ['--combat-mini-hud-top', `${placement.miniTop}px`],
+        ['--combat-mini-hud-top', `${beside ? beside.top : placement.miniTop}px`],
         ['--combat-selected-intent-top', `${placement.selectedTop}px`],
         ['--combat-selected-intent-center', `${placement.center}px`],
       ]) if (frame.style.getPropertyValue(name) !== value) frame.style.setProperty(name, value);
@@ -647,7 +708,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const relayoutConfig = uiConfig.presentation.combatFormationModel.behavior.relayout;
   const placedFrames = new WeakSet();
   let laidOut = null, forcePending = false, layoutEpoch = 0, placedFormationKey = null;
-  const viewportNow = () => viewportKey({ width: window.innerWidth, height: window.innerHeight });
+  // The layout's inputs are the combat canvas and the bands it is cut into, never the real window
+  // (owner, 2026-11-14: one configuration per form factor, only scaled). A window resize inside a
+  // form factor changes neither, so nothing relays out; a form-factor switch changes the canvas, and
+  // the bands combatLayout re-plans for it (the field's and the hand's local boxes) can land a frame
+  // later, so they are inputs too: a pass that ran before them is redone when they arrive.
+  const viewportNow = () => {
+    const canvas = logicalViewport(), hand = field.closest('.combat')?.querySelector('.hand');
+    return { ...viewportKey(canvas), inputs: [canvas.width, canvas.height, field.offsetWidth, field.offsetHeight,
+      hand?.offsetTop ?? '', hand?.offsetHeight ?? ''].join('x') };
+  };
   const refresh = (force = false) => {
     cancelAnimationFrame(frameRequest);
     // Fit replacement DOM synchronously before it can paint at intrinsic width.
@@ -665,7 +735,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       rangeRanks: field.dataset.rangeRanks, policy: field.dataset.formationPolicy,
       frames: frames.map(frame => ({ eid: frame.dataset.eid, dead: frame.classList.contains('dead') })) });
     const unplaced = frames.some(frame => !placedFrames.has(frame)) || formationKey !== placedFormationKey;
-    const moved = shouldRelayout(laidOut, now, relayoutConfig, { phone });
+    const moved = shouldRelayout(laidOut, now, relayoutConfig, { phone }) || laidOut?.inputs !== now.inputs;
     if (!(force === true || forcePending) && !unplaced && !moved) return;
     forcePending = false;
     layoutEpoch++;
@@ -691,7 +761,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     combat.style.setProperty('--combat-mini-hud-scale', String(hudWide ? hudGrid.desktopMiniHudScale : hudGrid.miniHudScale));
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
-    const overheadGap = combat.dataset.compactCombat === 'true' ? 4 : 14;
+    // Authored px are canvas px; this pass measures in scaled real px, so they take the canvas fit.
+    const fit = CanvasBox().scale;
+    const overheadGap = (combat.dataset.compactCombat === 'true' ? 4 : 14) * fit;
     // Owner (2026-10-12): a readout sits directly above or below its fighter,
     // never beside it. On the perspective grid a front-rank enemy's readout
     // goes below its feet; above its head stands the back rank's.
@@ -731,7 +803,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       presentation.playerSpawnRow = playerCell[0];
       presentation.playerSpawnColumn = playerCell[1];
     }
-    const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
+    // The formation models' px (strip thresholds, body caps, insets) are canvas px: plan on the field's canvas box,
+    // then scale the plan into the scaled real px every rect below is in (ScaleFormationPlan).
+    const planFit = CanvasBox().scale;
+    const plan = combatFormation({ width: fieldRect.width / planFit, height: fieldRect.height / planFit,
       presentation,
       footerClearance: logicalViewport().height <= 480 && logicalViewport().width >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
@@ -741,13 +816,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // above it (handLiftMaxFraction). Nothing from an earlier pass is used (owner, 2026-11-06: static layout).
     const planHand = combat.querySelector('.hand'), planHandRect = planHand?.getBoundingClientRect();
     const planHandTop = planHandRect && planHand.clientWidth > 0 ? planHandRect.top - fieldRect.top : null;
-    alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow', { ...presentation, handTop: Number.isFinite(planHandTop) ? planHandTop : null, formFactor: document.documentElement.dataset.formFactor });
+    // The resting cards' top inside the strip (hand.js publishes it): the stage can stretch down to it (stageExtent).
+    const planRestTop = parseFloat(planHand?.style.getPropertyValue('--hand-rest-top'));
+    const planCardsTop = Number.isFinite(planHandTop) && Number.isFinite(planRestTop) ? planHandTop + planRestTop * (planHandRect.height / (planHand.clientHeight || planHandRect.height || 1)) : null;
+    alternativeFormation(plan, fieldRect.width / planFit, fieldRect.height / planFit, document.documentElement.dataset.layout === 'narrow', { ...presentation, handTop: Number.isFinite(planHandTop) ? planHandTop / planFit : null,
+      handCardsTop: Number.isFinite(planCardsTop) ? planCardsTop / planFit : null, formFactor: document.documentElement.dataset.formFactor });
+    ScaleFormationPlan(plan, planFit);
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
     combat.style.setProperty('--combat-enemy-hud-scale', String(Math.min(
       hudWide ? hudGrid.desktopEnemyMiniHudScale : hudGrid.enemyMiniHudScale,
-      Math.max(1, Math.min((fieldRect.width - 24) / plan.rows,
-        ...plan.cells.map(cell => (cell.box?.width ?? Infinity) - 12)) / 104))));
+      // The plan is in scaled real px; the 24 / 12 / 104 px are canvas px, so they take the canvas fit.
+      Math.max(1, Math.min((fieldRect.width - 24 * CanvasBox().scale) / plan.rows,
+        ...plan.cells.map(cell => (cell.box?.width ?? Infinity) - 12 * CanvasBox().scale)) / (104 * CanvasBox().scale)))));
     // Geometry uses local offset dimensions, which already exclude CSS zoom.
     // Keep the fitted zoom while reading; resetting it would invalidate every
     // sprite descendant before the unchanged final zoom is written below.
@@ -794,7 +875,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // its configured headroom throughout that rebuild: an absent DOM node
       // must not briefly refit the settled artwork and backdrop between beats.
       const racked = hudWide && targetHud && !frame.classList.contains('player')
-        ? Math.max(0, miniHudGroupHeight(hudGrid) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) : 0;
+        ? Math.max(0, miniHudGroupHeight(hudGrid) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) * fit : 0;
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         art,
         // The overhead stack's own height (Inspect, when shown, over the
@@ -804,10 +885,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // Desktop and widescreen enemies carry the taller racked group (intent + health row) above the head: the body is
         // fitted under it, so the group never overlaps the head. It may rise desktopMiniHudBandOverlapPx into the HUD
         // band's empty middle, as the old group did (owner 2026-10-28).
-        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap, racked) };
+        leading: Math.max(Math.min(66 * fit, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap, racked) };
     });
     // A readout below the feet needs no headroom above the head.
-    for (const actor of actors) if (hudBelow(actor)) actor.leading = 6;
+    for (const actor of actors) if (hudBelow(actor)) actor.leading = 6 * fit;
     const narrow = document.documentElement.dataset.layout === 'narrow';
     const hand = combat.querySelector('.hand');
     const handRect = hand?.getBoundingClientRect();
@@ -822,22 +903,25 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const stableHandKey = handKey?.split(':').map(value => Number.isFinite(Number(value))
       ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
     const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':' + stableHandKey;
+    // The lone player's feet floor: the strip's top, or the resting cards' top where the stage stretches down to them.
+    const cardsFloor = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.stageExtent?.mode === 'handTop'
+      ? parseFloat(hand?.style.getPropertyValue('--hand-rest-top')) * (handRect ? handRect.height / (hand.clientHeight || handRect.height || 1) : 1) : NaN;
     const handAnchor = layoutState.handAnchor = stableHandAnchor(layoutState.handAnchor, handLayoutKey, {
-      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top : null,
+      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top + (Number.isFinite(cardsFloor) ? cardsFloor : 0) : null,
     });
     const solo = actors.filter(actor => actor.side === 'player').length === 1;
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && logicalViewport().height > 480);
     const fitFormation = () => {
       const viewportSizes = fitViewportSprites({ width: fieldRect.width, actors,
-        viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow),
+        viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow), unit: fit,
         // Judge the fit on the positions composition will use: a solo
         // player's feet stay above the hand.
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         solo: solo && logicalViewport().height > 480 });
       combat.dataset.spriteLastResort = viewportSizes.lastResort ? viewportSizes.lastResort.toFixed(3) : '';
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
-        perspectiveGrid: true,
+        perspectiveGrid: true, unit: fit,
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && logicalViewport().height > 480,
@@ -849,7 +933,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const growthFor = (actor, fitted) => {
         const requestedGrowth = 1; // Reading selection never changes approved artwork geometry.
         return Math.min(requestedGrowth, Math.max(1,
-          ((fitted.ground ?? actor.slot.ground) - actor.leading - 6) / fitted.visibleHeight),
+          ((fitted.ground ?? actor.slot.ground) - actor.leading - 6 * fit) / fitted.visibleHeight),
           // Selection must not make the player tower over a foe already capped
           // by the available headroom on a short screen.
           actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
@@ -1001,7 +1085,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
       }
-      field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height };
+      // plan boxes are in real px at this fit; keep the fit so a later scale-only resize (which skips relayout) can convert pointers.
+      field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height, fit: planFit };
       wireGridTargeting(field);
       field.dispatchEvent(new Event('formationlayoutchange'));
     }
@@ -1044,13 +1129,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       setData(frame, 'targetHudLane', slot.lane === 0 ? 'left' : slot.lane === plan.rows - 1 ? 'right' : 'middle');
       if (slot.box) {
         const { left, top, width, height, skew = 0 } = slot.box;
+        // Field-relative CANVAS px (the plan's field-relative real px over the canvas fit): a scale-only resize runs
+        // no relayout, so nothing cached here may hold scaled real px. combatTargetHud draws it in a canvas-px viewBox.
+        const fit = CanvasBox().scale;
         setData(frame, 'targetHudCellPolygon', JSON.stringify([[left + skew * height / 2, top],
           [left + width + skew * height / 2, top], [left + width - skew * height / 2, top + height],
-          [left - skew * height / 2, top + height]]));
+          [left - skew * height / 2, top + height]].map(point => point.map(value => value / fit))));
         // Owner (2026-11-06): the mini HUD is as wide as its cell (the front edge, a parallelogram's width) and its contents
         // scale with it. Both are written here, once per layout pass, and read by the HUD's own placement and styles.
-        setData(frame, 'cellWidth', width);
-        setVar(frame, '--mini-hud-scale', String(miniHudScale({ cellWidth: width }).scale));
+        // The cell width in canvas px (combatTargetHud scales it back by the fit): the mini HUD scale is an authored
+        // canvas-px ratio, and the cached width must not hold a stale scale's real px.
+        setData(frame, 'cellWidth', width / fit);
+        setVar(frame, '--mini-hud-scale', String(miniHudScale({ cellWidth: width / fit }).scale));
       }
       if (Number.isFinite(slot.miniHudWidth)) {
         const miniHud = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
@@ -1062,14 +1152,17 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         setVar(frame, '--combat-mini-hud-left', `${(slot.miniHudLeft - x + nameWidth / 2) / pageZoom}px`);
         setVar(frame, '--combat-mini-hud-top', `${groupTop / pageZoom}px`);
         setVar(frame, '--combat-mini-hud-width', `${slot.miniHudWidth / pageZoom}px`);
-        setData(frame, 'miniHudLeft', slot.miniHudLeft);
-        setData(frame, 'miniHudTop', groupTop);
-        setData(frame, 'miniHudWidth', slot.miniHudWidth);
+        // Cached for readers after the pass: field-relative canvas px (a scale-only resize runs no relayout).
+        setData(frame, 'miniHudLeft', slot.miniHudLeft / CanvasBox().scale);
+        setData(frame, 'miniHudTop', groupTop / CanvasBox().scale);
+        setData(frame, 'miniHudWidth', slot.miniHudWidth / CanvasBox().scale);
       }
       setData(frame, 'baseSpriteScale', fitted.scale);
       setData(frame, 'presentationScale', multiplier);
-      setData(frame, 'formationX', slot.x);
-      setData(frame, 'groundY', fieldRect.top + ground);
+      setData(frame, 'formationX', slot.x / CanvasBox().scale); // field-relative canvas px
+      // The ground anchor, field-relative in canvas px (readers add the field's own box): a scale-only resize runs no
+      // relayout, so a cached real-px value would go stale (enemyTargetPicker, the HUD clearance QA).
+      setData(frame, 'groundY', ground / CanvasBox().scale);
       setData(frame, 'groundRatio', ground / fieldRect.height);
       setStyle(stack, 'top', `${local.top}px`);
       // The half-field art floor may move two enemies to the same painted
@@ -1083,7 +1176,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       setData(frame, 'overheadClamped', 'false');
       setData(frame, 'combatantScale', '1');
       setData(frame, 'spriteRatio', ratio);
-      setData(frame, 'spriteVisibleHeight', visibleHeight);
+      setData(frame, 'spriteVisibleHeight', visibleHeight / CanvasBox().scale); // canvas px, paired with groundY
       // Keep the 44 px target on the clickable frame, above neighbouring art.
       // It does not change the dimensions read by the sprite fitter.
       frame.classList.toggle('enemy-target-hitbox', frame.classList.contains('enemy'));
@@ -1106,7 +1199,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Position the player's visible reading widget from the final art before
     // reserving target space. Its hit-testable health row and ability badges
     // must not split the independent frame plate's complete tap area.
-    for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
+    // The status tray shares the HUD's badge row with the defense badges: one capacity, the bar width. The tray always keeps room for a
+    // whole icon or +N tile; when the badges leave less, the last badges collapse into the tile (data-squeezed, counted in its +N).
+    for (const frame of frames) {
+      const tray = frame.querySelector('.statuses');
+      if (!tray) continue;
+      const row = tray.closest('.combat-health-badges');
+      if (!row) { fitIconTray(tray, nameWidth); continue; }
+      fitBadgeRowTray(tray);
+    }
     settledTargets = [];
     settledTargetCores = [];
     placePlayerHud();
@@ -1496,12 +1597,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
-      groundY: fieldTop + combatSceneryGround(sizes, actors, plan.ground) / zoom,
+      // Owner 2026-11-13: the floor's top stands at a fixed share of the whole
+      // combat screen (scenes/w4a-combat.json floorPercent: 75 = floor covers
+      // the bottom 75%), not at the back rank's feet, which left back-rank
+      // enemies standing on the tree line.
+      groundY: (rect.height / zoom) * (1 - wireframeUi.scene.floorFraction),
       config: battlefieldBackdropConfig({ height: sceneHeight,
         fieldTop, fieldHeight: fieldRect.height / zoom,
         formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
-    field.dataset.groundY = String(fieldRect.top + plan.ground);
+    field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
     field.dispatchEvent(new Event('battlefieldgeometrychange'));
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(() => refresh()); };
@@ -1539,7 +1644,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // (dialogue bands, shop rails, tower light timings); only the page zoom and
   // the view box move this layout, so a style mutation refits only when one of
   // those changed. Reading them off the inline style is no layout read.
-  const LAYOUT_ROOT_VARS = ['--ui-zoom', '--visible-height', '--view-width', '--view-height', '--view-fit', '--view-left', '--view-top'];
+  // The canvas's fit scale and letterbox offset (--view-fit, --view-left, --view-top) are not
+  // layout inputs: the battlefield is laid out in canvas px, so a scale-only change moves nothing.
+  const LAYOUT_ROOT_VARS = ['--ui-zoom', '--visible-height', '--view-width', '--view-height'];
   // Text size is the root's inline font-size; the HUD is sized in rem.
   const rootLayoutKey = () => {
     const rootStyle = document.documentElement.style;
@@ -1552,7 +1659,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const settingKey = () => { const root = document.documentElement;
     return FORCING_ATTRIBUTES.map(name => typeof root?.getAttribute === 'function' ? root.getAttribute(name) : null).join('|'); };
   let lastSettingKey = settingKey();
-  let lastSeenViewport = `${window.innerWidth}x${window.innerHeight}`;
+  const canvasKey = () => { const canvas = logicalViewport(); return `${canvas.width}x${canvas.height}`; };
+  let lastSeenViewport = canvasKey();
   let lastRootLayoutKey = rootLayoutKey();
   const layoutObserver = new MutationObserver(records => {
     const key = rootLayoutKey();
@@ -1566,7 +1674,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // UI scale and text size (--ui-zoom, root font-size, --view-*) are live display settings: changed in Settings
     // mid-combat they relay out once. The same variables also follow the viewport (a phone's address bar), so a
     // change that arrives with a new viewport size goes through the viewport gate instead.
-    const viewport = `${window.innerWidth}x${window.innerHeight}`;
+    const viewport = canvasKey();
     const settingChange = keyMoved && viewport === lastSeenViewport;
     lastSeenViewport = viewport;
     if (setting !== lastSettingKey || settingChange) { lastSettingKey = setting; scheduleForced(); }
@@ -1635,6 +1743,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     cancelAnimationFrame(frameRequest);
     cancelAnimationFrame(trackingRequest);
     cancelAnimationFrame(overheadRequest);
+    cancelAnimationFrame(rackRequest);
+    rackObserver.disconnect();
     resizeObserver.disconnect();
     layoutObserver.disconnect();
     poseObserver.disconnect();
@@ -1671,9 +1781,11 @@ function enemyFrameAtCell(field, x, y) {
   const plan = field.formationPlan?.plan;
   if (!grid || !plan) return null;
   const rect = field.getBoundingClientRect();
+  // Cached boxes are in real px at the fit the plan was laid out at; the pointer is at the current fit.
+  const toPlan = (field.formationPlan.fit || 1) / CanvasBox().scale;
   const occupied = new Set(plan.slots.filter(slot => slot.side === 'enemy').map(slot => slot.cell));
   const cell = plan.cells.find(cell => cell.box && occupied.has(cell.cell)
-    && perspectiveCellContains(cell.box, x - rect.left, y - rect.top));
+    && perspectiveCellContains(cell.box, (x - rect.left) * toPlan, (y - rect.top) * toPlan));
   if (!cell) return null;
   // Past the grid's capacity two enemies can share a cell; take a living one.
   return [...field.querySelectorAll(`.combatant.enemy[data-formation-cell="${CSS.escape(cell.cell)}"]`)]

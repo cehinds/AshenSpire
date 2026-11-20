@@ -90,7 +90,7 @@
       "tier": "minion"
     },
     "enemy:livingArmor": {
-      "name": "Living Armor",
+      "name": "Living Armour",
       "tier": "minion"
     },
     "enemy:marrowOrganist": {
@@ -1617,7 +1617,10 @@
         "heavy",
         "stagger"
       ],
-      "range": "melee"
+      "range": "melee",
+      "points": {
+        "strength": 3
+      }
     },
     "gear:dagger": {
       "name": "Dagger",
@@ -1629,7 +1632,11 @@
         "flurry",
         "throw"
       ],
-      "range": "melee"
+      "range": "melee",
+      "points": {
+        "dexterity": 1,
+        "strength": 1
+      }
     },
     "gear:shortbow": {
       "name": "Shortbow",
@@ -1637,9 +1644,10 @@
       "kind": "weapon",
       "rarity": "common",
       "tags": [
-        "bow"
+        "bow",
+        "retreat"
       ],
-      "range": "ranged",
+      "range": "reach",
       "points": {
         "dexterity": 1
       }
@@ -1663,7 +1671,8 @@
       "tags": [
         "polearm",
         "heavy",
-        "stagger"
+        "stagger",
+        "retreat"
       ],
       "range": "reach"
     },
@@ -1824,11 +1833,13 @@
       "rarity": "uncommon",
       "tags": [
         "sceptre",
-        "blight"
+        "blight",
+        "retreat"
       ],
       "range": "reach",
       "points": {
-        "intelligence": 1
+        "intelligence": 2,
+        "wisdom": 1
       }
     },
     "gear:emberlightSceptre": {
@@ -1837,7 +1848,8 @@
       "kind": "staff",
       "rarity": "rare",
       "tags": [
-        "sceptre"
+        "sceptre",
+        "retreat"
       ],
       "range": "reach",
       "points": {
@@ -1880,7 +1892,8 @@
       "tags": [
         "sceptre",
         "burn",
-        "bleed"
+        "bleed",
+        "retreat"
       ],
       "range": "reach"
     },

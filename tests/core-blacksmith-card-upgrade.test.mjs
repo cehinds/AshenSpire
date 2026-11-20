@@ -19,10 +19,10 @@ import '../src/engine/runCombat.js';
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
 const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
-const legacyOut = createRegistries(configuredContentBundle(contentBundle, OUT_ROWS));
 
 function smithRun(registries, stones, seed = 31, cinders = 2000) {
   const run = createRunState({ seed, classId: 'reaver', registries, runId: 'bs-cards' });
+  run.itemUpgradeLevels = { ...run.itemUpgradeLevels, 'armament/greatsword': 9 }; // all ten card upgrade slots (rank + weapon level + 1)
   run.smithingStones = stones;
   run.cinders = cinders;
   run.seenEvents = [];
@@ -39,21 +39,22 @@ const upgrade = (run, instanceId) => {
 test('Core Blacksmith: any deck card upgrades for cinders and no stones, even past the free allowance', () => {
   const run = smithRun(coreOut, 0);
   const card = strikes(run)[0];
+  // Owner, 2026-11-17: a Blacksmith card upgrade costs 50 + 35 per earlier upgrade + 25 per rank above 1 (Strike: rank 1).
   const first = upgrade(run, card.instanceId);
-  assert.deepEqual([first.n, first.spentStones, run.smithingStones, run.cinders], [1, 0, 0, 1960]);
+  assert.deepEqual([first.n, first.spentStones, run.smithingStones, run.cinders], [1, 0, 0, 1950]);
   // A rest site charges 1 stone for this second upgrade; the Blacksmith takes one stone off, so 0.
   const second = upgrade(run, card.instanceId);
-  assert.deepEqual([second.n, second.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 1920]);
+  assert.deepEqual([second.n, second.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 1865]);
   assert.equal(upgradeCount(card), 2);
   assert.deepEqual(card.upgradeSteps, [first.step, second.step]);
 });
 
 test('Core Blacksmith: no per-visit limit; the player upgrades while they can pay cinders, and a short purse is refused', () => {
-  const run = smithRun(coreOut, 3, 31, 200);
-  const [a, b, c] = strikes(run);
-  for (const card of [a, b, c, a, a]) upgrade(run, card.instanceId);
+  const run = smithRun(coreOut, 3, 31, 390);
+  const [a, b] = strikes(run); // the Reaver starts with two Strikes now
+  for (const card of [a, b, a, b, a]) upgrade(run, card.instanceId);
   assert.equal(run.smithingStones, 3, 'the stones are never touched');
-  assert.equal(run.cinders, 0, 'five upgrades at 40 cinders');
+  assert.equal(run.cinders, 0, 'five upgrades at 50, 50, 85, 85 and 120 cinders (50 + 35 per earlier upgrade)');
   assert.equal(upgradeCount(a), 3);
   const refused = upgradeArtPlan(coreOut, run, a.instanceId);
   assert.equal(refused.ok, false);
@@ -88,15 +89,7 @@ test('Core Blacksmith: the idle line is the card one when nothing can be upgrade
   assert.match(serviceIdleReason('upgradeArt', run), /card/i);
 });
 
-test('Legacy Blacksmith upgradeArt is unchanged: only a loose weapon art with an authored upgrade', () => {
-  const run = smithRun(legacyOut, 5);
-  const plain = run.deck[0];
-  const plan = upgradeArtPlan(legacyOut, run, plain.instanceId);
-  assert.equal(plan.ok, false);
-  assert.equal(plan.cardQuote, undefined);
-});
-
-test('about 25% of Core shop nodes are a Blacksmith, decided per node and the same every time; Legacy never', () => {
+test('about 25% of Core shop nodes are a Blacksmith, decided per node and the same every time', () => {
   const run = createRunState({ seed: 91, classId: 'reaver', registries: coreOut, runId: 'shop-kind' });
   assert.equal(configuredShopBlacksmithChance(run), 25);
   let hits = 0;
@@ -107,9 +100,6 @@ test('about 25% of Core shop nodes are a Blacksmith, decided per node and the sa
     if (a) hits++;
   }
   assert.ok(hits / N > 0.21 && hits / N < 0.29, `share ${hits / N}`);
-  const legacy = createRunState({ seed: 91, classId: 'reaver', registries: legacyOut, runId: 'shop-kind-l' });
-  assert.equal(configuredShopBlacksmithChance(legacy), 0);
-  assert.equal(configuredShopIsBlacksmith(legacy, '1:node-1'), false);
 });
 
 test('configuredShopKind (the call showShop makes): a saved merchandise offer stays a shop, an open Blacksmith stays one', async () => {
@@ -134,26 +124,12 @@ test('main.js showShop asks configuredShopKind (the roll is wired, not dropped)'
   assert.match(main, /configuredShopKind\(run, shopId\) === 'blacksmith'/);
 });
 
-test('a Core Blacksmith offers no extract or install service, and the commits refuse without touching the deck', async () => {
-  const { blacksmithExtractPlan, commitBlacksmithExtract, blacksmithInstallPlan, commitBlacksmithInstall } = await import('../src/model/blacksmith.js');
+test('a Core Blacksmith offers no extract or install service', async () => {
   const { shopStockOfferings } = await import('../src/model/shopKinds.js');
   const run = smithRun(coreOut, 3);
   const offered = shopStockOfferings(run.shopStock);
   assert.ok(!offered.includes('extractArt') && !offered.includes('installArt'));
   assert.ok(offered.includes('upgradeArt') && offered.includes('upgrade'), 'equipment and card upgrades stay');
-  // Even a stock forged (or saved by an older build) with the services cannot commit them.
-  run.shopStock.offerings = [...run.shopStock.offerings, 'extractArt', 'installArt'];
-  const deck = JSON.stringify(run.deck), sideboard = JSON.stringify(run.sideboard), mounts = JSON.stringify(run.itemMounts || null);
-  const ex = blacksmithExtractPlan(coreOut, run, 'armament/greatsword', 'any');
-  assert.equal(ex.ok, false);
-  assert.throws(() => commitBlacksmithExtract(coreOut, run, ex));
-  const inst = blacksmithInstallPlan(coreOut, run, 'armament/greatsword', 'any', run.deck[0].instanceId);
-  assert.equal(inst.ok, false);
-  assert.throws(() => commitBlacksmithInstall(coreOut, run, inst));
-  assert.deepEqual([JSON.stringify(run.deck), JSON.stringify(run.sideboard), JSON.stringify(run.itemMounts || null)], [deck, sideboard, mounts]);
-  // Legacy keeps both services.
-  const legacy = smithRun(legacyOut, 3);
-  assert.ok(shopStockOfferings(legacy.shopStock).includes('extractArt'));
 });
 
 test('Core Blacksmith: a sideboard card plans and commits an upgrade, and a sideboard-only candidate counts', () => {

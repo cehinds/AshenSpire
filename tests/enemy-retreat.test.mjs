@@ -74,6 +74,6 @@ test('the intent presentation names a retreat and an advance instead of a generi
   const { combatIntentPresentation } = await import('../src/ui/models/CombatIntentModel.js');
   const base = { kind: 'buff', moveId: 'retreat', revealed: true, hidden: false, profile: { camp: 'physical', maneuver: 'preparing' }, combatProfile: { camp: 'physical' } };
   assert.equal(combatIntentPresentation({ ...base, actionEffects: [{ op: 'moveEngagement', target: 'enemy', bands: 1 }] }).title, 'Retreating');
-  assert.equal(combatIntentPresentation({ ...base, moveId: 'advance', actionEffects: [{ op: 'moveEngagement', target: 'enemy', bands: -1 }] }).title, 'Advancing');
+  assert.equal(combatIntentPresentation({ ...base, moveId: 'advance', actionEffects: [{ op: 'moveEngagement', target: 'enemy', bands: -1 }] }).title, 'Approaching');
   assert.equal(combatIntentPresentation({ ...base, moveId: 'warcry', actionEffects: [{ op: 'applyStatus', target: 'self' }] }).title, 'Buffing');
 });

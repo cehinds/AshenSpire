@@ -5,9 +5,7 @@ import { ratingReceipt } from '../../model/combatRatings.js';
 import { ratingsConfigFor, statRow } from '../../model/statRows.js';
 import { runHandRules, handSizeReceipts } from '../../model/handRules.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
-import { skillSchools, trackSkillFeats, skillFeatById } from '../../model/skills.js';
-import { featById, featStacks } from '../../model/feats.js';
-import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
+import { skillSchools } from '../../model/skills.js';
 import { abilityKindForSkill, abilityRankAt, isAbilitySkill, SPELLCRAFT_SKILL, MANEUVERS_SKILL } from '../../model/abilityGrades.js';
 import { abilityOfferPool } from '../../model/abilityOffers.js';
 import { expandedProgression } from '../../model/classMilestones.js';
@@ -22,7 +20,7 @@ export function progressionStats(registries, run, settings = {}) {
   const handReceipts = handSizeReceipts(hand, run.attributes, run.level?.level);
   const resources = handResourceRows(registries, run, settings);
   const derived = (id, label) => ({ ...projection.derived.find(row => row.id === id), faceLabel: label });
-  const rows = [derived('hp', 'HP'), derived('stamina', 'SP'), derived('mana', 'MP'),
+  const rows = [derived('hp', 'HP'), derived('stamina', 'Stamina'), derived('mana', 'Mana'),
     ...['ar', 'pr', 'dr'].map(id => ({ id, label: id.toUpperCase(), faceLabel: id.toUpperCase(), value: ratings.totals[id],
       formula: ratings.sources.map(source => `${source.name}: ${source[id] || 0}`).join(' + ') })),
     { id: 'handSize', label: t('statsPreview.overview.handSize'), faceLabel: 'HandSize', value: handReceipts.capacity.value,
@@ -52,22 +50,6 @@ export function progressionStats(registries, run, settings = {}) {
   return { rows, attributes, projection };
 }
 
-export function featInspection(registries, run, id) {
-  registries = characterSheetRegistries(registries, run);
-  const general = Array.isArray(registries.feats) ? registries.feats.find(feat => feat.id === id)
-    : registries.feats?.has(id) ? registries.feats.get(id) : null;
-  const feat = general || featById(id) || skillFeatById(id, registries);
-  if (!feat) return null;
-  const tags = [...new Set([...(feat.tags || []), ...(feat.propertyTags || []), ...(feat.crit?.tags || []), ...(feat.passive?.tags || [])])];
-  return { ...feat, description: getFeatDescription(registries, feat), tags,
-    owned: featStacks(run, id) || (run.skillFeats || []).filter(owned => owned === id).length };
-}
-
-export function ownedFeatInspections(registries, run) {
-  return [...new Set([...(run.feats || []), ...(run.skillFeats || [])])]
-    .map(id => featInspection(registries, run, id)).filter(Boolean);
-}
-
 export function skillInspection(registries, run, track) {
   registries = characterSheetRegistries(registries, run);
   const expanded = expandedProgression(run), ability = expanded && isAbilitySkill(track.id);
@@ -84,10 +66,8 @@ export function skillInspection(registries, run, track) {
       : !expanded ? { legacyAbility: true } : {}) };
     return { ...resolveCard(registries, instance), ...(instance.legacyAbility ? {legacyAbility: true} : {}) };
   });
-  const feats = trackSkillFeats(track.id, !!run.classMasteryState, registries)
-    .map(feat => featInspection(registries, run, feat.id)).filter(Boolean);
   if (ability) tags = [...new Set(cards.flatMap(card => card.tags || []))];
   const tagIds = track.kind === 'class' ? [...new Set(cards.flatMap(card => card.tags || []))] : tags;
-  return { cards, feats, tags: tagIds, ...(ability ? {abilityKind: abilityKindForSkill(track.id)} : {}),
+  return { cards, tags: tagIds, ...(ability ? {abilityKind: abilityKindForSkill(track.id)} : {}),
     requiresEquipment: !ability && ['weapon', 'focus', 'dual'].includes(track.kind) && !tags.length };
 }

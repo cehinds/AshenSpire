@@ -6,22 +6,23 @@
     "portraitGapPx": 24
   },
   "sizing": {
-    "bands": { "hud": 10, "scene": 40, "context": 35, "footer": 15 },
-    "bandsCompact": { "hud": 12, "scene": 40, "context": 33, "footer": 15 },
-    "floorPercent": 60,
+    "bands": { "hud": 10, "scene": 47, "context": 28, "footer": 15 },
+    "bandsCompact": { "hud": 12, "scene": 46, "context": 27, "footer": 15 },
+    "bandsDesktop": { "hud": 9, "scene": 63, "context": 20, "footer": 8 },
+    "floorPercent": 75,
     "portraitSlot": { "widthVw": 20, "compactWidthVw": 30 },
     "context": {
       "widthVw": 95,
       "captionLines": 3,
       "captionLineHeight": 1.45,
-      "titleRem": 0.95,
+      "titleRem": 0.85,
       "titleLineHeight": "$titleLineHeight",
-      "textRem": 0.9,
+      "textRem": 0.8,
       "paddingRem": 0.5,
       "gapRem": "$bandGapRem"
     },
     "responses": {
-      "fontRem": 0.85,
+      "fontRem": 0.78,
       "lineHeight": "$compactLineHeight",
       "paddingBlockRem": 0.2,
       "paddingInlineRem": 0.5,

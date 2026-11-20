@@ -19,6 +19,7 @@
       "uniqueItems": true,
       "items": {
         "enum": [
+          "rest",
           "strategize",
           "smith",
           "levelUp",
@@ -36,9 +37,11 @@
       "type": "object",
       "properties": {
         "hp": {
-          "enum": [
-            "full"
-          ]
+          "anyOf": [
+            { "enum": ["full"] },
+            { "type": "number", "minimum": 0.01, "maximum": 1 }
+          ],
+          "description": "\"full\", or a fraction of max HP in (0, 1] restored by the rest service (0.01 is the smallest accepted)."
         },
         "sp": {
           "enum": [

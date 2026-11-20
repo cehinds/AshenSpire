@@ -1,0 +1,54 @@
+/* styles/density.css — DESKTOP DENSITY (owner, 2026-11-15: "why is everything so freaking big").
+   Two modes, one set of tokens each, read by the shared modal shell, the option rows, the shrine option cards
+   and the footer buttons:
+     touch (the default; pointer: coarse, hover: none, or a phone width) keeps the 44 px tap targets and the
+       phone sizes that were already here;
+     fine  (pointer: fine and hover: hover, and a window wider than a phone) is compact: a ~26 px title, ~17 px
+       option names, ~14 px effect lines, ~40 px buttons that fit their label, tighter padding.
+   Sizes are a band of the Text-size setting (rem) between a floor and a ceiling, divided by --ui-zoom so a
+   value means the same on glass at any zoom. Nothing here narrows a floor below what a mouse needs. */
+:root {
+  --density-title: calc(20px / var(--ui-zoom, 1));
+  --density-row-name: calc(18px / var(--ui-zoom, 1));
+  --density-row-text: calc(14px / var(--ui-zoom, 1));
+  --density-btn-h: var(--tap-floor);
+  --density-row-min: var(--tap-floor);
+  --density-pad: 1rem;
+  --density-gap: 0.6rem;
+}
+@media (pointer: fine) and (hover: hover) and (min-width: 700px) {
+  :root {
+    /* base.css owns --tap-floor; a mouse caps the floor it divides at 40 px (--tap-cap), never below the player's smaller setting. */
+    --tap-cap: min(var(--tap-target), 40px);
+    --density-title: calc(26px / var(--ui-zoom, 1));
+    --density-row-name: clamp(calc(16px / var(--ui-zoom, 1)), 1.75rem, calc(18px / var(--ui-zoom, 1)));
+    --density-row-text: clamp(calc(13px / var(--ui-zoom, 1)), 1.4rem, calc(14px / var(--ui-zoom, 1)));
+    --density-btn-h: calc(40px / var(--ui-zoom, 1));
+    --density-row-min: calc(40px / var(--ui-zoom, 1));
+    --density-pad: 0.9rem;
+    --density-gap: 0.45rem;
+  }
+  /* Modal shell: a ceiling on the title and a tighter inset. */
+  .modal { --modal-inset: var(--density-pad); }
+  .modal-head-id h2 { font-size: min(1.8rem, var(--density-title)); }
+  .modal-head { padding-block: calc(var(--density-pad) * 0.7); }
+  .modal-foot { padding-block: calc(var(--density-pad) * 0.7); }
+  .modal-foot-actions, .choice-door > .modal-foot > .modal-foot-actions { margin-left: auto; width: auto; flex: 0 0 auto; }
+  :root .modal-foot > .modal-foot-actions.modal-btnrow, :root .modal-foot > .modal-foot-actions.modal-btnrow[data-size] { display: flex; justify-content: flex-end; width: auto; }
+  .modal-foot-actions .modal-btnrow { display: flex; justify-content: flex-end; gap: 0.6rem; width: auto; }
+  :root .modal-foot-actions > button, :root .modal-foot-actions[data-action-count] > button, :root .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled="true"]):not([data-confirm-ready="false"]) { container-type: normal; flex: 0 0 auto; width: auto; min-width: 8rem; max-width: none; padding-inline: 1.6rem; min-height: var(--density-btn-h); height: var(--density-btn-h); }
+  /* Option rows (optionRowList, reaction and option modals). */
+  .modal:is(.reaction-choice, .option-choice) .option-row-list { gap: var(--density-gap); }
+  .modal:is(.reaction-choice, .option-choice) .option-row.as-railitem { min-height: var(--density-row-min); padding: 0.4rem 0.7rem; }
+  .modal:is(.reaction-choice, .option-choice) .option-row-name { font-size: var(--density-row-name); }
+  .modal:is(.reaction-choice, .option-choice) .option-row-status { font-size: var(--density-row-text); }
+  /* Rest site (shrine) option cards and Continue. */
+  :root .rest-screen .shrine-option-list { gap: var(--density-gap); }
+  :root .rest-screen .class-pick { min-height: var(--density-row-min); padding: 0.5rem 0.8rem; }
+  :root .rest-screen .class-pick .cp-body h3 { font-size: var(--density-row-name); margin: 0; }
+  :root .rest-screen .class-pick .cp-body p { font-size: var(--density-row-text); line-height: 1.3; }
+  :where(.core-rest) .rest-door .rest-choices .shrine-option-list > .class-pick { padding: 0.5rem 0.8rem; gap: 0.8rem; }
+  :where(.core-rest) .rest-door .rest-choices .class-pick h3 { font-size: var(--density-row-name); }
+  :where(.core-rest) .rest-door .rest-choices .class-pick p { font-size: var(--density-row-text); }
+  :root .rest-screen #shrine-leave { min-height: var(--density-btn-h); font-size: var(--density-row-text); }
+}

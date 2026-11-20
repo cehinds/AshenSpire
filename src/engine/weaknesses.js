@@ -46,7 +46,7 @@ function imbuedElements(ctx, source, carrier) {
  * (the wielded weapon's, via the carrier's resolved profile), `magic` when any of it is magic, and each element
  * (its school or damage type, its damage components, an element an attacker status adds to weapon attacks).
  */
-export function hitWeaknessTriggers(ctx, source, carrier = {}, profile = carrier.combatProfile || {}, share = magicShareOf(profile, ctx?.ratingsRules)) {
+export function hitWeaknessTriggers(ctx, source, carrier = {}, profile = carrier.combatProfile || {}, share = magicShareOf(profile)) {
   const triggers = new Set();
   const types = [profile.damageType, carrier.damageType, profile.physicalDamageType, carrier.physicalDamageType, ...(profile.damageComponents || []).map(row => row?.type)];
   for (const type of types) add(triggers, type);
@@ -68,11 +68,12 @@ export function matchingHitWeaknesses(target, triggers) {
   if (!Array.isArray(target?.weaknesses) || !triggers?.length) return [];
   return target.weaknesses
     .filter(row => !WEAKNESS_STATUS_EFFECTS.includes(row.effect) && triggers.includes(row.to))
-    .map(row => ({ to: row.to, effect: row.effect, amount: weaknessAmount(row) }));
+    .map(row => ({ to: row.to, effect: row.effect, amount: weaknessAmount(row), ...(row.hidden ? { hidden: true } : {}) }));
 }
 
 const titled = word => word.charAt(0).toUpperCase() + word.slice(1);
-export const weaknessLabel = to => `Weak to ${titled(to)}`;
+// A weakness the player has not discovered still counts in a preview, but its row never names the type (owner, 2026-11-14).
+export const weaknessLabel = (to, hidden = false) => hidden ? 'Unknown weakness' : `Weak to ${titled(to)}`;
 
 /** Extra stacks a status gets when applied to a target weak to it (0 for a self- or ally-applied status). */
 export function weaknessStackBonus(ctx, target, statusId, source) {

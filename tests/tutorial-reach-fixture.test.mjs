@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -12,8 +11,9 @@ import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { cardTargetPlan } from '../src/model/cardTargets.js';
 import { hasImmediateHostileDamage } from '../tools/click-impact-card.mjs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
-const source = readFileSync(new URL('../tools/tutorial-reach.mjs', import.meta.url), 'utf8');
+const source = readSourceTextSync(new URL('../tools/tutorial-reach.mjs', import.meta.url));
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const fresh = () => createRunState({ registries, classId: 'reaver', seed: 511 });

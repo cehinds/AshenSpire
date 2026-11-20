@@ -1,41 +1,57 @@
-// The pending choice a card offers before it plays (model/cardChoices.js;
-// SPEC §5.2 Warrior's Vow: "Enter a Stance of your choice"). One dialog (screens/combat.js): one button per
-// option (a uniform tile naming the stance and what it does); Cancel plays nothing. The
-// stance the player is already in (`option.active`) is shown but disabled and
-// marked, since re-entering it does nothing (#1449 review, Codex P2).
-import { openModal, button } from '../kit/index.js';
-import { t } from '../strings.js';
-import { cardOptionGrid } from './cardOptionGrid.js';
+import { t as translate } from '../strings.js';
+import { OpenChoiceModal } from './choiceModal.js';
 
-/**
- * openCardChoiceModal({ plan, cardName, opener, onChoose, onClosed }) → the
- * modal shell. `onChoose(optionId)` runs once, after the dialog closes; Cancel
- * or Escape runs nothing and the card stays in hand. `onClosed()` runs on
- * every close, before `onChoose`, so a screen can tell the dialog is gone.
- */
-export function openCardChoiceModal({ plan, cardName = t('card.artPlaceholder'), opener = document.activeElement, onChoose, onClosed = null }) {
-  let chosen = null;
-  const cancel = button({ label: t('common.cancel'), role: 'exit', attrs: { 'data-focusable': 'true' } });
-  const shell = openModal({
-    size: 'md',
-    className: 'card-choice',
-    opener,
-    eyebrow: cardName,
-    title: plan.kind === 'stance' ? t('cardChoice.stanceTitle') : t('common.choose'),
-    closeLabel: `${t('common.cancel')} ${cardName}`,
-    bodyClassName: 'as-pane card-choice-body',
-    body: (host) => {
-      // Uniform tiles like the other card pickers; a stance has no numbers, so its tooltip is the effect line.
-      const summaries = plan.options.map(option => ({ id: option.id, className: 'card-choice-option',
-        name: `${option.name}${option.active ? ' (active)' : ''}`,
-        text: option.tooltip || '', line: [], costs: [], disabled: !!option.active,
-        attrs: option.active ? { 'data-active': 'true' } : {} }));
-      host.appendChild(cardOptionGrid(summaries, { idAttr: 'data-choice', onSelect: id => { chosen = id; shell.close(); } }));
-    },
-    primary: cancel,
-    footSize: 'short',
-    onClose: () => { onClosed?.(); if (chosen != null) onChoose(chosen); },
-  });
-  cancel.addEventListener('click', shell.close);
-  return shell;
+const CARD_CHOICE_KIND = 'cardChoice';
+const ROW_CLASS = 'card-choice-option';
+const ACTIVE_ROW_CLASS = `${ROW_CLASS} is-active`;
+const ACTIVE_NAME_SUFFIX = ' (active)';
+const TITLE_KEYS = Object.freeze({
+    stance: 'cardChoice.stanceTitle',
+    mode: 'cardChoice.modeTitle',
+});
+const FALLBACK_TITLE_KEY = 'common.choose';
+
+function buildChoiceRow(option)
+{
+    const isActive = !!option.active;
+    const nameSuffix = isActive
+        ? ACTIVE_NAME_SUFFIX
+        : '';
+    return {
+        id: option.id,
+        className: isActive
+            ? ACTIVE_ROW_CLASS
+            : ROW_CLASS,
+        name: `${option.name}${nameSuffix}`,
+        text: option.tooltip || '',
+        disabled: isActive,
+    };
+}
+
+function readTitle(planKind)
+{
+    const titleKey = Object.hasOwn(TITLE_KEYS, planKind)
+        ? TITLE_KEYS[planKind]
+        : FALLBACK_TITLE_KEY;
+    return translate(titleKey);
+}
+
+export function openCardChoiceModal({
+    plan,
+    cardName = translate('card.artPlaceholder'),
+    opener = document.activeElement,
+    onChoose,
+    onClosed = null,
+})
+{
+    return OpenChoiceModal({
+        kind: CARD_CHOICE_KIND,
+        rows: plan.options.map(buildChoiceRow),
+        eyebrow: cardName,
+        title: readTitle(plan.kind),
+        closeLabel: `${translate('common.cancel')} ${cardName}`,
+        opener,
+        onClosed,
+        onCommit: onChoose,
+    });
 }

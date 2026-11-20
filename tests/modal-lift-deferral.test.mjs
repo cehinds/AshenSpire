@@ -9,9 +9,9 @@
 //   node --test tests/modal-lift-deferral.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom, installDom } from './helpers/dom.mjs';
 import { resetModalState, modalOpen } from '../src/ui/modalManager.js';
-import { openModal } from '../src/ui/components/modalShell.js';
+import { OpenModal } from '../src/ui/components/modalShell.js';
 
 function page(fn) {
   const dom = rewardDom();
@@ -30,20 +30,18 @@ function page(fn) {
   document.activeElement = opener;
   screen.appendChild(opener);
   app.appendChild(screen);
-  const saved = { document: globalThis.document, raf: globalThis.requestAnimationFrame };
+  const restoreDom = installDom(dom); // also restores requestAnimationFrame
   let queue = [];
-  globalThis.document = document;
   globalThis.requestAnimationFrame = (fn) => { queue.push(fn); return queue.length; };
   const frame = () => { const run = queue; queue = []; run.forEach((fn) => fn(0)); };
   resetModalState();
   try { return fn({ document, screen, opener, frame }); } finally {
     resetModalState();
-    globalThis.document = saved.document;
-    if (saved.raf === undefined) delete globalThis.requestAnimationFrame; else globalThis.requestAnimationFrame = saved.raf;
+    restoreDom();
   }
 }
 
-const open = (document, opener, extra) => openModal({ title: 'Door', opener, deferFocus: true, host: document.body, primary: null, ...extra });
+const open = (document, opener, extra) => OpenModal({ title: 'Door', opener, deferFocus: true, host: document.body, primary: null, ...extra });
 
 test('deferLift: the page locks a frame after the mount, focus lands first', () => {
   page(({ document, screen, opener, frame }) => {
@@ -89,7 +87,7 @@ test('without deferLift the door locks and releases synchronously, as before', (
 
 test('deferLift without deferFocus still locks the page, a few frames after the mount', () => {
   page(({ document, screen, opener, frame }) => {
-    const shell = openModal({ title: 'Door', opener, host: document.body, primary: null, deferLift: true });
+    const shell = OpenModal({ title: 'Door', opener, host: document.body, primary: null, deferLift: true });
     assert.equal(screen.hasAttribute('data-page-locked'), false, 'the mounting frame restyles nothing behind the door');
     frame(); frame();
     assert.equal(screen.hasAttribute('data-page-locked'), true, 'the entry is armed although the door never deferred focus');

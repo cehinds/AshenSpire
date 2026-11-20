@@ -1,13 +1,17 @@
-import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import * as ProfileCombat from './gameProfileCombat.js';
 import * as Actions from './actions.js';
 // Receipt capture enters this shared module from multiple bundled engine
 // roots. Read cyclic engine exports when invoked, never during initialization.
 import * as Matchups from './combatMatchups.js';
+import * as Counter from './counterRule.js';
+import { EvadeSpendPlan } from './stanceHit.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
+import { ElementPreviewBreak } from './elementIdentity.js';
 import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { DefendPoiseFloor, HeldStance } from './stanceBenefits.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
 /**
@@ -29,11 +33,37 @@ export function damagePreviewState(ctx, target) {
 }
 
 /**
+ * PreviewStateSnapshot(state) / PreviewStateRestore(state, snapshot): copy the detached defender (and the riders spent) and put it back in place,
+ * so a card row that is priced but does not run leaves the later rows' timeline as it was. The defender object keeps its identity (the preview
+ * context compares against it).
+ */
+export function PreviewStateSnapshot(state) {
+  const d = state?.defender;
+  if (!d) return null;
+  return { defender: { ...d, statuses: structuredClone(d.statuses || {}),
+    persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
+    ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
+    ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) }, riders: [...state.combatRiderTargets] };
+}
+export function PreviewStateRestore(state, snapshot) {
+  if (!state?.defender || !snapshot) return;
+  for (const key of Object.keys(state.defender)) delete state.defender[key];
+  Object.assign(state.defender, snapshot.defender);
+  state.combatRiderTargets.splice(0, state.combatRiderTargets.length, ...snapshot.riders);
+}
+
+/**
  * A Poise break staggers the owner exactly as live play does (D13): same guards, stance and Vulnerable. Detached:
  * only the previewed defender changes, so later hits of the same card see the stance and the Vulnerable multiplier.
  */
 function previewPoiseBreak(ctx, defender) {
-  if (ctx.foundation && defender.impactProtectedUntil >= ctx.turn) return;
+  // Broken (owner, 2026-11-14): the previewed owner is Broken for its later hits (x1.5, no Vulnerable grant).
+  const broken = FixCoreBrokenRules(ctx);
+  if (broken) {
+    defender.broken = { since: ctx.turn || 0, endTurn: (ctx.turn || 0) + 1, preview: true };
+    defender.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: broken.damageMultiplier };
+    return;
+  }
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
   if (rules.stance) defender.combatStance = fixCoreStaggeredStance(defender, rules);
   if (rules.vulnerableStacks > 0) defender.statuses = { ...defender.statuses, vulnerable: { ...defender.statuses?.vulnerable, stacks: (defender.statuses?.vulnerable?.stacks || 0) + rules.vulnerableStacks } };
@@ -58,7 +88,10 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
     amount = authored * pressure
       * (!card?.combatWardEdgeApplied && card?.combatProfile?.camp === 'spell' && card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1);
   } else return 0;
-  const spent = Math.min(poise.value, Math.max(0, Math.floor(amount)));
+  // Live poiseDamage and Ward-off wardDamage carry their card into drainFixCorePoise, so the card's Defend floor applies here too, and no card reads as physical
+  // (theme B, 2026-11-17).
+  const keep = Math.min(poise.value, DefendPoiseFloor(ctx, defender, card, HeldStance(defender), Math.max(defender.block || 0, defender.previewBlockAtHit || 0)));
+  const spent = Math.min(poise.value - keep, Math.max(0, Math.floor(amount * ProfileCombat.SpellPoiseMultiplier(ProfileCombat.configuredModule(ctx, 'effects'), source, defender, card))));
   if (!(spent > 0)) return 0;
   poise.value -= spent;
   if (poise.value === 0) previewPoiseBreak(ctx, defender);
@@ -69,7 +102,9 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
  * Carries one resolved hit's effect on the previewed target to its next hit: Block, Barrier, Ward, Poise (absorbed plus a Smash's
  * Poise damage) and, when that empties Poise, the Staggered stance and Vulnerable. Shared by the card preview and the intent projection.
  */
-export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
+export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = null) {
+  // The Block held when this hit arrived, for a Poise rider that follows it (live: the tactical receipt's blockBefore). Preview copy only.
+  defender.previewBlockAtHit = defender.block || 0;
   defender.block = receipt.blockRemaining;
   // A reflected hit spends one Reflect stack, as live does (SPEC §17).
   if (receipt.reflect) { const left = Math.max(0, (defender.reflectStacks || 0) - 1); if (left) defender.reflectStacks = left; else delete defender.reflectStacks; }
@@ -77,8 +112,12 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
   if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
   if (defender.persistentPoise) {
     const poiseBefore = defender.persistentPoise.value;
-    defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0));
-    if (poiseBefore > 0 && defender.persistentPoise.value === 0) previewPoiseBreak(ctx, defender);
+    defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
+    if (poiseBefore > 0 && defender.persistentPoise.value === 0) {
+      previewPoiseBreak(ctx, defender);
+      // Shown = dealt: a divine hit that breaks Poise also Smites (live: elementIdentity OnPoiseBreak), so the quoted HP carries it.
+      if (!receipt.evaded) receipt.hpLoss += ElementPreviewBreak(ctx, attacker, defender, receipt.element?.id, receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount) || 0;
+    }
   }
 }
 
@@ -140,6 +179,17 @@ export function previewAttackerView(state, source) {
   return { attacker, previewCtx: bindDetachedAttacker(state.previewCtx, source, attacker) };
 }
 
+/** A hit avoided by Evade spends what live resolveCertainHit spends (EvadeSpendPlan): the next-attack mode, a prepared charge and one stack,
+ *  so a later hit of the same action meets one of each fewer. Detached only: the shared objects are copied, never edited. */
+export function SpendPreviewEvade(defender) {
+  if (!defender) return;
+  const plan = EvadeSpendPlan(defender);
+  if (plan.mode) delete defender.nextEvadeMode;
+  if (plan.prepared) defender.combatEvade = { ...defender.combatEvade, charges: defender.combatEvade.charges - 1 };
+  const evade = defender.statuses?.evade;
+  if (plan.stack && evade) defender.statuses = { ...defender.statuses, evade: { ...evade, stacks: evade.stacks - 1 } };
+}
+
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */
 export function previewDamageHits(ctx, source, target, base, tags, carrier, hits = 1, state = null) {
   const local = state || damagePreviewState(ctx, target);
@@ -151,23 +201,43 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     if (local.attackerSource !== source) { local.attackerSource = source; local.attacker = cloneDetachedAttacker(source); }
     const attacker = local.attacker;
     const previewCtx = bindDetachedAttacker(local.previewCtx, source, attacker);
+    // A target holding a Counter that beats this hit adds Block to itself before the hit is absorbed (SPEC §17), as applyProfileDamage does:
+    // the face names the HP the play will cost, so the preview grants that Block too. An intent's own state has already granted it (counterBlocked).
+    const counterPlan = defender?.combatCounter && fixCoreEnabled(ctx) && !local.counterBlocked && defender !== source && defender.kind !== source?.kind
+      ? Matchups.previewTacticalAction(previewCtx, attacker || source, defender, carrier, Array.from({ length: Math.max(0, Math.floor(hits)) }, () => ({ amount: base }))) : null;
+    let counterAnswered = false;
+    const poiseStart = defender?.persistentPoise?.value ?? 0;
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
-      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier);
+      if (counterPlan && !counterAnswered && !Counter.counterReturnSpent(defender)) {
+        const probe = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
+        const bonus = Counter.counterBlockBonus(previewCtx, counterPlan, hit, probe.damageReceipt?.hits?.[0]?.incoming);
+        defender.block = (defender.block || 0) + Matchups.CounterBlockGrant(previewCtx, defender, bonus);
+        // With a per-hit reaction policy the Counter answers the first covered hit, so it adds Block to that hit only.
+        if (bonus > 0 && previewCtx.reactionRules?.contactPolicy === 'perHit') counterAnswered = true;
+        // A Counter that answered is used up for whatever acts after this action in the same detached state.
+        if (bonus > 0) defender.combatCounter = { ...defender.combatCounter, charges: 0 };
+      }
+      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
       receipts.push(receipt);
-      if (defender) applyReceiptToPreviewTarget(ctx, defender, receipt);
+      if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt, attacker || source); if (receipt.evaded) SpendPreviewEvade(defender); }
+      // No damage-type rider here: a configured (Core) hit resolves in actions.js applyProfileDamage, which applies no matchup rider, so the
+      // only Poise a hit takes is its receipt's (absorbed and drained). Pricing a blunt rider took Poise live never took (fellWarden caneStrike).
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
       if (defender && previewReflectReturn(previewCtx, attacker, defender, receipt, carrier)) break;
     }
-    // Owner, 2026-11-03: the quoted hit is the raw hit (receipt.rawHit), changed only by stances, statuses and damage-type weakness/resistance,
-    // never by the defender's defenses (Block, Poise, Ward, Barrier, Counter, Reflect, Evade/AC). hpLoss stays the real, resolved figure.
+    // Owner, 2026-11-14: the quoted hit is the HP the target will lose from it (receipt.hpLoss): after its defensive stance, Reflect, Block,
+    // Poise and Evade, carried hit to hit through the detached defender. Supersedes the 2026-11-02 and 2026-11-03 rulings.
     const modern = fixCoreEnabled(ctx);
-    const shown = receipt => modern ? receipt.rawHit : receipt.amount;
+    const shown = receipt => modern ? receipt.hpLoss : receipt.amount;
     const rawTotal = receipts.reduce((sum, receipt) => sum + shown(receipt), 0);
     return { damageReceipt: damageReceipt(target?.id, receipts.flatMap(row => row.damageReceipt?.hits || [])),
       damage: (receipts[0] && shown(receipts[0])) || 0, hits: receipts.length,
       hitDamages: receipts.map(shown), totalDamage: rawTotal,
       hpLoss: receipts.reduce((sum, receipt) => sum + receipt.hpLoss, 0),
       attackerDead: !!attacker && attacker !== source && !(attacker.hp > 0),
+      // Wave 3: the Poise the play removes from this target and whether that breaks it (the target quote's "−6 Poise" / BREAK).
+      poiseLoss: modern ? Math.max(0, poiseStart - (defender?.persistentPoise?.value ?? 0)) : 0,
+      poiseBreaks: modern && poiseStart > 0 && defender?.persistentPoise?.value === 0,
       hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
       hpLossBounds: modern ? [rawTotal, rawTotal]
         : [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };

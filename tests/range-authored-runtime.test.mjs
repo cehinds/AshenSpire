@@ -15,11 +15,12 @@ import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { validateContent } from '../src/model/validate.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
 import { enemyMoveQuote } from '../src/engine/combatRoundsAdapter.js';
-import { uncappedRun } from './helpers/uncapped-range.mjs';
+import { uncappedRun, withLegacyRangedBow } from './helpers/uncapped-range.mjs';
+import { withoutBands } from './legacyBandsRules.mjs';
 
 const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-const imported = importLegacyContent(contentBundle);
+const registries = withLegacyRangedBow(bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile));
+const imported = importLegacyContent({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments: contentBundle.equipment.armaments.map(piece => piece.id === 'shortbow' ? { ...piece, range: 'ranged' } : piece) } }); // the legacy Ranged bow
 const importedWeapon = id => imported.entities.find(row => row.kind === 'EQUIPMENT' && row.explicitOverrides.legacyId === id).explicitOverrides;
 const bandOf = range => ['melee', 'reach', 'ranged'].indexOf(range);
 function live(weaponId, enemyId = 'wanderingSoldier', seed = 511) {
@@ -42,10 +43,11 @@ function handStrike(combat) {
 }
 const pair = enemy => rangePairKey('player:player', `enemy:${enemy.id}`);
 
-test('real imported sword, halberd and bow coverage sets initial distance and live Strike payment', () => {
+// A paid approach that closes the pair for good is the legacy (pre-rows, 2026-11-15) arithmetic: the fight is built without the `bands` block.
+test('real imported sword, halberd and bow coverage sets initial distance and live Strike payment (legacy, no rows)', () => {
   for (const id of ['straightSword', 'halberd', 'shortbow']) {
     const metadata = importedWeapon(id), expected = bandOf(metadata.range);
-    const { combat, enemy } = live(id), card = handStrike(combat);
+    const { combat, enemy } = withoutBands(() => live(id)), card = handStrike(combat);
     assert.equal(combat.rangeState.engagements[pair(enemy)], expected, `${id}: imported initial range`);
     // A shared distant target separates source coverage from the initial pair.
     combat.rangeState.engagements[pair(enemy)] = 2;
@@ -65,6 +67,20 @@ test('real imported sword, halberd and bow coverage sets initial distance and li
     assert.equal(events.some(row => row.missReason === 'range'), false);
     assert.equal(combat.rangeState.engagements[pair(enemy)], expected, 'a paid approach persists as the new distance');
   }
+});
+
+// Under the shipped rows rule the pair band does not persist a paid approach: the melee card aimed at a back-row enemy Advances you instead,
+// and Advanced (bands.advancedTurnEnds turn ends) puts you in reach of every enemy (SPEC, Rows).
+test('a paid approach under rows Advances the player instead of storing a new distance', () => {
+  const { combat, enemy } = live('straightSword'), card = handStrike(combat);
+  enemy.row = 'back';
+  combat.rangeState.engagements[pair(enemy)] = 1;
+  assert.ok(!(combat.player.advanced > 0), 'fixture: not Advanced yet');
+  const preview = previewCard(combat, card.instanceId, enemy.id);
+  combat.player.stamina = preview.costs?.stamina ?? 5;
+  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
+  assert.ok(combat.player.advanced > 0, 'the auto-Advance leaves the player Advanced');
+  assert.equal(combat.rangeState.engagements[pair(enemy)], 0, 'Advanced puts the player in reach of the back-row enemy');
 });
 
 test('the imported dagger Throw property exposes and commits only its one-band extension', () => {

@@ -1,9 +1,9 @@
 # Shared local background checks
 
-- Use `node tools/local-checks.mjs --suite combat --output D:/repos/.codex/outputs/local-qa/<unique-name>` from the checkout's Node runtime.
+- Use `node tools/local-checks.mjs --suite combat --output <new-absolute-directory-outside-checkout>` from the checkout's Node runtime.
   - `combat`: discovered combat/card/status/knowledge/presentation regressions.
   - `core`: repository fast core/discovered checks, using `--no-selftests`.
-  - `tools`: full tool self-tests, with a shared native lock at `D:/repos/.codex/tmp/shared-native-qa.lock` on Windows.
+  - `tools`: full tool self-tests, with a shared native lock named `ashen-shared-native-qa.lock` inside Node's `os.tmpdir()` on every platform.
   - `build`: official standalone build, identity and shipping checks in the independent Git snapshot.
 - Launch that finite command through **Codex Process Jobs** where its controller supports the host. On Windows, use an owned hidden process with redirected logs and a launcher receipt recording PID, creation time, command and report path. The finite runner stays in the foreground of that worker and propagates failure.
 - The runner creates a separate Git checkout at an exact commit before checking. It has its own index and history; object sharing is read-only. Its local Git configuration disables automatic CRLF conversion and selects LF before checkout, preserving canonical source regardless of host-global settings without changing the author checkout. Uncommitted edits are excluded; commit changes first, or supply `--ref <existing-commit>`.

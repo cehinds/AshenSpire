@@ -1,0 +1,327 @@
+{
+  "request": "Owner bug: \"rewards that have multiple card choices (boss reward with upgrade card) break, making it hard to select the rewards.\" Also: \"Add contrast outline/shadow to enemy intent for improved visibility.\"",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "phone-landscape",
+      "width": 844,
+      "height": 390
+    }
+  ],
+  "scenes": [
+    {
+      "name": "door-idle",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        {
+          "kind": "count",
+          "label": "All four options (3 cards and the rank-up tile) are on the door",
+          "selector": ".reward-choice-face",
+          "eq": 4
+        },
+        {
+          "kind": "within",
+          "label": "The rank-up tile sits inside the option grid",
+          "selector": ".reward-choice-option:nth-child(4) .reward-choice-face",
+          "container": ".reward-choice-grid"
+        },
+        {
+          "kind": "within",
+          "label": "The rank-up tile sits inside the door",
+          "selector": ".reward-choice-option:nth-child(4) .reward-choice-face",
+          "container": ".reward-door"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 1 and option 2 do not overlap",
+          "a": ".reward-choice-option:nth-child(1) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(2) .reward-choice-face"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 2 and option 3 do not overlap",
+          "a": ".reward-choice-option:nth-child(2) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(3) .reward-choice-face"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 3 and option 4 do not overlap",
+          "a": ".reward-choice-option:nth-child(3) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(4) .reward-choice-face"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 1 and option 3 do not overlap",
+          "a": ".reward-choice-option:nth-child(1) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(3) .reward-choice-face"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 2 and option 4 do not overlap",
+          "a": ".reward-choice-option:nth-child(2) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(4) .reward-choice-face"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An inspection modal is open before any tap",
+          "selector": ".card-inspection-modal"
+        }
+      ]
+    },
+    {
+      "name": "door-card-selected",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The chosen card shows its (i)",
+          "selector": ".reward-choice-face.is-chosen > .card-info-button"
+        },
+        {
+          "kind": "within",
+          "label": "The (i) stays inside the chosen card",
+          "selector": ".reward-choice-face.is-chosen > .card-info-button",
+          "container": ".reward-choice-face.is-chosen"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "The (i) does not cover the Choose 1 line",
+          "a": ".reward-choice-face.is-chosen > .card-info-button",
+          "b": ".reward-note"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "The (i) does not cover the points button",
+          "a": ".reward-choice-face.is-chosen > .card-info-button",
+          "b": ".spoils-points-button"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 1 and option 2 do not overlap",
+          "a": ".reward-choice-option:nth-child(1) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(2) .reward-choice-face"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 2 and option 3 do not overlap",
+          "a": ".reward-choice-option:nth-child(2) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(3) .reward-choice-face"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 3 and option 4 do not overlap",
+          "a": ".reward-choice-option:nth-child(3) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(4) .reward-choice-face"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 1 and option 3 do not overlap",
+          "a": ".reward-choice-option:nth-child(1) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(3) .reward-choice-face"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Option 2 and option 4 do not overlap",
+          "a": ".reward-choice-option:nth-child(2) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(4) .reward-choice-face"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "An inspection modal opened on the first tap",
+          "selector": ".card-inspection-modal"
+        }
+      ]
+    },
+    {
+      "name": "door-reselect-no-inspect",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The card is still chosen after the second tap",
+          "selector": ".reward-choice-face.is-chosen"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Tapping the selected card again opened the inspection modal",
+          "selector": ".card-inspection-modal"
+        }
+      ]
+    },
+    {
+      "name": "door-rank-up-picker",
+      "url": "?shot=reward&shotRankUp=1&shotPool=boss&shotVictory=points&shotSeed=1",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(4) .reward-choice-face"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "click": ".reward-confirm"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The picker lists the cards",
+          "selector": ".rank-up-option"
+        },
+        {
+          "kind": "visible",
+          "label": "A picker row shows a thumbnail well",
+          "selector": ".rank-up-option .option-row-art"
+        },
+        {
+          "kind": "within",
+          "label": "The thumbnail sits inside its row",
+          "selector": ".rank-up-option .option-row-art",
+          "container": ".rank-up-option"
+        },
+        {
+          "kind": "text",
+          "label": "The first row names Strike or Defend",
+          "selector": ".rank-up-option",
+          "matches": "Strike|Defend"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "A picker row has no art cell",
+          "selector": ".rank-up-option:not(:has(.option-row-art))",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "combat-intent-outline",
+      "url": "?shot=combat&shotSeed=4",
+      "ready": ".intent",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        {
+          "kind": "style",
+          "label": "Intent value text is stroked under its fill",
+          "selector": ".intent .intent-action-value",
+          "prop": "paintOrder",
+          "equals": "stroke"
+        },
+        {
+          "kind": "style",
+          "label": "Intent value text stroke is the dark outline colour",
+          "selector": ".intent .intent-action-value",
+          "prop": "webkitTextStrokeColor",
+          "equals": "rgb(11, 8, 5)"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": []
+    }
+  ]
+}

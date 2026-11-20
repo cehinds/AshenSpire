@@ -1,13 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, stampPlayerPoiseMax } from '../src/model/state.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
-import { reconcileWardBlock } from '../src/model/blockPresentation.js';
-import { applyCombatDisplayReceipt } from '../src/ui/models/CombatDisplayReceiptModel.js';
-import { applyCombatIntentReceipt } from '../src/ui/models/CombatIntentProjectionModel.js';
+import { ApplyCombatBeat } from '../src/ui/models/CombatPlaybackModel.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { dealPoiseDamage, executeAction } from '../src/engine/actions.js';
@@ -77,11 +74,7 @@ test('paced player Poise follows each shipped impact, including fill overflow an
   const combat = fight();
   stampPlayerPoiseMax(combat.player, 3);
   const disp = { ents: { player: structuredClone(combat.player) } };
-  // Exercise the screen's actual beat reducer without mounting its DOM.
-  const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  const start = screen.indexOf('  function applyBeatToDisp(beat) {');
-  const end = screen.indexOf('  // ---------- rendering ----------', start);
-  const applyBeat = new Function('disp', 'combat', 'getEntity', 'reconcileWardBlock', 'applyCombatDisplayReceipt', 'applyCombatIntentReceipt', 'reduceFollowRows', `${screen.slice(start, end)}; return applyBeatToDisp;`)(disp, combat, (c, id) => id === 'player' ? c.player : c.enemies.find(e => e.id === id), reconcileWardBlock, applyCombatDisplayReceipt, applyCombatIntentReceipt, () => {});
+  const applyBeat = ({ events }) => ApplyCombatBeat(disp, events, { combat, reduceFollowRows() {} });
   function hit() {
     const before = combat.eventLog.length;
     executeAction(combat, { effect: { op: 'damage', target: 'player', amount: 1 }, source: combat.enemies[0], owner: combat.enemies[0], target: combat.player, meta: {} });

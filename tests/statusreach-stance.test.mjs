@@ -13,7 +13,10 @@ test('stance statuses require a positive grant from an actual projected carrier'
   const disabled = statusReach(contentBundle, { readFile,
     stanceRules: { offensivePrecision: 0, evadeStacks: 0, spellStatusStacks: 0 } });
   assert.ok(disabled.unreached.includes('precision'));
-  assert.ok(disabled.unreached.includes('evade'));
+  // W25-EvadeCards (intended by the design): Evade cards grant their stacks with their own applyStatus effect, not only through stance entry,
+  // so switching the stance-entry grant off no longer makes Evade unreachable; the carrier is still required (see the empty bundle below).
+  assert.ok(disabled.reached.includes('evade'));
+  assert.ok(disabled.witness.get('evade').some(route => route.startsWith('R8 authored Evade status')));
   const noSpeakers = { ...contentBundle, cards: [], enemies: [] };
   const empty = statusReach(noSpeakers, { readFile });
   assert.ok(empty.unreached.includes('precision'), 'definitions without a carrier are not reach');

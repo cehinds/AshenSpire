@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { shouldRelayout, viewportKey, isPhoneViewport } from '../src/model/relayoutGate.js';
 import { uiConfig } from '../src/config/generated/ui.js';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 const cfg = uiConfig.presentation.combatFormationModel.behavior.relayout;
 const base = viewportKey({ width: 1280, height: 800 });
@@ -31,7 +32,6 @@ test('a phone is a coarse pointer with a short side of 500px or less', () => {
   assert.equal(isPhoneViewport({ width: 820, height: 1180, coarse: true }, cfg), false);
 });
 
-import { readFileSync } from 'node:fs';
 import { formationKey } from '../src/model/relayoutGate.js';
 const state = over => ({ playerCell: 'A1', occupancy: '[]', rangeRanks: '{}', policy: 'null',
   frames: [{ eid: 'player', cell: 'A1', dead: false }, { eid: 'e1', cell: 'D1', dead: false }], ...over });
@@ -45,7 +45,7 @@ test('a formation change repositions: player move, enemy advance, strip change, 
   assert.notEqual(formationKey(state({ frames: [{ eid: 'player', cell: 'A1', dead: false }] })), base, 'frame removed');
 });
 test('the stage refits when the formation key changes, ahead of the viewport gate', () => {
-  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
   assert.match(source, /formationKey !== placedFormationKey/);
   assert.match(source, /placedFormationKey = formationKey;/);
 });
@@ -57,13 +57,13 @@ test('a phone that mounted sideways relays out once when it turns upright', () =
 });
 
 test('a display-setting change with an unchanged viewport forces one relayout; a viewport-driven one does not', () => {
-  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
   assert.match(source, /const settingChange = keyMoved && viewport === lastSeenViewport;/);
   assert.match(source, /if \(setting !== lastSettingKey \|\| settingChange\) \{ lastSettingKey = setting; scheduleForced\(\); \}/);
 });
 
 test('an art-load callback forces one relayout through the gate (one per load, never a loop)', () => {
-  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
   assert.match(source, /const scheduleArt = \(\) => scheduleForced\(\);/);
   assert.equal((source.match(/currentSprite(Art|Body)Bounds\(sprite, (schedule|refresh|placePlayerHud)\)/g) || []).length, 0, 'no art read registers an ungated callback');
   assert.ok((source.match(/currentSprite(Art|Body)Bounds\(sprite, scheduleArt\)/g) || []).length >= 8);
@@ -76,7 +76,7 @@ test('the per-frame cell the pass itself writes is not a key input: before and a
   const before = formationKey(state({ frames: [{ ...frame }] }));
   const after = formationKey(state({ frames: [{ ...frame, cell: 'D1' }] }));
   assert.equal(before, after);
-  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
   assert.doesNotMatch(source, /cell: frame\.dataset\.formationCell/);
   assert.match(source, /lastSeenViewport = `\$\{now\.width\}x\$\{now\.height\}`;/, 'the last seen viewport updates every pass');
 });

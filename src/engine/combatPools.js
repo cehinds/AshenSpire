@@ -47,9 +47,11 @@ export function syncPoiseMaximum(ctx, entity) {
   const delta = bonus - held;
   if (delta !== 0) {
     poise.max += delta;
-    poise.value = delta > 0 ? poise.value + delta : Math.min(poise.value, poise.max);
-    if (delta > 0) delete poise.missing; // a refilled pool is no longer empty (combatStatusState: missing only while value is 0)
+    // Broken: the bar is neither damaged nor refilled until Broken ends, so a Ward/Barrier gain raises the maximum only.
+    poise.value = delta > 0 ? (entity.broken ? poise.value : poise.value + delta) : Math.min(poise.value, poise.max);
+    if (delta > 0 && !entity.broken) delete poise.missing; // a refilled pool is no longer empty (combatStatusState: missing only while value is 0)
     if (bonus > 0) poise.barrierBonus = bonus; else delete poise.barrierBonus;
   }
-  ctx.emit('persistentPoiseChanged', { targetId: entity.id, value: poise.value, max: poise.max, source: delta ? 'barrier' : 'rating', ...seatOf(ctx, entity) });
+  if (entity.broken) poise.value = 0;
+  ctx.emit('persistentPoiseChanged', { targetId: entity.id, value: poise.value, max: poise.max, barrierBonus: poise.barrierBonus || 0, source: delta ? 'barrier' : 'rating', ...seatOf(ctx, entity) });
 }

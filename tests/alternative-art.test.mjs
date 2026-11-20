@@ -88,7 +88,7 @@ test('authored settings retain four layers while option C renders three without 
   assert.throws(() => combatBackdropHtml({}, 'not-a-scene'), /Unknown combat preview/);
 });
 
-test('phone first paint references only phone scene exports before fitting', () => {
+test('phone first paint uses the full scene art and the phone hand fade before fitting', () => {
   const previous = globalThis.document;
   globalThis.document = { documentElement: { dataset: { layout: 'narrow' } } };
   try {
@@ -96,7 +96,10 @@ test('phone first paint references only phone scene exports before fitting', () 
       const html = alternativeBackdropHtml(id);
       const paths = [...html.matchAll(/assets-display\/(?:alternative|shared)\/[A-Za-z0-9-]+\.webp/g)].map(m => m[0]);
       assert.equal(paths.length, 4); // Three scene layers and the hand fade.
-      assert(paths.every(p => p.endsWith('-mobile.webp')), id);
+      const scene = paths.filter(p => /assets-display\/alternative\/scene-/.test(p));
+      assert.equal(scene.length, 3, id);
+      assert(scene.every(p => !p.endsWith('-mobile.webp')), `${id}: phone scene layers use the full art`);
+      assert(paths.filter(p => !scene.includes(p)).every(p => p.endsWith('-mobile.webp')), `${id}: the hand fade stays the phone export`);
     }
   } finally {
     if (previous === undefined) delete globalThis.document;

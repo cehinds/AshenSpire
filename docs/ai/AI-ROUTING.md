@@ -44,7 +44,7 @@ files, runs a suite, or repeats an edit goes to a worker.
 4. Execute      Sonnet coders and Haiku workers: in parallel, isolation "worktree", in the background
 5. Verify       orchestrator: read the diff (not the transcript), re-run the key test, check the acceptance line
 6. Review       reviewer (§5); the orchestrator decides each finding against the diff
-7. Land         orchestrator: receipt and rebuild, PR, preview and screenshots to the owner; merge into dev yourself once review, conflicts and fast checks are done (CONTRIBUTING rule 6), then one promotion to test
+7. Land         orchestrator: receipt and rebuild, PR, preview and screenshots to the owner; merge into dev yourself once review, conflicts and fast checks are done (CONTRIBUTING rule 6), then one promotion to review (the Dev code review session carries it to test)
 8. Report       orchestrator: to the owner, in CLAUDE.md's question shape when a decision is needed
 ```
 
@@ -91,14 +91,14 @@ needs "and also", it is two briefs.
 ### Branch lifecycle
 
 ```text
-worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► test ──► release ──► main
+worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► review ──► test ──► release ──► main
 ```
 
 - When the parent (feature) branch merges into `dev`, the session removes its local worker
   worktrees and local worker branches (`git worktree remove <path>` if clean, then
   `git branch -d` only when `git merge-base --is-ancestor <branch> origin/dev`; never `-D`).
   Ask the owner about anything unmerged.
-- Origin worker branches stay until `dev` is promoted to `test`. Then `worker-branch-cleanup.yml`
+- Origin worker branches stay until a push to `test` (the `review` → `test` promotion). Then `worker-branch-cleanup.yml`
   deletes every origin `worker/**` branch whose tip is an ancestor of `origin/test`.
 ## 3a. Splitting a request into steps a worker can finish
 
@@ -227,7 +227,7 @@ unless it is an escalation (above).
   receipts, `buildordinal.json`, the generated changelog module, and any `generated/`
   module. Land one PR, merge `dev` into the next branch, rebuild, re-point its receipt,
   then land that one.
-- Promote `dev` to `test` once, after the wave's last merge (CONTRIBUTING rule 6).
+- Promote `dev` to `review` once, after the wave's last merge (CONTRIBUTING rule 6).
 - Large, independent fan-outs (ten or more agents) use the `Workflow` tool only when the
   owner opts in (for example `/finish`). Its agents take `model: 'sonnet'` for coding, `model: 'haiku'` for simple tasks and
   Opus for review, as above.

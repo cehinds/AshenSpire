@@ -113,7 +113,6 @@ export const LIVE = {
   'meta.character.class': 'classification.class',
   'meta.character.relic': 'classification.relic',
   'meta.character.consumable.flask': 'classification.flask',
-  'classification.keepsake': 'classification.keepsake',
   'meta.character.other.location.event': 'classification.event',
   'meta.character.other.location.encounter': 'classification.encounter',
   'classification.enemy': 'classification.enemy',

@@ -539,6 +539,12 @@
     "icon": "attack",
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 3,
+        "nonlethal": true
+      },
+      {
         "op": "damage",
         "target": "enemy",
         "amount": 18
@@ -550,8 +556,9 @@
         "stacks": 2
       }
     ],
-    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable. Lose {loseHp} HP.",
     "upgrade": {
+      "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
       "effects": [
         {
           "op": "damage",

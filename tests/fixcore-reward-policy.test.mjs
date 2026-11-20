@@ -11,17 +11,28 @@ import { gameProfileRewardOffers, gameProfileShopStock } from '../src/model/game
 
 const rules = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/rewards.json', import.meta.url)));
 const groupOf = kind => rules.rewardGroups.find(group => group.categories.includes(kind)).id;
-test('authored 66/4/20/10 card, weapon-art, potion, weapon groups govern seeded draws, including exhausted-group renormalization', () => {
+// Owner 2026-11-14: the shipped combat mix is 96 cards / 4 weapon arts; the pre-change 66/4/18+2/10 mix stays covered by this fixture.
+const LEGACY_WEIGHTS = { cards: 66, weaponArts: 4, potions: 18, flaskRelic: 2, weapons: 10, retired: 0 };
+const LEGACY_GROUPS = rules.rewardGroups.map(group => ({ ...group, weight: LEGACY_WEIGHTS[group.id] }));
+test('authored 96/4 card and weapon-art groups govern seeded draws; potions, relics and weapons are retired from combat doors', () => {
   assert.deepEqual(rewardGroupProblems(rules.rewardGroups, rules.categories), []);
+  const rng = createRng(417), counts = { cards: 0, weaponArts: 0, potions: 0, weapons: 0, retired: 0, flaskRelic: 0 }, total = 30000;
+  for (let i = 0; i < total; i++) counts[groupOf(pickRewardCategory(rng, 'cardRewards', rules.categories, rules.rewardGroups))]++;
+  for (const [kind, fraction] of Object.entries({ cards: .96, weaponArts: .04, potions: 0, weapons: 0, retired: 0, flaskRelic: 0 })) assert.ok(Math.abs(counts[kind] / total - fraction) < .012, JSON.stringify(counts));
+  // With every weapon art exhausted the zero-weight groups stay disabled: the door simply stops filling.
+  assert.equal(pickRewardCategory(rng, 'cardRewards', ['potions', 'weapons', 'relics', 'armor'], rules.rewardGroups), null);
+});
+test('legacy 66/4/20/10 card, weapon-art, potion, weapon groups govern seeded draws, including exhausted-group renormalization', () => {
+  assert.deepEqual(rewardGroupProblems(LEGACY_GROUPS, rules.categories), []);
   const rng = createRng(417), counts = { cards: 0, weaponArts: 0, potions: 0, weapons: 0, retired: 0 }, total = 30000;
-  for (let i = 0; i < total; i++) { const group = groupOf(pickRewardCategory(rng, 'cardRewards', rules.categories, rules.rewardGroups)); counts[group === 'flaskRelic' ? 'potions' : group]++; } // the flask relic sits inside the 20% potions share
+  for (let i = 0; i < total; i++) { const group = groupOf(pickRewardCategory(rng, 'cardRewards', rules.categories, LEGACY_GROUPS)); counts[group === 'flaskRelic' ? 'potions' : group]++; } // the flask relic sits inside the 20% potions share
   for (const [kind, fraction] of Object.entries({cards: .66, weaponArts: .04, potions: .2, weapons: .1, retired: 0})) assert.ok(Math.abs(counts[kind] / total - fraction) < .012, JSON.stringify(counts));
   // After all weapons are exhausted, 66:4:20 renormalizes (cards 66/90).
   const remaining = rules.categories.filter(kind => groupOf(kind) !== 'weapons');
   let cards = 0;
-  for (let i = 0; i < total; i++) if (groupOf(pickRewardCategory(rng, 'cardRewards', remaining, rules.rewardGroups)) === 'cards') cards++;
+  for (let i = 0; i < total; i++) if (groupOf(pickRewardCategory(rng, 'cardRewards', remaining, LEGACY_GROUPS)) === 'cards') cards++;
   assert.ok(Math.abs(cards / total - 66 / 90) < .012);
-  assert.equal(pickRewardCategory(rng, 'cardRewards', [], rules.rewardGroups), null);
+  assert.equal(pickRewardCategory(rng, 'cardRewards', [], LEGACY_GROUPS), null);
   assert.equal(pickRewardCategory(rng, 'cardRewards', ['potions'], [{id:'off',weight:0,categories:['potions']}]), null);
 });
 test('reward policy rejects missing, duplicate, negative and unknown group assignments', () => {

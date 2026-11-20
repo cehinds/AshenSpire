@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CREATION_FEAT_ART} from '../src/ui/components/creationFeatArt.js';
 import {creationFeatEmblem} from '../src/ui/components/creationPageParts.js';
-import {withKitDom} from './helpers/kit-dom.mjs';
+import {withKitDom} from './helpers/dom.mjs';
 test('native feat layers preserve staged geometry and separate original art parts',()=>withKitDom(()=>{
  for(const[id,art]of Object.entries(CREATION_FEAT_ART)){
   const node=creationFeatEmblem(id),images=node.querySelectorAll('img');

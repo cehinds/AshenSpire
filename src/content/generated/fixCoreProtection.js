@@ -118,6 +118,13 @@ export const fixCoreProtection = [
             "stanceAdvantageBonus": {
               "type": "number",
               "minimum": 0
+            },
+            "hitRoll": {
+              "type": "boolean"
+            },
+            "evadeStacksPerCard": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -259,6 +266,9 @@ export const fixCoreProtection = [
                 "type": "number"
               },
               "default": []
+            },
+            "roll": {
+              "type": "boolean"
             }
           },
           "required": [

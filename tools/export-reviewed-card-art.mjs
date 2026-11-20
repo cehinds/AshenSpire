@@ -2,6 +2,7 @@
 // Compile the approved review snapshot. PNGs remain separately addressable.
 import {readFileSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {sameLfCanonicalText} from './working-tree-text.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const source = JSON.parse(readFileSync(root+'asset-data/card-art/reviewed-library.json', 'utf8'));
 const importAt = process.argv.indexOf('--import');
@@ -26,34 +27,43 @@ if (importAt !== -1) {
   }
 }
 const existing = JSON.parse(readFileSync(root+'asset-data/card-art/layered-runtime.json', 'utf8'));
-const used = new Set(source.rows.flatMap(row => row.layers.map(layer => layer.assetId)));
+// Effect layers: one approved PNG per presentation `fx:` tag, painted by the procedural Simple art (src/ui/proceduralCardArt.js).
+const effectLayers = source.effectLayers || {};
+const used = new Set([...source.rows.flatMap(row => row.layers.map(layer => layer.assetId)), ...Object.values(effectLayers).map(layer => layer.assetId)]);
 const assets = Object.fromEntries([...used].map(id => {
   const a = source.assets[id];
   if (!a?.path || !a.sha256 || !a.bytes) throw Error(`Unregistered PNG: ${id}`);
   return [id, {id, path:a.path, name:a.label, sha256:a.sha256, bytes:a.bytes, width:a.width, height:a.height}];
 }));
+/** One authored layer (512 x 640 well coordinates) as a positioned sprite. */
+function compileSprite(layer, index, owner, id) {
+  const {assetId, x, y, width, height, rotation, opacity, blendMode, affine} = layer;
+  if (![x,y,width,height,rotation,opacity].every(Number.isFinite) || width<=0 || height<=0 || opacity<0 || opacity>1) throw Error(`Invalid transform: ${owner}`);
+  if (!['normal','screen','multiply','overlay','soft-light'].includes(blendMode)) throw Error(`Invalid blend: ${owner}`);
+  const matrix = affine || [Math.cos(rotation*Math.PI/180),Math.sin(rotation*Math.PI/180),-Math.sin(rotation*Math.PI/180),Math.cos(rotation*Math.PI/180)];
+  if (matrix.length !== 4 || !matrix.every(Number.isFinite)) throw Error(`Invalid matrix: ${owner}`);
+  return {id, assetId, path:assets[assetId].path, label:assets[assetId].name,
+    transform:{x,y,width,height,rotation,opacity,blendMode}, affine:matrix,
+    css:{position:'absolute',left:`${x/512*100}%`,top:`${y/640*100}%`,width:`${width/512*100}%`,height:`${height/640*100}%`,objectFit:'contain',transformOrigin:'50% 50%',transform:`translate(-50%, -50%) matrix(${matrix.join(',')},0,0)`,opacity:String(opacity),mixBlendMode:blendMode,pointerEvents:'none',zIndex:String(index)}};
+}
 const records = Object.fromEntries(source.rows.map(row => {
   if (row.visualCues.length > 4) throw Error(`Too many cues: ${row.id}`);
-  const sprites = row.layers.map((layer, index) => {
-    const {assetId, role, x, y, width, height, rotation, opacity, blendMode, affine} = layer;
-    if (![x,y,width,height,rotation,opacity].every(Number.isFinite) || width<=0 || height<=0 || opacity<0 || opacity>1) throw Error(`Invalid transform: ${row.id}`);
-    if (!['normal','screen','multiply','overlay','soft-light'].includes(blendMode)) throw Error(`Invalid blend: ${row.id}`);
-    const matrix = affine || [Math.cos(rotation*Math.PI/180),Math.sin(rotation*Math.PI/180),-Math.sin(rotation*Math.PI/180),Math.cos(rotation*Math.PI/180)];
-    if (matrix.length !== 4 || !matrix.every(Number.isFinite)) throw Error(`Invalid matrix: ${row.id}`);
-    return {id:role==='background'?'background':`${role}-${index}`, assetId, path:assets[assetId].path, label:assets[assetId].name,
-      transform:{x,y,width,height,rotation,opacity,blendMode}, affine:matrix,
-      css:{position:'absolute',left:`${x/512*100}%`,top:`${y/640*100}%`,width:`${width/512*100}%`,height:`${height/640*100}%`,objectFit:'contain',transformOrigin:'50% 50%',transform:`translate(-50%, -50%) matrix(${matrix.join(',')},0,0)`,opacity:String(opacity),mixBlendMode:blendMode,pointerEvents:'none',zIndex:String(index)}};
-  });
+  const sprites = row.layers.map((layer, index) => compileSprite(layer, index, row.id, layer.role==='background'?'background':`${layer.role}-${index}`));
   if (sprites.filter(s=>s.id==='background').length!==1) throw Error(`Background required: ${row.id}`);
   return [row.id,{code:row.code,label:row.name,rule:row.rule,tags:row.tags,visualCues:row.visualCues,sprites,path:sprites.find(s=>s.id==='background').path,coordinateSpace:{width:512,height:640},maxVisibleTags:4}];
 }));
-const runtime = {schema:1,sourceCommit:source.sourceCommit,reviewPage:source.reviewPage,assets,records};
+const effects = Object.fromEntries(Object.entries(effectLayers).map(([tag, layer]) => {
+  if (!/^fx:[a-z]+$/.test(tag)) throw Error(`Effect layer key must be an fx: tag: ${tag}`);
+  if (layer.role !== 'effect') throw Error(`Effect layer role must be effect: ${tag}`);
+  return [tag, compileSprite(layer, 0, tag, `fx-${tag.slice(3)}`)];
+}));
+const runtime = {schema:1,sourceCommit:source.sourceCommit,reviewPage:source.reviewPage,assets,records,effectLayers:effects};
 const outputs = {
   'src/content/reviewedCardArt.generated.js':'// Generated by tools/export-reviewed-card-art.mjs; edit asset-data/card-art/reviewed-library.json.\nexport const reviewedCardArtCatalog = '+JSON.stringify(runtime)+';\n',
   'asset-data/card-art/reviewed-assets.json':JSON.stringify({schema:1,assets:Object.fromEntries(Object.entries(assets).filter(([id])=>!Object.hasOwn(existing.assets,id)))},null,2)+'\n',
 };
 for (const [file,content] of Object.entries(outputs)) {
-  if (process.argv.includes('--check')) {if(readFileSync(root+file,'utf8')!==content)throw Error(`Stale export: ${file}`);}
+  if (process.argv.includes('--check')) {if(!sameLfCanonicalText(readFileSync(root+file,'utf8'),content))throw Error(`Stale export: ${file}`);}
   else writeFileSync(root+file,content);
 }
 if (importAt !== -1) writeFileSync(root+'asset-data/card-art/reviewed-library.json',JSON.stringify(source,null,2)+'\n');

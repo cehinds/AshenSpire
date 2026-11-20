@@ -2,6 +2,7 @@
 //   beginLightningHit  Bedrock absorbs the hit, else the Shocked contest rolls (advantage vs Damp, disadvantage in metal)
 //   finishLightningHit applies the 1 Shocked after the hit lost HP
 // plus the metal checks, the +1 Precision against metal, and the earth enemy's starting Bedrock.
+import { ElementRulesOf } from '../model/elementIdentityRules.js';
 import { d20Mode } from './d20Chance.js';
 import { applyStatus } from './statuses.js';
 import { attributesOf, levelOf } from './counterReturn.js';
@@ -41,6 +42,8 @@ export function beginLightningHit(ctx, source, target, carrier) {
     ctx.emit?.('statusRemoved', { targetId: target.id, status: rules.bedrockStatus, amount: 1, reason: 'consumed' });
     return { absorbed: true, backlash: false, contest: null };
   }
+  // Element identity (W25): the Shock status of the element rules replaces the Shocked contest (its dice and its backlash); Bedrock above still absorbs.
+  if (ElementRulesOf(ctx)) return { absorbed: false, backlash: false, contest: null };
   const preview = shockContestPreview(ctx, source, target, carrier);
   const mode = d20Mode({ advantage: preview.advantage, disadvantage: preview.disadvantage });
   const dice = [ctx.rng.int('combatContest', 1, 20)];

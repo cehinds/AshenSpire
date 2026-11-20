@@ -3,6 +3,7 @@ import { renderEnemyKnowledge } from '../components/enemyKnowledge.js';
 import { el, button, pane, options, optionCard, pageDoor, statusText, titleS } from '../kit/index.js';
 import { workspaceFrame, land } from '../components/w1Workspace.js';
 import { t } from '../strings.js';
+import { MarkSelected } from '../selection.js';
 
 export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemyId = null,
   combatExpansionVersion = 2, stanceRules = null }) {
@@ -37,11 +38,7 @@ export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemy
   }));
   function paintDetail() {
     const view = views.find(entry => entry.id === selectedId);
-    for (const control of list.children) {
-      const selected = control.dataset.member === selectedId;
-      control.setAttribute('aria-pressed', String(selected));
-      control.classList.toggle('is-selected', selected);
-    }
+    MarkSelected(list.children, control => control.dataset.member === selectedId);
     detail.replaceChildren(...(view ? [titleS(view.name), renderEnemyKnowledge(view)] : [statusText(t('knowledge.empty.help'))]));
   }
   list.replaceChildren(...views.map(view => {

@@ -78,10 +78,13 @@
         100,
         150
       ],
-      "cardUpgrade": 40,
+      "cardUpgrade": 50,
+      "cardUpgradePerUpgrade": 35,
+      "cardUpgradePerRank": 25,
       "rankUp": 120
     },
     "rankUpStones": 1,
+    "upgradeRankChance": 20,
     "armamentStock": 6,
     "tierWeights": {
       "0": 20,
@@ -95,5 +98,23 @@
       1.8,
       2.3
     ]
+  },
+  "rankUp": {
+    "stockChancePct": 15
+  },
+  "trader": {
+    "always": [
+      "weapons",
+      "combatCards",
+      "relics"
+    ],
+    "optional": [
+      "weaponArts",
+      "armor",
+      "potions"
+    ],
+    "minCategories": 3,
+    "maxCategories": 6,
+    "smithChance": 25
   }
 }

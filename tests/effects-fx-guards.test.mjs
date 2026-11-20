@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { setCombatPacing } from '../src/ui/animationPace.js';
 import { effectsOff, motionOff } from '../src/ui/performance.js';
@@ -24,15 +24,21 @@ function play(t, effects) {
     actor.className = target.className = 'sprite';
     const oldSink = haptic.sink; haptic.sink = () => {};
     registerStage(target, { play: () => true, hold() {}, settle() {} });
+    const actorHolds = [];
     const ctx = { layer, combatEl, anchorFor: (id) => id === 'enemy' ? actor : target,
-      animateActor: () => ({ impactMs: 100, totalMs: 800, hold() {}, cancel() {} }),
+      animateActor: () => ({ impactMs: 100, totalMs: 800, hold: ms => actorHolds.push(ms), cancel() {} }),
       onFlush() {}, onBeatApplied() {}, maxHpFor: () => 50 };
     try {
       playTimeline([{ type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
         { type: 'damageDealt', sourceId: 'enemy', targetId: 'player', amount: 20 }], ctx, () => {});
       const seen = new Set();
-      for (let i = 0; i < 6000; i++) { t.mock.timers.tick(1); for (const c of layer.children) seen.add(String(c.className)); }
-      out = { classes: [...seen], shaken: combatEl.classList.contains('shake') };
+      let held = false;
+      for (let i = 0; i < 6000; i++) {
+        t.mock.timers.tick(1);
+        held ||= actor.classList.contains('hit-stop');
+        for (const c of layer.children) seen.add(String(c.className));
+      }
+      out = { classes: [...seen], shaken: combatEl.classList.contains('shake'), held, actorHolds };
     } finally { haptic.sink = oldSink; setAnimSpeed('normal'); dom.document.documentElement = priorRoot; }
   });
   t.mock.timers.reset();
@@ -42,10 +48,14 @@ function play(t, effects) {
 test('Effects off drops the sparks and the shake; Effects on plays them', (t) => {
   const off = play(t, false);
   assert.equal(off.shaken, false, 'no screen shake with Effects off');
+  assert.equal(off.held, false, 'Effects off never freezes the figure');
+  assert.deepEqual(off.actorHolds, [], 'Effects off never holds its action animation');
   assert.ok(!off.classes.some(c => /fx-(slash|spark|shatter|glyph)/.test(c)), 'no impact particles');
   const on = play(t, true);
   assert.ok(on.classes.some(c => /fx-slash/.test(c)), 'Effects on spawns the slash: ' + on.classes.join('|'));
   assert.equal(on.shaken, true, 'and shakes');
+  assert.equal(on.held, true, 'Effects on still applies earned figure hit-stop');
+  assert.ok(on.actorHolds.some(ms => ms > 0), 'Effects on still holds the action animation');
 });
 
 test('Effects off still shows the damage number', (t) => {
@@ -85,14 +95,14 @@ test('image figures draw only the held stance glow with Effects off (no casting 
   const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
   assert.doesNotMatch(fx, /timing\.scale === 0 \|\| effectsOff\(\)/, 'the hit-stop duration still flows into the timeline with Effects off');
   assert.doesNotMatch(fx, /holdFor = \(event\) => \(!effectsOff\(\)/);
-  assert.match(fx, /if \(effectsOff\(\)\) return;\n\s+if \(activeActorAnimation\?\.hold\)/, 'the figure is not frozen');
+  assert.match(fx, /if \(holdMs && !effectsOff\(\)\) \{ actor\?\.hold\?\.\(holdMs\); hold\(ctx\.anchorFor\(beat\.actorId\), holdMs, ctx\.combatEl\); \}/, 'figure holds remain Effects-gated and belong to their originating combat mount');
 });
 
 test('idle motion off stops resting swaps but lets every action pose through', async () => {
   const { createPoseStage } = await import('../src/ui/services/PoseAnimator.js');
-  const dom = (await import('./helpers/reward-dom.mjs')).rewardDom();
-  const saved = { document: globalThis.document, Image: globalThis.Image };
-  globalThis.document = dom.document; globalThis.Image = class { set src(v) { this._s = v; } addEventListener() {} };
+  const { rewardDom, installDom } = await import('./helpers/dom.mjs');
+  const dom = rewardDom(), restoreDom = installDom(dom), savedImage = globalThis.Image;
+  globalThis.Image = class { set src(v) { this._s = v; } addEventListener() {} };
   dom.document.body.classList.add('motion-idle-off');
   try {
     const stage = createPoseStage('reaver', 'gold');
@@ -100,13 +110,13 @@ test('idle motion off stops resting swaps but lets every action pose through', a
     for (const pose of ['attack', 'guard', 'hit']) if (stage.poses.includes(pose)) assert.equal(stage.play(pose, 100), true, `${pose} plays`);
     assert.equal(stage.play('guard', 100), true, 'guard (what fx.js plays for non-attack actions) plays');
     assert.equal(stage.play('idle', 100), false, 'an idle swap is refused');
-  } finally { globalThis.document = saved.document; globalThis.Image = saved.Image; }
+  } finally { restoreDom(); globalThis.Image = savedImage; }
 });
 
 test('with Effects off the figure hit keyframes keep the recoil and drop the red tint', async () => {
   const { readFileSync } = await import('node:fs');
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
-  const frames = name => { const m = css.match(new RegExp(`@keyframes ${name} \\{([\\s\\S]*?)\\n\\}|@keyframes ${name} \\{([^\\n]*)\\}`)); return (m && (m[1] || m[2])) || ''; };
+  const frames = name => { const m = css.match(new RegExp(`@keyframes ${name} \\{\\n([\\s\\S]*?)\\n\\}|@keyframes ${name} \\{([^\\n]*)\\}`)); return (m && (m[1] || m[2])) || ''; };
   const names = new Map();
   for (const m of css.matchAll(/(:root\[data-effects='off'\][^{]*\.sprite\.hitflash[^{]*>\s*:first-child)\s*\{\s*animation-name:\s*([\w-]+)/g)) names.set(m[1], m[2]);
   assert.equal(names.size, 5, 'generic, enemy, player and both heavy variants are overridden');

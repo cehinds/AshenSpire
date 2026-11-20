@@ -8,7 +8,9 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { gameProfileRewardOffers, claimGameProfileReward } from '../src/model/gameProfileRewards.js';
 import { flaskKindOf } from '../src/model/gracerefill.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { rewards: { offerCount: 1000 } } });
+// Owner 2026-11-14: the shipped combat door is cards only, so the flask relic and potions come from an explicit legacy weight setting.
+const LEGACY_GROUPS = [['cards', 66, 'combatCards'], ['weaponArts', 4, 'weaponArts'], ['potions', 18, 'potions'], ['flaskRelic', 2, 'relics'], ['weapons', 10, 'weapons'], ['retired', 0, 'armor']].map(([id, weight, category]) => ({ id, weight, categories: [category] }));
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { rewards: { offerCount: 1000, rewardGroups: LEGACY_GROUPS } } });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const fresh = () => createRunState({ seed: 3, classId: 'reaver', registries });
 

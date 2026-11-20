@@ -8,7 +8,7 @@ import { attributeCardModels } from '../src/model/creationBrief.js';
 import { statRowValue } from '../src/model/derivedStats.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { resourceStrip } from '../src/ui/components/creationCards.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const registries = createRegistries(configuredContentBundle(contentBundle, {}));
 const run = createRunState({ registries, classId: 'reaver', seed: 7 });

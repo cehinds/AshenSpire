@@ -23,8 +23,8 @@ test('the Continue row targets the highlighted, enabled entry (source contract S
 });
 
 test('?shot=title seeds an occupied slot before it shows the title', () => {
-  const main = readFileSync(join(ROOT, 'src', 'main.js'), 'utf8');
-  const branch = /\} else if \(shotState === 'title'\) \{([\s\S]*?)\n\} else if/.exec(main)?.[1] || '';
+  const poses = readFileSync(join(ROOT, 'src', 'dev', 'shotStates.js'), 'utf8');
+  const branch = /\n    title: \(\) => \{([\s\S]*?)\n    \},/.exec(poses)?.[1] || '';
   const seed = branch.indexOf('newRun(');
   const show = branch.indexOf('showTitle()');
   assert.ok(seed >= 0 && show > seed, 'the ?shot=title branch must call newRun(...) before showTitle()');

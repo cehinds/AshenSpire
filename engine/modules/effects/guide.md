@@ -38,6 +38,12 @@ Settings live in `engine/modules/effects/settings.schema.json`; shipped defaults
 - `/spellRanks` (type enum; default `false`; allowed false): Core disables spell ranks.
 - `/attackRatingWeight` (type number; default `1`; range 0..100): Host adapter AR contribution.
 - `/defenseRatingWeight` (type number; default `1`; range 0..100): Confirmed host-adapter contribution to Block gained: `baseBlock + DR × defenseRatingWeight`.
+- `/baseDamageMultiplier` (type number; default `1`; range 0..10): Scales every card's base damage (player and enemy), rounded up, before AR or PR adds. The Core bundle sets 0.5 (owner, 2026-11-17: base damage halved). A Counter return is not scaled again.
+- `/playerDamageMultiplier` (type number; default `1`; range 0..10): Scales every hit a player source deals, as one `side-damage-scale` receipt stage after the element stages and before Block and Poise absorption, so the face, the intent and the hit agree. A Counter return, a reflected hit and a proposal's reactive return are final damage and are not scaled. A positive hit never rounds to 0. The Core bundle sets 0.7 (owner, 2026-11-18: damage, defense and enemy HP cut 30%).
+- `/enemyDamageMultiplier` (type number; default `1`; range 0..10): The same stage for hits an enemy source deals. Core sets 0.7 (owner, 2026-11-18).
+- `/blockGainMultiplier` (type number; default `1`; range 0..10): A factor inside the configured Block gain floor (`computeBlockGain`), both sides. A Counter's Block grant is a share of an already scaled hit and is not scaled again. Core sets 0.7 (owner, 2026-11-18).
+- `/spellPoiseDamageMultiplier` (type number; default `1`; range 1..10): Multiplies the Poise a player's spell-camp card takes from an enemy (what the hit absorbs plus its Poise damage), never past the pool; HP is unchanged. Core sets 2 (owner, 2026-11-18: spell Poise damage +100%).
+- Owner ruling, 2026-11-18: Core enemy `hpScaleByTier` (enemies module) is minion 0.385, elite 0.42, boss 0.455 (each 70% of the earlier 0.55 / 0.6 / 0.65).
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and the author object resolve next, then `policyBindings` copies resolved module fields onto selected content where declared. Arrays replace inherited arrays. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 

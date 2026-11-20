@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 
 const source = readFileSync(new URL('../tools/slot-load-door.mjs', import.meta.url), 'utf8');
-const start = source.indexOf('  const advanceTurn = async () => {');
+const start = source.indexOf('  const advanceTurn = async ({ guard = false } = {}) => {');
 const end = source.indexOf("\n  await cdp.send('Page.navigate'", start);
 assert.ok(start >= 0 && end > start, 'exercise the actual turn-advance helper');
 const advance = source.slice(start, end);

@@ -14,7 +14,7 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { hideTooltip } from './tooltip.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
 import { registerModal } from '../modalState.js';
 import { deleteSaveReview, replaceSaveReview, reviewEyebrow } from '../models/ConfirmationReviewModel.js';
 import { saveStatusReview, savedAtLabel } from '../models/SaveStatusModel.js';
@@ -184,14 +184,14 @@ export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = t('comm
  * `title-modal-heading` is the door's one heading.
  */
 const SLOT_DECISIONS = {
-  'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: 'Back to Saves', confirm: 'Load Save', action: 'review-load', card: true, danger: false },
-  'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: 'Back to Saves', confirm: 'New Game', action: 'review-new', card: false, danger: false },
-  'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: 'Back to Slots', confirm: 'Start', action: 'review-new', card: false, danger: false },
+  'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: t('common.back'), confirm: 'Load Save', action: 'review-load', card: true, danger: false },
+  'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: t('common.back'), confirm: 'New Game', action: 'review-new', card: false, danger: false },
+  'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: t('common.back'), confirm: 'Start', action: 'review-new', card: false, danger: false },
   // W1l (owner, FRONTEND-WIREFRAMES): selecting a slot never deletes or
   // overwrites it. An occupied destination is carried through creation, and the
   // W2c Replace review is asked at the write boundary — Begin the climb — where
   // the replacement can be named. This door only says that.
-  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-occupied', title: (n) => t('title.slots.start.occupied', { slot: n }), prompt: t('title.slots.start.occupied.prompt'), back: 'Back to Slots', confirm: t('common.continue'), action: 'review-new', card: true, danger: false },
+  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-occupied', title: (n) => t('title.slots.start.occupied', { slot: n }), prompt: t('title.slots.start.occupied.prompt'), back: t('common.back'), confirm: t('common.continue'), action: 'review-new', card: true, danger: false },
 };
 
 /**
@@ -554,7 +554,7 @@ export function openSaveSlotSelector({
 export function openSaveStatusReview({ slot, className, facts, savedAt = null, error = null, onRetry, returnFocusElement = null }) {
   const review = saveStatusReview({ slot, className, facts, savedAt, error });
   const card = detailCard({ eyebrow: review.destination, name: String(className), line: String(facts), meta: review.lastSaved, attrs: { class: 'title-load-review-slot save-status-slot' } });
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: review.question,
     target: review.target,
     message: review.message,
@@ -576,7 +576,7 @@ export function openSaveStatusReview({ slot, className, facts, savedAt = null, e
  */
 export function openReplaceSaveReview({ slot, existing, replacement, tone, onConfirm, returnFocusElement = null }) {
   const review = replaceSaveReview({ slot, existing, replacement });
-  openConfirmationModal({
+  OpenConfirmationModal({
     title: review.question,
     target: review.target,
     message: review.message,
@@ -593,6 +593,17 @@ export function saveSlotCopyHtml({ slot, summary }) {
   return html(slotOption({ slot, summary }).querySelector('.title-slot-copy'));
 }
 
+function openSaveNotice(noticeKind, { slot, returnFocusElement }) {
+  OpenConfirmationModal({
+    title: t(`save.${noticeKind}.title`),
+    message: t(`save.${noticeKind}.message`, { slot }),
+    cancelLabel: t(`save.${noticeKind}.close`),
+    confirmEnabled: false,
+    onConfirm: () => {},
+    returnFocusElement,
+  });
+}
+
 /**
  * openRefusedSaveNotice({ slot, returnFocusElement }) — the in-run Load door's
  * landing when loadRun refuses a slot that is not newer (content validation,
@@ -600,14 +611,7 @@ export function saveSlotCopyHtml({ slot, summary }) {
  * this says so. Nothing to confirm; the only way on is back to the climb.
  */
 export function openRefusedSaveNotice({ slot, returnFocusElement = null }) {
-  openConfirmationModal({
-    title: t('save.refused.title'),
-    message: t('save.refused.message', { slot }),
-    cancelLabel: t('save.refused.close'),
-    confirmEnabled: false,
-    onConfirm: () => {},
-    returnFocusElement,
-  });
+  openSaveNotice('refused', { slot, returnFocusElement });
 }
 
 /**
@@ -618,12 +622,5 @@ export function openRefusedSaveNotice({ slot, returnFocusElement = null }) {
  * no confirm, only the way out; Delete stays the slot's own confirmed act.
  */
 export function openNewerSaveNotice({ slot, returnFocusElement = null }) {
-  openConfirmationModal({
-    title: t('save.newer.title'),
-    message: t('save.newer.message', { slot }),
-    cancelLabel: t('save.newer.close'),
-    confirmEnabled: false,
-    onConfirm: () => {},
-    returnFocusElement,
-  });
+  openSaveNotice('newer', { slot, returnFocusElement });
 }

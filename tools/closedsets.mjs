@@ -83,7 +83,7 @@ const POPULATION_DIRS = ['src']; // the SHIPPED vocabulary; a tool's own set is 
 const DECL = /^export const ([A-Z][A-Z0-9_]*)\s*=\s*(?:Object\.freeze\(|\[)/;
 
 // DOT-ENTRIES ARE NOT THE TREE. tools/weapon-card-packages.mjs --selftest
-// writes a copy of src/model/loadout.js to src/model/.weapon-card-package-mutant-
+// writes a copy of src/model/loadout/weaponPlan.js to src/model/loadout/.weapon-card-package-mutant-
 // <pid>.mjs and unlinks it a moment later. Scanned, that transient copy was
 // either an ENOENT crash (listed, then gone: no RESULT line, FAIL 53) or a set of
 // false READERS for loadout.js's sets. No shipped source is a dot-file, and
@@ -289,7 +289,7 @@ function selftest() {
   // values as an inline literal instead. Take the live reader out of the
   // validator and put the literal back exactly as it stood at cd3da94.
   {
-    const rel = 'src/model/validate.js';
+    const rel = 'src/model/validate/effectGrammar.js';
     const original = read(rel);
     write(rel, original
       .replace('!PILES.includes(eff.pile)', "!['draw', 'hand', 'discard', 'exhaust'].includes(eff.pile)")

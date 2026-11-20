@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { resetModalState } from '../src/ui/modalState.js';
 import { openCombatLogModal } from '../src/ui/components/combatLogModal.js';
 import { consoleRecorder } from '../src/ui/consoleLog.js';

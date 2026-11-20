@@ -44,7 +44,7 @@ test('representative armaments hold the owner table', () => {
     frostSpear: 'reach', // spear
     ashStaff: 'reach', // staff
     boneSceptre: 'reach', // sceptre
-    shortbow: 'ranged', // bow
+    shortbow: 'reach', // bow (owner, 2026-11-14: Core keeps two bands, melee and reach)
   };
   for (const [id, range] of Object.entries(expected)) {
     const def = armamentById(id);

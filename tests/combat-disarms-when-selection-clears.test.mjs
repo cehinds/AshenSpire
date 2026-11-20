@@ -40,6 +40,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { lightCard, clearSelection, onSelectionChange, resetSelection } from '../src/ui/components/cardSelection.js';
+import { IsCurrentCombatMount } from '../src/ui/components/combatMount.js';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const strip = (text) => text.split('\n').filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line)).join('\n');
@@ -83,8 +84,33 @@ ok(/syncCardSelection\(\);/.test(watch[1]),
   're-dressing follows, so the enemies lose `.targetable` with the arming');
 ok(!/selectedFlask/.test(watch[1]),
   'a flask is not a card in the store, so the watch leaves flask targeting alone');
-ok(/combatEl\.isConnected/.test(watch[1]),
-  'a mount whose DOM is gone re-dresses nothing');
+ok(/if \(!isCurrentMount\(\)\) return;/.test(watch[1]),
+  'the watcher refuses a mount that no longer owns combat');
+ok(/const isCurrentMount = \(\) => IsCurrentCombatMount\(app, combatEl\);/.test(combat),
+  'the screen delegates connectivity and identity to the combat mount owner');
+// Run the actual watcher against the owner, including the gap before the
+// detach observer releases an outgoing but still connected combat.
+for (const mount of ['current', 'disconnected', 'replaced']) {
+  const combatEl = { isConnected: mount !== 'disconnected' };
+  const app = { querySelector: () => mount === 'replaced' ? {} : combatEl };
+  const notice = new Function('isCurrentMount', 'lit', `
+    let selected = 'armed', selfArm = 'self', selectedFlask = 'flask';
+    const upcastPreviewRefresh = false, paints = [];
+    const renderCombatantStage = () => paints.push('stage');
+    const syncCardSelection = () => paints.push('selection');
+    const watch = lit => { ${watch[1]} };
+    watch(lit);
+    return { selected, selfArm, selectedFlask, paints };
+  `);
+  for (const lit of [null, 'another-card']) {
+    const result = notice(() => IsCurrentCombatMount(app, combatEl), lit);
+    const cleared = mount === 'current' && lit === null;
+    ok(result.selected === (cleared ? null : 'armed') && result.selfArm === (cleared ? null : 'self'),
+      `${mount}: only the current mount's empty notice disarms`);
+    ok(result.selectedFlask === 'flask' && result.paints.join(',') === (cleared ? 'stage,selection' : ''),
+      `${mount}: flask targeting survives and only the current empty notice repaints in order`);
+  }
+}
 
 // The watch has to be given up, or every past fight re-dresses on every clear.
 ok(/releaseSelectionWatch\(\);/.test(combat.replace(/const releaseSelectionWatch[\s\S]*?\n  \}\);/, '')),
@@ -140,28 +166,20 @@ ok(/if \(hostile\) \{ selected = inst\.instanceId;/.test(combat),
 ok(/if \(pv\.needsTarget \|\| dragTargetMode === 'all'\) \{ selected = inst\.instanceId;/.test(combat),
   'the drag/flick select still arms `selected` directly');
 
-// ---- the stage is REPAINTED, not merely re-dressed --------------------------
-// `syncCardSelection` toggles classes on nodes that already exist. The 1-9
-// target keycap is not a class: `renderEnemies` APPENDS it to
-// `.combatant-leading` while `targeting` holds, and its renderKey names
-// `targeting`, so nothing short of a repaint takes it off again. A disarm that
-// only re-dressed left every enemy wearing its number while those same number
-// keys had gone back to selecting cards in hand.
+// The stage is refreshed before the target layer reflects cleared input.
 ok(/renderCombatantStage\(\);\s*\n\s*syncCardSelection\(\);/.test(beforeDelegation),
   'opening the Armoury repaints the combatant stage BEFORE it re-dresses');
-// The store watcher has the same gap and the same fix. It clears `selected` and
-// `selfArm` only, so a raised flask still holds `targeting` — which is exactly
-// why the repaint decides rather than the call site.
+// The store watcher clears the card selection. The shared layer reads any
+// remaining flask selection.
 const watchBody = combat.match(/onSelectionChange\(\(lit\) => \{[\s\S]*?\n  \}\);/);
 ok(!!watchBody, 'the selection watcher can still be read');
 ok(/renderCombatantStage\(\);\s*\n\s*syncCardSelection\(\);/.test(watchBody[0]),
   'the store watcher repaints the combatant stage before it re-dresses');
-// And the keycap really is written by the renderer, which is the fact both assertions above depend on. Owner
-// (2026-11-06): the key is built with the frame and only `hidden` follows `targeting`, so arming adds no HUD node.
-ok(/key\.hidden = !targeting;/.test(combat),
-  'the target keycap is shown only under `targeting` by renderEnemies (hidden otherwise, never added or removed)');
+// The renderer builds hidden keycaps with the frame. The target layer shows the existing keys for legal targets.
+ok(/key\.hidden = true;/.test(combat) && /key\.hidden = !showKey;/.test(combat),
+  'the target layer shows existing keycaps only for legal targets');
 ok(!/enemy-key/.test(combat.match(/function syncCardSelection\(\)[\s\S]*?\n  \}/)[0]),
-  'syncCardSelection still does not touch the keycap, so only a repaint can');
+  'the selection sync delegates keycap visibility to the target layer');
 
 // And the store really does stay silent on an empty clear — the exact reason a
 // watcher alone could not carry this.

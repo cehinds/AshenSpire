@@ -10,7 +10,7 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { cardFaceProjection, statusApplied, statusNamed } from '../src/model/cardFaceProjection.js';
 import { spellDefenseSplit } from '../src/model/spellDefense.js';
 import { tokenRe } from '../src/model/validate.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Owner, 2026-11-01: "inspect full effect shouldn't be there all the time". A face that cannot say its
 // effect in five-word clauses carries the card's authored `faceTemplate` instead of the Inspect cue.
@@ -92,7 +92,7 @@ test('a summary that replaces the cue keeps every downside the computed face res
 test('an upgraded card summary never states a base-only number', () => withKitDom(dom => {
   const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
   const up = id => facesOf(dom, reg, { cardId: id, upgraded: true }, rules).join(' | ');
-  assert.match(up('crimsonRite'), /Heal 3 per SP spent/);
+  assert.match(up('crimsonRite'), /Heal 3 per Stamina spent/);
   assert.doesNotMatch(up('blightNova'), /twice|\b2\b/);
   assert.doesNotMatch(up('warSurgeon'), /per 4/);
   for (const abilityRank of [4, 5]) {
@@ -170,7 +170,7 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
           assert.doesNotMatch(face, /\b1 cards\b/i, label);
           if (el.dataset.faceSummary !== 'true') continue;
           summarized++;
-          const def = playingCardDefinition(registries, ref, { rules }), tokens = staticCardTokens(def);
+          const def = playingCardDefinition(registries, ref, { rules }), tokens = staticCardTokens(def, registries, rules);
           const full = (def.textTemplate || '').replace(tokenRe(), (m, k) => tokens[k] ?? m).replace(/<[^>]+>/g, '');
           const shown = `${face} ${(def.keywords || []).filter(word => ['exhaust', 'ethereal'].includes(word)).join(' ')}`;
           // A literal number on a summary can drift from the graded values: every digit must appear in the full text (a Barrier split into Block + Ward counts as its sum).
@@ -186,11 +186,11 @@ test('census: every summarized face keeps its qualifiers, in both profiles at ev
   });
 });
 
-test('a summary keeps card identity so Sanctuary Cleanse reads Barrier stacks without a preview', () => withKitDom(dom => {
+test('a summary keeps card identity so Sanctuary Cleanse reads Gain N Poise without a preview', () => withKitDom(dom => {
   const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
   const def = resolveCard(reg, { cardId: 'sanctuaryCleanse' });
   const lines = facesOf(dom, reg, { cardId: 'sanctuaryCleanse' }, rules);
-  assert.ok(lines.includes('Gain 3 Barrier.'), lines.join(' | '));
+  assert.ok(lines.includes('Gain 15 Poise.'), lines.join(' | '));
 }));
 
 test('a status is named by its whole name or id, never by a stem of another word', async () => {
@@ -226,3 +226,47 @@ test('a legacy-resolved card never keeps the current card summary', () => withKi
   assert.doesNotMatch(legacy, /max 5/, legacy);
   assert.equal(resolveCard(reg, { cardId: 'reclamation', legacyAbility: true }).faceTemplate, undefined);
 }));
+
+// W25-EvadeCards (owner review, 2026-11-15): the face of every old Evade card says "Evade N." itself, as Block says "N Block", rather than leaving it to the side tag.
+test('every Evade card face says Evade N, at every upgrade and in both profiles', async () => {
+  for (const { name, registries, rules } of await profiles()) withKitDom(dom => {
+    for (const cardId of ['quickstep', 'dodgeRoll', 'evasiveGuard', 'backstep', 'core.backstep', 'acrobaticsRogue', 'shadowstep', 'crawlingShot', 'progression-nightstep']) {
+      if (!registries.cards.has(cardId)) continue;
+      for (const extra of [{}, { upgraded: true }]) {
+        const face = facesOf(dom, registries, { cardId, ...extra }, rules);
+        assert.ok(face.some(line => /\bEvade \d+\b/.test(line)), `${name}: ${cardId} ${JSON.stringify(extra)}: ${face.join(' | ')}`);
+        assert.ok(face.every(line => wordsIn(line) <= 5), `${name}: ${cardId}: ${face.join(' | ')}`);
+      }
+    }
+  });
+});
+
+test('an upgraded Evade card reads its doubled stacks, never "2 per 1"', () => withKitDom(dom => {
+  const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
+  assert.match(facesOf(dom, reg, { cardId: 'dodgeRoll', upgraded: true }, rules).join(' | '), /Evade 2/);
+  assert.doesNotMatch(facesOf(dom, reg, { cardId: 'acrobaticsRogue', upgraded: true }, rules).join(' | '), /per 1/);
+}));
+
+// W25-EvadeCards (owner review, 2026-11-15): the face shows every effect of the old Evade cards, not just Evade.
+test('each Evade card face names every effect it has, in at most three short lines', async () => {
+  for (const { name, registries, rules } of await profiles()) withKitDom(dom => {
+    const scaled = name === 'core';
+    const expected = {
+      quickstep: [scaled ? /Counter 1|Return 1 damage/ : /Counter 2|Return 2 damage/, /Evade 1/, /Draw 1/],
+      dodgeRoll: [/Evade 1/, /Advance/, /Retreat/],
+      evasiveGuard: [/Evade 1/, /2 Block/],
+      backstep: [/Evade 1/, /Retreat/, /Prepared/],
+      'core.backstep': [/Evade 1/, /Retreat/, /Prepared/],
+      acrobaticsRogue: [/Evade 1/, /\+1 DEX this turn/, /Draw 2/, /[Dd]iscard 1/],
+      shadowstep: [/Evade 2/, /Advance/, /Prepared/],
+      crawlingShot: [scaled ? /1 Piercing damage/ : /4 Piercing damage/, /Evade 1/, /Retreat/],
+      'progression-nightstep': [/\+1 INT this turn/, /Evade 2/],
+    };
+    for (const [cardId, patterns] of Object.entries(expected)) {
+      if (!registries.cards.has(cardId)) continue;
+      const face = facesOf(dom, registries, { cardId }, rules), joined = face.join(' | ');
+      assert.ok(face.length <= 3 && face.every(line => wordsIn(line) <= 5), `${name}: ${cardId}: ${joined}`);
+      for (const pattern of patterns) assert.ok(pattern.test(joined), `${name}: ${cardId} lost ${pattern}: ${joined}`);
+    }
+  });
+});

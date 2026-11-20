@@ -86,10 +86,12 @@ export function combatExpansionRulesProblems(value, path = 'combatExpansionRules
   check(value.statuses, combatStatusRules, `${path}.statuses`);
   if (value.statuses?.version !== 2) problems.push(`${path}.statuses.version must be 2`);
   for (const [id, row] of Object.entries(value.statuses?.statuses || {})) {
-    if (!Number.isSafeInteger(row?.cap) || row.cap < 1 || !(row.initialThreshold > 0) || !(row.activeThreshold > 0)) problems.push(`${path}.statuses.statuses.${id} requires positive thresholds and a whole cap`);
+    if (!Number.isSafeInteger(row?.cap) || row.cap < 1 || !Number.isFinite(row.initialThreshold) || row.initialThreshold <= 0
+      || !Number.isFinite(row.activeThreshold) || row.activeThreshold <= 0) problems.push(`${path}.statuses.statuses.${id} requires positive thresholds and a whole cap`);
   }
   const recovery = value.statuses?.recovery;
-  if (recovery && (recovery.maximum > 100 || recovery.minimum > recovery.maximum || recovery.pendingRemoval > 1)) problems.push(`${path}.statuses.recovery has invalid chance or removal bounds`);
+  if ((Number.isFinite(recovery?.maximum) && (recovery.maximum > 100 || (Number.isFinite(recovery.minimum) && recovery.minimum > recovery.maximum)))
+    || (Number.isFinite(recovery?.pendingRemoval) && recovery.pendingRemoval > 1)) problems.push(`${path}.statuses.recovery has invalid chance or removal bounds`);
   // The requested severe contract is fixed: a save may not redefine its risk.
   if (!record(value.ashenBlight) || Object.keys(value.ashenBlight).length !== Object.keys(ASHEN_BLIGHT_RULES).length
     || Object.entries(ASHEN_BLIGHT_RULES).some(([key, expected]) => JSON.stringify(value.ashenBlight[key]) !== JSON.stringify(expected))) problems.push(`${path}.ashenBlight must preserve the fixed 25/50/75, 90-percent threshold and 5-percent later-combat contract`);

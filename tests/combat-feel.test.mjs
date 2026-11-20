@@ -10,11 +10,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SHAKE_STEPS, SHAKE_STEPS_HP, SHAKE_MAX_PX, SHAKE_FLOOR_PX, BIG_HIT_SHARE, HUGE_HIT_SHARE, HIT_STOP, shakePxFor, hitStopMsFor, combatFeelIssues } from '../src/content/combatFeel.js';
-import { BIG_HIT_SHARE as fxBigHitShare, HUGE_HIT_SHARE as fxHugeHitShare, ANIM_SPEEDS, playTimeline, setAnimSpeed, setBeatOrder, dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
+import { BIG_HIT_SHARE as fxBigHitShare, HUGE_HIT_SHARE as fxHugeHitShare, ANIM_SPEEDS, playTimeline, setAnimSpeed, dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { playReaverAttack, REAVER_ATTACK } from '../src/ui/reaverAttack.js';
 import { runActionTimeline } from '../src/ui/actionTimeline.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { createEnemyPoseStage } from '../src/ui/enemyPoseStage.js';
@@ -110,10 +110,8 @@ test('fx shakes every HP hit by its HP and holds the figures on paced playback o
   assert.match(fx, /hitStopMsFor\(guardHitFloatParts\(event\)\.residual \|\| 0, [^\n]*maxHpFor/, 'the hit-stop reads the target max HP too');
   assert.match(fx, /combatEl\.style\.setProperty\('--shake-px', `\$\{px\}px`\)/, 'the amplitude reaches the CSS');
   assert.match(fx, /document\.body\.classList\.contains\('no-shake'\) \|\| reducedMotionRequested\(\)\) return;/, 'the setting and reduced motion drop the shake');
-  assert.match(fx, /activeActorAnimation\.hold\(holdMs\)/, 'a painted swing is held by its own sequence');
-  assert.match(fx, /schedule\(stepV, [^;\n]+ \+ \(held \? holdMs : 0\)\)/, 'the hold is added after the base visual delay, including any outcome lead');
+  assert.match(fx, /actor\?\.hold\?\.\(holdMs\)/, 'a painted swing is held by its own sequence');
   assert.match(fx, /flash\(anchor, 'hitflash', heavy \? 380 : 220, held\)/, 'the recoil keeps its authored duration and extends cleanup by the pause');
-  assert.match(fx, /actorAnimation\.totalMs \+ heldMs/, 'all played holds lengthen recovery');
   assert.match(fx, /if \(now < shakeUntil && px < shakeNow\) return;/, 'a smaller hit does not cut a bigger shake short');
   // Instant has no paced timeline: playTimeline falls back to animateEvents,
   // which has no actor swing and no hit-stop.
@@ -184,7 +182,7 @@ function drive(t, fn, { maxHp } = {}) {
     const ctx = { layer, combatEl, anchorFor: (id) => id === 'enemy' ? actor : target,
       animateActor: () => ({ impactMs: 100, totalMs: 800,
         hold: (ms) => holds.push(['actor', ms, Date.now()]), cancel() {} }),
-      onFlush: () => flushes++, onBeatApplied() {}, ...(maxHp ? { maxHpFor: () => maxHp } : {}) };
+      onFlush: () => flushes++, onBeatApplied() {}, ...(maxHp ? { maxHpFor: (id) => id === 'player' ? maxHp : 1000 } : {}) };
     const events = (amounts, opener) => [opener || { type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
       ...amounts.map((amount) => ({ type: 'damageDealt', sourceId: 'enemy', targetId: 'player', amount }))];
     const start = (amounts, opener) => playTimeline(events(amounts, opener), ctx, () => completed++);
@@ -253,32 +251,17 @@ test('skipping after the first multi-hit number does not replay its damage hapti
   });
 });
 
-test('beatOrder impact holds both figures at impact, as before', (t) => {
-  setBeatOrder('impact');
-  try {
-    drive(t, ({ start, tick, holds, reactions }) => {
-      start([6]); tick(100);
-      assert.deepEqual(holds, [['actor', 60, 10100], ['target', 60, 10100]]);
-      assert.deepEqual(reactions, [['hit', 220]]);
-      for (let i = 0; i < 100; i++) tick(20);
-    });
-  } finally { setBeatOrder('sequential'); }
-});
-
 for (const [amount, ms, px] of [[35, 120, '10px'], [6, 60, '2px']]) {
   test(`with the target max HP 100 known, a ${amount} HP hit holds ${ms} ms and shakes ${px}`, (t) => {
-    setBeatOrder('impact');
-    try {
-      drive(t, ({ start, tick, holds, combatEl }) => {
-        const shakes = [];
-        const setProperty = combatEl.style.setProperty.bind(combatEl.style);
-        combatEl.style.setProperty = (name, value) => { if (name === '--shake-px') shakes.push(value); return setProperty(name, value); };
-        start([amount]); tick(100);
-        assert.deepEqual(holds, [['actor', ms, 10100], ['target', ms, 10100]]);
-        for (let i = 0; i < 100; i++) tick(20);
-        assert.deepEqual(shakes, [px]);
-      }, { maxHp: 100 });
-    } finally { setBeatOrder('sequential'); }
+    drive(t, ({ start, tick, holds, combatEl }) => {
+      const shakes = [];
+      const setProperty = combatEl.style.setProperty.bind(combatEl.style);
+      combatEl.style.setProperty = (name, value) => { if (name === '--shake-px') shakes.push(value); return setProperty(name, value); };
+      start([amount]); tick(actionPacing().intentMs + actionPacing().wordMs + 100);
+      assert.deepEqual(holds.map(([who, hold]) => [who, hold]), [['actor', ms]], 'the attacker holds at contact, by the target max HP share');
+      for (let i = 0; i < 400; i++) tick(20);
+      assert.deepEqual(shakes, [px]);
+    }, { maxHp: 100 });
   });
 }
 
@@ -301,7 +284,8 @@ test('a click during hit-stop clears the held attacker and flushes once without 
 test('an ordered counter holds its attacker on a qualifying HP hit', (t) => {
   drive(t, ({ start, tick, holds }) => {
     start([6], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' });
-    const contactAt = actionPacing().intentMs + actionPacing().wordMs + 100; tick(contactAt);
+    // The Counter starts at once (owner, 2026-11-14): no intent or word wait before its animation, only the 1 ms timer turn.
+    const contactAt = 100 + 1; tick(contactAt);
     assert.deepEqual(holds, [['actor', 60, 10000 + contactAt]], 'a counter holds contact before its separate target reaction');
     for (let i = 0; i < 100; i++) tick(20);
   });
@@ -310,7 +294,7 @@ test('an ordered counter holds its attacker on a qualifying HP hit', (t) => {
 test('a counter beat does not hold on an HP hit under 6', (t) => {
   drive(t, ({ start, tick, holds }) => {
     start([5], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' });
-    tick(actionPacing().intentMs + actionPacing().wordMs + 100);
+    tick(100 + 1);
     assert.equal(holds.length, 0, 'a counter hit of 5 HP does not hold');
     for (let i = 0; i < 100; i++) tick(20);
   });
@@ -361,7 +345,7 @@ test('an ordinary enemy pose holds past its original settle deadline', (t) => {
 });
 
 test('a lite (phone) tier does not drop the shake; only the setting does', () => {
-  const main = src('src/main.js');
+  const main = src('src/main.js') + src('src/ui/displaySettings.js');
   assert.match(main, /toggle\('no-shake', settings\.screenShake === false\)/);
   assert.doesNotMatch(main, /toggle\('no-shake'[^)]*quality/);
 });
@@ -376,14 +360,14 @@ test('a damage float sizes by its share of the target max HP; no max HP keeps th
   assert.equal(dmgClass(4, 10), 'dmg pct35', 'a chip that is 40 percent of a small target is a big hit');
   assert.equal(dmgClass(10, 0), 'dmg', 'no max HP known: the absolute rule');
   assert.equal(guardHitFloatParts({ amount: 30, blocked: 0 }, 60).damage.cls, 'dmg pct35');
-  // Owner, 2026-11-02: an 8 hit into 5 Block floats 8 (the full hit), not the 3 that got through.
-  assert.equal(guardHitFloatParts({ amount: 8, blocked: 5 }, 60).damage.text, '-8');
+  // Owner, 2026-11-14: an 8 hit into 5 Block floats -3, the HP it cost (the number the card face, intent and HP bar agree on).
+  assert.equal(guardHitFloatParts({ amount: 8, blocked: 5 }, 60).damage.text, '-3');
   // A hit Block stopped whole floats its full number unsigned, in the guard colour, never as HP loss.
   const fullBlock = guardHitFloatParts({ amount: 8, blocked: 8 }, 60);
   assert.equal(fullBlock.damage, null);
   assert.equal(fullBlock.fullHit.text, '8');
   assert.doesNotMatch(fullBlock.fullHit.cls, /\bdmg\b/);
-  assert.equal(guardHitFloatParts({ amount: 30, blocked: 18 }, 60).damage.cls, 'dmg pct35', 'the tier keys off the full hit the number shows (owner, 2026-11-02)');
+  assert.equal(guardHitFloatParts({ amount: 30, blocked: 18 }, 60).damage.cls, 'dmg pct20', 'the tier keys off the HP lost, 12 of 60 (owner, 2026-11-14)');
   const css = src('styles/combat.css');
   // One text size for every floater (owner, 2026-11-05): the big-hit tiers differ by weight and colour only.
   assert.match(css, /\.float-num\.heavy, \.float-num\.pct20 \{ font-weight: 900; \}/);

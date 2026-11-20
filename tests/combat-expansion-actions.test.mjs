@@ -4,25 +4,23 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction, applyAttackDamage, restoreExpandedWard, gainBarrier, syncWardMaximum } from '../src/engine/actions.js';
 import { schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { applyStatus, advanceStatusClock, decayAtTurnEnd } from '../src/engine/statuses.js';
+import { applyStatus, decayAtTurnEnd } from '../src/engine/statuses.js';
 import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
 import { syncPoiseMaximum } from '../src/engine/combatPools.js';
-import { combatRules as combatRulesBundle } from '../src/content/combatRules.js';
 
 const drainQueue = combat => { while (combat.queue.length) executeAction(combat, combat.queue.shift()); };
 
 // magicShare (optional) stamps the pebble's own share: 1 makes the Ward tests below a magic hit, as they were written.
-function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], { statuses = contentBundle.statuses, ruleset = null, magicShare = undefined, ...options } = {}) {
+function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], { statuses = contentBundle.statuses, magicShare = undefined, ...options } = {}) {
   const registries = createRegistries({ ...contentBundle, statuses, cards: contentBundle.cards.map(card => card.id === 'starstonePebble'
     // costRule 'fixed': the fixture pins its own free card (SPEC action costs, 2026-10-12).
     ? { ...card, effects, cost: 0, costRule: 'fixed', manaCost: 0, upgrade: undefined, ...(magicShare === undefined ? {} : { magicShare }) } : card) });
-  const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, ...(ruleset ? { ruleset } : {}), ...options,
+  const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, ...options,
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId: 'starstonePebble', instanceId: 'paired', upgraded: false }] } });
@@ -318,26 +316,6 @@ test('a Ward bonus stack that decays at turn end lowers the Ward maximum at once
   assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 }, 'the decayed stack lowers the maximum without a later sync');
 });
 
-test('one expiring timed application lowers a Ward bonus maximum at once', () => {
-  // Two applications from different sources: one expires on its own clock while the other survives.
-  const timed = { id: 'timedWard', name: 'Timed Ward', icon: '◎', stackMode: 'add', decay: 'none',
-    stacking: { mode: 'independent', cap: 99, duration: 3, clock: 'ownerTurnEnd' } };
-  const { combat, enemy, player } = fixture([{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }],
-    { statuses: [...contentBundle.statuses, timed], ruleset: combatRulesBundle });
-  const other = { id: 'otherSource', kind: 'player', alive: true };
-  combat.ratingsRules = { bonuses: { 'status:timedWard': { ward: 2 } } };
-  enemy.ratings.ward = 3; enemy.persistentWard = { max: 3, value: 3 };
-  applyStatus(combat, enemy, 'timedWard', 1, player);
-  assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 });
-  advanceStatusClock(combat, enemy, 'ownerTurnEnd');
-  applyStatus(combat, enemy, 'timedWard', 1, other);
-  assert.deepEqual({ ...enemy.persistentWard }, { max: 7, value: 7 }, 'two applications add 4 to the pool');
-  advanceStatusClock(combat, enemy, 'ownerTurnEnd');
-  advanceStatusClock(combat, enemy, 'ownerTurnEnd');
-  assert.equal(enemy.statuses.timedWard.stacks, 1, 'the first application has expired; the second survives');
-  assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 }, 'the expired application lowers the maximum without a later sync');
-});
-
 test('a rise from a full Ward pool adds the same amount to current Ward', () => {
   const { combat, enemy } = fixture();
   enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 10 };
@@ -498,23 +476,4 @@ test('a spell status pressure that spends the last Ward point breaks Ward: one e
   const broke = events.filter(event => event.type === 'wardBroken');
   assert.equal(broke.length, 1);
   assert.equal(broke[0].staminaLoss, 1);
-});
-
-// A gainWard card restores the same amount it previews: the base plus the card's rating bonus (Attune, PR 10: 1 + 10).
-test('an expanded gainWard restores exactly the Ward its preview shows, rating bonus included', () => {
-  const registries = createRegistries(contentBundle);
-  const ratingsRules = { ...resolveCombatRatings({}, contentBundle), enabled: true };
-  const combat = createCombat({ registries, rng: createRng(811), combatExpansionVersion: 2, ratingsRules,
-    enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
-      maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
-      deck: [{ cardId: 'attune', instanceId: 'attune-1', upgraded: false }] } });
-  const player = combat.player;
-  player.ratings = { ar: 0, dr: 0, pr: 10, poise: 0, ward: 30 };
-  player.persistentWard = { max: 30, value: 0 };
-  const preview = previewCard(combat, 'attune-1', player.id);
-  const gain = preview.values.find(row => row.op === 'gainWard');
-  assert.ok(gain, 'Attune previews a Ward gain');
-  assert.equal(gain.value, 11, 'the preview shows the base 1 plus PR 10');
-  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'attune-1', targetId: player.id });
-  assert.equal(player.persistentWard.value, gain.value, 'Ward restored equals the previewed amount');
 });

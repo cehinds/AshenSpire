@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "maneuver",
   "label": "Spell",
-  "description": "A spell stance. Counter coverage depends on school and delivery.",
+  "description": "A spell stance. Counter coverage depends on school and delivery. Stance benefit: spells deal +25% damage.",
   "attaches": [
     "card"
   ],

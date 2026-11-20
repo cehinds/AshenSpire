@@ -47,6 +47,14 @@ test('settings import refuses malformed, oversized, unknown and invalid values a
   ]) assert.throws(() => parseAdvancedConfigFile(text, contentBundle));
 });
 
+test('settings import leaves out the removed legacy reward and shop rows instead of refusing the file', () => {
+  const rows = [{ cat: 'Advanced', key: 'shopSell', def: true, label: 'Sell items' }];
+  const text = v1File({ 'settings.masterArtChoice': false, 'settings.rewardBattleCards': true, 'settings.shopSell': true });
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(text, contentBundle, {}, rows, warnings), { shopSell: true });
+  assert.deepEqual(warnings, ['Settings for the removed legacy reward and shop menus were left out. Everything else was kept.']);
+});
+
 test('settings import accepts exported legacy advanced settings using their row definitions', () => {
   const rows = [{ cat: 'Advanced', key: 'levelUpValue', type: 'number', integer: true, min: 1, max: 20, def: 1 },
     { cat: 'Advanced', key: 'cardMotif', type: 'choice', choices: ['band', 'plain'], def: 'plain' }];
@@ -296,7 +304,7 @@ test('generated balance descriptions derive their names from the bundle', () => 
   };
 
   const relic = (contentBundle.relics || []).find((entry) => entry.id === 'ivoryComb');
-  assert.ok(note('powers.ivoryComb.n').startsWith(`${relic.name} —`),
+  assert.ok(note('powers.ivoryComb.n').startsWith(`${relic.name}:`),
     `the relic's own name should open its row: ${note('powers.ivoryComb.n')}`);
 
   // THE TIER AND THE CLASS COME FROM THE TREE, not from this file. Hard-coding
@@ -540,7 +548,7 @@ test('a restored profile carrying rewardMultiplier drops it and is saved', () =>
 
 test('boot and profile restore both come through the one door', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.equal(main.match(/bringProfileForward\(/g)?.length, 1, 'main.js calls the model door once, from its helper');
+  assert.match(main, /BringStoredProfileForward: bringStoredProfileForward,[\s\S]*?= CreateProfileBoot\(/);
   assert.match(main, /let activeSettings = bringStoredProfileForward\(activeMeta\);/);
   assert.match(main, /onRestored: \(\) => \{[^}]*?const meta = saves\.loadMeta\(\);\s*const settings = bringStoredProfileForward\(meta\);\s*seedPromotedDefaults\(meta, settings\);\s*applyRestoredSettings\(settings\);/,
     'a restore comes through the same door as boot, promotion step included');

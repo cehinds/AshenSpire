@@ -13,7 +13,7 @@
 //   node --test tests/escape-back.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // ---- the fixture: a browser's keydown path over the kit DOM -----------------
 let dom = null;
@@ -26,6 +26,29 @@ withKitDom((d, win) => {
   });
 });
 await new Promise((done) => setTimeout(done, 0));
+
+// The text of the innermost `{ … }` around `index`, so an option list may span several lines.
+function enclosingObjectText(source, index) {
+  let depth = 0;
+  let start = index;
+  for (; start > 0; start--) {
+    if (source[start] === '}') depth++;
+    if (source[start] === '{') {
+      if (depth === 0) break;
+      depth--;
+    }
+  }
+  depth = 0;
+  let end = index;
+  for (; end < source.length; end++) {
+    if (source[end] === '{') depth++;
+    if (source[end] === '}') {
+      if (depth === 0) break;
+      depth--;
+    }
+  }
+  return source.slice(start, end + 1);
+}
 
 function overrides() {
   const { document } = dom;
@@ -158,11 +181,11 @@ for (const [name, press] of Object.entries(PRESSES)) {
   test(`${name}: a dialog over a screen closes, and the screen's Back does not run`, async () => {
     resetDom();
     const { mountHistory } = await import('../src/ui/screens/history.js');
-    const { openModal } = await import('../src/ui/components/modalShell.js');
+    const { OpenModal } = await import('../src/ui/components/modalShell.js');
     let backs = 0;
     let closes = 0;
     mountHistory(app(), { meta: { results: [] }, onBack: () => { backs += 1; } });
-    const door = openModal({ title: 'Settings', body: dom.document.createElement('p'), onClose: () => { closes += 1; } });
+    const door = OpenModal({ title: 'Settings', body: dom.document.createElement('p'), onClose: () => { closes += 1; } });
     door.veil.classList.add('modal-veil');
     await press();
     assert.equal(closes, 1, 'the dialog closed once');
@@ -424,9 +447,13 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
   };
   for (const [file, id] of Object.entries(marked)) {
     const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
-    const lines = source.split('\n').filter((line) => line.includes(`id: '${id.slice(1)}'`));
-    assert.ok(lines.length, `${file} builds ${id}`);
-    for (const line of lines) assert.match(line, /'data-back': ''/, `${file}: ${id} is marked data-back`);
+    const idText = `id: '${id.slice(1)}'`;
+    const optionBlocks = [];
+    for (let at = source.indexOf(idText); at !== -1; at = source.indexOf(idText, at + 1)) {
+      optionBlocks.push(enclosingObjectText(source, at));
+    }
+    assert.ok(optionBlocks.length, `${file} builds ${id}`);
+    for (const block of optionBlocks) assert.match(block, /'data-back': ''/, `${file}: ${id} is marked data-back`);
   }
   const { SCREENS, NOT_DRIVEN, READY } = await import('../tools/escape-back.mjs');
   for (const row of SCREENS) {

@@ -7,12 +7,14 @@ import test from 'node:test';
 import { selectedWeaponReactionFor, REAVER_GREATSWORD_PILOT } from '../src/model/selectedWeaponStances.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { callout, clearCallouts, CALLOUT_KINDS, playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS, calloutForEvent } from '../src/ui/fx.js';
+import { callout, clearCallouts, CALLOUT_KINDS, playTimeline, setAnimSpeed, ANIM_SPEEDS, calloutForEvent } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { t } from '../src/ui/strings.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
-import { setCombatPacing as pinCombatPacing, calloutLifeMs, floaterStaggerMs } from '../src/ui/animationPace.js';
+import { withKitDom } from './helpers/dom.mjs';
+import { setCombatPacing as pinCombatPacing, calloutLifeMs, floaterStaggerMs, actionPacing } from '../src/ui/animationPace.js';
+import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
+setFloaterPolicyEnabled(false); // this file tests the floater mechanics for every kind; the allowlist is tests/floater-policy.test.mjs
 pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const callouts = (layer) => layer.children.filter((node) => node.dataset?.calloutFor !== undefined);
@@ -21,7 +23,7 @@ test('every callout kind has a localized word', () => {
   for (const [kind, def] of Object.entries(CALLOUT_KINDS)) {
     assert.match(t(def.string), /^[A-Za-z —]+$/, `${kind} is a localized outcome phrase`);
   }
-  assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'GUARD BREAK');
+  assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'BLOCK BREAK');
   assert.equal(t(CALLOUT_KINDS.hit.string), 'Hit');
   assert.equal(t(CALLOUT_KINDS.evadeFailed.string), 'Hit — Evade Failed');
   assert.equal(t(CALLOUT_KINDS.missed.string), 'Missed');
@@ -148,7 +150,7 @@ function drive(t2, fn) {
       for (let i = 0; i < 4000; i++) t2.mock.timers.tick(1); // one ms at a time: the mocked Date jumps to the end of a tick
     };
     try { fn({ dom, layer, anchors, trace, run, finish, tick: (ms) => t2.mock.timers.tick(ms) }); }
-    finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
+    finally { setAnimSpeed('normal'); dom.document.body.classList.remove('reduced-motion'); }
   });
 }
 const timeOf = (trace, what) => trace.find((e) => e.what === what)?.at;
@@ -156,7 +158,7 @@ const enemyAttack = (...events) => [{ type: 'enemyMoveStarted', sourceId: 'e1', 
 const playerAttack = (...events) => [{ type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1' }, ...events];
 const hit = (sourceId, targetId, amount = 4) => ({ type: 'damageDealt', sourceId, targetId, amount, blocked: 0 });
 
-for (const mode of ['sequential', 'impact', 'instant', 'reduced']) test(`selected player receipt reactions execute once in ${mode} playback`, t2 => {
+for (const mode of ['sequential', 'instant', 'reduced']) test(`selected player receipt reactions execute once in ${mode} playback`, t2 => {
   drive(t2, ({dom, run, finish, trace}) => {
     if (mode === 'instant') setAnimSpeed('instant');
     if (mode === 'reduced') dom.document.body.classList.add('reduced-motion');
@@ -167,7 +169,7 @@ for (const mode of ['sequential', 'impact', 'instant', 'reduced']) test(`selecte
       {type:'combatAvoidanceResolved',targetId:'player',avoided:true,distance:{success:true}},
       {type:'combatGuardBroken',targetId:'player',poise:0},
       {type:'combatGuardBroken',targetId:'e1',poise:0});
-    run(events,{beatOrder:mode==='impact'?'impact':'sequential',reactionForReceipt:event=>{
+    run(events,{reactionForReceipt:event=>{
       const kind=selectedWeaponReactionFor(event,REAVER_GREATSWORD_PILOT);
       return kind?()=>reactions.push({kind,targetId:event.targetId,at:Date.now()}):null;
     }});
@@ -186,7 +188,8 @@ test('an unsupported receipt reaction hook preserves callout-only pacing',t2=>{
   drive(t2,({trace,run,finish})=>{
     // A callout-only event: a miss now has its own streak and swish, so it no longer serves here.
     run(enemyAttack({type:'combatCounterTriggered',sourceId:'e1',targetId:'player'}),{reactionForReceipt:()=>null});finish();
-    assert.equal(timeOf(trace,'bars'),LEAD + TOTAL + AFTER + 2 * REACTION,'ordered callout-only actions retain the shared action delays');
+    // The attack beat keeps its lead-in and its sprite; the Counter that follows it plays at once, with one Counter gap between its stages.
+    assert.ok(timeOf(trace,'bars') < LEAD + TOTAL + AFTER + 2 * REACTION,'a Counter exchange is shorter than the shared action delays');
   });
 });
 
@@ -194,7 +197,7 @@ const CASES = [
   ['CRITICAL on the target, with its hurt pose', enemyAttack({ type: 'critHit', sourceId: 'e1', targetId: 'player', multiplier: 2 }, hit('e1', 'player')), 'critical@player', 'hit@player'],
   ['Dodged on the evader (attackEvaded)', enemyAttack({ type: 'attackEvaded', sourceId: 'e1', targetId: 'player', charges: 0 }), 'dodged@player', 'missed@player'],
   ['Dodged on the evader (combatAvoidanceResolved)', enemyAttack({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, evade: { success: true } }), 'dodged@player', 'missed@player'],
-  ['GUARD BREAK on the target', playerAttack(hit('player', 'e1'), { type: 'combatGuardBroken', sourceId: 'player', targetId: 'e1', poise: 2 }), 'guardBreak@e1', 'hit@e1'],
+  ['BLOCK BREAK on the target', playerAttack(hit('player', 'e1'), { type: 'combatGuardBroken', sourceId: 'player', targetId: 'e1', poise: 2 }), 'guardBreak@e1', 'hit@e1'],
   ['STAGGERED on an enemy', playerAttack(hit('player', 'e1'), { type: 'enemyStaggered', targetId: 'e1', enemyId: 'x' }), 'staggered@e1', 'hit@e1'],
   ['STAGGERED on the player', enemyAttack(hit('e1', 'player'), { type: 'playerStaggered', targetId: 'player', actionLoss: 1 }), 'staggered@player', 'hit@player'],
   ['STAGGERED on a co-op seat', enemyAttack(hit('e1', 'seatB'), { type: 'playerStaggered', targetId: 'seatB', actionLoss: 1 }), 'staggered@seatB', 'hit@seatB'],
@@ -252,18 +255,13 @@ test('COUNTERED shows on the attacker who got countered, after the counter\'s sp
   drive(t2, ({ trace, run, finish }) => {
     run([{ type: 'combatCounterTriggered', sourceId: 'player', sourceKind: 'player', targetId: 'e1', amount: 3 }, hit('player', 'e1', 3)]);
     finish();
-    assert.equal(timeOf(trace, 'callout:hit@e1'), LEAD + TOTAL + AFTER, 'the counter hit is announced before target reaction');
-    assert.equal(timeOf(trace, 'reaction:e1'), LEAD + TOTAL + AFTER + REACTION);
-    assert.ok(timeOf(trace, 'callout:countered@e1') >= LEAD + TOTAL + AFTER + 2 * REACTION, 'counter outcome follows the target reaction');
-    assert.equal(timeOf(trace, 'float:-3'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the counter damage follows its reaction by a gap');
-  });
-});
-
-test('impact order: the callout fires at impact', (t2) => {
-  drive(t2, ({ trace, run, finish }) => {
-    run(CASES[0][1], { beatOrder: 'impact' });
-    finish();
-    assert.equal(timeOf(trace, 'callout:critical@player'), IMPACT);
+    // Owner, 2026-11-14: the Counter animation starts at once; the hit word, the reaction and the damage floater follow it, one
+    // Counter gap (motion.counter.floaterToAnimMs) apart.
+    const G = actionPacing().counterGapMs, start = 1; // a zero-length wait is one 1 ms timer turn
+    assert.equal(timeOf(trace, 'callout:hit@e1'), start + TOTAL + G, 'the counter hit is announced before target reaction');
+    assert.equal(timeOf(trace, 'reaction:e1'), start + TOTAL + 2 * G);
+    assert.ok(timeOf(trace, 'callout:countered@e1') >= start + TOTAL + 3 * G, 'counter outcome follows the target reaction');
+    assert.equal(timeOf(trace, 'float:-3'), start + TOTAL + 3 * G, 'the counter damage follows its reaction by a gap');
   });
 });
 
@@ -304,18 +302,16 @@ test('a click-skip ends the callouts', (t2) => {
   });
 });
 
-for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accuracy outcome leads damage in ' + mode + ' playback', t2 => {
+for (const mode of ['sequential', 'instant', 'reduced']) test('accuracy outcome leads damage in ' + mode + ' playback', t2 => {
   drive(t2, ({ dom, trace, run, finish }) => {
     if (mode === 'instant') setAnimSpeed('instant');
     if (mode === 'reduced') dom.document.body.classList.add('reduced-motion');
-    run(enemyAttack({ type: 'attackHit', sourceId: 'e1', targetId: 'player', evadeActive: true }, hit('e1', 'player')), { beatOrder: mode });
+    run(enemyAttack({ type: 'attackHit', sourceId: 'e1', targetId: 'player', evadeActive: true }, hit('e1', 'player')));
     finish();
     const outcome = timeOf(trace, mode === 'sequential' ? 'callout:hit@player' : 'callout:evadeFailed@player');
     const damage = timeOf(trace, 'float:-4');
     assert.ok(Number.isFinite(outcome) && Number.isFinite(damage), 'both production visuals execute');
-    if (mode === 'impact') {
-      assert.ok(damage - outcome >= 300, 'legacy impact retains its readable accuracy lead');
-    } else if (mode === 'sequential') {
+    if (mode === 'sequential') {
       assert.equal(timeOf(trace, 'reaction:player') - outcome, REACTION, 'accuracy precedes the target reaction');
       assert.equal(damage - outcome, 2 * REACTION, 'accuracy leads damage by two gaps (accuracy → reaction → result)');
       assert.ok(timeOf(trace, 'callout:evadeFailed@player') >= damage, 'failed defense is the final outcome, after the damage number');

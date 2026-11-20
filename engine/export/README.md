@@ -7,12 +7,13 @@ and `docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md`.
 
 ```text
 node tools/build-game.mjs            write dist/build/ashenspire.build.json + games/ashenspire/build.summary.json
-node tools/build-game.mjs --check    build, fail when the committed summary is stale
+node tools/build-game.mjs --check    verify the committed summary without writing files
 node --test tests/build-game.test.mjs
 ```
 
-`--check` is not listed in a fast-check runner on purpose: `tests/build-game.test.mjs` runs it, and
-`tests/run-node.mjs` discovers every `*.test.mjs`, so the fast suite already covers it.
+`--check` is exercised by `tests/build-game.test.mjs`. The full default
+`node tests/run-node.mjs` discovers every `*.test.mjs`; `npm test` is the fast
+core lane and does not run discovered tests.
 
 ## Versioning
 

@@ -39,7 +39,7 @@ Changing a pool size, a tag's weights or a priority re-flows every item that lef
 
 `id`, `name`, `slot`, `kind`, `rarity`, `tags`, optional `points`, optional `weights`,
 optional `classes`, and `source` (the CSV row it came from). Regenerate from the CSVs with
-`node tools/gear-convert.mjs [--dry]`.
+`node tools/attic/gear-convert.mjs [--dry]`.
 
 ## Validation
 
@@ -53,6 +53,10 @@ validator. Profiles carrying `armorBudget` aggregate converted equipped values t
 `gameProfileEquipmentReceipt`; matched items replace legacy self-stat modifiers.
 Armor budget, Core: 3 points at rank 1 plus `perRank` 1 point per Smith tier (a shield gains the same per tier in its pool); `perRankStat: "dr"` (Core only) makes each tier's point a DR point, taken from unspent budget; without it tiers just grow the pool; `rarityBonus` per rarity (default 0).
 One upgrade tier adds one rank. Weapons retain their rarity pools.
+
+## Stat points (`statPoints`, Core)
+
+Owner, 2026-11-17: armour and armaments grant attribute points and a Poise value instead of AR or DR. With `statPoints` set, an item resolves to `attributes[rarity]` attribute points (0 to 3; Core: common 1, uncommon 2, rare 2, epic 3) split by its bonus weights over at most `maxAttributes` attributes, plus `perRank` more per rank above its own (a Smith tier). Its Poise points are its ratings pool times the Poise share of its ratings weights, rounded, at least `poiseMin`. AR, DR and every other rating stay 0, and tag costs are not charged. Authored attribute and Poise points are kept. The armor budget above does not apply.
 
 Additional point conversions: HP 10, MP 1, SP 1, Ward 3, Evasion 1 and
 Precision 1. Existing AR 1, DR 2, Poise 3 and attribute 1 conversions remain.

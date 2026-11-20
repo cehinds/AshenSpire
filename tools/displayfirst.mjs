@@ -1145,9 +1145,9 @@ function selftestPlants() {
   // for the same reason as before: a contiguous copy in this file would give
   // the self-referential plant below a second match to find.
   const fsButton = [
-    '${switchHtml({ label: r.label, on, attrs: ` data-key="${r.key}"',
+    '${switchHtml({ label: r.label, on, attrs: ` data-key="${esc(r.key)}"',
     '${r.type === \'action\' ? ` data-action="1"',
-    ' aria-describedby="set-${r.key}-status"` : \'\'}` })}',
+    ' aria-describedby="set-${esc(r.key)}-status"` : \'\'}` })}',
   ].join('');
   // Split the production line so the self-referential plant below does not
   // copy its own find bytes into this file. That leaves exactly one match: the
@@ -1196,7 +1196,7 @@ function selftestPlants() {
       name: 'the row trades places with the one behind it in the rendered Display panel',
       edits: [
         {
-          file: 'src/ui/screens/settings.js',
+          file: 'src/ui/models/SettingsRowsModel.js',
           find: [
             "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),",
             "    note: tFull('settings.row.fullscreen') },",
@@ -1210,7 +1210,7 @@ function selftestPlants() {
           ].join(settingsEol),
         },
         {
-          file: 'src/ui/screens/settings.js',
+          file: 'src/ui/models/SettingsRowsModel.js',
           find: [
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
             "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),",
@@ -1274,8 +1274,8 @@ function selftestPlants() {
       // blank screen.
       name: 'Display renders no rows at all (the empty edge)',
       file: 'src/ui/screens/settings.js',
-      find: '  const rows = ROWS.filter((r) => r.cat === cat && !r.retired);',
-      replace: '  const rows = ROWS.filter((r) => r.cat === cat && !r.retired && cat !== \'Display\');',
+      find: '  const rows = SETTINGS_ROWS.filter((r) => r.cat === cat && !r.retired);',
+      replace: '  const rows = SETTINGS_ROWS.filter((r) => r.cat === cat && !r.retired && cat !== \'Display\');',
       expectRed: /FINDING D0\/population/,
     },
     // -----------------------------------------------------------------------

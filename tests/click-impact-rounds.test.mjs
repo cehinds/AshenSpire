@@ -77,3 +77,17 @@ test('enough contacts with fewer than three real numbers can never pass', async 
   });
   assert.equal(result.exitCode, 2);
 });
+
+test('the chooser prefers the cheapest, then weakest, damaging play and avoids ending the fight', async () => {
+  const { chooseImpactPlay } = await import('../tools/click-impact-rounds.mjs');
+  const card = (id, o = {}) => ({ id, eligible: true, canDamage: true, cost: 1, damage: 5, lethal: false, ...o });
+  const pick = (cards, o) => chooseImpactPlay(cards, o)?.id;
+  assert.equal(pick([card('big', { cost: 2 }), card('mid', { damage: 9 }), card('small')]), 'small');
+  assert.equal(pick([card('mid', { damage: 9 }), card('small', { damage: 4 })]), 'small');
+  assert.equal(pick([card('kill', { cost: 0, lethal: true }), card('safe', { cost: 2 })]), 'safe');
+  assert.equal(pick([card('kill', { lethal: true }), card('guard', { canDamage: false })]), 'guard');
+  assert.equal(pick([card('kill', { lethal: true })]), 'kill', 'a lethal play is the last resort');
+  assert.equal(pick([card('x', { eligible: false })]), undefined);
+  assert.equal(pick([card('guard', { canDamage: false, cost: 0 }), card('hit')], { numbersShort: true }), 'hit');
+  assert.equal(pick([card('guard', { canDamage: false, cost: 0 }), card('hit')], { numbersShort: false, samplesShort: false }), 'guard');
+});
