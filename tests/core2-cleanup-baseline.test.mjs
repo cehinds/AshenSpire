@@ -16,6 +16,11 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-20 after merging dev's Sage's Robe signatureMods row into the Arcane/Divine
+// branch: only current-profile profile/runtime/snapshot/save hash leaves moved; the tradition-policy
+// control below still proves events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-20 for Sage's Robe's signatureMods row in Core's gear pack: exactly 24 leaves moved, the profile, snapshot and save hashes of the three
+// current-profile scenarios. Every event, RNG, receipt and continuation hash, the runtime hash and the whole historical scenario are unchanged.
 // Recaptured again 2026-11-19 after the bare content Poise row returned to CON (default profile
 // still overrides to WIS): 27 profile/runtime/snapshot/stored hash leaves moved; nothing else.
 // Recaptured 2026-11-19 for versioned Arcane/Divine casting and Wisdom Poise.
