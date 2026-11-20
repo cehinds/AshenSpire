@@ -59,7 +59,7 @@
         {
           "kind": "visible",
           "label": "Original school identity is retained",
-          "selector": ".deck-editor-inspector .playing-poker-card[data-combat-school=\"force\"]"
+          "selector": ".deck-editor-inspector .playing-poker-card[data-combat-school=\"illusion\"]"
         },
         {
           "kind": "within",
