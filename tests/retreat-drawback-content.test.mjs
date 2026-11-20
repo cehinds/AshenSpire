@@ -117,3 +117,15 @@ test('armoured and unarmoured Gale Push retain the exact spell surcharge and ref
     assert.equal(before - combat.player.stamina, shown.staminaCost);
   }
 });
+
+test('the rogue Backstep lesson card names Exhaust only when its keyword is on: legacy text has no Exhaust sentence, the current card carries the keyword', async () => {
+  const { bandsFight, registries } = await import('./helpers/bands-fight.mjs');
+  const { resolveCard } = await import('../src/model/registries.js');
+  const combat = bandsFight({ hand: ['backstep'], enemyIds: ['wanderingSoldier'] });
+  const current = resolveCard(registries, { cardId: 'backstep', instanceId: 'qa0' }, undefined, combat);
+  assert.ok(current.keywords.includes('exhaust'));
+  assert.doesNotMatch(current.textTemplate, /Exhaust/, 'the keyword is appended to the face, not duplicated in the text');
+  const legacy = resolveCard(registries, { cardId: 'backstep', instanceId: 'qa0' }, undefined, { gameProfile: null, fixCoreRules: {} });
+  assert.deepEqual(legacy.keywords, []);
+  assert.doesNotMatch(legacy.textTemplate, /Exhaust/);
+});
