@@ -11,7 +11,7 @@ import { executeRunEffects } from '../src/engine/actions.js';
 import { createRng } from '../src/engine/rng.js';
 
 const RELIC_BY_CHOICE = [
-  { eventId: 'goldboughAvatar', label: 'Offer a card', relicId: 'asceticsCord' },
+  { eventId: 'goldboughAvatar', label: 'Take its hand', relicId: 'asceticsCord' },
   { eventId: 'wanderingPhysician', label: 'Let him cut', relicId: 'threadbareSatchel' },
   { eventId: 'stakeOfTheMartyr', label: 'Pay its price', relicId: 'pruningHook' },
 ];

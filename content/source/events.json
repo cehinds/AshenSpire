@@ -29,7 +29,7 @@
     "text": "A huge figure kneels in a clearing, its legs grown into the roots of a golden sapling. It holds out one open hand.",
     "choices": [
       {
-        "label": "Offer a card (gain Ascetic's Cord, take 6 damage)",
+        "label": "Take its hand (gain Ascetic's Cord, take 6 damage)",
         "requires": {
           "relicNotHeld": "asceticsCord"
         },
