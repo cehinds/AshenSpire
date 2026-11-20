@@ -20,7 +20,7 @@ import { COMBAT_LOG_PALETTE_DEFAULTS } from './CombatLogPaletteModel.js';
 import { rangeSettingsRows } from './RangeSettingsModel.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { AUTOMATION_DEFAULTS, ACTION_PACING } from '../../model/autoCombatPolicy.js';
-import { resolveMotionIdle, EffectsSummary } from '../performance.js';
+import { resolveMotionIdle, EffectsSummary, SURFACE_CHOICES } from '../performance.js';
 import { TITLE_ENTRANCE_TIMING } from './StartupGateModels.js';
 import { MAP_ZOOM_DEFAULT, ZOOM_STEPS, MAP_FREE_PAN_DEFAULT } from '../../model/map/mapview.js';
 import { MAP_MODE_DEFAULT, MAP_MODES, SHRINE_GLOW_DEFAULT } from '../../model/map/mapknowledge.js';
@@ -234,6 +234,11 @@ function effectsButtonText(settings = {}) {
   return summary.on ? t('settings.effects.statusOn', { count: summary.count, total: summary.total }) : t('settings.effects.statusOff');
 }
 
+/** surfaceChoiceLabels() → the Auto / On / Off faces of the blur and shadow choices. */
+function surfaceChoiceLabels() {
+  return Object.fromEntries(SURFACE_CHOICES.map((choice) => [choice, t(`settings.fxSurface.${choice}`)]));
+}
+
 export const SETTINGS_ROWS = [
   { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: t('settings.row.askToUpcastAfterTarget'),
     note: tFull('settings.row.askToUpcastAfterTarget') },
@@ -343,6 +348,14 @@ export const SETTINGS_ROWS = [
     note: tFull('settings.row.motionIdle') },
   { cat: 'Combat', key: 'motionDefeat', def: true, modal: 'effects', modalSection: 'motion', label: t('settings.row.motionDefeat'), selfEvident: true,
     note: tFull('settings.row.motionDefeat') },
+  // BLUR AND SHADOWS (owner, 2026-11-20): Auto keeps the phones-only rule, On and
+  // Off force it on any device (ui/performance.js SurfaceFlags, styles/perf-lite.css).
+  { cat: 'Combat', key: 'fxBlur', type: 'choice', def: 'auto', modal: 'effects', modalSection: 'surface',
+    choices: [...SURFACE_CHOICES], choiceLabels: surfaceChoiceLabels(), label: t('settings.row.fxBlur'),
+    note: tFull('settings.row.fxBlur') },
+  { cat: 'Combat', key: 'fxShadows', type: 'choice', def: 'auto', modal: 'effects', modalSection: 'surface',
+    choices: [...SURFACE_CHOICES], choiceLabels: surfaceChoiceLabels(), label: t('settings.row.fxShadows'),
+    note: tFull('settings.row.fxShadows') },
   { cat: 'Display', key: 'titleCityHold', type: 'choice', def: TITLE_ENTRANCE_TIMING.holdDefault,
     choices: Object.keys(TITLE_ENTRANCE_TIMING.holdDurations), label: t('settings.row.titleCityHold'),
     note: tFull('settings.row.titleCityHold') },
