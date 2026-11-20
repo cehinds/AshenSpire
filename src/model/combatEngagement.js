@@ -105,6 +105,8 @@ export function rangeActionPlan(state, sourceKey, contacts, { route = 'advance',
     // first stack is the back-row band already in `distance`; its further stacks and each of the player's own stacks add one band. A frozen receipt carries the sum.
     const retreatBands = policy.enabled && !bypass && coverage === 0
       ? Math.max(0, Math.floor(contact.retreatBands ?? Math.max(0, (contact.enemyStacks || 0) - distance) + (contact.playerStacks || 0))) : 0;
+    // The player's own stacks this contact priced, frozen beside the sum: a charged enemy move spends only these on resolution, never stacks gained after the charge.
+    const playerStacks = retreatBands && contact.playerStacks !== undefined ? Math.max(0, Math.floor(contact.playerStacks)) : null;
     // A throw replaces the distance Advance (one band beyond the weapon's range); it never replaces a Retreat Advance, which is paid on either route.
     const distanceMissing = policy.enabled && !bypass ? Math.max(0, distance - coverage) : 0;
     const missingBands = route === 'throw' ? distanceMissing : distanceMissing + retreatBands;
@@ -113,7 +115,7 @@ export function rangeActionPlan(state, sourceKey, contacts, { route = 'advance',
     maxMissing = Math.max(maxMissing, missingBands);
     maxRetreat = Math.max(maxRetreat, retreatBands);
     return { contactId: contact.contactId ?? String(index), targetKey, actualBand, band: distance, coverage,
-      weapon: !!weapon, throwCapable: !!throwCapable, bypass: !!bypass, sourceWeaponId, ...(retreatBands ? { retreatBands } : {}),
+      weapon: !!weapon, throwCapable: !!throwCapable, bypass: !!bypass, sourceWeaponId, ...(retreatBands ? { retreatBands } : {}), ...(playerStacks !== null ? { playerStacks } : {}),
       missingBands, effectiveBand: !policy.enabled || bypass ? Math.min(distance, coverage) : route === 'advance' ? Math.min(distance, coverage) : distance,
       precisionDelta: policy.enabled ? (weapon && rangeBand(contact.weaponCoverage ?? contact.coverage) === 1 && actualBand === 0 ? policy.reachPrecisionBonus : 0) - (extended ? policy.throwPrecisionPenalty : 0) : 0 };
   });
@@ -133,9 +135,9 @@ export function rangePlanProblems(plan, state, actorKeys = null) {
     || !['advance', 'throw'].includes(plan.route) || typeof plan.available !== 'boolean' || !count(plan.advanceSp) || !Array.isArray(plan.targets)
     || !text(plan.sourceKey) || !/^(player|enemy):.+/.test(plan.sourceKey) || actorKeys && !actorKeys.includes(plan.sourceKey)
     || plan.rootId !== undefined && !text(plan.rootId)) return ['Invalid range action plan'];
-  for (const row of plan.targets) if (!fields(row, ['contactId', 'targetKey', 'actualBand', 'band', 'coverage', 'weapon', 'throwCapable', 'bypass', 'sourceWeaponId', 'retreatBands', 'missingBands', 'effectiveBand', 'precisionDelta'])
+  for (const row of plan.targets) if (!fields(row, ['contactId', 'targetKey', 'actualBand', 'band', 'coverage', 'weapon', 'throwCapable', 'bypass', 'sourceWeaponId', 'retreatBands', 'playerStacks', 'missingBands', 'effectiveBand', 'precisionDelta'])
     || !text(row.contactId) || !opposingRangeKeys(plan.sourceKey, row.targetKey) || actorKeys && !actorKeys.includes(row.targetKey)
-    || !['actualBand', 'band', 'coverage', 'effectiveBand'].every(k => band(row[k])) || !count(row.missingBands) || row.retreatBands !== undefined && !count(row.retreatBands)
+    || !['actualBand', 'band', 'coverage', 'effectiveBand'].every(k => band(row[k])) || !count(row.missingBands) || row.retreatBands !== undefined && !count(row.retreatBands) || row.playerStacks !== undefined && !count(row.playerStacks)
     || !Number.isSafeInteger(row.precisionDelta) || !['weapon', 'throwCapable', 'bypass'].every(k => typeof row[k] === 'boolean')
     || row.sourceWeaponId !== null && !text(row.sourceWeaponId)) return ['Invalid range contact receipt'];
   if (new Set(plan.targets.map(row => row.contactId)).size !== plan.targets.length) return ['Duplicate range contacts'];

@@ -121,8 +121,13 @@ export function SpendRetreatAdvances(ctx, source, plan, { frozen = false, firstT
   if (source.kind === 'enemy') {
     if (RetreatStacks(source) > 0) spendRetreat(ctx, source, RetreatStacks(source));
     if (source.row === 'back') SetEnemyRow(ctx, source, 'front', 'advance');
-    const priced = Math.max(0, ...melee.map(row => row.retreatBands || 0));
-    for (const player of playerEntities(ctx)) if (contacted.has(actorRangeKey(ctx, player))) spendRetreat(ctx, player, frozen ? Math.min(RetreatStacks(player), priced) : RetreatStacks(player));
+    // A frozen plan spends only the player stacks it priced for that contact (`playerStacks`; a plan saved before the field falls back to its `retreatBands`).
+    for (const player of playerEntities(ctx)) {
+      const key = actorRangeKey(ctx, player);
+      if (!contacted.has(key)) continue;
+      const priced = Math.max(0, ...melee.filter(row => row.targetKey === key).map(row => row.playerStacks ?? row.retreatBands ?? 0));
+      spendRetreat(ctx, player, frozen ? Math.min(RetreatStacks(player), priced) : RetreatStacks(player));
+    }
     return;
   }
   for (const enemy of ctx.enemies) {

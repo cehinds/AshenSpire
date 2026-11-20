@@ -68,3 +68,16 @@ test('a throw route (no SetAdvanced) still closes every other enemy by each Adva
   assert.equal(stacks(a), 0, 'the contacted enemy spends all of its stacks');
   assert.equal(stacks(b), 0, 'the other enemy loses one per Advance paid (2 to 0), not paid - 1');
 });
+
+test('a charged enemy move spends only the player stacks its plan priced, not those gained after the charge', () => {
+  const combat = bandsFight({ enemyIds: ['wanderingSoldier'] });
+  const enemy = combat.enemies[0];
+  hold(combat, enemy, 3);
+  const plan = enemyPlan(combat, enemy, { enemyStacks: 3, playerStacks: 0 }); // charged: 3 own stacks, the player holds none
+  assert.equal(plan.advanceSp, 3);
+  assert.equal(plan.targets[0].playerStacks, 0, 'the plan freezes the player\'s priced stack count apart from the sum');
+  applyStatus(combat, combat.player, 'retreat', 2, null); // the player retreats twice before it resolves
+  SpendRetreatAdvances(combat, enemy, plan, { frozen: true });
+  assert.equal(stacks(enemy), 0);
+  assert.equal(stacks(combat.player), 2, 'the player keeps both new stacks');
+});
