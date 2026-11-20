@@ -325,3 +325,8 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - The new Magic Absorption card costs **2 SP, 0 MP** and has two drawbacks chosen from Exhaust, Ethereal, Escalating, Vulnerable, Weak, bind, paralysis or self-damage. Its first upgrade guarantees **Reaction**, plus another tag or drawback easing.
 - **Initial trial defaults (orchestrator-decided):** start with **3 stacks**, continuing the prior trial, and choose **Exhaust + Ethereal** as the two starting drawbacks.
 - Implementation is queued with the later magic-card pass; this amendment adds no Magic Absorption mechanic to GearPass.
+
+## 25. Amendment: gear pool lines are dropped only where resolved points feed the pool (owner, 2026-11-20)
+- Amends §23's treatment of item max HP / Mana / Stamina lines on resolved Core gear. An item's own `self.maxHp`, `self.maxMana` or `self.maxStamina` line is dropped only when that item's resolved stat points already feed the pool, through `content/source/derivedStatRules.json`: HP from Constitution, Mana from Wisdom, Stamina from Dexterity. Otherwise the line stays, uncapped (the greatsword's authored +999 max HP stays; Bastion's -1 max SP stays, it has no Dexterity).
+- A type or armour group base line always stays (the Robes +1 max MP). A robe's own max MP line stays unless its resolved points feed Mana (Nightweave's Wisdom does, so it keeps the type +1 only).
+- Saves: runs in progress recalculate. A run holding the double-counted pool drops it at its next re-derive, with no per-run marker. Current HP clamps to the new max and is never healed.

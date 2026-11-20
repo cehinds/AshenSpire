@@ -10,7 +10,7 @@ import { parseMod } from './modStrings.js';
 import { EQUIPMENT_POOL_FIELDS, EQUIPMENT_POOL_CURRENT, moveEquipmentPool } from './applyVocab.js';
 import { WeaponCardPackageModel } from './weaponPackages.js';
 import { equippedPieces } from './equipped.js';
-import { GearPieceMods, GearTypeEffectsEnabled, GearVocabularyEnabled } from '../gearEffects.js';
+import { GearPieceMods, GearTypeRow, GearTypeEffectsEnabled, GearVocabularyEnabled } from '../gearEffects.js';
 import { GEAR_TYPES } from '../../content/gearTypes.js';
 
 /**
@@ -81,17 +81,21 @@ export function runMods(registries, loadout, classId, run = null) {
     const pieceRef = piece.kind === 'armor' ? `armor/${classId}/${piece.id}` : `armament/${piece.id}`;
     const resolvedPiece = resolvedRefs.has(pieceRef), resolvedSource = gear.sources.find(source => source.sourceId === pieceRef);
     // The piece's type or armour group base reads like its own mods (owner, 2026-11-18; content/source/equipmentTypes.json).
-    for (const raw of GearPieceMods(piece, GearTypeEffectsEnabled(subject))) {
+    const typeModCount = GearTypeEffectsEnabled(subject) ? (GearTypeRow(piece)?.mods?.length || 0) : 0;
+    for (const [modIndex, raw] of GearPieceMods(piece, GearTypeEffectsEnabled(subject)).entries()) {
+      const fromType = modIndex < typeModCount;
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];
       if (!spec || spec.scope !== 'run') continue;
       // Newly introduced vocabulary cannot change a saved profile which predates the gear pass.
       if (!GearVocabularyEnabled(subject, spec)) continue;
       // Resolved gear replaces pool stats; independent swap/status effects remain.
-      // Resolved gear replaces a pool stat only when its own points supply that pool (hp, mp, sp); an item that supplies none (Nightweave's +1 max MP) and every
-      // type or group base still add, uncapped (owner, 2026-11-18).
+      // Owner, 2026-11-20 (amends 2026-11-18, docs/balance/owner-ruling-2026-11-18.md): an item's own max HP/MP/SP line is dropped only when its resolved
+      // points already feed that pool, through content/source/derivedStatRules.json (hp: constitution, mana: wisdom, stamina: dexterity), so it is not counted twice.
+      // An item whose points feed no such pool, and every type or group base (Robes +1 max MP), keeps its line, uncapped.
       const poolStat = { maxHp: 'hp', maxMana: 'mp', maxStamina: 'sp' }[spec.apply];
-      if (resolvedPiece && poolStat && (!GearTypeEffectsEnabled(subject) || (resolvedSource?.[poolStat] || 0) > 0)) continue;
+      const feeder = { hp: 'constitution', mp: 'wisdom', sp: 'dexterity' }[poolStat];
+      if (resolvedPiece && poolStat && (!GearTypeEffectsEnabled(subject) || (!fromType && ((resolvedSource?.[poolStat] || 0) > 0 || (resolvedSource?.[feeder] || 0) > 0)))) continue;
       if (EQUIPMENT_POOL_FIELDS.includes(spec.apply)) {
         pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
       } else if (spec.apply === 'swapCost') {
