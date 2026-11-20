@@ -9,6 +9,8 @@
 //      then a death (which relays out the figures with the new grid), leaves every backdrop box where it was.
 //   5. Phone: upcast controls in hand reserve room (--hand-controls-height), and the field's height follows it
 //      (mobileFieldOverlap). The backdrop holds its field box: every box stays put, before and after a death.
+//   6. A form-factor switch (1280x800 to 1000x800, across 1100px): combatLayout's bands can land after the stage's
+//      forced pass; the redo stores fresh values, so the floor matches a fresh load at 1000x800 (within 0.5px).
 //   4. A window resize inside the form factor (1280x800 to 1180x760) refits once; a hand change and a death after it
 //      leave every backdrop box where the resize put it.
 import assert from 'node:assert/strict';
@@ -139,6 +141,32 @@ try {
     const afterDeath = await read(page);
     assert.notEqual(afterDeath.epoch, before.epoch, `${label}: the field and the death relay out the figures`);
     assert.deepEqual(afterDeath.boxes, before.boxes, `${label}: a death after it leaves every backdrop box`);
+    await page.close();
+    console.log(`ok ${label}`);
+  }
+  {
+    const label = '1280x800 to 1000x800 core, form-factor switch';
+    const floor = page => page.evaluate(() => ({ paint: Number(document.querySelector('.alternative-backdrop')?.dataset.mobileFloorPaintTop),
+      formFactor: document.documentElement.dataset.formFactor }));
+    const open = async (width, height) => {
+      const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
+      await page.goto(`${server.url}index.html?shot=combat&gameProfile=core&shotEnemyCount=3&shotSeed=7&shotHand=5`, { waitUntil: 'load' });
+      await page.waitForFunction(() => !!window.__combat);
+      await page.waitForSelector('.combatant.enemy .sprite');
+      await page.waitForTimeout(2500);
+      return page;
+    };
+    const fresh = await open(1000, 800);
+    const expected = await floor(fresh);
+    await fresh.close();
+    const page = await open(1280, 800);
+    const wide = await floor(page);
+    await page.setViewportSize({ width: 1000, height: 800 });
+    await page.waitForTimeout(2500);
+    const switched = await floor(page);
+    assert.notEqual(switched.formFactor, wide.formFactor, `${label}: the resize crosses a form factor`);
+    assert.ok(Number.isFinite(expected.paint) && Math.abs(switched.paint - expected.paint) <= .5,
+      `${label}: the floor ${switched.paint} matches a fresh load's ${expected.paint}`);
     await page.close();
     console.log(`ok ${label}`);
   }
