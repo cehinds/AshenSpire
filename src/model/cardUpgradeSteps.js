@@ -121,6 +121,7 @@ export function upgradeStepRng(runSeed, instanceId, stepIndex) {
   return mulberry32(upgradeSeed(runSeed, instanceId, stepIndex));
 }
 
+const hitsAnEnemy = (effect) => effect.target === 'enemy' || effect.target === 'allEnemies';
 const hitsOf = (effect) => (Number.isInteger(effect.hits) && effect.hits > 1 ? effect.hits : 1);
 const totalOf = (effects, op) => {
   const index = firstPlainIndex(effects, op);
@@ -178,7 +179,8 @@ function options(base, current, applied, limits, rarity = 0) {
   // return: a range, area, damage, hits or poise step could never be honoured, so none of them is offered.
   const counterReturn = familyValue(tagsOf(current), 'maneuver:') === 'counter';
   const dmgIndex = firstPlainIndex(effects, 'damage');
-  if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
+  // Owner, 2026-11-19: a Sweep (damage on allEnemies) rolls damage too; the step raises the damage each target takes.
+  if (!counterReturn && dmgIndex >= 0 && hitsAnEnemy(effects[dmgIndex])) {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const n = biggest(Math.max(2, Math.ceil(baseTotal * 0.15)), sized('dmg'), (k) => (effects[dmgIndex].amount + k) * hitsOf(effects[dmgIndex]) - baseTotal <= baseTotal);
     if (n) found.dmg = { n };
@@ -222,7 +224,7 @@ function options(base, current, applied, limits, rarity = 0) {
   }
 
   if (!counterReturn && dmgIndex >= 0 && !applied.some((s) => s.k === 'hits') && !effects.some((e) => e.op === 'damage' && hitsOf(e) > 1)
-    && effects[dmgIndex].target === 'enemy' && effects[dmgIndex].amount <= 8) {
+    && hitsAnEnemy(effects[dmgIndex]) && effects[dmgIndex].amount <= 8) {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const amount = effects[dmgIndex].amount;
     const per = Math.ceil(amount * 0.6);
