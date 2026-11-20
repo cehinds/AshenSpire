@@ -15,11 +15,14 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 const { catalog, authors } = compileGameProfiles();
 const profile = resolveGameAuthor(authors.core, catalog);
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const baseRegistries = registries;
+const wyrmBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'wyrmLord' ? { ...row, firstMove: 'tailSweep' } : row) };
+const wyrmRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(wyrmBundle, profile)), profile);
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
-function world(armor) {
+function world(armor, enemyId = 'wanderingSoldier', registries = baseRegistries) {
   const run = createRunState({ registries, classId: 'reaver', seed: 31, profileMeta: META });
   if (armor) equipPiece(registries, run.loadout, 'armor', 0, armor, { has: () => true }, { inCombat: false, classId: run.class, attributes: run.attributes });
-  const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
+  const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: [enemyId] });
   dispatch(combat, { type: 'setReactions', enabled: false });
   Object.assign(combat.enemies[0], { hp: 900, maxHp: 900 });
   combat.player.stamina = combat.player.energy = 100;
@@ -46,4 +49,16 @@ test('core.counter upgraded with a +1 Counter step and Mail: the quote and the f
   assert.match(html, />5<\/span> Counter stacks/);
   dispatch(combat, { type: 'playCard', cardInstanceId: 'gc' });
   assert.equal(combat.player.counterStacks || 0, 5, 'live play grants the same');
+});
+
+// Delta review: against a revealed attack the Counter does not cover, the stack total is still on the face (the authored row is hidden once the total shows).
+test('core.counter upgraded with a +1 Counter step and Mail, vs an uncovered revealed attack: the face still says 5 Counter stacks, as live grants', () => {
+  const combat = world('wyrmscaleMail', 'wyrmLord', wyrmRegistries); // its revealed tailSweep is an area attack the Counter does not cover
+  combat.piles.hand = [{ instanceId: 'gc', cardId: 'core.counter', upgraded: true, upgradeSteps: [{ k: 'authored' }, { k: 'fx', fx: 'counter', n: 1 }] }];
+  const preview = previewCard(combat, 'gc', combat.enemies[0].id);
+  assert.equal(preview.counterReturn?.uncovered, true, 'the path under test: an uncovered revealed attack');
+  const html = cardFaceLines(registries.cards.get('core.counter'), preview, registries, null).map(row => row.html).join('');
+  assert.match(html, />5<\/span> Counter stacks/);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'gc' });
+  assert.equal(combat.player.counterStacks || 0, 5);
 });

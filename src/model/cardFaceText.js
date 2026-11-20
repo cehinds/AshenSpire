@@ -418,7 +418,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(preview.counterReturn.block)} Block against it` });
   }
   // The Counter stacks the play grants (the base grant, Mail's gain bonus and any upgrade's stacks, summed: preview.counterStackGrant), shown with or without a revealed attack.
-  if (counter && !counterUncovered && preview?.counterStackGrant > 0) unconditional.push({ cat: 'gain', text: `${num(preview.counterStackGrant)} Counter stack${preview.counterStackGrant === 1 ? '' : 's'}` });
+  if (counter && preview?.counterStackGrant > 0) unconditional.push({ cat: 'gain', text: `${num(preview.counterStackGrant)} Counter stack${preview.counterStackGrant === 1 ? '' : 's'}` });
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', tag: true, text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
   const smashClause = coreSmashClause(def, registries, rules ?? preview?.faceRules ?? null);
