@@ -58,5 +58,6 @@ try {
   }
 } finally {
   await browser.close();
-  await server.close?.();
+  server.close?.();
 }
+process.exit(0);
