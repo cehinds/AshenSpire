@@ -1,5 +1,23 @@
 {
   "behavior": {
+    "enabled": true,
+    "warmShapes": [
+      "slash",
+      "multi-slash",
+      "thrust",
+      "smash",
+      "sweep",
+      "counter",
+      "spell",
+      "spell-circle",
+      "fire",
+      "frost",
+      "lightning",
+      "earth",
+      "force",
+      "illusion",
+      "decay"
+    ],
     "frameCount": 3,
     "atlasId": "v5",
     "palettes": {
@@ -294,16 +312,32 @@
     "clipMs": 300,
     "auraMs": 420,
     "spellWindupMs": 300,
-    "spellCircleScale": [0.3, 0.65, 1],
+    "spellCircleScale": [
+      0.3,
+      0.65,
+      1
+    ],
     "statusTickMs": 220,
     "meleeDeliveryMs": 80,
     "reachDeliveryMs": 160,
     "secondaryStartFrame": 2,
     "secondaryOffsetY": {
-      "heal-plus": [0.28, 0, -0.28],
-      "bleed-drops": [-0.28, 0, 0.28]
+      "heal-plus": [
+        0.28,
+        0,
+        -0.28
+      ],
+      "bleed-drops": [
+        -0.28,
+        0,
+        0.28
+      ]
     },
-    "auraRiseFractions": [0, 0.08, 0.16],
+    "auraRiseFractions": [
+      0,
+      0.08,
+      0.16
+    ],
     "movementMs": 220,
     "reactionLeadMs": 60,
     "cleanupSlackMs": 80,
@@ -326,7 +360,10 @@
   },
   "sizing": {
     "tilePx": 256,
-    "cardBoundShapes": ["buff", "debuff"],
+    "cardBoundShapes": [
+      "buff",
+      "debuff"
+    ],
     "impactBodyWidth": 1.05,
     "impactBodyHeight": 0.88,
     "impactMinPx": 48,
@@ -369,7 +406,11 @@
     "fallbackPx": 120
   },
   "layering": {
-    "auraReveal": [0.38, 0.72, 1],
+    "auraReveal": [
+      0.38,
+      0.72,
+      1
+    ],
     "opacity": {
       "primary": 0.9,
       "spellCircle": 0.9,
@@ -420,7 +461,11 @@
       "secondary": 0.9
     },
     "tintStrength": 0.48,
-    "tintStrengthByShape": { "spell-circle": 0.9, "heal-plus": 0.9, "bleed-drops": 0.9 },
+    "tintStrengthByShape": {
+      "spell-circle": 0.9,
+      "heal-plus": 0.9,
+      "bleed-drops": 0.9
+    },
     "grayscaleBeforeTint": true,
     "statusOffset": {
       "x": 0.25,

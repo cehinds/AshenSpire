@@ -1,5 +1,4 @@
 import { assetUrl, assetsAreInlined, builtInSource } from './assetmap.js';
-import { effectsOff } from './performance.js';
 import { reducedMotionRequested } from './motion.js';
 import { SETTINGS } from '../content/recipientEffectSettings.js';
 import { RecipientEffectAtlasEntry } from '../content/recipientEffectAtlas.js';
@@ -9,7 +8,7 @@ import { stageFor } from './services/PoseAnimator.js';
 const active = new WeakMap(), loaded = new Map(), groups = new WeakMap();
 const S = SETTINGS.sizing, O = SETTINGS.layering.opacity, M = SETTINGS.motion;
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-const disabled = () => effectsOff() || reducedMotionRequested() || document.body.classList.contains('reduce-flashes');
+const disabled = () => !SETTINGS.behavior.enabled || reducedMotionRequested() || document.body.classList.contains('reduce-flashes');
 export const RecipientAtlas = shape => RecipientEffectAtlasEntry(shape) || RecipientEffectAtlasEntry('skill');
 const transform = (scaleX = 1) => ({rotation:0, scaleX, scaleY:1, transform:`scale(${scaleX}, 1)`});
 
@@ -73,8 +72,13 @@ function sourcesFor(recipe, resolveAsset) {
   });
 }
 export function PrewarmRecipientEffect(recipe,{resolveAsset=assetUrl}={}) {
-  if (!recipe) return Promise.resolve(false);
+  if (!recipe || !SETTINGS.behavior.enabled) return Promise.resolve(false);
   return Promise.all(sourcesFor(recipe,resolveAsset).map(s=>s.absent ? false : load(s.url))).then(r=>r.every(Boolean));
+}
+/** Start decoding the common contact and caster layers before play is possible. */
+export function PrewarmCombatRecipientEffects({resolveAsset=assetUrl}={}) {
+  if (disabled()) return Promise.resolve([]);
+  return Promise.all(SETTINGS.behavior.warmShapes.map(shape => PrewarmRecipientEffect({ shape }, { resolveAsset })));
 }
 function canvas(width,height) {
   const c=document.createElement('canvas'); c.width=Math.max(1,Math.ceil(width)); c.height=Math.max(1,Math.ceil(height)); return c;
