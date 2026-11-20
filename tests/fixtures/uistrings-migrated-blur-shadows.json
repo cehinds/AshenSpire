@@ -1,0 +1,12 @@
+{
+  "reason": "Blur and shadows choices in the Effects menu (owner, 2026-11-20); retain the shadow sweep after origin/dev advances.",
+  "ids": [
+    "settings.effects.surface",
+    "settings.effects.surfaceNote",
+    "settings.row.fxBlur",
+    "settings.row.fxShadows",
+    "settings.fxSurface.auto",
+    "settings.fxSurface.on",
+    "settings.fxSurface.off"
+  ]
+}
