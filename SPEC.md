@@ -399,7 +399,7 @@ Closed vocabularies in `balance.equipment`:
 - After creation the cap does not apply: no re-minting, no holding a total.
 - **Attack count holds mid-run:** a swap re-skins the birth attack slots (`equipmentAttackSlotCount`, recorded at creation, never re-derived) minus permanently removed ones.
   - `removedAttackSlotIds`: unique stable `attack:N` ids from the birth allocation; absent = none.
-  - Merchant and event removal may remove run-owned basic attacks (including weapon-derived faces), retiring the slot without renumbering. Swaps, combat setup, save/load and restamping share the surviving slot plan and never restore a removed copy.
+  - Merchant removal may remove run-owned basic attacks (including weapon-derived faces), retiring the slot without renumbering. Swaps, combat setup, save/load and restamping share the surviving slot plan and never restore a removed copy.
   - Item-owned grants cannot be permanently removed. The merchant revalidates instance, funds and nonempty-deck guard before charging.
 - All authored: cap, per-class bias, odd-split winner, grant sources (rows in the `grantSource` tag domain). Bound cards mint at four seams (global, armor, weapon, class) reading tags from `startingDeck.sources` (map, tag row and `sourceOrder` move together); a binding naming no registered source, or an unbound seam, is refused by name.
 
@@ -1339,7 +1339,7 @@ The grace is the Shrine of Emberlight (there is no `grace` node type).
 
 - Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (`mapConfigs[act].unknownWeights`, `src/content/mapconfig.js`).
 - Event = data `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }`; `effects` are §3.4 run-level opcodes.
-- **No card removal as a reward** (owner, 2026-11-20): no card effect, event choice or reward removes a card from the deck as a benefit. Where one did, it grants a deck-reduction relic (`deckSlot1`) instead: Goldbough Avatar's *Offer a card* gives Ascetic's Cord, Wandering Physician's *Let him cut* Threadbare Satchel, Stake of the Martyr's *Pay its price* Pruning Hook (before its random relic). One copy per relic: a held relic is not granted again. The Merchant's paid removal service is not a card effect and stays (*Rewards after combat and merchant prices*).
+- **No card removal as a reward** (owner, 2026-11-20): no card effect, event choice or reward removes a card from the deck as a benefit. Where one did, it grants a deck-reduction relic (`deckSlot1`) instead: Goldbough Avatar's *Offer a card* gives Ascetic's Cord, Wandering Physician's *Let him cut* Threadbare Satchel, Stake of the Martyr's *Pay its price* Pruning Hook (before its random relic). One copy per relic: each choice `requires: { relicNotHeld }` its relic and is closed ("Already held") once the run holds it. The Merchant's paid removal service is not a card effect and stays (*Rewards after combat and merchant prices*).
 
 | # | Event | Choices |
 |---|---|---|

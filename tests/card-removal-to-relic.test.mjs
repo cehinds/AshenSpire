@@ -48,3 +48,15 @@ test('a held deck relic is not granted twice', () => {
   executeRunEffects({ run, registries, rng: createRng(run.seed) }, grant);
   assert.equal(run.relics.filter((id) => id === 'asceticsCord').length, 1);
 });
+
+test('a former removal choice is closed once its relic is held', async () => {
+  const { ChoiceUnmetRequirement } = await import('../src/engine/quests.js');
+  const events = JSON.parse(readFileSync('content/source/events.json', 'utf8'));
+  for (const { eventId, label, relicId } of RELIC_BY_CHOICE) {
+    const choice = events.find((event) => event.id === eventId).choices.find((row) => row.label.startsWith(label));
+    const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+    assert.equal(ChoiceUnmetRequirement(choice, run, registries), null, `${eventId} is open without ${relicId}`);
+    run.relics.push(relicId);
+    assert.equal(ChoiceUnmetRequirement(choice, run, registries), 'relicHeld', `${eventId} closes once ${relicId} is held`);
+  }
+});

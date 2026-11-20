@@ -30,6 +30,9 @@
     "choices": [
       {
         "label": "Offer a card (gain Ascetic's Cord, take 6 damage)",
+        "requires": {
+          "relicNotHeld": "asceticsCord"
+        },
         "effects": [
           {
             "op": "addRelic",
@@ -41,7 +44,7 @@
             "amount": 6
           }
         ],
-        "resultText": "The card turns to gold leaf, and its grip on your hand draws blood."
+        "resultText": "It closes its hand on yours and leaves a cord of gold thread. Its grip draws blood."
       },
       {
         "label": "Pray (heal 20% max HP, gain a Guilt curse)",
@@ -169,6 +172,9 @@
     "choices": [
       {
         "label": "Let him cut (gain Threadbare Satchel, take 4 damage)",
+        "requires": {
+          "relicNotHeld": "threadbareSatchel"
+        },
         "effects": [
           {
             "op": "addRelic",
@@ -738,10 +744,13 @@
     "id": "stakeOfTheMartyr",
     "name": "Stake of the Martyr",
     "art": "⛧",
-    "text": "A gilded thorn stake juts from the path. It offers a relic for one of your cards and some of your blood.",
+    "text": "A gilded thorn stake juts from the path. It offers relics for some of your blood.",
     "choices": [
       {
         "label": "Pay its price (gain Pruning Hook, lose 8% max HP, gain a random relic)",
+        "requires": {
+          "relicNotHeld": "pruningHook"
+        },
         "effects": [
           {
             "op": "addRelic",
