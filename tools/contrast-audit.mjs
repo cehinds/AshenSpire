@@ -131,6 +131,10 @@ const TARGETS = [
   // The Act chip (key `.ck` + value `.cv`) became one gold title in the act
   // route strip, so `Act value` folded into `Act`.
   { screen: MAP, sel: '.act-route-strip .as-title-s', label: 'Act' },
+  // The route strip's two ends. They are the measured riders of --muted
+  // (Entrance) and of --ember (Boss), which the --selftest palette arms dim.
+  { screen: MAP, sel: '.act-route-strip .as-eyebrow[data-role="start"]', label: 'route strip Entrance' },
+  { screen: MAP, sel: '.act-route-strip .as-eyebrow[data-role="boss"]', label: 'route strip Boss' },
   { screen: MAP, sel: '.map-zoom #map-legend', label: 'map ? button' },
   { screen: MAP, sel: '.hint-bar .hint:first-child', label: 'keyboard hint' },
   // Map STRUCTURE (#45): the graph itself — the roads and rings a player reads
@@ -708,26 +712,25 @@ if (args.includes('--selftest')) {
       why: 'the shipped high-contrast --muted dimmed to #5f5748 — the palette edit this gate exists to catch',
       // Named rather than counted: a gate that merely "exits 1" would be
       // satisfied by the standing BLIND rows below and prove nothing new.
-      // The Floor chip and the solo SEED left the header, and the keyboard hint
-      // is now a parchment button; the --muted riders today are the run-meta
-      // chip keys and the resource-bar labels.
+      // The Act chip became a gold title and the resource-bar label is no
+      // longer painted, so the measured --muted rider today is the route
+      // strip's Entrance label.
       expectRows: [
-        { label: 'Act', profile: 'default' },
-        { label: 'Cinders (combat)', profile: 'default' },
-        { label: 'resource bar label (combat)', profile: 'default' },
+        { label: 'route strip Entrance', profile: 'default' },
       ],
     },
     {
-      // THE cb-safe ARM (SPEC §7.5: all three palettes must pass). --bleed is
-      // overridden ONLY under body.cb-safe, so this plant can go red only if the
-      // gate actually judges the cb-safe profile — in `default` the keyword
-      // still derives from --ember and is untouched.
-      name: 'colourblind-safe keyword',
-      find: '  --bleed: #cc79a7;',
-      replace: '  --bleed: #6a3f57;',
-      why: 'the cb-safe --bleed keyword tint dimmed to #6a3f57 — a cb-safe-only palette edit',
+      // THE cb-safe ARM (SPEC §7.5: all three palettes must pass). The plant
+      // edits --ember inside body.cb-safe ONLY, so it can go red only if the
+      // gate actually judges the cb-safe profile — in `default` --ember keeps
+      // its own value. (It rode --bleed until the Bleed keyword stopped being
+      // painted: illustrated card faces carry no keyword spans.)
+      name: 'colourblind-safe ember',
+      find: '  --ember: #d55e00;',
+      replace: '  --ember: #5a2800;',
+      why: 'the cb-safe --ember dimmed to #5a2800 — a cb-safe-only palette edit',
       expectRows: [
-        { label: 'Bleed keyword (card text)', profile: 'cb-safe' },
+        { label: 'route strip Boss', profile: 'cb-safe' },
       ],
     },
     {
