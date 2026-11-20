@@ -114,16 +114,19 @@ test('the Evade cards grant exactly one stack, and Evade reads what it does', ()
   assert.ok(face.every(text => text.startsWith('Gain {evade} Evade.')));
 });
 
-test('Precision is gone from the cards that granted it, and out of every new offer', () => {
-  for (const id of ['core.steadyGuard', 'core.glimpse', 'core.wardingGlance', 'core.palmFlame']) {
+test('Precision is gone from new card effects and Guiding Whisper offers useful regeneration instead', () => {
+  for (const id of ['core.steadyGuard', 'core.glimpse', 'core.wardingGlance', 'core.palmFlame', 'core.guidingWhisper']) {
     const def = reg.cards.get(id);
     for (const effects of [def.effects, def.upgrade?.effects || []]) assert.ok(!effects.some(effect => effect.status === 'precision'), id);
     assert.ok(!/Precision/.test(def.textTemplate), id);
   }
-  assert.ok(reg.cards.has('core.guidingWhisper'), 'saved decks still resolve it');
+  assert.ok(reg.cards.has('core.guidingWhisper'), 'the stable card ID still resolves');
   const { run } = live();
+  run.attributes.wisdom = 10;
+  run.attributes.intelligence = 1;
   const pool = gameProfileRewardPools(reg, run).combatCards;
-  assert.ok(!pool.includes('core.guidingWhisper')); assert.ok(!pool.includes('base.evade'));
+  assert.ok(pool.includes('core.guidingWhisper'), 'the redesigned Divine support card is offered');
+  assert.ok(!pool.includes('base.evade'));
   assert.ok(pool.includes('core.evade'));
 });
 

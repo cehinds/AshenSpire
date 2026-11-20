@@ -99,7 +99,7 @@
           "kind": "text",
           "label": "Dexterity (DEX) states current per-point benefit",
           "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .disc-summary",
-          "includes": "Block"
+          "includes": "Defense"
         },
         {
           "kind": "noOverlap",
@@ -147,7 +147,7 @@
           "kind": "text",
           "label": "Wisdom (WIS) states current per-point benefit",
           "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"]) .disc-summary",
-          "includes": "Poise \u00b7 Divine magic"
+          "includes": "Poise · Divine magic"
         },
         {
           "kind": "noOverlap",

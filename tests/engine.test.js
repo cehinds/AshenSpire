@@ -7269,7 +7269,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,enemyAttackMs,enemyFloaterIntervalMs,combatPacingPreset,animSpeed',
       'auto combat and every pacing dial are under one name, first');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,effects,motionAttack,motionHit,motionIdle,motionDefeat,screenShake,showPlayedCard,manaRing',
+      'askToUpcastAfterTarget,useSprites,effectsMenu,showPlayedCard,manaRing',
       'every quality, shake, sprite, played-card and upcast switch is under one name');
     eq(combatTopics.get('Combat log').map(r => r.key).join(','),
       'combatLogConsole,combatLogPlayerColor,combatLogEnemyColor',
@@ -7295,7 +7295,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the bag that mixed combat pacing with the title entrance is gone');
     eq(displayTopics.get('Title screen').map((r) => r.key).join(','), 'titleCityHold',
       'what is left of it is named for the title screen it actually holds');
-    for (const key of ['combatLogConsole', 'combatLogPlayerColor', 'combatLogEnemyColor', 'useSprites', 'animSpeed', 'effects', 'motionAttack', 'motionHit', 'motionIdle', 'motionDefeat', 'screenShake', 'showPlayedCard',
+    for (const key of ['combatLogConsole', 'combatLogPlayerColor', 'combatLogEnemyColor', 'useSprites', 'animSpeed', 'effectsMenu', 'showPlayedCard',
       'armamentsPresentation', 'armamentsPhonePlacement']) {
       eq(categoryHandler('General').rows.filter((r) => r.key === key).length, 1,
         `${key} has exactly one home in the General tab`);
@@ -9722,6 +9722,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE ROW THE RUN WAS BORN WITH, which is the whole point of the snapshot:
     // the lean creation mode converts at a fifth, so the live tier is a fifth
     // of the authored one and the authored table is not what the receipt reads.
+    // REG is the bare content bundle, which keeps the legacy CON Poise row so
+    // saved runs are not repriced. Profile-bound runs (spellTraditionsVersion 1,
+    // docs/ARCANE-DIVINE-RULES.md) get the Wisdom row instead; that path is
+    // asserted in tests/spell-tradition-combat.test.mjs.
     // The 2026-10-06 default gives Poise base 1 plus one per CON. Reaver's
     // CON 2 gives three attribute Poise before equipment and relics.
     const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;

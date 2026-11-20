@@ -273,13 +273,16 @@ for (const [setup, expected] of PRE_THEME_B_PINNED) {
 // Only their state digests move: the Poise row/base row replaces CON with WIS, its explicit override is recorded, and
 // fixCoreRules.spellTraditionsVersion is added. The control below restores exactly those fields and compares the entire
 // serialized state; full logs, event counts, turns and every RNG counter are unchanged. The prior current pins remain controls.
+// Recaptured 2026-11-19 after the bare content Poise row returned to CON (saved runs keep it; the
+// default profile overrides it with WIS): only the four current state digests moved. assertStatPolicyOnly
+// and PRE_STAT_PINNED still prove logs, RNG and every non-Poise field are unchanged.
 const PRE_STAT_PINNED = [
   { log: 'fb4f923cd562413e', state: '36e3a5b7cdc00165', events: 207, turn: 6 },
   { log: '872df8f1e3aee8e3', state: 'ccaaf6aac67933c5', events: 217, turn: 6 },
 ];
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: 'fab8c6a9fa4c1e58', events: 207, turn: 6 }],
-  [[4242, 'reaver'], { log: '872df8f1e3aee8e3', state: '8ce9e14daf8cf0d5', events: 217, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: '217b3f5a9a66e82a', events: 207, turn: 6 }],
+  [[4242, 'reaver'], { log: '872df8f1e3aee8e3', state: '03eed4d9d0f42378', events: 217, turn: 6 }],
 ];
 function assertStatPolicyOnly(current, previous) {
   assert.deepEqual(current.eventLog, previous.eventLog, 'stat metadata changes no log payload');
@@ -310,8 +313,8 @@ for (const [index, [setup, expected]] of PINNED.entries()) {
 // PERF1 adds only the saved Defend multiplier. Seed4242 has one Smash into Defend: HP7 ->9 and Poise4 ->5.
 // That hit's HP/Poise receipts and subsequent HP snapshots change; event counts, turns and all RNG counters do not.
 const SMASH_PINNED = [
-  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: '7a558c6868e71c92', events: 207, turn: 6 }, '643cecce794d5d7d'],
-  [[4242, 'reaver'], { log: 'd9f8ab14d3786fe3', state: '29b21ebc307d74a2', events: 217, turn: 6 }, 'c20d74fee88cb015'],
+  [['PERF1', 'reaver'], { log: 'fb4f923cd562413e', state: '19f94e054a278428', events: 207, turn: 6 }, '643cecce794d5d7d'],
+  [[4242, 'reaver'], { log: 'd9f8ab14d3786fe3', state: '821b0b320ee2e680', events: 217, turn: 6 }, 'c20d74fee88cb015'],
 ];
 for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) {
   test(`pre-gear current Smash fight ${setup[0]}/${setup[1]} matches genuine Dev and preserves pre-ruling controls`, () => {
