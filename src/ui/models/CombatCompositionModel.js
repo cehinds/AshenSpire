@@ -89,10 +89,10 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
     const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
     const box = actor.slot.box;
     const wanted = box ? { ...actor.slot, ground: box.top + box.height * (1 - grid.footInCellFraction) } : actor.slot;
-    const inner = box ? insetPerspectiveFootprint(wanted, { width: halfWidth * 2, height: shadowHeight, inset: grid.footprintInsetPx * unit }) : null;
-    const stripFits = inner && box.height >= shadowHeight + 2 * grid.footprintInsetPx * unit;
-    // A strip too short for the shadow plus both insets (a landscape phone's 9px strip) stands the foot at its middle, so it stays inside.
-    const ground = inner ? (stripFits ? inner.ground : box.top + box.height / 2) : actor.slot.ground;
+    const insetY = box ? PerspectiveFootInsetY({ cellHeight: box.height, shadowHeight, inset: grid.footprintInsetPx * unit }) : 0;
+    const inner = box ? insetPerspectiveFootprint(wanted, { width: halfWidth * 2, height: shadowHeight, inset: grid.footprintInsetPx * unit, insetY }) : null;
+    // A strip shorter than the shadow itself (a landscape phone's 9px strip) stands the foot at its middle, so it stays inside.
+    const ground = inner ? (box.height >= shadowHeight ? inner.ground : box.top + box.height / 2) : actor.slot.ground;
     const foot = inner ? (actor.side === 'enemy' ? { x: inner.x, ground } : { x, ground }) : { x, ground };
     // A lone player's feet never stand inside the hand area: the ground line
     // moves up to the hand's top edge (the fit already sized the body for it).
@@ -115,18 +115,28 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
   return placed;
 }
 
+// Owner 2026-11-20: the feet stay footInCellFraction above the cell's bottom line. A cell too short to hold the
+// shadow plus footprintInsetPx above and below the foot there shrinks the vertical inset (down to 0) instead of
+// moving the foot; a cell tall enough keeps the full inset.
+export function PerspectiveFootInsetY({ cellHeight, shadowHeight, inset,
+  fraction = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footInCellFraction }) {
+  const room = cellHeight * Math.min(fraction, 1 - fraction) - shadowHeight / 2;
+  return Math.max(0, Math.min(inset, room));
+}
+
 // Constrain the shadow's complete bounding envelope inside its skewed cell.
 // The active kit draws an 8%-high ellipse centred on the sprite's foot.
 // Its full bounding envelope, rather than only its centre, owns this cell.
 // Configured clearance is in physical field pixels, independent of CSS zoom.
+// `insetY` (default `inset`) is the clearance above and below the shadow; `inset` alone keeps it from the side lines.
 // Moving the anchor never refits artwork.
 export function insetPerspectiveFootprint(slot, { width, height = 12,
-  inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx }) {
+  inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx, insetY = inset }) {
   const box = slot.box;
   if (!box) return { x: slot.x, ground: slot.ground };
   const above = height / 2, below = height / 2;
-  const ground = Math.max(box.top + above + inset,
-    Math.min(box.top + box.height - below - inset, slot.ground));
+  const ground = Math.max(box.top + above + insetY,
+    Math.min(box.top + box.height - below - insetY, slot.ground));
   const skew = box.skew || 0;
   const centreAt = y => box.left + box.width / 2 + skew * (box.top + box.height / 2 - y);
   const half = width / 2 + inset;
