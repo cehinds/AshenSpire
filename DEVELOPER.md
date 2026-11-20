@@ -1665,7 +1665,7 @@ Shared enemy IDs, HP ranges, legacy move payloads and AI weights live in
 `games/ashenspire/packs/core/enemyCards.json` owns the referenced cards’ effects and prices.
 At registry creation, the Core profile overlays the authored closing and retreat cards and their range data.
 Each `ai` hint can reference a shared or declared range move with `legacyMove`.
-`coreOffense: "card"` takes damage and hit count from one integer damage effect on an owned card.
+`coreOffense: "card"` takes damage and hit count from one integer damage effect on an owned card. `coreBlock: "card"` (owner, 2026-11-20) takes the move's Block from one integer block effect on an owned card; a profile saved without it keeps the shared move's Block.
 `coreSp: "card"` takes its nonnegative integer stamina cost. Either opt-in works without a closing move.
 `aiWeight` is a finite nonnegative weight and `maxConsecutive` is a positive integer when supplied.
 The sheet checker names invalid hint fields and the runtime adapter checks the resolved card payload.
