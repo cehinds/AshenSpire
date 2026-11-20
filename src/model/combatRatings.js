@@ -753,18 +753,22 @@ export function splitContactParts({ amount, base = amount, ratingBonus = 0, rati
  * PacketSplit({ base, share, physicalBonus, magicBonus, magicMultiplier, total }) -> { physical, magic } of the figure `total` of an element packet
  * hit (a physical hit with a magic share and its own INT / Power stage, owner 2026-11-19). The ONE split the receipt, the live preview and the
  * face all read. Each part starts as its own share of the hit (the card's magic share of its base plus the Power bonus; the rest of the base plus
- * STR / AR); every multiplier of the chain (Vulnerable, stance, weakness) then scales both parts in proportion, and `magicMultiplier` (elemental
- * flux, Burn and the other element stages of the packet's element) weighs the magic part alone.
+ * STR / AR); every multiplier of the chain (Vulnerable, stance, weakness, Burn and the other element stages) then scales both parts in proportion, and
+ * `magicMultiplier` (elemental flux, owner ruling 2026-11-20) weighs the magic part alone: the chain carries it as a factor on the magic share of the hit only.
  */
 export function PacketSplit({ base, share, physicalBonus = 0, magicBonus = 0, magicMultiplier = 1, total }) {
-  const card = Math.max(0, Math.floor(Number(base) || 0));
   const value = Math.max(0, Math.floor(Number(total) || 0));
-  const magicCard = Math.floor(card * Math.min(1, Math.max(0, share)) + 1e-9);
-  const magicWeight = (magicCard + Math.max(0, magicBonus)) * Math.max(0, Number.isFinite(magicMultiplier) ? magicMultiplier : 1);
-  const physicalWeight = card - magicCard + Math.max(0, physicalBonus);
-  const sum = magicWeight + physicalWeight;
+  const weights = PacketWeights({ base, share, physicalBonus, magicBonus });
+  const magicWeight = weights.magic * Math.max(0, Number.isFinite(magicMultiplier) ? magicMultiplier : 1);
+  const sum = magicWeight + weights.physical;
   const magic = sum > 0 ? Math.min(value, Math.floor(value * magicWeight / sum + 1e-9)) : 0;
   return { physical: value - magic, magic };
+}
+/** PacketWeights({ base, share, physicalBonus, magicBonus }) -> { magic, physical }: the two parts of a packet hit before any multiplier. */
+export function PacketWeights({ base, share, physicalBonus = 0, magicBonus = 0 }) {
+  const card = Math.max(0, Math.floor(Number(base) || 0));
+  const magicCard = Math.floor(card * Math.min(1, Math.max(0, share)) + 1e-9);
+  return { magic: magicCard + Math.max(0, magicBonus), physical: card - magicCard + Math.max(0, physicalBonus) };
 }
 
 /** magicDamageTypeOf(profile) → the Ward type a hit's magic part deals: its school's, else its damage type when that is magic. */

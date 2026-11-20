@@ -107,15 +107,29 @@ test('face and preview read exactly the split the live receipt deals (Vulnerable
     const authored = card.effects.find((e) => e.op === 'damage').amount;
     Object.assign(combat.player.ratings, { ar: 10, pr: 10 });
     if (flux) combat.player.elementFlux = flux;
-    const target = combat.enemies[0];
     const row = hit(combat, carrier, authored, patch);
-    const face = PacketFaceSplit(combat, combat.player, carrier, authored, row.incoming, target);
+    const face = PacketFaceSplit(combat, combat.player, carrier, authored, row.incoming);
     assert.deepEqual([face.physical, face.magic], [row.physical, row.magical], `${name}: the face split is the receipt's`);
     seen[name] = row;
   }
   const share = (row) => row.magical / (row.magical + row.physical);
-  assert.ok(seen['fire flux'].magical > seen.plain.magical && share(seen['fire flux']) > share(seen.plain), 'flux weighs the magic part: it takes more of the hit');
-  assert.ok(share(seen['Burn 2']) >= share(seen.plain), 'Burn weighs the magic part');
+  const { ElementFluxRules } = await import('../src/engine/elementFlux.js');
+  const multiplier = ElementFluxRules(live()).multiplier;
+  assert.equal(seen['fire flux'].physical, seen.plain.physical, 'flux never lifts the physical part (owner ruling, 2026-11-20)');
+  assert.ok(Math.abs(seen['fire flux'].magical - Math.floor(seen.plain.magical * multiplier)) <= 1, `the magic part scales by the flux x${multiplier}`);
+  assert.equal(seen['fire flux'].incoming, seen['fire flux'].physical + seen['fire flux'].magical, 'the hit total is physical plus the flux-scaled magic');
+  assert.ok(seen['Burn 2'].incoming >= seen.plain.incoming && Math.abs(share(seen['Burn 2']) - share(seen.plain)) < 0.04, 'Burn scales the whole hit and keeps the proportion');
   assert.ok(seen['Vulnerable 3'].magical > seen.plain.magical && seen['Vulnerable 3'].physical > seen.plain.physical, 'Vulnerable raises both parts');
   assert.ok(Math.abs(share(seen['Vulnerable 3']) - share(seen.plain)) < 0.04, 'and keeps their proportion');
+});
+
+test('a non-packet fire hit still takes flux on the whole hit', () => {
+  const combat = live();
+  const legacy = carrierFor(combat, [{ k: 'tag', tag: 'school:fire', damage: 'fire', damageSchool: 'fire', magicShare: 1 }]);
+  const authored = legacy.card.effects.find((e) => e.op === 'damage').amount;
+  Object.assign(combat.player.ratings, { ar: 10, pr: 10 });
+  const plain = hit(combat, legacy.carrier, authored);
+  combat.player.elementFlux = 'fire';
+  const fluxed = hit(combat, legacy.carrier, authored);
+  assert.ok(fluxed.magical > plain.magical && fluxed.physical === 0 && plain.physical === 0, 'a whole-magic hit has no physical part and its whole hit takes flux');
 });

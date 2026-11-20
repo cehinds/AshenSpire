@@ -2529,7 +2529,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         { const shown = entry.faceValue ?? entry.value;
           tokens[token] = typeof shown === 'number' && (eff.op === 'gainBarrier' || (eff.op === 'applyStatus' && eff.status === 'barrier')) ? shown * BarrierPoisePerStack(combat) : shown; }
         if (eff.op === 'damage' && entry.packetBase !== undefined) {
-          const parts = PacketFaceSplit(combat, p, action.card, entry.packetBase, entry.faceValue ?? entry.value, primary?.kind === 'enemy' ? primary : null);
+          const parts = PacketFaceSplit(combat, p, action.card, entry.packetBase, entry.faceValue ?? entry.value);
           if (parts) { tokens[token] = parts.physical; tokens.packet = parts.magic; entry.packet = parts.magic; }
         }
         if (entry.defenseSplit) {
