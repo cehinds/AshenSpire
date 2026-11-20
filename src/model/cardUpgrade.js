@@ -300,9 +300,14 @@ function addElementPacket(out, card, step) {
     const keepType = (tag) => !tag.startsWith('damage:');
     const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
     for (const key of keys.length ? keys : ['tags']) out[key] = [...(out[key] || card[key] || []).filter(keepType), `damage:${step.damage}`];
+    // The face says it: a second sentence names the magic part, and {damage} then reads the physical part alone (model/playingCard.js, engine/combat.js).
+    const sentence = `Deal {packet} ${PACKET_NAME[step.damage] || step.damage} damage.`;
+    if (typeof card.textTemplate === 'string' && card.textTemplate.includes('{damage}') && !card.textTemplate.includes('{packet}')) out.textTemplate = `${card.textTemplate.replace(/\s+$/, '')} ${sentence}`;
+    if (Array.isArray(card.faceTemplate) && !card.faceTemplate.some((line) => line.includes('{packet}'))) out.faceTemplate = [...card.faceTemplate, sentence];
   }
   return out;
 }
+const PACKET_NAME = Object.freeze({ fire: 'Fire', frost: 'Frost', arcane: 'Arcane', sacred: 'Holy' });
 
 const KEYWORD_OF = { retain: 'retain', innate: 'innate' };
 // The lifecycle tag a keyword carries. Built, not quoted: tools/mechanics-generate.mjs names the first file quoting a tag as the code

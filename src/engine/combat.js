@@ -21,7 +21,7 @@ import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemP
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
 import { selectCardVariant, PlayConditionEnemies, PlayConditionMet } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
-import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
+import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile, PacketFaceSplit } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { previewCardAttackHit, previewTargetFor, precisionEntryGrant } from './stanceHit.js';
 import { stanceStaminaCost, stanceManaCost, stanceEffectiveness, stanceEntryBonuses } from '../model/stanceRules.js';
@@ -2424,6 +2424,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           // The physical type the carrier resolved (a lending weapon, or a technique's wielded weapon) names the face's physical part.
           if (carrier.physicalDamageType) entry.physicalDamageType = carrier.physicalDamageType;
         }
+        // An element packet hit (owner, 2026-11-19) prints its physical part in {damage} and its magic part in {packet}: the card's authored amount rides on the row.
+        if (carrier.magicShare > 0 && carrier.magicShare < 1) entry.packetBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
         // the boosted number. Engine states the fact; display reads it.
@@ -2526,6 +2528,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         // Barrier stacks are printed as the Poise they give (owner, 2026-11-15).
         { const shown = entry.faceValue ?? entry.value;
           tokens[token] = typeof shown === 'number' && (eff.op === 'gainBarrier' || (eff.op === 'applyStatus' && eff.status === 'barrier')) ? shown * BarrierPoisePerStack(combat) : shown; }
+        if (eff.op === 'damage' && entry.packetBase !== undefined) {
+          const parts = PacketFaceSplit(combat, p, action.card, entry.packetBase, entry.faceValue ?? entry.value);
+          if (parts) { tokens[token] = parts.physical; tokens.packet = parts.magic; entry.packet = parts.magic; }
+        }
         if (entry.defenseSplit) {
           tokens[`${token}.block`] = entry.defenseSplit.block;
           tokens[`${token}.ward`] = entry.defenseSplit.ward;

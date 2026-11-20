@@ -749,6 +749,20 @@ export function splitContactParts({ amount, base = amount, ratingBonus = 0, rati
   return { magic, physical };
 }
 
+/**
+ * packetSplit({ base, share, physicalBonus, magicBonus, total }) → { physical, magic } of a face figure `total` for an element packet hit
+ * (a physical hit with a magic share and its own INT / Power stage, owner 2026-11-19): the magic part is the card's magic share of its base
+ * plus the Power bonus, the physical part is the rest (base, STR / AR and every multiplier), the proportions read before any multiplier.
+ */
+export function packetSplit({ base, share, physicalBonus = 0, magicBonus = 0, total }) {
+  const card = Math.max(0, Math.floor(Number(base) || 0));
+  const value = Math.max(0, Math.floor(Number(total) || 0));
+  const magicBefore = Math.floor(card * Math.min(1, Math.max(0, share)) + 1e-9) + Math.max(0, magicBonus);
+  const before = card + Math.max(0, physicalBonus) + Math.max(0, magicBonus);
+  const magic = before > 0 ? Math.min(value, Math.floor(value * magicBefore / before + 1e-9)) : 0;
+  return { physical: value - magic, magic };
+}
+
 /** magicDamageTypeOf(profile) → the Ward type a hit's magic part deals: its school's, else its damage type when that is magic. */
 export function magicDamageTypeOf(profile) {
   const row = damageTypeRules.schools?.[schoolOf(profile)];

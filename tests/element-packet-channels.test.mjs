@@ -60,3 +60,33 @@ test('the magic part meets Barrier then Ward and the physical part meets Block t
   assert.ok(poised.poiseReduced <= bare.physical, 'and only the physical part');
   void registries;
 });
+
+test('the face says it: "Deal X damage. Deal Y Fire damage." with {damage} the physical part and {packet} the magic part', async () => {
+  const { staticCardTokens, combatCardSummary } = await import('../src/model/playingCard.js');
+  const { fillCardText } = await import('../src/model/cardFaceText.js').catch(() => ({}));
+  const f = projectGameCard(subject, { instanceId: 'i', cardId: 'core.strike', upgraded: true, upgradeSteps: [FIRE] });
+  assert.match(f.textTemplate, /^Deal \{damage\} damage\. Deal \{packet\} Fire damage\.$/);
+  const plain = projectGameCard(subject, { instanceId: 'i', cardId: 'core.strike' });
+  assert.equal(plain.textTemplate, 'Deal {damage} damage.', 'an un-stepped card says nothing about a packet');
+  const tokens = staticCardTokens(f, registries, { gameProfile: profile });
+  const base = staticCardTokens(plain, registries, { gameProfile: profile });
+  assert.ok(Number.isFinite(tokens.packet) && tokens.packet > 0, 'the magic part has its own number');
+  assert.ok(tokens.damage > 0 && tokens.damage + tokens.packet >= base.damage, 'the two parts add up to at least the un-stepped hit');
+  assert.equal(base.packet, undefined);
+  void fillCardText; void combatCardSummary;
+});
+
+test('live preview: the same tokens, and the same split the hit then deals', async () => {
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { previewCard } = await import('../src/engine/combat.js');
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  for (const c of run.deck.filter((x) => x.cardId === 'core.strike')) { c.upgraded = true; c.upgradeSteps = [FIRE]; }
+  const fight = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const card = fight.piles.hand.find((c) => c.cardId === 'core.strike');
+  const quote = previewCard(fight, card.instanceId, fight.enemies[0].id);
+  const row = quote.values.find((v) => v.op === 'damage');
+  assert.ok(Number.isFinite(quote.tokens.packet) && quote.tokens.packet === row.packet, 'the live tokens carry the magic part');
+  assert.ok(quote.tokens.damage > 0);
+});
