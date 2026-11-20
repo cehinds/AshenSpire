@@ -167,6 +167,8 @@ test('the player Broken: next turn starts 1 Stamina short, hits x1.5 through tha
   const bare = hpPlain - plain.player.hp;
   const combat = fight(); const player = combat.player, enemy = combat.enemies[0];
   const full = player.energyMax;
+  // A deep pool keeps this about Broken: a fresh Core Reaver has 50 HP (stat contract 2026-11-18, 5 HP per CON) and the second enemy phase would end the fight.
+  player.hp = player.maxHp = 500;
   player.persistentPoise.value = 1;
   primeAccuracyRolls(combat);
   applyAttackDamage(combat, enemy, player, 8, [], carrier);
