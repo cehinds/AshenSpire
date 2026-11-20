@@ -1238,7 +1238,7 @@ Weighted table: `src/content/encounters/weald.js` (§13.2). Act 2/3 rosters are 
 | Grave Wisp | 12–14 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 8 + heals self 4 (50) | kill first |
 | Pack encounter | — | — | 2× Blight Hound + 1 Grave Wisp | teaches targeting |
 
-**Elite — Wyrm Aspirant** (HP 82–86, Poise 24). Opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+**Elite — Wyrm Aspirant** (HP 82–86, Poise 24). Opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 10 Block + 4 HP heal (20, max1). Drops a relic.
 
 **Boss — The Fell Warden** (Margit-inspired, HP 120, Poise 30)
 
@@ -3407,7 +3407,8 @@ All combat values are floored whole numbers. The attacker's chain (Vulnerable, s
 
 ### Defense, Smash and stance bonuses
 
-- Base Defend gives 10 Block; Counter gives floor(Defend Block × 0.5) = 5, before DEX, stance and other bonuses.
+- Base Defend gives 8 Block (10 before the 2026-11-20 retune); Counter gives 5, before DEX, stance and other bonuses. Counter was half of Defend until that retune and keeps its 5.
+- **Block per card** (owner, 2026-11-20): an average Block card, with typical buffs, gives about 8-10 Block, and a single card rarely reaches 20. Core's Defend authors 8 (Counter keeps 5), and no Core enemy move authors more than 12 Block (Nacre Wall, Prism Guard and Golden Bulwark 12; Courtly Decree 11; Pearl Guard, Frozen Bulwark, Harden, Cooling Ash, Kiln Plate, Siege Plate, Iron Litany, Golden Guard, Fortify, Oath Water and Tail Bastion 10). Profiles saved before the retune keep their snapshotted numbers. *Falsify:* `tests/block-per-card-retune.test.mjs`.
 - Stance bonuses (+1 STR offensive stance, +3 DEX defensive stance; +2 STR / DEX / INT from a relic's stance property) apply to Block and damage alike; the card face and preview show the boosted value.
 - **Stance attribute properties** (`stanceAttribute { stance, attribute, n }` in `content/source/itemProperties.json`, relics only; owner, 2026-11-18, #2835): Attacker's, Smasher's, Caster's and Defender's Stance grant +2 STR, STR, INT, DEX while in Attack, Smash, Casting, Defend stance. They replace the old `stanceRating` (+2 AR / DR / PR; a fight saved with it keeps that). The grant is added to the entity's attribute before the channel is priced (`stanceAttributeBonus`, `src/model/stanceRules.js`): the channel is priced with and without it and the difference is the bonus. So Arcane magic reads INT, Divine reads WIS, and shared magic reads max(INT, WIS); an INT stance grant affects only spells whose casting attribute uses it, and a finesse hit's physical channel is priced on its DEX row, not STR. Fight-local: attributes are read, never written.
 - Matching stance multiplies effectiveness by 1.25.
