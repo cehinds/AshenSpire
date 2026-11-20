@@ -33,8 +33,8 @@ Owner request, 2026-11-19. Branch `feature/settings-ui-performance-063de6`.
 - [ ] `combat.js` `render()` re-runs every geometry pass on every action; skip when nothing moved (as `finishRender()` does)
 - [ ] `combat.js:1701` copies the whole event log every render; read from the last-seen index instead
 - [ ] `tooltip.js:693` body-wide observer rescans the whole page on every DOM change; scan only added nodes
-- [ ] CSS that animates forever with Effects off: `pulse-gold` (kit.css), `aimGlow` (combat.css), title glow/embers (ui.css)
-- [ ] Effects off on desktop still keeps every blur and drop-shadow; extend the lite filter rule beyond phones
+- [x] CSS that animates forever with Effects off: all 19 infinite loops now stop (one allowlisted: loading spinner); test `tests/effects-off-infinite-animations.test.mjs`
+- [ ] Effects off on desktop still keeps every blur and drop-shadow. Blocked: owner set filter stripping to phones only (`styles/perf-lite.css`, `tests/perf-lite-css.test.mjs`); needs owner yes/no
 - [ ] Later: `JSON.stringify` render keys in `combat.js` → revision counter
 
 ### Settings tidy (follow-up, not this PR)
