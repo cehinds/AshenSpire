@@ -181,3 +181,26 @@ test('under the real Core profile the static face tokens equal the receipt for a
     assert.deepEqual([tokens.damage, tokens.packet], [row.physical, row.magical], `packet ${packet} + dmg ${dmg}: face ${tokens.damage}/${tokens.packet} vs receipt ${row.physical}/${row.magical}`);
   }
 });
+
+test('the magic part is at least 1: Strike + common packet 2 shows and deals 1 Fire under Core, total unchanged', async () => {
+  const { staticCardTokens } = await import('../src/model/playingCard.js');
+  const { PacketSplit } = await import('../src/model/combatRatings.js');
+  const { resolveGameProfile, bindGameProfileRegistries, applyGameProfileToContent } = await import('../src/model/gameProfile.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { contentBundle } = await import('../src/content/index.js');
+  const core = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, core)), core);
+  const combat = live(); combat.gameProfile = core;
+  Object.assign(combat.player.ratings, { ar: 0, pr: 0 });
+  const f = projectGameCard({ gameProfile: core }, { instanceId: 'i', cardId: 'core.strike', upgraded: true, upgradeSteps: [{ ...FIRE, packet: 2 }] });
+  const authored = f.effects.find((e) => e.op === 'damage').amount;
+  const carrier = tacticalCarrier(f, { cardId: 'core.strike', damageSchool: f.damageSchool, magicShare: f.magicShare, sourceHand: 'right' }, combat, combat.player);
+  const row = hit(combat, carrier, authored);
+  const tokens = staticCardTokens(f, regs, { gameProfile: core, faceAttributes: { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0 } });
+  assert.equal(row.magical, 1, 'the hit deals 1 Fire');
+  assert.deepEqual([tokens.damage, tokens.packet], [row.physical, 1], 'the face shows it too');
+  assert.equal(PacketSplit({ base: 3, share: 0.1, total: 0 }).magic, 0, 'a hit of 0 deals 0');
+  assert.deepEqual(PacketSplit({ base: 3, share: 0.1, total: 1 }), { physical: 0, magic: 1 }, 'physical never below 0');
+  const a = PacketSplit({ base: 20, share: 0.05, total: 7 });
+  assert.equal(a.physical + a.magic, 7, 'the total is unchanged');
+});

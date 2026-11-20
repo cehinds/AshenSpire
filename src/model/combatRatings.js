@@ -762,7 +762,9 @@ export function PacketSplit({ base, share, physicalBonus = 0, magicBonus = 0, ma
   const magicWeight = weights.magic * Math.max(0, Number.isFinite(magicMultiplier) ? magicMultiplier : 1);
   const physicalWeight = weights.physical * Math.max(0, Number.isFinite(physicalMultiplier) ? physicalMultiplier : 1);
   const sum = magicWeight + physicalWeight;
-  const magic = sum > 0 ? Math.min(value, Math.floor(value * magicWeight / sum + 1e-9)) : 0;
+  let magic = sum > 0 ? Math.min(value, Math.floor(value * magicWeight / sum + 1e-9)) : 0;
+  // Owner ruling: a packet's magic part always deals at least 1 of its element. The 1 comes off the physical part (never below 0); a hit of 0 stays 0.
+  if (value > 0 && magic < 1 && share > 0) magic = 1;
   return { physical: value - magic, magic };
 }
 /** PacketWeights({ base, share, physicalBonus, magicBonus }) -> { magic, physical }: the two parts of a packet hit before any multiplier. */
