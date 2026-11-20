@@ -72,13 +72,15 @@ test('add to deck refuses non-card rewards', () => {
 });
 
 // ---- review step UI ----------------------------------------------------------
-import { rewardDom } from './helpers/dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 
 async function withDom(fn) {
-  const dom = { customElements: { define() {}, get: () => true }, HTMLElement: class {}, ...rewardDom() };
-  const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
+  const { globals } = withKitDom((dom, globals) => ({ globals }));
+  const before = Object.fromEntries(Object.keys(globals).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, globals);
+  document.documentElement = document.body;
+  document.getSelection = () => null;
   // The minimal DOM has no insertAdjacentHTML; the equipment face paints with it and is not under test.
   const make = document.createElement.bind(document);
   document.createElement = (...args) => { const node = make(...args); node.insertAdjacentHTML ||= () => {}; return node; };
@@ -176,7 +178,14 @@ test('an armament reward offers Equip now when the Armoury is open, claims first
         onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
         onAddToDeck() { calls.push('add'); }, onEditDeck() { calls.push('deck'); },
         canEditEquipment: gate, onEditEquipment: (i, back) => { calls.push('equip'); back(); }, onContinue() { calls.push('continue'); } });
-      app.querySelector('.reward-pick').click(); app.querySelector('#reward-card-confirm').click();
+      // The face opens the inspect door; the name control is what selects.
+      app.querySelector('.reward-choice-face').click();
+      const inspection = document.querySelector('.card-inspection-modal');
+      assert.ok(inspection, 'an armament face opens the inspect door');
+      inspection.querySelector('.card-inspection-back').click();
+      assert.equal(document.querySelector('.card-inspection-modal'), null, 'Back leaves without claiming');
+      app.querySelector('.reward-pick').click();
+      app.querySelector('#reward-card-confirm').click();
       const equip = app.querySelector('#reward-equip-now');
       assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
       assert.equal(app.querySelector('#reward-edit-deck'), null, 'no deck editor for an item');

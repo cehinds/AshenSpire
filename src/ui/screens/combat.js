@@ -59,7 +59,7 @@ import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, EnemyCastEff
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 import { DecorateRecipientEffects, CreateRecipientEffectState } from '../recipientEffectEvents.js';
-import { PlayRecipientEffectLayers } from '../recipientEffectSprites.js';
+import { PlayRecipientEffectLayers, PrewarmCombatRecipientEffects } from '../recipientEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { createToast } from '../components/toast.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
@@ -264,6 +264,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
+  // Start decoding impact sprites now; never awaited, so the fight is not delayed.
+  void PrewarmCombatRecipientEffects();
   SetFaceCostCombat(combat); // pile faces (no preview) are priced by this fight's stance and loadout, as the hand is
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
