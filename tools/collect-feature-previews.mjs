@@ -13,7 +13,7 @@ const shaPattern = /^[a-f0-9]{40}$/;
 // 44813657232). The newest builds win: a preview built by feature-preview ranks by
 // its run id (newest first), one left from the dev-preview step by its PR number.
 // A PR without a Pages preview still has its CI artifact.
-export const MAX_BRANCH_PREVIEWS = 2;
+export const MAX_BRANCH_PREVIEWS = 3;
 
 /** The entries to publish: all of them when within `max`, else the `max` newest, in their original order. Pure. */
 export function capPreviews(entries, max = MAX_BRANCH_PREVIEWS) {
@@ -106,7 +106,7 @@ export async function collectFeaturePreviews({ repo, out, api, download, warn = 
   mkdirSync(out, { recursive: true });
   // `capped` names the fresh previews the cap left out, so the PR comment says so
   // rather than calling their build failed (pages-builds.yml, capped_prs).
-  writeFileSync(manifest, JSON.stringify({ previews: entries, capped: dropped.map((e) => ({ branch: e.branch, pr: Number(e.pr) || 0 })) }));
+  writeFileSync(manifest, JSON.stringify({ max: maxPreviews, previews: entries, capped: dropped.map((e) => ({ branch: e.branch, pr: Number(e.pr) || 0 })) }));
   return entries;
 }
 

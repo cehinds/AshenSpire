@@ -63,9 +63,10 @@ test('a branch with no open pull request into dev gets no preview, however fresh
   assert.deepEqual(await collectFeaturePreviews(fixture), fixture.original);
 });
 test('the site carries at most MAX_BRANCH_PREVIEWS previews, newest build first', () => {
-  assert.equal(MAX_BRANCH_PREVIEWS, 2);
+  assert.equal(MAX_BRANCH_PREVIEWS, 3);
   const e = [{ branch: 'a', pr: 50 }, { branch: 'b', pr: 51, run: 7 }, { branch: 'c', pr: 52 }, { branch: 'd', pr: 40, run: 9 }];
-  assert.deepEqual(capPreviews(e).kept.map((x) => x.branch), ['b', 'd']);
+  assert.deepEqual(capPreviews(e).kept.map((x) => x.branch), ['b', 'c', 'd'], 'the default cap is MAX_BRANCH_PREVIEWS');
+  assert.deepEqual(capPreviews(e, 2).kept.map((x) => x.branch), ['b', 'd']);
   assert.deepEqual(capPreviews(e, 3).kept.map((x) => x.branch), ['b', 'c', 'd'], 'a run-less entry ranks by PR number');
   assert.deepEqual(capPreviews(e, 3).dropped.map((x) => x.branch), ['a']);
   assert.equal(capPreviews(e, 10).kept, e, 'within the cap nothing moves');
