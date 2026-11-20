@@ -333,11 +333,11 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
 /* Lite performance mode stops the map's endless animations, the same way
    Reduced motion does above (combat.css carries the lite rules for combat).
    Only the motion goes; the reachable, current and shrine cues stay on screen. */
-:root[data-effects='off'] .mapscreen .map-node.current circle { animation: none; }
-:root[data-effects='off'] .mapscreen .map-node.reachable > circle:not(.node-halo) { animation: none; stroke-opacity: 1; }
-:root[data-effects='off'] .mapscreen .map-node .node-halo { animation: none; stroke-opacity: 0.5; }
-:root[data-effects='off'] .mapscreen .map-edge.shrine-lane,
-:root[data-effects='off'] .mapscreen .map-node.shrine-lane > circle:not(.node-halo) {
+:root[data-performance='lite'] .mapscreen .map-node.current circle { animation: none; }
+:root[data-performance='lite'] .mapscreen .map-node.reachable > circle:not(.node-halo) { animation: none; stroke-opacity: 1; }
+:root[data-performance='lite'] .mapscreen .map-node .node-halo { animation: none; stroke-opacity: 0.5; }
+:root[data-performance='lite'] .mapscreen .map-edge.shrine-lane,
+:root[data-performance='lite'] .mapscreen .map-node.shrine-lane > circle:not(.node-halo) {
   animation: none;
   filter: none;
 }
@@ -364,7 +364,7 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
    as flat concrete. */
 .map-fog-ground image { opacity: 1; mix-blend-mode: soft-light; }
 /* Lite: no blend pass over the map; the plate reads as a plain, faint texture instead. */
-:root[data-effects='off'] .map-fog-ground image { mix-blend-mode: normal; opacity: 0.12; }
+:root[data-performance='lite'] .map-fog-ground image { mix-blend-mode: normal; opacity: 0.12; }
 /* Three acts, three washes. Deliberately close to each other and to the panel
    colour — the ground is meant to read as "nothing legible here", not as a
    feature competing with the nodes drawn on top of it. */

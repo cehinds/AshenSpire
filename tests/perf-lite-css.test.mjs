@@ -31,10 +31,10 @@ test('every rule in perf-lite.css is phone Lite, or forced by a Blur or Shadows 
   for (const { selectors } of rules) {
     for (const sel of selectors) {
       if (FORCED_OFF.test(sel)) {
-        assert.ok(!sel.includes("data-effects='off'") && !sel.includes(PHONE_LITE), `a forced-off rule is not device-scoped: ${sel}`);
+        assert.ok(!sel.includes("data-performance='lite'") && !sel.includes(PHONE_LITE), `a forced-off rule is not device-scoped: ${sel}`);
         continue;
       }
-      assert.match(sel, /^:root(:root)?\[data-effects='off'\]/, `not Lite-scoped: ${sel}`);
+      assert.match(sel, /^:root(:root)?\[data-performance='lite'\]/, `not Lite-scoped: ${sel}`);
       assert.ok(sel.includes(PHONE_LITE), `not phone-scoped: ${sel}`);
     }
   }

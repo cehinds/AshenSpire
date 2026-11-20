@@ -6,7 +6,7 @@
 .combat-pose-aura svg { width:100%; height:100%; overflow:visible; fill:none; stroke:currentColor; stroke-width:.85; opacity:.28; }
 /* Empty auras stay still; Lite and mobile retain the visible cue without breathing.
    Keep qualifiers zero-specificity so reduced-motion/flash overrides still win. */
-:where(:root[data-effects="on"]:not([data-form-factor="mobile"])) .combat-pose-aura:where([data-motif]:not([data-motif=""])) svg { animation:pose-aura-breathe 4200ms ease-in-out var(--pulse-delay,0ms) infinite; }
+:where(:root[data-performance="full"]:not([data-form-factor="mobile"])) .combat-pose-aura:where([data-motif]:not([data-motif=""])) svg { animation:pose-aura-breathe 4200ms ease-in-out var(--pulse-delay,0ms) infinite; }
 @keyframes pose-aura-breathe { 0%,100% { opacity:.18; } 50% { opacity:.38; } }
 /* No filter transition: tweening a stacked drop-shadow repainted the whole
    figure every frame for 300ms on each pose change. */
