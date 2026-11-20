@@ -69,8 +69,7 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
   if (stats.secondaryPolicy === 'primaryOnly') {
     for (const row of Object.values(rows)) for (const attribute of STAT_ATTRIBUTES) if (!Object.hasOwn(row, attribute)) row[attribute] = 0;
   }
-  // How many attribute points one +1 of a pool costs, the points it counts from, and the attributes it reads the highest of
-  // (owner, 2026-11-17: SP = 3 + floor((DEX - 1) / 3), MP = 1 + floor((max(INT, WIS) - 1) / 3)).
+  // Points per +1 of a pool and the baseline they count from (2026-11-18 contract: +1 Stamina or Mana per four DEX or WIS).
   for (const [name, points] of Object.entries(stats.pointsPerIncrease || {})) {
     const id = aliases[name] || name;
     rows[id] = { ...(rows[id] || {}), pointsPerIncrease: points };
@@ -78,10 +77,6 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
   for (const [name, baseline] of Object.entries(stats.attributeBaseline || {})) {
     const id = aliases[name] || name;
     rows[id] = { ...(rows[id] || {}), attributeBaseline: baseline };
-  }
-  for (const [name, ids] of Object.entries(stats.maxOf || {})) {
-    const id = aliases[name] || name;
-    rows[id] = { ...(rows[id] || {}), maxOf: [...ids] };
   }
   for (const id of ['openingHand', 'draw']) rows[id] = {
     ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0,
