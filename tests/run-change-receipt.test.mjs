@@ -17,7 +17,8 @@ test('no change is an empty frozen diff', () => {
 test('stat and resource rows carry before, after and delta', () => {
   const d = diff(newRun(), (r) => { r.hp -= 5; r.cinders += 12; r.smithingStones += 1; });
   assert.deepEqual(d.rows.map((r) => [r.kind, r.label, r.before, r.after, r.delta]).sort(), [
-    ['resource', 'CINDERS', '20', '32', 12], ['resource', 'SMITHING STONES', '0', '1', 1], ['stat', 'HP', '71', '66', -5]].sort());
+    // A fresh Core Reaver has 50 HP (stat contract 2026-11-18: 5 maximum HP per CON point).
+    ['resource', 'CINDERS', '20', '32', 12], ['resource', 'SMITHING STONES', '0', '1', 1], ['stat', 'HP', '50', '45', -5]].sort());
 });
 test('a relic gained and lost', () => {
   const run = newRun();
