@@ -601,7 +601,7 @@ export function findings(r) {
     });
   const viaRunHud = (text) => importsRunHud(text)
     && /\$\{[^`]*runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
-  // The configured shop builds its band from a detached node (`band.innerHTML = runHudHtml({…})`), not a template string.
+  // The configured shop builds its band from a detached node (`band.innerHTML = runHudHtml({â€¦})`), not a template string.
   const viaRunHudCall = (text) => importsRunHud(text)
     && /runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
   // Both Rest service policies compose through the same room frame; require
