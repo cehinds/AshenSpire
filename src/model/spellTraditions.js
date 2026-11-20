@@ -2,6 +2,7 @@ import { spellTraditions as rules } from '../content/generated/spellTraditions.j
 import { statRow } from './statRows.js';
 import { statRowValue } from './derivedStats.js';
 import { PrAttributeView } from './fixCoreMechanics.js';
+import { t } from './strings.js';
 
 const traditionIds = Object.freeze(Object.keys(rules.traditions));
 const tagIds = card => (card?.cardTags ?? card?.tags ?? []).map(tag => typeof tag === 'string' ? tag : tag.id);
@@ -62,9 +63,11 @@ export function TraditionSpellPower(ctx, entity, card, previous) {
   return Math.max(0, previous - intrinsic + evaluateSpellRow(row, ctx, entity, attributes, card));
 }
 
+// The words live in uiStrings.csv (card.tradition.*), not in spellTraditions.json:
+// a one-tradition card wears that tradition's name, a shared card wears "Spell".
 export function SpellTraditionLabel(card) {
   const traditions = CardSpellTraditions(card);
-  return traditions.length === 1 ? rules.traditions[traditions[0]].label : 'Spell';
+  return t(traditions.length === 1 ? `card.tradition.${traditions[0]}` : 'card.tradition.shared');
 }
 
 

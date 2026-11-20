@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-20 again for the card.tradition.* uiStrings rows (#2892 review): runtime and
+// current-profile hash leaves only (27).
 // Recaptured 2026-11-20 after merging dev's Sage's Robe signatureMods row into the Arcane/Divine
 // branch: only current-profile profile/runtime/snapshot/save hash leaves moved; the tradition-policy
 // control below still proves events, RNG, receipts and continuations unchanged.

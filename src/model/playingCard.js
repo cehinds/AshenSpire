@@ -1,4 +1,5 @@
 import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
+import { t } from './strings.js';
 import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
 import { CardSpellTraditions, SpellTraditionLabel } from './spellTraditions.js';
@@ -648,9 +649,9 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     type: freeze({
       id: classification.cardCategory,
       label: traditionType ? traditionType.toUpperCase() : classification.cardCategory.toUpperCase(),
-      subtype: traditionType ? classification.cardCategory === 'power' ? 'Power' : null
+      subtype: traditionType ? classification.cardCategory === 'power' ? t('deckEditor.stance.power') : null
         : classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
-      abilityLabel: traditionType ? abilityRank === 0 ? 'Cantrip' : null : abilityLabel,
+      abilityLabel: traditionType ? abilityRank === 0 ? t('deckEditor.rank.cantrip') : null : abilityLabel,
       weaponArt: weaponArt ? 'Weapon Art' : null,
       glyph: abilityLabel ? def.abilityKind === 'spell' ? 'skill' : weaponArt ? 'attack' : 'actions' : null,
       help: abilityLabel ? `${abilityLabel}${weaponArt ? ' · Weapon Art' : ''}. ${rankHelp}` : '',

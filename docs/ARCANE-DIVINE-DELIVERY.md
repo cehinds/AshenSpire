@@ -28,7 +28,9 @@ Merge requested by the owner on 2026-11-19; the PR records the current queue sta
 - [x] Final upgrade audit: every rolled Core card upgrade changes gameplay.
   Final runtime checks total 214 passing tests across 17 suites, including
   the 152-fight damage audit and Reflect/Divine/revive cases.
-- [ ] Remote CI/CD and merged-tree verification: tracked in the feature PR.
+- [x] Merged-tree verification (2026-11-20, PR #2892): core lane 151/0; every
+  non-slow discovered file passes except `preview-restamp-recovery`, which fails
+  identically on `origin/dev` locally (environmental). Remote CI runs on the PR.
 
 The discovered fast suite exercised 1,209 files / 9,452 tests across the
 implementation. Its initial failures were triaged and corrected; focused
@@ -39,7 +41,9 @@ all 9,452 tests passed on the final tree.
 
 - [x] Reconciled current dev's stat-row evaluation, equipment and saved contexts.
 - [x] Added separate reward-policy versioning for profiles that already had casting traditions.
-- [ ] Browser sandbox acceptance and final integrated CI: recorded in the feature PR.
+- [x] Browser sandbox acceptance: `docs/qa/acceptance-spell-traditions.json`,
+  184 PASS / 0 FAIL against `origin/dev` at 1280x800, 390x844, 1920x1080 and
+  1024x768 (PR #2892 body, *Acceptance criteria*).
 
 ## In progress
 
@@ -75,20 +79,11 @@ No requested gameplay or UI feature is intentionally deferred.
   actual four-INT hand-growth cadence.
 - [x] Updated SPEC.md, component catalog and the detailed rules contract.
 
-## Local review
+## Review evidence
 
-Source preview: <http://localhost:8398/index.html?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers,core.rootedShelter,core.stormBlessing,core.rimeVeil&shotDeckEditor=1>
-
-Built preview: <http://localhost:8398/dist/AshenSpire.html?shot=customize>
-
-Browser evidence is in
-`C:\Users\const\AppData\Local\Temp\ashenspire-casting-qa`:
-
-- `wisdom-allocation-mobile.png`: bounded descriptions, Wisdom at 2.
-- `deck-editor-arcane-desktop.png`: Arcane label and rune.
-- `deck-editor-divine-desktop.png`: Divine label and sun.
-- `deck-editor-shared-desktop.png` and `deck-editor-shared-mobile.png`: both sigils.
-- `standalone-shared-mobile.png`: final packaged game with both sigils.
-- `allocation-matrix.json`: 320/390/606/1280 widths, Auto/S/L/XL text sizes.
+Screenshots (before/after, desktop and phone) for every QA scene are published at
+<https://claude.ai/artifact/52NuqcXvNS6kg3b4d9foHe> and linked from the PR #2892
+body. The earlier localhost previews and the local `%TEMP%` evidence folder were
+not published and are superseded by that page and the PR's CI artifacts.
 
 Final gameplay contract: [Arcane and Divine rules](ARCANE-DIVINE-RULES.md).

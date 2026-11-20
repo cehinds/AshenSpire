@@ -244,6 +244,5 @@
       "push": false,
       "knockback": false
     }
-  },
-  "spellTraditionsVersion": 1
+  }
 }
