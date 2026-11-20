@@ -13,9 +13,29 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { progressionStats } from '../src/ui/models/ProgressionInspectionModel.js';
 import { primaryStatCard } from '../src/ui/components/creationCards.js';
 
+// `registries` is the bare content bundle, which keeps the legacy CON Poise row
+// so saved runs are not repriced. The profile-bound Wisdom row is asserted in the
+// first test below and in tests/spell-tradition-combat.test.mjs.
 const registries = createRegistries(configuredContentBundle(contentBundle, {}));
 const run = createRunState({ registries, classId: 'reaver', seed: 7 });
 const cards = (reg, character) => attributeCardModels(reg, character.attributes, { projection: statProjection(reg, character) });
+
+test('current Wisdom and spell disclosures omit retired Ward and use the real configured hand cadence', () => {
+  const profile = resolveGameProfile('core');
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const character = createRunState({ registries: core, classId: 'reaver', seed: 37 });
+  const models = attributeCardModels(core, character.attributes, {
+    projection: statProjection(core, character), gainContext: { run: character },
+  });
+  const wisdom = models.find(row => row.id === 'wisdom');
+  const intelligence = models.find(row => row.id === 'intelligence');
+  assert.equal(wisdom.face.mainSummary, 'Poise · Divine magic');
+  assert.equal(models.find(row => row.id === 'constitution').face.mainSummary, 'Health');
+  assert.ok(wisdom.reveal.lines.every(line => !/Ward|PR/.test(line)));
+  assert.ok(wisdom.reveal.lines.some(line => /Divine magic/.test(line)));
+  assert.ok(intelligence.reveal.lines.some(line => /Hand size \+1 every 4 points/.test(line)));
+  assert.ok(intelligence.reveal.lines.every(line => !/every 5 points/.test(line)));
+});
 
 test('each primary point adds one to its main stats and no other main stat', () => {
   const mains = { ar: 'strength', dr: 'dexterity', hp: 'constitution', poise: 'constitution', ward: 'wisdom', pr: 'intelligence' };
@@ -67,7 +87,7 @@ test('Core faces use current spell and hand rules without rating names or numeri
   const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const character = createRunState({ registries: core, classId: 'reaver', seed: 9 });
   const expected = {
-    strength: 'Physical damage', dexterity: 'Block', constitution: 'Health',
+    strength: 'Physical damage', dexterity: 'Defense', constitution: 'Health',
     wisdom: 'Poise · Divine magic', intelligence: 'Arcane magic',
   };
   for (const wisdom of [1, 5]) {
@@ -86,7 +106,7 @@ test('crossing a multi-point threshold does not add it to the per-point summary'
   for (const dexterity of [1, 2, 3]) {
     character.attributes.dexterity = dexterity;
     const rows = cards(custom, character);
-    assert.equal(rows.find(row => row.id === 'dexterity').face.mainSummary, 'Block');
+    assert.equal(rows.find(row => row.id === 'dexterity').face.mainSummary, 'Defense');
     assert.equal(rows.find(row => row.id === 'intelligence').face.mainSummary, 'Magic damage');
   }
 });

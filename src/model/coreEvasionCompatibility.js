@@ -41,6 +41,9 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:edf0d924c49e924157a7c4250168a0e470ad3cf282f63d7439ab66eca9f8d8b0',
+  'sha256:ac60781b09e46ca4816ac4148f4ff4269760f5d43872ad1db9a507a439274586',
+  'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92',
   'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9',
   'sha256:04de9306278ad81f89b62fa2a2fbde640f6d7ba258fe74e63b9f46cb23d9b0b8',
   'sha256:de42dafc4ec394c607c7c52a5772bdd940728ff863ccfb21508e8a2a05f1d0bc',
@@ -145,11 +148,14 @@ const PREVIOUS_RUNTIMES = new Set([
 // Merging dev (route spread #2847, stance fix #2843) into the rules pass (#2835): 0bf081... and 6ef5d3... are now in PREVIOUS_RUNTIMES.
 // The gear pass mechanics (2026-11-18/19: gear vocabulary, armour type bonuses, Poise bases) merged with dev's 58cd1d... moves it again; 58cd1d... and this branch's 0bf081... are now in PREVIOUS_RUNTIMES.
 // Merging dev (#2835 and the route spread) into the Force, Ward and Pierce rules pass (chore/ForceWardRules): dev's 58cd1d... and this branch's 404f18... are now in PREVIOUS_RUNTIMES.
+// Arcane/Divine (2026-11-18): prior profiles retain their absent version flag
+// and their original Poise snapshot; no saved profile is re-authored.
 // The Defend-only Smash override approves the existing edges again; old combats retain their absent override and shared tuning.
 // Canonical Stone Skin and Fire Thorns mechanic manifests regenerated after Dev integration.
 // Diamond Skin display rename keeps stoneskin and stoneHide identities stable.
 // Combined Gear, stat traditions and Smash rules retain every parent runtime above.
-const FIXED_EVASION_RUNTIME = 'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92';
+// Card tradition labels move to uiStrings.csv (card.tradition.*, #2892 review): wording only, no rule; edf0d9... is now in PREVIOUS_RUNTIMES.
+const FIXED_EVASION_RUNTIME = 'sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

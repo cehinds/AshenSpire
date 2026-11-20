@@ -81,6 +81,10 @@
         2
       ]
     },
+    "spellRewardPolicyVersion": {
+      "type": "integer",
+      "enum": [0, 1]
+    },
     "spellTraditionsVersion": {
       "type": "integer",
       "enum": [

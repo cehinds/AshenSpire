@@ -31,6 +31,8 @@ const def = id => profile.content.cards.find(card => card.id === id);
 
 // Owner 2026-11-14 (playableOnly): a class is never offered a card whose mana cost is above its maximum MP. Owner 2026-11-17:
 // the Reaver's class mana base is 1 (its 1-MP starter card), so a 1-MP card is payable and offered; a dearer one is not.
+const matchesTradition = (classId, id) => !def(id).tags.includes('camp:spell')
+  || def(id).tags.includes(`tradition:${classId === 'herald' ? 'divine' : 'arcane'}`);
 const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -97,17 +99,41 @@ test('resource variants are authored for all four resource modes and agree with 
   }
 });
 
+// Owner 2026-11-19: HP a card takes from its own player (loseHp or damage aimed at
+// self) is a cost, not a benefit. Before this, Wither Draught's 2 self-HP counted
+// as "more" and made it cover Censure; now x covers y only when x costs no more HP.
+const isSelfDamage = e => e.target === 'self' && (e.op === 'loseHp' || e.op === 'damage');
+const amount = (card, key) => card.effects.filter(e => e.op === key && !isSelfDamage(e)).reduce((n, e) => n + (e.amount || 0), 0);
+const selfDamage = card => card.effects.filter(isSelfDamage).reduce((n, e) => n + (e.amount || 0), 0);
+const stacks = card => Object.fromEntries(card.effects.filter(e => e.op === 'applyStatus').map(e => [e.status, e.stacks]));
+// x is at least as good as y in every effect and no dearer in self-HP (so a card that only
+// does more of y's job, for no more cost, makes y dead).
+const covers = (x, y) => {
+  const keys = new Set([...x.effects.map(e => e.op), ...y.effects.map(e => e.op)]);
+  const sx = stacks(x), sy = stacks(y);
+  return [...keys].every(k => k === 'applyStatus' || amount(x, k) >= amount(y, k))
+    && selfDamage(x) <= selfDamage(y)
+    && Object.keys(sy).every(s => (sx[s] || 0) >= sy[s]) && x.keywords.length <= y.keywords.length;
+};
+
+test('the dominance check counts self-damage as a cost, not a benefit', () => {
+  const card = effects => ({ keywords: [], effects });
+  const weak = stacks => ({ op: 'applyStatus', target: 'enemy', status: 'weak', stacks });
+  const selfHp = amount => ({ op: 'loseHp', target: 'self', amount, nonlethal: true });
+  // More of the job but paid for in HP: not strictly better.
+  assert.equal(covers(card([selfHp(2), weak(4)]), card([weak(2)])), false);
+  // The HP-free card doing at least as much does cover the one that costs HP.
+  assert.equal(covers(card([weak(2)]), card([selfHp(2), weak(2)])), true);
+  // Less self-damage for the same job covers; more does not.
+  assert.equal(covers(card([selfHp(1), weak(2)]), card([selfHp(2), weak(2)])), true);
+  assert.equal(covers(card([selfHp(3), weak(2)]), card([selfHp(2), weak(2)])), false);
+  // Damage to the enemy is still a benefit; damage to self is not.
+  assert.equal(covers(card([{ op: 'damage', target: 'enemy', amount: 6 }]), card([{ op: 'damage', target: 'enemy', amount: 5 }])), true);
+  assert.equal(covers(card([{ op: 'damage', target: 'self', amount: 6 }]), card([{ op: 'damage', target: 'self', amount: 5 }])), false);
+});
+
 test('no card is strictly better than a peer it shares a reward pool with, in either direction', () => {
   const all = profile.content.cards.filter(card => card.id.startsWith('core.'));
-  const amount = (card, key) => card.effects.filter(e => e.op === key).reduce((n, e) => n + (e.amount || 0), 0);
-  const stacks = card => Object.fromEntries(card.effects.filter(e => e.op === 'applyStatus').map(e => [e.status, e.stacks]));
-  // x is at least as good as y in every effect (so a card that only does more of y's job, for no more cost, makes y dead).
-  const covers = (x, y) => {
-    const keys = new Set([...x.effects.map(e => e.op), ...y.effects.map(e => e.op)]);
-    const sx = stacks(x), sy = stacks(y);
-    return [...keys].every(k => k === 'applyStatus' || amount(x, k) >= amount(y, k))
-      && Object.keys(sy).every(s => (sx[s] || 0) >= sy[s]) && x.keywords.length <= y.keywords.length;
-  };
   const samePool = (x, y) => x.class === y.class || x.class === 'colorless' || y.class === 'colorless';
   for (const id of ALL) for (const other of all) {
     const a = def(id);
@@ -147,14 +173,14 @@ test('every class sees its new cards more often at depth 4+ than at depth 1-3 (6
   console.log(`new-card share of card offers: ${report.join('; ')}`);
 });
 
-test('offers never cross classes: class cards only reach their own class, colorless reach everyone', () => {
+test('offers respect class, affordability and the stock class spell tradition', () => {
   for (const classId of CLASSES) {
     const seen = new Set(), counts = new Map();
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) { seen.add(id); counts.set(id, (counts.get(id) || 0) + 1); }
     // The Core 2 starter decks hold one of the class's own mana cards (Rogue: Venomed Edge); a basic the class already owns is never offered again.
     const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(BY_CLASS)) for (const id of list) {
-      if (!payable(classId, id)) assert.ok(!seen.has(id), `${classId} was offered ${id} it cannot pay for`);
+      if (!payable(classId, id) || !matchesTradition(classId, id)) assert.ok(!seen.has(id), `${classId} was offered ineligible ${id}`);
       // An owned copy is not forbidden, only weighed at rewards.json ownedCopyWeight (0.05): far rarer than a card the class does not own.
       else if (starter.has(id)) assert.ok((counts.get(id) || 0) * 3 < Math.min(...list.filter(other => !starter.has(other) && payable(classId, other)).map(other => counts.get(other) || 0), Infinity), `${classId} was offered ${id} from its own starter deck as often as a card it does not own`);
       else if (owner === classId || owner === 'colorless') assert.ok(seen.has(id), `${classId} never offered ${id}`);

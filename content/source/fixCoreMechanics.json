@@ -1,6 +1,7 @@
 {
   "version": 1,
   "enabled": true,
+  "spellTraditionsVersion": 1,
   "statusCaps": "none",
   "ward": {
     "enabled": false,
@@ -243,6 +244,5 @@
       "push": false,
       "knockback": false
     }
-  },
-  "spellTraditionsVersion": 1
+  }
 }

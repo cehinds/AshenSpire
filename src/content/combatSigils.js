@@ -1,4 +1,14 @@
 import { CARD_COMPONENTS } from './cardComponents.generated.js';
+import { uiStrings } from './generated/uiStrings.js';
+// Content may not import model/strings.js (tests/layering.test.mjs ranks), so the
+// tradition words are read straight from the generated uiStrings table, loudly.
+const uiRow = (id) => {
+  const row = uiStrings.find(entry => entry.id === id);
+  if (!row?.short || !row.full) throw new Error(`combatSigils: uiStrings row ${id} needs short and full text`);
+  return row;
+};
+const t = (id) => uiRow(id).short;
+const tFull = (id) => uiRow(id).full;
 // Original monochrome marks. Identity comes from authored combat tags, never
 // a card name, damage element, class colour, or inferred effect.
 const mark = (label, shape, help, solid = false) => Object.freeze({ label, shape, help, solid });
@@ -29,6 +39,15 @@ export const SCHOOL_SIGILS = Object.freeze({
   illusion: mark('Illusion', '<path d="M2 16Q16 1 30 16 16 31 2 16Z"/><circle cx="16" cy="16" r="5"/><path d="m6 28 20-24"/>', 'Illusion magic.'),
   divine: mark('Divine', '<circle cx="16" cy="16" r="8"/><path d="M16 4v24M4 16h24M7 7l3 3m12 12 3 3M7 25l3-3M22 10l3-3"/>', 'Divine magic.'),
   decay: mark('Decay', '<path d="M26 5C9 2 3 10 7 22c12 4 20-2 19-17ZM7 25l14-14M12 20l-1-7m6 2 6 1M4 28h.01M27 25h.01"/>', 'Decay magic.'),
+});
+
+// Original scalable silhouettes: a geometric casting seal and a radiant sun.
+// Kept separate from action identities so costs, stances and spell triggers
+// retain the canonical spell camp.
+export const TRADITION_SIGILS = Object.freeze({
+  // Tradition words live in uiStrings.csv (card.tradition.*).
+  arcane: mark(t('card.tradition.arcane'), '<path d="M16 1 30 9v14L16 31 2 23V9Zm0 5L6 12v8l10 6 10-6v-8Zm0 3 7 12H9Zm0 5-3 5h6Z"/>', tFull('card.tradition.arcane'), true),
+  divine: mark(t('card.tradition.divine'), '<path d="M14 1h4v6h-4Zm0 24h4v6h-4ZM1 14h6v4H1Zm24 0h6v4h-6ZM4 6l2-2 5 5-2 2Zm17 17 2-2 5 5-2 2ZM4 26l5-5 2 2-5 5ZM21 9l5-5 2 2-5 5ZM16 8a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm0 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>', tFull('card.tradition.divine'), true),
 });
 
 // A mirror's mark and word. Technique has no mark of its own: it wears the Skill mark under its own word.

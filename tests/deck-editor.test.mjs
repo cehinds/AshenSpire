@@ -17,6 +17,8 @@ import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
+import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
+import { TRADITION_SIGILS } from '../src/content/combatSigils.js';
 import { locationServices, locationTags } from '../src/model/locations.js';
 import { deckEditorModel, deckEditorDoors, deckVariantKey, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
 import { deckEditorCollectionRows } from '../src/ui/models/deckEditorCollectionRows.js';
@@ -1451,13 +1453,13 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     // Canonical Attack identity leaves delivery range to the separate range chip.
     assert.deepEqual(read('ricochet'), ['reach', 'physical'], 'a ranged attack retains its authored Reach delivery');
     assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'attack');
-    // Physical marks carry the approved shield; magical marks carry the Spell sparkle.
+    // Physical marks retain the shield; magic uses its card-face tradition mark.
     const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
     assert.equal(mark('ricochet'), 'physical');
-    assert.equal(mark('cometFragment'), 'spell');
+    assert.equal(mark('cometFragment'), 'arcane');
     const spellMark = row('cometFragment').querySelector('.deck-editor-camp .combat-sigil');
-    assert.equal(spellMark.querySelectorAll('path').length, 1);
-    assert.equal(spellMark.querySelector('path').getAttribute('d'), 'm16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z');
+    assert.ok(spellMark.classList.contains('combat-sigil-tradition'));
+    assert.equal(spellMark.querySelector('path').getAttribute('d'), TRADITION_SIGILS.arcane.shape.match(/<path d="([^"]+)"/)[1]);
     // Phase Ward carries range:melee but attacks nothing: no range.
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.
@@ -1704,6 +1706,40 @@ test('public deck group headings use canonical categories while raw filter kinds
     }
     assert.equal(JSON.stringify(run.deck.filter(card => card.instanceId.startsWith('category-'))), saved,
       'presentation does not migrate saved Counter card references');
+    editor.close();
+  });
+});
+
+test('Reading Desk rows share the card face tradition labels and icons without changing canonical groups', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const cases = [
+    ['core.mindLance', 'Arcane', ['arcane']],
+    ['core.purifyingLight', 'Divine', ['divine']],
+    ['core.cleansingEmbers', 'Spell', ['arcane', 'divine']],
+  ];
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  for (const marker of [1, 0, null]) withDom(() => {
+    const run = createRunState({ seed: 0x5eed, classId: 'reaver', registries });
+    // This is the marker saved by the effects module, rather than a live flag.
+    run.gameProfile = structuredClone(run.gameProfile);
+    run.gameProfile.modules.effects.spellTraditionsVersion = marker;
+    if (marker === null) delete run.gameProfile.modules.effects.spellTraditionsVersion;
+    for (const [id] of cases) run.deck.push({ instanceId: `tradition-${id}`, cardId: id, upgraded: false });
+    const editor = mountDeckEditor(document.body, { registries, run, settings: {} });
+    for (const [id, label, traditions] of cases) {
+      const row = editor.root.querySelector(`[data-instance-id="tradition-${id}"]`);
+      assert.ok(row, id);
+      assert.equal(row.querySelector('.deck-editor-stance').textContent, `${marker === 1 ? label : 'Spell'} · Prepare`);
+      assert.equal(row.querySelectorAll('.deck-editor-camp .combat-sigil-tradition').length, marker === 1 ? traditions.length : 0);
+      assert.equal(row.closest('.deck-editor-group').querySelector('summary').textContent.split(' ·')[0], 'Spell');
+      assert.equal(row.querySelector('.deck-editor-stance').dataset.stance, 'prepare');
+      row.querySelector('.deck-editor-main').dispatchEvent(new Event('focus'));
+      const face = editor.root.querySelector('.deck-editor-inspector .playing-poker-card');
+      assert.ok(face, `${id}: selecting a row renders its face`);
+      assert.equal(face.querySelector('.card-sigil-band').dataset.traditions, marker === 1 ? traditions.join(' ') : undefined);
+      assert.equal(face.querySelectorAll('.combat-sigil-tradition').length, marker === 1 ? traditions.length : 0);
+    }
     editor.close();
   });
 });

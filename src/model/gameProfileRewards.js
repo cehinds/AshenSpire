@@ -18,6 +18,7 @@ import { GearTypeEffectsEnabled } from './gearEffects.js';
 import { GEAR_TYPES } from '../content/gearTypes.js';
 const GEAR_THEME_PERCENT = GEAR_TYPES.themedPercent;
 import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
+import { SpellRewardEligible, BalanceSpellRewardWeights } from './spellPoolPolicy.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -57,7 +58,7 @@ function pools(registries, run, { claim = false } = {}) {
   // Owner 2026-11-14: eligibility.excludeCardIds keeps cards that do nothing without the hit roll (Guiding Whisper) or repeat another
   // (base.evade) out of every new offer and shop. Their definitions stay for saved decks, and a claim still accepts an earlier offer.
   const retired = claim ? null : new Set(rules?.eligibility?.excludeCardIds || []);
-  const cards = definitions.filter(card => rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+  const cards = definitions.filter(card => (claim || SpellRewardEligible(registries, run, card)) && rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
     && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
@@ -156,8 +157,8 @@ function weightedCardPick(registries,run,rule,rng,stream,ids) {
   const isBasic=rule?.depthBias?basicOrCantripMatcher(registries,run):()=>false;
   // Owner 2026-10-31: a card already shown (taken or not) is drawn at rule.offeredCopyWeight per earlier showing; absent/1 is neutral.
   const offered=run.rewardOfferHistory?.cards||{},offeredWeight=Number.isFinite(rule?.offeredCopyWeight)?rule.offeredCopyWeight:1;
-  const weights=ids.map(id=>{const card=defs.get(id);
-    return cardPickWeight(rule,card,owned.get(id)||0)*typeWeight(rule,card)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));}),total=weights.reduce((sum,weight)=>sum+weight,0);
+  const weights=BalanceSpellRewardWeights(registries,run,ids.map(id=>defs.get(id)),ids.map(id=>{const card=defs.get(id);
+    return cardPickWeight(rule,card,owned.get(id)||0)*typeWeight(rule,card)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));})),total=weights.reduce((sum,weight)=>sum+weight,0);
   if(!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
   let roll=rng.float(stream)*total;
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
