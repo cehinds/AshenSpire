@@ -443,10 +443,26 @@ const HELD_TRIGGERS = '.tooltip-keyword, .card-tag-symbol, .inspection-tag';
  * back inside the card inspector.
  */
 export function syncHeldTriggers(root) {
-  for (const el of root.querySelectorAll(HELD_TRIGGERS)) {
-    if (heldBackInCard(el)) { if (el.getAttribute('tabindex') !== '-1') el.tabIndex = -1; if (el.dataset.heldBack !== 'true') el.dataset.heldBack = 'true'; }
-    else if (el.dataset.heldBack === 'true') { el.tabIndex = 0; delete el.dataset.heldBack; }
+  for (const el of root.querySelectorAll(HELD_TRIGGERS)) syncHeldTrigger(el);
+}
+/**
+ * syncAddedHeldTriggers(nodes) — syncHeldTriggers over only the given element nodes (and their
+ * descendants): the page-wide observer hands it what a mutation burst added, so a combat beat that
+ * rewrites a few nodes scans those, not every trigger on the page. Text nodes and nodes already
+ * removed again are skipped; a node inside another listed node is scanned through that one.
+ */
+export function syncAddedHeldTriggers(nodes) {
+  const list = new Set([...nodes].filter(node => node?.nodeType === 1 && node.isConnected !== false));
+  const listedAncestor = node => { for (let up = node.parentElement; up; up = up.parentElement) if (list.has(up)) return true; return false; };
+  for (const node of list) {
+    if (listedAncestor(node)) continue;
+    if (node.matches?.(HELD_TRIGGERS)) syncHeldTrigger(node);
+    syncHeldTriggers(node);
   }
+}
+function syncHeldTrigger(el) {
+  if (heldBackInCard(el)) { if (el.getAttribute('tabindex') !== '-1') el.tabIndex = -1; if (el.dataset.heldBack !== 'true') el.dataset.heldBack = 'true'; }
+  else if (el.dataset.heldBack === 'true') { el.tabIndex = 0; delete el.dataset.heldBack; }
 }
 /** Keep a hand's triggers in step with its cards' selection classes. Returns the stop function. */
 export function watchHeldTriggers(handEl) {
@@ -691,9 +707,15 @@ function wireTitles() {
   };
   // Every card surface (rewards, shop, deck, upgrade previews) drops its held triggers from the tab order, not just the hand.
   if (typeof MutationObserver !== 'undefined' && document.body) {
-    let queued = false;
-    new MutationObserver(() => { if (queued) return; queued = true; queueMicrotask(() => { queued = false; syncHeldTriggers(document.body); }); })
-      .observe(document.body, { childList: true, subtree: true });
+    // Only what each burst added is scanned (perf, 2026-11-19): a page-wide query on every combat beat grew with the board.
+    // A removal cannot leave a held trigger behind, and selection-class changes are the hand's own watcher's (watchHeldTriggers).
+    const added = new Set();
+    new MutationObserver(records => {
+      const first = !added.size;
+      for (const record of records) for (const node of record.addedNodes || []) if (node.nodeType === 1) added.add(node);
+      if (!first || !added.size) return;
+      queueMicrotask(() => { const nodes = [...added]; added.clear(); syncAddedHeldTriggers(nodes); });
+    }).observe(document.body, { childList: true, subtree: true });
     syncHeldTriggers(document.body);
   }
   document.addEventListener('pointerover', adopt, true);

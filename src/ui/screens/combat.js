@@ -1698,9 +1698,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderReactionNote() {
     reactionNote.attach(combatEl);
-    const note = latestReactionNote(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length), { after: reactionNoteSeen,
+    // Only the entries after the last note shown can hold a new one: read that tail, never a copy of the
+    // whole log (it grows all fight, and this runs on every render).
+    const start = Math.max(0, reactionNoteSeen + 1), shown = disp?.logLength ?? combat.eventLog.length;
+    if (start >= shown) return;
+    const note = latestReactionNote(combat.eventLog.slice(start, shown), {
       registries, players: [{ id: 'player', name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name) }], enemies: combat.enemies });
-    if (note) { reactionNoteSeen = note.index; reactionNote.show(note.text); }
+    if (note) { reactionNoteSeen = start + note.index; reactionNote.show(note.text); }
   }
 
   function renderTopbar() {
