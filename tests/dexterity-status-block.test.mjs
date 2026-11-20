@@ -12,6 +12,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
+import { computeBlockGain, gainBlock } from '../src/engine/actions.js';
 
 const registriesFor = profile => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const current = resolveGameProfile('default');
@@ -58,6 +59,23 @@ test('each Dexterity stack adds 1 Block to every later Block card and leaves Blo
   const counter = play(combat, 'core.counter');
   delete combat.player.statuses.dexterity;
   assert.equal(counter - play(combat, 'core.counter'), 3, 'every Block card, not only Defend');
+});
+
+test('protection that is not a played card gets no Dexterity Block (Defend stance, the Dodge Roll guard, a power or status block)', () => {
+  const combat = fight(current);
+  const p = combat.player;
+  const sources = {
+    'Defend-stance turn protection': { skipRatingBonus: true, logSource: 'defendStance' },
+    'the Dodge Roll guard or a power/status block (no card)': null,
+    'a synthetic stance-entry guard': { cardId: null, syntheticDefense: true },
+  };
+  const plain = Object.fromEntries(Object.entries(sources).map(([name, card]) => [name, computeBlockGain(combat, p, 8, card)]));
+  giveDexterity(combat, 3);
+  for (const [name, card] of Object.entries(sources)) assert.equal(computeBlockGain(combat, p, 8, card), plain[name], name);
+  const held = p.block;
+  assert.equal(gainBlock(combat, p, 8, { skipRatingBonus: true, logSource: 'defendStance' }), plain['Defend-stance turn protection'], 'the stance grant itself');
+  assert.equal(p.block, held + plain['Defend-stance turn protection']);
+  assert.equal(computeBlockGain(combat, p, 8, { cardId: 'core.defend' }) - computeBlockGain(combat, p, 8, { cardId: 'core.defend', syntheticDefense: true }), 3, 'a played card still gets it');
 });
 
 test('a run on the saved profile keeps the old rule: the Dexterity status adds no Block', () => {
