@@ -80,6 +80,7 @@ test('Quickstep: Evade, a Counter and a draw', () => {
 
 test('Nightstep pays exactly 1 SP and 1 MP (no spell surcharge), gives Evade 2 and +1 INT this turn', () => {
   const c = fight('progression-nightstep', { stamina: 3 });
+  c.player.mana = 1; // the shared bandsFight helper tops Mana up to 3 for Gale Push (1 MP, owner 2026-11-19); this test pins the Rogue's own one Mana
   assert.equal(c.player.mana, 1, 'the Rogue starts with one Mana');
   const pv = previewCard(c, 'qa0', undefined);
   assert.deepEqual([pv.staminaCost, pv.manaCost], [1, 1]);
