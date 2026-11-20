@@ -554,7 +554,7 @@ test('Reading Desk: deck search and Cards mode preserve the run and Back returns
     openInspector(editor.root.querySelector('.deck-editor-row'));
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
     editor.root.querySelector('[data-focus-key="inspect-back"]').click();
-    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection', 'Back returns to the list');
+    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'deck', 'Back returns to the source deck on desktop');
     assert.deepEqual(editState(run), before);
     editor.close();
   });
@@ -601,12 +601,12 @@ test('Reading Desk: removed cards remain available and Undo restores their deck 
   });
 });
 
-test('Reading Desk: an unordered phone has no mobile tabs; Inspect opens over the list and Back returns to it', async () => {
+test('Reading Desk: unordered decks expose both source tabs; library Inspect returns to the library', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun(), before = editState(run);
     const editor = mountDeckEditor(document.body, { registries: REG, run });
-    assert.equal(editor.root.querySelector('[data-mobile-tab]'), null, 'no phone tabs when the deck is not ordered');
+    assert.equal(editor.root.querySelectorAll('.deck-editor-mobile-tabs .deck-editor-chip').length, 2);
     const tile = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"]');
     tile.querySelector('.deck-editor-main').click();
     openInspector(tile);
@@ -619,7 +619,7 @@ test('Reading Desk: an unordered phone has no mobile tabs; Inspect opens over th
   });
 });
 
-test('Reading Desk: the first press on a card selects it; pressing its art again opens Inspect', async () => {
+test('Reading Desk: the first press anywhere on a card opens Inspect without editing it', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom((dom) => {
     const run = freshRun();
@@ -631,16 +631,19 @@ test('Reading Desk: the first press on a card selects it; pressing its art again
       main.dispatchEvent(new dom.Event('pointerdown', { target: main.querySelector('.deck-editor-art') }));
       main.click();
     };
+    const before = editState(run);
     pressArt();
-    assert.equal(view(), 'collection', 'the first press only selects');
+    assert.equal(view(), 'inspect', 'the first press opens Inspect');
     assert.equal(tile().querySelector('.deck-editor-inline-inspect'), null, 'no (i) badge is drawn');
-    pressArt();
-    assert.equal(view(), 'inspect', 'pressing the selected card art opens Inspect');
+    editor.root.querySelector('[data-focus-key="inspect-back"]').click();
+    tile().querySelector('.deck-editor-main').click();
+    assert.equal(view(), 'inspect', 'a press outside the artwork opens Inspect too');
+    assert.deepEqual(editState(run), before, 'opening and closing Inspect moves no copies');
     editor.close();
   });
 });
 
-test('Reading Desk: removing the inspected final copy returns Back to the list', async () => {
+test('Reading Desk: removing the inspected final copy returns Back to the source deck', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun();
@@ -652,7 +655,7 @@ test('Reading Desk: removing the inspected final copy returns Back to the list',
     editor.root.querySelector('[data-focus-key="selected-remove"]').click();
     assert.equal(run.deck.some(card => card.instanceId === reward.instanceId), false);
     editor.root.querySelector('[data-focus-key="inspect-back"]').click();
-    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection');
+    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'deck');
     editor.close();
   });
 });
@@ -728,7 +731,7 @@ test('Reading Desk: the I key on a focused card opens the inspector, with no (i)
   });
 });
 
-test('Reading Desk: selecting a card draws no (i) and does not navigate or change the deck', async () => {
+test('Reading Desk: selecting a card opens Inspect without an (i) or changing the deck', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun(), before = editState(run);
@@ -736,7 +739,7 @@ test('Reading Desk: selecting a card draws no (i) and does not navigate or chang
     const row = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"]');
     assert.equal(row.querySelector('.deck-editor-inline-inspect'), null, 'no (i) badge is drawn');
     row.querySelector('.deck-editor-main').click();
-    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection');
+    assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
     assert.deepEqual(editState(run), before);
     openInspector(row);
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
@@ -980,9 +983,9 @@ test('DOM: a known attack card shows its stance type on the row and in the inspe
     row.querySelector('.deck-editor-main').click();
     openInspector(row);
     const reason = editor.root.querySelector('.deck-editor-inspector .deck-editor-selected-reason');
-    // A refusal shown on the reason line (here the Strike is already in the
-    // deck) leads the line, and the stance still follows it.
-    assert.equal(reason?.textContent, 'Every Shield Strike you own is already in the deck. · Stance · Attack', 'the refusal leads and the stance follows');
+    // The deck action can set this copy aside, so an unrelated Add refusal
+    // must not appear beside its available Add to library action.
+    assert.equal(reason?.textContent, 'Item-owned · Stance · Attack', 'the stance follows the source without an unrelated refusal');
     assert.equal(editor.root.querySelector('.deck-editor-inspector .deck-editor-reading .deck-editor-stance'), null, 'no stance label over the card face');
     // A library tile with no refusal names the stance on the reason line.
     const clean = deckEditorModel({ registries: REG, run, settings: {} }).collection.find(tile => tile.addable && !tile.refusal && tile.equipmentEligible !== false);
@@ -1039,7 +1042,7 @@ test('DOM: a pressed － keeps focus; when its copy runs out, focus moves to the
   });
 });
 
-test('DOM: on a phone an unordered deck gives LB and RB no pane to reach; an ordered deck still switches', async () => {
+test('DOM: on a phone unordered and ordered decks both switch source panes with the pad', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const had = Object.prototype.hasOwnProperty.call(globalThis, 'matchMedia');
   const previous = globalThis.matchMedia;
@@ -1047,8 +1050,10 @@ test('DOM: on a phone an unordered deck gives LB and RB no pane to reach; an ord
   try {
     withDom(() => {
       const unordered = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
-      assert.equal(unordered.dispatch({ family: 'controller', button: 5 }), false, 'RB does not switch on a phone');
-      assert.equal(unordered.root.querySelector('.deck-editor-panes').dataset.active, 'collection', 'the deck pane stays hidden');
+      assert.equal(unordered.dispatch({ family: 'controller', button: 5 }), true, 'RB switches to the deck on a phone');
+      assert.equal(unordered.root.querySelector('.deck-editor-panes').dataset.active, 'deck');
+      assert.equal(unordered.root.querySelector('.deck-editor').dataset.mobileView, 'deck');
+      assert.equal(unordered.dispatch({ family: 'controller', button: 4 }), true);
       assert.equal(unordered.root.querySelector('.deck-editor').dataset.mobileView, 'collection');
       unordered.close();
       const ordered = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: { playInDeckOrder: true } });
@@ -1061,7 +1066,7 @@ test('DOM: on a phone an unordered deck gives LB and RB no pane to reach; an ord
   }
 });
 
-test('DOM: a disabled inspector ＋ hands focus to its － partner in the same inspector', async () => {
+test('DOM: a spent inspector transfer hands focus to Back', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun();
@@ -1076,12 +1081,12 @@ test('DOM: a disabled inspector ＋ hands focus to its － partner in the same i
     add.focus();
     add.click();
     assert.equal(run.deck.filter(c => deckVariantKey(c) === variant).length, 2);
-    assert.equal(document.activeElement.dataset.focusKey, 'selected-remove', 'focus moves to Remove, not a chip');
+    assert.equal(document.activeElement.dataset.focusKey, 'inspect-back', 'focus stays in the inspector on Back');
     editor.close();
   });
 });
 
-test('DOM: a basic deck row inspects with an enabled Add that adds a copy of its basic', async () => {
+test('DOM: a basic deck row offers Add to library and transfers one copy', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun();
@@ -1091,10 +1096,13 @@ test('DOM: a basic deck row inspects with an enabled Add that adds a copy of its
     assert.ok(strike, 'a basic deck row names its own basic tile');
     editor.root.querySelector(`[data-focus-key="row:${strike.groupKey}"]`).click();
     openInspector(editor.root.querySelector(`[data-focus-key="row:${strike.groupKey}"]`));
-    const add = editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-add"]');
-    assert.equal(add.disabled === true || add.hasAttribute('disabled'), false, 'Add is on for a basic');
-    add.click();
-    assert.equal(run.deck.length, n + 1, 'Add minted a copy of the basic');
+    const transfer = editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-remove"]');
+    assert.equal(editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-add"]'), null);
+    assert.equal(transfer.textContent, 'Add to library');
+    assert.equal(transfer.disabled, false);
+    transfer.click();
+    assert.equal(run.deck.length, n - 1, 'one basic leaves the deck');
+    assert.ok(run.sideboard.some(card => card.instanceId === strike.instanceId));
     editor.close();
   });
 });
@@ -1159,7 +1167,7 @@ test('a set-aside variant in the deck with no sideboard copy: add is refused cle
   edit.cancel();
 });
 
-test('DOM: the inspector offers Add and Remove side by side, each enabled only when it would act', async () => {
+test('DOM: the inspector offers only the transfer appropriate to its source', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun();
@@ -1178,18 +1186,18 @@ test('DOM: the inspector offers Add and Remove side by side, each enabled only w
       openInspector(editor.root.querySelector(`[data-focus-key="row:${groupKey}"]`));
     };
 
-    // Every copy of Gorefire is in the deck: Remove works, Add waits.
+    // The deck offers only Add to library, even if the library owns copies.
     inspectDeckRow(model().deck.find(row => row.cardId === 'gorefireSlash').groupKey);
-    assert.equal(off(add()), true, 'Add is off: its library tile has no copy outside the deck');
+    assert.equal(add(), null, 'the deck inspector has no Add to deck action');
     assert.equal(off(remove()), false, 'Remove is on');
     remove().click();
-    assert.equal(run.deck.includes(card), false, 'Remove takes the copy out');
+    assert.equal(run.deck.some(copy => copy.instanceId === card.instanceId), false, 'the inspected copy moved');
 
     // Its library tile now has a copy outside the deck: Add is on, Remove is off on the tile.
     editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-main`).click();
     openInspector(editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"]`));
     assert.equal(off(add()), false, 'Add is on for a library copy');
-    assert.equal(off(remove()), true, 'Remove is off with no copy in the deck');
+    assert.equal(remove(), null, 'the library inspector has no Add to library action');
     add().click();
     assert.equal(run.deck.length, n, 'Add put a copy back in the deck');
     assert.ok(run.deck.some(c => deckVariantKey(c) === variant), 'the copy is the same variant');
@@ -1197,7 +1205,56 @@ test('DOM: the inspector offers Add and Remove side by side, each enabled only w
   });
 });
 
-test('DOM: a window that narrows to phone width leaves the deck pane; the listener is removed on close', async () => {
+test('DOM: unordered phone source tabs transfer one duplicate copy and Back preserves the source', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const original = run.deck.find(card => card.cardId === 'gorefireSlash');
+    const variant = deckVariantKey(original);
+    run.deck.push({ ...structuredClone(original), instanceId: 'deck-duplicate' });
+    run.sideboard.push(
+      { ...structuredClone(original), instanceId: 'library-duplicate-1' },
+      { ...structuredClone(original), instanceId: 'library-duplicate-2' },
+    );
+    const previousMedia = globalThis.matchMedia;
+    globalThis.matchMedia = query => ({ matches: query === '(max-width: 1000px)' });
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    try {
+      const initial = editState(run);
+      const view = () => editor.root.querySelector('.deck-editor').dataset.mobileView;
+      assert.equal(view(), 'collection', 'the default view remains the library');
+      editor.root.querySelector('[data-focus-key="mobile:deck"]').click();
+      assert.equal(view(), 'deck', 'the unordered phone can reach actual deck copies');
+      const deckRow = deckEditorModel({ registries: REG, run }).deck.find(row => row.cardId === original.cardId);
+      editor.root.querySelector(`[data-focus-key="row:${deckRow.groupKey}"]`).click();
+      assert.equal(editor.root.querySelector('.deck-editor-selected-buttons').children.length, 1);
+      const toLibrary = editor.root.querySelector('[data-focus-key="selected-remove"]');
+      assert.equal(toLibrary.textContent, 'Add to library');
+      toLibrary.click();
+      assert.equal(run.deck.length, initial.deck.length - 1);
+      assert.equal(run.sideboard.length, initial.sideboard.length + 1);
+      assert.ok(run.sideboard.some(card => card.instanceId === deckRow.instanceId), 'the inspected instance moved');
+      assert.equal(run.deck.filter(card => deckVariantKey(card) === variant).length, 1, 'the other deck copy remains');
+      editor.root.querySelector('[data-focus-key="inspect-back"]').click();
+      assert.equal(view(), 'deck', 'Back returns to Your Deck');
+      editor.root.querySelector('[data-focus-key="mobile:collection"]').click();
+      editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-main`).click();
+      assert.equal(editor.root.querySelector('[data-focus-key="selected-remove"]'), null);
+      const beforeBack = editState(run);
+      editor.root.querySelector('[data-focus-key="inspect-back"]').click();
+      assert.deepEqual(editState(run), beforeBack);
+      assert.equal(view(), 'collection', 'library Back returns to Card Library');
+      editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-main`).click();
+      editor.root.querySelector('[data-focus-key="selected-add"]').click();
+      assert.equal(run.deck.length, initial.deck.length);
+      assert.equal(run.sideboard.length, initial.sideboard.length);
+      assert.equal(run.deck.filter(card => deckVariantKey(card) === variant).length, 2);
+      assert.equal(run.sideboard.filter(card => deckVariantKey(card) === variant).length, 2, 'two duplicate library copies remain');
+    } finally { editor.close(); globalThis.matchMedia = previousMedia; }
+  });
+});
+
+test('DOM: narrowing to phone width preserves the deck pane; the listener is removed on close', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const had = Object.prototype.hasOwnProperty.call(globalThis, 'matchMedia');
   const previous = globalThis.matchMedia;
@@ -1216,13 +1273,13 @@ test('DOM: a window that narrows to phone width leaves the deck pane; the listen
       assert.equal(editor.root.querySelector('.deck-editor-panes').dataset.active, 'deck', 'the deck pane stands on desktop');
       query.matches = true;
       for (const fn of [...listeners]) fn({ matches: true });
-      assert.equal(editor.root.querySelector('.deck-editor-panes').dataset.active, 'collection');
-      assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection');
+      assert.equal(editor.root.querySelector('.deck-editor-panes').dataset.active, 'deck');
+      assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'deck');
       const focused = document.activeElement;
       assert.notEqual(focused.tagName, 'INPUT', 'focus never lands in a search box');
       let inPane = null;
       for (let at = focused; at && !inPane; at = at.parentNode) if (at.dataset?.pane) inPane = at.dataset.pane;
-      assert.equal(inPane, 'collection', 'focus is in the collection pane');
+      assert.equal(inPane, 'deck', 'focus stays in the source deck pane');
       editor.close();
       assert.equal(listeners.length, 0, 'the listener is removed on close');
     });
@@ -1257,7 +1314,7 @@ test('DOM: an ordered deck narrowing to phone width shows the pane that holds fo
   }
 });
 
-test('DOM: a phone-width change keeps an open deck-row inspection; Back then lands on the list', async () => {
+test('DOM: a phone-width change keeps an open deck-row inspection and its Back destination', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const had = Object.prototype.hasOwnProperty.call(globalThis, 'matchMedia');
   const previous = globalThis.matchMedia;
@@ -1279,7 +1336,7 @@ test('DOM: a phone-width change keeps an open deck-row inspection; Back then lan
       for (const fn of [...listeners]) fn({ matches: true });
       assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect', 'the inspection stays open');
       editor.root.querySelector('[data-focus-key="inspect-back"]').click();
-      assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection', 'Back lands on the list');
+      assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'deck', 'Back lands on its source deck');
       editor.close();
     });
   } finally {
@@ -1330,19 +1387,19 @@ test('DOM: under the phone inspector the list is inert and hidden from assistive
   }
 });
 
-test('DOM: an ordered deck on a phone shows one Draw order chip, and it toggles the deck view', async () => {
+test('DOM: an ordered deck exposes explicit library and deck source tabs', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const editor = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: { playInDeckOrder: true } });
     const panel = editor.root.querySelector('.deck-editor');
     const chips = editor.root.querySelectorAll('.deck-editor-mobile-tabs .deck-editor-chip');
-    assert.equal(chips.length, 1, 'a single chip');
-    assert.equal(chips[0].textContent, 'Draw order');
+    assert.equal(chips.length, 2);
+    assert.deepEqual([...chips].map(chip => chip.textContent), ['Card Library', 'Your Deck']);
     assert.equal(editor.root.querySelector('[data-mobile-tab]'), null);
-    chips[0].click();
+    editor.root.querySelector('[data-focus-key="mobile:deck"]').click();
     assert.equal(panel.dataset.mobileView, 'deck');
-    assert.equal(editor.root.querySelector('.deck-editor-mobile-tabs .deck-editor-chip').getAttribute('aria-pressed'), 'true');
-    editor.root.querySelector('.deck-editor-mobile-tabs .deck-editor-chip').click();
+    assert.equal(editor.root.querySelector('[data-focus-key="mobile:deck"]').getAttribute('aria-pressed'), 'true');
+    editor.root.querySelector('[data-focus-key="mobile:collection"]').click();
     assert.equal(panel.dataset.mobileView, 'collection');
     editor.close();
   });
@@ -1681,8 +1738,8 @@ test('Reading Desk: Cancel and Escape guard edits, Keep editing preserves them, 
     const main = editor.root.querySelector('.deck-editor-tile .deck-editor-main');
     main.click();
     const buttons = editor.root.querySelector('.deck-editor-selected-buttons');
-    assert.equal(buttons.children[0].dataset.focusKey, 'selected-remove');
-    assert.equal(buttons.children[1].dataset.focusKey, 'selected-add');
+    assert.equal(buttons.children.length, 1);
+    assert.equal(buttons.children[0].dataset.focusKey, 'selected-add');
     editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="remove"]').click();
     assert.equal(editor.root.querySelector('#deck-editor-done').disabled, true);
     assert.equal(editor.root.querySelector('.deck-editor-counter').getAttribute('aria-invalid'), 'true');

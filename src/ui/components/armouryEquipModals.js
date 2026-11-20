@@ -1,11 +1,10 @@
 import { openModal, button, el as buildElement } from '../kit/index.js';
 import { renderEquipmentCard } from './equipmentCard.js';
-import { optionRowList, markOptionRows } from './optionRowList.js';
+import { optionRowList } from './optionRowList.js';
 import { t as translate } from '../strings.js';
 
 const CLICK_EVENT = 'click';
 const SLOT_OPTION_ATTRIBUTE = 'data-slot-option';
-const NO_SCROLL = Object.freeze({ preventScroll: true });
 const BACK_LABEL_KEY = 'common.back';
 const EQUIP_LABEL_KEY = 'armoury.picker.act.equip';
 const CARD_OPTIONS = Object.freeze({
@@ -63,7 +62,7 @@ function buildSlotRowModels(slotOptions)
 function buildEquipButton()
 {
     return button({
-        label: translate(EQUIP_LABEL_KEY),
+        label: translate('common.confirm'),
         weight: 'primary',
         className: 'equip-confirm-equip',
     });
@@ -93,38 +92,33 @@ function renderEquipCard(host, registries, item)
     host.append(cardWrap);
 }
 
-export function OpenSlotChoiceModal({ options, onChoose, opener })
+export function OpenSlotChoiceModal({ options, selectedId = null, onChoose, onBack, opener, host })
 {
     const backButton = buildBackButton();
-    const chooseButton = button({
-        label: translate('common.choose'),
-        weight: 'primary',
-        disabled: true,
-    });
+    const selectedSlotId = options.some(option => option.id === selectedId && !option.disabled) ? selectedId : null;
     let slotList = null;
-    let selectedSlotId = null;
+    let hasChosen = false;
 
     function findFirstEnabledRow()
     {
         const slotRows = slotList?.querySelectorAll(
             `[${SLOT_OPTION_ATTRIBUTE}]`,
         ) || [];
+        const selectedRow = [...slotRows].find(
+            (slotRow) => !slotRow.disabled && slotRow.getAttribute(SLOT_OPTION_ATTRIBUTE) === selectedSlotId,
+        );
         const firstEnabledRow = [...slotRows].find(
             (slotRow) => !slotRow.disabled,
         );
-        return firstEnabledRow || null;
+        return selectedRow || firstEnabledRow || null;
     }
 
-    function selectSlot(slotId, slotRow)
+    function selectSlot(slotId)
     {
-        selectedSlotId = slotId;
-        slotRow?.focus?.(NO_SCROLL);
-        markOptionRows(
-            slotList,
-            SLOT_OPTION_ATTRIBUTE,
-            [slotId],
-        );
-        chooseButton.disabled = false;
+        if (hasChosen) return;
+        hasChosen = true;
+        modal.close();
+        onChoose?.(slotId);
     }
 
     function renderSlotList(host)
@@ -133,32 +127,23 @@ export function OpenSlotChoiceModal({ options, onChoose, opener })
             buildSlotRowModels(options),
             {
                 idAttr: SLOT_OPTION_ATTRIBUTE,
+                selectedId: selectedSlotId,
                 onSelect: selectSlot,
             },
         );
         host.append(slotList);
     }
 
-    function chooseSelectedSlot()
-    {
-        if (selectedSlotId == null)
-        {
-            return;
-        }
-        modal.close();
-        onChoose?.(selectedSlotId);
-    }
-
     const modal = openBackableModal({
         backButton,
-        primaryButton: chooseButton,
         opener,
+        host,
+        onClose: () => { if (!hasChosen) onBack?.(); },
         title: translate('armoury.slot.title'),
         className: 'option-choice equip-slot-choice',
         initialFocus: findFirstEnabledRow,
         body: renderSlotList,
     });
-    chooseButton.addEventListener(CLICK_EVENT, chooseSelectedSlot);
     return modal;
 }
 
@@ -170,6 +155,7 @@ export function OpenEquipConfirmModal({
     onEquip,
     onBack,
     opener,
+    host,
 })
 {
     const backButton = buildBackButton();
@@ -186,6 +172,7 @@ export function OpenEquipConfirmModal({
 
     function equipAndClose()
     {
+        if (hasEquipped) return;
         hasEquipped = true;
         modal.close();
         onEquip?.();
@@ -195,6 +182,7 @@ export function OpenEquipConfirmModal({
         backButton,
         primaryButton: equipButton,
         opener,
+        host,
         onClose: returnToListUnlessEquipped,
         title: buildConfirmTitle(name, slotLabel),
         className: 'equip-confirm-modal',

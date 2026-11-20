@@ -12,9 +12,8 @@
 //   boosts      net attribute change, by attribute, for the rest of the fight (turn boosts included)
 //   turnBoosts  the part of `boosts` that leaves again at the end of the owner's turn
 // The run's own attributes are never written: combat holds its own copies.
-import { statRow } from '../model/statRows.js';
-import { statRowValue } from '../model/derivedStats.js';
-import { PrAttributeView } from '../model/fixCoreMechanics.js';
+import { SpellScalingValue, SpellTraditionsActive } from '../model/spellTraditions.js';
+import { ChannelRowValue as rowValue } from '../model/channelRowValue.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { configuredCombat, profileHandSize } from './gameProfileCombat.js';
 
@@ -45,20 +44,15 @@ export function StatScaledNumber(entity, ids, mode = 'sum') {
 }
 
 /** ElementStatScale(entity, element) -> the attacker's live stat number an element's rule scales by (0 for an element with no stat scale). */
-export function ElementStatScale(entity, element) {
+export function ElementStatScale(entity, element, ctx = null) {
   const rule = ELEMENT_STAT_SCALING[element];
-  return rule ? StatScaledNumber(entity, rule.ids, rule.mode) : 0;
+  if (!rule) return 0;
+  return SpellTraditionsActive(ctx) ? SpellScalingValue(entity?.attributes || {}, { school: element })
+    : StatScaledNumber(entity, rule.ids, rule.mode);
 }
 
 const whole = value => Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
 
-function rowValue(ctx, entity, id, attributes) {
-  const run = { derivedStatRuleSnapshot: entity.kind === 'enemy' ? null : ctx.derivedStatRuleSnapshot, class: entity.kind === 'enemy' ? null : entity.classId };
-  const row = statRow(ctx.registries, run, id);
-  if (!row) return 0;
-  const read = id === 'pr' ? PrAttributeView(ctx, attributes) : attributes;
-  return statRowValue(row, { attributes: read, level: 1, statId: id, lenientAttributes: true }).value;
-}
 
 function attributeRow(entity) {
   return (entity.ratingSources || []).find(row => row.kind === 'attribute') || null;

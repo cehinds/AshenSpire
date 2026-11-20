@@ -36,6 +36,7 @@
 // Batch 3 (Broken wording on cards, relics and the Prepared status; the rank-up bonus pick) moves the runtime hash; the batch-2 hash a4c872... is kept.
 // W25-W (2026-11-15): Ward's Block-first routing (`ward.routing` in fixCoreMechanics.json) and the Barrier -> "Gain N Poise" wording move the runtime hash; batch 3's 753eed... is kept.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:b9c05567d296fc4a2dcf8342d541e54cbc257f4dae6dc3d08533082b48342db7',
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
   'sha256:df30b7dac0b52f363d4875c083955c3efeaf9cebe235ef3e523a2e8d58c0f2e5',
@@ -94,7 +95,7 @@ const PREVIOUS_RUNTIMES = new Set([
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
 // the statusCaps rule key (W25-NC); the Counter stack rule (batch 5); the bands rules (W25-BANDS) with the swapRows op, Upset the Ranks, formation Block and spell lanes (rules 6-9). Then W25-EvadeCards (Evade card data, card modes, the self Advance). Then the Evade card faces, the Quickstep Counter stack and the Evade-grant face phrase (src/model/fixCoreMechanics.js, playingCard.js). Pinned once at the batch-5 + bands + Evade cards merge; 8c57f3... is now in PREVIOUS_RUNTIMES.
-const FIXED_EVASION_RUNTIME = 'sha256:b9c05567d296fc4a2dcf8342d541e54cbc257f4dae6dc3d08533082b48342db7';
+const FIXED_EVASION_RUNTIME = 'sha256:b66130030d195c79fa40400fe5f2a998c3f54835b70ae4b5625732ceb0ff6813';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

@@ -106,7 +106,7 @@ function findOptionDefinition(registries, activeRun, option)
     }
 }
 
-function buildCardOptionFace(registries, activeRun, option, optionIndex)
+function buildCardOptionFace(registries, activeRun, option, optionIndex, inspectionOptions = {})
 {
     const rankFields = option.rank > 1
         ? {
@@ -128,6 +128,7 @@ function buildCardOptionFace(registries, activeRun, option, optionIndex)
             actionOwnsTouch: true,
             infoBadge: true,
             only: [],
+            ...inspectionOptions,
         },
     );
 }
@@ -145,11 +146,11 @@ function buildCollectibleOptionFace(registries, option, definition)
     ).card;
 }
 
-function buildOptionFace(registries, activeRun, option, optionIndex, definition)
+function buildOptionFace(registries, activeRun, option, optionIndex, definition, inspectionOptions = {})
 {
     if (isCardKind(option.kind))
     {
-        return buildCardOptionFace(registries, activeRun, option, optionIndex);
+        return buildCardOptionFace(registries, activeRun, option, optionIndex, inspectionOptions);
     }
     if (option.kind === RANK_UP_KIND)
     {
@@ -157,7 +158,7 @@ function buildOptionFace(registries, activeRun, option, optionIndex, definition)
     }
     if (isEquipmentKind(option.kind))
     {
-        return renderEquipmentCard(registries, definition, READ_ONLY_REWARD_FACE_OPTIONS).card;
+        return renderEquipmentCard(registries, definition, { ...READ_ONLY_REWARD_FACE_OPTIONS, ...inspectionOptions }).card;
     }
     return buildCollectibleOptionFace(registries, option, definition);
 }
@@ -537,6 +538,15 @@ export function MountGameProfileOffers(appRoot, {
 
     function handleFaceClick(face, optionIndex, isCardOption)
     {
+        // The acquisition door owns the choice and the commit. A face press
+        // only selects and reads; its explicit action takes exactly one offer.
+        if (onAddToDeck && (isCardOption || isEquipmentKind(offer.options[optionIndex].kind)))
+        {
+            if (isClaimPending || isCompleted || isReviewing || isOptionSpent(optionIndex)) return;
+            selectOption(optionIndex);
+            openBoundCardInspection(face, face);
+            return;
+        }
         const canInspect = isCardOption
             && selectedIndex === optionIndex
             && !isClaimPending
@@ -554,7 +564,25 @@ export function MountGameProfileOffers(appRoot, {
 
     function buildChoiceFace(option, optionIndex, definition)
     {
-        const face = buildOptionFace(registries, activeRun, option, optionIndex, definition);
+        const isAcquisition = !!onAddToDeck && (isCardKind(option.kind) || isEquipmentKind(option.kind));
+        const inspectionOptions = isAcquisition ? {
+            infoBadge: false,
+            inspectionActions: () => {
+                const canTake = !isClaimPending && !isCompleted && !isReviewing && !isOptionSpent(optionIndex);
+                if (!isCardKind(option.kind)) return [{ id: 'take', verb: translate(CONFIRM_LABEL_KEY), enabled: canTake, reason: '' }];
+                const refusal = addRefusal?.(optionIndex);
+                return [
+                    { id: 'addToDeck', verb: translate('reward.configured.addToDeck'), enabled: canTake && !refusal, reason: refusal ? describeRefusal(refusal) : '' },
+                    { id: 'addToLibrary', verb: translate('reward.configured.addToLibrary'), enabled: canTake, reason: '' },
+                ];
+            },
+            commands: {
+                addToDeck: () => { selectOption(optionIndex); return commitPick(index => onAddToDeck(index)); },
+                addToLibrary: () => { selectOption(optionIndex); return commitPick(takeOptionIfUntaken); },
+                take: () => { selectOption(optionIndex); return commitPick(takeOptionIfUntaken); },
+            },
+        } : {};
+        const face = buildOptionFace(registries, activeRun, option, optionIndex, definition, inspectionOptions);
         face.classList.add('reward-choice-face');
         face.dataset.pickId = String(optionIndex);
         return face;
@@ -577,10 +605,11 @@ export function MountGameProfileOffers(appRoot, {
         const choiceLabel = readChoiceLabel(option, definition);
         if (isFaceRadio)
         {
-            applyRadioRole(face, choiceLabel, isSpent, () => selectOption(optionIndex));
+            applyRadioRole(face, choiceLabel, isSpent, () => handleFaceClick(face, optionIndex, isCardOption));
         }
         const control = buildChoiceControl(choiceLabel, isSpent, optionIndex);
-        control.addEventListener('click', () => selectOption(optionIndex));
+        control.addEventListener('click', () => onAddToDeck && (isCardOption || isEquipmentKind(option.kind))
+            ? handleFaceClick(face, optionIndex, isCardOption) : selectOption(optionIndex));
         column.append(face, control);
         choiceStrip.append(column);
         choices.push({
@@ -818,7 +847,15 @@ export function MountGameProfileOffers(appRoot, {
 
     function openEquipmentEditor()
     {
-        return onEditEquipment(selectedIndex, continueAfterClaim);
+        return onEditEquipment(selectedIndex, equipped =>
+        {
+            if (equipped) return continueAfterClaim();
+            // The reward is already owned; cancelling its equip must leave
+            // Equip and Continue available without claiming another copy.
+            isClaimPending = false;
+            setFooterButtonsDisabled(false);
+            renderFoot();
+        });
     }
 
     function openDeckEditor()

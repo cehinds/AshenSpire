@@ -47,9 +47,12 @@ export function showReading(text,reading){
 }
 // The roomy reading's smallest font (layout px): FACE_BUDGET.minScale of the face's own full size, and never under
 // FACE_BUDGET.minPx on screen; a face whose full size is already below that keeps its full size as the floor.
-export function roomyFloor(high,low,zoom){
-  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(FACE_BUDGET.minPx/zoom,high)));
+export function roomyFloor(high,low,zoom,minPx=FACE_BUDGET.minPx){
+  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(minPx/zoom,high)));
 }
+// A surface may trade a few on-screen pixels of rules type for more visible words;
+// titles and costs keep their authored bounds. Include this input in the fit cache.
+const rulesFontReduction = face => Math.max(0, parseFloat(getComputedStyle(face).getPropertyValue('--card-rules-font-reduction-px')) || 0);
 const GLANCE_LINES = 2;
 // A face's fit is a pure function of its width, its text, its line budgets, the
 // page scale and the loaded fonts, and a full fit is a search of many forced
@@ -74,7 +77,7 @@ function fitSignature(face, width) {
   const { fontSize, zoom } = layoutMetrics();
   const texts = [...face.querySelectorAll('.ic-text[data-auto-fit="true"]')]
     .map(text => `${text.dataset.maxLines}|${text.dataset.minFont}|${text.dataset.maxFont}|${text.dataset.cardBinding}`);
-  return [width, fontEpoch, fontSize, zoom, face.className, face.parentElement?.className, face.dataset.designWidth,
+  return [width, fontEpoch, fontSize, zoom, rulesFontReduction(face), face.className, face.parentElement?.className, face.dataset.designWidth,
     face.dataset.fullRules, face.dataset.cardLayoutId, face.querySelector('[data-face-overflow="true"]') ? 1 : 0,
     face.textContent, texts.join(',')].join('\u0001');
 }
@@ -141,6 +144,7 @@ export function fitIllustratedCards(cards) {
     if(fitSignatures.get(face)===signatures[i]){skipped.add(face);return;}
     resetCardLayout(face);
     const scale=widths[i]/Number(face.dataset.designWidth);
+    const fontReduction=rulesFontReduction(face);
     let textIndex=0;
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
@@ -187,8 +191,9 @@ export function fitIllustratedCards(cards) {
       // Rules shrink until they fit their box, down to the configured on-screen
       // floor (rulesText.minPx). They used to stop at eleven on-screen pixels
       // and then overflow the parchment on a phone-sized card (owner 2026-11-04).
-      row.low=rules?RULES_MIN_PX/zoom:Number(text.dataset.minFont)*scale;
-      row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale);
+      row.fontReduction=rules?fontReduction:0;
+      row.low=rules?Math.max(1,RULES_MIN_PX-row.fontReduction)/zoom:Number(text.dataset.minFont)*scale;
+      row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale-row.fontReduction/zoom);
       texts.push(row);
     }
   });
@@ -210,7 +215,7 @@ export function fitIllustratedCards(cards) {
   // them all, read them all, put back the ones that did not fit) so a hand costs two layouts, not two per card.
   const roomyRows=texts.filter(row=>row.hasRoomy);
   for(const row of roomyRows){
-    row.floor=roomyFloor(row.high,row.low,zoom);
+    row.floor=roomyFloor(row.high,row.low,zoom,Math.max(1,FACE_BUDGET.minPx-row.fontReduction));
     showReading(row.text,'roomy');
     Object.assign(row.text.style,{maxHeight:'none',lineHeight:String(row.lineHeight),fontSize:row.floor+'px',webkitLineClamp:'unset'});
   }

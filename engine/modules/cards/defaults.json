@@ -9,5 +9,6 @@
   "editorEnabled": true,
   "editorWhere": "strategize",
   "faceMaxEffects": 2,
-  "faceMaxLines": 3
+  "faceMaxLines": 3,
+  "handPointsPerIncrease": 1
 }

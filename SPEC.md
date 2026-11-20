@@ -2,6 +2,8 @@
 
 Single-player browser roguelike deckbuilder, mechanically faithful to Slay the Spire, thematically inspired by (legally distinct from) Elden Ring. Companions: `DEVELOPER.md`, `CREDITS.md`.
 
+**Current stat allocation:** [Stat allocation rules](docs/balance/stat-allocation-rules-2026-11-18.md) supersede conflicting older stat descriptions for new Core profiles. Existing runs retain their saved rules.
+
 - Numbers are **initial balance targets** (M3 pass may move them); structures (formulas, orderings, state shapes) are contractual.
 - Two contracts supersede conflicting older prose:
   - [STANCE-COMBAT-RULES](docs/STANCE-COMBAT-RULES.md) (planned) supersedes conflicting older prose in this specification and its combat contracts: revised stance discounts, active ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews, HUD/floaters.
@@ -452,6 +454,7 @@ Key `sote_run_v1`; **three slots, one run each** (`SLOTS`, `save.js`). The persi
 - **Save-safe changes:**
   - A run carrying `attributeMode`, attributes, a flask capacity ledger, level receipts, equipment-profile rules or a `derivedStatRuleSnapshot` keeps them; new presets, formulas, flask allocations and level prices apply to new runs only. Live content tuning of existing ids is allowed.
   - New persisted state must be optional for older saves and deterministically migrated (or get a schema migration) before any current save is written; a missing new field never archives a valid save. Prefer existing opcodes/statuses/snapshots.
+  - `equipmentSlotChoices` is optional per-run UI preference data: item inventory keys map to the last selected `slotId:setIndex`. Slot selection saves the preference before equip confirmation; cancelling never equips an item. Older saves start with no preference, and current equipment eligibility decides whether a remembered destination can be reused.
   - The Rogue/tuning addition is save-safe: the new creation mode gets a new stable id; `standard` and `pointbuy` stay valid with their old validation rules; Rogue adds ids and does not rename or delete any existing class, card, relic, kit, outfit or asset id. Adding those definitions alone needs no run- or profile-schema bump.
 - **Pool-deck mark:** a Sealed or Draft run carries `poolDeckRule` (`RUN_SHAPE`; `POOL_DECK_RULE`, `model/cardRemoval.js`): its deck is held to the attack slots it was dealt. Standard runs never carry it. A pool save from schema ≤19 lacks the mark: the load door heals its quota to the dealt slots once, marks it, notes it. A schema-20+ pool save without the mark is refused by name.
 - **Flask capacity ledger:** `flaskCharges` carries `base`, `grown` (possession door), `granted` (moment door); `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted` (§5.5.2). A v2 save is attributed once at the load door (`initializeRunFlaskCharges`): unaccounted surplus goes to `granted`; `base` comes from `balance.flaskCapacity`, clamped so no charge is invented.
@@ -2593,7 +2596,7 @@ For every seed and every save written before this section:
 Full history: [docs/spec-history/13b-progression.md](docs/spec-history/13b-progression.md).
 
 ## Shared armor sets
-Four `sharedSet` outfits are in every class's Armoury after creation: one identical row per wearer class, on class-scoped armor save keys. Empty unlock means owned; excluded from starting-armour selection and exactly-one-baseline rule. Existing saves stay valid. Equip needs the listed stat at 3.
+Four `sharedSet` outfits have one identical row per wearer class, on class-scoped armor save keys. A fresh run owns only its chosen starting armour; an empty unlock does not grant additional armour. Shared sets enter the run's Armoury only after acquisition (including purchase), recorded in `loadout.boughtArmour` as `{ classId, id }`. They remain excluded from starting-armour selection and the exactly-one-baseline rule. Existing saves keep their worn armour, recorded as acquired at load so it remains available after unequipping. Equip also needs the listed stat at 3.
 
 Bonuses (`outfits.csv`, existing modifiers): Wayfarer Plate (STR) +2 Defend Block, +4 max HP; Nightweave (INT) +1 class-power Potency, +1 max Mana; Rite Vestments (WIS) +1 Defend Block, +6 max HP; Gutter Leathers (DEX) +1 Strike Damage, +1 max Stamina.
 
@@ -3565,7 +3568,8 @@ Owner requests of 2026-11-14 and 2026-11-15 (the "Wave 2.5" list, batch 3). Pres
 
 ### Reward inspection and earned-effect feedback
 
-- Reward choices keep a separate Inspect action (existing read-only inspectors) before collection and during confirmation review. Closing it preserves the selection and review stage; an in-flight claim disables it until the save succeeds or fails.
+- **Contextual card inspection** (owner, 2026-11-19). Merchant card and armament rows show the complete artwork, without a separate information badge below the thumbnail. Clicking anywhere except the row action opens inspection. Inspectors provide Back and the action belonging to their source: Buy at the shop, Play in combat, Add to library for a deck copy, or Add to deck for a library copy. A deck transfer moves exactly one eligible instance, even when the row groups several copies, and respects existing deck restrictions. Configured card reward inspections offer Add to deck and Add to library through the existing claim transaction; Back claims nothing. Combat selection and targeting gestures remain unchanged.
+- Older reward confirmation flows keep a separate read-only Inspect action before collection and during confirmation review. Closing it preserves the selection and review stage; an in-flight claim disables it until the save succeeds or fails.
 - Class and used-weapon level notices show the level transition, visible progression, resolved card-value changes and new unlocks the active rules grant; a level with none says so. Next-benefit previews follow the active authored rules and owned-card context. A saved notice resumes without paying XP or granting effects again. Reduced motion keeps final values visible.
 - Positive status grants (self-buffs and grants from another actor, player or enemy) show the status's one word above the recipient, with a count from 2 ("Strengthened", "Strengthened ×2"; *Statuses always shown* under Wave 2 adjustments (batch 1)). The count is the actual increase after caps and refresh/unique stacking (none shown if nothing added). Buildup and hostile feedback keep their channels. Labels share the overhead queue and add no combat steps or waits.
 

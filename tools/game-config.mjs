@@ -18,6 +18,7 @@ function referenced(base,path) { if (typeof path !== 'string') throw new Error(`
 // browser. The generated data mirrors are derived from the canonical JSON.
 const MECHANIC_RUNTIME_SOURCES = Object.freeze([
   'content/source/fixCoreMechanics.json',
+  'content/source/spellTraditions.json',
   'engine/runtime/bindings.mjs',
   'src/model/formulas.js',
   'src/model/fixCoreMechanics.js',

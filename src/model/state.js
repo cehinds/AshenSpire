@@ -885,6 +885,8 @@ export const RUN_SHAPE = [
   // Optional so a run saved before equipment existed still loads; save.js
   // heals it with a fresh loadout rather than refusing the save.
   { key: 'loadout', type: 'object', optional: true },
+  // UI preferences only; older saves need no default or schema bump.
+  { key: 'equipmentSlotChoices', type: 'object', optional: true },
   // Plan phase 3a. Required at schema 7; a preZones save (≤ 6) is filled at
   // the migration door from the four legacy fields, no registries needed.
   { key: 'zones', type: 'object' },

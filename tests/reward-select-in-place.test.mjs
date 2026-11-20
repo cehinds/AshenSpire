@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewardDom } from './helpers/dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
@@ -11,9 +11,11 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 
 // Owner 2026-11-05: selecting a card must not reload the modal.
 test('selecting a reward card keeps the door and card nodes and updates selection and buttons in place', () => {
-  const dom = rewardDom();
-  const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
+  const { globals } = withKitDom((dom, globals) => ({ globals }));
+  const before = Object.fromEntries(Object.keys(globals).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, globals);
+  document.documentElement = document.body;
+  document.getSelection = () => null;
   try {
     const app = document.createElement('main'); document.body.append(app);
     const offer = { id: 'in-place', options: [{ kind: 'combatCards', id: 'core.strike' }, { kind: 'combatCards', id: 'core.defend' }], taken: [], claimed: null, takeCount: 1 };
@@ -29,6 +31,7 @@ test('selecting a reward card keeps the door and card nodes and updates selectio
     assert.ok(confirm.disabled);
 
     picks[0].click();
+    document.querySelector('.card-inspection-back').click();
     assert.equal(app.querySelector('.reward-door'), door, 'same modal node');
     assert.equal(app.querySelector('.reward-row'), strip);
     assert.equal(door.children.find(node => node.classList.contains('reward-body')), body, 'body is not rebuilt');
@@ -44,6 +47,7 @@ test('selecting a reward card keeps the door and card nodes and updates selectio
     assert.ok(app.querySelector('#reward-keep').isConnected && app.querySelector('#reward-edit-deck').isConnected, 'new buttons are in the footer');
 
     picks[1].click();
+    document.querySelector('.card-inspection-back').click();
     assert.equal(app.querySelector('.reward-door'), door);
     assert.deepEqual([...app.querySelectorAll('.reward-pick')], picks);
     assert.equal(picks[0].getAttribute('aria-checked'), 'false');

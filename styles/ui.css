@@ -1500,7 +1500,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-reading .card .cost > span { display: none; }
 .deck-editor .deck-editor-reading .card .cost { justify-content: center; align-content: center; }
 .deck-editor .deck-editor-reading .card .card-cost-rail > :is(.stamina-cost, .mana-cost) { font-size: max(1.4rem, var(--deck-min-text)); line-height: 1.3; padding: .3rem .5rem; border: 1px solid #796741; background: #181b1e; border-radius: .5rem; }
-.deck-editor-inspect-back { display: none; }
+.deck-editor-inspect-back { display: block; align-self: start; flex: none; }
 .deck-editor-feedback { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #d6bd8e; min-height: var(--deck-editor-target); }
 .deck-editor-feedback[hidden] { display: none; }
 .deck-editor-feedback .deck-editor-undo { min-height: var(--deck-editor-target); min-width: 8rem; }
@@ -1788,6 +1788,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury[data-responsive="phone"] .armament-compact-row .armament-position-actions > button { padding-inline: .7rem; }
 .armoury .ep-list.armoury-split.is-picker-table > .armoury-item-collection { grid-column: 1 / -1; }
 .armoury .equip-picker { display: grid; gap: .8rem; min-width: 0; }
+.armoury-overlay > .armoury[hidden] { display: none; }
+.equip-item-choice .modal-body { min-height: 0; overflow-y: auto; }
+.equip-item-choice .ep-list { margin: 0; }
+.equip-confirm-card { display: flex; justify-content: center; }
+.equip-confirm-card .equipment-poker-card { width: min(24rem, 100%); }
 .armoury .equip-picker-filter { justify-self: end; }
 .armoury .equip-picker-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
 .armoury .equip-picker-table th { text-align: left; font-weight: 600; color: var(--muted); padding: .4rem .6rem; border-bottom: 1px solid var(--line-soft); }

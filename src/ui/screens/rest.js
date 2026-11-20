@@ -475,6 +475,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
       const cards = new Map(attributeCardModels(registries, values, {
         projection: statProjection(registries, run),
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+        gainContext: { run, settings: meta?.settings || {} },
         // The next fight's hand, resolved the way engine/runCombat.js resolves
         // it (`runHandRules`: the run's own rows), so a point here states what
         // it buys in the solo hand (Codex, #1294; #1318).

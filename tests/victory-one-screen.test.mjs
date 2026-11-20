@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { rewardDom } from './helpers/dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { VictorySpoils } from '../src/ui/components/victorySpoils.js';
 import { MountRewards } from '../src/ui/screens/reward.js';
@@ -12,9 +12,11 @@ import { MountRewards } from '../src/ui/screens/reward.js';
 const p = resolveGameProfile('core'), reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, p)), p);
 
 async function withDom(fn) {
-  const dom = { customElements: { define() {}, get: () => true }, HTMLElement: class {}, ...rewardDom() };
-  const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
+  const { globals } = withKitDom((dom, globals) => ({ globals }));
+  const before = Object.fromEntries(Object.keys(globals).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, globals);
+  document.documentElement = document.body;
+  document.getSelection = () => null;
   const make = document.createElement.bind(document);
   document.createElement = (...args) => { const node = make(...args); node.insertAdjacentHTML ||= () => {}; return node; };
   try { await fn(); } finally { for (const [key, value] of Object.entries(before)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } }
@@ -64,6 +66,7 @@ test('Add to deck, Add to library and a relic Confirm leave without a Continue p
       const claim = i => { calls.push('claim'); offer.taken.push(i); offer.claimed = i; };
       MountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', onTake: claim, onAddToDeck: claim, addRefusal: () => '', onContinue() { calls.push('continue'); } });
       app.querySelector('.reward-pick').click();
+      document.querySelector('.card-inspection-back')?.click();
       app.querySelector(button).click(); await settle();
       assert.deepEqual(calls, ['claim', 'continue'], `${kind} ${button}: two clicks (select + take) reach what follows`);
       app.remove();

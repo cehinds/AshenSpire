@@ -32,7 +32,8 @@
       "version": "1.0.0",
       "settings": {
         "fixCoreVersion": 1,
-        "core2ActionRulesVersion": 2
+        "core2ActionRulesVersion": 2,
+        "spellTraditionsVersion": 1
       }
     },
     "statuses": {
@@ -46,8 +47,16 @@
         "upgradeBonuses": {
           "weaponARPerTier": 1,
           "armorDRPerTier": 1,
-          "tierBonusSteps": [1, 1, 2],
-          "tierStoneCosts": [1, 2, 3]
+          "tierBonusSteps": [
+            1,
+            1,
+            2
+          ],
+          "tierStoneCosts": [
+            1,
+            2,
+            3
+          ]
         }
       }
     },
@@ -241,7 +250,8 @@
       "module": "cards",
       "settings": {
         "handBase": "handBase",
-        "handAttribute": "handAttribute"
+        "handAttribute": "handAttribute",
+        "handPointsPerIncrease": "handPointsPerIncrease"
       }
     },
     {

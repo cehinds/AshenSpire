@@ -1,3 +1,4 @@
+import { TraditionSpellPower } from './spellTraditions.js';
 import { DEFAULT_BARRIER_POISE_PER_STACK } from '../content/barrierPoise.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
@@ -490,11 +491,11 @@ export function ratingReceipt(registries, run, config) {
   return { totals, sources, attributeReceipts };
 }
 
-export function ratingValue(ctx, entity, id) {
-  let value = (entity?.ratings?.[id] || 0) + stanceRatingBonus(ctx, entity, id);
+export function ratingValue(ctx, entity, id, carrier = null) {
+  let value = (entity?.ratings?.[id] || 0) + stanceRatingBonus(ctx, entity, id, carrier);
   for (const [status, instance] of Object.entries(entity?.statuses || {})) value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
-  return Math.max(0, value);
+  return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);
 }
 
 /**
@@ -517,9 +518,9 @@ export function carrierHasTag(ctx, carrier, tag) {
   return [...(carrier?.tags || def?.tags || []), ...(carrier?.cardTags || [])].includes(tag);
 }
 
-export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false) {
-  if ((!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id);
-  let value = stanceRatingBonus(ctx, entity, id);
+export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false, carrier = null) {
+  if ((!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id, carrier);
+  let value = stanceRatingBonus(ctx, entity, id, carrier);
   for (const source of entity.ratingSources) {
     if (source.kind !== 'equipment') value += Number(source[id]) || 0;
     else if (sourceArmamentId && (source.sourceId === sourceArmamentId || source.sourceId === `armament/${sourceArmamentId}`)
@@ -529,7 +530,7 @@ export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentSc
     value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
   }
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
-  return Math.max(0, value);
+  return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);
 }
 
 export function isMagicalAttack(ctx, carrier) {

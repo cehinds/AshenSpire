@@ -289,6 +289,8 @@ export function createCombat({
   };
   if (fixCoreEnabled(combat)) {
     combat.fixCoreRules = snapshotFixCoreRules(combat);
+    if (gameModule(combat, 'effects')?.spellTraditionsVersion === 1) combat.fixCoreRules.spellTraditionsVersion = 1;
+    else delete combat.fixCoreRules.spellTraditionsVersion;
     // Stamp v2 only when the run's own profile carries the current rules; a run started on an older profile keeps v1.
     combat.core2ActionRulesVersion = Math.min(CORE2_ACTION_RULES_VERSION, gameModule(combat, 'effects')?.core2ActionRulesVersion ?? 1);
     if (combat.reactionRulesVersion === 2) combat.reactionRules.contactPolicy = 'perHit';

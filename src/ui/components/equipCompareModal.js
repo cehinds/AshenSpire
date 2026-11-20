@@ -208,7 +208,7 @@ function buildBackButton()
 function buildEquipButton()
 {
     return button({
-        label: translate('armoury.picker.act.equip'),
+        label: translate('common.confirm'),
         weight: 'primary',
         className: 'equip-compare-equip',
     });
@@ -343,6 +343,7 @@ export function MountEquipCompareModal(
 
     function confirmEquip()
     {
+        if (isClosed) return;
         close({ restoreFocus: false });
         onEquip?.();
     }

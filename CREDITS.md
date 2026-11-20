@@ -889,11 +889,23 @@ The 73 additional status/mineral cutouts reuse existing project proposal PNGs by
 
 Original OpenAI image-generated pixel effects, reviewed in the local
 `scratch/recipient-effects/front-on-v4`, `composed-v5`, and `overlay-v6` source
-packages. The 35 runtime strips stage as `assets/recipient-effects/v5/*.png` in
+packages. The 35 runtime strips ship as `assets/recipient-effects/v5/*.png` in
 both art tiers. Original raw PNGs, exact generation prompts, extraction records
 and SHA-256 hashes are preserved in the explicit intake package's
 `provenance/recipient-effects/v5/` tree and `recipient-effects-catalog.json`.
 The [recipient-effect guide](docs/RECIPIENT-EFFECTS.md) documents the source and
-export command. No third-party artwork or license is claimed; no published
-art-release URL exists yet. Ward and Evade reuse each affected actor's existing
+export command. No third-party artwork or license is claimed. The pinned
+[v29 art release](https://github.com/cehinds/AI-Art/releases/tag/ashenspire-hd-assets-v29)
+and its [reviewed provenance](https://github.com/cehinds/AI-Art/tree/ashenspire-hd-assets-v29/provenance/recipient-effects/v5)
+preserve the shipped strips and source records. Ward and Evade reuse each affected actor's existing
 artwork and attribution rather than the demonstration silhouette sprite.
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/recipient-effects/` | The 35 original OpenAI image-generated strips under `v5/`; [recipient-effect guide](docs/RECIPIENT-EFFECTS.md) and [v29 provenance](https://github.com/cehinds/AI-Art/tree/ashenspire-hd-assets-v29/provenance/recipient-effects/v5) preserve exact prompts, raw PNGs, extraction records and source/export hashes. | No third-party artwork or license is claimed. The recorded generation provenance is preserved; this attribution row grants no additional artwork rights. |
+
+### Enemy concept catalog metadata (2026-11-18)
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `asset-data/enemy-concepts/` | The local [catalog](asset-data/enemy-concepts/manifest.json) and [guide](asset-data/enemy-concepts/README.md) index 32 disabled designs from `cehinds/AI-Art`'s `ashenspire` art tree. They record source-manifest paths, suggested roles/seats, frame mappings and tier registration; no artwork is embedded in this directory. | Catalog metadata and documentation are covered by the project's [MIT licence](LICENSE). Referenced artwork remains separate; the metadata does not establish or extend its artwork rights. |

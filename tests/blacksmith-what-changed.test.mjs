@@ -38,8 +38,13 @@ function smithRun(registries, { stones = 3, cinders = 2000, seed = 31 } = {}) {
 }
 const strike = (run) => run.deck.find((c) => c.cardId === 'core.strike');
 
-import { withKitDom } from './helpers/dom.mjs';
+import { withKitDom as baseDom } from './helpers/dom.mjs';
 import { mountBlacksmith } from '../src/ui/screens/blacksmith.js';
+function withKitDom(fn) {
+  const timers = [], timeout = globalThis.setTimeout;
+  globalThis.setTimeout = (...args) => { const timer = timeout(...args); timers.push(timer); return timer; };
+  try { return baseDom(fn); } finally { for (const timer of timers) clearTimeout(timer); globalThis.setTimeout = timeout; }
+}
 
 const mount = (dom, run) => {
   const app = dom.document.createElement('main');
@@ -58,6 +63,7 @@ test('buying a tiered armament opens a receipt with the armament, its stat rows 
     assert.ok(buy, 'a buy button is drawn');
     const cinders = run.cinders;
     buy.click();
+    dom.document.querySelector('.confirmation-confirm').click();
     assert.ok(run.cinders < cinders, 'the purchase committed');
     const modal = receipt(dom);
     assert.ok(modal, 'receipt open');
@@ -75,6 +81,7 @@ test('a refused purchase opens no receipt and keeps the inline refusal', () => {
     const buy = [...app.querySelectorAll('button')].find((b) => b.textContent === 'Buy');
     run.cinders = 0; // goes stale after the screen drew it as affordable
     buy.click();
+    dom.document.querySelector('.confirmation-confirm').click();
     assert.equal(receipt(dom), null);
     assert.ok(app.querySelector('.bs-refusal'), 'inline refusal');
   });

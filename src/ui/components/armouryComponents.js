@@ -30,7 +30,26 @@ export function renderArmouryOverlay(model) {
   return wrap;
 }
 
-export function renderArmouryPanel(model, wrap, { back = null, primary = null, tabs = null, onTab = null } = {}) {
+export function renderArmouryPanel(model, wrap, { back = null, primary, tabs = null, onTab = null } = {}) {
+  const retained = wrap.__armouryPanel;
+  if (retained?.panel.parentNode === wrap) {
+    const props = model.properties;
+    retained.panel.classList.toggle('picking', !!props.picking);
+    retained.panel.dataset.figure = props.figure ? '1' : '0';
+    retained.panel.dataset.slots = props.slots;
+    retained.panel.dataset.view = props.view;
+    for (const tab of tabs || []) {
+      const control = retained.panel.querySelector(`[data-modal-tab="${tab.id}"]`);
+      if (control) {
+        control.setAttribute('aria-selected', String(!!tab.selected));
+        control.tabIndex = tab.selected ? 0 : -1;
+      }
+    }
+    if (back && retained.back) retained.back.textContent = back.textContent;
+    retained.onTab = onTab;
+    if (primary !== undefined) retained.setPrimary(primary);
+    return retained;
+  }
   const header = ChildModel(model, UI.armouryHeader);
   const body = DescendantModel(model, UI.armouryBody);
   const inventory = DescendantModel(model, UI.armouryInventory);
@@ -63,8 +82,9 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
   if (model.properties.notice) {
     pane.prepend(blocker(model.properties.notice, { attrs: { class: 'armoury-notice', role: 'status' } }));
   }
+  const state = { onTab };
   const head = ModalHead({
-    title: header.properties.title, tabs, onTab,
+    title: header.properties.title, tabs, onTab: id => state.onTab?.(id),
     titleId: 'armoury-title',
     showMenuButton: false,
     closeLabel: header.properties.closeLabel,
@@ -83,10 +103,21 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
   // The footer: Back bottom-left, the primary bottom-right; alone, Back spans
   // the foot. `setPrimary` swaps the primary slot when the selection changes.
   const setPrimary = (primaryNode) => {
-    const foot = modalFooter({ secondary: back ? [back] : [], primary: primaryNode, size: 'medium' });
+    const backCopy = back?.cloneNode(true);
+    const foot = modalFooter({ secondary: backCopy ? [backCopy] : [], primary: primaryNode, size: 'medium' });
     foot.classList.add('armoury-foot');
     const current = panel.querySelector(':scope > .armoury-foot');
-    if (current) current.replaceWith(foot); else panel.appendChild(foot);
+    if (current) {
+      const actions = current.querySelector('.modal-foot-actions');
+      const fresh = foot.querySelector('.modal-foot-actions');
+      for (const [key, value] of Object.entries(fresh.dataset)) actions.dataset[key] = value;
+      for (const child of [...actions.children]) if (child !== back) child.remove();
+      if (primaryNode) actions.append(primaryNode);
+      if (backCopy && back) for (const [key, value] of Object.entries(backCopy.dataset)) back.dataset[key] = value;
+      return current;
+    }
+    if (backCopy) backCopy.replaceWith(back);
+    panel.appendChild(foot);
     return foot;
   };
   setPrimary(primary);
@@ -96,7 +127,7 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
   markUiComponent(wrap.querySelector('.armoury-inventory'), inventory.component, inventory.variant);
   markUiComponent(wrap.querySelector('.armoury-strip'), cards.component, cards.variant);
   markUiComponent(wrap.querySelector('.armoury-stats-tray'), stats.component, stats.variant);
-  return {
+  const result = Object.assign(state, {
     panel,
     left: wrap.querySelector('.armoury-left'),
     right: wrap.querySelector('.armoury-right'),
@@ -108,7 +139,10 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null, t
     close: wrap.querySelector('.armoury-close'),
     pane,
     setPrimary,
-  };
+    back,
+  });
+  wrap.__armouryPanel = result;
+  return result;
 }
 
 /** The image dies quietly if the file is missing — the single-file dist and file:// play depend on this. */

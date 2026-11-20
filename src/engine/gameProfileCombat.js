@@ -1,6 +1,7 @@
 import { applyStatus } from './statuses.js';
 import { ItemHandBonus, QueueItemStanceEntry, ItemIncomingPercent, ItemPoiseExtra } from './itemPropertyHooks.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
+import { SpellTraditionsActive, SpellTraditionLabel, TraditionSpellPower } from '../model/spellTraditions.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
@@ -14,7 +15,7 @@ import { hitWeaknessTriggers, matchingHitWeaknesses, weaknessLabel } from './wea
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
 import { gameContent } from '../model/gameProfile.js';
-import { configuredModule } from '../model/profileModule.js';
+import { ConfiguredCombat as configuredCombat, configuredModule } from '../model/profileModule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
 import { AttackDamageMultiplier, PoiseLossAdjust } from './stanceBenefits.js';
@@ -29,12 +30,7 @@ export function isPierceHit(profile, carrier) {
   return tags.includes('pierce') || tags.includes('damage:piercing')
     || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
 }
-export function configuredCombat(subject) {
-  const profile = subject?.gameProfile;
-  return !!profile && (profile.foundation?.mode === 'configured'
-    || Object.values(profile.modules || {}).some(rule => rule?.mode === 'configured'));
-}
-export { configuredModule };
+export { configuredCombat, configuredModule };
 // configuredStance / mirroredStance / armsAsCoreCounter live in the model layer (profileStance.js) so the card inspector shares them.
 export { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter };
 export function setProfileStance(ctx, entity, carrier) {
@@ -112,19 +108,22 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Owner, 2026-10-19: spell effectiveness uses PR; a spell (camp spell or magic school, whatever its Barrier split) reads PR where a physical attack reads AR.
   // A hit with any magic share (a school-only technique included, as magicShareOf reads it) reads PR.
   // Enemies keep AR for their spells: their PR is 0 in data, so reading it would zero their spell damage.
-  const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
+  const ratingId = modern && (source?.kind !== 'enemy' || SpellTraditionsActive(ctx)) && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar';
+  const ratingLabel = ratingId === 'pr' && SpellTraditionsActive(ctx) ? SpellTraditionLabel(carrier) : ratingId.toUpperCase();
   // A finesse hit scales with Dexterity instead of Strength (owner, 2026-10-25; Core 2 rules version 2).
   const finesse = modern && ratingId === 'ar' && core2MultiHitRulesEnabled(ctx) && carrierHasTag(ctx, carrier, 'finesse');
   const rated = finesse ? finesseRatingView(source) : source;
-  const ar = modern ? sourceRatingValue(ctx, rated, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
+  const ar = modern ? sourceRatingValue(ctx, rated, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped, carrier) : rating(source,'ar');
   const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
   let raw = base;
   const applicable = (rated?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
     || row.slot === 'armor' || row.sourceId?.startsWith('armor/') || row.sourceId === carrier.sourceArmamentId || row.sourceId === `armament/${carrier.sourceArmamentId}`);
-  const sourceAR = applicable.reduce((sum,row)=>sum+(row[ratingId] || 0),0);
+  const contributionValue = row => row.kind === 'attribute' && ratingId === 'pr' && SpellTraditionsActive(ctx)
+    ? TraditionSpellPower(ctx, rated, carrier, row[ratingId] || 0) : row[ratingId] || 0;
+  const sourceAR = applicable.reduce((sum,row)=>sum+contributionValue(row),0);
   if (modern && sourceAR > 0 && ratingBonus > 0) {
     for (const [index,row] of applicable.entries()) {
-      const contribution = (row[ratingId] || 0) * (effects?.attackRatingWeight || 0);
+      const contribution = contributionValue(row) * (effects?.attackRatingWeight || 0);
       raw = transition(`${ratingId}:${row.sourceId || index}`,`${row.name || row.kind}: ${ratingLabel}`,raw,raw+contribution);
     }
     raw = transition('ar:adjustments',`${ratingLabel} stance/status modifiers (including Weak)`,raw,base+ratingBonus);
@@ -352,8 +351,9 @@ export function profileCardCosts(ctx, def) {
 export function profileHandSize(ctx) {
   const cards = configuredModule(ctx, 'cards');
   if (!cards) return 0;
+  const perIncrease = Math.max(1, cards.handPointsPerIncrease || 1);
   return Math.max(0, Math.floor((cards.handBase ?? 4)
-    + (ctx.attributes?.[cards.handAttribute || 'intelligence'] || 0)) + ItemHandBonus(ctx)); // + a hand-size item property (W25 step 6)
+    + Math.floor((ctx.attributes?.[cards.handAttribute || 'intelligence'] || 0) / perIncrease)) + ItemHandBonus(ctx)); // + a hand-size item property (W25 step 6)
 }
 export function profileFallbackDamage(ctx) {
   return gameContent(ctx, 'fallback')?.attackDamage ?? ctx.gameProfile?.foundation?.attackDamage ?? 5;

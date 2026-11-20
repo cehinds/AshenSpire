@@ -1762,26 +1762,24 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
    option's card face on top and its text button under it; both select, and the
    chosen one wears the green trim. The face scales to its column, the button
    text wraps and never clips. */
-/* The column count follows the offer (--choice-count, set from JS): one to four
-   options, each column capped at 16rem and the row centred, so a lone option
-   sits in the middle rather than stretching across the door. */
-.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); grid-auto-rows: 1fr; gap: var(--modal-grid-gap, 12px); align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
-/* Owner (2026-11-02): desktop cards are 20% larger (--card-w-glance 152 to 182.4). The grid column was capped at 16rem
-   (160px) and the door at its 57rem rung, which held the card at 158px at 1280x720; both now follow the card width.
-   A phone keeps its two-column rule below (the narrow layout never reaches here). */
-:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, max(16rem, var(--card-w-glance, 182.4px)))); max-width: max(60rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * var(--modal-grid-gap, 12px))); }
-:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid) { --modal-rung-width: max(57rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
+/* Reward faces are 20% larger than Test's .75 scale, shared by every card
+   family. The column count follows the offer, and a lone option stays centred. */
+.reward-door { --reward-card-scale: .9; --reward-choice-width: calc(var(--card-w-glance, 182.4px) * var(--reward-card-scale)); --card-rules-font-reduction-px: 2; }
+.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, var(--reward-choice-width))); grid-auto-rows: auto; gap: var(--modal-grid-gap, 12px); align-items: stretch; align-content: start; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
+:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid { max-width: max(60rem, calc(var(--choice-count, 3) * var(--reward-choice-width) + (var(--choice-count, 3) - 1) * var(--modal-grid-gap, 12px))); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid) { --modal-rung-width: max(57rem, calc(var(--choice-count, 3) * var(--reward-choice-width) + (var(--choice-count, 3) - 1) * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
 
 /* The door's width follows the offered count, which only the grid carries (as an inline custom property, unreadable from here): without these the door stayed at its 3-card width and five cards shrank to 106 px. */
-:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 4']) { --modal-rung-width: max(57rem, calc(4 * var(--card-w-glance, 182.4px) + 3 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
-:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 5']) { --modal-rung-width: max(57rem, calc(5 * var(--card-w-glance, 182.4px) + 4 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
-:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 6']) { --modal-rung-width: max(57rem, calc(6 * var(--card-w-glance, 182.4px) + 5 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 4']) { --modal-rung-width: max(57rem, calc(4 * var(--reward-choice-width) + 3 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 5']) { --modal-rung-width: max(57rem, calc(5 * var(--reward-choice-width) + 4 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid[style*='--choice-count: 6']) { --modal-rung-width: max(57rem, calc(6 * var(--reward-choice-width) + 5 * var(--modal-grid-gap, 12px) + 2 * var(--modal-inset) + 20px)); }
 .reward-door .reward-choice-option { display: flex; flex-direction: column; gap: var(--modal-option-gap, .6rem); min-width: 0; width: 100%; }
-/* Every face uses the shared glance width, independent of its card family or
-   selection. Equal grid rows and flexible buttons let the longest rules set
-   their common height, including when phone choices wrap onto a second row. */
-.reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 182.4px); height: auto; min-height: 0; aspect-ratio: var(--card-ratio, 5 / 8); margin-inline: auto; flex: 0 0 auto; zoom: 1; box-sizing: border-box; }
+/* Every face uses the shared reward width, independent of its card family or
+   selection. Flexible buttons align within each row; wrapped rows keep their
+   own height instead of adding empty space beneath shorter choices. */
+.reward-door .reward-choice-option > .reward-choice-face { width: 100%; max-width: var(--reward-choice-width); height: auto; min-height: 0; aspect-ratio: var(--card-ratio, 5 / 8); margin-inline: auto; flex: 0 0 auto; zoom: 1; box-sizing: border-box; }
 .reward-door .reward-choice-face.equipment-poker-card > .epc-frame { height: calc(var(--epc-frame-w, 350px) / var(--card-ratio, .666667)); }
+.reward-door .reward-choice-face.equipment-poker-card .epc-bonus { font-size: calc((var(--epc-text-bonus, 13px) - 2px) * var(--epc-bonus-fit, 1)); }
 .reward-door .reward-choice-option > .reward-pick { flex: 1 0 var(--modal-name-button-basis, 3.5rem); height: auto; align-items: center; justify-content: center; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: var(--modal-name-button-pad-block, .7rem) var(--modal-name-button-pad-inline, .8rem); gap: .3rem; }
 /* modal.json `showNameButton: false`: the face is the radio; the button stays in the DOM for the door's code. */
 .modal[data-name-button='hidden'] .reward-choice-option > button.reward-pick { display: none; }
@@ -1799,9 +1797,10 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
   .reward-door .reward-choice-option > .reward-pick p { font-size: max(calc(12px / var(--ui-zoom, 1)), .85rem); }
 }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
-/* The ring itself is the shared one above; the door adds only the lift. */
-.reward-door .reward-choice-option > .card:hover,
-.reward-door .reward-row .card.reward-selected { transform: translateY(-8px); }
+/* All reward faces share motion: the choice stays lifted; only hover enlarges it. */
+.reward-door .reward-choice-option > .reward-choice-face { position: relative; transition: transform 140ms; }
+.reward-door .reward-choice-option > .reward-choice-face:is(.is-chosen, :focus-visible) { transform: translateY(-8px); z-index: 1; }
+.reward-door .reward-choice-option > .reward-choice-face:hover { transform: translateY(-8px) scale(1.06); z-index: 2; }
 .reward-door .reward-confirm:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);
@@ -1918,14 +1917,25 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
 .as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
 
 /* Allocation uses the same connected primary-stat fold, with the point
-   controls inside its header. The details element keeps its own layout box. */
+   controls inside its header. Stack the name and summary instead of using
+   the primary-stat grid's max-content name column. Reserve a separate column
+   for the controls so all text wraps before them. */
 .as-row.setting.se-row { display: block; padding: 0; border: 0; }
 .as-row.setting.se-row > .as-row-fold,
 .as-row.setting.se-row > .as-row-fold > .disc-fold-row { display: block; width: 100%; }
 .as-row.setting.se-row .disc-face { width: 100%; }
-.as-row.setting.se-row .disc-face > .as-row { flex-wrap: nowrap; }
+.as-row.setting.se-row .disc-face > .as-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+}
+.as-row.setting.se-row .disc-face > .as-row > .as-labelstack {
+  display: flex; flex-direction: column; gap: .25rem;
+}
+.as-row.setting.se-row .ls-label {
+  display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .5em;
+  white-space: normal; overflow: visible; text-overflow: clip;
+}
 .as-row.setting.se-row .se-controls { flex: 0 0 auto; margin-left: auto; }
-.as-row.setting.se-row .disc-summary { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-row.setting.se-row .disc-summary { min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; }
 .disc-face > .as-row { flex-wrap: nowrap; }
 .disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
 .disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
@@ -4068,7 +4078,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    --card-info-size, which nothing does today — the hook stays for a host that
    must pin the circle to a size the zoom does not choose. */
 .card-inspection-target > .card-info-button,
-.merchant-offer-media > .card-info-button,
 .combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
 /* A clue is a word; the formation column must not clip it to a number badge. */
 :root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
@@ -4077,16 +4086,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    selected; the in-card copy stays hidden so it never paints at a temporary spot and then moves. */
 .card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .hand .card-inspection-target > .card-info-button { visibility:hidden; pointer-events:none; }
-/* A shop card row has no selection step: its (i) is always shown, in the thumbnail's top-right corner, and only inspects. */
-.merchant-offer-media.has-card-info { position:relative; }
-.merchant-offer-media > .card-info-button { position:absolute; z-index:2; top:-6px; right:-6px; visibility:visible; pointer-events:auto; }
-/* The thumbnail is narrower than the (i) circle, so a corner badge covers the art. Seat the badge centred in a lane under
-   the art (the reward door reserves one above its row), and let a shelf holding such rows size them to fit the lane. */
-.merchant-offer-media.has-card-info { --shop-inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); padding-bottom:calc(var(--shop-inspect-box) + 4px); }
-.merchant-offer-media.has-card-info > .card-info-button { top:auto; right:auto; bottom:0; left:50%; transform:translateX(-50%); }
-:root .shop-workspace.merchant-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services):has(.merchant-offer-media.has-card-info) { grid-auto-rows:minmax(var(--merchant-row-height,110px), auto); }
-:root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer:has(> .merchant-offer-media.has-card-info) { height:auto; min-height:var(--merchant-row-height,110px); }
-:root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer-media.has-card-info { height:auto; min-height:calc(var(--shop-inspect-box) + 4px + 48px / var(--ui-zoom, 1)); }
 /* WCF3: the selected card and its inspect control share one glow. The hand
    moves that control into an overlay, so the portal wears the same filter. */
 .inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
@@ -4804,6 +4803,13 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 :is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
   padding-top: var(--modal-grid-pad-top, 64px); row-gap: var(--modal-grid-row-gap, 64px);
 }
+/* Read-only deck inspection keeps only a tiny clearance for the cost pennants. */
+.deck-view-modal .pile-body { padding-top: 0; }
+.deck-view-modal .pile-body .as-cardgrid {
+  --modal-grid-pad-top: calc(16px / var(--ui-zoom, 1)); --modal-grid-row-gap: 32px;
+  column-gap: calc(9px / var(--ui-zoom, 1));
+}
+.reward-door .reward-row.reward-choice-grid { row-gap: 12px; }
 /* Reward-card status stack, top to bottom: Information, NEW, card.
    These three variables are the only placement knobs a theme or future card
    size needs. The empty Information lane is reserved so revealing it never
@@ -4815,7 +4821,7 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 }
 .reward-door .reward-row:has(.card[data-new='1']) {
   padding-top: calc(var(--reward-status-stack-height) + var(--reward-status-gap));
-  row-gap: calc(var(--reward-status-stack-height) + var(--reward-status-gap));
+  row-gap: 12px;
 }
 .mount-row.card-inspection-target { position: relative; padding-right: 54px; }
 /* Focusing a selected card must retain its inspection gutter in scrollports. */
@@ -6258,6 +6264,16 @@ button[data-button-size] {
 .merchant-offer-actions { display: grid; gap: .8rem; justify-items: stretch; align-content: center; min-width: 0; }
 .merchant-offer-action.as-btn { width: 100%; min-width: 0; min-height: 44px; white-space: normal; }
 .merchant-offer-price.as-status { color: var(--gold); text-align: center; white-space: normal; overflow-wrap: anywhere; }
+/* A sale keeps its count immediately beside the commit action. */
+:root .shop-workspace.merchant-workspace .shop-offers > .shop-shelf[data-shop-shelf='sell']:not([hidden]) { container: merchant-sales / inline-size; grid-auto-rows: minmax(var(--merchant-row-height, 110px), auto); }
+:root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer:has(.merchant-sale-quantity) { grid-template-columns: calc(60px / var(--ui-zoom, 1)) minmax(0, 1fr) calc(210px / var(--ui-zoom, 1)); height: auto; }
+:root .shop-workspace.merchant-workspace .merchant-offer-actions:has(.merchant-sale-quantity) { grid-template-columns: max-content minmax(0, 1fr); align-items: center; }
+.merchant-sale-quantity.as-seg { grid-column: 1; grid-row: 1; width: auto; min-width: 0; margin: 0; }
+.merchant-sale-quantity.as-seg.stepper .seg-value { min-width: calc(24px / var(--ui-zoom, 1)); padding-inline: .3rem; }
+.merchant-sale-quantity.as-seg.stepper button { min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); padding-inline: .5rem; }
+.merchant-offer-actions:has(.merchant-sale-quantity) > .merchant-offer-action { grid-column: 2; grid-row: 1; }
+.merchant-offer-actions:has(.merchant-sale-quantity) > :is(.merchant-offer-price, .merchant-sale-available) { grid-column: 1 / -1; text-align: center; }
+.merchant-sale-available { color: var(--muted); white-space: normal; }
 .merchant-workspace .shop-services .class-row { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; }
 @container game-viewport (max-width: 600px) {
   :root .shop-workspace .shop-shelf .merchant-offer { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: var(--book-compact-gap); padding: var(--book-compact-padding); }
@@ -6266,6 +6282,12 @@ button[data-button-size] {
   .merchant-offer-details { padding-left: var(--book-compact-gap); }
   .merchant-offer-details > h3 { font-size: 1.5rem; }
   .merchant-offer-details > p { font-size: 1.2rem; }
+}
+/* Respond to this shelf's width, including the narrow desktop merchant pane. */
+@container merchant-sales (max-width: 44rem) {
+  :root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer:has(.merchant-sale-quantity) { grid-template-columns: calc(60px / var(--ui-zoom, 1)) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; min-height: max(var(--merchant-row-height, 110px), calc(150px / var(--ui-zoom, 1))); }
+  :root .shop-workspace.merchant-workspace .merchant-offer:has(.merchant-sale-quantity) > .merchant-offer-media { grid-row: 1; max-height: calc(60px / var(--ui-zoom, 1)); align-self: start; }
+  :root .shop-workspace.merchant-workspace .merchant-offer-actions:has(.merchant-sale-quantity) { grid-column: 1 / -1; grid-template-columns: max-content minmax(0, 1fr); }
 }
 
 /* Character and skill rows share the same aligned columns and visible name. */
@@ -6749,26 +6771,33 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media (prefers-reduced-motion: reduce) { .as-toast { transition: none; } }
 body.reduced-motion .as-toast { transition: none; }
 
-/* The Replace comparison (src/ui/components/equipCompareModal.js): everything
-   centred, the buttons right-justified; the card-upgrade modal's faces and
-   as-delta colours do the rest. Unchanged rows are dimmed. */
-.equip-compare-modal .equip-compare-body { display: flex; flex-direction: column; align-items: center; gap: 1.6rem; text-align: center; }
-.equip-compare-faces { align-items: center; justify-content: center; flex-wrap: nowrap; gap: 1.6rem; }
-.equip-compare-face { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+/* Replace follows its comparison content, with the footer directly below it.
+   Only an overflowing body scrolls; other large modal heights stay unchanged. */
+.modal.equip-compare-modal { height: auto; }
+.equip-compare-modal .equip-compare-body { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 1fr); align-items: start; gap: 1.6rem; padding: var(--modal-inset); flex: 0 1 auto; overflow-y: auto; min-height: 0; }
+.equip-compare-faces { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; justify-content: center; gap: 1rem; width: 100%; }
+.equip-compare-face { margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
 .equip-compare-caption { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
 .equip-compare-which { color: var(--muted); font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); letter-spacing: 0.08em; text-transform: uppercase; }
 .equip-compare-arrow { color: var(--gold); font-size: 3.2rem; line-height: 1; }
-.equip-compare-rows { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%; }
-.equip-compare-rows .as-statrow { justify-content: center; width: auto; max-width: 100%; gap: 1.6rem; }
+.equip-compare-rows { display: flex; flex-direction: column; align-items: stretch; gap: 0.4rem; width: 100%; min-width: 0; }
+.equip-compare-rows .as-statrow { justify-content: space-between; width: 100%; max-width: 100%; gap: 1rem; }
 .equip-compare-rows .as-statrow.is-same { opacity: 0.55; }
-.equip-compare-face { flex: 0 0 auto; }
-.equip-compare-face .equipment-poker-card { width: 14rem !important; max-width: 100%; --epc-level-w: 14rem; }
-.equip-compare-rows .as-statrow .sr-name { overflow: visible; text-overflow: clip; flex: none; }
-.equip-compare-rows .as-statrow { padding-block: 0.2rem; column-gap: 2rem; }
+.equip-compare-face .equipment-poker-card { width: 100% !important; max-width: 22rem; --epc-level-w: 22rem; }
+.equip-compare-rows .as-statrow .sr-name { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
+.equip-compare-rows .as-statrow { padding-block: 0.3rem; }
+.equip-compare-rows .as-statrow.is-changed { flex-direction: column; gap: .3rem; }
+.equip-compare-rows .as-statrow.is-changed > .sr-id { max-width: 100%; }
+.equip-compare-rows .as-statrow.is-changed > .sr-vals { flex: 0 1 auto; width: 100%; }
+.equip-compare-rows .as-statrow.is-changed .as-delta { display: grid; grid-template-columns: minmax(min-content, 1fr) auto minmax(0, 3fr); width: 100%; }
+.equip-compare-rows .as-statrow.is-changed .as-delta > :is(.d-from, .d-to) { overflow-wrap: normal; word-break: normal; white-space: normal; }
 /* The owner's tweak for this door: the buttons sit together at the right, not as equal tracks across the foot. */
 .modal.equip-compare-modal .modal-foot-actions { display: flex !important; width: auto !important; margin-left: auto !important; justify-content: flex-end; gap: 1rem; }
 .modal.equip-compare-modal .modal-foot-actions > button.as-btn { flex: 0 0 auto !important; width: auto !important; min-width: 12rem !important; max-width: none !important; padding-inline: 2rem; overflow: visible; }
-.equip-compare-modal .equip-compare-body { overflow-y: auto; min-height: 0; }
+@container (max-width: 64rem) {
+  .equip-compare-modal .equip-compare-body { grid-template-columns: minmax(0, 1fr); }
+  .equip-compare-faces { max-width: 48rem; margin-inline: auto; }
+}
 @media (max-width: 600px) { .equip-compare-faces { gap: 0.6rem; } .equip-compare-arrow { font-size: 2.2rem; } }
 /* CARD READING MODAL: THE CARD AND ITS DETAILS FIT ONE SCREEN (owner, 2026-11-01).
    The inspected card used to fill the inspect width (320px, 480 tall) and stack

@@ -23,13 +23,14 @@ import { button, statusText, el, segmented } from '../kit/index.js';
 import { t } from '../strings.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
-import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { runHudHtml, wireRunHud, RefreshRunHud, runHudRefreshSignature } from '../components/runHud.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { MountCardUpgradeModal } from '../components/cardUpgradeModal.js';
 import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
 import { wireShopLayout } from './shop.js';
 import { arrangeMerchantOffer } from '../components/merchantOffer.js';
+import { confirmMerchantPurchase } from '../components/merchantPurchaseConfirmation.js';
 import { renderCard } from '../components/card.js';
 import { renderEquipmentCard } from '../components/equipmentCard.js';
 import { shopStockOfferings } from '../../model/shopKinds.js';
@@ -48,6 +49,17 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   const stoneDiscount = blacksmithStoneDiscount(run);
   let activeCategory = null;
   let layout = null;
+  let root = null;
+  let frame;
+  let railed;
+  let paneHead;
+  let purse;
+  let switchNode = null;
+  let categorySignature = '';
+  let hudMarkup = '';
+  const shelves = new Map();
+  const rows = new Map();
+  let purchasePending = false;
 
   function refuse(host, error) {
     // The refusal reads inside the row's details column, as the merchant's own unaffordable reason does.
@@ -58,6 +70,11 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   // One action: commit, sound, persist, redraw — or show the refusal in place.
   function act(tile, commit) {
+    tile = tile._liveHost || tile;
+    tile = tile.closest?.('.merchant-offer') || tile;
+    const focusKey = tile.dataset.smithKey;
+    const actions = [...tile.querySelectorAll('.merchant-offer-action')];
+    const actionIndex = Math.max(0, actions.indexOf(document.activeElement));
     const before = snapshotRunForDiff(run);
     try { commit(); }
     catch (error) {
@@ -66,7 +83,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     }
     sfx.play('shrine');
     onChanged();
-    render();
+    render({ focusKey, actionIndex });
     // The what-changed receipt (SPEC §14.4): after the redraw, so the page lock covers the new screen. Refusals
     // above keep the inline .bs-refusal and open nothing.
     showRunReceipt({ run, registries, before, title: t('whatChanged.blacksmith') });
@@ -119,17 +136,26 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     if (control) {
       if (first.id) control.id = first.id;
       if (first.serviceId) control.dataset.smithService = first.serviceId;
-      if (first.ok) control.addEventListener('click', first.run);
+      if (first.ok) control.addEventListener('click', event => {
+        const action = host._row.actions[0];
+        if (action.kind !== 'buy') return action.run(event);
+        if (purchasePending) return;
+        purchasePending = true;
+        confirmMerchantPurchase({ name: row.name, price: action.price, opener: control,
+          onCancel: () => { purchasePending = false; },
+          onConfirm: () => { purchasePending = false; return action.run(event); },
+        });
+      });
       if (!first.ok && first.reason) control.title = first.reason;
     }
     // A disabled action beside an affordable one still says why, in the row, not only as a tooltip.
     if (available && first && !first.ok && first.reason) host.querySelector('.merchant-offer-details').append(statusText(first.reason, { class: 'shop-offer-avail' }));
     const actions = host.querySelector('.merchant-offer-actions');
-    for (const action of rest) {
+    for (const [index, action] of rest.entries()) {
       const extra = button({ label: action.label, className: 'merchant-offer-action', disabled: !action.ok, attrs: action.ok ? {} : { title: action.reason } });
       extra.dataset.shopAction = action.kind;
       extra.addEventListener('click', (event) => event.stopPropagation());
-      if (action.ok) extra.addEventListener('click', action.run);
+      if (action.ok) extra.addEventListener('click', event => host._row.actions[index + 1].run(event));
       actions.append(extra);
       if (action.price) actions.append(statusText(action.price, { class: 'merchant-offer-price' }));
       if (!action.ok && available && action.reason) host.querySelector('.merchant-offer-details').append(statusText(action.reason, { class: 'shop-offer-avail' }));
@@ -144,8 +170,9 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         const plan = coreArmamentPlan(registries, run, item.id);
         if (!plan.def) continue;
         const host = tile(GLYPH.armaments, plan.name, t('blacksmith.armament.tierOnly', { tier: plan.tier }), '', { visual: equipmentVisual(item.id) });
+        host.dataset.smithKey = `armaments:${item.id}`;
         host.dataset.armamentTier = String(plan.tier);
-        actionButton(host, { label: t('blacksmith.action.buy'), kind: 'buy', cost: plan.cost, plan, commit: () => onArmamentPurchased(commitCoreArmament(registries, run, plan).id) });
+        actionButton(host, { label: t('blacksmith.action.buy'), kind: 'buy', cost: plan.cost, plan, commit: () => onArmamentPurchased(commitCoreArmament(registries, run, plan).id, render) });
         shelf.append(host);
       }
     },
@@ -154,9 +181,10 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         const plan = coreWeaponArtPlan(registries, run, item.id);
         if (!plan.name) continue;
         const host = tile(GLYPH.weaponArts, plan.name, t('blacksmith.weaponArt.desc'), '', { visual: cardVisual(item.id) });
+        host.dataset.smithKey = `weaponArts:${item.id}`;
         actionButton(host, { label: t('blacksmith.action.buy'), kind: 'buy', cost: plan.cost, plan, commit: () => {
           const receipt = commitCoreWeaponArt(registries, run, plan);
-          onCardPurchased({ kind: 'weaponArts', id: receipt.id, instanceId: receipt.instanceId });
+          onCardPurchased({ kind: 'weaponArts', id: receipt.id, instanceId: receipt.instanceId }, render);
         } });
         shelf.append(host);
       }
@@ -165,6 +193,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       for (const card of rankUpCards(registries, run)) {
         const plan = rankUpPlan(registries, run, card.instanceId, { priceMult });
         const host = tile(GLYPH.rankUp, plan.name, t('blacksmith.rankUp.desc', { from: plan.from, to: plan.to }), '', { visual: cardVisual(card) });
+        host.dataset.smithKey = `rankUp:${card.instanceId}`;
         actionButton(host, { label: t('blacksmith.action.rankUp'), price: priceLine({ stones: plan.stones, cinders: plan.cost }), plan, commit: () => commitRankUp(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }
@@ -176,6 +205,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
           const plan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'stones', priceMult });
           const held = KeepableProperties(run, candidate.itemRef).map((row) => row.text);
           const host = tile(GLYPH.upgrade, candidate.itemName, [t('blacksmith.upgrade.slotLine', { n: candidate.nextLevel, max: candidate.slots }), ...(held.length ? [held.join(', ')] : [])].join(' · '), '', { visual: equipmentVisual(candidate.itemId) });
+          host.dataset.smithKey = `upgrade:${candidate.itemRef}`;
           host.dataset.itemRef = candidate.itemRef;
           const action = addAction(host, { label: t('blacksmith.verb.upgrade'), kind: 'service', ok: !!plan.ok, reason: plan.reason, price: priceLine({ stones: plan.stones, cinders: plan.cost }) });
           action.run = (event) => openItemOptions(plan, event.currentTarget, host);
@@ -195,6 +225,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       // An item with no name of its own is a raw id; the screen never shows one.
       for (const candidate of smithingPlan(registries, run, undefined, { stoneDiscount }).candidates.filter((row) => row.itemName)) {
         const host = tile(GLYPH.upgrade, candidate.itemName, t('blacksmith.upgrade.line', { from: candidate.currentLevel, to: candidate.nextLevel }), '', { visual: equipmentVisual(candidate.itemId) });
+        host.dataset.smithKey = `upgrade:${candidate.itemRef}`;
         // The stone purse opens the smith's own upgrade modal (SmithSelectionModel),
         // whose confirm commits the blacksmith's quote.
         const stonesPlan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'stones', priceMult });
@@ -206,6 +237,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     upgradeArt(shelf) {
       // One tile opens the card picker; any deck card, as many upgrades as the purse pays for.
       const host = tile(GLYPH.upgradeArt, t('blacksmith.cardUpgrade.title'), t('blacksmith.cardUpgrade.desc'));
+      host.dataset.smithKey = 'upgradeArt';
       const ready = readyCount('upgradeArt') > 0;
       addAction(host, { id: 'blacksmith-upgrade-card', label: t('blacksmith.cardUpgrade.open'), kind: 'service', ok: ready, reason: '', price: '', run: (event) => openCardUpgradeModal(event.currentTarget, host) });
       shelf.append(host);
@@ -296,88 +328,152 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     return BLACKSMITH_SERVICES.includes(key) ? serviceCandidates(registries, run, key, meta?.settings).length : 0;
   };
 
-  function render() {
-    if (layout) layout.release();
-    const categories = shopStockOfferings(stock).filter((key) => SHELVES[key] && !blacksmithWithholds(run, key));
-    if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
-    app.innerHTML = `
-      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}
+  function mountFrame() {
+    const markup = hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : '';
+    hudMarkup = hud ? runHudRefreshSignature({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : '';
+    app.innerHTML = `${markup}
       <div class="screen room-screen shop-workspace merchant-workspace blacksmith-workspace" data-wireframe="W1d" data-shop-kind="blacksmith">
         <div class="shop-frame">
           <div class="as-railed shop-railed">
             <div class="as-pane shop-pane" data-wireframe="W1v" id="shop-pane">
               <div class="as-pane-head shop-pane-head"></div>
-              <div class="shop-body">
-                <div class="shop-offers">
-                  ${categories.map((key) => `<div class="card-shelf shop-shelf" id="blacksmith-${key}" data-shop-shelf="${key}"></div>`).join('')}
-                </div>
-              </div>
+              <div class="shop-body"><div class="shop-offers"></div></div>
             </div>
           </div>
         </div>
       </div>`;
     if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: render });
-    const root = app.querySelector('.shop-workspace');
+    root = app.querySelector('.shop-workspace');
     root.prepend(servicePortrait('smith'));
-    const frame = root.querySelector('.shop-frame');
-    const railed = root.querySelector('.shop-railed');
-    const paneHead = root.querySelector('.shop-pane-head');
-    const stonesHeld = run.smithingStones || 0;
-    // Core has no refining, so its purse never names refined stones.
-    const purse = t('blacksmith.purse.core', { stones: stonesHeld, plural: plural(stonesHeld), cinders: run.cinders });
-    frame.prepend(ModalHead({ title: t('blacksmith.title'), closeLabel: t('blacksmith.leave'), onClose: onLeave, showMenuButton: false, extras: statusText(purse, { class: 'modal-head-status' }) }));
-
-    const idle = {};
-    for (const key of categories) {
-      const shelf = root.querySelector(`#blacksmith-${key}`);
-      SHELVES[key](shelf);
-      for (const host of shelf.querySelectorAll(':scope > .shop-offer')) finishRow(host);
-      // A service with nothing to act on now says why, and stays on the rail.
-      if ((BLACKSMITH_SERVICES.includes(key) || key === 'rankUp') && !readyCount(key)) {
-        idle[key] = serviceIdleReason(key, run);
-        shelf.prepend(statusText(idle[key], { class: 'shop-offer-avail bs-idle', role: 'status' }));
-      }
-    }
-    const statusOf = (key) => {
-      const n = readyCount(key);
-      return n ? t('blacksmith.status.ready', { count: n }) : t('blacksmith.status.idle');
-    };
-    // Core's five-way switch is narrow on a phone, so its tabs wear the one-word `blacksmith.tab.*` labels, in a
-    // compact switch at the top of the pane (like the card upgrade picker's own controls) instead of a rail.
-    const labelOf = (key) => t(`blacksmith.tab.${key}`);
-    const switchNode = segmented({
-      options: categories.map((key) => ({ label: labelOf(key), value: key, pressed: key === activeCategory, attrs: { id: `shop-cat-${key}`, role: 'tab', 'aria-controls': 'shop-pane', dataset: { shopCategory: key } } })),
-      attrs: { class: 'shop-switch', role: 'tablist', 'aria-label': t('blacksmith.rail.aria') },
-    });
-    const railItems = [...switchNode.querySelectorAll('button')];
-    for (const item of railItems) item.addEventListener('click', () => { activeCategory = item.dataset.shopCategory; paint(); });
-    root.dataset.shopRail = 'top';
-    railed.prepend(switchNode);
-    root.classList.add('blacksmith-compact');
+    frame = root.querySelector('.shop-frame');
+    railed = root.querySelector('.shop-railed');
+    paneHead = root.querySelector('.shop-pane-head');
+    purse = statusText('', { class: 'modal-head-status' });
+    frame.prepend(ModalHead({ title: t('blacksmith.title'), closeLabel: t('blacksmith.leave'), onClose: onLeave, showMenuButton: false, extras: purse }));
     const leave = button({ label: t('blacksmith.leave'), role: 'exit', id: 'leave-shop' });
     leave.addEventListener('click', onLeave);
     const footHost = el('div', { class: 'shop-foot-host' });
     footHost.append(ModalFooter({ secondary: [leave], primary: null, className: 'shop-foot' }));
     frame.appendChild(footHost);
-
-    function paint() {
-      for (const item of railItems) {
-        const on = item.dataset.shopCategory === activeCategory;
-        item.classList.toggle('on', on);
-        item.setAttribute('aria-pressed', on ? 'true' : 'false');
-        item.setAttribute('aria-selected', on ? 'true' : 'false');
-        if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
-      }
-      for (const shelf of root.querySelectorAll('[data-shop-shelf]')) shelf.hidden = shelf.dataset.shopShelf !== activeCategory;
-      if (activeCategory) {
-        root.querySelector('.shop-pane').setAttribute('aria-labelledby', `shop-cat-${activeCategory}`);
-        paneHead.replaceChildren(statusText(statusOf(activeCategory), { class: 'shop-pane-status', role: 'status' }));
-      }
-    }
-    paint();
+    root.dataset.shopRail = 'top';
+    root.classList.add('blacksmith-compact');
     layout = wireShopLayout(root);
   }
 
+  function statusOf(key) {
+    const n = readyCount(key);
+    return n ? t('blacksmith.status.ready', { count: n }) : t('blacksmith.status.idle');
+  }
+
+  function paint() {
+    for (const item of switchNode.querySelectorAll('button')) {
+      const on = item.dataset.shopCategory === activeCategory;
+      item.classList.toggle('on', on);
+      item.setAttribute('aria-pressed', on ? 'true' : 'false');
+      item.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
+    }
+    for (const [key, shelf] of shelves) shelf.hidden = key !== activeCategory;
+    if (activeCategory) {
+      root.querySelector('.shop-pane').setAttribute('aria-labelledby', `shop-cat-${activeCategory}`);
+      const text = statusOf(activeCategory);
+      if (paneHead.firstChild?.textContent !== text) paneHead.replaceChildren(statusText(text, { class: 'shop-pane-status', role: 'status' }));
+    }
+  }
+
+  // Builders provide fresh plans, while this comparison concerns presentation.
+  // Retained controls dispatch through the live row descriptor, so an unchanged
+  // label never means keeping an obsolete quote or candidate instance.
+  function rowSignature(host) {
+    const row = host._row;
+    return JSON.stringify([row.name, row.desc, row.reason, row.price, host.dataset,
+      row.actions.map(({ run: _run, ...action }) => action)]);
+  }
+
+  function render({ focusKey = null, actionIndex = 0 } = {}) {
+    if (root && !root.isConnected) return;
+    if (!root) mountFrame();
+    const categories = shopStockOfferings(stock).filter(key => SHELVES[key] && !blacksmithWithholds(run, key));
+    if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
+    const focusedRow = document.activeElement?.closest?.('[data-smith-key]');
+    focusKey ||= focusedRow?.dataset.smithKey;
+    if (focusedRow) actionIndex = Math.max(0, [...focusedRow.querySelectorAll('.merchant-offer-action')].indexOf(document.activeElement));
+    const previousKeys = [...rows.keys()];
+    const scroll = [root, frame, ...root.querySelectorAll('.shop-pane, .shop-body, .shop-offers'), ...shelves.values()]
+      .map(node => [node, node.scrollTop, node.scrollLeft]);
+    const nextCategorySignature = JSON.stringify(categories);
+    if (categorySignature !== nextCategorySignature) {
+      categorySignature = nextCategorySignature;
+      const next = segmented({
+        options: categories.map(key => ({ label: t(`blacksmith.tab.${key}`), value: key, pressed: key === activeCategory, attrs: { id: `shop-cat-${key}`, role: 'tab', 'aria-controls': 'shop-pane', dataset: { shopCategory: key } } })),
+        attrs: { class: 'shop-switch', role: 'tablist', 'aria-label': t('blacksmith.rail.aria') },
+      });
+      for (const item of next.querySelectorAll('button')) item.addEventListener('click', () => { activeCategory = item.dataset.shopCategory; paint(); });
+      if (switchNode) switchNode.replaceWith(next); else railed.prepend(next);
+      switchNode = next;
+    }
+    const port = root.querySelector('.shop-offers');
+    const seen = new Set();
+    for (const key of categories) {
+      let shelf = shelves.get(key);
+      if (!shelf) {
+        shelf = el('div', { class: 'card-shelf shop-shelf', id: `blacksmith-${key}`, dataset: { shopShelf: key } });
+        shelves.set(key, shelf); port.append(shelf);
+      }
+      const candidates = el('div');
+      SHELVES[key](candidates);
+      let index = 0;
+      for (const fresh of [...candidates.children]) {
+        const id = fresh.dataset.smithKey;
+        seen.add(id);
+        const signature = rowSignature(fresh);
+        const previous = rows.get(id);
+        let host;
+        if (previous?.signature === signature) {
+          host = previous.host;
+          host._row = fresh._row;
+          fresh._liveHost = host;
+        } else {
+          finishRow(fresh);
+          host = fresh;
+          if (previous) previous.host.replaceWith(host);
+          rows.set(id, { host, signature });
+        }
+        const at = shelf.children[index++];
+        if (at !== host) shelf.insertBefore(host, at || null);
+      }
+      const idle = shelf.querySelector('.bs-idle');
+      const idleReason = (BLACKSMITH_SERVICES.includes(key) || key === 'rankUp') && !readyCount(key) ? serviceIdleReason(key, run) : '';
+      if (idleReason) {
+        if (idle) idle.textContent = idleReason;
+        else shelf.append(statusText(idleReason, { class: 'shop-offer-avail bs-idle', role: 'status' }));
+      } else idle?.remove();
+    }
+    for (const [id, row] of rows) if (!seen.has(id)) { row.host.remove(); rows.delete(id); }
+    for (const [key, shelf] of shelves) if (!categories.includes(key)) { shelf.remove(); shelves.delete(key); }
+    const stonesHeld = run.smithingStones || 0;
+    purse.textContent = t('blacksmith.purse.core', { stones: stonesHeld, plural: plural(stonesHeld), cinders: run.cinders });
+    if (hud) {
+      const next = runHudRefreshSignature({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' });
+      if (next !== hudMarkup) {
+        hudMarkup = next;
+        RefreshRunHud(app, { registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud', hud, remount: render });
+      }
+    }
+    paint();
+    layout.apply();
+    if (focusKey && !document.querySelector('.modal-veil:not(.confirmation-input-shield)')) {
+      const surviving = [...rows.values()].map(row => row.host).filter(host => host.closest('[data-shop-shelf]')?.dataset.shopShelf === activeCategory);
+      const same = rows.get(focusKey)?.host;
+      const neighbour = surviving.find(host => previousKeys.indexOf(host.dataset.smithKey) >= previousKeys.indexOf(focusKey)) || surviving.at(-1);
+      const host = same || neighbour;
+      const controls = host ? [...host.querySelectorAll('.merchant-offer-action')].filter(control => !control.disabled) : [];
+      const target = controls[Math.min(actionIndex, controls.length - 1)] || host || switchNode.querySelector(`[data-shop-category="${activeCategory}"]`);
+      target?.focus({ preventScroll: true });
+    }
+    for (const [node, top, left] of scroll) if (node.isConnected) { node.scrollTop = top; node.scrollLeft = left; }
+  }
+
   render();
-  return { render };
+  return { render, refresh: render };
 }

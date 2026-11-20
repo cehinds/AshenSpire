@@ -37,6 +37,12 @@ cards fold automatically where the authored view asks for folded state.
 
 ## Armaments List
 
+Replace and Choose item open a modal item picker over the current equipment rows; they never append a picker below the list. Choosing a candidate opens one confirmation: the candidate card for an empty slot, or current and candidate cards with their comparison for an occupied slot. Back returns to the picker without changing equipment.
+
+Reward and purchase Equip open only the item's compatible, unlocked slots. A slot press immediately opens confirmation, with no separate Choose button; a single destination skips the slot list. The final buttons are Back and green Confirm. Back returns to the slot list when there was a choice; dismissing the flow returns to the original reward or purchase choice, where Equip remains retryable. Only Confirm changes the loadout, and repeated cancellation never claims or purchases another copy.
+
+Within a run, each item's last selected destination is saved in `equipmentSlotChoices` as soon as the slot is selected, including when equip is then cancelled. The preference survives saving, reloading and restarting the game. Retrying Equip opens that slot's confirmation directly when it is still available. Back opens the slot list with the remembered destination highlighted and focused; selecting another slot saves the new choice. Unavailable or incompatible remembered destinations fall back to the current valid choices. Preferences are separate for each item and run; older saves start without a preference.
+
 List mode uses compact occupied rows with a complete scaled equipment-card thumbnail, authored position code, item name and Equipped/Reserve badge. Inspect and Replace stay grouped; Unequip sits at the right. Inspect is read-only: desktop shows the complete inspection beside the list; mobile switches to inspection with a Back control. Thumbnail and inspection widths are authored in `layout.equipment.compactList`. Empty and locked positions retain their model-driven states and refusal text. Make active remains a separate action, including for an empty reserve.
 
 ## Armaments Grid

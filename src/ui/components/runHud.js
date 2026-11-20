@@ -101,6 +101,21 @@ export function runHudHtml({ registries, run, meta, place, headerClass = 'map-he
   }));
 }
 
+/** The shell and the live content wireRunHud fills have separate inputs.
+ * Compare their presentation projections so a no-op retains the band while
+ * HP, relic, potion and Armoury-indicator changes still invalidate it. */
+export function runHudRefreshSignature(options) {
+  const { registries, run, meta } = options;
+  return JSON.stringify({
+    shell: runHudHtml(options),
+    hp: resourceBarPlan(registries, 'main', run, run, resourceDomains(registries)).filter(bar => bar.id === 'hp'),
+    relics: run.relics || [],
+    potions: potionContents({ chargeKinds: CHARGE_FLASK_KINDS, flaskCharges: run.flaskCharges, carried: run.flasks }),
+    armouryNew: armouryHasNew(run),
+    useRestorativeFlasks: settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat'),
+  });
+}
+
 /**
  * wireRunHud(app, opts) — fill and wire the band `runHudHtml` drew inside `app`.
  *

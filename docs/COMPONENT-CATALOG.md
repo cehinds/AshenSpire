@@ -606,7 +606,7 @@ low-contrast danger text.
 | Component ID | Model | Renderer | Purpose |
 |---|---|---|---|
 | `armoury-overlay` | `armouryOverlayModel` | `armouryComponents.renderArmouryOverlay` | Modal veil and Armoury focus scope. |
-| `armoury-panel` | `armouryPanelModel` | `armouryComponents.renderArmouryPanel` | Complete responsive Armoury surface. |
+| `armoury-panel` | `armouryPanelModel` | `armouryComponents.renderArmouryPanel` | Complete responsive Armoury surface. Replace opens a modal item picker; a candidate leads directly to Back / Confirm with one card or an occupied-slot comparison. Reward and purchase Equip use direct slot choices, skip a single destination, and return to the originating choice on cancellation. Retrying an item recalls its last valid destination for this run; Back highlights and focuses that slot for changing the choice. |
 | `armoury-header` | `armouryHeaderModel` | `armouryComponents.renderArmouryPanel` | Title, view switcher, and close action. |
 | `armoury-view-switcher` | `armouryViewSwitcherModel` | `armouryComponents.renderArmouryPanel` | Player labels are Character / Inventory / Hybrid; the compatibility keys remain `grid` / `rack` / `hybrid` internally. |
 | `armoury-body` | `armouryBodyModel` | `armouryComponents.renderArmouryPanel` | Responsive Character and Armaments workspace selected by the current player view. |

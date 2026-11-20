@@ -18,6 +18,12 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 
 const oldRuntime = 'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9';
 const digest = profile => { delete profile.hash; profile.hash = gameDigest(profile); return profile; };
+test('the stat-allocation runtime retains the preceding Core runtime', () => {
+  const current = resolveGameProfile('core');
+  const previous = structuredClone(current);
+  previous.lock.runtimeHash = 'sha256:b9c05567d296fc4a2dcf8342d541e54cbc257f4dae6dc3d08533082b48342db7';
+  assert.equal(coreEvasionCompatibleRuntime(previous, current.lock.runtimeHash), previous.lock.runtimeHash);
+});
 function priorRuntimeEnvelope() {
   const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }));
   profile.lock.runtimeHash = oldRuntime;
@@ -131,7 +137,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-15 (W25-W): Ward's `ward.routing` rule and the Barrier -> "Gain N Poise" wording move the runtime hash (batch 3's 753eed... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-15 (W25-MS): the cost.manaOnly tag and the nine mana-only Core spells move it again (the branch pins 63e86f... and 8af5d7... are now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-15 (W25-NC, Wave 2 batch 5, W25-BANDS): statusCaps, the Counter stack rule and the bands rules move the runtime hash; W25-EvadeCards moved it again (the Evade card face phrase and Quickstep's Counter stack); every earlier hash, 8c57f3... included, is in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:b9c05567d296fc4a2dcf8342d541e54cbc257f4dae6dc3d08533082b48342db7');
+  // Versioned stat defaults and casting traditions change the runtime pin.
+  assert.equal(profile.lock.runtimeHash, 'sha256:b66130030d195c79fa40400fe5f2a998c3f54835b70ae4b5625732ceb0ff6813');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

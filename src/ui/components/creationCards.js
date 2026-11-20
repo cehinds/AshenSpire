@@ -62,7 +62,7 @@ function renderPrimaryStatCard(input, peers = null) {
   const face = row({
     tag: 'span', className: 'face-lite',
     labelNode: labelStack({ label: input.reveal?.title ? `${input.reveal.title} (${input.face.label})` : input.face.label,
-      hint: input.face.mainSummary || input.face.summary || '' }),
+      hint: input.face.mainSummary ?? input.face.summary ?? '' }),
     status: input.face.value === '' || input.face.value == null ? '' : String(input.face.value),
   });
   face.querySelector('.ls-hint')?.classList.add('disc-summary');

@@ -8,8 +8,10 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
 import { gameProfileShopSalePlan, gameProfileShopSalePlans, commitGameProfileShopSale } from '../src/model/gameProfileShopSales.js';
 import { syncFlaskGrowth } from '../src/model/flaskgrowth.js';
-import { pieceItemRef } from '../src/model/loadout.js';
+import { equipPiece, ownership, pieceItemRef } from '../src/model/loadout.js';
 import { mountKey } from '../src/model/cardMounts.js';
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -217,4 +219,72 @@ test('foreign-class armor remains sellable when its bare ID matches the equipped
   commitGameProfileShopSale(registries, f.run, 'market', quote);
   assert.deepEqual(f.run.loadout.boughtArmour, [{ classId: own.classId, id: own.id }]);
   assert.deepEqual(f.run.loadout.sets.armor, [own.id]);
+});
+
+test('buying and equipping replacement armor makes the starter sellable without restoring it after save', () => {
+  const f = fixture(), starter = registries.equipment.armour.find(row => row.classId === f.run.class && row.id === f.run.loadout.sets.armor[0]);
+  const identity = `${starter.classId}:${starter.id}`;
+  assert.match(gameProfileShopSalePlans(registries, f.run, 'market').find(row => row.identity === identity).reason, /Unequip/);
+  const bought = purchase(f, f.stock.options.findIndex(option => option.kind === 'armor'));
+  const replacement = registries.equipment.armour.find(row => row.classId === f.run.class && row.id === bought.id);
+  f.run.level = { xp: 0, level: 11, unspentPoints: 10 };
+  for (const [id, minimum] of Object.entries(replacement.requirements?.attributes || {})) {
+    while (f.run.attributes[id] < minimum) allocateAttributePoint(registries, f.run, id);
+  }
+  assert.equal(equipPiece(registries, f.run.loadout, 'armor', 0, bought.id,
+    ownership(registries, { loadout: f.run.loadout }), { inCombat: false, classId: f.run.class, attributes: f.run.attributes }), true);
+  rederivePools(registries, f.run, 'replacement armor equipped');
+  const quote = gameProfileShopSalePlans(registries, f.run, 'market').find(row => row.identity === identity);
+  assert(quote.ok, quote.reason);
+  const before = f.run.cinders;
+  commitGameProfileShopSale(registries, f.run, 'market', quote);
+  assert.equal(f.run.cinders, before + quote.price);
+  assert.equal(ownership(registries, { loadout: f.run.loadout }).has(starter), false);
+  assert.equal(equipPiece(registries, f.run.loadout, 'armor', 0, starter.id,
+    ownership(registries, { loadout: f.run.loadout }), { inCombat: false, classId: f.run.class, attributes: f.run.attributes }), false);
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(f.run, f.rng);
+  const restored = saves.loadRun(registries);
+  assert.ok(restored, JSON.stringify(saves.runStatus()));
+  assert.equal(ownership(registries, { loadout: restored.loadout }).has(starter), false);
+  assert(!gameProfileShopSalePlans(registries, restored, 'market').some(row => row.kind === 'armor' && row.identity === identity));
+  const restoredBefore = bytes(restored);
+  assert.throws(() => commitGameProfileShopSale(registries, restored, 'market', quote), /inventory/);
+  assert.equal(bytes(restored), restoredBefore);
+  assert.equal(ownership(registries, { meta: {}, profileWardrobe: true, loadout: restored.loadout }).has(starter), true, 'sale does not remove the profile wardrobe');
+  // The ordinary configured purchase path grants a new owned copy.
+  const stock = restored.gameProfileRewardOffers['shop:market'];
+  stock.options[0] = { kind: 'armor', id: starter.id, price: 100 };
+  stock.taken = stock.taken.filter(index => index !== 0);
+  purchaseGameProfileShopOffer(registries, restored, 'market', 0, f.rng);
+  assert.equal(ownership(registries, { loadout: restored.loadout }).has(starter), true);
+});
+
+test('armor sales exclude locked unowned sets and reject changed ownership, tiers and equipped quotes atomically', () => {
+  const f = fixture();
+  const locked = registries.equipment.armour.find(row => row.classId === f.run.class && row.unlock && row.id !== f.run.loadout.creationArmourGrant.id);
+  assert.ok(locked);
+  assert.equal(gameProfileShopSalePlan(registries, f.run, 'market', 'armor', `${locked.classId}:${locked.id}`).ok, false);
+  assert(!gameProfileShopSalePlans(registries, f.run, 'market').some(row => row.kind === 'armor' && row.identity === `${locked.classId}:${locked.id}`));
+  const bought = purchase(f, f.stock.options.findIndex(option => option.kind === 'armor'));
+  const identity = `${f.run.class}:${bought.id}`, quote = gameProfileShopSalePlan(registries, f.run, 'market', 'armor', identity);
+  f.run.itemUpgradeLevels[quote.itemRef] = 1;
+  const upgraded = bytes(f.run);
+  assert.throws(() => commitGameProfileShopSale(registries, f.run, 'market', quote), /changed/);
+  assert.equal(bytes(f.run), upgraded);
+  const current = gameProfileShopSalePlan(registries, f.run, 'market', 'armor', identity);
+  f.run.loadout.sets.armor[0] = bought.id;
+  const equipped = bytes(f.run);
+  assert.throws(() => commitGameProfileShopSale(registries, f.run, 'market', current), /Unequip/);
+  assert.equal(bytes(f.run), equipped);
+});
+
+test('an armor assigned to a spare prepared set must be removed before it can be sold', () => {
+  const f = fixture();
+  const bought = purchase(f, f.stock.options.findIndex(option => option.kind === 'armor'));
+  f.run.loadout.sets.armor.push(bought.id);
+  f.run.loadout.active.armor = 0;
+  const quote = gameProfileShopSalePlan(registries, f.run, 'market', 'armor', `${f.run.class}:${bought.id}`);
+  assert.match(quote.reason, /every set/);
+  assert.equal(quote.ok, false);
 });

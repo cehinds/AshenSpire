@@ -25,7 +25,7 @@ import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 // regression it exists to stop.
 import { t } from '../strings.js';
 
-export function openPileModal(registries, title, cards, { shuffleForDisplay = false, rules = null } = {}) {
+export function openPileModal(registries, title, cards, { shuffleForDisplay = false, rules = null, deckView = false } = {}) {
   let list = [...cards];
   if (shuffleForDisplay) {
     for (let i = list.length - 1; i > 0; i--) {
@@ -44,8 +44,8 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
 
   const shell = OpenModal({
     size: 'xl',
-    className: 'pile-modal',
-    eyebrow: t('piles.eyebrow'),
+    className: deckView ? 'pile-modal deck-view-modal' : 'pile-modal',
+    eyebrow: deckView ? '' : t('piles.eyebrow'),
     title,
     headExtras: status,
     bodyClassName: 'pile-body',

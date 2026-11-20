@@ -127,7 +127,7 @@ export function armouryPickerTable(ctx, { selectedSlot, allRows, pickerParts, fo
       act.dataset.act = target.kind;
       if (!parts.seal.ok) { act.disabled = true; refuses(act, () => parts.seal.reason); }
       else if (!parts.transition.ok) { act.disabled = true; refuses(act, () => parts.transition.reason); }
-      else act.addEventListener('click', () => requestEquip(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel));
+      else act.addEventListener('click', () => requestEquip(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel, { confirm: true, opener: act }));
       actions.push(act);
     }
     const actionsCell = el('td', { role: 'cell' }, [el('div', { class: 'equip-picker-actions' }, actions)]);

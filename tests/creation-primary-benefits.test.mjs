@@ -9,6 +9,9 @@ import { statRowValue } from '../src/model/derivedStats.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { resourceStrip } from '../src/ui/components/creationCards.js';
 import { withKitDom } from './helpers/dom.mjs';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { progressionStats } from '../src/ui/models/ProgressionInspectionModel.js';
+import { primaryStatCard } from '../src/ui/components/creationCards.js';
 
 const registries = createRegistries(configuredContentBundle(contentBundle, {}));
 const run = createRunState({ registries, classId: 'reaver', seed: 7 });
@@ -28,9 +31,9 @@ test('each primary point adds one to its main stats and no other main stat', () 
 
 test('primary faces name the main bonus while secondary benefits remain inspectable', () => {
   const rows = cards(registries, run);
-  assert.equal(rows.find((row) => row.id === 'strength').face.mainSummary, 'Physical damage / Attack Rating (AR) +1 per point');
-  assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health +1 per point · Poise +1 per point');
-  assert.equal(rows.find((row) => row.id === 'intelligence').face.mainSummary, 'Magic damage / Potency Rating (PR) +1 per point');
+  assert.equal(rows.find((row) => row.id === 'strength').face.mainSummary, 'Physical damage');
+  assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health · Poise');
+  assert.equal(rows.find((row) => row.id === 'intelligence').face.mainSummary, 'Magic damage');
   assert.ok(rows.find((row) => row.id === 'wisdom').reveal.lines.some((line) => line.startsWith('Mana ')));
 });
 
@@ -53,9 +56,143 @@ test('custom fractional bonuses and caps use the saved rules after live config c
   const custom = createRegistries(configuredContentBundle(bundle, {}));
   const saved = createRunState({ registries: custom, classId: 'reaver', seed: 8 });
   const rows = cards(registries, saved);
-  assert.equal(rows.find((row) => row.id === 'strength').face.mainSummary, 'Physical damage / Attack Rating (AR) +1 every 2 points (max 9)');
-  assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health +4 per point · Poise +1 per point');
+  assert.equal(rows.find((row) => row.id === 'strength').face.mainSummary, '', 'a benefit requiring two points stays out of the short summary');
+  assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health · Poise');
+  assert.ok(rows.find((row) => row.id === 'strength').reveal.lines.some(line => /0\.5/.test(line)), 'the exact saved formula remains inspectable');
 });
+
+test('Core faces use current spell and hand rules without rating names or numerical bonuses', () => {
+  const profile = resolveGameProfile('core');
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const character = createRunState({ registries: core, classId: 'reaver', seed: 9 });
+  const expected = {
+    strength: 'Physical damage', dexterity: 'Block', constitution: 'Health',
+    wisdom: 'Poise · Divine magic', intelligence: 'Arcane magic',
+  };
+  for (const wisdom of [1, 5]) {
+    character.attributes.wisdom = wisdom;
+    const rows = progressionStats(core, character).attributes;
+    assert.deepEqual(Object.fromEntries(rows.map(row => [row.id, row.face.mainSummary])), expected);
+  }
+});
+
+test('crossing a multi-point threshold does not add it to the per-point summary', () => {
+  const bundle = { ...contentBundle, derivedStatRules: structuredClone(contentBundle.derivedStatRules) };
+  bundle.derivedStatRules.rules.ar = { base: 0, strength: 0.5 };
+  bundle.derivedStatRules.rules.handSize = { base: 7, intelligence: 0.2, min: 1 };
+  const custom = createRegistries(configuredContentBundle(bundle, {}));
+  const character = createRunState({ registries: custom, classId: 'reaver', seed: 10 });
+  for (const strength of [1, 2, 3]) {
+    character.attributes.strength = strength;
+    const rows = cards(custom, character);
+    assert.equal(rows.find(row => row.id === 'strength').face.mainSummary, '');
+    assert.equal(rows.find(row => row.id === 'intelligence').face.mainSummary, 'Magic damage');
+  }
+});
+
+test('current expanded benefits follow saved pools, hand intervals and casting traditions', () => {
+  const profile = resolveGameProfile('core');
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const character = createRunState({ registries: core, classId: 'reaver', seed: 12 });
+  const rows = progressionStats(core, character).attributes;
+  const lines = id => rows.find(row => row.id === id).reveal.lines.join(' ');
+  assert.match(lines('constitution'), /HP \+5 every 1 point/);
+  assert.doesNotMatch(lines('constitution'), /Poise|Mana|Stamina/);
+  assert.match(lines('wisdom'), /Poise \+1 every 1 point/);
+  assert.match(lines('wisdom'), /Mana \+1 every 4 points/);
+  assert.match(lines('dexterity'), /Stamina.*\+1 every 4 points/);
+  for (const label of ['Opening hand', 'Draw / turn', 'Hand size']) assert.ok(lines('intelligence').includes(`${label} +1 every 4 points`));
+  assert.match(lines('wisdom'), /Divine magic scales with Wisdom/);
+  assert.match(lines('intelligence'), /Arcane magic scales with Intelligence/);
+  assert.match(lines('intelligence'), /higher of Intelligence and Wisdom, never their sum/);
+  for (const row of rows) assert.doesNotMatch([row.face.summary, ...row.reveal.lines].join(' '), /\b(?:AR|DR|PR|Ward|Perception|Evasion|Precision)\b/);
+});
+
+test('historical and custom snapshots retain their own owners and hand growth in current registries', () => {
+  const profile = resolveGameProfile('core');
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const character = createRunState({ registries: core, classId: 'reaver', seed: 13 });
+  delete character.gameProfile.modules.effects.spellTraditionsVersion;
+  if (character.gameProfile.fixCoreRules) delete character.gameProfile.fixCoreRules.spellTraditionsVersion;
+  delete character.gameProfile.modules.cards.handPointsPerIncrease;
+  character.derivedStatRuleSnapshot.rules.rules.poise = { base: 1, constitution: 1 };
+  character.derivedStatRuleSnapshot.rules.rules.hp = { base: 35, constitution: 10 };
+  const rows = progressionStats(core, character).attributes;
+  const con = rows.find(row => row.id === 'constitution');
+  const wisdom = rows.find(row => row.id === 'wisdom');
+  const intelligence = rows.find(row => row.id === 'intelligence');
+  assert.equal(con.face.mainSummary, 'Health · Poise');
+  assert.match(con.reveal.lines.join(' '), /HP \+10 every 1 point/);
+  assert.doesNotMatch(wisdom.face.mainSummary, /Poise|Divine/);
+  assert.match(intelligence.face.mainSummary, /Magic damage · Hand size/);
+  assert.match(intelligence.reveal.lines.join(' '), /Hand size \+1 every 1 point/);
+  character.derivedStatRuleSnapshot.rules.rules.hp = { base: 35, strength: 7 };
+  const custom = progressionStats(core, character).attributes;
+  assert.equal(custom.find(row => row.id === 'constitution').face.mainSummary, 'Poise');
+  assert.equal(custom.find(row => row.id === 'strength').face.mainSummary, 'Physical damage · Health');
+  assert.match(custom.find(row => row.id === 'strength').reveal.lines.join(' '), /HP \+7 every 1 point/);
+});
+
+test('configured hand summaries respect the saved points-per-card interval at every threshold', () => {
+  const profile = resolveGameProfile('core');
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const character = createRunState({ registries: core, classId: 'reaver', seed: 11 });
+  character.gameProfile.modules.cards.handPointsPerIncrease = 4;
+  for (const intelligence of [1, 3, 4, 5, 7, 8]) {
+    character.attributes.intelligence = intelligence;
+    const rows = progressionStats(core, character).attributes;
+    assert.equal(rows.find(row => row.id === 'intelligence').face.mainSummary, 'Arcane magic');
+  }
+});
+
+test('custom magic compact labels require a benefit on every point while saved formulas stay inspectable', () => {
+  const profile = resolveGameProfile('core');
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  for (const coefficient of [0, 0.5, 2]) {
+    const character = createRunState({ registries: core, classId: 'reaver', seed: 14 });
+    character.derivedStatRuleSnapshot.rules.rules.pr = { base: 3, intelligence: coefficient, multiplier: 2, max: 40 };
+    for (const points of [1, 2, 3, 4, 5, 8]) {
+      Object.assign(character.attributes, { intelligence: points, wisdom: points });
+      const models = progressionStats(core, character).attributes;
+      for (const [id, label, short] of [['intelligence', 'Arcane magic', 'INT'], ['wisdom', 'Divine magic', 'WIS']]) {
+        const row = models.find(model => model.id === id);
+        assert.equal(row.face.mainSummary.includes(label), coefficient === 2, `${id}, coefficient ${coefficient}, value ${points}`);
+        const text = row.reveal.lines.join(' ');
+        assert.ok(text.includes(`${label}: 3 base`));
+        assert.ok(text.includes('× 2'));
+        assert.ok(text.includes('max 40'));
+        if (coefficient) assert.ok(text.includes(`floor(${coefficient} × ${short})`));
+        assert.doesNotMatch(text, /\b(?:AR|DR|PR)\b/);
+        if (!coefficient) assert.ok(row.gains.every(gain => !['arcaneMagic', 'divineMagic'].includes(gain.statId)));
+      }
+    }
+  }
+});
+
+test('Divine compact eligibility includes both the remapped Intelligence term and a custom Wisdom term', () => {
+  const profile = resolveGameProfile('core');
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const character = createRunState({ registries: core, classId: 'reaver', seed: 15 });
+  for (const [intelligence, wisdom, qualifies] of [[0, 2, true], [0.5, 1, true], [0.5, 0.5, false]]) {
+    character.derivedStatRuleSnapshot.rules.rules.pr = { base: 0, intelligence, wisdom };
+    for (const points of [1, 2, 3, 4]) {
+      character.attributes.wisdom = points;
+      const row = progressionStats(core, character).attributes.find(model => model.id === 'wisdom');
+      assert.equal(row.face.mainSummary.includes('Divine magic'), qualifies, `${intelligence} INT + ${wisdom} WIS at ${points}`);
+      const formula = row.reveal.lines.find(line => line.startsWith('Divine magic:'));
+      if (intelligence) assert.ok(formula.includes(`floor(${intelligence} × WIS)`));
+      if (wisdom) assert.ok(formula.includes(`floor(${wisdom} × WIS)`));
+    }
+  }
+});
+
+test('an intentionally empty primary summary does not fall back to numerical legacy prose', () => withKitDom(() => {
+  const model = cards(registries, run)[0];
+  model.face.mainSummary = '';
+  model.face.summary = 'AR +1 every 2 points';
+  const node = primaryStatCard(model);
+  assert.equal(node.querySelector('.disc-summary'), null);
+}));
 
 test('resource rows show each total once in readable groups', () => withKitDom(() => {
   const projection = statProjection(registries, run);

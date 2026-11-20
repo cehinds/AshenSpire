@@ -112,6 +112,7 @@ import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, RestOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { armouryRoute } from './model/armouryPages.js';
 import { mountConfiguredShop } from './ui/screens/shop.js';
+import { runHudRefreshSignature, RefreshRunHud } from './ui/components/runHud.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
@@ -1396,7 +1397,26 @@ function showOfflinePlay() {
 // default; a room (merchant, Shrine, event) passes itself, because the band
 // those rooms now carry opens the Armoury too and a close that went to the
 // map would abandon the room mid-visit.
+// Overlay navigation back to a still-mounted map keeps its selected route
+// and camera. Other callbacks may finish a reward or a service and must run.
+function retainMapOrigin(returnTo) {
+  if (returnTo !== showMap) return returnTo;
+  const origin = app.querySelector('.mapscreen');
+  if (!origin) return returnTo;
+  const owner = run;
+  let markup = runHudRefreshSignature({ registries, run, meta: saves.loadMeta(), place: 'map', headerClass: 'map-header' });
+  return () => {
+    if (!origin.isConnected || run !== owner) return returnTo();
+    const meta = saves.loadMeta();
+    const next = runHudRefreshSignature({ registries, run, meta, place: 'map', headerClass: 'map-header' });
+    if (next === markup) return;
+    markup = next;
+    RefreshRunHud(app, { registries, run, meta, place: 'map', headerClass: 'map-header', hud: roomHud(showMap), remount: showMap });
+  };
+}
+
 function showArmoury(request = '', returnTo = showMap) {
+  returnTo = retainMapOrigin(returnTo);
   // A glow cleared by looking must survive a reload even when nothing in the Armoury changes.
   if (armouryHasNew(run)) { markArmourySeen(run); persist(); } else markArmourySeen(run);
   const armouryMeta = saves.loadMeta();
@@ -1422,6 +1442,7 @@ function showArmoury(request = '', returnTo = showMap) {
     destination,
     equipItemId,
     inCombat: false,
+    onRememberEquipSlot: persistOrWarn,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
         const meta = saves.loadMeta();
@@ -1472,6 +1493,7 @@ function deckDoors(services = null) {
 // `place` names where Back leads (common.place.*): the exit reads "Back to {place}" instead of Cancel.
 function showDeckEditor(returnTo = showMap, hub = true, focusCard = null, place = '') {
   if (!run) return;
+  returnTo = retainMapOrigin(returnTo);
   mountDeckEditor(document.body, {
     registries,
     run,
@@ -2376,13 +2398,15 @@ function showRest(openPanel = null, locationId = null) {
     const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
     persist();
     const leave = () => { markRestLeft(run); persist(); showMap(); };
+    let restView;
+    const refresh = options => restView?.refresh(options);
     const commit = (service, payload) => {
       const before = snapshotRunForDiff(run);
       commitGameProfileRest(registries, run, service, payload);
       if (record) recordRestConsumed(run, service);
-      persist(); showRest();
+      persist(); refresh({ focusId: service });
       // The what-changed receipt for the services that change gear or cards. Level-up already ends in its own
-      // reward door, so it is skipped. It opens after the screen re-mounts, so the page lock covers the new screen.
+      // reward door, so it is skipped. It opens after the affected choices refresh.
       if (service === 'smith' || service === 'upgradeCard') {
         showRunReceipt({ run, registries, before, title: t(service === 'smith' ? 'whatChanged.rest.smith' : 'whatChanged.rest.upgradeCard') });
       }
@@ -2392,14 +2416,15 @@ function showRest(openPanel = null, locationId = null) {
       const draft = createGameProfileRestDraft(run);
       mountDeckEditor(document.body, {
         registries, run: draft, settings: saves.loadMeta().settings || {},
-        onDone: () => commit('strategize', { draft }), onCancel: () => showRest(),
+        onDone: () => commit('strategize', { draft }), onCancel: refresh,
       });
     };
-    return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave, hud: roomHud(() => showRest()),
+    restView = mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave, hud: roomHud(refresh),
       gameProfileRest: { visit, onStrategize: strategize,
         // Core 2: the deck door is free and is not a service, so it never touches the visit's one pick.
-        deckEditor: deckDoors().rest ? { onOpen: () => showDeckEditor(() => showRest(), true, null, 'shrine') } : null,
+        deckEditor: deckDoors().rest ? { onOpen: () => showDeckEditor(refresh, true, null, 'shrine') } : null,
         onCommit: commit, onLeave: leave } });
+    return restView;
   }
   if (locationId) restLocationId = locationId;
   audio.music('rest');
@@ -2626,21 +2651,26 @@ function mountGameProfileOfferDoor(pending, { combined }) {
 
 // Owner 2026-11-05: after a shop purchase a card may go to the deck (else it stays in the library, as before) and an
 // armament may be equipped through the Armoury's own equip flow (else it stays in the inventory, as before).
-function offerShopCardDestination(receipt) {
-  if (['weapons', 'armor'].includes(receipt?.kind)) return offerShopEquip(receipt.id);
+function offerShopCardDestination(receipt, refresh = showShop) {
+  if (['weapons', 'armor'].includes(receipt?.kind)) return offerShopEquip(receipt.id, refresh);
   if (!['combatCards', 'weaponArts'].includes(receipt?.kind) || !receipt.instanceId) return;
   const settings = saves.loadMeta().settings || {};
   openShopCardChoice({
     name: registries.cards.get(receipt.id)?.name || receipt.id,
     refusal: (code => !code ? '' : code === 'full' ? t('reward.configured.deckFull', { max: deckEditBounds(settings).max }) : t('reward.configured.deckLimit'))(shopCardDeckRefusal(registries, run, receipt.instanceId, settings)),
-    onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); showShop(); },
+    onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); queueMicrotask(refresh); },
+    onLibrary: () => queueMicrotask(refresh),
+    onEditDeck: deckEditingOn(settings) ? () => queueMicrotask(() => showDeckEditor(refresh, false,
+      run.sideboard.find(card => card.instanceId === receipt.instanceId), 'merchant')) : null,
   });
 }
-function shopArmamentBought(id) { recordCollectedArmament(id, 'shop'); offerShopEquip(id); }
-function offerShopEquip(id) {
+function shopArmamentBought(id, refresh = showShop) { recordCollectedArmament(id, 'shop'); offerShopEquip(id, refresh); }
+function offerShopEquip(id, refresh = showShop) {
   if (isConfiguredRun(run) && !gameModule(run, 'equipment')) return;
   const def = (registries.equipment.armaments || []).find(row => row.id === id) || (registries.equipment.armour || []).find(row => row.id === id);
-  openShopArmamentChoice({ name: def?.name || id, onEquip: () => showArmoury({ equipItemId: id }, showShop) });
+  openShopArmamentChoice({ name: def?.name || id,
+    onEquip: () => showArmoury({ equipItemId: id }, equipped => equipped ? refresh() : offerShopEquip(id, refresh)),
+    onKeep: () => queueMicrotask(refresh) });
 }
 
 function showShop() {
@@ -2652,25 +2682,32 @@ function showShop() {
   if (configuredShopKind(run, shopId) === 'blacksmith') {
     if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
     persist(); audio.music('shop');
-    return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
+    let smith;
+    const refresh = () => smith?.refresh();
+    smith = mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(refresh),
       onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
       onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
+    return smith;
   }
   const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
   audio.music('shop');
-  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
+  let shop;
+  const refresh = () => shop?.refresh();
+  shop = mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(refresh),
+    onEditDeck: deckEditingOn(saves.loadMeta().settings || {}) ? () => showDeckEditor(refresh, false, null, 'merchant') : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
-      if (offer.options[index]?.kind === 'rankUps') {
+      if (run.gameProfileRewardOffers[`shop:${shopId}`]?.options[index]?.kind === 'rankUps') {
         return chooseRankUpCard({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
-          try { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist(); } finally { showShop(); }
+          purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist();
         }, () => {});
       }
-      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
-      offerShopCardDestination(receipt);
+      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); refresh();
+      offerShopCardDestination(receipt, refresh);
     },
-    onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
+    onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); },
     onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
+  return shop;
 }
 
 function showEvent(eventId) {
@@ -2813,6 +2850,7 @@ if (shotState) {
       sideboardIDs: (row.sideboard || []).map(card => card.cardId),
       cinders: row.cinders,
       loadout: row.loadout,
+      equipmentSlotChoices: row.equipmentSlotChoices,
       flasks: row.flasks,
       relics: row.relics,
       sigils: row.sigils,

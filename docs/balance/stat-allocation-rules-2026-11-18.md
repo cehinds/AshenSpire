@@ -1,0 +1,34 @@
+# Stat descriptions and allocation
+
+Owner-confirmed, 2026-11-18. This contract applies to new Core profiles and
+supersedes earlier descriptions of attribute ownership.
+
+| Attribute | Benefits |
+| --- | --- |
+| Strength | Physical damage |
+| Dexterity | Block and maximum Stamina |
+| Constitution | Maximum Health only |
+| Wisdom | Divine magic, maximum Mana and Poise |
+| Intelligence | Arcane magic and hand size |
+
+Each Strength point adds to physical damage; each Dexterity point adds to Block.
+Each Constitution point grants 5 maximum HP. Wisdom grants 1 Poise per point.
+Stamina, Mana and hand size each increase by 1 per four points of their governing
+attribute. The starting hand is 5 + floor(INT / 4). Shared elemental spells use
+the higher of INT and WIS, never their sum.
+
+Spell traditions follow the approved Arcane/Divine contract: Force, Illusion and
+Alteration are Arcane; Divine and Decay/Necrotic are Divine; Fire, Earth,
+Lightning, Frost and unschooled magic are shared.
+
+Compact attribute faces name per-point benefits without numeric badges. Expanded
+details explain all benefits, including the four-point resource thresholds, and
+retain the exact formulas used by the character. Damage channels are described
+as physical damage, Block and magic rather than AR, DR or PR stats.
+
+The allocation preview and committed allocation must agree. Existing profiles,
+combat snapshots and custom stat snapshots retain their own scaling and benefit
+descriptions. Current defaults must not silently change a saved character.
+
+This change covers stat scaling, descriptions and allocation presentation. It
+does not change card pools, reward weighting or spell artwork.

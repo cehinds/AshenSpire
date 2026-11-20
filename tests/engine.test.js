@@ -4780,13 +4780,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ---- 4. armour answers to the OTHER route, and it is not a kind test ---
     const armourPool = fits(armorSlot, eq_.armour.filter((o) => o.classId === 'reaver'));
     assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
-    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default,wayfarerPlate,nightweave,riteVestments,gutterLeathers',
-      'a fresh profile owns its starting set and four attribute-gated shared sets');
+    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default',
+      'a fresh run owns only its starting armour');
     const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh, profileWardrobe: true });
     eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set (profile wardrobe)');
     // Owner, 2026-11-05: in a run the profile wardrobe is not the inventory.
     const inRun = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
-    eq(armourPool.filter((p) => inRun.has(p)).length, 5, 'a profile unlock does not make a set owned inside a run');
+    eq(armourPool.filter((p) => inRun.has(p)).length, 1, 'a profile unlock does not make a set owned inside a run');
     assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
       'the pool question is asked of the piece, not spelled as an if on its kind');
 
@@ -5749,7 +5749,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       };
       const meta = { unlocked: over.unlocked || [], found: over.available || [] };
       return {
-        owned: ownership(reg, { meta, loadout: over.loadout || null }),
+        owned: ownership(reg, { meta, loadout: over.loadout || null, profileWardrobe: true }),
         unlockById: new Map((REG.unlocks || []).map((u) => [u.id, u])),
         drops,
       };
@@ -7629,6 +7629,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
     const vigil = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil');
     const defaultArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'default');
+    assert(!equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
+      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'an alternate starter does not also grant the default armour');
+    worn.loadout.boughtArmour = [{ classId: 'reaver', id: defaultArmour.id }];
     assert(equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
       ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the creation armour can be switched away from');
     assert(ownership(REG, { meta: {}, loadout: worn.loadout }).has(vigil),
@@ -7915,7 +7918,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // halves — derived, so the card followed the row with no prose edit.
     eq(constitution.face.summary, '+1 HP per pt · +1 Mana per 4 pts · +1 Stamina / turn per 4 pts · +1 Poise per pt',
       'the face summary is derived from the rules that read the attribute');
-    eq(constitution.reveal.flavour, 'What your body takes before the climb ends.',
+    eq(constitution.reveal.flavour, REG.attributes.get('constitution').sense,
       'the authored description is still derived, as the fold\'s flavour');
     assert(constitution.reveal.lines.some((line) => /^HP \+1 every 1 point$/.test(line))
       && constitution.reveal.lines.some((line) => /^Mana \+1 every 4 points$/.test(line))

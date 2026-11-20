@@ -71,8 +71,9 @@ export const OWNERSHIP_GATES = Object.freeze(['unearned', 'unfound']);
  * ownership(registries, { meta, loadout }) → { has(piece), why(piece) }
  *
  * IN A RUN, AN ARMOUR SET IS OWNED BY THE RUN, NOT BY THE PROFILE (owner,
- * 2026-11-05; SPEC §14.2/§14.3). A set with an `unlock` is owned when it is the
- * creation grant, in `loadout.boughtArmour`, or already worn in `loadout.sets`
+ * 2026-11-05; SPEC §14.2/§14.3). Every set, including blank-unlock shared sets,
+ * is owned when it is the creation grant, in `loadout.boughtArmour`, or already
+ * worn in `loadout.sets.armor`
  * (saves from before this rule keep what they wear). `meta.unlocked` does NOT
  * make it owned there: the profile wardrobe must not fill a fresh run's
  * inventory. `profileWardrobe: true` is the one explicit way to ask the
@@ -100,6 +101,7 @@ export function ownership(registries, { meta = {}, loadout = null, profileWardro
   // the loadout beside the creation grant, as `{ classId, id }` because armour
   // ids repeat across classes.
   const boughtArmour = loadout && Array.isArray(loadout.boughtArmour) ? loadout.boughtArmour : [];
+  const soldArmour = loadout && Array.isArray(loadout.soldArmour) ? loadout.soldArmour : [];
   // A missing piece resolves to 'unearned' rather than to a fourth value: there
   // is no row to read a hint from, and 'unearned' is the route whose sentence is
   // generic. 'unfound' would promise the player it turns up in treasure, which
@@ -117,17 +119,22 @@ export function ownership(registries, { meta = {}, loadout = null, profileWardro
   // so this order is not a tiebreak, it is the absence of a tie.
   const basicTag = cfg.basicTag;
   const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
-  const wornIds = new Set(carriedIds(loadout));
+  const wornArmourIds = new Set(loadout?.sets?.armor || []);
   const why = (piece) => {
     if (!piece) return 'unearned';
+    // A sale retires starter/legacy ownership for this run only.
+    // A later purchase is an explicit new copy and restores ordinary ownership.
+    if (piece.kind === 'armor' && !profileWardrobe
+      && soldArmour.some(row => row && row.classId === piece.classId && row.id === piece.id)
+      && !boughtArmour.some(row => row && row.classId === piece.classId && row.id === piece.id)) return 'unearned';
     if (creationArmourGrant
       && creationArmourGrant.classId === piece.classId
       && creationArmourGrant.id === piece.id) return null;
     if (boughtArmour.some((row) => row && row.classId === piece.classId && row.id === piece.id)) return null;
+    if (piece.kind === 'armor' && !profileWardrobe) {
+      return wornArmourIds.has(piece.id) ? null : 'unearned';
+    }
     if (piece.unlock !== '' && piece.unlock != null) {
-      if (piece.kind === 'armor' && !profileWardrobe) {
-        return loadout && wornIds.has(piece.id) ? null : 'unearned';
-      }
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }
     if (fromDropPool(piece) && drops.requireFound) {

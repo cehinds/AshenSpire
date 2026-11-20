@@ -1,6 +1,7 @@
 import { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes } from './gameProfileGear.js';
 export { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes };
 import { deriveStat } from './derivedStats.js';
+const STAT_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
 import { PrAttributeView } from './fixCoreMechanics.js';
@@ -63,15 +64,43 @@ export function gameProfileStatOptions(subject, options = {}, classId = subject?
   for (const [id, base] of Object.entries(stats.poolBasesByClass?.[classId] || {})) rows[id] = {
     ...(rows[id] || {}), base,
   };
+  // Owner, 2026-11-17: under `secondaryPolicy: "primaryOnly"` a row levelGains names reads only the attributes it lists
+  // (Stamina from DEX, HP from CON, Mana from WIS); every other attribute weight of that row is zeroed.
+  if (stats.secondaryPolicy === 'primaryOnly') {
+    for (const row of Object.values(rows)) for (const attribute of STAT_ATTRIBUTES) if (!Object.hasOwn(row, attribute)) row[attribute] = 0;
+  }
+  // How many attribute points one +1 of a pool costs, the points it counts from, and the attributes it reads the highest of
+  // (owner, 2026-11-17: SP = 3 + floor((DEX - 1) / 3), MP = 1 + floor((max(INT, WIS) - 1) / 3)).
+  for (const [name, points] of Object.entries(stats.pointsPerIncrease || {})) {
+    const id = aliases[name] || name;
+    rows[id] = { ...(rows[id] || {}), pointsPerIncrease: points };
+  }
+  for (const [name, baseline] of Object.entries(stats.attributeBaseline || {})) {
+    const id = aliases[name] || name;
+    rows[id] = { ...(rows[id] || {}), attributeBaseline: baseline };
+  }
+  for (const [name, ids] of Object.entries(stats.maxOf || {})) {
+    const id = aliases[name] || name;
+    rows[id] = { ...(rows[id] || {}), maxOf: [...ids] };
+  }
   for (const id of ['openingHand', 'draw']) rows[id] = {
     ...(rows[id] || {}), base: stats.handBase, intelligence: 1, attributeBaseline: 0,
+    ...(stats.handPointsPerIncrease === undefined ? {} : { pointsPerIncrease: Math.max(1, stats.handPointsPerIncrease || 1) }),
     byClass: {},
   };
-  return { ...options, explicitOverride: {
-    ...(options.explicitOverride || {}), rules: {
-      ...(options.explicitOverride?.rules || {}), ...rows,
-    },
-  } };
+  // Every class's pool base and per-level growth (owner, 2026-11-17: HP = 30 + 5 x (CON + level) is base 35, CON 5 and 5 per level
+  // after the first). A run layer, not the explicit override, so a relic's flat bonus still adds to the base.
+  const pools = {};
+  for (const [id, base] of Object.entries(stats.poolBases || {})) pools[id] = { ...(pools[id] || {}), base };
+  for (const [id, perLevel] of Object.entries(stats.levelGrowth || {})) pools[id] = { ...(pools[id] || {}), perLevel };
+  const runModifiers = Array.isArray(options.runModifiers) ? options.runModifiers : options.runModifiers ? [options.runModifiers] : [];
+  return { ...options,
+    ...(Object.keys(pools).length ? { runModifiers: [...runModifiers, { rules: pools }] } : {}),
+    explicitOverride: {
+      ...(options.explicitOverride || {}), rules: {
+        ...(options.explicitOverride?.rules || {}), ...rows,
+      },
+    } };
 }
 
 export function initializeGameProfileRun(registries, run, { profileMeta = {} } = {}) {

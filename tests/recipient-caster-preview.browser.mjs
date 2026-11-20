@@ -1,12 +1,14 @@
 // Focused production-preview caster/recipient contract; requires staged effect art.
+// Optional PLAYWRIGHT_MODULE, CHROME, RECIPIENT_EFFECTS_QA_OUT.
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright';
+import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, resolve, relative, sep } from 'node:path';
 import { artPath, packTreeOf } from '../tools/art-source.mjs';
+const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root=resolve(import.meta.dirname,'..');
-const out=resolve(root,'scratch/recipient-effects/caster-review');await mkdir(out,{recursive:true});
+const out=resolve(process.env.RECIPIENT_EFFECTS_QA_OUT || resolve(root,'scratch/recipient-effects/caster-review'));await mkdir(out,{recursive:true});
 // Read-only source serving: this focused test does not restamp a game build.
 const server = createServer(async (req, res) => {
   const path = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
@@ -20,7 +22,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const baseUrl = `http://127.0.0.1:${server.address().port}`;
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,...(process.env.CHROME?{executablePath:process.env.CHROME}:{})});
 const page=await browser.newPage({viewport:{width:1280,height:1100}});
 const report={cases:[],errors:[]};page.on('pageerror',error=>report.errors.push(error.message));
 const cases=[

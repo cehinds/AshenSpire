@@ -72,13 +72,15 @@ test('add to deck refuses non-card rewards', () => {
 });
 
 // ---- review step UI ----------------------------------------------------------
-import { rewardDom } from './helpers/dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 
 async function withDom(fn) {
-  const dom = { customElements: { define() {}, get: () => true }, HTMLElement: class {}, ...rewardDom() };
-  const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
+  const { dom, globals } = withKitDom((dom, globals) => ({ dom, globals }));
+  const before = Object.fromEntries(Object.keys(globals).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, globals);
+  document.documentElement = document.body;
+  document.getSelection = () => null;
   // The minimal DOM has no insertAdjacentHTML; the equipment face paints with it and is not under test.
   const make = document.createElement.bind(document);
   document.createElement = (...args) => { const node = make(...args); node.insertAdjacentHTML ||= () => {}; return node; };
@@ -96,7 +98,12 @@ function mount(extra = {}) {
     onContinue() { calls.push('continue'); }, canEditDeck: true, ...extra });
   return { app, calls };
 }
-const review = app => { app.querySelector('.reward-pick').click(); };
+const review = app => {
+  app.querySelector('.reward-pick').click();
+  const inspection = document.querySelector('.card-inspection-modal');
+  assert.ok(inspection, 'selecting a live reward opens its inspect door');
+  inspection.querySelector('.card-inspection-back').click();
+};
 const footLabels = app => [...app.querySelectorAll('.reward-foot button')].filter(b => !b.hidden).map(b => b.textContent);
 const settle = async () => { await Promise.resolve(); await Promise.resolve(); };
 
@@ -170,7 +177,7 @@ test('an armament reward offers Equip now when the Armoury is open, claims first
       MountGameProfileOffers(app, { registries: reg, run, offer, title: 'Reward',
         onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
         onAddToDeck() { calls.push('add'); }, onEditDeck() { calls.push('deck'); },
-        canEditEquipment: gate, onEditEquipment: (i, back) => { calls.push('equip'); back(); }, onContinue() { calls.push('continue'); } });
+        canEditEquipment: gate, onEditEquipment: (i, back) => { calls.push('equip'); back(true); }, onContinue() { calls.push('continue'); } });
       review(app); app.querySelector('#reward-card-confirm').click();
       const equip = app.querySelector('#reward-equip-now');
       assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
@@ -181,5 +188,34 @@ test('an armament reward offers Equip now when the Armoury is open, claims first
       assert.deepEqual(calls, ['take', 'equip', 'continue']);
       app.remove();
     }
+  });
+});
+
+test('Back from reward equip keeps Equip retryable without duplicate claims or leaving the reward', async () => {
+  await withDom(async () => {
+    const app = document.createElement('main'); document.body.append(app);
+    const offer = { id: 'equip-retry', options: [{ kind: 'weapons', id: reg.equipment.armaments[0].id }], taken: [], claimed: null, takeCount: 1 };
+    const calls = [];
+    let returnFromEquip;
+    MountGameProfileOffers(app, { registries: reg, run: { class: 'reaver', deck: [] }, offer, title: 'Reward',
+      onAddToDeck() {},
+      onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
+      canEditEquipment: true,
+      onEditEquipment(i, back) { calls.push('equip'); returnFromEquip = back; },
+      onContinue() { calls.push('continue'); } });
+    review(app); app.querySelector('#reward-card-confirm').click();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      app.querySelector('#reward-equip-now').click(); await settle();
+      returnFromEquip(false);
+      assert.equal(app.querySelector('#reward-equip-now').disabled, false);
+      assert.equal(app.querySelector('#reward-card-confirm').disabled, false);
+      assert.equal(calls.filter(call => call === 'take').length, 1, 'claim only once');
+      assert.equal(calls.includes('continue'), false, 'Back stays on the reward');
+    }
+    app.querySelector('#reward-equip-now').click(); await settle();
+    returnFromEquip(true);
+    assert.equal(calls.filter(call => call === 'take').length, 1);
+    assert.equal(calls.at(-1), 'continue', 'successful equip completes the reward');
+    app.remove();
   });
 });

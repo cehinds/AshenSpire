@@ -5,6 +5,7 @@ import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard, clearSelection } from './cardSelection.js';
 import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel.js';
 import { setAttr } from '../domWrite.js';
+import { t } from '../strings.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
 // ./cardSelection.js. They were two module-level `let`s here — shared by every
@@ -305,7 +306,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     note.className = 'card-action-reason';
     note.setAttribute('role', 'status');
     note.textContent = blocked.map((row) => row.reason).join(' ');
-    details.append(note);
+    details.prepend(note);
   }
   const buttons = rows.map((row) => {
     const button = document.createElement('button');
@@ -317,16 +318,22 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     if (row.reason) button.title = row.reason;
     return button;
   });
-  // W1o: the header close is the way out. The footer holds only applicable
-  // actions — one fills it — and a read-only door has no footer at all, not a
-  // redundant Back beside the close it duplicates.
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.className = 'card-inspection-back';
+  back.textContent = t('common.back');
+  back.dataset.role = 'exit';
+  // Reading and acting share one door; Back always leaves without acting.
   const shell = OpenModal({ title, size: 'lg',
     className: 'card-inspection-modal', opener, deferFocus: true, deferLift,
     primary: buttons[0] || null,
-    secondary: buttons.slice(1),
+    secondary: [back, ...buttons.slice(1)],
     body: cardInspectionLayout(card, details, { chipsWithDetails: true }) });
+  back.addEventListener('click', shell.close);
+  let committed = false;
   for (const button of buttons) {
     button.addEventListener('click', () => {
+      if (committed || !shell.panel.isConnected) return;
       // Re-read rather than trusting the row this button was drawn from: the
       // door can stand open while the run moves underneath it.
       const current = read().find((row) => row.id === button.dataset.act);
@@ -340,6 +347,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
         return;
       }
       button.disabled = true;
+      committed = true;
       // The command may move focus (targeting): lift the page lock now, not a frame later, so its target is focusable.
       shell.close({ liftNow: true });
       commit();
@@ -358,10 +366,10 @@ export function openCardInspection({ title, card, details, opener, actions = nul
 // Hosts can expose a visible Inspect action (a footer button) without the face
 // printing anything. The renderer owns the reading; opening it owns no choice.
 const boundInspections = new WeakMap();
-export function openBoundCardInspection(card, opener = card) {
+export function openBoundCardInspection(card, opener = card, { allowDetached = false, ...overrides } = {}) {
   const open = boundInspections.get(card);
-  if (!card?.isConnected || !open) return false;
-  return open(opener);
+  if ((!card?.isConnected && !allowDetached) || !open) return false;
+  return open(opener, overrides);
 }
 
 /** The card face is the door (right-click, I, a read-only tap); action/hold/drag handlers stay on hosts. */
