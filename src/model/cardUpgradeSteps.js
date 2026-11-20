@@ -17,7 +17,7 @@ export { STACK_CAPS };
 // pool. `range`..`rankDown` are all `tag` steps (cardUpgrade.js); they are separate options so a choice of
 // several never offers the same thing twice.
 const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5,
-  poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3,
+  poise: 12, range: 3, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3,
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
   'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8, 'fx:counter': 8,
@@ -85,6 +85,10 @@ const PLACED_AT = Object.freeze({
 });
 // The ease kinds: easing a drawback is common; the uncommon version removes it and draws a card, the rare one removes it and takes a rare-size step.
 const EASE_KINDS = Object.freeze(['fx:unexhaust', 'fx:unethereal', 'fx:steady', 'stkEase']);
+
+// A Reach hit skips the Advance SP and gains Precision, so its weight is halved (owner, 2026-11-19; proposal section 9).
+/** The weight of every option kind inside its group. */
+export const UPGRADE_KIND_WEIGHTS = WEIGHTS;
 
 /** Every option kind a rolled upgrade can be; a card's `upgradeMenu` names a subset of these (theme C, playtest 2026-11-17). */
 export const UPGRADE_OPTION_KINDS = Object.freeze(Object.keys(WEIGHTS));

@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rollUpgradeOptions, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
+import { rollUpgradeOptions, upgradeStepRng, UPGRADE_KIND_WEIGHTS } from '../src/model/cardUpgradeSteps.js';
 import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 
 const cards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
@@ -28,4 +28,9 @@ test('a Sweep rolls dmg and hits: the gate is allEnemies, not only a single enem
   assert.ok(hits, 'a 2 SP Sweep offers a hits step');
   assert.equal(applyUpgradeSteps(wide, [hits]).effects[0].hits, hits.hits);
   assert.equal(applyUpgradeSteps(wide, [hits]).effects[0].target, 'allEnemies');
+});
+
+test('range weighs 3, half its old 6 (a Reach hit skips the Advance SP and gains Precision)', () => {
+  assert.equal(UPGRADE_KIND_WEIGHTS.range, 3);
+  assert.equal(UPGRADE_KIND_WEIGHTS.targeting, 6, 'the other identity kinds keep their weight');
 });
