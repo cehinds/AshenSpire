@@ -46,3 +46,9 @@
 .set-group-modal-body .set-group-modal-section > .set-subsection-heading {
   padding-inline: 0.5rem;
 }
+/* The window is outside [data-settings-host], so the panel's number-row layout is restated here:
+   label above, the stepper and slider full width below, never wider than the window. */
+.set-group-modal-body { overflow-x: hidden; }
+.set-group-modal-body .set-row-number { flex-wrap: wrap; }
+.set-group-modal-body .set-row-number > .as-labelstack { flex: 1 1 100%; }
+.set-group-modal-body .set-row-number > .r-trail { flex: 1 1 100%; max-width: 100%; min-width: 0; margin-left: 0; }
