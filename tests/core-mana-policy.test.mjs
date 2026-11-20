@@ -27,13 +27,21 @@ function fight(cardId, classId = 'reaver', reg = registries) {
   return { combat, card };
 }
 
-test('core Reaver starts with one MP and an earned WIS point still adds exactly one maximum MP', () => {
+// Stat contract 2026-11-18: "Stamina, Mana and hand size each increase by 1 per four points of their governing attribute" (Mana: WIS).
+test('core Reaver starts with one MP and an earned WIS point adds one maximum MP only when it reaches a fourth point', () => {
   // Level Up is no longer a shipped rest service; a run pinned to the pre-one-pick rests keeps it.
-  const run = pinLegacyRests(fresh()); assert.equal(run.maxMana, 1); assert.equal(run.mana, 1);
-  run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
-  beginGameProfileRest(run, '1:' + run.mapNodeId); run.level.unspentPoints = 1;
-  commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });
-  assert.equal(run.maxMana, 2); assert.equal(run.mana, 2);
+  const levelWisdom = (startWisdom) => {
+    const run = pinLegacyRests(fresh()); assert.equal(run.maxMana, 1); assert.equal(run.mana, 1);
+    run.attributes.wisdom = startWisdom;
+    run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+    beginGameProfileRest(run, '1:' + run.mapNodeId); run.level.unspentPoints = 1;
+    commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });
+    return run;
+  };
+  const below = levelWisdom(1);
+  assert.equal(below.attributes.wisdom, 2); assert.equal(below.maxMana, 1, 'WIS 2 is short of the fourth point');
+  const reached = levelWisdom(3);
+  assert.equal(reached.attributes.wisdom, 4); assert.equal(reached.maxMana, 2); assert.equal(reached.mana, 2);
 });
 
 test('core Smash is twice its same-rank Strike for one extra SP; Sundering Art is three times that Smash plus one MP', () => {
