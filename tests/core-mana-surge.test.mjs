@@ -316,7 +316,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
     combat.result = 'victory';
     runCombatEnd(run, combat);
     run.combatEntered = null; // The finished-fight transition clears its resume point.
-    assert.equal(run.equipmentPoolBonuses.maxMana, 1, 'the combat-end door persists the same raw pool bonus');
+    assert.equal(run.equipmentPoolBonuses.maxMana, 0, 'the combat-end door persists the same (here no) raw pool bonus, §25');
     const saves = createSaveManager(createMemoryStorage());
     saves.saveRun(run, combat.rng);
     assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));
