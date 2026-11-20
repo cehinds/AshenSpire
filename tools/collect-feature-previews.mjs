@@ -6,6 +6,23 @@ import { pathToFileURL } from 'node:url';
 import { safeBranchDir } from './pages-site.mjs';
 
 const shaPattern = /^[a-f0-9]{40}$/;
+
+// AT MOST TWO BRANCH PREVIEWS ON THE SITE (2026-11-20). Each preview is a ~180 MB
+// single file; with eight open PRs five previews were 894 MB of a 2945 MB site and
+// the assemble size guard (2500 MB, pages-builds.yml) failed dev's publication (run
+// 44813657232). The newest builds win: a preview built by feature-preview ranks by
+// its run id (newest first), one left from the dev-preview step by its PR number.
+// A PR without a Pages preview still has its CI artifact.
+export const MAX_BRANCH_PREVIEWS = 2;
+
+/** The entries to publish: all of them when within `max`, else the `max` newest, in their original order. Pure. */
+export function capPreviews(entries, max = MAX_BRANCH_PREVIEWS) {
+  if (!(max >= 0) || entries.length <= max) return { kept: entries, dropped: [] };
+  const rank = (e) => [Number(e.run) || 0, Number(e.pr) || 0];
+  const order = [...entries].sort((a, b) => { const [ra, pa] = rank(a), [rb, pb] = rank(b); return rb - ra || pb - pa; });
+  const keep = new Set(order.slice(0, max));
+  return { kept: entries.filter((e) => keep.has(e)), dropped: entries.filter((e) => !keep.has(e)) };
+}
 export const documentationOnly = (file) => file === 'README.md' || file === 'CONTRIBUTING.md' || file.startsWith('docs/');
 
 // GitHub exposes at most 300 comparison files. At that boundary we cannot prove
@@ -20,7 +37,7 @@ export async function freshBuild(api, repo, built, head) {
     && result.files.every((f) => documentationOnly(f.filename) && (!f.previous_filename || documentationOnly(f.previous_filename)));
 }
 
-export async function collectFeaturePreviews({ repo, out, api, download, warn = console.warn }) {
+export async function collectFeaturePreviews({ repo, out, api, download, warn = console.warn, maxPreviews = MAX_BRANCH_PREVIEWS }) {
   if (!repo || !out) throw new Error('repo and output directory are required');
   // Listing/API failures propagate: publishing an incomplete inventory would
   // silently remove live previews. A bad individual artifact is only skipped.
@@ -73,13 +90,19 @@ export async function collectFeaturePreviews({ repo, out, api, download, warn = 
       const html = readdirSync(destination).filter((f) => f.endsWith('.html'));
       if (html.length !== 1 || !lstatSync(join(destination, html[0])).isFile() || !lstatSync(join(destination, html[0])).size) throw new Error('expected exactly one non-empty regular HTML file');
       entries = entries.filter((e) => e.branch !== branch.name);
-      entries.push({ branch: branch.name, dir, sha: selected.head_sha, pr: open.get(branch.name) });
+      entries.push({ branch: branch.name, dir, sha: selected.head_sha, pr: open.get(branch.name), run: selected.id });
     } catch (error) {
       rmSync(destination, { recursive: true, force: true });
       if (error.collectionFailure) throw error;
       warn(`${branch.name}: feature artifact skipped: ${error.message}`);
     }
   }
+  const { kept, dropped } = capPreviews(entries, maxPreviews);
+  for (const e of dropped) {
+    warn(`${e.branch}: preview not published, only the ${maxPreviews} newest are (MAX_BRANCH_PREVIEWS)`);
+    try { if (e.dir === safeBranchDir(e.branch)) rmSync(join(out, e.dir), { recursive: true, force: true }); } catch { /* an unsafe name was never written */ }
+  }
+  entries = kept;
   mkdirSync(out, { recursive: true });
   writeFileSync(manifest, JSON.stringify({ previews: entries }));
   return entries;

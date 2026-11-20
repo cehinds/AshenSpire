@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { collectFeaturePreviews, freshBuild } from '../tools/collect-feature-previews.mjs';
+import { collectFeaturePreviews, freshBuild, capPreviews, MAX_BRANCH_PREVIEWS } from '../tools/collect-feature-previews.mjs';
 import { branchPreviewSection } from '../tools/pages-site.mjs';
 const built = 'a'.repeat(40), head = 'b'.repeat(40);
 const comparison = { status: 'ahead', merge_base_commit: { sha: built }, total_commits: 1, files: [{ filename: 'docs/readme.md' }] };
@@ -27,7 +27,7 @@ function setup(t, options = {}) {
     if (url.includes('/artifacts?')) return { artifacts: [{ name: `feature-preview-${built}`, expired: !!options.expired }] };
     throw Error(url);
   };
-  return { out, original, api, repo: 'owner/repo', warn: () => {}, download: async (_id, _name, dir) => writeFileSync(join(dir, 'AshenSpire.html'), '<html>game</html>') };
+  return { out, original, api, repo: 'owner/repo', warn: () => {}, maxPreviews: Infinity, download: async (_id, _name, dir) => writeFileSync(join(dir, 'AshenSpire.html'), '<html>game</html>') };
 }
 test('case-insensitive feature inventory merges PR and other channel entries', async (t) => {
   const fixture = setup(t);
@@ -61,4 +61,18 @@ test('invalid individual artifact is skipped', async (t) => {
 test('a branch with no open pull request into dev gets no preview, however fresh its build', async (t) => {
   const fixture = setup(t, { noPr: true });
   assert.deepEqual(await collectFeaturePreviews(fixture), fixture.original);
+});
+test('the site carries at most MAX_BRANCH_PREVIEWS previews, newest build first', () => {
+  assert.equal(MAX_BRANCH_PREVIEWS, 2);
+  const e = [{ branch: 'a', pr: 50 }, { branch: 'b', pr: 51, run: 7 }, { branch: 'c', pr: 52 }, { branch: 'd', pr: 40, run: 9 }];
+  assert.deepEqual(capPreviews(e).kept.map((x) => x.branch), ['b', 'd']);
+  assert.deepEqual(capPreviews(e, 3).kept.map((x) => x.branch), ['b', 'c', 'd'], 'a run-less entry ranks by PR number');
+  assert.deepEqual(capPreviews(e, 3).dropped.map((x) => x.branch), ['a']);
+  assert.equal(capPreviews(e, 10).kept, e, 'within the cap nothing moves');
+});
+test('a capped collection drops the older previews from the manifest and the disk', async (t) => {
+  const fixture = setup(t);
+  const entries = await collectFeaturePreviews({ ...fixture, maxPreviews: 1 });
+  assert.deepEqual(entries.map((e) => [e.branch, e.run]), [['Feature/test', 9]]);
+  assert.deepEqual(JSON.parse(readFileSync(join(fixture.out, 'previews.json'), 'utf8')).previews, entries);
 });
