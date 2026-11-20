@@ -8,10 +8,10 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 test('only combat clamps the scenery floor; dialogue keeps its own floor line', () => {
   const art = read('../src/ui/alternativeArt.js');
   assert.match(art, /fitAlternativeBackdrop\(combat, \{[^}]*coverFloor = false[^}]*\}\)/, 'the clamp is opt-in');
-  assert.match(art, /const cameraGround = coverFloor\s*\?/);
+  assert.match(art, /coverFloor \? previewTop \+ /);
   const stage = read('../src/ui/components/battlefieldStage.js');
-  const combatCall = stage.slice(stage.indexOf('fitAlternativeBackdrop(combat, {'), stage.indexOf('});', stage.indexOf('fitAlternativeBackdrop(combat, {')));
-  assert.match(combatCall, /coverFloor: true/);
+  assert.match(stage, /fitAlternativeBackdrop\(combat, backdropInputs\.alternative\)/);
+  assert.match(read('../src/ui/models/CombatBackdropFitModel.js'), /coverFloor: true/);
   const dialogue = read('../src/ui/components/dialogueStage.js');
   const at = dialogue.indexOf('fitAlternativeBackdrop(wrap, {');
   assert.ok(at >= 0);
@@ -59,12 +59,12 @@ test('backdrop pointer motion stays canonical when reduced, ambient-off or touch
 });
 
 // Owner 2026-10-31: the painted ground never starts below the back rank's cell top, so the grid's back edge stands
-// on ground. Measured in Chromium: data-mobile-floor-paint-top equals band A's top at 1280x800, 1200x730 and 390x844.
-test('combat passes the back rank top as a ceiling for the painted ground', () => {
+// on ground. Owner 2026-11-20: that line is the empty grid's, never a living enemy's shadow, so a death cannot move it.
+test('combat passes only the back rank top as the ceiling for the painted ground', () => {
   const art = read('../src/ui/alternativeArt.js');
-  assert.match(art, /floorTop/);
-  assert.match(art, /Math\.min\(floorShadowTop - floor\.shadowClearancePx \/ zoom, floorTop\)/);
-  const stage = read('../src/ui/components/battlefieldStage.js');
-  const combatCall = stage.slice(stage.indexOf('fitAlternativeBackdrop(combat, {'), stage.indexOf('});', stage.indexOf('fitAlternativeBackdrop(combat, {')));
-  assert.match(combatCall, /floorTop: plan\.visualBands\?\.length \? fieldTop \+ plan\.visualBands\[0\]\.top \/ zoom/);
+  assert.match(art, /maximumPaintTop: \(floorTop - frameTop\) \/ frameScale/);
+  assert.doesNotMatch(art, /floorShadowTop|shadowClearancePx/);
+  const model = read('../src/ui/models/CombatBackdropFitModel.js');
+  assert.match(model, /floorTop: Number\.isFinite\(grid\.backRankTop\) \? fieldTopLocal \+ grid\.backRankTop/);
+  assert.doesNotMatch(read('../src/ui/components/battlefieldStage.js'), /floorShadowTop|getComputedStyle\(sprite, '::before'\)/);
 });

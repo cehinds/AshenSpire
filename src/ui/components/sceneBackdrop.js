@@ -32,14 +32,18 @@ export function fitSceneBackdrop(backdrop, { width, height, zoom = 1, windowTop 
   if (backdrop?.classList.contains('layered-environment')) {
     const chosen = resolveSceneConfig(config || wireframeUi.scene, activeWireframeChoices());
     const floorLine = groundY ?? windowTop + windowHeight * (1 - chosen.floorFraction);
+    const effects = backdrop.parentElement?.querySelector(`[data-layered-effects="${backdrop.dataset.layeredKey}"]`) ?? null;
+    const fitKey = JSON.stringify([backdrop.dataset.layeredKey, width, height, zoom, windowTop, windowHeight, floorLine, chosen]);
+    const unchanged = UnchangedBackdropFit(backdrop, fitKey, effects);
+    if (unchanged) return unchanged;
     const geometry = fitLayeredEnvironment(backdrop, { width, height, groundY: floorLine });
     if (!geometry) return null;
     backdrop.dataset.floorTop = String(floorLine * zoom);
     backdrop.dataset.skyline = chosen.skyline ? 'on' : 'off';
     backdrop.dataset.floor = chosen.floor ? 'on' : 'off';
-    return { geometry, aligned: true, skyline: { visible: !!chosen.skyline },
+    return RememberBackdropFit(backdrop, fitKey, effects, { geometry, aligned: true, skyline: { visible: !!chosen.skyline },
       floor: { visible: !!chosen.floor, top: floorLine, height: height - floorLine },
-      frame: { floorLine, windowTop, windowHeight, height } };
+      frame: { floorLine, windowTop, windowHeight, height } });
   }
   const art = backdrop?.querySelector(':scope > svg');
   if (!art) return null;
@@ -51,6 +55,9 @@ export function fitSceneBackdrop(backdrop, { width, height, zoom = 1, windowTop 
   // its own floor fraction, and an answer about the skyline must not flatten
   // that back to combat's.
   const chosen = resolveSceneConfig(config || wireframeUi.scene, activeWireframeChoices());
+  const fitKey = JSON.stringify([backdrop.dataset.scene, width, height, zoom, windowTop, windowHeight, chosen]);
+  const unchanged = UnchangedBackdropFit(backdrop, fitKey, art);
+  if (unchanged) return unchanged;
   const layers = framed
     ? sceneWindowLayers({ width, height, windowTop, windowHeight, scene, config: chosen })
     : sceneLayers({ width, height, scene, config: chosen });
@@ -68,5 +75,18 @@ export function fitSceneBackdrop(backdrop, { width, height, zoom = 1, windowTop 
   // Screen px below the drawn box's top edge (relative, so it cannot go stale
   // when the whole board shifts without resizing).
   backdrop.dataset.floorTop = String((framed ? layers.frame.floorLine : layers.floor.top) * zoom);
-  return layers;
+  return RememberBackdropFit(backdrop, fitKey, art, layers);
+}
+
+// A refit with the same inputs would write the same values: it returns the last
+// fit and writes nothing. `part` is the other node the fit wrote (the plate or the
+// effects layer); a re-rendered one is fitted afresh.
+function UnchangedBackdropFit(backdrop, key, part) {
+  const last = backdrop.lastBackdropFit;
+  return last && last.key === key && last.part === part ? last.result : null;
+}
+
+function RememberBackdropFit(backdrop, key, part, result) {
+  backdrop.lastBackdropFit = { key, part, result };
+  return result;
 }

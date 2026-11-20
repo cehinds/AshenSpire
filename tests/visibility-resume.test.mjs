@@ -437,7 +437,7 @@ const KNOWN = {
   'src/dev/shotStates.js': ['.__shotAgeSlot'],
   'src/ui/audio.js': [['ev', "one of 'pointerdown', 'pointerup', 'touchend', 'keydown' (the literal list beside it): unlocks/resumes the AudioContext and music only"]],
   'src/ui/components/armamentRadial.js': ["'pointerdown'", "'keydown'"],
-  'src/ui/components/battlefieldStage.js': ["'resize'"],
+  'src/ui/components/battlefieldStage.js': ["'resize'", "'resize'"],
   'src/ui/components/card.js': ["'resize'"],
   'src/ui/components/cardInspection.js': ["'resize'"],
   'src/ui/components/combatTargetHud.js': ["'resize'"],
