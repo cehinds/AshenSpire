@@ -56,3 +56,15 @@ test('a charged move spends only what its frozen plan priced: stacks the player 
   SpendRetreatAdvances(combat, enemy, plan, { frozen: true });
   assert.equal(stacks(combat.player), 2, 'only the 1 it paid for is spent');
 });
+
+test('a throw route (no SetAdvanced) still closes every other enemy by each Advance paid', async () => {
+  const { acceptRangeActions } = await import('../src/engine/combatEngagement.js');
+  const combat = bandsFight({ enemyIds: ['wanderingSoldier', 'wanderingSoldier'], stamina: 8 });
+  const [a, b] = combat.enemies;
+  hold(combat, a, 3); hold(combat, b, 2);
+  const plan = rangeActionPlan(combat.rangeState, 'player:player', [{ targetKey: `enemy:${a.id}`, coverage: 0, throwCapable: true, enemyStacks: 3, playerStacks: 0 }], { route: 'throw' });
+  assert.equal(plan.advanceSp, 2, 'the throw pays its two Retreat Advances');
+  acceptRangeActions(combat, combat.player, [], { rangePlan: plan }, 'root-throw');
+  assert.equal(stacks(a), 0, 'the contacted enemy spends all of its stacks');
+  assert.equal(stacks(b), 0, 'the other enemy loses one per Advance paid (2 to 0), not paid - 1');
+});

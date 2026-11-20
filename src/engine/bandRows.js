@@ -108,11 +108,11 @@ export function ContactRetreatStacks(ctx, source, target) {
  * SpendRetreatAdvances(ctx, source, plan, { frozen }): the Advances a plan paid each spend one Retreat stack, so spent equals paid on both sides.
  * ORDER: the enemy's stacks first, then the player's (the enemy stands between you and the hit; your own Retreat is the step you took back, so it is
  * walked off last). A player's paid Advance closes on every enemy (owner decision 2026-11-19): enemies the hit did not touch lose one stack per Advance
- * paid (SetAdvanced already took the first), the contacted enemy loses all of its stacks. An enemy source spends all of its own stacks and steps
+ * paid (SetAdvanced already took the first, except on the throw route, which never calls it: `firstTaken` false), the contacted enemy loses all of its stacks. An enemy source spends all of its own stacks and steps
  * forward. `frozen` (a charged enemy move whose plan was priced at the charge): the player's stacks are spent only up to what the plan priced; stacks
  * gained since are left alone.
  */
-export function SpendRetreatAdvances(ctx, source, plan, { frozen = false } = {}) {
+export function SpendRetreatAdvances(ctx, source, plan, { frozen = false, firstTaken = true } = {}) {
   if (!BandsActive(ctx) || !RetreatRulesActive(ctx) || !plan?.targets) return;
   const melee = plan.targets.filter(row => row.coverage === 0 && !row.bypass);
   if (!melee.length) return;
@@ -127,7 +127,7 @@ export function SpendRetreatAdvances(ctx, source, plan, { frozen = false } = {})
   }
   for (const enemy of ctx.enemies) {
     if (!enemy.alive || RetreatStacks(enemy) <= 0) continue;
-    spendRetreat(ctx, enemy, contacted.has(actorRangeKey(ctx, enemy)) ? RetreatStacks(enemy) : Math.max(0, paid - 1));
+    spendRetreat(ctx, enemy, contacted.has(actorRangeKey(ctx, enemy)) ? RetreatStacks(enemy) : Math.max(0, paid - (firstTaken ? 1 : 0)));
   }
   if (RetreatStacks(source) > 0) spendRetreat(ctx, source, RetreatStacks(source));
 }

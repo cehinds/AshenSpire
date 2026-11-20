@@ -235,7 +235,7 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
     }
     else if (BandsActive(ctx) && source.kind !== 'enemy') { SetAdvanced(ctx, source, true); MarkAdvancedByPlay(source, rootId); }
     else ctx.rangeState = advancedEngagementState(before, plan);
-    SpendRetreatAdvances(ctx, source, plan, { frozen: prepaidPlanPending });
+    SpendRetreatAdvances(ctx, source, plan, { frozen: prepaidPlanPending, firstTaken: plan.route !== 'throw' });
     emitCommittedAdvance(ctx, source, before, ctx.rangeState);
   }
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
