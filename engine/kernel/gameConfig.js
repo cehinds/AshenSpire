@@ -479,6 +479,21 @@ export function enemyLevel(row, settings) {
   const profile = row.levelProfile || {};
   return Math.max(1, settings.levelFrom === 'levelProfile.max' ? profile.max ?? 1 : profile.min ?? 1);
 }
+// Owner, 2026-11-20 (characters `enemyLevelScaling`, SPEC §17): an enemy's level for one fight from its act, tier and floor step.
+// Step = floor((floor - 1) / floorsPerStep) on floors 1+, at most the tier's last table entry; a boss sits at `bossSteps`.
+// Past the last act the last act's row holds. No table, or no row for the tier: enemyLevel() at step 0.
+export function enemyFightLevel(row, settings, { act = 1, floor = 0 } = {}) {
+  const scaling = settings?.enemyLevelScaling;
+  const tier = row?.tier || characterTags(row || {}).find(tag => tag.startsWith('tier.'))?.slice(5);
+  const acts = Object.keys(scaling?.levels || {}).length;
+  const actIndex = Math.min(acts, Math.max(1, Number.isSafeInteger(act) ? act : 1));
+  const levels = scaling?.levels?.[`act${actIndex}`]?.[tier];
+  if (levels === undefined) return { level: enemyLevel(row, settings), step: 0 };
+  if (!Array.isArray(levels)) return { level: Math.max(1, levels), step: scaling.bossSteps || 0 };
+  const climbed = Number.isSafeInteger(floor) && floor >= 1 ? Math.floor((floor - 1) / scaling.floorsPerStep) : 0;
+  const step = Math.min(levels.length - 1, climbed);
+  return { level: Math.max(1, levels[step]), step };
+}
 // Gear and relics grant attribute points only (owner 2026-10-17): `self.<attribute>=+N`,
 // 0-5 points across at most 3 attributes per item. Returns the summed bonus for one enemy.
 const ITEM_MODIFIER = /^self\.(strength|dexterity|constitution|wisdom|intelligence|sp|mp|hp)=([+-]\d+)$/;
