@@ -58,10 +58,10 @@ test('pose preloads deduplicate images and reuse a bounded recent working set', 
 
 test('lite and reduced-motion sessions allocate no pose preloads', () => {
   globalThis.Image = class { constructor() { throw Error('unexpected image allocation'); } };
-  globalThis.document = { documentElement: { dataset: { performance: 'lite' } }, body: { classList: { contains: () => false } } };
+  globalThis.document = { documentElement: { dataset: { effects: 'off' } }, body: { classList: { contains: () => false } } };
   try {
     assert.deepEqual(preloadPoses('lite', ['unused.webp']), []);
-    document.documentElement.dataset.performance = 'full';
+    document.documentElement.dataset.effects = 'on';
     document.body.classList.contains = () => true;
     assert.deepEqual(preloadPoses('reduced', ['unused.webp']), []);
   } finally { delete globalThis.Image; delete globalThis.document; clearPosePreloads(); }

@@ -139,7 +139,7 @@
 :root .combat .combatant .intent .intent-damage-scope { display:none; }
 
 /* Lite: one drop-shadow instead of three on the matchup-highlighted sprite. */
-:root[data-performance='lite'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+:root[data-effects='off'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
   filter: drop-shadow(0 0 1.5px var(--combat-matchup-color, var(--ember))) !important;
 }
 

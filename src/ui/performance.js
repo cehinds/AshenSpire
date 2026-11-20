@@ -94,7 +94,7 @@ export function resolvePerformanceMode(settings = {}, coarse = false) { // eslin
 }
 
 export function liteRendering() {
-  return typeof document !== 'undefined' && document.documentElement?.dataset.performance === 'lite';
+  return typeof document !== 'undefined' && document.documentElement?.dataset.effects === 'off';
 }
 
 /** OutlineTargetSilhouette() → true when a target silhouette must be drawn as an outline, not a filter-tinted copy:

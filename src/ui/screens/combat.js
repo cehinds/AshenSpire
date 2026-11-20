@@ -2241,7 +2241,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
     const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, run.class);
-    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.effects]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
     const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return false;
@@ -2431,7 +2431,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     syncWeaknessDiscovery();
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
-      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance]);
+      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.effects]);
       let record = enemyFrames.get(enemy.id);
       if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; wrote = true; }
       // `combat.player` is deliberately not part of this key, but the intent is: it reads the player through

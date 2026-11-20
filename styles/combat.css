@@ -1048,7 +1048,7 @@
 .hand .card.card-drawn { animation: card-arrive var(--hand-draw-ms) ease-out; }
 @keyframes card-arrive { from { opacity: 0.35; filter: brightness(1.6); } to { opacity: 1; filter: none; } }
 @keyframes card-arrive-lite { from { opacity: 0.35; } to { opacity: 1; } }
-:root[data-performance='lite'] .hand .card.card-drawn { animation-name: card-arrive-lite; }
+:root[data-effects='off'] .hand .card.card-drawn { animation-name: card-arrive-lite; }
 .combat .pile.spent.pile-received { animation: pile-receive 320ms ease-out; }
 @keyframes pile-receive { 35% { box-shadow: inset 0 0 16px var(--gold); } }
 .combat .pile.spent[data-card-outcome="exhaust"] { border-bottom-color: var(--ember); }
@@ -1494,13 +1494,13 @@
 }
 .player .status-overflow-list { left:0; right:auto; }
 /* Lite keeps the target color and selection affordance without cloning art. */
-:root[data-performance='lite'] .aim-silho.aim-outline {
+:root[data-effects='off'] .aim-silho.aim-outline {
   inset: auto 8% -3%; width: auto; height: 12%; border: 2px solid var(--target-color);
   border-radius: 50%; filter: none; animation: none; opacity: 0.9;
   transform: scale(1.04); background: transparent; box-shadow: none;
 }
 /* Lite also stops the backdrop ambient layer; resting figures stay still in all modes. */
-:root[data-performance='lite'] .backdrop::after { animation: none; }
+:root[data-effects='off'] .backdrop::after { animation: none; }
 /* Effects off keeps the held stance glow on image figures (ui/paintedOutfits.js sets it once per pose
    change) but nothing on those layers tweens (the reaction animations are governed by the motion options). */
 :root[data-effects='off'] .sprite img,
@@ -2184,8 +2184,8 @@ body.reduce-motion .target-hud-detail { transition: none; }
 
 
 /* ---------- Effects off and the fighter-motion options (owner, 2026-10-30) ----------
-   `data-effects="off"` is the default (main.js, ui/performance.js; `data-performance="lite"` is its
-   older twin, and the lite rules above already cover the stance glow, backdrop bloom, weather and
+   `data-effects="off"` is the default (main.js, ui/performance.js; it replaced its older lite/full
+   twin attribute in the Settings tidy, and the lite rules above already cover the stance glow, backdrop bloom, weather and
    sprite filters). These rules add what lite left animated or soft. They sit in their own rules
    so the reduced-motion rules above stay as they are. Damage numbers, callouts, intents, statuses
    and card text are never touched here. */

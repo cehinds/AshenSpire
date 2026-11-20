@@ -85,7 +85,7 @@ test('Effects-off CSS never blanks a figure\'s filter: focus ring, skill-selecte
   }
   // the three states that must stay visible are still defined, unconditionally
   assert.match(css, /\.combat \.combatant:focus-visible \.sprite \{ filter: drop-shadow/);
-  assert.doesNotMatch(css, /data-performance='lite'\]:not\(\[data-effects='off'\]\)/, 'the unreachable lite selector is gone');
+  assert.doesNotMatch(css, /data-performance/, 'the retired lite twin of data-effects is gone, so no lite selector can be unreachable');
 });
 
 test('image figures draw only the held stance glow with Effects or Stance and aura glow off (no casting pulse)', async () => {

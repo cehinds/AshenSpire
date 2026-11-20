@@ -509,10 +509,10 @@ export function applyDisplaySettings(settings) {
   document.documentElement.dataset.playerSpawnColumn = advancedPresentation.playerSpawnColumn;
   document.documentElement.dataset.enemySpawnColumn = advancedPresentation.enemySpawnColumn;
   const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
-  document.documentElement.dataset.performance = quality;
-  // Effects (owner, 2026-10-30): `data-performance` stays the CSS hook (lite = off);
-  // `data-effects` is its readable alias. The fighter-motion options are body
-  // classes (`motion-attack-off`, ...), each independent of Effects.
+  // Effects (owner, 2026-10-30): `data-effects` is the one root hook (off = lite).
+  // Its twin `data-performance` (lite/full) was always the same fact and left in
+  // the Settings tidy (2026-11-20). The fighter-motion options are body classes
+  // (`motion-attack-off`, ...), each independent of Effects.
   document.documentElement.dataset.effects = effectsEnabled(settings) ? 'on' : 'off';
   // Effects sub-switches: `data-fx-glow="off"` etc., read by FxOff(kind).
   const fx = FxFlags(settings);
