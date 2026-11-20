@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:267f06427f5e62131d053e6f49d41390cb292c459b2ca97ae8b011e28cea7129",
+      "hash": "sha256:6172b780a9ff5e8929d5fd189790a907126a450d6b741953d742321e2b41b444",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -130,7 +130,7 @@
           "path": "engine/modules/characters/defaults.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:422a03c7ac5bcabedef6c9fe71f9b0a59669bdc6b53225be9e63a9f86144407c"
+          "hash": "sha256:34d40a1f2a1cfebf86c4bd130c3f01df72e02766e8e5ed695c08ed48f5ca538e"
         },
         {
           "path": "engine/modules/characters/module.json",
@@ -142,7 +142,7 @@
           "path": "engine/modules/characters/settings.schema.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:bd5329b3b047843d49b6d9057a8fcacbc3fc5481a1bcee5b7bc7e0040dc937cb"
+          "hash": "sha256:ec51fad3ef0d429a96a9fe38b9da22f83219f38e53b9d23f21b37302138b0306"
         },
         {
           "path": "engine/modules/class-selection/defaults.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7"
     },
     "core": {
-      "hash": "sha256:267f06427f5e62131d053e6f49d41390cb292c459b2ca97ae8b011e28cea7129",
+      "hash": "sha256:6172b780a9ff5e8929d5fd189790a907126a450d6b741953d742321e2b41b444",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -854,7 +854,7 @@
           "path": "engine/modules/characters/defaults.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:422a03c7ac5bcabedef6c9fe71f9b0a59669bdc6b53225be9e63a9f86144407c"
+          "hash": "sha256:34d40a1f2a1cfebf86c4bd130c3f01df72e02766e8e5ed695c08ed48f5ca538e"
         },
         {
           "path": "engine/modules/characters/module.json",
@@ -866,7 +866,7 @@
           "path": "engine/modules/characters/settings.schema.json",
           "id": "characters",
           "version": "1.0.0",
-          "hash": "sha256:bd5329b3b047843d49b6d9057a8fcacbc3fc5481a1bcee5b7bc7e0040dc937cb"
+          "hash": "sha256:ec51fad3ef0d429a96a9fe38b9da22f83219f38e53b9d23f21b37302138b0306"
         },
         {
           "path": "engine/modules/class-selection/defaults.json",
