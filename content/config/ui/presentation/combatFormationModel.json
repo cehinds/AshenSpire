@@ -89,6 +89,7 @@
       "footprintInsetPx": 6,
       "footInCellFraction": 0.35,
       "handLiftMaxFraction": 0.12,
+      "backRowEnemyScale": 0.9,
       "stageExtent": {
         "mode": "handTop",
         "handGapPx": 8,
