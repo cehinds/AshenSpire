@@ -63,8 +63,9 @@ test('Core card offense and SP opt-ins project without an authored closing move'
     const colossusMoves = enemy(projected.enemies, colossus).moves;
     assert.deepEqual(Object.keys(dragonMoves), Object.keys(sharedDragon.moves));
     assert.deepEqual(Object.keys(colossusMoves), Object.keys(sharedColossus.moves));
-    assert.deepEqual(dragonMoves, { ...sharedDragon.moves, ashBreath: { ...sharedDragon.moves.ashBreath, damage: 18, hits: 2 } });
-    assert.deepEqual(colossusMoves, { ...sharedColossus.moves, smash: { ...sharedColossus.moves.smash, sp: 1 } });
+    // tailBastion opts into its card's Block (coreBlock "card", owner 2026-11-20).
+    assert.deepEqual(dragonMoves, { ...sharedDragon.moves, ashBreath: { ...sharedDragon.moves.ashBreath, damage: 18, hits: 2 }, tailBastion: { ...sharedDragon.moves.tailBastion, block: 10 } });
+    assert.deepEqual(colossusMoves, { ...sharedColossus.moves, smash: { ...sharedColossus.moves.smash, sp: 1 }, harden: { ...sharedColossus.moves.harden, block: 10 } });
     assert.equal(registry.enemies.get(dragon).moves.ashBreath.damage, 18);
     assert.equal(registry.enemies.get(colossus).moves.smash.sp, 1);
     assert.equal(registry.enemies.get(dragon).rangeClosingMove, undefined);
