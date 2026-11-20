@@ -87,3 +87,25 @@ test('Text, Interface, Card sizes and Export each open their own window; search 
   // Card sizes: number fields, so the window draws their steppers.
   assert.match(SettingsGroupModalHtml({}, 'cardSize'), /num-wrap/);
 });
+
+test('an import redraws every open settings window, so a stale field cannot save back over it', async () => {
+  const { RegisterSettingsWindow, RedrawSettingsWindows } = await import('../src/ui/screens/settings.js');
+  const { readFileSync } = await import('node:fs');
+  const drawn = [];
+  const closeA = RegisterSettingsWindow(() => drawn.push('a'));
+  const closeB = RegisterSettingsWindow(() => drawn.push('b'));
+  assert.equal(RedrawSettingsWindows(), 2);
+  assert.deepEqual(drawn, ['a', 'b'], 'both open windows redraw');
+  closeA();
+  drawn.length = 0;
+  RedrawSettingsWindows();
+  assert.deepEqual(drawn, ['b'], 'a closed window is no longer redrawn');
+  closeB();
+  // Both import doors redraw the windows right after the panel, and a window's text field saves
+  // nothing on a blur that changed nothing.
+  const source = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  const doors = source.split('parseAdvancedConfigFile(text, contentBundle, settings, SETTINGS_ROWS').slice(1);
+  assert.equal(doors.length, 2);
+  for (const door of doors) assert.match(door.slice(0, 2000), /renderSettings\([^\n]*\);\n\s*RedrawSettingsWindows\(\);/);
+  assert.match(source, /if \(value === \(settings\[input\.dataset\.key\] \?\? ''\)\) return;/);
+});

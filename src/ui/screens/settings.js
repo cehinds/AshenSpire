@@ -375,6 +375,20 @@ export function SettingsGroupModalHtml(settings, id) {
     + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`).join('');
 }
 
+// The open settings windows, each as its redraw. Every one draws from the panel's own settings
+// object, so after an import changes that object, redrawing shows the imported values.
+const OPEN_SETTINGS_WINDOWS = new Set();
+/** RegisterSettingsWindow(redraw) → unregister: an open settings window joins RedrawSettingsWindows. */
+export function RegisterSettingsWindow(redraw) {
+  OPEN_SETTINGS_WINDOWS.add(redraw);
+  return () => OPEN_SETTINGS_WINDOWS.delete(redraw);
+}
+/** RedrawSettingsWindows() → how many open settings windows were redrawn. */
+export function RedrawSettingsWindows() {
+  for (const redraw of [...OPEN_SETTINGS_WINDOWS]) redraw();
+  return OPEN_SETTINGS_WINDOWS.size;
+}
+
 /**
  * OpenSettingsGroupModal({ settings, onChange, opener, buttonKey, title, bodyHtml, ... }) — the one
  * helper behind every settings button that opens its own modal (Effects, the Advanced group modals).
@@ -428,8 +442,11 @@ export function OpenSettingsGroupModal({ settings, onChange, opener = document.a
     });
     host.querySelectorAll('.set-text[data-key]').forEach((input) => {
       const commitText = () => {
-        settings[input.dataset.key] = input.value.trim();
-        onChange({ [input.dataset.key]: input.value.trim() });
+        const value = input.value.trim();
+        // A blur with nothing typed saves nothing, so a field cannot write back what it showed.
+        if (value === (settings[input.dataset.key] ?? '')) return;
+        settings[input.dataset.key] = value;
+        onChange({ [input.dataset.key]: value });
         refreshButton();
       };
       input.addEventListener('change', commitText);
@@ -452,6 +469,9 @@ export function OpenSettingsGroupModal({ settings, onChange, opener = document.a
       (chosen || host.querySelector(`${rowSelector} [data-key]`))?.focus({ preventScroll: true });
     }
   };
+  // An import redraws every open window with the panel (RedrawSettingsWindows), so no field still
+  // shows, and could save back, a value the import replaced.
+  const unregister = RegisterSettingsWindow(() => draw());
   return openModal({
     size: 'sm',
     className,
@@ -460,6 +480,7 @@ export function OpenSettingsGroupModal({ settings, onChange, opener = document.a
     body: (node) => { host = node; draw(); },
     opener,
     onClose: () => {
+      unregister();
       // The panel may have been redrawn while the modal was open; then the opener is gone and
       // focus goes back to the same button in the new panel.
       if (opener?.isConnected) return;
@@ -2643,6 +2664,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         Object.assign(settings, saved);
         dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
         renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
+        RedrawSettingsWindows();
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -3155,6 +3177,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
       rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
+      RedrawSettingsWindows();
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });
