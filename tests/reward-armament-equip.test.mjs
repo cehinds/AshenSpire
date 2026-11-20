@@ -42,7 +42,8 @@ function mount(kind, id, extra = {}) {
   return { app, calls };
 }
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
-const openFace = app => app.querySelector('.reward-choice-face').click();
+// Owner 2026-11-20: a tap selects the face; its (i) opens the inspection modal.
+const openFace = app => { const face = app.querySelector('.reward-choice-face'); face.click(); face.querySelector('.card-info-button').click(); };
 const actions = () => [...document.querySelectorAll('.card-inspection-modal .card-inspection-act')];
 
 for (const [kind, piece] of [['armor', armour], ['weapons', weapon]]) {
