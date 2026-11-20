@@ -50,6 +50,13 @@ test('selecting a reward card keeps the door and card nodes and updates selectio
     assert.equal(picks[0].getAttribute('aria-checked'), 'false');
     assert.equal(picks[1].getAttribute('aria-checked'), 'true');
     assert.ok(!picks[0].classList.contains('is-chosen') && picks[1].classList.contains('is-chosen'));
+
+    // Tapping a chosen face again deselects it: it must not keep the inspection light's aria-pressed/current.
+    faces[1].click();
+    assert.equal(faces[1].getAttribute('aria-checked'), 'false');
+    for (const attr of ['aria-pressed', 'aria-current']) {
+      assert.notEqual(faces[1].getAttribute(attr), 'true', `a deselected face keeps no ${attr}`);
+    }
     app.remove();
   } finally {
     for (const [key, value] of Object.entries(before)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; }
