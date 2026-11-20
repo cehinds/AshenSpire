@@ -197,7 +197,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         : registries.equipment.armaments.find(piece => piece.id === item.itemId);
     // Selecting an item only opens its upgrade preview, so the first tap can
     // choose it immediately. The information button remains a separate action.
-    if (piece) bindCardInspection(card, { title: item.name, actionOwnsTouch: true, open: opener => {
+    if (piece) bindCardInspection(card, { title: item.name, actionOwnsTouch: true, infoBadge: true, open: opener => {
       const owned = Number.isInteger(item.inventoryCount) ? item.inventoryCount : null;
       // This face goes straight into openCardInspection, so it is an inspect card.
       const rendered = item.itemKind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { inspection: false, interactive: false, owned, level: 'inspect' })
