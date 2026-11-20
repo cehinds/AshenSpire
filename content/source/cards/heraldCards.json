@@ -1789,10 +1789,11 @@
     "type": "skill",
     "flavor": "The heat that rises when the hymn is loudest.\n\nPilgrims on the cinder road sang until their throats bled, and fought best while the song lasted. Their captains learned to strike before the final verse. After it, the fervour cooled and the pilgrims only wept.\n\nNo one ever wrote down the final verse.",
     "keywords": [
-      "ethereal"
+      "ethereal",
+      "exhaust"
     ],
     "icon": "audio",
-    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal.",
+    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal. Exhaust.",
     "faceTemplate": [
       "Gain {strength} Strength.",
       "Gain {dexterity} Dexterity."
