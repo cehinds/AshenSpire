@@ -707,7 +707,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const relayoutConfig = uiConfig.presentation.combatFormationModel.behavior.relayout;
   const placedFrames = new WeakSet();
   let laidOut = null, forcePending = false, layoutEpoch = 0, placedFormationKey = null;
-  let backdropRequest = 0, lastPass = null;
+  let backdropRequest = 0;
   // The layout's inputs are the combat canvas and the bands it is cut into, never the real window
   // (owner, 2026-11-14: one configuration per form factor, only scaled). A window resize inside a
   // form factor changes neither, so nothing relays out; a form-factor switch changes the canvas, and
@@ -1591,12 +1591,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const measuredField = field.getBoundingClientRect();
     const zoom = measuredField.width / field.offsetWidth || 1;
     const rect = combat.getBoundingClientRect();
-    const narrow = document.documentElement.dataset.layout === 'narrow';
-    const screenKey = [rect.width, rect.height, zoom, narrow, document.documentElement.dataset.formFactor]
-      .map(value => typeof value === 'number' ? Math.round(value * 64) / 64 : value).join('|');
-    if (pass) lastPass = pass;
-    const lines = lastPass && (() => BackdropGridLines({ plan: lastPass.plan, zoom, narrow: lastPass.narrow, screenKey }));
-    const grid = layoutState.backdropGrid = HeldBackdropGrid(layoutState.backdropGrid, { screenKey, lines });
+    // Only a formation pass stores the lines, from its own plan and the screen measured in this same pass.
+    if (pass) {
+      const screenKey = [rect.width, rect.height, zoom, pass.narrow, document.documentElement.dataset.formFactor]
+        .map(value => typeof value === 'number' ? Math.round(value * 64) / 64 : value).join('|');
+      layoutState.backdropGrid = HeldBackdropGrid(layoutState.backdropGrid,
+        BackdropGridLines({ plan: pass.plan, zoom, narrow: pass.narrow, screenKey }));
+    }
+    const grid = layoutState.backdropGrid;
     if (!grid) return;
     const backdrop = combat.querySelector('.environment-backdrop');
     // Its width is read BEFORE the two variables below are written: they are

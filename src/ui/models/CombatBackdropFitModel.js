@@ -19,14 +19,15 @@ export function BackdropGridLines({ plan, zoom, narrow, screenKey })
   };
 }
 
-// The lines held for this screen. They are taken from the latest plan only when
-// the screen changes (the first fit of a fight, a resize); a later plan on the same
-// screen (a death after the hand changed size, which moves the grid a little)
-// never replaces them. `lines` reads the latest plan's lines for this screen.
-export function HeldBackdropGrid(held, { screenKey, lines })
+// The lines held for the fight, stored only by a formation pass, from its own plan
+// and the screen measured in that pass. A pass on the screen that already holds
+// lines keeps them: a later plan there (a death after the hand changed size, which
+// moves the grid a little) never replaces them. A pass on a new screen stores its own.
+// A fit without a pass uses the held lines as they are, even on a screen still
+// waiting for its pass, and stores nothing.
+export function HeldBackdropGrid(held, passLines)
 {
-  if (held?.screenKey === screenKey) return held;
-  return lines?.() ?? held ?? null;
+  return held?.screenKey === passLines.screenKey ? held : passLines;
 }
 
 // Lengths in are real px (the combat and field boxes); the grid is local px; out

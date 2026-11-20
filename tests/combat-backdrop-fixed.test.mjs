@@ -75,23 +75,39 @@ test('the combat backdrop fit follows the screen: a resize refits it', () => {
 
 // Review of #2918: the grid's lines follow the resting cards' top, which moves with the number of cards in the hand.
 // A hand change runs no pass, but the next pass (a death) brought the new lines and the floor jumped about 35 px.
+// The stage stores lines only from a formation pass (HeldBackdropGrid); a fit without a pass uses what is held.
+const passLines = (screen, plan, screenKey = screen.label) => BackdropGridLines({ plan, zoom: screen.zoom, narrow: screen.narrow, screenKey });
+
 test('the backdrop holds its grid lines per screen: a hand change then a death changes nothing', () => {
   for (const screen of SCREENS) {
     const enemies = enemiesOf(3);
     const alive = ids => ({ enemies, rangeRanks: ranksFor(enemies, ids, []) });
-    const fit = (held, plan, screenKey = screen.label) => {
-      const grid = HeldBackdropGrid(held, { screenKey, lines: () => BackdropGridLines({ plan, zoom: screen.zoom, narrow: screen.narrow, screenKey }) });
-      return { grid, inputs: CombatBackdropInputs({ ...screen, grid }) };
-    };
-    const first = fit(null, stagePlan(screen, { ...alive(['e0', 'e1', 'e2']), handCardsTop: screen.handTop + 40 }));
+    const first = HeldBackdropGrid(null, passLines(screen, stagePlan(screen, { ...alive(['e0', 'e1', 'e2']), handCardsTop: screen.handTop + 40 })));
     const handChanged = stagePlan(screen, { ...alive(['e1', 'e2']), handCardsTop: screen.handTop });
-    assert.notDeepEqual(fitFor(screen, handChanged), first.inputs, `${screen.label}: the fixture's hand change moves the grid`);
-    const afterDeath = fit(first.grid, handChanged);
-    assert.equal(afterDeath.grid, first.grid, `${screen.label}: the held lines are kept`);
-    assert.deepEqual(afterDeath.inputs, first.inputs, `${screen.label}: a death after a hand change moves nothing`);
-    const resized = fit(first.grid, handChanged, `${screen.label} resized`);
-    assert.notEqual(resized.grid, first.grid, `${screen.label}: a new screen takes the latest plan's lines`);
-    assert.deepEqual(resized.inputs, fitFor(screen, handChanged), `${screen.label}: from that plan`);
+    assert.notDeepEqual(fitFor(screen, handChanged), CombatBackdropInputs({ ...screen, grid: first }), `${screen.label}: the fixture's hand change moves the grid`);
+    const afterDeath = HeldBackdropGrid(first, passLines(screen, handChanged));
+    assert.equal(afterDeath, first, `${screen.label}: a death's pass on the same screen keeps the held lines`);
+    assert.deepEqual(CombatBackdropInputs({ ...screen, grid: afterDeath }), CombatBackdropInputs({ ...screen, grid: first }), `${screen.label}: and moves nothing`);
+    const resized = HeldBackdropGrid(first, passLines(screen, handChanged, `${screen.label} resized`));
+    assert.deepEqual(resized, passLines(screen, handChanged, `${screen.label} resized`), `${screen.label}: a pass on a new screen stores its own lines`);
+  }
+});
+
+// Re-review of #2918: a fit without a pass (the combat box observer) could run between a screen change and its
+// pass, store the old plan's lines under the new screen, and the new screen's pass then kept them.
+test('a fit without a pass stores nothing: the pass for the new screen stores its own lines', () => {
+  for (const screen of SCREENS) {
+    const enemies = enemiesOf(3);
+    const resized = { ...screen, label: `${screen.label} resized`, combatHeight: screen.combatHeight - 120, fieldHeight: screen.fieldHeight - 90 };
+    const oldPlan = stagePlan(screen, { enemies }), newPlan = stagePlan(resized, { enemies });
+    let held = HeldBackdropGrid(null, passLines(screen, oldPlan));
+    // The box observer's fit on the new screen, before its pass: no pass, so the held lines are used and kept.
+    const provisional = CombatBackdropInputs({ ...resized, grid: held });
+    assert.ok(Number.isFinite(provisional.alternative.floorTop));
+    // The pass for the new screen.
+    held = HeldBackdropGrid(held, passLines(resized, newPlan));
+    assert.deepEqual(held, passLines(resized, newPlan), `${screen.label}: the held lines are the new plan's`);
+    assert.notDeepEqual(held.cellGrounds, passLines(screen, oldPlan).cellGrounds, `${screen.label}: which differ from the old plan's`);
   }
 });
 
