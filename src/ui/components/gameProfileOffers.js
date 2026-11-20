@@ -75,21 +75,6 @@ function applyRadioRole(face, label, isDisabled, onPick)
     );
 }
 
-function applyInspectionRole(face, name, isDisabled, onInspect)
-{
-    face.setAttribute('role', 'button');
-    face.setAttribute('aria-haspopup', 'dialog');
-    face.setAttribute('aria-label', translate('deckEditor.inspectNamed', { name }));
-    face.removeAttribute('aria-checked');
-    if (isDisabled)
-    {
-        face.setAttribute('aria-disabled', 'true');
-        return;
-    }
-    face.tabIndex = 0;
-    ActivateOnKey(face, onInspect, { canActivate: (event) => event.target === face });
-}
-
 function findOptionDefinition(registries, activeRun, option)
 {
     if (isCardKind(option.kind))
@@ -579,11 +564,7 @@ export function MountGameProfileOffers(appRoot, {
     function handleFaceClick(face, optionIndex)
     {
         if (isClaimPending || isCompleted || isReviewing || isOptionSpent(optionIndex)) return;
-        if (onAddToDeck && (isCardKind(offer.options[optionIndex].kind) || isEquipmentKind(offer.options[optionIndex].kind)))
-        {
-            openBoundCardInspection(face, face);
-            return;
-        }
+        // Owner 2026-11-20: a tap selects; the selected card's (i), a press-and-hold, right-click or I opens its modal.
         selectOption(optionIndex);
     }
 
@@ -591,7 +572,7 @@ export function MountGameProfileOffers(appRoot, {
     {
         const isAcquisition = !!onAddToDeck && (isCardKind(option.kind) || isEquipmentKind(option.kind));
         const inspectionOptions = isAcquisition ? {
-            infoBadge: false,
+            infoBadge: true,
             inspectionActions: () => {
                 const canTake = !isClaimPending && !isCompleted && !isReviewing && !isOptionSpent(optionIndex);
                 // Owner 2026-11-19: won armour or a won weapon is offered to Equip beside Keep, as a purchase is.
@@ -635,11 +616,7 @@ export function MountGameProfileOffers(appRoot, {
         const choiceLabel = readChoiceLabel(option, definition);
         if (isFaceRadio)
         {
-            if (onAddToDeck && (isCardKind(option.kind) || isEquipmentKind(option.kind)))
-            {
-                applyInspectionRole(face, choiceLabel, isSpent, () => handleFaceClick(face, optionIndex));
-            }
-            else applyRadioRole(face, choiceLabel, isSpent, () => handleFaceClick(face, optionIndex));
+            applyRadioRole(face, choiceLabel, isSpent, () => handleFaceClick(face, optionIndex));
         }
         const control = buildChoiceControl(choiceLabel, isSpent, optionIndex);
         control.addEventListener('click', () => selectOption(optionIndex));
@@ -1124,7 +1101,7 @@ function mountCardPickDoor(appRoot, doorArgs)
         const spent = isSpent(optionIndex);
         const column = buildChoiceColumn(optionIndex, spent);
         const face = buildOptionFace(registries, activeRun, option, optionIndex, definition, {
-            infoBadge: false,
+            infoBadge: true,
             // Owner 2026-11-20: the card's own modal answers where it goes, Add to deck or Send to library side by side;
             // one click claims it (no selection step, no second page).
             inspectionActions: () => {
@@ -1151,13 +1128,20 @@ function mountCardPickDoor(appRoot, doorArgs)
         const label = readChoiceLabel(option, definition);
         const control = buildChoiceControl(label, spent, optionIndex);
         control.setAttribute('role', 'checkbox');
+        // Owner 2026-11-20: a tap on the face selects it (as the name control does); its (i), a press-and-hold,
+        // right-click or I opens the card's modal, whose Add to deck / Send to library claim it in one click.
         if (isFaceRadio)
         {
-            applyInspectionRole(face, label, spent, inspectChoice);
+            applyRadioRole(face, label, spent, () => toggle(optionIndex));
+            face.setAttribute('role', 'checkbox');
         }
         if (!spent)
         {
-            face.addEventListener('click', inspectChoice);
+            face.addEventListener('click', (event) =>
+            {
+                if (event.target.closest?.('.card-info-button')) return;
+                toggle(optionIndex);
+            });
             control.addEventListener('click', () => toggle(optionIndex));
         }
         column.append(face, control);
@@ -1166,10 +1150,6 @@ function mountCardPickDoor(appRoot, doorArgs)
             face,
             control,
         });
-        function inspectChoice()
-        {
-            if (!isBusy && !isCompleted && !isSpent(optionIndex)) openBoundCardInspection(face, face);
-        }
     }
 
     function toggle(optionIndex)
@@ -1216,8 +1196,14 @@ function mountCardPickDoor(appRoot, doorArgs)
                     'reward-selected',
                     CHOSEN_CLASS,
                 ],
-                ariaAttribute: null,
+                ariaAttribute: isFaceRadio ? 'aria-checked' : null,
             });
+            // The inspection light's attributes (cardInspection select()) go with the choice.
+            if (isFaceRadio && !isChosen)
+            {
+                face.removeAttribute('aria-pressed');
+                face.removeAttribute('aria-current');
+            }
             MarkSelected(control, isChosen, {
                 className: CHOSEN_CLASS,
                 ariaAttribute: 'aria-checked',

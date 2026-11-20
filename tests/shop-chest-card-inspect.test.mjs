@@ -32,6 +32,8 @@ function withGlobalDom(fn) {
 }
 const modal = () => document.querySelector('.card-inspection-modal');
 const tap = face => { face.dispatchEvent(new Event('pointerdown', { pointerType: 'touch', bubbles: true })); face.click(); };
+// Owner 2026-11-20: a reward face tap selects; the selected card's (i) opens its modal.
+const inspect = face => { tap(face); face.querySelector('.card-info-button').click(); };
 
 function mountShop(kind = 'combatCards', cinders = 100000) {
   const run = createRunState({ seed: 71, classId: 'reaver', registries }), rng = createRng(71);
@@ -167,17 +169,18 @@ function mountChest() {
 const chosen = faces => faces.map(face => face.classList.contains('is-chosen'));
 
 // Owner 2026-11-20: the card's own modal answers where it goes, Add to deck or Send to library, one click.
-test('chest card picks open the card modal with Add to deck and Send to library, without selecting or claiming', () => withGlobalDom(() => {
+test('a chest card tap selects it and shows its (i); the (i) opens Add to deck and Send to library without claiming', () => withGlobalDom(() => {
   const { faces, ids, claims } = mountChest();
   assert.equal(faces.length, 3);
   assert.deepEqual(chosen(faces), [false, false, false]);
   tap(faces[1]);
-  assert.deepEqual(chosen(faces), [false, false, false], 'reading does not select a pick');
+  assert.equal(modal(), null, 'a tap never opens the modal');
+  assert.deepEqual(chosen(faces), [false, true, false], 'the tap chose the card');
+  faces[1].querySelector('.card-info-button').click();
   assert.equal(modal().querySelector('.card[data-level="inspect"]')?.dataset.cardId, ids[1]);
   assert.deepEqual([...modal().querySelectorAll('.card-inspection-act')].map(node => node.textContent).sort(), ['Add to deck', 'Send to library']);
-  assert.equal(modal().querySelector('[data-act="select"]'), null, 'no Select step');
   modal().querySelector('.card-inspection-back').click();
-  assert.deepEqual(chosen(faces), [false, false, false], 'Back leaves every pick unchanged');
+  assert.deepEqual(chosen(faces), [false, true, false], 'Back keeps the pick');
   assert.deepEqual(claims, [], 'Back claims nothing');
 }));
 
@@ -185,7 +188,7 @@ for (const [act, to] of [['addToDeck', 'deck'], ['addToLibrary', 'library']]) {
   // The claim reaches the host synchronously on the click (this file's DOM helper is synchronous).
   test(`chest ${act} claims that card exactly once in one click`, () => withGlobalDom(() => {
     const { faces, claims } = mountChest();
-    tap(faces[2]);
+    inspect(faces[2]);
     const commit = modal().querySelector(`[data-act="${act}"]`);
     commit.click(); commit.click();
     assert.equal(modal(), null);
