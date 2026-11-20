@@ -45,7 +45,7 @@ function fixture(document) {
     inspectionPlayAction: () => ({}), syncHandPager() {}, syncHitChances() {}, hideTooltip() {}, clearAim() {},
     hasCardChoice: () => false, refusePlay() {}, lockReport: () => ({}), logIgnored() {}, dlog() {},
     unplayableReason: () => null, cardTargets: () => ({ legalIds: combat.enemies.map(e => e.id) }),
-    upcastOptions: () => [], cardChoicePlan: () => null, resolveCard: () => ({}),
+    upcastOptions: () => [], UPCASTING_ENABLED: false, upcastingOffered: () => false, cardChoicePlan: () => null, resolveCard: () => ({}),
     takeSnapshot: () => CaptureCombatDisplay(combat, { registries, projectCombatIntent: () => null, previewCard, followMemo: { plan: () => null }, upcastRanksByCard: context.upcastRanksByCard, paintedHandQuotes: new Map() }),
     flyCard() {}, sfx: { play() {} }, haptic: { play() {} }, t: x => x, render() {}, renderPlayQueue() {}, queueToast: { show() {} },
     renderTopbar() {},

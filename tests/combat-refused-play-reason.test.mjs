@@ -23,7 +23,7 @@ function harness({ energy = 5, stamina = 5, mana = 9, legalIds = ['e1'], cost = 
     combat, busy: false, inputBusy: () => false, upcastRanksByCard: new Map(), CSS: { escape: v => v },
     hasCardChoice: () => choice, t: key => ({ 'combat.actions': 'Actions' })[key] || key, getEntity: () => ({ alive: true }),
     cardTargets: () => ({ legalIds }), unplayableReason: () => unplayable,
-    resolveCombatCard: () => ({}), readSettings: () => ({}), upcastOptions: () => [],
+    resolveCombatCard: () => ({}), readSettings: () => ({}), upcastOptions: () => [], UPCASTING_ENABLED: false, upcastingOffered: () => false,
     cardChoicePlan: () => null, previewCard: () => ({ cost, manaCost, staminaCost }),
     dlog: (...args) => logs.push(args), esc: v => String(v),
     showTooltipFor: (el, html) => tips.push({ el, html }),
