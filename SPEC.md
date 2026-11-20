@@ -2977,6 +2977,8 @@ Only Core ships; non-Core runs and saves are refused at load. Core's shop is the
 - The kind rides the persisted stock as `stock.kind`; a stock of a kind this build lacks is refused by name at load.
 - `content/source/shops.json` authors the kind tables Core's validation reads (the Blacksmith's offerings); its market and master tables are kept only so existing validation and Settings rows resolve.
 - All prices are in cinders unless stated, and all are data.
+- **Shelf sizes vary** (owner, 2026-11-20). A vendor shelf's stock count is a whole number or a `[min, max]` range (`model/vendorStockRange.js`; a range starts at 1, so a shelf it covers is never empty). A range is rolled once per shelf per visit on a hash of the run seed, the node and the shelf, so a reload, a revisit and a preview agree and no RNG stream moves; the stock saved for the visit keeps the count. Core: the trader's `itemsPerCategory` `[2, 4]` (each buying shelf on its own), the Blacksmith's `armamentStock` `[4, 6]` and `weaponArtStock` `[2, 4]`. A shelf whose pool runs short offers what exists.
+- **Every vendor buys** (owner, 2026-11-20). The merchant, a trader's workshop and the Blacksmith all show the same Sell shelf (`FillSellShelf`), each sale confirmed through the same review and committed by `commitGameProfileShopSale`. A sale trades against the open vendor's stock (`vendorSaleStock`): the trader's workshop or a Blacksmith visit (`run.shopStock`) while it is open, else the merchant's offer, and bumps that stock's `tradeRevision`. Prices are the same everywhere (`balance.shop.sellFraction`); the `shopSell` setting turns Sell off at every vendor.
 
 ### 14.3 The market (usual shop)
 
@@ -2998,7 +3000,7 @@ Core's shop keeps: `gameProfileShopSales`, `shopOfferPrice`, `balance.shop.sellF
 | `upgrade` | Item tier upgrade | `smithingPlan` / `commitItemUpgrade` |
 | `upgradeArt` | Card upgrade of any deck card (§13.4s) | `cardUpgradeService` |
 
-It is a screen of its own, reusing `SmithSelectionModel` and the smith modals.
+It is a screen of its own, reusing `SmithSelectionModel` and the smith modals. Its last tab is the merchant's Sell shelf (§14.2, *Every vendor buys*).
 
 - **Tier reach.** Equipment up to the ladder's top, tier 3; a rest-site Smith stops at tier 2 (`restSmithMaxTier`; §4).
 - **Stones.** `stoneDiscount` (1) comes off every stone price, never below 0: tiers 1, 2, 3 cost 0, 1, 2 stones; a card upgrade costs 0 stones; `rankUp` costs `rankUpStones` (1).
@@ -3011,11 +3013,11 @@ It is a screen of its own, reusing `SmithSelectionModel` and the smith modals.
 | Rank-up | `prices.rankUp` | 120 |
 
 - **Rank-up.** Raises one run-owned card's `rank` by 1 (not an equipment-bound or granted card; never past rank 99).
-- **Armaments.** The rack is `armamentStock` (6) distinct pieces drawn on `shopOffers` from the Core weapon pool the run does not carry.
+- **Armaments.** The rack is `armamentStock` (4 to 6, §14.2) distinct pieces drawn on `shopOffers` from the Core weapon pool the run does not carry.
   - Each is rolled at a tier from `tierWeights` (`{0: 20, 1: 40, 2: 30, 3: 10}`, capped at the piece's ladder top) and priced over the `priceTable.armament` row of its rarity × `tierPriceMult` (`[1, 1.4, 1.8, 2.3]`), rounded.
   - Stock entry `{ id, cost, tier }` (cost scaled once by the shop price multiplier when the visit opens).
   - Buying adds it to storage and, when tier > 0, writes `run.itemUpgradeLevels[armament/<id>] = tier`, never lowering a tier the run holds. The tile reads "Sold at tier N"; a piece the run carries is refused.
-- **Weapon arts.** `weaponArts` sells the learnable arts of carried weapons not owned or granted (owner, 2026-11-05) at a price from `priceTable.weaponArt`, into the sideboard (`shop-art:<n>:<cardId>`); the shelf is not restocked.
+- **Weapon arts.** `weaponArts` sells up to `weaponArtStock` (2 to 4, §14.2; absent: all of them) of the learnable arts of carried weapons not owned or granted (owner, 2026-11-05) at a price from `priceTable.weaponArt`, into the sideboard (`shop-art:<n>:<cardId>`); the shelf is not restocked.
 
 ### 14.5 The wise master
 

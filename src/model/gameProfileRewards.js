@@ -1,6 +1,7 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
 import { gameModule, gameContent } from './gameProfile.js';
 import { ConfiguredTraderCategories } from './gameProfileShopKind.js';
+import { ShelfStockCounts } from './vendorStockRange.js';
 import { syncZones } from './state.js';
 import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
@@ -202,6 +203,8 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   const combatRelics=gameContent(run,'rewards')?.eligibility?.relics?.combatIds;
   if(source==='combat'&&Array.isArray(combatRelics))available.relics=available.relics.filter(id=>combatRelics.includes(id));
   const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
+  // A shop shelf's cap: one number for every shelf, or each shelf's own count ({kind: n}, rolled per visit; vendorStockRange.js).
+  const shelfCap=kind=>typeof itemsPerCategory==='number'?itemsPerCategory:(itemsPerCategory?.[kind]??0);
   if(groups.length) {
     const problems=rewardGroupProblems(groups,categories);
     if(problems.length)throw new Error(problems.join('; '));
@@ -213,7 +216,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   }
   // Ordinary combat draws weighted groups. Shops independently fill each shelf.
   while(options.length<count) {
-    const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<itemsPerCategory));
+    const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<shelfCap(kind)));
     if(!kinds.length)break;
     const kind=itemsPerCategory===null?pickRewardCategory(rng,stream,kinds,groups):kinds[0];
     if(!kind)break;
@@ -484,8 +487,11 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const rankUpShelf=fresh&&ShopStocksRankUp(registries,run,shopId);
   // Each trader offers 3-6 options in all (playtest 2026-11-17 item 42; gameProfileShopKind.js).
   const categories=ConfiguredTraderCategories(run,shopId,gameContent(run,'rewards').categories,{rankUpShelf});
-  const itemsPerCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
-  const count=itemsPerCategory===null?(module.options??rules.offerCount):itemsPerCategory*categories.length;
+  // Owner 2026-11-20: `itemsPerCategory` may be a [min, max] range; each shelf rolls its own count per visit, seeded by the
+  // run seed, the node and the shelf (vendorStockRange.js), so a reload and a revisit agree.
+  const perCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
+  const itemsPerCategory=perCategory===null?null:ShelfStockCounts(run,shopId,categories,perCategory);
+  const count=itemsPerCategory===null?(module.options??rules.offerCount):Object.values(itemsPerCategory).reduce((sum,n)=>sum+n,0);
   const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count,takeCount:count,categories,itemsPerCategory});
   if(stock.price===undefined)stock.price=module.price??rules.price;
   // W25-R: some shops also stock a rank-up service (shops.json rankUp.stockChancePct), at the Blacksmith's own price. It rolls on a hash of the

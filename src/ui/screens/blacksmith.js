@@ -29,7 +29,9 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { MountCardUpgradeModal } from '../components/cardUpgradeModal.js';
 import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
-import { wireShopLayout } from './shop.js';
+import { wireShopLayout, FillSellShelf } from './shop.js';
+import { settingOn } from './settings.js';
+import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
 import { arrangeMerchantOffer } from '../components/merchantOffer.js';
 import { renderCard } from '../components/card.js';
 import { renderEquipmentCard } from '../components/equipmentCard.js';
@@ -46,7 +48,9 @@ import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards,
 
 const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack' });
 
-export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, onCardPurchased = () => {}, priceMult = 1, hud = null }) {
+// Every vendor buys (owner, 2026-11-20): with `onSell` and the node's `shopId`, the Blacksmith shows the merchant's own Sell
+// shelf (FillSellShelf) as its last tab; `onSell(quote)` commits the sale and the screen redraws.
+export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, onCardPurchased = () => {}, onSell = null, shopId = null, priceMult = 1, hud = null }) {
   const stock = run.shopStock;
   const stoneDiscount = blacksmithStoneDiscount(run);
   let activeCategory = null;
@@ -334,7 +338,9 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   }
 
   // How many things each offering can act on now: the rail's {Status}.
+  const sellOpen = !!onSell && shopId != null && settingOn(meta?.settings, 'shopSell');
   const readyCount = (key) => {
+    if (key === 'sell') return gameProfileShopSalePlans(registries, run, shopId).filter((plan) => plan.ok).length;
     if (key === 'armaments') return (stock.armaments || []).length;
     if (key === 'weaponArts') return (stock.weaponArts || []).length;
     if (key === 'rankUp') return serviceCandidates(registries, run, key, meta?.settings).length;
@@ -343,7 +349,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   function render() {
     if (layout) layout.release();
-    const categories = shopStockOfferings(stock).filter((key) => SHELVES[key] && !blacksmithWithholds(run, key));
+    const categories = [...shopStockOfferings(stock).filter((key) => SHELVES[key] && !blacksmithWithholds(run, key)), ...(sellOpen ? ['sell'] : [])];
     if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
     app.innerHTML = `
       ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}
@@ -375,6 +381,11 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     const idle = {};
     for (const key of categories) {
       const shelf = root.querySelector(`#blacksmith-${key}`);
+      if (key === 'sell') {
+        FillSellShelf(shelf, { registries, run, shopId, arm, onError: (error, host) => refuse(host, error),
+          onSell: (quote) => { onSell(quote); onChanged(); render(); } });
+        continue;
+      }
       SHELVES[key](shelf);
       for (const host of shelf.querySelectorAll(':scope > .shop-offer')) finishRow(host);
       // A service with nothing to act on now says why, and stays on the rail.

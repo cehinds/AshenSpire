@@ -42,6 +42,38 @@ function configuredOfferText(registries, run, kind, def, ref) {
   return '';
 }
 
+/**
+ * FillSellShelf(shelf, { registries, run, shopId, arm, onSell, onError }) — the Sell shelf every vendor shows (owner,
+ * 2026-11-20: the merchant, a trader's workshop and the Blacksmith alike). One merchant row per thing the vendor would
+ * buy (gameProfileShopSalePlans), each armed through the shared sale review before `onSell(quote)` commits it.
+ */
+export function FillSellShelf(shelf, { registries, run, shopId, arm, onSell, onError = () => {} }) {
+  const sales = gameProfileShopSalePlans(registries, run, shopId);
+  for (const quote of sales) {
+    const { def, kind, price } = quote;
+    const tile = el('div', { class: 'class-pick shop-offer', dataset: { saleKind: kind } });
+    const visual = ['combatCards', 'weaponArts'].includes(kind)
+      ? renderCard(registries, run.sideboard.find(card => card.instanceId === quote.identity), shopCardOptions)
+      : ['weapons', 'armor'].includes(kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card
+      : kind === 'consumables' ? null : renderCollectibleCard(registries, def, kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
+    const saleRef = ['combatCards', 'weaponArts'].includes(kind) ? run.sideboard.find(card => card.instanceId === quote.identity) : null;
+    const sell = arrangeMerchantOffer({ tile, name: def.name, desc: configuredOfferText(registries, run, kind, def, saleRef) || def.blurb || '', visual,
+      price: t('shop.price.back', { price }), avail: { available: quote.ok, reason: quote.reason || null },
+      action: { kind: 'sell', label: t('shop.action.sell', { price }), enabled: quote.ok } });
+    // A sale asks for confirmation (playtest 2026-11-17 item 37): the review names the item and the cinders it returns.
+    if (quote.ok) arm(sell, 'shopSell', {
+      question: t('shop.sell.question', { name: def.name }),
+      target: def.name,
+      message: t('shop.sell.message', { price }),
+      confirmLabel: t('shop.action.sell', { price }),
+      onConfirm: () => { try { onSell(quote); } catch (error) { onError(error, tile); } },
+    });
+    shelf.append(tile);
+  }
+  if (!sales.length) shelf.append(statusText(t('shop.status.nothingWanted')));
+  return sales;
+}
+
 export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, onSmith = null, shelfKinds = null, meta, hud = null }) {
   const previousCategory = app.querySelector('.merchant-workspace')?.dataset.shopContent;
   clearSelection();
@@ -118,31 +150,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     });
     shelves.get(option.kind).append(tile);
   }
-  if (sellEnabled) {
-    const sales = gameProfileShopSalePlans(registries, run, shopId);
-    for (const quote of sales) {
-      const { def, kind, price } = quote;
-      const tile = el('div', { class: 'class-pick shop-offer', dataset: { saleKind: kind } });
-      const visual = ['combatCards', 'weaponArts'].includes(kind)
-        ? renderCard(registries, run.sideboard.find(card => card.instanceId === quote.identity), shopCardOptions)
-        : ['weapons', 'armor'].includes(kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card
-        : kind === 'consumables' ? null : renderCollectibleCard(registries, def, kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
-      const saleRef = ['combatCards', 'weaponArts'].includes(kind) ? run.sideboard.find(card => card.instanceId === quote.identity) : null;
-      const sell = arrangeMerchantOffer({ tile, name: def.name, desc: configuredOfferText(registries, run, kind, def, saleRef) || def.blurb || '', visual,
-        price: t('shop.price.back', { price }), avail: { available: quote.ok, reason: quote.reason || null },
-        action: { kind: 'sell', label: t('shop.action.sell', { price }), enabled: quote.ok } });
-      // A sale asks for confirmation (playtest 2026-11-17 item 37): the review names the item and the cinders it returns.
-      if (quote.ok) arm(sell, 'shopSell', {
-        question: t('shop.sell.question', { name: def.name }),
-        target: def.name,
-        message: t('shop.sell.message', { price }),
-        confirmLabel: t('shop.action.sell', { price }),
-        onConfirm: () => { try { onSell(quote); } catch (error) { status.textContent = error.message; } },
-      });
-      shelves.get('sell').append(tile);
-    }
-    if (!sales.length) shelves.get('sell').append(statusText(t('shop.status.nothingWanted')));
-  }
+  if (sellEnabled) FillSellShelf(shelves.get('sell'), { registries, run, shopId, arm, onSell, onError: (error) => { status.textContent = error.message; } });
   showCategory(active); layout = wireShopLayout(root); wireCardShelf(offersBox);
 }
 

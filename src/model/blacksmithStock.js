@@ -14,6 +14,7 @@ import { blacksmithRules } from './blacksmithConfig.js';
 import { carriedIds } from './loadout.js';
 import { shopSentence } from './shopKinds.js';
 import { CORE_BLACKSMITH_OFFERINGS } from './blacksmith.js';
+import { RollStockCount, VendorNodeKey } from './vendorStockRange.js';
 
 const STREAM = 'shopOffers';
 const say = (id, tokens = {}) => shopSentence(id, tokens);
@@ -49,7 +50,7 @@ function rangeFor(table, kind, rarity) {
 
 /**
  * coreBlacksmithShelves(registries, rng, run) → { armaments, weaponArts } (either may be empty). Armaments: `armamentStock`
- * distinct pieces the run does not carry, each at a rolled tier, priced over its rarity's row times `tierPriceMult[tier]`.
+ * (a count or a [min, max] range) distinct pieces the run does not carry, each at a rolled tier, priced over its rarity's row times `tierPriceMult[tier]`.
  */
 export function coreBlacksmithShelves(registries, rng, run) {
   const rules = blacksmithRules(run) || {};
@@ -57,14 +58,20 @@ export function coreBlacksmithShelves(registries, rng, run) {
   const pools = gameProfileRewardPools(registries, run);
   const defs = new Map((registries.equipment.armaments || []).map((piece) => [piece.id, piece]));
   const mult = Array.isArray(rules.tierPriceMult) ? rules.tierPriceMult : [];
-  const armaments = pickSome(rng, pools.weapons.filter((id) => defs.has(id)), rules.armamentStock ?? 0).map((id) => {
+  // Owner 2026-11-20: `armamentStock` and `weaponArtStock` may be [min, max] ranges, rolled per visit on a hash of the
+  // run seed and the node (vendorStockRange.js). A missing `weaponArtStock` lays out every eligible art.
+  const node = VendorNodeKey(run);
+  const armamentCount = RollStockCount(rules.armamentStock ?? 0, run.seed, `${node}:blacksmith:armaments`);
+  const armaments = pickSome(rng, pools.weapons.filter((id) => defs.has(id)), armamentCount).map((id) => {
     const tier = rollTier(rules.tierWeights, rng, tierCeiling(registries, run, id));
     const base = rng.int(STREAM, ...rangeFor(table, 'armament', defs.get(id).rarity));
     return { id, tier, cost: Math.max(1, Math.round(base * (Number.isFinite(mult[tier]) ? mult[tier] : 1))) };
   });
   // Owner 2026-11-05: never stock an art the open reward door is showing; owned arts are already out of the pool.
   const onDoor = new Set(artsOnOtherSide(run, 'blacksmith', null));
-  const weaponArts = pools.weaponArts.filter((id) => !onDoor.has(id)).map((id) => ({ id, cost: rng.int(STREAM, ...rangeFor(table, 'weaponArt', null)) }));
+  const artPool = pools.weaponArts.filter((id) => !onDoor.has(id));
+  const artIds = rules.weaponArtStock === undefined ? artPool : pickSome(rng, artPool, RollStockCount(rules.weaponArtStock, run.seed, `${node}:blacksmith:weaponArts`));
+  const weaponArts = artIds.map((id) => ({ id, cost: rng.int(STREAM, ...rangeFor(table, 'weaponArt', null)) }));
   return { armaments, weaponArts };
 }
 

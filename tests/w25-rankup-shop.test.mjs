@@ -11,6 +11,7 @@ import { createRng } from '../src/engine/rng.js';
 import { gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
 import { InstanceRank, RankUpCandidates } from '../src/model/rankUpService.js';
 import { ConfiguredTraderCategories } from '../src/model/gameProfileShopKind.js';
+import { ShelfStockCounts } from '../src/model/vendorStockRange.js';
 import { gameContent } from '../src/model/gameProfile.js';
 import '../src/engine/runCombat.js';
 
@@ -100,9 +101,10 @@ test('a fresh stock with the rank-up shelf takes one more than a plain stock, so
   assert.equal(stock.options.length, real + 1);
   // Traders vary (playtest 2026-11-17 item 42): a plain stock for THIS shop is its own shelves times the shelf size.
   // The rank-up shelf is one of the trader's dock options, so a shop that stocks it makes room among its shelves.
-  const shelves = (id, rankUpShelf) => ConfiguredTraderCategories(run, id, gameContent(run, 'rewards').categories, { rankUpShelf }).length;
-  assert.equal(plain.takeCount, 3 * shelves('1:plain', false));
-  const plainHere = 3 * shelves(shopId, true);
+  // Owner 2026-11-20: each shelf holds its own rolled count (vendorStockRange.js), so a plain stock is the sum of them.
+  const items = (id, rankUpShelf) => Object.values(ShelfStockCounts(run, id, ConfiguredTraderCategories(run, id, gameContent(run, 'rewards').categories, { rankUpShelf }), gameContent(run, 'shops').itemsPerCategory)).reduce((sum, count) => sum + count, 0);
+  assert.equal(plain.takeCount, items('1:plain', false));
+  const plainHere = items(shopId, true);
   assert.equal(stock.takeCount, plainHere + 1);
   assert.ok(stock.takeCount >= real + 1, 'every real item and the shelf can all be bought');
   assert.equal(run.gameProfileRewardOffers[`shop:${shopId}`].takeCount, plainHere + 1);
