@@ -1421,7 +1421,7 @@ Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), 
 ### Player view and camera
 
 - Full act map visible; only nodes edge-connected to the current node are clickable. **Sealstone Key** shows `?` types.
-- Camera opens framed on the current decision; grab-drag on both axes. **Settings → Advanced → Interface → Two-axis map dragging** (default on); off = vertical-only, horizontal centred. Zoom reset recentres; the saved camera keeps both axes.
+- Camera opens framed on the current decision; grab-drag on both axes. **Settings → Advanced → Map → Two-axis map dragging** (default on); off = vertical-only, horizontal centred. Zoom reset recentres; the saved camera keeps both axes.
 - Acts 2/3 reuse the generator with other encounter tables and elite/boss pools (data only).
 - Core preview route: opens on a fight (`firstFloor: fight`), rests on floors 3 and 6, whole map visible; the fixed-Monster rule above is the Current profile's.
 
@@ -2167,7 +2167,7 @@ Summary: `run.zones` and `run.collection` project the legacy fields (class, load
   - `zones.js` is the ONE map from zone to loadout slot: `WORN_SLOT_IDS` (body ← `armor`, the rest by name), `HAND_SLOT_IDS` (main ← `rightHand`, off ← `leftHand`). `projectZones` and `figureSpec` read it; `validateContent` refuses a slot row no zone names. The `armor` id stays for `body` (renaming would move every save's `loadout.sets.armor`).
 - **The figure reads the zones.** `figureSpec(registries, loadout, classId)` projects the loadout to zones; body from `zones.worn.body`, `headId`/`handsId`/`feetId` from the other worn slots, each hand from the piece its hand zone names. `equippedFigure` layers feet, hands, head over the body and under held pieces; a layer with no art draws nothing.
 - **The deck's floor.** `balance.deck = { minimum, minimumStepLevels, minimumPerStep }` = (8, 2, 1). `deckMinimum(registries, run)` = `minimum + ⌊characterLevel / minimumStepLevels⌋ × minimumPerStep`, with character level = `run.level.level` (§13.4i); a fresh run is level 1, so the floor first rises at level 2.
-  - **Core 2** (owner, 2026-11-17): one minimum, the deck editor's. `deckMinimum(registries, run, settings)` returns `CoreDeckMinimum(run, settings)`: the player's own minimum setting (`SettingsDeckMinimum`, the same `deckMinSize`/`deckMinUnlimited` the editor reads) less `DeckMinDelta(run)` through `ReducedDeckMinimum`, the one reduction the editor's bounds also use (§14.1 *Size rules*), so levels and min-slot relics lower the Armoury floor too; `balance.deck` governs every other profile.
+  - **Core 2** (owner, 2026-11-17): one minimum, the deck editor's. `deckMinimum(registries, run, settings)` returns `CoreDeckMinimum(run, settings)`: the editor's minimum (`SettingsDeckMinimum`, the same fixed `deckRules.defaults.deckMinSize`/`deckMinUnlimited` the editor reads) less `DeckMinDelta(run)` through `ReducedDeckMinimum`, the one reduction the editor's bounds also use (§14.1 *Size rules*), so levels and min-slot relics lower the Armoury floor too; `balance.deck` governs every other profile.
   - `loadoutLeaveRefusal(registries, run, { enteredWith })` returns the sentence refusing LEAVING the Armoury with fewer cards than the floor; every exit (Back, ✕, Escape, tap outside) asks it and shows it in place.
   - A run already under the floor when the screen opened may leave (the door refuses only what this screen did). Unequipping is never refused.
   - The floor is an OUT-OF-COMBAT door: a mid-fight equipment change re-stamps the combat piles and never moves `run.deck`, so the Armoury opened from a fight counts the same deck in and out.
@@ -2292,7 +2292,7 @@ Summary: `run.level` holds XP, level and waiting points; levels pay points that 
 - Core pays levels with `awardLevelXp`; there is no banked-level claim, and no general feats.
 - **The ledger is the run's:** `run.level = { xp, level, unspentPoints }` (schema 10), written only by `model/levelup.js`. `validateRunShape` refuses a malformed ledger by name. A save ≤ 9 arrives at level `1 + levelUps` (its cinder purchases), with no XP toward the next and nothing waiting.
   - `xpToNext(registries, level)` is the one curve shape (`balance.level.xp`).
-  - `awardLevelXp` climbs as many steps as the XP buys at once. A level grants the level-up dial's points (`levelUpValue`, read where the level is reached) to `unspentPoints`; `balance.levelUp.maxLevels` caps levels (XP past it stays). The run's owner (`main.js onCombatEnd`, `tools/simrun.mjs`) awards through `awardLevelXp`; a QA fixture also calls it.
+  - `awardLevelXp` climbs as many steps as the XP buys at once. A level grants the fixed game value `balance.levelUp.pointsPerLevel` (1; the Level-up value setting `levelUpValue` was dropped 2026-11-20) to `unspentPoints`; `balance.levelUp.maxLevels` caps levels (XP past it stays). The run's owner (`main.js onCombatEnd`, `tools/simrun.mjs`) awards through `awardLevelXp`; a QA fixture also calls it.
   - `applyLevelUp(registries, run, attributeId)` assigns ONE waiting point: the attribute moves; `levelUps`/`levelPoints` record the assignment for the load door's allocation check; pools re-derive from the run's own snapshot with the deficit carried (levelling is not a rest).
   - `levelUpPlan` offers the waiting points only (`blockedBy`: `points` | `cap` | null). The shrine's Level-up card assigns them (`rest.js`), as does the town's level-up service. Every level waits for the player's Level up press (§13.4o).
   - Cinders buy no level: no code path spends `run.cinders` on one.
@@ -2863,17 +2863,17 @@ The deck editor lets the player move cards between the deck and a sideboard unde
 
 ### 14.1 The deck editor
 
-**Settings.** Advanced group **Deck**. Each default is `deckRules.defaults.<key>`. They are plain profile settings read live (like `shrineMultiUse`), not `gameConfig.*` rows, so not copied into `run.advancedConfigSnapshot`: a change applies the next time the editor opens, and `playInDeckOrder` to the next combat created.
+**Rules.** Fixed game values in `deckRules.defaults.<key>` (`src/content/deckRules.js`), not player settings (owner, 2026-11-20: the Settings rows were dropped; a stored or imported key is cleared or skipped). Only `playInDeckOrder` is still a player setting, Advanced group **Deck**, read live and not copied into `run.advancedConfigSnapshot`: it applies to the next combat created.
 
-| Key | Type | Default | Meaning |
+| Key | Type | Value | Meaning |
 |---|---|---|---|
 | `deckEditing` | bool | on | The editor exists. Off: no door opens it; the deck changes only by rewards, removal and the Armoury. |
 | `deckEditingWhere` | `free` \| `restOnly` | `free` | `free`: from the Armoury any time out of combat (including before the first node). `restOnly` ("Rest sites only"): only as an option card on the Rest screen of a place whose tags carry the `deckEdit` service tag (a marker like `smith`, no rule; `tagging.csv` gives it to shrine, inn, chapel, not camp). |
 | `deckMinSize` | number ≥ 0 | 10 | Fewest cards the editor lets you confirm. |
-| `deckMinUnlimited` | bool | off | On: no minimum, `deckMinSize` ignored (row shown disabled). |
-| `deckMaxSize` | number ≥ 1 | `deckRules.defaults.deckMaxSize` | Most cards. A max below the effective min is refused in Settings by name. |
-| `deckMaxUnlimited` | bool | on | On: no maximum (`deckMaxSize` row disabled). |
-| `playInDeckOrder` | bool | off | Draw pile not shuffled (below). |
+| `deckMinUnlimited` | bool | off | On: no minimum, `deckMinSize` ignored. |
+| `deckMaxSize` | number ≥ 1 | `deckRules.defaults.deckMaxSize` | Most cards. A max below the effective min is refused by content validation by name. |
+| `deckMaxUnlimited` | bool | on | On: no maximum (`deckMaxSize` ignored). |
+| `playInDeckOrder` | bool | off | The one player setting here (Advanced › Deck). Draw pile not shuffled (below). |
 
 **The collection is what the run owns plus the unlimited basics.**
 
@@ -2921,7 +2921,7 @@ The deck editor lets the player move cards between the deck and a sideboard unde
 - **Owned means deck ∪ sideboard everywhere:** `projectZones` (so `run.collection` includes the sideboard, §13.4a); `cardExtraction`'s `installableCards` and `commitInstall` (the commit takes the instance from whichever pile holds it, so `restOnly` needs no editor visit first); `rankUpCandidates` (§13.4o). Combat reads only `run.deck`.
 
 **Class spells and Powers: one copy in the deck** (owner, 2026-09-26), except an eligible collected Cantrip (Magic Adept) or Basic (Martial Adept) minted without limit in Core.
-- Covers any class (not colorless) card whose type is `power` or that carries `source:spell` (`deckRules.singleCopy`). Limit = Settings row `classSpellPowerCopies` (default 1), answered by `deckCopyLimit(registries, cardId, settings)`.
+- Covers any class (not colorless) card whose type is `power` or that carries `source:spell` (`deckRules.singleCopy`). Limit = the fixed game value `deckRules.defaults.classSpellPowerCopies` (1; no longer a Settings row, owner 2026-11-20), answered by `deckCopyLimit(registries, cardId, settings)`.
 - The editor refuses a copy past the limit and names the card; further owned copies stay in the sideboard.
 - Legacy and Current Strike and Defend remain unlimited; weapon arts and techniques stay limited to copies owned.
 
@@ -2977,7 +2977,7 @@ Only Core ships; non-Core runs and saves are refused at load. Core's shop is the
 
 ### 14.3 The market (usual shop)
 
-Core's shop keeps: `gameProfileShopSales`, `shopOfferPrice`, `balance.shop.sellFraction` (sell price of an owned relic, flask or armament), the `shopSell` setting, `applyShopPriceMult` (a custom run's price multiplier) and `armamentTrading`'s sale. The [class-book rewards contract](docs/CLASS-BOOK-REWARDS-CONTRACT.md) does not depend on a market shelf.
+Core's shop keeps: `gameProfileShopSales`, `shopOfferPrice`, `balance.shop.sellFraction` (sell price of an owned relic, flask or armament), the fixed game value `balance.shop.sellBack` (true: the Sell bar is offered; it was the Merchant buys back setting until 2026-11-20), `applyShopPriceMult` (a custom run's price multiplier) and `armamentTrading`'s sale. The [class-book rewards contract](docs/CLASS-BOOK-REWARDS-CONTRACT.md) does not depend on a market shelf.
 
 ### 14.4 The blacksmith
 
@@ -3142,9 +3142,9 @@ Healing cantrips that heal are not unlimited-copy for the Magic Adept: `core.ste
 
 ### 15.2 Levelling pace you can see
 
-Shows the configured levelling pace in Settings and optionally caps levels per fight. The curve is the base-200 x1.5 exponential `balance.level.xp` (`src/content/balance.js`), tabulated in §13.4o. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` rounds the multiplied awards into the configured registries). `levelUpValue` **replaces** `pointsPerLevel` as the points per level. This section changes no curve or award number; the owner retunes them in Settings.
+Shows the configured levelling pace in Settings and optionally caps levels per fight. The curve is the base-200 x1.5 exponential `balance.level.xp` (`src/content/balance.js`), tabulated in §13.4o. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` rounds the multiplied awards into the configured registries). The points per level are the fixed game value `balance.levelUp.pointsPerLevel` (the `levelUpValue` setting that replaced it was dropped with the Progression tab, owner 2026-11-20). This section changes no curve or award number; the owner retunes them in content.
 
-- **Levelling preview.** Settings -> Progression, `ui/models/LevelPacePreviewModel.js`, drawn live from the configured registries (`xpMultiplier` counted once, where `configuredContentBundle` applies it) and `levelUpValue`. It shows:
+- **Levelling preview.** No longer in Settings: the Settings › Progression tab was removed (owner, 2026-11-20). As specified, it was drawn live from the configured registries (`xpMultiplier` counted once, where `configuredContentBundle` applies it) and `balance.levelUp.pointsPerLevel`. It shows:
   - XP to reach each of levels 2-20;
   - "a normal fight (3 kills) gives N XP", and the same for an elite and a boss, with how many levels each is worth from level 1 and from level 10;
   - the stat points those levels grant.
