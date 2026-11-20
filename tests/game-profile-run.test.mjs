@@ -32,7 +32,7 @@ test('fixed classes, eleven starters, persistent pin and restamping do not mint 
  stampDeck(reg,run);assert.equal(run.deck.length,11);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,2);
  assert.throws(()=>createRunState({seed:1,classId:'starseer',registries:reg}),/locked/);
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one']}}};
- const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,4+gameProfileEffectiveAttributes(reg,star).intelligence);
+ const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,5+Math.floor(gameProfileEffectiveAttributes(reg,star).intelligence/4)); // stat contract 2026-11-18: 5 + floor(INT / 4)
  const restored=deserializeRun(serializeRun(run));assert.equal(restored.gameProfile.hash,profile.hash);assert.equal(restored.runId,run.runId);
 });
 
@@ -73,7 +73,7 @@ test('rest requires real current rest, commits once and fully recovers after ear
  visit(run);run.hp=1;run.mana=0;run.stamina=0;run.flaskCharges.hpCurrent=0;run.flaskCharges.manaCurrent=0;
  run.level.unspentPoints=1;const before=run.maxHp;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
- assert.equal(run.maxHp,before+10);assert.equal(run.hp,run.maxHp);assert.equal(run.mana,run.maxMana);assert.equal(run.stamina,run.maxStamina);
+ assert.equal(run.maxHp,before+5);assert.equal(run.hp,run.maxHp); // stat contract 2026-11-18: 5 maximum HP per CON pointassert.equal(run.mana,run.maxMana);assert.equal(run.stamina,run.maxStamina);
  assert.equal(run.flaskCharges.hpCurrent,run.flaskCharges.hp);assert.equal(run.flaskCharges.manaCurrent,run.flaskCharges.mana);
  const after=JSON.stringify(run);assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'}),/spent/);assert.equal(JSON.stringify(run),after);
 });
@@ -145,11 +145,12 @@ test('profile completion ledger persists independently from bounded history and 
 });
 
 
-test('two CON increases add one authored SP, and Smith commits an equipment tier before full recovery',async()=>{
- const run=freshLegacy();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina;
+// Stat contract 2026-11-18: "Constitution | Maximum Health only" (it no longer adds half an SP per point).
+test('two CON increases add 10 maximum HP and no SP, and Smith commits an equipment tier before full recovery',async()=>{
+ const run=freshLegacy();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina,initialHp=run.maxHp;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  run.mapNodeId=restId(run,6);beginGameProfileRest(run,'1:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
- assert.equal(run.maxStamina,initial+1);
+ assert.equal(run.maxStamina,initial);assert.equal(run.maxHp,initialHp+10);
  const smith=freshLegacy();visit(smith);smith.smithingStones=999;smith.hp=1;
  const {smithingPlan}=await import('../src/model/smithing.js');const candidate=smithingPlan(reg,smith).candidates.find(row=>row.affordable);
  assert.ok(candidate);commitGameProfileRest(reg,smith,'smith',{itemRef:candidate.itemRef});
