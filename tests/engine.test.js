@@ -9722,6 +9722,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE ROW THE RUN WAS BORN WITH, which is the whole point of the snapshot:
     // the lean creation mode converts at a fifth, so the live tier is a fifth
     // of the authored one and the authored table is not what the receipt reads.
+    // REG is the bare content bundle, which keeps the legacy CON Poise row so
+    // saved runs are not repriced. Profile-bound runs (spellTraditionsVersion 1,
+    // docs/ARCANE-DIVINE-RULES.md) get the Wisdom row instead; that path is
+    // asserted in tests/spell-tradition-combat.test.mjs.
     // The 2026-10-06 default gives Poise base 1 plus one per CON. Reaver's
     // CON 2 gives three attribute Poise before equipment and relics.
     const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;

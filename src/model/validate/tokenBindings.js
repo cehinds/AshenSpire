@@ -21,6 +21,7 @@ export const TOKENIZABLE_OPS = Object.freeze([
   'gainEnergy',
   'restoreMana',
   'restoreStamina',
+  'restorePoise',
   'addCinders',
   'loseMaxHpPct',
 ]);
@@ -41,6 +42,7 @@ export const REQUIRED_TOKEN_OPS = Object.freeze([
   'gainEnergy',
   'restoreMana',
   'restoreStamina',
+  'restorePoise',
 ]);
 
 export function relicModifierTokenBindings(def) {
