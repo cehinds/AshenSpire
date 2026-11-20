@@ -385,6 +385,9 @@ export const PASSIVE_TYPES = Object.freeze({
   // it scoped to the mounts whose tags include the track — never unscoped.
   skillXpMult: 'num',
   retainBlockUpTo: 'num', // highest allowance wins at owner turn start
+  // Owner 2026-11-20: picking the relic up queues N one-time card copies (cardCopyOnPickup), each a
+  // reward door listing every card the player owns (model/cardCopyService.js).
+  cardCopyOnPickup: 'num',
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));

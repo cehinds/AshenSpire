@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:267f06427f5e62131d053e6f49d41390cb292c459b2ca97ae8b011e28cea7129",
+      "hash": "sha256:8ab59fd0b61195514963635e689d1b46f2ed5b84026570f317a2ddf84ae0be2a",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -436,7 +436,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:24ebe9a23a1711be12d0c7f9650a7ea066df0c36d78c254bf84326b221e4929d"
+          "hash": "sha256:c7068514dba76f79213e670bc0dcecafaa0af4813b0c79431badc965eeed711d"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -448,7 +448,7 @@
           "path": "engine/modules/reward-ranks/settings.schema.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:087bcaeb27fc0c02268973e6026781cd19609ef14bc43b7818fc82129de4460a"
+          "hash": "sha256:09e109db3e460614bbb64bf3da574bd567e33bb14724704ec36da7d165e11b5a"
         },
         {
           "path": "engine/modules/rewards/defaults.json",
@@ -694,7 +694,7 @@
           "path": "games/ashenspire/packs/core/rewards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:3ab4da8e703be87d8c20b810463c9942968646abbec51ff5ae80561f93e980d9"
+          "hash": "sha256:9cd7b0725c60952d382b72c02efaf20a42ea1430dcaa8b5f9e23032a98ece09b"
         },
         {
           "path": "games/ashenspire/packs/core/routes.json",
@@ -706,7 +706,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:b062ca5c85d69626f573afee115c283396a2e638d80fc1711403c720f811b735"
+          "hash": "sha256:b87ec6d8d2c56659b1ba16a9246cf1d4d7c3d727a87a0a53b2f91a71781df880"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7"
     },
     "core": {
-      "hash": "sha256:267f06427f5e62131d053e6f49d41390cb292c459b2ca97ae8b011e28cea7129",
+      "hash": "sha256:8ab59fd0b61195514963635e689d1b46f2ed5b84026570f317a2ddf84ae0be2a",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1160,7 +1160,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:24ebe9a23a1711be12d0c7f9650a7ea066df0c36d78c254bf84326b221e4929d"
+          "hash": "sha256:c7068514dba76f79213e670bc0dcecafaa0af4813b0c79431badc965eeed711d"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -1172,7 +1172,7 @@
           "path": "engine/modules/reward-ranks/settings.schema.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:087bcaeb27fc0c02268973e6026781cd19609ef14bc43b7818fc82129de4460a"
+          "hash": "sha256:09e109db3e460614bbb64bf3da574bd567e33bb14724704ec36da7d165e11b5a"
         },
         {
           "path": "engine/modules/rewards/defaults.json",
@@ -1418,7 +1418,7 @@
           "path": "games/ashenspire/packs/core/rewards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:3ab4da8e703be87d8c20b810463c9942968646abbec51ff5ae80561f93e980d9"
+          "hash": "sha256:9cd7b0725c60952d382b72c02efaf20a42ea1430dcaa8b5f9e23032a98ece09b"
         },
         {
           "path": "games/ashenspire/packs/core/routes.json",
@@ -1430,7 +1430,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:b062ca5c85d69626f573afee115c283396a2e638d80fc1711403c720f811b735"
+          "hash": "sha256:b87ec6d8d2c56659b1ba16a9246cf1d4d7c3d727a87a0a53b2f91a71781df880"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",

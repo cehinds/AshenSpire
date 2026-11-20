@@ -19,6 +19,7 @@ import { GEAR_TYPES } from '../content/gearTypes.js';
 const GEAR_THEME_PERCENT = GEAR_TYPES.themedPercent;
 import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
 import { SpellRewardEligible, BalanceSpellRewardWeights } from './spellPoolPolicy.js';
+import { CARD_COPY_OPTION, CARD_COPY_SOURCE, CopyOwnedCard, GrantRelicCardCopies, VendorStocksCardCopy, CardCopyShelf, CardCopyUsesLeft, CardCopyCandidates } from './cardCopyService.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -58,7 +59,11 @@ function pools(registries, run, { claim = false } = {}) {
   // Owner 2026-11-14: eligibility.excludeCardIds keeps cards that do nothing without the hit roll (Guiding Whisper) or repeat another
   // (base.evade) out of every new offer and shop. Their definitions stay for saved decks, and a claim still accepts an earlier offer.
   const retired = claim ? null : new Set(rules?.eligibility?.excludeCardIds || []);
+  // Owner 2026-11-20: eligibility.combatCards.skipOwned never offers a card the player already holds (deck or library), at any
+  // rank: one copy of a card, and the copy service (cardCopyService.js) is the only way to a second. A claim still accepts it.
+  const skipOwned = !claim && cardRule?.skipOwned === true;
   const cards = definitions.filter(card => (claim || SpellRewardEligible(registries, run, card)) && rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+    && !(skipOwned && ownedIds.has(card.id))
     && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
@@ -96,7 +101,7 @@ function weaponArtPool(registries,run,rules,extras,carried,claim) {
     if(!claim&&!carried.has(piece.id))continue;
     ids.push(...(piece.weaponCardPackage?.weaponArtDefaults||[]),...(piece.weaponCardPackage?.learnableArts||[]));
   }
-  const owned=!claim&&rules?.eligibility?.weaponArts?.skipOwned?new Set([...(run.deck||[]),...(run.sideboard||[])].map(card=>card?.cardId??card?.id??card)):new Set();
+  const owned=!claim&&(rules?.eligibility?.weaponArts?.skipOwned||rules?.eligibility?.combatCards?.skipOwned===true)?new Set([...(run.deck||[]),...(run.sideboard||[])].map(card=>card?.cardId??card?.id??card)):new Set();
   return [...new Set(ids)].filter(id=>registries.cards.has(id)&&!owned.has(id)&&rangeCardAvailable(run,registries.cards.get(id)));
 }
 // Owner 2026-11-05: an art stocked in the shop the player is in, or shown on the open reward door, is not offered by the other.
@@ -390,13 +395,27 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
   const option=offer.options[index];
   if(!Number.isInteger(index)||!option)throw new Error('Invalid reward option');
   if(!IsBonusOption(option)&&OfferPicksLeft(BonusFreeOffer(offer))<1)throw new Error('Reward offer is missing or already claimed');
-  if (option.kind!==RANK_UP_OPTION.kind&&!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
+  // A copy door (cardCopyService.js) lists owned cards, which no reward pool holds; its options are checked against the run instead.
+  const copyDoor=offer.source===CARD_COPY_SOURCE;
+  if (option.kind!==RANK_UP_OPTION.kind&&option.kind!==CARD_COPY_OPTION.kind&&!copyDoor&&!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
   const draft=structuredClone(run);
   let raised=null;
   if(option.kind===RANK_UP_OPTION.kind) {
     // W25-R: the service raises one chosen owned card by one rank; the pick rides the claim, so the offer stays one row.
     if(typeof instanceId!=='string'||!instanceId)throw new Error('Choose a card to rank up');
     raised=RaiseCardRank(registries,draft,instanceId);
+  } else if(option.kind===CARD_COPY_OPTION.kind) {
+    // Owner 2026-11-20: a vendor's copy service copies one chosen owned card into the library.
+    if(typeof instanceId!=='string'||!instanceId)throw new Error('Choose a card to copy');
+    const copy=CopyOwnedCard(registries,draft,instanceId);
+    raised={instanceId:copy.instanceId,cardId:copy.cardId};
+  } else if(copyDoor) {
+    // A copy relic's door: the chosen card is copied as the instance it names (`copyOf`), at the reward's own instance id,
+    // so "Add to deck" finds it. A source since removed still yields the card the door showed.
+    if(option.kind!=='combatCards'||!registries.cards.has(option.id))throw new Error('Invalid reward option');
+    const at=rewardInstanceId(offerId,index),source=[...draft.deck,...draft.sideboard].find(card=>card?.instanceId===option.copyOf&&card.cardId===option.id);
+    if(source){const copy=CopyOwnedCard(registries,draft,source.instanceId);copy.instanceId=at;}
+    else draft.sideboard.push({instanceId:at,cardId:option.id,upgraded:!!option.upgraded,...(option.rank>1?{rank:option.rank}:{})});
   } else if(['combatCards','weaponArts'].includes(option.kind)) {
     registries.cards.get(option.id);
     const instanceId=`reward:${offerId}:${index}${offer.source==='shop'?`:${offer.tradeRevision||0}`:''}`;
@@ -409,6 +428,7 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
     registries.relics.get(option.id);
     if(draft.relics.includes(option.id))throw new Error('Reward relic already owned');
     draft.relics.push(option.id);
+    GrantRelicCardCopies(registries,draft,option.id); // a copy relic queues its one-time copy door (main.js opens it next)
     // Bind flask growth now (a Core pickup used to wait for a reload); a relic that grows a flask also refills them.
     syncFlaskGrowth(registries,draft);
     reconcileRunLoadoutHp(registries,draft); // a relic property such as maxMana1 raises the pools now, not at the next load
@@ -423,7 +443,7 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
   } else throw new Error('Unknown reward category');
   const pending=draft.gameProfileRewardOffers[offerId];pending.taken.push(index);
   if(OfferPicksLeft(pending)<1)pending.claimed=index;
-  syncZones(draft);Object.assign(run,draft);return raised?{...option,instanceId:raised.instanceId,rank:raised.rank}:option;
+  syncZones(draft);Object.assign(run,draft);return raised?{...option,...raised}:option;
 }
 // Owner 2026-10-18: a won card may go straight into the deck. The claim is the ordinary one (the card lands in the
 // sideboard as `reward:<offer>:<index>`); the move into the deck then obeys the deck rules (size cap, copy limits,
@@ -491,6 +511,9 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   // W25-R: some shops also stock a rank-up service (shops.json rankUp.stockChancePct), at the Blacksmith's own price. It rolls on a hash of the
   // run seed and the shop id, joins a fresh stock once, and rides the saved stock after that.
   if(rankUpShelf&&!stock.options.some(option=>option.kind===RANK_UP_OPTION.kind)){stock.options.push({...RANK_UP_OPTION,price:ShopRankUpPrice(run)});stock.takeCount+=1;}
+  // Owner 2026-11-20: some traders also sell a copy-a-card service with limited uses (shops.json cardCopy), rolled once on a
+  // hash of the run seed and the shop id, like the rank-up shelf. It rides the saved stock after that.
+  if(fresh&&VendorStocksCardCopy(registries,run,'trader',shopId)&&!stock.options.some(option=>option.kind===CARD_COPY_OPTION.kind)){stock.options.push(CardCopyShelf(run,'trader'));stock.takeCount+=1;}
   // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
   const table=module.priceTable??rules.priceTable;
   if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
@@ -520,6 +543,7 @@ export function gameProfileShopPurchasePlan(registries,run,shopId,index) {
   else if(stock.options[index].kind==='weapons'&&(run.loadout?.storage||[]).length>=(registries.balance.equipment.storageSlots??8))reason='Inventory is full. Sell or make room first.';
   else if(!Number.isSafeInteger(run.cinders)||run.cinders<price)reason='Insufficient cinders';
   else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';}
+  else if(stock.options[index].kind===CARD_COPY_OPTION.kind){if(CardCopyUsesLeft(stock.options[index])<1)reason='This offer is sold out.';else if(!CardCopyCandidates(registries,run).length)reason='You have no card to copy.';}
   else try {claimGameProfileReward(registries,structuredClone(run),offerId,index);}catch(error){reason=error.message;}
   return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};
 }
@@ -533,6 +557,13 @@ export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=nul
   const receipt=claimGameProfileReward(registries,draft,offerId,index,{instanceId:quote?.instanceId??null});
   // A rank-up service is a one-off shelf: no replacement is stocked in its place, and what was paid is no resale ceiling.
   if(receipt.kind===RANK_UP_OPTION.kind){draft.gameProfileRewardOffers[offerId].tradeRevision=plan.revision+1;Object.assign(run,draft);return {...receipt,price,replacement:null};}
+  // A copy service sells until its uses run out: each use reopens the shelf with one use fewer; the last leaves it sold out.
+  if(receipt.kind===CARD_COPY_OPTION.kind){
+    const copyStock=draft.gameProfileRewardOffers[offerId],shelf=copyStock.options[index],left=CardCopyUsesLeft(shelf)-1;
+    shelf.usesLeft=Math.max(0,left);
+    if(left>0){copyStock.taken=copyStock.taken.filter(taken=>taken!==index);copyStock.claimed=null;}
+    copyStock.tradeRevision=plan.revision+1;Object.assign(run,draft);return {...receipt,price,replacement:null};
+  }
   // Old saves can offer a much lower flat price. Retain that paid-price
   // ceiling across reloads and later merchants so resale cannot profit.
   draft.gameProfileShopPurchasePrices ||= {};

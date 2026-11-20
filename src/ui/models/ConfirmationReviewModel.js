@@ -37,13 +37,15 @@ const BUY = Object.freeze({
   // Every purchase confirms (owner, 2026-11-19): a weapon or shield, and the trader's rank-up service.
   armament: Object.freeze({ question: 'shop.review.buy.armament', message: 'shop.review.buy.armament.message' }),
   rankUp: Object.freeze({ question: 'shop.review.buy.rankUp', message: 'shop.review.buy.rankUp.message' }),
+  // The copy-a-card service (owner 2026-11-20), at a trader or a Blacksmith.
+  cardCopy: Object.freeze({ question: 'shop.review.buy.cardCopy', message: 'shop.review.buy.cardCopy.message' }),
 });
 const SMITH_RANK = Object.freeze({ card: 'smith.review.rank.card', item: 'smith.review.rank.item' });
 
 /** The trader's shelf kind (gameProfile stock and the Blacksmith's racks) → the purchase review's kind. */
 const SHELF_KIND = Object.freeze({
   combatCards: 'card', weaponArts: 'card', relics: 'relic', potions: 'flask',
-  weapons: 'armament', armaments: 'armament', armor: 'armour', rankUps: 'rankUp',
+  weapons: 'armament', armaments: 'armament', armor: 'armour', rankUps: 'rankUp', cardCopies: 'cardCopy',
 });
 
 /** ShopPurchaseKind(shelfKind) → the purchaseReview kind for a merchant or Blacksmith shelf. Throws on an unknown shelf. */
