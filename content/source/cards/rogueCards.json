@@ -2580,10 +2580,11 @@
     "type": "skill",
     "flavor": "A whetstone's last pass, done in the dark.\n\nCutpurses of the low quarter sharpened by feel, never by sight, so no lamp would mark them. The edge lasted one good night. By morning the steel was dull again and the purse was empty.\n\nA true thief owns only one stone.",
     "keywords": [
-      "ethereal"
+      "ethereal",
+      "exhaust"
     ],
     "icon": "smith",
-    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal.",
+    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal. Exhaust.",
     "faceTemplate": [
       "Gain {strength} Strength.",
       "Gain {dexterity} Dexterity."
