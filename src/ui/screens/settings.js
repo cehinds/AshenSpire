@@ -236,14 +236,13 @@ const ADVANCED_GROUPS = Object.freeze([
   // The four Range rules moved here from General › Combat (owner, 2026-11-20): they change the
   // next run's rules, not how a fight looks.
   { id: 'Range', label: t('settings.group.Range'), tip: tFull('settings.group.Range') },
+  // The four map rows, split from Interface (owner, 2026-11-20).
+  { id: 'Map', label: t('settings.group.Map'), tip: tFull('settings.group.Map') },
   { id: 'Interface', label: t('settings.group.Interface'), tip: tFull('settings.group.Interface') },
   { id: 'Text', label: t('settings.group.Text'), tip: tFull('settings.group.Text') },
-  // The wireframe decisions the drawings leave open, one topic per family of
-  // surfaces, now beside the other size controls (cards, the settings window):
-  // every "how big and where" answer in one place.
-  { id: 'Wireframes', label: t('settings.group.Wireframes'), tip: tFull('settings.group.Wireframes') },
   { id: 'Export', label: t('settings.group.Export'), tip: tFull('settings.group.Export') },
-  // QA shortcuts and author dials (owner, 2026-11-20). Dev and test builds only.
+  // Author and QA dials (owner, 2026-11-20): the wireframe choices, card sizes and their export,
+  // the settings window and the creation shortcut. Dev and test builds only.
   { id: 'Developer', label: t('settings.group.Developer'), tip: tFull('settings.group.Developer') },
   { id: 'Sync', label: t('settings.group.Sync'), tip: tFull('settings.group.Sync') },
   { id: 'Changelog', label: t('settings.group.Changelog'), tip: tFull('settings.group.Changelog') },
@@ -262,7 +261,7 @@ const ADVANCED_GROUPS = Object.freeze([
 // Deck (SPEC §14.1) is a player choice, not tuning: Play in deck order is its
 // one row (the editor's limits are authored in content/deckRules.js). Range was a
 // General › Combat topic every build showed; it keeps that reach after its move.
-export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Range', 'Interface', 'Text', 'Changelog', 'About']);
+export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Range', 'Map', 'Interface', 'Text', 'Changelog', 'About']);
 /** Groups with their own mounted panel instead of rows. */
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 
@@ -1509,7 +1508,7 @@ function shownCategories(saves) {
 const SETTINGS_TOPIC_LABELS = Object.freeze({
   interface: () => 'Interface',
   titleScreen: () => 'Title screen',
-  map: () => 'Map',
+  map: () => t('settings.group.Map'),
   hud: () => 'HUD',
   autoCombat: () => t('settings.topic.autoCombat'),
   animation: () => 'Animation & effects',

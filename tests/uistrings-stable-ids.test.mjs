@@ -45,7 +45,7 @@ test('Wireframes topics are filed and persisted by group id, labelled by the row
     const group = WIREFRAME_CHOICE_GROUPS.find((entry) => entry.choices.some((choice) => choice.key === row.key));
     assert.equal(row.wireframeTopic, group.id, `${row.key} is filed under the label, not the id`);
   }
-  const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Wireframes');
+  const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Developer');
   const families = groups.slice(0, WIREFRAME_CHOICE_GROUPS.length);
   // The ids a profile stores are the ones dev always stored: Modals, Menus, Scenes.
   assert.deepEqual(families.map((group) => group.id), ['Modals', 'Menus', 'Scenes']);
@@ -55,7 +55,7 @@ test('Wireframes topics are filed and persisted by group id, labelled by the row
     WIREFRAME_CHOICE_GROUPS.map((group) => group.choices.map((choice) => choice.key)));
   assert.equal(groups.filter((group) => group.label === 'Windows & menus').length, 2);
   // A profile left on Menus before the rewording reopens on Menus.
-  const stored = storedAdvancedTopic({ 'settingsAdvancedSubgroup.Wireframes': 'Menus' }, 'Wireframes');
+  const stored = storedAdvancedTopic({ 'settingsAdvancedSubgroup.Developer': 'Menus' }, 'Developer');
   assert.ok(groups.some((group) => group.id === stored), 'the stored topic no longer names a topic');
 });
 

@@ -87,7 +87,7 @@ const ADVANCED_CONFIG_ROWS = authoredAdvancedRows.filter((row) => !row.retired)
 function wireframeChoiceRows() {
   return WIREFRAME_CHOICE_GROUPS.flatMap((group) => group.choices.map((choice) => ({
     cat: 'Advanced',
-    advancedGroup: 'Wireframes',
+    advancedGroup: 'Developer',
     wireframeTopic: group.id,
     wireframeTopicLabel: group.label,
     key: choice.key,
@@ -438,7 +438,7 @@ export const SETTINGS_ROWS = [
   // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or
   // higher (settings for customization)"). The ladder itself is CSS
   // (styles/map.css, keyed on data-walked-fade); this row only picks the rung.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'walkedFade', type: 'choice', def: 'half',
+  { cat: 'Advanced', advancedGroup: 'Map', key: 'walkedFade', type: 'choice', def: 'half',
     choices: ['off', 'subtle', 'half', 'strong'], label: t('settings.row.walkedFade'),
     note: tFull('settings.row.walkedFade') },
   // `selfEvident`: W1a shows help only where the effect is not obvious. The
@@ -500,12 +500,12 @@ export const SETTINGS_ROWS = [
     note: tFull('settings.row.loreIdentitySlant') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'controlHints', def: true, label: t('settings.row.controlHints'),
     note: tFull('settings.row.controlHints') },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: t('settings.row.mapFreePan'),
+  { cat: 'Advanced', advancedGroup: 'Map', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: t('settings.row.mapFreePan'),
     note: tFull('settings.row.mapFreePan') },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'compact',
+  { cat: 'Advanced', advancedGroup: 'Map', key: 'mapHeaderDensity', type: 'choice', def: 'compact',
     choices: ['comfortable', 'compact'], label: t('settings.row.mapHeaderDensity'),
     note: tFull('settings.row.mapHeaderDensity') },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: t('settings.row.mapHeaderRelics'), selfEvident: true,
+  { cat: 'Advanced', advancedGroup: 'Map', key: 'mapHeaderRelics', def: true, label: t('settings.row.mapHeaderRelics'), selfEvident: true,
     note: tFull('settings.row.mapHeaderRelics') },
   // RETIRED (owner, 2026-09-23). The solo map header never draws the seed —
   // the header model receives it and prints nothing — and the co-op header's
@@ -680,19 +680,19 @@ export const SETTINGS_ROWS = [
   // The ladder is the contract: a card you opened to read is never smaller
   // than one you were browsing past. A set of numbers that breaks it is
   // REFUSED and the authored table stands — see cardLevelsWithOverrides.
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardWidth_glance', type: 'number',
     def: CARD_LEVELS.glance.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_glance'),
     note: tFull('settings.row.cardWidth_glance') },
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance_mobile', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardWidth_glance_mobile', type: 'number',
     def: CARD_LEVELS.glance.variants.mobile, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_glance_mobile'),
     note: tFull('settings.row.cardWidth_glance_mobile') },
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_focus', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardWidth_focus', type: 'number',
     def: CARD_LEVELS.focus.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_focus'),
     note: tFull('settings.row.cardWidth_focus') },
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_inspect', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardWidth_inspect', type: 'number',
     def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_inspect'),
     note: tFull('settings.row.cardWidth_inspect') },
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: t('common.copy'),
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: t('common.copy'),
     label: t('settings.row.cardSizeExport'),
     note: tFull('settings.row.cardSizeExport') },
   // The deck editor's rules (SPEC §14.1) are authored in content/deckRules.js; their rows were

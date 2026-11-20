@@ -2,6 +2,7 @@
   "reason": "Settings regroup (owner, 2026-11-20): the Developer, Map and settings-group modal copy; retain the copy and semantic-key checks after origin/dev advances.",
   "ids": [
     "settings.group.Developer",
-    "settings.group.Range"
+    "settings.group.Range",
+    "settings.group.Map"
   ]
 }
