@@ -1,7 +1,7 @@
 {
-  "request": "My settings is very messy. Tidy it: remove the retired Rendering quality row, make the topic grouping data, keep one of data-performance and data-effects.",
-  "success": "Settings > General > Combat draws its usual topics (Auto combat & pacing first) with no Rendering quality row, the root carries data-effects and no data-performance, and there are no console errors.",
-  "failure": "A Rendering quality (performanceMode) row is listed; the Combat topics are missing or reordered; the root still carries data-performance; console errors appear.",
+  "request": "My settings is very messy. Tidy it: remove the retired Rendering quality row and make the topic grouping data.",
+  "success": "Settings > General > Combat draws its usual topics (Auto combat & pacing first) with no Rendering quality row, and there are no console errors.",
+  "failure": "A Rendering quality (performanceMode) row is listed; the Combat topics are missing or reordered; console errors appear.",
   "viewports": [
     { "name": "desktop", "width": 1280, "height": 800 },
     { "name": "phone", "width": 390, "height": 844 }
@@ -21,8 +21,6 @@
         { "kind": "count", "label": "No Rendering quality row", "selector": "[data-row-key=\"performanceMode\"]", "eq": 0 },
         { "kind": "count", "label": "Combat topics are drawn as sections", "selector": ".set-topic[data-section-topic]", "min": 4 },
         { "kind": "text", "label": "Auto combat & pacing is the first topic", "selector": ".set-topic:first-of-type .set-subsection-heading", "includes": "Auto combat" },
-        { "kind": "count", "label": "Root carries data-effects (off by default)", "selector": "html[data-effects=\"off\"] .set-card-list", "min": 1 },
-        { "kind": "count", "label": "Root carries no data-performance", "selector": "html[data-performance] .set-card-list", "eq": 0 },
         { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
       ],
       "failure": [

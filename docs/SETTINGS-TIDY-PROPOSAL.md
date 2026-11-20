@@ -167,7 +167,31 @@ Rows Core 2 never draws, whose stored value or default still applies:
 - The real dead weight is the 22 rows Core 2 cannot reach (table above): live code, but
   no way to change them in the only game mode.
 
+## data-performance vs data-effects
+
+Not merged. At runtime they are the same fact; one module and its test treat them as two.
+
+- **Set**: only `src/ui/displaySettings.js:511-516`, in one call, from one predicate:
+  `data-performance` = `resolvePerformanceMode()` = Effects on ? `full` : `lite`;
+  `data-effects` = Effects on ? `on` : `off`. The touch-device argument is ignored, and the
+  Blur / Shadows Auto rule uses its own `data-fx-blur` / `data-fx-shadows` plus
+  `data-layout` / `data-form-factor`. So in the game, `lite` always means `off`.
+- **Read as `data-performance`**: `ui/performance.js` `liteRendering()` (used by
+  `alternativeCardStage.js`, `reaverAttack.js`, `services/posePreloads.js`),
+  `components/battlefieldStage.js:656`, the art cache keys in `screens/combat.js:2244, 2434`,
+  and about 60 CSS selectors (`perf-lite.css`, `kit.css`, `map.css`, `combat*.css`, ...).
+- **Read as `data-effects`**: `ui/performance.js` `effectsOff()` / `FxOff()`,
+  `battlefieldStage.js:1735`, and the Effects-off CSS in `combat.css`, `kit.css`, `ui.css`,
+  `combat-visuals.css`.
+- **Where they differ**: `src/ui/alternativeCardStage.js:118-120` has three paths: glow off
+  (held still glow), Lite (no aura canvas, red hit mask kept), Standard. The Lite path runs only
+  when `data-performance="lite"` and Effects is on, which the game never sets.
+  `tests/alternative-card-stage.test.mjs:56-70` sets exactly that and asserts the Lite path.
+- Merging the hooks (tried, then reverted on this branch) makes that path unreachable and fails
+  that test. Keeping one hook means deleting the Lite path and its test segment.
+
 ## Decisions needed
+- data-performance: drop it and delete the unreachable Lite path in `alternativeCardStage.js` with its test lines? (yes/no)
 - Combat: OK to hide the 5 millisecond rows behind "More" and move Sprites and Console to Developer? (yes/no)
 - Range: move the 4 rows to Advanced? (yes/no)
 - Core 2 hidden rows: drop them and keep their defaults as authored content? (yes/no)
