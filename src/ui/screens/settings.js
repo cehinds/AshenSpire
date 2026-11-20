@@ -104,7 +104,7 @@ const CONTROL_ROW_TYPES = new Set(['button', 'action', 'sceneList']);
 
 /**
  * hiddenTuningKeys(settings, debug) → stored keys this build has no row for:
- * every row of a debug-only section (tuning or not — `shrineMultiUse`, say),
+ * every row of a debug-only section (tuning or not — `creationAutoAdvance`, say),
  * and any `gameConfig.*` key no shown row carries. On a release build these
  * still apply, but nothing on screen can see or reset them — so the options
  * menu offers to clear them.
@@ -230,15 +230,9 @@ const ADVANCED_GROUPS = Object.freeze([
   // A retired tab id resolves through `activeAdvancedGroup`, so a profile that
   // last had "Rules" open lands on the first tab rather than a blank panel.
   { id: 'Opening', label: t('settings.group.Opening'), tip: tFull('settings.group.Opening') },
-  // These four groups hold only the live settings game code still reads by key
-  // (reward toggles, victory pacing, the swap-cost choice, level-up value). Core 2
-  // draws none of them (SettingsCapabilitiesModel); the rows stay until the code
-  // that reads them goes with the legacy path (cleanup rows 3i/3k).
-  { id: 'Progression', label: t('settings.group.Progression'), tip: tFull('settings.group.Progression') },
-  { id: 'Rewards', label: t('settings.group.Rewards'), tip: tFull('settings.group.Rewards') },
+  // Progression, Rewards, Equipment and World went with their rows (owner, 2026-11-20):
+  // Core 2 drew none of them, and their values are authored content now.
   { id: 'Deck', label: t('settings.group.Deck'), tip: tFull('settings.group.Deck') },
-  { id: 'Equipment', label: t('settings.group.Equipment'), tip: tFull('settings.group.Equipment') },
-  { id: 'World', label: t('settings.group.World'), tip: tFull('settings.group.World') },
   { id: 'Interface', label: t('settings.group.Interface'), tip: tFull('settings.group.Interface') },
   { id: 'Text', label: t('settings.group.Text'), tip: tFull('settings.group.Text') },
   // The wireframe decisions the drawings leave open, one topic per family of
@@ -246,6 +240,8 @@ const ADVANCED_GROUPS = Object.freeze([
   // every "how big and where" answer in one place.
   { id: 'Wireframes', label: t('settings.group.Wireframes'), tip: tFull('settings.group.Wireframes') },
   { id: 'Export', label: t('settings.group.Export'), tip: tFull('settings.group.Export') },
+  // QA shortcuts and author dials (owner, 2026-11-20). Dev and test builds only.
+  { id: 'Developer', label: t('settings.group.Developer'), tip: tFull('settings.group.Developer') },
   { id: 'Sync', label: t('settings.group.Sync'), tip: tFull('settings.group.Sync') },
   { id: 'Changelog', label: t('settings.group.Changelog'), tip: tFull('settings.group.Changelog') },
   { id: 'About', label: t('settings.group.About'), tip: tFull('settings.group.About') },
@@ -260,8 +256,8 @@ const ADVANCED_GROUPS = Object.freeze([
 // only where `pageDebug()` is true (src/ui/buildChannel.js says where that is).
 // Stored values are untouched either way: hiding a section changes what is
 // drawn, never what a profile holds.
-// Deck (SPEC §14.1) is a player choice, not tuning: where the editor opens,
-// the size limits and Play in deck order are the owner's player-facing rows.
+// Deck (SPEC §14.1) is a player choice, not tuning: Play in deck order is its
+// one row (the editor's limits are authored in content/deckRules.js).
 export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'Text', 'Changelog', 'About']);
 /** Groups with their own mounted panel instead of rows. */
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
@@ -1170,21 +1166,6 @@ function appliedSlot(settings, r) {
  * the rejected value where the choice is made.
  */
 /**
- * resolveLevelUpValue(settings) → how many stat points one level grants.
- *
- * HIS LEVEL DIAL, resolved the way every other row in this file is: a stored
- * value the row does not offer, or no value at all, is the SHIPPING DEFAULT —
- * the same rule `savedZoom`, `resolveMapMode` and `resolveTapSize` use, and for
- * the same reason. A hand-edited profile or an older build's value must behave
- * exactly like an absent one, because the alternative is a run created under a
- * number nothing in the game admits to.
- *
- * IT RETURNS THE ROW'S OWN `def` WHEN UNSET, and the row derives that `def`
- * from content, so this function contains no number. (Its sibling, the "Stat
- * points per tier" dial, was retired with ruleset 6: every stat now states its
- * own decimal weight per attribute.)
- */
-/**
  * settingsRow(key) → the declared row, for anything that needs its DOMAIN rather
  * than its value. Exported so a test asserts against the row the screen actually
  * renders instead of a second copy of its bounds.
@@ -1204,9 +1185,6 @@ export function settingsImportRows() {
   return SETTINGS_ROWS;
 }
 
-export function resolveLevelUpValue(settings) {
-  return resolveNumberRow(settings, SETTINGS_ROWS.find((r) => r.key === 'levelUpValue'));
-}
 
 /**
  * The `applied` line for ANY `number` row — SILENT WHEN THE PROMISE IS KEPT,

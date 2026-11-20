@@ -23,7 +23,7 @@ test('Core hides legacy-only mechanics in groups, topics and search while retain
   assert(groups.includes('Opening'), 'Core opening settings are live');
   assert(groups.includes('Deck'),'ordered draw still applies to configured fights');
   for(const key of ['viewPreset','uiScale','fullscreen','musicEnabled','sfxVolume','textSize','tapFloor','reducedMotion','screenShake','playInDeckOrder']) assert(available(key,core),key);
-  assert(!available('askToUpcastAfterTarget',core));assert(!available('mapMode',core));
+  assert(!rows.some(row=>row.key==='askToUpcastAfterTarget'),'the upcast prompt row is gone (owner, 2026-11-20)');assert(!available('mapMode',core));
   assert.equal(settingsSearchHits('skill',true,{}, {profile:core}).length,0);
   assert.deepEqual(settingsSearchHits('',true,{'gameConfig.derivedStatRules.rules.ar.strength':1.5},{changedOnly:true,profile:core}),[]);
   assert.deepEqual(settingsSearchHits('',true,{playInDeckOrder:true},{changedOnly:true,profile:core}).map(hit=>hit.row.key),['playInDeckOrder']);
@@ -67,7 +67,7 @@ test('active run capabilities win over a future new-game choice',()=>{
   const future=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{routes:false}});
   const context={active:()=>core,read:()=>future};
   assert.equal(activeSettingsProfile(context),core);
-  assert(!available('askToUpcastAfterTarget',activeSettingsProfile(context)));
+  assert(available('mapZoom',activeSettingsProfile(context)),'the active run has routes, so its map rows stay');
   assert.equal(activeSettingsProfile({read:()=>future}),future);
 });
 

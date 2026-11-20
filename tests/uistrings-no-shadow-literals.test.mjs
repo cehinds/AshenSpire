@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'blur-shadows', 'card-art-builder-lifecycle', 'modal-return', 'wording', 'smash-stance-rule'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'blur-shadows', 'card-art-builder-lifecycle', 'modal-return', 'wording', 'smash-stance-rule', 'settings-regroup'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -89,8 +89,6 @@ const ALLOWED = [
   ['src/ui/screens/settings.js', 'Export', 'persisted advancedGroup and section id for diagnostics; the displayed heading reads settings.group.Export'],
   ['src/ui/models/SettingsRowsModel.js', 'Export', 'persisted advancedGroup and section id for diagnostics; the displayed heading reads settings.group.Export'],
   ['src/ui/highResArt.js', 'Auto', 'ART_AUTO is a persisted resolution choice sentinel; renderer labels are separate from the viewport preset face'],
-  ['src/ui/models/SettingsCapabilitiesModel.js', 'Deck', `legacy advanced-group capability key; ${ID}`],
-  ['src/ui/models/SettingsCapabilitiesModel.js', 'Progression', `legacy advanced-group capability key; ${ID}`],
   ['src/ui/models/SettingsRowsModel.js', 'Auto', 'persisted uiScale/textSize option ids and defaults; both displayed choices explicitly read settings.viewPreset.auto'],
   ['src/ui/screens/settings.js', 'Game rules', 'category key and selected-category comparison; CATEGORY_LABELS renders gameProfile.settings.title'],
 
@@ -111,9 +109,6 @@ const ALLOWED = [
   ['src/ui/screens/combat.js', 'Upcast', 'ordinary hand-card upcast control, separate from the reaction option tier sentence'],
   ['src/ui/screens/settings.js', 'enabled', 'stored prologue property key; not reaction switch copy'],
   ['src/ui/components/friendlyTargets.js', 'Target', 'friendly-target accessibility prefix; not the numbered enemy target label row'],
-  ['src/ui/screens/settings.js', 'Progression', `advanced-group id; ${ID}`],
-  ['src/ui/models/SettingsRowsModel.js', 'Progression', `advanced-group id; ${ID}`],
-  ['src/ui/models/AdvancedSettingsGroups.js', 'Progression', `advanced-group id; ${ID}`],
   ['src/ui/components/combatantInspector.js', 'Skills', 'combatant active abilities section, separate from the player progression tab'],
   ['src/ui/components/overlay.js', 'Class', 'combat HUD identity field, separate from the progression tab'],
   ['src/ui/screens/customize.js', 'Character', 'character creation fold, separate from the progression tab'],
@@ -124,9 +119,9 @@ const ALLOWED = [
   ['src/ui/models/SettingsRowsModel.js', 'Audio', `category id (cat: 'Audio', GENERAL_GROUPS) and General › Audio's own subgroup; ${ID}`],
   ['src/ui/screens/settings.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
   ['src/ui/models/SettingsRowsModel.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
-  ['src/ui/screens/settings.js', 'Rewards', 'settings advancedGroup id, not displayed copy (the face reads t(\'settings.group.*\'))'],
-  ['src/ui/models/SettingsRowsModel.js', 'Rewards', 'settings advancedGroup id, not displayed copy (the face reads t(\'settings.group.*\'))'],
-  ['src/ui/models/SettingsCapabilitiesModel.js', 'Rewards', 'settings advancedGroup id in HIDDEN_LEGACY_SETTING_GROUPS, not displayed copy'],
+  ['src/ui/models/SettingsRowsModel.js', 'Rewards', 'advancedGroup id of the derived grace-refill rows, not displayed copy'],
+  ['src/ui/screens/settings.js', 'Developer', `advanced-group id; the heading reads settings.group.Developer; ${ID}`],
+  ['src/ui/models/SettingsRowsModel.js', 'Developer', `advancedGroup id; the heading reads settings.group.Developer; ${ID}`],
   ['src/ui/screens/settings.js', 'Interface', `advancedGroup id; and General › Display's own "Interface" subgroup, a different heading from Advanced › Interface`],
   ['src/ui/models/SettingsRowsModel.js', 'Interface', `advancedGroup id; and General › Display's own "Interface" subgroup, a different heading from Advanced › Interface`],
   ['src/ui/screens/settings.js', 'Changelog', `advanced-group id and a stored category value; ${ID}`],

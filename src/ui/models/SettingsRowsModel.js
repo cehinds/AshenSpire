@@ -24,7 +24,6 @@ import { resolveMotionIdle, EffectsSummary, SURFACE_CHOICES } from '../performan
 import { TITLE_ENTRANCE_TIMING } from './StartupGateModels.js';
 import { MAP_ZOOM_DEFAULT, ZOOM_STEPS, MAP_FREE_PAN_DEFAULT } from '../../model/map/mapview.js';
 import { MAP_MODE_DEFAULT, MAP_MODES, SHRINE_GLOW_DEFAULT } from '../../model/map/mapknowledge.js';
-import { VICTORY_XP_DEFAULTS } from '../../model/victoryXpPresentation.js';
 import { ART_QUALITY_KEY, ART_AUTO, ART_QUALITY_CHOICES, LEGACY_ART_QUALITY } from '../highResArt.js';
 import { tierChoiceDisabled } from '../artTier.js';
 import { CARD_ART_STYLE_KEY, CARD_ART_SIMPLE, CARD_ART_STYLE_CHOICES } from '../cardArtStyle.js';
@@ -46,8 +45,6 @@ import { deckRules } from '../../content/deckRules.js';
 const hooks = {};
 export function bindSettingsRowHooks(supplied) { Object.assign(hooks, supplied); }
 
-const EQ_DEFAULTS = balance.equipment;
-const LEVEL_DEFAULTS = balance.levelUp || {};
 export const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
 // rather than a number typed twice. content/config/ui/components/card.json is
@@ -240,8 +237,10 @@ function surfaceChoiceLabels() {
 }
 
 export const SETTINGS_ROWS = [
-  { cat: 'Combat', key: 'askToUpcastAfterTarget', topic: 'animation', type: 'toggle', def: false, label: t('settings.row.askToUpcastAfterTarget'),
-    note: tFull('settings.row.askToUpcastAfterTarget') },
+  // First in the table so Animation & effects is the second Combat topic (topics are drawn in the
+  // order their first row appears; Auto combat & pacing is pulled to the front by generalGroups).
+  { cat: 'Combat', key: 'useSprites', topic: 'animation', def: true, label: t('settings.row.useSprites'),
+    note: tFull('settings.row.useSprites') },
   { cat: 'Combat', key: 'combatLogConsole', topic: 'combatLog', type: 'toggle', def: false, label: t('settings.row.combatLogConsole'),
     note: tFull('settings.row.combatLogConsole') },
   { cat: 'Combat', key: 'combatLogPlayerColor', topic: 'combatLog', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
@@ -281,8 +280,6 @@ export const SETTINGS_ROWS = [
   // NOTHING IS DUPLICATED. A row has one home; each of these moved, and the
   // Advanced tip now says where the feel settings went so the section named for
   // combat stops being a dead end.
-  { cat: 'Combat', key: 'useSprites', topic: 'animation', def: true, label: t('settings.row.useSprites'),
-    note: tFull('settings.row.useSprites') },
   { cat: 'Combat', key: 'autoCombat', topic: 'autoCombat', def: AUTOMATION_DEFAULTS.autoCombat, label: t('settings.row.autoCombat'),
     note: tFull('settings.row.autoCombat') },
   { cat: 'Combat', key: 'combatSpeed', topic: 'autoCombat', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
@@ -418,13 +415,6 @@ export const SETTINGS_ROWS = [
   // `def` is the resolver's own const (model/map/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
-  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
-  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
-  // Shrine open: Rest once, Smith while you have Stones, Level while you have
-  // cinders, and leave when you choose. On by default (owner's uploaded
-  // configuration, #1254).
-  { cat: 'Advanced', advancedGroup: 'World', key: 'shrineMultiUse', def: true, label: t('settings.row.shrineMultiUse'),
-    note: tFull('settings.row.shrineMultiUse') },
   // A SETTING, NOT A SWITCH IN THE FLOW. The creation screen's Starting
   // equipment head carried an "Auto-advance on valid choice" toggle beside
   // the List/Grid control — a preference standing in the middle of a decision
@@ -433,27 +423,8 @@ export const SETTINGS_ROWS = [
   // matches the shipped creation layout (content/source/characterCreation.json
   // `equipmentAutoAdvance`), which stays the screen's fallback when no
   // settings bag reaches it.
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'creationAutoAdvance', def: false, label: t('settings.row.creationAutoAdvance'),
+  { cat: 'Advanced', advancedGroup: 'Developer', key: 'creationAutoAdvance', def: false, label: t('settings.row.creationAutoAdvance'),
     note: tFull('settings.row.creationAutoAdvance') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victorySummaryMode', type: 'choice', def: 'continue',
-    choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: t('common.continue'), anywhere: 'Click anywhere', auto: 'Expand automatically' },
-    label: t('settings.row.victorySummaryMode'), note: tFull('settings.row.victorySummaryMode') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptSeconds', type: 'number', def: VICTORY_XP_DEFAULTS.seconds, min: 0, max: 12, step: 0.1,
-    label: t('settings.row.victoryReceiptSeconds'), note: tFull('settings.row.victoryReceiptSeconds') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptPauseMs', type: 'number', def: VICTORY_XP_DEFAULTS.pauseMs, min: 0, max: 500, step: 10,
-    label: t('settings.row.victoryReceiptPauseMs'), note: tFull('settings.row.victoryReceiptPauseMs') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptReadySeconds', type: 'number', def: VICTORY_XP_DEFAULTS.readySeconds, min: 0, max: 5, step: 0.1,
-    label: t('settings.row.victoryReceiptReadySeconds'), note: tFull('settings.row.victoryReceiptReadySeconds') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptFormulaTerms', type: 'number', def: VICTORY_XP_DEFAULTS.formulaTerms, min: 1, max: 20, step: 1,
-    label: t('settings.row.victoryReceiptFormulaTerms'), note: tFull('settings.row.victoryReceiptFormulaTerms') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptVisibleRows', type: 'number', def: VICTORY_XP_DEFAULTS.visibleRows, min: 2, max: 8, step: 1,
-    label: t('settings.row.victoryReceiptVisibleRows'), note: tFull('settings.row.victoryReceiptVisibleRows') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpSeconds', type: 'number', def: 3, min: 0, max: 12, step: 0.25,
-    label: t('settings.row.victoryXpSeconds'), note: tFull('settings.row.victoryXpSeconds') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelStatPoints', def: true, label: t('settings.row.rewardLevelStatPoints'),
-    note: tFull('settings.row.rewardLevelStatPoints') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelCards', def: false, label: t('settings.row.rewardLevelCards'),
-    note: tFull('settings.row.rewardLevelCards') },
   { cat: 'Display', key: 'shrinePathGlow', topic: 'map', def: SHRINE_GLOW_DEFAULT, label: t('settings.row.shrinePathGlow'),
     note: tFull('settings.row.shrinePathGlow') },
   // The map's Potions control and the run HUD read this on every profile
@@ -652,14 +623,6 @@ export const SETTINGS_ROWS = [
     note: tFull('settings.row.debugMode') },
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'commandLog', type: 'button', btn: 'Open', label: t('settings.row.commandLog'),
     note: tFull('settings.row.commandLog') },
-  // E2 (#247): the recorded answer on the row — Sell is its own bar at the
-  // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
-  // and the bar is ABSENT (not greyed) when off. shop.js reads it through
-  // settingOn so the default's polarity has one home, here. ONE ROW, appended
-  // on purpose while another seat serializes this file for E3 — named in the
-  // E2 claim (#247) so the touch is on the record, not smuggled.
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'shopSell', def: true, label: t('settings.row.shopSell'),
-    note: tFull('settings.row.shopSell') },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
   // which is where he put it and where it stays.
@@ -708,48 +671,6 @@ export const SETTINGS_ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
     choices: UI_DEFAULTS.rewardCollect.modes, label: t('settings.row.rewardCollect'),
     note: tFull('settings.row.rewardCollect') },
-  // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
-  // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
-  // setting, different weapon categories have weapon swap costs. THAT WAY I CAN
-  // TRY EACH."* He asked to feel three prices, so the row is the way to feel
-  // them; the rules themselves are rows in balance.equipment.swapCostRules.
-  //
-  // ADVANCED, because Advanced is this game's debugging surface and that is
-  // where the last knob he asked to "try" went (Hold to confirm, same
-  // category). It is a tuning question he wants to answer by playing, not a
-  // preference the game should be asking a first-time player.
-  //
-  // `choices` and `def` are DERIVED, never typed. The zoom row two screens up
-  // carried four of a six-step ladder for a night because someone typed the
-  // list; a fourth rule row is a row in balance.js and nothing here.
-  { cat: 'Advanced', advancedGroup: 'Equipment', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
-    choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: t('settings.row.swapCostRule'),
-    // ONE SENTENCE PER RULE AND NO MORE, on the measurement in the row above:
-    // a long note squeezes the text column beside a chip strip. Three chips,
-    // three clauses.
-    note: tFull('settings.row.swapCostRule') },
-  // ---- HIS TWO LEVELLING DIALS (2026-08-17) --------------------------------
-  //
-  //   "leave the level up value configurable. also, let's make the increment of
-  //    5 points for reasonable change be confurable as well. that way I can
-  //    test each."
-  //
-  // ADVANCED, AND THE PRECEDENT IS HIS OWN SENTENCE TWO SETTINGS_ROWS UP: *"alternatively,
-  // or by a setting, different weapon categories have weapon swap costs. THAT
-  // WAY I CAN TRY EACH."* That ask was ruled into an Advanced row for a reason
-  // that applies here word for word — a tuning question he wants to answer by
-  // playing, not a preference to put in front of a first-time player. Advanced
-  // is this game's debugging surface, his word, and the third knob he has asked
-  // to "test" now sits beside the other two.
-  //
-  // A ROW, NOT A FILE HE EDITS AND REBUILDS. "That way I can test each" is the
-  // requirement and not a footnote: a content edit plus `node tools/launch.mjs
-  // --build-only` between every comparison is a friction that ends an
-  // experiment after two turns of the dial.
-  //
-  // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
-  // ladders are `balance.levelUp`, the level value's default is that table's own
-  // `pointsPerLevel`.
   // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
   // content/config/ui/components/card.json and ship as the default; these rows
   // lay an override over that table so a size can be tried against real cards
@@ -774,34 +695,8 @@ export const SETTINGS_ROWS = [
   { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: t('common.copy'),
     label: t('settings.row.cardSizeExport'),
     note: tFull('settings.row.cardSizeExport') },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
-    min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
-    label: t('settings.row.levelUpValue'), applied: (settings, row) => hooks.numberAppliedHtml(settings, row),
-    note: tFull('settings.row.levelUpValue') },
-  // THE DECK EDITOR'S RULES (SPEC §14.1, owner brief 2026-09-26). Each
-  // default is content/deckRules.js — the one home; model/deckRules.js reads
-  // the stored choice against the same object. Live settings, not gameConfig
-  // rows: a change applies the next time the editor opens (and Play in deck
-  // order at the next fight), never to a fight already under way.
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditing', def: deckRules.defaults.deckEditing, label: t('settings.row.deckEditing'),
-    note: tFull('settings.row.deckEditing') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditingWhere', type: 'choice', dropdown: true, def: deckRules.defaults.deckEditingWhere,
-    choices: [...deckRules.where], choiceLabels: { free: 'Free (anywhere out of combat)', restOnly: 'Rest sites only' },
-    gates: [{ key: 'deckEditing' }], label: t('settings.row.deckEditingWhere'),
-    note: tFull('settings.row.deckEditingWhere') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinUnlimited', def: deckRules.defaults.deckMinUnlimited, label: t('settings.row.deckMinUnlimited'),
-    gates: [{ key: 'deckEditing' }], note: tFull('settings.row.deckMinUnlimited') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinSize', type: 'number', def: deckRules.defaults.deckMinSize, min: deckRules.sizeRange.min, max: deckRules.sizeRange.max,
-    gates: [{ key: 'deckEditing' }, { key: 'deckMinUnlimited', when: false }], label: t('settings.row.deckMinSize'), applied: (settings, row) => hooks.numberAppliedHtml(settings, row),
-    note: tFull('settings.row.deckMinSize') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxUnlimited', def: deckRules.defaults.deckMaxUnlimited, label: t('settings.row.deckMaxUnlimited'),
-    gates: [{ key: 'deckEditing' }], note: tFull('settings.row.deckMaxUnlimited') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxSize', type: 'number', def: deckRules.defaults.deckMaxSize, min: Math.max(1, deckRules.sizeRange.min), max: deckRules.sizeRange.max,
-    gates: [{ key: 'deckEditing' }, { key: 'deckMaxUnlimited', when: false }], label: t('settings.row.deckMaxSize'), applied: (settings, row) => hooks.numberAppliedHtml(settings, row),
-    note: tFull('settings.row.deckMaxSize') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'classSpellPowerCopies', type: 'number', def: deckRules.defaults.classSpellPowerCopies,
-    min: deckRules.copyRange.min, max: deckRules.copyRange.max, gates: [{ key: 'deckEditing' }], label: t('settings.row.classSpellPowerCopies'), applied: (settings, row) => hooks.numberAppliedHtml(settings, row),
-    note: tFull('settings.row.classSpellPowerCopies') },
+  // The deck editor's rules (SPEC §14.1) are authored in content/deckRules.js; their rows were
+  // dropped (owner, 2026-11-20: Core 2 drew none of them). Play in deck order stays a setting.
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: t('settings.row.playInDeckOrder'),
     note: tFull('settings.row.playInDeckOrder') },
   ...ADVANCED_CONFIG_ROWS,

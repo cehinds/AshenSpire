@@ -9,7 +9,6 @@ import { WIREFRAME_CHOICE_GROUPS } from './WireframeChoiceModel.js';
 // the exceptions below are the presentation rows whose one model group,
 // Interface, spans three tabs.
 export function advancedSection(row) {
-  if (row.key === 'creationAutoAdvance') return 'Progression';
   if (/^gameConfig\.presentation\.settings(Width|Height)Percent$/.test(row.key) || row.key === 'uprightGate') return 'Wireframes';
   return row.advancedGroup || 'Interface';
 }

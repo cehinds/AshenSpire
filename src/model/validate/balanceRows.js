@@ -38,7 +38,8 @@ export function balanceRowProblems(b, err, ctx) {
     const rest = b.balance.rest;
     if (!rest || typeof rest !== 'object' || Array.isArray(rest)) err('balance.rest', 'must be an object { hpSmallPct, hpPartialPct, mana } — the location rules read it (plan phase 7)');
     else {
-      for (const key of Object.keys(rest)) if (!['hpSmallPct', 'hpPartialPct', 'mana'].includes(key)) err(`balance.rest.${key}`, 'Unknown field');
+      for (const key of Object.keys(rest)) if (!['hpSmallPct', 'hpPartialPct', 'mana', 'multiUseShrines'].includes(key)) err(`balance.rest.${key}`, 'Unknown field');
+      if (rest.multiUseShrines !== undefined && typeof rest.multiUseShrines !== 'boolean') err('balance.rest.multiUseShrines', `must be true or false, got ${JSON.stringify(rest.multiUseShrines)}`);
       for (const key of ['hpSmallPct', 'hpPartialPct']) {
         if (!(Number.isInteger(rest[key]) && rest[key] >= 0 && rest[key] <= 100)) err(`balance.rest.${key}`, `must be an integer percent 0–100, got ${JSON.stringify(rest[key])}`);
       }

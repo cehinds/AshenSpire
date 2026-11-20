@@ -1533,16 +1533,23 @@ function tolerateRaisedFloors(entries, rows, warnings) {
 // them, so a file or sync profile exported while they existed still carries
 // their keys. They are dropped with one named warning, never refused as
 // unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
-// still settings. The plain-key settings game code still reads by key
-// (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
+// still settings.
 const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.(?:settings(?:Width|Height)Percent|showFormationGrid)$)|recovery\.(hp|stamina|mana)\.)/;
-// A live row exported under a gameConfig alias (see advancedConfigSettings and the additional-row
-// mapping in parseAdvancedConfigFile): the alias is not retired while its row is. levelUpValue is
-// the only one.
-const LIVE_ALIAS_KEYS = /^(settings\.)?gameConfig\.balance\.levelUp\.pointsPerLevel$/;
-export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
-/** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups left behind. */
-export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) && !LIVE_ALIAS_KEYS.test(key);
+// THE RETIRED PLAIN-KEY ROWS (owner, 2026-11-20). Core 2 drew none of these rows, so nobody could
+// change them; the value each one gave is now authored content (docs/SETTINGS-TIDY-PROPOSAL.md,
+// "Removed settings"). A stored or imported key is dropped the same way, so the authored value
+// applies. The readers that still take a settings bag (deck rules, victory pacing, swap cost) keep
+// their authored fallbacks.
+export const RetiredPlainSettingKeys = Object.freeze([
+  'askToUpcastAfterTarget', 'shrineMultiUse', 'shopSell', 'swapCostRule', 'levelUpValue',
+  'rewardLevelStatPoints', 'rewardLevelCards', 'victorySummaryMode', 'victoryXpSeconds',
+  'victoryReceiptSeconds', 'victoryReceiptPauseMs', 'victoryReceiptReadySeconds', 'victoryReceiptFormulaTerms', 'victoryReceiptVisibleRows',
+  'deckEditing', 'deckEditingWhere', 'deckMinUnlimited', 'deckMinSize', 'deckMaxUnlimited', 'deckMaxSize', 'classSpellPowerCopies',
+]);
+const RETIRED_PLAIN_KEYS = new Set(RetiredPlainSettingKeys);
+export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
+/** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups or rows left behind. */
+export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) || RETIRED_PLAIN_KEYS.has(String(key).replace(/^settings\./, ''));
 /** retiredStoredSettingKeys(settings) → the stored keys the boot cleanup deletes (every retired legacy key). */
 export const retiredStoredSettingKeys = (settings = {}) => Object.keys(settings || {}).filter(isRetiredLegacySettingKey);
 export function withoutRetiredLegacyGroups(entries, warnings) {
