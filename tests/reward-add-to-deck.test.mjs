@@ -98,24 +98,26 @@ function mount(extra = {}) {
     onContinue() { calls.push('continue'); }, canEditDeck: true, ...extra });
   return { app, calls };
 }
-// Owner 2026-11-18: a card door is the multi-pick door. A tap selects, Continue opens a confirmation, and its one
-// destination choice (Add to deck by default, Add to library, Edit deck for a single card) covers the chosen cards.
+// Owner 2026-11-18: a card door is the multi-pick door. A tap on the name selects, Continue opens a confirmation.
+// Owner 2026-11-20: that confirmation's own answers are Add to deck (primary) and Send to library, one click each;
+// no destination radio group. Edit deck lives on the card's own modal (one-pick door).
 const review = app => { app.querySelector('.reward-pick').click(); app.querySelector('#reward-card-confirm').click(); };
 const footLabels = app => [...app.querySelectorAll('.reward-foot button')].filter(b => !b.hidden).map(b => b.textContent);
-const destinations = () => [...document.querySelectorAll('.reward-pick-destination')];
-const destination = name => destinations().find(node => node.dataset.destination === name);
 const settle = async () => { await new Promise(resolve => setTimeout(resolve, 0)); };
-const finish = async () => { document.querySelector('.confirmation-confirm').click(); await settle(); await new Promise(resolve => setTimeout(resolve, 650)); };
+const answer = async selector => { document.querySelector(selector).click(); await settle(); await new Promise(resolve => setTimeout(resolve, 650)); };
+const confirmAnswers = () => [...document.querySelectorAll('.confirmation-footer button')].filter(b => !b.hidden).map(b => b.textContent);
 
-test('the card door footer is just Skip and Continue; the destinations live in the confirmation', async () => {
+test('the card door footer is just Skip and Continue; the confirmation answers Add to deck or Send to library', async () => {
   await withDom(async () => {
     const { app } = mount();
     app.querySelector('.reward-pick').click();
     assert.deepEqual(footLabels(app), ['Skip', 'Continue']);
     assert.equal(app.querySelector('#reward-inspect'), null);
     app.querySelector('#reward-card-confirm').click();
-    assert.deepEqual(destinations().map(node => node.textContent), ['Add to deck', 'Add to library', 'Edit deck']);
-    assert.equal(destination('deck').getAttribute('aria-checked'), 'true', 'Add to deck is the default');
+    assert.deepEqual(confirmAnswers().sort(), ['Add to deck', 'Back', 'Send to library']);
+    assert.equal(document.querySelector('.confirmation-confirm').textContent, 'Add to deck');
+    assert.equal(document.querySelector('.confirmation-alternate').textContent, 'Send to library');
+    assert.equal(document.querySelector('[role=radiogroup]'), null, 'no inner destination group');
     document.querySelector('.confirmation-cancel').click();
   });
 });
@@ -123,45 +125,25 @@ test('Add to deck claims straight into the deck once', async () => {
   await withDom(async () => {
     const { app, calls } = mount();
     review(app);
-    await finish();
+    await answer('.confirmation-confirm');
     assert.deepEqual(calls, ['add', 'continue']);
   });
 });
-test('Add to library claims into the collection only, never the deck', async () => {
+test('Send to library claims into the collection only, never the deck', async () => {
   await withDom(async () => {
     const { app, calls } = mount();
     review(app);
-    destination('library').click();
-    await finish();
+    await answer('.confirmation-alternate');
     assert.deepEqual(calls, ['take', 'continue']);
   });
 });
-test('Edit deck claims, opens the editor, and the editor returning continues the reward', async () => {
-  await withDom(async () => {
-    const { app, calls } = mount();
-    review(app);
-    destination('edit').click();
-    await finish();
-    assert.deepEqual(calls, ['take', 'edit', 'continue']);
-  });
-});
-test('Edit deck is absent when no deck door is open; Add to library and Add to deck stay', async () => {
-  await withDom(async () => {
-    const { app } = mount({ canEditDeck: false });
-    review(app);
-    assert.equal(destination('edit'), undefined);
-    assert.deepEqual(destinations().map(node => node.textContent), ['Add to deck', 'Add to library']);
-    document.querySelector('.confirmation-cancel').click();
-  });
-});
-test('an illegal Add is disabled with a reason and the cards go to the library', async () => {
+test('a refused deck leaves Send to library as the only answer', async () => {
   await withDom(async () => {
     const full = mount({ addRefusal: () => 'full', deckMax: 40 });
     review(full.app);
-    assert.equal(destination('deck').disabled, true);
-    assert.equal(destination('library').getAttribute('aria-checked'), 'true', 'the library is the default when the deck refuses');
-    assert.ok(destination('edit'));
-    await finish();
+    assert.equal(document.querySelector('.confirmation-confirm').textContent, 'Send to library');
+    assert.equal(document.querySelector('.confirmation-alternate'), null);
+    await answer('.confirmation-confirm');
     assert.deepEqual(full.calls, ['take', 'continue']);
   });
 });
@@ -178,8 +160,9 @@ test('an armament reward offers Equip now when the Armoury is open, claims first
         onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
         onAddToDeck() { calls.push('add'); }, onEditDeck() { calls.push('deck'); },
         canEditEquipment: gate, onEditEquipment: (i, back) => { calls.push('equip'); back(); }, onContinue() { calls.push('continue'); } });
-      // The face opens the inspect door; the name control is what selects.
+      // Owner 2026-11-20: a face tap selects; its (i) opens the inspect door.
       app.querySelector('.reward-choice-face').click();
+      app.querySelector('.reward-choice-face .card-info-button').click();
       const inspection = document.querySelector('.card-inspection-modal');
       assert.ok(inspection, 'an armament face opens the inspect door');
       inspection.querySelector('.card-inspection-back').click();
