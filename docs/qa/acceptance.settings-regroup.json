@@ -1,0 +1,316 @@
+{
+  "request": "Tidy Settings (owner, 2026-11-20): hide Combat's five millisecond dials behind a More toggle, move Range to Advanced, split Map out of Interface, fold Wireframes and card size into a dev-only Developer group, drop the rows Core 2 cannot reach, and put clusters of related Advanced rows behind a button that opens their own modal.",
+  "success": "General > Combat shows a collapsed More toggle with the five dials hidden and no Range rows. Advanced offers Map, Range and Developer sections; Developer > Layout has a Wireframes button that opens a modal with the six wireframe choices. Deck shows only Play in deck order. No console errors.",
+  "failure": "A millisecond dial or a Range row is visible in Combat; Wireframes is still its own tab; the Wireframes button is missing or opens nothing; a removed row (deck limits, Merchant buys back, Level-up value) is still drawn.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "combat-more",
+      "url": "?shot=title&shotSettings=%7B%22settingsGeneralCategory%22%3A%22Combat%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#settings"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "One More toggle, collapsed",
+          "selector": "details.set-more[data-more-topic=\"autoCombat\"]:not([open])",
+          "eq": 1
+        },
+        {
+          "kind": "hidden",
+          "label": "Pause between steps is hidden",
+          "selector": "[data-row-key=\"combatStepPause\"]"
+        },
+        {
+          "kind": "hidden",
+          "label": "Combat pacing preset is hidden",
+          "selector": "[data-row-key=\"combatPacingPreset\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Combat pacing stays in view",
+          "selector": "[data-row-key=\"animSpeed\"]"
+        },
+        {
+          "kind": "count",
+          "label": "No Range rows in Combat",
+          "selector": "[data-row-key^=\"range\"]",
+          "eq": 0
+        },
+        {
+          "kind": "count",
+          "label": "No upcast prompt row",
+          "selector": "[data-row-key=\"askToUpcastAfterTarget\"]",
+          "eq": 0
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "A dial is drawn outside More",
+          "selector": ".set-card-list > [data-row-key=\"enemyAttackMs\"]:not(details *)",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "combat-more-open",
+      "url": "?shot=title&shotSettings=%7B%22settingsGeneralCategory%22%3A%22Combat%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#settings"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": "details.set-more > summary"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "More is open",
+          "selector": "details.set-more[open]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "The five dials are inside it",
+          "selector": "details.set-more[open] [data-row-key]",
+          "eq": 5
+        },
+        {
+          "kind": "visible",
+          "label": "Pause between steps shows",
+          "selector": "[data-row-key=\"combatStepPause\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "advanced-developer-modal",
+      "url": "?shot=title&shotSettings=%7B%22settingsCategory%22%3A%22Advanced%22%2C%22settingsAdvancedCategory%22%3A%22Developer%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#settings"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": "[data-btn=\"groupModal.wireframes\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "Map section",
+          "selector": ".set-section-select",
+          "includes": "Map"
+        },
+        {
+          "kind": "text",
+          "label": "Range section",
+          "selector": ".set-section-select",
+          "includes": "Range"
+        },
+        {
+          "kind": "text",
+          "label": "Developer section",
+          "selector": ".set-section-select",
+          "includes": "Developer"
+        },
+        {
+          "kind": "text",
+          "label": "No Wireframes (Layout) section",
+          "selector": ".set-section-select",
+          "matches": "^(?![\\s\\S]*Layout)"
+        },
+        {
+          "kind": "visible",
+          "label": "Wireframes modal is open",
+          "selector": ".set-group-modal"
+        },
+        {
+          "kind": "count",
+          "label": "The modal holds the six wireframe choices",
+          "selector": ".set-group-modal [data-row-key^=\"wireframe\"]",
+          "eq": 6
+        },
+        {
+          "kind": "count",
+          "label": "Three family sections",
+          "selector": ".set-group-modal [data-group-section]",
+          "eq": 3
+        },
+        {
+          "kind": "within",
+          "label": "Modal fits the screen",
+          "selector": ".set-group-modal",
+          "container": "body"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "Wireframe rows drawn in the panel",
+          "selector": "[data-advanced-panel=\"Developer\"] [data-row-key^=\"wireframe\"]",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "advanced-deck",
+      "url": "?shot=title&shotSettings=%7B%22settingsCategory%22%3A%22Advanced%22%2C%22settingsAdvancedCategory%22%3A%22Deck%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#settings"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Deck shows only Play in deck order",
+          "selector": "[data-advanced-panel=\"Deck\"] [data-row-key]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Play in deck order",
+          "selector": "[data-advanced-panel=\"Deck\"] [data-row-key=\"playInDeckOrder\"]",
+          "eq": 1
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "A removed Deck row is drawn",
+          "selector": "[data-row-key=\"deckMinSize\"], [data-row-key=\"deckEditing\"], [data-row-key=\"classSpellPowerCopies\"]",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "name": "advanced-map",
+      "url": "?shot=title&shotSettings=%7B%22settingsCategory%22%3A%22Advanced%22%2C%22settingsAdvancedCategory%22%3A%22Map%22%7D",
+      "ready": "#settings",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": "#settings"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Map holds its four rows",
+          "selector": "[data-advanced-panel=\"Map\"] [data-row-key]",
+          "eq": 4
+        },
+        {
+          "kind": "visible",
+          "label": "Walked nodes shows",
+          "selector": "[data-advanced-panel=\"Map\"] [data-row-key=\"walkedFade\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": []
+    }
+  ]
+}
