@@ -546,7 +546,7 @@ export function renderCard(registries, ref, opts = {}) {
     touchSelectionSafe: Boolean(opts.preview?.needsTarget),
     actionOwnsTouch: opts.actionOwnsTouch === true,
     infoBadge: opts.infoBadge === true,
-    open: opener => {
+    open: (opener, overrides = {}) => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
       const reading = cardStatusContext(def, opts, registries);
@@ -581,8 +581,8 @@ export function renderCard(registries, ref, opts = {}) {
       // and no footer, which is the honest shape rather than an apology.
       const surface = opts.surface || 'none';
       return openCardInspection({ title: def.name, card: face, details, opener,
-        actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
-        commands: opts.commands || {},
+        actions: overrides.actions ?? opts.inspectionActions ?? (() => cardActions(surface, ref, { availability: opts.availability, only: opts.only })),
+        commands: overrides.commands ?? opts.commands ?? {},
         // Combat's hand: the page lock lifts a frame after the door leaves.
         deferLift: surface === 'combat' });
     } });

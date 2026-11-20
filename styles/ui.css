@@ -1499,7 +1499,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-reading .card .cost > span { display: none; }
 .deck-editor .deck-editor-reading .card .cost { justify-content: center; align-content: center; }
 .deck-editor .deck-editor-reading .card .card-cost-rail > :is(.stamina-cost, .mana-cost) { font-size: max(1.4rem, var(--deck-min-text)); line-height: 1.3; padding: .3rem .5rem; border: 1px solid #796741; background: #181b1e; border-radius: .5rem; }
-.deck-editor-inspect-back { display: none; }
+.deck-editor-inspect-back { display: block; align-self: start; flex: none; }
 .deck-editor-feedback { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #d6bd8e; min-height: var(--deck-editor-target); }
 .deck-editor-feedback[hidden] { display: none; }
 .deck-editor-feedback .deck-editor-undo { min-height: var(--deck-editor-target); min-width: 8rem; }

@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-20
+
+- **Inspect cards straight from the shop, rewards and your deck** ([#2887](https://github.com/cehinds/AshenSpire/pull/2887), `0.7.4.226`). Shop rows show the full artwork without an (i) badge, and clicking a row opens the card with Back and Buy. Item pictures are centred on the item itself. Tapping a reward card opens it with Select or Add to deck. In the deck editor, a deck card offers Add to library and a library card offers Add to deck, one copy at a time, and phones show both piles.
+
 ## 2026-11-19
 
 - **Impact sprites show with Effects off** ([#2888](https://github.com/cehinds/AshenSpire/pull/2888), `0.7.4.224`). Hits, spells and status changes now show their impact sprite on the affected fighter whether Effects is on or off; Reduce motion and Reduce flashes still hide them. Fights load these sprites as they open, so the first hit is less often a plain marker.
