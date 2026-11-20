@@ -22,6 +22,23 @@
       "failure": [
         { "kind": "count", "label": "No combatant on the field", "selector": ".combatant .sprite", "eq": 0 }
       ]
+    },
+    {
+      "name": "combat-back-row",
+      "url": "?shot=combat&shotSeed=PERF1&shotEnemyCount=3&shotSettings=%7B%22gameConfig.presentation.showFormationGrid%22%3Atrue%7D",
+      "ready": ".combatant .sprite",
+      "settleMs": 2500,
+      "actions": [],
+      "success": [
+        { "kind": "count", "label": "Three back-row enemies are drawn", "selector": ".combatant.enemy[data-band-row=\"back\"] .sprite", "min": 3 },
+        { "kind": "visible", "label": "The player is drawn", "selector": ".combatant.player .sprite" },
+        { "kind": "count", "label": "Every back-row enemy shows its plates", "selector": ".combatant.enemy[data-band-row=\"back\"] > .target-hud-overhead-meters", "min": 3 },
+        { "kind": "count", "label": "Grid cells are drawn", "selector": ".formation-grid-cell:not([hidden])", "min": 4 },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "No enemy in the back row", "selector": ".combatant.enemy[data-band-row=\"back\"]", "eq": 0 }
+      ]
     }
   ]
 }
