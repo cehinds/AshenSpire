@@ -14,13 +14,14 @@ import { createMemoryStorage, createSaveManager, runKey } from '../src/engine/sa
 import { LoadSavedRunContext } from '../src/engine/savedRunContext.js';
 import { createRunState } from '../src/model/state.js';
 const author=modules=>({formatVersion:1,core:'ashen.core@1.0.0',modules});
+// Stat contract 2026-11-18: "The starting hand is 5 + floor(INT / 4)" and "Each Constitution point grants 5 maximum HP".
 test('core class/hand/deck facts are source-owned and immutable per profile',()=>{
- const p=resolveGameProfile('core');assert.deepEqual(gameContent(p,'startingHands'),{reaver:5,starseer:6,rogue:5,herald:5});
+ const p=resolveGameProfile('core');assert.deepEqual(gameContent(p,'startingHands'),{reaver:5,starseer:5,rogue:5,herald:5});
  assert.deepEqual(gameContent(p,'classes').map(row=>Object.values(row.attributes).reduce((a,b)=>a+b)),[6,6,6,6]);
  assert.equal(gameContent(p,'starterDeck').shared.reduce((n,row)=>n+row.copies,0)+1,10);
  assert.equal(gameContent(p,'starterDeck').shared.some(row=>row.card==='core.evade'),false);
- assert.deepEqual(gameContent(p,'rests').services,['rest','smith','upgradeCard']);assert.equal(gameContent(p,'rests').servicesPerVisit,1);assert.equal(gameContent(p,'stats').levelGains.constitution.hp,10);
- assert.throws(()=>{p.modules.cards.handBase=90},TypeError);assert.notEqual(p,resolveGameProfile('core'));assert.equal(resolveGameProfile('core').modules.cards.handBase,4);
+ assert.deepEqual(gameContent(p,'rests').services,['rest','smith','upgradeCard']);assert.equal(gameContent(p,'rests').servicesPerVisit,1);assert.equal(gameContent(p,'stats').levelGains.constitution.hp,5);
+ assert.throws(()=>{p.modules.cards.handBase=90},TypeError);assert.notEqual(p,resolveGameProfile('core'));assert.equal(resolveGameProfile('core').modules.cards.handBase,5);
 });
 
 
