@@ -36,21 +36,6 @@ export function stableCombatArtwork(previous, key, sizes) {
   return previous?.key === key ? previous : { key, sizes: sizes.map(size => ({ ...size })) };
 }
 
-function nearestEnemyGround(sizes, actors, fallback, groundField) {
-  const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
-  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size[groundField] ?? size.ground))
-    .map(size => size[groundField] ?? size.ground);
-  return grounds.length ? Math.min(...grounds) : fallback;
-}
-
-export function combatSceneryGround(sizes, actors, fallback) {
-  return nearestEnemyGround(sizes, actors, fallback, 'sceneryGround');
-}
-
-export function combatStandingGround(sizes, actors, fallback) {
-  return nearestEnemyGround(sizes, actors, fallback, 'standingGround');
-}
-
 // Attach the foreground player's feet to the battlefield edge, above the
 // health strip and card-band tools. Selection never changes this resting fit.
 // Share of the field height a short portrait phone lifts its enemies by, so

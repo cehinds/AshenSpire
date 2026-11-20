@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatSpriteGeometry } from '../src/ui/components/combatSpriteGeometry.js';
 import { combatArtworkKey } from '../src/ui/models/CombatCompositionModel.js';
-import { insetPerspectiveFootprint, PerspectiveFootInsetY, BackRowEnemySizes, alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
+import { insetPerspectiveFootprint, PerspectiveFootInsetY, BackRowEnemySizes, alternativeCombatComposition, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
@@ -101,7 +101,7 @@ test('a short portrait field keeps its enemies back on the floor, clear of the p
     assert.ok(player.ground - enemy.ground >= height * .25, 'depth between the player and the enemy row');
   }
   // The perspective composition carries no camera override: the backdrop frames the back rank.
-  assert.equal(combatStandingGround(fit, actors, 0), Math.min(...fit.filter(f => f.id !== 'p').map(f => f.ground)));
+  assert.ok(fit.every(f => f.sceneryGround === undefined && f.standingGround === undefined));
 });
 
 test('a 130px field keeps short enemies readable on their distinct foot anchors', () => {

@@ -27,6 +27,9 @@
 /* A back-row enemy's plates are drawn at the layout's back-row scale (--combat-hud-row-scale, set from perspectiveGrid.backRowEnemyScale),
    about their top centre: the placement reads the scaled height, so the plates' bottom still stands its gap above the head. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters { scale: var(--combat-hud-row-scale, 1); transform-origin: 50% 0; }
+/* `scale` makes the rack a stacking context, which traps its children's z-index. Lift the rack itself just above the fade layer
+   (combat-layers.css): above every sprite and the fade, below fx, the toolbar, hit badges, floaters and reading panels. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters { z-index: calc(var(--combat-layer-fade, 375) + 1); }
 /* The intent row is centred over the HP bar (not the Block shield): its left edge sits on the bar's centre, then translate pulls it back half its own
    width. It keeps its max-content width so its hit area does not grow (combat-target-responsive.css zeroes translate with a less specific selector). */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > :is(.intent, .player-action-intent) {
