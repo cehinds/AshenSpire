@@ -96,7 +96,10 @@ test('all 33 Codex armaments and five armour rows resolve their authored type an
 });
 
 test('classification preserves every one of the 38 original item modifier lists', () => {
-  const mods = Object.keys({ ...WEAPONS, ...ARMOUR }).sort().map(id => [id, pieceById(id).mods]);
+  // The AUTHORED lists, read from the unprojected content: a profile's signatureMods (Sage's Robe, 2026-11-19) replace a registry
+  // piece's raw mods, never the content they were authored in (tests/gear-signature-mods.test.mjs).
+  const raw = id => contentBundle.equipment.armaments.find(p => p.id === id) || contentBundle.equipment.armour.find(p => p.id === id);
+  const mods = Object.keys({ ...WEAPONS, ...ARMOUR }).sort().map(id => [id, raw(id).mods]);
   assert.equal(createHash('sha256').update(JSON.stringify(mods)).digest('hex'), '70271201db192902e073af3b14fdcc4243cc1b23088be35f90f4f5369829d2a0');
 });
 
@@ -141,7 +144,9 @@ test('Codex armour grants its group Block once and preserves the authored robe M
   for (const [id, block] of [['cinderforgedPlate', 13], ['wyrmscaleMail', 12], ['ringmailHauberk', 12], ['huntersHide', 11], ['sagesRobe', 10]]) {
     const piece = pieceById(id), equipped = world({ armor: id, classId: piece.classId });
     assert.equal(equipped.card('core.defend').effects.find(e => e.op === 'block').amount, block, id);
-    if (id === 'sagesRobe') assert.equal(equipped.mods.maxMana, 2, 'authored +1 and generic robe +1 remain additive');
+    // The current profile carries Sage's Robe's signature (owner, 2026-11-19): its raw +1 is replaced, so only the generic robe +1 remains.
+    // Other robes' own MP still adds on top of the base; the pinned +2 of an existing type-enabled save is in gear-signature-mods.test.mjs.
+    if (id === 'sagesRobe') assert.equal(equipped.mods.maxMana, 1, 'signature replaces the raw +1; the generic robe +1 remains');
     if (id === 'huntersHide') {
       assert.equal(equipped.summary.statPoints.dexterity, 1);
       assert.equal(equipped.combat.player.statuses.dexterity.stacks, 1, 'the original positive status is preserved');

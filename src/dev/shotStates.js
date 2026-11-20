@@ -23,7 +23,7 @@ import { GameProfileArmamentOffer } from './../model/gameProfileRewards.js';
 import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
-import { configureArmamentKitPreview } from './armamentKitPreview.js';
+import { configureArmamentKitPreview, ConfigureArmourPreview } from './armamentKitPreview.js';
 import { mountDeckEditor } from './../ui/screens/deckEditor.js';
 import { OpenSiteRecord, markRestLeft } from './../model/restRevisit.js';
 
@@ -41,6 +41,11 @@ export function createShotStates(ctx) {
     // Suppress the first-run tutorial so captures show a clean board.
     const shotMeta = saves.loadMeta();
     shotMeta.settings.seenTutorial = true;
+    // `?shotClass=` names a class to pose; on a configured profile the later classes unlock by completed runs, so a fresh stub meta
+    // refused them ("Class 'starseer' is locked in this profile"). Three completed runs open the whole sequence. The meta is the shot
+    // boot's memory stub (pickStorage), never a player's.
+    const profileId = ctx.getRegistries().gameProfile?.id;
+    if (shotParams.get('shotClass') && profileId) shotMeta.gameProfileUnlocks = { ...(shotMeta.gameProfileUnlocks || {}), [profileId]: { completedRunIds: ['shot-1', 'shot-2', 'shot-3'] } };
     saves.saveMeta(shotMeta);
     // `?shotSeed=<string>` — ONE MAP IS NOT THE MAP (EldenSpire#28).
     //
@@ -98,6 +103,7 @@ export function createShotStates(ctx) {
     if (name === 'combat' && shotParams.get('shotKit') === '1') {
       configureArmamentKitPreview(ctx.getRegistries(), run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
     }
+    if (name === 'combat' && shotParams.get('shotArmor')) ConfigureArmourPreview(ctx.getRegistries(), run, shotParams.get('shotArmor'));
     // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
     //
     // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A
