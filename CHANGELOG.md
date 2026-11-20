@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-20
 
-- **Sage's Robe now grants Ward** ([#2895](https://github.com/cehinds/AshenSpire/pull/2895), `0.7.4.226`). In new runs, Sage's Robe gives 1 Ward at the start of each of your turns. Its extra max Mana is gone, so it now matches other robes at +1 max Mana. Its spell Mana discount and melee vulnerability are unchanged. Runs you already saved keep the robe they had.
+- **Sage's Robe now grants Ward** ([#2895](https://github.com/cehinds/AshenSpire/pull/2895), `0.7.4.228`). In new runs, Sage's Robe gives 1 Ward at the start of each of your turns. Its extra max Mana is gone, so it now matches other robes at +1 max Mana. Its spell Mana discount and melee vulnerability are unchanged. Runs you already saved keep the robe they had.
+- **Fewer missing sound-file requests; release checks contrast** ([#2891](https://github.com/cehinds/AshenSpire/pull/2891), `0.7.4.228`). Sounds that are synthesized no longer ask for an audio file that was never shipped, so the browser console stays clear of missing-file errors while every cue still plays immediately. Release builds now run the colour-contrast check automatically.
 - **Inspect cards straight from the shop, rewards and your deck** ([#2887](https://github.com/cehinds/AshenSpire/pull/2887), `0.7.4.226`). Shop rows show the full artwork without an (i) badge, and clicking a row opens the card with Back and Buy. Item pictures are centred on the item itself. Tapping a reward card opens it with Select or Add to deck. In the deck editor, a deck card offers Add to library and a library card offers Add to deck, one copy at a time, and phones show both piles.
 
 ## 2026-11-19
