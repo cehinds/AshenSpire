@@ -1657,6 +1657,28 @@ function searchResultsHtml(settings, query, changedOnly = false, profile = null,
 }
 
 /** categoryHtml(cat, settings, …) → one pane's markup (exported for tests). */
+// ---- the More toggle (owner, 2026-11-20) ------------------------------------
+// A topic's `more: true` rows (the millisecond pacing dials) sit behind one
+// collapsed "More" toggle at the end of the topic. Open or closed is remembered
+// on this device only; with no storage it starts closed every time.
+const MORE_STORAGE_PREFIX = 'ashenspire.settings.more.';
+function moreStorage() { try { return globalThis.localStorage || null; } catch { return null; } }
+/** SettingsMoreOpen(topic) → true when this device last left the topic's More toggle open. */
+export function SettingsMoreOpen(topic) {
+  try { return moreStorage()?.getItem(MORE_STORAGE_PREFIX + topic) === '1'; } catch { return false; }
+}
+function rememberMoreOpen(topic, open) {
+  try { moreStorage()?.setItem(MORE_STORAGE_PREFIX + topic, open ? '1' : '0'); } catch { /* storage refused: it stays closed next time */ }
+}
+/** SettingsMoreHtml(settings, rows) → the collapsed "More" toggle holding `rows`, or '' when there are none. */
+export function SettingsMoreHtml(settings, rows) {
+  if (!rows.length) return '';
+  const topic = rows[0].topic || 'more';
+  return `<details class="set-more" data-more-topic="${esc(topic)}"${SettingsMoreOpen(topic) ? ' open' : ''}>`
+    + `<summary class="set-more-toggle">${esc(t('settings.more'))}</summary>`
+    + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></details>`;
+}
+
 export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false, profile = null, nextProfile = null) {
   nextProfile ||= readNewGameProfile(settings, profile || undefined);
   if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly, profile, nextProfile);
@@ -1669,10 +1691,11 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const custom = Object.hasOwn(CUSTOM_GENERAL_GROUPS, selected);
     const firstFullscreen = selected === 'Display' && [...topics.values()][0]?.[0]?.key === 'fullscreen';
     const sections = [...topics.entries()].map(([label, topicRows], index) => {
-      const rowHtml = custom ? [] : topicRows.map(row => settingsRowHtml(settings, row));
+      const rowHtml = custom ? [] : topicRows.filter(row => !row.more).map(row => settingsRowHtml(settings, row));
       // On a phone the expanded preview can fill the visible pane. Keep the
       // first Display control ahead of it so Fullscreen is reachable on entry.
-      const list = firstFullscreen && index === 0 ? `${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}` : rowHtml.join('');
+      const list = (firstFullscreen && index === 0 ? `${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}` : rowHtml.join(''))
+        + (custom ? '' : SettingsMoreHtml(settings, topicRows.filter(row => row.more)));
       const id = `set-topic-${selected}-${index}`.replace(/[^A-Za-z0-9_-]/g, '-');
       return topics.size > 1
         ? `<section class="set-topic" aria-labelledby="${id}" data-section-topic="${esc(label)}"><h4 class="set-subsection-heading" id="${id}">${esc(label)}</h4><div class="set-card-list">${list}</div></section>`
@@ -2403,6 +2426,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
     btn.addEventListener('click', openDebugLog);
+  });
+
+  container.querySelectorAll('details[data-more-topic]').forEach((more) => {
+    more.addEventListener('toggle', () => rememberMoreOpen(more.dataset.moreTopic, more.open));
   });
 
   container.querySelectorAll('[data-btn="effectsMenu"]').forEach((btn) => {
