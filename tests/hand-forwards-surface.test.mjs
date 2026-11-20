@@ -41,7 +41,7 @@ const ok = (cond, what) => { checks++; assert.ok(cond, what); };
 
 // ---- the surface builds the triple ------------------------------------------
 ok(/surface:\s*'combat'/.test(combat), "combat.js names its surface on the hand entry");
-ok(/availability:\s*\{\s*play:/.test(combat), 'combat.js supplies the play availability');
+ok(/availability:\s*\{\s*(?:get\s+play\(\)|play:)/.test(combat), 'combat.js supplies the play availability (a live getter, so a kept card reads it now)');
 ok(/commands:\s*\{\s*play:/.test(combat), 'combat.js supplies the play command');
 
 // ---- the hand forwards it, which is the link that was missing ---------------
