@@ -58,7 +58,8 @@
       "aiWeight": 25,
       "maxConsecutive": 1,
       "costSource": "stance",
-      "legacyMove": "fortify"
+      "legacyMove": "fortify",
+      "coreBlock": "card"
     },
     "card:livingArmor.crush": {
       "aiWeight": 20,

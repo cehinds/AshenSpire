@@ -1086,13 +1086,15 @@ Expanded combat only (`minCombatExpansionVersion: 2`): Core's configured reward 
 
   | Card | Class | Cost | Effect | Penalty → upgrade |
   |---|---|---|---|---|
-  | Steel Resolve | Reaver | 2 SP | 2 Strength | Exhaust, 2 SP → 1 SP |
-  | Iron Hide | Reaver | 1 SP | 2 Dexterity | +1 SP each play (max +2) → base 0 SP |
+  | Steel Resolve | Reaver | 2 SP | 2 Strength | Exhaust, 2 SP → 1 SP, no Exhaust |
+  | Iron Hide | Reaver | 1 SP | 2 Dexterity | Exhaust, +1 SP each play (max +2) → base 0 SP, no Exhaust |
   | Hearth Vigil | Herald | 1 SP, 2 MP | 4 Regen | 2 MP → 1 MP |
-  | Zealous Fervor | Herald | 1 SP | 2 Strength, 1 Dexterity | Ethereal → removed |
-  | Inner Orbit | Starseer | 1 SP, 2 MP | 2 Dexterity, draw 1 | Exhaust, 2 MP → 1 MP |
+  | Zealous Fervor | Herald | 1 SP | 2 Strength, 1 Dexterity | Ethereal, Exhaust → both removed |
+  | Inner Orbit | Starseer | 1 SP, 2 MP | 2 Dexterity, draw 1 | Exhaust, 2 MP → 1 MP, no Exhaust |
   | Starlit Skin | Starseer | 1 SP, 1 MP | 5 Block, 1 Stoneskin | Exhaust → removed |
-  | Keen Edge | Rogue | 1 SP | 1 Strength, 1 Dexterity | Ethereal → removed |
+  | Keen Edge | Rogue | 1 SP | 1 Strength, 1 Dexterity | Ethereal, Exhaust → both removed |
+
+- **Stat-buff cards exhaust** (owner, 2026-11-19). Every player card that grants Strength or Dexterity (to its player or an ally) carries Exhaust on its base face, and its upgrade removes Exhaust; anything else the upgrade already did stays. In Core today: Steel Resolve, Iron Hide, Zealous Fervor, Inner Orbit, Keen Edge (table above), Empower (`base.stat-buff`, 2 Strength), Ally Empowerment (`base.buff-ally`) and Storm Blessing (`core.stormBlessing`, 1 Dexterity and 1 Stamina; upgraded 2 Dexterity). A new stat-buff card follows the same rule. Enemy moves are not cards in a deck and are unaffected. Profiles saved before this rule keep their snapshotted card definitions. *Falsify:* `tests/stat-buff-exhaust.test.mjs`.
 
 - **Conditional payoffs** (base / upgraded; stance and status conditions read `snapshot: 'beforePlay'`):
 
@@ -1236,7 +1238,7 @@ Weighted table: `src/content/encounters/weald.js` (§13.2). Act 2/3 rosters are 
 | Grave Wisp | 12–14 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 8 + heals self 4 (50) | kill first |
 | Pack encounter | — | — | 2× Blight Hound + 1 Grave Wisp | teaches targeting |
 
-**Elite — Wyrm Aspirant** (HP 82–86, Poise 24). Opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+**Elite — Wyrm Aspirant** (HP 82–86, Poise 24). Opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 10 Block + 4 HP heal (20, max1). Drops a relic.
 
 **Boss — The Fell Warden** (Margit-inspired, HP 120, Poise 30)
 
@@ -2087,6 +2089,7 @@ Player animations:
   - One or two lines at the floor: show it. A one-line rule always shows.
   - Three or more lines at the floor (or an uncarriable clause): show the Inspect cue instead.
   - The (i) Inspect badge over the selected hand card is centred on it.
+  - Holding a hand card selects it at its Hold to confirm duration; keeping the hold 300 ms longer opens its inspection (owner, 2026-11-20). Dragging still plays it.
 - **Card face summaries**: the Inspect cue is a last resort. A card whose computed face cannot be said in five-word clauses authors an optional `faceTemplate`.
   - One to three lines, at most five words each, same `{token}` bindings as `textTemplate` (numbers stay live), naming the main effect: a tag or status is named ("Gain 3 Foresight."), a pile move is plain ("Return 1 exhausted card."). A `[v2:...]` span shows only under the expanded combat rules.
   - Shown instead of the Inspect cue, after any downside the computed face reserved (Exhaust, a payment); details stay in Information.
@@ -3404,7 +3407,8 @@ All combat values are floored whole numbers. The attacker's chain (Vulnerable, s
 
 ### Defense, Smash and stance bonuses
 
-- Base Defend gives 10 Block; Counter gives floor(Defend Block × 0.5) = 5, before DEX, stance and other bonuses.
+- Base Defend gives 8 Block (10 before the 2026-11-20 retune); Counter gives 5, before DEX, stance and other bonuses. Counter was half of Defend until that retune and keeps its 5.
+- **Block per card** (owner, 2026-11-20): an average Block card, with typical buffs, gives about 8-10 Block, and a single card rarely reaches 20. Core's Defend authors 8 (Counter keeps 5), and no Core enemy move authors more than 12 Block (Nacre Wall, Prism Guard and Golden Bulwark 12; Courtly Decree 11; Pearl Guard, Frozen Bulwark, Harden, Cooling Ash, Kiln Plate, Siege Plate, Iron Litany, Golden Guard, Fortify, Oath Water and Tail Bastion 10). Profiles saved before the retune keep their snapshotted numbers. *Falsify:* `tests/block-per-card-retune.test.mjs`.
 - Stance bonuses (+1 STR offensive stance, +3 DEX defensive stance; +2 STR / DEX / INT from a relic's stance property) apply to Block and damage alike; the card face and preview show the boosted value.
 - **Stance attribute properties** (`stanceAttribute { stance, attribute, n }` in `content/source/itemProperties.json`, relics only; owner, 2026-11-18, #2835): Attacker's, Smasher's, Caster's and Defender's Stance grant +2 STR, STR, INT, DEX while in Attack, Smash, Casting, Defend stance. They replace the old `stanceRating` (+2 AR / DR / PR; a fight saved with it keeps that). The grant is added to the entity's attribute before the channel is priced (`stanceAttributeBonus`, `src/model/stanceRules.js`): the channel is priced with and without it and the difference is the bonus. So Arcane magic reads INT, Divine reads WIS, and shared magic reads max(INT, WIS); an INT stance grant affects only spells whose casting attribute uses it, and a finesse hit's physical channel is priced on its DEX row, not STR. Fight-local: attributes are read, never written.
 - Matching stance multiplies effectiveness by 1.25.
@@ -3665,6 +3669,7 @@ Owner requests of 2026-11-14 and 2026-11-15 (the "Wave 2.5" list, batch 3). Pres
 ### Reward inspection and earned-effect feedback
 
 - **Contextual card inspection** (owner, 2026-11-19). Merchant card and armament rows show complete artwork, without a separate information badge below the thumbnail. Clicking outside the row action opens inspection. Inspectors provide Back and the action belonging to their source: Buy at the shop, Play in combat, Add to library for a deck copy, or Add to deck for a library copy. A deck transfer moves exactly one eligible instance, even when the row groups several copies, and respects existing deck restrictions. Item thumbnails fit and center the visible cutout bounds rather than transparent export margins. Combat targeting and the configured reward multi-pick claim transaction remain unchanged.
+- **Reward cards and press-and-hold** (owner, 2026-11-20). A reward card (cards and armaments, both reward doors) is selected by a tap, never opened by it; the chosen card shows its (i) above it, in the row's reserved lane, and the (i), right-click or I opens its inspection, whose Add to deck and Send to library (side by side) claim it in one click. Every card bound to inspection (rewards, the hand, the Smith's upgrade list, the deck editor and other card surfaces) also opens it on a still press and hold: 700 ms, or the card's own hold (its Hold to confirm duration) plus 300 ms where it has one, so a combat hand card's hold selects first and its release is never a tap or a play. Moving past the 12 px drag slop, a drag or an early release abandons the read; the click after a completed read is swallowed once.
 
 - Older reward confirmation flows keep a separate read-only Inspect action before collection and during confirmation review. Closing it preserves the selection and review stage; an in-flight claim disables it until the save succeeds or fails.
 - Class and used-weapon level notices show the level transition, visible progression, resolved card-value changes and new unlocks the active rules grant; a level with none says so. Next-benefit previews follow the active authored rules and owned-card context. A saved notice resumes without paying XP or granting effects again. Reduced motion keeps final values visible.

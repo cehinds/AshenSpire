@@ -41,6 +41,7 @@ const CLASS = Object.freeze({
     details: 'confirmation-details as-detailcard muted',
     cancel: 'subtle confirmation-cancel',
     confirm: 'confirmation-confirm',
+    alternate: 'confirmation-alternate',
     confirmDanger: 'subtle danger',
     footer: 'confirmation-footer',
     bodyPanel: 'as-decide confirmation-body',
@@ -54,7 +55,7 @@ const ELEMENT_ID = Object.freeze({
 const SELECTOR = Object.freeze({
     modalClose: '.modal-close',
     modalEyebrow: '.modal-eyebrow',
-    answers: '.confirmation-close, .confirmation-cancel, .confirmation-confirm',
+    answers: '.confirmation-close, .confirmation-cancel, .confirmation-confirm, .confirmation-alternate',
     detailsTabStops: 'button, [tabindex], input, select',
     pickedOption: '[aria-checked="true"]',
 });
@@ -308,6 +309,9 @@ export function OpenConfirmationModal({
     component = UI_COMPONENTS.confirmationModal,
     inputShieldMs = CONFIRMATION_INPUT_SHIELD_MS,
     confirmEnabled = true,
+    // A second answer beside the confirm button (owner, 2026-11-20: Add to deck and Send to library side by side).
+    // { label, onSelect, enabled = true }; it commits like the confirm button, running onSelect instead of onConfirm.
+    alternate = null,
 } = {})
 {
     CloseConfirmationModal();
@@ -341,6 +345,14 @@ export function OpenConfirmationModal({
         confirmEnabled,
         tone,
     });
+    const alternateButton = alternate
+        ? buildButton({ className: CLASS.alternate, label: alternate.label })
+        : null;
+    if (alternateButton)
+    {
+        alternateButton.disabled = alternate.enabled === false;
+        markUiComponent(alternateButton, UI_COMPONENTS.confirmationAction, tone);
+    }
     mountDialog();
 
     const unregisterModal = registerModal('confirmation', dialog);
@@ -389,7 +401,8 @@ export function OpenConfirmationModal({
     };
 
     cancelButton.addEventListener(EVENT.click, cancel);
-    confirmButton.addEventListener(EVENT.click, commitConfirmation);
+    confirmButton.addEventListener(EVENT.click, () => commitConfirmation(onConfirm, confirmEnabled));
+    alternateButton?.addEventListener(EVENT.click, () => commitConfirmation(alternate.onSelect, !alternateButton.disabled));
     listenForScrimAndAnswerClicks();
     window.addEventListener('keydown', onKeydown, true);
     setTimeout(focusInitialControl, 0);
@@ -399,6 +412,7 @@ export function OpenConfirmationModal({
         dialog,
         cancelButton,
         confirmButton,
+        alternateButton,
         close,
         cancel,
     });
@@ -420,7 +434,9 @@ export function OpenConfirmationModal({
     function mountDialog()
     {
         const footer = modalFooter({
-            secondary: [cancelButton],
+            secondary: alternateButton
+                ? [cancelButton, alternateButton]
+                : [cancelButton],
             primary: confirmButton,
             className: CLASS.footer,
             size: FOOTER_SIZE,
@@ -461,9 +477,13 @@ export function OpenConfirmationModal({
         const confirmTabStops = confirmEnabled
             ? [confirmButton]
             : [];
+        const alternateTabStops = alternateButton && !alternateButton.disabled
+            ? [alternateButton]
+            : [];
         return [
             ...detailsTabStops,
             cancelButton,
+            ...alternateTabStops,
             ...confirmTabStops,
         ];
     }
@@ -522,10 +542,10 @@ export function OpenConfirmationModal({
         window.dispatchEvent(commitEvent);
     }
 
-    function commitConfirmation()
+    function commitConfirmation(onCommit, isEnabled)
     {
         if (
-            !confirmEnabled
+            !isEnabled
             || closed
         )
         {
@@ -537,7 +557,7 @@ export function OpenConfirmationModal({
         let awaitingDestination = false;
         try
         {
-            const destination = onConfirm?.();
+            const destination = onCommit?.();
             if (
                 destination
                 && typeof destination.then === 'function'

@@ -95,8 +95,12 @@ test('the hand info portal keeps its centring transform in combat', () => {
   assert.match(read('../styles/kit.css'), /\.hand-overlay > \.hand-info-portal\s*\{[^}]*transform:\s*translateX\(-50%\)/);
 });
 
-test('the combat hand asks for the (i) badge and no other card surface does', () => {
+// Owner 2026-11-20: the (i) appears on every card that can be SELECTED (the hand, reward cards and armaments, the
+// Smith's upgrade list). The deck editor keeps its own first-click inspector (owner's choice) and asks for none.
+test('the selectable card surfaces ask for the (i) badge; the deck editor does not', () => {
   assert.equal(hand.match(/actionOwnsTouch: true, infoBadge: true/g)?.length, 2);
-  assert.doesNotMatch(read('../src/ui/components/equipmentCard.js'), /infoBadge/);
+  assert.match(read('../src/ui/components/equipmentCard.js'), /infoBadge = false,/, 'equipment faces have the badge only when asked');
+  assert.match(read('../src/ui/components/gameProfileOffers.js'), /infoBadge: true,/);
+  assert.match(read('../src/ui/components/smithUpgradeModal.js'), /infoBadge: true/);
   assert.doesNotMatch(read('../src/ui/screens/deckEditor.js'), /infoBadge/);
 });
