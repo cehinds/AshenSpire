@@ -685,6 +685,7 @@ event.status.resolved,,Resolved,Your response is taken; continue when ready.,
 event.continue,,Continue,Move on from this event.,Continue
 event.continue.combat,,Steel yourself,The event leads into a fight.,Steel yourself
 event.noRankableCard,,No card can rank up,None of your cards can rise in rank right now.,
+event.relicHeld,,Already held,You already hold this relic.,
 # ---- the quest dialogue (W4c, WGQ0–WGQ8) ------------------------------------
 dialogue.eyebrow,,Quest,A step of a quest you are following.,Quest
 dialogue.region,,Conversation with {speaker},,
@@ -985,7 +986,6 @@ settings.row.useSprites,,Character sprites,Show a drawn class figure in combat i
 settings.row.combatLogPlayerColor,,Player name color,Color for player names in the combat log.,
 settings.row.combatLogEnemyColor,,Enemy name color,Color for enemy names in the combat log.,
 settings.row.animSpeed,,Combat pacing,"Auto picks Fast on touch screens and Normal elsewhere.",
-settings.row.performanceMode,,Rendering quality,Auto uses lighter effects on touch devices. Lite trims decoration.,
 settings.row.effects,,Effects,"Off is still and light. On adds glow, sparks, flashes and shake. Hit sprites show either way.",
 settings.row.effectsMenu,,Effects,"Glow, sparks, flashes, shake and fighter motion.",
 settings.effects.statusOff,,Effects off,,
