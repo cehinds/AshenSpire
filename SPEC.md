@@ -710,7 +710,7 @@ Every card's Stamina (SP) and Mana (MP) cost is derived by formula, in every fig
 **Targets**: most basic and cantrip cards cost 1 Stamina and no Mana; smashes and sweeps cost 2; rank 1–2 cost 1 SP + 1 MP, or 2 SP; most rank 1–3 spells cost 1–2 Mana; many magic cards cost at least 1 SP (0-SP magic still possible); higher SP usually means lower MP.
 
 **Layering and opt-outs**
-- The derived SP and MP replace the authored `cost` and `manaCost`. Per-card rules then apply on top: relic and power reductions, Mana discounts, upcast surcharges. Equipment and status mods apply after, so a mod's flat bonus is added to the scaled number and not scaled.
+- The derived SP and MP replace the authored `cost` and `manaCost`. Per-card rules then apply on top: relic and power reductions, Mana discounts, upcast surcharges (only for stored upcast ranks; upcasting is off, §4.8). Equipment and status mods apply after, so a mod's flat bonus is added to the scaled number and not scaled.
 - Opt-outs (keep authored cost, Mana and numbers): `costRule: 'fixed'` content, curses and statuses (by type), X costs. Every other card is priced, the Dodge Roll and powers included.
   - `costRule: 'fixed'`: warriorsVow, twinkling, shootingShard, bloodPact, bloodletting, painOffering, rogueShiv, smokePellet, setupRogue, prepare, hex, blindingSand, hamstring, masterOfStrategy, blightedTransmute, blightedSecondBloom, blightedBlightward; Core zero-cost cards (§4.3): core.flick, core.pebbleThrow, core.brace, core.quickGuard, core.whetstoneNick, core.temperedEdge.
   - By type: curses (guilt, wound, dazed), statuses (slimed).
@@ -1023,7 +1023,8 @@ All tactical numbers remain authored/configurable; their defaults above establis
 ### 4.8 Martial and Spell expansion (version 2)
 
 Version-2 combat expansion: [docs/combat-expansion-contract.md](docs/combat-expansion-contract.md) and its referenced notes define version-2 ordering, state, defaults and acceptance. New runs snapshot version 2; older runs and snapshots keep §4.7's version-1 rules.
-- It adds: one persistent tactical stance; authored Counter coverage and returns; persistent Ward; reach and area tradeoffs; seeded Evade / recovery checks; control recovery cards; opt-in upcasting; tag/status combos; run-lasting Ashen Blight with three feat milestones.
+- It adds: one persistent tactical stance; authored Counter coverage and returns; persistent Ward; reach and area tradeoffs; seeded Evade / recovery checks; control recovery cards; tag/status combos; run-lasting Ashen Blight with three feat milestones.
+- **Upcasting is off** (owner, 2026-11-20: upcasting is turned off, in Core and in legacy version-2 runs). No Upcast control, no rank prompt and no upcast reaction option appears. The engine still accepts stored `upcastTier` / `upcastRanks` so old saves and logs resolve as before.
 - Preview and rejected/cancelled actions are inert. Committed random outcomes and per-cycle budgets survive saves. Solo play, enemy actions, and both presentation variants share the headless contract.
 
 **Card lifecycle and labels** (contract section of the same name; version 2 only, version-1 fights and snapshots unchanged)
@@ -1712,7 +1713,7 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 - **Selection and information are separate from play.** The focused card, selection glow, Information button and legal-target highlights are preserved; Information opens details without playing; tap, hold, keyboard, controller and direct-target drag confirmation remain.
   - A tap selects and never plays; play needs a second tap on the card or a target pick.
   - The "Tap a card to play it" setting (default off) restores one-tap play when the target is unambiguous (self and all-enemy cards; one living enemy).
-  - Hold selects without playing (inspect, Upcast, target choice).
+  - Hold selects without playing (inspect, target choice; upcasting is off, §4.8).
   - One select colour, the targeting colour (`--selection-color`), for armed, held, keyboard-focused and inspected cards; no gold select state on the hand.
 - **End Turn:** a single press when no card in hand is playable; otherwise the configured second beat.
 - **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a playable hand card plays on release without reaching a combatant.
@@ -2595,7 +2596,7 @@ Class milestones no longer queue. The table is the cadence `classMilestoneProble
 #### One action resource
 
 - Actions, Stamina and SP name one pool. Each card charges its action cost once, plus separately authored Mana or HP costs.
-  - The upcast surcharge (`def.upcastSurcharge`) is still paid: `resolvedCardPlayCosts` (`src/engine/combat.js`) adds it to both the Stamina and the Mana cost.
+  - The upcast surcharge (`def.upcastSurcharge`, only from stored upcast ranks; upcasting is off, §4.8) is still paid: `resolvedCardPlayCosts` (`src/engine/combat.js`) adds it to both the Stamina and the Mana cost.
   - Recovery, discounts, maximum capacity, eligibility and save validation use the shared pool; keep the existing runtime action/Stamina binding where it supplies that identity.
 
 #### Ability identity and grades
