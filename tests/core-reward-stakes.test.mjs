@@ -39,6 +39,7 @@ test('a Reaver combat offer is 3-5 cards or weapon arts over 300 seeds, plus the
   assert.ok(bonus <= rankUps);
 });
 
+// Owner, 2026-11-20: a fresh run is offered only cards its max Mana pays (1 MP, +1 per four WIS; stat contract 2026-11-18), the Reaver included.
 test('no offered card costs mana the class cannot pay; a Starseer still sees mana cards', () => {
   let starseerMana = 0;
   for (let i = 0; i < 300; i++) for (const [classId, source] of [['reaver', 'combat'], ['reaver', 'level'], ['reaver', 'treasure'], ['starseer', 'combat'], ['starseer', 'level'], ['starseer', 'treasure']]) {
@@ -46,8 +47,8 @@ test('no offered card costs mana the class cannot pay; a Starseer still sees man
     for (const option of gameProfileRewardOffers(reg, run, createRng(900 + i), { offerId: `o:${source}`, source }).options) {
       if (!['combatCards', 'weaponArts'].includes(option.kind)) continue;
       const cost = manaOf(run, option.id);
-      if (classId === 'reaver') assert.equal(cost, 0, `reaver ${source} ${option.id}`);
-      else { assert.ok(cost <= run.maxMana, `starseer ${source} ${option.id} costs ${cost} > ${run.maxMana}`); if (cost > 0) starseerMana++; }
+      assert.ok(cost <= run.maxMana, `${classId} ${source} ${option.id} costs ${cost} > ${run.maxMana}`);
+      if (classId === 'starseer' && cost > 0) starseerMana++;
     }
   }
   assert.ok(starseerMana > 0, 'a Starseer is still offered mana cards');
