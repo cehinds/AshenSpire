@@ -81,23 +81,9 @@ test('v2: Precision joins Piercing as the larger bypass, Gorefire turns into Bur
     { op: 'buildup', status: 'burn', amount: 4, camp: 'physical', recoveryProfile: 'elemental' }]);
 });
 
-// Owner decision #25: Lethal Dose carries Precision, so it bypasses 4 Block like the other Precision cards.
-test('v1: Lethal Dose carries the Precision tags and bypasses 4 Block', () => {
-  const { combat, enemy } = v1Combat('lethalDose', 'rogue');
-  enemy.block = 10;
+// Owner, 2026-11-20: the Precision tag is gone from Core content; Lethal Dose and Coup de Grace carry Pierce instead.
+test('v1: Lethal Dose carries Pierce, not Precision', () => {
   const def = registries.cards.get('lethalDose');
-  assert.ok(def.tags.includes('precision') && def.tags.includes('technique:precision'), 'Precision tags');
-  assert.equal(prepareMatchupHit(combat, combat.player, enemy, carrier(def.tags, 'poison'), 8).guardBypass, 4);
-});
-
-test('v1 play: a Precision Piercing card into 10 Block puts 4 through (Piercing alone would put 2), preview equals the hit', () => {
-  const { combat, enemy } = v1Combat('coupDeGrace', 'rogue');
-  enemy.block = 10;
-  const shown = previewCard(combat, 'c', enemy.id).values.find(row => row.op === 'damage');
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'c', targetId: enemy.id });
-  const hit = combat.eventLog.find(row => row.type === 'damageDealt' && row.targetId === enemy.id);
-  assert.equal(hit.amount, shown.value, 'preview equals the hit');
-  assert.equal(shown.value, 10);
-  assert.equal(500 - enemy.hp, 4, 'Precision bypasses 4 of the Block');
-  assert.equal(enemy.block, 4);
+  assert.ok(def.tags.includes('pierce'), 'Pierce tag');
+  assert.ok(!def.tags.includes('precision') && !def.tags.includes('technique:precision'), 'no Precision tags');
 });
