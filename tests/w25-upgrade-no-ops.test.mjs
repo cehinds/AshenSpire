@@ -17,6 +17,9 @@ const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction', 'unethereal
 // ('the run-long +1 INT applies to the effective attributes, the ratings, the sheet and a fight') proves it there.
 const isDeferred = (step) => (step.k === 'fx' && DEFERRED.has(step.fx)) || step.k === 'attr';
 const PER_CARD = 14;
+// A damage-type step (#2920) changes the physical type the hit is dealt as, shown in the played card's tags; a neutral target
+// takes the same damage whatever the type, so the single play shows it through that `damage:<type>` tag instead.
+const damageTagOf = (played) => (played.ev.find((e) => e.type === 'cardPreparing')?.cardTags || []).filter((t) => t.startsWith('damage:')).join();
 
 test('every rolled upgrade option changes what the card does when played', () => {
   const noOps = [];
@@ -34,9 +37,10 @@ test('every rolled upgrade option changes what the card does when played', () =>
         checked += 1;
         // A second-target step can only show itself with a second enemy on the field.
         const opts = { classId, ...(step.k === 'fx' && step.fx === 'target' ? { enemies: ['wanderingSoldier', 'wanderingSoldier'] } : {}) };
-        const before = outcome(play(id, lead.length ? { upgraded: true, upgradeSteps: lead } : {}, opts));
-        const after = outcome(play(id, { upgraded: true, upgradeSteps: [...lead, step] }, opts));
-        if (after === before && !RAMP.has(id)) noOps.push(`${id}${lead.length ? '+' : ''} ${JSON.stringify(step)}`);
+        const playedBefore = play(id, lead.length ? { upgraded: true, upgradeSteps: lead } : {}, opts);
+        const playedAfter = play(id, { upgraded: true, upgradeSteps: [...lead, step] }, opts);
+        const typeShown = step.k === 'tag' && step.damage && !step.damageSchool && damageTagOf(playedAfter) === `damage:${step.damage}` && damageTagOf(playedAfter) !== damageTagOf(playedBefore);
+        if (outcome(playedAfter) === outcome(playedBefore) && !typeShown && !RAMP.has(id)) noOps.push(`${id}${lead.length ? '+' : ''} ${JSON.stringify(step)}`);
       }
     }
   }
