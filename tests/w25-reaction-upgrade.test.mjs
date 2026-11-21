@@ -14,7 +14,7 @@ import { dispatch } from '../src/engine/combat.js';
 
 const RUN = { seed: 7, gameProfile: profile, rangePolicy: {} };
 const REACTION = [{ k: 'fx', fx: 'reaction' }];
-const offered = (cardId) => nextUpgradeOptions(RUN, { instanceId: 'k1', cardId, upgraded: false }, registries.cards.get(cardId), registries, 60, { noAuthored: true })
+const offered = (cardId) => nextUpgradeOptions(RUN, { instanceId: 'k1', cardId, upgraded: false }, registries.cards.get(cardId), registries, 60, { noAuthored: true, everyFamily: true })
   .some((step) => step.k === 'fx' && step.fx === 'reaction');
 
 test('Reaction is offered on attack, Smash, Sweep, spell and skill cards', () => {

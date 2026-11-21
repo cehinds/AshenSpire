@@ -33,6 +33,7 @@ import { ItemRank, ItemUpgradeCount } from './itemPicks.js';
 import { ITEM_SMITH } from '../content/itemProperties.js';
 import { planCardUpgrade, commitCardUpgrade } from './cardUpgradeService.js';
 import { blacksmithRules, blacksmithStoneDiscount, blacksmithPrices, tierUpgradePrice, CardUpgradePrice } from './blacksmithConfig.js';
+import { OfferSalted } from './upgradeOffer.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
 /** The `{plural}` token of the uiStrings rows: '' for exactly one, 's' otherwise. */
@@ -252,7 +253,7 @@ export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = 
 
 /**
  * Whether Blacksmith work on this card also raises its rank (W25 step 3): `blacksmith.upgradeRankChance` percent,
- * rolled on the run's seed, the card and its upgrade number, so it is the same however often it is asked.
+ * rolled on the run's seed, the card, its upgrade number and the visit's offer key, so it is the same however often it is asked during the stay.
  */
 export function UpgradeGrantsRank(run, instance) {
   return upgradeGrantsRankAt(run, instance, Array.isArray(instance?.upgradeSteps) ? instance.upgradeSteps.length : 0);
@@ -260,7 +261,7 @@ export function UpgradeGrantsRank(run, instance) {
 function upgradeGrantsRankAt(run, instance, steps) {
   const chance = blacksmithRules(run)?.upgradeRankChance;
   if (!(chance > 0) || !instance || EquipmentBound(instance)) return false;
-  return mulberry32(upgradeSeed(run.seed, `${instance.instanceId}#rankChance`, steps))() * 100 < chance;
+  return mulberry32(upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#rankChance`), steps))() * 100 < chance;
 }
 
 export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {}) {

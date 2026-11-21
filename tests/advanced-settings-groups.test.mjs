@@ -295,7 +295,7 @@ test('every setting has one home, and rows sharing a quantity sit together', asy
     const sub = advancedSubgroups(rows, section).find(group => group.rows.includes(row));
     return `${section} → ${sub.id}`;
   };
-  assert.equal(where('gameConfig.presentation.settingsWidthPercent'), 'Wireframes → Window', 'window size sits with the modal width it is clamped by');
+  assert.equal(where('gameConfig.presentation.settingsWidthPercent'), 'Developer → Layout', 'window size sits with the modal width it is clamped by (both in Developer › Layout, owner 2026-11-20)');
 
   // The battlefield / formation section was retired (owner, 2026-11-05): no tab, no rows.
   assert.ok(!ADVANCED_GROUP_IDS.includes('Battlefield'), 'there is no Battlefield tab');

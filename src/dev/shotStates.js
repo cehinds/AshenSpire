@@ -657,7 +657,7 @@ export function createShotStates(ctx) {
         const posed = saves.loadMeta();
         saves.saveMeta({ ...posed, settings: {
           ...(posed.settings || {}), settingsCategory: 'Advanced',
-          settingsAdvancedCategory: posed.settings?.settingsAdvancedCategory || 'Progression',
+          settingsAdvancedCategory: posed.settings?.settingsAdvancedCategory || 'Interface',
         } });
         const adopted = saves.loadMeta();
         ctx.setActiveMeta(adopted);

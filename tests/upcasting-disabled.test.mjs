@@ -14,16 +14,17 @@ test('upcasting is switched off', () => {
   assert.equal(UpcastingOffered(null), false);
 });
 
-test('the ask-to-upcast setting is hidden in every profile', () => {
-  const row = { key: 'askToUpcastAfterTarget', cat: 'Combat' };
-  assert.equal(settingsRowAvailable(row, { foundation: { mode: 'legacy' }, modules: { cards: {} } }), false);
-  assert.equal(settingsRowAvailable(row, { foundation: { mode: 'configured' }, modules: { cards: {} } }), false);
+test('the ask-to-upcast setting is gone and its prompt is off (settings tidy, owner 2026-11-20)', async () => {
+  const { SETTINGS_ROWS } = await import('../src/ui/models/SettingsRowsModel.js');
+  assert.ok(!SETTINGS_ROWS.some((row) => row.key === 'askToUpcastAfterTarget'), 'the row was dropped; no profile can show it');
+  const src = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(src, /const ASK_TO_UPCAST_AFTER_TARGET = false;/);
 });
 
 test('combat screen gates every Upcast entry point and sends no rank', () => {
   const src = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.ok(!/\bupcastOptions\(/.test(src), 'combat.js offers upcast only through UpcastingOffered');
   assert.match(src, /function wireUpcastControl\([^)]*\) \{\n\s*if \(combat\.combatExpansionVersion !== 2 \|\| !UpcastingOffered\(/);
-  assert.match(src, /askToUpcastAfterTarget && UpcastingOffered\(definition\)/);
+  assert.match(src, /ASK_TO_UPCAST_AFTER_TARGET && UpcastingOffered\(definition\)/);
   assert.match(src, /const rank = UPCASTING_ENABLED \? .* : undefined;/);
 });
