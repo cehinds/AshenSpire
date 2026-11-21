@@ -144,8 +144,13 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   const gained = UpgradeEffectGain(registries, before, after);
   if (gained) out.push(freeze({ label: t('cardUpgrade.change.also'), before: '', after: gained, adds: true }));
   else if (gained === null) push(t('cardUpgrade.change.effects'), UpgradeEffectWords(registries, before), UpgradeEffectWords(registries, after));
-  const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
+  // Keywords by their shown name ("Retain", not "retain"); Reaction is not a keyword but when the card is played, so it
+  // has its own row (it is a `form` step, cardUpgradeSteps.js UPGRADE_FAMILIES).
+  const keywordName = (kw) => registries.framework?.keywordDisplay?.(kw)?.name || cap(kw);
+  const words = (def) => (def?.keywords || []).map(keywordName).sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));
+  const timing = (def) => t((def?.tags || []).includes('trait:reaction') ? 'cardUpgrade.value.reaction' : 'cardUpgrade.value.ownTurn');
+  push(t('cardUpgrade.change.timing'), timing(before), timing(after));
   // A rising cost (costGrowth) and the steady step that stops it (review of #2819: the picker named no change for it).
   const rising = (def) => (def?.costGrowth?.stamina > 0 ? t('cardUpgrade.value.risingCost', { n: def.costGrowth.stamina }) : t('cardUpgrade.value.steadyCost'));
   push(t('cardUpgrade.change.risingCost'), rising(before), rising(after));

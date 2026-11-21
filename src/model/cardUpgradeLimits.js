@@ -149,20 +149,33 @@ function withSecondEffects(run, instance, applied, chosen, candidates, outcome, 
  */
 export function AuthoredFamilies(base) {
   const after = applyUpgradeSteps(base, [{ k: 'authored' }]);
-  const sum = (card, op, field = 'amount') => (card.effects || []).filter((e) => e.op === op).reduce((n, e) => n + (Number(e[field]) || 0) * (e.op === 'damage' && e.hits > 1 ? e.hits : 1), 0);
-  const stacks = (card) => (card.effects || []).filter((e) => e.op === 'applyStatus').reduce((n, e) => n + (Number(e.stacks) || 0), 0);
-  const flowOps = ['draw', 'discard', 'addCard', 'shuffleDiscardIntoDraw', 'exhaust', 'retain'];
-  const flow = (card) => (card.effects || []).filter((e) => flowOps.includes(e.op)).map((e) => `${e.op}:${e.amount ?? e.count ?? ''}`).sort().join();
-  const families = [];
+  const families = new Set();
+  const differs = (pick) => JSON.stringify(pick(base)) !== JSON.stringify(pick(after));
+  // Effects by op, whole (a formula amount, a ramp's `add`, hits and targets all count), judged per family.
+  const ops = (card, list) => (card.effects || []).filter((e) => list.includes(e.op)).map((e) => JSON.stringify(e)).sort();
   const lower = (key) => Number.isFinite(base[key]) && Number.isFinite(after[key]) && after[key] < base[key];
-  if (lower('cost') || lower('staminaCost') || lower('manaCost')) families.push('cost');
-  if (sum(after, 'damage') !== sum(base, 'damage')) families.push('damage');
-  if (sum(after, 'block') !== sum(base, 'block')) families.push('defense');
-  if (stacks(after) !== stacks(base) || sum(after, 'poiseDamage') !== sum(base, 'poiseDamage')) families.push('pressure');
-  if (flow(after) !== flow(base)) families.push('flow');
-  if ([...(after.keywords || [])].sort().join() !== [...(base.keywords || [])].sort().join()) families.push('keyword');
-  return families;
+  if (lower('cost') || lower('staminaCost') || lower('manaCost') || differs((card) => card.costGrowth || null)) families.add('cost');
+  const rampOf = (stat) => (card) => (card.ramp?.stat === stat ? card.ramp : null);
+  if (differs((card) => ops(card, OP_FAMILIES.damage)) || differs(rampOf('damage'))) families.add('damage');
+  if (differs((card) => ops(card, OP_FAMILIES.defense)) || differs(rampOf('block'))) families.add('defense');
+  if (differs((card) => ops(card, OP_FAMILIES.pressure))) families.add('pressure');
+  if (differs((card) => ops(card, OP_FAMILIES.flow))) families.add('flow');
+  if (differs((card) => [...(card.keywords || [])].sort())) families.add('keyword');
+  if (differs((card) => [...(card.cardTags ?? card.tags ?? [])].sort())) families.add('form');
+  // Any other effect, a ramp on another stat, or a text-only change: still one family, never none (review, 2026-11-20).
+  if (!families.size && (differs((card) => card.effects || []) || differs((card) => card.ramp || null))) families.add(OTHER_OP_FAMILY);
+  if (!families.size) families.add('form');
+  return [...families];
 }
+
+// The effect ops each family reads when it judges an authored upgrade (AuthoredFamilies).
+const OP_FAMILIES = Object.freeze({
+  damage: ['damage', 'changeAttribute'],
+  defense: ['block', 'gainWard', 'gainBarrier', 'heal', 'applyReflect', 'restorePoise', 'gainCounterStacks'],
+  pressure: ['applyStatus', 'poiseDamage', 'removeStatus'],
+  flow: ['draw', 'discard', 'addCard', 'shuffleDiscardIntoDraw', 'exhaust', 'retain', 'restoreStamina', 'restoreMana'],
+});
+const OTHER_OP_FAMILY = 'form';
 
 /**
  * nextUpgradeStep(run, instance, base, registries) → the step the next upgrade
