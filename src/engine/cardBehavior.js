@@ -4,6 +4,9 @@ import { gameContent } from '../model/gameProfile.js';
 // presentation, affordability and actual effect execution.
 import * as Triggers from './triggers.js';
 import { GearCardDefinition } from './gearHooks.js';
+import { RetreatRulesActive } from '../model/fixCoreMechanics.js';
+const growthSteps = (growth, uses) => growth.uncapped ? Math.floor(uses / (growth.perUse || 1))
+  : Math.min(growth.max ?? 3, Math.floor(uses / (growth.perUse || 1)));
 export function projectCardBehavior(ctx, instance, def, { applyGear = true } = {}) {
   let result=applyGear ? GearCardDefinition(ctx,def) : def;
   if(def.playLimit && (ctx.player.abilityRiders?.instanceUsesCombat?.[instance.instanceId] || 0)>=def.playLimit) result={...result,keywords:[...new Set([...(result.keywords || []),'unplayable'])]};
@@ -11,14 +14,44 @@ export function projectCardBehavior(ctx, instance, def, { applyGear = true } = {
   if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain && (changes.retainUntilTurn ?? ctx.turn)>=ctx.turn ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};
   if (result.costGrowth) {
     // Plays of this copy (review of #2819): an upgraded copy's plays never raise an unupgraded copy's cost. A projection with no instance id counts by card.
-    const riders=ctx.player.abilityRiders, plays=(instance.instanceId ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0, growth=result.costGrowth;
-    const steps=Math.min(growth.max ?? 3,Math.floor(plays/(growth.perUse || 1)));
+    // `perCard` (core.retreat, owner 2026-11-19): the count is the plays of this card id in the fight, not of one copy, since each granted copy is a fresh Exhausting
+    // instance. `uncapped` drops the default three-step ceiling (section 23: no hidden caps). Both live in the fight's saved rider counters.
+    const riders=ctx.player.abilityRiders, growth=result.costGrowth;
+    const plays=((instance.instanceId && !growth.perCard) ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0;
+    const steps=growthSteps(growth,plays);
     const baseStamina=result.resourceCosts?.sp ?? result.staminaCost ?? result.cost;
     const stamina=typeof baseStamina==='number' ? Math.max(0,baseStamina+steps*(growth.stamina || 0)) : baseStamina;
     const mana=Math.max(0,(result.manaCost || 0)+steps*(growth.mana || 0));
-    result={...result,cost:stamina,staminaCost:stamina,manaCost:mana,...(result.resourceCosts ? {resourceCosts:{...result.resourceCosts,sp:stamina,mp:mana}} : {})};
+    result={...result,costGrowthApplied:{stamina:steps*(growth.stamina || 0)},cost:stamina,staminaCost:stamina,manaCost:mana,...(result.resourceCosts ? {resourceCosts:{...result.resourceCosts,sp:stamina,mp:mana}} : {})};
+  }
+  if (RetreatRulesActive(ctx) && result.choiceModes?.some(mode => mode.costGrowth)) {
+    const riders = ctx.player.abilityRiders;
+    result = { ...result, choiceModes: result.choiceModes.map(mode => {
+      if (!mode.costGrowth) return mode;
+      const growth = mode.costGrowth;
+      const uses = (instance.instanceId && !growth.perCard ? riders?.instanceModeUsesCombat?.[instance.instanceId]?.[mode.id]
+        : riders?.cardModeUsesCombat?.[instance.cardId || def.id]?.[mode.id]) || 0;
+      const steps = growthSteps(growth, uses);
+      return { ...mode, costGrowthApplied: { stamina: steps * (growth.stamina || 0), mana: steps * (growth.mana || 0) } };
+    }) };
   }
   return result;
+}
+
+/** Price the selected mode's projected growth. Re-reading a projected definition never adds it twice. */
+export function ChoiceModeCard(def, choice = null) {
+  if (!def.choiceModes?.length) return def;
+  const selected = choice ?? def.selectedChoice ?? def.choiceModes[0].id;
+  const mode = def.choiceModes.find(row => row.id === selected);
+  if (!mode) throw new Error(`Unknown card mode '${selected}'`);
+  const growth = mode.costGrowthApplied || { stamina: 0, mana: 0 };
+  const prior = def.modeCostGrowthApplied || { stamina: 0, mana: 0 };
+  const base = def.resourceCosts?.sp ?? def.staminaCost ?? def.cost;
+  const stamina = typeof base === 'number' ? Math.max(0, base - prior.stamina + growth.stamina) : base;
+  const mana = Math.max(0, (def.resourceCosts?.mp ?? def.manaCost ?? 0) - prior.mana + growth.mana);
+  return { ...def, selectedChoice: selected, choiceModeGrowth: !!mode.costGrowthApplied, modeCostGrowthApplied: growth,
+    cost: def.cost === 'X' ? 'X' : stamina, staminaCost: stamina, manaCost: mana,
+    ...(def.resourceCosts ? { resourceCosts: { ...def.resourceCosts, sp: stamina, mp: mana } } : {}) };
 }
 /** Whether a card's `playIf` holds with `target` aimed. A card without one is always allowed. */
 export function PlayConditionMet(ctx, def, target=null, source=ctx.player) {

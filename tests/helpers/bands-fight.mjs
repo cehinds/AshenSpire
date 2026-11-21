@@ -17,6 +17,7 @@ export function bandsFight({ registries: selectedRegistries = registries, enemyI
   uncappedRun(run);
   const combat = createRunCombat({ registries: selectedRegistries, run, rng: createRng(seed), enemyIds, encounter });
   combat.player.stamina = stamina; combat.player.energy = stamina;
+  combat.player.mana = Math.max(combat.player.mana || 0, 3); // Gale Push costs 1 MP (owner 2026-11-19)
   dispatch(combat, { type: 'setReactions', enabled: false });
   combat.piles.hand.length = 0;
   hand.forEach((cardId, i) => combat.piles.hand.push({ instanceId: `qa${i}`, cardId, upgraded: false }));

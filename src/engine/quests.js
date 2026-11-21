@@ -29,7 +29,7 @@ import { RankUpCandidates } from '../model/rankUpService.js';
 
 /**
  * Why a choice is closed to this run right now: 'cinders' (the price is not in the purse), 'rankableCard' (it ranks a card up and no card
- * can rise), or null (open). The engine and both event screens read this one function, so they agree. `registries` is needed only for
+ * can rise), 'relicHeld' (it grants a relic the run already holds), or null (open). The engine and both event screens read this one function, so they agree. `registries` is needed only for
  * the rankableCard requirement; without it that requirement is not judged.
  */
 export function ChoiceUnmetRequirement(choice, run, registries = null) {
@@ -37,6 +37,7 @@ export function ChoiceUnmetRequirement(choice, run, registries = null) {
   if (!requires) return null;
   if (typeof requires.cinders === 'number' && !(run.cinders >= requires.cinders)) return 'cinders';
   if (requires.rankableCard === true && registries && !RankUpCandidates(registries, run).length) return 'rankableCard';
+  if (typeof requires.relicNotHeld === 'string' && (run.relics || []).includes(requires.relicNotHeld)) return 'relicHeld';
   return null;
 }
 
