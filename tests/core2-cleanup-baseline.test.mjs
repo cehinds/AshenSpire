@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-21 for reward uniqueness and card copy (#2928: reward-ranks.skipOwned, shops cardCopy, Scribe's Mirror): exactly 24 leaves moved,
+// all profile, snapshot and save hashes of the three current-profile scenarios; events, RNG, receipts and continuations unchanged.
 // Recaptured 2026-11-20 for effects.statusBlockWeight (the Dexterity status adds Block): 24 leaves moved against dev (after #2915), all of them profile, snapshot
 // and save hashes of the three current-profile scenarios; every event, RNG, receipt and continuation hash is unchanged.
 // Recaptured 2026-11-20 once for the version-free save hash: contentVersion is normalised before hashing, so only the 8 stored/loaded leaves moved; release cuts no longer move them.

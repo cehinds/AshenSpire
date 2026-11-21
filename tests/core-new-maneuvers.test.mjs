@@ -76,6 +76,8 @@ test('offers at map depth 4+ reach unowned higher-rank cards of each class over 
   for (const classId of Object.keys(classOf)) {
     const expected = [...colorless, ...classOf[classId]];
     const starterRun = live(classId, []);
+    // Owner 2026-11-20 (reward-ranks.skipOwned): an owned card is never offered, so eligibility is asked with the expected cards out of the deck.
+    starterRun.deck = starterRun.deck.filter(card => !expected.includes(card.cardId));
     for (const id of expected) assert.ok(gameProfileRewardPools(registries, starterRun).combatCards.includes(id), `${classId} is eligible for ${id}`);
     const seen = new Set();
     for (let seed = 1; seed <= 1200; seed++) {
