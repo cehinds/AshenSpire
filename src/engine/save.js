@@ -123,7 +123,7 @@ function classTreeReferenceProblems(run, registries) {
   return problems;
 }
 
-export function pendingRewardReferenceProblems(pending, registries) {
+export function PendingRewardReferenceProblems(pending, registries) {
   if (!pending) return [];
   const rewards = pending.rewards || {};
   const problems = [];
@@ -214,7 +214,7 @@ function grantTaken(run, receiptId) {
   return Object.values(run?.classMilestones || {}).some(row => Object.values(row?.grants || {})
     .some(grant => grant?.id === receiptId && grant.state !== 'pending'));
 }
-export function dropRetiredFeatOptions(run) {
+export function DropRetiredFeatOptions(run) {
   const rows = run?.pendingReward?.rewards?.classMilestoneRewards;
   if (!Array.isArray(rows)) return;
   const offers = run.classMilestoneOffers && typeof run.classMilestoneOffers === 'object' ? run.classMilestoneOffers : null;
@@ -552,7 +552,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // every fight an older build saved with its three cells. The ledger is
         // not open yet, so the note is written below, once it is.
         dropRetiredStatuses(run);
-        dropRetiredFeatOptions(run);
+        DropRetiredFeatOptions(run);
         trimmedLoadout = [
           ...trimExtraSets(registries, run.loadout),
           ...[run.combatEntered, run.combatPendingOutcome]
@@ -566,7 +566,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         if (snapshotReferenceProblems.length) {
           throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
         }
-        const pendingReferenceProblems = pendingRewardReferenceProblems(run.pendingReward, registries);
+        const pendingReferenceProblems = PendingRewardReferenceProblems(run.pendingReward, registries);
         if (pendingReferenceProblems.length) {
           throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
         }
