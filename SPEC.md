@@ -3469,7 +3469,12 @@ Shipped Core 2 rolls no Perception for intents and shows no hit chance (`percept
 - Discounts apply on the player's turn (floor 1) and to enemy-turn reactions (floor 0). Exception: Counter, Reaction cost.
 - Not discounted: the other resource lane, wrong-classification cards, a stance entered by that card, zero-cost and X-cost cards.
 - At most one same-stance cut; Mana Surge's separate rule stays without stacking a reaction or Adept cut. The same-stance Magic Adept cut and the successive-Spell Mana cut are one MP reduction when both apply (successive-Spell timing unchanged across mirrored stance changes). Range/Advance charges and upcast prices are independent.
-- **Mirrored spells** (sceptre/staff Strike, Ward, Channel; Arcane Spark) take the basic card's stance and type for matchups but stay Spells and Cantrips: corner shows the spell mark; footer shows the spell mark, the basic card's mark and its word (e.g. "ATTACK", "SMASH"); they count as Spells for the successive-Spell Mana cut. Others say "SPELL". Core 2 only (Current/v2 keeps the casting stance and old faces).
+- **Mirrored spells** (sceptre/staff Strike, Ward, Channel; Arcane Spark) take the basic card's stance and type for matchups but stay Spells and Cantrips: corner shows the spell mark; they count as Spells for the successive-Spell Mana cut. Core 2 only (Current/v2 keeps the casting stance and old faces).
+- **Spell categories** (owner, 2026-11-20; `spellTraditionsVersion: 1`; [Arcane and Divine rules](docs/ARCANE-DIVINE-RULES.md)). A Spell's school sets its category: Arcane (Force, Alteration, Illusion), Divine (Divine, Decay) or Shared (Fire, Frost, Lightning, Earth). A Spell with no school is a plain Spell. Every category is a Spell for every Spell rule.
+  - Footer: Spell mark, then the Arcane or Divine mark, then a mirrored spell's basic mark; word "Arcane", "Divine", or "Spell" for Shared and plain.
+  - A Spell played into a stance (every player Spell card, mirrored ones included) deals Prepared's damage bonus (+25%), never its stance's (Attack +20%). Smash Poise and Sweep splash still follow the stance.
+  - Gear can target `spell`, `arcaneSpell` or `divineSpell`. Arcane and Divine bonuses also reach Shared spells; on a Shared spell only the larger of the two counts per field, and `spell` bonuses add on top. A plain Spell gets `spell` bonuses only.
+  - Off-role cards (Arcane healing, buffs or debuffs; Divine damage) are weaker, rarer and dearer: about 60% of the effect, +1 MP, one rarity tier higher.
 
 ### Rest sites, progression and combat pacing
 

@@ -17,7 +17,7 @@ Owner brief, 2026-11-20. Rule for SPEC.md, *Stance discounts and spell cards*. A
 | Shared | Fire, Frost, Lightning, Earth | Spell mark + "SPELL" |
 
 - A card with no school is a plain Spell, footer "SPELL" (owner, 2026-11-20). It gets "Spell" bonuses only, never Arcane or Divine ones, and scales with the higher of INT and WIS.
-- Mirrored spells (sceptre/staff Strike, Ward, Channel; Arcane Spark) keep their basic card's mark and word, and take their category from their school, like any other Spell.
+- Mirrored spells (sceptre/staff Strike, Ward, Channel; Arcane Spark) take their category from their school, like any other Spell. Footer: Spell mark, category mark (Arcane or Divine only), the basic card's mark, then the category word.
 
 ## 3. Scaling
 
