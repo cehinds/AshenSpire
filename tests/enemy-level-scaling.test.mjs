@@ -3,11 +3,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { gunzipSync } from 'node:zlib';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
-import { characterSettings, resolveGameAuthor, enemyFightLevel, enemyLevel, resolveEnemyAttributes, enemyPools } from '../engine/kernel/gameConfig.js';
+import { characterSettings, resolveGameAuthor, enemyFightLevel, enemyLevel, enemyEffectiveLevel, resolveEnemyAttributes, enemyPools, canonicalGameJSON } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, validateGameProfileSnapshot } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
@@ -106,4 +108,35 @@ test('no boss or elite exceeds SP 3 and no minion SP 2; elite and boss Dex and W
     assert.ok(enemy.maxStamina <= cap, `${e.id} SP ${enemy.maxStamina}`);
     if (e.tier !== 'minion') assert.ok(enemy.ownAttributes.dexterity <= 4 && enemy.ownAttributes.wisdom <= 4, `${e.id} ${JSON.stringify(enemy.ownAttributes)}`);
   }
+});
+
+// An older snapshot carries no enemyLevelScaling: its fights keep today's levels and never move with the floor.
+const plain = value => JSON.parse(JSON.stringify(value));
+function withoutScaling() {
+  const old = plain(resolveGameProfile('default'));
+  delete old.modules.characters.enemyLevelScaling;
+  const { hash: _hash, ...payload } = old;
+  old.hash = `sha256:${createHash('sha256').update(canonicalGameJSON(payload)).digest('hex')}`;
+  return resolveGameProfile(old);
+}
+
+test('an older snapshot without enemyLevelScaling fights as before, whatever the floor', () => {
+  const old = coreRegistries(withoutScaling());
+  const oldSettings = characterSettings(old.gameProfile.modules);
+  for (const [id, act] of [['wanderingSoldier', 1], ['courtDuelist', 2], ['stitchedKing', 2]]) {
+    const [low, high] = [2, 8].map(floor => fightEnemy(old, id, act, floor));
+    assert.ok(!('levelStep' in low), `${id} has no level step`);
+    assert.deepEqual(plain(high), plain(low), `${id} does not move with the floor`);
+    const row = old.gameProfile.content.enemies.find(e => e.id === id);
+    assert.equal(low.level, enemyEffectiveLevel(row, oldSettings, act) ?? enemyLevel(row, oldSettings), id);
+    assert.equal(low.ratings.ar, low.attributes.strength, `${id} has no gear step`);
+  }
+});
+
+test('a historical saved profile fights the same on every floor', () => {
+  const historical = validateGameProfileSnapshot(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url)))));
+  const registries = coreRegistries(historical);
+  const [low, high] = [2, 8].map(floor => fightEnemy(registries, 'wanderingSoldier', 1, floor));
+  assert.ok(!('levelStep' in low));
+  assert.deepEqual(plain(high), plain(low));
 });
