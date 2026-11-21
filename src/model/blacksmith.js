@@ -24,6 +24,7 @@ import { coreSmithingActive } from './smithingCore.js';
 import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
 import { mulberry32 } from './rng.js';
 import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { CardCopyCandidates, CopyOwnedCard, CardCopyUsesLeft } from './cardCopyService.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
 import { upgradeCount } from './cardUpgrade.js';
 import { PlanCategoryChange, ApplyCategoryChange, CategoryChoices } from './smithCategory.js';
@@ -47,7 +48,8 @@ export const blacksmithRevision = (run) => run.shopStock?.tradeRevision || 0;
  * What a Core (card ranks on) Blacksmith offers (owner ask 2026-10-31): the equipment upgrade, the card upgrade, a card rank-up,
  * and two shelves (armaments rolled at tiers, weapon arts). Nothing else.
  */
-export const CORE_BLACKSMITH_OFFERINGS = Object.freeze(['upgrade', 'upgradeArt', 'rankUp', 'armaments', 'weaponArts']);
+// `cardCopy` (owner 2026-11-20) is laid out only by some Blacksmiths (shops.json blacksmith.cardCopy, blacksmithStock.js).
+export const CORE_BLACKSMITH_OFFERINGS = Object.freeze(['upgrade', 'upgradeArt', 'rankUp', 'armaments', 'weaponArts', 'cardCopy']);
 
 /**
  * Core (card ranks on) is an allow-list, not a deny-list: Core has no sigils, no copy-stacking, no weapon-art mounts
@@ -336,11 +338,42 @@ export function serviceCandidates(registries, run, id) {
     case 'upgrade': return coreSmithingActive(run) ? SmithUpgradeItems(registries, run) : smithingPlan(registries, run).candidates;
     case 'upgradeArt': return upgradeableArts(registries, run);
     case 'rankUp': return rankUpCards(registries, run);
+    case 'cardCopy': return CardCopyUsesLeft(run.shopStock?.cardCopy) > 0 ? CardCopyCandidates(registries, run) : [];
     default: return [];
   }
 }
 
 /** The sentence a service with nothing to act on shows (uiStrings `blacksmith.idle.<id>`). */
+/**
+ * CardCopyPlan(registries, run, instanceId) → the quote for copying owned card `instanceId` at this Blacksmith's copy shelf
+ * (owner 2026-11-20): `{ ok, reason, instanceId, name, cost, stones: 0, usesLeft, revision }`.
+ */
+export function CardCopyPlan(registries, run, instanceId) {
+  const shelf = run.shopStock?.cardCopy || null;
+  const card = CardCopyCandidates(registries, run).find((row) => row.instanceId === instanceId) || null;
+  const cost = Number.isSafeInteger(shelf?.cost) ? shelf.cost : 0;
+  const usesLeft = CardCopyUsesLeft(shelf);
+  const name = card ? cardName(registries, card.cardId) : '';
+  let reason = '';
+  if (!blacksmithOffers(run, 'cardCopy') || !shelf) reason = say('blacksmith.refuse.notOffered');
+  else if (usesLeft < 1) reason = say('blacksmith.idle.cardCopy');
+  else if (!card) reason = say('shop.refuse.gone');
+  else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
+  return { ok: !reason, reason, instanceId, name, cost, stones: 0, usesLeft, revision: run.shopStock?.tradeRevision || 0 };
+}
+
+/** CommitCardCopy(registries, run, quote) → { instance, spent }. The copy lands in the library; the shelf loses one use. */
+export function CommitCardCopy(registries, run, quote) {
+  const plan = CardCopyPlan(registries, run, quote.instanceId);
+  if (!plan.ok) throw new Error(plan.reason);
+  stale(quote, plan);
+  const instance = CopyOwnedCard(registries, run, plan.instanceId);
+  run.cinders -= plan.cost;
+  run.shopStock.cardCopy = { ...run.shopStock.cardCopy, usesLeft: plan.usesLeft - 1 };
+  bump(run, plan);
+  return { instance, instanceId: instance.instanceId, id: instance.cardId, spent: plan.cost };
+}
+
 export function serviceIdleReason(id) {
   if (id === 'upgradeArt') return say('blacksmith.idle.upgradeCard');
   return say(`blacksmith.idle.${id}`);
