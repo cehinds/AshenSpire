@@ -36,7 +36,7 @@ test('rank zero is hidden and positive ranks are written out in the face rank la
         assert.match(illustratedCardHtml(playingCardModel(reg,{cardId,abilityRank}),{rules:''}),new RegExp(`>Rank ${abilityRank}</span>`));}
       assert.equal(face.querySelector('.card-ability-type'), null);
       const model = playingCardModel(reg, { cardId, abilityRank });
-      if (model.sigils.traditions) assert.equal(face.querySelectorAll('.combat-sigil-tradition').length, model.sigils.traditions.length);
+      if (model.sigils.traditions) assert.equal(face.querySelectorAll('.combat-sigil-tradition').length, ['arcane', 'divine'].includes(model.sigils.category) ? 1 : 0);
       else assert.ok(face.querySelector('.combat-sigil-action'));
       assert.ok(face.getAttribute('aria-label').includes(abilityRank === 0 ? label : label === 'Cantrip' ? 'Spell' : 'Combat Maneuver'));
       assert.ok(face.getAttribute('aria-label').includes(`rank ${abilityRank}`));
