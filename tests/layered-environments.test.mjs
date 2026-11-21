@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LAYERED_SCENES, INTRO_LAYERED_SCENES } from '../src/content/layeredEnvironments.js';
-import { layeredCombatScene } from '../src/model/layeredEnvironments.js';
+import { layeredCombatScene, LayeredDialogueScene, REGION_SETTINGS } from '../src/model/layeredEnvironments.js';
+import { ENVIRONMENTS } from '../src/content/environments.js';
+import { readFileSync } from 'node:fs';
 
 test('every authored Crownfall site resolves exactly across save/load', () => {
   assert.ok(Object.keys(INTRO_LAYERED_SCENES).length > 0);
@@ -89,4 +91,31 @@ test('explicit solo cursors choose their layered scene', async () => {
   assert.equal(layeredCombatScene(solo).id, 'castle-grounds');
   assert.equal(layeredCombatScene({ ...solo, mapNodeId: 'crownfall/forge' }).id, 'intro-forge');
   assert.equal(JSON.stringify(snapshot), original);
+});
+
+// Owner bug, 2026-11-20: an event node resolved to an atlas painting, fitted to
+// the dialogue's scene window, and left a black band under it on a phone. The
+// conversation plate is always the layered generator, themed by the node.
+test('every conversation, in every region, gets a layered plate seeded by its node', () => {
+  for (const region of ENVIRONMENTS) {
+    const run = (nodeId) => ({ seedString: 'DIALOGUE', environmentRegionId: region.id, mapNodeId: nodeId,
+      mapGraph: { nodes: { [nodeId]: { id: nodeId, type: 'event' } } } });
+    assert.equal(layeredCombatScene(run('evt-a')), null, `${region.id}: an event node has no layered combat scene`);
+    for (const nodeId of ['evt-a', 'evt-b', 'evt-c', 'evt-d', 'evt-e', 'evt-f']) {
+      const scene = LayeredDialogueScene(run(nodeId));
+      assert.ok(scene?.layers.some(layer => layer.role === 'ground'), `${region.id}/${nodeId}: layered plate`);
+      assert.deepEqual(scene, LayeredDialogueScene(JSON.parse(JSON.stringify(run(nodeId)))), 'stable across reloads');
+      const own = Object.values(REGION_SETTINGS[region.id] || {});
+      if (own.length) assert.ok(own.some(id => scene.id.startsWith(id)), `${region.id}: ${scene.id} is a scene of the region`);
+    }
+  }
+  // A node with its own layered combat scene keeps it.
+  const crown = { seedString: 'DIALOGUE', mapNodeId: 'crownfall' };
+  assert.equal(LayeredDialogueScene(crown).id, layeredCombatScene(crown).id);
+});
+
+test('the dialogue screen draws its plate from the layered generator, not the atlas', () => {
+  const source = readFileSync(new URL('../src/ui/screens/dialogue.js', import.meta.url), 'utf8');
+  assert.match(source, /layeredEnvironmentHtml\(plateScene\)/);
+  assert.doesNotMatch(source, /combatBackdropHtml/);
 });
