@@ -19,6 +19,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const PACK = join(ROOT, 'games/ashenspire/packs/core');
 export const OUTPUT = join(PACK, 'enemyLevelCards.json');
 export const LEVEL_CARD_SP = 2;
+// A level card is a special move: never twice in a row, so it adds variety instead of replacing the rotation.
+export const LEVEL_CARD_MAX_CONSECUTIVE = 1;
 export const DAMAGE_CAP = 1.6;
 export const UNIQUE_BOOST = 1.5;
 export const SHARED_WEIGHT = 25;
@@ -219,6 +221,7 @@ function finishMove(numbers, effects, weight)
         ...(effects.length ? { effects } : {}),
         sp: LEVEL_CARD_SP,
         weight,
+        maxConsecutive: LEVEL_CARD_MAX_CONSECUTIVE,
     };
 }
 

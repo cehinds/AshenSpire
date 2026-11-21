@@ -9,7 +9,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -29,7 +30,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -49,7 +51,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -69,7 +72,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -81,7 +85,8 @@
         "intent": "block",
         "block": 9,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -93,7 +98,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -107,7 +113,8 @@
         "intent": "attack",
         "damage": 9,
         "sp": 2,
-        "weight": 60
+        "weight": 60,
+        "maxConsecutive": 1
       }
     },
     {
@@ -127,7 +134,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -148,7 +156,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -168,7 +177,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -181,7 +191,8 @@
         "block": 5,
         "damage": 4,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -195,7 +206,8 @@
         "intent": "attack",
         "damage": 23,
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -215,7 +227,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -235,7 +248,8 @@
           }
         ],
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -255,7 +269,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -267,7 +282,8 @@
         "intent": "block",
         "block": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -279,7 +295,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -300,7 +317,8 @@
           }
         ],
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -325,7 +343,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -350,7 +369,8 @@
           }
         ],
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -375,7 +395,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -395,7 +416,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -409,7 +431,8 @@
         "intent": "attack",
         "damage": 26,
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -429,7 +452,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -449,7 +473,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -469,7 +494,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -488,7 +514,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -500,7 +527,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -515,7 +543,8 @@
         "damage": 8,
         "hits": 2,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -535,7 +564,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -555,7 +585,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -575,7 +606,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -587,7 +619,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -602,7 +635,8 @@
         "damage": 6,
         "hits": 2,
         "sp": 2,
-        "weight": 65
+        "weight": 65,
+        "maxConsecutive": 1
       }
     },
     {
@@ -627,7 +661,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -648,7 +683,8 @@
           }
         ],
         "sp": 2,
-        "weight": 65
+        "weight": 65,
+        "maxConsecutive": 1
       }
     },
     {
@@ -673,7 +709,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -692,7 +729,8 @@
           }
         ],
         "sp": 2,
-        "weight": 35
+        "weight": 35,
+        "maxConsecutive": 1
       }
     },
     {
@@ -712,7 +750,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -734,7 +773,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -754,7 +794,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -774,7 +815,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -794,7 +836,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -806,7 +849,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -818,7 +862,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -832,7 +877,8 @@
         "intent": "attack",
         "damage": 30,
         "sp": 2,
-        "weight": 60
+        "weight": 60,
+        "maxConsecutive": 1
       }
     },
     {
@@ -852,7 +898,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -872,7 +919,8 @@
           }
         ],
         "sp": 2,
-        "weight": 60
+        "weight": 60,
+        "maxConsecutive": 1
       }
     },
     {
@@ -892,7 +940,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -904,7 +953,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -918,7 +968,8 @@
         "intent": "attack",
         "damage": 14,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -938,7 +989,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -950,7 +1002,8 @@
         "intent": "block",
         "block": 14,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -970,7 +1023,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -990,7 +1044,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1002,7 +1057,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1017,7 +1073,8 @@
         "damage": 6,
         "hits": 3,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1037,7 +1094,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1058,7 +1116,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1078,7 +1137,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1090,7 +1150,8 @@
         "intent": "block",
         "block": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1102,7 +1163,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1116,7 +1178,8 @@
         "intent": "attack",
         "damage": 17,
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1136,7 +1199,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1156,7 +1220,8 @@
           }
         ],
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1176,7 +1241,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1195,7 +1261,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1207,7 +1274,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1234,7 +1302,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1259,7 +1328,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1279,7 +1349,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1304,7 +1375,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1330,7 +1402,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1350,7 +1423,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1372,7 +1446,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1392,7 +1467,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1405,7 +1481,8 @@
         "damage": 6,
         "hits": 2,
         "sp": 2,
-        "weight": 60
+        "weight": 60,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1425,7 +1502,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1437,7 +1515,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1452,7 +1531,8 @@
         "damage": 6,
         "hits": 2,
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1472,7 +1552,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1492,7 +1573,8 @@
           }
         ],
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1512,7 +1594,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1524,7 +1607,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1538,7 +1622,8 @@
         "intent": "attack",
         "damage": 21,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1558,7 +1643,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1578,7 +1664,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1598,7 +1685,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1610,7 +1698,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1622,7 +1711,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1637,7 +1727,8 @@
         "damage": 8,
         "hits": 3,
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1657,7 +1748,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1677,7 +1769,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1697,7 +1790,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1716,7 +1810,8 @@
           }
         ],
         "sp": 2,
-        "weight": 10
+        "weight": 10,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1728,7 +1823,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1743,7 +1839,8 @@
         "damage": 8,
         "hits": 3,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1763,7 +1860,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1783,7 +1881,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1803,7 +1902,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1823,7 +1923,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1835,7 +1936,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1850,7 +1952,8 @@
         "damage": 6,
         "hits": 2,
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1875,7 +1978,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1896,7 +2000,8 @@
           }
         ],
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1921,7 +2026,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1941,7 +2047,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -1955,7 +2062,8 @@
         "intent": "attack",
         "damage": 20,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1975,7 +2083,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -1987,7 +2096,8 @@
         "intent": "block",
         "block": 17,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2007,7 +2117,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2028,7 +2139,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2040,7 +2152,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2055,7 +2168,8 @@
         "damage": 9,
         "hits": 3,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2075,7 +2189,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2087,7 +2202,8 @@
         "intent": "block",
         "block": 18,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2107,7 +2223,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2127,7 +2244,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2139,7 +2257,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2154,7 +2273,8 @@
         "damage": 12,
         "hits": 3,
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2174,7 +2294,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2195,7 +2316,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2215,7 +2337,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2234,7 +2357,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2246,7 +2370,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2260,7 +2385,8 @@
         "intent": "attack",
         "damage": 18,
         "sp": 2,
-        "weight": 55
+        "weight": 55,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2280,7 +2406,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2300,7 +2427,8 @@
           }
         ],
         "sp": 2,
-        "weight": 55
+        "weight": 55,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2320,7 +2448,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2332,7 +2461,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2365,7 +2495,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2385,7 +2516,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2397,7 +2529,8 @@
         "intent": "attack",
         "damage": 14,
         "sp": 2,
-        "weight": 60
+        "weight": 60,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2417,7 +2550,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2437,7 +2571,8 @@
           }
         ],
         "sp": 2,
-        "weight": 60
+        "weight": 60,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2449,7 +2584,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2471,7 +2607,8 @@
           }
         ],
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2491,7 +2628,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2504,7 +2642,8 @@
         "damage": 8,
         "hits": 2,
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2524,7 +2663,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2536,7 +2676,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2550,7 +2691,8 @@
         "intent": "attack",
         "damage": 24,
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2570,7 +2712,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2590,7 +2733,8 @@
           }
         ],
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2610,7 +2754,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2622,7 +2767,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2634,7 +2780,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2648,7 +2795,8 @@
         "intent": "attack",
         "damage": 23,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2668,7 +2816,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2687,7 +2836,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2707,7 +2857,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2726,7 +2877,8 @@
           }
         ],
         "sp": 2,
-        "weight": 10
+        "weight": 10,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2738,7 +2890,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2761,7 +2914,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2781,7 +2935,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2801,7 +2956,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2821,7 +2977,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2841,7 +2998,8 @@
           }
         ],
         "sp": 2,
-        "weight": 35
+        "weight": 35,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2853,7 +3011,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2868,7 +3027,8 @@
         "damage": 8,
         "hits": 2,
         "sp": 2,
-        "weight": 55
+        "weight": 55,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2888,7 +3048,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2909,7 +3070,8 @@
           }
         ],
         "sp": 2,
-        "weight": 55
+        "weight": 55,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2929,7 +3091,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2941,7 +3104,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -2955,7 +3119,8 @@
         "intent": "attack",
         "damage": 17,
         "sp": 2,
-        "weight": 50
+        "weight": 50,
+        "maxConsecutive": 1
       }
     },
     {
@@ -2980,7 +3145,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3005,7 +3171,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3030,7 +3197,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3049,7 +3217,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3069,7 +3238,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -3083,7 +3253,8 @@
         "intent": "attack",
         "damage": 33,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3103,7 +3274,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3123,7 +3295,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3143,7 +3316,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3155,7 +3329,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3167,7 +3342,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -3182,7 +3358,8 @@
         "damage": 17,
         "hits": 3,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3202,7 +3379,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3223,7 +3401,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3243,7 +3422,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3255,7 +3435,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -3270,7 +3451,8 @@
         "damage": 18,
         "hits": 2,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3290,7 +3472,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3311,7 +3494,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3331,7 +3515,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3343,7 +3528,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3355,7 +3541,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -3369,7 +3556,8 @@
         "intent": "attack",
         "damage": 11,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3389,7 +3577,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3401,7 +3590,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3421,7 +3611,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3441,7 +3632,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3461,7 +3653,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -3483,7 +3676,8 @@
           }
         ],
         "sp": 2,
-        "weight": 35
+        "weight": 35,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3503,7 +3697,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3515,7 +3710,8 @@
         "intent": "attack",
         "damage": 9,
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3535,7 +3731,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3547,7 +3744,8 @@
         "intent": "block",
         "block": 9,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3567,7 +3765,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -3589,7 +3788,8 @@
           }
         ],
         "sp": 2,
-        "weight": 55
+        "weight": 55,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3609,7 +3809,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3628,7 +3829,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3648,7 +3850,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3660,7 +3863,8 @@
         "intent": "attack",
         "damage": 8,
         "sp": 2,
-        "weight": 55
+        "weight": 55,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3673,7 +3877,8 @@
         "block": 5,
         "damage": 4,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -3687,7 +3892,8 @@
         "intent": "attack",
         "damage": 11,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3712,7 +3918,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3724,7 +3931,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3749,7 +3957,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3769,7 +3978,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3789,7 +3999,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -3803,7 +4014,8 @@
         "intent": "attack",
         "damage": 26,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3823,7 +4035,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3835,7 +4048,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3855,7 +4069,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3875,7 +4090,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3887,7 +4103,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -3901,7 +4118,8 @@
         "intent": "attack",
         "damage": 26,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3927,7 +4145,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3947,7 +4166,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3972,7 +4192,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -3997,7 +4218,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4011,7 +4233,8 @@
         "intent": "attack",
         "damage": 27,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4031,7 +4254,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4043,7 +4267,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4063,7 +4288,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4083,7 +4309,8 @@
           }
         ],
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4096,7 +4323,8 @@
         "block": 5,
         "damage": 4,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4110,7 +4338,8 @@
         "intent": "attack",
         "damage": 24,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4130,7 +4359,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4142,7 +4372,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4162,7 +4393,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4182,7 +4414,8 @@
           }
         ],
         "sp": 2,
-        "weight": 35
+        "weight": 35,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4194,7 +4427,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4208,7 +4442,8 @@
         "intent": "attack",
         "damage": 20,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4228,7 +4463,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4240,7 +4476,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 15
+        "weight": 15,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4260,7 +4497,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4280,7 +4518,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4292,7 +4531,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4306,7 +4546,8 @@
         "intent": "attack",
         "damage": 30,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4326,7 +4567,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4346,7 +4588,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4366,7 +4609,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4378,7 +4622,8 @@
         "intent": "block",
         "block": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4390,7 +4635,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4404,7 +4650,8 @@
         "intent": "attack",
         "damage": 27,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4424,7 +4671,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4444,7 +4692,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4464,7 +4713,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4489,7 +4739,8 @@
           }
         ],
         "sp": 2,
-        "weight": 15
+        "weight": 15,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4501,7 +4752,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4515,7 +4767,8 @@
         "intent": "attack",
         "damage": 11,
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4535,7 +4788,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4547,7 +4801,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4567,7 +4822,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4587,7 +4843,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4607,7 +4864,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4629,7 +4887,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4649,7 +4908,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4661,7 +4921,8 @@
         "intent": "attack",
         "damage": 11,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4681,7 +4942,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4693,7 +4955,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4713,7 +4976,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4740,7 +5004,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4765,7 +5030,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4777,7 +5043,8 @@
         "intent": "attack",
         "damage": 11,
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4802,7 +5069,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4814,7 +5082,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4834,7 +5103,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4856,7 +5126,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4876,7 +5147,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4888,7 +5160,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4908,7 +5181,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4920,7 +5194,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4932,7 +5207,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -4946,7 +5222,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4966,7 +5243,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4978,7 +5256,8 @@
         "intent": "attack",
         "damage": 9,
         "sp": 2,
-        "weight": 35
+        "weight": 35,
+        "maxConsecutive": 1
       }
     },
     {
@@ -4998,7 +5277,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5018,7 +5298,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5038,7 +5319,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -5052,7 +5334,8 @@
         "intent": "attack",
         "damage": 27,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5072,7 +5355,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5084,7 +5368,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5104,7 +5389,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5124,7 +5410,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5136,7 +5423,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -5163,7 +5451,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5189,7 +5478,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5201,7 +5491,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5226,7 +5517,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5238,7 +5530,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5263,7 +5556,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -5277,7 +5571,8 @@
         "intent": "attack",
         "damage": 26,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5297,7 +5592,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5309,7 +5605,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 15
+        "weight": 15,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5329,7 +5626,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5349,7 +5647,8 @@
           }
         ],
         "sp": 2,
-        "weight": 35
+        "weight": 35,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5362,7 +5661,8 @@
         "block": 5,
         "damage": 4,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -5376,7 +5676,8 @@
         "intent": "attack",
         "damage": 27,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5396,7 +5697,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5408,7 +5710,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5428,7 +5731,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5453,7 +5757,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5465,7 +5770,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -5479,7 +5785,8 @@
         "intent": "attack",
         "damage": 30,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5499,7 +5806,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5511,7 +5819,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5531,7 +5840,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5551,7 +5861,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5564,7 +5875,8 @@
         "block": 5,
         "damage": 4,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -5578,7 +5890,8 @@
         "intent": "attack",
         "damage": 30,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5598,7 +5911,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5618,7 +5932,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5638,7 +5953,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5650,7 +5966,8 @@
         "intent": "block",
         "block": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5662,7 +5979,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -5676,7 +5994,8 @@
         "intent": "attack",
         "damage": 30,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5696,7 +6015,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5716,7 +6036,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5736,7 +6057,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5761,7 +6083,8 @@
           }
         ],
         "sp": 2,
-        "weight": 15
+        "weight": 15,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5773,7 +6096,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -5787,7 +6111,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5807,7 +6132,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5819,7 +6145,8 @@
         "intent": "attack",
         "damage": 11,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5839,7 +6166,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5859,7 +6187,8 @@
           }
         ],
         "sp": 2,
-        "weight": 35
+        "weight": 35,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5879,7 +6208,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -5893,7 +6223,8 @@
         "intent": "attack",
         "damage": 11,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5918,7 +6249,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5938,7 +6270,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5963,7 +6296,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -5982,7 +6316,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6002,7 +6337,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -6024,7 +6360,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6044,7 +6381,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6057,7 +6395,8 @@
         "damage": 3,
         "hits": 3,
         "sp": 2,
-        "weight": 45
+        "weight": 45,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6077,7 +6416,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6090,7 +6430,8 @@
         "block": 5,
         "damage": 4,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -6104,7 +6445,8 @@
         "intent": "attack",
         "damage": 29,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6130,7 +6472,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6150,7 +6493,8 @@
           }
         ],
         "sp": 2,
-        "weight": 35
+        "weight": 35,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6175,7 +6519,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6200,7 +6545,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -6214,7 +6560,8 @@
         "intent": "attack",
         "damage": 27,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6234,7 +6581,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6254,7 +6602,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6274,7 +6623,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6286,7 +6636,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6298,7 +6649,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -6312,7 +6664,8 @@
         "intent": "attack",
         "damage": 29,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6332,7 +6685,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6344,7 +6698,8 @@
         "intent": "block",
         "block": 11,
         "sp": 2,
-        "weight": 15
+        "weight": 15,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6364,7 +6719,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6384,7 +6740,8 @@
           }
         ],
         "sp": 2,
-        "weight": 40
+        "weight": 40,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6397,7 +6754,8 @@
         "block": 5,
         "damage": 4,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -6411,7 +6769,8 @@
         "intent": "attack",
         "damage": 24,
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6431,7 +6790,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6456,7 +6816,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6476,7 +6837,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6496,7 +6858,8 @@
           }
         ],
         "sp": 2,
-        "weight": 35
+        "weight": 35,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6509,7 +6872,8 @@
         "block": 5,
         "damage": 4,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -6523,7 +6887,8 @@
         "intent": "attack",
         "damage": 27,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6543,7 +6908,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6555,7 +6921,8 @@
         "intent": "block",
         "block": 15,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6575,7 +6942,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6595,7 +6963,8 @@
           }
         ],
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6607,7 +6976,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ],
@@ -6621,7 +6991,8 @@
         "intent": "attack",
         "damage": 30,
         "sp": 2,
-        "weight": 30
+        "weight": 30,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6641,7 +7012,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6661,7 +7033,8 @@
           }
         ],
         "sp": 2,
-        "weight": 20
+        "weight": 20,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6681,7 +7054,8 @@
           }
         ],
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6693,7 +7067,8 @@
         "intent": "block",
         "block": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     },
     {
@@ -6705,7 +7080,8 @@
         "intent": "attack",
         "damage": 12,
         "sp": 2,
-        "weight": 25
+        "weight": 25,
+        "maxConsecutive": 1
       }
     }
   ]
