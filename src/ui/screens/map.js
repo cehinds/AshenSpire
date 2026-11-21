@@ -34,7 +34,7 @@ import { mountMapBoard } from '../components/mapboard.js';
 import { resolveMapMode } from '../../model/map/mapknowledge.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
 import { seatNameOf } from '../components/runHud.js';
-import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
 import { mountRunPotions } from '../components/runPotions.js';
 import { button, el, popover, row } from '../kit/index.js';
 import { t } from '../strings.js';
@@ -61,6 +61,8 @@ let liveMapKeys = null;
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
 let liveMapViewportRelease = null;
+// The mounted map's own HUD redraw (RefreshMapHud below): the band rebuilt with this mount's wiring.
+let liveMapHudRefresh = null;
 
 // THE COMMIT SAVE, OFF THE TAP (W5a). A settled-board commit used to run the
 // whole run save synchronously inside the camera's own callback, so a tap paid
@@ -123,6 +125,17 @@ export function releaseMapScreen() {
   liveMapBoard = null;
   liveMapViewportRelease?.();
   liveMapViewportRelease = null;
+  liveMapHudRefresh = null;
+}
+
+/**
+ * RefreshMapHud(meta) — redraw the mounted map's run HUD in place, wired exactly as mountMap wires it (the queued
+ * camera save flushed or dropped by its doors, and a remount that keeps the selected route). An overlay that closes
+ * back onto the map calls it instead of remounting the board. Returns false when no map is mounted.
+ */
+export function RefreshMapHud(meta) {
+  if (!liveMapHudRefresh) return false;
+  return liveMapHudRefresh(meta);
 }
 
 export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null, revisitId = null, selectedId = null, selectedPointerType = 'mouse' }) {
@@ -173,9 +186,16 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // Bars, relics, Armoury and Menu: components/runHud.js fills the band for
   // every room, so the map cannot drift from the merchant or the Shrine any
   // more than it could from combat (E9 / #254).
-  wireRunHud(app, {
-    registries, run, meta, onArmoury: leaving(onArmoury), onMenu: leaving(onMenu), onLoad: leaving(onLoad), onSave: saving(onSave), onQuit: leaving(onQuit), onQuitWithoutSave: leaving(onQuitWithoutSave), quickControls, onSettingsChange, remount,
-  });
+  const hudWiring = {
+    onArmoury: leaving(onArmoury), onMenu: leaving(onMenu), onLoad: leaving(onLoad), onSave: saving(onSave), onQuit: leaving(onQuit), onQuitWithoutSave: leaving(onQuitWithoutSave), quickControls, onSettingsChange,
+  };
+  wireRunHud(app, { ...hudWiring, registries, run, meta, remount });
+  const mapRoot = app.querySelector('.mapscreen');
+  liveMapHudRefresh = (nextMeta = meta) => {
+    if (!mapRoot?.isConnected) return false;
+    RefreshRunHud(app, { registries, run, meta: nextMeta, place: 'map', headerClass: 'map-header', hud: hudWiring, remount });
+    return true;
+  };
   // ---- THE BOARD -------------------------------------------------------
   //
   // ONE RENDERER, and this is the whole of the map on this screen. Everything
