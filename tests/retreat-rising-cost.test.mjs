@@ -28,3 +28,21 @@ test('the second Retreat in a fight costs 2 Stamina, the third 3', () => {
   }
   assert.deepEqual(costs, [1, 2, 3]);
 });
+
+test('an Evade card costs 1, 2, 3, 4 then stays at +3 across copies, and each copy withers on its third play', () => {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(5), enemyIds: ['wanderingSoldier'] });
+  combat.player.stamina = combat.player.energy = 40;
+  const order = ['g1', 'g1', 'g1', 'g2', 'g2'];
+  const costs = [];
+  for (const instanceId of order) {
+    for (const pile of [combat.piles.discard, combat.piles.draw]) { const at = pile.findIndex(c => c.instanceId === instanceId); if (at >= 0) pile.splice(at, 1); }
+    if (!combat.piles.hand.some(c => c.instanceId === instanceId)) combat.piles.hand.unshift({ instanceId, cardId: 'evasiveGuard', upgraded: false });
+    delete combat.player.combatStance;
+    costs.push(cardPlayCosts(combat, instanceId).stamina);
+    dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: combat.player.id });
+  }
+  assert.deepEqual(costs, [1, 2, 3, 4, 4]);
+  assert.ok(combat.piles.exhaust.some(c => c.instanceId === 'g1'), 'the first copy withered on its third play');
+  assert.ok(!combat.piles.exhaust.some(c => c.instanceId === 'g2'), 'the second copy has one play left');
+});
