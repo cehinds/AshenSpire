@@ -153,3 +153,15 @@ test('upgrading a retained row after another upgrade commits its current plan', 
   assert.equal(x.querySelector('.bs-refusal'), null, 'the retained Upgrade is not refused as stale');
   assert(run.smithingStones < stones, 'the second upgrade committed');
 }));
+
+// Every row is keyed: a copy shelf with several owned cards draws one row per card, not one row that the next
+// card's row replaces.
+test('the card-copy shelf keeps one keyed row per owned card', () => withKitDom(dom => {
+  const { app } = fixture(dom);
+  const tab = app.querySelector('[data-shop-category="cardCopy"]');
+  assert.ok(tab, 'every offering is stocked, the copy shelf included');
+  tab.click();
+  const copyRows = [...app.querySelectorAll('[data-shop-shelf="cardCopy"] .merchant-offer')];
+  assert(copyRows.length > 1, 'several owned cards can be copied');
+  assert.equal(new Set(copyRows.map(row => row.dataset.smithKey)).size, copyRows.length, 'each copy row has its own key');
+}));
