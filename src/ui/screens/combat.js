@@ -95,6 +95,7 @@ import { cardKind } from '../../model/tree.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
+import { enemyDefinitionOf, enemyMoveOf, enemyEventMoveOf } from '../../model/enemyMoveSet.js';
 import { enemyMoveDamage } from '../../model/state.js';
 import { variableIntentDamage } from '../../model/intentDamage.js';
 import { ART_REDRAW_EVENT } from '../highResArt.js';
@@ -531,7 +532,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const playedInstance = played && (played.cardInstance || disp?.hand.find((card) => card.instanceId === played.cardInstanceId)
         || findInst(played.cardInstanceId) || { cardId: played.cardId });
       let definition = played ? resolvePlayedCombatCard(combat, played, playedInstance)
-        : registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
+        : enemyEventMoveOf(registries, { enemies: combat.enemies, instanceId: moved.sourceId, enemyId: moved.enemyId, moveId: moved.moveId });
       const selectedCounter = returned?.sourceKind === 'player' && definition
         ? selectedWeaponCounterFor(definition,selectedProfile(),registries.cards.get(played.cardId)) : null;
       if (returned && definition) {
@@ -1191,14 +1192,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       };
     }
 
-    const def = registries.enemies.get(entity.enemyId);
+    // The instance's move set: its level-card moves (owner, 2026-11-20) show with its own, under the card's name.
+    const def = enemyDefinitionOf(registries, entity);
     const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
     const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, weaknesses: knownWeaknesses(entity) }) : null;
     const currentMoveId = intent.moveId;
+    // A level-card move reads by its card's name; the others by their move id, as before.
+    const moveName = moveId => def.moves?.[moveId]?.levelCard ? def.moves[moveId].name : words(moveId);
     const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
-      name: words(moveId),
+      name: moveName(moveId),
       detail: moveDetail(move, moveId === currentMoveId ? intent : null, entity),
       active: moveId === currentMoveId,
     }));
@@ -1244,7 +1248,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // The stance an enemy's telegraph set reads only as far as its intent does.
       statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],
       entityId: entity.id,
-      history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
+      history: past.map((moveId) => ({ name: moveName(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
       traits: learning ? learning.traits : [...weaknessTraitRows(knownWeaknesses(entity)), ...(def.tags || []).map((tag) => ({ name: words(tag) }))],
       // No authored lore exists for enemies yet; unknown, not none.
       lore: learning ? learning.lore : null,
@@ -3508,7 +3512,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         run.stats.lastHit = {
           sourceId,
           sourceName: striker?.name || (sourceId ? words(sourceId) : (cause && cause !== 'effect' ? words(cause) : 'Unknown')),
-          move: moveId ? words(moveId) : null,
+          move: moveId ? (striker && enemyMoveOf(registries, striker, moveId)?.levelCard ? enemyMoveOf(registries, striker, moveId).name : words(moveId)) : null,
           amount: e.amount,
         };
       }
@@ -3622,7 +3626,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             || findInst(event.cardInstanceId) || { cardId: event.cardId };
           return resolvePlayedCombatCard(combat, event, instance);
         },
-        resolveEnemyMove: event => registries.enemies.get(event.enemyId)?.moves?.[event.moveId],
+        resolveEnemyMove: event => enemyEventMoveOf(registries, { enemies: combat.enemies, instanceId: event.sourceId, enemyId: event.enemyId, moveId: event.moveId }),
       });
     } catch (e) { console.warn('[combat] recipient effect decoration failed:', e && e.message); }
     playbackEvents = events;

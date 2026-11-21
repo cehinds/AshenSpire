@@ -59,6 +59,18 @@ test('elite and boss Dex and Wis stop at 4 and the held points spill to the othe
   assert.ok(minion.dexterity > 4, 'minions are not capped');
 });
 
+test('when every weighted priority is capped, the rest spills to the attributes with room', () => {
+  // Review, 2026-11-20: a boss whose only priorities are the capped Dex and Wis used to keep 11 of its 16 points.
+  const boss = row('boss', { level: 11, attributePriority: ['dexterity', 'wisdom'] });
+  const own = resolveEnemyAttributes(boss, settings);
+  assert.equal(Object.values(own).reduce((a, b) => a + b, 0), 16, JSON.stringify(own));
+  assert.ok(own.dexterity <= 4 && own.wisdom <= 4, JSON.stringify(own));
+  // Nothing has room: the fill stops at the caps instead of looping.
+  const full = Object.fromEntries(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].map(id => [id, 2]));
+  const boxed = resolveEnemyAttributes(row('boss', { level: 11, attributeCaps: full }), settings);
+  assert.deepEqual(boxed, full);
+});
+
 test('SP stops at the tier cap after gear and relics', () => {
   const rich = { sp: 5 };
   for (const [tier, cap] of Object.entries({ minion: 2, elite: 3, boss: 3 })) {

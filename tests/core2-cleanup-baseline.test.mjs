@@ -16,6 +16,12 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-20 for enemy level-card moves (enemy.extraMoves, owner 2026-11-20): the two boss scenarios (step 2, two level moves each) moved
+// 14 snapshot and save leaves only; their events, RNG, receipts and continuations, the paid-reaction elite (step 0) and the historical scenario are unchanged.
+// Recaptured 2026-11-20 for the capped-attribute spill under enemyLevelScaling (review): the same 27 profile, runtime, snapshot and save hash leaves
+// moved; events, RNG, receipts, continuations and the historical scenario are unchanged.
+// Recaptured 2026-11-20 for loading content.enemyLevelCards (owner, 2026-11-20): the 27 profile, runtime, snapshot and save hash leaves of the three
+// current-profile scenarios moved; events, RNG, receipts, continuations and the historical scenario are unchanged.
 // Recaptured 2026-11-20 for enemy level scaling (characters.enemyLevelScaling, owner 2026-11-20): 42 leaves of the three current-profile scenarios moved,
 // events and continuations by design (the enemy fights at its table level, gear and HP step); no rng leaf moved and the historical scenario is unchanged.
 // Recaptured 2026-11-20 once for the version-free save hash: contentVersion is normalised before hashing, so only the 8 stored/loaded leaves moved; release cuts no longer move them.

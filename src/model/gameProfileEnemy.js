@@ -1,5 +1,6 @@
 import { characterSettings,resolveEnemyAttributes,enemyItemBonuses,enemyPools,enemyLevel,enemyAttributeTotal,enemyEffectiveLevel,enemyScalingHpFactor } from '../../engine/kernel/gameConfig.js';
 import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { levelCardsFor, levelCardMoves, levelMoveId } from './enemyLevelCards.js';
 // Project only the configured enemy's actual held gear. The source catalog is
 // the pinned profile, and the kernel resolves the same points as player gear.
 // `actLevelled`: the fight supplied this enemy's level (createRunCombat's enemyLevelsForFight), so an act level applies.
@@ -38,4 +39,30 @@ export function gameProfileEnemyRatings(ctx,enemy,{actLevelled=false,levelStep=n
     ...(Number.isFinite(settings.hpScaleByTier?.[definition.tier]) ? {hpScale:settings.hpScaleByTier[definition.tier]} : {}),
     ...(scaling ? {levelStep:step} : {}),
     mechanicTags:definition.mechanicTags,mechanicBindings:definition.mechanicBindings};
+}
+
+// Level cards (owner, 2026-11-20; docs/plans/enemy-level-scaling.md, "Level-card lists"): an enemy at floor step N fights
+// with the first N cards of its list in the pinned profile (content.enemyLevelCards), picked by levelCardsFor from
+// `${seed}/${instanceId}` (no RNG draw). Each becomes an enemy move named for the card, costing the card's SP, with the
+// identity tags (camp, maneuver, damage, range...) of what it came from: its own move for a unique card, the player
+// card for a shared one. null without the table, the list or a step (an older snapshot, a step-0 fight).
+const LEVEL_TAG_FAMILIES = ['camp:', 'maneuver:', 'damage:', 'school:', 'source:', 'delivery:', 'range:', 'reach:', 'targeting:', 'counter:'];
+function levelMoveTags(registries,enemyId,entry) {
+  const own=entry.from?.startsWith(`${enemyId}.`) ? registries?.enemies?.get(enemyId)?.moves?.[entry.from.slice(enemyId.length+1)] : null;
+  if (own) return [...(own.tags || [])];
+  const card=entry.from && registries?.cards?.has?.(entry.from) ? registries.cards.get(entry.from) : null;
+  return (card?.tags || []).filter(tag=>LEVEL_TAG_FAMILIES.some(family=>tag.startsWith(family)));
+}
+export function gameProfileEnemyLevelMoves(ctx,enemy) {
+  if (!fixCoreEnabled(ctx) || !Number.isSafeInteger(enemy.levelStep) || enemy.levelStep<=0) return null;
+  const settings=ctx.gameProfile?.modules ? characterSettings(ctx.gameProfile.modules) : null;
+  const lists=ctx.gameProfile?.content?.enemyLevelCards;
+  if (!settings?.enemyLevelScaling || !lists || !Array.isArray(lists[enemy.enemyId])) return null;
+  const entries=levelCardsFor(lists,enemy.enemyId,enemy.levelStep,`${ctx.rng.seed}/${enemy.id}`);
+  const moves=levelCardMoves(entries);
+  if (!Object.keys(moves).length) return null;
+  return Object.fromEntries(entries.map(entry=>{
+    const moveId=levelMoveId(entry);
+    return [moveId,{...moves[moveId],name:entry.name,id:moveId,enemyId:enemy.enemyId,levelCard:entry.id,tags:levelMoveTags(ctx.registries,enemy.enemyId,entry),kindIds:['classification.enemyMove']}];
+  }));
 }

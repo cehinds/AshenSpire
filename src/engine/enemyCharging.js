@@ -7,6 +7,7 @@
 //   committed (pendingMove)                -> `resolveOnTurn - combat.turn` turns remain; when none do, it lands this coming enemy phase and
 //                                             is an ordinary attack (null here).
 
+import { enemyMoveOf } from '../model/enemyMoveSet.js';
 /**
  * EnemyChargingState(combat, enemy) → { moveId, turnsLeft, block } while the enemy's move is charging, else null.
  */
@@ -14,7 +15,7 @@ export function EnemyChargingState(combat, enemy) {
   if (!enemy?.alive || enemy.intent?.kind === 'staggered') return null;
   const pending = enemy.pendingMove;
   const moveId = pending?.moveId ?? (enemy.intent?.delayed ? enemy.intent.moveId : null);
-  const authored = moveId && combat.registries?.enemies?.get(enemy.enemyId)?.moves?.[moveId];
+  const authored = moveId && enemyMoveOf(combat.registries, enemy, moveId);
   if (!authored?.delay) return null;
   if (pending) {
     const turnsLeft = pending.resolveOnTurn - combat.turn;

@@ -419,6 +419,14 @@ export function resolveEnemyAttributes(row, settings, seed = null) {
     for (const [id, n] of Object.entries(share)) { const room = caps[id] === undefined ? n : Math.min(n, caps[id] - out[id]); out[id] += room; left -= room; }
     weights = open;
   }
+  // Under enemyLevelScaling, points every weighted priority's cap holds back spill over the attributes with room, the
+  // default priority first, then ENEMY_ATTRIBUTES order, one point each in turn: the total stays the budget while any
+  // attribute has room (#EnemyLevelScaling review, 2026-11-20). Profiles without the table keep their old fill.
+  if (settings.enemyLevelScaling) {
+    const spill = [...new Set([...(fill.defaultPriority || []), ...ENEMY_ATTRIBUTES])].filter(id => ENEMY_ATTRIBUTES.includes(id));
+    for (let room = spill.filter(id => caps[id] === undefined || out[id] < caps[id]); left > 0 && room.length; room = room.filter(id => caps[id] === undefined || out[id] < caps[id]))
+      for (const id of room) { if (left <= 0) break; out[id]++; left--; }
+  }
   const v = { points: 0, among: 2, ...(settings.variance || {}), ...(row.variance || {}) };
   if (seed !== null && settings.variance && v.points > 0 && tier.variance) {
     const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among);
@@ -635,13 +643,15 @@ export function characterSettings(modules) {
 function deriveCharacterContent(content, modules) {
   // enemies off: the enemy pack data is ignored (enemies/guide.md, Disabled), whatever characters is set to.
   if (!modules.enemies) {
-    delete content.enemyCards; delete content.enemies; delete content.enemyRelics;
+    delete content.enemyCards; delete content.enemies; delete content.enemyRelics; delete content.enemyLevelCards;
     if (!modules.characters && Array.isArray(content.characters)) content.characters = content.characters.filter(c => !c.tags?.includes('character.enemy'));
   }
   // Enemy rows, stats and decks come from the characters module (characters.json); enemies cannot run without it.
   if (modules.enemies && !modules.characters) fail('$/modules/enemies', 'requires the characters module; enable characters or disable enemies');
   if (!modules.characters || !Array.isArray(content.characters)) return;
   const settings = characterSettings(modules);
+  // Level cards (owner, 2026-11-20) ride with characters.enemyLevelScaling: without the table no enemy draws them.
+  if (!settings.enemyLevelScaling) delete content.enemyLevelCards;
   // enemy-relics off: enemies carry no relics.
   if (!settings.equipment) for (const c of content.characters) if (c.tags?.includes('character.enemy')) c.defaultRelics = [];
   if (Array.isArray(content.enemyCards) && !content.enemyCardsMerged) {
@@ -660,6 +670,11 @@ function deriveCharacterContent(content, modules) {
   if (modules.enemies) content.enemies = enemies.map(c => { const row = flat(c); row.defaultDeck = resolveCharacterDeck(c, content, modules.gear, settings.cardPoolRules); row.tier = (c.tags.find(t => t.startsWith('tier.')) || 'tier.minion').slice(5); delete row.presentation; delete row.enemy; return row; })
     // include picks the fielded tiers: rows of a known but unselected tier are dropped; an unknown tier still fails validation.
     .filter(row => !Array.isArray(settings.include) || settings.include.includes(row.tier) || !settings.tagRules?.[`tier.${row.tier}`]);
+  // A level-card list follows its enemy: a dropped tier's lists go with its rows.
+  if (record(content.enemyLevelCards) && Array.isArray(content.enemies)) {
+    const fielded = new Set(content.enemies.map(row => row.id));
+    content.enemyLevelCards = Object.fromEntries(Object.entries(content.enemyLevelCards).filter(([id]) => fielded.has(id)));
+  }
   content.classes = players.map(c => {
     const row = flat(c), gear = Object.fromEntries((c.defaultGear || []).map(g => [g.key, g.id]));
     // Player loadouts slot real items (createLoadout): an unknown gear id would start the run without its cards/stats.
@@ -752,6 +767,22 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
     }
     for (const id of enemyGearIds(row)) if (!gear.has(id)) fail(`${at}/defaultGear`, `unresolved gear '${id}'`);
     for (const id of enemyRelicIds(row)) if (!relics.has(id)) fail(`${at}/defaultRelics`, `unresolved relic '${id}'`);
+  }
+  // Level cards (characters.enemyLevelScaling, owner 2026-11-20): { enemyId: [{ id, name, move }] }, each move an enemy
+  // move that names its own SP; a fight adds the first levelStep of them to that enemy's move set.
+  if (content.enemyLevelCards !== undefined) {
+    const at = '$/content/enemyLevelCards';
+    if (!record(content.enemyLevelCards)) fail(at, 'expected { enemyId: [entries] }');
+    for (const [enemyId, entries] of Object.entries(content.enemyLevelCards)) {
+      if (!ids.has(enemyId)) fail(`${at}/${enemyId}`, 'unknown enemy');
+      if (!Array.isArray(entries)) fail(`${at}/${enemyId}`, 'expected an entry array');
+      const seen = new Set();
+      for (const entry of entries) {
+        if (!record(entry) || typeof entry.id !== 'string' || seen.has(entry.id) || typeof entry.name !== 'string') fail(`${at}/${enemyId}`, 'expected { id, name, move } entries with unique ids');
+        if (!record(entry.move) || typeof entry.move.intent !== 'string' || !Number.isSafeInteger(entry.move.sp) || entry.move.sp < 0) fail(`${at}/${enemyId}/${entry.id}/move`, 'expected an enemy move with an intent and a nonnegative integer sp');
+        seen.add(entry.id);
+      }
+    }
   }
 }
 function verifySettings(modules, instances = {}) {
