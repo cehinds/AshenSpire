@@ -192,6 +192,37 @@ function dropRetiredStatuses(run) {
   }
 }
 
+// Class-skill feats retired from the game (the crit feats, owner 2026-11-20: crits are gone from Core). A run
+// saved while a class milestone offered one still names it in that offer and in its pending reward row; the
+// option is dropped from both (with its paired choiceIds/abilityRanks entries) BEFORE the pending reference
+// check, so the save is not archived. A row left with no option is removed from both. Only ids named here
+// are dropped: any other unknown feat id is still refused.
+export const RETIRED_FEAT_IDS = Object.freeze(['reaverKeenBlade', 'reaverBloodDiscipline', 'reaverMasteryFocus',
+  'starseerClearSky', 'starseerRitualPrecision', 'starseerMasteryFocus', 'rogueMeasuredPoint', 'rogueKnifeWork',
+  'rogueMasteryFocus', 'heraldBlightPrecision', 'heraldOathEdge', 'heraldMasteryFocus', 'bladeCritical']);
+function withoutRetiredFeats(row) {
+  if (!row || row.rewardKind !== 'feat' || !Array.isArray(row.options)) return row;
+  const keep = row.options.map((id, index) => (RETIRED_FEAT_IDS.includes(id) ? -1 : index)).filter(index => index >= 0);
+  if (keep.length === row.options.length) return row;
+  const next = { ...row, options: keep.map(index => row.options[index]) };
+  for (const key of ['choiceIds', 'abilityRanks']) if (Array.isArray(row[key])) next[key] = keep.map(index => row[key][index]);
+  return next;
+}
+export function dropRetiredFeatOptions(run) {
+  const offers = run?.classMilestoneOffers;
+  if (offers && typeof offers === 'object') {
+    for (const [receiptId, offer] of Object.entries(offers)) {
+      const next = withoutRetiredFeats(offer);
+      if (next === offer) continue;
+      if (next.options.length) offers[receiptId] = next; else delete offers[receiptId];
+    }
+  }
+  const rows = run?.pendingReward?.rewards?.classMilestoneRewards;
+  if (Array.isArray(rows)) {
+    run.pendingReward.rewards.classMilestoneRewards = rows.map(withoutRetiredFeats).filter(row => !row || row.rewardKind !== 'feat' || row.options.length);
+  }
+}
+
 /**
  * Migrate one exact active-combat snapshot through the same weapon-package
  * composer as an ordinary run. The snapshot loadout is authoritative while a
@@ -515,6 +546,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // every fight an older build saved with its three cells. The ledger is
         // not open yet, so the note is written below, once it is.
         dropRetiredStatuses(run);
+        dropRetiredFeatOptions(run);
         trimmedLoadout = [
           ...trimExtraSets(registries, run.loadout),
           ...[run.combatEntered, run.combatPendingOutcome]
