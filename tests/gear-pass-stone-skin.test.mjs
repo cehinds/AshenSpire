@@ -118,3 +118,24 @@ test('Diamond Skin retains Block and Stone Skin cancels Pierce under their origi
   assert.equal(registries.statuses.get('stoneHide').name, 'Stone Skin');
   assert.equal(registries.statuses.get('stoneHide').stackMode, 'add');
 });
+
+// Review finding (LOW): Stone Skin is spent only against Pierce that would actually have passed Block.
+test('against 0 Block no Stone Skin is spent; with Block the 3 v 2 and 3 v 4 rules still hold, preview equal to live', () => {
+  const { combat, enemy, player } = world();
+  enemy.block = 0;
+  applyStatus(combat, enemy, 'stoneHide', 2, enemy);
+  const carrier = { ...plain, tags: [...plain.tags, 'pierce'], pierceStacks: 3 };
+  const quoted = profileDamageReceipt(combat, player, enemy, 40, carrier);
+  assert.equal(quoted.skinSpent, undefined, 'Block 0 spends no skin');
+  applyAttackDamage(combat, player, enemy, 40, carrier.tags, carrier);
+  assert.equal(enemy.statuses.stoneHide?.stacks, 2, 'the live hit keeps both stacks');
+  for (const [skin, pierce, bypass, left] of [[2, 3, 1, 0], [4, 3, 0, 1]]) {
+    const w = world();
+    w.enemy.block = 50;
+    applyStatus(w.combat, w.enemy, 'stoneHide', skin, w.enemy);
+    const c = { ...plain, tags: [...plain.tags, 'pierce'], pierceStacks: pierce };
+    assert.equal(profileDamageReceipt(w.combat, w.player, w.enemy, 40, c).pierceBypassed, bypass);
+    applyAttackDamage(w.combat, w.player, w.enemy, 40, c.tags, c);
+    assert.equal(w.enemy.statuses.stoneHide?.stacks || 0, left);
+  }
+});

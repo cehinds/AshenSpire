@@ -100,6 +100,9 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   const effects = damage.length ? damage : evasion ? [{ id: 'effect:evade', label: t('card.tags.evade'), blurb: tFull('card.tags.evade') }]
     : [element || school].filter(Boolean);
   for (const tag of effects) if (!selected.some(row => row.id === tag.id) && selected.length < 5) selected.push(tag);
+  // Owner, 2026-11-18 section 22: Gale Pull carries the Pull tag; the rail says it removes a Retreat stack.
+  const pull = tags.find(tag => tag.id === 'pullRetreat');
+  if (pull && def.effects?.some(effect => effect?.op === 'pullEnemy') && !selected.some(row => row.id === 'pullRetreat') && selected.length < 5) selected.push(pull);
   // Owner, 2026-11-18: a card whose moveEngagement sends a foe back carries the Retreat tag, and the rail says it inflicts Retreat (not the weapon's free Retreat card).
   const retreat = tags.find(tag => tag.id === 'retreat');
   if (retreat && def.effects?.some(effect => effect?.op === 'moveEngagement' && effect.target === 'enemy' && effect.bands > 0) && selected.length < 5) {

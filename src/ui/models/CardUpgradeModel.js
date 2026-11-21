@@ -2,7 +2,8 @@
 // Every fact comes from planCardUpgrade, which is inert: the rolled step shown here
 // is the step commitCardUpgrade applies. Nothing here mutates the run.
 import { planCardUpgrade } from '../../model/cardUpgradeService.js';
-import { upgradeCount, upgradeStepsOf } from '../../model/cardUpgrade.js';
+import { upgradeCount, upgradeStepsOf, FlatSteps } from '../../model/cardUpgrade.js';
+import { RarityOfStep } from '../../model/cardUpgradeSteps.js';
 import { cardRank } from '../../model/cardRank.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { upgradeChoiceCount, RestUpgradeRule } from '../../model/cardUpgradeLimits.js';
@@ -109,6 +110,40 @@ export function UpgradeEffectGain(registries, before, after) {
   return gained.join(', ');
 }
 
+const ELEMENT_WORD = freeze({ fire: 'Fire', frost: 'Frost', arcane: 'Arcane', sacred: 'Holy' });
+const plainAmount = (def, op) => num((def?.effects || []).find((e) => e.op === op && Number.isFinite(e.amount))?.amount);
+/**
+ * UpgradeStepLook(registries, step, before, after) -> { rarity, rarityLabel, size }: the rarity the picker colours an option by and
+ * its exact size in words ("+6 Fire damage"). The size is read off the card the step makes (after minus before), not off the step's own
+ * number, so what the picker promises is the change the card then shows (a rank-up scale included), and a combo lists each part.
+ */
+export function UpgradeStepLook(registries, step, before, after) {
+  const rarity = RarityOfStep(step);
+  const sizes = (FlatSteps([step]).map((one) => {
+    switch (one.k) {
+      case 'dmg': return t('cardUpgrade.size.damage', { n: plainAmount(after, 'damage') - plainAmount(before, 'damage') });
+      case 'blk': return t('cardUpgrade.size.block', { n: plainAmount(after, 'block') - plainAmount(before, 'block') });
+      case 'poise': return t('cardUpgrade.size.poise', { n: plainAmount(after, 'poiseDamage') - plainAmount(before, 'poiseDamage') });
+      case 'hits': return t('cardUpgrade.size.hits', { hits: one.hits, per: one.per });
+      case 'addStatus': return t('cardUpgrade.size.status', { n: one.stacks, status: statusName(registries, one.status) });
+      case 'stk': {
+        const was = statusStacks(before).get(one.status) ?? 0, now = statusStacks(after).get(one.status) ?? 0;
+        return one.side || one.op ? t('cardUpgrade.size.eases', { n: Math.abs(one.n), what: one.status ? statusName(registries, one.status) : one.op }) : t('cardUpgrade.size.stacks', { n: now - was, status: statusName(registries, one.status) });
+      }
+      case 'cost': return t(one.pool === 'mp' ? 'cardUpgrade.size.costMp' : 'cardUpgrade.size.costSp', { n: one.n || 1 });
+      case 'tag': {
+        if (Number.isFinite(one.packet)) return t('cardUpgrade.size.packet', { n: plainAmount(after, 'damage') - plainAmount(before, 'damage'), element: ELEMENT_WORD[one.damage] || cap(one.damage) });
+        // An identity step has one size: the value it sets ("Blunt damage", "Reach", "Cantrip").
+        if (one.damage) return t('cardUpgrade.size.damageType', { type: cap(one.damage) });
+        return one.tag ? t('cardUpgrade.size.tag', { value: cap(String(one.tag).split(':').pop().replace(/^rank\./, '')) }) : '';
+      }
+      case 'fx': return one.fx === 'block' ? t('cardUpgrade.size.block', { n: one.n }) : ['draw', 'cycle'].includes(one.fx) ? t(`cardUpgrade.size.${one.fx}`, { n: one.n }) : '';
+      default: return '';
+    }
+  })).filter(Boolean);
+  return freeze({ rarity, rarityLabel: t(`cardUpgrade.rarity.${rarity}`), size: sizes.join(' + ') });
+}
+
 /** The face numbers that changed between the plan's before and after faces, as [{ label, before, after }]. */
 export function cardUpgradeChanges(registries, before, after, playsEver = 0, maxRange = undefined) {
   if (!before || !after) return [];
@@ -136,6 +171,7 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.stance'), cap(combatProfileFor(before).maneuver || 'none'), cap(combatProfileFor(after).maneuver || 'none'));
   push(t('cardUpgrade.change.school'), cap(combatProfileFor(before).school || 'none'), cap(combatProfileFor(after).school || 'none'));
   push(t('cardUpgrade.change.element'), cap(before.damageSchool || 'none'), cap(after.damageSchool || 'none'));
+  push(t('cardUpgrade.change.damageType'), cap(combatProfileFor(before).damageType || 'none'), cap(combatProfileFor(after).damageType || 'none'));
   const cantrip = (def) => t((def?.tags || []).includes('rank.cantrip') ? 'cardUpgrade.value.cantrip' : 'cardUpgrade.value.ranked');
   push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
   // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target.
@@ -207,7 +243,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   for (const { instance, inDeck } of owned) {
     if (!instance || !registries.cards.has(instance.cardId)) continue;
     // Blacksmith: 2 or 3 options. Rest site (owner, 2026-11-14): 1 option up to the third upgrade, then 2, some with two effects.
-    const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false } : RestUpgradeRule(instance);
+    const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false, vendor: 'blacksmith' } : RestUpgradeRule(instance);
     const plan = planCardUpgrade(run, registries, instance.instanceId, rule);
     if (HIDDEN_CODES.includes(plan.code)) continue;
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
@@ -241,8 +277,10 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
       levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
       changes: cardUpgradeChanges(registries, plan.before, plan.after, playsEverOf(instance), run.rangePolicy?.maxRange),
+      look: plan.step ? UpgradeStepLook(registries, plan.step, plan.before, plan.after) : null,
       options: freeze((plan.options || (plan.step ? [{ step: plan.step, after: plan.after }] : [])).map((option, index) => freeze({
         index, step: option.step, after: option.after, changes: cardUpgradeChanges(registries, plan.before, option.after, playsEverOf(instance), run.rangePolicy?.maxRange),
+        look: UpgradeStepLook(registries, option.step, plan.before, option.after),
       }))),
       tags: cardTags(registries, plan.before || base, rarity),
       artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (plan.before || base).icon || 'smith',

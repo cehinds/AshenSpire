@@ -105,7 +105,7 @@ function authoredOf(def) {
     else if (e.op === 'draw') out.draw += Number(e.amount) || 0;
     else if (e.op === 'restoreMana') out.mana += Number(e.amount) || 0;
     else if (e.op === 'gainBarrier') out.statuses.push(`barrier ${amt(e)}@self`);
-    else if (e.op === 'moveEngagement' || e.op === 'swapRows') out.moves.push(e.op);
+    else if (e.op === 'moveEngagement' || e.op === 'swapRows' || e.op === 'pullEnemy') out.moves.push(e.op);
     else out.other.push(e.op);
   }
   return out;

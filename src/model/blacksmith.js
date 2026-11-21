@@ -234,7 +234,7 @@ export function CommitItemRankUp(registries, run, quote, { priceMult = 1 } = {})
 
 export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = {}) {
   const card = owned(run).find((row) => row.instanceId === instanceId) || null;
-  const verdict = card ? planCardUpgrade(run, registries, instanceId) : null;
+  const verdict = card ? planCardUpgrade(run, registries, instanceId, { vendor: 'blacksmith' }) : null;
   // The blacksmith takes its stone discount off the service's price (Free stays free; 1 stone becomes 0).
   const due = verdict ? Math.max(0, (verdict.cost ?? 0) - blacksmithStoneDiscount(run)) : 0;
   const payable = !!verdict && (verdict.ok || (verdict.code === 'stones' && stones(run) >= due));

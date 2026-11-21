@@ -35,7 +35,8 @@ test('every kind the generator emits is a known step kind and never retain', () 
 });
 
 test('dmg step is +max(2, ceil(15%)) and blk is +max(2, ceil(20%))', () => {
-  const pick = (card, kind) => { for (let i = 0; i < 400; i += 1) { const s = rollUpgradeStep(card, [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === kind) return s; } };
+  const pick = (card, kind) => { for (let i = 0; i < 400; i += 1) { const s = rollUpgradeStep(card, [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === kind && !s.r) return s; } };
+  // A common step (no `r`) is today's size; the uncommon and rare ones are x2 and x4 of it.
   assert.equal(pick(dmg(6), 'dmg').n, 2);
   assert.equal(pick(dmg(40), 'dmg').n, 6);
   const blk = { ...dmg(1), effects: [{ op: 'block', target: 'self', amount: 20 }], type: 'skill' };
@@ -152,8 +153,11 @@ const withPoise = (extra = {}) => dmg(8, { cost: 2, staminaCost: 2, rarity: 'unc
   effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }], ...extra });
 const tagsFor = (card) => {
   const out = new Set();
-  for (let i = 0; i < 600; i += 1) for (const s of rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 3)) {
-    out.add(s.k === 'tag' ? JSON.stringify(s) : s.k);
+  // Late upgrade numbers (stepIndex 9) put the most weight on the rarer, identity and new-effect rolls, so every placed kind turns up.
+  for (let i = 0; i < 1200; i += 1) for (const s of rollUpgradeOptions(card, [], 9, upgradeStepRng(i, 'x', 0), {}, 3)) {
+    // the stored rarity (`r`) is not what these tests look at: they pin the tag a step writes
+    const { r, ...step } = s;
+    out.add(s.k === 'tag' ? JSON.stringify(step) : s.k);
   }
   return out;
 };
@@ -162,12 +166,16 @@ test('poise: +max(1, ceil 20%) and only on a card with a poiseDamage effect', ()
   const poise = [];
   const plain = (extra = {}) => withPoise({ tags: ['camp:physical', 'maneuver:attack'], ...extra });
   for (let i = 0; i < 600; i += 1) for (const s of rollUpgradeOptions(plain(), [], 0, upgradeStepRng(i, 'x', 0), {}, 3)) if (s.k === 'poise') poise.push(s.n);
-  assert.ok(poise.length > 0 && poise.every((n) => n === 1));
+  assert.ok(poise.length > 0 && poise.every((n) => n === 1 || n === 2 || n === 4), 'common 1, uncommon x2, rare x4');
+  assert.ok(poise.includes(1));
   assert.ok(!kindsFor(dmg(8)).has('poise'));
   // A Smash card's Poise number never reaches the engine (it is derived from the hit), so it is never offered a Poise step (W25).
   assert.ok(!kindsFor(withPoise()).has('poise'));
   const big = plain({ effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 20 }] });
-  assert.ok(rollUpgradeOptions(big, [], 0, upgradeStepRng(1, 'x', 0), {}, 20).some((s) => s.k === 'poise' && s.n === 4));
+  // a poise step of every rarity is possible: the common one is 20% of 20 (4), the others x2 and x4 up to the +100% guard
+  const sizes = new Set();
+  for (let i = 0; i < 80; i += 1) for (const s of rollUpgradeOptions(big, [], 0, upgradeStepRng(i, 'x', 0), {}, 20)) if (s.k === 'poise') sizes.add(`${s.r || 'common'}:${s.n}`);
+  assert.ok(sizes.has('common:4'), [...sizes].join());
 });
 
 test('a range step only lengthens melee to reach (never ranged, never back to melee), replaces the old tag and stops after two', () => {

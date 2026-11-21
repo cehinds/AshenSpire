@@ -93,14 +93,15 @@ export function upgradeChoiceCount(def, instance, { blacksmith = false, run = nu
  * The first entry is always what nextUpgradeStep returns. Stateless.
  * `scale` (> 1) makes the amounts bigger, `salt` gives the roll its own stream and `noAuthored` skips the card's
  * designed upgrade: the three a rank-up bonus uses (model/rankUpBonus.js). `everyFamily` lists every eligible kind
- * (several of one family), for a probe or test that walks the whole menu; no offer uses it.
+ * (several of one family), for a probe or test that walks the whole menu; no offer uses it. `vendor` ('blacksmith' | 'arcane') weights
+ * the kinds by category and reads the vendor's own rarity odds (proposal section 11); none is a rest site, a free upgrade or any other source.
  */
-export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false, everyFamily = false } = {}) {
+export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false, everyFamily = false, vendor = '' } = {}) {
   const applied = upgradeStepsOf(instance);
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
   const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
-  const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell, maxRange: run.rangePolicy?.maxRange };
+  const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}) };
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1 && authored) return [{ k: 'authored' }];
   // An authored first step occupies its family (AuthoredFamilies): the rolled alternative is of another family.
@@ -132,7 +133,7 @@ function withSecondEffects(run, instance, applied, chosen, candidates, outcome, 
   return chosen.map((step) => {
     const roll = draw();
     const pick = draw();
-    if (roll >= REST_TWO_EFFECT_CHANCE || step.k === 'authored') return step;
+    if (roll >= REST_TWO_EFFECT_CHANCE || step.k === 'authored' || step.k === 'combo') return step;
     // The second effect is of a family no option on the list already has (UPGRADE_FAMILIES).
     const partners = candidates.filter((other) => other.k !== 'authored' && other.k !== 'combo' && !UpgradeStepFamilies(other).some((family) => offered.has(family))
       && !chosen.some((c) => JSON.stringify(c) === JSON.stringify(other)) && outcome(other) !== outcome(step));
