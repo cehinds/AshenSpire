@@ -570,16 +570,26 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const stepperSpoken = (count) => (count.unlimited ? tFull('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
     : tFull('deckEditor.stepperCount', { inDeck: count.inDeck, owned: count.owned }));
 
-  function collectionPane() {
-    const search = searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.search'), 'aria-label': t('deckEditor.search'), value: query }), 'search') : null;
-    search?.addEventListener('input', () => {
-      query = search.value;
-      const caret = search.selectionStart;
+  // A search box is built once and reused by every redraw, so the text, the caret and focus stay in the one input
+  // the player is typing into (a fresh input would carry its starting value and be swapped in by the patch).
+  const searchBoxes = new Map();
+  function searchBox(focusKeyName, labelKey, value, onQuery) {
+    if (!searchEnabled) return null;
+    if (searchBoxes.has(focusKeyName)) return searchBoxes.get(focusKeyName);
+    const input = focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t(labelKey), 'aria-label': t(labelKey), value }), focusKeyName);
+    input.addEventListener('input', () => {
+      onQuery(input.value);
+      const caret = input.selectionStart;
       draw();
-      const next = panel.querySelector('.deck-editor-search');
-      next.focus();
-      try { next.setSelectionRange(caret, caret); } catch { /* search selection varies by browser */ }
+      input.focus();
+      try { input.setSelectionRange(caret, caret); } catch { /* search selection varies by browser */ }
     });
+    searchBoxes.set(focusKeyName, input);
+    return input;
+  }
+
+  function collectionPane() {
+    const search = searchBox('search', 'deckEditor.search', query, value => { query = value; });
     const list = el('div', { class: 'deck-editor-list', role: 'list' });
     const rows = model.collection.filter(row => `${row.name} ${rulesFor(row)}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
     for (const tile of rows) {
@@ -684,15 +694,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       list.appendChild(details);
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.deck') }));
-    const search = searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search') : null;
-    search?.addEventListener('input', () => {
-      deckQuery = search.value;
-      const caret = search.selectionStart;
-      draw();
-      const next = panel.querySelector('[data-focus-key="deck-search"]');
-      next.focus();
-      try { next.setSelectionRange(caret, caret); } catch { /* browser search input */ }
-    });
+    const search = searchBox('deck-search', 'deckEditor.searchDeck', deckQuery, value => { deckQuery = value; });
     const section = paneSection('deck', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list, [
       ...['list', 'cards'].map(id => chip(t(`deckEditor.display.${id}`), deckDisplay === id, () => { deckDisplay = id; draw(); }, `display:${id}`)),
       search,
