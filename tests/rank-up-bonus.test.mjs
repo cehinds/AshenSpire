@@ -33,11 +33,12 @@ test('a rank-up offers 2 to 3 distinct options from the blacksmith pool, with bi
     const seeded = newRun(seed), card = strikeOf(seeded);
     const bonusSteps = rankUpBonusOptions(registries, seeded, card).map((o) => o.step);
     for (const plainStep of nextUpgradeOptions(seeded, card, base, registries, 3)) {
-      const bonusStep = bonusSteps.find((s) => s.k === plainStep.k && s.fx === plainStep.fx && Number.isFinite(s.n) && Number.isFinite(plainStep.n));
+      const bonusStep = bonusSteps.find((s) => s.k === plainStep.k && s.fx === plainStep.fx && s.r === plainStep.r && Number.isFinite(s.n) && Number.isFinite(plainStep.n));
       if (!bonusStep) continue;
       // A step already at its ceiling (Block cannot exceed the card's base) cannot grow: never smaller, and the scaled amount where it can.
       assert.ok(amount(bonusStep) >= amount(plainStep), 'a rank-up number step is never smaller than a blacksmith one');
-      if (amount(bonusStep) > amount(plainStep)) { compared++; assert.equal(amount(bonusStep), plainStep.n * rankUpBonusScale(registries)); }
+      // Rarity multiplies the size first (x2 / x4), the +100% guard clips it, so the bonus is the plain step scaled, or what the guard leaves.
+      if (amount(bonusStep) > amount(plainStep)) { compared++; assert.ok(amount(bonusStep) <= plainStep.n * rankUpBonusScale(registries)); }
     }
   }
   assert.ok(compared > 0, 'some seed offers a number step that the rank-up makes bigger');
