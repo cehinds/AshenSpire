@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-21
+
+- **Gear fixes: no double-counted pools, Counter stacks shown, Stone Skin** ([#2919](https://github.com/cehinds/AshenSpire/pull/2919), `0.7.5.18`). Tower Shield, Twinblade and Wayfarer Plate no longer add max HP or Stamina on top of the stats that already give it, and Blacksmith picks no longer remove an item's own max HP. Counter cards now show the Counter stacks they grant, Wyrmscale Mail's extra stack included. Stone Skin is no longer spent when the target has no Block.
+- **Pull-request test shards stop hitting their time limit** ([#2925](https://github.com/cehinds/AshenSpire/pull/2925), `0.7.5.18`). Development-process fix only, nothing in the game changes. The discovered-test checks on a pull request into dev now run in six parts instead of four, because some parts kept stopping at the 15-minute limit with every test passing. No test was removed and the limit is unchanged.
+
 ## 2026-11-20
 
-- **Gear fixes: no double-counted pools, Counter stacks shown, Stone Skin** ([#2919](https://github.com/cehinds/AshenSpire/pull/2919), `0.7.5.16`). Tower Shield, Twinblade and Wayfarer Plate no longer add max HP or Stamina on top of the stats that already give it, and Blacksmith picks no longer remove an item's own max HP. Counter cards now show the Counter stacks they grant, Wyrmscale Mail's extra stack included. Stone Skin is no longer spent when the target has no Block.
 - **Upcast button removed** ([#2914](https://github.com/cehinds/AshenSpire/pull/2914), `0.7.5.16`). Cards no longer show an Upcast button or ask for a rank after you pick a target, and the setting that asked is gone. Spell ranks were removed from combat, so choosing one stopped the card from playing; every card now plays at its printed strength.
 - **Dexterity now adds Block** ([#2912](https://github.com/cehinds/AshenSpire/pull/2912), `0.7.5.14`). In new runs, each stack of Dexterity gives +1 Block to every Block card you play after gaining it. Block you already hold does not change: with 5 Block, gaining 1 Dexterity leaves you at 5, and playing a 5-Block card then adds 6. Before this, the Dexterity from cards like Iron Hide and Keen Edge added no Block at all. Runs you already saved keep the old rule.
 - **Enemy health bars stay above every sprite** ([#2917](https://github.com/cehinds/AshenSpire/pull/2917), `0.7.5.12`). In combat, the health, block and status bars over each fighter are no longer hidden behind other fighters' sprites, including when a back-row enemy is drawn smaller.
