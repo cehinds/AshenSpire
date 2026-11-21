@@ -60,7 +60,7 @@ import { combatProfileFor, isSpellCard, ScaleCardBaseDamage, ScalePhysicalDamage
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from './d20Chance.js';
-import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
+import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, PacketSplit, PacketWeights, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -320,6 +320,7 @@ export function combatCardSummary(def, preview = null, registries = null, rules 
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
       case 'swapRows': text = 'Swap its row with the nearest enemy in the other row'; break;
+      case 'pullEnemy': text = 'Remove a Retreat stack from it; with none left it comes forward to the front row'; break;
       case 'moveEngagement': {
         if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker', 'self'].includes(effect.target)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) return null;
@@ -426,6 +427,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const faceShare = magicShareOf(faceProfile) || 0;
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
   const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
+  const finesseSource = Array.isArray(def?.tags) && def.tags.includes('finesse');
   const magicStat = attributes && SpellTraditionsActive(holder) ? SpellScalingValue(attributes, { ...def, combatProfile: faceProfile })
     : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);
   const damageStat = attributes ? (magicHit ? magicStat : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
@@ -491,6 +493,27 @@ export function staticCardTokens(def, registries = null, rules = null) {
       }
     }
   }
+  // An element packet hit (owner, 2026-11-19; a physical card with a magic share and no rating of its own) prints its physical part in {damage} and
+  // its magic part in {packet}: STR on the first, INT / Power on the second, the same two stages the receipt reads.
+  const packetIndex = effects.findIndex(effect => effect.op === 'damage' && typeof constant(effect.amount) === 'number');
+  if (packetIndex >= 0 && def.ratingId === undefined && faceProfile.camp === 'physical' && Number.isFinite(def.magicShare) && faceShare > 0 && faceShare < 1) {
+    const token = computeTokenBindings(effects).find(binding => binding.index === packetIndex && binding.field === 'amount')?.token;
+    if (token && typeof tokens[token] === 'number') {
+      const base = ScaleCardBaseDamage(constant(effects[packetIndex].amount), baseDamageMultiplier);
+      const physicalBonus = attributes ? (attributes[finesseSource ? 'dexterity' : 'strength'] || 0) * ChannelWeight(faceEffects, 'ar') : 0;
+      const magicBonus = attributes ? magicStat * ChannelWeight(faceEffects, 'pr') : 0;
+      // The receipt's order: the physical-damage scale cuts the physical part alone, the side scale takes the whole hit, the amount is floored ONCE,
+      // then the same PacketSplit (same weights) divides that amount. Flooring parts separately would drift a point from the hit.
+      const cut = Number.isFinite(physicalMultiplier) && physicalMultiplier >= 0 ? physicalMultiplier : 1;
+      // The card's own share (`magicShare`) rules a packet, as the receipt reads it; the face profile alone would give the configured Technique share.
+      const weights = PacketWeights({ base, share: def.magicShare, physicalBonus, magicBonus });
+      const whole = weights.physical * cut + weights.magic;
+      const sided = Number.isFinite(playerMultiplier) && playerMultiplier !== 1 ? Math.max(whole >= 1 && playerMultiplier > 0 ? 1 : 0, whole * playerMultiplier) : whole;
+      const parts = PacketSplit({ base, share: def.magicShare, physicalBonus, magicBonus, physicalMultiplier: cut, total: sided });
+      tokens[token] = parts.physical;
+      tokens.packet = parts.magic;
+    }
+  }
   return tokens;
 }
 
@@ -501,7 +524,7 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
   const configured = projectGameCard(rules?.gameProfile ? rules : registries, ref);
   if (configured) return configured;
   const def = rules?.breakMeterVersion == null
-    ? resolveCard(registries, ref) : resolveCard(registries, ref, rules.breakMeterVersion);
+    ? resolveCard(registries, ref, undefined, rules || registries) : resolveCard(registries, ref, rules.breakMeterVersion, rules || registries);
   if (rules?.combatExpansionVersion !== 2) return def;
   const expanded = applyCombatExpansionCard(def);
   return rules.reactionRulesVersion === 2 ? applyCardTraits(expanded, rules.reactionRules) : expanded;
