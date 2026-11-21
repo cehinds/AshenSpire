@@ -2812,15 +2812,16 @@ Core only (Legacy and Current keep the single authored upgrade). Design and buil
 - **What a step does.**
   - Step 1 is the card's authored upgrade if it has one; otherwise, and for every later step, a seeded procedural step.
   - Caps: a status never past its cap; damage or block gain never past +100% of base; cost never below 1; cost and hits once per card. Never touches a conditional or HP-loss effect.
-  - Power, status and curse cards take only a cost step. Retain is not offered (Core does not honour it at end of turn).
-  - Roll = `mulberry32(hash(run.seed, instanceId, stepIndex))`, so preview equals commit. The step is stored on the card (`upgradeSteps`), never re-derived. Name: `Name+` for one upgrade, `Name+N` for N.
+  - Power, status and curse cards take only a cost step. Retain is offered (an `fx` step; Core keeps a Retain card in hand at end of turn).
+  - Roll = `mulberry32(hash(run.seed, instanceId + offer key, stepIndex))`, so preview equals commit. The step is stored on the card (`upgradeSteps`), never re-derived. Name: `Name+` for one upgrade, `Name+N` for N.
+  - **Offer key** (owner, 2026-11-20): every upgrade source (a Blacksmith or trader visit, a rest site or Shrine visit, a reward offer) takes the next `run.upgradeOfferSerial` and stores it as `offerKey` on its record (`shopStock`, the rest visit, `gameProfilePendingReward`). Every upgrade roll folds it into its seed: card steps, option count, two-effect combos, rank-up bonus, Blacksmith rank chance, item options and category change. Options stay fixed for the stay (close and reopen a card: same options) and re-roll at the next source. A record without a key (an older save) rolls as before.
 - **Where.**
   - Rest site: one card upgrade per visit, alongside the other services (it does not close them).
   - Blacksmith: any owned card (deck or sideboard; deck cards marked "In deck"), no limit per visit while the player can pay.
   - Event reward: one free step (still capped at 10).
   - Every picker shows the cost (Free, or 1 Smithing Stone) and the card before and after, from the same step the commit applies.
 - **Blacksmith reach.** 25% of Core shop nodes are a Blacksmith instead of the merchandise shop (`shops.blacksmithChance`), decided once per node from the run seed.
-- **Step options and weights.** Every step after the authored one draws from the table. A step that changes nothing is never offered. The vocabulary is the one `combatCardProfile.js` reads; saves and combat snapshots validate the `poise` and `tag` step kinds like the rest.
+- **Step options and weights.** Every step after the authored one draws from the table (and the `fx` effect menu, `cardUpgradeSteps.js` WEIGHTS). A step that changes nothing, or is a downgrade on a single play, is never rolled: no run attribute (`attr`), no rank down, no one enemy to all, no Reach to Melee (saved steps of these still resolve; a card's own `upgradeMenu` may name `attr` or `rankDown`). The vocabulary is the one `combatCardProfile.js` reads; saves and combat snapshots validate the `poise` and `tag` step kinds like the rest.
 
 | Kind | Weight | Effect |
 |---|---|---|
@@ -2831,22 +2832,38 @@ Core only (Legacy and Current keep the single authored upgrade). Design and buil
 | addStatus | 8 | an added status |
 | hits | 5 | +hits |
 | poise | 12 | +max(1, ceil 20%) on the first plain `poiseDamage` effect; only on a card that has one; never past +100% of base |
-| range | 6 | melee → reach, reach → ranged, replacing the `range:` tag; on a card that attacks |
-| targeting | 6 | first plain damage effect moves between one enemy and all enemies, `targeting:` tag swapped; single → area cuts the amount 25% (round up, min 1), area → single adds 25% (round up, never past +100% of base); never on a Sweep; once per card |
+| range | 6 | melee → reach only, replacing the `range:` tag; on a card that attacks and does not already reach (a spell or projectile reaches by default); never ranged |
+| targeting | 6 | an area hit's first plain damage effect moves to one enemy, adding 25% (round up, never past +100% of base), `targeting:` tag swapped; never on a Sweep; once per card. A saved single → area step still cuts 25% |
 | stance | 5 | a physical attack's `maneuver:` tag changes among attack, smash, ranged (smash only on a card paying 2 SP or more); once per card; never a Sweep, Defend or Counter |
-| school | 4 | a spell's `school:` tag set to another of frost, fire, lightning, force, alteration, illusion, divine, decay, earth; once per card |
+| school | 4 | not rolled (a school change alone changes no play); a saved one still applies |
 | element | 6 | a physical attack's damage school becomes magic, arcane, holy or fire (a magical property); once per card |
-| rank down | 3 | adds `rank.cantrip` (the copy counts as a cantrip, free allowance F = 1, from then on); once per card; only on a card not already Basic |
+| rank down | 3 | adds `rank.cantrip` (the copy counts as a cantrip, free allowance F = 1, from then on); once per card; only on a card not already Basic; only when a card's `upgradeMenu` names it |
+| attr | 2 | +1 INT or WIS for the run; only when a card's `upgradeMenu` names it |
+| fx: block, draw, cycle, cull, copy, shuffle, retain, innate, unexhaust, holdOne, boost, target, reaction, counter, unethereal, steady | 4-18 | the effect menu: each adds an effect the card lacks (W25; weights in `cardUpgradeSteps.js`) |
+
+- **Option families** (owner, 2026-11-20). One offer never shows two options of a family, and a combo's second effect is of a family no option on the list has. An authored first step occupies the family of what it changes (cost, damage, Block, status, flow, keywords).
+
+| Family | Kinds |
+|---|---|
+| damage | dmg, hits, targeting, element, fx:target, a STR / INT boost |
+| defense | blk, fx:block, fx:counter, a DEX / WIS boost |
+| pressure | stk, addStatus, poise |
+| cost | cost, fx:steady, rank down |
+| flow | fx:draw, fx:cycle, fx:shuffle, fx:cull, fx:copy |
+| keyword | fx:unexhaust, fx:innate, fx:retain, fx:holdOne, fx:unethereal |
+| form | range, maneuver, school, fx:reaction, attr |
+
+  - Item options follow the same rule: attribute picks (STR, DEX, CON, INT, WIS, Mana, +1 attribute properties) are one family; the six edges (elemental damage or a status on a hit) one; then Poise, resistances, start-of-turn Block, stances, hand flow and deck building.
 
 - **Cantrip and Basic Mana.** A cantrip or Basic costs no Mana, printed or upgrade-made (`core.mendingTouch` prints 0 MP; the validator refuses a `rank.cantrip` card with Mana).
   - Rank down sets the copy's Mana cost to 0 wherever the card resolves (saved copies included); the preview reads e.g. Mana 2 → 0.
   - No -1 Mana (`cost`) step is offered on a cantrip, a Basic or a copy that became one.
   - A card paying 0 Stamina is not offered rank down (a 0/0 cantrip is forbidden).
-- **The choice (Blacksmith only).** The player picks one of several rolled options: 2 for a Basic card, 3 for a ranked (not Basic) card. Rest-site upgrades and event free upgrades keep the single roll.
-  - Options are distinct kinds from the same per-step seeded stream; the first is exactly the single roll, so preview equals commit.
+- **The choice (Blacksmith only).** The player picks one of 2 or 3 rolled options (an even, seeded draw per card, upgrade number and offer key; 2 for a Basic card and 3 for a ranked one only when no run is given). A rest site offers 1 option up to the third upgrade, then 2 (some with two effects); event free upgrades keep the single roll. Fewer show when fewer families are eligible.
+  - Options are of distinct families from the same per-step seeded stream; the first is exactly the single roll, so preview equals commit.
   - A card's first upgrade still offers its authored upgrade (one option), plus one rolled alternative at a Blacksmith.
   - A quote lists its options; the commit re-plans the same list and refuses a step not on it.
-  - The dialog shows the after-faces side by side (stacked on a phone), the picked one highlighted.
+  - The dialog shows the after-faces side by side (stacked on a phone), the picked one highlighted. Every option lists at least one change: each face number, keyword and status, every other effect amount (Counter, Ward, Barrier, heal, a second hit, exposure), and "Card text changes" when only the text differs. An item option reads its change on the item ("STR +1 → +2", or the property it adds).
 
 #### Notes and history
 - Runs born before ruleset 7 keep the frozen formulas in the rating table.
