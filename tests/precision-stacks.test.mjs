@@ -156,7 +156,9 @@ test('hit chances: Reaver vs wanderingSoldier both ways, fellWarden and glassReg
     // Re-captured 2026-11-17: Core gear grants attribute points (the soldier's gear gives DEX 1 -> 2), and an act-1 boss fights at level 4
     // (the Fell Warden was 3): the player hits both 5% less often, the Warden's unstacked hit rises to 95%; the Glass Regent was already level 4.
     wanderingSoldier: { 0: { playerHits: 70, enemyHits: 75 }, 1: { playerHits: 75, enemyHits: 80 } },
-    fellWarden: { 0: { playerHits: 65, enemyHits: 95 }, 1: { playerHits: 70, enemyHits: 95 } },
+    // Re-captured 2026-11-20 (characters.enemyLevelScaling): an act-1 boss fights at level 5 (was 4) and the Fell Warden's sixth point
+    // goes to DEX (4, the elite and boss cap), so the player hits it 5% less often.
+    fellWarden: { 0: { playerHits: 60, enemyHits: 95 }, 1: { playerHits: 65, enemyHits: 95 } },
     glassRegent: { 0: { playerHits: 70, enemyHits: 95 }, 1: { playerHits: 75, enemyHits: 95 } },
   });
   assert.ok(table.wanderingSoldier[1].enemyHits < 95, 'a level-1 enemy no longer hits 95%');
