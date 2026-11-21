@@ -9,6 +9,7 @@ import { equipPiece, ownership, stampDeck } from '../src/model/loadout.js';
 import { startingArmourViews } from '../src/model/startingKits.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileShopStock, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
+import { gameProfileShopSalePlan, gameProfileShopSalePlans } from '../src/model/gameProfileShopSales.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 import { createRng } from '../src/engine/rng.js';
 import { rederivePools } from '../src/model/levelup.js';
@@ -155,5 +156,44 @@ test('a save from before acquired-only armour keeps every unworn set the old rul
   const reloaded = loadBytes(storage.getItem(RUN_KEY));
   for (const piece of oldClassShared) {
     assert.equal(ownership(registries, { loadout: reloaded.loadout }).has(piece), false, `a fresh run does not own ${piece.id}`);
+  }
+});
+
+test('armour kept from a pre-v27 save is owned but not for sale; armour bought on the new rule is', () => {
+  const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
+  const loadBytes = (bytes) => {
+    const storage = createMemoryStorage();
+    storage.setItem(RUN_KEY, bytes);
+    const saves = createSaveManager(storage);
+    const run = saves.loadRun(registries);
+    assert.ok(run, JSON.stringify(saves.runStatus()));
+    return { run, saves };
+  };
+  const { run } = loadBytes(corpus.versions[String(RUN_SCHEMA_ACQUIRED_ARMOUR - 1)].bytes);
+  const kept = registries.equipment.armour.filter(row => row.classId === run.class && !row.unlock
+    && !run.loadout.sets.armor.includes(row.id));
+  assert.ok(kept.some(row => row.sharedSet));
+  const bought = registries.equipment.armour.find(row => row.classId === run.class && row.unlock);
+  // The legacy profile has no configured merchant: borrow a Core merchant's
+  // shelf, and record the purchase the way the merchant does.
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const merchantRun = createRunState({ seed: 71, classId: run.class, registries: core });
+  const rng = createRng(run.seed);
+  run.gameProfileRewardOffers = { ...run.gameProfileRewardOffers,
+    'shop:market': structuredClone(gameProfileShopStock(core, merchantRun, createRng(71), { shopId: 'market' })) };
+  run.loadout.boughtArmour.push({ classId: run.class, id: bought.id });
+  const storage = createMemoryStorage();
+  createSaveManager(storage).saveRun(run, rng);
+  const reloaded = loadBytes(storage.getItem(RUN_KEY)).run;
+  for (const subject of [run, reloaded]) {
+    const offered = gameProfileShopSalePlans(registries, subject, 'market').filter(plan => plan.kind === 'armor').map(plan => plan.identity);
+    for (const piece of kept) {
+      assert.equal(ownership(registries, { loadout: subject.loadout }).has(piece), true, `${piece.id} still owned`);
+      assert.equal(offered.includes(`${piece.classId}:${piece.id}`), false, `${piece.id} is not offered for sale`);
+      assert.equal(gameProfileShopSalePlan(registries, subject, 'market', 'armor', `${piece.classId}:${piece.id}`).ok, false, `${piece.id} cannot be sold`);
+    }
+    assert.ok(offered.includes(`${bought.classId}:${bought.id}`), `${bought.id}, bought on the new rule, is offered`);
+    assert.equal(gameProfileShopSalePlan(registries, subject, 'market', 'armor', `${bought.classId}:${bought.id}`).ok, true);
   }
 });

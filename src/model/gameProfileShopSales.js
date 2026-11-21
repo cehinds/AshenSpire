@@ -42,6 +42,7 @@ export function gameProfileShopSalePlan(registries, run, shopId, kind, identity)
       detail = { itemRef, tier: run.itemUpgradeLevels?.[itemRef] || 0, mounts: mountRows(registries, run, { itemRef, piece: def }).filter(row => row.cardId) };
     }
     if (def?.classId === run.class && Object.values(run.loadout?.sets || {}).some(ids => ids.includes(def.id))) reason = 'Unequip this armour from every set before selling.';
+    if (item?.legacy) reason = 'This armour cannot be sold.';
     if (!item) reason = 'This armour is no longer in your inventory.';
   } else if (kind === 'relics') {
     def = registries.relics.has(identity) ? registries.relics.get(identity) : null;
@@ -71,7 +72,7 @@ export function gameProfileShopSalePlans(registries, run, shopId) {
   const arts = gameProfileWeaponArtIds(registries, run);
   const entries = [
     ...(run.loadout?.storage || []).map(id => ['weapons', id]),
-    ...(run.loadout?.boughtArmour || []).map(row => ['armor', `${row.classId}:${row.id}`]),
+    ...(run.loadout?.boughtArmour || []).filter(row => !row?.legacy).map(row => ['armor', `${row.classId}:${row.id}`]),
     ...(run.relics || []).map(id => ['relics', id]),
     ...(run.flasks || []).map((_, index) => ['potions', index]),
     ...Object.keys(run.consumables || {}).map(id => ['consumables', id]),

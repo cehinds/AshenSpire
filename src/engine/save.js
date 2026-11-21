@@ -607,7 +607,8 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // preserve it here before it can disappear after unequipping.
         // ownership() stays pure.
         // A save from before v27 also owned every blank-unlock set of its class
-        // (shared sets and the baseline), worn or not; it keeps them.
+        // (shared sets and the baseline), worn or not; it keeps them. Those rows
+        // are marked `legacy`: the old rule never let them be sold.
         if (run.loadout && run.loadout.sets) {
           const worn = new Set((run.loadout.sets.armor || []).filter(Boolean));
           const grant = run.loadout.creationArmourGrant;
@@ -620,7 +621,9 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
             if (grant && grant.classId === piece.classId && grant.id === piece.id) continue;
             const bought = Array.isArray(run.loadout.boughtArmour) ? run.loadout.boughtArmour : (run.loadout.boughtArmour = []);
             if (!bought.some((row) => row && row.classId === piece.classId && row.id === piece.id)) {
-              bought.push({ classId: piece.classId, id: piece.id });
+              bought.push(ownedBeforeAcquiredArmour(piece)
+                ? { classId: piece.classId, id: piece.id, legacy: true }
+                : { classId: piece.classId, id: piece.id });
             }
           }
         }
