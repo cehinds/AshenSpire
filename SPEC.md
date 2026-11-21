@@ -2684,7 +2684,7 @@ For every seed and every save written before this section:
 Full history: [docs/spec-history/13b-progression.md](docs/spec-history/13b-progression.md).
 
 ## Shared armor sets
-Four `sharedSet` outfits have one identical row per wearer class, on class-scoped armor save keys. A fresh run owns only its chosen starting armour; an empty unlock does not grant additional armour. Shared sets enter the run's Armoury only after acquisition (including purchase), recorded in `loadout.boughtArmour` as `{ classId, id }`. They remain excluded from starting-armour selection and the exactly-one-baseline rule. Existing saves keep their worn armour, recorded as acquired at load so it remains available after unequipping. Equip also needs the listed stat at 3.
+Four `sharedSet` outfits have one identical row per wearer class, on class-scoped armor save keys. A fresh run owns only its chosen starting armour; an empty unlock does not grant additional armour. Shared sets enter the run's Armoury only after acquisition (including purchase), recorded in `loadout.boughtArmour` as `{ classId, id }`. They remain excluded from starting-armour selection and the exactly-one-baseline rule. Existing saves keep their worn armour, recorded as acquired at load so it remains available after unequipping. A run saved before run schema 27 also keeps every blank-unlock armour set of its own class, worn or not, recorded the same way. Equip also needs the listed stat at 3.
 
 Bonuses (`outfits.csv`, existing modifiers): Wayfarer Plate (STR) +2 Defend Block, +4 max HP; Nightweave (INT) +1 class-power Potency, +1 max Mana; Rite Vestments (WIS) +1 Defend Block, +6 max HP; Gutter Leathers (DEX) +1 Strike Damage, +1 max Stamina.
 
