@@ -43,8 +43,39 @@ export function PickText(pick) {
   if (!pick) return '';
   if (pick.k === 'spent') return '(reworked)';
   if (pick.k === 'prop') return ITEM_PROPERTIES.find((row) => row.id === pick.prop)?.text || pick.prop;
-  if (pick.k === 'effect') return pick.effect === 'poiseDamagePct' ? `+${pick.n}% Poise damage` : `${pick.effect} ${pick.n}`;
+  if (pick.k === 'effect') return `+${pick.n}${EFFECT_UNITS[pick.effect] || ''} ${EffectLabel(pick.effect)}`;
   return `+${pick.n} ${STAT_LABELS[pick.stat] || pick.stat}`;
+}
+
+// An item effect's player words: a known one by name, any other split from its id ("poiseDamagePct" -> "Poise damage pct").
+const EFFECT_LABELS = { poiseDamagePct: 'Poise damage' };
+const EFFECT_UNITS = { poiseDamagePct: '%' };
+function EffectLabel(effect) {
+  if (EFFECT_LABELS[effect]) return EFFECT_LABELS[effect];
+  const words = String(effect || '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/**
+ * What an option changes on the item, as { label, before, after } (owner, 2026-11-20: every change is on the modal).
+ * A stat or effect reads its total from this item's upgrades before and after ("STR +1 -> +2"); a property reads as
+ * added ("before" empty).
+ */
+export function SmithPickChange(run, itemRef, pick) {
+  if (!pick) return null;
+  if (pick.k === 'prop') return { label: PickText(pick), before: '', after: '', adds: true };
+  const same = (row) => row.k === pick.k && (pick.k === 'effect' ? row.effect === pick.effect : (STAT_LABELS[row.stat] || row.stat) === (STAT_LABELS[pick.stat] || pick.stat));
+  const held = ItemPicks(run, itemRef).filter(same).reduce((sum, row) => sum + (Number(row.n) || 0), 0);
+  const unit = pick.k === 'effect' ? EFFECT_UNITS[pick.effect] || '' : '';
+  const label = pick.k === 'effect' ? EffectLabel(pick.effect) : STAT_LABELS[pick.stat] || pick.stat;
+  return { label, before: `+${held}${unit}`, after: `+${held + (Number(pick.n) || 0)}${unit}` };
+}
+
+/** The option's change in one line for the options modal: "STR +1 -> +2", or "Adds: <property>". */
+export function SmithPickChangeText(run, itemRef, pick) {
+  const change = SmithPickChange(run, itemRef, pick);
+  if (!change) return '';
+  return change.adds ? `Adds: ${change.label}` : `${change.label} ${change.before} → ${change.after}`;
 }
 
 function statCandidates(run, itemRef, family) {
