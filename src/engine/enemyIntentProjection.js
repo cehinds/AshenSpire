@@ -13,6 +13,7 @@ import { IsBroken } from './brokenRule.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { effectiveD20Percent } from './d20Chance.js';
 import { enemyMoveDamage } from '../model/state.js';
+import { enemyMoveOf, enemyMovesOf } from '../model/enemyMoveSet.js';
 
 const sum = values => values.reduce((total, value) => total + value, 0);
 const unknown = reason => ({ basis: 'hp', min: null, max: null, label: '?', tone: 'red', stanceReduced: false, uncertain: true, reason });
@@ -83,7 +84,7 @@ function applyMoveEffects(ctx, other, move, carrier, moveId, prepared) {
 // 'stop' ends the whole advance (an action that cannot be known), 'delay' ends this enemy's plan, 'ok' goes on.
 function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
   const advance = (other, moveId, damage, hits, followUp = false) => {
-    const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[moveId];
+    const authored = enemyMoveOf(ctx.registries, other, moveId);
     if (!authored) return 'stop';
     const move = Tactics.expandedEnemyMove(other, authored, moveId, ctx);
     // A delayed move only starts charging this turn: it lands nothing on the player yet, so it neither spends the
@@ -122,7 +123,7 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
       if (head === 'delay' || !other.planDue) continue;
     }
     for (const planned of other.plannedMoves || []) {
-      const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[planned.moveId];
+      const authored = enemyMoveOf(ctx.registries, other, planned.moveId);
       if (!authored || authored.reaction) continue;
       const move = Tactics.expandedEnemyMove(other, authored, planned.moveId, ctx);
       if (move.delay) break;
@@ -247,7 +248,7 @@ export function projectEnemyIntentDamage(combat, enemy, intent, { action = null,
     dodgeCharges: enemy.combatEvade?.charges ?? enemy.statuses?.evade?.stacks ?? 0 };
   if (intent.damage == null) return intent;
   const moveId = action?.meta?.moveId || enemy.intent?.moveId;
-  move ||= Tactics.expandedEnemyMove(enemy, combat.registries.enemies.get(enemy.enemyId).moves[moveId] || {}, moveId, combat);
+  move ||= Tactics.expandedEnemyMove(enemy, enemyMoveOf(combat.registries, enemy, moveId) || {}, moveId, combat);
   if (!action && (move.effects || []).filter(row => row.op === 'damage').length > 1) return { ...intent, projectedDamage: unknown('multipleDamageEffects') };
   hits = Math.max(0, Math.floor(hits));
   if (!Number.isFinite(base) || !Number.isFinite(hits) || hits > 100) return { ...intent, projectedDamage: unknown('unresolvedDamage') };
@@ -292,7 +293,7 @@ export function enemyIntentDamageState(ctx, enemy, carrier, base, action = null,
 // delayed move ends the plan before it, a reaction, or something in front of it cannot be known.
 export function ProjectPlannedMoveDamage(combat, enemy, index) {
   const planned = enemy.plannedMoves || [], head = enemy.intent;
-  const defs = combat.registries.enemies.get(enemy.enemyId)?.moves;
+  const defs = enemyMovesOf(combat.registries, enemy);
   const broken = IsBroken(enemy) && head?.kind === 'staggered' && enemy.planDue;
   if (!defs || !planned[index] || (!broken && (!head?.moveId || head.kind === 'staggered'))) return null;
   // A Broken enemy lost its head, not its plan: the follow-ups are priced as the first moves it plays.

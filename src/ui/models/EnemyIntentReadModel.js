@@ -5,6 +5,7 @@ import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { projectCombatIntent } from './CombatIntentProjectionModel.js';
 import { ChargingWhen, intentDamageRead } from './CombatIntentModel.js';
 import { t } from '../strings.js';
+import { enemyDefinitionOf } from '../../model/enemyMoveSet.js';
 
 const words = value => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, c => c.toUpperCase());
 
@@ -19,7 +20,7 @@ export function enemyIntentRead(combat, enemy, { preview = projectCombatIntent(c
   }
   let row = inspectedMoves?.find(move => move.moveId === moveId);
   if (!row) {
-    const def = combat.registries.enemies.get(enemy.enemyId);
+    const def = enemyDefinitionOf(combat.registries, enemy);
     const move = def.moves?.[moveId];
     if (move) {
       // previewIntent already materializes this public payload. Reuse it when
