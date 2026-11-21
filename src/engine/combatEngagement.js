@@ -238,6 +238,9 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
     SpendRetreatAdvances(ctx, source, plan, { frozen: prepaidPlanPending, firstTaken: plan.route !== 'throw' });
     emitCommittedAdvance(ctx, source, before, ctx.rangeState);
   }
+  // A prepaid Counter return (SPEC §22): its price already counted one Advance per Retreat stack, so it spends them here. It moves nobody
+  // (the return stays inside the incoming contact); SetAdvanced is not called, so every other enemy loses one stack per Advance paid (firstTaken false).
+  if (prepaidReturn && extra > 0) SpendRetreatAdvances(ctx, source, plan, { frozen: true, firstTaken: false });
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
   if (lineage) carrier.rangeLineagePlan={...lineage,rootId};
