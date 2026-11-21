@@ -844,7 +844,7 @@ function presentationModelRows() {
     {
       cat: 'Display',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
-      presentationKey: 'showFormationGrid', def: false,
+      presentationKey: 'showFormationGrid', def: PRESENTATION_DEFAULTS.showFormationGrid,
       label: 'Show battlefield grid',
       note: 'Show faint formation lines behind combatants.',
     },
@@ -883,7 +883,7 @@ function presentationModelRows() {
 
 // The one presentation row still a setting: how much of the viewport the Settings panel uses.
 const SETTINGS_PANEL_KEYS = ['settingsWidthPercent', 'settingsHeightPercent'];
-// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default on).
+// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default off).
 const LIVE_PRESENTATION_KEYS = [...SETTINGS_PANEL_KEYS, 'showFormationGrid'];
 function presentationRows() {
   return presentationModelRows().filter((row) => SETTINGS_PANEL_KEYS.includes(row.presentationKey));
@@ -1063,10 +1063,9 @@ export function advancedConfigOwns(bundle) {
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
   const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
-  if (settings.levelUpValue !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`, settings.levelUpValue]);
   for (const key of additionalKeys) {
     // `statTierSize` is the retired tier dial (ruleset 6); it is never exported.
-    if (key === 'levelUpValue' || key === 'statTierSize' || settings[key] === undefined) continue;
+    if (key === 'statTierSize' || settings[key] === undefined) continue;
     entries.push([`settings.${key}`, settings[key]]);
   }
   return Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
@@ -1222,7 +1221,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       for (let index = 0; index < range.length; index += 1) range[index] = Math.max(0, Math.round(range[index] * rewardMultiplier));
     }
   }
-  const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
+  const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`]);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
@@ -1533,16 +1532,27 @@ function tolerateRaisedFloors(entries, rows, warnings) {
 // them, so a file or sync profile exported while they existed still carries
 // their keys. They are dropped with one named warning, never refused as
 // unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
-// still settings. The plain-key settings game code still reads by key
-// (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
+// still settings.
 const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.(?:settings(?:Width|Height)Percent|showFormationGrid)$)|recovery\.(hp|stamina|mana)\.)/;
-// A live row exported under a gameConfig alias (see advancedConfigSettings and the additional-row
-// mapping in parseAdvancedConfigFile): the alias is not retired while its row is. levelUpValue is
-// the only one.
-const LIVE_ALIAS_KEYS = /^(settings\.)?gameConfig\.balance\.levelUp\.pointsPerLevel$/;
-export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
-/** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups left behind. */
-export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) && !LIVE_ALIAS_KEYS.test(key);
+// THE RETIRED PLAIN-KEY ROWS (owner, 2026-11-20). Core 2 drew none of these rows, so nobody could
+// change them; the value each one gave is now authored content (docs/SETTINGS-TIDY-PROPOSAL.md,
+// "Removed settings"). A stored or imported key is dropped the same way, so the authored value
+// applies. The readers that still take a settings bag (deck rules, victory pacing, swap cost) keep
+// their authored fallbacks.
+export const RetiredPlainSettingKeys = Object.freeze([
+  'askToUpcastAfterTarget', 'shrineMultiUse', 'shopSell', 'swapCostRule', 'levelUpValue',
+  'rewardLevelStatPoints', 'rewardLevelCards', 'victorySummaryMode', 'victoryXpSeconds',
+  'victoryReceiptSeconds', 'victoryReceiptPauseMs', 'victoryReceiptReadySeconds', 'victoryReceiptFormulaTerms', 'victoryReceiptVisibleRows',
+  'deckEditing', 'deckEditingWhere', 'deckMinUnlimited', 'deckMinSize', 'deckMaxUnlimited', 'deckMaxSize', 'classSpellPowerCopies',
+]);
+const RETIRED_PLAIN_KEYS = new Set(RetiredPlainSettingKeys);
+export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
+/** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups or rows left behind. */
+// The per-kind grace refill rows (`graceRefill.<kind>`, under the removed Rewards tab) went the same
+// way: the counts are the authored `balance.graceRefill` table.
+const RETIRED_GRACE_REFILL_KEY = /^(settings\.)?graceRefill\.[^.]+$/;
+export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) || RETIRED_GRACE_REFILL_KEY.test(String(key))
+  || RETIRED_PLAIN_KEYS.has(String(key).replace(/^settings\./, ''));
 /** retiredStoredSettingKeys(settings) → the stored keys the boot cleanup deletes (every retired legacy key). */
 export const retiredStoredSettingKeys = (settings = {}) => Object.keys(settings || {}).filter(isRetiredLegacySettingKey);
 export function withoutRetiredLegacyGroups(entries, warnings) {
@@ -1567,7 +1577,6 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   for (const row of presentationModelRows().filter((r) => r.presentationKey === 'showFormationGrid')) if (!rows.has(row.key)) { rows.set(row.key, row); rows.set(`settings.${row.key}`, row); }
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
-    if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
   }
   const changes = {};
   // A file exported before ruleset 7 carries retired stat keys and per-item

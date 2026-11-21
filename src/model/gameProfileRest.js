@@ -12,6 +12,7 @@ import { refillFlaskCharges } from './gracerefill.js';
 import { syncZones } from './state.js';
 import { commitDeckEditDraft } from './deckRules.js';
 import { commitCardUpgrade, PlanRestCardUpgrade } from './cardUpgradeService.js';
+import { StampOfferKey } from './upgradeOffer.js';
 
 // True when arriving restored anything, flasks included. Saves from before the flask fields count them as 0.
 export const restHealedAny = healed => !!healed && !!(healed.hp || healed.mana || healed.stamina || healed.flaskHp || healed.flaskMana);
@@ -63,6 +64,8 @@ export function beginGameProfileRest(run, visitId = restContext(run)) {
   run.gameProfileRestVisits[visitId] ||= { id: visitId, service: null };
   run.gameProfileRestVisitId = visitId;
   const visit = run.gameProfileRestVisits[visitId];
+  // The visit is one upgrade source: its card options roll on its own offer key, kept across reloads (upgradeOffer.js).
+  StampOfferKey(run, visit);
   // Core: arriving at the site heals once, so Continue without a service still rests. Reloads and remounts do not heal again.
   if (restServicesAll(run) && !RestChoiceMode(run) && !visit.healed) {
     const before = { hp: run.hp, mana: run.mana, stamina: run.stamina, flaskHp: run.flaskCharges?.hpCurrent ?? 0, flaskMana: run.flaskCharges?.manaCurrent ?? 0 };

@@ -433,17 +433,18 @@ const TOGGLE_SETTING = (opener) => `(async () => {
   document.querySelector('${opener}').click();
   const tab = await __fm.until(() => document.querySelector('.qn-row[data-tab="settings"]'));
   if (tab) tab.click(); else if (!document.querySelector('.ov-tab')) return 'no Settings door';
-  // No search box any more (owner, 2026-10-26): open Advanced, then Interface →
-  // Map & HUD (where the row is filed), and find it by its data-key.
+  // No search box any more (owner, 2026-10-26): open Advanced, then Interface. Its rows sit
+  // behind one button that opens the Interface settings window (owner, 2026-11-20), so press
+  // that button and find the row by its data-key inside the window.
   const advanced = await __fm.until(() => document.querySelector('.set-tab[data-member="Advanced"]'));
   if (!advanced) return 'no Settings Advanced tab';
   advanced.click();
   const section = await __fm.until(() => document.querySelector('.set-subtab[data-advanced-group="Interface"]'));
   if (!section) return 'no Settings Interface section';
   section.click();
-  const topic = await __fm.until(() => [...document.querySelectorAll('.set-advanced-group:not([hidden]) [data-topic]')].find(t => t.dataset.topic === 'Map & HUD'));
-  if (!topic) return 'no Settings Map & HUD topic';
-  topic.click();
+  const windowButton = await __fm.until(() => document.querySelector('[data-btn="groupModal.interface"]'));
+  if (!windowButton) return 'no Settings Interface window button';
+  windowButton.click();
   const toggle = await __fm.until(() => document.querySelector('[data-key="${SETTING}"]'));
   if (!toggle) return 'the "Use flasks outside combat" row did not appear';
   if ((toggle.type === 'checkbox' ? String(toggle.checked) : toggle.getAttribute('aria-checked')) !== 'false') return 'the toggle did not start off';
@@ -451,6 +452,9 @@ const TOGGLE_SETTING = (opener) => `(async () => {
   await __fm.sleep(300);
   const onEl = document.querySelector('[data-key="${SETTING}"]');
   const on = onEl && (onEl.type === 'checkbox' ? String(onEl.checked) : onEl.getAttribute('aria-checked'));
+  // The row sits in the Interface window, over the Settings menu: close the window, then the menu.
+  document.querySelector('.set-group-modal .modal-close')?.click();
+  await __fm.sleep(400);
   document.querySelector('.modal-close[aria-label="Close menu"]')?.click();
   await __fm.sleep(400);
   return on === 'true' ? '' : 'the toggle did not turn on';

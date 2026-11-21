@@ -22,7 +22,6 @@ import { shopOfferPrice } from '../../model/shopOfferPrice.js';
 import { gameProfileShopPurchasePlan } from '../../model/gameProfileRewards.js';
 import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
 import { runHudHtml, wireRunHud, RefreshRunHud, RunHudRefreshSignature } from '../components/runHud.js';
-import { settingOn } from './settings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { shopWorkspaceLayout } from '../models/ShopWorkspaceModel.js';
 import { purchaseReview, ShopPurchaseKind } from '../models/ConfirmationReviewModel.js';
@@ -70,7 +69,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   const leave = button({ label: t('shop.leave'), role: 'exit', id: 'leave-shop' }); leave.addEventListener('click', onLeave);
   foot.append(status, ModalFooter({ secondary: [leave], className: 'shop-foot' }));
   const labels = { combatCards: 'shop.bar.combatCards', weaponArts: 'shop.bar.weaponArts', weapons: 'shop.bar.armaments', armor: 'shop.bar.armour', relics: 'shop.bar.relics', potions: 'shop.bar.flasks', sell: 'shop.bar.sell', rankUps: 'shop.bar.rankUps' };
-  const sellEnabled = onSell && settingOn(meta?.settings, 'shopSell');
+  const sellEnabled = onSell && registries?.balance?.shop?.sellBack !== false;
   // `shelfKinds` is the dock the host allows (the 3-6 options rule); an offer on a shelf left off is not drawn.
   const stocked = [...new Set(offer.options.map(option => option.kind))].filter(kind => !shelfKinds || shelfKinds.includes(kind));
   const categories = [...stocked, ...(sellEnabled ? ['sell'] : [])];

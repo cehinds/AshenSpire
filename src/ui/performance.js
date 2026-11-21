@@ -87,14 +87,9 @@ export function migrateEffectsSetting(settings) {
   return true;
 }
 
-// `coarse` is kept so callers need no change; the default is now off everywhere,
-// so a touch screen no longer decides anything.
-export function resolvePerformanceMode(settings = {}, coarse = false) { // eslint-disable-line no-unused-vars
-  return effectsEnabled(settings) ? 'full' : 'lite';
-}
-
+/** liteRendering() → true when Effects is off (root `data-effects="off"`); the old Lite quality is that same state. */
 export function liteRendering() {
-  return typeof document !== 'undefined' && document.documentElement?.dataset.performance === 'lite';
+  return typeof document !== 'undefined' && document.documentElement?.dataset.effects === 'off';
 }
 
 /** OutlineTargetSilhouette() → true when a target silhouette must be drawn as an outline, not a filter-tinted copy:
