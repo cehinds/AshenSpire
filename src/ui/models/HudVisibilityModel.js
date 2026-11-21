@@ -8,7 +8,7 @@ export const HUD_VISIBILITY_SETTINGS = Object.freeze([
   { key: 'hudShowCurrency', label: t('settings.row.hudShowCurrency'), note: tFull('settings.row.hudShowCurrency') },
   { key: 'hudShowPosition', label: t('settings.row.hudShowPosition'), note: tFull('settings.row.hudShowPosition') },
   { key: 'hudShowPotions', label: t('settings.row.hudShowPotions'), note: tFull('settings.row.hudShowPotions') },
-].map(row => Object.freeze({ ...row, cat: 'Display', def: true })));
+].map(row => Object.freeze({ ...row, cat: 'Display', topic: 'hud', def: true })));
 
 export function resolveHudVisibility(settings = {}) {
   return Object.fromEntries(HUD_VISIBILITY_SETTINGS.map(({ key }) => [key, settings?.[key] !== false]));
