@@ -19,7 +19,9 @@ const newRun = (seed) => createRunState({ seed, classId: 'reaver', registries, r
 
 // The dock a trader shows (screens/shop.js): one tab per kind its stock holds (the rank-up shelf included), then Sell,
 // then the Blacksmith when it keeps one. Built from real stock, so a shelf added after the roll is counted too.
-const dockTabs = (run, shopId, stock) => [...new Set(stock.options.map((option) => option.kind)), 'sell', ...(ConfiguredTraderOffersSmith(run, shopId) ? ['smith'] : [])];
+// The copy service (owner 2026-11-20) shares the SERVICES tab with a rank-up shelf, so it is one tab with it.
+const tabOf = (stock, kind) => (kind === 'cardCopies' && stock.options.some((option) => option.kind === 'rankUps') ? 'rankUps' : kind);
+const dockTabs = (run, shopId, stock) => [...new Set(stock.options.map((option) => tabOf(stock, option.kind))), 'sell', ...(ConfiguredTraderOffersSmith(run, shopId) ? ['smith'] : [])];
 
 test('every trader shows 3-6 dock options in all (rank-up shelf, Sell and Blacksmith counted), always armaments, cards and relics', () => {
   const sizes = new Set();

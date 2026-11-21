@@ -5,6 +5,8 @@ import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
+import { OpenCardCopyModal } from './ui/components/cardCopyModal.js';
+import { StartCardCopyOffer, CARD_COPY_OPTION, CARD_COPY_SOURCE } from './model/cardCopyService.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
 import { snapshotRunForDiff } from './model/runChangeReceipt.js';
@@ -1835,6 +1837,8 @@ function remountMapIfShowing(changed) {
 }
 
 function showMap(opts) {
+  // Owner 2026-11-20: a copy relic picked up anywhere opens its one-time copy door before the map (cardCopyService.js).
+  if (openPendingCardCopy('map')) return;
   if (run.mapGraph?.activityLauncher) {
     app.replaceChildren();
     const screen = document.createElement('section'); screen.className = 'screen game-profile-activities';
@@ -2499,6 +2503,17 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
+// A queued card copy (a copy relic's pickup) opens as an ordinary reward door; `after` is where its Continue goes.
+function openPendingCardCopy(after) {
+  if (!gameModule(run, 'rewards') || run.gameProfilePendingReward || !(run.pendingCardCopies > 0)) return false;
+  const offerId = StartCardCopyOffer(registries, run);
+  if (offerId) run.gameProfilePendingReward = { offerId, source: CARD_COPY_SOURCE, after, levelOffers: 0, rankUpsOffered: true };
+  persistOrWarn();
+  if (!offerId) return false;
+  showGameProfileReward();
+  return true;
+}
+
 function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false, armamentReward = '', pool = 'normal', takeCount = null } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
   if (noticeOnly && !progression.length && !victoryReceipt) { persistOrWarn(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
@@ -2585,11 +2600,20 @@ function leaveRewardDoor(pending) {
   });
   if (run.gameProfilePendingReward) return showGameProfileReward();
   if (pending.after === 'advanceAct') return advanceAct();
+  if (pending.after === 'shop' && run.gameProfileOpenShop) return showShop();
   showMap();
 }
 
 // W25-R: the card pick of a "Rank up a card" service (a reward option or a shop shelf): option rows of the cards that can rise.
 // Resolves with the chosen instance id; Cancel rejects with an empty message, so the door that asked stays as it was.
+// The card pick of a vendor's copy service: option rows of every card the player owns. Cancel rejects with an empty message.
+function chooseCardToCopy({ price = '' } = {}) {
+  return new Promise((resolve, reject) => {
+    let picked = null;
+    OpenCardCopyModal({ registries, run, price, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
+  });
+}
+
 function chooseRankUpCard({ price = '' } = {}) {
   return new Promise((resolve, reject) => {
     let picked = null;
@@ -2610,7 +2634,7 @@ function mountGameProfileOfferDoor(pending, { combined }) {
     onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
   }) : null;
   MountGameProfileOffers(app, { registries, run, settings, offer, spoils,
-    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : pending.source === 'armament' ? 'Armament reward' : 'Victory rewards',
+    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : pending.source === 'armament' ? 'Armament reward' : pending.source === CARD_COPY_SOURCE ? t('cardCopy.door.title') : 'Victory rewards',
     // W25-R: a "Rank up a card" option asks which card first (option rows); the claim carries the pick, Cancel leaves the offer open.
     onTake: index => (offer.options[index]?.kind === 'rankUps'
       ? chooseRankUpCard().then(instanceId => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index, { instanceId })))
@@ -2685,8 +2709,11 @@ function showShop() {
   StampOfferKey(run, run.gameProfileRewardOffers?.[`shop:${shopId}`]); persist();
   audio.music('shop');
   // The dock holds to the 3-6 options rule, Sell counted, for a stock saved before traders varied too.
-  const dock = ConfiguredTraderDock(run, offer.options.map(option => option.kind), { smith: ConfiguredTraderOffersSmith(run, shopId) });
-  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop), shelfKinds: dock.kinds,
+  const dock = ConfiguredTraderDock(run, offer.options.map(option => option.kind).filter(kind => kind !== CARD_COPY_OPTION.kind), { smith: ConfiguredTraderOffersSmith(run, shopId) });
+  // The copy service (owner 2026-11-20) is an extra service shelf beside the trader's 3-6 stock shelves, never one of them.
+  // It shares the SERVICES tab with a rank-up shelf (screens/shop.js), and gets its own tab only when stocked without one.
+  const shelfKinds = offer.options.some(option => option.kind === CARD_COPY_OPTION.kind) && !dock.kinds.includes('rankUps') ? [...dock.kinds, CARD_COPY_OPTION.kind] : dock.kinds;
+  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop), shelfKinds,
     onSmith: dock.smith ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
@@ -2695,7 +2722,17 @@ function showShop() {
           try { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist(); } finally { showShop(); }
         }, () => {});
       }
-      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
+      // Owner 2026-11-20: a copy service asks which owned card to copy; the copy lands in the library like a bought card.
+      if (offer.options[index]?.kind === CARD_COPY_OPTION.kind) {
+        return chooseCardToCopy({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
+          const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist(); showShop();
+          offerShopCardDestination({ kind: 'combatCards', id: receipt.cardId, instanceId: receipt.instanceId });
+        }, () => {});
+      }
+      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist();
+      // A copy relic bought here opens its copy door at once; its Continue comes back to this shop.
+      if (openPendingCardCopy('shop')) return;
+      showShop();
       offerShopCardDestination(receipt);
     },
     onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
