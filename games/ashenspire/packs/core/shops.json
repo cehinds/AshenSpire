@@ -87,6 +87,11 @@
       "rankUp": 120
     },
     "rankUpStones": 1,
+    "cardCopy": {
+      "stockChancePct": 30,
+      "uses": 2,
+      "price": 140
+    },
     "upgradeRankChance": 20,
     "armamentStock": [
       4,
@@ -111,6 +116,11 @@
   },
   "rankUp": {
     "stockChancePct": 15
+  },
+  "cardCopy": {
+    "stockChancePct": 20,
+    "uses": 1,
+    "price": 160
   },
   "trader": {
     "always": [

@@ -15,6 +15,7 @@ import { carriedIds } from './loadout.js';
 import { shopSentence } from './shopKinds.js';
 import { CORE_BLACKSMITH_OFFERINGS } from './blacksmith.js';
 import { RollStockCount, VendorNodeKey } from './vendorStockRange.js';
+import { VendorStocksCardCopy, CardCopyRule } from './cardCopyService.js';
 
 const STREAM = 'shopOffers';
 const say = (id, tokens = {}) => shopSentence(id, tokens);
@@ -150,7 +151,12 @@ export function commitCoreWeaponArt(registries, run, quote) {
  */
 export function coreBlacksmithStock(registries, rng, run) {
   const { armaments, weaponArts } = coreBlacksmithShelves(registries, rng, run);
-  const stock = { kind: 'blacksmith', offerings: CORE_BLACKSMITH_OFFERINGS.filter((id) => (id === 'armaments' ? armaments.length : id === 'weaponArts' ? weaponArts.length : true)) };
+  // Owner 2026-11-20: some Blacksmiths also copy a card, with limited uses (shops.json blacksmith.cardCopy). The roll is a hash of
+  // the run seed and the visit's node, so no stream moves and the rest of the workshop rolls exactly as before.
+  const copyRule = CardCopyRule(run, 'blacksmith');
+  const copies = !!copyRule && VendorStocksCardCopy(registries, run, 'blacksmith', run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`);
+  const stock = { kind: 'blacksmith', offerings: CORE_BLACKSMITH_OFFERINGS.filter((id) => (id === 'armaments' ? armaments.length : id === 'weaponArts' ? weaponArts.length : id === 'cardCopy' ? copies : true)) };
+  if (copies) stock.cardCopy = { cost: copyRule.price, usesLeft: copyRule.uses };
   if (armaments.length) stock.armaments = armaments;
   if (weaponArts.length) stock.weaponArts = weaponArts;
   return stock;

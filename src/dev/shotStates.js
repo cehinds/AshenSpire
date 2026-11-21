@@ -19,7 +19,8 @@ import { buildBlacksmithStock } from './../engine/shopKinds.js';
 import { mountGameOver } from './../ui/screens/gameover.js';
 import { mountCompendium } from './../ui/screens/compendium.js';
 import { gameModule } from './../model/gameProfile.js';
-import { GameProfileArmamentOffer } from './../model/gameProfileRewards.js';
+import { GameProfileArmamentOffer, gameProfileShopStock } from './../model/gameProfileRewards.js';
+import { StartCardCopyOffer, CardCopyShelf, CardCopyRule } from './../model/cardCopyService.js';
 import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
@@ -428,6 +429,18 @@ export function createShotStates(ctx) {
         run.loadout.storage.push('katana');
         run.shopStock = buildBlacksmithStock(ctx.getRegistries(), ctx.getRng(), run);
       }
+      // `?shotCopy=1` — the visit stocks the copy-a-card service (owner 2026-11-20) whatever the seed rolled, so its shelf
+      // can be photographed: the Blacksmith's `cardCopy` offering, or a trader's copy shelf in its stock.
+      if (shotParams.get('shotCopy') === '1') {
+        if (name === 'blacksmith') {
+          const rule = CardCopyRule(run, 'blacksmith');
+          if (!run.shopStock.offerings.includes('cardCopy')) run.shopStock.offerings.push('cardCopy');
+          run.shopStock.cardCopy = { cost: rule.price, usesLeft: rule.uses };
+        } else {
+          const stock = gameProfileShopStock(ctx.getRegistries(), run, ctx.getRng(), { shopId: run.gameProfileOpenShop });
+          if (!stock.options.some(option => option.kind === 'cardCopies')) { stock.options.push(CardCopyShelf(run, 'trader')); stock.takeCount += 1; }
+        }
+      }
       persist(); showShop(); return;
     } else if (name === 'reward') {
       // Core's configured reward door: the production offer/save/renderer callbacks, no posed alternate UI and no
@@ -449,6 +462,13 @@ export function createShotStates(ctx) {
         const offerId = `${run.actNumber}:${run.mapNodeId}:combat:armament`;
         if (!GameProfileArmamentOffer(ctx.getRegistries(), run, ctx.getRng(), { offerId, pool: armamentPool })) throw new Error(`No armament reward for a ${armamentPool} on this seed.`);
         run.gameProfilePendingReward = { offerId, source: 'armament', after: 'map', levelOffers: 0 };
+        persist(); return showGameProfileReward();
+      }
+      // `?shotCopy=1` — the one-time copy door Scribe's Mirror opens (owner 2026-11-20), built by the production offer.
+      if (shotParams.get('shotCopy') === '1') {
+        run.pendingCardCopies = 1;
+        const offerId = StartCardCopyOffer(ctx.getRegistries(), run);
+        run.gameProfilePendingReward = { offerId, source: 'copy', after: 'map', levelOffers: 0, rankUpsOffered: true };
         persist(); return showGameProfileReward();
       }
       const shotTake = Math.floor(Number(shotParams.get('shotTake')));

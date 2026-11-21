@@ -44,10 +44,10 @@ import { blacksmithStoneDiscount } from '../../model/blacksmithConfig.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt } from '../../model/blacksmithStock.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { purchaseReview, ShopPurchaseKind, SmithRankReview } from '../models/ConfirmationReviewModel.js';
-import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
+import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, CardCopyPlan, CommitCardCopy, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
 import { SmithPickChangeText } from '../../model/smithUpgrade.js';
 
-const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack' });
+const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack', cardCopy: 'skill' });
 
 // Every vendor buys (owner, 2026-11-20): with `onSell` and the node's `shopId`, the Blacksmith shows the merchant's own Sell
 // shelf (FillSellShelf) as its last tab; `onSell(quote)` commits the sale and the screen redraws.
@@ -218,6 +218,17 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         shelf.append(host);
       }
     },
+    // Owner 2026-11-20: a copy shelf, one row per card the player owns, while the shelf has uses left.
+    cardCopy(shelf) {
+      for (const card of serviceCandidates(registries, run, 'cardCopy')) {
+        const plan = CardCopyPlan(registries, run, card.instanceId);
+        const host = tile(GLYPH.cardCopy, `${plan.name}${card.upgraded ? '+' : ''}`, t('blacksmith.cardCopy.desc', { uses: plan.usesLeft }), '', { visual: cardVisual(card) });
+        actionButton(host, { label: t('blacksmith.action.copy'), cost: plan.cost, plan,
+          commit: () => { const receipt = CommitCardCopy(registries, run, plan); onCardPurchased({ kind: 'combatCards', id: receipt.id, instanceId: receipt.instanceId }); },
+          review: () => purchaseReview({ kind: 'cardCopyChosen', name: plan.name, cost: plan.cost, cinders: run.cinders }) });
+        shelf.append(host);
+      }
+    },
     upgrade(shelf) {
       if (coreSmithingActive(run)) {
         // Core 2: every owned weapon, shield, armour and relic with a slot left. The action opens its rolled options.
@@ -345,7 +356,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     if (key === 'sell') return gameProfileShopSalePlans(registries, run, shopId).filter((plan) => plan.ok).length;
     if (key === 'armaments') return (stock.armaments || []).length;
     if (key === 'weaponArts') return (stock.weaponArts || []).length;
-    if (key === 'rankUp') return serviceCandidates(registries, run, key, meta?.settings).length;
+    if (key === 'rankUp' || key === 'cardCopy') return serviceCandidates(registries, run, key, meta?.settings).length;
     return BLACKSMITH_SERVICES.includes(key) ? serviceCandidates(registries, run, key, meta?.settings).length : 0;
   };
 
@@ -391,7 +402,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       SHELVES[key](shelf);
       for (const host of shelf.querySelectorAll(':scope > .shop-offer')) finishRow(host);
       // A service with nothing to act on now says why, and stays on the rail.
-      if ((BLACKSMITH_SERVICES.includes(key) || key === 'rankUp') && !readyCount(key)) {
+      if ((BLACKSMITH_SERVICES.includes(key) || key === 'rankUp' || key === 'cardCopy') && !readyCount(key)) {
         idle[key] = serviceIdleReason(key, run);
         shelf.prepend(statusText(idle[key], { class: 'shop-offer-avail bs-idle', role: 'status' }));
       }
