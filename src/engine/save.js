@@ -123,7 +123,7 @@ function classTreeReferenceProblems(run, registries) {
   return problems;
 }
 
-function pendingRewardReferenceProblems(pending, registries) {
+export function pendingRewardReferenceProblems(pending, registries) {
   if (!pending) return [];
   const rewards = pending.rewards || {};
   const problems = [];
@@ -154,7 +154,7 @@ function pendingRewardReferenceProblems(pending, registries) {
   for (const row of rewards.classMilestoneRewards || []) {
     if (row.rewardKind === 'cards') for (const id of row.options || []) if (!registries.cards.has(id)) problems.push(`class milestone card '${id}' is unknown`);
     if (row.rewardKind === 'relic') for (const id of row.options || []) if (!registries.relics.has(id)) problems.push(`class milestone relic '${id}' is unknown`);
-    if (row.rewardKind === 'feat') for (const id of row.options || []) if (!registries.classSkillFeats.some(feat => feat.id === id)) problems.push(`class milestone feat '${id}' is unknown`);
+    if (row.rewardKind === 'feat') for (const id of row.options || []) if (!RETIRED_FEAT_IDS.includes(id) && !registries.classSkillFeats.some(feat => feat.id === id)) problems.push(`class milestone feat '${id}' is unknown`);
     if (row.rewardKind === 'attribute') for (const id of row.options || []) if (!registries.attributes.has(id)) problems.push(`class milestone attribute '${id}' is unknown`);
   }
   for (const draft of rewards.skillDrafts || []) {

@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { RETIRED_FEAT_IDS, dropRetiredFeatOptions } from '../src/engine/save.js';
+import { RETIRED_FEAT_IDS, dropRetiredFeatOptions, pendingRewardReferenceProblems } from '../src/engine/save.js';
 
 const registries = createRegistries(contentBundle);
 const known = id => registries.classSkillFeats.some(feat => feat.id === id);
@@ -48,6 +48,18 @@ test('an offer whose grant was already taken is never touched, even with a retir
     classMilestones: { 'class:reaver:1': { grants: { feat: { id: taken.receiptId, state: 'taken', selection: { id: 'reaverKeenBlade' } } } } } };
   dropRetiredFeatOptions(run);
   assert.deepEqual(run.classMilestoneOffers[taken.receiptId], taken, 'classMilestoneProblems needs the taken selection to stay in offer.options');
+});
+
+test('a pending row whose grant was already taken keeps its retired option and still loads', () => {
+  const taken = offer(['reaverIronFooting', 'reaverKeenBlade'], 'class:reaver:1:feat');
+  const run = { classMilestoneOffers: { [taken.receiptId]: structuredClone(taken) },
+    classMilestones: { 'class:reaver:1': { grants: { feat: { id: taken.receiptId, state: 'taken', selection: { id: 'reaverIronFooting' } } } } },
+    pendingReward: { rewards: { classMilestoneRewards: [structuredClone(taken)] } } };
+  dropRetiredFeatOptions(run);
+  assert.deepEqual(run.pendingReward.rewards.classMilestoneRewards[0], taken, 'row and offer stay equal');
+  assert.deepEqual(pendingRewardReferenceProblems(run.pendingReward, registries), [], 'the retired option is not refused');
+  const odd = { pendingReward: { rewards: { classMilestoneRewards: [offer(['notARealFeat'], 'class:reaver:1:feat')] } } };
+  assert.ok(pendingRewardReferenceProblems(odd.pendingReward, registries).some(p => p.includes('notARealFeat')), 'an unknown feat that was never retired is still refused');
 });
 
 test('healing is idempotent: a healed save loads the same the second time', () => {
