@@ -1,11 +1,8 @@
 // The Core card-upgrade step generator (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md).
-// Pure and stateless: the roll is mulberry32(hash(run.seed, instanceId, stepIndex)),
-// so a preview equals the commit and no named RNG stream moves. A leaf module:
-// it imports only rng.js (a leaf) and cardUpgrade.js (a leaf).
-//
-// `retain` is deliberately NOT an option: Core's end-of-turn fate
-// (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
-// `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
+// Pure and stateless: the roll is mulberry32(hash(run.seed, instanceId, stepIndex)); its callers fold the visit's
+// offer key into the instance id (upgradeOffer.js), so a preview equals the commit and no named RNG stream moves.
+// A leaf module: it imports only rng.js, cardUpgrade.js, combatRanges.js, cardRank.js and generated data.
+// Retain is offered as an `fx` step (W25): Core keeps a Retain card in hand at the end of a turn.
 import { mulberry32 } from './rng.js';
 import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
