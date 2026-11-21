@@ -1438,6 +1438,7 @@ function showArmoury(request = '', returnTo = showMap) {
       stampDeck(registries, run);
       persist();
     },
+    onRememberEquipSlot: () => persist(),
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
     onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards }),
