@@ -1,6 +1,6 @@
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
 import { gameModule, gameContent } from '../model/gameProfile.js';
-import { characterSettings, enemyEffectiveLevel } from '../../engine/kernel/gameConfig.js';
+import { characterSettings, enemyEffectiveLevel, enemyFightLevel } from '../../engine/kernel/gameConfig.js';
 import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../model/gameProfileRun.js';
 import { ItemPropertySummary } from '../model/itemProperties.js';
 import { GearSummary, GearItemProps } from '../model/gearEffects.js';
@@ -41,8 +41,27 @@ import { reconcileCombatKnowledge } from './enemyKnowledge.js';
 import { RestoreLiveStats } from './liveStats.js';
 import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
+// Owner, 2026-11-20 (characters.enemyLevelScaling, SPEC §17): a Core enemy's level and floor step for this fight from the
+// run's act, its floor within the act and the enemy's tier. null when the profile has no table (an older snapshot) or no row.
+function enemyFightScaling(run, enemyId) {
+  const settings = run.gameProfile?.modules ? characterSettings(run.gameProfile.modules) : null;
+  if (!settings?.enemyLevelScaling) return null;
+  const row = (gameContent(run, 'enemies') || []).find(entry => entry.id === enemyId);
+  if (!row) return null;
+  return enemyFightLevel(row, settings, {
+    act: Number.isSafeInteger(run.actNumber) && run.actNumber > 0 ? run.actNumber : 1,
+    floor: Number.isSafeInteger(run.floor) && run.floor >= 0 ? run.floor : 0,
+  });
+}
+// Each enemy's floor step for this fight (null without enemyLevelScaling): its gear and HP climb by it.
+export function enemyLevelStepsForFight(run, enemyIds) {
+  return enemyIds.map(enemyId => enemyFightScaling(run, enemyId)?.step ?? null);
+}
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
   return enemyIds.map((enemyId, index) => {
+    // enemyLevelScaling, when the profile has it, replaces the by-act levels below for every tier.
+    const scaled = enemyFightScaling(run, enemyId);
+    if (scaled) return scaled.level;
     // A Core elite or boss fights at its tier's level for this act (enemies.effectiveLevelByAct, owner 2026-11-17).
     const act = Number.isSafeInteger(run.actNumber) && run.actNumber > 0 ? run.actNumber : 1;
     const settings = run.gameProfile?.modules ? characterSettings(run.gameProfile.modules) : null;
@@ -174,6 +193,7 @@ export function createRunCombat({
     enemyIds,
     enemyRows: encounter?.rows || [],
     enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),
+    enemyLevelSteps: enemyLevelStepsForFight(run, enemyIds),
     hpMult,
     enemyDamageMult,
     enemyStatuses,

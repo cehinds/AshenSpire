@@ -5,6 +5,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
 import { characterSettings, resolveGameAuthor, enemyFightLevel, enemyLevel, resolveEnemyAttributes, enemyPools } from '../engine/kernel/gameConfig.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRng } from '../src/engine/rng.js';
 
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
 const profile = resolveGameAuthor(author, loadGameProfileCatalog());
@@ -58,5 +64,46 @@ test('SP stops at the tier cap after gear and relics', () => {
     assert.equal(enemyPools(r, settings, 11, rich).sp, cap, tier);
     const { enemyLevelScaling, ...old } = settings;
     assert.ok(enemyPools(r, old, 11, rich).sp > cap, `${tier} uncapped without the table`);
+  }
+});
+
+// Headless Core fights, built the way the live game builds them (createRunCombat).
+const coreRegistries = (gameProfile = resolveGameProfile('default')) =>
+  bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile);
+const core = coreRegistries();
+function fightEnemy(registries, enemyId, act, floor, seed = 77) {
+  const run = createRunState({ registries, classId: 'reaver', seed });
+  run.actNumber = act;
+  run.floor = floor;
+  return createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [enemyId] }).enemies[0];
+}
+const tierOf = id => profile.content.enemies.find(e => e.id === id).tier;
+
+test('an act-1 minion on floors 2, 5 and 8 is level 1, 2 and 3 with +8% HP and +1 AR and DR a step', () => {
+  assert.equal(tierOf('wanderingSoldier'), 'minion');
+  const [low, mid, high] = [2, 5, 8].map(floor => fightEnemy(core, 'wanderingSoldier', 1, floor));
+  assert.deepEqual([low, mid, high].map(e => [e.level, e.levelStep]), [[1, 0], [2, 1], [3, 2]]);
+  // Same seed, same rolled HP: only the step factor (and rounding) separates them.
+  for (const [e, ratio] of [[mid, 1.08], [high, 1.16]]) assert.ok(Math.abs(e.maxHp / low.maxHp - ratio) < 0.04, `HP ${low.maxHp} -> ${e.maxHp}`);
+  // AR and DR follow STR and DEX plus the gear step: strip the attribute part to see the step alone.
+  const gear = e => [e.ratings.ar - e.attributes.strength, e.ratings.dr - e.attributes.dexterity];
+  assert.deepEqual([low, mid, high].map(gear), [[0, 0], [1, 1], [2, 2]]);
+});
+
+test('an act-2 boss is level 8 and an act-3 boss level 11, both at the boss gear step with no HP step', () => {
+  assert.equal(tierOf('stitchedKing'), 'boss');
+  const king = fightEnemy(core, 'stitchedKing', 2, 10);
+  assert.deepEqual([king.level, king.levelStep], [8, 2]);
+  assert.equal(king.ratings.ar - king.attributes.strength, 2);
+  assert.equal(fightEnemy(core, 'ashheartDragon', 3, 10).level, 11);
+});
+
+test('no boss or elite exceeds SP 3 and no minion SP 2; elite and boss Dex and Wis stay at 4 or less before gear', () => {
+  // Act 3, floor 8 is the top of the table, so the most points and the most SP any enemy can carry.
+  for (const e of profile.content.enemies) {
+    const enemy = fightEnemy(core, e.id, 3, 8);
+    const cap = e.tier === 'minion' ? 2 : 3;
+    assert.ok(enemy.maxStamina <= cap, `${e.id} SP ${enemy.maxStamina}`);
+    if (e.tier !== 'minion') assert.ok(enemy.ownAttributes.dexterity <= 4 && enemy.ownAttributes.wisdom <= 4, `${e.id} ${JSON.stringify(enemy.ownAttributes)}`);
   }
 });

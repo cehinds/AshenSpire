@@ -125,7 +125,7 @@ const QUEUE_GUARD = 10000;
  * Setup events are in combat.eventLog.
  */
 export function createCombat({
-  registries, rng, player, enemyIds: requestedEnemyIds, enemyLevels = [], enemyRows = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  registries, rng, player, enemyIds: requestedEnemyIds, enemyLevels = [], enemyLevelSteps = [], enemyRows = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
   // Every enemy's move damage × this (SPEC §13.3 balance.bossTiers: a boss
   // met at a later tier hits harder). Stamped on each enemy entity, so a
   // snapshot carries it; 1 stamps nothing.
@@ -372,10 +372,12 @@ export function createCombat({
         enemy.basePrecisionBonus = definition.basePrecisionBonus || definition.precisionBonus || 0;
         enemy.ratings ||= { ar: definition.ar || 0, dr: definition.dr || 0, pr: 0,
           ward: definition.ward || definition.poiseMax || 0, poise: definition.poise || definition.poiseMax || 0 };
-        const { effectiveMaxHp, hpScale, ...ratings } = gameProfileEnemyRatings(combat,enemy,{actLevelled:Number.isSafeInteger(enemyLevels[index])}) || {};
+        const { effectiveMaxHp, hpScale, hpStepScale, ...ratings } = gameProfileEnemyRatings(combat,enemy,{actLevelled:Number.isSafeInteger(enemyLevels[index]),levelStep:enemyLevelSteps[index]}) || {};
         Object.assign(enemy, ratings);
         // An act-levelled elite or boss (enemies.effectiveLevelHp) takes its level's HP; Custom Climb hpMult still scales it.
         if (Number.isSafeInteger(effectiveMaxHp) && effectiveMaxHp > 0) enemy.hp = enemy.maxHp = hpMult !== 1 ? Math.max(1, Math.round(effectiveMaxHp * hpMult)) : effectiveMaxHp;
+        // An enemy still on its rolled HP gains enemyLevelScaling.hpPerStep per floor step (owner, 2026-11-20), after hpMult; no RNG is drawn.
+        else if (Number.isFinite(hpStepScale) && hpStepScale !== 1) enemy.hp = enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * hpStepScale));
         // Then its tier's HP scale (enemies.hpScaleByTier), on the level HP or the rolled range alike.
         if (Number.isFinite(hpScale) && hpScale !== 1) enemy.hp = enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * hpScale));
       }

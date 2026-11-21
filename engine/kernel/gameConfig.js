@@ -504,6 +504,12 @@ export function enemyFightLevel(row, settings, { act = 1, floor = 0 } = {}) {
   const step = Math.min(levels.length - 1, climbed);
   return { level: Math.max(1, levels[step]), step };
 }
+// The HP factor a floor step gives an enemy on its rolled HP: 1 + hpPerStep × step for a tier with a stepped row; 1 for a boss
+// (one level per act, no HP step: its level-row HP and seat tier already scale it) or without the table.
+export function enemyScalingHpFactor(row, settings, step) {
+  const scaling = settings?.enemyLevelScaling, firstAct = Object.values(scaling?.levels || {})[0];
+  return Array.isArray(firstAct?.[enemyTierId(row)]) && step > 0 ? 1 + scaling.hpPerStep * step : 1;
+}
 // Gear and relics grant attribute points only (owner 2026-10-17): `self.<attribute>=+N`,
 // 0-5 points across at most 3 attributes per item. Returns the summed bonus for one enemy.
 const ITEM_MODIFIER = /^self\.(strength|dexterity|constitution|wisdom|intelligence|sp|mp|hp)=([+-]\d+)$/;

@@ -131,6 +131,7 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085',
   'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb',
   'sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7',
+  'sha256:430fdce708e5bb706bab21c8fc6612343fb122bfb935336263b77b345d026e91',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
 // the statusCaps rule key (W25-NC); the Counter stack rule (batch 5); the bands rules (W25-BANDS) with the swapRows op, Upset the Ranks, formation Block and spell lanes (rules 6-9). Then W25-EvadeCards (Evade card data, card modes, the self Advance). Then the Evade card faces, the Quickstep Counter stack and the Evade-grant face phrase (src/model/fixCoreMechanics.js, playingCard.js). Pinned once at the batch-5 + bands + Evade cards merge; 8c57f3... is now in PREVIOUS_RUNTIMES.
@@ -157,7 +158,8 @@ const PREVIOUS_RUNTIMES = new Set([
 // Combined Gear, stat traditions and Smash rules retain every parent runtime above.
 // Card tradition labels move to uiStrings.csv (card.tradition.*, #2892 review): wording only, no rule; edf0d9... is now in PREVIOUS_RUNTIMES.
 // Enemy level scaling (owner, 2026-11-20: characters.enemyLevelScaling, enemyFightLevel, tier SP and attribute caps) moves it again; 7d13f1... is now in PREVIOUS_RUNTIMES.
-const FIXED_EVASION_RUNTIME = 'sha256:430fdce708e5bb706bab21c8fc6612343fb122bfb935336263b77b345d026e91';
+// Enemy fight levels, floor-step gear and HP (owner, 2026-11-20: enemyLevelsForFight, enemyLevelStepsForFight, enemyScalingHpFactor) move it again; 430fdc... is now in PREVIOUS_RUNTIMES.
+const FIXED_EVASION_RUNTIME = 'sha256:6436828d5e97fdddb6343ad556294b5a86b79bbc4876cdccf850bccb0faa0d3e';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
