@@ -2385,13 +2385,17 @@ function showRest(openPanel = null, locationId = null) {
     const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
     persist();
     const leave = () => { markRestLeft(run); persist(); showMap(); };
+    // The Shrine stays mounted: a commit, a closed deck editor or Armoury refreshes its cards in place.
+    let restView;
+    // A door's return callback may pass its own argument; only a focus request is read.
+    const refresh = options => restView?.refresh(options?.focusId ? options : {});
     const commit = (service, payload) => {
       const before = snapshotRunForDiff(run);
       commitGameProfileRest(registries, run, service, payload);
       if (record) recordRestConsumed(run, service);
-      persist(); showRest();
+      persist(); refresh({ focusId: service });
       // The what-changed receipt for the services that change gear or cards. Level-up already ends in its own
-      // reward door, so it is skipped. It opens after the screen re-mounts, so the page lock covers the new screen.
+      // reward door, so it is skipped. It opens after the affected choices refresh.
       if (service === 'smith' || service === 'upgradeCard') {
         showRunReceipt({ run, registries, before, title: t(service === 'smith' ? 'whatChanged.rest.smith' : 'whatChanged.rest.upgradeCard') });
       }
@@ -2401,14 +2405,15 @@ function showRest(openPanel = null, locationId = null) {
       const draft = createGameProfileRestDraft(run);
       mountDeckEditor(document.body, {
         registries, run: draft, settings: saves.loadMeta().settings || {},
-        onDone: () => commit('strategize', { draft }), onCancel: () => showRest(),
+        onDone: () => commit('strategize', { draft }), onCancel: refresh,
       });
     };
-    return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave, hud: roomHud(() => showRest()),
+    restView = mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave, hud: roomHud(refresh),
       gameProfileRest: { visit, onStrategize: strategize,
         // Core 2: the deck door is free and is not a service, so it never touches the visit's one pick.
-        deckEditor: deckDoors().rest ? { onOpen: () => showDeckEditor(() => showRest(), true, null, 'shrine') } : null,
+        deckEditor: deckDoors().rest ? { onOpen: () => showDeckEditor(refresh, true, null, 'shrine') } : null,
         onCommit: commit, onLeave: leave } });
+    return restView;
   }
   if (locationId) restLocationId = locationId;
   audio.music('rest');
