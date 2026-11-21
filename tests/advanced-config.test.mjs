@@ -65,10 +65,11 @@ test('settings import reads the removed Rendering quality as Effects, never refu
 });
 
 test('settings import accepts exported legacy advanced settings using their row definitions', () => {
-  const rows = [{ cat: 'Advanced', key: 'levelUpValue', type: 'number', integer: true, min: 1, max: 20, def: 1 },
-    { cat: 'Advanced', key: 'cardMotif', type: 'choice', choices: ['band', 'plain'], def: 'plain' }];
+  const rows = [{ cat: 'Advanced', key: 'cardMotif', type: 'choice', choices: ['band', 'plain'], def: 'plain' }];
+  // A stray retired `levelUpValue` (owner, 2026-11-20) is no longer exported under its old gameConfig alias.
   const text = advancedConfigExport({ levelUpValue: 3, cardMotif: 'band' }, {}, ['cardMotif']);
-  assert.deepEqual(parseAdvancedConfigFile(text, contentBundle, {}, rows), { levelUpValue: 3, cardMotif: 'band' });
+  assert.ok(!text.includes('levelUp'), 'the retired level-up value is not exported');
+  assert.deepEqual(parseAdvancedConfigFile(text, contentBundle, {}, rows), { cardMotif: 'band' });
 });
 
 test('advanced configuration inventory is complete, grouped, and uniquely keyed', () => {

@@ -298,7 +298,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   const rows = read();
   // The refusal sentence stands in the body, where a reader is already
   // looking, and only when there is one. An enabled act needs no caption:
-  // the button says what it does.
+  // the button says what it does. It leads the body so long card details never push it out of view.
   const blocked = rows.filter((row) => !row.enabled && row.reason);
   let note = null;
   if (blocked.length) {
@@ -306,7 +306,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     note.className = 'card-action-reason';
     note.setAttribute('role', 'status');
     note.textContent = blocked.map((row) => row.reason).join(' ');
-    details.append(note);
+    details.prepend(note);
   }
   const buttons = rows.map((row) => {
     const button = document.createElement('button');

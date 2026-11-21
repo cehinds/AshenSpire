@@ -41,7 +41,7 @@ Owner request, 2026-11-19. Branch `feature/settings-ui-performance-063de6`.
 ### Settings tidy (follow-up, not this PR)
 - [ ] Advanced has 54 rows in 9 groups; Combat has 28. Split or prune. Survey and proposal: [SETTINGS-TIDY-PROPOSAL.md](SETTINGS-TIDY-PROPOSAL.md); owner to decide.
 - [x] Topic grouping is a long key regex (`settings.js:1462`); make it a row field. Each row carries `topic`.
-- [ ] `data-performance` and `data-effects` mean the same thing; keep one. Not merged: see [SETTINGS-TIDY-PROPOSAL.md](SETTINGS-TIDY-PROPOSAL.md#data-performance-vs-data-effects).
+- [x] `data-performance` and `data-effects` meant the same thing; `data-effects` is now the one hook (owner, 2026-11-20).
 - [x] Remove the retired `performanceMode` row. A saved or imported Full still turns Effects on.
 
 ### Verify

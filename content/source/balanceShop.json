@@ -12,9 +12,11 @@
   "removeBase": 225,
   "removeStep": 75,
   "sellFraction": 0.5,
+  "sellBack": true,
   "$note": {
     "removeBase": "What the first card removal of a run costs at the merchant.",
     "removeStep": "How much each further removal adds to that price.",
+    "sellBack": "The merchant has a Sell bar for your relics, flasks and armaments. False removes the bar. Was the Merchant buys back setting.",
     "sellFraction": "What the merchant pays for a relic, flask or armament of yours, as a fraction of the cheapest he would sell that kind for, so the same piece fetches the same cinders every visit. Below 1 selling always loses on the trade, which is the point of it; at 1 or above a relic or flask sells for at least what he charges, while armaments stop selling altogether. 0 takes every buy-back to nothing.",
     "{kind}Cost.{rarity}.{end}": "The {band} of what the merchant charges for {a costItem}.",
     "{kind}Cost.{end}": "The {band} of what the merchant charges for {a costItem}.",

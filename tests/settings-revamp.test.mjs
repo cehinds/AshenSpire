@@ -578,9 +578,9 @@ test('navigate() reads its own cursor, and a refused token write is reported', a
 
 test('release promotions and Clear hidden tuning cover every debug-only row, not only gameConfig.*', async () => {
   const { promotionFor, hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
-  const values = { shrineMultiUse: true, screenShake: false, 'gameConfig.presentation.settingsWidthPercent': 80 };
+  const values = { creationAutoAdvance: true, screenShake: false, 'gameConfig.presentation.settingsWidthPercent': 80 };
   assert.deepEqual(promotionFor({ digest: 'x', values }, false).values, { screenShake: false });
-  assert.deepEqual(hiddenTuningKeys(values, false).sort(), ['gameConfig.presentation.settingsWidthPercent', 'shrineMultiUse']);
+  assert.deepEqual(hiddenTuningKeys(values, false).sort(), ['creationAutoAdvance', 'gameConfig.presentation.settingsWidthPercent']);
   assert.deepEqual(hiddenTuningKeys(values, true), [], 'debug builds show them all');
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
