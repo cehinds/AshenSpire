@@ -112,6 +112,7 @@ import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, RestOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { armouryRoute } from './model/armouryPages.js';
 import { mountConfiguredShop } from './ui/screens/shop.js';
+import { runHudRefreshSignature, RefreshRunHud } from './ui/components/runHud.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
@@ -1402,7 +1403,30 @@ function showOfflinePlay() {
 // default; a room (merchant, Shrine, event) passes itself, because the band
 // those rooms now carry opens the Armoury too and a close that went to the
 // map would abandon the room mid-visit.
+//
+// An overlay (the Armoury, the deck editor) that goes back to a map still mounted under it keeps that map, with its
+// selected route and camera: only the run HUD is redrawn, and only when what it shows changed. Any other return
+// callback may finish a reward or a service, so it runs as given.
+function retainMapOrigin(returnTo) {
+  if (returnTo !== showMap) return returnTo;
+  const origin = app.querySelector('.mapscreen');
+  if (!origin) return returnTo;
+  const owner = run;
+  const hudOptions = { place: 'map', headerClass: 'map-header' };
+  let signature = runHudRefreshSignature({ registries, run, meta: saves.loadMeta(), ...hudOptions });
+  return () => {
+    if (!origin.isConnected || run !== owner) return returnTo();
+    const meta = saves.loadMeta();
+    const next = runHudRefreshSignature({ registries, run, meta, ...hudOptions });
+    if (next === signature) return undefined;
+    signature = next;
+    RefreshRunHud(app, { registries, run, meta, ...hudOptions, hud: roomHud(showMap), remount: showMap });
+    return undefined;
+  };
+}
+
 function showArmoury(request = '', returnTo = showMap) {
+  returnTo = retainMapOrigin(returnTo);
   // A glow cleared by looking must survive a reload even when nothing in the Armoury changes.
   if (armouryHasNew(run)) { markArmourySeen(run); persist(); } else markArmourySeen(run);
   const armouryMeta = saves.loadMeta();
@@ -1478,6 +1502,7 @@ function deckDoors(services = null) {
 // `place` names where Back leads (common.place.*): the exit reads "Back to {place}" instead of Cancel.
 function showDeckEditor(returnTo = showMap, hub = true, focusCard = null, place = '') {
   if (!run) return;
+  returnTo = retainMapOrigin(returnTo);
   mountDeckEditor(document.body, {
     registries,
     run,
