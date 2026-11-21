@@ -37,6 +37,12 @@ cards fold automatically where the authored view asks for folded state.
 
 ## Armaments List
 
+Replace and Choose item open a modal item list over the current equipment rows; they never append a picker below the list. Choosing an item for an occupied slot opens the comparison, current and candidate cards side by side; an empty slot equips at once. Back returns to the item list without changing equipment.
+
+Reward and purchase Equip open the item's compatible slots; locked or refused slots are disabled rows that name the reason. A slot press immediately opens confirmation, with no separate Choose button; a single available destination skips the slot list. The final buttons are Back and green Confirm. Back returns to the slot list when there was a choice. Only Confirm changes the loadout.
+
+Within a run, each item's last selected destination is saved in `equipmentSlotChoices` as soon as the slot is pressed, including when the equip is then cancelled, and it is saved with the run. Retrying Equip opens that slot's confirmation directly when it is still available. Back opens the slot list with the remembered destination highlighted and focused; pressing another slot saves the new choice. A remembered destination that is locked, refused or gone falls back to the current valid choices. Preferences are separate for each item and run; older saves start without one.
+
 List mode uses compact occupied rows with a complete scaled equipment-card thumbnail, authored position code, item name and Equipped/Reserve badge. Inspect and Replace stay grouped; Unequip sits at the right. Inspect is read-only: desktop shows the complete inspection beside the list; mobile switches to inspection with a Back control. Thumbnail and inspection widths are authored in `layout.equipment.compactList`. Empty and locked positions retain their model-driven states and refusal text. Make active remains a separate action, including for an empty reserve.
 
 ## Armaments Grid

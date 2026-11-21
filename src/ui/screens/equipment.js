@@ -509,9 +509,11 @@ export { isCollectibleCategory };
  *   inCombat  applies the authored combat-change rule and each slot's swap rule
  *   onSwap    routes active-set changes through the priced combat intent
  *   onEquip   routes item replacement/move/unequip through the priced combat intent
+ *   onRememberEquipSlot  saves the run after Equip records a new slot in run.equipmentSlotChoices
  */
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', equipItemId = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
+  onRememberEquipSlot = null,
   // SPEC §14.1: the deck editor's Armoury door (under `free`, out of combat).
   onEditDeck = null, onCharacterSheet = null,
   handRules = null,
@@ -895,10 +897,17 @@ export function mountEquipment(host, {
 
   /**
    * Equip on an Inventory item (owner, 2026-11-05): every position open to it
-   * is a destination. More than one asks first in a "Choose a slot" modal; one
-   * goes straight to the compare modal (occupied) or the confirm modal (empty).
-   * Equip itself is the same applyEquipmentChange as ever, so combat pricing
-   * (onEquip) and refusals are unchanged.
+   * is a destination. More than one asks first in a "Choose a slot" modal, where
+   * a press goes straight to the compare modal (occupied) or the confirm modal
+   * (empty); one goes there at once. Equip itself is the same
+   * applyEquipmentChange as ever, so combat pricing (onEquip) and refusals are
+   * unchanged.
+   *
+   * The slot pressed is remembered per item for the run in
+   * run.equipmentSlotChoices (docs/ARMOURY-LAYOUT-BRIEF.md, Armaments List),
+   * even when the equip is then cancelled. A retry opens that slot's
+   * confirmation directly while it is still available; its Back opens the slot
+   * list with the remembered slot highlighted.
    */
   function beginInventoryEquip(row, opener) {
     const choices = [];
@@ -907,27 +916,49 @@ export function mountEquipment(host, {
         choices.push({ slot, position, id: `${slot.id}:${position.index}` });
       }
     }
-    const open = choices.filter(choice => choice.position.state !== 'locked');
-    // Back from the compare or confirm child lands on the slot list it came from (when there was one).
-    const proceed = ({ slot, position }, onBack = undefined) => {
-      const label = `${slot.label} · ${position.index + 1}`;
+    const refusalFor = ({ slot, position }) => {
+      if (position.state === 'locked') return position.rung?.hint || position.rung?.name || '';
       const seal = canEquip(registries, slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: position.index, itemId: row.id, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
       const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, row.id);
-      const refusal = !seal.ok ? seal.reason : !transition.ok ? transition.reason : '';
+      return !seal.ok ? seal.reason : !transition.ok ? transition.reason : '';
+    };
+    const isRefused = (choice) => choice.position.state === 'locked' || !!refusalFor(choice);
+    const rememberedId = () => run.equipmentSlotChoices?.[row.key] || null;
+    const remember = ({ id }) => {
+      if (rememberedId() === id) return;
+      run.equipmentSlotChoices = { ...(run.equipmentSlotChoices || {}), [row.key]: id };
+      onRememberEquipSlot?.();
+    };
+    // Back from the compare or confirm child lands on the slot list it came from (when there was one).
+    const proceed = (choice, onBack = undefined) => {
+      const { slot, position } = choice;
+      const label = `${slot.label} · ${position.index + 1}`;
+      const refusal = refusalFor(choice);
       if (refusal) { notice = refusal; draw(); return; }
       requestEquip(slot.id, position.index, row.id, `Equip ${row.name} to ${label}`, { confirm: true, opener, onBack });
     };
-    if (open.length === 1) { proceed(open[0]); return; }
+    const available = choices.filter(choice => !isRefused(choice));
+    const open = choices.filter(choice => choice.position.state !== 'locked');
     const chooseSlot = () => OpenSlotChoiceModal({
       opener,
-      options: choices.map(({ slot, position, id }) => ({
-        id, label: `${slot.label} · ${position.index + 1}`,
-        disabled: position.state === 'locked',
-        hint: position.rung?.hint || position.rung?.name || '',
-        sub: `${t(position.active ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${position.state === 'empty' ? tTip('piles.empty') : position.summary.name}`,
+      selectedId: rememberedId(),
+      options: choices.map((choice) => ({
+        id: choice.id, label: `${choice.slot.label} · ${choice.position.index + 1}`,
+        disabled: isRefused(choice),
+        hint: refusalFor(choice),
+        sub: `${t(choice.position.active ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${choice.position.state === 'empty' ? tTip('piles.empty') : choice.position.summary.name}`,
       })),
-      onChoose: (id) => { const choice = choices.find(candidate => candidate.id === id); if (choice) proceed(choice, chooseSlot); },
+      onChoose: (id) => {
+        const choice = choices.find(candidate => candidate.id === id);
+        if (!choice) return;
+        remember(choice);
+        proceed(choice, chooseSlot);
+      },
     });
+    const remembered = available.find(choice => choice.id === rememberedId());
+    if (remembered) { proceed(remembered, available.length > 1 ? chooseSlot : undefined); return; }
+    if (available.length === 1) { proceed(available[0]); return; }
+    if (!available.length && open.length === 1) { proceed(open[0]); return; }
     chooseSlot();
   }
 

@@ -161,7 +161,7 @@ try {
   if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/compare-weapon-desktop.png` });
   // The footer: Back and Equip, right-justified.
   const foot = await page.$eval('.equip-compare-modal .modal-foot-actions', (n) => { const box = n.closest('.equip-compare-modal').getBoundingClientRect(); const kids = [...n.children].map((c) => c.getBoundingClientRect()); return { right: box.right, lastRight: kids.at(-1).right, firstLeft: kids[0].left, left: box.left, labels: [...n.children].map((c) => c.textContent.trim()) }; });
-  assert.deepEqual(foot.labels, ['Back', 'Equip']);
+  assert.deepEqual(foot.labels, ['Back', 'Confirm']);
   assert.ok(foot.right - foot.lastRight < 40, 'Equip sits at the right edge');
   if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/compare-weapon-desktop.png` });
   assert.ok(foot.firstLeft - foot.left > 100, 'Back is not stretched to the left edge');
