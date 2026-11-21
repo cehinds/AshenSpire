@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-20 for the capped-attribute spill under enemyLevelScaling (review): the same 27 profile, runtime, snapshot and save hash leaves
+// moved; events, RNG, receipts, continuations and the historical scenario are unchanged.
 // Recaptured 2026-11-20 for loading content.enemyLevelCards (owner, 2026-11-20): the 27 profile, runtime, snapshot and save hash leaves of the three
 // current-profile scenarios moved; events, RNG, receipts, continuations and the historical scenario are unchanged.
 // Recaptured 2026-11-20 for enemy level scaling (characters.enemyLevelScaling, owner 2026-11-20): 42 leaves of the three current-profile scenarios moved,

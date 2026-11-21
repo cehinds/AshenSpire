@@ -216,7 +216,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-20 (enemy level scaling: characters.enemyLevelScaling, enemyFightLevel, tier SP and attribute caps) (7d13f1... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-20 (enemy fight levels, floor-step gear and HP) (430fdc... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-20 (enemy level cards: content.enemyLevelCards loaded and validated) (643682... is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:0e780f2b4fa1c0fc6e2577d5dc431033745fdf3ce16066b2b3018d6c28f31020');
+  // Re-pinned 2026-11-20 (capped attribute points spill under enemyLevelScaling) (0e780f... is now in PREVIOUS_RUNTIMES).
+  assert.equal(profile.lock.runtimeHash, 'sha256:bdd0f4db15ab15f1fc7732d989945f30128169c49280e09d02b02c5c4cb31d71');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

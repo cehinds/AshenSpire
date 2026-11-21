@@ -419,6 +419,14 @@ export function resolveEnemyAttributes(row, settings, seed = null) {
     for (const [id, n] of Object.entries(share)) { const room = caps[id] === undefined ? n : Math.min(n, caps[id] - out[id]); out[id] += room; left -= room; }
     weights = open;
   }
+  // Under enemyLevelScaling, points every weighted priority's cap holds back spill over the attributes with room, the
+  // default priority first, then ENEMY_ATTRIBUTES order, one point each in turn: the total stays the budget while any
+  // attribute has room (#EnemyLevelScaling review, 2026-11-20). Profiles without the table keep their old fill.
+  if (settings.enemyLevelScaling) {
+    const spill = [...new Set([...(fill.defaultPriority || []), ...ENEMY_ATTRIBUTES])].filter(id => ENEMY_ATTRIBUTES.includes(id));
+    for (let room = spill.filter(id => caps[id] === undefined || out[id] < caps[id]); left > 0 && room.length; room = room.filter(id => caps[id] === undefined || out[id] < caps[id]))
+      for (const id of room) { if (left <= 0) break; out[id]++; left--; }
+  }
   const v = { points: 0, among: 2, ...(settings.variance || {}), ...(row.variance || {}) };
   if (seed !== null && settings.variance && v.points > 0 && tier.variance) {
     const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among);
