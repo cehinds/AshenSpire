@@ -34,6 +34,8 @@ const incomingDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixture
 const smashDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-4fc475a2.json.gz', import.meta.url))));
 // Genuine archived Gear parent stays unchanged; only the explicitly derived pre-Gear control below removes its type-effects opt-in.
 const gearParentProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/gear-profile-62323292.json.gz', import.meta.url))));
+// Genuine published Dev 213 before Retreat versioning: these existing stat/Smash goldens remain historical controls.
+const preRetreatProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-0b11a358-profile.json.gz', import.meta.url))));
 
 function fight([seed, classId], profile = resolveGameProfile('default'), equipment = null) {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -52,7 +54,7 @@ function withoutGearPierce(combat) {
   for (const key of ['builtInElements', 'skinStatus', 'earthSource']) delete combat.fixCoreRules.pierce[key];
   return combat;
 }
-function preGearFight(setup, profile = legacyGearProfile(resolveGameProfile('default'))) {
+function preGearFight(setup, profile = legacyGearProfile(preRetreatProfile)) {
   // Explicit pre-type-effects compatibility lane. The current stat policy remains enabled.
   return withoutSmashOverride(withoutGearPierce(fight(setup, profile)));
 }
@@ -317,8 +319,8 @@ const SMASH_PINNED = [
   [[4242, 'reaver'], { log: 'd9f8ab14d3786fe3', state: '821b0b320ee2e680', events: 217, turn: 6 }, 'c20d74fee88cb015'],
 ];
 for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) {
-  test(`pre-gear current Smash fight ${setup[0]}/${setup[1]} matches genuine Dev and preserves pre-ruling controls`, () => {
-    const current = play(withoutGearPierce(fight(setup, legacyGearProfile(resolveGameProfile('default')))), 5);
+  test(`pre-Retreat pre-gear Smash fight ${setup[0]}/${setup[1]} matches genuine Dev and preserves pre-ruling controls`, () => {
+    const current = play(withoutGearPierce(fight(setup, legacyGearProfile(preRetreatProfile))), 5);
     const incoming = play(withoutGearPierce(fight(setup, legacyGearProfile(smashDevProfile))), 5);
     assert.equal(current.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5);
     assert.deepEqual(digest(current), expected);
@@ -361,11 +363,12 @@ for (const [setup, expected] of SMASH_PARENT_PINNED) {
 }
 
 for (const setup of [['PERF1', 'reaver'], [4242, 'reaver']]) {
-  test(`current gear seeded fight ${setup[0]}/${setup[1]} keeps real stat ownership, preview receipts and deterministic play`, () => {
+  test(`current Retreat and gear seeded fight ${setup[0]}/${setup[1]} keeps real stat ownership, preview receipts and deterministic play`, () => {
     function scenario() {
       const combat = fight(setup);
       assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'exercise current gear, not the pre-gear fixture');
       assert.equal(combat.fixCoreRules.spellTraditionsVersion, 1);
+      assert.equal(combat.fixCoreRules.retreatRulesVersion, 1, 'new default fights own the Retreat opt-in');
       assert.equal(combat.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5, 'the full current Gear/stat lane keeps the current Smash override');
       const poise = combat.derivedStatRuleSnapshot.rules.rules.poise;
       assert.equal(poise.wisdom, 1);

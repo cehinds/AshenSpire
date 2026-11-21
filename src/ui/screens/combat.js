@@ -257,7 +257,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const projectCombatIntent = (target, enemyId) => target === combat
     ? previewMemo.memo(`project:${enemyId}`, () => projectIntentUncached(target, enemyId)) : projectIntentUncached(target, enemyId);
   function previewCard(target, instanceId, targetId, ranks, options) {
-    return memoPreviewCard(target, instanceId, targetId, ranks, options ?? { rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance' });
+    return memoPreviewCard(target, instanceId, targetId, ranks, { rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance', ...options });
   }
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -2349,6 +2349,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!existing) box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
+      // Self-and-all (owner 2026-11-18 section 22): the player is a legal target of a card that affects them and every enemy.
+      else if (selected && pendingTargetPlan().legalIds.includes(combat.player.id)) playCard(selected, combat.player.id);
       else if (!selected && selectedFlask == null) selectCombatant('player');
     });
     if (!existing) box.addEventListener('click', event => {
@@ -3108,14 +3110,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         bounds: frame.querySelector('.sprite')?.getBoundingClientRect(),
       })));
       if (forbidden && !directLegal) return { legal: false, enemies: [], flick };
-      const wrongSide = dragTargetMode === 'none' ? !!directEnemy : !!directPlayer;
+      const playerLegal = targetPlan.legalIds.includes(combat.player.id); // self-and-all: the player is a drop target too
+      const wrongSide = dragTargetMode === 'none' ? !!directEnemy : !!directPlayer && !playerLegal;
       if (wrongSide) return { legal: false, enemies: [], flick };
       if (dragTargetMode === 'single') {
         const enemy = directLegal ? directEnemy : flick ? nearestEnemy(point.x, point.y, targetPlan.legalIds) : null;
         return { legal: !!enemy, enemies: enemy ? [enemy] : [], targetId: enemy?.dataset.eid, flick };
       }
       if (dragTargetMode === 'all') {
-        const enemies = flick || directEnemy ? enemyElsFor(targetPlan.legalIds) : [];
+        const enemies = flick || directEnemy || (directPlayer && playerLegal) ? enemyElsFor(targetPlan.legalIds) : [];
         return { legal: enemies.length > 0, enemies, flick };
       }
       return { legal: flick || !!directPlayer, enemies: [], flick };
@@ -3592,7 +3595,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const handCard = option => combat.piles.hand.find(card => card.instanceId === option.play.cardInstanceId);
     const summarize = option => summarizeCardOption(registries, combat, option, {
       defOf: o => { const inst = handCard(o); return inst ? resolveCombatCard(combat, inst, { upcastTier: o.play.upcastTier }) : null; },
-      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier, { rangeRoute: o.play.rangeRoute ?? 'advance' }),
+      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier, { rangeRoute: o.play.rangeRoute ?? 'advance', choice: o.play.choice }),
       // The engine's own predicate evaluator, for the card owner against the fight as it stands now.
       conditionHolds: (effect, o) => evalPredicate(combat, effect.if, { owner: combat.player, source: combat.player, meta: {},
         target: combat.enemies.find(enemy => enemy.id === (o.play.targetId ?? o.sourceId ?? pending.sourceId)) }),
@@ -3929,14 +3932,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     renderHand({ refreshHitChances: false });
   }
   // Why a queued play can no longer go ahead (checked when its turn comes), or null.
-  function queuedPlayProblem({ instanceId, targetId, rank }) {
+  function queuedPlayProblem({ instanceId, targetId, rank, choice }) {
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
     if (!inst) return 'This card is no longer in your hand.';
     const blocked = unplayableReason(inst);
     if (blocked) return blocked;
     if (targetId && (!getEntity(combat, targetId)?.alive || !cardTargets(instanceId).legalIds.includes(targetId))) return 'Its target is gone.';
     let pv;
-    try { pv = previewCard(combat, instanceId, targetId, rank); } catch { return 'This card cannot be played now.'; }
+    try { pv = previewCard(combat, instanceId, targetId, rank, { choice }); } catch { return 'This card cannot be played now.'; }
     const needEnergy = pv.costIsX ? 0 : pv.cost;
     if (combat.player.energy < needEnergy) return `Not enough ${t('combat.actions')} (needs ${needEnergy}, have ${combat.player.energy}).`;
     if (combat.player.mana < pv.manaCost) return `Not enough mana (needs ${pv.manaCost}, have ${combat.player.mana}).`;
@@ -4004,7 +4007,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const plan = cardTargets(instanceId);
           const previousTarget = targetId ?? (plan.mode === 'friendly' ? combat.player.id : null);
           // An area card (allEnemies) has no single destination: play it now.
-          const step = upcastNextStep(plan, previewCard(combat, instanceId, undefined, Number(selectedRank)).needsTarget, previousTarget);
+          const step = upcastNextStep(plan, previewCard(combat, instanceId, undefined, Number(selectedRank), { choice }).needsTarget, previousTarget);
           if (step === 'retarget') {
             selected = plan.mode === 'enemy' ? instanceId : null;
             selfArm = plan.mode === 'friendly' ? instanceId : null;
@@ -4026,7 +4029,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         return;
       }
     }
-    const finalPreview = previewCard(combat, instanceId, targetId, rank);
+    const finalPreview = previewCard(combat, instanceId, targetId, rank, { choice });
     const needEnergy = finalPreview.costIsX ? 0 : finalPreview.cost;
     const needStamina = finalPreview.staminaCost || 0;
     if (combat.player.energy < needEnergy) { refusePlay(instanceId, `cost ${needEnergy} > energy ${combat.player.energy}`, `Not enough ${t('combat.actions')} (needs ${needEnergy}, have ${combat.player.energy}).`); return; }

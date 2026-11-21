@@ -54,6 +54,6 @@ test('solo single-target upcast still re-targets after the rank when no legal ta
 
 test('the upcast-after-target door routes an untargeted step to an immediate play with the chosen ranks', () => {
   const solo = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  assert.match(solo, /upcastNextStep\(plan, previewCard\(combat, instanceId, undefined, Number\(selectedRank\)\)\.needsTarget, previousTarget\)/);
+  assert.match(solo, /upcastNextStep\(plan, previewCard\(combat, instanceId, undefined, Number\(selectedRank\)(?:, \{ choice \})?\)\.needsTarget, previousTarget\)/);
   assert.match(solo, /playCard\(instanceId, step === 'play' \? targetId : null, choice, Number\(selectedRank\)\)/);
 });
