@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-21
+
+- **Pull-request test shards stop hitting their time limit** ([#2925](https://github.com/cehinds/AshenSpire/pull/2925), `0.7.5.16`). Development-process fix only, nothing in the game changes. The discovered-test checks on a pull request into dev now run in six parts instead of four, because some parts kept stopping at the 15-minute limit with every test passing. No test was removed and the limit is unchanged.
+
 ## 2026-11-20
 
 - **Events give a relic instead of taking a card** ([#2926](https://github.com/cehinds/AshenSpire/pull/2926), `0.7.5.16`). Three events no longer remove a random card from your deck. The Goldbough Avatar's Take its hand now gives Ascetic's Cord, the Wandering Physician's Let him cut gives Threadbare Satchel, and the Stake of the Martyr's price gives Pruning Hook as well as its random relic. Each relic lets your deck be 1 card smaller. If you already hold that relic, the choice shows Already held and cannot be picked. The Merchant still removes cards for cinders.
