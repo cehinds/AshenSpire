@@ -35,7 +35,7 @@ export function isPierceHit(profile, carrier) {
     || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
 }
 /** PierceStacks is the shared, pure Pierce count for live hits and forecasts. Stone Skin cancels one stack per stack. */
-export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProfile || {}, out = null) {
+export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProfile || {}, out = null, maxSpend = Infinity) {
   if (carrier?.combatReaction) return 0;
   const rules = fixCorePierceRules(fixCoreRules(ctx, target));
   const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
@@ -44,7 +44,8 @@ export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProf
   const intrinsic = tagged || builtIn ? (Number.isFinite(carrier?.pierceStacks) ? Math.max(0, Math.floor(carrier.pierceStacks)) : 1) : 0;
   const stacks = intrinsic + Math.max(0, Math.floor(carrier?.gear?.pierce || 0));
   const skin = rules.skinStatus ? Math.max(0, target?.statuses?.[rules.skinStatus]?.stacks || 0) : 0;
-  const spent = Math.min(stacks, skin);
+  // Stone Skin is spent only against Pierce that Block actually soaked (`maxSpend`): Block 0 spends none.
+  const spent = Math.min(stacks, skin, Math.max(0, maxSpend));
   if (out) out.spent = spent;
   return stacks - spent;
 }
@@ -55,7 +56,7 @@ export function PierceBlockIgnored(ctx, target, carrier, profile, total, blockSo
   const ignored = Math.max(0, carrier?.gear?.ignoreBlock || 0);
   let bypass;
   if (rules.blockIgnoredPerStack > 0) {
-    bypass = Math.floor(PierceStacks(ctx, target, carrier, profile, out) * rules.blockIgnoredPerStack);
+    bypass = Math.floor(PierceStacks(ctx, target, carrier, profile, out, Math.ceil(Math.max(0, blockSoak) / rules.blockIgnoredPerStack)) * rules.blockIgnoredPerStack);
   } else {
     // The old fraction belongs to the saved fight, and gear Pierce remains a flat grant.
     const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
@@ -63,7 +64,7 @@ export function PierceBlockIgnored(ctx, target, carrier, profile, total, blockSo
     bypass = isPierceHit(profile, carrier) || builtIn ? Math.floor(rules.blockBypassFraction * total) : 0;
     bypass += Math.max(0, carrier?.gear?.pierce || 0);
     const skin = rules.skinStatus ? target?.statuses?.[rules.skinStatus]?.stacks || 0 : 0;
-    const spent = Math.min(bypass, skin);
+    const spent = Math.min(bypass, skin, Math.max(0, blockSoak));
     if (out) out.spent = spent;
     bypass -= spent;
   }
@@ -468,7 +469,9 @@ export function profileCardCosts(ctx, def) {
   const authored = def.resourceCosts || def.costs || {};
   const baseSp = def.cost==='X' && include.includes('sp') ? Math.max(0,ctx.player?.stamina ?? ctx.player?.energy ?? 0) : authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
   const baseMp = authored.mp ?? def.manaCost ?? 0;
-  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp, ctx.player, def, ctx, baseMp) : baseSp;
+  // A per-fight rising cost (core.retreat, owner 2026-11-19) is added after the stance discount, so the Nth use costs N-1 whatever stance the player is in.
+  const grown = (def.costGrowth?.perCard ? (def.costGrowthApplied?.stamina || 0) : 0) + (def.modeCostGrowthApplied?.stamina || 0);
+  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp - grown, ctx.player, def, ctx, baseMp) + grown : baseSp;
   const mp = stanceManaCost(baseMp, ctx.player, def, ctx);
   if ((!include.includes('sp') && sp > 0) || (!include.includes('mp') && mp > 0)) {
     throw new Error(`Card ${def.id || 'unknown'} requires an authored disabled-resource variant`);

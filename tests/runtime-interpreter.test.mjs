@@ -380,7 +380,7 @@ test('ops.json op names equal the handler keys of actions.js runOpcode/runRunOpc
   const { OPCODE_HANDLERS, RUN_OPCODE_HANDLERS } = await import('../src/engine/actions.js');
   const cases = new Set([...Object.keys(OPCODE_HANDLERS), ...Object.keys(RUN_OPCODE_HANDLERS)]);
   assert.deepEqual([...Object.keys(ops.ops)].sort(), [...cases].sort());
-  assert.equal(Object.keys(ops.ops).length, 48);
+  assert.equal(Object.keys(ops.ops).length, 49);
   assert.equal(ops.format, 'ashen.ops@1');
   for (const def of Object.values(ops.ops)) {
     assert.ok(['portable', 'legacy'].includes(def.reference));

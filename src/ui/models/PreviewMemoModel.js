@@ -89,7 +89,7 @@ export function createPreviewMemo({ combat, preview, dispatch, idle }) {
     },
     previewCard(target, instanceId, targetId, upcastRanks, options) {
       if (target !== combat) return preview(target, instanceId, targetId, upcastRanks, options);
-      const key = JSON.stringify([instanceId, targetId, upcastRanks, options?.rangeRoute ?? 'advance', target.rangeState]);
+      const key = JSON.stringify([instanceId, targetId, upcastRanks, options?.rangeRoute ?? 'advance', options?.choice ?? null, target.rangeState]);
       if (kept.has(key)) return kept.get(key);
       const shown = preview(target, instanceId, targetId, upcastRanks, { ...options, knowledgeView: view });
       kept.set(key, shown);
