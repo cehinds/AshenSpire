@@ -83,6 +83,17 @@
 # Open PR dev-preview artifacts are collected too, retaining their PR labels.
 # Preview HTML is data only (build.txt); trusted wrappers use opaque-origin
 # sandboxed frames. No feature checkout or feature build command runs here.
+# AT MOST THREE PREVIEWS ARE PUBLISHED (MAX_BRANCH_PREVIEWS in the collector, 2026-11-20):
+# each is a ~180 MB single file, and five were 894 MB of the 2945 MB site that failed
+# the size guard below (run 44813657232). The newest builds win; the rest keep their
+# CI artifact link. SIZE BUDGET (owner raised the cap 2 -> 3 and tightened retention
+# to pay for it; SITE_MAX_MB stays 2500): with the cap at 2 and main 2, release 3,
+# dev 3, test 3 the site was ~2310 MB. Cap 3 adds one preview, +180 MB = ~2490 MB,
+# too close. RETENTION main 1, release 1, dev 2, test 2 drops one main build (65-105
+# MB), two Play-only release builds (>= 65 MB each, full art) and one older dev and
+# one older test build (>= ~30 MB each), >= 255 MB (never a primary channel's newest
+# build or its offline file). Estimate: 2310 + 180 - 255 = ~2235 MB at worst, a
+# margin of ~265 MB (~10%) under 2500; the measured total is in the size report.
 # Feature preview completions wake publication on every conclusion, so failed
 # builds can remove stale previews. Listing/API failures abort assembly and keep
 # the existing live site; expired or invalid individual artifacts are skipped.
@@ -142,7 +153,7 @@ on:
   workflow_dispatch:
     inputs:
       keep:
-        description: "override: newest builds per branch for EVERY channel (1..25); leave empty for the per-channel table in tools/pages-site.mjs (main 3, release 5, dev 3, test 3)"
+        description: "override: newest builds per branch for EVERY channel (1..25); leave empty for the per-channel table in tools/pages-site.mjs (main 1, release 1, dev 2, test 2)"
         default: ''
       publish:
         description: "type PUBLISH to deploy the assembled site to Pages (owner-exclusive: only the repository owner's dispatch deploys; a push never does)"
@@ -235,6 +246,10 @@ jobs:
       # Compact JSON array of {pr, dir} for every PR whose preview is in the site this run.
       comment_targets: ${{ steps.feature_previews.outputs.comment_targets }}
       preview_targets: ${{ steps.feature_previews.outputs.preview_targets }}
+      # Compact JSON array of PR numbers (strings) whose fresh preview the cap left out.
+      capped_prs: ${{ steps.feature_previews.outputs.capped_prs }}
+      # The collector's MAX_BRANCH_PREVIEWS, so the PR comment never hardcodes the cap.
+      max_previews: ${{ steps.feature_previews.outputs.max_previews }}
       primary_targets: ${{ steps.primary_targets.outputs.targets }}
     steps:
       - uses: actions/checkout@v5
@@ -479,6 +494,9 @@ jobs:
           # Branch builds without a PR never become PR comment targets.
           targets=$(jq -c '[.previews[] | select(.pr > 0) | {pr: (.pr | tostring), dir: .dir}]' "$out/previews.json")
           echo "comment_targets=$targets" >> "$GITHUB_OUTPUT"
+          capped=$(jq -c '[.capped[]? | select(.pr > 0) | (.pr | tostring)]' "$out/previews.json")
+          echo "capped_prs=$capped" >> "$GITHUB_OUTPUT"
+          echo "max_previews=$(jq -r '.max' "$out/previews.json")" >> "$GITHUB_OUTPUT"
           previews=$(jq -c '[.previews[] | {dir: .dir, sha: .sha}]' "$out/previews.json")
           echo "preview_targets=$previews" >> "$GITHUB_OUTPUT"
           {
@@ -503,7 +521,7 @@ jobs:
           KEEP_INPUT: ${{ inputs.keep || '' }}
         run: |
           # PER-CHANNEL RETENTION (owner, 2026-11-06): with no `keep` input the generator's
-          # RETENTION table rules (main 3, release 5, dev 3, test 3). A given input overrides all.
+          # RETENTION table rules (main 1, release 1, dev 2, test 2; 2026-11-20). A given input overrides all.
           keep_args=()
           keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3)
           if [ -n "$keep" ]; then
@@ -818,6 +836,8 @@ jobs:
           REPO: ${{ github.repository }}
           # Branch-derived values reach the shell only through env, never ${{ }} in run.
           TARGETS: ${{ needs.assemble.outputs.comment_targets }}
+          CAPPED: ${{ needs.assemble.outputs.capped_prs }}
+          MAX_PREVIEWS: ${{ needs.assemble.outputs.max_previews }}
           # The PR this run closed (pull_request_target, closed), or empty. Its preview is
           # removed with the close, so its own sticky comment is edited to say so.
           CLOSED_PR: ${{ github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.number || '' }}
@@ -882,13 +902,22 @@ jobs:
               failed=1
             fi
           fi
+          # A PR whose build passed but fell outside MAX_BRANCH_PREVIEWS is told so, not
+          # told its build failed.
+          declare -A capped=()
+          for pr in $(printf '%s' "${CAPPED:-[]}" | jq -r '.[]' 2>/dev/null); do capped[$pr]=1; done
           open=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
             | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/"; "i")) | .number') \
             || { echo "::error::could not list the open pull requests into dev"; exit 1; }
           while read -r pr; do
             [ -n "$pr" ] || continue
             [ -n "${published[$pr]:-}" ] && continue
-            if ! withdraw "$pr" "Preview withdrawn: the current commit's build did not succeed; it returns when a build passes."; then
+            if [ -n "${capped[$pr]:-}" ]; then
+              text="Preview not published: only the ${MAX_PREVIEWS} newest branch builds are on the site (MAX_BRANCH_PREVIEWS); this commit's build passed and its CI artifact is still available."
+            else
+              text="Preview withdrawn: the current commit's build did not succeed; it returns when a build passes."
+            fi
+            if ! withdraw "$pr" "$text"; then
               echo "::error title=Withdrawn-preview comment failed::PR #$pr"
               failed=1
             fi
