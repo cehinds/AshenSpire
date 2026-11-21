@@ -49,6 +49,20 @@ test('damage multipliers: Attack 1.2, Prepared 1.25, every other stance 1; a ret
   assert.equal(Benefits.AttackDamageMultiplier(fight, { kind: 'player', combatStance: { maneuver: 'attack' } }, {}), 1.2, 'a carrier without a stance acts from the held one');
 });
 
+test("every Spell takes Prepared's +25%, even a mirrored spell that enters Attack (owner 2026-11-20); mirrored Smash keeps its Poise bonus", () => {
+  const player = { kind: 'player' }, enemy = { kind: 'enemy' };
+  const mirrored = mirrors => ({ combatProfile: { camp: 'spell', maneuver: mirrors, mirrors, range: 'melee' } });
+  assert.equal(Benefits.HeldStance(player, mirrored('attack')), 'attack', 'the mirrored spell still enters Attack');
+  assert.equal(Benefits.AttackDamageMultiplier(fight, player, mirrored('attack')), 1.25);
+  assert.equal(Benefits.AttackDamageMultiplier(fight, player, mirrored('smash')), 1.25);
+  assert.equal(Benefits.AttackDamageMultiplier(fight, player, { tags: ['camp:spell'], combatProfile: { maneuver: 'attack' } }), 1.25, 'the spell tag counts');
+  assert.equal(Benefits.AttackDamageMultiplier(fight, player, card('attack')), 1.2, "a physical Attack keeps Attack's +20%");
+  assert.equal(Benefits.AttackDamageMultiplier(fight, player, { ...mirrored('attack'), counterReturnAttack: true }), 1, 'a return hit never gets one');
+  assert.deepEqual(Benefits.PoiseLossAdjust(fight, enemy, mirrored('smash'), 'attack', { taken: 8, pool: 20 }), { extra: 4, spared: 0 });
+  const legacy = modern({ ...shipped, spellTraditionsVersion: 0 });
+  assert.equal(Benefits.AttackDamageMultiplier(legacy, player, mirrored('attack')), 1.2, "a fight saved without spell traditions keeps Attack's row");
+});
+
 test('Block multipliers: Defend 1.5, Counter 1.25', () => {
   const player = { kind: 'player' };
   assert.equal(Benefits.BlockGainMultiplier(fight, player, card('defend')), 1.5);

@@ -5,6 +5,7 @@
 //
 //   attack     attacks deal +20% damage                          AttackDamageMultiplier  (profileDamageReceipt, after matching stance)
 //   prepared   spells deal +25% damage (chosen over the Mana discount)   AttackDamageMultiplier
+//              under spell traditions every Spell takes it, even a mirrored spell played in another stance (owner 2026-11-20)
 //   smash      +50% Poise damage                                 PoiseLossAdjust         (profileDamageReceipt, before the receipt returns)
 //   defend     +50% Block gained, -25% Poise damage taken        BlockGainMultiplier (computeBlockGain), PoiseLossAdjust
 //              while it holds Block, Poise stays at 1 or more against physical hits and Sweeps (and magic with Ward stacks)  DefendPoiseFloor (2026-11-17)
@@ -19,6 +20,8 @@ import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { stanceOf } from '../model/stanceRules.js';
 import { configuredStance } from '../model/profileStance.js';
 import { magicShareOf, isMagicalAttack } from '../model/combatRatings.js';
+import { isSpellCard } from '../model/combatCardProfile.js';
+import { SpellTraditionsActive } from '../model/spellTraditions.js';
 import * as Engagement from './combatEngagement.js';
 
 const ALIASES = Object.freeze({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack', evade: 'defend' });
@@ -41,11 +44,18 @@ export function HeldStance(entity, carrier = null) {
 
 const isReturn = carrier => !!(carrier?.counterReturnAttack || carrier?.reflectedHit);
 
+/**
+ * The stance row whose damage bonus a hit reads: under spell traditions a Spell played into a stance (a mirrored Strike, Smash or
+ * Sweep included) reads Prepared, never the basic's row; anything else reads the stance it acts from.
+ */
+const damageStance = (ctx, source, carrier) => SpellTraditionsActive(ctx) && isSpellCard(carrier) && stanceOf(carrier, source)
+  ? 'prepared' : HeldStance(source, carrier);
+
 /** Attack +20%, Prepared +25%: the multiplier on a hit's damage before the defender's stance, Block and Poise. 1 for a return hit. */
 export function AttackDamageMultiplier(ctx, source, carrier) {
   const rules = StanceBenefitRules(ctx);
   if (!rules || isReturn(carrier)) return 1;
-  return count(rules[HeldStance(source, carrier)]?.damageMultiplier) || 1;
+  return count(rules[damageStance(ctx, source, carrier)]?.damageMultiplier) || 1;
 }
 
 /**
