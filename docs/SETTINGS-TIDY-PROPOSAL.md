@@ -1,6 +1,7 @@
 # Settings tidy: Advanced and Combat proposal
 
-Survey only (2026-11-20). Nothing here is moved or deleted yet. The owner decides.
+Survey (2026-11-20). The owner decided the same day; what was done is in
+[What changed](#what-changed-owner-2026-11-20) at the end. The survey below is as written.
 
 - Source: `SETTINGS_ROWS` (`src/ui/models/SettingsRowsModel.js`), Core 2 visibility from
   `settingsRowAvailable` (`src/ui/models/SettingsCapabilitiesModel.js`), readers from
@@ -196,3 +197,100 @@ Not merged. At runtime they are the same fact; one module and its test treat the
 - Range: move the 4 rows to Advanced? (yes/no)
 - Core 2 hidden rows: drop them and keep their defaults as authored content? (yes/no)
 - Advanced: split Interface into Map + Interface, and fold Wireframes into Developer? (yes/no)
+
+## What changed (owner, 2026-11-20)
+
+Branch `feature/SettingsTidyRegroup`. The owner said yes to everything above except: do not
+move Character sprites or Console, do not merge the speed rows, do not move Ambient.
+
+### 1. One root hook
+- `data-performance` is gone. `data-effects` (`on` / `off`) is the one root hook; every CSS
+  selector and JS reader moved to it (`ui/performance.js` `liteRendering()` reads it).
+- The unreachable "Lite with Effects on" aura path in `ui/alternativeCardStage.js` and its test
+  segment were deleted. A regression test fails if any stylesheet or `src/ui` script uses
+  `data-performance` again (`tests/effects-fx-guards.test.mjs`).
+
+### 2. Removed settings
+Core 2 drew none of these rows. Each value now lives in authored content, at the row's old
+default, so play is unchanged. A stored key is cleared at boot and an imported one is skipped
+with the retired-settings warning (`RetiredPlainSettingKeys`, `model/advancedConfig.js`).
+
+| Key | Old default | Where the value lives now |
+|---|---|---|
+| askToUpcastAfterTarget | false | `ui/screens/combat.js` reads the absent key as off (no prompt) |
+| shrineMultiUse | true | `balance.rest.multiUseShrines` (`content/source/balanceRest.json`) |
+| shopSell | true | `balance.shop.sellBack` (`content/source/balanceShop.json`) |
+| rewardLevelStatPoints | true | `balance.levelUp.offerStatPoints` (`content/source/balanceLevelUp.json`) |
+| rewardLevelCards | false | `balance.levelUp.offerBonusCard` (`content/source/balanceLevelUp.json`) |
+| levelUpValue | 1 | `balance.levelUp.pointsPerLevel` (already authored) |
+| swapCostRule | flat | `balance.equipment.swapCostRule` (already authored) |
+| victorySummaryMode | continue | `ui/screens/reward.js`: neither `auto` nor `anywhere`, so Continue |
+| victoryXpSeconds | 3 | `DEFAULT_XP_SECONDS` in `ui/screens/reward.js` |
+| victoryReceiptSeconds | 1 | `VICTORY_XP_DEFAULTS.seconds` (`model/victoryXpPresentation.js`) |
+| victoryReceiptPauseMs | 80 | `VICTORY_XP_DEFAULTS.pauseMs` |
+| victoryReceiptReadySeconds | 0.5 | `VICTORY_XP_DEFAULTS.readySeconds` |
+| victoryReceiptFormulaTerms | 5 | `VICTORY_XP_DEFAULTS.formulaTerms` |
+| victoryReceiptVisibleRows | 4 | `VICTORY_XP_DEFAULTS.visibleRows` |
+| deckEditing | true | `deckRules.defaults` (`content/deckRules.js`) |
+| deckEditingWhere | free | `deckRules.defaults` |
+| deckMinUnlimited | false | `deckRules.defaults` |
+| deckMinSize | 10 | `deckRules.defaults` |
+| deckMaxUnlimited | true | `deckRules.defaults` |
+| deckMaxSize | 40 | `deckRules.defaults` |
+| classSpellPowerCopies | 1 | `deckRules.defaults` |
+| graceRefill.<kind> | the authored count | `balance.graceRefill` (empty today, so no row was ever drawn); found in review |
+
+- Moved, not removed: **Auto-advance character creation** is in Advanced › Developer (QA
+  shortcuts).
+- The Progression, Rewards, Equipment and World tabs went with their rows. Deck keeps Play in
+  deck order.
+- The model functions that take a settings bag (deck rules, victory pacing, swap cost) still
+  do, with their authored fallbacks; tests use that seam.
+
+### 3. Combat
+- Pause between steps, Animation step duration, Enemy attack animation, Enemy floater interval
+  and Combat pacing preset sit behind a **More** toggle at the end of Auto combat & pacing.
+  Collapsed by default; open or closed is remembered on this device.
+- The four Range rows moved to **Advanced › Range**, dev and test builds only (owner,
+  2026-11-20). Release players lose the four Range rows they had in Combat; the values are unchanged.
+
+### 4. Advanced groups
+| Group | Rows | Builds |
+|---|---|---|
+| Opening | the opening editor (unchanged) | dev, test |
+| Deck | Play in deck order | all |
+| Range | the four Range rules | dev, test |
+| Map | Walked nodes, Two-axis map dragging, Map header, Relics in map header | all |
+| Interface | one Interface button: Use flasks outside combat, Ambient effects, Card motif, Motif strength, Control hints, Hold to confirm, Reward collection | all |
+| Text | one Text & lore button: the six lore type rows | all |
+| Export | one Import, export & debug button: configuration file and diagnostics | dev, test |
+| Developer | Layout (Wireframes and Card sizes buttons, settings window size, short-screen warning), QA shortcuts (Auto-advance character creation) | dev, test |
+
+### 5. Settings-group modals
+- One helper, `OpenSettingsGroupModal` (`ui/screens/settings.js`), opens every settings button
+  window. Effects uses it; so does every Advanced window (`AdvancedGroupModal`, `models/AdvancedSettingsGroups.js`).
+- The Advanced panel draws one button row in place of the cluster. Its face says
+  "All default" or "N changed". Search, reset, export and release visibility still see every
+  row; a search hit is filed as group › window ("Developer › Wireframes", "Text & lore › Text & lore").
+- The window wires switches, chips, drop-downs, number fields (commit and steppers as in the
+  panel), text fields and the panel's own buttons (export, import, command log, copy card sizes).
+- Closing returns focus to the button, found again if the panel was redrawn meanwhile.
+
+| Modal | Where | Rows |
+|---|---|---|
+| Effects (existing) | General › Combat | the 12 Effects rows |
+| Wireframes | Advanced › Developer › Layout | Modal window width, Modal footer buttons, Category navigation, Workspace frame, Scene backdrop, Scene ground line |
+| Text & lore | Advanced › Text | the six lore rows, in Flavor text and Lore window sections |
+| Interface | Advanced › Interface | the seven Interface rows, in Map & HUD, Appearance and Controls sections |
+| Card sizes | Advanced › Developer › Layout | four card widths and Copy |
+| Import, export & debug | Advanced › Export | configuration file and diagnostics rows |
+
+Owner follow-up (2026-11-20): Text, Interface, Card size and Export open their own windows too.
+Only **Opening** stays inline: it is its own scene editor with one topic per scene.
+
+### SPEC wording
+SPEC now names the content key for each (owner, 2026-11-20; wording only): §14.1 *Settings* table
+(Advanced group Deck, `deckEditing` ... `classSpellPowerCopies`), the `classSpellPowerCopies`
+row note, the `shopSell` setting in the Core shop list, `levelUpValue` in §13.4 levelling and
+the Settings → Progression levelling preview, and "Settings → Advanced → Interface → Two-axis
+map dragging" (now Advanced › Map).

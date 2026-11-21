@@ -76,7 +76,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
   const gridCheckbox = el('input', { type: 'checkbox', 'data-combat-tool': 'grid', 'aria-label': t('combat.grid.aria') });
   gridLabel.append(gridCheckbox, el('span', { text: t('combat.grid.label') }));
   const gridRoot = document.documentElement;
-  const syncGrid = () => { gridCheckbox.checked = gridRoot?.dataset?.formationGrid !== 'false'; };
+  const syncGrid = () => { gridCheckbox.checked = gridRoot?.dataset?.formationGrid === 'true'; };
   syncGrid();
   gridCheckbox.addEventListener('change', async () => {
     const enabled = gridCheckbox.checked;

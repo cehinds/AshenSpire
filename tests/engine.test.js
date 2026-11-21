@@ -125,7 +125,7 @@ import { advancedConfigProblems, configuredContentBundle } from '../src/model/ad
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
 import { advancedConfigSettings } from '../src/model/advancedConfig.js';
-import { settingOn, resolveTapSize, resolveLevelUpValue, settingsRow, categoryHandler, generalGroups, GENERAL_GROUPS, fullscreenCapability } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, settingsRow, categoryHandler, generalGroups, GENERAL_GROUPS, fullscreenCapability } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -7119,78 +7119,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'and a ruleset-6 table that spells a tier is refused — there is none to set');
   });
 
-  // ---- 60d. the typed level value, and every door a field opens ------------
-  test('60d. a typed level value resolves to an integer in domain, whatever is stored', () => {
-    // Constantine, 2026-08-17: "i don't want a dial for hte level up, I want to
-    // be able to enter the value myself and maybe a slider with it that is
-    // synced with the value." A ladder could only ever hold four legal values;
-    // a FIELD can hold anything, so these are the edges that did not exist
-    // before the control changed.
-    const row = settingsRow('levelUpValue');
-    eq(row.type, 'number', 'the level value is a typed field, not a chip ladder');
-    eq(row.min, REG.balance.levelUp.pointsPerLevelMin, 'its floor is the authored one');
-    eq(row.max, REG.balance.levelUp.pointsPerLevelMax, 'and so is its ceiling — no number is typed in the UI');
-    // ONE DOMAIN, TWO CONTROLS: the field and the slider are rendered from this
-    // row, so there is nothing for them to disagree about.
-
-    const cases = [
-      [undefined, 1, 'unset is the default'],
-      ['', 1, 'an empty field is the default and NOT a zero'],
-      [null, 1, 'null is the default'],
-      ['lots', 1, 'a word is the default — unreadable is unset'],
-      [NaN, 1, 'NaN is the default'],
-      [Infinity, 1, 'Infinity is the default'],
-      [0, 1, 'zero clamps up: a level that grants nothing is a purchase that does nothing'],
-      [-3, 1, 'a negative clamps up — levelling can never take a point away'],
-      [1, 1, 'the floor itself is legal'],
-      [7, 7, 'an arbitrary value in domain is kept, which is the whole ask'],
-      ['  7  ', 7, 'whitespace is trimmed, because a field lets him type it'],
-      ['7', 7, 'a string of digits is a number — this is what an input element gives us'],
-      [2.7, 2, 'a fraction FLOORS: attributes are integers and floor is this tree\'s rounding'],
-      [20, 20, 'the ceiling itself is legal'],
-      [21, 20, 'one past the ceiling clamps down'],
-      [1e9, 20, 'and so does absurdity'],
-    ];
-    for (const [stored, want, why] of cases) {
-      eq(resolveLevelUpValue({ levelUpValue: stored }), want, `${JSON.stringify(stored)} → ${want}: ${why}`);
-    }
-
-    // THE PROPERTY UNDER ALL OF THAT, stated once: whatever is in the profile,
-    // what the model receives is an integer inside the domain. A hand-edited
-    // profile is the same door as a typed field.
-    for (const [stored] of cases) {
-      const v = resolveLevelUpValue({ levelUpValue: stored });
-      assert(Number.isInteger(v) && v >= row.min && v <= row.max,
-        `${JSON.stringify(stored)} resolved to ${v}, which is in domain and whole`);
-    }
-
-    // AND IT REACHES THE GAME. A value he types mid-run applies to the NEXT
-    // level bought — no new run, nothing snapshotted — which is the promise the
-    // row's own note makes to him.
+  // ---- 60d. the level value is authored (owner, 2026-11-20: the Level-up value row was dropped)
+  test('60d. a level reached grants the authored balance.levelUp.pointsPerLevel', () => {
     const run = createRunState({ seed: 0x7ed, classId: 'reaver', registries: REG });
-    const typed = resolveLevelUpValue({ levelUpValue: '7' });
-    awardLevelXp(REG, run, xpToNextLevel(REG, 1), { pointsPerLevel: typed });
-    eq(run.level.unspentPoints, 7, 'a level reached at a typed 7 grants seven points');
-    for (let i = 0; i < 7; i++) applyLevelUp(REG, run, 'constitution');
-    eq(run.attributes.constitution - REG.attributeRules.presets.lean.reaver.constitution, 7, 'all seven assigned to one stat');
-    eq(run.levelPoints, 7, 'and records seven assigned');
-    eq(run.level.level, 2, 'from ONE level');
-    // …mid-run, he changes his mind. The next level answers the new number and
-    // the run stays loadable.
-    awardLevelXp(REG, run, xpToNextLevel(REG, 2), { pointsPerLevel: resolveLevelUpValue({ levelUpValue: '2' }) });
-    eq(run.level.unspentPoints, 2);
-    applyLevelUp(REG, run, 'wisdom'); applyLevelUp(REG, run, 'wisdom');
-    eq(run.levelPoints, 9, 'nine points over two levels at two different typed values');
-    run.seedString = 'TYPED';
-    const store = createMemoryStorage();
-    createSaveManager(store).saveRun(run);
-    assert(createSaveManager(store).loadRun(REG) !== null,
-      'and the run still loads — typing a new value mid-climb cannot archive a save');
-
-    // THE PLANT'S TARGET, named so the next reader can find it: with the clamp
-    // removed, `0` reaches the model and a level grants nothing. Watched red.
-    const zero = resolveLevelUpValue({ levelUpValue: 0 });
-    assert(zero >= 1, 'the floor is what stops an earned level from granting nothing');
+    const authored = REG.balance.levelUp.pointsPerLevel;
+    assert(Number.isInteger(authored) && authored >= 1, 'the authored value is a whole number of at least 1');
+    awardLevelXp(REG, run, xpToNextLevel(REG, 1), { pointsPerLevel: authored });
+    eq(run.level.unspentPoints, authored, 'one level grants the authored points');
   });
 
   // ---- 60e. the affordability predicate the fold reads ---------------------
@@ -7263,24 +7198,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio,Game rules',
       'General offers Display, Combat, Audio and the custom Game rules section');
     const combatTopics = generalGroups('Combat');
-    eq([...combatTopics.keys()].join(','), 'Auto combat & pacing,Animation & effects,Combat log,Range,Armaments',
+    eq([...combatTopics.keys()].join(','), 'Auto combat & pacing,Animation & effects,Combat log,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Auto combat & pacing').map((r) => r.key).join(','),
       'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,enemyAttackMs,enemyFloaterIntervalMs,combatPacingPreset,animSpeed',
       'auto combat and every pacing dial are under one name, first');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,effectsMenu,showPlayedCard,manaRing',
-      'every quality, shake, sprite, played-card and upcast switch is under one name');
+      'useSprites,effectsMenu,showPlayedCard,manaRing',
+      'every quality, shake, sprite and played-card switch is under one name');
     eq(combatTopics.get('Combat log').map(r => r.key).join(','),
       'combatLogConsole,combatLogPlayerColor,combatLogEnemyColor',
       'console access and log identity colors share the Combat log topic');
     eq(combat.find(r => r.key === 'combatLogConsole').def, false, 'Console shortcut defaults off');
     eq(combat.find(r => r.key === 'combatLogConsole').type, 'toggle', 'Console shortcut is an ordinary toggle');
     eq(combat.find(r => r.key === 'combatLogConsole').debugTopic, undefined, 'Console shortcut has no developer gate');
-    eq(combatTopics.get('Range').map(r => r.key).join(','),
+    eq(categoryHandler('Advanced').rows.filter(r => r.advancedGroup === 'Range').map(r => r.key).join(','),
       'rangeMechanics,rangeAdvanceSpPerBand,rangeReachPrecisionBonus,rangeThrowPrecisionPenalty',
-      'new-run range rules have their own Combat topic');
-    eq(combat.find(r => r.key === 'askToUpcastAfterTarget').def, false, 'upcast prompting defaults off');
+      'new-run range rules are their own Advanced group (owner, 2026-11-20)');
+    eq(combat.some(r => r.key === 'askToUpcastAfterTarget'), false, 'the upcast prompt row is gone (owner, 2026-11-20)');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
       'armamentsPresentation,armamentsPhonePlacement',
       'the combat Armaments cluster is filed with combat, not with the accent colour');

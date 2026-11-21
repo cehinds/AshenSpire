@@ -178,12 +178,15 @@ test('poise: +max(1, ceil 20%) and only on a card with a poiseDamage effect', ()
   assert.ok(sizes.has('common:4'), [...sizes].join());
 });
 
-test('range tag steps switch melee and reach (never ranged), replace the old range tag and stop after two', () => {
+test('a range step only lengthens melee to reach (never ranged, never back to melee), replaces the old tag and stops after two', () => {
   const seen = tagsFor(withPoise());
   assert.ok(seen.has('{"k":"tag","tag":"range:reach"}'));
   assert.ok(![...seen].some((k) => k.includes('range:ranged')), 'ranged cards are gone');
+  // Owner, 2026-11-20 (no downgrades): Reach to Melee loses range on a single play, so a reach card is offered no range step.
   const reach = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack', 'range:reach'] }));
-  assert.ok(reach.has('{"k":"tag","tag":"range:melee"}') && !reach.has('{"k":"tag","tag":"range:reach"}'));
+  assert.ok(![...reach].some((k) => k.includes('range:')), 'a reach card keeps its reach');
+  // A spell already reaches (combatCardProfile defaultRangeFor), so a reach tag would change nothing on it.
+  assert.ok(![...tagsFor(dmg(6, { tags: ['camp:spell', 'maneuver:casting'], damageSchool: 'magic', manaCost: 1 }))].some((k) => k.includes('range:')), 'a spell gets no range step');
   const done = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack', 'range:ranged'] }));
   assert.ok(![...done].some((k) => k.includes('range:')));
   const twice = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'range:reach' }, { k: 'tag', tag: 'range:melee' }], 2, upgradeStepRng(1, 'x', 2), {}, 30);
@@ -191,15 +194,16 @@ test('range tag steps switch melee and reach (never ranged), replace the old ran
   assert.ok(![...tagsFor(dmg(6, { effects: [{ op: 'block', target: 'self', amount: 5 }], type: 'skill', tags: ['camp:physical', 'maneuver:defend'] }))].some((k) => k.includes('range:')), 'a block card has no range');
 });
 
-test('targeting flips single and area, the amount x0.75 up or x1.25 up, once per card', () => {
+test('targeting moves an area hit to one enemy (x1.25 up), never one enemy to all; a saved area step still applies (x0.75 up); once per card', () => {
+  // Owner, 2026-11-20 (no downgrades): one enemy to all cuts the hit 25%, so a single-target card is offered no targeting step.
   const single = tagsFor(withPoise());
-  assert.ok(single.has('{"k":"tag","tag":"targeting:area","retarget":"area"}'));
+  assert.ok(![...single].some((k) => k.includes('targeting:')), 'a single-target card keeps its target');
   const area = tagsFor(withPoise({ effects: [{ op: 'damage', target: 'allEnemies', amount: 8 }], tags: ['camp:physical', 'maneuver:attack', 'targeting:area'] }));
   assert.ok(area.has('{"k":"tag","tag":"targeting:single","retarget":"single"}'));
   const flipped = applyUpgradeSteps(withPoise(), [{ k: 'tag', tag: 'targeting:area', retarget: 'area' }]);
   assert.equal(flipped.effects[0].target, 'allEnemies');
   assert.equal(flipped.effects[0].amount, 6);
-  const after = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'targeting:area', retarget: 'area' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  const after = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'targeting:area', retarget: 'area' }], 1, upgradeStepRng(1, 'x', 1), { everyFamily: true }, 20);
   assert.ok(!after.some((s) => s.retarget), 'targeting changes once per card');
   const sweep = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:sweep', 'targeting:area'] }));
   assert.ok(![...sweep].some((k) => k.includes('targeting:')), 'a sweep stays area');
@@ -228,13 +232,15 @@ test('no school swap is offered (it changes no play); element: physical to magic
   assert.ok(!again.some((s) => s.damageSchool), 'element once per card');
 });
 
-test('rank-down adds rank.cantrip to a card that pays Mana and is not basic, once', () => {
+test('rank-down is never rolled at random (a dud on a single play); a card menu naming it gets it on a card that pays Mana and is not basic, once', () => {
   const mana = (extra = {}) => withPoise({ manaCost: 1, ...extra });
-  assert.ok(!tagsFor(withPoise()).has('{"k":"tag","tag":"rank.cantrip"}'), 'a 0-Mana card would change a tag and nothing else');
-  assert.ok(tagsFor(mana()).has('{"k":"tag","tag":"rank.cantrip"}'));
-  assert.ok(!tagsFor(dmg(6, { rarity: 'common' })).has('{"k":"tag","tag":"rank.cantrip"}'), 'a common non-spell is already basic');
-  assert.ok(!tagsFor(mana({ tags: ['camp:physical', 'maneuver:smash', 'rank.cantrip'] })).has('{"k":"tag","tag":"rank.cantrip"}'));
-  const again = rollUpgradeOptions(mana(), [{ k: 'tag', tag: 'rank.cantrip' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  assert.ok(!tagsFor(mana()).has('{"k":"tag","tag":"rank.cantrip"}'), 'owner, 2026-11-20: no rank down in a random roll');
+  const menu = (extra = {}) => mana({ upgradeMenu: ['rankDown', 'dmg'], ...extra });
+  assert.ok(!tagsFor(withPoise({ upgradeMenu: ['rankDown', 'dmg'] })).has('{"k":"tag","tag":"rank.cantrip"}'), 'a 0-Mana card would change a tag and nothing else');
+  assert.ok(tagsFor(menu()).has('{"k":"tag","tag":"rank.cantrip"}'));
+  assert.ok(!tagsFor(dmg(6, { rarity: 'common', upgradeMenu: ['rankDown', 'dmg'] })).has('{"k":"tag","tag":"rank.cantrip"}'), 'a common non-spell is already basic');
+  assert.ok(!tagsFor(menu({ tags: ['camp:physical', 'maneuver:smash', 'rank.cantrip'] })).has('{"k":"tag","tag":"rank.cantrip"}'));
+  const again = rollUpgradeOptions(menu(), [{ k: 'tag', tag: 'rank.cantrip' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
   assert.ok(!again.some((s) => s.tag === 'rank.cantrip'));
 });
 
@@ -282,7 +288,7 @@ test('a counter card never gets a range or targeting option; Strike still does',
   assert.ok(counters[0], 'core.counter exists');
   const seen = (card) => {
     const kinds = new Set();
-    for (let i = 0; i < 400; i += 1) for (const s of rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 20)) kinds.add(s.retarget ? 'targeting' : s.tag?.startsWith('range:') ? 'range' : s.k);
+    for (let i = 0; i < 400; i += 1) for (const s of rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), { everyFamily: true }, 20)) kinds.add(s.retarget ? 'targeting' : s.tag?.startsWith('range:') ? 'range' : s.k);
     return kinds;
   };
   for (const card of counters) {
@@ -292,6 +298,9 @@ test('a counter card never gets a range or targeting option; Strike still does',
   }
   const plain = seen(withPoiseEffect(dmg(6)));
   assert.ok(plain.has('poise') && plain.has('dmg'), 'a non-counter card still gets poise and damage');
+  // Strike hits one enemy at melee: it is offered the longer reach, and (owner, 2026-11-20) no move to all enemies.
   const strike = seen(byId('core.strike'));
-  assert.ok(strike.has('targeting') && strike.has('range'), 'core.strike still gets both');
+  assert.ok(strike.has('range') && !strike.has('targeting'), 'core.strike gets reach, not area');
+  const area = seen({ ...byId('core.strike'), effects: [{ op: 'damage', target: 'allEnemies', amount: 6 }], tags: [...byId('core.strike').tags, 'targeting:area'] });
+  assert.ok(area.has('targeting'), 'an area Strike may move to one enemy');
 });

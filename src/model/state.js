@@ -58,6 +58,7 @@ import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, co
 import { bringRangesForward } from './combatRanges.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
+import { OfferKeyProblems } from './upgradeOffer.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
 import { sigilInventoryProblems, attunedSigilProblems } from './sigils.js';
 
@@ -799,6 +800,8 @@ export const RUN_SHAPE = [
   { key: 'weaknessDiscovery', type: 'object', optional: true },
   { key: 'runId', type: 'string', optional: true },
   { key: 'gameProfileRestVisits', type: 'object', optional: true },
+  // The upgrade offer counter (upgradeOffer.js): each upgrade source a run enters takes the next number.
+  { key: 'upgradeOfferSerial', type: 'number', optional: true },
   { key: 'rewardOfferHistory', type: 'object', optional: true },
   { key: 'contentVersion', type: 'string' },
   { key: 'seed', type: 'number' },
@@ -1155,6 +1158,15 @@ function checkProfileAndCombatRules(run, problems) {
     try { validateResolvedGameProfile(run.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (typeof run.runId !== 'string' || !run.runId) problems.push('Configured run requires a durable runId');
   } else if (run.runId || run.gameProfileRestVisits) problems.push('Profile-owned fields require a pinned gameProfile');
+  // Upgrade offer keys (upgradeOffer.js): the run's counter and each source's key are positive integers, never past the counter.
+  problems.push(...OfferKeyProblems(run.upgradeOfferSerial, 'upgradeOfferSerial'));
+  const offerKeyed = [['shopStock', run.shopStock], ['gameProfilePendingReward', run.gameProfilePendingReward],
+    ...Object.entries(run.gameProfileRestVisits || {}).map(([id, visit]) => [`gameProfileRestVisits.${id}`, visit])];
+  for (const [path, record] of offerKeyed) {
+    if (!record || typeof record !== 'object' || record.offerKey === undefined) continue;
+    problems.push(...OfferKeyProblems(record.offerKey, `${path}.offerKey`));
+    if (Number.isSafeInteger(record.offerKey) && !(record.offerKey <= (run.upgradeOfferSerial || 0))) problems.push(`${path}.offerKey must not exceed upgradeOfferSerial`);
+  }
   // Defeat summaries may acknowledge earned XP, but never open spoils or
   // resume combat. The acknowledgement itself is persisted before finishing.
   if (run.gameProfilePendingReward?.after === 'defeat') {

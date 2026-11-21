@@ -191,7 +191,7 @@ css.box-shadow.styles/combat.1147,glow,,.combat .hand .card > .card-hold-progres
 css.box-shadow.styles/combat.1392,glow,,:root .combat.coop[data-layout='formation'] .combatant {box-shadow: none !important},,,,,normal,,,,styles/combat.css:1392,glow,styles/combat.css:1392
 css.filter.styles/combat.1393,glow,,:root .combat.coop[data-layout='formation'] .combatant.selected-target .sprite {filter: drop-shadow(0 0 3px var(--gold))},,0,0,,normal,1,var,,styles/combat.css:1393,glow,styles/combat.css:1393
 css.filter.styles/combat.1399,glow,,":root .combat[data-layout='formation'] .combatant.context-selected .sprite {filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)))}",,,,,normal,,,,styles/combat.css:1399,glow,styles/combat.css:1399
-css.box-shadow.styles/combat.1470,glow,,:root[data-performance='lite'] .aim-silho.aim-outline {box-shadow: none},,,,,normal,,,,styles/combat.css:1470,glow,styles/combat.css:1470
+css.box-shadow.styles/combat.1470,glow,,:root[data-effects='off'] .aim-silho.aim-outline {box-shadow: none},,,,,normal,,,,styles/combat.css:1470,glow,styles/combat.css:1470
 css.box-shadow.styles/combat.1497,glow,,.formation-grid-cell {box-shadow: none},,,,,normal,,,,styles/combat.css:1497,glow,styles/combat.css:1497
 css.box-shadow.styles/combat.1505,glow,,":root .formation-grid-cell, :root .formation-grid-cell:disabled, :root .formation-grid-cell:hover, :root .formation-grid-cell:focus-visible {box-shadow: none}",,,,,normal,,,,styles/combat.css:1505,glow,styles/combat.css:1505
 css.box-shadow.styles/combat.1542,glow,,.combatant-leading > .combatant-info {box-shadow: none},,,,,normal,,,,styles/combat.css:1542,glow,styles/combat.css:1542
