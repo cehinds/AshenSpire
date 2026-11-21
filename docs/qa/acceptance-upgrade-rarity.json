@@ -1,0 +1,37 @@
+{
+  "request": "Upgrade rarity (owner, 2026-11-19): every upgrade option has a rarity (common, uncommon, rare) that grows with the upgrade number, rarer steps are bigger (damage, Block and Poise x1/x2/x4), an Element upgrade ADDS a magic packet to the hit instead of replacing it, and the Blacksmith favours physical kinds. The upgrade picker shows each option's rarity (colour) and its exact size.",
+  "success": "The Blacksmith's Upgrade Card picker lists the owned cards; choosing one shows its options, and each option names its rarity and its exact size (for example '+2 damage'), with the rarity chip coloured, the before and after faces and the change rows. Nothing overlaps or clips at desktop or phone width and the console stays clean.",
+  "failure": "An option shows no rarity or no size, prints a raw string, 'undefined' or 'NaN', the chip overflows its option, or the page logs a console error.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "blacksmith-upgrade-picker",
+      "url": "?shot=blacksmith",
+      "ready": "#blacksmith-upgrade-card",
+      "settleMs": 2000,
+      "actions": [
+        { "click": "#shop-cat-upgradeArt" },
+        { "wait": { "ms": 500 } },
+        { "click": "#blacksmith-upgrade-card" },
+        { "wait": { "ms": 900 } },
+        { "click": ".card-upgrade-row:not(.locked)" },
+        { "wait": { "ms": 900 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "The card picker lists cards", "selector": ".card-upgrade-row" },
+        { "kind": "count", "label": "Every listed option names its rarity", "selector": ".card-upgrade-option .card-upgrade-look-rarity", "min": 2 },
+        { "kind": "count", "label": "A chosen card shows at least two options", "selector": ".card-upgrade-option", "min": 2 },
+        { "kind": "text", "label": "The rarity chip reads a rarity word", "selector": ".card-upgrade-option .card-upgrade-look-rarity", "matches": "(Common|Uncommon|Rare) upgrade" },
+        { "kind": "within", "label": "The first option's chip stays inside its option", "selector": ".card-upgrade-option .card-upgrade-look", "container": ".card-upgrade-option" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0 }
+      ],
+      "failure": [
+        { "kind": "text", "label": "An option prints undefined or NaN", "selector": ".card-upgrade-option", "matches": "undefined|NaN" },
+        { "kind": "count", "label": "An option has no rarity chip", "selector": ".card-upgrade-option:not(:has(.card-upgrade-look))", "min": 1 }
+      ]
+    }
+  ]
+}
