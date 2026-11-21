@@ -32,19 +32,38 @@ test('a saved feat offer keeps its live options, and the offer and pending row s
   assert.ok(row.options.every(known));
 });
 
-test('an offer left with no live option is removed from both the offers and the pending rewards', () => {
+test('a row left with no live option is removed; its offer is kept as saved', () => {
   const dead = offer(['reaverMasteryFocus'], 'class:reaver:8:feat');
   const cards = { receiptId: 'class:reaver:2:cards', rewardKind: 'cards', options: ['strike'] };
   const run = { classMilestoneOffers: { [dead.receiptId]: structuredClone(dead) },
     pendingReward: { rewards: { classMilestoneRewards: [structuredClone(dead), cards] } } };
   dropRetiredFeatOptions(run);
-  assert.equal(run.classMilestoneOffers[dead.receiptId], undefined);
+  assert.deepEqual(run.classMilestoneOffers[dead.receiptId], dead, 'no row reads it, and deleting it could orphan its grant');
   assert.deepEqual(run.pendingReward.rewards.classMilestoneRewards, [cards], 'non-feat rows are untouched');
+});
+
+test('an offer whose grant was already taken is never touched, even with a retired option in it', () => {
+  const taken = offer(['reaverIronFooting', 'reaverKeenBlade'], 'class:reaver:1:feat');
+  const run = { classMilestoneOffers: { [taken.receiptId]: structuredClone(taken) },
+    classMilestones: { 'class:reaver:1': { grants: { feat: { id: taken.receiptId, state: 'taken', selection: { id: 'reaverKeenBlade' } } } } } };
+  dropRetiredFeatOptions(run);
+  assert.deepEqual(run.classMilestoneOffers[taken.receiptId], taken, 'classMilestoneProblems needs the taken selection to stay in offer.options');
+});
+
+test('healing is idempotent: a healed save loads the same the second time', () => {
+  const live = offer(['reaverIronFooting', 'reaverKeenBlade'], 'class:reaver:1:feat');
+  const run = { classMilestoneOffers: { [live.receiptId]: structuredClone(live) },
+    pendingReward: { rewards: { classMilestoneRewards: [structuredClone(live)] } } };
+  dropRetiredFeatOptions(run);
+  const once = structuredClone(run);
+  dropRetiredFeatOptions(run);
+  assert.deepEqual(run, once);
 });
 
 test('an unknown feat id that was never retired is left for the reference check to refuse', () => {
   const odd = offer(['notARealFeat'], 'class:reaver:1:feat');
-  const run = { classMilestoneOffers: { [odd.receiptId]: structuredClone(odd) } };
+  const run = { classMilestoneOffers: { [odd.receiptId]: structuredClone(odd) },
+    pendingReward: { rewards: { classMilestoneRewards: [structuredClone(odd)] } } };
   dropRetiredFeatOptions(run);
-  assert.deepEqual(run.classMilestoneOffers[odd.receiptId].options, ['notARealFeat']);
+  assert.deepEqual(run.pendingReward.rewards.classMilestoneRewards[0].options, ['notARealFeat']);
 });

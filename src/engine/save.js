@@ -193,10 +193,12 @@ function dropRetiredStatuses(run) {
 }
 
 // Class-skill feats retired from the game (the crit feats, owner 2026-11-20: crits are gone from Core). A run
-// saved while a class milestone offered one still names it in that offer and in its pending reward row; the
-// option is dropped from both (with its paired choiceIds/abilityRanks entries) BEFORE the pending reference
-// check, so the save is not archived. A row left with no option is removed from both. Only ids named here
-// are dropped: any other unknown feat id is still refused.
+// saved while a class milestone offered one still names it in that offer and in its pending reward row. Only an
+// offer that a pending row still references is healed: the retired option is dropped from the row and its offer
+// together (with the paired choiceIds/abilityRanks entries), BEFORE the pending reference check, so the save is
+// not archived. A row left with no option is removed and its offer kept as saved (no row reads it any more).
+// An offer whose grant was already taken is never touched: classMilestoneProblems requires its selection to stay
+// in offer.options. Only ids named here are dropped: any other unknown feat id is still refused.
 export const RETIRED_FEAT_IDS = Object.freeze(['reaverKeenBlade', 'reaverBloodDiscipline', 'reaverMasteryFocus',
   'starseerClearSky', 'starseerRitualPrecision', 'starseerMasteryFocus', 'rogueMeasuredPoint', 'rogueKnifeWork',
   'rogueMasteryFocus', 'heraldBlightPrecision', 'heraldOathEdge', 'heraldMasteryFocus', 'bladeCritical']);
@@ -208,19 +210,23 @@ function withoutRetiredFeats(row) {
   for (const key of ['choiceIds', 'abilityRanks']) if (Array.isArray(row[key])) next[key] = keep.map(index => row[key][index]);
   return next;
 }
+function grantTaken(run, receiptId) {
+  return Object.values(run?.classMilestones || {}).some(row => Object.values(row?.grants || {})
+    .some(grant => grant?.id === receiptId && grant.state !== 'pending'));
+}
 export function dropRetiredFeatOptions(run) {
-  const offers = run?.classMilestoneOffers;
-  if (offers && typeof offers === 'object') {
-    for (const [receiptId, offer] of Object.entries(offers)) {
-      const next = withoutRetiredFeats(offer);
-      if (next === offer) continue;
-      if (next.options.length) offers[receiptId] = next; else delete offers[receiptId];
-    }
-  }
   const rows = run?.pendingReward?.rewards?.classMilestoneRewards;
-  if (Array.isArray(rows)) {
-    run.pendingReward.rewards.classMilestoneRewards = rows.map(withoutRetiredFeats).filter(row => !row || row.rewardKind !== 'feat' || row.options.length);
+  if (!Array.isArray(rows)) return;
+  const offers = run.classMilestoneOffers && typeof run.classMilestoneOffers === 'object' ? run.classMilestoneOffers : null;
+  const kept = [];
+  for (const row of rows) {
+    const next = withoutRetiredFeats(row);
+    if (next === row || grantTaken(run, row.receiptId)) { kept.push(row); continue; }
+    if (!next.options.length) continue;
+    kept.push(next);
+    if (offers && offers[row.receiptId]) offers[row.receiptId] = withoutRetiredFeats(offers[row.receiptId]);
   }
+  run.pendingReward.rewards.classMilestoneRewards = kept;
 }
 
 /**
