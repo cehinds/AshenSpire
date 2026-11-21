@@ -4,13 +4,26 @@ export { immediateCardEffects };
 
 const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies', 'otherEnemy']);
 
+const SINGLE_FOE_TARGETS = new Set(['enemy', 'randomEnemy', 'otherEnemies', 'otherEnemy']);
+/** SelfAndAll(def, effects): true when the card affects the player and every enemy, and picks no single foe (Rallying Roar, Reaping Arc). */
+export function SelfAndAll(def, effects = immediateCardEffects(def)) {
+  return def?.combatPreview?.needsTarget !== true && effects.some(effect => effect.target === 'self') && effects.some(effect => effect.target === 'allEnemies')
+    && !effects.some(effect => SINGLE_FOE_TARGETS.has(effect.target));
+}
+
 // Explicit destinations must agree with the card, even when an effect would
 // otherwise ignore the supplied entity and fall back to its source/first foe.
 // Omitted targets keep the engine's existing automatic resolution semantics.
 export function cardTargetPlan(def, actorId, enemies = [], players = [], { solo = false } = {}) {
   const effects = immediateCardEffects(def);
   const hostile = def?.combatPreview?.needsTarget === true || effects.some(effect => HOSTILE_TARGETS.has(effect.target));
-  if (hostile) return { mode: 'enemy', legalIds: enemies.filter(enemy => enemy.alive).map(enemy => enemy.id) };
+  if (hostile) {
+    const legalIds = enemies.filter(enemy => enemy.alive).map(enemy => enemy.id);
+    // Self-and-all (owner 2026-11-18 section 22): a card that affects the player AND every enemy (no single foe) plays when either is selected.
+    const actor = players.find(player => player.id === actorId && player.alive && player.connected !== false);
+    if (actor && SelfAndAll(def, effects)) legalIds.push(actorId);
+    return { mode: 'enemy', legalIds };
+  }
   const friendly = friendlyTargetPlan(def, actorId, players);
   const actor = players.find(player => player.id === actorId && player.alive && player.connected !== false);
   // Solo ally effects historically fall back to their source (SPEC/engine
