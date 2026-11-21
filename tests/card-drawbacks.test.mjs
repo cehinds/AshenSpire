@@ -297,7 +297,7 @@ test("each reachable Evade card's upgrade eases its drawback", async () => {
   // rolled menu, which offers removing Exhaust on every roll it can.
   const quickstep = registries.cards.get('quickstep');
   const offered = new Set();
-  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) for (const step of nextUpgradeOptions({ seed, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: `q${seed}`, cardId: 'quickstep', upgraded: false }, quickstep, registries, 40, { noAuthored: true })) if (step.k === 'fx') offered.add(step.fx);
+  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) for (const step of nextUpgradeOptions({ seed, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: `q${seed}`, cardId: 'quickstep', upgraded: false }, quickstep, registries, 40, { noAuthored: true, everyFamily: true })) if (step.k === 'fx') offered.add(step.fx);
   assert.ok(offered.has('unexhaust'), 'Quickstep may roll the drop-Exhaust upgrade');
 });
 
@@ -310,7 +310,7 @@ test('a ranked ability card is offered only drawback-removal steps, and drop-Exh
   for (const cardId of ['quickstep', 'kickOff', 'warcry', 'reclamation', 'vanish', 'smokeBomb', 'perfectHeist']) {
     const def = registries.cards.get(cardId);
     assert.ok(Array.isArray(def.gradeProfiles) && def.keywords.includes('exhaust'), `${cardId} is a ranked card that Exhausts`);
-    const offered = nextUpgradeOptions({ seed: 3, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: `o-${cardId}`, cardId, upgraded: false }, def, registries, 40, { noAuthored: true });
+    const offered = nextUpgradeOptions({ seed: 3, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: `o-${cardId}`, cardId, upgraded: false }, def, registries, 40, { noAuthored: true, everyFamily: true });
     assert.deepEqual(offered.map((step) => `${step.k}:${step.fx}`), ['fx:unexhaust'], `${cardId}: only the step that applies is offered`);
     const run = createRunState({ registries, classId: 'rogue', seed: 511, profileMeta: unlocked });
     const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });

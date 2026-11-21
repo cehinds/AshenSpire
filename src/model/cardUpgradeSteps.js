@@ -27,6 +27,44 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   attr: 2 });
 /** Every option kind a rolled upgrade can be; a card's `upgradeMenu` names a subset of these (theme C, playtest 2026-11-17). */
 export const UPGRADE_OPTION_KINDS = Object.freeze(Object.keys(WEIGHTS));
+
+// Option families (owner, 2026-11-20: "no upgrade" or "damage +2 / damage +3" side by side is no choice). One roll never
+// offers two options of one family, so the choices differ in kind, not only in amount:
+//   damage    more or wider HP damage: dmg, hits, targeting, element, a second target, a STR / INT boost
+//   defense   Block and answers to a hit: blk, an added Block, Counter, a DEX / WIS boost
+//   pressure  what wears an enemy down besides HP: status stacks, an added status, Poise damage
+//   cost      what the card costs: cost, a steady (no longer rising) cost, rank down
+//   flow      cards moving: draw, cycle, shuffle, cull, a copy
+//   keyword   how the card sits in hand: Innate, Retain, hold one, losing Exhaust or Ethereal
+//   form      how and when the card is played: range, stance, school, Reaction (a play in the enemy's turn), a run attribute
+export const UPGRADE_FAMILIES = Object.freeze({
+  damage: Object.freeze(['dmg', 'hits', 'targeting', 'element', 'fx:target']),
+  defense: Object.freeze(['blk', 'fx:block', 'fx:counter']),
+  pressure: Object.freeze(['stk', 'addStatus', 'poise']),
+  cost: Object.freeze(['cost', 'fx:steady', 'rankDown']),
+  flow: Object.freeze(['fx:draw', 'fx:cycle', 'fx:shuffle', 'fx:cull', 'fx:copy']),
+  keyword: Object.freeze(['fx:unexhaust', 'fx:innate', 'fx:retain', 'fx:holdOne', 'fx:unethereal']),
+  form: Object.freeze(['range', 'maneuver', 'school', 'fx:reaction', 'attr']),
+});
+const FAMILY_OF = Object.freeze(Object.fromEntries(Object.entries(UPGRADE_FAMILIES).flatMap(([family, kinds]) => kinds.map((kind) => [kind, family]))));
+const DEFENSE_STATS = Object.freeze(['dexterity', 'wisdom']);
+/** The family of an option kind (a boost goes with what it raises: STR / INT damage, DEX / WIS defense). */
+export function UpgradeKindFamily(kind, option = null) {
+  if (kind === 'fx:boost') return DEFENSE_STATS.includes(option?.stat) ? 'defense' : 'damage';
+  return FAMILY_OF[kind] || kind;
+}
+/** The families a stored step belongs to: one, or both of a combo's. An authored step has none here (its caller reads the face). */
+export function UpgradeStepFamilies(step) {
+  if (!step || step.k === 'authored') return [];
+  if (step.k === 'combo') return [...new Set((step.steps || []).flatMap(UpgradeStepFamilies))];
+  if (step.k === 'fx') return [UpgradeKindFamily(`fx:${step.fx}`, step)];
+  if (step.k === 'tag') {
+    if (step.retarget || step.damageSchool) return ['damage'];
+    if (step.tag === RANK_DOWN_TAG) return ['cost'];
+    return ['form'];
+  }
+  return [UpgradeKindFamily(step.k, step)];
+}
 // A cantrip's own element status (Frost, Shocked, Venom, Regen...) may gain stacks up to this many (owner, 2026-11-14:
 // cantrip upgrades add +1 stack); every other status keeps STACK_CAPS, or none.
 const CANTRIP_STACK_CAP = 5;
@@ -325,8 +363,8 @@ const stepOf = (kind, option, choice) => {
 };
 
 /**
- * rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits, count) → up to `count` DISTINCT steps (distinct
- * kinds of option, so never the same step twice) from the one per-step stream: each takes two draws (pick, then the
+ * rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits, count) → up to `count` DISTINCT steps (each of
+ * another family, UPGRADE_FAMILIES, so never two of one kind) from the one per-step stream: each takes two draws (pick, then the
  * option's own choice), so the first option is exactly rollUpgradeStep's. Fewer than `count` come back when the card
  * has fewer eligible options; [] when it is fully upgraded.
  */
@@ -340,7 +378,9 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   // it is offered only those, so the offer equals the effect (review of #2819).
   const menu = Array.isArray(baseDef.upgradeMenu) ? baseDef.upgradeMenu
     : Array.isArray(baseDef.gradeProfiles) ? DrawbackSteps.map((fx) => `fx:${fx}`) : null;
-  const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind] && (!menu || menu.includes(kind)));
+  // `limits.excludeFamilies` names families already on offer (an authored first step's), so no option repeats one.
+  const taken = new Set(limits.excludeFamilies || []);
+  let kinds = Object.keys(WEIGHTS).filter((kind) => found[kind] && (!menu || menu.includes(kind)) && !taken.has(UpgradeKindFamily(kind, found[kind])));
   const out = [];
   // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream.
   for (let n = 0; n < Math.max(1, count | 0); n += 1) {
@@ -354,7 +394,9 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
       if (roll < 0) { kind = candidate; break; }
     }
     out.push(stepOf(kind, found[kind], choice));
-    kinds.splice(kinds.indexOf(kind), 1);
+    // Every kind of the picked family leaves the draw: the next option is of another family.
+    const family = UpgradeKindFamily(kind, found[kind]);
+    kinds = limits.everyFamily ? kinds.filter((other) => other !== kind) : kinds.filter((other) => UpgradeKindFamily(other, found[other]) !== family);
   }
   return out;
 }

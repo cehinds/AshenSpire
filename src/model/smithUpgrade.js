@@ -81,21 +81,46 @@ export function SmithOptionPool(run, itemRef) {
   return [...statCandidates(run, itemRef, family), ...propertyCandidates(run, itemRef, family)];
 }
 
-/** Upgrade number `n` of an item: two or three distinct options, the same every time it is asked. */
+// Item option families (owner, 2026-11-20): one roll never offers two of a family. Attribute picks are one family
+// (STR, DEX, CON, INT, WIS, Mana, and the +1 attribute properties); the edges that add an element or a status on a hit
+// are one; so are Poise, resistances, start-of-turn Block, stances, hand flow and deck building.
+const PROPERTY_FAMILIES = Object.freeze({
+  edge: ['edgeFire', 'edgeFrost', 'edgeLightning', 'bleedingEdge', 'searingEdge', 'chillingEdge'],
+  attribute: ['plusSTR', 'plusDEX', 'plusCON', 'plusWIS', 'plusINT', 'maxMana1'],
+  poise: ['maxPoise5', 'poiseGuard2'],
+  resist: ['resistFire', 'resistFrost', 'resistLightning', 'resistDecay', 'resistSacred', 'resistPsychic', 'immuneFire', 'immuneFrost', 'immuneLightning', 'statusWard'],
+  block: ['startBlock2', 'startBlock4'],
+  stance: ['attackStance', 'smashStance', 'castingStance', 'defendStance', 'stanceDraw', 'stanceStamina'],
+  hand: ['handSize1', 'retain1', 'firstSkillDraw'],
+  deck: ['smallerDeck', 'deckSlot1', 'unlimitedBasics', 'unlimitedCantrips'],
+});
+const PROPERTY_FAMILY_OF = Object.freeze(Object.fromEntries(Object.entries(PROPERTY_FAMILIES).flatMap(([family, ids]) => ids.map((id) => [id, family]))));
+const STAT_FAMILY = Object.freeze({ poise: 'poise', ward: 'resist', poiseDamagePct: 'poise' });
+/** The family of an item pick: a property's group, else the stat's ('attribute' for any attribute or Mana). */
+export function SmithPickFamily(pick) {
+  if (!pick) return '';
+  if (pick.k === 'prop') return PROPERTY_FAMILY_OF[pick.prop] || `prop:${pick.prop}`;
+  if (pick.k === 'effect') return STAT_FAMILY[pick.effect] || `effect:${pick.effect}`;
+  return STAT_FAMILY[pick.stat] || 'attribute';
+}
+
+/** Upgrade number `n` of an item: two or three options of distinct families, the same every time it is asked during a visit. */
 export function RollSmithOptions(run, itemRef, n = ItemUpgradeCount(run, itemRef) + 1) {
   const pool = SmithOptionPool(run, itemRef);
   if (!pool.length) return [];
   const rng = mulberry32(upgradeSeed(run.seed, OfferSalted(run, `smith:${itemRef}`), n));
   const counts = ITEM_SMITH.optionCounts;
   const count = Math.min(pool.length, counts[Math.min(counts.length - 1, Math.floor(rng() * counts.length))]);
-  const left = [...pool];
+  let left = [...pool];
   const options = [];
   while (options.length < count && left.length) {
     const total = left.reduce((sum, row) => sum + row.weight, 0);
     let roll = rng() * total, index = 0;
     for (; index < left.length - 1; index += 1) { roll -= left[index].weight; if (roll < 0) break; }
-    options.push({ ...left[index].pick, text: PickText(left[index].pick) });
-    left.splice(index, 1);
+    const pick = left[index].pick;
+    options.push({ ...pick, text: PickText(pick) });
+    const family = SmithPickFamily(pick);
+    left = left.filter((row) => SmithPickFamily(row.pick) !== family);
   }
   return options;
 }

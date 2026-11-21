@@ -6,7 +6,7 @@ import { mulberry32 } from './rng.js';
 import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 
 const MAX_CANDIDATES = 20;
-import { rollUpgradeOptions, upgradeStepRng, upgradeSeed } from './cardUpgradeSteps.js';
+import { rollUpgradeOptions, upgradeStepRng, upgradeSeed, UpgradeStepFamilies } from './cardUpgradeSteps.js';
 import { OfferSalted } from './upgradeOffer.js';
 
 /**
@@ -92,17 +92,21 @@ export function upgradeChoiceCount(def, instance, { blacksmith = false, run = nu
  * first, then one rolled alternative when count > 1. Otherwise the seeded roll supplies the options.
  * The first entry is always what nextUpgradeStep returns. Stateless.
  * `scale` (> 1) makes the amounts bigger, `salt` gives the roll its own stream and `noAuthored` skips the card's
- * designed upgrade: the three a rank-up bonus uses (model/rankUpBonus.js).
+ * designed upgrade: the three a rank-up bonus uses (model/rankUpBonus.js). `everyFamily` lists every eligible kind
+ * (several of one family), for a probe or test that walks the whole menu; no offer uses it.
  */
-export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false } = {}) {
+export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false, everyFamily = false } = {}) {
   const applied = upgradeStepsOf(instance);
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
   const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
   const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell, maxRange: run.rangePolicy?.maxRange };
-  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, OfferSalted(run, salt ? `${instance.instanceId}#${salt}` : instance.instanceId), applied.length), limits, n);
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
-  if (count <= 1) return authored ? [{ k: 'authored' }] : roll(1);
+  if (count <= 1 && authored) return [{ k: 'authored' }];
+  // An authored first step occupies its family (AuthoredFamilies): the rolled alternative is of another family.
+  const excludeFamilies = authored && !everyFamily ? AuthoredFamilies(base) : [];
+  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, OfferSalted(run, salt ? `${instance.instanceId}#${salt}` : instance.instanceId), applied.length), { ...limits, excludeFamilies, everyFamily }, n);
+  if (count <= 1) return roll(1);
   // Two options that resolve to the same card would be no choice: every pick after the first must differ in what
   // it does (face, tags, profile fields; the name aside) from the picks before it. Candidates come from the same
   // seeded stream in the same order, so the list stays deterministic; a card with no distinct candidate left shows fewer.
@@ -124,16 +128,40 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
 // its own seeded stream (instance id + `#fx` + step index), so the same quote always shows the same list.
 function withSecondEffects(run, instance, applied, chosen, candidates, outcome, salt) {
   const draw = mulberry32(upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#fx${salt}`), applied.length));
+  const offered = new Set(chosen.flatMap(UpgradeStepFamilies));
   return chosen.map((step) => {
     const roll = draw();
     const pick = draw();
     if (roll >= REST_TWO_EFFECT_CHANCE || step.k === 'authored') return step;
-    const kindOf = (s) => (s.k === 'fx' ? `fx:${s.fx}` : s.k === 'tag' ? `tag:${(s.tag || '').split(':')[0]}` : s.k);
-    const partners = candidates.filter((other) => other.k !== 'authored' && other.k !== 'combo' && kindOf(other) !== kindOf(step)
+    // The second effect is of a family no option on the list already has (UPGRADE_FAMILIES).
+    const partners = candidates.filter((other) => other.k !== 'authored' && other.k !== 'combo' && !UpgradeStepFamilies(other).some((family) => offered.has(family))
       && !chosen.some((c) => JSON.stringify(c) === JSON.stringify(other)) && outcome(other) !== outcome(step));
     if (!partners.length) return step;
-    return { k: 'combo', steps: [step, partners[Math.min(partners.length - 1, Math.floor(pick * partners.length))]] };
+    const partner = partners[Math.min(partners.length - 1, Math.floor(pick * partners.length))];
+    for (const family of UpgradeStepFamilies(partner)) offered.add(family);
+    return { k: 'combo', steps: [step, partner] };
   });
+}
+
+/**
+ * The families a card's authored upgrade belongs to, read from what it changes on the face: lower cost, more damage,
+ * more Block, more status, more draw-like effects, new keywords. A text-only authored upgrade claims none.
+ */
+export function AuthoredFamilies(base) {
+  const after = applyUpgradeSteps(base, [{ k: 'authored' }]);
+  const sum = (card, op, field = 'amount') => (card.effects || []).filter((e) => e.op === op).reduce((n, e) => n + (Number(e[field]) || 0) * (e.op === 'damage' && e.hits > 1 ? e.hits : 1), 0);
+  const stacks = (card) => (card.effects || []).filter((e) => e.op === 'applyStatus').reduce((n, e) => n + (Number(e.stacks) || 0), 0);
+  const flowOps = ['draw', 'discard', 'addCard', 'shuffleDiscardIntoDraw', 'exhaust', 'retain'];
+  const flow = (card) => (card.effects || []).filter((e) => flowOps.includes(e.op)).map((e) => `${e.op}:${e.amount ?? e.count ?? ''}`).sort().join();
+  const families = [];
+  const lower = (key) => Number.isFinite(base[key]) && Number.isFinite(after[key]) && after[key] < base[key];
+  if (lower('cost') || lower('staminaCost') || lower('manaCost')) families.push('cost');
+  if (sum(after, 'damage') !== sum(base, 'damage')) families.push('damage');
+  if (sum(after, 'block') !== sum(base, 'block')) families.push('defense');
+  if (stacks(after) !== stacks(base) || sum(after, 'poiseDamage') !== sum(base, 'poiseDamage')) families.push('pressure');
+  if (flow(after) !== flow(base)) families.push('flow');
+  if ([...(after.keywords || [])].sort().join() !== [...(base.keywords || [])].sort().join()) families.push('keyword');
+  return families;
 }
 
 /**

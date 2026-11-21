@@ -28,7 +28,7 @@ test('every rolled upgrade option changes what the card does when played', () =>
       if (lead === null) continue;
       const run = { seed: 7, gameProfile: profile, rangePolicy: {} };
       const inst = { instanceId: 'probe-1', cardId: id, ...(lead.length ? { upgraded: true, upgradeSteps: lead } : { upgraded: false }) };
-      const options = nextUpgradeOptions(run, inst, base, registries, 40, { noAuthored: true })
+      const options = nextUpgradeOptions(run, inst, base, registries, 40, { noAuthored: true, everyFamily: true })
         .filter((step) => !isDeferred(step)).slice(0, PER_CARD);
       for (const step of options) {
         checked += 1;
@@ -49,7 +49,7 @@ const RUN = { seed: 7, gameProfile: profile, rangePolicy: {} };
 const kindsOf = (cardId, steps = []) => {
   const base = registries.cards.get(cardId);
   const inst = { instanceId: 'k1', cardId, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) };
-  return nextUpgradeOptions(RUN, inst, base, registries, 30, { noAuthored: true });
+  return nextUpgradeOptions(RUN, inst, base, registries, 30, { noAuthored: true, everyFamily: true });
 };
 
 test('a Smash card is never offered a Poise step, and its authored upgrade keeps the Poise number the engine ignores', () => {
