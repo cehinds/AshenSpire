@@ -36,7 +36,7 @@ test('an old export with retired legacy keys imports with one warning and still 
   assert.ok(!('gameConfig.presentation.movementEnabled' in changes), 'a battlefield key loads without it');
   assert.ok(!Object.keys(changes).some((key) => /presentation\.(rowBScale|movementEnabled)/.test(key)));
   for (const key of Object.keys(changes)) assert.doesNotMatch(key, /^(settings\.)?gameConfig\.(?!prologue\.|presentation\.settings(Width|Height)Percent$)|^recovery\./);
-  assert.equal(changes.deckEditing, true, 'live plain-key settings still apply');
+  assert.ok(!('deckEditing' in changes) && !('levelUpValue' in changes), 'a retired plain-key row (owner, 2026-11-20) is skipped, not refused');
 });
 
 test('a stored battlefield key is cleared by a profile load and counts as retired', () => {
@@ -62,7 +62,7 @@ test('a sync profile carrying retired legacy keys loads with the warning', () =>
 test('live non-gameConfig settings round-trip through a sync profile with no retired warning', () => {
   const rows = settingsRows();
   const keys = rows.map((row) => row.key);
-  const settings = { victoryReceiptSeconds: 5, rewardLevelCards: true, deckEditing: true, levelUpValue: 4 };
+  const settings = { playInDeckOrder: true, controlHints: false, creationAutoAdvance: true };
   const text = profileText(settings, keys);
   const result = profileChanges(text, contentBundle, settings, rows, keys);
   for (const [key, value] of Object.entries(settings)) assert.equal(result.changes[key], value, `${key} is kept`);
@@ -70,7 +70,7 @@ test('live non-gameConfig settings round-trip through a sync profile with no ret
   assert.ok(!result.warnings.includes(RETIRED_LEGACY_GROUPS_WARNING), 'a current-build file carries no retired warning');
   const warnings = [];
   const changes = parseAdvancedConfigFile(text, contentBundle, {}, rows, warnings, { dropRetiredLegacy: true });
-  assert.equal(changes.deckEditing, true);
+  assert.equal(changes.playInDeckOrder, true);
   assert.deepEqual(warnings.filter((w) => w === RETIRED_LEGACY_GROUPS_WARNING), []);
 });
 
@@ -106,20 +106,20 @@ test('a stored battlefield key never drives combat, and the boot cleanup list na
 
 test('an old export carrying the retired Level Up feat and class-upgrade rows still imports, dropping only those keys', () => {
   const old = JSON.stringify({ game: 'Ashen Spire', schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
-    overrides: { 'settings.rewardLevelFeats': true, 'settings.rewardLevelClassTree': false, 'settings.deckEditing': true } });
+    overrides: { 'settings.rewardLevelFeats': true, 'settings.rewardLevelClassTree': false, 'settings.playInDeckOrder': true } });
   const warnings = [];
   const changes = parseAdvancedConfigFile(old, contentBundle, {}, settingsRows(), warnings, { dropRetiredLegacy: true });
   assert.ok(!('rewardLevelFeats' in changes) && !('rewardLevelClassTree' in changes), 'the retired rows are dropped');
-  assert.equal(changes.deckEditing, true, 'live settings in the same file still apply');
+  assert.equal(changes.playInDeckOrder, true, 'live settings in the same file still apply');
   assert.ok(warnings.includes(RETIRED_LEGACY_GROUPS_WARNING) || warnings.length >= 1, 'the drop is named');
 });
 
 test('an old export carrying a class book feat chance still imports, dropping only that key', () => {
   const old = JSON.stringify({ game: 'Ashen Spire', schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
-    overrides: { 'gameConfig.consumables.starseerClassBook.featChance': 5, 'settings.deckEditing': true } });
+    overrides: { 'gameConfig.consumables.starseerClassBook.featChance': 5, 'settings.playInDeckOrder': true } });
   const warnings = [];
   const changes = parseAdvancedConfigFile(old, contentBundle, {}, settingsRows(), warnings, { dropRetiredLegacy: true });
   assert.ok(!Object.keys(changes).some((key) => key.includes('featChance')), 'the retired feat chance is dropped');
-  assert.equal(changes.deckEditing, true, 'live settings in the same file still apply');
+  assert.equal(changes.playInDeckOrder, true, 'live settings in the same file still apply');
   assert.ok(warnings.length >= 1, 'the drop is named');
 });

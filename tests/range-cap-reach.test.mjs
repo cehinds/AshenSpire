@@ -123,7 +123,8 @@ test('an upgrade never offers Reach to Ranged under the cap, and still offers Me
   };
   // The owner removed ranged cards (2026-11-14, SPEC 17 "Range"): a range change is melee or reach, so even an uncapped roll never offers ranged.
   assert.ok(!offers('reach', undefined).has('range:ranged'), 'uncapped: the ranged band is never offered');
-  assert.ok(offers('reach', undefined).has('range:melee'), 'uncapped control still offers a range change');
+  // Owner, 2026-11-20 (no downgrades): Reach to Melee loses range, so a reach card is offered no range change at all.
+  assert.equal(offers('reach', undefined).size, 0, 'a reach card keeps its reach');
   assert.ok(!offers('reach', 'reach').has('range:ranged'));
   assert.ok(offers('melee', 'reach').has('range:reach'));
   // The run's own policy is the limit source: nextUpgradeOptions passes it through.

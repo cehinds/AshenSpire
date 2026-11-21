@@ -2178,20 +2178,20 @@ statuses,:root .combat[data-layout='formation'] .combatant .statuses,width,100%,
 statuses,:root .combat[data-layout='formation'] .combatant .statuses,margin,0,,styles/combat.css:1467,all,spacing,styles/combat.css:1467,statuses
 status-overflow-list,.player .status-overflow-list,left,0,,styles/combat.css:1470,all,spacing,styles/combat.css:1470,status-overflow-list
 status-overflow-list,.player .status-overflow-list,right,auto,,styles/combat.css:1470,all,spacing,styles/combat.css:1470,status-overflow-list
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,inset,auto 8% -3%,,styles/combat.css:1472,all,spacing,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,width,auto,,styles/combat.css:1472,all,spacing,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,height,12%,,styles/combat.css:1472,all,spacing,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,border,2px solid var(--target-color),,styles/combat.css:1472,all,style.other,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,border-radius,50%,,styles/combat.css:1472,all,radius,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,filter,none,,styles/combat.css:1472,all,style.other,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,animation,none,,styles/combat.css:1472,all,motion,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,opacity,0.9,,styles/combat.css:1472,all,style.other,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,transform,scale(1.04),,styles/combat.css:1472,all,motion,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,background,transparent,,styles/combat.css:1472,all,color,styles/combat.css:1472,aim-outline
-aim-outline,:root[data-performance='lite'] .aim-silho.aim-outline,box-shadow,none,,styles/combat.css:1472,all,style.shadow,styles/combat.css:1472,aim-outline
-illustrated-background,:root[data-performance='lite'] .backdrop::after,animation,none,,styles/combat.css:1479,all,motion,styles/combat.css:1479,backdrop
-sprite,:root[data-performance='lite'] .sprite img,filter,none !important,,styles/combat.css:1480,all,style.other,styles/combat.css:1480,sprite
-facing,:root[data-performance='lite'] .sprite .facing,filter,none !important,,styles/combat.css:1480,all,style.other,styles/combat.css:1480,facing
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,inset,auto 8% -3%,,styles/combat.css:1472,all,spacing,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,width,auto,,styles/combat.css:1472,all,spacing,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,height,12%,,styles/combat.css:1472,all,spacing,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,border,2px solid var(--target-color),,styles/combat.css:1472,all,style.other,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,border-radius,50%,,styles/combat.css:1472,all,radius,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,filter,none,,styles/combat.css:1472,all,style.other,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,animation,none,,styles/combat.css:1472,all,motion,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,opacity,0.9,,styles/combat.css:1472,all,style.other,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,transform,scale(1.04),,styles/combat.css:1472,all,motion,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,background,transparent,,styles/combat.css:1472,all,color,styles/combat.css:1472,aim-outline
+aim-outline,:root[data-effects='off'] .aim-silho.aim-outline,box-shadow,none,,styles/combat.css:1472,all,style.shadow,styles/combat.css:1472,aim-outline
+illustrated-background,:root[data-effects='off'] .backdrop::after,animation,none,,styles/combat.css:1479,all,motion,styles/combat.css:1479,backdrop
+sprite,:root[data-effects='off'] .sprite img,filter,none !important,,styles/combat.css:1480,all,style.other,styles/combat.css:1480,sprite
+facing,:root[data-effects='off'] .sprite .facing,filter,none !important,,styles/combat.css:1480,all,style.other,styles/combat.css:1480,facing
 formation-layout-editor,.formation-grid,display,none,,styles/combat.css:1484,all,style.other,styles/combat.css:1484,formation-grid
 formation-layout-editor,.formation-grid,position,absolute,,styles/combat.css:1484,all,style.other,styles/combat.css:1484,formation-grid
 formation-layout-editor,.formation-grid,inset,0,,styles/combat.css:1484,all,spacing,styles/combat.css:1484,formation-grid

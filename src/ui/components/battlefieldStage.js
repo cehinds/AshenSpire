@@ -652,7 +652,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // window always places, a frame whose bodies did not move (within half a pixel) skips the placement, and two such
   // frames in a row end the window. Lite samples every second frame, except the one that closes the window.
   let trackFresh = true, trackStable = 0, trackTick = 0, trackBodies = null;
-  const lite = () => document.documentElement.dataset.performance === 'lite';
+  const lite = () => document.documentElement.dataset.effects === 'off';
   // Effects off settles the HUD at the start and end of a move, exactly as reduced motion does.
   const stillHud = () => reducedMotionRequested() || effectsOff();
   // Classic figures report no `busy`: their actions are finite CSS animations (a hit holds its displaced pose
