@@ -99,7 +99,7 @@ import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountDraft } from './ui/screens/draft.js';
 import { executeRunEffects, drawCards, discardFromHand, executeAction } from './engine/actions.js';
-import { mountMap } from './ui/screens/map.js';
+import { mountMap, refreshMapHud } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { MountRewards } from './ui/screens/reward.js';
 // After reward.js on purpose: imported earlier, its model imports change the bundle's load order and expose cyclic named imports.
@@ -112,7 +112,7 @@ import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, RestOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { armouryRoute } from './model/armouryPages.js';
 import { mountConfiguredShop } from './ui/screens/shop.js';
-import { runHudRefreshSignature, RefreshRunHud } from './ui/components/runHud.js';
+import { runHudRefreshSignature } from './ui/components/runHud.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
@@ -1405,8 +1405,8 @@ function showOfflinePlay() {
 // map would abandon the room mid-visit.
 //
 // An overlay (the Armoury, the deck editor) that goes back to a map still mounted under it keeps that map, with its
-// selected route and camera: only the run HUD is redrawn, and only when what it shows changed. Any other return
-// callback may finish a reward or a service, so it runs as given.
+// selected route and camera: only the run HUD is redrawn, by the map's own builder (refreshMapHud), and only when
+// what it shows changed. Any other return callback may finish a reward or a service, so it runs as given.
 function retainMapOrigin(returnTo) {
   if (returnTo !== showMap) return returnTo;
   const origin = app.querySelector('.mapscreen');
@@ -1420,7 +1420,8 @@ function retainMapOrigin(returnTo) {
     const next = runHudRefreshSignature({ registries, run, meta, ...hudOptions });
     if (next === signature) return undefined;
     signature = next;
-    RefreshRunHud(app, { registries, run, meta, ...hudOptions, hud: roomHud(showMap), remount: showMap });
+    // The map's own builder redraws it, so its save doors and route-keeping remount stay wired.
+    if (!refreshMapHud(meta)) return returnTo();
     return undefined;
   };
 }
