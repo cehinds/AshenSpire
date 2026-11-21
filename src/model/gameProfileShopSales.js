@@ -16,7 +16,7 @@ import { gameProfileWeaponArtIds } from './gameProfileRewards.js';
 
 const revision = stock => stock?.tradeRevision || 0;
 /** The stock a sale at `shopId` trades against: the trader's workshop or a Blacksmith visit when one is open, else the merchant's offer. */
-export function vendorSaleStock(run, shopId) {
+export function VendorSaleStock(run, shopId) {
   const offer = run.gameProfileRewardOffers?.[`shop:${shopId}`];
   const smith = run.shopStock?.kind === 'blacksmith' ? run.shopStock : null;
   if (smith && (run.gameProfileTraderSmith === shopId || !offer)) return smith;
@@ -38,7 +38,7 @@ function withMerchant(run, stock) {
   return draft;
 }
 export function gameProfileShopSalePlan(registries, run, shopId, kind, identity) {
-  const stock = vendorSaleStock(run, shopId);
+  const stock = VendorSaleStock(run, shopId);
   let def, item, detail, reason = '';
   if (kind === 'weapons') {
     detail = armamentSalePlan(registries, withMerchant(run, stock), identity);
@@ -92,7 +92,7 @@ export function commitGameProfileShopSale(registries, run, shopId, quote) {
   const plan = gameProfileShopSalePlan(registries, run, shopId, quote.kind, quote.identity);
   if (!plan.ok) throw new Error(plan.reason);
   if (quote.shopId !== shopId || quote.price !== plan.price || quote.revision !== plan.revision || quote.signature !== plan.signature) throw new Error('This sale changed. Inspect the item again.');
-  const stock = vendorSaleStock(run, shopId), draft = withMerchant(run, stock);
+  const stock = VendorSaleStock(run, shopId), draft = withMerchant(run, stock);
   if (plan.kind === 'weapons') {
     const receipt = commitArmamentSale(registries, draft, armamentSalePlan(registries, draft, plan.identity));
     draft.cinders -= receipt.received;

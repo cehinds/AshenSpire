@@ -12,7 +12,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { blacksmithVisitStock } from '../src/engine/shopKinds.js';
 import { gameProfileShopStock, gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
-import { gameProfileShopSalePlan, gameProfileShopSalePlans, commitGameProfileShopSale, vendorSaleStock } from '../src/model/gameProfileShopSales.js';
+import { gameProfileShopSalePlan, gameProfileShopSalePlans, commitGameProfileShopSale, VendorSaleStock } from '../src/model/gameProfileShopSales.js';
 import { StockRangeProblem, StockRange, RollStockCount } from '../src/model/vendorStockRange.js';
 import '../src/engine/runCombat.js';
 
@@ -95,7 +95,7 @@ function blacksmithVisit(seed = 41) {
 test('a Blacksmith buys: the same sale plan, priced as the merchant prices it, trading against the visit stock', () => {
   const { run, relic } = blacksmithVisit();
   assert.equal(run.gameProfileRewardOffers?.['shop:1:smith'], undefined, 'no merchant offer at a Blacksmith node');
-  assert.equal(vendorSaleStock(run, '1:smith'), run.shopStock);
+  assert.equal(VendorSaleStock(run, '1:smith'), run.shopStock);
   const quote = gameProfileShopSalePlan(registries, run, '1:smith', 'relics', relic.id);
   assert.equal(quote.ok, true, quote.reason);
   assert.ok(gameProfileShopSalePlans(registries, run, '1:smith').some((plan) => plan.identity === relic.id));
@@ -114,13 +114,13 @@ test("a trader's open workshop sells against the workshop; back at the trader th
   const { run, relic } = blacksmithVisit(43);
   const offer = gameProfileShopStock(registries, run, createRng(run.seed), { shopId: '1:smith' });
   run.gameProfileTraderSmith = '1:smith';
-  assert.equal(vendorSaleStock(run, '1:smith'), run.shopStock);
+  assert.equal(VendorSaleStock(run, '1:smith'), run.shopStock);
   commitGameProfileShopSale(registries, run, '1:smith', gameProfileShopSalePlan(registries, run, '1:smith', 'relics', relic.id));
   assert.equal(run.shopStock.tradeRevision, 1);
   assert.equal(run.gameProfileRewardOffers['shop:1:smith'].tradeRevision || 0, 0, "the trader's own offer is not touched");
   assert.deepEqual(run.gameProfileRewardOffers['shop:1:smith'].options, offer.options, "the trader's shelves are unchanged");
   delete run.gameProfileTraderSmith;
-  assert.equal(vendorSaleStock(run, '1:smith'), run.gameProfileRewardOffers['shop:1:smith']);
+  assert.equal(VendorSaleStock(run, '1:smith'), run.gameProfileRewardOffers['shop:1:smith']);
 });
 
 test('the shops schema refuses a malformed shelf count', async () => {
