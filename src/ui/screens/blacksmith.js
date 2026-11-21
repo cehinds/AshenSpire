@@ -30,7 +30,6 @@ import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { MountCardUpgradeModal } from '../components/cardUpgradeModal.js';
 import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
 import { wireShopLayout, FillSellShelf } from './shop.js';
-import { settingOn } from './settings.js';
 import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
 import { arrangeMerchantOffer } from '../components/merchantOffer.js';
 import { renderCard } from '../components/card.js';
@@ -351,7 +350,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   }
 
   // How many things each offering can act on now: the rail's {Status}.
-  const sellOpen = !!onSell && shopId != null && settingOn(meta?.settings, 'shopSell');
+  // The same gate as the merchant's Sell (shop.js): authored `balance.shop.sellBack`, on unless set to false.
+  const sellOpen = !!onSell && shopId != null && registries?.balance?.shop?.sellBack !== false;
   const readyCount = (key) => {
     if (key === 'sell') return gameProfileShopSalePlans(registries, run, shopId).filter((plan) => plan.ok).length;
     if (key === 'armaments') return (stock.armaments || []).length;
