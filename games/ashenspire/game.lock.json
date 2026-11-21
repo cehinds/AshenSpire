@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:0bbd4778e58e4bd7d159df53fdd4ee83f54f4ee11a0b1494f909dbdcb017ce13",
+      "hash": "sha256:c52835cf3355cb5df7b94fa0b53b93e7034bec825f62ca833bd10d2a70ff4aee",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -502,7 +502,7 @@
           "path": "engine/modules/shops/settings.schema.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:0279f2cbbc4a0dfcfe49793fa6db7cc1fe1a801571e83dc00ec147391b72997c"
+          "hash": "sha256:a8d05926f9a5d84dd81f150767330d6e8aa17c11c9f56675713fd25ea274d1f3"
         },
         {
           "path": "engine/modules/stagger/defaults.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7"
     },
     "core": {
-      "hash": "sha256:0bbd4778e58e4bd7d159df53fdd4ee83f54f4ee11a0b1494f909dbdcb017ce13",
+      "hash": "sha256:c52835cf3355cb5df7b94fa0b53b93e7034bec825f62ca833bd10d2a70ff4aee",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1226,7 +1226,7 @@
           "path": "engine/modules/shops/settings.schema.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:0279f2cbbc4a0dfcfe49793fa6db7cc1fe1a801571e83dc00ec147391b72997c"
+          "hash": "sha256:a8d05926f9a5d84dd81f150767330d6e8aa17c11c9f56675713fd25ea274d1f3"
         },
         {
           "path": "engine/modules/stagger/defaults.json",

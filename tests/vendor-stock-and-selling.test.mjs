@@ -117,9 +117,20 @@ test("a trader's open workshop sells against the workshop; back at the trader th
   assert.equal(vendorSaleStock(run, '1:smith'), run.shopStock);
   commitGameProfileShopSale(registries, run, '1:smith', gameProfileShopSalePlan(registries, run, '1:smith', 'relics', relic.id));
   assert.equal(run.shopStock.tradeRevision, 1);
-  assert.equal(offer.tradeRevision || 0, 0, "the trader's own offer is not touched");
+  assert.equal(run.gameProfileRewardOffers['shop:1:smith'].tradeRevision || 0, 0, "the trader's own offer is not touched");
+  assert.deepEqual(run.gameProfileRewardOffers['shop:1:smith'].options, offer.options, "the trader's shelves are unchanged");
   delete run.gameProfileTraderSmith;
   assert.equal(vendorSaleStock(run, '1:smith'), run.gameProfileRewardOffers['shop:1:smith']);
+});
+
+test('the shops schema refuses a malformed shelf count', async () => {
+  const { resolveGameProfile: resolve } = await import('../src/model/gameProfile.js');
+  const game = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
+  for (const bad of ['3', -5, 2.5, [0, 4], [1, 2, 3], {}]) {
+    const custom = structuredClone(game);
+    custom.modules = { ...(custom.modules || {}), shops: { ...(custom.modules?.shops || {}), itemsPerCategory: bad } };
+    assert.throws(() => resolve(custom), undefined, JSON.stringify(bad));
+  }
 });
 
 test('away from every vendor nothing sells', () => {
