@@ -63,7 +63,8 @@ test("Star Seer's Ethereal starter keeps 10 Block and is offered Reaction, dropp
   assert.ok(ethereal.keywords.includes('ethereal'));
   for (const seed of [1, 2, 3, 4, 5]) {
     const offered = nextUpgradeOptions({ seed, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: `e${seed}`, cardId: ethereal.id, upgraded: false }, ethereal, registries, 3);
-    const kinds = offered.map((s) => (s.k === 'fx' ? `fx:${s.fx}` : s.k)).sort();
+    // An ease offered at uncommon or rare is a combo whose first step is the ease (upgrade rarity, #2920): name it by that step.
+    const kinds = offered.map((s) => (s.k === 'combo' ? s.steps[0] : s)).map((s) => (s.k === 'fx' ? `fx:${s.fx}` : s.k)).sort();
     assert.deepEqual(kinds, ['blk', 'fx:reaction', 'fx:unethereal'], `seed ${seed}: ${JSON.stringify(offered)}`);
   }
   const kept = applyUpgradeSteps(ethereal, [{ k: 'fx', fx: 'unethereal' }]);
