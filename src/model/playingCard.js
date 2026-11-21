@@ -320,6 +320,7 @@ export function combatCardSummary(def, preview = null, registries = null, rules 
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
       case 'swapRows': text = 'Swap its row with the nearest enemy in the other row'; break;
+      case 'pullEnemy': text = 'Remove a Retreat stack from it; with none left it comes forward to the front row'; break;
       case 'moveEngagement': {
         if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker', 'self'].includes(effect.target)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) return null;
@@ -523,7 +524,7 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
   const configured = projectGameCard(rules?.gameProfile ? rules : registries, ref);
   if (configured) return configured;
   const def = rules?.breakMeterVersion == null
-    ? resolveCard(registries, ref) : resolveCard(registries, ref, rules.breakMeterVersion);
+    ? resolveCard(registries, ref, undefined, rules || registries) : resolveCard(registries, ref, rules.breakMeterVersion, rules || registries);
   if (rules?.combatExpansionVersion !== 2) return def;
   const expanded = applyCombatExpansionCard(def);
   return rules.reactionRulesVersion === 2 ? applyCardTraits(expanded, rules.reactionRules) : expanded;
