@@ -77,6 +77,8 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // (they embed it); every events, rng and continuation hash is identical, with the legacy fixture in openFight (no Counter-stack keys, the stance's 25% return) in place.
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline.json', import.meta.url), 'utf8'));
 const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline-521250.json', import.meta.url), 'utf8'));
+// The tradition-policy capture, kept as it was before enemy level scaling (2026-11-20) changed fight events on purpose.
+const traditionFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline-tradition.json', import.meta.url), 'utf8'));
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;
@@ -300,7 +302,7 @@ test('the original historical profile fixture keeps its provenance', () => {
 });
 
 test('the tradition-policy recapture preserves preceding events, RNG, receipts and continuations', () => {
-  for (const [name, current] of Object.entries(fixture.scenarios)) {
+  for (const [name, current] of Object.entries(traditionFixture.scenarios)) {
     const previous = previousFixture.scenarios[name];
     assert.deepEqual(current.receipt, previous.receipt, `${name}: same receipt`);
     assert.equal(current.profile.actionPolicy, previous.profile.actionPolicy);
