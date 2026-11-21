@@ -194,6 +194,7 @@ import { PlayConditionReachable, PlayConditionTargetPlan } from '../../engine/ca
 import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { UpcastingOffered, UPCASTING_ENABLED } from '../../model/upcasting.js';
 import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
+import { proposalCardPlan } from '../../engine/proposalStatusRuntime.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { NonlethalHpRefusal } from '../../model/cardHpCost.js';
 
@@ -2666,7 +2667,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // The surface names itself and hands over its own commit; the
           // verb and its availability sentence come from the service.
           surface: 'combat',
-          availability: { play: playAvailability(inst.instanceId) },
+          availability: { get play() { return playAvailability(inst.instanceId); } },
           commands: { play: () => inspectionPlayAction(inst.instanceId).play?.() } };
       }),
       // The turn-start refresh is drawn once: the last hand leaves, then the new one arrives.
@@ -2704,12 +2705,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (reason) return unavailable(reason);
     // The hand render already treats a card the engine cannot resolve (stranded by a combat-ending play,
     // or a snapshot older than the fight) as inert; its availability sentence must not throw instead.
+    // Price it the way the hand face is priced: a selected card against its aimed enemy, else untargeted.
     let pv;
-    try { pv = previewCard(combat, instanceId, undefined, upcastRanksByCard.get(instanceId)); }
-    catch (e) { console.warn('[combat] card not previewable for availability:', instanceId); return unavailable('This card cannot be played right now.'); }
-    if (combat.player.energy < (pv.costIsX ? 0 : pv.cost) || combat.player.mana < pv.manaCost || combat.player.stamina < (pv.staminaCost || 0)) {
-      return unavailable('Not enough resources to play this card.');
+    try {
+      const targetId = selected === instanceId
+        ? (lastTargetId && cardTargets(instanceId).legalIds.includes(lastTargetId) ? lastTargetId
+          : cardTargets(instanceId).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy')) : undefined;
+      pv = previewCard(combat, instanceId, targetId, upcastRanksByCard.get(instanceId));
     }
+    catch (e) { console.warn('[combat] card not previewable for availability:', instanceId); return unavailable('This card cannot be played right now.'); }
+    const resourceReason = cardResourceReason(pv);
+    if (resourceReason) return unavailable(resourceReason);
     return { enabled: true, needsTarget: pv.needsTarget, play: () => {
       if (!inspectionPlayAction(instanceId).enabled) return;
       if (pv.needsTarget) {
@@ -2717,6 +2723,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         render(); focusTargeting();
       } else playCard(instanceId, null);
     } };
+  }
+
+  /** Each pool the card is short in, with the live need and have; '' when it is affordable. */
+  function cardResourceReason(pv) {
+    const player = combat.player;
+    const actionCost = pv.costIsX ? 0 : pv.cost;
+    const staminaCost = pv.staminaCost || 0;
+    const reasons = [];
+    if (player.energy < actionCost) reasons.push(t('combat.card.unavailable.sp', { need: actionCost, have: player.energy }));
+    if (player.stamina < staminaCost) {
+      const reason = t('combat.card.unavailable.sp', { need: staminaCost, have: player.stamina });
+      // Check the same two fields as the gray face, but do not repeat a
+      // shortage when the legacy energy field aliases the Stamina budget.
+      if (!reasons.includes(reason)) reasons.push(reason);
+    }
+    if (player.mana < pv.manaCost) reasons.push(t('combat.card.unavailable.mp', { need: pv.manaCost, have: player.mana }));
+    return reasons.join(' ');
   }
 
   // Paging exists only when it adds reach. The controls stay mounted so their
@@ -2770,15 +2793,31 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function unplayableReason(inst) {
-    const def = resolveCombatCard(combat, inst);
-    if (!controlGate(combat, combat.player, def).allowed) return 'Recover your active control effects first.';
-    if (combat.player.ashenBlight?.milestones.some(row => row.path === null)) return 'Choose your Blight feat first.';
-    if (registries.framework.isUnplayable(def)) return 'This card cannot be played.';
+    const def = resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
+    // The engine refuses a restricted play ("Restricted by <status>"), so the hand names that effect first.
+    const restriction = proposalCardPlan(combat, combat.player, def);
+    if (!restriction.allowed) {
+      const status = /^Restricted by (.+)$/.exec(restriction.refusal || '')?.[1];
+      return status ? t('combat.card.unavailable.effect', { effect: blockingStatusName(status) })
+        : restriction.refusal || t('combat.card.unavailable.unplayable');
+    }
+    const control = controlGate(combat, combat.player, def);
+    if (!control.allowed) {
+      const covered = def.usableWhile || def.recovery?.usableWhile || [];
+      const effects = control.locks.filter(id => !covered.includes(id)).map(blockingStatusName).join(', ');
+      return t('combat.card.unavailable.control', { effects });
+    }
+    if (combat.player.ashenBlight?.milestones.some(row => row.path === null)) return t('combat.card.unavailable.blight');
+    if (registries.framework.isUnplayable(def)) return t('combat.card.unavailable.unplayable');
     if (!PlayConditionReachable(combat, def)) return 'Its play condition is not met.';
     // A nonlethal HP cost may never kill: the engine refuses the play, so the hand says why first.
     const hp = NonlethalHpRefusal(def, combat.player);
     if (hp) return hp;
     return '';
+  }
+  function blockingStatusName(id) {
+    try { return registries.statuses.get(id, combat.player).name || id; }
+    catch { return id; }
   }
   function isUnplayable(inst) { return !!unplayableReason(inst); }
 
