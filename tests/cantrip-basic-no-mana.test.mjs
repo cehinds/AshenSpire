@@ -8,7 +8,7 @@ import { upgradeBasic } from '../src/model/cardUpgradeLimits.js';
 import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 
 test('census: no Core cantrip or Basic card (upgradeBasic) prints Mana', () => {
-  const bad = registries.cards.all().filter((d) => upgradeBasic(d) && d.manaCost > 0 && String(d.id).startsWith('core.'));
+  const bad = registries.cards.all().filter((d) => upgradeBasic(d) && d.manaCost > 0 && String(d.id).startsWith('core.') && d.id !== 'core.galePush'); // Gale Push costs 1 MP (owner ruling 2026-11-19, Retreat-source drawbacks)
   assert.deepEqual(bad.map((d) => d.id), []);
   for (const d of registries.cards.all()) if (String(d.id).startsWith('core.') && upgradeBasic(d)) {
     assert.ok(!(d.upgrade && d.upgrade.manaCost > 0), `${d.id} upgrade`);
