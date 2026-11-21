@@ -1,3 +1,5 @@
+import { RetreatRulesActive } from './fixCoreMechanics.js';
+import { ProjectRetreatRuleFace } from './retreatRuleFaces.js';
 import { applyBaseManaPolicy } from './cardManaPolicy.js';
 import { cardRank, primaryEffectIndex, rankBonus, rankedEffects } from './cardRank.js';
 export { cardRank, primaryEffectIndex, rankBonus };
@@ -631,19 +633,20 @@ function gradedBase(legacyBase, abilityRank, stable) {
   return base;
 }
 
-export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
-  return resolveCardAuthored(registries, instanceOrRef, breakMeterVersion);
+export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion, ruleContext = registries) {
+  return resolveCardAuthored(registries, instanceOrRef, breakMeterVersion, ruleContext);
 }
 
-function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
+function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion, ruleContext = registries) {
   const cardId = instanceOrRef.cardId;
   const legacyCards = registries.legacyProgressionSource?.cards;
-  const definition = instanceOrRef.legacyAbility && legacyCards?.has(cardId)
+  const sourceDefinition = instanceOrRef.legacyAbility && legacyCards?.has(cardId)
     ? legacyCards.get(cardId) : registries.cards.get(cardId);
+  const definition = ProjectRetreatRuleFace(sourceDefinition, ruleContext);
   // A legacy card keeps only a summary written for its legacy face; the current card's faceTemplate describes other effects.
-  const legacyResolved = instanceOrRef.legacyAbility && (definition.legacyFace ? {...definition,...definition.legacyFace,gradeProfiles:undefined} : definition !== registries.cards.get(cardId) ? definition : null);
+  const legacyResolved = instanceOrRef.legacyAbility && (definition.legacyFace ? {...definition,...definition.legacyFace,gradeProfiles:undefined} : sourceDefinition !== registries.cards.get(cardId) ? definition : null);
   const authored = legacyResolved ? {...legacyResolved,faceTemplate:definition.legacyFace?.faceTemplate} : definition;
-  const stable = !legacyResolved; // a legacy spread is per call; only a registry definition may be memoised on identity
+  const stable = !legacyResolved && definition === sourceDefinition; // only an unchanged registry definition may be memoised on identity
   const legacyBase = breakMeterVersion === 1 && authored.singleBreak ? singleBreakBase(authored, stable) : authored;
   const usesAbilityGrade = Array.isArray(authored.gradeProfiles) && (instanceOrRef.abilityRank !== undefined || instanceOrRef.rank === undefined);
   const base = usesAbilityGrade ? gradedBase(legacyBase, instanceOrRef.abilityRank, stable) : legacyBase;
@@ -669,7 +672,8 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${upgradeSignature(instanceOrRef)}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|pe${playsEver}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
+  const policyKey = definition.retreatRuleFaces ? `|retreat${RetreatRulesActive(ruleContext) ? 1 : 0}` : '';
+  const key = `${cardId}|${upgradeSignature(instanceOrRef)}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|pe${playsEver}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}${policyKey}`;
   const hit = cache.get(key);
   if (hit) return hit;
 

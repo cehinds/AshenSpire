@@ -20,7 +20,9 @@ const legacyCarriers = new Map(cardExposure.map(({ cardId, ...carrier }) => [car
 // A grade's text is built from its effects, so the card's drawback keywords would never show: name them after the effects
 // (review of #2819: Quickstep's Exhaust lived only in its keywords). Exhaust and Ethereal are the drawbacks a card carries.
 const DRAWBACK_SENTENCES = Object.freeze({ exhaust: 'Exhaust.', ethereal: 'Ethereal.' });
-const withDrawbacks = (text, id) => [text, ...(originals.get(id)?.keywords || []).filter(word => DRAWBACK_SENTENCES[word]).map(word => DRAWBACK_SENTENCES[word])].join(' ');
+// A card with versioned Retreat faces names only its legacy drawbacks here: the current face's Exhaust comes from its keywords once the rules are on.
+const drawbackWords = id => originals.get(id)?.retreatRuleFaces?.legacy?.keywords ?? originals.get(id)?.keywords ?? [];
+const withDrawbacks = (text, id) => [text, ...drawbackWords(id).filter(word => DRAWBACK_SENTENCES[word]).map(word => DRAWBACK_SENTENCES[word])].join(' ');
 const budget = progressionGradeRules.gradeBudget;
 
 function lessonGrade(recipe, rank) {
