@@ -8,7 +8,7 @@ import { applyUpgradeSteps, upgradeCount, upgradeStepsOf, ApplyDrawbackSteps } f
 import { cardRank, rankedEffectsCapped } from './cardRank.js';
 import { applyRamp, playsEverOf } from './cardRamp.js';
 import { ProjectEnemyContent } from './enemyProjection.js';
-import { CardSpellTraditions, SpellTraditionsActive } from './spellTraditions.js';
+import { CardTraditionTags, SpellTraditionsActive } from './spellTraditions.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
 // resolves return a fresh deep-frozen copy (callers rely on distinct snapshots) instead of re-hashing.
@@ -51,7 +51,7 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
   }
   let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
   if (SpellTraditionsActive({ gameProfile: subject.gameProfile || subject }) && chosen.tags?.includes('camp:spell')) {
-    chosen.tags = [...new Set([...chosen.tags, ...CardSpellTraditions(chosen).map(id => 'tradition:' + id)])];
+    chosen.tags = [...new Set([...chosen.tags, ...CardTraditionTags(chosen)])];
   }
   // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
   if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance) && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(applyUpgradeSteps(chosen, upgradeStepsOf(idOrInstance)));
@@ -198,8 +198,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     for (const card of bundle.cards || []) {
       const tags = tagsByCard.get(card.id) || [];
       if (!tags.includes('camp:spell')) continue;
-      for (const id of CardSpellTraditions({ ...card, tags })) {
-        const tagId = 'tradition:' + id;
+      for (const tagId of CardTraditionTags({ ...card, tags })) {
         if (!tags.includes(tagId)) bundle.tagging.push({ family: 'card', objectId: card.id, tagId });
       }
     }

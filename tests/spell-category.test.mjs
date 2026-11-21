@@ -30,3 +30,10 @@ test('every school source and explicit tradition tags count', () => {
   assert.equal(SpellTraditionLabel(spell('force')), 'Arcane');
   assert.equal(SpellTraditionLabel(spell('decay')), 'Divine');
 });
+
+test('a profile stamps tradition tags on schooled Spells only, so a schoolless Spell stays plain', async () => {
+  const { CardTraditionTags } = await import('../src/model/spellTraditions.js');
+  assert.deepEqual(CardTraditionTags(spell(null)), []);
+  assert.deepEqual(CardTraditionTags(spell('fire')), ['tradition:arcane', 'tradition:divine']);
+  assert.deepEqual(CardTraditionTags(spell('decay')), ['tradition:divine']);
+});

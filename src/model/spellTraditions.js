@@ -29,6 +29,11 @@ export function CardSpellTraditions(card) {
     : [...(rules.schools[SpellSchool(card)] || rules.schools.arcane)];
 }
 
+// The tradition:* tags a profile stamps on a Spell: none for a schoolless plain Spell, so stamping never makes it Shared.
+export function CardTraditionTags(card) {
+  return SpellCategory(card) ? CardSpellTraditions(card).map(id => 'tradition:' + id) : [];
+}
+
 // 'arcane' | 'divine' | 'shared' | null. A schoolless card with no tradition tag is a plain Spell (null):
 // it takes Spell bonuses only, never Arcane or Divine ones (docs/plans/spell-categories.md).
 export function SpellCategory(card) {
