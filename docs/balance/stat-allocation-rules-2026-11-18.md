@@ -32,3 +32,5 @@ descriptions. Current defaults must not silently change a saved character.
 
 This change covers stat scaling, descriptions and allocation presentation. It
 does not change card pools, reward weighting or spell artwork.
+
+Owner, 2026-11-20: because rewards offer only cards a run can pay, the smaller fresh Mana pools mean a new caster is offered only the spells it can afford; costlier spells appear as Mana grows.
