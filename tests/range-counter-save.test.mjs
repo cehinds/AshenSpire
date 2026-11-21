@@ -24,6 +24,7 @@ function fixture({ die = 20, count = 4 } = {}) {
   // The incoming three-contact Slash pays its two-SP minimum plus two-band
   // Advance. Supply four actual SP before its first plan is built.
   profile.modules.characters.tagRules['tier.minion'].pools.sp += 3; // was 4 before the level budget (owner, 2026-11-07) gave a level-1 minion one more SP
+  profile.modules.characters.enemyLevelScaling.spCap.minion = 4; // and the minion SP cap (owner, 2026-11-20) is lifted to match
   profile.content.cards.find(card => card.id === 'core.counter').effects.unshift({ op: 'discard', choose: true, amount: 1 });
   // This suite pins seeded misses (die 1), so its profile carries the rules of one saved before the 2026-11-14 ruling: the d20 is rolled.
   profile.fixCoreRules = legacyRules(fixCoreMechanics);

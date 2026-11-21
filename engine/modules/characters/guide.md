@@ -27,6 +27,10 @@ Base rule = the sum of every tag's `tagRules` entry (pools HP/SP/MP and hand); t
   player's derived-stat rows; hand + INT), plus gear and relic points
 - `attributeOffset` (optional, none by default since 2026-11-07) is added to each enemy attribute after gear and relic bonuses and floored at 0; the budget check ignores it
 - penalties floor at `penaltyFloor` (SP never below 1)
+- `enemyLevelScaling` (optional; Core, owner 2026-11-20, SPEC §17): a fight sets an enemy's level from its act, tier and
+  floor step (`levels`, `floorsPerStep`, a boss at `bossSteps`); each step adds `gearPerStep` AR/DR and, on rolled HP,
+  `hpPerStep`; `spCap` caps a tier's SP after gear and relics; `attributeCaps` caps a tier's own attributes (elite and
+  boss Dex and Wis 4). Absent (older snapshots): the level is the `levelFrom` bound
 
 Class tags (`class.reaver`…) carry each class's base HP, calibrated so legacy max HP is unchanged
 with the starting gear (Reaver 84, Starseer 72, Rogue 74, Herald 78).
