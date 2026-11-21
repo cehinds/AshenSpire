@@ -41,6 +41,7 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7',
   'sha256:edf0d924c49e924157a7c4250168a0e470ad3cf282f63d7439ab66eca9f8d8b0',
   'sha256:ac60781b09e46ca4816ac4148f4ff4269760f5d43872ad1db9a507a439274586',
   'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92',
@@ -155,7 +156,8 @@ const PREVIOUS_RUNTIMES = new Set([
 // Diamond Skin display rename keeps stoneskin and stoneHide identities stable.
 // Combined Gear, stat traditions and Smash rules retain every parent runtime above.
 // Card tradition labels move to uiStrings.csv (card.tradition.*, #2892 review): wording only, no rule; edf0d9... is now in PREVIOUS_RUNTIMES.
-const FIXED_EVASION_RUNTIME = 'sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7';
+// Spell categories (owner 2026-11-20: SpellCategory, Arcane/Divine gear selectors) move spellTraditions.js and gearEffects.js; 7d13f1... is now in PREVIOUS_RUNTIMES.
+const FIXED_EVASION_RUNTIME = 'sha256:15d16a1fa5b77c324f001cd684b9deb0ac68376f8aa61165c2b0e09df08708a6';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

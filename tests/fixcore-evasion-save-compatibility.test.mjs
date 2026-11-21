@@ -213,7 +213,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-19: the deferred Axe Strength reader's generated call-map now names finishAbilityPlay; 2a83899... remains readable.
   // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
   // Re-pinned 2026-11-20 (#2892 review): card tradition labels move to uiStrings.csv (card.tradition.*); wording only, edf0d9... is now in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7');
+  // Re-pinned 2026-11-20 (spell categories): SpellCategory and the Arcane/Divine gear selectors move spellTraditions.js and gearEffects.js; 7d13f1... is now in PREVIOUS_RUNTIMES.
+  assert.equal(profile.lock.runtimeHash, 'sha256:15d16a1fa5b77c324f001cd684b9deb0ac68376f8aa61165c2b0e09df08708a6');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
