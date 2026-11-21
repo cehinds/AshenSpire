@@ -47,7 +47,7 @@ import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, mirrorSigil } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
-import { WitherFaceCount, cardFaceLines } from '../../model/cardFaceText.js';
+import { WitherFaceCount, CostGrowthFaceText, CardRuleRiderLines, cardFaceLines } from '../../model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
 import { roomyBudgetFor } from '../../model/cardFaceBudget.js';
 import { evadeGrantOnlyCard, CounterStacksForCard, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
@@ -416,7 +416,9 @@ export function renderCard(registries, ref, opts = {}) {
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null);
     // Under version-one combat a sentence that opens "In expanded combat," does not apply, so the face need not carry it.
-    const appliedRules = expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '');
+    // An authored face still prints the rules its fields add (Wither, a rising cost); a generated face already has them.
+    const riderRules = allFaceLines ? '' : CardRuleRiderLines(def, opts.rules || null, model.instanceId || null).map(line => ' ' + line.html + '.').join('');
+    const appliedRules = (expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '')) + riderRules;
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
     const summaryHtml = Array.isArray(def.faceTemplate) && def.faceTemplate.length
       ? def.faceTemplate.map(line => fillTemplate({ id: def.id, type: def.type, tags: def.tags, cardTags: def.cardTags, combatProfile: def.combatProfile, evade: def.evade, textTemplate: line.replace(/\[v2:([^\]]*)\]/g, expanded ? '$1' : '').replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },
@@ -779,7 +781,8 @@ export function cardPlainText(registries, ref, opts = {}) {
     ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries, opts.rules ?? opts.preview?.faceRules ?? null))
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries, opts.rules ?? opts.preview?.faceRules ?? null)
+    + (lines ? '' : CardRuleRiderLines(def, opts.rules || null, ref?.instanceId || null).map(line => ' ' + line.html + '.').join('')))
     .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
@@ -967,7 +970,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // follow, then the chips.
   const common = html.slice(commonStart);
   html = html.slice(0, commonStart);
-  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries, statusContext)}</div>`;
+  const growthRule = CostGrowthFaceText(def.costGrowth);
+  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries, statusContext)}${growthRule ? ' ' + esc(growthRule) + '.' : ''}</div>`;
   html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
   // ONE CHIP PER DISTINCT TAG. Three authored ids carry the label "Spell"

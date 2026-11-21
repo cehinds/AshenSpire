@@ -11,8 +11,10 @@ export function projectCardBehavior(ctx, instance, def, { applyGear = true } = {
   const changes=instance.proposalChanges;
   if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain && (changes.retainUntilTurn ?? ctx.turn)>=ctx.turn ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};
   if (result.costGrowth) {
-    // Plays of this copy (review of #2819): an upgraded copy's plays never raise an unupgraded copy's cost. A projection with no instance id counts by card.
-    const riders=ctx.player.abilityRiders, plays=(instance.instanceId ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0, growth=result.costGrowth;
+    // Scope 'copy' (default) counts plays of this copy (review of #2819): an upgraded copy's plays never raise an unupgraded copy's cost.
+    // Scope 'card' counts every copy's plays by card id (Evade cards, Retreat). A projection with no instance id counts by card.
+    const riders=ctx.player.abilityRiders, growth=result.costGrowth;
+    const plays=(growth.scope!=='card' && instance.instanceId ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0;
     const steps=Math.min(growth.max ?? 3,Math.floor(plays/(growth.perUse || 1)));
     const baseStamina=result.resourceCosts?.sp ?? result.staminaCost ?? result.cost;
     const stamina=typeof baseStamina==='number' ? Math.max(0,baseStamina+steps*(growth.stamina || 0)) : baseStamina;

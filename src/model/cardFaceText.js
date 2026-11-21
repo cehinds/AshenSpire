@@ -72,6 +72,31 @@ export function WitherFaceCount(def, rules = null, instanceId = null) {
   return rules?.player?.abilityRiders && instanceId ? WitherRemaining(rules.player, { instanceId }, def) : def.wither;
 }
 
+/** The rising-cost rule a face prints from `costGrowth` (SPEC §4.3), or null when the cost does not rise. */
+export function CostGrowthFaceText(growth) {
+  if (!growth) return null;
+  const pools = [['stamina', 'SP'], ['mana', 'MP']].filter(([key]) => Number(growth[key]) > 0);
+  if (!pools.length) return null;
+  const perUse = growth.perUse > 1 ? growth.perUse : 1;
+  const when = growth.scope === 'card'
+    ? (perUse > 1 ? `every ${perUse} times you play this card` : 'each time you play this card')
+    : (perUse > 1 ? `every ${perUse} plays` : 'each play');
+  const max = growth.max ?? 3;
+  const capOf = ([key, unit]) => `+${growth[key] * max}${pools.length > 1 ? ' ' + unit : ''}`;
+  const cap = max < 100 ? ` (max ${pools.map(capOf).join(', ')})` : '';
+  return `${pools.map(([key, unit]) => `+${growth[key]} ${unit}`).join(', ')} ${when} this fight${cap}`;
+}
+
+/** Rule lines a card's fields add to any face, generated or authored: Wither and a rising cost. */
+export function CardRuleRiderLines(def, rules = null, instanceId = null) {
+  const lines = [];
+  const wither = WitherFaceCount(def, rules, instanceId);
+  if (wither !== null) lines.push({ kind: 'detail', html: `Wither <span class="val">${wither}</span>` });
+  const growth = CostGrowthFaceText(def?.costGrowth);
+  if (growth) lines.push({ kind: 'detail', html: esc(growth) });
+  return lines;
+}
+
 export function withChargedEffects(def, preview = null) {
   return Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects ? { ...def, effects: preview.chargedEffects } : def;
 }
@@ -491,6 +516,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   const byChance = new Map();
   for (const { name, chance } of chances) byChance.set(chance, [...new Set([...(byChance.get(chance) || []), name])]);
   for (const [chance, names] of byChance) byKind.detail.push(`${names.map(esc).join(', ')}: ${esc(chance)}% chance`);
+  const growthLine = CostGrowthFaceText(def.costGrowth);
+  if (growthLine) byKind.detail.push(esc(growthLine));
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
   const playGate = PlayConditionPhrase(def.playIf);
   if (playGate) byKind.condition.unshift(esc(playGate));
