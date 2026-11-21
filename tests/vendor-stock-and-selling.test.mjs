@@ -110,6 +110,19 @@ test('a Blacksmith buys: the same sale plan, priced as the merchant prices it, t
   assert.throws(() => commitGameProfileShopSale(registries, run, '1:smith', quote), 'one quote commits once');
 });
 
+test('a sale keeps the open Blacksmith visit stock object, so a screen holding it sees later purchases', async () => {
+  const { coreWeaponArtPlan, commitCoreWeaponArt } = await import('../src/model/blacksmithStock.js');
+  const { run, relic } = blacksmithVisit(47);
+  run.cinders = 5000;
+  const held = run.shopStock;
+  commitGameProfileShopSale(registries, run, '1:smith', gameProfileShopSalePlan(registries, run, '1:smith', 'relics', relic.id));
+  assert.equal(run.shopStock, held, 'the same object after a sale');
+  const art = held.weaponArts?.[0];
+  assert.ok(art, 'seed 47 stocks a weapon art');
+  commitCoreWeaponArt(registries, run, coreWeaponArtPlan(registries, run, art.id));
+  assert.ok(!held.weaponArts.some((row) => row.id === art.id), 'the bought art leaves the shelf the screen reads');
+});
+
 test("a trader's open workshop sells against the workshop; back at the trader the trader's offer is the stock", () => {
   const { run, relic } = blacksmithVisit(43);
   const offer = gameProfileShopStock(registries, run, createRng(run.seed), { shopId: '1:smith' });

@@ -119,8 +119,13 @@ export function commitGameProfileShopSale(registries, run, shopId, quote) {
   if (Object.hasOwn(run, 'shopStock')) draft.shopStock = structuredClone(run.shopStock);
   else delete draft.shopStock;
   draft.cinders += plan.price;
-  if (stock === run.shopStock) draft.shopStock.tradeRevision = plan.revision + 1;
-  else draft.gameProfileRewardOffers[`shop:${shopId}`].tradeRevision = plan.revision + 1;
+  if (stock !== run.shopStock) draft.gameProfileRewardOffers[`shop:${shopId}`].tradeRevision = plan.revision + 1;
+  // The open visit keeps its own stock object (a Blacksmith screen holds it), so a sale never orphans it.
+  const liveStock = run.shopStock;
   syncZones(draft); Object.assign(run, draft);
+  if (liveStock) {
+    run.shopStock = liveStock;
+    if (stock === liveStock) liveStock.tradeRevision = plan.revision + 1;
+  }
   return { kind: plan.kind, identity: plan.identity, received: plan.price };
 }

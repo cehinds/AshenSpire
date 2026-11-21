@@ -242,6 +242,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         const host = tile(GLYPH.sell, def.name, ConfiguredOfferText(registries, run, kind, def, saleRef) || def.blurb || '', '', { visual });
         host.dataset.smithKey = `sell:${kind}:${quote.identity}`;
         host.dataset.saleKind = kind;
+        // The quote's signature names what is sold (rank, upgrade, mounts), so a changed item redraws its row.
+        host.dataset.saleSignature = quote.signature;
         actionButton(host, { label: t('shop.action.sell', { price }), kind: 'sell', price: t('shop.price.back', { price }), plan: quote,
           commit: () => onSell(quote),
           review: () => ({ question: t('shop.sell.question', { name: def.name }), target: def.name, message: t('shop.sell.message', { price }), confirmLabel: t('shop.action.sell', { price }) }) });
