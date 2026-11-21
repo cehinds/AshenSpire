@@ -51,7 +51,7 @@ for (const mode of ['native', 'bundled']) {
     ]);
     assert.ok(report.relics.passiveNoOpRows.every(row => row.result === 'no-op-declaration'));
     assert.deepEqual(report.relics.passiveEffectRows.filter(row => row.key !== 'modifiers').map(row => row.key).sort(), [
-      'eliteExtraCardReward', 'exposureBuildupMult', 'flaskPowerMult', 'flaskPowerMult', 'flaskPowerMult',
+      'cardCopyOnPickup', 'eliteExtraCardReward', 'exposureBuildupMult', 'flaskPowerMult', 'flaskPowerMult', 'flaskPowerMult',
       'poiseThresholdAdd', 'powerCostReduction', 'powerCostReduction', 'restDenied', 'restHealMult', 'restHealMult',
       'restHealMult', 'revealUnknown', 'runeGainMult', 'runeGainMult', 'runeGainMult', 'runeGainMult',
     ]);

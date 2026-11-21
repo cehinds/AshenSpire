@@ -39,6 +39,8 @@ const BUY = Object.freeze({
   rankUp: Object.freeze({ question: 'shop.review.buy.rankUp', message: 'shop.review.buy.rankUp.message' }),
   // The copy-a-card service (owner 2026-11-20), at a trader or a Blacksmith.
   cardCopy: Object.freeze({ question: 'shop.review.buy.cardCopy', message: 'shop.review.buy.cardCopy.message' }),
+  // The Blacksmith's copy row names its card already, so its review says what happens to that card.
+  cardCopyChosen: Object.freeze({ question: 'shop.review.buy.cardCopyChosen', message: 'shop.review.buy.cardCopyChosen.message' }),
 });
 const SMITH_RANK = Object.freeze({ card: 'smith.review.rank.card', item: 'smith.review.rank.item' });
 
