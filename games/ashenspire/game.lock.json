@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:6927a267d92ca5b16500a1820f8e60063ed316a4d718495419884ba0b5093b04",
+      "hash": "sha256:19813376d08d3e06988369ca3e3d9e1de180943a9c9df91b03f87853d7fd6695",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -502,7 +502,7 @@
           "path": "engine/modules/shops/settings.schema.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:b2ee10141b7c6bb0a4f0a106fe2ff1884310842ab181dccbe76a24438f75833d"
+          "hash": "sha256:a8d05926f9a5d84dd81f150767330d6e8aa17c11c9f56675713fd25ea274d1f3"
         },
         {
           "path": "engine/modules/stagger/defaults.json",
@@ -706,7 +706,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:b87ec6d8d2c56659b1ba16a9246cf1d4d7c3d727a87a0a53b2f91a71781df880"
+          "hash": "sha256:3d6f47ab1557896eae64fea9350091a53e427504a055857f54bbf7e51c1ed47a"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:fbf370e6b803b5dde87934ba7bb0e0789209ea33dc1ce45c2642f4eee9fd8f1d"
     },
     "core": {
-      "hash": "sha256:6927a267d92ca5b16500a1820f8e60063ed316a4d718495419884ba0b5093b04",
+      "hash": "sha256:19813376d08d3e06988369ca3e3d9e1de180943a9c9df91b03f87853d7fd6695",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1226,7 +1226,7 @@
           "path": "engine/modules/shops/settings.schema.json",
           "id": "shops",
           "version": "1.0.0",
-          "hash": "sha256:b2ee10141b7c6bb0a4f0a106fe2ff1884310842ab181dccbe76a24438f75833d"
+          "hash": "sha256:a8d05926f9a5d84dd81f150767330d6e8aa17c11c9f56675713fd25ea274d1f3"
         },
         {
           "path": "engine/modules/stagger/defaults.json",
@@ -1430,7 +1430,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:b87ec6d8d2c56659b1ba16a9246cf1d4d7c3d727a87a0a53b2f91a71781df880"
+          "hash": "sha256:3d6f47ab1557896eae64fea9350091a53e427504a055857f54bbf7e51c1ed47a"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",

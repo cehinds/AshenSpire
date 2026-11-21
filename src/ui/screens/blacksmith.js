@@ -29,7 +29,9 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { MountCardUpgradeModal } from '../components/cardUpgradeModal.js';
 import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
-import { wireShopLayout } from './shop.js';
+import { wireShopLayout, ConfiguredOfferText } from './shop.js';
+import { renderCollectibleCard } from '../components/collectibleCard.js';
+import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
 import { arrangeMerchantOffer } from '../components/merchantOffer.js';
 import { renderCard } from '../components/card.js';
 import { renderEquipmentCard } from '../components/equipmentCard.js';
@@ -45,9 +47,11 @@ import { purchaseReview, ShopPurchaseKind, SmithRankReview } from '../models/Con
 import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, CardCopyPlan, CommitCardCopy, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
 import { SmithPickChangeText } from '../../model/smithUpgrade.js';
 
-const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack', cardCopy: 'skill' });
+const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack', cardCopy: 'skill', sell: 'smith' });
 
-export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, onCardPurchased = () => {}, priceMult = 1, hud = null }) {
+// Every vendor buys (owner, 2026-11-20): with `onSell` and the node's `shopId`, the Blacksmith's last tab is the merchant's
+// Sell shelf, the same sale plans (gameProfileShopSalePlans) and the same review; `onSell(quote)` commits the sale.
+export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, onCardPurchased = () => {}, onSell = null, shopId = null, priceMult = 1, hud = null }) {
   const stock = run.shopStock;
   const stoneDiscount = blacksmithStoneDiscount(run);
   let activeCategory = null;
@@ -73,9 +77,11 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   function wireAction(control, action) {
     if (!action.review) { control.addEventListener('click', (event) => action.run(event)); return; }
     const review = () => action.review();
-    arm(control, 'smithBuy', {
+    // A sale asks through the merchant's own sale review (secondbeat 'shopSell'); every other action is a purchase.
+    const sale = action.kind === 'sell';
+    arm(control, sale ? 'shopSell' : 'smithBuy', {
       question: () => review().question, target: () => review().target, message: () => review().message,
-      confirmLabel: review().confirmLabel, policyAction: 'action.purchase', onConfirm: () => action.run(),
+      confirmLabel: review().confirmLabel, ...(sale ? {} : { policyAction: 'action.purchase' }), onConfirm: () => action.run(),
     });
   }
 
@@ -222,7 +228,28 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   };
 
   // ---- each offering's shelf ------------------------------------------------
+  // The same gate as the merchant's Sell (shop.js): authored `balance.shop.sellBack`, on unless set to false.
+  const sellOpen = !!onSell && shopId != null && registries?.balance?.shop?.sellBack !== false;
   const SHELVES = {
+    // One row per thing the vendor would buy, as the merchant's Sell shelf shows it (shop.js putSaleRow).
+    sell(shelf) {
+      for (const quote of gameProfileShopSalePlans(registries, run, shopId)) {
+        const { def, kind, price } = quote;
+        const saleRef = ['combatCards', 'weaponArts'].includes(kind) ? run.sideboard.find((card) => card.instanceId === quote.identity) : null;
+        const visual = saleRef ? cardVisual(saleRef)
+          : ['weapons', 'armor'].includes(kind) ? (() => { try { return renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card; } catch { return null; } })()
+          : kind === 'consumables' ? null : renderCollectibleCard(registries, def, kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
+        const host = tile(GLYPH.sell, def.name, ConfiguredOfferText(registries, run, kind, def, saleRef) || def.blurb || '', '', { visual });
+        host.dataset.smithKey = `sell:${kind}:${quote.identity}`;
+        host.dataset.saleKind = kind;
+        // The quote's signature names what is sold (rank, upgrade, mounts), so a changed item redraws its row.
+        host.dataset.saleSignature = quote.signature;
+        actionButton(host, { label: t('shop.action.sell', { price }), kind: 'sell', price: t('shop.price.back', { price }), plan: quote,
+          commit: () => onSell(quote),
+          review: () => ({ question: t('shop.sell.question', { name: def.name }), target: def.name, message: t('shop.sell.message', { price }), confirmLabel: t('shop.action.sell', { price }) }) });
+        shelf.append(host);
+      }
+    },
     armaments: (shelf) => renderBuyShelf('armaments', shelf),
     weaponArts: (shelf) => renderBuyShelf('weaponArts', shelf),
     rankUp(shelf) {
@@ -374,6 +401,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   // How many things each offering can act on now: the rail's {Status}.
   const readyCount = (key) => {
+    if (key === 'sell') return gameProfileShopSalePlans(registries, run, shopId).filter((plan) => plan.ok).length;
     if (key === 'armaments') return (stock.armaments || []).length;
     if (key === 'weaponArts') return (stock.weaponArts || []).length;
     if (key === 'rankUp' || key === 'cardCopy') return serviceCandidates(registries, run, key, meta?.settings).length;
@@ -513,7 +541,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     // A refresh that lands after the player left must not draw over the next screen.
     if (root && !root.isConnected) return;
     if (!root) mountFrame();
-    const categories = shopStockOfferings(stock).filter((key) => SHELVES[key] && !blacksmithWithholds(run, key));
+    const categories = [...shopStockOfferings(stock).filter((key) => key !== 'sell' && SHELVES[key] && !blacksmithWithholds(run, key)), ...(sellOpen ? ['sell'] : [])];
     if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
     const focusedRow = document.activeElement?.closest?.('[data-smith-key]');
     if (focusedRow) {

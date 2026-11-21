@@ -2,7 +2,10 @@
   "offerCount": 3,
   "price": 10,
   "blacksmithChance": 25,
-  "itemsPerCategory": 3,
+  "itemsPerCategory": [
+    2,
+    4
+  ],
   "priceTable": {
     "card": {
       "common": [
@@ -90,7 +93,14 @@
       "price": 140
     },
     "upgradeRankChance": 20,
-    "armamentStock": 6,
+    "armamentStock": [
+      4,
+      6
+    ],
+    "weaponArtStock": [
+      2,
+      4
+    ],
     "tierWeights": {
       "0": 20,
       "1": 40,

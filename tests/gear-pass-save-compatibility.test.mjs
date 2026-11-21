@@ -23,6 +23,9 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/comba
 function world(enabled) {
   const snapshot = structuredClone(resolveGameProfile('default'));
   if (!enabled) delete snapshot.modules.gear.typeEffectsVersion;
+  // The Blacksmith oracle below was captured with a rack of six; Core's rack size became a [4, 6] range (owner,
+  // 2026-11-20), so this snapshot keeps the fixed six (and every art) the oracle measured.
+  if (snapshot.content?.shops?.blacksmith) { snapshot.content.shops.blacksmith.armamentStock = 6; delete snapshot.content.shops.blacksmith.weaponArtStock; }
   const { hash: _hash, ...payload } = snapshot;
   snapshot.hash = 'sha256:' + createHash('sha256').update(canonicalGameJSON(payload)).digest('hex');
   const profile = resolveGameProfile(snapshot);

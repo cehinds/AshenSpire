@@ -37,7 +37,7 @@ const shopCardOptions = Object.freeze({ level: 'glance', surface: 'shop', only: 
 
 // A configured-shop row's description: the resolved text the card face / relic tooltip shows (cardPlainText and
 // relicText fill the {tokens}), never the raw textTemplate. Equipment and other kinds have no template to fill.
-function configuredOfferText(registries, run, kind, def, ref) {
+export function ConfiguredOfferText(registries, run, kind, def, ref) {
   if (['combatCards', 'weaponArts'].includes(kind)) return ref ? cardPlainText(registries, ref, { rules: run }) : '';
   if (['relics', 'potions'].includes(kind)) return relicText(def, registries);
   return '';
@@ -166,7 +166,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const quote = gameProfileShopPurchasePlan(registries, run, shopId, index);
     const price = shopOfferPrice(offer, index);   // each offer has its own price; stock saved before that has one for all
     // The copy service names its uses left (owner 2026-11-20); they come from `option`, which the signature holds.
-    const desc = copyService ? `${t('cardCopy.blurb')} ${t('cardCopy.uses', { uses: CardCopyUsesLeft(option) })}` : service ? t('rankUp.blurb') : configuredOfferText(registries, run, option.kind, def, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false });
+    const desc = copyService ? `${t('cardCopy.blurb')} ${t('cardCopy.uses', { uses: CardCopyUsesLeft(option) })}` : service ? t('rankUp.blurb') : ConfiguredOfferText(registries, run, option.kind, def, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false });
     const signature = JSON.stringify([option, shelfOf(option.kind), price, quote.ok, quote.reason, desc]);
     put(key, shelfOf(option.kind), signature, entry => {
       const tile = el('div', { class: 'class-pick shop-offer' });
@@ -193,7 +193,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const { def, kind, price } = quote;
     const key = `sell:${kind}:${quote.identity}`;
     const saleRef = ['combatCards', 'weaponArts'].includes(kind) ? run.sideboard.find(card => card.instanceId === quote.identity) : null;
-    const desc = configuredOfferText(registries, run, kind, def, saleRef) || def.blurb || '';
+    const desc = ConfiguredOfferText(registries, run, kind, def, saleRef) || def.blurb || '';
     const signature = JSON.stringify([def, quote.signature, price, quote.ok, quote.reason, desc]);
     put(key, 'sell', signature, entry => {
       const tile = el('div', { class: 'class-pick shop-offer', dataset: { saleKind: kind } });
