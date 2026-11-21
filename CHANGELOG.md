@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-21
 
-- **Settings tidy, part one** ([#2909](https://github.com/cehinds/AshenSpire/pull/2909), `0.7.5.18`). The old Rendering quality option, already hidden since Effects replaced it, is now gone for good. If you had it set to Full, Effects stays on, both for your saved settings and for any settings file you load. Nothing you see in General or Accessibility has moved.
+- **Settings tidy, part one** ([#2909](https://github.com/cehinds/AshenSpire/pull/2909), `0.7.5.20`). The old Rendering quality option, already hidden since Effects replaced it, is now gone for good. If you had it set to Full, Effects stays on, both for your saved settings and for any settings file you load. Nothing you see in General or Accessibility has moved.
 - **Pull-request test shards stop hitting their time limit** ([#2925](https://github.com/cehinds/AshenSpire/pull/2925), `0.7.5.18`). Development-process fix only, nothing in the game changes. The discovered-test checks on a pull request into dev now run in six parts instead of four, because some parts kept stopping at the 15-minute limit with every test passing. No test was removed and the limit is unchanged.
 
 ## 2026-11-20
