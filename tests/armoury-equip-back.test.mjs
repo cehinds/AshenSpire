@@ -7,6 +7,8 @@ import { resolveUpgradedEquipment } from '../src/model/itemUpgrades.js';
 import { resetModalState } from '../src/ui/modalManager.js';
 import { OpenEquipConfirmModal } from '../src/ui/components/armouryEquipModals.js';
 import { withKitDom } from './helpers/dom.mjs';
+import { createRunState, validateRunShape } from '../src/model/state.js';
+import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 
 const piece = registries.equipment.armaments[0];
 const item = resolveUpgradedEquipment(registries, `armament/${piece.id}`, 0);
@@ -39,4 +41,21 @@ for (const [name, act] of Object.entries(paths)) {
 }
 test('empty-slot confirm: Equip does not reopen the list', () => {
   assert.deepEqual(run(null, true), { backs: 0, equips: 1 });
+});
+
+test('remembered equipment slots survive a real save/load and older saves need no preference', () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const saves = createSaveManager(createMemoryStorage());
+  assert.equal(run.equipmentSlotChoices, undefined);
+  saves.saveRun(run);
+  assert.ok(saves.loadRun(registries), 'a run without preferences loads');
+  run.equipmentSlotChoices = { 'armament:ashStaff': 'leftHand:0', 'armament:roundShield': 'rightHand:0' };
+  saves.saveRun(run);
+  const loaded = saves.loadRun(registries);
+  assert.ok(loaded, saves.runStatus().reason);
+  assert.notEqual(loaded, run, 'reload creates a new run object');
+  assert.deepEqual(loaded.equipmentSlotChoices, run.equipmentSlotChoices);
+  assert.equal(createRunState({ registries, classId: 'reaver', seed: 512 }).equipmentSlotChoices, undefined,
+    'a new run starts without another run\'s preferences');
+  assert.ok(validateRunShape({ ...run, equipmentSlotChoices: 'leftHand:0' }).length > 0, 'RUN_SHAPE refuses a non-object');
 });
