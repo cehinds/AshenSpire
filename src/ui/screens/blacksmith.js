@@ -42,10 +42,10 @@ import { blacksmithStoneDiscount } from '../../model/blacksmithConfig.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt } from '../../model/blacksmithStock.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { purchaseReview, ShopPurchaseKind, SmithRankReview } from '../models/ConfirmationReviewModel.js';
-import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
+import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, CardCopyPlan, CommitCardCopy, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
 import { SmithPickChangeText } from '../../model/smithUpgrade.js';
 
-const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack' });
+const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack', cardCopy: 'skill' });
 
 export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, onCardPurchased = () => {}, priceMult = 1, hud = null }) {
   const stock = run.shopStock;
@@ -236,6 +236,17 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         shelf.append(host);
       }
     },
+    // Owner 2026-11-20: a copy shelf, one row per card the player owns, while the shelf has uses left.
+    cardCopy(shelf) {
+      for (const card of serviceCandidates(registries, run, 'cardCopy')) {
+        const plan = CardCopyPlan(registries, run, card.instanceId);
+        const host = tile(GLYPH.cardCopy, `${plan.name}${card.upgraded ? '+' : ''}`, t('blacksmith.cardCopy.desc', { uses: plan.usesLeft }), '', { visual: cardVisual(card) });
+        actionButton(host, { label: t('blacksmith.action.copy'), cost: plan.cost, plan,
+          commit: () => { const receipt = CommitCardCopy(registries, run, plan); onCardPurchased({ kind: 'combatCards', id: receipt.id, instanceId: receipt.instanceId }); },
+          review: () => purchaseReview({ kind: 'cardCopyChosen', name: plan.name, cost: plan.cost, cinders: run.cinders }) });
+        shelf.append(host);
+      }
+    },
     upgrade(shelf) {
       if (coreSmithingActive(run)) {
         // Core 2: every owned weapon, shield, armour and relic with a slot left. The action opens its rolled options.
@@ -364,7 +375,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   const readyCount = (key) => {
     if (key === 'armaments') return (stock.armaments || []).length;
     if (key === 'weaponArts') return (stock.weaponArts || []).length;
-    if (key === 'rankUp') return serviceCandidates(registries, run, key, meta?.settings).length;
+    if (key === 'rankUp' || key === 'cardCopy') return serviceCandidates(registries, run, key, meta?.settings).length;
     return BLACKSMITH_SERVICES.includes(key) ? serviceCandidates(registries, run, key, meta?.settings).length : 0;
   };
 
@@ -453,7 +464,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       port.append(shelf);
     }
     // A service with nothing to act on now says why, and stays on the rail.
-    const idleReason = (BLACKSMITH_SERVICES.includes(key) || key === 'rankUp') && !readyCount(key) ? serviceIdleReason(key, run) : '';
+    const idleReason = (BLACKSMITH_SERVICES.includes(key) || key === 'rankUp' || key === 'cardCopy') && !readyCount(key) ? serviceIdleReason(key, run) : '';
     let idle = [...shelf.children].find(node => node.classList.contains('bs-idle')) || null;
     if (!idleReason) { idle?.remove(); idle = null; }
     else if (idle) { if (idle.textContent !== idleReason) idle.textContent = idleReason; }

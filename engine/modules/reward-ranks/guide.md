@@ -1,6 +1,6 @@
 # Reward ranks module (`reward-ranks@1.0.0`)
 
-Combat-card rewards are rank `minRank`+ except for a `lowerRankChance` per slot; rank comes from a card's `rank` or its rarity (`rankOfRarity`). `skipOwnedBasics` drops basic cards the character already owns. Off: rewards ignore rank.
+Combat-card rewards are rank `minRank`+ except for a `lowerRankChance` per slot; rank comes from a card's `rank` or its rarity (`rankOfRarity`). `skipOwnedBasics` drops basic cards the character already owns; `skipOwned` (owner 2026-11-20) drops every card the character already owns, deck or library, so a card is held once unless the copy service copies it. Off: rewards ignore rank.
 
 Turn off from `game.json`: `{ "modules": { "reward-ranks": false } }`.
 

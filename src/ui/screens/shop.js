@@ -18,6 +18,8 @@ import { t } from '../strings.js';
 import { renderEquipmentCard } from '../components/equipmentCard.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { RenderRankUpOfferCard } from '../components/rankUpOfferCard.js';
+import { RenderCardCopyOfferCard } from '../components/cardCopyOfferCard.js';
+import { CardCopyUsesLeft } from '../../model/cardCopyService.js';
 import { shopOfferPrice } from '../../model/shopOfferPrice.js';
 import { gameProfileShopPurchasePlan } from '../../model/gameProfileRewards.js';
 import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
@@ -68,10 +70,12 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   const status = statusText('', { role: 'alert' });
   const leave = button({ label: t('shop.leave'), role: 'exit', id: 'leave-shop' }); leave.addEventListener('click', onLeave);
   foot.append(status, ModalFooter({ secondary: [leave], className: 'shop-foot' }));
-  const labels = { combatCards: 'shop.bar.combatCards', weaponArts: 'shop.bar.weaponArts', weapons: 'shop.bar.armaments', armor: 'shop.bar.armour', relics: 'shop.bar.relics', potions: 'shop.bar.flasks', sell: 'shop.bar.sell', rankUps: 'shop.bar.rankUps' };
+  const labels = { combatCards: 'shop.bar.combatCards', weaponArts: 'shop.bar.weaponArts', weapons: 'shop.bar.armaments', armor: 'shop.bar.armour', relics: 'shop.bar.relics', potions: 'shop.bar.flasks', sell: 'shop.bar.sell', rankUps: 'shop.bar.rankUps', cardCopies: 'shop.bar.cardCopies' };
   const sellEnabled = onSell && registries?.balance?.shop?.sellBack !== false;
   // `shelfKinds` is the dock the host allows (the 3-6 options rule); an offer on a shelf left off is not drawn.
-  const stocked = [...new Set(offer.options.map(option => option.kind))].filter(kind => !shelfKinds || shelfKinds.includes(kind));
+  // The copy service shares the SERVICES tab with a rank-up shelf (owner 2026-11-20).
+  const shelfOf = kind => (kind === 'cardCopies' && offer.options.some(option => option.kind === 'rankUps') && (!shelfKinds || shelfKinds.includes('rankUps')) ? 'rankUps' : kind);
+  const stocked = [...new Set(offer.options.map(option => shelfOf(option.kind)))].filter(kind => !shelfKinds || shelfKinds.includes(kind));
   const categories = [...stocked, ...(sellEnabled ? ['sell'] : [])];
   let active = categories.includes(previousCategory) ? previousCategory : categories[0];
   const shopId = offer.id.slice('shop:'.length);
@@ -144,6 +148,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   }
 
   function offerDef(option) {
+    if (option.kind === 'cardCopies') return { name: t('cardCopy.name') };
     if (option.kind === 'rankUps') return { name: t('rankUp.name') };
     if (['combatCards', 'weaponArts'].includes(option.kind)) return registries.cards.get(option.id);
     if (option.kind === 'relics') return registries.relics.get(option.id);
@@ -156,14 +161,15 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const key = `buy:${index}`;
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
     const service = option.kind === 'rankUps';
+    const copyService = option.kind === 'cardCopies';
     const def = offerDef(option);
     const quote = gameProfileShopPurchasePlan(registries, run, shopId, index);
     const price = shopOfferPrice(offer, index);   // each offer has its own price; stock saved before that has one for all
-    const desc = service ? t('rankUp.blurb') : configuredOfferText(registries, run, option.kind, def, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false });
+    const desc = copyService ? `${t('cardCopy.blurb')} ${t('cardCopy.uses', { uses: CardCopyUsesLeft(option) })}` : service ? t('rankUp.blurb') : configuredOfferText(registries, run, option.kind, def, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false });
     const signature = JSON.stringify([option, price, quote.ok, quote.reason, desc]);
-    put(key, option.kind, signature, entry => {
+    put(key, shelfOf(option.kind), signature, entry => {
       const tile = el('div', { class: 'class-pick shop-offer' });
-      const visual = service ? RenderRankUpOfferCard(registries, { interactive: false, level: 'glance', surface: 'shop' }).card : card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, shopCardOptions) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
+      const visual = copyService ? RenderCardCopyOfferCard(registries, CardCopyUsesLeft(option), { interactive: false, level: 'glance', surface: 'shop' }).card : service ? RenderRankUpOfferCard(registries, { interactive: false, level: 'glance', surface: 'shop' }).card : card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, shopCardOptions) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
       const action = { kind: 'buy', label: t('shop.action.buy', { cost: price }), enabled: quote.ok };
       const control = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc, visual, price: t('shop.price', { cost: price }), avail: { available: quote.ok, reason: quote.reason || null, because: 'cinders' }, action });
       // Every purchase asks first (owner, 2026-11-19): the review names the offer, its price and the purse left.
@@ -234,7 +240,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const restoreKey = focusKey || focused?.dataset.shopKey || pendingFocusKey;
     const seen = new Set();
     for (const [index, option] of offer.options.entries()) {
-      if (shelves.has(option.kind)) seen.add(putBuyRow(index, option));
+      if (shelves.has(shelfOf(option.kind))) seen.add(putBuyRow(index, option));
     }
     if (sellEnabled) {
       const sales = gameProfileShopSalePlans(registries, run, shopId);

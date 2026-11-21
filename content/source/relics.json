@@ -641,5 +641,16 @@
     ],
     "textTemplate": "Your deck may be 1 card smaller.",
     "flavor": "Cut back the weak growth, and the rest bears fruit."
+  },
+  {
+    "id": "scribesMirror",
+    "name": "Scribe's Mirror",
+    "rarity": "uncommon",
+    "icon": "relic",
+    "passives": {
+      "cardCopyOnPickup": 1
+    },
+    "textTemplate": "When you pick this up, copy one card you own.",
+    "flavor": "It shows the page, and then it shows it again."
   }
 ]
