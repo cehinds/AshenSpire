@@ -215,7 +215,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-20 (#2892 review): card tradition labels move to uiStrings.csv (card.tradition.*); wording only, edf0d9... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-20 (enemy level scaling: characters.enemyLevelScaling, enemyFightLevel, tier SP and attribute caps) (7d13f1... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-20 (enemy fight levels, floor-step gear and HP) (430fdc... is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:6436828d5e97fdddb6343ad556294b5a86b79bbc4876cdccf850bccb0faa0d3e');
+  // Re-pinned 2026-11-20 (enemy level cards: content.enemyLevelCards loaded and validated) (643682... is now in PREVIOUS_RUNTIMES).
+  assert.equal(profile.lock.runtimeHash, 'sha256:0e780f2b4fa1c0fc6e2577d5dc431033745fdf3ce16066b2b3018d6c28f31020');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
