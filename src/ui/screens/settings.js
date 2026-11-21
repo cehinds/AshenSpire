@@ -1518,6 +1518,34 @@ function shownCategories(saves) {
   });
 }
 
+// THE TOPIC IS A ROW FIELD (Settings tidy, 2026-11-20). Each General and
+// Accessibility row names its titled section with `topic`; this table turns the
+// id into the heading. It replaced a long key regex here, so a new row now says
+// where it sits instead of matching a pattern by luck. "Effects & pacing" used
+// to catch the Combat rows too; those are `cat: 'Combat'` now, and Title screen
+// is named for the one thing it holds.
+const SETTINGS_TOPIC_LABELS = Object.freeze({
+  interface: () => 'Interface',
+  titleScreen: () => 'Title screen',
+  map: () => 'Map',
+  hud: () => 'HUD',
+  autoCombat: () => t('settings.topic.autoCombat'),
+  animation: () => 'Animation & effects',
+  combatLog: () => t('combat.log.title'),
+  range: () => t('settings.range.topic'),
+  armaments: () => 'Armaments',
+  audio: () => 'Audio',
+  tooltips: () => 'Tooltips',
+  touchGestures: () => 'Touch gestures',
+  readability: () => 'Readability',
+  motionColour: () => 'Motion & colour',
+});
+
+/** SettingsTopicIds() → every topic id a row may name (tests hold each row to it). */
+export function SettingsTopicIds() {
+  return Object.keys(SETTINGS_TOPIC_LABELS);
+}
+
 /** The topics one General group is drawn in, as Map(label -> rows).
  *
  * EXPORTED so the Combat group's shape is asserted rather than described: the
@@ -1528,17 +1556,7 @@ export function generalGroups(category, profile = null, nextProfile = null) {
   if (Object.hasOwn(CUSTOM_GENERAL_GROUPS, category)) return new Map([[categoryLabel(category), CUSTOM_GENERAL_GROUPS[category].map(key => ({ key }))]]);
   const groups = new Map();
   for (const row of categoryHandler(category).rows.filter(row => settingsRowAvailable(row, profile, nextProfile))) {
-    const key = row.key;
-    const label = category === 'Display' ? /^hud/.test(key) ? 'HUD' : /map|shrine/.test(key) ? 'Map'
-      // "Effects & pacing" USED TO CATCH THE COMBAT SETTINGS_ROWS TOO, and that is the
-      // bag the report was about: a player hunting for an animation switch had
-      // to guess that combat lived under a title-screen word. Those keys are
-      // `cat: 'Combat'` now, so what is left here is the title entrance — and
-      // the topic is named for the one thing it holds.
-      : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|animationStepDuration|enemyAttackMs|enemyFloaterIntervalMs|combatPacingPreset|animSpeed)/.test(key) ? t('settings.topic.autoCombat') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
-      : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
-      : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
+    const label = SETTINGS_TOPIC_LABELS[row.topic]?.() ?? categoryLabel(category);
     if (!groups.has(label)) groups.set(label, []);
     groups.get(label).push(row);
   }

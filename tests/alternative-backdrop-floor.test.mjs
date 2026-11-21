@@ -5,7 +5,7 @@ import { wireAlternativeBackdrop } from '../src/ui/alternativeArt.js';
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-test('only combat clamps the scenery floor; dialogue keeps its own floor line', () => {
+test('only combat clamps the scenery floor; dialogue draws no alternative plate', () => {
   const art = read('../src/ui/alternativeArt.js');
   assert.match(art, /fitAlternativeBackdrop\(combat, \{[^}]*coverFloor = false[^}]*\}\)/, 'the clamp is opt-in');
   assert.match(art, /coverFloor \? previewTop \+ /);
@@ -13,9 +13,10 @@ test('only combat clamps the scenery floor; dialogue keeps its own floor line', 
   assert.match(stage, /fitAlternativeBackdrop\(combat, backdropInputs\.alternative\)/);
   assert.match(read('../src/ui/models/CombatBackdropFitModel.js'), /coverFloor: true/);
   const dialogue = read('../src/ui/components/dialogueStage.js');
-  const at = dialogue.indexOf('fitAlternativeBackdrop(wrap, {');
-  assert.ok(at >= 0);
-  assert.doesNotMatch(dialogue.slice(at, dialogue.indexOf('});', at)), /coverFloor/, 'dialogue honours its 60% floor split');
+  // Owner, 2026-11-20: the conversation plate is always the layered generator
+  // (tests/layered-environments.test.mjs), fitted by fitSceneBackdrop to its own floor line.
+  assert.doesNotMatch(dialogue, /fitAlternativeBackdrop/);
+  assert.match(dialogue, /fitSceneBackdrop\(backdrop, \{/);
 });
 
 

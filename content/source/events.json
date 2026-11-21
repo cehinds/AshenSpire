@@ -29,11 +29,14 @@
     "text": "A huge figure kneels in a clearing, its legs grown into the roots of a golden sapling. It holds out one open hand.",
     "choices": [
       {
-        "label": "Offer a card (lose a random card, take 6 damage)",
+        "label": "Take its hand (gain Ascetic's Cord, take 6 damage)",
+        "requires": {
+          "relicNotHeld": "asceticsCord"
+        },
         "effects": [
           {
-            "op": "removeCardFromDeck",
-            "random": true
+            "op": "addRelic",
+            "id": "asceticsCord"
           },
           {
             "op": "damage",
@@ -41,7 +44,7 @@
             "amount": 6
           }
         ],
-        "resultText": "The card turns to gold leaf, and its grip on your hand draws blood."
+        "resultText": "It closes its hand on yours and leaves a cord of gold thread. Its grip draws blood."
       },
       {
         "label": "Pray (heal 20% max HP, gain a Guilt curse)",
@@ -168,11 +171,14 @@
     "text": "A physician in a rotting coat lays out his knives. \"I can cut something out of you, or just patch you up.\"",
     "choices": [
       {
-        "label": "Let him cut (remove a random card, take 4 damage)",
+        "label": "Let him cut (gain Threadbare Satchel, take 4 damage)",
+        "requires": {
+          "relicNotHeld": "threadbareSatchel"
+        },
         "effects": [
           {
-            "op": "removeCardFromDeck",
-            "random": true
+            "op": "addRelic",
+            "id": "threadbareSatchel"
           },
           {
             "op": "damage",
@@ -738,14 +744,17 @@
     "id": "stakeOfTheMartyr",
     "name": "Stake of the Martyr",
     "art": "⛧",
-    "text": "A gilded thorn stake juts from the path. It offers a relic for one of your cards and some of your blood.",
+    "text": "A gilded thorn stake juts from the path. It offers relics for some of your blood.",
     "choices": [
       {
-        "label": "Pay its price (remove a random card, lose 8% max HP, gain a random relic)",
+        "label": "Pay its price (gain Pruning Hook, lose 8% max HP, gain a random relic)",
+        "requires": {
+          "relicNotHeld": "pruningHook"
+        },
         "effects": [
           {
-            "op": "removeCardFromDeck",
-            "random": true
+            "op": "addRelic",
+            "id": "pruningHook"
           },
           {
             "op": "loseMaxHpPct",
