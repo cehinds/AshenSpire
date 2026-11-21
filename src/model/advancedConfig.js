@@ -844,7 +844,7 @@ function presentationModelRows() {
     {
       cat: 'Display',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
-      presentationKey: 'showFormationGrid', def: false,
+      presentationKey: 'showFormationGrid', def: PRESENTATION_DEFAULTS.showFormationGrid,
       label: 'Show battlefield grid',
       note: 'Show faint formation lines behind combatants.',
     },
@@ -883,7 +883,7 @@ function presentationModelRows() {
 
 // The one presentation row still a setting: how much of the viewport the Settings panel uses.
 const SETTINGS_PANEL_KEYS = ['settingsWidthPercent', 'settingsHeightPercent'];
-// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default on).
+// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default off).
 const LIVE_PRESENTATION_KEYS = [...SETTINGS_PANEL_KEYS, 'showFormationGrid'];
 function presentationRows() {
   return presentationModelRows().filter((row) => SETTINGS_PANEL_KEYS.includes(row.presentationKey));
