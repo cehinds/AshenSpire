@@ -61,7 +61,7 @@ let liveMapKeys = null;
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
 let liveMapViewportRelease = null;
-// The mounted map's own HUD redraw (refreshMapHud below): the band rebuilt with this mount's wiring.
+// The mounted map's own HUD redraw (RefreshMapHud below): the band rebuilt with this mount's wiring.
 let liveMapHudRefresh = null;
 
 // THE COMMIT SAVE, OFF THE TAP (W5a). A settled-board commit used to run the
@@ -129,11 +129,11 @@ export function releaseMapScreen() {
 }
 
 /**
- * refreshMapHud(meta) — redraw the mounted map's run HUD in place, wired exactly as mountMap wires it (the queued
+ * RefreshMapHud(meta) — redraw the mounted map's run HUD in place, wired exactly as mountMap wires it (the queued
  * camera save flushed or dropped by its doors, and a remount that keeps the selected route). An overlay that closes
  * back onto the map calls it instead of remounting the board. Returns false when no map is mounted.
  */
-export function refreshMapHud(meta) {
+export function RefreshMapHud(meta) {
   if (!liveMapHudRefresh) return false;
   return liveMapHudRefresh(meta);
 }

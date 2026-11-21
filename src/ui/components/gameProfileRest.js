@@ -9,7 +9,7 @@ import { esc } from './tooltip.js';
 import { engravedIconHtml } from './engravedIcon.js';
 import { recoveryLedgerHtml } from './recoveryLedger.js';
 import { mountRestFrame, restPresentation } from './restFrame.js';
-import { RefreshRunHud, runHudRefreshSignature } from './runHud.js';
+import { RefreshRunHud, RunHudRefreshSignature } from './runHud.js';
 import { RenderStatAllocationCard } from './statAllocationCard.js';
 import { mountSmithUpgradeModal } from './smithUpgradeModal.js';
 import { MountCardUpgradeModal } from './cardUpgradeModal.js';
@@ -92,7 +92,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     eyebrow: '', title: t('rest.title'), status: t('rest.status.available', { available: availability.available, total: availability.total }),
     choices, consequences, foot: modalFooter({ primary: leave, size: 'fill', className: 'choice-foot' }),
   });
-  let hudSignature = hud ? runHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS }) : '';
+  let hudSignature = hud ? RunHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS }) : '';
   screen.classList.add('core-rest'); // scopes the compact Core rest CSS away from the full-game rest screen
   const invoke = action => {
     status.textContent = '';
@@ -246,7 +246,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     syncServiceCards();
     syncStatusLines();
     if (hud) {
-      const signature = runHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS });
+      const signature = RunHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS });
       if (signature !== hudSignature) {
         hudSignature = signature;
         RefreshRunHud(app, { registries, run, meta, ...HUD_OPTIONS, hud, remount: () => refresh() });

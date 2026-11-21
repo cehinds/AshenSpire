@@ -24,7 +24,7 @@ import { t } from '../strings.js';
 import { MarkSelected } from '../selection.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
-import { runHudHtml, wireRunHud, RefreshRunHud, runHudRefreshSignature } from '../components/runHud.js';
+import { runHudHtml, wireRunHud, RefreshRunHud, RunHudRefreshSignature } from '../components/runHud.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { MountCardUpgradeModal } from '../components/cardUpgradeModal.js';
@@ -369,7 +369,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   const HUD_OPTIONS = { place: 'shop', headerClass: 'map-header room-header workspace-hud' };
   function mountFrame() {
     const markup = hud ? runHudHtml({ registries, run, meta, ...HUD_OPTIONS }) : '';
-    hudMarkup = hud ? runHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS }) : '';
+    hudMarkup = hud ? RunHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS }) : '';
     app.innerHTML = `${markup}
       <div class="screen room-screen shop-workspace merchant-workspace blacksmith-workspace" data-wireframe="W1d" data-shop-kind="blacksmith">
         <div class="shop-frame">
@@ -517,7 +517,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     const stonesHeld = run.smithingStones || 0;
     purse.textContent = t('blacksmith.purse.core', { stones: stonesHeld, plural: plural(stonesHeld), cinders: run.cinders });
     if (hud) {
-      const next = runHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS });
+      const next = RunHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS });
       if (next !== hudMarkup) {
         hudMarkup = next;
         RefreshRunHud(app, { registries, run, meta, ...HUD_OPTIONS, hud, remount: render });

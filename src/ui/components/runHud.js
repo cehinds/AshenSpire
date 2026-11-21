@@ -104,7 +104,7 @@ export function runHudHtml({ registries, run, meta, place, headerClass = 'map-he
 /** The shell and the live content wireRunHud fills have separate inputs.
  * Compare their presentation projections so a no-op retains the band while
  * HP, relic, potion and Armoury-indicator changes still invalidate it. */
-export function runHudRefreshSignature(options) {
+export function RunHudRefreshSignature(options) {
   const { registries, run, meta } = options;
   return JSON.stringify({
     shell: runHudHtml(options),

@@ -99,7 +99,7 @@ import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountDraft } from './ui/screens/draft.js';
 import { executeRunEffects, drawCards, discardFromHand, executeAction } from './engine/actions.js';
-import { mountMap, refreshMapHud } from './ui/screens/map.js';
+import { mountMap, RefreshMapHud } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { MountRewards } from './ui/screens/reward.js';
 // After reward.js on purpose: imported earlier, its model imports change the bundle's load order and expose cyclic named imports.
@@ -112,7 +112,7 @@ import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, RestOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { armouryRoute } from './model/armouryPages.js';
 import { mountConfiguredShop } from './ui/screens/shop.js';
-import { runHudRefreshSignature } from './ui/components/runHud.js';
+import { RunHudRefreshSignature } from './ui/components/runHud.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
@@ -1405,7 +1405,7 @@ function showOfflinePlay() {
 // map would abandon the room mid-visit.
 //
 // An overlay (the Armoury, the deck editor) that goes back to a map still mounted under it keeps that map, with its
-// selected route and camera: only the run HUD is redrawn, by the map's own builder (refreshMapHud), and only when
+// selected route and camera: only the run HUD is redrawn, by the map's own builder (RefreshMapHud), and only when
 // what it shows changed. Any other return callback may finish a reward or a service, so it runs as given.
 function retainMapOrigin(returnTo) {
   if (returnTo !== showMap) return returnTo;
@@ -1413,15 +1413,15 @@ function retainMapOrigin(returnTo) {
   if (!origin) return returnTo;
   const owner = run;
   const hudOptions = { place: 'map', headerClass: 'map-header' };
-  let signature = runHudRefreshSignature({ registries, run, meta: saves.loadMeta(), ...hudOptions });
+  let signature = RunHudRefreshSignature({ registries, run, meta: saves.loadMeta(), ...hudOptions });
   return () => {
     if (!origin.isConnected || run !== owner) return returnTo();
     const meta = saves.loadMeta();
-    const next = runHudRefreshSignature({ registries, run, meta, ...hudOptions });
+    const next = RunHudRefreshSignature({ registries, run, meta, ...hudOptions });
     if (next === signature) return undefined;
     signature = next;
     // The map's own builder redraws it, so its save doors and route-keeping remount stay wired.
-    if (!refreshMapHud(meta)) return returnTo();
+    if (!RefreshMapHud(meta)) return returnTo();
     return undefined;
   };
 }

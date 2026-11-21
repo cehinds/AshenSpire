@@ -21,7 +21,7 @@ import { RenderRankUpOfferCard } from '../components/rankUpOfferCard.js';
 import { shopOfferPrice } from '../../model/shopOfferPrice.js';
 import { gameProfileShopPurchasePlan } from '../../model/gameProfileRewards.js';
 import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
-import { runHudHtml, wireRunHud, RefreshRunHud, runHudRefreshSignature } from '../components/runHud.js';
+import { runHudHtml, wireRunHud, RefreshRunHud, RunHudRefreshSignature } from '../components/runHud.js';
 import { settingOn } from './settings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { shopWorkspaceLayout } from '../models/ShopWorkspaceModel.js';
@@ -51,7 +51,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   if (hud) {
     const band = el('div'); band.innerHTML = runHudHtml({ registries, run, meta, ...HUD_OPTIONS });
     app.append(...band.childNodes);
-    hudMarkup = runHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS });
+    hudMarkup = RunHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS });
     wireRunHud(app, { ...hud, registries, run, meta, remount: () => refresh() });
   }
   const root = el('div', { class: 'screen room-screen shop-workspace merchant-workspace', dataset: { wireframe: 'W1d', shopRail: 'dock' } });
@@ -247,7 +247,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const purseText = t('shop.purse', { cinders: run.cinders });
     if (purse && purse.textContent !== purseText) purse.textContent = purseText;
     if (hud) {
-      const next = runHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS });
+      const next = RunHudRefreshSignature({ registries, run, meta, ...HUD_OPTIONS });
       if (next !== hudMarkup) {
         hudMarkup = next;
         RefreshRunHud(app, { registries, run, meta, ...HUD_OPTIONS, hud, remount: refresh });

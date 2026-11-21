@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { runHudHtml, runHudRefreshSignature } from '../src/ui/components/runHud.js';
+import { runHudHtml, RunHudRefreshSignature } from '../src/ui/components/runHud.js';
 import { withKitDom } from './helpers/dom.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -14,11 +14,11 @@ function options() {
 }
 
 test('HUD refresh signature is stable for no-op returns and unrelated run bookkeeping', () => withKitDom(() => {
-  const opts = options(), initial = runHudRefreshSignature(opts);
-  assert.equal(runHudRefreshSignature(opts), initial);
+  const opts = options(), initial = RunHudRefreshSignature(opts);
+  assert.equal(RunHudRefreshSignature(opts), initial);
   opts.run.gameProfileOpenShop = 'merchant';
   opts.run.notesForTest = 'not a HUD presentation input';
-  assert.equal(runHudRefreshSignature(opts), initial);
+  assert.equal(RunHudRefreshSignature(opts), initial);
 }));
 
 for (const [label, change] of [
@@ -29,9 +29,9 @@ for (const [label, change] of [
   ['carried potion count', run => { run.flasks = [...run.flasks, { flaskId: registries.flasks.all()[0].id }]; }],
 ]) {
   test(`HUD refresh detects ${label} changes even when its shell markup is identical`, () => withKitDom(() => {
-    const opts = options(), shell = runHudHtml(opts), before = runHudRefreshSignature(opts);
+    const opts = options(), shell = runHudHtml(opts), before = RunHudRefreshSignature(opts);
     change(opts.run);
     assert.equal(runHudHtml(opts), shell, 'the shell does not contain this independently wired content');
-    assert.notEqual(runHudRefreshSignature(opts), before, 'the dependent HUD must refresh');
+    assert.notEqual(RunHudRefreshSignature(opts), before, 'the dependent HUD must refresh');
   }));
 }
