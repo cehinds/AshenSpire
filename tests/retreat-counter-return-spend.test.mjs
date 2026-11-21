@@ -57,3 +57,10 @@ test('a prepaid return from a front-row attacker holding 1 stack pays 1 and spen
   assert.equal(accepted.advanceSp, priced.costs.stamina);
   assert.equal(RetreatStacks(attacker), Math.max(0, 1 - accepted.advanceSp));
 });
+
+test('a fight saved before the Retreat rules (version 0) keeps its price and loses no stacks to the return', () => {
+  const legacy = prepaidReturn({ retreatRulesVersion: 0 });
+  assert.equal(legacy.priced.costs.stamina, 1, 'legacy price: the distance only, no stack surcharge');
+  assert.equal(RetreatStacks(legacy.attacker), 2, 'the return spends no stacks without the Retreat rules');
+  assert.equal(RetreatStacks(legacy.other), 2);
+});
