@@ -2645,21 +2645,22 @@ function mountGameProfileOfferDoor(pending, { combined }) {
 
 // Owner 2026-11-05: after a shop purchase a card may go to the deck (else it stays in the library, as before) and an
 // armament may be equipped through the Armoury's own equip flow (else it stays in the inventory, as before).
-function offerShopCardDestination(receipt) {
-  if (['weapons', 'armor'].includes(receipt?.kind)) return offerShopEquip(receipt.id);
+// `refresh` redraws the open shop in place; a caller without one remounts it.
+function offerShopCardDestination(receipt, refresh = showShop) {
+  if (['weapons', 'armor'].includes(receipt?.kind)) return offerShopEquip(receipt.id, refresh);
   if (!['combatCards', 'weaponArts'].includes(receipt?.kind) || !receipt.instanceId) return;
   const settings = saves.loadMeta().settings || {};
   openShopCardChoice({
     name: registries.cards.get(receipt.id)?.name || receipt.id,
     refusal: (code => !code ? '' : code === 'full' ? t('reward.configured.deckFull', { max: deckEditBounds(settings).max }) : t('reward.configured.deckLimit'))(shopCardDeckRefusal(registries, run, receipt.instanceId, settings)),
-    onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); showShop(); },
+    onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); queueMicrotask(refresh); },
   });
 }
-function shopArmamentBought(id) { recordCollectedArmament(id, 'shop'); offerShopEquip(id); }
-function offerShopEquip(id) {
+function shopArmamentBought(id, refresh = showShop) { recordCollectedArmament(id, 'shop'); offerShopEquip(id, refresh); }
+function offerShopEquip(id, refresh = showShop) {
   if (isConfiguredRun(run) && !gameModule(run, 'equipment')) return;
   const def = (registries.equipment.armaments || []).find(row => row.id === id) || (registries.equipment.armour || []).find(row => row.id === id);
-  openShopArmamentChoice({ name: def?.name || id, onEquip: () => showArmoury({ equipItemId: id }, showShop) });
+  openShopArmamentChoice({ name: def?.name || id, onEquip: () => showArmoury({ equipItemId: id }, refresh) });
 }
 
 function showShop() {
@@ -2677,11 +2678,15 @@ function showShop() {
     const slot = traderSmith ? 'smithStock' : 'stock';
     if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = VisitSiteStock(run, slot, () => blacksmithVisitStock(registries, rng, run, { }));
     persist(); audio.music('shop');
-    return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
+    // The Blacksmith stays mounted: a purchase, the Armoury or a flask refreshes its rows in place.
+    let smith;
+    const refresh = () => smith?.refresh();
+    smith = mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(refresh),
       onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
       onLeave: traderSmith
         ? () => { StashSiteStock(run, slot, run.shopStock); delete run.gameProfileTraderSmith; persist(); showShop(); }
         : () => { StashSiteStock(run, slot, run.shopStock); run.shopStock = null; delete run.gameProfileOpenShop; markRestLeft(run); persist(); showMap(); } });
+    return smith;
   }
   // A trader left from the map stays enterable until a new node is chosen (restRevisit.js).
   OpenSiteRecord(run, 'shop');
@@ -2689,20 +2694,25 @@ function showShop() {
   audio.music('shop');
   // The dock holds to the 3-6 options rule, Sell counted, for a stock saved before traders varied too.
   const dock = ConfiguredTraderDock(run, offer.options.map(option => option.kind), { smith: ConfiguredTraderOffersSmith(run, shopId) });
-  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop), shelfKinds: dock.kinds,
+  // The trader stays mounted: each trade refreshes its rows in place once the transaction settles (shop.js).
+  let shop;
+  const refresh = () => shop?.refresh();
+  shop = mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(refresh), shelfKinds: dock.kinds,
     onSmith: dock.smith ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
-      if (offer.options[index]?.kind === 'rankUps') {
+      // A trade replaces the saved stock, so the slot's kind is read from the current one.
+      if (run.gameProfileRewardOffers?.[`shop:${shopId}`]?.options[index]?.kind === 'rankUps') {
         return chooseRankUpCard({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
-          try { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist(); } finally { showShop(); }
+          purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist();
         }, () => {});
       }
-      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
-      offerShopCardDestination(receipt);
+      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist();
+      offerShopCardDestination(receipt, refresh);
     },
-    onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
+    onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); },
     onLeave: () => { delete run.gameProfileOpenShop; delete run.gameProfileTraderSmith; if (shopStockKind(run.shopStock) === 'blacksmith') run.shopStock = null; markRestLeft(run); persist(); showMap(); } });
+  return shop;
 }
 
 function showEvent(eventId) {
