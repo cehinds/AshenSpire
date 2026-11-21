@@ -39,7 +39,7 @@ import { migrateAbilityGrades } from '../model/abilityGrades.js';
 
 import { retiredProfileReason } from '../model/retiredProfile.js';
 import { storedGameProfile, expandStoredRun } from '../model/runStorage.js';
-import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
+import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION, RUN_SCHEMA_ACQUIRED_ARMOUR } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
@@ -606,11 +606,17 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // sets. Older saves may wear a set without recording that acquisition;
         // preserve it here before it can disappear after unequipping.
         // ownership() stays pure.
+        // A save from before v27 also owned every blank-unlock set of its class
+        // (shared sets and the baseline), worn or not; it keeps them.
         if (run.loadout && run.loadout.sets) {
           const worn = new Set((run.loadout.sets.armor || []).filter(Boolean));
           const grant = run.loadout.creationArmourGrant;
+          const predatesAcquiredArmour = run.migratedFromRunSchemaVersion !== undefined
+            && run.migratedFromRunSchemaVersion < RUN_SCHEMA_ACQUIRED_ARMOUR;
+          const ownedBeforeAcquiredArmour = (piece) => predatesAcquiredArmour && !piece.unlock;
           for (const piece of registries.equipment.armour || []) {
-            if (piece.classId !== run.class || !worn.has(piece.id)) continue;
+            if (piece.classId !== run.class) continue;
+            if (!worn.has(piece.id) && !ownedBeforeAcquiredArmour(piece)) continue;
             if (grant && grant.classId === piece.classId && grant.id === piece.id) continue;
             const bought = Array.isArray(run.loadout.boughtArmour) ? run.loadout.boughtArmour : (run.loadout.boughtArmour = []);
             if (!bought.some((row) => row && row.classId === piece.classId && row.id === piece.id)) {
