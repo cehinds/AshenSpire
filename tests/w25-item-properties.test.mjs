@@ -107,7 +107,8 @@ test('resist halves and immune negates damage of one type; other types are untou
   const hit = (run, damageType) => {
     const c = fight(run);
     const carrier = { combatProfile: { camp: 'spell', damageType, range: 'melee', magicShare: 1 }, cardTags: [] };
-    return profileDamageReceipt(c, c.enemies[0], c.player, 12, carrier, { proposal: false }).raw;
+    // `raw` is the unrounded multiplier chain; every multiplier (x0.5 resist included) is floored once at the end, into the hit shown and dealt.
+    return profileDamageReceipt(c, c.enemies[0], c.player, 12, carrier, { proposal: false }).rawHit;
   };
   const plain = hit(newRun(), 'fire');
   assert.ok(plain > 0);
