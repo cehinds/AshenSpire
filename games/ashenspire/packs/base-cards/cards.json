@@ -8651,10 +8651,11 @@
           {
             "op": "damage",
             "target": "enemy",
-            "amount": 12
+            "amount": 8,
+            "breakBlock": 8
           }
         ],
-        "textTemplate": "Deal {damage} damage.",
+        "textTemplate": "Break {breakBlock} Block. Deal {damage} damage.",
         "icon": "attack",
         "damageSchool": "physical",
         "exposureBuildupPerHit": 0,

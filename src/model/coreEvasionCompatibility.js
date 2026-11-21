@@ -156,8 +156,8 @@ const PREVIOUS_RUNTIMES = new Set([
 // Diamond Skin display rename keeps stoneskin and stoneHide identities stable.
 // Combined Gear, stat traditions and Smash rules retain every parent runtime above.
 // Card tradition labels move to uiStrings.csv (card.tradition.*, #2892 review): wording only, no rule; edf0d9... is now in PREVIOUS_RUNTIMES.
-// Smash breaks flat Block (owner, 2026-11-20): smashVsDefensive loses blockFraction (a saved one is accepted and ignored); 7d13f1... is now in PREVIOUS_RUNTIMES.
-const FIXED_EVASION_RUNTIME = 'sha256:66d82f48c2bc9bc25ae783c39ebe4db804c78017a7ce9c5d5b6f43a3e6616984';
+// Smash breaks flat Block (owner, 2026-11-20): smashVsDefensive loses blockFraction (a saved one is accepted and ignored) and the damage op gains breakBlock / breakPoise (engine/runtime/ops.json); 7d13f1... is now in PREVIOUS_RUNTIMES.
+const FIXED_EVASION_RUNTIME = 'sha256:ea2c143386c8a56f94b3bdd60d5c61541a687778d9d9b164394e6c480f5446c8';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

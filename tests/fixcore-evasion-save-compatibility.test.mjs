@@ -215,7 +215,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
   // Re-pinned 2026-11-20 (#2892 review): card tradition labels move to uiStrings.csv (card.tradition.*); wording only, edf0d9... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-20: Smash breaks flat Block (smashVsDefensive loses blockFraction); 7d13f1... is now in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:66d82f48c2bc9bc25ae783c39ebe4db804c78017a7ce9c5d5b6f43a3e6616984');
+  assert.equal(profile.lock.runtimeHash, 'sha256:ea2c143386c8a56f94b3bdd60d5c61541a687778d9d9b164394e6c480f5446c8');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

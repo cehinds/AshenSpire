@@ -81,3 +81,15 @@ test('live: a two-hit Smash breaks Block on its first hit only', () => {
   assert.deepEqual(events.map(e => e.blockBroken || 0), [6, 0]);
   assert.equal(500 - target.hp, 4);
 });
+
+test('Smash cards read "Break N Block. Deal N damage." on the face and in their text', async () => {
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const { cardPlainText } = await import('../src/ui/components/card.js');
+  const core = resolveGameProfile('core');
+  const shipped = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, core)), core);
+  const def = shipped.cards.get('core.smash');
+  assert.deepEqual(def.effects.find(e => e.op === 'damage'), { op: 'damage', target: 'enemy', amount: 8, breakBlock: 8 });
+  const face = cardFaceLines(def, null, shipped, null).map(line => line.html.replace(/<[^>]+>/g, ''));
+  assert.match(face[0], /^Break 8 Block\. Deal \d+ damage$/);
+  assert.match(cardPlainText(shipped, { cardId: 'core.smash' }), /^Break 8 Block\. Deal \d+ damage\./);
+});
