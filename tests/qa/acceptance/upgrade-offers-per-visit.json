@@ -57,7 +57,7 @@
           "kind": "text",
           "label": "First-open option 2 (the reopen scene must match it)",
           "selector": ".card-upgrade-detail-modal [data-card-upgrade-option=\"1\"] .card-upgrade-option-changes",
-          "includes": "KEYWORDS none → retain"
+          "includes": "KEYWORDS none → Retain"
         },
         {
           "kind": "count",
@@ -156,7 +156,7 @@
           "kind": "text",
           "label": "Reopened option 2 is the option first shown",
           "selector": ".card-upgrade-detail-modal [data-card-upgrade-option=\"1\"] .card-upgrade-option-changes",
-          "includes": "KEYWORDS none → retain"
+          "includes": "KEYWORDS none → Retain"
         },
         {
           "kind": "count",
@@ -218,9 +218,9 @@
         },
         {
           "kind": "text",
-          "label": "Each item option names its change (before → after, or what it adds)",
+          "label": "A stat option names its change on the item (before → after)",
           "selector": ".modal.smith-options",
-          "matches": "(→|Adds:)"
+          "matches": "→"
         },
         {
           "kind": "consoleErrors",

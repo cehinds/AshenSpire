@@ -71,11 +71,11 @@ export function SmithPickChange(run, itemRef, pick) {
   return { label, before: `+${held}${unit}`, after: `+${held + (Number(pick.n) || 0)}${unit}` };
 }
 
-/** The option's change in one line for the options modal: "STR +1 -> +2", or "Adds: <property>". */
+/** The option's change in one line for the options modal ("STR +1 -> +2"); a property option shows its name only, which already says what it adds. */
 export function SmithPickChangeText(run, itemRef, pick) {
   const change = SmithPickChange(run, itemRef, pick);
   if (!change) return '';
-  return change.adds ? `Adds: ${change.label}` : `${change.label} ${change.before} → ${change.after}`;
+  return change.adds ? '' : `${change.label} ${change.before} → ${change.after}`;
 }
 
 function statCandidates(run, itemRef, family) {

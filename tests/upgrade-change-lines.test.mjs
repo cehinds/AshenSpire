@@ -55,7 +55,9 @@ test('item options read in player words with their change on the item, never a r
   for (const ref of refs) {
     for (const { pick } of SmithOptionPool(run, ref)) {
       const line = SmithPickChangeText(run, ref, pick);
-      assert.ok(line && !/[a-z][A-Z]/.test(line) && !/[a-z][A-Z]/.test(PickText(pick)), `${ref} ${JSON.stringify(pick)}: ${line}`);
+      // A property option's name is its change; any other option names its before and after.
+      assert.ok(pick.k === 'prop' ? line === '' : !!line, `${ref} ${JSON.stringify(pick)}: ${line}`);
+      assert.ok(!/[a-z][A-Z]/.test(line) && !/[a-z][A-Z]/.test(PickText(pick)), `${ref} ${JSON.stringify(pick)}: ${line}`);
       if (pick.k !== 'prop') assert.match(line, /\+\d+%? → \+\d+%?$/, line);
     }
   }
