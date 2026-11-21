@@ -68,7 +68,8 @@ const ATTRIBUTE_ABBREVIATION = Object.freeze({ strength: 'STR', dexterity: 'DEX'
 
 /** The Wither count a face shows: the copy's remaining plays when a live combat knows it, else the authored N. */
 export function WitherFaceCount(def, rules = null, instanceId = null) {
-  if (!Number.isSafeInteger(def?.wither) || def.wither < 1) return null;
+  // Exhaust wins over Wither (the first play exhausts), so an Exhaust card does not print it.
+  if (!Number.isSafeInteger(def?.wither) || def.wither < 1 || def.keywords?.includes('exhaust')) return null;
   return rules?.player?.abilityRiders && instanceId ? WitherRemaining(rules.player, { instanceId }, def) : def.wither;
 }
 
@@ -176,7 +177,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   };
   // Saved profiles may still carry the old verbose template. Phrase this
   // complete grant from the shared configured/live value on every face.
-  if (evadeGrantOnlyCard(def)) return [{ kind: 'gain', html: `Gain ${num(value(def.effects[0], 0, 'stacks'))} Evade.` }];
+  if (evadeGrantOnlyCard(def)) return [{ kind: 'gain', html: `Gain ${num(value(def.effects[0], 0, 'stacks'))} Evade.` }, ...CardRuleRiderLines(def, rules, instanceId)];
 
   const typeWord = id => {
     const service = registries && tagService(registries);

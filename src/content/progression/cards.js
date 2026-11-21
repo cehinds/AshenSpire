@@ -115,6 +115,8 @@ export const progressionCards = cardFamilies.map(family => {
     abilityRank: family.abilityRank, abilityFamily: family.id,
     effects: base.effects, textTemplate: base.textTemplate, ...(base.faceTemplate ? { faceTemplate: base.faceTemplate } : {}), gradeProfiles,
     ...base.traits,
+    // Wither and a rising cost ride through from the family row (SPEC §4.3).
+    ...(family.wither ? { wither: family.wither } : {}), ...(family.costGrowth ? { costGrowth: family.costGrowth } : {}),
   };
 });
 
