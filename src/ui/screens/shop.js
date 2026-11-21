@@ -70,7 +70,9 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   const labels = { combatCards: 'shop.bar.combatCards', weaponArts: 'shop.bar.weaponArts', weapons: 'shop.bar.armaments', armor: 'shop.bar.armour', relics: 'shop.bar.relics', potions: 'shop.bar.flasks', sell: 'shop.bar.sell', rankUps: 'shop.bar.rankUps', cardCopies: 'shop.bar.cardCopies' };
   const sellEnabled = onSell && settingOn(meta?.settings, 'shopSell');
   // `shelfKinds` is the dock the host allows (the 3-6 options rule); an offer on a shelf left off is not drawn.
-  const stocked = [...new Set(offer.options.map(option => option.kind))].filter(kind => !shelfKinds || shelfKinds.includes(kind));
+  // The copy service shares the SERVICES tab with a rank-up shelf (owner 2026-11-20).
+  const shelfOf = kind => (kind === 'cardCopies' && offer.options.some(option => option.kind === 'rankUps') && (!shelfKinds || shelfKinds.includes('rankUps')) ? 'rankUps' : kind);
+  const stocked = [...new Set(offer.options.map(option => shelfOf(option.kind)))].filter(kind => !shelfKinds || shelfKinds.includes(kind));
   const categories = [...stocked, ...(sellEnabled ? ['sell'] : [])];
   let active = categories.includes(previousCategory) ? previousCategory : categories[0];
   const shopId = offer.id.slice('shop:'.length);
@@ -96,7 +98,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   }
   const arm = beatArmer(meta, registries);
   for (const [index, option] of offer.options.entries()) {
-    if (!shelves.has(option.kind)) continue;
+    if (!shelves.has(shelfOf(option.kind))) continue;
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
     const service = option.kind === 'rankUps';
     const copyService = option.kind === 'cardCopies';
@@ -119,7 +121,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
       policyAction: 'action.purchase',
       onConfirm: () => { try { onTake(index, quote); } catch (error) { status.textContent = error.message; } },
     });
-    shelves.get(option.kind).append(tile);
+    shelves.get(shelfOf(option.kind)).append(tile);
   }
   if (sellEnabled) {
     const sales = gameProfileShopSalePlans(registries, run, shopId);

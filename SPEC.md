@@ -1263,7 +1263,7 @@ Weighted table: `src/content/encounters/weald.js` (§13.2). Act 2/3 rosters are 
 | Casters | piercing, Paralysis stacks |
 | Each boss | one themed trigger |
 
-### 5.4 Relics (M2 set of 16; 74 ship in all: 64 in `src/content/relics.js` plus 10 class-mastery relics in `src/content/progression/relics.js`)
+### 5.4 Relics (M2 set of 16; 80 ship in all: 70 in `src/content/relics.js` plus 10 class-mastery relics in `src/content/progression/relics.js`)
 
 Relic behavior uses the trigger DSL (§3.6).
 
@@ -1286,6 +1286,10 @@ Relic behavior uses the trigger DSL (§3.6).
 | Wyrm Heart | rare | +1 Stamina each turn. Shrines and chapels no longer offer Rest (`restDenied: ['restHpPartial']`, §13.4j). |
 | Ancestral Horn | rare | Powers cost 1 less. |
 | Ash of Remembrance | boss | **+1 Stamina each turn; at combat start, gain 1 Madness.** |
+
+**One copy per relic** (owner 2026-11-20). No reward, chest, elite spoils, shop or event offers a relic the run already holds; a saved offer that lists one is refused at claim, so a relic is never held twice.
+
+**Scribe's Mirror** (uncommon, Core 2 allow list; owner 2026-11-20): *When you pick this up, copy one card you own.* Passive `cardCopyOnPickup: N` queues N one-time copies (`run.pendingCardCopies`, optional, absent = 0). Each opens the usual reward door (source `copy`, take 1) listing every card the player owns, deck then library, one row per variant (card, upgrade, rank); equipment-bound cards are left out. The copy keeps the source's upgrade, rank and upgrade steps and lands in the library. Skipping the door spends the chance. It opens before the map, or at once when the relic is bought from a trader (Continue returns to the shop). `model/cardCopyService.js`.
 
 ### 5.5 Flasks (potions)
 
@@ -1458,6 +1462,8 @@ Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), 
 ### Rewards after combat and merchant prices
 
 - Cinders: Monster 45–75, Elite 105–150, Boss 225–270. Elites also drop a relic (Core 2: a choice of two, §15.1 *Elite spoils*). Flask roll: §5.5.
+- **One copy per card** (owner 2026-11-20): no new card offer (combat, chest, level, shop, Blacksmith) lists a card already in the deck or library, at any rank (`reward-ranks.skipOwned`, default true; absent = off). A saved offer made before still claims. The copy service (below and §5.4 Scribe's Mirror) is the only way to a second copy.
+- **Copy-a-card service** (owner 2026-11-20): some traders (`shops.cardCopy` {stockChancePct 20, uses 1, price 160}) and some Blacksmiths (`shops.blacksmith.cardCopy` {stockChancePct 30, uses 2, price 140}, offering `cardCopy`) sell a limited-use copy of one owned card into the library. Each roll is a hash of the run seed and the shop (no stream moves). At a trader it shares the SERVICES tab with a rank-up shelf, and is stocked without one only while the dock stays within `trader.maxCategories`.
 - Card reward on the §15.1 schedule: shipped 10% per won fight (`balance.rewards.cardRewards.chancePct`); choose 1 of 3–5 (random per combat door, `rewards.combatOfferCount` {min 3, max 5}, `cardRewards` stream; chests and level cards keep 3). Default odds common 60 / uncommon 35 / rare 5, Elite 45/40/15; a class's reward weights may override.
 - Solo boss victory: up to `balance.rewards.bossRelicChoices` (3) distinct unowned boss relics (`rollRelicChoices`, `relicRewards` stream; one left gives a single `relicId`); pick one. Auto-collect picks randomly; with it off an unpicked choice is left behind.
 - Merchant prices (cinders): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.

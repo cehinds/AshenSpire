@@ -11,10 +11,10 @@ for (const mode of ['native', 'bundled']) {
     assert.match(report.sourceRevision, /^[0-9a-f]{40}$/);
     assert.equal(report.loader, mode);
     assert.deepEqual(report.counts, {
-      relics: 79, relicPropertyCarriers: 62, relicRules: 68, relicBranchesCovered: 68,
+      relics: 80, relicPropertyCarriers: 62, relicRules: 68, relicBranchesCovered: 68,
       relicConditionalFalseControls: 33, relicGatedBranches: report.counts.relicGatedBranches,
       relicGatedBranchesCovered: report.counts.relicGatedBranches,
-      relicPassives: 27, relicPassiveDeclarations: 31, relicPassiveEffects: 19, relicPassiveNoOpDeclarations: 12,
+      relicPassives: 28, relicPassiveDeclarations: 32, relicPassiveEffects: 20, relicPassiveNoOpDeclarations: 12,
       relicPassiveEffectsCovered: report.counts.relicPassiveEffects,
       statusModifierOutcomes: report.counts.statusModifierDeclarations, statusModifierDeclarations: report.counts.statusModifierDeclarations,
       statusProcBranches: 3, statusProcBranchesCovered: 3,
@@ -29,17 +29,17 @@ for (const mode of ['native', 'bundled']) {
     assert.equal(report.relics.conditionalBranches, 33);
     assert.equal(report.relics.conditionalNegativeControls, 33);
     assert.equal(report.relics.gatedBranchesCovered, report.relics.gatedBranches);
-    assert.equal(report.relics.relicCoverage.length, 79);
-    assert.equal(report.relics.passiveIds, 27);
+    assert.equal(report.relics.relicCoverage.length, 80);
+    assert.equal(report.relics.passiveIds, 28);
     assert.equal(report.relics.passiveMissing.length, 0);
-    assert.equal(report.relics.passiveEffects, 19);
+    assert.equal(report.relics.passiveEffects, 20);
     assert.equal(report.relics.passiveNoOpDeclarations, 12);
-    assert.equal(report.relics.passiveDeclarations, 31);
+    assert.equal(report.relics.passiveDeclarations, 32);
     assert.deepEqual(report.relics.passiveEffectRows.map(row => `${row.relicId}:${row.key}`).sort(), [
       'ancestralHorn:powerCostReduction', 'cinderPouch:runeGainMult', 'crackedTear:flaskPowerMult', 'curedHide:poiseThresholdAdd',
       'emberFragment:restHealMult', 'feralEye:eliteExtraCardReward', 'forsakenMedallion:modifiers', 'paupersDiadem:powerCostReduction',
       'paupersDiadem:runeGainMult', 'prismaticThorn:exposureBuildupMult', 'prismaticThorn:flaskPowerMult', 'restlessClasp:flaskPowerMult',
-      'restlessClasp:restHealMult', 'saltedRelic:runeGainMult', 'sealstoneKey:revealUnknown', 'starstoneShard:modifiers',
+      'restlessClasp:restHealMult', 'saltedRelic:runeGainMult', 'scribesMirror:cardCopyOnPickup', 'sealstoneKey:revealUnknown', 'starstoneShard:modifiers',
       'wayfarersKnot:restHealMult', 'wayfarersKnot:runeGainMult', 'wyrmHeart:restDenied',
     ]);
     assert.ok(report.relics.passiveEffectRows.every(row => row.result === 'covered' && row.observed !== null));

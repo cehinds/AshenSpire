@@ -25,7 +25,7 @@ function buildCardCopyRow(card, registries)
         className: ROW_CLASS,
         name: `${definition?.name || card.cardId}${card.upgraded ? '+' : ''}`,
         text: translate('cardCopy.pick.row'),
-        chip: rank > 1 ? `Rank ${rank}` : '',
+        chip: rank > 1 ? translate('deckEditor.rank', { rank }) : '',
         artAsset: cardArt?.path || null,
         artGlyph: cardArt?.path
             ? null

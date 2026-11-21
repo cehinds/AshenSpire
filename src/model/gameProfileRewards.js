@@ -1,6 +1,6 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
 import { gameModule, gameContent } from './gameProfile.js';
-import { ConfiguredTraderCategories } from './gameProfileShopKind.js';
+import { ConfiguredTraderCategories, ConfiguredTraderOffersSmith } from './gameProfileShopKind.js';
 import { syncZones } from './state.js';
 import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
@@ -512,12 +512,20 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   // run seed and the shop id, joins a fresh stock once, and rides the saved stock after that.
   if(rankUpShelf&&!stock.options.some(option=>option.kind===RANK_UP_OPTION.kind)){stock.options.push({...RANK_UP_OPTION,price:ShopRankUpPrice(run)});stock.takeCount+=1;}
   // Owner 2026-11-20: some traders also sell a copy-a-card service with limited uses (shops.json cardCopy), rolled once on a
-  // hash of the run seed and the shop id, like the rank-up shelf. It rides the saved stock after that.
-  if(fresh&&VendorStocksCardCopy(registries,run,'trader',shopId)&&!stock.options.some(option=>option.kind===CARD_COPY_OPTION.kind)){stock.options.push(CardCopyShelf(run,'trader'));stock.takeCount+=1;}
+  // hash of the run seed and the shop id, like the rank-up shelf. It rides the saved stock after that. It shares the SERVICES tab
+  // with a rank-up shelf; without one it needs a tab of its own, so it is stocked only while the dock stays within maxCategories.
+  if(fresh&&VendorStocksCardCopy(registries,run,'trader',shopId)&&!stock.options.some(option=>option.kind===CARD_COPY_OPTION.kind)&&CopyShelfFits(run,shopId,stock)){stock.options.push(CardCopyShelf(run,'trader'));stock.takeCount+=1;}
   // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
   const table=module.priceTable??rules.priceTable;
   if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
   return stock;
+}
+// The dock counts one tab per stocked kind, Sell, and the Blacksmith when the trader keeps one (gameProfileShopKind.js).
+function CopyShelfFits(run,shopId,stock) {
+  const kinds=new Set(stock.options.map(option=>option.kind));
+  if(kinds.has(RANK_UP_OPTION.kind))return true;
+  const max=gameContent(run,'shops')?.trader?.maxCategories;
+  return !Number.isInteger(max)||kinds.size+1+1+(ConfiguredTraderOffersSmith(run,shopId)?1:0)<=max;
 }
 const PRICE_KIND={combatCards:'card',weaponArts:'weaponArt',relics:'relic',weapons:'armament',armor:'armour',potions:'flask'};
 function rollOfferPrice(registries,run,rng,table,option) {

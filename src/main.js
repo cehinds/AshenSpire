@@ -2709,7 +2709,8 @@ function showShop() {
   // The dock holds to the 3-6 options rule, Sell counted, for a stock saved before traders varied too.
   const dock = ConfiguredTraderDock(run, offer.options.map(option => option.kind).filter(kind => kind !== CARD_COPY_OPTION.kind), { smith: ConfiguredTraderOffersSmith(run, shopId) });
   // The copy service (owner 2026-11-20) is an extra service shelf beside the trader's 3-6 stock shelves, never one of them.
-  const shelfKinds = offer.options.some(option => option.kind === CARD_COPY_OPTION.kind) ? [...dock.kinds, CARD_COPY_OPTION.kind] : dock.kinds;
+  // It shares the SERVICES tab with a rank-up shelf (screens/shop.js), and gets its own tab only when stocked without one.
+  const shelfKinds = offer.options.some(option => option.kind === CARD_COPY_OPTION.kind) && !dock.kinds.includes('rankUps') ? [...dock.kinds, CARD_COPY_OPTION.kind] : dock.kinds;
   return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop), shelfKinds,
     onSmith: dock.smith ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
     onTake: (index, quote) => {
