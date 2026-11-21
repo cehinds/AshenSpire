@@ -39,10 +39,10 @@ Owner request, 2026-11-19. Branch `feature/settings-ui-performance-063de6`.
 - [ ] Later: `JSON.stringify` render keys in `combat.js` → revision counter
 
 ### Settings tidy (follow-up, not this PR)
-- [ ] Advanced has 54 rows in 9 groups; Combat has 28. Split or prune.
-- [ ] Topic grouping is a long key regex (`settings.js:1462`); make it a row field.
-- [ ] `data-performance` and `data-effects` mean the same thing; keep one.
-- [ ] Remove the retired `performanceMode` row.
+- [ ] Advanced has 54 rows in 9 groups; Combat has 28. Split or prune. Survey and proposal: [SETTINGS-TIDY-PROPOSAL.md](SETTINGS-TIDY-PROPOSAL.md); owner to decide.
+- [x] Topic grouping is a long key regex (`settings.js:1462`); make it a row field. Each row carries `topic`.
+- [ ] `data-performance` and `data-effects` mean the same thing; keep one. Not merged: see [SETTINGS-TIDY-PROPOSAL.md](SETTINGS-TIDY-PROPOSAL.md#data-performance-vs-data-effects).
+- [x] Remove the retired `performanceMode` row. A saved or imported Full still turns Effects on.
 
 ### Verify
 - [x] Sandbox QA `docs/qa/acceptance.effects-modal.json`: 24 PASS / 0 FAIL at 1280x800 and 390x844
