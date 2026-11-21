@@ -398,6 +398,18 @@
         "camp:spell",
         "fx:heal"
       ]
+    },
+    "arcaneSpell": {
+      "allTags": [
+        "camp:spell"
+      ],
+      "spellCategory": "arcane"
+    },
+    "divineSpell": {
+      "allTags": [
+        "camp:spell"
+      ],
+      "spellCategory": "divine"
     }
   },
   "conditions": {
