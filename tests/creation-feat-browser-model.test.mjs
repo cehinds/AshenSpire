@@ -15,7 +15,7 @@ test('birth browses canonical locked selected-class and skill feats without gran
   assert.equal(groups[0].rows.length, 0, 'the general character feats are retired');
   assert.ok(groups[1].rows.length > 0);
   assert.ok(groups[1].rows.every(row => row.trackId === 'class:starseer' && row.name && row.description));
-  assert.ok(groups[2].rows.some(row => row.id === 'bladeCritical' && row.requiredLevel === 2 && row.locked));
+  assert.ok(groups[2].rows.some(row => row.id === 'shieldBraced' && row.requiredLevel === 2 && row.locked));
   assert.ok(groups[2].rows.some(row => row.id === 'shieldBraced' && row.trackLabel));
   assert.equal(JSON.stringify(run), before);
   assert.equal(run.feats, undefined);
@@ -25,12 +25,11 @@ test('actual track levels independently meet character, class and skill requirem
   const run = born('reaver');
   run.level.level = 2;
   run.skills['class:reaver'] = { level: 1 };
-  run.skills['item:blade'] = { level: 2 };
+  run.skills['item:shield'] = { level: 2 };
   const groups = creationFeatBrowserGroups(registries, run);
   assert.equal(groups[1].rows.find(row => row.id === 'reaverIronFooting').requiredLevel, 1);
   assert.equal(groups[1].rows.find(row => row.id === 'reaverIronFooting').locked, false);
-  assert.equal(groups[2].rows.find(row => row.id === 'bladeCritical').locked, false);
-  assert.equal(groups[2].rows.find(row => row.id === 'shieldBraced').locked, true);
+  assert.equal(groups[2].rows.find(row => row.id === 'shieldBraced').locked, false);
 });
 
 test('authored mastery gates and retuned skill cadence change requirements rather than hardcoded values', () => {
@@ -39,7 +38,7 @@ test('authored mastery gates and retuned skill cadence change requirements rathe
     classMastery: registries.classMastery.map(gate => gate.ref === 'reaverIronFooting' ? { ...gate, level: 7 } : gate) };
   const groups = creationFeatBrowserGroups(source, run);
   assert.equal(groups[1].rows.find(row => row.id === 'reaverIronFooting').requiredLevel, 7);
-  assert.equal(groups[2].rows.find(row => row.id === 'bladeCritical').requiredLevel, 5);
+  assert.equal(groups[2].rows.find(row => row.id === 'shieldBraced').requiredLevel, 5);
   assert.ok(!groups[1].rows.some(row => row.trackId === 'class:starseer'));
 });
 

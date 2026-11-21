@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:6a1efed0b10ed0c233a0c9f62fcd4466164449057ce0d64950f8fe091d23140a",
+      "hash": "sha256:6927a267d92ca5b16500a1820f8e60063ed316a4d718495419884ba0b5093b04",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -592,7 +592,7 @@
           "path": "games/ashenspire/packs/base-cards/cards.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:ebde184a59c6893f2ca8bec99f38a6658814f75b31a79707af4929fa0b877a96"
+          "hash": "sha256:89829b5b191df6b490f6bb901be1d72a86b1eecd01ddc5d95b4a84cac6154797"
         },
         {
           "path": "games/ashenspire/packs/base-cards/groups.json",
@@ -622,7 +622,7 @@
           "path": "games/ashenspire/packs/base-cards/statuses.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:bef966880e7eb8f7117bf3ee2a5f44b4b306292d70ad53b95555f5694043b4c1"
+          "hash": "sha256:29044a7eafcef2ba50b2bd0fd66fa9626fb1254ecf8badd03a0e43be1f9b11e3"
         },
         {
           "path": "games/ashenspire/packs/core/cardPools.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:fbf370e6b803b5dde87934ba7bb0e0789209ea33dc1ce45c2642f4eee9fd8f1d"
     },
     "core": {
-      "hash": "sha256:6a1efed0b10ed0c233a0c9f62fcd4466164449057ce0d64950f8fe091d23140a",
+      "hash": "sha256:6927a267d92ca5b16500a1820f8e60063ed316a4d718495419884ba0b5093b04",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1316,7 +1316,7 @@
           "path": "games/ashenspire/packs/base-cards/cards.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:ebde184a59c6893f2ca8bec99f38a6658814f75b31a79707af4929fa0b877a96"
+          "hash": "sha256:89829b5b191df6b490f6bb901be1d72a86b1eecd01ddc5d95b4a84cac6154797"
         },
         {
           "path": "games/ashenspire/packs/base-cards/groups.json",
@@ -1346,7 +1346,7 @@
           "path": "games/ashenspire/packs/base-cards/statuses.json",
           "id": "ashen.base-cards",
           "version": "1.0.0",
-          "hash": "sha256:bef966880e7eb8f7117bf3ee2a5f44b4b306292d70ad53b95555f5694043b4c1"
+          "hash": "sha256:29044a7eafcef2ba50b2bd0fd66fa9626fb1254ecf8badd03a0e43be1f9b11e3"
         },
         {
           "path": "games/ashenspire/packs/core/cardPools.json",
