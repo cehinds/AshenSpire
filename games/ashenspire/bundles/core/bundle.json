@@ -43,6 +43,7 @@
         "statusBlockWeight": 1,
         "spellPoiseDamageMultiplier": 2,
         "spellTraditionsVersion": 1,
+        "retreatRulesVersion": 1,
         "spellRewardPolicyVersion": 1
       }
     },
