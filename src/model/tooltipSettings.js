@@ -13,7 +13,7 @@ export function resolveTooltipSettings(settings = {}, policy = tooltipHelp) {
 }
 
 export function tooltipSettingsRows(policy = tooltipHelp) {
-  return policy.settings.map(row => ({ cat: 'Accessibility', ...row,
+  return policy.settings.map(row => ({ cat: 'Accessibility', topic: 'tooltips', ...row,
     ...(row.type === 'choice' ? { choices: Object.keys(policy.delays) } : {}) }));
 }
 
