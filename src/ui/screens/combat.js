@@ -1199,8 +1199,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
     const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, weaknesses: knownWeaknesses(entity) }) : null;
     const currentMoveId = intent.moveId;
+    // A level-card move reads by its card's name; the others by their move id, as before.
+    const moveName = moveId => def.moves?.[moveId]?.levelCard ? def.moves[moveId].name : words(moveId);
     const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
-      name: move.levelCard ? move.name : words(moveId),
+      name: moveName(moveId),
       detail: moveDetail(move, moveId === currentMoveId ? intent : null, entity),
       active: moveId === currentMoveId,
     }));
@@ -1246,7 +1248,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // The stance an enemy's telegraph set reads only as far as its intent does.
       statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],
       entityId: entity.id,
-      history: past.map((moveId) => ({ name: def.moves?.[moveId]?.levelCard ? def.moves[moveId].name : words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
+      history: past.map((moveId) => ({ name: moveName(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
       traits: learning ? learning.traits : [...weaknessTraitRows(knownWeaknesses(entity)), ...(def.tags || []).map((tag) => ({ name: words(tag) }))],
       // No authored lore exists for enemies yet; unknown, not none.
       lore: learning ? learning.lore : null,

@@ -11,10 +11,25 @@ function hasExtraMoves(enemy)
     return extra !== null && typeof extra === 'object' && Object.keys(extra).length > 0;
 }
 
+// The registry row by id; a registry without has() (a test stub) is asked directly.
+function registryRow(registries, enemyId)
+{
+    const enemies = registries?.enemies;
+    if (!enemies || enemyId == null)
+    {
+        return undefined;
+    }
+    if (typeof enemies.has === 'function')
+    {
+        return enemies.has(enemyId) ? enemies.get(enemyId) : undefined;
+    }
+    return enemies.get?.(enemyId);
+}
+
 /** The definition an enemy instance acts from: the registry row, with the instance's extra moves after its own. */
 export function enemyDefinitionOf(registries, enemy)
 {
-    const def = enemy?.enemyId != null && registries?.enemies?.has?.(enemy.enemyId) ? registries.enemies.get(enemy.enemyId) : undefined;
+    const def = registryRow(registries, enemy?.enemyId);
     if (!def || !hasExtraMoves(enemy))
     {
         return def;
@@ -38,7 +53,12 @@ export function enemyMovesOf(registries, enemy)
 /** One move of the instance by id, an extra move included; undefined when it has none by that id. */
 export function enemyMoveOf(registries, enemy, moveId)
 {
-    return enemyMovesOf(registries, enemy)?.[moveId];
+    // One move by id, without walking the move set: the instance's own first, then its row's.
+    if (hasExtraMoves(enemy) && Object.hasOwn(enemy.extraMoves, moveId))
+    {
+        return enemy.extraMoves[moveId];
+    }
+    return registryRow(registries, enemy?.enemyId)?.moves?.[moveId];
 }
 
 /**
@@ -52,5 +72,5 @@ export function enemyEventMoveOf(registries, { enemy = null, enemies = [], insta
     {
         return enemyMoveOf(registries, instance, moveId);
     }
-    return enemyId != null && registries?.enemies?.has?.(enemyId) ? registries.enemies.get(enemyId)?.moves?.[moveId] : undefined;
+    return registryRow(registries, enemyId)?.moves?.[moveId];
 }
