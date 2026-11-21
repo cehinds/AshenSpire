@@ -111,13 +111,11 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   // It overlays the body without replacing the action or last confirmed stance.
   let resources=[], reactionTimer=null, currentArt=null, bodyReaction=null, paintedLite=null;
   const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? (pilotFrames ? 'pilot-counter' : selected.stances.counter) : ['defend','guard','evade'].includes(rest) ? 'guard-brace' : 'ready';
-  // Lite already omits decorative filters on image-backed figures. Apply the
-  // same quality policy to canvas bodies; contact, recoil and hit masks stay.
   // Effects off keeps the stance glow but holds it still: the resting glow of the held stance or
   // status, never the casting pulse (the action and its payment colours only tint while Effects is on).
   const filterFor = (frame, action, paid = resources, active = !!action) =>
     FxOff('glow') ? auraFilter('ready', ['defend','counter'].includes(rest) ? 'guard' : rest, [], false)
-    : liteRendering() ? 'none' : auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
+    : auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
   const paintGate=createPaintGate();
   function paint(now=performance.now(), materialize=false) {
     if (disposed) return;

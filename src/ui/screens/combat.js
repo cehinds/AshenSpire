@@ -197,6 +197,9 @@ import { controlGate, recoveryControls } from '../../engine/combatStatusControl.
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { NonlethalHpRefusal } from '../../model/cardHpCost.js';
 
+// The upcast prompt after choosing a target is off (owner, 2026-11-20: the Ask to upcast setting was
+// dropped; Core 2 never offered it). Turning it on is this one edit.
+const ASK_TO_UPCAST_AFTER_TARGET = false;
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
@@ -2241,7 +2244,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
     const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, run.class);
-    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.effects]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
     const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return false;
@@ -2433,7 +2436,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     syncWeaknessDiscovery();
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
-      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance]);
+      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.effects]);
       let record = enemyFrames.get(enemy.id);
       if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; wrote = true; }
       // `combat.player` is deliberately not part of this key, but the intent is: it reads the player through
@@ -3958,7 +3961,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const definition = resolveCombatCard(combat, inst);
     // With upcasting off no rank is sent: the engine plays the printed card.
     const rank = UPCASTING_ENABLED ? chosenUpcastRanks ?? upcastRanksByCard.get(instanceId) ?? definition.upcast?.baseTier ?? 0 : undefined;
-    if (chosenUpcastRanks === null && readSettings().askToUpcastAfterTarget && UpcastingOffered(definition)) {
+    if (chosenUpcastRanks === null && ASK_TO_UPCAST_AFTER_TARGET && UpcastingOffered(definition)) {
       if (expansionChoiceShell) { refusePlay(instanceId, 'upcast choice already open'); return; }
       if (targetId) lastTargetId = targetId;
       expansionChoiceShell = openUpcastChoice({ definition, opener: combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`),

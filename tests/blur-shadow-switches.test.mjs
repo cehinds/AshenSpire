@@ -64,7 +64,7 @@ test('Shadows forced Off draws the target silhouette as a coloured outline, not 
   });
   const saved = globalThis.document;
   try {
-    for (const [flags, outline] of [[{}, false], [{ fxShadows: 'off' }, true], [{ fxShadows: 'on' }, false], [{ performance: 'lite' }, true]]) {
+    for (const [flags, outline] of [[{}, false], [{ fxShadows: 'off' }, true], [{ fxShadows: 'on' }, false], [{ effects: 'off' }, true]]) {
       globalThis.document = { documentElement: { dataset: { ...flags } }, createElement: () => element() };
       const sprite = element('sprite');
       sprite.children.push(element('art'));

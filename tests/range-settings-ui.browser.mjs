@@ -24,7 +24,12 @@ try {
   const group = page.locator('[data-general-select]');
   await group.selectOption('Game rules');
   await page.locator('.game-profile-selector select').selectOption('core');
-  await group.selectOption('Combat');
+  // The Range rows live under Advanced › Range, shown on dev and test builds only.
+  const openRange = async () => {
+    await page.locator('.set-tab[data-member="Advanced"]').click();
+    await page.locator('.set-section-select').selectOption('Range'); // the phone's section picker
+  };
+  await openRange();
   const toggle = page.locator('[data-key="rangeMechanics"]');
   await toggle.waitFor({ state: 'visible', timeout: 15000 });
   assert.equal(await toggle.isChecked(), true);
@@ -36,7 +41,7 @@ try {
     await input.fill('0'); await input.press('Tab');
     assert.equal(await input.inputValue(), '0');
   }
-  await group.selectOption('Display'); await group.selectOption('Combat');
+  await page.locator('.set-tab[data-member="General"]').click(); await openRange();
   await page.locator('[data-key="rangeMechanics"]').waitFor({ state: 'visible', timeout: 15000 });
   for (const key of keys) assert.equal(await page.locator(`input[type="number"][data-key="${key}"]`).inputValue(), '0');
   assert.equal(await page.locator('[data-key="rangeMechanics"]').isChecked(), false);
@@ -54,7 +59,7 @@ try {
     const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
     return createRunState({ registries, seed: 42, classId: 'reaver', profileMeta: { settings } }).rangePolicy;
   }, prefs);
-  assert.deepEqual(policy, { version: 1, enabled: false, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0 });
+  assert.deepEqual(policy, { version: 1, enabled: false, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0, maxRange: 'reach' }); // maxRange is the policy's default (no setting row), added on dev
   await page.screenshot({ path: resolve(out, 'settings-current-next-core-390x844.png') });
   assert.deepEqual(errors, []);
   writeFileSync(resolve(out, 'settings-checks.json'), JSON.stringify({ before, after, prefs, policy, failedResponses, errors }, null, 2));

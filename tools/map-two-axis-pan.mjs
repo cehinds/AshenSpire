@@ -257,8 +257,8 @@ try {
   await evaluate(`document.querySelector('#settings').click()`);
   await until(`!!document.querySelector('.set-tab[data-member="Advanced"]')`);
   await evaluate(`document.querySelector('.set-tab[data-member="Advanced"]').click()`);
-  await until(`!!document.querySelector('.set-subtab[data-advanced-group="Interface"]')`);
-  await evaluate(`document.querySelector('.set-subtab[data-advanced-group="Interface"]').click()`);
+  await until(`!!document.querySelector('.set-subtab[data-advanced-group="Map"]')`);
+  await evaluate(`document.querySelector('.set-subtab[data-advanced-group="Map"]').click()`);
   const setting = await evaluate(`(() => {
     const control = document.querySelector('[data-key="mapFreePan"]');
     const row = control && control.closest('.set-row');
