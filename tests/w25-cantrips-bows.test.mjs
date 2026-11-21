@@ -78,9 +78,10 @@ test('elemental and Divine cantrips retain school riders while Arcane schools ke
 test('a cantrip upgrade can add +1 stack of its status, Retain or a draw', () => {
   for (const id of ['core.frostNip', 'core.venomSpray', 'core.mendingTouch', 'core.cinderDart', 'core.dawnFlame']) {
     const base = reg.cards.get(id);
+    // `everyFamily` lists every eligible kind: a normal roll offers one option per family (#2932), so a 30-option probe would see one keyword, not Retain.
     const kinds = new Set();
     for (let seed = 1; seed <= 12; seed += 1) {
-      for (const step of rollUpgradeOptions(base, [], 0, upgradeStepRng(seed, 'probe', 0), {}, 30)) kinds.add(step.k === 'fx' ? `fx:${step.fx}` : step.k);
+      for (const step of rollUpgradeOptions(base, [], 0, upgradeStepRng(seed, 'probe', 0), { everyFamily: true }, 30)) kinds.add(step.k === 'fx' ? `fx:${step.fx}` : step.k);
     }
     // Venom Spray already prints Venom 3, the most a card can usefully apply (cardUpgradeSteps ENGINE_STACK_CAPS), so it offers no +1 stack.
     if (id !== 'core.venomSpray') assert.ok(kinds.has('stk'), `${id} offers +1 stack`);
