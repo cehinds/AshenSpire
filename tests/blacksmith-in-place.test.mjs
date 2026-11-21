@@ -9,6 +9,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
 import { mountBlacksmith } from '../src/ui/screens/blacksmith.js';
+import { t } from '../src/ui/strings.js';
 import { withKitDom as baseDom } from './helpers/dom.mjs';
 import '../src/engine/runCombat.js';
 
@@ -164,4 +165,26 @@ test('the card-copy shelf keeps one keyed row per owned card', () => withKitDom(
   const copyRows = [...app.querySelectorAll('[data-shop-shelf="cardCopy"] .merchant-offer')];
   assert(copyRows.length > 1, 'several owned cards can be copied');
   assert.equal(new Set(copyRows.map(row => row.dataset.smithKey)).size, copyRows.length, 'each copy row has its own key');
+}));
+
+// Review of #2927: a Blacksmith Sell tab with nothing the smith would buy reads as the merchant's empty Sell shelf.
+test('the Blacksmith Sell tab says so when there is nothing to sell, and drops the line once there is', () => withKitDom(dom => {
+  const run = createRunState({ seed: 31, classId: 'reaver', registries, runId: 'smith-empty-sell' });
+  run.seenEvents = [];
+  run.shopStock = buildBlacksmithStock(registries, createRng(31), run);
+  Object.assign(run, { relics: [], flasks: [], consumables: {}, sideboard: [] });
+  run.loadout = { ...run.loadout, storage: [], boughtArmour: [] };
+  const app = dom.document.createElement('main');
+  dom.document.body.replaceChildren(app);
+  const screen = mountBlacksmith(app, { registries, run, meta: { settings: {} }, onLeave() {}, shopId: '1:smith', onSell() {} });
+  const tab = app.querySelector('[data-shop-category="sell"]');
+  assert.ok(tab, 'the Sell tab is offered');
+  tab.click();
+  const shelf = () => app.querySelector('[data-shop-shelf="sell"]');
+  assert.equal(shelf().querySelectorAll('.merchant-offer').length, 0, 'nothing is sellable');
+  assert.equal(shelf().querySelector('.bs-idle')?.textContent, t('shop.status.nothingWanted'));
+  run.relics = [registries.relics.all()[0].id];
+  screen.refresh();
+  assert.ok(shelf().querySelectorAll('.merchant-offer').length > 0, 'the relic is offered for sale');
+  assert.equal(shelf().querySelector('.bs-idle'), null, 'the empty line is gone');
 }));
