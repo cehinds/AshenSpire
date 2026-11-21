@@ -1,3 +1,4 @@
+import { GrantRelicCardCopies } from '../model/cardCopyService.js';
 import { ChannelWeight } from '../model/damageChannels.js';
 import { GearGainBonus, GearProps, GearState } from './gearReceipt.js';
 import { GearHitRiders } from '../model/gearEffects.js';
@@ -2439,6 +2440,7 @@ export const RUN_OPCODE_HANDLERS = Object.freeze({
       if (relicId && !run.relics.includes(relicId)) {
         ctx.registries.relics.get(relicId); // throws on dangling id
         run.relics.push(relicId);
+        GrantRelicCardCopies(ctx.registries, run, relicId); // a copy relic queues its one-time copy door
         syncFlaskGrowth(ctx.registries, run); // growth chain: a relic source binds the moment it is held
         reconcileRunLoadoutHp(ctx.registries, run); // relic properties (maxMana1) raise the pools the moment it is held
       }

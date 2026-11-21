@@ -803,6 +803,8 @@ export const RUN_SHAPE = [
   // The upgrade offer counter (upgradeOffer.js): each upgrade source a run enters takes the next number.
   { key: 'upgradeOfferSerial', type: 'number', optional: true },
   { key: 'rewardOfferHistory', type: 'object', optional: true },
+  // Owner 2026-11-20: one-time card copies a copy relic queued (model/cardCopyService.js); absent means none waiting.
+  { key: 'pendingCardCopies', type: 'number', optional: true },
   { key: 'contentVersion', type: 'string' },
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
@@ -1376,6 +1378,7 @@ function checkLevelAndSmithingCounters(run, problems) {
     }
   }
   if (run.level !== undefined) problems.push(...levelProblems(run.level));
+  if (run.pendingCardCopies !== undefined && (!Number.isInteger(run.pendingCardCopies) || run.pendingCardCopies < 0)) problems.push('pendingCardCopies must be a non-negative integer');
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
   }

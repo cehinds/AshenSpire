@@ -16,6 +16,8 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-21 for reward uniqueness and card copy (#2928: reward-ranks.skipOwned, shops cardCopy, Scribe's Mirror): exactly 24 leaves moved,
+// all profile, snapshot and save hashes of the three current-profile scenarios; events, RNG, receipts and continuations unchanged.
 // Recaptured 2026-11-20 on merging dev again (card changes, #2902): the runtime hash is unchanged (fbf370e6...); only the profile, snapshot and save hash leaves moved (card data joins the profile); every events, RNG, receipt and continuation hash is unchanged.
 // Recaptured 2026-11-20 on merging dev (0.7.4.242, spell traditions) into the Retreat reach rules and drawbacks: only profile, runtime, snapshot and save hash leaves moved
 // (the new retreatRulesVersion and spellRewardPolicyVersion module defaults and the Retreat card faces join the profile); every events, RNG, receipt and continuation hash is unchanged (the tradition-policy test below proves it).
