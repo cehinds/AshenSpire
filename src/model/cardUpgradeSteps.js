@@ -136,15 +136,15 @@ export const UPGRADE_OPTION_KINDS = Object.freeze(Object.keys(WEIGHTS));
 //   cost      what the card costs: cost, a steady (no longer rising) cost, rank down
 //   flow      cards moving: draw, cycle, shuffle, cull, a copy
 //   keyword   how the card sits in hand: Innate, Retain, hold one, losing Exhaust or Ethereal
-//   form      how and when the card is played: range, stance, school, Reaction (a play in the enemy's turn), a run attribute
+//   form      how and when the card is played: range, stance, school, damage type, Reaction (a play in the enemy's turn), a run attribute
 export const UPGRADE_FAMILIES = Object.freeze({
   damage: Object.freeze(['dmg', 'hits', 'targeting', 'element', 'fx:target']),
   defense: Object.freeze(['blk', 'fx:block', 'fx:counter']),
-  pressure: Object.freeze(['stk', 'addStatus', 'poise']),
+  pressure: Object.freeze(['stk', 'stkEase', 'addStatus', 'poise']),
   cost: Object.freeze(['cost', 'fx:steady', 'rankDown']),
   flow: Object.freeze(['fx:draw', 'fx:cycle', 'fx:shuffle', 'fx:cull', 'fx:copy']),
   keyword: Object.freeze(['fx:unexhaust', 'fx:innate', 'fx:retain', 'fx:holdOne', 'fx:unethereal']),
-  form: Object.freeze(['range', 'maneuver', 'school', 'fx:reaction', 'attr']),
+  form: Object.freeze(['range', 'maneuver', 'school', 'dmgType', 'fx:reaction', 'attr']),
 });
 // Kinds a random roll never offers (owner, 2026-11-20: no "no upgrade"): a run-long +1 attribute (`attr`) and a rank
 // down (`rankDown`) change nothing on a single play. Saved steps of these kinds still resolve; a card's authored
@@ -598,7 +598,15 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const takenKinds = new Set();
   // A dud kind (DUD_KINDS) is rolled only when a card's own upgradeMenu names it.
   const allowed = (kind) => (menu ? menu.includes(kind) : !DUD_KINDS.includes(kind));
-  const open = (r, kind) => !takenKinds.has(kind) && !takenFamilies.has(UpgradeKindFamily(kind, perRarity[r][kind]));
+  // An ease above common is a combo of the ease and a partner step (`also`): the partner must be of a family still open, so the
+  // combo never brings back a family already on offer. `optionAt` drops the closed partners; an ease with none left is closed.
+  const optionAt = (r, kind) => {
+    const option = perRarity[r][kind];
+    if (!option?.also || limits.everyFamily) return option;
+    const also = option.also.filter((partner) => !takenFamilies.has(UpgradeKindFamily(partner.kind, partner.option)));
+    return also.length ? { ...option, also } : null;
+  };
+  const open = (r, kind) => !takenKinds.has(kind) && !takenFamilies.has(UpgradeKindFamily(kind, perRarity[r][kind])) && !!optionAt(r, kind);
   // kindsAt(r, group): the kinds still open at rarity r, in WEIGHTS order.
   const vendor = UPGRADE_VENDORS[limits.vendor] || null;
   const categoryAt = (r, kind) => UpgradeCategoryOf(kind, perRarity[r][kind], current);
@@ -630,9 +638,10 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     const { key: rarity, rest: afterRarity } = pickByWeight(rarities, afterCategory);
     const inGroup = here(rarity);
     const { key: kind } = pickByWeight(inGroup.map((candidate) => [candidate, WEIGHTS[candidate]]), afterRarity);
-    out.push(stepOf(kind, perRarity[rarity][kind], choice, rarity));
+    const step = stepOf(kind, optionAt(rarity, kind), choice, rarity);
+    out.push(step);
     // The picked family leaves the draw: the next option is of another family (with everyFamily, only the kind).
-    if (limits.everyFamily) takenKinds.add(kind); else takenFamilies.add(UpgradeKindFamily(kind, perRarity[rarity][kind]));
+    if (limits.everyFamily) takenKinds.add(kind); else for (const family of [UpgradeKindFamily(kind, perRarity[rarity][kind]), ...UpgradeStepFamilies(step)]) takenFamilies.add(family);
   }
   return out;
 }
