@@ -28,6 +28,7 @@ import { spellDefenseSplit } from './spellDefense.js';
 import { tagService } from './tagService.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { combatExpansionMatchups } from '../content/combatMatchups.js';
+import { WitherRemaining } from './wither.js';
 
 const UNPHRASEABLE = Symbol('unphraseable');
 const fail = () => { throw UNPHRASEABLE; };
@@ -65,15 +66,21 @@ function esc(value) {
 /** `def` with the effect list a live preview priced: an active charge expands it (an added buildup row), and the preview's values follow that list. */
 const ATTRIBUTE_ABBREVIATION = Object.freeze({ strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT' });
 
+/** The Wither count a face shows: the copy's remaining plays when a live combat knows it, else the authored N. */
+export function WitherFaceCount(def, rules = null, instanceId = null) {
+  if (!Number.isSafeInteger(def?.wither) || def.wither < 1) return null;
+  return rules?.player?.abilityRiders && instanceId ? WitherRemaining(rules.player, { instanceId }, def) : def.wither;
+}
+
 export function withChargedEffects(def, preview = null) {
   return Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects ? { ...def, effects: preview.chargedEffects } : def;
 }
 
 /** The card-face lines for `def`, or null when a part of it cannot be phrased. */
 export function cardFaceLines(def, preview = null, registries = null, rules = null,
-  { stanceEntry = true, representedEffects = [], representedEntry = [], representedRules = [], entryLabel = 'Entry' } = {}) {
+  { stanceEntry = true, representedEffects = [], representedEntry = [], representedRules = [], entryLabel = 'Entry', instanceId = null } = {}) {
   try {
-    return buildLines(def, preview, registries, rules, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel });
+    return buildLines(def, preview, registries, rules, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel, instanceId });
   } catch (error) {
     if (error === UNPHRASEABLE) return null;
     throw error;
@@ -90,7 +97,7 @@ function rampFace(def) {
   return { def: plain, line: `+<span class="val">${per}</span> ${stat === 'block' ? 'Block' : 'damage'} per play this ${scope === 'run' ? 'run' : 'combat'}` };
 }
 
-function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel }) {
+function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel, instanceId = null }) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
   const ramped = rampFace(def);
@@ -461,6 +468,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
 
   if ((def.keywords || []).some(keyword => !KEYWORDS.includes(keyword))) return null;
   const keywords = KEYWORDS.filter(keyword => (def.keywords || []).includes(keyword)).map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
+  const wither = WitherFaceCount(def, rules, instanceId);
+  if (wither !== null) keywords.push(`Wither ${num(wither)}`);
   const byKind = { cost: [], damage: [], status: [], condition: [], consume: [], gain: [], bonus: [], detail: [] };
   const faceText = new Map();
   const faceSegments = segmentsOf(unconditional.filter(f => !f.tag), keywords, true);

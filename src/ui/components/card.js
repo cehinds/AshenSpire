@@ -37,7 +37,7 @@ import { cardArtFallbacks } from '../cardArtwork.js';
 import { markArtPlaceholder } from '../artFallback.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
@@ -47,7 +47,7 @@ import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, mirrorSigil } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
-import { cardFaceLines } from '../../model/cardFaceText.js';
+import { WitherFaceCount, cardFaceLines } from '../../model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
 import { roomyBudgetFor } from '../../model/cardFaceBudget.js';
 import { evadeGrantOnlyCard, CounterStacksForCard, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
@@ -394,7 +394,7 @@ export function renderCard(registries, ref, opts = {}) {
     const representedEntry = model.sideTags.flatMap(tag => tag.representedEntry || []);
     const representedRules = model.sideTags.flatMap(tag => tag.representedRules || []);
     allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null,
-      { stanceEntry: false, representedEffects, representedEntry, representedRules });
+      { stanceEntry: false, representedEffects, representedEntry, representedRules, instanceId: model.instanceId || null });
     // The bounded projection selects whole qualified clauses after the live
     // model has suppressed benefits already represented by exact tag values.
     faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
@@ -993,6 +993,9 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     const k = registries.framework.keywordDisplay(kw);
     if (k) addChip(k.name, k.tooltip, true);
   }
+  // Wither N (SPEC §4.3) is a card field, not a keyword id: its chip reads the authored count.
+  const witherCount = WitherFaceCount(def);
+  if (witherCount !== null) addChip(t('card.keyword.wither', { n: witherCount }), tFull('card.keyword.wither', { n: witherCount }), true);
   for (const eff of def.effects || []) {
     // Status/stance WORDS resolve through the per-bundle framework term
     // overlay — verbatim text, framework authority. Unknown ids and

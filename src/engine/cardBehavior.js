@@ -4,6 +4,7 @@ import { gameContent } from '../model/gameProfile.js';
 // presentation, affordability and actual effect execution.
 import * as Triggers from './triggers.js';
 import { GearCardDefinition } from './gearHooks.js';
+import { WitherRemaining } from '../model/wither.js';
 export function projectCardBehavior(ctx, instance, def, { applyGear = true } = {}) {
   let result=applyGear ? GearCardDefinition(ctx,def) : def;
   if(def.playLimit && (ctx.player.abilityRiders?.instanceUsesCombat?.[instance.instanceId] || 0)>=def.playLimit) result={...result,keywords:[...new Set([...(result.keywords || []),'unplayable'])]};
@@ -19,6 +20,10 @@ export function projectCardBehavior(ctx, instance, def, { applyGear = true } = {
     result={...result,cost:stamina,staminaCost:stamina,manaCost:mana,...(result.resourceCosts ? {resourceCosts:{...result.resourceCosts,sp:stamina,mp:mana}} : {})};
   }
   return result;
+}
+/** Whether this copy's plays this fight have reached its Wither count (read after the play is recorded). */
+export function Withered(entity, instance, def) {
+  return WitherRemaining(entity, instance, def) === 0;
 }
 /** Whether a card's `playIf` holds with `target` aimed. A card without one is always allowed. */
 export function PlayConditionMet(ctx, def, target=null, source=ctx.player) {

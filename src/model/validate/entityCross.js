@@ -28,6 +28,7 @@ export function entityCrossProblems(b, err, ctx) {
       for(const key of ['skipActions','staminaTax','manaTax']) if(card.burden[key]!==undefined && (!Number.isSafeInteger(card.burden[key]) || card.burden[key]<0 || card.burden[key]>10)) err(`${path}.burden.${key}`,'must be bounded nonnegative integer');
     }
     for (const [i, kind] of (Array.isArray(card.upgradeMenu) ? card.upgradeMenu : []).entries()) if (!UPGRADE_OPTION_KINDS.includes(kind)) err(`${path}.upgradeMenu[${i}]`, `unknown upgrade option '${kind}'`);
+    for (const [wither, at] of [[card.wither, `${path}.wither`], [card.upgrade?.wither, `${path}.upgrade.wither`]]) if (wither !== undefined && (!Number.isSafeInteger(wither) || wither < 1 || wither > 20)) err(at, 'must be an integer from 1 to 20');
     for (const [growth, at] of [[card.costGrowth, `${path}.costGrowth`], [card.upgrade?.costGrowth, `${path}.upgrade.costGrowth`]]) {
       if (!growth) continue;
       for (const key of ['stamina','mana']) if (growth[key]!==undefined && (!Number.isSafeInteger(growth[key]) || Math.abs(growth[key])>10)) err(`${at}.${key}`,'must be an integer from -10 to 10');

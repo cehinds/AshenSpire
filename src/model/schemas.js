@@ -901,6 +901,8 @@ export const SCHEMAS = Object.freeze({
     legacyFace: opt(any),
     requirements: opt(any),
     playLimit:opt(int),
+    // Wither N (SPEC §4.3): each copy exhausts on its Nth play this fight.
+    wither: opt(int),
     burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
     costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
     // The only rolled upgrade options this card is offered, by kind (`blk`, `fx:reaction`, ...; cardUpgradeSteps.js UPGRADE_OPTION_KINDS).
@@ -940,6 +942,7 @@ export const SCHEMAS = Object.freeze({
         faceTemplate: opt(arr(str)),
         ramp: opt(rampNode),
         contest: opt(str),
+        wither: opt(int),
         // An upgrade may ease a rising cost (playtest 2026-11-17, theme C): `{ stamina: 0, mana: 0 }` stops the growth.
         costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
       })
