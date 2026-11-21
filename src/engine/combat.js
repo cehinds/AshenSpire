@@ -6,7 +6,7 @@ import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyAdvance, BandsEn
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { actorRangeKey, engagementBand, rangeBand, bandCap } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
-import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
+import { gameProfileEnemyRatings, gameProfileEnemyLevelMoves } from '../model/gameProfileEnemy.js';
 import { enemyDefinitionOf } from '../model/enemyMoveSet.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
 import { decayAtTurnStart } from './statuses.js';
@@ -375,6 +375,9 @@ export function createCombat({
           ward: definition.ward || definition.poiseMax || 0, poise: definition.poise || definition.poiseMax || 0 };
         const { effectiveMaxHp, hpScale, hpStepScale, ...ratings } = gameProfileEnemyRatings(combat,enemy,{actLevelled:Number.isSafeInteger(enemyLevels[index]),levelStep:enemyLevelSteps[index]}) || {};
         Object.assign(enemy, ratings);
+        // Its floor step's level cards join its moves on the instance (owner, 2026-11-20); the registry row stays shared and unchanged.
+        const levelMoves = gameProfileEnemyLevelMoves(combat, enemy);
+        if (levelMoves) enemy.extraMoves = levelMoves;
         // An act-levelled elite or boss (enemies.effectiveLevelHp) takes its level's HP; Custom Climb hpMult still scales it.
         if (Number.isSafeInteger(effectiveMaxHp) && effectiveMaxHp > 0) enemy.hp = enemy.maxHp = hpMult !== 1 ? Math.max(1, Math.round(effectiveMaxHp * hpMult)) : effectiveMaxHp;
         // An enemy still on its rolled HP gains enemyLevelScaling.hpPerStep per floor step (owner, 2026-11-20), after hpMult; no RNG is drawn.
