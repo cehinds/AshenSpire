@@ -230,7 +230,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         } else {
           text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
         }
-        return frag('damage', conciseCounter && hits === 1 ? num(n, base) + area : text + area);
+        // Smash's flat break (owner, 2026-11-20) reads ahead of the damage: "Break 8 Block. Deal 8 damage."
+        const breaks = [['breakBlock', 'Block'], ['breakPoise', 'Poise']].filter(([key]) => effect[key] > 0)
+          .map(([key, label]) => ({ cat: 'break', text: `${num(effect[key], effect[key])} ${label}` }));
+        return [...breaks, ...frag('damage', conciseCounter && hits === 1 ? num(n, base) + area : text + area)];
       }
       case 'poiseDamage': case 'wardDamage': {
         // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
@@ -362,7 +365,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const out = [];
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), restore = of('restore'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
-    if (damage.length) out.push({ kind: 'damage', text: `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
+    const breaks = of('break');
+    if (damage.length) out.push({ kind: 'damage', text: breaks.length
+      ? `Break ${breaks.join(', ')}. Deal ${joinList(damage)}`
+      : `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
     else if (counter && isUnconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
     if (status.length) out.push({ kind: 'status', text: `${concise ? '' : 'Inflict '}${joinList(status)}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
