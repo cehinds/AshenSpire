@@ -220,7 +220,7 @@ test('every object states exactly one kind, the one its collection and type name
   }
   // The original 513, forty cards, ten relics, fifty new class feats, and the
   // twenty existing mastery feats now participating in the kind registry.
-  assert.equal(contentBundle.classSkillFeats.length, 70);
+  assert.equal(contentBundle.classSkillFeats.length, 58, "12 crit feats removed (owner, 2026-11-20: crits and Precision are gone from Core)");
   // Plus the two enemy reaction moves (gildedGuard, bindingRiposte; docs/combat-card-traits-contract.md).
   assert.equal(contentBundle.enemyMoves.length, 237, 'the scoped enemy move collection contains all 237 authored actions');
   // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).

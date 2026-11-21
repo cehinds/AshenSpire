@@ -7,7 +7,6 @@ reaver,3,cards,goreslash
 reaver,4,relic,whetstoneFragment
 reaver,5,cards,bracingStance
 reaver,5,cards,rondelParry
-reaver,6,feat,reaverMasteryFocus
 reaver,7,cards,stomp
 reaver,8,weapon,armament/warhammer
 reaver,9,cards,rallyingStandard
@@ -34,7 +33,6 @@ starseer,3,cards,starstoneWard
 starseer,4,relic,azureSigil
 starseer,5,cards,starlance
 starseer,5,cards,twinkling
-starseer,6,feat,starseerMasteryFocus
 starseer,7,cards,shootingShard
 starseer,7,cards,wardingStar
 starseer,8,weapon,armament/frostSpear
@@ -63,7 +61,6 @@ rogue,3,cards,serratedShiv
 rogue,4,relic,feralEye
 rogue,5,cards,lowBlow
 rogue,5,cards,pilfer
-rogue,6,feat,rogueMasteryFocus
 rogue,7,cards,vanish
 rogue,8,weapon,armament/katana
 rogue,9,cards,cheapShot
@@ -89,7 +86,6 @@ herald,3,cards,cullTheWeak
 herald,3,cards,transfusion
 herald,4,relic,blessedDew
 herald,5,cards,blightward
-herald,6,feat,heraldMasteryFocus
 herald,7,cards,painOffering
 herald,7,cards,witheringTouch
 herald,8,weapon,armament/cinderAxe
