@@ -21,6 +21,8 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // (the new retreatRulesVersion and spellRewardPolicyVersion module defaults and the Retreat card faces join the profile); every events, RNG, receipt and continuation hash is unchanged (the tradition-policy test below proves it).
 // Recaptured 2026-11-19 for saved Retreat opt-in after Dev 213: exactly 27 current profile/runtime/snapshot/save hashes moved.
 // Native and production agree; the complete historical scenario, events, receipts, continuations and RNG values are unchanged.
+// Recaptured 2026-11-20 for effects.statusBlockWeight (the Dexterity status adds Block): 24 leaves moved against dev (after #2915), all of them profile, snapshot
+// and save hashes of the three current-profile scenarios; every event, RNG, receipt and continuation hash is unchanged.
 // Recaptured 2026-11-20 once for the version-free save hash: contentVersion is normalised before hashing, so only the 8 stored/loaded leaves moved; release cuts no longer move them.
 // Recaptured 2026-11-20 again for the card.tradition.* uiStrings rows (#2892 review): runtime and
 // current-profile hash leaves only (27).
