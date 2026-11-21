@@ -10,7 +10,7 @@ import { upgradeChoiceCount, RestUpgradeRule } from '../../model/cardUpgradeLimi
 import { rampParts, playsEverOf } from '../../model/cardRamp.js';
 import { staticTokens } from '../components/card.js';
 import { playingCardArtwork } from '../cardArtwork.js';
-import { t } from '../strings.js';
+import { t, has as hasString } from '../strings.js';
 import { rankUpCandidates } from '../../model/skills.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
 
@@ -180,15 +180,44 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   const gained = UpgradeEffectGain(registries, before, after);
   if (gained) out.push(freeze({ label: t('cardUpgrade.change.also'), before: '', after: gained, adds: true }));
   else if (gained === null) push(t('cardUpgrade.change.effects'), UpgradeEffectWords(registries, before), UpgradeEffectWords(registries, after));
-  const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
+  // Keywords by their shown name ("Retain", not "retain"); Reaction is not a keyword but when the card is played, so it
+  // has its own row (it is a `form` step, cardUpgradeSteps.js UPGRADE_FAMILIES).
+  const keywordName = (kw) => registries.framework?.keywordDisplay?.(kw)?.name || cap(kw);
+  const words = (def) => (def?.keywords || []).map(keywordName).sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));
+  const timing = (def) => t((def?.tags || []).includes('trait:reaction') ? 'cardUpgrade.value.reaction' : 'cardUpgrade.value.ownTurn');
+  push(t('cardUpgrade.change.timing'), timing(before), timing(after));
   // A rising cost (costGrowth) and the steady step that stops it (review of #2819: the picker named no change for it).
   const rising = (def) => (def?.costGrowth?.stamina > 0 ? t('cardUpgrade.value.risingCost', { n: def.costGrowth.stamina }) : t('cardUpgrade.value.steadyCost'));
   push(t('cardUpgrade.change.risingCost'), rising(before), rising(after));
   const from = statusStacks(before), to = statusStacks(after);
   if (statusText(registries, from) !== statusText(registries, to)) out.push(freeze({ label: t('cardUpgrade.change.status'), before: statusText(registries, from), after: statusText(registries, to) }));
+  // Every other amount an effect carries (owner, 2026-11-20: every change an option makes is on the modal): Counter
+  // stacks, Ward, Barrier, a heal, a second hit, a resource back, per op, summed like the face sums them.
+  const before2 = otherAmounts(before), after2 = otherAmounts(after);
+  for (const key of new Set([...before2.keys(), ...after2.keys()])) push(otherLabel(key), num(before2.get(key)), num(after2.get(key)));
+  if (num(before.exposureBuildupPerHit) !== num(after.exposureBuildupPerHit)) push(t('cardUpgrade.change.exposure'), num(before.exposureBuildupPerHit), num(after.exposureBuildupPerHit));
+  // Nothing above names the change, yet the card reads differently: say so rather than show a bare option.
+  if (!out.length && faceText(before) !== faceText(after)) out.push(freeze({ label: t('cardUpgrade.change.text'), before: '', after: t('cardUpgrade.change.textChanges'), adds: true }));
   return freeze(out);
 }
+
+// The effect ops the rows above already read; every other op's amount is compared by otherAmounts.
+const READ_OPS = freeze(['damage', 'block', 'poiseDamage', 'applyStatus', 'draw', 'discard', 'exhaust', 'retain', 'addCard', 'shuffleDiscardIntoDraw', 'changeAttribute', 'removeStatus', 'swapRows']);
+const amountOf = (effect) => num(effect.amount ?? effect.stacks ?? effect.count ?? effect.bands);
+/** Summed amounts of the effects no other row reads, by op (a hit on another or a random enemy is `secondHit`). */
+function otherAmounts(def) {
+  const totals = new Map();
+  for (const effect of def?.effects || []) {
+    const key = effect.op === 'damage' && (effect.target === 'randomEnemy' || effect.target === 'otherEnemy') ? 'secondHit'
+      : READ_OPS.includes(effect.op) ? '' : effect.op;
+    if (key) totals.set(key, (totals.get(key) || 0) + amountOf(effect));
+  }
+  return totals;
+}
+const otherLabel = (key) => (hasString(`cardUpgrade.op.${key}`) ? t(`cardUpgrade.op.${key}`) : key.toUpperCase());
+/** The words a face prints (its template and the fields it fills), for the last-resort "Card text changes" line. */
+const faceText = (def) => JSON.stringify([def?.textTemplate, def?.faceTemplate, def?.text, def?.description, def?.effects, def?.keywords, def?.tags, def?.costGrowth]);
 
 /** Card type, rarity and keyword words, as the face shows them. */
 const cardTags = (registries, def, rarity) => freeze([
