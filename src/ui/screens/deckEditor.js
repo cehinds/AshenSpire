@@ -905,7 +905,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     parts.push(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [inspectPane(), collectionPane(), deckPane()]), footer());
     // Only what changed is replaced (owner, 2026-11-18): the lists and panes stay, so scroll position, focus and
     // the unchanged cards are not rebuilt by one add, remove or selection.
+    // The focus ring is presentation the fresh nodes never carry, so it is lifted
+    // for the comparison; otherwise the focused card would be rebuilt every time.
+    const focusRing = panel.querySelector('.gp-focus');
+    focusRing?.classList.remove('gp-focus');
     PatchChildren(panel, parts, { keyOf: patchKey, isContainer: (key) => PATCH_CONTAINERS.has(key.split(':')[0]), ignoreAttributes: PATCH_IGNORED, opaqueAttributes: PATCH_OPAQUE });
+    focusRing?.classList.add('gp-focus');
     syncInert();
     restoreFocus();
   }
