@@ -46,6 +46,10 @@ export const UPGRADE_FAMILIES = Object.freeze({
   keyword: Object.freeze(['fx:unexhaust', 'fx:innate', 'fx:retain', 'fx:holdOne', 'fx:unethereal']),
   form: Object.freeze(['range', 'maneuver', 'school', 'fx:reaction', 'attr']),
 });
+// Kinds a random roll never offers (owner, 2026-11-20: no "no upgrade"): a run-long +1 attribute (`attr`) and a rank
+// down (`rankDown`) change nothing on a single play. Saved steps of these kinds still resolve; a card's authored
+// `upgradeMenu` may still name one.
+export const DUD_KINDS = Object.freeze(['attr', 'rankDown']);
 const FAMILY_OF = Object.freeze(Object.fromEntries(Object.entries(UPGRADE_FAMILIES).flatMap(([family, kinds]) => kinds.map((kind) => [kind, family]))));
 const DEFENSE_STATS = Object.freeze(['dexterity', 'wisdom']);
 /** The family of an option kind (a boost goes with what it raises: STR / INT damage, DEX / WIS defense). */
@@ -287,8 +291,11 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
     if (n) found.poise = { n };
   }
   if (attacking && !counterReturn) {
-    const raw = familyValue(tags, 'range:') || normalizeRange(familyValue(tags, 'reach:')) || (maneuver === 'ranged' ? 'reach' : 'melee');
-    const next = { melee: 'reach', reach: 'melee' }[raw];
+    // The default mirrors combatCardProfile defaultRangeFor: a spell, a projectile or a ranged stance already reaches.
+    const raw = familyValue(tags, 'range:') || normalizeRange(familyValue(tags, 'reach:'))
+      || (maneuver === 'ranged' || spell || familyValue(tags, 'delivery:') === 'projectile' ? 'reach' : 'melee');
+    // Only a longer reach is offered: Reach to Melee loses range on a single play (owner, 2026-11-20, no downgrades).
+    const next = { melee: 'reach' }[raw];
     // Owner, 2026-11-05: a fight capped at Reach never offers Reach to Ranged (limits.maxRange, from the run's range policy).
     const cap = RANGES.indexOf(limits.maxRange);
     if (next && applied.filter((t) => t.tag?.startsWith('range:')).length < 2 && (cap < 0 || RANGES.indexOf(next) <= cap)) found.range = { tag: `range:${next}` };
@@ -299,8 +306,9 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
     // Single-target hits harder (x1.25 up): it stays inside the same +100% guard a damage step keeps.
     const baseTotal = totalOf(base.effects || [], 'damage') || totalOf(effects, 'damage');
     const grown = Math.ceil(effects[dmgIndex].amount * 1.25) * hitsOf(effects[dmgIndex]);
-    if (!area) found.targeting = { tag: `targeting:${AREA}`, retarget: AREA };
-    else if (grown - baseTotal <= baseTotal) found.targeting = { tag: `targeting:${SINGLE}`, retarget: SINGLE };
+    // One enemy to all enemies is not offered: it cuts the hit 25%, a downgrade on a single play (owner, 2026-11-20).
+    // A saved `targeting:all` step still resolves (cardUpgrade.js).
+    if (area && grown - baseTotal <= baseTotal) found.targeting = { tag: `targeting:${SINGLE}`, retarget: SINGLE };
   }
   if (hitsEnemy && !spell && ATTACK_MANEUVERS.includes(maneuver) && !tagged((t) => t.tag?.startsWith('maneuver:'))) {
     const sp = Number.isInteger(current.staminaCost) ? current.staminaCost : 0;
@@ -380,7 +388,8 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     : Array.isArray(baseDef.gradeProfiles) ? DrawbackSteps.map((fx) => `fx:${fx}`) : null;
   // `limits.excludeFamilies` names families already on offer (an authored first step's), so no option repeats one.
   const taken = new Set(limits.excludeFamilies || []);
-  let kinds = Object.keys(WEIGHTS).filter((kind) => found[kind] && (!menu || menu.includes(kind)) && !taken.has(UpgradeKindFamily(kind, found[kind])));
+  // A dud kind (DUD_KINDS) is rolled only when a card's own upgradeMenu names it.
+  let kinds = Object.keys(WEIGHTS).filter((kind) => found[kind] && (menu ? menu.includes(kind) : !DUD_KINDS.includes(kind)) && !taken.has(UpgradeKindFamily(kind, found[kind])));
   const out = [];
   // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream.
   for (let n = 0; n < Math.max(1, count | 0); n += 1) {

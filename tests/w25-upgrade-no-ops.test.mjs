@@ -44,6 +44,74 @@ test('every rolled upgrade option changes what the card does when played', () =>
   assert.deepEqual(noOps, []);
 });
 
+// The kinds the single play above skips (owner, 2026-11-20: probe them too). Each is played the way it acts: Retain and
+// dropping Ethereal at the end of a turn the card stays in hand, Innate in the opening hand, a steady cost on the second
+// play, Reaction and hold-one in the card the engine reads (their timing is proven in tests/w25-upgrade-menu.test.mjs).
+// Core refreshes the hand at the end of a turn (it goes back to the draw pile and a new hand is drawn), so a plain card
+// may come back by chance: over several seeds a Retain card is always in hand and a plain one is not.
+function endTurnPile(cardId, steps, seed = 511) {
+  const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
+  for (const pile of Object.values(combat.piles)) pile.length = 0;
+  combat.piles.hand.push({ instanceId: 'probe-1', cardId, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) });
+  combat.player.hp = combat.player.maxHp = 999;
+  for (let i = 0; i < 40; i += 1) combat.piles.draw.push({ instanceId: `f${i}`, cardId: 'core.strike', upgraded: false });
+  dispatch(combat, { type: 'endTurn' });
+  // Decline any Reaction the enemy turn offers, so the turn reaches the next draw.
+  for (let i = 0; combat.pendingReaction && i < 20; i += 1) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  return Object.entries(combat.piles).find(([, pile]) => pile.some((card) => card.instanceId === 'probe-1'))?.[0] || 'gone';
+}
+function openingHand(cardId, steps) {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  run.deck = [{ instanceId: 'probe-1', cardId, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) },
+    ...Array.from({ length: 24 }, (_, i) => ({ instanceId: `f${i}`, cardId: 'core.strike', upgraded: false }))];
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  return combat.piles.hand.some((card) => card.instanceId === 'probe-1');
+}
+
+test('every deferred option (Retain, Innate, hold one, Reaction, drop Ethereal, steady cost) changes what the engine does or reads', () => {
+  const faults = [];
+  let checked = 0;
+  for (const id of ids) {
+    const base = registries.cards.get(id);
+    const inst = { instanceId: 'probe-1', cardId: id, upgraded: false };
+    const steps = nextUpgradeOptions({ seed: 7, gameProfile: profile, rangePolicy: {} }, inst, base, registries, 40, { noAuthored: true, everyFamily: true }).filter(isDeferred);
+    for (const step of steps) {
+      checked += 1;
+      const label = `${id} ${JSON.stringify(step)}`;
+      if (step.fx === 'retain' || step.fx === 'unethereal') {
+        const seeds = [511, 512, 513, 514];
+        const upgraded = seeds.map((seed) => endTurnPile(id, [step], seed)), plain = seeds.map((seed) => endTurnPile(id, [], seed));
+        const kept = step.fx === 'retain' ? upgraded.every((pile) => pile === 'hand') : !upgraded.includes('exhaust');
+        if (!kept || JSON.stringify(upgraded) === JSON.stringify(plain)) faults.push(label);
+      } else if (step.fx === 'innate') {
+        if (!openingHand(id, [step])) faults.push(label);
+      } else {
+        // Reaction, hold one and a steady cost: the card the engine reads (tags, effects, cost growth) changes.
+        const read = (card) => JSON.stringify([card.tags, card.effects, card.costGrowth, card.keywords]);
+        if (read(resolveCard(registries, { ...inst, upgraded: true, upgradeSteps: [step] })) === read(resolveCard(registries, inst))) faults.push(label);
+      }
+    }
+  }
+  assert.ok(checked > 100, `probe checked ${checked} deferred options`);
+  assert.deepEqual(faults, []);
+});
+
+test('no roll offers a dud: no run attribute, no rank down, no one enemy to all, no Reach to Melee', () => {
+  for (const id of ids) {
+    const base = registries.cards.get(id);
+    for (let seed = 1; seed <= 6; seed += 1) {
+      const steps = nextUpgradeOptions({ seed, gameProfile: profile, rangePolicy: {} }, { instanceId: `d${seed}`, cardId: id, upgraded: false }, base, registries, 40, { noAuthored: true, everyFamily: true });
+      for (const step of steps) {
+        const where = `${id} ${JSON.stringify(step)}`;
+        assert.notEqual(step.k, 'attr', where);
+        assert.notEqual(step.tag, 'rank.cantrip', where);
+        assert.notEqual(step.tag, 'targeting:area', where);
+        assert.notEqual(step.tag, 'range:melee', where);
+      }
+    }
+  }
+});
 
 const RUN = { seed: 7, gameProfile: profile, rangePolicy: {} };
 const kindsOf = (cardId, steps = []) => {
@@ -85,6 +153,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { resolveCard } from '../src/model/registries.js';
 
 // A magic weapon's Smith tier raises its spells (PR), not only the physical Strike.
 function spellDamage(itemTier) {
