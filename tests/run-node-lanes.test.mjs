@@ -221,7 +221,7 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     }
     if (file === 'tests.yml') {
       const shards = [...discovery.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]);
-      assert.deepEqual(shards, ['0/4', '1/4', '2/4', '3/4']);
+      assert.deepEqual(shards, ['0/6', '1/6', '2/6', '3/6', '4/6', '5/6']);
     }
     assert.match(discovery, /fetch-art/);
     assert.match(discovery, /Pillow==11\.1\.0/);

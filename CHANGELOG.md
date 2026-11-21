@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-21
+
+- **Pull-request test shards stop hitting their time limit** ([#2925](https://github.com/cehinds/AshenSpire/pull/2925), `0.7.5.16`). Development-process fix only, nothing in the game changes. The discovered-test checks on a pull request into dev now run in six parts instead of four, because some parts kept stopping at the 15-minute limit with every test passing. No test was removed and the limit is unchanged.
+
 ## 2026-11-20
 
 - **Upcast button removed** ([#2914](https://github.com/cehinds/AshenSpire/pull/2914), `0.7.5.16`). Cards no longer show an Upcast button or ask for a rank after you pick a target, and the setting that asked is gone. Spell ranks were removed from combat, so choosing one stopped the card from playing; every card now plays at its printed strength.
