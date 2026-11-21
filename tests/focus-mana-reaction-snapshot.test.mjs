@@ -1,5 +1,6 @@
 // A snapshot saved before the Focus Mana discount stores a stale manaCost on a pending reaction option; answering must pay the live price.
-// Focus discounts magic cards only (owner, 2026-11-01), and guardCounter is a physical card, so its live price is the printed 2 with no discount.
+// Focus discounts magic cards only (owner, 2026-11-01), and guardCounter is a physical card, so its live price is the printed 1 with no discount.
+// Upcasting is off, so the reaction offers only the printed tier (r0:0); it used to read the tier-1 upcast option at 2 MP.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -24,14 +25,15 @@ test('a snapshot paused on a Mana reaction with the printed manaCost still answe
       maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, deck: [{ cardId: 'guardCounter', instanceId: 'r0', upgraded: false }] } });
   combat.player.block = 100;
   dispatch(combat, { type: 'endTurn' });
-  const option = combat.pendingReaction.options.find(row => row.id === 'r0:1:default');
+  const option = combat.pendingReaction.options.find(row => row.id === 'r0:0:default');
   assert.ok(option, 'the Mana reaction card is offered');
-  assert.equal(option.manaCost, 2, 'live price is the printed 2: a non-magic card gets no Focus discount');
+  assert.equal(option.manaCost, 1, 'live price is the printed 1: a non-magic card gets no Focus discount');
+  assert.ok(!combat.pendingReaction.options.some(row => row.id.startsWith('r0:1:')), 'no upcast tier is offered');
   const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
   const stored = snapshot.pendingReaction.options.find(row => row.id === option.id);
   stored.manaCost = option.manaCost + 1; // what a pre-deploy save holds: the printed cost
   const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot });
   const before = restored.player.mana;
   dispatch(restored, { type: 'chooseReaction', offerId: restored.pendingReaction.id, optionId: option.id });
-  assert.equal(before - restored.player.mana, 2, 'pays the live price, not the stale one');
+  assert.equal(before - restored.player.mana, 1, 'pays the live price, not the stale one');
 });
