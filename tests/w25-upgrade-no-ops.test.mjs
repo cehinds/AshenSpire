@@ -30,11 +30,15 @@ test('every rolled upgrade option changes what the card does when played', () =>
       const inst = { instanceId: 'probe-1', cardId: id, ...(lead.length ? { upgraded: true, upgradeSteps: lead } : { upgraded: false }) };
       const options = nextUpgradeOptions(run, inst, base, registries, 40, { noAuthored: true })
         .filter((step) => !isDeferred(step)).slice(0, PER_CARD);
+      // The card before the option depends only on the card, its lead and the field, so it is played once per field.
+      const beforeByField = new Map();
       for (const step of options) {
         checked += 1;
         // A second-target step can only show itself with a second enemy on the field.
         const opts = { classId, ...(step.k === 'fx' && step.fx === 'target' ? { enemies: ['wanderingSoldier', 'wanderingSoldier'] } : {}) };
-        const before = outcome(play(id, lead.length ? { upgraded: true, upgradeSteps: lead } : {}, opts));
+        const field = JSON.stringify(opts);
+        if (!beforeByField.has(field)) beforeByField.set(field, outcome(play(id, lead.length ? { upgraded: true, upgradeSteps: lead } : {}, opts)));
+        const before = beforeByField.get(field);
         const after = outcome(play(id, { upgraded: true, upgradeSteps: [...lead, step] }, opts));
         if (after === before && !RAMP.has(id)) noOps.push(`${id}${lead.length ? '+' : ''} ${JSON.stringify(step)}`);
       }
