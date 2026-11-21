@@ -57,7 +57,7 @@ test('legacy fixture (noncombat + the old unlimited rules): Armoury door, Strike
 test('the Core rest component offers the deck-opt door, which is not a service and leaves the visit unspent', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const component = readFileSync(new URL('../src/ui/components/gameProfileRest.js', import.meta.url), 'utf8');
-  assert.match(main, /deckEditor: deckDoors\(\)\.rest \? \{ onOpen: \(\) => showDeckEditor\(\(\) => showRest\(\), true, null, 'shrine'\) \} : null/);
+  assert.match(main, /deckEditor: deckDoors\(\)\.rest \? \{ onOpen: \(\) => showDeckEditor\(refresh, true, null, 'shrine'\) \} : null/);
   assert.match(main, /if \(RestOpensDeckEditor\(run\)\) return Object\.freeze\(\{ armoury: false, rest: deckEditingOn\(settings\) \}\)/);
   assert.match(component, /id: 'deck-opt'/);
   // The door calls only deckEditor.onOpen: no commit, no visit write.
