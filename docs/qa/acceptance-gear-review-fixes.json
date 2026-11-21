@@ -1,0 +1,115 @@
+{
+  "request": "Review finding (gear, 2026-11-20): Wyrmscale Mail's Counter gain bonus is missing from Counter cards. Reaver playing guardCounter in Mail gets 2 Counter stacks in play (1 without Mail), but the face showed only the return damage. Show the Counter-stack grant, the way Evade already shows its grant.",
+  "success": "guardCounter's face shows '1 Counter stack' bare and '2 Counter stacks' with Wyrmscale Mail; the line fits the card at 1280x800 and 390x844 with no overflow, undefined or NaN, and no console errors.",
+  "failure": "The Counter-stack line is missing, overflows the card, prints undefined or NaN, or the page logs a console error.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "guard-counter-bare",
+      "url": "?shot=combat&shotSeed=4&shotDeck=guardCounter,guardCounter,guardCounter,guardCounter,guardCounter",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "wait": {
+            "ms": 500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "guardCounter is in the hand",
+          "selector": ".hand .card[data-card-id=\"guardCounter\"]"
+        },
+        {
+          "kind": "text",
+          "label": "The face says 1 Counter stack",
+          "selector": ".hand .card[data-card-id=\"guardCounter\"]",
+          "matches": "\\b1\\s*Counter stack"
+        },
+        {
+          "kind": "within",
+          "label": "The card face line fits inside the card",
+          "selector": ".hand .card[data-card-id=\"guardCounter\"] .card-body, .hand .card[data-card-id=\"guardCounter\"]",
+          "container": ".hand .card[data-card-id=\"guardCounter\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "max": 0,
+          "label": "No console errors (the unfetched art pack 404s of this sandbox are ignored)",
+          "ignore": [
+            "Failed to load resource.*404", "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "The face prints undefined or NaN",
+          "selector": ".hand .card[data-card-id=\"guardCounter\"]",
+          "matches": "undefined|NaN"
+        }
+      ]
+    },
+    {
+      "name": "guard-counter-mail",
+      "url": "?shot=combat&shotSeed=4&shotArmor=wyrmscaleMail&shotDeck=guardCounter,guardCounter,guardCounter,guardCounter,guardCounter",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "wait": {
+            "ms": 500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "guardCounter is in the hand",
+          "selector": ".hand .card[data-card-id=\"guardCounter\"]"
+        },
+        {
+          "kind": "text",
+          "label": "The face says 2 Counter stack",
+          "selector": ".hand .card[data-card-id=\"guardCounter\"]",
+          "matches": "\\b2\\s*Counter stack"
+        },
+        {
+          "kind": "within",
+          "label": "The card face line fits inside the card",
+          "selector": ".hand .card[data-card-id=\"guardCounter\"] .card-body, .hand .card[data-card-id=\"guardCounter\"]",
+          "container": ".hand .card[data-card-id=\"guardCounter\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "max": 0,
+          "label": "No console errors (the unfetched art pack 404s of this sandbox are ignored)",
+          "ignore": [
+            "Failed to load resource.*404", "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "The face prints undefined or NaN",
+          "selector": ".hand .card[data-card-id=\"guardCounter\"]",
+          "matches": "undefined|NaN"
+        }
+      ]
+    }
+  ]
+}

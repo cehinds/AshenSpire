@@ -342,3 +342,8 @@ Every item of a type carries its type's base effect. An item's own signature (se
 ## 25. Buff-card drawbacks (owner, 2026-11-19)
 - Most buff cards carry a drawback before upgrade: Exhaust, a high cost, an escalating cost, Ethereal, a buff to an enemy, a discard, Wound/Dazed status cards added to the deck, or a negative status on the user. Upgrades can remove or soften the drawback as an option.
 - Upgrade options favour easing the drawback or improving effectiveness/cost: at early upgrade levels they are offered about 3:1 against new-effect options; additional effects come mostly at later levels.
+
+## 26. Amendment: gear pool lines are dropped only where resolved points feed the pool (owner, 2026-11-20)
+- Amends §23's treatment of item max HP / Mana / Stamina lines on resolved Core gear. An item's own `self.maxHp`, `self.maxMana` or `self.maxStamina` line is dropped only when that item's resolved stat points already feed the pool, through `content/source/derivedStatRules.json`: HP from Constitution, Mana from Wisdom, Stamina from Dexterity. Otherwise the line stays, uncapped (the greatsword's authored +999 max HP stays; Bastion's -1 max SP stays, it has no Dexterity).
+- A type or armour group base line always stays (the Robes +1 max MP). A robe's own max MP line stays unless its resolved points feed Mana (Nightweave's Wisdom does, so it keeps the type +1 only).
+- Saves: runs in progress recalculate. A run holding the double-counted pool drops it at its next re-derive, with no per-run marker. Current HP clamps to the new max and is never healed.
