@@ -218,7 +218,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       for (const card of serviceCandidates(registries, run, 'cardCopy')) {
         const plan = cardCopyPlan(registries, run, card.instanceId);
         const host = tile(GLYPH.cardCopy, `${plan.name}${card.upgraded ? '+' : ''}`, t('blacksmith.cardCopy.desc', { uses: plan.usesLeft }), '', { visual: cardVisual(card) });
-        actionButton(host, { label: t('blacksmith.action.copy'), kind: 'buy', cost: plan.cost, plan,
+        actionButton(host, { label: t('blacksmith.action.copy'), cost: plan.cost, plan,
           commit: () => { const receipt = commitCardCopy(registries, run, plan); onCardPurchased({ kind: 'combatCards', id: receipt.id, instanceId: receipt.instanceId }); },
           review: () => purchaseReview({ kind: ShopPurchaseKind('cardCopies'), name: plan.name, cost: plan.cost, cinders: run.cinders }) });
         shelf.append(host);
