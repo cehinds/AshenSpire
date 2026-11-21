@@ -522,12 +522,33 @@ export function MountCardUpgradeModal(
             selected: {
                 ...model.selected,
                 changes: option.changes,
+                look: option.look,
             },
             faces: {
                 before: model.faces.before,
                 after: option.after,
             },
         };
+    }
+
+    // The rarity (a coloured chip) and the exact size of an upgrade, read from the card the step makes (owner, 2026-11-19).
+    function buildLookNode(look)
+    {
+        if (!look)
+        {
+            return null;
+        }
+        return buildElement(
+            'span',
+            {
+                class: `card-upgrade-look card-upgrade-look-${look.rarity}`,
+                dataset: { upgradeRarity: look.rarity },
+            },
+            [
+                buildElement('b', { class: 'card-upgrade-look-rarity', text: look.rarityLabel }),
+                ...(look.size ? [buildElement('span', { class: 'card-upgrade-look-size', text: look.size })] : []),
+            ],
+        );
     }
 
     function buildOptionBody(option, selected)
@@ -551,6 +572,7 @@ export function MountCardUpgradeModal(
             { class: CLASS.optionFace },
             faceCard,
         );
+        const lookNode = buildLookNode(option.look);
         const changeList = buildElement(
             'ul',
             { class: CLASS.optionChanges },
@@ -563,6 +585,7 @@ export function MountCardUpgradeModal(
             },
             [
                 titleNode,
+                ...(lookNode ? [lookNode] : []),
                 faceNode,
                 changeList,
             ],
@@ -664,6 +687,11 @@ export function MountCardUpgradeModal(
             faces: model.faces ? buildFaces(model) : null,
             rows: changeRows,
         });
+        const lookNode = hasOptionChoice(model.selected) ? null : buildLookNode(model.selected.look);
+        if (lookNode)
+        {
+            nodes.unshift(lookNode);
+        }
         if (model.selected.nextDiffers)
         {
             const noteNode = buildElement('p', {
