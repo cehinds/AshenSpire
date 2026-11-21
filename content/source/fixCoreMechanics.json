@@ -173,8 +173,8 @@
     "version": 1,
     "enabled": true,
     "advanceSpPerBand": 1,
-    "reachPrecisionBonus": 0,
-    "throwPrecisionPenalty": 0,
+    "reachPrecisionBonus": 1,
+    "throwPrecisionPenalty": 1,
     "maxRange": "reach"
   },
   "bands": {

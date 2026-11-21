@@ -60,6 +60,15 @@
       "tooltip": "Deal 25% less direct damage while active. Additional stacks extend duration; they do not multiply the penalty."
     },
     {
+      "id": "base.charm",
+      "name": "Charm",
+      "icon": "health",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Direct attack accuracy -25 while active. Lose one stack at turn end.",
+      "retired": true
+    },
+    {
       "id": "base.bind",
       "name": "Bind",
       "icon": "stamina",
@@ -74,6 +83,15 @@
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Melee and Reach cards cost 1 extra Stamina while active. This is separate from a generated Restrained burden card."
+    },
+    {
+      "id": "base.foresight",
+      "name": "Foresight",
+      "icon": "target",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Each stack grants +2 Perception for detecting Veil. Lose one stack at the next turn start.",
+      "retired": true
     },
     {
       "id": "base.evade",
@@ -170,6 +188,15 @@
       "stackMode": "add",
       "decay": "none",
       "tooltip": "Intercept up to 4 direct damage per stack for another ally, consuming one stack per interception. The lowest actor ID wins competing guards."
+    },
+    {
+      "id": "base.veil",
+      "name": "Veil",
+      "icon": "target",
+      "stackMode": "add",
+      "decay": "none",
+      "tooltip": "Single-target actions must detect the bearer. Chance is 50% plus 5% per Perception advantage, minus 10% per Veil stack, clamped between 5% and 95%. Area actions bypass Veil.",
+      "retired": true
     },
     {
       "id": "base.retain-block",
@@ -366,6 +393,24 @@
         }
       ]
     },
+    "base.charm": {
+      "requires": {
+        "modules": [
+          "statuses"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "end",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "accuracy",
+          "delta": -25
+        }
+      ]
+    },
     "base.bind": {
       "requires": {
         "modules": [
@@ -406,6 +451,25 @@
           ],
           "stamina": 1,
           "mana": 0
+        }
+      ]
+    },
+    "base.foresight": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "stats"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "perception",
+          "amountPerStack": 2
         }
       ]
     },
@@ -679,6 +743,30 @@
           "kind": "guard",
           "amountPerStack": 4,
           "consumeStacks": 1
+        }
+      ]
+    },
+    "base.veil": {
+      "requires": {
+        "modules": [
+          "statuses",
+          "stats"
+        ],
+        "elements": []
+      },
+      "decay": {
+        "phase": "start",
+        "stacks": 1
+      },
+      "behaviors": [
+        {
+          "kind": "veil",
+          "baseChance": 50,
+          "perceptionScale": 5,
+          "penaltyPerStack": 10,
+          "minimum": 5,
+          "maximum": 95,
+          "areaBypass": true
         }
       ]
     },
