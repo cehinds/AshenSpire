@@ -33,17 +33,20 @@ test('an attr step changes no play of the card but records its run bonus', () =>
 test('the roll offers it on spells only, and rarely', () => {
   const spells = registries.cards.ids().map(id => registries.cards.get(id)).filter(d => (d.tags || []).includes('camp:spell') && (d.effects || []).some(e => e.op === 'damage')).slice(0, 3);
   const strike = registries.cards.get('core.strike');
-  let spellAttr = 0, spellBoost = 0, strikeAttr = 0;
-  for (let seed = 0; seed < 600; seed += 1) {
-    for (const def of spells) for (const step of rollUpgradeOptions(def, [], 1, upgradeStepRng(seed, `i${seed}`, 1), {}, 1)) {
+  // The run bonus is a rare-only step (PLACED_AT), and rare is common only at later upgrades, so sample upgrades #9-#11.
+  let spellAttr = 0, spellBoost = 0, strikeAttr = 0, spellRolls = 0;
+  for (const idx of [8, 9, 10]) for (let seed = 0; seed < 600; seed += 1) {
+    for (const def of spells) for (const step of rollUpgradeOptions(def, [], idx, upgradeStepRng(seed, `i${seed}`, idx), {}, 1)) {
+      spellRolls += 1;
       if (step.k === 'attr') { spellAttr += 1; assert.ok(['intelligence', 'wisdom'].includes(step.stat)); assert.equal(step.n, 1); }
       if (step.k === 'fx' && step.fx === 'boost') spellBoost += 1;
     }
-    for (const step of rollUpgradeOptions(strike, [], 1, upgradeStepRng(seed, `i${seed}`, 1), {}, 3)) if (step.k === 'attr') strikeAttr += 1;
+    for (const step of rollUpgradeOptions(strike, [], idx, upgradeStepRng(seed, `i${seed}`, idx), {}, 3)) if (step.k === 'attr') strikeAttr += 1;
   }
   assert.ok(spellAttr > 0, 'offered on a spell');
   assert.equal(strikeAttr, 0, 'never on a physical attack');
   assert.ok(spellAttr < spellBoost, `a run bonus (${spellAttr}) is rarer than a boost (${spellBoost})`);
+  assert.ok(spellAttr / spellRolls < 0.05, `a run bonus is a small share of spell rolls (${spellAttr}/${spellRolls})`);
 });
 
 test('the run-long +1 INT applies to the effective attributes, the ratings, the sheet and a fight; it leaves with the card', () => {
