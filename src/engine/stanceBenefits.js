@@ -159,7 +159,8 @@ export function SweepSplashTargets(ctx, source, primary, carrier, candidates) {
 
 /** The carrier a splash hit travels as: no committed contact, range plan or crit of the main hit, and the fraction its damage carries. */
 export function SplashCarrier(ctx, source, carrier) {
-  const { rangePlan, rangeContactId, expansionGroup, expansionContact, manualCounterSerial, critMultiplier, ...rest } = carrier;
+  // A splash hit carries no flat break (Smash's breakBlock / breakPoise hit only the aimed target).
+  const { rangePlan, rangeContactId, expansionGroup, expansionContact, manualCounterSerial, critMultiplier, breakBlock, breakPoise, ...rest } = carrier;
   return { ...rest, stanceSplash: SweepSplashFraction(ctx, source, carrier), proposalTargetDecisions: {}, combatRiderTargets: [] };
 }
 

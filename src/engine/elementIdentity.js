@@ -293,7 +293,7 @@ export function ElementSecondaryPlan(ctx, source, target, carrier, { single = tr
   // The chained hit gets its own contact: the copy keeps the planned contact's flags (no roll of its own) but has its own receipt, so what the
   // chained hit records there (blockBefore, read by the first target's Poise riders) never overwrites the first target's.
   const contact = carrier?.expansionContact && { ...carrier.expansionContact, receipt: carrier.expansionContact.receipt && { ...carrier.expansionContact.receipt } };
-  return other ? [{ kind: 'chain', target: other, carrier: { ...carrier, elementChain: true, ...(contact ? { expansionContact: contact } : {}) } }] : [];
+  return other ? [{ kind: 'chain', target: other, carrier: { ...carrier, breakBlock: undefined, breakPoise: undefined, elementChain: true, ...(contact ? { expansionContact: contact } : {}) } }] : [];
 }
 
 /** After a landed lightning hit on a single target: the chained hit, dealt through `deal` (the same door as the first). */

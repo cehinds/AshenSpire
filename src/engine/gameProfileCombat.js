@@ -175,6 +175,18 @@ export function SideDamageMultiplier(effects, source) {
   const value = source?.kind === 'enemy' ? effects?.enemyDamageMultiplier : source?.kind === 'player' ? effects?.playerDamageMultiplier : 1;
   return Number.isFinite(value) && value >= 0 ? value : 1;
 }
+/** The flat break a hit's carrier holds (`breakBlock`, `breakPoise` from its damage effect), capped by what the target has; null when none. */
+export function HitBreakAmounts(target, carrier) {
+  const block = Math.min(Math.max(0, target?.block || 0), Math.max(0, Math.floor(Number(carrier?.breakBlock) || 0)));
+  const poise = Math.min(Math.max(0, target?.persistentPoise?.value || 0), Math.max(0, Math.floor(Number(carrier?.breakPoise) || 0)));
+  return block > 0 || poise > 0 ? { block, poise } : null;
+}
+/** A carrier with its damage effect's flat break (first hit per target only); `hitIndex` > 0 or no break leaves the carrier without one. */
+export function HitBreakCarrier(carrier, effect, hitIndex = 0) {
+  const { breakBlock, breakPoise, ...rest } = carrier || {};
+  if (hitIndex > 0 || !effect || !(effect.breakBlock > 0 || effect.breakPoise > 0)) return breakBlock || breakPoise ? rest : carrier;
+  return { ...rest, ...(effect.breakBlock > 0 ? { breakBlock: effect.breakBlock } : {}), ...(effect.breakPoise > 0 ? { breakPoise: effect.breakPoise } : {}) };
+}
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const pierceOut = { spent: 0 };
   const effects = configuredModule(ctx, 'effects');
@@ -306,11 +318,15 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   if (fixCoreEnabled(ctx)) hitChance = (attackHitPreview(ctx, source, target, carrier, forecast ? { assumeInRange: true } : {})?.hitChance ?? 100) / 100;
   const evaded = roll !== null ? roll >= hitChance : forecast && fixCoreEnabled(ctx) && hitChance === 0;
   if (evaded) amount = 0;
-  let smashBlockBonus = 0;
-  if (smashRule && !evaded && target) {
-    // Read from the Block held before this hit's own absorption.
-    smashBlockBonus = Math.floor(smashRule.blockFraction * Math.max(0, target.block || 0));
-    if (smashBlockBonus > 0) { sources.push({id:'smash-block-bonus',label:'Smash vs defensive stance: bonus from target Block',amount:smashBlockBonus,requested:amount,effective:amount+smashBlockBonus,stage:'stance',operation:'add'}); amount += smashBlockBonus; }
+  // Owner, 2026-11-20 (SPEC, Smash): a damage effect's flat break. A landed hit first removes `breakBlock` Block and `breakPoise` Poise, then its damage
+  // meets what is left as usual (Reflect, then Block). The carrier holds the break only on its first hit per target, so a multi-hit card breaks once.
+  const broken = !evaded && target && !flatReturn ? HitBreakAmounts(target, carrier) : null;
+  if (broken) {
+    if (broken.block > 0) sources.push({id:'break-block',label:'Break Block',amount:0,requested:target.block || 0,effective:(target.block || 0)-broken.block,stage:'mitigation',operation:'add'});
+    if (broken.poise > 0) sources.push({id:'break-poise',label:'Break Poise',amount:0,requested:target.persistentPoise.value,effective:target.persistentPoise.value-broken.poise,stage:'mitigation',operation:'add'});
+    // The rest of the receipt reads the target as the break leaves it (a detached view; the live hit applies blockRemaining and the Poise loss).
+    target = { ...target, block: Math.max(0, (target.block || 0) - broken.block),
+      ...(broken.poise > 0 ? { persistentPoise: { ...target.persistentPoise, value: target.persistentPoise.value - broken.poise } } : {}) };
   }
   // Reflect (owner 2026-10-31, SPEC §17): the target's Reflect stacks cut this hit before Block; the stacks and the pre-cut
   // figure ride on the receipt so the landed hit can send its share back. A reflected, countered or unreflectable hit is not cut.
@@ -449,14 +465,17 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poise = PoiseLossAdjust(ctx,source,carrier,defending,{taken:poiseMitigated+poiseDrain,pool:target?.persistentPoise?.value || 0});
     poiseDrain += poise.extra; poiseSpared = poise.spared;
   }
+  // The broken Poise leaves the pool with the hit's own Poise damage (the live hit subtracts poiseDrain from the real pool).
+  if (broken?.poise > 0) poiseDrain += broken.poise;
   return { ...(pierceOut.spent > 0 ? { skinSpent: pierceOut.spent } : {}), raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
-    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
+    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,...(broken?.block ? {blockBroken:broken.block} : {}),...(broken?.poise ? {poiseBroken:broken.poise} : {}),barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
     ...(wardRouted ? { wardRouted: true } : {}), ...(wardBlockFirst ? { wardBlockFirst: true } : {}),
     hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null && !evaded,
     hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain, ...(poiseSpared ? { poiseSpared } : {}),
     blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
-    ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
+    ...(broken ? { broken } : {}),
+    ...(smashRule ? { smashVsDefensive: { poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,
     interrupted: advantage && stances?.staggerOnAdvantage === true

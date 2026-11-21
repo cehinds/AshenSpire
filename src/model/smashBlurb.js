@@ -1,7 +1,7 @@
 // Leaf of smashClause.js: the Smash tag-blurb swap and the shared text fill. Reads the profile through model/profileModule.js only,
 // so combatCardProfile.js can import it without the smashClause -> gameProfileCombat -> stanceRules -> combatCardProfile cycle.
 // Core (FixCore) Smash text, one shared source for every card tagged maneuver:smash (no per-card edits).
-// A Core Smash reads the multiplier for each active matchup, plus blockFraction of the target's Block and
+// A Core Smash reads the multiplier for each active matchup and
 // poiseFraction of the total to Poise (smashVsDefensive in fixCoreMechanics.json). The words are read from the
 // same rules combat uses, so a profile with other numbers says them; other profiles keep the legacy wording.
 import { fixCoreEnabled, fixCoreSmashVsDefensiveRules } from './fixCoreMechanics.js';
@@ -41,7 +41,7 @@ export const fill = (id, ctx) => {
   }
   const matchupRow = row('card.smash.matchupClause');
   const matchups = groups.map(group => matchupRow.replace('{stances}', list(group.stances)).replace('{mult}', multWord(group.multiplier))).join(' ');
-  const words = { matchups, block: fractionWord(rules.blockFraction), poise: fractionWord(rules.poiseFraction) };
+  const words = { matchups, poise: fractionWord(rules.poiseFraction) };
   return row(id).replace(/\{(\w+)\}/g, (whole, key) => words[key] ?? whole);
 };
 /** A resolved tag row with the Core Smash help swapped in for maneuver:smash under a Core profile; any other row is returned as is. */

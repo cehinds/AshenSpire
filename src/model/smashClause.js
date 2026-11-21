@@ -1,5 +1,5 @@
 // Core (FixCore) Smash text, one shared source for every card tagged maneuver:smash (no per-card edits).
-// A Core Smash reads the multiplier for each active matchup, plus blockFraction of the target's Block and
+// A Core Smash reads the multiplier for each active matchup and
 // poiseFraction of the total to Poise (smashVsDefensive in fixCoreMechanics.json). The words are read from the
 // same rules combat uses, so a profile with other numbers says them; other profiles keep the legacy wording.
 import { configuredStance } from './profileStance.js';

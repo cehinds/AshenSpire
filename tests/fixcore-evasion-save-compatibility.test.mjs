@@ -101,7 +101,7 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   const def = registries.cards.get('core.evade');
   // The resumed fight keeps its snapshotted evadeStackBase of 1: its card face reads that, not the shipped evadeStacksPerCard, and the
   // grant matches the face. Off-combat faces (no combat rules) still read the shipped rule.
-  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 1 Evade.');
+  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 1 Evade. · Wither 3 · +1 SP each time you play this card this fight (max +3)');
   assert.equal(restored.fixCoreRules.accuracy.hitRoll, undefined, 'the saved fight keeps rolling');
   const face = cardFaceLines(def, null, registries, restored).map(row=>row.html).join('').replace(/<[^>]*>/g,'');
   const plain = cardPlainText(registries, {cardId:'core.evade'}, { rules: restored });
@@ -110,7 +110,8 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   dispatch(restored,{type:'playCard',cardInstanceId:'resumed-evade'});
   const granted = restored.player.statuses.evade.stacks - start;
   assert.equal(granted, 1);
-  for (const text of [face, plain, live]) assert.equal(text, `Gain ${granted} Evade.`, 'the resumed card face matches its grant');
+  // The grant line leads; Wither and the rising cost follow it (owner, 2026-11-20).
+  for (const text of [face, plain, live]) assert.ok(text.startsWith(`Gain ${granted} Evade.`), `the resumed card face matches its grant: ${text}`);
   const roundtrip=restoreStripped({registries,rng:createRng(511),snapshot:serializeCombatSnapshot(restored),expectedGameProfile:restoredRun.gameProfile});
   assert.equal(roundtrip.gameProfile.hash,originalHash);assert.equal(roundtrip.fixCoreRules.accuracy.evadeStackDex,0);
 });
@@ -213,7 +214,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-19: the deferred Axe Strength reader's generated call-map now names finishAbilityPlay; 2a83899... remains readable.
   // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
   // Re-pinned 2026-11-20 (#2892 review): card tradition labels move to uiStrings.csv (card.tradition.*); wording only, edf0d9... is now in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7');
+  // Re-pinned 2026-11-20: Smash breaks flat Block (smashVsDefensive loses blockFraction); 7d13f1... is now in PREVIOUS_RUNTIMES.
+  assert.equal(profile.lock.runtimeHash, 'sha256:66d82f48c2bc9bc25ae783c39ebe4db804c78017a7ce9c5d5b6f43a3e6616984');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

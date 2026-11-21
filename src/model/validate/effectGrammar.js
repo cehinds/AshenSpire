@@ -54,6 +54,7 @@ export function validateEffects(effects, path, vctx) {
     if(eff.op==='modifyCards' && eff.changes?.hideTurns && typeof eff.changes.hideTurns==='object') validateFormula(eff.changes.hideTurns,`${p}.changes.hideTurns`,vctx);
     if (eff.oncePerTurn !== undefined && (typeof eff.oncePerTurn !== 'string' || !eff.oncePerTurn.trim())) err(`${p}.oncePerTurn`, 'must be a non-empty family marker');
     for (const flag of ['nonlethal', 'offering', ...(eff.op === 'discard' ? ['choose'] : [])]) if (eff[flag] !== undefined && typeof eff[flag] !== 'boolean') err(`${p}.${flag}`, 'must be a boolean');
+    for (const key of ['breakBlock','breakPoise']) if (eff.op==='damage' && eff[key]!==undefined && (!Number.isSafeInteger(eff[key]) || eff[key]<1 || eff[key]>99)) err(`${p}.${key}`,'must be an integer from 1 to 99');
     if(eff.op==='addBurden' && eff.pile!==undefined && !['draw','hand'].includes(eff.pile)) err(`${p}.pile`,'Enemy burden pile must be draw or hand');
     if (eff.op === 'discard' && eff.choose && eff.random) err(p, 'chosen discard cannot also be random');
     if (eff.op === 'grantCardCharge') {
