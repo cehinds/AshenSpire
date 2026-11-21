@@ -250,7 +250,7 @@ export function mountDialogue(app, options) {
     if (response.binding) btn.dataset.binding = '1';
     if (!response.affordable) {
       btn.dataset.requires = '1';
-      const reason = response.unmet === 'rankableCard' ? t('event.noRankableCard') : t('dialogue.cannotAfford');
+      const reason = response.unmet === 'rankableCard' ? t('event.noRankableCard') : response.unmet === 'relicHeld' ? t('event.relicHeld') : t('dialogue.cannotAfford');
       if (tooltipHints) {
         btn.title = `${response.label} — ${reason}`;
         btn.setAttribute('aria-description', reason);
