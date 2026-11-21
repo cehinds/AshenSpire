@@ -14,8 +14,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 4
+      "min": 8,
+      "max": 8
     },
     "poiseMax": 13,
     "spFloor": 3
@@ -26,7 +26,7 @@
     "deckSize": 8,
     "reserveSize": 1,
     "distinctCards": 4,
-    "levelRange": "4-4"
+    "levelRange": "8-8"
   },
   "equipment": [
     {
