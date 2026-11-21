@@ -63,7 +63,7 @@ const DIALOGUE_FALLBACK_SCENES = ['open-road', 'mountain-road', 'cave-approach']
  * own combat scene when it has one, otherwise one of its region's layered
  * settings picked by the run seed and the node id (stable across reloads).
  */
-export function layeredDialogueScene(run = {}, environment = combatEnvironment(run)) {
+export function LayeredDialogueScene(run = {}, environment = combatEnvironment(run)) {
   const own = layeredCombatScene(run, environment);
   if (own) return own;
   const regionId = run.environmentRegionId || environment?.region?.id;

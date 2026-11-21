@@ -42,7 +42,7 @@ import { wireframeUi } from '../../content/wireframeUi.js';
 import { el, modalFooter, button, prose } from '../kit/index.js';
 import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
 import { layeredEnvironmentHtml } from '../components/layeredEnvironment.js';
-import { layeredDialogueScene } from '../../model/layeredEnvironments.js';
+import { LayeredDialogueScene } from '../../model/layeredEnvironments.js';
 import { wireDialogueStage } from '../components/dialogueStage.js';
 import { enemySprite, playerSprite } from '../assets.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -112,7 +112,7 @@ export function mountDialogue(app, options) {
   // floor line (dialogueStage fits both to the scene window). Always the
   // layered generator, themed by the node: an atlas painting fitted to the
   // window left a black band below it on tall frames (owner, 2026-11-20).
-  const plateScene = layeredDialogueScene(run);
+  const plateScene = LayeredDialogueScene(run);
   const plateLayer = (layer, wireframe) => {
     const wrap = el('div', { class: `dialogue-plate-layer dialogue-${layer}`, 'aria-hidden': 'true', dataset: { layer, wireframe } });
     wrap.innerHTML = layeredEnvironmentHtml(plateScene);

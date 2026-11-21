@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LAYERED_SCENES, INTRO_LAYERED_SCENES } from '../src/content/layeredEnvironments.js';
-import { layeredCombatScene, layeredDialogueScene, REGION_SETTINGS } from '../src/model/layeredEnvironments.js';
+import { layeredCombatScene, LayeredDialogueScene, REGION_SETTINGS } from '../src/model/layeredEnvironments.js';
 import { ENVIRONMENTS } from '../src/content/environments.js';
 import { readFileSync } from 'node:fs';
 
@@ -102,16 +102,16 @@ test('every conversation, in every region, gets a layered plate seeded by its no
       mapGraph: { nodes: { [nodeId]: { id: nodeId, type: 'event' } } } });
     assert.equal(layeredCombatScene(run('evt-a')), null, `${region.id}: an event node has no layered combat scene`);
     for (const nodeId of ['evt-a', 'evt-b', 'evt-c', 'evt-d', 'evt-e', 'evt-f']) {
-      const scene = layeredDialogueScene(run(nodeId));
+      const scene = LayeredDialogueScene(run(nodeId));
       assert.ok(scene?.layers.some(layer => layer.role === 'ground'), `${region.id}/${nodeId}: layered plate`);
-      assert.deepEqual(scene, layeredDialogueScene(JSON.parse(JSON.stringify(run(nodeId)))), 'stable across reloads');
+      assert.deepEqual(scene, LayeredDialogueScene(JSON.parse(JSON.stringify(run(nodeId)))), 'stable across reloads');
       const own = Object.values(REGION_SETTINGS[region.id] || {});
       if (own.length) assert.ok(own.some(id => scene.id.startsWith(id)), `${region.id}: ${scene.id} is a scene of the region`);
     }
   }
   // A node with its own layered combat scene keeps it.
   const crown = { seedString: 'DIALOGUE', mapNodeId: 'crownfall' };
-  assert.equal(layeredDialogueScene(crown).id, layeredCombatScene(crown).id);
+  assert.equal(LayeredDialogueScene(crown).id, layeredCombatScene(crown).id);
 });
 
 test('the dialogue screen draws its plate from the layered generator, not the atlas', () => {
