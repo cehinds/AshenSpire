@@ -42,7 +42,7 @@ import { blacksmithStoneDiscount } from '../../model/blacksmithConfig.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt } from '../../model/blacksmithStock.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { purchaseReview, ShopPurchaseKind, SmithRankReview } from '../models/ConfirmationReviewModel.js';
-import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, cardCopyPlan, commitCardCopy, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
+import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, CardCopyPlan, CommitCardCopy, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
 
 const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack', cardCopy: 'skill' });
 
@@ -216,10 +216,10 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     // Owner 2026-11-20: a copy shelf, one row per card the player owns, while the shelf has uses left.
     cardCopy(shelf) {
       for (const card of serviceCandidates(registries, run, 'cardCopy')) {
-        const plan = cardCopyPlan(registries, run, card.instanceId);
+        const plan = CardCopyPlan(registries, run, card.instanceId);
         const host = tile(GLYPH.cardCopy, `${plan.name}${card.upgraded ? '+' : ''}`, t('blacksmith.cardCopy.desc', { uses: plan.usesLeft }), '', { visual: cardVisual(card) });
         actionButton(host, { label: t('blacksmith.action.copy'), cost: plan.cost, plan,
-          commit: () => { const receipt = commitCardCopy(registries, run, plan); onCardPurchased({ kind: 'combatCards', id: receipt.id, instanceId: receipt.instanceId }); },
+          commit: () => { const receipt = CommitCardCopy(registries, run, plan); onCardPurchased({ kind: 'combatCards', id: receipt.id, instanceId: receipt.instanceId }); },
           review: () => purchaseReview({ kind: 'cardCopyChosen', name: plan.name, cost: plan.cost, cinders: run.cinders }) });
         shelf.append(host);
       }

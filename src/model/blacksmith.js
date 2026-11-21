@@ -344,10 +344,10 @@ export function serviceCandidates(registries, run, id) {
 
 /** The sentence a service with nothing to act on shows (uiStrings `blacksmith.idle.<id>`). */
 /**
- * cardCopyPlan(registries, run, instanceId) → the quote for copying owned card `instanceId` at this Blacksmith's copy shelf
+ * CardCopyPlan(registries, run, instanceId) → the quote for copying owned card `instanceId` at this Blacksmith's copy shelf
  * (owner 2026-11-20): `{ ok, reason, instanceId, name, cost, stones: 0, usesLeft, revision }`.
  */
-export function cardCopyPlan(registries, run, instanceId) {
+export function CardCopyPlan(registries, run, instanceId) {
   const shelf = run.shopStock?.cardCopy || null;
   const card = CardCopyCandidates(registries, run).find((row) => row.instanceId === instanceId) || null;
   const cost = Number.isSafeInteger(shelf?.cost) ? shelf.cost : 0;
@@ -361,9 +361,9 @@ export function cardCopyPlan(registries, run, instanceId) {
   return { ok: !reason, reason, instanceId, name, cost, stones: 0, usesLeft, revision: run.shopStock?.tradeRevision || 0 };
 }
 
-/** commitCardCopy(registries, run, quote) → { instance, spent }. The copy lands in the library; the shelf loses one use. */
-export function commitCardCopy(registries, run, quote) {
-  const plan = cardCopyPlan(registries, run, quote.instanceId);
+/** CommitCardCopy(registries, run, quote) → { instance, spent }. The copy lands in the library; the shelf loses one use. */
+export function CommitCardCopy(registries, run, quote) {
+  const plan = CardCopyPlan(registries, run, quote.instanceId);
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
   const instance = CopyOwnedCard(registries, run, plan.instanceId);

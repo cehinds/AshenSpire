@@ -100,7 +100,7 @@ test('a save made before the copy service loads unchanged; a bad copy count is r
 });
 
 test('a Blacksmith copy shelf copies the chosen card, spends a use per copy, refuses a stale quote, then runs out', async () => {
-  const { cardCopyPlan, commitCardCopy } = await import('../src/model/blacksmith.js');
+  const { CardCopyPlan, CommitCardCopy } = await import('../src/model/blacksmith.js');
   const { buildBlacksmithStock } = await import('../src/engine/shopKinds.js');
   const run = fresh(13);
   run.cinders = 5000; run.smithingStones = 5;
@@ -108,14 +108,14 @@ test('a Blacksmith copy shelf copies the chosen card, spends a use per copy, ref
   if (!run.shopStock.offerings.includes('cardCopy')) run.shopStock.offerings.push('cardCopy');
   run.shopStock.cardCopy = { cost: 140, usesLeft: 2 };
   const target = run.deck[0];
-  const first = cardCopyPlan(reg, run, target.instanceId);
+  const first = CardCopyPlan(reg, run, target.instanceId);
   assert.ok(first.ok, first.reason);
-  const receipt = commitCardCopy(reg, run, first);
+  const receipt = CommitCardCopy(reg, run, first);
   assert.equal(receipt.id, target.cardId);
   assert.equal(run.sideboard.at(-1).instanceId, receipt.instanceId);
   assert.equal(run.cinders, 5000 - 140);
-  assert.throws(() => commitCardCopy(reg, run, first), /changed|stale|again/i, 'the first quote is stale once the shelf moved');
-  commitCardCopy(reg, run, cardCopyPlan(reg, run, target.instanceId));
+  assert.throws(() => CommitCardCopy(reg, run, first), /changed|stale|again/i, 'the first quote is stale once the shelf moved');
+  CommitCardCopy(reg, run, CardCopyPlan(reg, run, target.instanceId));
   assert.equal(run.shopStock.cardCopy.usesLeft, 0);
-  assert.equal(cardCopyPlan(reg, run, target.instanceId).ok, false, 'no uses left');
+  assert.equal(CardCopyPlan(reg, run, target.instanceId).ok, false, 'no uses left');
 });
