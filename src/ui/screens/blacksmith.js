@@ -67,8 +67,10 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   // Every purchase asks first (owner, 2026-11-19): a row whose action spends on one click (buy, rank up) is armed
   // through the shared review (secondbeat 'smithBuy'); the services that open their own modal confirm there.
   const arm = beatArmer(meta, registries);
+  // A retained row's action object takes each refresh's fresh plan (syncShelf), so the listener reads `action.run`
+  // at the click, never the function the row was first built with.
   function wireAction(control, action) {
-    if (!action.review) { control.addEventListener('click', action.run); return; }
+    if (!action.review) { control.addEventListener('click', (event) => action.run(event)); return; }
     const review = () => action.review();
     arm(control, 'smithBuy', {
       question: () => review().question, target: () => review().target, message: () => review().message,

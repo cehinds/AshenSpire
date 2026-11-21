@@ -132,3 +132,24 @@ test('a refresh after leaving cannot replace the next screen', () => withKitDom(
   screen.refresh();
   assert.equal(app.firstElementChild, next);
 }));
+
+// A retained row's own button must run the plan of the latest refresh: upgrading Y moves the trade revision, and
+// X's kept Upgrade button used to pass its first-build plan, which the commit refused as stale.
+test('upgrading a retained row after another upgrade commits its current plan', () => withKitDom(dom => {
+  const { app, run } = fixture(dom);
+  app.querySelector('[data-shop-category="upgrade"]').click();
+  const upgradeRows = () => [...app.querySelectorAll('[data-shop-shelf="upgrade"] .merchant-offer')].filter(row => !action(row).disabled);
+  const [x, y] = upgradeRows();
+  assert(x && y, 'two upgradable items');
+  const choose = () => {
+    dom.document.querySelector('[data-smith-option]:not([disabled])').click();
+    [...dom.document.querySelectorAll('button')].find(node => node.textContent === 'Choose').click();
+  };
+  action(y).click(); choose();
+  dom.document.querySelector('#what-changed-continue')?.click();
+  assert.equal(x.isConnected, true, 'the untouched row is retained');
+  const stones = run.smithingStones;
+  action(x).click(); choose();
+  assert.equal(x.querySelector('.bs-refusal'), null, 'the retained Upgrade is not refused as stale');
+  assert(run.smithingStones < stones, 'the second upgrade committed');
+}));
