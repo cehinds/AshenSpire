@@ -91,14 +91,16 @@ const coreReg = bindGameProfileRegistries(createRegistries(applyGameProfileToCon
 const RARITY_RANGE = { common: [60, 75], uncommon: [90, 113], rare: [150, 180] };
 const MULT = [1, 1.4, 1.8, 2.3];
 
-test('stock: six distinct armaments, tiers within the authored weights, prices scale with the tier', () => {
+test('stock: four to six distinct armaments (owner 2026-11-20: the rack size varies per visit), tiers within the authored weights, prices scale with the tier', () => {
   const tally = [0, 0, 0, 0];
+  const sizes = new Set();
   let n = 0;
   for (let seed = 1; seed <= 120; seed++) {
     const run = smithRun(coreOut, { seed });
     const rack = run.shopStock.armaments;
-    assert.equal(rack.length, 6);
-    assert.equal(new Set(rack.map((row) => row.id)).size, 6, 'distinct pieces');
+    assert.ok(rack.length >= 4 && rack.length <= 6, `seed ${seed}: ${rack.length} armaments`);
+    sizes.add(rack.length);
+    assert.equal(new Set(rack.map((row) => row.id)).size, rack.length, 'distinct pieces');
     for (const row of rack) {
       assert.ok(Number.isInteger(row.tier) && row.tier >= 0 && row.tier <= 3, `tier ${row.tier}`);
       tally[row.tier]++; n++;
@@ -107,7 +109,8 @@ test('stock: six distinct armaments, tiers within the authored weights, prices s
       assert.ok(row.cost >= Math.round(lo * MULT[row.tier]) && row.cost <= Math.round(hi * MULT[row.tier]), `${row.id} tier ${row.tier} price ${row.cost} outside ${lo}-${hi} x ${MULT[row.tier]}`);
     }
   }
-  // 20/40/30/10 with 720 draws: each tier within 8 points of its weight, and "usually higher than default".
+  assert.ok(sizes.size > 1, 'racks differ in size between visits');
+  // 20/40/30/10 with about 600 draws: each tier within 8 points of its weight, and "usually higher than default".
   [0.2, 0.4, 0.3, 0.1].forEach((share, tier) => assert.ok(Math.abs(tally[tier] / n - share) < 0.08, `tier ${tier}: ${tally[tier] / n}`));
   assert.ok(1 - tally[0] / n > 0.7, 'most pieces are above the default tier');
   // The same seed rolls the same rack.

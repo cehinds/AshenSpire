@@ -39,6 +39,8 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // current-profile scenarios. Every event, RNG, receipt and continuation hash, the runtime hash and the whole historical scenario are unchanged.
 // Recaptured again 2026-11-19 after the bare content Poise row returned to CON (default profile
 // still overrides to WIS): 27 profile/runtime/snapshot/stored hash leaves moved; nothing else.
+// Recaptured 2026-11-20 for varied vendor shelf sizes: exactly 24 current profile/snapshot/save hashes moved; events, RNG,
+// receipts, continuations, runtime hashes and the historical scenario are unchanged.
 // Recaptured 2026-11-19 for versioned Arcane/Divine casting and Wisdom Poise.
 // Only profile/runtime pins and snapshot/save digests move; events, RNG,
 // receipts and continuations match the preserved preceding 521250 capture.

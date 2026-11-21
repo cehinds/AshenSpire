@@ -2734,6 +2734,8 @@ function showShop() {
     const refresh = () => smith?.refresh();
     smith = mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(refresh),
       onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
+      // Every vendor buys (owner, 2026-11-20): the Blacksmith sells through the merchant's own sale transaction.
+      shopId, onSell: quote => commitGameProfileShopSale(registries, run, shopId, quote),
       onLeave: traderSmith
         ? () => { StashSiteStock(run, slot, run.shopStock); delete run.gameProfileTraderSmith; persist(); showShop(); }
         : () => { StashSiteStock(run, slot, run.shopStock); run.shopStock = null; delete run.gameProfileOpenShop; markRestLeft(run); persist(); showMap(); } });
