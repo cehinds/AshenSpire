@@ -2324,6 +2324,16 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .card-upgrade-option.selected { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
 .card-upgrade-option:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .card-upgrade-option-title { font-family: var(--font-display); color: var(--gold); }
+.card-upgrade-look { display: inline-flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0.1rem 0.5rem; font-size: 0.85rem; color: var(--ink-dim); }
+.card-upgrade-look-rarity { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-dim); }
+.card-upgrade-look-uncommon .card-upgrade-look-rarity { color: var(--frost); }
+.card-upgrade-look-rare .card-upgrade-look-rarity { color: var(--gold); }
+.card-upgrade-look-size { color: var(--parchment); font-weight: 600; }
+/* The card's cost medallion hangs 1rem above its face, so the chip clears it on a wide option; a narrow one has the chip in the title row. */
+.card-upgrade-option-body .card-upgrade-look { margin-bottom: 1rem; font-size: var(--upgrade-text, 0.85rem); }
+@media (max-width: 600px) {
+  .card-upgrade-option-body .card-upgrade-look { flex: 0 0 100%; justify-content: flex-start; margin-bottom: 0; }
+}
 .card-upgrade-option-face { min-width: 0; }
 .card-upgrade-option-face .card { transform: none !important; }
 .card-upgrade-option-changes { list-style: none; margin: 0; padding: 0; font-size: 0.85rem; color: var(--ink-dim); }
