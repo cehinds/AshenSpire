@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-21
+
+- **The build site stays small enough to publish** ([#2922](https://github.com/cehinds/AshenSpire/pull/2922), `0.7.5.16`). Development-process fix only, nothing in the game changes. The site of playable builds now carries at most the three newest branch previews, and keeps one build of the stable channel, one of the release channel and two each of the development and test channels, so it fits under the size its publication allows again.
+
 ## 2026-11-20
 
-- **The build site stays small enough to publish** ([#2922](https://github.com/cehinds/AshenSpire/pull/2922), `0.7.5.14`). Development-process fix only, nothing in the game changes. The site of playable builds now carries at most the three newest branch previews, and keeps one build of the stable channel, one of the release channel and two each of the development and test channels, so it fits under the size its publication allows again.
+- **Upcast button removed** ([#2914](https://github.com/cehinds/AshenSpire/pull/2914), `0.7.5.16`). Cards no longer show an Upcast button or ask for a rank after you pick a target, and the setting that asked is gone. Spell ranks were removed from combat, so choosing one stopped the card from playing; every card now plays at its printed strength.
 - **Dexterity now adds Block** ([#2912](https://github.com/cehinds/AshenSpire/pull/2912), `0.7.5.14`). In new runs, each stack of Dexterity gives +1 Block to every Block card you play after gaining it. Block you already hold does not change: with 5 Block, gaining 1 Dexterity leaves you at 5, and playing a 5-Block card then adds 6. Before this, the Dexterity from cards like Iron Hide and Keen Edge added no Block at all. Runs you already saved keep the old rule.
 - **Enemy health bars stay above every sprite** ([#2917](https://github.com/cehinds/AshenSpire/pull/2917), `0.7.5.12`). In combat, the health, block and status bars over each fighter are no longer hidden behind other fighters' sprites, including when a back-row enemy is drawn smaller.
 - **The combat background stays still** ([#2918](https://github.com/cehinds/AshenSpire/pull/2918), `0.7.5.10`). The background now settles as the fight loads and then holds like one painted picture. Defeating an enemy no longer shifts its layers, on desktop and phone.
