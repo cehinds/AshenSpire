@@ -279,5 +279,6 @@ export function applyShopPriceMult(stock, mult) {
   if (stock.smithStones) stock.smithStones.price = up(stock.smithStones.price);
   if (stock.innRest) stock.innRest.price = up(stock.innRest.price);
   if (stock.questEvent) stock.questEvent.price = up(stock.questEvent.price);
+  if (stock.cardCopy && Number.isFinite(stock.cardCopy.cost)) stock.cardCopy.cost = up(stock.cardCopy.cost); // the Blacksmith's copy shelf (owner 2026-11-20)
   return stock;
 }

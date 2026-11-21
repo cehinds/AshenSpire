@@ -109,7 +109,9 @@ test('switching casting focus filters exclusive spells while keeping shared, mar
   assert.ok(arcane.has('core.manaLash') && !divine.has('core.manaLash'));
   assert.ok(divine.has('core.hexmark') && !arcane.has('core.hexmark'));
   assert.ok(run.deck.some(card => card.cardId === 'core.venomedEdge'), 'owned martial fixture');
-  for (const id of ['core.rootedShelter', 'core.rimeVeil', 'core.smokeVeil', 'core.venomedEdge']) {
-    assert.ok(arcane.has(id) && divine.has(id), `${id}: shared magic, martial and owned eligibility survives the focus change`);
+  for (const id of ['core.rootedShelter', 'core.rimeVeil', 'core.smokeVeil']) {
+    assert.ok(arcane.has(id) && divine.has(id), `${id}: shared magic and martial eligibility survives the focus change`);
   }
+  // Owner 2026-11-20 (reward-ranks.skipOwned): an owned card is out of the offer pool under either focus, so the focus never decides it.
+  assert.ok(!arcane.has('core.venomedEdge') && !divine.has('core.venomedEdge'), 'core.venomedEdge: owned, so offered under neither focus');
 });

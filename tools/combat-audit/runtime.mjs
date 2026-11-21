@@ -38,6 +38,7 @@ const moduleIds = [
   'src/model/map/mapknowledge.js', 'src/model/statProjection.js',
   'src/model/advancedConfig.js',
   'src/engine/cardBehavior.js',
+  'src/model/cardCopyService.js',
 ];
 export async function loadAuditRuntime(mode = 'native', { configuration = 'raw-authored' } = {}) {
   if (!['native', 'bundled'].includes(mode)) throw new Error(`Unknown audit loader '${mode}'`);
