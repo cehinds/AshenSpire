@@ -86,6 +86,10 @@
         2
       ]
     },
+    "retreatRulesVersion": {
+      "type": "integer",
+      "enum": [0, 1]
+    },
     "spellRewardPolicyVersion": {
       "type": "integer",
       "enum": [0, 1]

@@ -96,6 +96,28 @@ test('route and pair distance changes never reuse another approach quote', () =>
   assert.equal(calls.length, 3);
 });
 
+test('selected modes keep separate live prices on the same fight and each repeated quote is reused', async () => {
+  const { bandsFight } = await import('./helpers/bands-fight.mjs');
+  const combat = bandsFight({ hand: ['dodgeRoll'], stamina: 10 });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', choice: 'retreat' });
+  // Re-deal the same copy to exercise its second Retreat use, without a new turn changing the quote state.
+  const index = combat.piles.discard.findIndex(card => card.instanceId === 'qa0');
+  assert.ok(index >= 0, 'Dodge Roll remains reusable');
+  combat.piles.hand.push(combat.piles.discard.splice(index, 1)[0]);
+  const { memo, calls } = counted(combat);
+  const advance = memo.previewCard(combat, 'qa0', undefined, undefined, { choice: 'advance' });
+  const retreat = memo.previewCard(combat, 'qa0', undefined, undefined, { choice: 'retreat' });
+  assert.equal(advance.staminaCost, 1);
+  assert.equal(retreat.staminaCost, 2);
+  assert.deepEqual(retreat, previewCard(combat, 'qa0', undefined, undefined, { choice: 'retreat' }));
+  assert.notEqual(retreat, advance);
+  for (let i = 0; i < 3; i += 1) {
+    assert.equal(memo.previewCard(combat, 'qa0', undefined, undefined, { choice: 'advance' }), advance);
+    assert.equal(memo.previewCard(combat, 'qa0', undefined, undefined, { choice: 'retreat' }), retreat);
+  }
+  assert.equal(calls.preview, 2, 'one engine preview per mode, never one shared price');
+});
+
 test('one unchanged fight shares one knowledge view; any dispatch or invalidate hands out a fresh one', () => {
   const combat = {};
   const views = [];
