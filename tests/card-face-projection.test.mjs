@@ -195,7 +195,7 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
     assert.ok(projection.clauses.length >= 1 && projection.clauses.length <= 3, label);
     for (const clause of projection.clauses) {
       assert.doesNotMatch(plain(clause.html), /Inspect/, label);
-      assert.ok(clause.kind !== 'detail', label);
+      assert.ok(clause.kind !== 'detail' || card.id === 'core.hitAndRun', label); // Hit and Run's clause carries the Exhaust drawback (owner 2026-11-19)
       assert.doesNotMatch(plain(clause.html), /Smash|while Prone|Entry:|Usable through/, label);
     }
   }

@@ -261,6 +261,20 @@
         "symbol": "runOpcode case swapRows"
       }
     },
+    "pullEnemy": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": true
+        }
+      },
+      "description": "Removes one Retreat stack from the target enemy; with none left the target comes forward to the front row (Gale Pull); inactive in a fight without the bands rules.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case pullEnemy"
+      }
+    },
     "dodgeRoll": {
       "params": {
         "target": {
