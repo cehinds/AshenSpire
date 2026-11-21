@@ -335,7 +335,8 @@ const SETTINGS_GROUP_MODALS = Object.freeze({
   cardSize: Object.freeze({ labelId: 'settings.groupModal.cardSize', section: null }),
   text: Object.freeze({ labelId: 'settings.group.Text', section: topicSection }),
   interface: Object.freeze({ labelId: 'settings.group.Interface', section: topicSection }),
-  export: Object.freeze({ labelId: 'settings.group.Export', section: topicSection }),
+  // Quoted: the bundler reads any line that starts with the word export as a module export.
+  'export': Object.freeze({ labelId: 'settings.group.Export', section: topicSection }),
 });
 
 /** SettingsGroupRows(id) → the Advanced rows behind group modal `id`, in table order. */

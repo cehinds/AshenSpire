@@ -710,7 +710,7 @@ Every card's Stamina (SP) and Mana (MP) cost is derived by formula, in every fig
 **Targets**: most basic and cantrip cards cost 1 Stamina and no Mana; smashes and sweeps cost 2; rank 1–2 cost 1 SP + 1 MP, or 2 SP; most rank 1–3 spells cost 1–2 Mana; many magic cards cost at least 1 SP (0-SP magic still possible); higher SP usually means lower MP.
 
 **Layering and opt-outs**
-- The derived SP and MP replace the authored `cost` and `manaCost`. Per-card rules then apply on top: relic and power reductions, Mana discounts, upcast surcharges. Equipment and status mods apply after, so a mod's flat bonus is added to the scaled number and not scaled.
+- The derived SP and MP replace the authored `cost` and `manaCost`. Per-card rules then apply on top: relic and power reductions, Mana discounts, upcast surcharges (only for stored upcast ranks; upcasting is off, §4.8). Equipment and status mods apply after, so a mod's flat bonus is added to the scaled number and not scaled.
 - Opt-outs (keep authored cost, Mana and numbers): `costRule: 'fixed'` content, curses and statuses (by type), X costs. Every other card is priced, the Dodge Roll and powers included.
   - `costRule: 'fixed'`: warriorsVow, twinkling, shootingShard, bloodPact, bloodletting, painOffering, rogueShiv, smokePellet, setupRogue, prepare, hex, blindingSand, hamstring, masterOfStrategy, blightedTransmute, blightedSecondBloom, blightedBlightward; Core zero-cost cards (§4.3): core.flick, core.pebbleThrow, core.brace, core.quickGuard, core.whetstoneNick, core.temperedEdge.
   - By type: curses (guilt, wound, dazed), statuses (slimed).
@@ -746,7 +746,7 @@ All statuses, the Elden Ring layer included, are data objects in `content/status
 | Status | On whom | Effect | Decay |
 |---|---|---|---|
 | Strength | any | +N attack damage per hit | permanent |
-| Dexterity | player | +N block from cards | permanent |
+| Dexterity | player | +N Block on each later Block card (Core: added after the Block scale, `effects.statusBlockWeight` 1; Block already held is unchanged) | permanent |
 | Weak | any | deal 25% less attack damage | −1 stack at owner's turn end |
 | Vulnerable | any | take 25% more attack damage | −1 stack at owner's turn end |
 | Frail | player | 25% less block from cards | −1 stack at turn end |
@@ -1023,7 +1023,8 @@ All tactical numbers remain authored/configurable; their defaults above establis
 ### 4.8 Martial and Spell expansion (version 2)
 
 Version-2 combat expansion: [docs/combat-expansion-contract.md](docs/combat-expansion-contract.md) and its referenced notes define version-2 ordering, state, defaults and acceptance. New runs snapshot version 2; older runs and snapshots keep §4.7's version-1 rules.
-- It adds: one persistent tactical stance; authored Counter coverage and returns; persistent Ward; reach and area tradeoffs; seeded Evade / recovery checks; control recovery cards; opt-in upcasting; tag/status combos; run-lasting Ashen Blight with three feat milestones.
+- It adds: one persistent tactical stance; authored Counter coverage and returns; persistent Ward; reach and area tradeoffs; seeded Evade / recovery checks; control recovery cards; tag/status combos; run-lasting Ashen Blight with three feat milestones.
+- **Upcasting is off** (owner, 2026-11-20: upcasting is turned off, in Core and in legacy version-2 runs). No Upcast control, no rank prompt and no upcast reaction option appears. The engine still accepts stored `upcastTier` / `upcastRanks` so old saves and logs resolve as before.
 - Preview and rejected/cancelled actions are inert. Committed random outcomes and per-cycle budgets survive saves. Solo play, enemy actions, and both presentation variants share the headless contract.
 
 **Card lifecycle and labels** (contract section of the same name; version 2 only, version-1 fights and snapshots unchanged)
@@ -1086,13 +1087,15 @@ Expanded combat only (`minCombatExpansionVersion: 2`): Core's configured reward 
 
   | Card | Class | Cost | Effect | Penalty → upgrade |
   |---|---|---|---|---|
-  | Steel Resolve | Reaver | 2 SP | 2 Strength | Exhaust, 2 SP → 1 SP |
-  | Iron Hide | Reaver | 1 SP | 2 Dexterity | +1 SP each play (max +2) → base 0 SP |
+  | Steel Resolve | Reaver | 2 SP | 2 Strength | Exhaust, 2 SP → 1 SP, no Exhaust |
+  | Iron Hide | Reaver | 1 SP | 2 Dexterity | Exhaust, +1 SP each play (max +2) → base 0 SP, no Exhaust |
   | Hearth Vigil | Herald | 1 SP, 2 MP | 4 Regen | 2 MP → 1 MP |
-  | Zealous Fervor | Herald | 1 SP | 2 Strength, 1 Dexterity | Ethereal → removed |
-  | Inner Orbit | Starseer | 1 SP, 2 MP | 2 Dexterity, draw 1 | Exhaust, 2 MP → 1 MP |
+  | Zealous Fervor | Herald | 1 SP | 2 Strength, 1 Dexterity | Ethereal, Exhaust → both removed |
+  | Inner Orbit | Starseer | 1 SP, 2 MP | 2 Dexterity, draw 1 | Exhaust, 2 MP → 1 MP, no Exhaust |
   | Starlit Skin | Starseer | 1 SP, 1 MP | 5 Block, 1 Stoneskin | Exhaust → removed |
-  | Keen Edge | Rogue | 1 SP | 1 Strength, 1 Dexterity | Ethereal → removed |
+  | Keen Edge | Rogue | 1 SP | 1 Strength, 1 Dexterity | Ethereal, Exhaust → both removed |
+
+- **Stat-buff cards exhaust** (owner, 2026-11-19). Every player card that grants Strength or Dexterity (to its player or an ally) carries Exhaust on its base face, and its upgrade removes Exhaust; anything else the upgrade already did stays. In Core today: Steel Resolve, Iron Hide, Zealous Fervor, Inner Orbit, Keen Edge (table above), Empower (`base.stat-buff`, 2 Strength), Ally Empowerment (`base.buff-ally`) and Storm Blessing (`core.stormBlessing`, 1 Dexterity and 1 Stamina; upgraded 2 Dexterity). A new stat-buff card follows the same rule. Enemy moves are not cards in a deck and are unaffected. Profiles saved before this rule keep their snapshotted card definitions. *Falsify:* `tests/stat-buff-exhaust.test.mjs`.
 
 - **Conditional payoffs** (base / upgraded; stance and status conditions read `snapshot: 'beforePlay'`):
 
@@ -1236,7 +1239,7 @@ Weighted table: `src/content/encounters/weald.js` (§13.2). Act 2/3 rosters are 
 | Grave Wisp | 12–14 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 8 + heals self 4 (50) | kill first |
 | Pack encounter | — | — | 2× Blight Hound + 1 Grave Wisp | teaches targeting |
 
-**Elite — Wyrm Aspirant** (HP 82–86, Poise 24). Opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+**Elite — Wyrm Aspirant** (HP 82–86, Poise 24). Opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 10 Block + 4 HP heal (20, max1). Drops a relic.
 
 **Boss — The Fell Warden** (Margit-inspired, HP 120, Poise 30)
 
@@ -1710,7 +1713,7 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 - **Selection and information are separate from play.** The focused card, selection glow, Information button and legal-target highlights are preserved; Information opens details without playing; tap, hold, keyboard, controller and direct-target drag confirmation remain.
   - A tap selects and never plays; play needs a second tap on the card or a target pick.
   - The "Tap a card to play it" setting (default off) restores one-tap play when the target is unambiguous (self and all-enemy cards; one living enemy).
-  - Hold selects without playing (inspect, Upcast, target choice).
+  - Hold selects without playing (inspect, target choice; upcasting is off, §4.8).
   - One select colour, the targeting colour (`--selection-color`), for armed, held, keyboard-focused and inspected cards; no gold select state on the hand.
 - **End Turn:** a single press when no card in hand is playable; otherwise the configured second beat.
 - **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a playable hand card plays on release without reaching a combatant.
@@ -2087,6 +2090,7 @@ Player animations:
   - One or two lines at the floor: show it. A one-line rule always shows.
   - Three or more lines at the floor (or an uncarriable clause): show the Inspect cue instead.
   - The (i) Inspect badge over the selected hand card is centred on it.
+  - Holding a hand card selects it at its Hold to confirm duration; keeping the hold 300 ms longer opens its inspection (owner, 2026-11-20). Dragging still plays it.
 - **Card face summaries**: the Inspect cue is a last resort. A card whose computed face cannot be said in five-word clauses authors an optional `faceTemplate`.
   - One to three lines, at most five words each, same `{token}` bindings as `textTemplate` (numbers stay live), naming the main effect: a tag or status is named ("Gain 3 Foresight."), a pile move is plain ("Return 1 exhausted card."). A `[v2:...]` span shows only under the expanded combat rules.
   - Shown instead of the Inspect cue, after any downside the computed face reserved (Exhaust, a payment); details stay in Information.
@@ -2579,7 +2583,7 @@ Class milestones no longer queue. The table is the cadence `classMilestoneProble
 #### One action resource
 
 - Actions, Stamina and SP name one pool. Each card charges its action cost once, plus separately authored Mana or HP costs.
-  - The upcast surcharge (`def.upcastSurcharge`) is still paid: `resolvedCardPlayCosts` (`src/engine/combat.js`) adds it to both the Stamina and the Mana cost.
+  - The upcast surcharge (`def.upcastSurcharge`, only from stored upcast ranks; upcasting is off, §4.8) is still paid: `resolvedCardPlayCosts` (`src/engine/combat.js`) adds it to both the Stamina and the Mana cost.
   - Recovery, discounts, maximum capacity, eligibility and save validation use the shared pool; keep the existing runtime action/Stamina binding where it supplies that identity.
 
 #### Ability identity and grades
@@ -2740,6 +2744,7 @@ The equipment type pass is opt-in per saved profile: `gear.typeEffectsVersion: 1
 - Card damage = base + STR (physical), INT (Arcane-only), WIS (Divine-only), or max(INT, WIS) (shared magic). Under `damage.unified`, casting scaling applies to spell-camp attacks; spell damage is otherwise ordinary damage. The originating card's school and tradition determine the attribute, including for magical power hooks.
 - **Base damage halved** (owner, 2026-11-17): `effects.baseDamageMultiplier` scales every card's base damage, player's and enemy's, rounded up (5 → 3, 1 → 1), before AR or PR adds. Core sets 0.5; the module default is 1. A Counter scales its authored base when it arms. Its completed return includes the share of the incoming hit and lands without another scaling step. The receipt shows the ordinary hit's scale as `base-damage-scale`; the face, the intent and the hit read the same receipt.
 - **Damage, Block and enemy HP cut 30%; spell Poise doubled** (owner, 2026-11-18): four `effects` settings, each defaulting to 1 in the module and set by Core. `playerDamageMultiplier` (0.7) and `enemyDamageMultiplier` (0.7) scale every hit its side deals as one receipt stage, `side-damage-scale` ("Player damage scale" / "Enemy damage scale"), after the element stages and before Block and Poise absorb the hit, so a face, an intent, a preview and the hit read one number. The chain keeps full precision and floors once, as before, and a positive hit never rounds to 0. A Counter return, a reflected hit and a proposal's reactive return are final damage and take no side scale; a Counter's armed base takes none either. Status ticks (Poison, Bleed, Burn) and a Burn explosion are not hits and are not scaled. `blockGainMultiplier` (0.7) is a factor inside the configured Block gain (`computeBlockGain`, both sides, floored) and does not scale a Counter's Block grant (a share of an already side-scaled hit, like its return). **Physical cut** (owner, 2026-11-18, a playtest): `physicalDamageMultiplier` (0, default 1; Core 0.7) scales only the physical share of a hit (the receipt's own physical/magical split, so a spell's magic share is untouched) for both sides, as one `physical-damage-scale` receipt stage just before the side scale; a positive physical part never rounds to 0, and a Counter return, a reflected hit and a reactive return are exempt, like the side scale. Core `blockGainMultiplier` is 0.49 (0.7 twice). A static card face shows the same cut on a physical damage figure; an untyped card's damage type (and so its physical/magic split) resolves from the armament that deals it (`ResolveCarrierDamageType`, `src/model/carrierDamageType.js`: its lending piece, else the first piece of that kind in hand, else bare hands), the same resolver combat uses, so face and hit agree. The spell Poise factor ranges 1..10. `spellPoiseDamageMultiplier` (2) multiplies the Poise a player's spell-camp card takes from an enemy (what the hit absorbs plus its Poise damage, and an explicit spell Poise or Ward-off Ward damage), never past the pool; HP is unchanged. Core enemy HP tiers (`enemies.hpScaleByTier`) are 0.385, 0.42 and 0.455. A static card face outside combat shows the player side scale on a damage figure (not a Counter's); Block faces still show the authored number. The balance tiers `balance.bossTiers` are untouched.
+- **The Dexterity status adds Block** (owner, 2026-11-20): each stack adds `effects.statusBlockWeight` (0 in the module, Core 1) to every Block card played after it (a player card or an enemy move card), added after `blockGainMultiplier` and the floor, so one stack is exactly +1 Block on the next Block card. Protection that is not a played card takes none: Defend-stance turn protection, the Dodge Roll guard, a power's or status's `block`, a Counter's Ward share and a stance-entry guard. Barrier spells (Crystal Aegis, Frost Veil) grant Barrier, not card Block, and take no Dexterity either. Gaining Dexterity does not change Block already held: hold 5, gain 1 Dexterity (still 5), play the 5-Block card again for 6, 11 in all. Before this the configured path never read the status (`blockAdd`), so it added nothing; a profile saved before the ruling has no `statusBlockWeight` and keeps that rule.
 - Physical defensive-skill Block gets DEX; magical Block and healing use the originating card's casting attribute (INT Arcane, WIS Divine, max(INT, WIS) shared). Magical power hooks retain that originating card for damage, Block and healing. Saved profiles without the tradition marker keep their earlier casting formula.
 - Resource generation, buff duration, card draw and action costs get no PR.
 - Profile-level attribute scaling is off for these runs (no double bonus). Authored card-specific modifiers still apply.
@@ -3404,7 +3409,8 @@ All combat values are floored whole numbers. The attacker's chain (Vulnerable, s
 
 ### Defense, Smash and stance bonuses
 
-- Base Defend gives 10 Block; Counter gives floor(Defend Block × 0.5) = 5, before DEX, stance and other bonuses.
+- Base Defend gives 8 Block (10 before the 2026-11-20 retune); Counter gives 5, before DEX, stance and other bonuses. Counter was half of Defend until that retune and keeps its 5.
+- **Block per card** (owner, 2026-11-20): an average Block card, with typical buffs, gives about 8-10 Block, and a single card rarely reaches 20. Core's Defend authors 8 (Counter keeps 5), and no Core enemy move authors more than 12 Block (Nacre Wall, Prism Guard and Golden Bulwark 12; Courtly Decree 11; Pearl Guard, Frozen Bulwark, Harden, Cooling Ash, Kiln Plate, Siege Plate, Iron Litany, Golden Guard, Fortify, Oath Water and Tail Bastion 10). Profiles saved before the retune keep their snapshotted numbers. *Falsify:* `tests/block-per-card-retune.test.mjs`.
 - Stance bonuses (+1 STR offensive stance, +3 DEX defensive stance; +2 STR / DEX / INT from a relic's stance property) apply to Block and damage alike; the card face and preview show the boosted value.
 - **Stance attribute properties** (`stanceAttribute { stance, attribute, n }` in `content/source/itemProperties.json`, relics only; owner, 2026-11-18, #2835): Attacker's, Smasher's, Caster's and Defender's Stance grant +2 STR, STR, INT, DEX while in Attack, Smash, Casting, Defend stance. They replace the old `stanceRating` (+2 AR / DR / PR; a fight saved with it keeps that). The grant is added to the entity's attribute before the channel is priced (`stanceAttributeBonus`, `src/model/stanceRules.js`): the channel is priced with and without it and the difference is the bonus. So Arcane magic reads INT, Divine reads WIS, and shared magic reads max(INT, WIS); an INT stance grant affects only spells whose casting attribute uses it, and a finesse hit's physical channel is priced on its DEX row, not STR. Fight-local: attributes are read, never written.
 - Matching stance multiplies effectiveness by 1.25.
@@ -3665,6 +3671,7 @@ Owner requests of 2026-11-14 and 2026-11-15 (the "Wave 2.5" list, batch 3). Pres
 ### Reward inspection and earned-effect feedback
 
 - **Contextual card inspection** (owner, 2026-11-19). Merchant card and armament rows show complete artwork, without a separate information badge below the thumbnail. Clicking outside the row action opens inspection. Inspectors provide Back and the action belonging to their source: Buy at the shop, Play in combat, Add to library for a deck copy, or Add to deck for a library copy. A deck transfer moves exactly one eligible instance, even when the row groups several copies, and respects existing deck restrictions. Item thumbnails fit and center the visible cutout bounds rather than transparent export margins. Combat targeting and the configured reward multi-pick claim transaction remain unchanged.
+- **Reward cards and press-and-hold** (owner, 2026-11-20). A reward card (cards and armaments, both reward doors) is selected by a tap, never opened by it; the chosen card shows its (i) above it, in the row's reserved lane, and the (i), right-click or I opens its inspection, whose Add to deck and Send to library (side by side) claim it in one click. Every card bound to inspection (rewards, the hand, the Smith's upgrade list, the deck editor and other card surfaces) also opens it on a still press and hold: 700 ms, or the card's own hold (its Hold to confirm duration) plus 300 ms where it has one, so a combat hand card's hold selects first and its release is never a tap or a play. Moving past the 12 px drag slop, a drag or an early release abandons the read; the click after a completed read is swallowed once.
 
 - Older reward confirmation flows keep a separate read-only Inspect action before collection and during confirmation review. Closing it preserves the selection and review stage; an in-flight claim disables it until the save succeeds or fails.
 - Class and used-weapon level notices show the level transition, visible progression, resolved card-value changes and new unlocks the active rules grant; a level with none says so. Next-benefit previews follow the active authored rules and owned-card context. A saved notice resumes without paying XP or granting effects again. Reduced motion keeps final values visible.

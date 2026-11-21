@@ -43,7 +43,7 @@ test('own artwork permits the target while foreign artwork remains an obstacle i
 
 const stageSource=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
 const stageStart=stageSource.indexOf('    // Idle names do not reserve footer rows');
-const stageEnd=stageSource.indexOf('    const rect = combat.getBoundingClientRect();',stageStart);
+const stageEnd=stageSource.indexOf('    // Last layout write of the refit: the HUD, ribbon and intents are settled.',stageStart);
 // The adapter asks for idle enemies and for context-selected ones; answer each.
 const actor=(id,art,x,y,idle)=>{
   const properties={};

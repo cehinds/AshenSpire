@@ -1,7 +1,7 @@
 import { dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
 import { deriveEnemyMoves, resolveEnemyMoveSources } from './enemyMoveSources.js';
 
-const cardOverlayFields = ['coreOffense', 'coreSp'];
+const cardOverlayFields = ['coreOffense', 'coreSp', 'coreBlock'];
 const hasCardOverlay = hint => cardOverlayFields.some(field => hint[field] === 'card');
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const pointerPart = value => value.replaceAll('~', '~0').replaceAll('/', '~1');
@@ -134,6 +134,25 @@ function applyCardOverlay(moves, hint, source, owned, path)
             );
         }
         moves[moveId] = { ...moves[moveId], damage: hits[0].amount, hits: hits[0].hits ?? 1 };
+    }
+    // Block per card (owner, 2026-11-20): coreBlock "card" takes the move's Block from one whole-number block effect on the owned
+    // card. Profiles saved before the opt-in carry no such hint, so their moves keep the shared Block they were born with.
+    if (hint.coreBlock === 'card')
+    {
+        const guards = Array.isArray(source?.effects)
+            ? source.effects.filter(effect => effect?.op === 'block')
+            : [];
+        if (
+            !owned || guards.length !== 1 || !Number.isSafeInteger(guards[0].amount)
+            || moves[moveId].block === undefined
+        )
+        {
+            throw new GameConfigError(
+                `${path}/coreBlock`,
+                'requires one whole-number block effect on the card and a move with authored block',
+            );
+        }
+        moves[moveId] = { ...moves[moveId], block: guards[0].amount };
     }
     if (hint.coreSp === 'card')
     {

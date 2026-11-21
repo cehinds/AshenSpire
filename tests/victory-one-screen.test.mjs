@@ -50,13 +50,14 @@ test('the cinders line comes from the receipt, never from the live purse', async
   });
 });
 
-// Owner 2026-11-18: a card door confirms in a modal (Add to deck by default, or Add to library); a relic keeps its Confirm.
-test('Add to deck, Add to library and a relic Confirm leave without a second Continue press', async () => {
+// Owner 2026-11-18: a card door confirms in a modal; 2026-11-20: its answers are Add to deck and Send to library side by
+// side (one click each, no radio group). A relic keeps its Confirm.
+test('Add to deck, Send to library and a relic Confirm leave without a second Continue press', async () => {
   await withDom(async () => {
     const run = { class: 'reaver', deck: [], cinders: 0 };
     const kinds = [
       ['combatCards', 'core.strike', '#reward-card-confirm'],
-      ['combatCards', 'core.strike', '[data-destination=library]'],
+      ['combatCards', 'core.strike', '.confirmation-alternate'],
       ['relics', reg.relics.all()[0].id, '#reward-card-confirm'],
     ];
     for (const [kind, id, button] of kinds) {
@@ -68,8 +69,7 @@ test('Add to deck, Add to library and a relic Confirm leave without a second Con
       app.querySelector('.reward-pick').click();
       if (kind === 'combatCards') {
         app.querySelector('#reward-card-confirm').click();
-        if (button !== '#reward-card-confirm') document.querySelector(button).click();
-        document.querySelector('.confirmation-confirm').click();
+        document.querySelector(button === '#reward-card-confirm' ? '.confirmation-confirm' : button).click();
         await new Promise(resolve => setTimeout(resolve, 0));
       } else { app.querySelector(button).click(); await settle(); }
       assert.deepEqual(calls, ['claim', 'continue'], `${kind} ${button}: select, then the confirmation, reach what follows`);

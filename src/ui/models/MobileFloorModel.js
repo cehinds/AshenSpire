@@ -12,23 +12,3 @@ export function mobileFloorLayer(layer, { paintStart, maximumPaintTop, minimumBo
   const width = layer.width * scale;
   return { ...layer, x: layer.x + (layer.width - width) / 2, y: bottom - height, width, height };
 }
-
-// Prefer the actual back row. When it is empty, the nearest occupied enemy
-// band supplies the same grounding rule; HUDs never enter this calculation.
-export function mobileFloorShadowTop(shadows) {
-  const occupied = shadows.filter(row => Number.isFinite(row.top) && ['A','B','C'].includes(row.band));
-  const band = ['A','B','C'].find(band => occupied.some(row => row.band === band));
-  return band ? Math.min(...occupied.filter(row => row.band === band).map(row => row.top)) : undefined;
-}
-
-// The floor is anchored to the living enemies' shadows. When the last one dies
-// there is nothing to measure, and an undefined anchor drops the ground layer's
-// extension behind the hand: the whole painted floor jumps to its authored
-// place for the beat between the killing blow and the spoils. A fight keeps the
-// last anchor it measured, so the backdrop holds still once the field is empty.
-// `state` is the fight's layout state: co-op re-wires the stage on every render,
-// so the memory cannot live in a per-mount closure.
-export function holdFloorShadowTop(state, top) {
-  if (Number.isFinite(top)) state.floorShadowTop = top;
-  return state.floorShadowTop;
-}

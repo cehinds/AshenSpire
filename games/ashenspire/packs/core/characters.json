@@ -704,7 +704,8 @@
           "aiWeight": 20,
           "maxConsecutive": 1,
           "costSource": "healRules",
-          "legacyMove": "goldenGuard"
+          "legacyMove": "goldenGuard",
+          "coreBlock": "card"
         },
         "wyrmAspirant.advance": {
           "aiWeight": 0,
@@ -1742,7 +1743,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "fortify"
+          "legacyMove": "fortify",
+          "coreBlock": "card"
         },
         "livingArmor.crush": {
           "aiWeight": 20,
@@ -1974,7 +1976,8 @@
           "aiWeight": 30,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "courtlyDecree"
+          "legacyMove": "courtlyDecree",
+          "coreBlock": "card"
         },
         "stitchedKing.thousandHands": {
           "aiWeight": 40,
@@ -2255,7 +2258,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "prismGuard"
+          "legacyMove": "prismGuard",
+          "coreBlock": "card"
         },
         "glassRegent.crystalRapier": {
           "aiWeight": 45,
@@ -2712,7 +2716,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "harden"
+          "legacyMove": "harden",
+          "coreBlock": "card"
         },
         "charredColossus.advance": {
           "aiWeight": 0,
@@ -2810,7 +2815,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "healRules",
-          "legacyMove": "goldenBulwark"
+          "legacyMove": "goldenBulwark",
+          "coreBlock": "card"
         },
         "wyrmLord.advance": {
           "aiWeight": 0,
@@ -3258,7 +3264,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "coolingAsh"
+          "legacyMove": "coolingAsh",
+          "coreBlock": "card"
         },
         "furnaceSaint.advance": {
           "aiWeight": 0,
@@ -3491,7 +3498,8 @@
           "aiWeight": 25,
           "maxConsecutive": 1,
           "costSource": "stance",
-          "legacyMove": "tailBastion"
+          "legacyMove": "tailBastion",
+          "coreBlock": "card"
         },
         "ashheartDragon.heartRumble": {
           "aiWeight": 15,
@@ -4271,14 +4279,16 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "pearlGuard",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         },
         "pearlbackSnail.nacreWall": {
           "aiWeight": 15,
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "nacreWall",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         },
         "pearlbackSnail.advance": {
           "aiWeight": 0,
@@ -5248,7 +5258,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "oathWater",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         },
         "pallidOathCamel.pilgrimBurden": {
           "aiWeight": 15,
@@ -5567,7 +5578,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "frozenBulwark",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         },
         "saltChoirWalrus.advance": {
           "aiWeight": 0,
@@ -6056,7 +6068,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "kilnPlate",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         },
         "kilnshellTortoise.advance": {
           "aiWeight": 0,
@@ -6444,7 +6457,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "siegePlate",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         },
         "kilnbackTerrapin.bunkerGuard": {
           "aiWeight": 20,
@@ -6760,7 +6774,8 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "ironLitany",
-          "coreSp": "card"
+          "coreSp": "card",
+          "coreBlock": "card"
         },
         "ferrumVotary.thunderOath": {
           "aiWeight": 15,

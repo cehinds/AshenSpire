@@ -44,7 +44,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 10
+        "amount": 8
       }
     ],
     "tags": [
@@ -5099,7 +5099,9 @@
     "costRule": "fixed",
     "type": "skill",
     "icon": "skill",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "applyStatus",
@@ -5122,7 +5124,7 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Gain {dexterity} Dexterity. Restore {restoreStamina} Stamina.",
+    "textTemplate": "Gain {dexterity} Dexterity. Restore {restoreStamina} Stamina. Exhaust.",
     "upgrade": {
       "effects": [
         {
@@ -5136,7 +5138,9 @@
           "target": "self",
           "amount": 1
         }
-      ]
+      ],
+      "keywords": [],
+      "textTemplate": "Gain {dexterity} Dexterity. Restore {restoreStamina} Stamina."
     },
     "flavor": "A measured current steadies the hands and returns motion to weary limbs."
   },

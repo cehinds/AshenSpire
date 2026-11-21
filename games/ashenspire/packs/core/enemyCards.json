@@ -398,7 +398,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 12
+        "amount": 10
       },
       {
         "op": "heal",
@@ -1362,7 +1362,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 12
+        "amount": 10
       }
     ],
     "tags": [
@@ -1654,7 +1654,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 15
+        "amount": 11
       },
       {
         "op": "applyStatus",
@@ -1897,7 +1897,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 16
+        "amount": 12
       }
     ],
     "tags": [
@@ -2369,7 +2369,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 14
+        "amount": 10
       }
     ],
     "tags": [
@@ -2485,7 +2485,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 16
+        "amount": 12
       },
       {
         "op": "heal",
@@ -2886,7 +2886,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 14
+        "amount": 10
       }
     ],
     "tags": [
@@ -3062,7 +3062,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 12
+        "amount": 10
       }
     ],
     "tags": [
@@ -5149,7 +5149,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 14
+        "amount": 10
       }
     ],
     "tags": [
@@ -5176,7 +5176,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 20
+        "amount": 12
       }
     ],
     "tags": [
@@ -6561,7 +6561,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 12
+        "amount": 10
       }
     ],
     "tags": [
@@ -7038,7 +7038,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 14
+        "amount": 10
       }
     ],
     "tags": [
@@ -7727,7 +7727,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 14
+        "amount": 10
       }
     ],
     "tags": [
@@ -8277,7 +8277,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 14
+        "amount": 10
       }
     ],
     "tags": [
@@ -8768,7 +8768,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 14
+        "amount": 10
       }
     ],
     "tags": [

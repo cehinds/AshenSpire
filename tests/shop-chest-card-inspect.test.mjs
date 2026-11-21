@@ -11,6 +11,7 @@ import { mountConfiguredShop } from '../src/ui/screens/shop.js';
 import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { renderCard } from '../src/ui/components/card.js';
+import { CONFIRMATION_INPUT_SHIELD_MS } from '../src/ui/components/confirmationModal.js';
 
 // Merchant thumbnails and reward choices open the shared contextual inspector.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -22,13 +23,17 @@ function withGlobalDom(fn) {
   Object.assign(globalThis, globals);
   dom.document.documentElement = dom.document.body;
   dom.document.getSelection = () => null;
-  try { return fn(dom); } finally {
+  let pending = null;
+  try { const out = fn(dom); if (out?.then) { pending = out; return out.finally(() => restore()); } return out; } finally { if (!pending) restore(); }
+  function restore() {
     clearSelection();
     for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; }
   }
 }
 const modal = () => document.querySelector('.card-inspection-modal');
 const tap = face => { face.dispatchEvent(new Event('pointerdown', { pointerType: 'touch', bubbles: true })); face.click(); };
+// Owner 2026-11-20: a reward face tap selects; the selected card's (i) opens its modal.
+const inspect = face => { tap(face); face.querySelector('.card-info-button').click(); };
 
 function mountShop(kind = 'combatCards', cinders = 100000) {
   const run = createRunState({ seed: 71, classId: 'reaver', registries }), rng = createRng(71);
@@ -98,15 +103,23 @@ test('armament and collectible rows inspect with Back and Buy', () => withGlobal
   assert.deepEqual(taken, []);
 }));
 
-test('inspector Buy forwards one guarded row purchase and row Buy never inspects', () => withGlobalDom(() => {
+test('inspector Buy forwards one guarded row purchase through the buy review, and row Buy never inspects', () => withGlobalDom(async () => {
   const { rows, taken } = mountShop();
+  // The inspector presses the row's armed Buy with element.click(), which a browser sends with detail 0.
+  for (const control of document.querySelectorAll('[data-shop-action="buy"]')) control.click = function () { this.dispatchEvent(new Event('click', { bubbles: true, detail: 0 })); };
   rows[0].querySelector('.merchant-thumbnail').click();
   modal().querySelector('[data-act="buy"]').click();
   assert.equal(modal(), null);
+  assert.equal(taken.length, 0, 'Buy asks before it spends (owner, 2026-11-19)');
+  document.querySelector('.confirmation-confirm').click();
   assert.equal(taken.length, 1);
   rows[1].querySelector('[data-shop-action="buy"]').click();
+  assert.equal(taken.length, 1);
+  document.querySelector('.confirmation-confirm').click();
   assert.equal(taken.length, 2);
   assert.equal(modal(), null);
+  // The review's focus timer and input shield run before the kit DOM's globals are taken away.
+  await new Promise(resolve => setTimeout(resolve, CONFIRMATION_INPUT_SHIELD_MS + 50));
 }));
 
 test('unaffordable and newly disabled merchant actions cannot buy from inspection', () => withGlobalDom(() => {
@@ -149,42 +162,37 @@ function mountChest() {
   const ids = ['frostNova', 'scholarsInsight', 'guardCounter'];
   const claims = [];
   const offer = { id: '1:node:treasure', options: ids.map(id => ({ kind: 'combatCards', id })), taken: [], claimed: null, takeCount: 1 };
-  MountGameProfileOffers(app, { registries, run, offer, title: 'Treasure', onTake: (...a) => claims.push(a), onContinue() {}, onAddToDeck() {} });
+  const claim = to => i => { claims.push([to, i]); offer.taken.push(i); offer.claimed = i; };
+  MountGameProfileOffers(app, { registries, run, offer, title: 'Treasure', onTake: claim('library'), onContinue() {}, onAddToDeck: claim('deck') });
   return { faces: [...app.querySelectorAll('.reward-choice-face')], ids, claims };
 }
 const chosen = faces => faces.map(face => face.classList.contains('is-chosen'));
 
-test('chest card picks inspect on first tap without selecting or claiming', () => withGlobalDom(() => {
+// Owner 2026-11-20: the card's own modal answers where it goes, Add to deck or Send to library, one click.
+test('a chest card tap selects it and shows its (i); the (i) opens Add to deck and Send to library without claiming', () => withGlobalDom(() => {
   const { faces, ids, claims } = mountChest();
   assert.equal(faces.length, 3);
   assert.deepEqual(chosen(faces), [false, false, false]);
   tap(faces[1]);
-  assert.deepEqual(chosen(faces), [false, false, false], 'reading does not select a pick');
-  assert.equal(faces[1].querySelector('.card-info-button'), null);
+  assert.equal(modal(), null, 'a tap never opens the modal');
+  assert.deepEqual(chosen(faces), [false, true, false], 'the tap chose the card');
+  faces[1].querySelector('.card-info-button').click();
   assert.equal(modal().querySelector('.card[data-level="inspect"]')?.dataset.cardId, ids[1]);
-  assert.ok(modal().querySelector('[data-act="select"]'), 'the inspector offers the live pick action');
+  assert.deepEqual([...modal().querySelectorAll('.card-inspection-act')].map(node => node.textContent).sort(), ['Add to deck', 'Send to library']);
   modal().querySelector('.card-inspection-back').click();
-  assert.deepEqual(chosen(faces), [false, false, false], 'Back leaves every pick unchanged');
-  assert.deepEqual(claims, []);
+  assert.deepEqual(chosen(faces), [false, true, false], 'Back keeps the pick');
+  assert.deepEqual(claims, [], 'Back claims nothing');
 }));
 
-test('chest inspector Select toggles one pick while Back preserves existing selection', () => withGlobalDom(() => {
-  const { faces, claims } = mountChest();
-  tap(faces[0]);
-  assert.ok(modal(), 'first tap inspects');
-  modal().querySelector('[data-act="select"]').click();
-  assert.deepEqual(chosen(faces), [true, false, false]);
-  assert.equal(modal(), null);
-  tap(faces[0]);
-  assert.ok(modal(), 'second tap inspects');
-  modal().querySelector('.card-inspection-back').click();
-  assert.deepEqual(chosen(faces), [true, false, false], 'Back does not deselect');
-  tap(faces[0]);
-  modal().querySelector('[data-act="select"]').click();
-  assert.deepEqual(chosen(faces), [false, false, false], 'Deselect changes precisely this pick');
-  tap(faces[2]);
-  assert.ok(modal(), 'another card opens its own inspector');
-  modal().querySelector('[data-act="select"]').click();
-  assert.deepEqual(chosen(faces), [false, false, true]);
-  assert.deepEqual(claims, []);
-}));
+for (const [act, to] of [['addToDeck', 'deck'], ['addToLibrary', 'library']]) {
+  // The claim reaches the host synchronously on the click (this file's DOM helper is synchronous).
+  test(`chest ${act} claims that card exactly once in one click`, () => withGlobalDom(() => {
+    const { faces, claims } = mountChest();
+    inspect(faces[2]);
+    const commit = modal().querySelector(`[data-act="${act}"]`);
+    commit.click(); commit.click();
+    assert.equal(modal(), null);
+    assert.equal(document.querySelector('.confirmation-modal'), null, 'no second page');
+    assert.deepEqual(claims, [[to, 2]]);
+  }));
+}

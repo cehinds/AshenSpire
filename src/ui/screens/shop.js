@@ -24,6 +24,7 @@ import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { shopWorkspaceLayout } from '../models/ShopWorkspaceModel.js';
+import { purchaseReview, ShopPurchaseKind } from '../models/ConfirmationReviewModel.js';
 
 // Configured stock uses the same merchant frame, category dock, offer rows,
 // inspections and purchase review as the full game. The host retains ownership
@@ -103,7 +104,17 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const visual = service ? RenderRankUpOfferCard(registries, { interactive: false, level: 'glance', surface: 'shop' }).card : card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, shopCardOptions) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
     const action = { kind: 'buy', label: t('shop.action.buy', { cost: price }), enabled: available };
     const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: service ? t('rankUp.blurb') : configuredOfferText(registries, run, option.kind, def, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }), visual, price: t('shop.price', { cost: price }), avail: { available, reason: quote.reason || null, because: 'cinders' }, action });
-    if (available) arm(buy, 'shopBuy', { onConfirm: () => { try { onTake(index, quote); } catch (error) { status.textContent = error.message; } } });
+    // Every purchase asks first (owner, 2026-11-19): the review names the offer, its price and the purse left.
+    // The row's Buy and the inspector's Buy press the same armed control, so both routes reach this review.
+    const review = () => purchaseReview({ kind: ShopPurchaseKind(option.kind), name: def?.name || option.id, cost: price, cinders: run.cinders });
+    if (available) arm(buy, 'shopBuy', {
+      question: () => review().question,
+      target: () => review().target,
+      message: () => review().message,
+      confirmLabel: t('shop.buy.confirm'),
+      policyAction: 'action.purchase',
+      onConfirm: () => { try { onTake(index, quote); } catch (error) { status.textContent = error.message; } },
+    });
     shelves.get(option.kind).append(tile);
   }
   if (sellEnabled) {
