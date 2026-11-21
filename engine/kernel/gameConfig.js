@@ -739,7 +739,9 @@ export function resolveGameAuthor(author, catalog) {
   verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies ? characterSettings(modules) : null, modules.gear);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
-    content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + row.attributes.intelligence]));
+    // A stats pack on the 2026-11-18 contract names handPointsPerIncrease (hand = 5 + floor(INT / 4)); one without it keeps a card per INT point.
+    const handPointsPerIncrease = Math.max(1, content.stats.handPointsPerIncrease || 1);
+    content.startingHands = Object.fromEntries(content.classes.map(row => [row.id, content.stats.handBase + Math.floor(row.attributes.intelligence / handPointsPerIncrease)]));
   }
   const artifacts = [...catalog.runtimeArtifacts, ...bundle.artifacts,
     ...Object.entries(modules).filter(([,v]) => v).flatMap(([id]) => catalog.modules[id].artifacts),
