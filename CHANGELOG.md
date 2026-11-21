@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-21
+
+- **Retreat costs one Advance per stack** ([#2916](https://github.com/cehinds/AshenSpire/pull/2916), `0.7.5.18`). Retreat now costs one Advance per stack on either side, and Gale Pull removes a stack. Retreat sources carry real drawbacks: the weapon Retreat card gets pricier each use in a fight, Backstep inflicts Frail on you, Rogue Backstep and Hit and Run Exhaust, Dodge Roll's Retreat mode costs more per use, and Gale Push costs 1 MP.
+- **Pull-request test shards stop hitting their time limit** ([#2925](https://github.com/cehinds/AshenSpire/pull/2925), `0.7.5.18`). Development-process fix only, nothing in the game changes. The discovered-test checks on a pull request into dev now run in six parts instead of four, because some parts kept stopping at the 15-minute limit with every test passing. No test was removed and the limit is unchanged.
+
 ## 2026-11-20
 
-- **Retreat costs one Advance per stack** ([#2916](https://github.com/cehinds/AshenSpire/pull/2916), `0.7.5.16`). Retreat now costs one Advance per stack on either side, and Gale Pull removes a stack. Retreat sources carry real drawbacks: the weapon Retreat card gets pricier each use in a fight, Backstep inflicts Frail on you, Rogue Backstep and Hit and Run Exhaust, Dodge Roll's Retreat mode costs more per use, and Gale Push costs 1 MP.
 - **Upcast button removed** ([#2914](https://github.com/cehinds/AshenSpire/pull/2914), `0.7.5.16`). Cards no longer show an Upcast button or ask for a rank after you pick a target, and the setting that asked is gone. Spell ranks were removed from combat, so choosing one stopped the card from playing; every card now plays at its printed strength.
 - **Dexterity now adds Block** ([#2912](https://github.com/cehinds/AshenSpire/pull/2912), `0.7.5.14`). In new runs, each stack of Dexterity gives +1 Block to every Block card you play after gaining it. Block you already hold does not change: with 5 Block, gaining 1 Dexterity leaves you at 5, and playing a 5-Block card then adds 6. Before this, the Dexterity from cards like Iron Hide and Keen Edge added no Block at all. Runs you already saved keep the old rule.
 - **Enemy health bars stay above every sprite** ([#2917](https://github.com/cehinds/AshenSpire/pull/2917), `0.7.5.12`). In combat, the health, block and status bars over each fighter are no longer hidden behind other fighters' sprites, including when a back-row enemy is drawn smaller.
