@@ -9,7 +9,7 @@ import { resolveCombatCard } from './combatExpansion.js';
 // Matchups imports the reaction path too; defer access until the bundled cycle initializes.
 import * as Matchups from './combatMatchups.js';
 import { cardChoice } from '../model/cardChoices.js';
-import { upcastOptions } from '../model/upcasting.js';
+import { upcastOptions, UPCASTING_ENABLED } from '../model/upcasting.js';
 import { controlRestrictions } from './combatStatusControl.js';
 import { cardTargetPlan } from '../model/cardTargets.js';
 import { fightReacts, incomingAgainst, openEnemyWindow, playerRootSeat, runEnemyPlan, seatGone } from './enemyReactions.js';
@@ -145,7 +145,7 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null, incom
     const choices = cardChoice(ctx.registries, base, ctx.player.classId)?.options || [null];
     const aimed = cardTargetPlan(base, seat, ctx.enemies, players, { solo: !ctx.players }).mode === 'enemy';
     const aims = aimed ? [...new Set(answered.map(threat => threat.enemyId))] : [answered[0].enemyId];
-    for (const rangeRoute of (ctx.rangeState && (base.cardTags || base.tags || []).includes('maneuver:counter') ? ['advance','throw'] : [undefined])) for (const aim of aims) for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
+    for (const rangeRoute of (ctx.rangeState && (base.cardTags || base.tags || []).includes('maneuver:counter') ? ['advance','throw'] : [undefined])) for (const aim of aims) for (const tier of [0, ...(UPCASTING_ENABLED ? upcastOptions(base).map(option => option.ranks) : [])]) for (const choice of choices) {
       const candidate = candidateState(ctx, { detached: true });
       candidate.queue = []; delete candidate.pendingReaction; delete candidate.reactionResume;
       candidate._reactionPlaying = true; candidate._buffer = null;
