@@ -124,7 +124,7 @@ test('an explicit range / targeting field follows the identity step (rimeNeedle)
   assert.equal(combatProfileFor(back).targeting, 'single');
 });
 
-test('an element-stepped Strike with a slashing weapon resolves as fire magic in combat; an un-stepped one stays physical', async () => {
+test('an element-stepped Strike with a slashing weapon adds a fire packet to its slashing hit in combat; an un-stepped one stays physical', async () => {
   const { live } = await import('./helpers/fixcore-combat-rules.mjs');
   const { tacticalCarrier } = await import('../src/engine/combatCardTactics.js');
   const { magicShareOf, isMagicalHit } = await import('../src/model/combatRatings.js');
@@ -138,7 +138,9 @@ test('an element-stepped Strike with a slashing weapon resolves as fire magic in
     step = nextUpgradeOptions({ seed: n, gameProfile: profile }, { instanceId: `f${n}`, cardId: 'core.strike' }, registries.cards.get('core.strike'), registries, 20).find((s) => s.damageSchool === 'fire');
   }
   assert.ok(step, 'a fire element step is rolled');
-  assert.deepEqual([step.tag, step.damage, step.magicShare], ['school:fire', 'fire', 1]);
+  // Owner, 2026-11-19: the element ADDS a packet; the step stores its size, and the card's magic share is packet / total (a step saved before packets, `magicShare: 1`, still plays whole).
+  assert.deepEqual([step.tag, step.damage, step.magicShare], ['school:fire', 'fire', undefined]);
+  assert.ok(Number.isInteger(step.packet) && step.packet >= 2, 'the packet size is stored');
   const combat = live();
   const carrierFor = (steps) => {
     const f = projectGameCard(subject, { instanceId: 'i', cardId: 'core.strike', ...(steps ? { upgraded: true, upgradeSteps: steps } : {}) });
@@ -152,7 +154,12 @@ test('an element-stepped Strike with a slashing weapon resolves as fire magic in
   assert.equal(isMagicalHit(combat, plainCarrier), false);
   assert.equal(fireCarrier.combatProfile.damageType, 'fire');
   assert.equal(fireCarrier.combatProfile.school, 'fire');
-  assert.equal(share(fireCarrier), 1);
+  assert.equal(fireCarrier.combatProfile.maneuver, 'attack', 'the card stays an Attack');
+  assert.equal(fireCarrier.combatProfile.camp, 'physical', 'and a physical-camp card: it is not a spell');
+  const printed = plainCarrier ? projectGameCard(subject, { instanceId: 'i', cardId: 'core.strike' }).effects.find((e) => e.op === 'damage').amount : 0;
+  assert.ok(Math.abs(share(fireCarrier) - step.packet / (printed + step.packet)) < 1e-9, 'the magic share is the packet over the whole hit');
+  assert.ok(share(fireCarrier) > 0 && share(fireCarrier) < 1);
+  assert.equal(fireCarrier.physicalDamageType, 'slashing', 'the physical part is still the weapon\'s blow');
   assert.equal(isMagicalHit(combat, fireCarrier), true);
   // Played: the same Strike, stepped, no longer hits for the weapon's physical damage.
   const hpLost = (steps) => {
@@ -164,7 +171,7 @@ test('an element-stepped Strike with a slashing weapon resolves as fire magic in
     dispatch(fight, { type: 'playCard', cardInstanceId: card.instanceId, targetId: fight.enemies[0].id });
     return 100 - fight.enemies[0].hp;
   };
-  assert.notEqual(hpLost([step]), hpLost(null), 'the fire Strike routes through the magic lane');
+  assert.notEqual(hpLost([step]), hpLost(null), 'the fire Strike routes part of its hit through the magic lane');
 });
 
 test('a fire step rewrites the damage components of an authored mixed hit (ruinousBlow)', async () => {

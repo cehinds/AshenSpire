@@ -1045,6 +1045,16 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
 
 // Owner, 2026-11-18: `effects.blockGainMultiplier` scales every configured Block gain, both sides (the live Block preview calls computeBlockGain).
 const BlockGainScale = ctx => { const m = configuredModule(ctx, 'effects')?.blockGainMultiplier; return Number.isFinite(m) && m >= 0 ? m : 1; };
+// Owner, 2026-11-20: each Dexterity stack (a `blockAdd` status) adds `effects.statusBlockWeight` Block to every Block CARD played after it
+// (a player card or an enemy move card), after the scale, so +1 Dexterity is +1 Block on the next card. Protection that is not a played
+// card gets none: Defend-stance turn protection, the Dodge Roll guard, a power's or status's `block`, a Counter's Ward share, a synthetic
+// stance-entry guard (#2912 review). Absent (profiles saved before) = 0: the status added nothing.
+const PlayedBlockCard = card => !!card && !card.syntheticDefense && !card.combatReaction && !card.skipRatingBonus && !!(card.cardId || card.moveId);
+const StatusBlockAdd = (ctx, entity, card) => {
+  if (!PlayedBlockCard(card)) return 0;
+  const w = configuredModule(ctx, 'effects')?.statusBlockWeight;
+  return Number.isFinite(w) && w > 0 ? Math.floor(statuses.getAdd(ctx, entity, 'blockAdd') * w) : 0;
+};
 
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
@@ -1054,7 +1064,7 @@ const BlockGainScale = ctx => { const m = configuredModule(ctx, 'effects')?.bloc
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * ChannelWeight(configuredModule(ctx, 'effects'), 'dr')) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx))) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
+    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * ChannelWeight(configuredModule(ctx, 'effects'), 'dr')) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx)) + StatusBlockAdd(ctx, entity, card)) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
@@ -1716,6 +1726,25 @@ function plannedStatusTargets(ctx, action, eff) {
 export function ComputeStatusGrant(ctx, action, eff, target, base) {
   const authored = base + (base > 0 && eff.status === 'evade' && !eff.noGainBonus ? GearGainBonus(target, 'evade') : 0);
   return FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0));
+}
+
+/**
+ * The Counter stacks one Counter play grants a holder, summed the way live play grants them: the card's own base grant (the synthetic
+ * `gainCounterStacks` the armed Counter adds; 0 under the Block-as-stacks rule) plus every authored `gainCounterStacks` with an explicit
+ * amount (the fx:counter upgrade), each given Mail's gain bonus unless it opts out. `effects` are the card's prepared effects and
+ * `amountOf(effect)` reads an authored amount; the quote and the landed opcode below must agree.
+ */
+export function CounterStacksGranted(ctx, card, holder, effects = [], amountOf = effect => Number(effect.amount) || 0) {
+  if (!fixCoreEnabled(ctx)) return 0;
+  const bonus = GearGainBonus(holder, 'counter');
+  const base = CounterStackGrant(ctx, card);
+  let total = base > 0 ? base + bonus : 0;
+  for (const effect of effects) {
+    if (effect.op !== 'gainCounterStacks' || effect.amount === undefined || !['self', 'owner'].includes(effect.target)) continue;
+    const gained = amountOf(effect);
+    total += gained > 0 && !effect.noGainBonus ? gained + bonus : Math.max(0, gained);
+  }
+  return total;
 }
 
 function runGuardStackOpcode(ctx, action, eff) {
