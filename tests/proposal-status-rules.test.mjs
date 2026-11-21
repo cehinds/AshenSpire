@@ -44,12 +44,12 @@ test('persistent protection replenishes remaining stacks without duplication or 
 });
 
 test('Poison ticks distinctly from Venom; harmful and beneficial decay leave one action opportunity',()=>{
- const owner=actor('e',{poison:3,charm:1,mirrors:1});
+ const owner=actor('e',{poison:3,weak:1,mirrors:1});
  const start=proposalTurnRules({actor:owner,phase:'start',rules});
  assert.equal(start.effects[0].amount,3);assert.equal(start.effects[0].damageType,'decay');
  assert.equal(start.effects[0].direct,false);
  assert.deepEqual(start.statusChanges,[{actorId:'e',status:'base.mirrors',delta:-1}]);
- assert.deepEqual(proposalTurnRules({actor:owner,phase:'end',rules}).statusChanges,[{actorId:'e',status:'base.poison',delta:-1},{actorId:'e',status:'base.charm',delta:-1}]);
+ assert.deepEqual(proposalTurnRules({actor:owner,phase:'end',rules}).statusChanges,[{actorId:'e',status:'base.poison',delta:-1},{actorId:'e',status:'base.weak',delta:-1}]);
  assert.deepEqual(proposalTurnRules({actor:{...owner,statuses:{venom:{stacks:9}}},phase:'start',rules}).effects,[],'legacy Venom remains owned by existing engine rules');
 });
 
@@ -60,12 +60,11 @@ test('Blight uses current HP with an at-least threshold and never kills an alrea
  assert.equal(proposalThresholdRules({actor:actor('e',{blight:10},{hp:0}),rules}).effects.length,0);
 });
 
-test('Grease has an explicit prone roll and melee/reach accuracy cost',()=>{
- const owner=actor('e',{greased:3,charm:1});
- assert.equal(proposalTurnRules({actor:owner,phase:'start',rules,roll:()=>16}).effects[0].status,'prone');
- assert.equal(proposalTurnRules({actor:owner,phase:'start',rules,roll:()=>15}).effects.length,0);
- assert.equal(proposalTargetRules({actor:owner,target:player,card,rules}).accuracyDelta,-45);
- assert.equal(proposalTargetRules({actor:owner,target:player,card:{...card,range:'ranged'},rules}).accuracyDelta,-25);
+test('Grease no longer rolls Prone or changes accuracy (owner, 2026-11-20: Prone and accuracy are gone from Core)',()=>{
+ const owner=actor('e',{greased:3});
+ assert.equal(proposalTurnRules({actor:owner,phase:'start',rules,roll:()=>19}).effects.length,0);
+ assert.ok(!proposalTargetRules({actor:owner,target:player,card,rules}).accuracyDelta);
+ assert.deepEqual(rules['base.greased'].behaviors.map(row=>row.kind),['greaseFire']);
 });
 
 test('Grease fire triples the hit, burns and splashes the original amount without recursive ignition',()=>{
@@ -97,14 +96,10 @@ test('Bind and Restrained are typed restrictions, independent of burden marker s
  assert.equal(tracking.allowed,true);assert.equal(tracking.staminaTax,0,'burden metadata owns its one skip/tax');
 });
 
-test('Veil uses perception, Foresight and explicit d20 rolls; area targeting bypasses it',()=>{
- const target=actor('e',{veil:1},{perception:4}),observer=actor('p',{foresight:1},{perception:4});
- const input={actor:observer,target,card,rules};
- assert.equal(proposalTargetRules(input).perceptionChance,50);
- assert.equal(proposalTargetRules({...input,perceptionRoll:11}).allowed,true);
- assert.equal(proposalTargetRules({...input,perceptionRoll:10}).allowed,false);
- assert.equal(proposalTargetRules({...input,actor:player}).perceptionChance,20);
- assert.equal(proposalTargetRules({...input,card:{...card,targeting:'area'}}).perceptionChance,null);
+test('Veil, Foresight and Charm are retired: kept only so old saves load, and no current card applies them (owner, 2026-11-20)',()=>{
+ const cards=JSON.parse(readFileSync(new URL('../games/ashenspire/packs/base-cards/cards.json',import.meta.url))).cards;
+ const applied=new Set(cards.flatMap(row=>row.definition.effects||[]).map(effect=>effect.status).filter(Boolean));
+ for(const id of['base.veil','base.foresight','base.charm']){assert.ok(rules[id],id+' still loads');assert.ok(!applied.has(id),id+' is applied by no card');}
 });
 
 test('Evade consumes a charge on success and failure, while unavoidable fire bypasses it',()=>{
