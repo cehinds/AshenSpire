@@ -177,6 +177,24 @@ function withoutRetiredCinderKey(entries) {
   return entries.filter(([key]) => !LEGACY_CINDER_KEYS.includes(key));
 }
 
+// RENDERING QUALITY LEFT SETTINGS (Settings tidy, 2026-11-20). Its row folded into
+// Effects (2026-10-30) and is gone now, so a file exported before then would be
+// refused as an unknown key. Both spellings are read the way the boot migration
+// reads a stored one (ui/performance.js, migrateEffectsSetting): an explicit
+// 'full' becomes `settings.effects: true` unless the file also names Effects;
+// anything else is dropped. Silent: the player's choice lands, nothing is lost.
+const RETIRED_RENDERING_QUALITY_KEYS = Object.freeze(['performanceMode', 'settings.performanceMode']);
+const EFFECTS_SETTING_KEYS = Object.freeze(['effects', 'settings.effects']);
+
+/** withRenderingQualityAsEffects(entries) → the entries without `performanceMode`, with a saved 'full' read as Effects on. */
+function withRenderingQualityAsEffects(entries) {
+  const quality = entries.find(([key]) => RETIRED_RENDERING_QUALITY_KEYS.includes(key));
+  if (!quality) return entries;
+  const kept = entries.filter(([key]) => !RETIRED_RENDERING_QUALITY_KEYS.includes(key));
+  const effectsNamed = kept.some(([key]) => EFFECTS_SETTING_KEYS.includes(key));
+  return quality[1] === 'full' && !effectsNamed ? [...kept, ['settings.effects', true]] : kept;
+}
+
 const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was left out: Cinders pay the authored table. Use Rewards → Cinder gain multiplier to scale them.';
 
 // SETTINGS ROWS REMOVED WITH THE LEGACY REWARD AND SHOP MENUS. A settings export
@@ -1562,7 +1580,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // opening-hand limits and shared opening base/attribute (which have no row)
   // are dropped by withoutRetiredOpeningHand, before the same check.
   if (Object.keys(overrides).some((key) => LEGACY_CINDER_KEYS.includes(key))) warnings.push(LEGACY_CINDER_WARNING);
-  const entries = withoutRetiredOpeningHand(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), warnings);
+  const entries = withoutRetiredOpeningHand(withoutRetired(withoutSupersededLegacy(withRenderingQualityAsEffects(Object.entries(overrides))), warnings), warnings);
   for (const [key, raw] of tolerateRaisedFloors(withoutRetiredRows(entries, rows, warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);

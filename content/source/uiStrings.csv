@@ -985,7 +985,6 @@ settings.row.useSprites,,Character sprites,Show a drawn class figure in combat i
 settings.row.combatLogPlayerColor,,Player name color,Color for player names in the combat log.,
 settings.row.combatLogEnemyColor,,Enemy name color,Color for enemy names in the combat log.,
 settings.row.animSpeed,,Combat pacing,"Auto picks Fast on touch screens and Normal elsewhere.",
-settings.row.performanceMode,,Rendering quality,Auto uses lighter effects on touch devices. Lite trims decoration.,
 settings.row.effects,,Effects,"Off is still and light. On adds glow, sparks, flashes and shake. Hit sprites show either way.",
 settings.row.effectsMenu,,Effects,"Glow, sparks, flashes, shake and fighter motion.",
 settings.effects.statusOff,,Effects off,,
