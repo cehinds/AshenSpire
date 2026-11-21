@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-21
 
-- **Conversation backgrounds fill the screen** ([#2923](https://github.com/cehinds/AshenSpire/pull/2923), `0.7.5.16`). In conversations such as the Grave of the Nameless and the Last Lantern, the background no longer stops partway down and leaves a black band, most visibly on a phone. Each conversation now draws a full scene from the place on the map where it happens.
+- **Conversation backgrounds fill the screen** ([#2923](https://github.com/cehinds/AshenSpire/pull/2923), `0.7.5.18`). In conversations such as the Grave of the Nameless and the Last Lantern, the background no longer stops partway down and leaves a black band, most visibly on a phone. Each conversation now draws a full scene from the place on the map where it happens.
+- **Pull-request test shards stop hitting their time limit** ([#2925](https://github.com/cehinds/AshenSpire/pull/2925), `0.7.5.18`). Development-process fix only, nothing in the game changes. The discovered-test checks on a pull request into dev now run in six parts instead of four, because some parts kept stopping at the 15-minute limit with every test passing. No test was removed and the limit is unchanged.
 
 ## 2026-11-20
 
