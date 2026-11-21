@@ -5,7 +5,7 @@
 //
 //   attack     attacks deal +20% damage                          AttackDamageMultiplier  (profileDamageReceipt, after matching stance)
 //   prepared   spells deal +25% damage (chosen over the Mana discount)   AttackDamageMultiplier
-//              under spell traditions every Spell takes it, even a mirrored spell played in another stance (owner 2026-11-20)
+//              under spell traditions every Spell played into a stance takes it, a mirrored Strike, Smash or Sweep included (owner 2026-11-20)
 //   smash      +50% Poise damage                                 PoiseLossAdjust         (profileDamageReceipt, before the receipt returns)
 //   defend     +50% Block gained, -25% Poise damage taken        BlockGainMultiplier (computeBlockGain), PoiseLossAdjust
 //              while it holds Block, Poise stays at 1 or more against physical hits and Sweeps (and magic with Ward stacks)  DefendPoiseFloor (2026-11-17)
