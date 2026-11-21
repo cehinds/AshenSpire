@@ -515,7 +515,11 @@ export function statusReach(bundle, opts = {}) {
   }
 
   // ---- the verdict ---------------------------------------------------------
-  const unreached = ids.filter((id) => !reached.has(id));
+  // A row marked `retired: true` stays only so saves that pinned older card content still load
+  // (owner, 2026-11-20: Foresight, Veil and Charm). It is reported, never counted as unreached;
+  // a retired row that something still applies is listed too, so the flag cannot hide a live status.
+  const retired = ids.filter((id) => byId.get(id)?.retired === true);
+  const unreached = ids.filter((id) => !reached.has(id) && !retired.includes(id));
   // An applier pointing at a status id that does not exist is a different
   // defect (the validator's), but silence about it here would be dishonest.
   const dangling = [...witness.keys()].filter((id) => !byId.has(id));
@@ -524,6 +528,8 @@ export function statusReach(bundle, opts = {}) {
     total: ids.length,
     reached: [...reached].sort(),
     unreached,
+    retired,
+    retiredButApplied: retired.filter((id) => reached.has(id)),
     dangling,
     witness,
     floors,
