@@ -7,6 +7,7 @@ import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgrade
 
 const MAX_CANDIDATES = 20;
 import { rollUpgradeOptions, upgradeStepRng, upgradeSeed } from './cardUpgradeSteps.js';
+import { OfferSalted } from './upgradeOffer.js';
 
 /**
  * upgradeBasic(def) → whether a card is "Basic" for upgrades (owner ruling,
@@ -75,13 +76,13 @@ export function RestUpgradeRule(instance) {
 
 /**
  * upgradeChoiceCount(def, instance, { blacksmith, run }) → how many options a player picks from: a blacksmith
- * offers 2 or 3 at random (owner, 2026-11-14), seeded by the run, the card and its upgrade number so the quote is
- * stable; a rest-site upgrade, an event reward and co-op keep the single roll (1). Asked without a run (no seed to
+ * offers 2 or 3 at random (owner, 2026-11-14), seeded by the run, the card, its upgrade number and the visit's offer key
+ * (upgradeOffer.js) so the quote is stable for the stay; a rest-site upgrade, an event reward and co-op keep the single roll (1). Asked without a run (no seed to
  * roll from) the older rule stands: 2 on a Basic card and 3 on a ranked (not Basic) one.
  */
 export function upgradeChoiceCount(def, instance, { blacksmith = false, run = null } = {}) {
   if (!blacksmith) return 1;
-  if (run && instance?.instanceId) return mulberry32(upgradeSeed(run.seed, `${instance.instanceId}#choices`, upgradeStepsOf(instance).length))() < 0.5 ? 2 : 3;
+  if (run && instance?.instanceId) return mulberry32(upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#choices`), upgradeStepsOf(instance).length))() < 0.5 ? 2 : 3;
   return upgradeBasic(def, instance) ? 2 : 3;
 }
 
@@ -99,7 +100,7 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
   const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
   const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell, maxRange: run.rangePolicy?.maxRange };
-  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, salt ? `${instance.instanceId}#${salt}` : instance.instanceId, applied.length), limits, n);
+  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, OfferSalted(run, salt ? `${instance.instanceId}#${salt}` : instance.instanceId), applied.length), limits, n);
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1) return authored ? [{ k: 'authored' }] : roll(1);
   // Two options that resolve to the same card would be no choice: every pick after the first must differ in what
@@ -122,7 +123,7 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
 // "Two effects" (owner, 2026-11-14): each option gets a second, different effect with REST_TWO_EFFECT_CHANCE. The draw comes from
 // its own seeded stream (instance id + `#fx` + step index), so the same quote always shows the same list.
 function withSecondEffects(run, instance, applied, chosen, candidates, outcome, salt) {
-  const draw = mulberry32(upgradeSeed(run.seed, `${instance.instanceId}#fx${salt}`, applied.length));
+  const draw = mulberry32(upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#fx${salt}`), applied.length));
   return chosen.map((step) => {
     const roll = draw();
     const pick = draw();

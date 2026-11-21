@@ -1,6 +1,6 @@
 // The Blacksmith's item upgrades (W25 step 4, owner 2026-11-14): every upgrade is a CHOICE of two or three rolled
 // options, priced by how many upgrades the item already has. Pure and stateless like the card-upgrade generator:
-// the roll is mulberry32(hash(run.seed, itemRef, upgrade number)), so the options a quote shows are the options a
+// the roll is mulberry32(hash(run.seed, itemRef + the visit's offer key, upgrade number)), so the options a quote shows are the options a
 // commit applies and a re-quote never changes them. Nothing here touches the combat engine; the chosen option is
 // stored in `run.itemUpgradePicks[itemRef]` and read by the gear receipt (gameProfileGear.js) and the item-property
 // summary (itemProperties.js).
@@ -14,6 +14,7 @@ import { itemRefIdentity } from './itemUpgrades.js';
 import { ItemCategory, ItemFamily, ItemPicks, ItemUpgradeCount, ItemRank, ItemPropertyIds } from './itemPicks.js';
 import { ITEM_SMITH, ITEM_STAT_OPTIONS, ITEM_SMITH_BEFORE_STAT_POINTS, ITEM_STAT_OPTIONS_BEFORE_STAT_POINTS, ITEM_PROPERTIES } from '../content/itemProperties.js';
 import { gameModule } from './gameProfile.js';
+import { OfferSalted } from './upgradeOffer.js';
 
 const STAT_LABELS = {
   ar: 'STR', dr: 'DEX', pr: 'INT', poise: 'Poise', ward: 'Ward', mp: 'Mana',
@@ -84,7 +85,7 @@ export function SmithOptionPool(run, itemRef) {
 export function RollSmithOptions(run, itemRef, n = ItemUpgradeCount(run, itemRef) + 1) {
   const pool = SmithOptionPool(run, itemRef);
   if (!pool.length) return [];
-  const rng = mulberry32(upgradeSeed(run.seed, `smith:${itemRef}`, n));
+  const rng = mulberry32(upgradeSeed(run.seed, OfferSalted(run, `smith:${itemRef}`), n));
   const counts = ITEM_SMITH.optionCounts;
   const count = Math.min(pool.length, counts[Math.min(counts.length - 1, Math.floor(rng() * counts.length))]);
   const left = [...pool];

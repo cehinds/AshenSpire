@@ -16,6 +16,7 @@ import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest
 import { retiredProfileReason } from './model/retiredProfile.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
+import { StampOfferKey } from './model/upgradeOffer.js';
 import { openRestRecord, OpenSiteRecord, VisitSiteStock, StashSiteStock, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { completedRunMeta, commitRunFinishAsync } from './model/runCompletion.js';
 import { configureDisplaySettings, installDisplaySettings, installCardSizeResize, projectHudPresentation, applyDisplaySettings, applyUiScale } from './ui/displaySettings.js';
@@ -2508,6 +2509,8 @@ function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers 
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
   if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source, pool, takeCount });
   run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}), ...(armamentReward ? { armamentReward } : {}) };
+  // The reward is an upgrade source of its own: its rank-up and upgrade options roll on a fresh offer key (upgradeOffer.js).
+  StampOfferKey(run, run.gameProfilePendingReward);
   persistOrWarn(); return showGameProfileReward();
 }
 
@@ -2671,6 +2674,8 @@ function showShop() {
     OpenSiteRecord(run, traderSmith ? 'shop' : 'blacksmith');
     const slot = traderSmith ? 'smithStock' : 'stock';
     if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = VisitSiteStock(run, slot, () => blacksmithVisitStock(registries, rng, run, { }));
+    // One upgrade roll per visit (upgradeOffer.js): a fresh stock takes the next offer key, a kept one keeps its own.
+    StampOfferKey(run, run.shopStock);
     persist(); audio.music('shop');
     return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
       onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
@@ -2680,7 +2685,8 @@ function showShop() {
   }
   // A trader left from the map stays enterable until a new node is chosen (restRevisit.js).
   OpenSiteRecord(run, 'shop');
-  const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
+  const offer = gameProfileShopStock(registries, run, rng, { shopId });
+  StampOfferKey(run, run.gameProfileRewardOffers?.[`shop:${shopId}`]); persist();
   audio.music('shop');
   // The dock holds to the 3-6 options rule, Sell counted, for a stock saved before traders varied too.
   const dock = ConfiguredTraderDock(run, offer.options.map(option => option.kind), { smith: ConfiguredTraderOffersSmith(run, shopId) });
