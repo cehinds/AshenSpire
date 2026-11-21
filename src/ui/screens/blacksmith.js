@@ -493,7 +493,10 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       port.append(shelf);
     }
     // A service with nothing to act on now says why, and stays on the rail.
-    const idleReason = (BLACKSMITH_SERVICES.includes(key) || key === 'rankUp' || key === 'cardCopy') && !readyCount(key) ? serviceIdleReason(key, run) : '';
+    // Sell with nothing the smith would buy reads as the merchant's empty Sell shelf does (shop.js emptySales).
+    const idleReason = key === 'sell'
+      ? (gameProfileShopSalePlans(registries, run, shopId).length ? '' : t('shop.status.nothingWanted'))
+      : (BLACKSMITH_SERVICES.includes(key) || key === 'rankUp' || key === 'cardCopy') && !readyCount(key) ? serviceIdleReason(key, run) : '';
     let idle = [...shelf.children].find(node => node.classList.contains('bs-idle')) || null;
     if (!idleReason) { idle?.remove(); idle = null; }
     else if (idle) { if (idle.textContent !== idleReason) idle.textContent = idleReason; }
