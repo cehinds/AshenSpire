@@ -74,7 +74,8 @@ test('flat equipment Mana and Stamina addends and permanent HP adjustments are e
   poolsAgree(robe);
   const leathers = world();
   wear(leathers, 'gutterLeathers');
-  assert.equal(leathers.run.equipmentPoolBonuses.maxStamina, 1, 'the real leather signature supplies one Stamina');
+  // Owner, 2026-11-20: Gutter Leathers' own +1 max Stamina is dropped because its +1 Dexterity already feeds Stamina (derivedStatRules.json), so it is not counted twice.
+  assert.equal(leathers.run.equipmentPoolBonuses.maxStamina, 0, 'the leather +1 Stamina line is dropped: its Dexterity point already feeds the pool');
   leathers.run.maxHpAdjustment = 7;
   reconcileRunLoadoutHp(leathers.registries, leathers.run);
   const hp = poolsAgree(leathers).derived.find(row => row.id === 'hp');

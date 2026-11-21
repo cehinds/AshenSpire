@@ -199,6 +199,11 @@ export function FixCoreBands(ctx) {
   const row = rawRules(ctx).bands;
   return row?.rows === true ? row : null;
 }
+/** Saved Retreat policy: an existing rules snapshot owns absence and zero. */
+export function RetreatRulesActive(ctx) {
+  return ctx?.fixCoreRules ? ctx.fixCoreRules.retreatRulesVersion === 1
+    : ctx?.gameProfile?.modules?.effects?.retreatRulesVersion === 1;
+}
 function validateElementFlux(row) {
   if (row === undefined) return;
   if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'multiplier'].includes(key)) || !(Number.isFinite(row.multiplier) && row.multiplier >= 1)) throw new Error('FixCore elementFlux requires {version:1, multiplier:number >= 1}');
@@ -206,7 +211,8 @@ function validateElementFlux(row) {
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
   if (rules.spellTraditionsVersion !== undefined && ![0, 1].includes(rules.spellTraditionsVersion)) throw new Error('FixCore spellTraditionsVersion must be 0 or 1');
-  const known = new Set(['spellTraditionsVersion','version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','bands','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  if (rules.retreatRulesVersion !== undefined && ![0, 1].includes(rules.retreatRulesVersion)) throw new Error('FixCore retreatRulesVersion must be 0 or 1');
+  const known = new Set(['retreatRulesVersion','spellTraditionsVersion','version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','bands','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing', 'decayPerTurn', 'breaksAtZeroPoise'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0))
     || (rules.ward.decayPerTurn !== undefined && !(Number.isInteger(rules.ward.decayPerTurn) && rules.ward.decayPerTurn >= 0))

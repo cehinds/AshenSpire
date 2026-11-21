@@ -409,12 +409,13 @@ test('a Bow Reach stack is granted at the start of the turn, so it is live for t
   assert.equal(world.combat.player.statuses.reach?.stacks, 1, 'the stack is there at turn 1');
 });
 
-test('the unarmoured type gives +1 max MP and a specific robe adds its own on top, uncapped', () => {
+// Owner, 2026-11-20 (amends 2026-11-18): a robe's own max MP line is dropped when its resolved points feed Mana (Wisdom); the type base +1 always stays.
+test('the unarmoured type gives +1 max MP; a specific robe adds its own on top only if its resolved points do not already feed Mana', () => {
   assert.ok(GEAR_TYPES.armourGroups.unarmoured.mods.includes('self.maxMana=+1'));
   const plain = build({ classId: 'starseer' }).run;
   assert.equal(runMods(registries, plain.loadout, plain.class).maxMana, 1, 'a plain robe: the type base');
   const nightweave = build({ classId: 'starseer', armor: 'nightweave' }).run;
-  assert.equal(runMods(registries, nightweave.loadout, nightweave.class).maxMana, 2, 'Nightweave: the type base plus its own +1');
+  assert.equal(runMods(registries, nightweave.loadout, nightweave.class).maxMana, 1, 'Nightweave: the type base; its own +1 would count its Wisdom points twice');
 });
 
 // Owner, 2026-11-19: the Bow's end-of-turn Retreat is a floor of 1 stack, and only while in Defend stance.

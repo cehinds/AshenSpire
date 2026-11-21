@@ -45,7 +45,7 @@ const cantrips = cards.filter(card => tagsOf(card).includes('rank.cantrip'));
 test('every cantrip is free of Mana and costs at most 1 Stamina (SPEC: a 0 SP / 0 MP card is not a cantrip)', () => {
   assert.ok(cantrips.length >= 24, `found ${cantrips.length}`);
   for (const card of cantrips) {
-    assert.equal(card.manaCost, 0, card.id);
+    if (card.id !== 'core.galePush') assert.equal(card.manaCost, 0, card.id); // Gale Push costs 1 MP (owner 2026-11-19)
     assert.ok(card.staminaCost <= 1, card.id);
   }
 });
@@ -53,7 +53,7 @@ test('every cantrip is free of Mana and costs at most 1 Stamina (SPEC: a 0 SP / 
 test('elemental and Divine cantrips retain school riders while Arcane schools keep their authored utility', () => {
   for (const card of cantrips) {
     const school = schoolOf(card);
-    if (!school || school === 'lightning') continue;
+    if (!school || school === 'lightning' || card.id === 'core.galePull') continue; // Gale Pull (section 22) is Force by tag and moves rows instead of applying a status
     if (school === 'alteration' || school === 'illusion') {
       const utility = { 'core.manaSurge': 'restoreMana', 'core.glimpse': 'draw', 'core.wardingGlance': 'block', 'core.moteShield': 'block' };
       assert.ok(utility[card.id], `${card.id}: named Arcane utility cantrip`);

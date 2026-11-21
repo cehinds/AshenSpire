@@ -16,6 +16,11 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-20 on merging dev again (card changes, #2902): the runtime hash is unchanged (fbf370e6...); only the profile, snapshot and save hash leaves moved (card data joins the profile); every events, RNG, receipt and continuation hash is unchanged.
+// Recaptured 2026-11-20 on merging dev (0.7.4.242, spell traditions) into the Retreat reach rules and drawbacks: only profile, runtime, snapshot and save hash leaves moved
+// (the new retreatRulesVersion and spellRewardPolicyVersion module defaults and the Retreat card faces join the profile); every events, RNG, receipt and continuation hash is unchanged (the tradition-policy test below proves it).
+// Recaptured 2026-11-19 for saved Retreat opt-in after Dev 213: exactly 27 current profile/runtime/snapshot/save hashes moved.
+// Native and production agree; the complete historical scenario, events, receipts, continuations and RNG values are unchanged.
 // Recaptured 2026-11-20 for effects.statusBlockWeight (the Dexterity status adds Block): 24 leaves moved against dev (after #2915), all of them profile, snapshot
 // and save hashes of the three current-profile scenarios; every event, RNG, receipt and continuation hash is unchanged.
 // Recaptured 2026-11-20 once for the version-free save hash: contentVersion is normalised before hashing, so only the 8 stored/loaded leaves moved; release cuts no longer move them.
@@ -39,6 +44,7 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // Recaptured 2026-11-19 after merging Defend-only Smash from Dev 4fc475a249: exactly 27 current profile/runtime/snapshot/save hashes differ from each parent.
 // Native and production agree; full historical scenarios and every event, RNG, receipt and continuation remain unchanged. Historical fights omit the new Smash override.
 // Both concurrent Smash integrations independently measured 27 changed current hash leaves with unchanged historical behavior.
+// Recaptured 2026-11-20 (chore/RemoveDeadEffectTags: Precision tags become Pierce, Foresight/Veil/Charm/Grease reworked, crit feats removed): only the profile, snapshot, stored and loaded hashes moved; events, RNG, receipts, continuations and the runtime hash are unchanged.
 // Incoming Dev previously revalidated the same historical capture at runtime 04de9306 before combining stat traditions.
 // Recaptured 2026-11-19 for stat allocation on incoming Dev 6232329243: exactly 27 current profile/runtime/snapshot/save hashes moved.
 // The entire historical scenario and every event, RNG, receipt and continuation match incoming Dev; native and production agree, and the JS01 no-Gear guard stays intact.

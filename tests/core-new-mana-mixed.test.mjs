@@ -39,8 +39,15 @@ const live = (classId, seed, floor) => {
   run.floor = floor;
   return run;
 };
-const offered = (classId, seed, floor) => gameProfileRewardOffers(registries, live(classId, seed, floor), createRng(seed + 50000), { offerId: 'b4' })
-  .options.filter(option => option.kind === 'combatCards').map(option => option.id);
+// An offer is a pure function of (class, seed, floor): a fresh run and a fresh RNG each time. Both 600-seed tests below
+// ask for the same offers (floor 1 + seed % 6 is one of 1 + seed % 3 and 4 + seed % 3), so each is rolled once.
+const offers = new Map();
+const offered = (classId, seed, floor) => {
+  const key = `${classId}|${seed}|${floor}`;
+  if (!offers.has(key)) offers.set(key, Object.freeze(gameProfileRewardOffers(registries, live(classId, seed, floor), createRng(seed + 50000), { offerId: 'b4' })
+    .options.filter(option => option.kind === 'combatCards').map(option => option.id)));
+  return offers.get(key);
+};
 
 test('every card is authored in its class, costs SP and MP, is not a cantrip, and is uncommon or rare (at most 3 rares)', () => {
   for (const [cls, list] of Object.entries(BY_CLASS)) for (const id of list) {

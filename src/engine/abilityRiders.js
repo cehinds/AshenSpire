@@ -22,6 +22,8 @@ export function beginAbilityTurn(entity) {
     turnStartHpPct: entity.maxHp > 0 ? 100 * entity.hp / entity.maxHp : 0,
     charges: {}, once: {},
     instanceUsesCombat:old.instanceUsesCombat || {},cardUsesCombat:old.cardUsesCombat || {}, typePlays: {}, sameCardPlays: {}, attacksPlayed: 0, cardPlaysCombat: old.cardPlaysCombat || 0,
+    ...(old.instanceModeUsesCombat ? { instanceModeUsesCombat: old.instanceModeUsesCombat } : {}),
+    ...(old.cardModeUsesCombat ? { cardModeUsesCombat: old.cardModeUsesCombat } : {}),
   };
 }
 
@@ -37,11 +39,21 @@ export function abilityMetric(entity, predicate, snapshot) {
   return state[predicate.metric] || 0;
 }
 
-export function recordAbilityCard(entity, card, manaSpent) {
+export function recordAbilityCard(entity, card, manaSpent, mode = null) {
   const state = stateFor(entity);
   state.typePlays ||= {}; state.typePlays[card.type]=(state.typePlays[card.type] || 0)+1;
   if(card.instanceId) {state.instanceUsesCombat ||= {};state.instanceUsesCombat[card.instanceId]=(state.instanceUsesCombat[card.instanceId] || 0)+1;}
   state.cardUsesCombat ||= {}; state.cardUsesCombat[card.cardId]=(state.cardUsesCombat[card.cardId] || 0)+1;
+  if (mode !== null) {
+    state.cardModeUsesCombat ||= {};
+    const cards = state.cardModeUsesCombat[card.cardId] ||= {};
+    cards[mode] = (cards[mode] || 0) + 1;
+    if (card.instanceId) {
+      state.instanceModeUsesCombat ||= {};
+      const copy = state.instanceModeUsesCombat[card.instanceId] ||= {};
+      copy[mode] = (copy[mode] || 0) + 1;
+    }
+  }
   state.cardsPlayed += 1;
   state.cardPlaysCombat = (state.cardPlaysCombat || 0) + 1;
   state.attacksPlayed = (state.attacksPlayed || 0) + (card.type === 'attack' ? 1 : 0);
