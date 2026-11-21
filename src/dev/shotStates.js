@@ -428,6 +428,11 @@ export function createShotStates(ctx) {
         run.smithingStones = 12;
         run.loadout.storage.push('katana');
         run.shopStock = buildBlacksmithStock(ctx.getRegistries(), ctx.getRng(), run);
+        // `?shotSellNothing=1` — the run carries nothing a vendor would buy, so the empty Sell shelf can be photographed.
+        if (shotParams.get('shotSellNothing') === '1') {
+          Object.assign(run, { relics: [], flasks: [], consumables: {}, sideboard: [] });
+          run.loadout.storage = []; run.loadout.boughtArmour = [];
+        }
       }
       // `?shotCopy=1` — the visit stocks the copy-a-card service (owner 2026-11-20) whatever the seed rolled, so its shelf
       // can be photographed: the Blacksmith's `cardCopy` offering, or a trader's copy shelf in its stock.
