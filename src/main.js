@@ -2129,6 +2129,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       enemy.intentRevealed = false;
     }
   }
+  if (shotState === 'combat' && shotParams.has('shotCards')) {
+    // `?shotCards=core.evade,core.smash`: a memory-only QA pose that holds the named cards in hand (sandbox acceptance of a card's face).
+    // Loud on an unknown id, as the poses above; the cards still play through the production interpreter.
+    const ids = shotParams.get('shotCards').split(',').map((id) => id.trim()).filter(Boolean);
+    const known = (id) => { try { return !!registries.cards.get(id); } catch { return false; } };
+    for (const id of ids) if (!known(id)) throw new Error(`?shotCards: unknown card '${id}'`);
+    combat.piles.draw.push(...combat.piles.hand);
+    combat.piles.hand = ids.map((cardId, index) => ({ cardId, instanceId: `cards-shot-${index}`, upgraded: false }));
+  }
   if (shotState === 'combat' && shotParams.has('shotHand')) {
     const wantHand = Number(shotParams.get('shotHand'));
     if (!Number.isInteger(wantHand) || wantHand < 1 || wantHand > combat.handMax) {
