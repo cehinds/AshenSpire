@@ -22,7 +22,8 @@ import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 // Fund the authored three-contact Slash before the planner selects its head. The Core 0.5 base-damage scale and the 0.7 side and Block scales are off: this file pins
 // the per-contact contract, and halved 5-damage contacts leave a Counter's floor(0.25 x hit) Block at 0.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
-  characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+  // The minion SP cap (characters.enemyLevelScaling.spCap, owner 2026-11-20) is lifted with the pool so the fixture keeps its funded slash.
+  characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } }, enemyLevelScaling: { spCap: { minion: 4 } } },
   effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 },
 } });
 const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
