@@ -92,7 +92,7 @@ card,,setupRogue,guile
 card,,acrobaticsRogue,flourish
 card,,disorient,guile
 card,,coupDeGrace,blade
-card,,coupDeGrace,precision
+card,,coupDeGrace,pierce
 card,,sap,guile
 card,,shadowstep,flourish
 card,,shadowstep,guile
@@ -105,7 +105,7 @@ card,,venomcoat,oath
 card,,misdirect,guile
 card,,misdirect,guard
 card,,assassinate,blade
-card,,assassinate,precision
+card,,assassinate,pierce
 card,,thousandCutsRogue,blade
 card,,thousandCutsRogue,flourish
 card,,deadlyTempoCard,flourish
@@ -121,7 +121,7 @@ card,,smokeBomb,ash
 card,,executionWindow,blade
 card,,perfectHeist,guile
 card,,deathblow,blade
-card,,deathblow,precision
+card,,deathblow,pierce
 card,,strike,blade
 card,,defend,guard
 card,,gorefireSlash,blade
@@ -207,7 +207,6 @@ armament,,shortbow,item:blade
 armament,,shortbow,pierce
 armament,,shortbow,ranged
 armament,,shortbow,bow
-armament,,shortbow,precision
 armament,,katana,item:blade
 armament,,katana,blade
 armament,,katana,blood
@@ -341,7 +340,6 @@ basicCardProfile,,daggerPierceAttack,flourish
 basicCardProfile,,bowPierceAttack,pierce
 basicCardProfile,,bowPierceAttack,ranged
 basicCardProfile,,bowPierceAttack,bow
-basicCardProfile,,bowPierceAttack,precision
 basicCardProfile,,staffMagicAttack,starstone
 basicCardProfile,,sceptreArcaneAttack,ritual
 basicCardProfile,,sceptreArcaneAttack,blight
@@ -354,7 +352,7 @@ basicCardProfile,,unarmedTechnique,flourish
 basicCardProfile,,weaponTechnique,blade
 basicCardProfile,,weaponTechnique,flourish
 basicCardProfile,,bowTechnique,ranged
-basicCardProfile,,bowTechnique,precision
+basicCardProfile,,bowTechnique,pierce
 basicCardProfile,,staffTechnique,ritual
 enemy,,lanternMoth,beast
 enemy,,briarHermit,humanoid
@@ -625,7 +623,7 @@ card,,acrobaticsRogue,fx:flourish
 card,,disorient,fx:guile
 card,,disorient,fx:bind
 card,,coupDeGrace,fx:blade
-card,,coupDeGrace,fx:precision
+card,,coupDeGrace,fx:pierce
 card,,sap,fx:guile
 card,,shadowstep,fx:flourish
 card,,shadowstep,fx:guile
@@ -638,7 +636,7 @@ card,,venomcoat,fx:oath
 card,,misdirect,fx:guile
 card,,misdirect,fx:guard
 card,,assassinate,fx:blade
-card,,assassinate,fx:precision
+card,,assassinate,fx:pierce
 card,,thousandCutsRogue,fx:blade
 card,,thousandCutsRogue,fx:flourish
 card,,deadlyTempoCard,fx:flourish
@@ -652,11 +650,11 @@ card,,toxicVolley,fx:ranged
 card,,smokeBomb,fx:guile
 card,,smokeBomb,fx:ash
 card,,executionWindow,fx:blade
-card,,executionWindow,fx:precision
+card,,executionWindow,fx:pierce
 card,,executionWindow,fx:bind
 card,,perfectHeist,fx:guile
 card,,deathblow,fx:blade
-card,,deathblow,fx:precision
+card,,deathblow,fx:pierce
 card,,katanaDrawCut,fx:blade
 card,,katanaDrawCut,fx:flourish
 card,,katanaDrawCut,fx:blood
@@ -687,7 +685,6 @@ basicCardProfile,,daggerPierceAttack,fx:pierce
 basicCardProfile,,daggerPierceAttack,fx:flourish
 basicCardProfile,,bowPierceAttack,fx:pierce
 basicCardProfile,,bowPierceAttack,fx:ranged
-basicCardProfile,,bowPierceAttack,fx:precision
 basicCardProfile,,staffMagicAttack,fx:starstone
 basicCardProfile,,sceptreArcaneAttack,fx:ritual
 basicCardProfile,,sceptreArcaneAttack,fx:blight
@@ -709,7 +706,7 @@ basicCardProfile,,unarmedTechnique,fx:dodge
 basicCardProfile,,weaponTechnique,fx:blade
 basicCardProfile,,weaponTechnique,fx:flourish
 basicCardProfile,,bowTechnique,fx:ranged
-basicCardProfile,,bowTechnique,fx:precision
+basicCardProfile,,bowTechnique,fx:pierce
 basicCardProfile,,staffTechnique,fx:ritual
 
 # Categorized attack identity. Weapon attack cards carry a fixed damage:* tag (below); the equipped weapon supplies the source otherwise.
@@ -918,19 +915,16 @@ card,,serratedShiv,theme:blood
 card,,bladeDanceRogue,technique:flourish
 card,,garrote,theme:blood
 card,,acrobaticsRogue,technique:flourish
-card,,coupDeGrace,technique:precision
 card,,shadowstep,technique:flourish
 card,,afterimageCard,technique:flourish
 card,,afterimageCard,theme:oath
 card,,bloodletterRogue,theme:blood
 card,,venomcoat,theme:oath
-card,,assassinate,technique:precision
 card,,thousandCutsRogue,technique:flourish
 card,,deadlyTempoCard,technique:flourish
 card,,deadlyTempoCard,theme:oath
 card,,opportunistCard,theme:oath
 card,,envenomCard,theme:oath
-card,,deathblow,technique:precision
 card,,gorefireSlash,theme:blood
 card,,crimsonCleave,theme:blood
 card,,quickstep,technique:flourish
@@ -949,7 +943,6 @@ card,,bloodPact,theme:blood
 card,,blightTouch,theme:blight
 armament,,greatsword,technique:heavy
 armament,,dagger,technique:flourish
-armament,,shortbow,technique:precision
 armament,,katana,theme:blood
 armament,,katana,technique:flourish
 armament,,halberd,technique:heavy
@@ -967,13 +960,11 @@ armament,,blightRod,theme:blight
 armament,,gorefireBrand,theme:blood
 armament,,wyrmhornStaff,technique:heavy
 basicCardProfile,,daggerPierceAttack,technique:flourish
-basicCardProfile,,bowPierceAttack,technique:precision
 basicCardProfile,,staffMagicAttack,theme:astral
 basicCardProfile,,sceptreArcaneAttack,theme:blight
 basicCardProfile,,staffGuard,theme:astral
 basicCardProfile,,unarmedTechnique,technique:flourish
 basicCardProfile,,weaponTechnique,technique:flourish
-basicCardProfile,,bowTechnique,technique:precision
 card,,enterGorefire,theme:stance
 card,,enterBulwark,theme:stance
 card,,enterGorefire,theme:blood
@@ -2066,13 +2057,10 @@ card,,nockAndWait,ranged
 card,,nockAndWait,classification.skill
 card,,aimedShot,pierce
 card,,aimedShot,ranged
-card,,aimedShot,precision
 card,,aimedShot,fx:pierce
-card,,aimedShot,fx:precision
 card,,aimedShot,source:weapon
 card,,aimedShot,delivery:projectile
 card,,aimedShot,damage:piercing
-card,,aimedShot,technique:precision
 card,,aimedShot,classification.attack
 card,,barbedArrow,pierce
 card,,barbedArrow,ranged
@@ -2156,7 +2144,7 @@ card,,riteOfCinders,fx:ritual
 card,,riteOfCinders,theme:astral
 card,,riteOfCinders,classification.skill
 card,,nockAndWait,fx:ranged
-card,,nockAndWait,fx:precision
+card,,nockAndWait,fx:pierce
 card,,bindingParry,fx:flourish
 card,,whirlingGuard,fx:flourish
 card,,hewingArc,fx:blood
@@ -2527,24 +2515,12 @@ feat,,progression-bearer-of-burdens,feat:bearer-of-burdens
 feat,,progression-sepulchral-promise,classification.feat
 feat,,progression-sepulchral-promise,feat:sepulchral-promise
 feat,,reaverIronFooting,classification.feat
-feat,,reaverKeenBlade,classification.feat
-feat,,reaverBloodDiscipline,classification.feat
-feat,,reaverMasteryFocus,classification.feat
 feat,,reaverMasteryResolve,classification.feat
 feat,,starseerAshShelter,classification.feat
-feat,,starseerClearSky,classification.feat
-feat,,starseerRitualPrecision,classification.feat
-feat,,starseerMasteryFocus,classification.feat
 feat,,starseerMasteryResolve,classification.feat
 feat,,rogueQuietGuard,classification.feat
-feat,,rogueMeasuredPoint,classification.feat
-feat,,rogueKnifeWork,classification.feat
-feat,,rogueMasteryFocus,classification.feat
 feat,,rogueMasteryResolve,classification.feat
 feat,,heraldRiteShelter,classification.feat
-feat,,heraldBlightPrecision,classification.feat
-feat,,heraldOathEdge,classification.feat
-feat,,heraldMasteryFocus,classification.feat
 feat,,heraldMasteryResolve,classification.feat
 relic,,progression-emberjaw-token,progression-emberjaw-token
 relic,,progression-emberjaw-token,blade
@@ -4744,8 +4720,7 @@ card,,lethalDose,camp:physical
 card,,lethalDose,maneuver:attack
 card,,lethalDose,damage:poison
 card,,lethalDose,range:reach
-card,,lethalDose,precision
-card,,lethalDose,technique:precision
+card,,lethalDose,pierce
 card,,mindSpike,classification.attack
 card,,mindSpike,camp:spell
 card,,mindSpike,school:illusion
@@ -5288,8 +5263,6 @@ armament,,longbow,item:blade
 armament,,longbow,pierce
 armament,,longbow,ranged
 armament,,longbow,bow
-armament,,longbow,precision
-armament,,longbow,technique:precision
 armament,,longbow,source:weapon
 armament,,longbow,delivery:projectile
 armament,,longbow,damage:piercing
@@ -5299,8 +5272,6 @@ armament,,huntersRecurve,item:blade
 armament,,huntersRecurve,pierce
 armament,,huntersRecurve,ranged
 armament,,huntersRecurve,bow
-armament,,huntersRecurve,precision
-armament,,huntersRecurve,technique:precision
 armament,,huntersRecurve,source:weapon
 armament,,huntersRecurve,delivery:projectile
 armament,,huntersRecurve,damage:piercing
@@ -5310,8 +5281,6 @@ armament,,handCrossbow,item:blade
 armament,,handCrossbow,pierce
 armament,,handCrossbow,ranged
 armament,,handCrossbow,bow
-armament,,handCrossbow,precision
-armament,,handCrossbow,technique:precision
 armament,,handCrossbow,source:weapon
 armament,,handCrossbow,delivery:projectile
 armament,,handCrossbow,damage:piercing
@@ -5321,8 +5290,6 @@ armament,,arbalest,item:blade
 armament,,arbalest,pierce
 armament,,arbalest,ranged
 armament,,arbalest,bow
-armament,,arbalest,precision
-armament,,arbalest,technique:precision
 armament,,arbalest,source:weapon
 armament,,arbalest,delivery:projectile
 armament,,arbalest,damage:piercing
