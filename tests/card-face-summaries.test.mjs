@@ -51,9 +51,9 @@ test('no card face in the registry shows the Inspect placeholder', async () => {
   });
 });
 
-test('Foresight names its tag and Exile Recovery says what it returns', () => withKitDom(dom => {
+test('Foresight names its draw (Foresight the status is retired, owner 2026-11-20) and Exile Recovery says what it returns', () => withKitDom(dom => {
   const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
-  assert.deepEqual(facesOf(dom, reg, { cardId: 'base.foresight' }, rules), ['Gain 3 Foresight.', 'Draw 2.']);
+  assert.deepEqual(facesOf(dom, reg, { cardId: 'base.foresight' }, rules), ['Draw 3.']);
   assert.deepEqual(facesOf(dom, reg, { cardId: 'base.recover-exile' }, rules), ['Return 1 exhausted card.']);
   assert.deepEqual(facesOf(dom, reg, { cardId: 'base.greased' }, rules), ['Apply Greased 3.']);
 }));
@@ -139,7 +139,7 @@ test('qualifier table: chance, payment, discard, hits and plain cards', () => wi
       ['Silent Exchange rank 4 keeps its discard', () => face({ cardId: 'progression-silent-exchange', abilityRank: 4 }), /discard/i],
       ['Silent Exchange rank 5 keeps its discard', () => face({ cardId: 'progression-silent-exchange', abilityRank: 5 }), /discard/i],
       ['Arrow Volley reads uneven hits', () => face({ cardId: 'arrowVolley' }, { combatExpansionVersion: 2, tokens: {}, values: [], damageSequences: [{ amountToken: 'damage', hitsToken: 'hits', hitDamages: [1, 5], totalDamage: 6 }] }), /1 \+ 5/],
-      ['a plain card still gets its summary', () => face({ cardId: 'base.foresight' }), /^Gain 3 Foresight\./],
+      ['a plain card still gets its summary', () => face({ cardId: 'base.foresight' }), /^Draw 3\./],
       ['another plain card still gets its summary', () => face({ cardId: 'base.recover-exile' }), /^Return 1 exhausted card\.$/],
     ];
     // Hex names both its debuffs with their chance; a face that would drop either line falls back to the cue instead.
