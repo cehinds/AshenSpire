@@ -5206,8 +5206,7 @@
     "motionFlags",
     "motionOff",
     "resolveCombatPacing",
-    "resolveMotionIdle",
-    "resolvePerformanceMode"
+    "resolveMotionIdle"
   ],
   "src/ui/poiseHelp.js": [
     "poiseHelpText"
@@ -5374,7 +5373,6 @@
     "resolveArmamentsPhonePlacement",
     "resolveArmamentsPresentation",
     "resolveGraceRefill",
-    "resolveLevelUpValue",
     "resolveNumberRow",
     "resolveTapSize",
     "restoreView",

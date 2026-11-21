@@ -150,3 +150,93 @@ test('full detail itemises a roll under its row; compact reading hides it', () =
     log.close();
   });
 });
+
+function withClipboard(clipboard, run) {
+  const saved = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { clipboard } });
+  try { return run(); }
+  finally {
+    if (saved) Object.defineProperty(globalThis, 'navigator', saved);
+    else delete globalThis.navigator;
+  }
+}
+
+test('Copy uses the latest entries, round headings and the selected level of detail', async () => {
+  const copied = [], pending = [];
+  const damageReceipt = { version: 1, hits: [{incoming:20,hpLoss:15,poiseReduced:5,sources:[{id:'armor',label:'Iron Cuirass',amount:3}]}],totalDamage:15 };
+  const rollReceipt = { kind: 'accuracy', die: 'd20', dice: [14], mode: 'normal', success: true,
+    parts: [{ label: 'Precision', value: 4 }], total: 18, dcParts: [{ label: 'Evasion', value: 9 }], dc: 9 };
+  const latest = [entries[0], { id: 2, round: 2, text: 'old text', segments: [{text:'Reaver '},{text:'hit Soldier.'}], damageReceipt, rollReceipt }];
+  withClipboard({ writeText(text) { copied.push(text); return Promise.resolve(); } }, () => {
+    withModalDom(dom => {
+      for (const detailed of [true, false]) {
+        resetModalState();
+        const log = openCombatLogModal({ entries, opener: openerButton(dom), detailed });
+        log.setEntries(latest);
+        const copy = log.panel.querySelector('[data-combat-log-copy]');
+        pending.push(copy.listeners.get('click')[0]());
+        assert.equal(copy.disabled, true, 'copy cannot be submitted twice while pending');
+        log.close();
+      }
+    });
+  });
+  await Promise.all(pending);
+  assert.match(copied[0], /^Round 1\nReaver played Guard Counter\.\n\nRound 2\nReaver hit Soldier\./);
+  assert.match(copied[0], /Iron Cuirass: \+3/);
+  assert.match(copied[0], /d20 \[14\]/);
+  assert.equal(copied[1], 'Round 1\nReaver played Guard Counter.\n\nRound 2\nReaver hit Soldier.');
+});
+
+test('blocked clipboard access selects the log for manual copy without claiming success', async () => {
+  let pending;
+  const savedSelection = globalThis.getSelection;
+  withClipboard(undefined, () => withModalDom(dom => {
+    resetModalState();
+    let selected = null, cleared = false;
+    const range = { selectNodeContents(node) { selected = node; } };
+    dom.document.createRange = () => range;
+    globalThis.getSelection = () => ({ removeAllRanges() { cleared = true; }, addRange(value) { assert.equal(value, range); } });
+    try {
+      const log = openCombatLogModal({ entries, opener: openerButton(dom) });
+      const copy = log.panel.querySelector('[data-combat-log-copy]');
+      pending = copy.listeners.get('click')[0]();
+      assert.equal(selected, log.panel.querySelector('.combat-log-modal-entries'));
+      assert.equal(cleared, true);
+      assert.equal(copy.textContent, 'Text selected');
+      assert.equal(copy.disabled, false);
+      log.close();
+    } finally {
+      if (savedSelection === undefined) delete globalThis.getSelection;
+      else globalThis.getSelection = savedSelection;
+    }
+  }));
+  await pending;
+});
+
+test('a clipboard result after closing leaves the closed button untouched', async () => {
+  let resolveCopy, pending, copy;
+  withClipboard({ writeText() { return new Promise(resolve => { resolveCopy = resolve; }); } }, () => withModalDom(dom => {
+    resetModalState();
+    const log = openCombatLogModal({ entries, opener: openerButton(dom) });
+    copy = log.panel.querySelector('[data-combat-log-copy]');
+    pending = copy.listeners.get('click')[0]();
+    log.close();
+  }));
+  resolveCopy();
+  await pending;
+  assert.equal(copy.textContent, 'Copy');
+});
+
+test('footer action counts include Copy with and without the optional console', () => {
+  withModalDom(dom => {
+    resetModalState();
+    const log = openCombatLogModal({ entries, opener: openerButton(dom) });
+    const actions = log.panel.querySelector('.modal-foot-actions');
+    assert.equal(actions.dataset.actionCount, '3');
+    log.setConsoleEnabled(true);
+    assert.equal(actions.dataset.actionCount, '4');
+    log.setConsoleEnabled(false);
+    assert.equal(actions.dataset.actionCount, '3');
+    log.close();
+  });
+});

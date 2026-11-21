@@ -45,6 +45,7 @@ import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeap
 import { beatArmer } from '../../framework/optionDecision.js';
 import { purchaseReview, ShopPurchaseKind, SmithRankReview } from '../models/ConfirmationReviewModel.js';
 import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
+import { SmithPickChangeText } from '../../model/smithUpgrade.js';
 
 const GLYPH = Object.freeze({ armaments: 'attack', upgrade: 'smith', upgradeArt: 'vulnerable', rankUp: 'skill', weaponArts: 'attack' });
 
@@ -267,7 +268,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       title: t('blacksmith.options.title', { name: plan.name }),
       eyebrow: t('blacksmith.upgrade.slotLine', { n: plan.n, max: plan.smith.slots }),
       price: t('blacksmith.options.price', { stones: plan.stones, plural: plural(plan.stones), cinders: plan.cost }),
-      options: plan.options.map((option) => ({ id: option.id, name: option.text, text: '' })),
+      // Each option names its change on the item (owner, 2026-11-20): "STR +1 → +2", or the property it adds.
+      options: plan.options.map((option) => ({ id: option.id, name: option.text, text: SmithPickChangeText(run, plan.itemRef, option) })),
       opener,
       onChoose: (optionId) => act(host, () => commitBlacksmithUpgrade(registries, run, { ...plan, optionId }, { priceMult })),
     });

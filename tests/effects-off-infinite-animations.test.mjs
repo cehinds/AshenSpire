@@ -25,9 +25,9 @@ const ANCESTOR_GATES = new Map([
   ['.startup-ash', '.startup-ash-field'],
 ]);
 
-const GATE_PREFIX = /^:root(?::root)?\[data-(?:effects=['"]off['"]|performance=['"]lite['"])\] /;
+const GATE_PREFIX = /^:root(?::root)?\[data-effects=['"]off['"]\] /;
 const STOPS = /(?:^|[;\s])(?:animation(?:-name)?\s*:\s*none|display\s*:\s*none)\b/;
-const SELF_GATED = /\[data-performance=["']full["']\]|\[data-effects=["']on["']\]/;
+const SELF_GATED = /\[data-effects=["']on["']\]/;
 
 const infinite = rules.filter(r => /animation(?:-iteration-count)?\s*:[^;]*\binfinite\b/.test(r.body))
   .flatMap(r => r.selectors.map(selector => ({ sheet: r.sheet, selector })));

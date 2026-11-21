@@ -1,0 +1,245 @@
+{
+  "request": "Upgrade options (cards AND armaments/items) are rolled once when you enter a node or receive an upgrade reward, and do not change while you stay in that menu (open/close a card at the blacksmith: same options). Going to another upgrade source (e.g. blacksmith, then a shrine) re-rolls. Every change an option makes must be visible on the upgrade modal. Don't offer several options of the same type (owner keeps seeing \"no upgrade\" or \"damage +2 / damage +3\").",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "blacksmith-strike-first-open",
+      "url": "?shot=blacksmith",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": "[data-shop-category=\"upgradeArt\"]"
+        },
+        {
+          "click": "#blacksmith-upgrade-card"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".card-upgrade-row[data-instance-id=\"gp1\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Strike shows two or three options on first open",
+          "selector": ".card-upgrade-detail-modal [data-card-upgrade-option]",
+          "min": 2,
+          "max": 3
+        },
+        {
+          "kind": "text",
+          "label": "First-open option 1 (the reopen scene must match it)",
+          "selector": ".card-upgrade-detail-modal [data-card-upgrade-option=\"0\"] .card-upgrade-option-changes",
+          "includes": "STATUS none → Bleed 1"
+        },
+        {
+          "kind": "text",
+          "label": "First-open option 2 (the reopen scene must match it)",
+          "selector": ".card-upgrade-detail-modal [data-card-upgrade-option=\"1\"] .card-upgrade-option-changes",
+          "includes": "KEYWORDS none → Retain"
+        },
+        {
+          "kind": "count",
+          "label": "Every option tile lists at least one change line",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-option-changes li",
+          "min": 2
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "An option tile with no change line",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-option-changes:empty",
+          "min": 1
+        },
+        {
+          "kind": "text",
+          "label": "Two damage options side by side",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-options",
+          "matches": "DAMAGE[\\s\\S]*DAMAGE"
+        },
+        {
+          "kind": "text",
+          "label": "Two Block options side by side",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-options",
+          "matches": "BLOCK[\\s\\S]*BLOCK"
+        }
+      ]
+    },
+    {
+      "name": "blacksmith-strike-reopened",
+      "url": "?shot=blacksmith",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": "[data-shop-category=\"upgradeArt\"]"
+        },
+        {
+          "click": "#blacksmith-upgrade-card"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".card-upgrade-row[data-instance-id=\"gp1\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        },
+        {
+          "click": ".card-upgrade-detail-back"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": ".card-upgrade-row[data-instance-id=\"gp1\"]"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Strike shows two or three options after reopening",
+          "selector": ".card-upgrade-detail-modal [data-card-upgrade-option]",
+          "min": 2,
+          "max": 3
+        },
+        {
+          "kind": "text",
+          "label": "Reopened option 1 is the option first shown",
+          "selector": ".card-upgrade-detail-modal [data-card-upgrade-option=\"0\"] .card-upgrade-option-changes",
+          "includes": "STATUS none → Bleed 1"
+        },
+        {
+          "kind": "text",
+          "label": "Reopened option 2 is the option first shown",
+          "selector": ".card-upgrade-detail-modal [data-card-upgrade-option=\"1\"] .card-upgrade-option-changes",
+          "includes": "KEYWORDS none → Retain"
+        },
+        {
+          "kind": "count",
+          "label": "Every option tile lists at least one change line",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-option-changes li",
+          "min": 2
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "An option tile with no change line",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-option-changes:empty",
+          "min": 1
+        },
+        {
+          "kind": "text",
+          "label": "Two damage options side by side",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-options",
+          "matches": "DAMAGE[\\s\\S]*DAMAGE"
+        },
+        {
+          "kind": "text",
+          "label": "Two Block options side by side",
+          "selector": ".card-upgrade-detail-modal .card-upgrade-options",
+          "matches": "BLOCK[\\s\\S]*BLOCK"
+        }
+      ]
+    },
+    {
+      "name": "blacksmith-item-options",
+      "url": "?shot=blacksmith",
+      "ready": "#shop-cat-upgrade",
+      "settleMs": 2000,
+      "actions": [
+        {
+          "click": "button.merchant-offer-action:has-text(\"Upgrade\")"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Item options dialog is on screen",
+          "selector": ".modal.smith-options"
+        },
+        {
+          "kind": "text",
+          "label": "A stat option names its change on the item (before → after)",
+          "selector": ".modal.smith-options",
+          "matches": "→"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "A raw effect id is printed",
+          "selector": ".modal.smith-options",
+          "matches": "poiseDamagePct"
+        }
+      ]
+    }
+  ]
+}

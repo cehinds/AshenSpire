@@ -13,9 +13,7 @@ import { liveAdvancedConfigRows } from '../../model/advancedConfig.js';
 import { contentBundle } from '../../content/index.js';
 import { t, tFull } from '../strings.js';
 import { WIREFRAME_CHOICE_GROUPS } from './WireframeChoiceModel.js';
-import { flaskSlotCap, graceRefillTable, graceRefillLadder, firstFlaskOfKind } from '../../model/gracerefill.js';
-import { esc } from '../kit/index.js';
-import { flasks } from '../../content/flasks.js';
+import { graceRefillTable } from '../../model/gracerefill.js';
 import { COMBAT_LOG_PALETTE_DEFAULTS } from './CombatLogPaletteModel.js';
 import { rangeSettingsRows } from './RangeSettingsModel.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
@@ -24,7 +22,6 @@ import { resolveMotionIdle, EffectsSummary, SURFACE_CHOICES } from '../performan
 import { TITLE_ENTRANCE_TIMING } from './StartupGateModels.js';
 import { MAP_ZOOM_DEFAULT, ZOOM_STEPS, MAP_FREE_PAN_DEFAULT } from '../../model/map/mapview.js';
 import { MAP_MODE_DEFAULT, MAP_MODES, SHRINE_GLOW_DEFAULT } from '../../model/map/mapknowledge.js';
-import { VICTORY_XP_DEFAULTS } from '../../model/victoryXpPresentation.js';
 import { ART_QUALITY_KEY, ART_AUTO, ART_QUALITY_CHOICES, LEGACY_ART_QUALITY } from '../highResArt.js';
 import { tierChoiceDisabled } from '../artTier.js';
 import { CARD_ART_STYLE_KEY, CARD_ART_SIMPLE, CARD_ART_STYLE_CHOICES } from '../cardArtStyle.js';
@@ -46,8 +43,6 @@ import { deckRules } from '../../content/deckRules.js';
 const hooks = {};
 export function bindSettingsRowHooks(supplied) { Object.assign(hooks, supplied); }
 
-const EQ_DEFAULTS = balance.equipment;
-const LEVEL_DEFAULTS = balance.levelUp || {};
 export const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
 // rather than a number typed twice. content/config/ui/components/card.json is
@@ -77,7 +72,7 @@ const ADVANCED_CONFIG_ROWS = authoredAdvancedRows.filter((row) => !row.retired)
 // families and whose rows are dropdowns. Not one row typed per choice: the
 // catalogue (models/WireframeChoiceModel.js) already has to name every option
 // for the components that read them, and a second copy here is the drift this
-// screen has learned to refuse everywhere else (see graceRefillRows above). A
+// screen has learned to refuse everywhere else. A
 // fourth family, or a third option on an existing one, is an edit to the model
 // and NOTHING here.
 //
@@ -90,9 +85,12 @@ const ADVANCED_CONFIG_ROWS = authoredAdvancedRows.filter((row) => !row.retired)
 function wireframeChoiceRows() {
   return WIREFRAME_CHOICE_GROUPS.flatMap((group) => group.choices.map((choice) => ({
     cat: 'Advanced',
-    advancedGroup: 'Wireframes',
+    advancedGroup: 'Developer',
     wireframeTopic: group.id,
     wireframeTopicLabel: group.label,
+    // Behind one Wireframes button in Developer › Layout (owner, 2026-11-20); the modal heads
+    // its sections with the family labels.
+    groupModal: 'wireframes',
     key: choice.key,
     type: 'choice',
     dropdown: true,
@@ -104,128 +102,16 @@ function wireframeChoiceRows() {
   })));
 }
 
-// ---- the grace-refill rows: DERIVED, one per row of the table --------------
-//
-// Constantine asked for the flask refill to be "configurable in teh debug
-// settings and be data driven" in one breath, and this is the only shape that
-// is both at once. These rows are not authored. `balance.graceRefill` is walked
-// and each row becomes one Advanced chip strip, so a third refilled kind is a
-// row in content and NOTHING here — which is the Law 0 falsifier for this
-// feature, and `tools/gracerefill.mjs --selftest` runs it.
-//
-// THE LADDER IS DERIVED TOO: 0 … balance.flaskSlots, from graceRefillLadder.
-// Raising the carry cap lengthens every strip with no edit here, and 0 is a
-// real position — his own debug switch for turning the whole thing off.
-//
-// FIVE CHIPS AT flaskSlots: 3. Marina measured four chips at 92.1 px tall on
-// 390x844 and seven at 301.2 px with the last chip off-viewport; five is inside
-// that, and tools/axisfit.mjs is what says so rather than this comment.
-//
-// KEY SHAPE `graceRefill.<kind>`: one key per kind, so a stored override
-// survives a table reorder. `settingOn` is not involved — these are choices.
-const GRACE_REFILL_KEY = (kind) => `graceRefill.${kind}`;
-
-// What a kind is CALLED to a human. A kind with no entry here falls back to the
-// id, so a new kind gets a working row before anyone writes it prose — the row
-// appears ugly rather than not at all.
-const KIND_LABELS = { hp: 'HP', mana: 'Mana', utility: 'Utility' };
-const kindLabel = (k) => KIND_LABELS[k] || k;
-
-function graceRefillRows() {
-  const cap = flaskSlotCap(balance);
-  return graceRefillTable(balance).map((row) => ({
-    cat: 'Advanced',
-    advancedGroup: 'Rewards',
-    key: GRACE_REFILL_KEY(row.kind),
-    type: 'choice',
-    def: String(row.count),
-    choices: graceRefillLadder(balance),
-    label: `Grace refill — ${kindLabel(row.kind)} flasks`,
-    applied: graceRefillAppliedHtml,
-    graceRefillKind: row.kind,
-    // SHORT, and Marina's own measurement is why: a long note beside a chip
-    // strip squeezes the text column to a ribbon (she took one row from 92.1 px
-    // to 216.9 px proving it). What the row DOES is one clause; what it
-    // RESOLVES TO is the applied line below, which changes with the value and
-    // therefore earns its space.
-    note: `Topped up automatically on arrival at a shrine. 0 is off; ${cap} slots in total.`,
-  }));
-}
-
 /**
- * resolveGraceRefill(settings) → { counts, bad: [{ key, kind, stored, used }] }
- *
- * THE ONE HOME FOR "how many flasks does a grace give", asked by the shrine
- * (main.js showRest), by the co-op session, and by the row below that prints
- * it. The authored numbers are `balance.graceRefill`; this only ever layers a
- * stored override on top, and the override has to be a position on the row's
- * own ladder.
- *
- * `bad` IS THE POINT, exactly as it is for resolveTapSize: a sparse store is
- * normal and absence means "use the authored count" with nothing to report. A
- * key that is PRESENT and not on the ladder is bad data — a hand-edited save, a
- * restored profile from a tree with a smaller carry cap — and it still has to
- * resolve to something, so it resolves to the authored count and SAYS SO. A
- * refill that quietly ignores the number on the screen is the failure this
- * whole feature is supposed to be the opposite of.
+ * resolveGraceRefill() → { counts, bad }: how many flasks of each kind a grace tops up, from the
+ * authored `balance.graceRefill` table. The per-kind `graceRefill.<kind>` rows were retired
+ * (owner, 2026-11-20, with the Rewards tab); a stored key is cleared at boot, so there is never a
+ * bad stored value to report and `bad` is always empty.
  */
-export function resolveGraceRefill(settings) {
-  const s = settings || {};
+export function resolveGraceRefill() {
   const counts = {};
-  const bad = [];
-  for (const r of SETTINGS_ROWS) {
-    if (!r.graceRefillKind) continue;
-    const def = Number(r.def);
-    const stored = s[r.key];
-    if (stored === undefined || stored === null || stored === '') {
-      counts[r.graceRefillKind] = def;
-      continue;
-    }
-    const v = String(stored);
-    if (r.choices.includes(v)) {
-      counts[r.graceRefillKind] = Number(v);
-    } else {
-      counts[r.graceRefillKind] = def;
-      bad.push({ key: r.key, kind: r.graceRefillKind, stored: v, used: def });
-    }
-  }
-  return { counts, bad };
-}
-
-// THE LINE UNDER A GRACE-REFILL ROW. It exists to make two states impossible to
-// miss and one impossible to fake:
-//
-//   NOT BINDING — the kind has no flask entry, so whatever number is showing,
-//   this restores nothing. Freja's pattern, and the reason it is not silence:
-//   a chip strip reading 3 over a refill that gives 0 is a knob whose value is
-//   ignored, which Law 0 clause 5 calls the dangerous failure.
-//
-//   the rejected stored value — same sentence resolveTapSize's row prints.
-//
-//   0 says "off" in words, because a lone 0 chip is ambiguous between "off"
-//   and "not set".
-//
-// It names the flask a kind resolves to, at the value chosen, so the derivation
-// is visible on the screen the choice is made on rather than inferable from
-// content/flasks.js.
-function graceRefillAppliedHtml(settings, r) {
-  const { counts, bad } = resolveGraceRefill(settings);
-  const kind = r.graceRefillKind;
-  const n = counts[kind];
-  const rejected = bad.find((b) => b.kind === kind);
-  const lead = rejected
-    ? `<b>${esc(rejected.stored)}</b> is not one of these. Using ${rejected.used}. `
-    : '';
-  // Asked of the content array rather than the registry: this module is UI and
-  // is never handed registries. The RULE is `firstFlaskOfKind`, one home,
-  // shared with the plan and with boot validation.
-  const entry = firstFlaskOfKind(flasks, kind);
-  if (!entry) {
-    return `${lead}<b>NOT BINDING</b>: nothing declares kind “${esc(kind)}”, so a grace restores none. `
-      + `Declared so it works the day something does.`;
-  }
-  if (n === 0) return `${lead}Off. A grace tops up no ${esc(kindLabel(kind))} flasks.`;
-  return `${lead}A grace tops you up to ${n} × ${esc(entry.name)}.`;
+  for (const row of graceRefillTable(balance)) counts[row.kind] = row.count;
+  return { counts, bad: [] };
 }
 
 /** effectsButtonText(settings) → the Effects button face: "Off", or "On · 5 of 6". */
@@ -240,8 +126,10 @@ function surfaceChoiceLabels() {
 }
 
 export const SETTINGS_ROWS = [
-  { cat: 'Combat', key: 'askToUpcastAfterTarget', topic: 'animation', type: 'toggle', def: false, label: t('settings.row.askToUpcastAfterTarget'),
-    note: tFull('settings.row.askToUpcastAfterTarget') },
+  // First in the table so Animation & effects is the second Combat topic (topics are drawn in the
+  // order their first row appears; Auto combat & pacing is pulled to the front by generalGroups).
+  { cat: 'Combat', key: 'useSprites', topic: 'animation', def: true, label: t('settings.row.useSprites'),
+    note: tFull('settings.row.useSprites') },
   { cat: 'Combat', key: 'combatLogConsole', topic: 'combatLog', type: 'toggle', def: false, label: t('settings.row.combatLogConsole'),
     note: tFull('settings.row.combatLogConsole') },
   { cat: 'Combat', key: 'combatLogPlayerColor', topic: 'combatLog', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
@@ -281,8 +169,6 @@ export const SETTINGS_ROWS = [
   // NOTHING IS DUPLICATED. A row has one home; each of these moved, and the
   // Advanced tip now says where the feel settings went so the section named for
   // combat stops being a dead end.
-  { cat: 'Combat', key: 'useSprites', topic: 'animation', def: true, label: t('settings.row.useSprites'),
-    note: tFull('settings.row.useSprites') },
   { cat: 'Combat', key: 'autoCombat', topic: 'autoCombat', def: AUTOMATION_DEFAULTS.autoCombat, label: t('settings.row.autoCombat'),
     note: tFull('settings.row.autoCombat') },
   { cat: 'Combat', key: 'combatSpeed', topic: 'autoCombat', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
@@ -293,20 +179,20 @@ export const SETTINGS_ROWS = [
   { cat: 'Combat', key: 'autoCombatSpeed', topic: 'autoCombat', type: 'number', def: AUTOMATION_DEFAULTS.autoCombatSpeed,
     min: AUTOMATION_DEFAULTS.autoSpeedMinimum, max: AUTOMATION_DEFAULTS.autoSpeedMaximum, step: 0.25, integer: false, label: t('settings.row.autoCombatSpeed'),
     note: tFull('settings.row.autoCombatSpeed') },
-  { cat: 'Combat', key: 'combatStepPause', topic: 'autoCombat', type: 'number', def: ACTION_PACING.stageGapMs,
+  { cat: 'Combat', key: 'combatStepPause', topic: 'autoCombat', more: true, type: 'number', def: ACTION_PACING.stageGapMs,
     min: AUTOMATION_DEFAULTS.stageGapMinimumMs, max: AUTOMATION_DEFAULTS.stageGapMaximumMs, step: 250, label: t('settings.row.combatStepPause'),
     note: tFull('settings.row.combatStepPause') },
-  { cat: 'Combat', key: 'animationStepDuration', topic: 'autoCombat', type: 'number', def: ACTION_PACING.animationStepDefaultMs,
+  { cat: 'Combat', key: 'animationStepDuration', topic: 'autoCombat', more: true, type: 'number', def: ACTION_PACING.animationStepDefaultMs,
     min: AUTOMATION_DEFAULTS.animationStepMinimumMs, max: AUTOMATION_DEFAULTS.animationStepMaximumMs, step: 25,
     label: t('settings.row.animationStepDuration'), note: tFull('settings.row.animationStepDuration') },
   // Owner 2026-11-06: the enemy's pacing is separate from the player's (both default 750 ms).
-  { cat: 'Combat', key: 'enemyAttackMs', topic: 'autoCombat', type: 'number', def: ACTION_PACING.enemyAttackDefaultMs,
+  { cat: 'Combat', key: 'enemyAttackMs', topic: 'autoCombat', more: true, type: 'number', def: ACTION_PACING.enemyAttackDefaultMs,
     min: AUTOMATION_DEFAULTS.enemyPacingMinimumMs, max: AUTOMATION_DEFAULTS.enemyPacingMaximumMs, step: 50,
     label: t('settings.row.enemyAttackMs'), note: tFull('settings.row.enemyAttackMs') },
-  { cat: 'Combat', key: 'enemyFloaterIntervalMs', topic: 'autoCombat', type: 'number', def: ACTION_PACING.enemyFloaterIntervalDefaultMs,
+  { cat: 'Combat', key: 'enemyFloaterIntervalMs', topic: 'autoCombat', more: true, type: 'number', def: ACTION_PACING.enemyFloaterIntervalDefaultMs,
     min: AUTOMATION_DEFAULTS.enemyPacingMinimumMs, max: AUTOMATION_DEFAULTS.enemyPacingMaximumMs, step: 50,
     label: t('settings.row.enemyFloaterIntervalMs'), note: tFull('settings.row.enemyFloaterIntervalMs') },
-  { cat: 'Combat', key: 'combatPacingPreset', topic: 'autoCombat', type: 'choice', def: 'custom', choices: ['custom', 'mobile-fast'],
+  { cat: 'Combat', key: 'combatPacingPreset', topic: 'autoCombat', more: true, type: 'choice', def: 'custom', choices: ['custom', 'mobile-fast'],
     label: t('settings.row.combatPacingPreset'), note: tFull('settings.row.combatPacingPreset') },
   { cat: 'Combat', key: 'animSpeed', topic: 'autoCombat', type: 'choice', def: 'auto',
     choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: t('settings.row.animSpeed'),
@@ -418,13 +304,6 @@ export const SETTINGS_ROWS = [
   // `def` is the resolver's own const (model/map/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
-  // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
-  // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
-  // Shrine open: Rest once, Smith while you have Stones, Level while you have
-  // cinders, and leave when you choose. On by default (owner's uploaded
-  // configuration, #1254).
-  { cat: 'Advanced', advancedGroup: 'World', key: 'shrineMultiUse', def: true, label: t('settings.row.shrineMultiUse'),
-    note: tFull('settings.row.shrineMultiUse') },
   // A SETTING, NOT A SWITCH IN THE FLOW. The creation screen's Starting
   // equipment head carried an "Auto-advance on valid choice" toggle beside
   // the List/Grid control — a preference standing in the middle of a decision
@@ -433,27 +312,8 @@ export const SETTINGS_ROWS = [
   // matches the shipped creation layout (content/source/characterCreation.json
   // `equipmentAutoAdvance`), which stays the screen's fallback when no
   // settings bag reaches it.
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'creationAutoAdvance', def: false, label: t('settings.row.creationAutoAdvance'),
+  { cat: 'Advanced', advancedGroup: 'Developer', key: 'creationAutoAdvance', def: false, label: t('settings.row.creationAutoAdvance'),
     note: tFull('settings.row.creationAutoAdvance') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victorySummaryMode', type: 'choice', def: 'continue',
-    choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: t('common.continue'), anywhere: 'Click anywhere', auto: 'Expand automatically' },
-    label: t('settings.row.victorySummaryMode'), note: tFull('settings.row.victorySummaryMode') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptSeconds', type: 'number', def: VICTORY_XP_DEFAULTS.seconds, min: 0, max: 12, step: 0.1,
-    label: t('settings.row.victoryReceiptSeconds'), note: tFull('settings.row.victoryReceiptSeconds') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptPauseMs', type: 'number', def: VICTORY_XP_DEFAULTS.pauseMs, min: 0, max: 500, step: 10,
-    label: t('settings.row.victoryReceiptPauseMs'), note: tFull('settings.row.victoryReceiptPauseMs') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptReadySeconds', type: 'number', def: VICTORY_XP_DEFAULTS.readySeconds, min: 0, max: 5, step: 0.1,
-    label: t('settings.row.victoryReceiptReadySeconds'), note: tFull('settings.row.victoryReceiptReadySeconds') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptFormulaTerms', type: 'number', def: VICTORY_XP_DEFAULTS.formulaTerms, min: 1, max: 20, step: 1,
-    label: t('settings.row.victoryReceiptFormulaTerms'), note: tFull('settings.row.victoryReceiptFormulaTerms') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptVisibleRows', type: 'number', def: VICTORY_XP_DEFAULTS.visibleRows, min: 2, max: 8, step: 1,
-    label: t('settings.row.victoryReceiptVisibleRows'), note: tFull('settings.row.victoryReceiptVisibleRows') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpSeconds', type: 'number', def: 3, min: 0, max: 12, step: 0.25,
-    label: t('settings.row.victoryXpSeconds'), note: tFull('settings.row.victoryXpSeconds') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelStatPoints', def: true, label: t('settings.row.rewardLevelStatPoints'),
-    note: tFull('settings.row.rewardLevelStatPoints') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelCards', def: false, label: t('settings.row.rewardLevelCards'),
-    note: tFull('settings.row.rewardLevelCards') },
   { cat: 'Display', key: 'shrinePathGlow', topic: 'map', def: SHRINE_GLOW_DEFAULT, label: t('settings.row.shrinePathGlow'),
     note: tFull('settings.row.shrinePathGlow') },
   // The map's Potions control and the run HUD read this on every profile
@@ -467,7 +327,7 @@ export const SETTINGS_ROWS = [
   // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or
   // higher (settings for customization)"). The ladder itself is CSS
   // (styles/map.css, keyed on data-walked-fade); this row only picks the rung.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'walkedFade', type: 'choice', def: 'half',
+  { cat: 'Advanced', advancedGroup: 'Map', key: 'walkedFade', type: 'choice', def: 'half',
     choices: ['off', 'subtle', 'half', 'strong'], label: t('settings.row.walkedFade'),
     note: tFull('settings.row.walkedFade') },
   // `selfEvident`: W1a shows help only where the effect is not obvious. The
@@ -529,12 +389,12 @@ export const SETTINGS_ROWS = [
     note: tFull('settings.row.loreIdentitySlant') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'controlHints', def: true, label: t('settings.row.controlHints'),
     note: tFull('settings.row.controlHints') },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: t('settings.row.mapFreePan'),
+  { cat: 'Advanced', advancedGroup: 'Map', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: t('settings.row.mapFreePan'),
     note: tFull('settings.row.mapFreePan') },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'compact',
+  { cat: 'Advanced', advancedGroup: 'Map', key: 'mapHeaderDensity', type: 'choice', def: 'compact',
     choices: ['comfortable', 'compact'], label: t('settings.row.mapHeaderDensity'),
     note: tFull('settings.row.mapHeaderDensity') },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: t('settings.row.mapHeaderRelics'), selfEvident: true,
+  { cat: 'Advanced', advancedGroup: 'Map', key: 'mapHeaderRelics', def: true, label: t('settings.row.mapHeaderRelics'), selfEvident: true,
     note: tFull('settings.row.mapHeaderRelics') },
   // RETIRED (owner, 2026-09-23). The solo map header never draws the seed —
   // the header model receives it and prints nothing — and the co-op header's
@@ -652,14 +512,6 @@ export const SETTINGS_ROWS = [
     note: tFull('settings.row.debugMode') },
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'commandLog', type: 'button', btn: 'Open', label: t('settings.row.commandLog'),
     note: tFull('settings.row.commandLog') },
-  // E2 (#247): the recorded answer on the row — Sell is its own bar at the
-  // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
-  // and the bar is ABSENT (not greyed) when off. shop.js reads it through
-  // settingOn so the default's polarity has one home, here. ONE ROW, appended
-  // on purpose while another seat serializes this file for E3 — named in the
-  // E2 claim (#247) so the touch is on the record, not smuggled.
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'shopSell', def: true, label: t('settings.row.shopSell'),
-    note: tFull('settings.row.shopSell') },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
   // which is where he put it and where it stays.
@@ -708,48 +560,6 @@ export const SETTINGS_ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
     choices: UI_DEFAULTS.rewardCollect.modes, label: t('settings.row.rewardCollect'),
     note: tFull('settings.row.rewardCollect') },
-  // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
-  // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
-  // setting, different weapon categories have weapon swap costs. THAT WAY I CAN
-  // TRY EACH."* He asked to feel three prices, so the row is the way to feel
-  // them; the rules themselves are rows in balance.equipment.swapCostRules.
-  //
-  // ADVANCED, because Advanced is this game's debugging surface and that is
-  // where the last knob he asked to "try" went (Hold to confirm, same
-  // category). It is a tuning question he wants to answer by playing, not a
-  // preference the game should be asking a first-time player.
-  //
-  // `choices` and `def` are DERIVED, never typed. The zoom row two screens up
-  // carried four of a six-step ladder for a night because someone typed the
-  // list; a fourth rule row is a row in balance.js and nothing here.
-  { cat: 'Advanced', advancedGroup: 'Equipment', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
-    choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: t('settings.row.swapCostRule'),
-    // ONE SENTENCE PER RULE AND NO MORE, on the measurement in the row above:
-    // a long note squeezes the text column beside a chip strip. Three chips,
-    // three clauses.
-    note: tFull('settings.row.swapCostRule') },
-  // ---- HIS TWO LEVELLING DIALS (2026-08-17) --------------------------------
-  //
-  //   "leave the level up value configurable. also, let's make the increment of
-  //    5 points for reasonable change be confurable as well. that way I can
-  //    test each."
-  //
-  // ADVANCED, AND THE PRECEDENT IS HIS OWN SENTENCE TWO SETTINGS_ROWS UP: *"alternatively,
-  // or by a setting, different weapon categories have weapon swap costs. THAT
-  // WAY I CAN TRY EACH."* That ask was ruled into an Advanced row for a reason
-  // that applies here word for word — a tuning question he wants to answer by
-  // playing, not a preference to put in front of a first-time player. Advanced
-  // is this game's debugging surface, his word, and the third knob he has asked
-  // to "test" now sits beside the other two.
-  //
-  // A ROW, NOT A FILE HE EDITS AND REBUILDS. "That way I can test each" is the
-  // requirement and not a footnote: a content edit plus `node tools/launch.mjs
-  // --build-only` between every comparison is a friction that ends an
-  // experiment after two turns of the dial.
-  //
-  // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
-  // ladders are `balance.levelUp`, the level value's default is that table's own
-  // `pointsPerLevel`.
   // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
   // content/config/ui/components/card.json and ship as the default; these rows
   // lay an override over that table so a size can be tried against real cards
@@ -759,49 +569,23 @@ export const SETTINGS_ROWS = [
   // The ladder is the contract: a card you opened to read is never smaller
   // than one you were browsing past. A set of numbers that breaks it is
   // REFUSED and the authored table stands — see cardLevelsWithOverrides.
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardWidth_glance', type: 'number',
     def: CARD_LEVELS.glance.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_glance'),
     note: tFull('settings.row.cardWidth_glance') },
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance_mobile', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardWidth_glance_mobile', type: 'number',
     def: CARD_LEVELS.glance.variants.mobile, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_glance_mobile'),
     note: tFull('settings.row.cardWidth_glance_mobile') },
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_focus', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardWidth_focus', type: 'number',
     def: CARD_LEVELS.focus.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_focus'),
     note: tFull('settings.row.cardWidth_focus') },
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_inspect', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardWidth_inspect', type: 'number',
     def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_inspect'),
     note: tFull('settings.row.cardWidth_inspect') },
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: t('common.copy'),
+  { cat: 'Advanced', advancedGroup: 'Developer', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: t('common.copy'),
     label: t('settings.row.cardSizeExport'),
     note: tFull('settings.row.cardSizeExport') },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
-    min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
-    label: t('settings.row.levelUpValue'), applied: (settings, row) => hooks.numberAppliedHtml(settings, row),
-    note: tFull('settings.row.levelUpValue') },
-  // THE DECK EDITOR'S RULES (SPEC §14.1, owner brief 2026-09-26). Each
-  // default is content/deckRules.js — the one home; model/deckRules.js reads
-  // the stored choice against the same object. Live settings, not gameConfig
-  // rows: a change applies the next time the editor opens (and Play in deck
-  // order at the next fight), never to a fight already under way.
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditing', def: deckRules.defaults.deckEditing, label: t('settings.row.deckEditing'),
-    note: tFull('settings.row.deckEditing') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditingWhere', type: 'choice', dropdown: true, def: deckRules.defaults.deckEditingWhere,
-    choices: [...deckRules.where], choiceLabels: { free: 'Free (anywhere out of combat)', restOnly: 'Rest sites only' },
-    gates: [{ key: 'deckEditing' }], label: t('settings.row.deckEditingWhere'),
-    note: tFull('settings.row.deckEditingWhere') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinUnlimited', def: deckRules.defaults.deckMinUnlimited, label: t('settings.row.deckMinUnlimited'),
-    gates: [{ key: 'deckEditing' }], note: tFull('settings.row.deckMinUnlimited') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinSize', type: 'number', def: deckRules.defaults.deckMinSize, min: deckRules.sizeRange.min, max: deckRules.sizeRange.max,
-    gates: [{ key: 'deckEditing' }, { key: 'deckMinUnlimited', when: false }], label: t('settings.row.deckMinSize'), applied: (settings, row) => hooks.numberAppliedHtml(settings, row),
-    note: tFull('settings.row.deckMinSize') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxUnlimited', def: deckRules.defaults.deckMaxUnlimited, label: t('settings.row.deckMaxUnlimited'),
-    gates: [{ key: 'deckEditing' }], note: tFull('settings.row.deckMaxUnlimited') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxSize', type: 'number', def: deckRules.defaults.deckMaxSize, min: Math.max(1, deckRules.sizeRange.min), max: deckRules.sizeRange.max,
-    gates: [{ key: 'deckEditing' }, { key: 'deckMaxUnlimited', when: false }], label: t('settings.row.deckMaxSize'), applied: (settings, row) => hooks.numberAppliedHtml(settings, row),
-    note: tFull('settings.row.deckMaxSize') },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'classSpellPowerCopies', type: 'number', def: deckRules.defaults.classSpellPowerCopies,
-    min: deckRules.copyRange.min, max: deckRules.copyRange.max, gates: [{ key: 'deckEditing' }], label: t('settings.row.classSpellPowerCopies'), applied: (settings, row) => hooks.numberAppliedHtml(settings, row),
-    note: tFull('settings.row.classSpellPowerCopies') },
+  // The deck editor's rules (SPEC §14.1) are authored in content/deckRules.js; their rows were
+  // dropped (owner, 2026-11-20: Core 2 drew none of them). Play in deck order stays a setting.
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: t('settings.row.playInDeckOrder'),
     note: tFull('settings.row.playInDeckOrder') },
   ...ADVANCED_CONFIG_ROWS,
@@ -811,9 +595,5 @@ export const SETTINGS_ROWS = [
     note: tFull('settings.row.gameConfigExport') },
   { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigImport', type: 'button', btn: 'Load JSON', label: t('settings.row.gameConfigImport'),
     note: tFull('settings.row.gameConfigImport') },
-  // Advanced is the debugging surface — his word, and where Hold to confirm
-  // already lives. These rows are generated from balance.graceRefill; see the
-  // block above the SETTINGS_ROWS array.
-  ...graceRefillRows(),
   ...wireframeChoiceRows(),
 ];
