@@ -237,7 +237,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       // Owner, 2026-11-15: Gain may exceed the maximum, Restore stops at it. restoreMana, restoreStamina and gainWard are capped; gainEnergy and gainPoise are not.
       case 'restoreMana': return frag('restore', `${num(n, base)} Mana`);
       case 'applyReflect': return frag('gain', `${num(n, base)} Reflect`);
-      case 'gainCounterStacks': return frag('gain', `${num(n, base)} Counter`);
+      // The quote's total (base grant, Mail, every stack step) is one line below, so an authored row does not repeat part of it.
+      case 'gainCounterStacks': if (counter && preview?.counterStackGrant > 0) return []; return frag('gain', `${num(n, base)} Counter`);
       case 'restoreStamina': return frag('restore', `${num(n, base)} Stamina`);
       case 'gainEnergy': return frag('gain', `${num(n, base)} Stamina`);
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
@@ -417,6 +418,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     // Beating the revealed hit also adds Block before it lands.
     if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(preview.counterReturn.block)} Block against it` });
   }
+  // The Counter stacks the play grants (the base grant, Mail's gain bonus and any upgrade's stacks, summed: preview.counterStackGrant), shown with or without a revealed attack.
+  if (counter && preview?.counterStackGrant > 0) unconditional.push({ cat: 'gain', text: `${num(preview.counterStackGrant)} Counter stack${preview.counterStackGrant === 1 ? '' : 's'}` });
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', tag: true, text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
   const smashClause = coreSmashClause(def, registries, rules ?? preview?.faceRules ?? null);
