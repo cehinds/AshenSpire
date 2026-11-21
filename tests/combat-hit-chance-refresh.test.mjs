@@ -51,7 +51,7 @@ function fixture(document) {
     heldTurnHand: null, playQueue: [], inputBusy: () => false, disp: null, busy: false, enemyPlayback: false, upcastPreviewRefresh: false,
     handRenderKey: null, handPreviewCache: { stateKey: null, cards: new Map() }, upcastRanksByCard: new Map(), rangeRoutesByCard: new Map(),
     resolveCombatCard, previewCard, previewCardHit, cardTargetPlan, PlayConditionTargetPlan, cardAffectsEnemies, hitBadgeTargetIds,
-    rangeHitLabel, FixCoreHitRollOff, fixCoreEnabled, TargetQuote, t, upcastOptions, upcastChoicePlan, esc: value => String(value),
+    rangeHitLabel, FixCoreHitRollOff, fixCoreEnabled, TargetQuote, t, upcastOptions, UpcastingOffered: def => !!def && upcastOptions(def).length > 0, upcastChoicePlan, esc: value => String(value),
     findInst: id => combat.piles.hand.find(card => card.instanceId === id),
     getEntity: (_combat, id) => [combat.player, ...combat.enemies].find(entity => entity.id === id),
     $: selector => combatEl.querySelector(selector), readSettings: () => ({}),
