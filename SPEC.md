@@ -710,7 +710,7 @@ Every card's Stamina (SP) and Mana (MP) cost is derived by formula, in every fig
 **Targets**: most basic and cantrip cards cost 1 Stamina and no Mana; smashes and sweeps cost 2; rank 1–2 cost 1 SP + 1 MP, or 2 SP; most rank 1–3 spells cost 1–2 Mana; many magic cards cost at least 1 SP (0-SP magic still possible); higher SP usually means lower MP.
 
 **Layering and opt-outs**
-- The derived SP and MP replace the authored `cost` and `manaCost`. Per-card rules then apply on top: relic and power reductions, Mana discounts, upcast surcharges. Equipment and status mods apply after, so a mod's flat bonus is added to the scaled number and not scaled.
+- The derived SP and MP replace the authored `cost` and `manaCost`. Per-card rules then apply on top: relic and power reductions, Mana discounts, upcast surcharges (only for stored upcast ranks; upcasting is off, §4.8). Equipment and status mods apply after, so a mod's flat bonus is added to the scaled number and not scaled.
 - Opt-outs (keep authored cost, Mana and numbers): `costRule: 'fixed'` content, curses and statuses (by type), X costs. Every other card is priced, the Dodge Roll and powers included.
   - `costRule: 'fixed'`: warriorsVow, twinkling, shootingShard, bloodPact, bloodletting, painOffering, rogueShiv, smokePellet, setupRogue, prepare, hex, blindingSand, hamstring, masterOfStrategy, blightedTransmute, blightedSecondBloom, blightedBlightward; Core zero-cost cards (§4.3): core.flick, core.pebbleThrow, core.brace, core.quickGuard, core.whetstoneNick, core.temperedEdge.
   - By type: curses (guilt, wound, dazed), statuses (slimed).
@@ -746,7 +746,7 @@ All statuses, the Elden Ring layer included, are data objects in `content/status
 | Status | On whom | Effect | Decay |
 |---|---|---|---|
 | Strength | any | +N attack damage per hit | permanent |
-| Dexterity | player | +N block from cards | permanent |
+| Dexterity | player | +N Block on each later Block card (Core: added after the Block scale, `effects.statusBlockWeight` 1; Block already held is unchanged) | permanent |
 | Weak | any | deal 25% less attack damage | −1 stack at owner's turn end |
 | Vulnerable | any | take 25% more attack damage | −1 stack at owner's turn end |
 | Frail | player | 25% less block from cards | −1 stack at turn end |
@@ -1023,7 +1023,8 @@ All tactical numbers remain authored/configurable; their defaults above establis
 ### 4.8 Martial and Spell expansion (version 2)
 
 Version-2 combat expansion: [docs/combat-expansion-contract.md](docs/combat-expansion-contract.md) and its referenced notes define version-2 ordering, state, defaults and acceptance. New runs snapshot version 2; older runs and snapshots keep §4.7's version-1 rules.
-- It adds: one persistent tactical stance; authored Counter coverage and returns; persistent Ward; reach and area tradeoffs; seeded Evade / recovery checks; control recovery cards; opt-in upcasting; tag/status combos; run-lasting Ashen Blight with three feat milestones.
+- It adds: one persistent tactical stance; authored Counter coverage and returns; persistent Ward; reach and area tradeoffs; seeded Evade / recovery checks; control recovery cards; tag/status combos; run-lasting Ashen Blight with three feat milestones.
+- **Upcasting is off** (owner, 2026-11-20: upcasting is turned off, in Core and in legacy version-2 runs). No Upcast control, no rank prompt and no upcast reaction option appears. The engine still accepts stored `upcastTier` / `upcastRanks` so old saves and logs resolve as before.
 - Preview and rejected/cancelled actions are inert. Committed random outcomes and per-cycle budgets survive saves. Solo play, enemy actions, and both presentation variants share the headless contract.
 
 **Card lifecycle and labels** (contract section of the same name; version 2 only, version-1 fights and snapshots unchanged)
@@ -1713,7 +1714,7 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 - **Selection and information are separate from play.** The focused card, selection glow, Information button and legal-target highlights are preserved; Information opens details without playing; tap, hold, keyboard, controller and direct-target drag confirmation remain.
   - A tap selects and never plays; play needs a second tap on the card or a target pick.
   - The "Tap a card to play it" setting (default off) restores one-tap play when the target is unambiguous (self and all-enemy cards; one living enemy).
-  - Hold selects without playing (inspect, Upcast, target choice).
+  - Hold selects without playing (inspect, target choice; upcasting is off, §4.8).
   - One select colour, the targeting colour (`--selection-color`), for armed, held, keyboard-focused and inspected cards; no gold select state on the hand.
 - **End Turn:** a single press when no card in hand is playable; otherwise the configured second beat.
 - **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a playable hand card plays on release without reaching a combatant.
@@ -2583,7 +2584,7 @@ Class milestones no longer queue. The table is the cadence `classMilestoneProble
 #### One action resource
 
 - Actions, Stamina and SP name one pool. Each card charges its action cost once, plus separately authored Mana or HP costs.
-  - The upcast surcharge (`def.upcastSurcharge`) is still paid: `resolvedCardPlayCosts` (`src/engine/combat.js`) adds it to both the Stamina and the Mana cost.
+  - The upcast surcharge (`def.upcastSurcharge`, only from stored upcast ranks; upcasting is off, §4.8) is still paid: `resolvedCardPlayCosts` (`src/engine/combat.js`) adds it to both the Stamina and the Mana cost.
   - Recovery, discounts, maximum capacity, eligibility and save validation use the shared pool; keep the existing runtime action/Stamina binding where it supplies that identity.
 
 #### Ability identity and grades
@@ -2744,6 +2745,7 @@ The equipment type pass is opt-in per saved profile: `gear.typeEffectsVersion: 1
 - Card damage = base + STR (physical), INT (Arcane-only), WIS (Divine-only), or max(INT, WIS) (shared magic). Under `damage.unified`, casting scaling applies to spell-camp attacks; spell damage is otherwise ordinary damage. The originating card's school and tradition determine the attribute, including for magical power hooks.
 - **Base damage halved** (owner, 2026-11-17): `effects.baseDamageMultiplier` scales every card's base damage, player's and enemy's, rounded up (5 → 3, 1 → 1), before AR or PR adds. Core sets 0.5; the module default is 1. A Counter scales its authored base when it arms. Its completed return includes the share of the incoming hit and lands without another scaling step. The receipt shows the ordinary hit's scale as `base-damage-scale`; the face, the intent and the hit read the same receipt.
 - **Damage, Block and enemy HP cut 30%; spell Poise doubled** (owner, 2026-11-18): four `effects` settings, each defaulting to 1 in the module and set by Core. `playerDamageMultiplier` (0.7) and `enemyDamageMultiplier` (0.7) scale every hit its side deals as one receipt stage, `side-damage-scale` ("Player damage scale" / "Enemy damage scale"), after the element stages and before Block and Poise absorb the hit, so a face, an intent, a preview and the hit read one number. The chain keeps full precision and floors once, as before, and a positive hit never rounds to 0. A Counter return, a reflected hit and a proposal's reactive return are final damage and take no side scale; a Counter's armed base takes none either. Status ticks (Poison, Bleed, Burn) and a Burn explosion are not hits and are not scaled. `blockGainMultiplier` (0.7) is a factor inside the configured Block gain (`computeBlockGain`, both sides, floored) and does not scale a Counter's Block grant (a share of an already side-scaled hit, like its return). **Physical cut** (owner, 2026-11-18, a playtest): `physicalDamageMultiplier` (0, default 1; Core 0.7) scales only the physical share of a hit (the receipt's own physical/magical split, so a spell's magic share is untouched) for both sides, as one `physical-damage-scale` receipt stage just before the side scale; a positive physical part never rounds to 0, and a Counter return, a reflected hit and a reactive return are exempt, like the side scale. Core `blockGainMultiplier` is 0.49 (0.7 twice). A static card face shows the same cut on a physical damage figure; an untyped card's damage type (and so its physical/magic split) resolves from the armament that deals it (`ResolveCarrierDamageType`, `src/model/carrierDamageType.js`: its lending piece, else the first piece of that kind in hand, else bare hands), the same resolver combat uses, so face and hit agree. The spell Poise factor ranges 1..10. `spellPoiseDamageMultiplier` (2) multiplies the Poise a player's spell-camp card takes from an enemy (what the hit absorbs plus its Poise damage, and an explicit spell Poise or Ward-off Ward damage), never past the pool; HP is unchanged. Core enemy HP tiers (`enemies.hpScaleByTier`) are 0.385, 0.42 and 0.455. A static card face outside combat shows the player side scale on a damage figure (not a Counter's); Block faces still show the authored number. The balance tiers `balance.bossTiers` are untouched.
+- **The Dexterity status adds Block** (owner, 2026-11-20): each stack adds `effects.statusBlockWeight` (0 in the module, Core 1) to every Block card played after it (a player card or an enemy move card), added after `blockGainMultiplier` and the floor, so one stack is exactly +1 Block on the next Block card. Protection that is not a played card takes none: Defend-stance turn protection, the Dodge Roll guard, a power's or status's `block`, a Counter's Ward share and a stance-entry guard. Barrier spells (Crystal Aegis, Frost Veil) grant Barrier, not card Block, and take no Dexterity either. Gaining Dexterity does not change Block already held: hold 5, gain 1 Dexterity (still 5), play the 5-Block card again for 6, 11 in all. Before this the configured path never read the status (`blockAdd`), so it added nothing; a profile saved before the ruling has no `statusBlockWeight` and keeps that rule.
 - Physical defensive-skill Block gets DEX; magical Block and healing use the originating card's casting attribute (INT Arcane, WIS Divine, max(INT, WIS) shared). Magical power hooks retain that originating card for damage, Block and healing. Saved profiles without the tradition marker keep their earlier casting formula.
 - Resource generation, buff duration, card draw and action costs get no PR.
 - Profile-level attribute scaling is off for these runs (no double bonus). Authored card-specific modifiers still apply.
