@@ -249,7 +249,7 @@ export const itemCombatPower = {
  "weapon:flamberge": {"raw":-4,"cp":-9,"rank":0,"rarity":"rare"},
  "weapon:frostSpear": {"raw":47,"cp":45,"rank":10,"rarity":"uncommon"},
  "weapon:goldboughBranch": {"raw":42,"cp":37,"rank":10,"rarity":"rare"},
- "weapon:gorefireBrand": {"raw":51,"cp":46,"rank":10,"rarity":"rare"},
+ "weapon:gorefireBrand": {"raw":45,"cp":40,"rank":10,"rarity":"rare"},
  "weapon:greatsword": {"raw":3,"cp":1,"rank":1,"rarity":"uncommon"},
  "weapon:grimoire": {"raw":2,"cp":0,"rank":0,"rarity":"uncommon"},
  "weapon:halberd": {"raw":1,"cp":-1,"rank":0,"rarity":"uncommon"},
