@@ -277,10 +277,10 @@ function compileDir(srcDir, outDir, { write } = {}) {
   }
   const orphans = existsSync(outDir)
     ? readdirSortedSync(outDir).filter((f) => f.endsWith('.js') && !produced.has(f)
-      // This exact output belongs to tools/game-config.mjs; its separate check
+      // combatPower.js belongs to tools/combat-power-report.mjs (npm run combat-power:check). gameProfiles.js etc. belong to tools/game-config.mjs; its separate check
       // validates source JSON, runtime pins and freshness before the HTML bundler.
       // Do not exempt the filename in arbitrary output trees or other JS files.
-      && !(resolve(outDir) === OUT && ['gameProfiles.js', 'baseCards.js', 'fixCoreProtection.js'].includes(f)))
+      && !(resolve(outDir) === OUT && ['gameProfiles.js', 'baseCards.js', 'fixCoreProtection.js', 'combatPower.js'].includes(f)))
     : [];
   if (existsSync(cardsOut)) {
     for (const f of readdirSortedSync(cardsOut)) {

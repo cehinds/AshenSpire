@@ -3651,7 +3651,10 @@
     "kit": {
       "attack": "(attack profile baseValue - 3 unarmed) x 0.35 authored-to-final (spell share x 0.5) x 3 Strikes",
       "guard": "(guard profile baseValue - 1 unarmed) x 0.49 / 2 x 2 Defends",
-      "weaponArt": "the art card scored as a card (its SP/MP cost included), played once in 3 rounds; legacy authored numbers converted to card-face as x0.35 + 3 per hit (AR add), Block x0.49 + 6 (DR add)"
+      "weaponArt": "the art card scored as a card (its SP/MP cost included), played once in 3 rounds; legacy authored numbers converted to card-face as x0.35 + 3 per hit (AR add), Block x0.49 + 6 (DR add)",
+      "unarmedAttack": 3,
+      "unarmedGuard": 1,
+      "unarmedNote": "bare hands: Strike 3, Guard 1 (the baseline a weapon profile is measured against)"
     },
     "poiseThreshold": {
       "baseline": 4,
@@ -3726,7 +3729,102 @@
         "arcaneBuildup": "1",
         "applyStatus": "status weight x stacks (sign by target)"
       },
-      "passives": "2 per passive key"
+      "passives": "2 per passive key",
+      "defaultFrequency": 1,
+      "onceCap": 1,
+      "conditionalFactor": 0.7,
+      "passiveValue": 2,
+      "opCalc": {
+        "restoreMana": {
+          "calc": [
+            [
+              "*",
+              5
+            ]
+          ]
+        },
+        "restoreStamina": {
+          "calc": [
+            [
+              "*",
+              4
+            ]
+          ]
+        },
+        "gainEnergy": {
+          "calc": [
+            [
+              "*",
+              4
+            ]
+          ]
+        },
+        "poiseDamage": {
+          "calc": [
+            [
+              "/",
+              3
+            ]
+          ]
+        },
+        "block": {
+          "calc": [
+            [
+              "*",
+              "model.AUTH_BLOCK"
+            ],
+            [
+              "/",
+              2
+            ]
+          ]
+        },
+        "heal": {
+          "calc": [
+            [
+              "*",
+              1
+            ]
+          ]
+        },
+        "damage": {
+          "calc": [
+            [
+              "*",
+              0.5
+            ]
+          ]
+        },
+        "draw": {
+          "calc": [
+            [
+              "*",
+              3
+            ]
+          ]
+        },
+        "loseHp": {
+          "calc": [
+            [
+              "*",
+              -1
+            ]
+          ]
+        },
+        "refillFlasks": {
+          "flat": 6
+        },
+        "grantCardCharge": {
+          "flat": 2
+        },
+        "arcaneBuildup": {
+          "flat": 1
+        },
+        "default": {
+          "flat": 1
+        },
+        "note": "calc applies [op, operand] steps left to right to the op amount (1 when the amount is not a number); flat ignores the amount; operands are numbers or refs (model.X, plays.X, costs.X, status.X = that status weight; a leading - negates)"
+      }
     },
     "rarityDiscount": {
       "starter": 0,
@@ -3741,7 +3839,517 @@
       "uncommon": 7,
       "rare": 6,
       "boss": 5
+    },
+    "mods": {
+      "strike.damage": {
+        "label": "Strike damage",
+        "calc": [
+          [
+            "*",
+            "model.AUTH_PHYS"
+          ],
+          [
+            "*",
+            "plays.strike"
+          ]
+        ],
+        "why": "authored +1 = 0.35 final, 3 Strikes in 3R"
+      },
+      "strike.poise": {
+        "label": "Strike Poise",
+        "calc": [
+          [
+            "*",
+            0.5
+          ],
+          [
+            "/",
+            3
+          ],
+          [
+            "*",
+            "plays.strike"
+          ]
+        ],
+        "why": "Poise 1 per 3, about half lands final"
+      },
+      "strike.hits": {
+        "label": "Strike hits (set to)",
+        "calc": [
+          [
+            "*",
+            1.5
+          ],
+          [
+            "*",
+            "plays.strike"
+          ]
+        ],
+        "why": "an extra hit repeats on-hit riders, ~1.5 per play",
+        "pre": "extraHits"
+      },
+      "strike.cost": {
+        "label": "Strike SP cost",
+        "calc": [
+          [
+            "*",
+            "costs.sp"
+          ],
+          [
+            "*",
+            2
+          ]
+        ],
+        "why": "+1 SP on ~2 Strikes in 3R"
+      },
+      "strike.bleed": {
+        "label": "Strike Bleed",
+        "calc": [
+          [
+            "*",
+            "status.bleed"
+          ],
+          [
+            "*",
+            "plays.strike"
+          ]
+        ],
+        "why": "status weight x 3 Strikes"
+      },
+      "strike.burn": {
+        "label": "Strike Burn",
+        "calc": [
+          [
+            "*",
+            "status.burn"
+          ],
+          [
+            "*",
+            "plays.strike"
+          ]
+        ],
+        "why": "status weight x 3 Strikes"
+      },
+      "strike.frost": {
+        "label": "Strike Frost",
+        "calc": [
+          [
+            "*",
+            "status.frost"
+          ],
+          [
+            "*",
+            "plays.strike"
+          ]
+        ],
+        "why": "status weight x 3 Strikes"
+      },
+      "strike.blight": {
+        "label": "Strike Blight",
+        "calc": [
+          [
+            "*",
+            "status.crimsonBlight"
+          ],
+          [
+            "*",
+            "plays.strike"
+          ]
+        ],
+        "why": "Crimson Blight weight x 3 Strikes"
+      },
+      "strike.insanity": {
+        "label": "Strike Insanity",
+        "calc": [
+          [
+            "*",
+            "status.confused"
+          ],
+          [
+            "*",
+            "plays.strike"
+          ]
+        ],
+        "why": "Confused weight x 3 Strikes"
+      },
+      "defend.block": {
+        "label": "Defend Block",
+        "calc": [
+          [
+            "*",
+            "model.AUTH_BLOCK"
+          ],
+          [
+            "/",
+            2
+          ],
+          [
+            "*",
+            "plays.defend"
+          ]
+        ],
+        "why": "authored x 0.49, Block 1 per 2, 2 Defends"
+      },
+      "self.maxHp": {
+        "label": "Max HP",
+        "calc": [
+          [
+            "*",
+            0.5
+          ]
+        ],
+        "why": "max HP is spent about half a fight at a time"
+      },
+      "self.maxStamina": {
+        "label": "Max SP",
+        "calc": [
+          [
+            "*",
+            "-costs.sp"
+          ],
+          [
+            "*",
+            "model.R"
+          ]
+        ],
+        "why": "+1 SP every round = 5 x 3"
+      },
+      "self.maxMana": {
+        "label": "Max MP",
+        "calc": [
+          [
+            "*",
+            "-costs.mp"
+          ]
+        ],
+        "why": "one more MP per fight"
+      },
+      "self.regen": {
+        "label": "Regen",
+        "calc": [
+          [
+            "*",
+            "status.regen"
+          ]
+        ],
+        "why": "regen weight"
+      },
+      "self.strength": {
+        "label": "Strength",
+        "calc": [
+          [
+            "*",
+            "status.strength"
+          ]
+        ],
+        "why": "strength weight"
+      },
+      "self.dexterity": {
+        "label": "Dexterity",
+        "calc": [
+          [
+            "*",
+            "status.dexterity"
+          ]
+        ],
+        "why": "dexterity weight"
+      },
+      "self.thornsFire": {
+        "label": "Fire thorns",
+        "calc": [
+          [
+            "*",
+            2
+          ]
+        ],
+        "why": "~3 enemy hits in 3R x 0.7"
+      },
+      "power.potency": {
+        "label": "Power potency",
+        "calc": [
+          [
+            "*",
+            2
+          ]
+        ],
+        "why": "powers stronger, ~2 per point"
+      },
+      "spell:fire.hitFireVulnerable": {
+        "label": "Fire hits apply Vulnerable",
+        "calc": [
+          [
+            "*",
+            "status.vulnerable"
+          ]
+        ],
+        "why": "Vulnerable weight",
+        "pre": "flag"
+      },
+      "passive.resource.flat.hp": {
+        "label": "Max HP (relic)",
+        "calc": [
+          [
+            "*",
+            0.5
+          ]
+        ],
+        "why": "as Max HP"
+      },
+      "passive.damage.school.flat": {
+        "label": "School damage (relic)",
+        "calc": [
+          [
+            "*",
+            0.5
+          ],
+          [
+            "*",
+            "plays.strike"
+          ]
+        ],
+        "why": "flat damage on ~3 hits",
+        "prefix": true
+      }
+    },
+    "unmodelledMod": {
+      "calc": [
+        [
+          "*",
+          1
+        ]
+      ],
+      "why": "unmodelled: 1 per point (label is the key)"
+    },
+    "weaponArtScale": "Weapon art faces are the card model: SP, MP and every effect scored by the card rules, times plays.weaponArt"
+  },
+  "cardModel": {
+    "rule": "Constants of the card scorer that are not per-effect weights; read by src/model/combatPower.js",
+    "decayOneStatuses": [
+      "vulnerable",
+      "weak",
+      "frail",
+      "confused",
+      "dazed"
+    ],
+    "decayOneNote": "these statuses last one round per stack, so stacks above model.R add nothing in 3R",
+    "tickDamageTakenPerStack": 0.05,
+    "chillStacksPerStamina": 3,
+    "utility": {
+      "holdOne": 1,
+      "boost": 2,
+      "cull": 2,
+      "shuffle": 1,
+      "attr": 1
+    },
+    "copyDivisor": 3,
+    "counterstrikeTag": "trait:counterstrike",
+    "honedTag": "ramp.honed",
+    "areaTag": "targeting:area",
+    "exact": {
+      "burn": "tri(n) x (1 + tickDamageTakenPerStack x D)",
+      "venom": "tri(n)",
+      "shock": "tri(n) x tickDamageTakenPerStack x (I + D)",
+      "chill": "tri(n) x tickDamageTakenPerStack x I + n / chillStacksPerStamina"
     }
+  },
+  "naming": {
+    "rule": "Convention name = effect word + base word + rank numeral (+N upgrades). Effect words are chosen from the highest-scoring part; rank numerals come from combat power.",
+    "roman": [
+      "",
+      "I",
+      "II",
+      "III",
+      "IV",
+      "V",
+      "VI",
+      "VII",
+      "VIII",
+      "IX",
+      "X"
+    ],
+    "card": {
+      "element": {
+        "school:fire": "Ember",
+        "damage:fire": "Ember",
+        "school:frost": "Frost",
+        "damage:frost": "Frost",
+        "school:lightning": "Storm",
+        "damage:lightning": "Storm",
+        "school:force": "Arcane",
+        "damage:arcane": "Arcane",
+        "school:decay": "Blight",
+        "damage:decay": "Blight",
+        "school:divine": "Holy",
+        "damage:sacred": "Holy",
+        "school:illusion": "Mind",
+        "damage:psychic": "Mind",
+        "school:earth": "Stone",
+        "damage:earth": "Stone",
+        "school:alteration": "Warding",
+        "damage:poison": "Venom",
+        "damage:slashing": "Rending",
+        "damage:piercing": "Piercing",
+        "damage:blunt": "Crushing"
+      },
+      "effect": {
+        "damage": "@element",
+        "poise": "Staggering",
+        "block": "Guarding",
+        "draw": "Insightful",
+        "heal": "Mending",
+        "HP cost": "Blood",
+        "cleanse": "Purifying",
+        "SP restore": "Rallying",
+        "MP restore": "Siphoning",
+        "counter": "Riposting",
+        "reflect": "Mirrored",
+        "pull": "Hooking",
+        "move": "Swift",
+        "utility": "Cunning",
+        "copy": "Echoing",
+        "vulnerable": "Exposing",
+        "weak": "Sapping",
+        "frail": "Brittle",
+        "burn": "Searing",
+        "venom": "Venomous",
+        "bleed": "Bleeding",
+        "chill": "Chilling",
+        "frost": "Freezing",
+        "shock": "Shocking",
+        "crimsonBlight": "Blighted",
+        "necroticBlight": "Withering",
+        "confused": "Bewildering",
+        "dazed": "Dazing",
+        "silenced": "Silencing",
+        "paralysis": "Paralyzing",
+        "sleep": "Lulling",
+        "entombed": "Entombing",
+        "staggered": "Shattering",
+        "regen": "Renewing",
+        "strength": "Mighty",
+        "dexterity": "Nimble",
+        "prepared": "Poised",
+        "barrier": "Barrier",
+        "ward": "Warded",
+        "stoneskin": "Stoneskin",
+        "evade": "Evasive",
+        "invulnerability": "Invulnerable",
+        "decoy": "Decoy",
+        "trait:reaction": "Reactive",
+        "range:reach": "Long",
+        "range:ranged": "Far",
+        "maneuver:smash": "Heavy",
+        "maneuver:sweep": "Wide",
+        "ramp.honed": "Honed",
+        "finesse": "Deft",
+        "trait:unavoidable": "True",
+        "trait:impact": "Impact"
+      },
+      "base": {
+        "maneuver:smash": "Smash",
+        "maneuver:sweep": "Sweep",
+        "maneuver:counter": "Riposte",
+        "maneuver:defend": "Guard",
+        "maneuver:evade": "Step",
+        "attack:physical": "Strike",
+        "attack:spell": "Bolt",
+        "attack:area:physical": "Cleave",
+        "attack:area:spell": "Wave",
+        "skill:physical": "Technique",
+        "skill:spell": "Rite"
+      },
+      "fallback": {
+        "physical": "Keen",
+        "spell": "Astral"
+      }
+    },
+    "item": {
+      "mod": {
+        "Strike damage": "Keen",
+        "Strike Poise": "Heavy",
+        "Strike hits (set to)": "Twin",
+        "Strike SP cost": "Ponderous",
+        "Strike Bleed": "Bleeding",
+        "Strike Burn": "Searing",
+        "Strike Frost": "Freezing",
+        "Strike Blight": "Blighted",
+        "Strike Insanity": "Maddening",
+        "Defend Block": "Guarding",
+        "Max HP": "Hale",
+        "Max SP": "Tireless",
+        "Max MP": "Arcane",
+        "Regen": "Renewing",
+        "Strength": "Mighty",
+        "Dexterity": "Nimble",
+        "Fire thorns": "Thorned",
+        "Power potency": "Potent",
+        "Fire hits apply Vulnerable": "Scorching",
+        "Max HP (relic)": "Hale",
+        "School damage (relic)": "Empowered",
+        "Attack profile": "Keen",
+        "Guard profile": "Stalwart",
+        "Poise threshold": "Steadfast",
+        "range:reach": "Long",
+        "range:ranged": "Far"
+      },
+      "op": {
+        "restoreMana": "Siphoning",
+        "restoreStamina": "Rallying",
+        "gainEnergy": "Rallying",
+        "draw": "Insightful",
+        "block": "Warded",
+        "heal": "Mending",
+        "damage": "Wrathful",
+        "poiseDamage": "Staggering",
+        "grantCardCharge": "Charged",
+        "loseHp": "Blood",
+        "refillFlasks": "Brimming",
+        "arcaneBuildup": "Resonant"
+      },
+      "base": {
+        "sword": "Sword",
+        "colossal": "Greatsword",
+        "dagger": "Dagger",
+        "curved": "Saber",
+        "polearm": "Spear",
+        "hammer": "Hammer",
+        "twin": "Twinblades",
+        "axe": "Axe",
+        "round": "Buckler",
+        "kite": "Shield",
+        "tower": "Tower Shield",
+        "spiked": "Shield",
+        "lantern": "Lantern",
+        "torch": "Torch",
+        "staff": "Staff",
+        "metal": "Plate",
+        "leather": "Leathers",
+        "cloth": "Robes",
+        "relic": "Relic"
+      }
+    },
+    "itemArmourSuffixes": [
+      "Plate",
+      "Mail",
+      "Leathers",
+      "Jerkin",
+      "Harness",
+      "Robes",
+      "Silks",
+      "Habit",
+      "Vestment",
+      "Coat",
+      "Cuirass",
+      "Vestments",
+      "Garb",
+      "Raiment",
+      "Hauberk",
+      "Wraps",
+      "Shroud",
+      "Cloak",
+      "Armor",
+      "Armour"
+    ]
   },
   "rewards": {
     "rule": "one table for every class; rare < 10% from every source; a specific card is less likely as rarity rises given pool sizes",
