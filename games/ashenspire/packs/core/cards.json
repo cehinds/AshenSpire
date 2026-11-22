@@ -15,7 +15,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4
+        "amount": 6
       }
     ],
     "tags": [
@@ -44,7 +44,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 8
       }
     ],
     "tags": [
@@ -196,7 +196,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 16
+        "amount": 18
       },
       {
         "op": "applyStatus",
@@ -322,14 +322,12 @@
     "type": "attack",
     "mirrors": "attack",
     "icon": "attack",
-    "keywords": [
-      "ethereal"
-    ],
+    "keywords": [],
     "effects": [
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 3
+        "amount": 6
       }
     ],
     "tags": [

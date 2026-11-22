@@ -5,9 +5,11 @@
 export const levelLists = {
  cards: {
   "act1": [
+   "blightTouch",
    "core.acidSplash",
    "core.advance",
    "core.arcaneSiphon",
+   "core.arcaneWard",
    "core.astralBolt",
    "core.backstep",
    "core.batteringGale",
@@ -97,12 +99,16 @@ export const levelLists = {
    "core.wearyingTouch",
    "core.whetstoneNick",
    "core.whirlwind",
-   "core.wideSweep"
+   "core.wideSweep",
+   "greatswordSunderingHew",
+   "twinFang"
   ],
   "act2": [
+   "blightTouch",
    "core.acidSplash",
    "core.advance",
    "core.arcaneSiphon",
+   "core.arcaneWard",
    "core.astralBolt",
    "core.backstep",
    "core.batteringGale",
@@ -200,12 +206,16 @@ export const levelLists = {
    "core.whetstoneNick",
    "core.whirlwind",
    "core.wideSweep",
-   "core.witherDraught"
+   "core.witherDraught",
+   "greatswordSunderingHew",
+   "twinFang"
   ],
   "act3": [
+   "blightTouch",
    "core.acidSplash",
    "core.advance",
    "core.arcaneSiphon",
+   "core.arcaneWard",
    "core.astralBolt",
    "core.backstep",
    "core.batteringGale",
@@ -304,7 +314,9 @@ export const levelLists = {
    "core.whetstoneNick",
    "core.whirlwind",
    "core.wideSweep",
-   "core.witherDraught"
+   "core.witherDraught",
+   "greatswordSunderingHew",
+   "twinFang"
   ]
  },
  items: {
