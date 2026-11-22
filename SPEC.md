@@ -708,7 +708,7 @@ Every card's Stamina (SP) and Mana (MP) cost is derived by formula, in every fig
 
 **Shipped tunables**: `spDivisor` 6; `mpDivisor` 8; `damageWeight` 1.5 on steps 1 / 3 / 5 / 8 / 12; `rankWeight` 1; `rankWeightMp` 4; `castingEffortWeight` 6; `restoreWeight` 1; `statusWeight` 2 (no stack cap); `smashPoiseBase` 3; Ethereal -1; smash, sweep and heavy tags 0 (the floor prices a base smash).
 
-**Targets**: most basic and cantrip cards cost 1 Stamina and no Mana; smashes and sweeps cost 2; rank 1–2 cost 1 SP + 1 MP, or 2 SP; most rank 1–3 spells cost 1–2 Mana; many magic cards cost at least 1 SP (0-SP magic still possible); higher SP usually means lower MP.
+**Targets**: most basic cards cost 1 Stamina and no Mana, and most cantrips 1 Stamina and 0-1 Mana; smashes and sweeps cost 2; rank 1–2 cost 1 SP + 1 MP, or 2 SP; most rank 1–3 spells cost 1–2 Mana; many magic cards cost at least 1 SP (0-SP magic still possible); higher SP usually means lower MP.
 
 **Layering and opt-outs**
 - The derived SP and MP replace the authored `cost` and `manaCost`. Per-card rules then apply on top: relic and power reductions, Mana discounts, upcast surcharges (only for stored upcast ranks; upcasting is off, §4.8). Equipment and status mods apply after, so a mod's flat bonus is added to the scaled number and not scaled.
@@ -991,7 +991,7 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
   - A chip is a fixed square, the size of a combat badge, holding the trigger's own mark (damage-type, element or status symbol, `model/weaknessIcons.js`, never a letter); tooltip on hover, focus and tap ("Weak to Piercing: +25% damage"), same text as its accessible name.
 
 **Lightning, Shocked, Damp and Bedrock.** Core combat on the Lightning damage type; the Lightning rider (1 Weak after HP loss) is unchanged in the legacy and expanded profiles; in Core 2 the Weak comes from *School statuses* below.
-- **Spark** (`core.spark`): Core Cantrip (tags `rank.cantrip`, `lightning`, `school:lightning`), 3 Lightning damage, 1 SP, 0 MP (a cantrip costs no Mana); upgraded 4.
+- **Spark** (`core.spark`): Core Cantrip (tags `rank.cantrip`, `lightning`, `school:lightning`), 3 Lightning damage, 1 SP, 0 MP (a cantrip costs 0-1 Mana); upgraded 4.
 - **Lightning hit** = a card or enemy move with the `lightning` tag or dealing Lightning damage.
   - *Metal conducts:* a target using metal equipment (row `material: metal`; Core weapons, shields, armour are tagged) takes the hit at +1 Precision for the attacker (+1 Accuracy on that hit).
   - *Shock contest* (stream `combatContest`): after HP loss the hit tries to inflict 1 Shocked. Roll d20 + (target's current Shocked stacks × (caster INT + WIS + card rank)) vs DC = target's current Poise + STR + DEX + CON + level (d20 helper `engine/d20Chance.js` and the roll log; the receipt shows total vs DC). Card rank = the played copy's `cardRank` (§13.4o; 1 when absent). Success: 1 Shocked.
@@ -2861,7 +2861,7 @@ Core only (Legacy and Current keep the single authored upgrade). Design and buil
 
   - Item options follow the same rule: attribute picks (STR, DEX, CON, INT, WIS, Mana, +1 attribute properties) are one family; the six edges (elemental damage or a status on a hit) one; then Poise, resistances, start-of-turn Block, stances, hand flow and deck building.
 
-- **Cantrip and Basic Mana.** A cantrip or Basic costs no Mana, printed or upgrade-made (`core.mendingTouch` prints 0 MP; the validator refuses a `rank.cantrip` card with Mana).
+- **Cantrip and Basic Mana.** A Basic costs no Mana. A cantrip costs 0 or 1 Mana, printed or upgrade-made (owner, 2026-11-22; it was 0 from 2026-11-01): `core.mendingTouch` prints 0 MP, `core.cantrip` (Arcane Spark) prints 1 MP; the validator refuses a `rank.cantrip` card, base or upgrade, that costs 2 or more Mana.
   - Rank down sets the copy's Mana cost to 0 wherever the card resolves (saved copies included); the preview reads e.g. Mana 2 → 0.
   - No -1 Mana (`cost`) step is offered on a cantrip, a Basic or a copy that became one.
   - A card paying 0 Stamina is not offered rank down (a 0/0 cantrip is forbidden).
@@ -3702,7 +3702,7 @@ Owner requests of 2026-11-14 and 2026-11-15 (the "Wave 2.5" list, batch 3). Pres
 - **Rank-up.** A won fight offers a chance to rank up a card (5%; 25% after an elite or boss), and 25% of those arrive as an extra Bonus pick. The shop offers a rank-up at 15% chance, at the Blacksmith's price; the Sleeping Smith rank-up costs 40 cinders.
 - **Armoury item properties.** Weapons, armour and relics carry properties shown in the Armoury.
 - **Bows are Reach attacks.** `maneuver:ranged` stays loadable so old saves keep working.
-- **Cantrips** cost no Mana and 1 Stamina, and need 1 or more stacks of their element's status.
+- **Cantrips** cost 0-1 Mana and 1 Stamina, and need 1 or more stacks of their element's status.
 - **School riders.** Attacks may carry a status rider that matches their school.
 - **Broken.** A Poise break reads "Broken" (the legacy "Staggered" wording stays only on a legacy-rule path).
 - **Player HUD.** The player's HP and Poise numbers match the enemy mini HUD's.

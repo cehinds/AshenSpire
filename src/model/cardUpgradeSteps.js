@@ -239,7 +239,7 @@ function options(base, current, applied, limits, rarity = 0) {
       by.sp = biggest(cut, scale, (n) => current.staminaCost - n >= spMin && current.cost - n >= actionMin && floor <= current.staminaCost - n);
       if (by.sp) pools.push('sp');
     }
-    // A cantrip or basic costs no Mana (owner, 2026-11-01), so a Mana cut is pointless on one, or on a copy that becomes one.
+    // A basic costs no Mana and a cantrip at most 1 (owner, 2026-11-22), so no Mana cut is offered on one, or on a copy that becomes one.
     if (Number.isInteger(current.manaCost) && !basicDef(base) && !tagsOf(current).includes(RANK_DOWN_TAG)) {
       by.mp = biggest(rarity === 2 ? 2 : 1, scale, (n) => current.manaCost - n >= 1);
       if (by.mp) pools.push('mp');

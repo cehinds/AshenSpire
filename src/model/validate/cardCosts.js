@@ -32,10 +32,10 @@ export function cardCostProblems(b, err, ctx) {
     if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
     }
-    // Cantrips cost no Mana (owner, 2026-11-01, SPEC card upgrades): a card tagged rank.cantrip, base or authored upgrade.
+    // A cantrip costs at most 1 Mana (owner, 2026-11-22; was 0 from 2026-11-01, SPEC card upgrades): a card tagged rank.cantrip, base or authored upgrade.
     if (card && [...(card.tags || []), ...(card.cardTags || [])].includes('rank.cantrip')) {
-      if (Number.isInteger(card.manaCost) && card.manaCost > 0) err(`cards.${card.id || '?'}.manaCost`, 'a cantrip costs no Mana');
-      if (card.upgrade && Number.isInteger(card.upgrade.manaCost) && card.upgrade.manaCost > 0) err(`cards.${card.id || '?'}.upgrade.manaCost`, 'a cantrip costs no Mana');
+      if (Number.isInteger(card.manaCost) && card.manaCost > 1) err(`cards.${card.id || '?'}.manaCost`, 'a cantrip costs at most 1 Mana');
+      if (card.upgrade && Number.isInteger(card.upgrade.manaCost) && card.upgrade.manaCost > 1) err(`cards.${card.id || '?'}.upgrade.manaCost`, 'a cantrip costs at most 1 Mana');
     }
     if (card && card.staminaCost != null && Number.isInteger(card.staminaCost) && card.staminaCost < 0) {
       err(`cards.${card.id || '?'}.staminaCost`, 'must be >= 0');

@@ -402,7 +402,7 @@ export function applyUpgradeSteps(base, steps) {
     if (steps[i].k === 'authored') throw new Error('An authored upgrade step must be the first step');
     card = applyStep(card, steps[i]);
   }
-  // Cantrips and basics cost no Mana (SPEC, card upgrades): a rank-down step zeroes the copy's Mana, whatever the
+  // Basics cost no Mana and a cantrip at most 1 (owner, 2026-11-22; SPEC, card upgrades): a rank-down step zeroes (inside both limits) the copy's Mana, whatever the
   // order of the steps, so a saved instance resolves the same way (no migration).
   if (FlatSteps(steps).some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) {
     card.manaCost = 0;
