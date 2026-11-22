@@ -4378,17 +4378,17 @@
       {
         "id": "act1",
         "minRank": 0,
-        "maxRank": 4
+        "maxRank": 2
       },
       {
         "id": "act2",
-        "minRank": 1,
-        "maxRank": 6
+        "minRank": 0,
+        "maxRank": 5
       },
       {
         "id": "act3",
-        "minRank": 3,
-        "maxRank": 10
+        "minRank": 0,
+        "maxRank": 7
       }
     ]
   },
