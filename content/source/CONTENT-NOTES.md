@@ -1460,7 +1460,6 @@ _No comments were written beside these numbers in the old balance.js._
   reading against the OLD faucet for a week; both are re-tuned against
   this one now (2026-09-11) — the shop by this same ×3, the level ladder
   by measurement, each explained where it lives.
-- **`rewards.rarityWeightsByClass`** — Caster rewards favor uncommon/rare cards when the skill gate allows them.
 - **`rewards.elementAffinity`** — Owner decision #13: Psychic and Earth cards belong to no class, but the
   Herald and Starseer meet them more naturally. Within a rarity, a card
   tagged damage:<element> for one of the class's elements weighs
