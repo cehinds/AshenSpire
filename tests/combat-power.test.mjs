@@ -45,7 +45,7 @@ test('combat power: scoring overrides change the result and the shipped table is
   const face = fixture('combat-power-core-faces.json').find(f => f.id === 'smash');
   const edited = JSON.parse(JSON.stringify(scoring));
   edited.costs.sp.weight = -10;
-  assert.equal(scoreCard(face, edited).raw, scoreCard(face).raw - 10);
+  assert.equal(scoreCard(face, edited).raw, scoreCard(face).raw + face.sp * (-10 - scoring.costs.sp.weight)); // follows the shipped SP weight
   edited.rarity.discount.rare = 9;
   assert.equal(combatPower(10, 'rare', edited), 1);
   assert.equal(scoring.rarity.discount.rare, 5);
