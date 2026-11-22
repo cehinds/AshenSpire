@@ -17,7 +17,7 @@
   },
   "costs": {
     "sp": {
-      "weight": -5,
+      "weight": -4,
       "why": "SP is 3 per turn; 1 SP = 1/3 of a turn = D/3 = 5 points."
     },
     "mp": {
@@ -53,7 +53,7 @@
     },
     "poiseDamage": {
       "weight": 1,
-      "per": 3,
+      "per": 1,
       "basis": "final Poise",
       "projection": "Break (2 Staggered stacks) ~ every 3 rounds of pressure",
       "why": "Pays only on Break; a third of HP damage."
@@ -171,7 +171,7 @@
       "why": ""
     },
     "addCard": {
-      "weight": 2,
+      "weight": 3,
       "per": 1,
       "basis": "per generated card",
       "projection": "draw weight - 1 (not chosen)",
@@ -382,7 +382,7 @@
     }
   },
   "effectCount": {
-    "weight": 2,
+    "weight": 5,
     "skipFirst": true,
     "riders": [
       "poise"
@@ -392,56 +392,56 @@
   },
   "tags": {
     "maneuver:smash": {
-      "weight": 1,
+      "weight": 3,
       "projection": "+50% Poise vs Guard (~1 Poise point) + extra vs physical Guard",
       "why": "Smash stance edge.",
       "domain": "maneuver",
       "label": "Smash"
     },
     "maneuver:sweep": {
-      "weight": 1,
+      "weight": 2,
       "projection": "bypasses melee Counter (~20% of hits) x V",
       "why": "Sweep stance edge.",
       "domain": "maneuver",
       "label": "Sweep"
     },
     "maneuver:counter": {
-      "weight": 1,
+      "weight": 4,
       "projection": "Counter Block x1.25 stance benefit",
       "why": "Counter stance edge.",
       "domain": "maneuver",
       "label": "Counter"
     },
     "maneuver:ranged": {
-      "weight": 1,
+      "weight": 5,
       "projection": "avoids melee replies",
       "why": "Ranged stance edge.",
       "domain": "maneuver",
       "label": "Ranged"
     },
     "range:melee": {
-      "weight": -1,
+      "weight": 0,
       "projection": "+1 SP to hit the back row (5) x ~20% of plays",
       "why": "Row tax.",
       "domain": "range",
       "label": "Melee"
     },
     "range:reach": {
-      "weight": 1,
+      "weight": 3,
       "projection": "no row tax: + the 1 melee pays",
       "why": "Hits either row.",
       "domain": "range",
       "label": "Reach"
     },
     "range:ranged": {
-      "weight": 1,
+      "weight": 5,
       "projection": "as reach",
       "why": "Hits any enemy.",
       "domain": "range",
       "label": "Ranged"
     },
     "counter:spell": {
-      "weight": 1,
+      "weight": 3,
       "projection": "covers spells and ranged moves (~20% of enemy moves) x I",
       "why": "Wider Counter.",
       "domain": "counterMode",
@@ -455,7 +455,7 @@
       "label": "Ranged counter"
     },
     "damage:blunt": {
-      "weight": 1,
+      "weight": 2,
       "projection": "+2 Poise per action / 3",
       "why": "FixCore rider.",
       "per": "action",
@@ -479,7 +479,7 @@
       "label": "Fire"
     },
     "damage:poison": {
-      "weight": 2,
+      "weight": 5,
       "projection": "1 Venom per Health hit",
       "why": "Rider = Venom weight.",
       "per": "hit",
@@ -487,7 +487,7 @@
       "label": "Poison"
     },
     "damage:frost": {
-      "weight": 1,
+      "weight": 3,
       "projection": "1 Frost per Health hit",
       "why": "Rider = Frost weight.",
       "per": "hit",
@@ -495,7 +495,7 @@
       "label": "Cold"
     },
     "damage:lightning": {
-      "weight": 2,
+      "weight": 3,
       "projection": "1 Weak per Health hit",
       "why": "Rider = Weak weight.",
       "per": "hit",
@@ -527,7 +527,7 @@
       "label": "Earth"
     },
     "damage:sacred": {
-      "weight": 1,
+      "weight": 2,
       "projection": "removes 1 debuff from self on hit, half the time one is up",
       "why": "Rider.",
       "per": "hit",
@@ -551,21 +551,21 @@
       "label": "Piercing"
     },
     "trait:reaction": {
-      "weight": 2,
+      "weight": 5,
       "projection": "played on the enemy turn: Block matches the telegraphed hit, ~0.4 V saved",
       "why": "Timing.",
       "domain": "trait",
       "label": "Reaction"
     },
     "trait:unavoidable": {
-      "weight": 2,
+      "weight": 5,
       "projection": "ignores Evasion: ~0.4 V on evasive enemies",
       "why": "",
       "domain": "trait",
       "label": "Unavoidable"
     },
     "trait:unreflectable": {
-      "weight": 1,
+      "weight": 3,
       "projection": "ignores Reflect: rare enemy trait",
       "why": "",
       "domain": "trait",
@@ -579,14 +579,14 @@
       "label": "Impact"
     },
     "trait:flux": {
-      "weight": 2,
+      "weight": 3,
       "projection": "adds or doubles Ward damage (~4 / 2)",
       "why": "",
       "domain": "trait",
       "label": "Flux"
     },
     "trait:persistent": {
-      "weight": 1,
+      "weight": 5,
       "projection": "Precision survives the turn",
       "why": "",
       "domain": "trait",
@@ -612,7 +612,7 @@
       "weight": 0,
       "projection": "multiplier: as targeting:area for the marked effect",
       "why": "",
-      "multiplier": 2,
+      "multiplier": 1.3,
       "domain": "technique",
       "label": "Wide Cleave"
     },
@@ -648,7 +648,7 @@
       "weight": 0,
       "projection": "multiplier: +1/2 of P (second use in 3R half the time)",
       "why": "Returns to hand.",
-      "pMultiplier": 0.5,
+      "pMultiplier": 0.75,
       "domain": "lifecycle",
       "label": "recall"
     },
@@ -656,7 +656,7 @@
       "weight": 0,
       "projection": "as recall",
       "why": "",
-      "pMultiplier": 0.5,
+      "pMultiplier": 0.75,
       "domain": "lifecycle",
       "label": "afterUse"
     },
@@ -664,7 +664,7 @@
       "weight": 0,
       "projection": "as recall",
       "why": "",
-      "pMultiplier": 0.5,
+      "pMultiplier": 0.75,
       "domain": "lifecycle",
       "label": "afterCardPlay"
     },
@@ -1327,21 +1327,21 @@
       "label": "Spell"
     },
     "maneuver:attack": {
-      "weight": 0,
+      "weight": 1,
       "projection": "identity",
       "why": "Stance; attack, defend and casting are the baseline.",
       "domain": "maneuver",
       "label": "Attack"
     },
     "maneuver:defend": {
-      "weight": 0,
+      "weight": 1,
       "projection": "identity",
       "why": "Stance; attack, defend and casting are the baseline.",
       "domain": "maneuver",
       "label": "Defend"
     },
     "maneuver:casting": {
-      "weight": 0,
+      "weight": 2,
       "projection": "identity",
       "why": "Stance; attack, defend and casting are the baseline.",
       "domain": "maneuver",
