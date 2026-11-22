@@ -234,7 +234,7 @@ export const itemCombatPower = {
  "weapon:battleaxe": {"raw":-12,"cp":-12,"rank":0,"rarity":"common"},
  "weapon:beardedAxe": {"raw":-5,"cp":-5,"rank":0,"rarity":"common"},
  "weapon:beastClaws": {"raw":9,"cp":7,"rank":2,"rarity":"uncommon"},
- "weapon:blightRod": {"raw":43,"cp":41,"rank":10,"rarity":"uncommon"},
+ "weapon:blightRod": {"raw":34,"cp":32,"rank":8,"rarity":"uncommon"},
  "weapon:boneSceptre": {"raw":24,"cp":22,"rank":6,"rarity":"uncommon"},
  "weapon:boneTalisman": {"raw":-1,"cp":-3,"rank":0,"rarity":"uncommon"},
  "weapon:broadsword": {"raw":-1,"cp":-3,"rank":0,"rarity":"uncommon"},
