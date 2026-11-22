@@ -136,7 +136,7 @@ export function balanceRowProblems(b, err, ctx) {
       if (!payoff || !(b.statuses || []).some(status => status.id === payoff.status)) err('balance.exposure.defaultPayoff.status', 'must name a status');
       if (!Number.isInteger(payoff?.value) || payoff.value < 0) err('balance.exposure.defaultPayoff.value', 'must be a non-negative integer');
       if (!Number.isInteger(payoff?.duration) || payoff.duration <= 0) err('balance.exposure.defaultPayoff.duration', 'must be a positive integer');
-      if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
+      if (!(Number.isInteger(exposure.elementUpgradeBuildup) && exposure.elementUpgradeBuildup >= 0)) err('balance.exposure.elementUpgradeBuildup', `must be a non-negative integer, got ${JSON.stringify(exposure.elementUpgradeBuildup)}`);
       if (!(Number.isInteger(exposure.resonanceSpreadPct) && exposure.resonanceSpreadPct >= 0 && exposure.resonanceSpreadPct <= 100)) err('balance.exposure.resonanceSpreadPct', `must be an integer percent 0–100, got ${JSON.stringify(exposure.resonanceSpreadPct)}`);
     }
   }

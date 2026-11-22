@@ -39,7 +39,7 @@ export function upgradedDefinition(base) {
 //                                  `retarget` 'area' | 'single' moves the first damage effect between enemy
 //                                  and allEnemies (amount x0.75 up, or x1.25 up), `damageSchool` sets the
 //                                  card's damage school (a magical property), with the `exposureBuildupPerHit` an
-//                                  authored card of that school carries (balance.exposure.buildupPerManaSpell)
+//                                  authored card of that school carries (balance.exposure.elementUpgradeBuildup)
 //                                  `packet` n (with `damage`, `damageSchool`): an element ADDS n magic damage to the hit, or raises the card's own packet
 //   (every step may carry `r`: 'uncommon' or 'rare', its rarity; none means common)
 //   fx { fx, ... }                 an effect-menu step (W25, owner 2026-11-14), see FX_KINDS below

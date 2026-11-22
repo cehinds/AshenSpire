@@ -1365,10 +1365,8 @@ _No comments were written beside these numbers in the old balance.js._
 - **`exposure.staggerBreakPoise`** — Plan phase 8 (proposal §7.2): what the other two foci make of YOUR break.
 - **`exposure.staggerBreakPoise`** — PROVISIONAL — Poise damage to the broken foe (staff `staggerBreak`)
 - **`exposure.resonanceSpreadPct`** — PROVISIONAL — % of the broken foe's threshold poured into every OTHER foe (orb `resonance`)
-- **`exposure.buildupPerManaSpell`** — A Mana spell's buildup per hit (content/source/cardExposure.csv must carry at
-  least this on a card that costs Mana): an empty caster still works toward
-  a break with action-only spells, a Mana spell works faster.
-- **`exposure.buildupPerManaSpell`** — PROVISIONAL
+- **`exposure.elementUpgradeBuildup`** — The buildup per hit an upgrade that gives a card a new damage school builds. No card has an Exposure floor: it is authored per card (owner ruling 2026-11-22; this key was `buildupPerManaSpell`, a floor).
+- **`exposure.elementUpgradeBuildup`** — PROVISIONAL
 
 ### balancePoise.json — poise
 

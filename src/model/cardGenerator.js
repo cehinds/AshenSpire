@@ -73,10 +73,10 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
 }
 
 /**
- * GenerateCard(target, {scoring, buildupPerManaSpell}) -> a Core cards.json-shaped definition (id `gen.<seed>`) whose ScoreCard face lands exactly
- * on the target. `buildupPerManaSpell` is balance.exposure.buildupPerManaSpell (5 in Core), the Exposure floor of a Mana-costing magic attack.
+ * GenerateCard(target, {scoring, spellExposureBuildup}) -> a Core cards.json-shaped definition (id `gen.<seed>`) whose ScoreCard face lands exactly
+ * on the target. `spellExposureBuildup` (5) is the Exposure per hit a generated magic attack that costs Mana is authored with; no floor applies to a card (owner ruling 2026-11-22).
  */
-export function GenerateCard(input, { scoring = shippedScoring, buildupPerManaSpell = 5 } = {}) {
+export function GenerateCard(input, { scoring = shippedScoring, spellExposureBuildup = 5 } = {}) {
   const { face, cp, target } = GenerateFace(input, { scoring });
   const { rarity, cls, camp, type, seed } = target;
   const effects = [], parts = [], faceTemplate = [];
@@ -98,6 +98,6 @@ export function GenerateCard(input, { scoring = shippedScoring, buildupPerManaSp
     icon: type === 'attack' ? 'attack' : 'shield', keywords: [], effects, tags: face.tags,
     textTemplate: parts.join(' '), ...(parts.length > 1 ? { faceTemplate } : {}),
     flavor: `Generated: combat power ${cp}, Rank ${RankOf(cp, scoring)}.`,
-    ...(type === 'attack' ? { damageSchool: camp === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: camp === 'spell' && face.mp ? buildupPerManaSpell : 0 } : {}),
+    ...(type === 'attack' ? { damageSchool: camp === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: camp === 'spell' && face.mp ? spellExposureBuildup : 0 } : {}),
   };
 }

@@ -11,7 +11,6 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 import { balanceMana } from '../src/content/generated/balanceMana.js';
-import { balanceExposure } from '../src/content/generated/balanceExposure.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -59,7 +58,7 @@ test('every card is authored in its class, costs SP and MP, is not a cantrip, an
     assert.ok(card.staminaCost >= balanceMana.minActionCost, `${id}: a mana card costs at least ${balanceMana.minActionCost} SP (balance.mana.minActionCost)`);
     assert.ok(['uncommon', 'rare'].includes(card.rarity), id);
     assert.ok(!card.tags.includes('rank.cantrip'), `${id} is not a cantrip`);
-    if (card.damageSchool === 'magic') assert.ok(card.exposureBuildupPerHit >= balanceExposure.buildupPerManaSpell, `${id}: a magic attack builds at least ${balanceExposure.buildupPerManaSpell} Arcane Exposure per hit`);
+    // No Exposure floor on a Mana spell (owner ruling 2026-11-22): per-hit Exposure is authored per card.
     if (cls === 'starseer' || cls === 'herald' || cls === 'colorless') assert.ok(card.tags.includes('camp:spell'), id);
   }
   assert.equal(ALL.length, 6);

@@ -43,7 +43,7 @@ test('card generator: never emits a card over the combat-power ceiling (scoring.
 
 test('card generator: output has the Core card shape and passes the card template validator', () => {
   const generated = [];
-  for (const rarity of RARITIES) for (const shape of shapes) for (let rank = 0; rank <= 5; rank++) generated.push(GenerateCard({ rarity, rank, seed: 100 * rank + generated.length, ...shape }, { buildupPerManaSpell: contentBundle.balance.exposure.buildupPerManaSpell }));
+  for (const rarity of RARITIES) for (const shape of shapes) for (let rank = 0; rank <= 5; rank++) generated.push(GenerateCard({ rarity, rank, seed: 100 * rank + generated.length, ...shape }, { spellExposureBuildup: contentBundle.balance.exposure.elementUpgradeBuildup }));
   assert.equal(new Set(generated.map(c => c.id)).size, generated.length);
   const coreCards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
   const coreKeys = new Set(coreCards.flatMap(card => Object.keys(card)));

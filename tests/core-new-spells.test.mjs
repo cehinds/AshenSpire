@@ -10,7 +10,6 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 import { balanceMana } from '../src/content/generated/balanceMana.js';
-import { balanceExposure } from '../src/content/generated/balanceExposure.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -50,7 +49,7 @@ test('every new spell is authored in its class, costs mana, is not a cantrip, an
     assert.ok(['uncommon', 'rare'].includes(card.rarity), id);
     assert.ok(!card.tags.includes('rank.cantrip'), `${id} is not a cantrip`);
     assert.ok(card.tags.includes('camp:spell'), id);
-    if (card.effects.some(e => e.op === 'damage')) assert.ok(card.exposureBuildupPerHit >= balanceExposure.buildupPerManaSpell, `${id}: a mana attack builds at least ${balanceExposure.buildupPerManaSpell} Arcane Exposure per hit`);
+    // No Exposure floor on a Mana spell (owner ruling 2026-11-22): per-hit Exposure is authored per card.
   }
   assert.equal(ALL.length, 10);
   assert.equal(new Set(ALL.map(id => def(id).name)).size, 10);

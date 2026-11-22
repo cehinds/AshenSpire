@@ -9582,8 +9582,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const { mana: _noMana, ...sansMana } = bal;
     assert(said(validateContent({ ...contentBundle, balance: sansMana })).some((e) => /^balance\.mana:/.test(e)), 'a bundle without the Mana floor is refused by name');
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
+    // Owner ruling 2026-11-22: no Exposure floor; a Mana spell grade that builds little Exposure is valid.
     const lowGrade = withCards(card => card.id === 'starstoneArc' ? { ...card, gradeProfiles: card.gradeProfiles.map(profile => ({ ...profile, traits: { ...profile.traits, exposureBuildupPerHit: 1 } })) } : card);
-    assert(said(lowGrade).some((e) => /cards\.starstoneArc\.gradeProfiles.*at least 5 Exposure per hit/.test(e)), 'a Mana spell grade building less than buildupPerManaSpell is refused by name');
+    assert(!said(lowGrade).some((e) => /Exposure per hit/.test(e)), 'a Mana spell grade may build any non-negative Exposure (no floor)');
     assert(said(withCards(card => {
       if (card.id !== 'starShower') return card;
       const { gradeProfiles, abilityKind, abilityRank, abilityFamily, legacyFace, ...legacy } = card;
