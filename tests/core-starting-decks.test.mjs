@@ -39,12 +39,23 @@ for (const [classId, expected] of Object.entries(DECKS)) {
     for (const id of gameProfileStarterDeck(run, classId)) assert.ok(run.collectedCardIds.includes(id), `${id} is in the collection ledger`);
   });
 
-  test(`Core ${classId} starter has a Smash, a Sweep and two cards of its own class, none costing more MP than it starts with`, () => {
+  test(`Core ${classId} starter is exactly the recipe: 4 basic attacks, 4 defences, 1 own-class card, 1 weapon art, none costing more MP than it starts with (owner ruling 2026-11-21)`, () => {
     const run = start(classId);
     const defs = run.deck.map(c => reg.cards.get(c.cardId));
-    assert.ok(defs.some(d => d.tags.includes('maneuver:smash')), 'a Smash');
-    assert.ok(defs.some(d => d.tags.includes('maneuver:sweep')), 'a Sweep');
-    assert.ok(defs.filter(d => d.class === classId).length >= 2, 'two cards of its own class');
+    const caster = classId === 'starseer' || classId === 'herald';
+    const art = defs.filter(d => d.rarity === 'rare');
+    assert.equal(art.length, 1, 'one rare weapon art');
+    const own = defs.filter(d => d.class === classId && d.rarity !== 'rare');
+    assert.equal(own.length, 1, 'one own-class card');
+    assert.equal(own[0].rarity, 'uncommon', 'the class card is uncommon');
+    const basics = defs.filter(d => d.rarity === 'common');
+    assert.equal(basics.length, 8, 'eight common basics');
+    const isDefence = d => (d.type === 'skill' && (d.effects || []).some(e => e.op === 'block'));
+    assert.equal(basics.filter(isDefence).length, 4, 'four defences');
+    assert.equal(basics.filter(d => d.type === 'attack').length, 4, 'four attacks');
+    for (const d of basics) assert.equal(d.tags.includes('rank.cantrip') || d.tags.includes('maneuver:attack') || d.tags.includes('maneuver:defend'), true, `${d.id} is a basic or a cantrip`);
+    if (caster) for (const d of basics) assert.ok(d.tags.includes('camp:spell'), `${d.id} is a cantrip`);
+    else for (const d of basics) assert.ok(d.tags.includes('camp:physical'), `${d.id} is a Strike or Defend type`);
     const maxMana = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.maxMana;
     for (const d of defs) assert.ok((d.manaCost || 0) <= maxMana, `${d.id} costs ${d.manaCost} MP, class starts with ${maxMana}`);
   });
@@ -73,8 +84,10 @@ for (const [classId, expected] of Object.entries(DECKS)) {
 
 test('Core editor offers only collected definitions under the matching Adept (legacy unlimited rules, owner ruling 2026-10-23)', async () => {
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
-  const expected = { reaver: ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep'],
-    rogue: ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade'], starseer: ['core.cantrip'], herald: ['core.cantrip'] };
+  // Owner ruling 2026-11-21: Counter, Smash, Sweep and Evade left the starting decks, so only Strike and Defend are collected basics.
+  const CASTER_BASICS = ['core.cantrip', 'core.arcaneWard', 'core.glimmerVeil', 'core.stoneSigil', 'core.ashenShell'];
+  const expected = { reaver: ['core.strike', 'core.defend'],
+    rogue: ['core.strike', 'core.defend'], starseer: CASTER_BASICS, herald: CASTER_BASICS };
   for (const id of Object.keys(expected)) assert.deepEqual(unlimitedCardIds(startLegacy(id)), expected[id]);
 });
 
@@ -88,24 +101,24 @@ test('Legacy Core owned basics are sourced basic and the Basic filter is non-emp
   const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
   const { unlimitedCardIds, basicCardIds, isBasicCard } = await import('../src/model/deckRules.js');
   const run = startLegacy('reaver');
-  assert.deepEqual(unlimitedCardIds(run), ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep'], 'policy: only collected trained basics can be minted');
-  for (const id of ['core.strike', 'core.defend', 'core.counter']) assert.ok(basicCardIds(run).includes(id), `${id} classified basic`);
-  for (const c of run.deck.filter((x) => ['core.strike', 'core.defend', 'core.counter'].includes(x.cardId))) assert.ok(isBasicCard(c, run), c.cardId);
+  assert.deepEqual(unlimitedCardIds(run), ['core.strike', 'core.defend'], 'policy: only collected trained basics can be minted');
+  for (const id of ['core.strike', 'core.defend']) assert.ok(basicCardIds(run).includes(id), `${id} classified basic`);
+  for (const c of run.deck.filter((x) => ['core.strike', 'core.defend'].includes(x.cardId))) assert.ok(isBasicCard(c, run), c.cardId);
   const model = deckEditorModel({ registries: legacyReg, run });
-  const owned = (rows) => rows.filter((r) => ['core.strike', 'core.defend', 'core.counter'].includes(r.card?.cardId ?? r.cardId));
+  const owned = (rows) => rows.filter((r) => ['core.strike', 'core.defend'].includes(r.card?.cardId ?? r.cardId));
   const basics = [...model.deck, ...model.collection].filter((r) => r.source === 'basic');
   assert.ok(basics.length > 0, 'Basic filter has rows');
   assert.ok(model.collection.filter(row => row.unlimited).every(row => run.collectedCardIds.includes(row.cardId)), 'no uncollected unlimited basic tile');
   assert.ok(owned(model.deck).every((r) => r.source === 'basic'), 'owned Strike/Defend/Counter in the deck are basic');
 });
 
-test('Shipped Core: owned Strike/Defend/Counter are ordinary owned tiles, none basic, no mint tile', async () => {
+test('Shipped Core: owned Strike/Defend are ordinary owned tiles, none basic, no mint tile', async () => {
   const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
   const { unlimitedCardIds, basicCardIds, isBasicCard } = await import('../src/model/deckRules.js');
   const run = start('reaver');
   assert.deepEqual(unlimitedCardIds(run), [], 'no unlimited ids');
   assert.deepEqual(basicCardIds(run), [], 'nothing classified basic');
-  const ids = ['core.strike', 'core.defend', 'core.counter'];
+  const ids = ['core.strike', 'core.defend'];
   const own = run.deck.filter((x) => ids.includes(x.cardId));
   assert.ok(own.length > 0);
   for (const c of own) assert.ok(!isBasicCard(c, run), c.cardId);
@@ -163,7 +176,7 @@ test('Legacy Core Reaver: the class special is not badged Basic in the editor, t
     assert.notEqual(r.source, 'basic', 'core.reaverSpecial row source');
     assert.equal(rankZeroLabelId(r.source, false), 'deckEditor.source.art');
   }
-  for (const id of ['core.strike', 'core.defend', 'core.counter']) for (const r of rows.filter((x) => x.cardId === id)) {
+  for (const id of ['core.strike', 'core.defend']) for (const r of rows.filter((x) => x.cardId === id)) {
     assert.equal(r.source, 'basic', `${id} row source`);
     assert.equal(rankZeroLabelId(r.source, false), 'deckEditor.rank.basic', `${id} badge`);
   }
@@ -173,18 +186,18 @@ test('Legacy Core Reaver: the class special is not badged Basic in the editor, t
 });
 
 // Owner rule (2026-10-19): the rank-0 badge agrees with the Basic filter. A card the Basic filter hides is never badged Basic.
-test('Core Herald: Smash (source reward) is hidden by the Basic filter and is not badged Basic', async () => {
+test('Core Herald: its class spell (source reward) is hidden by the Basic filter and is not badged Basic', async () => {
   const { deckEditorModel, rankZeroLabelId } = await import('../src/ui/models/DeckEditorModel.js');
   const run = start('herald');
-  const rows = [...deckEditorModel({ registries: reg, run }).deck].filter((r) => r.cardId === 'core.smash');
-  assert.ok(rows.length > 0, 'core.smash row found');
+  const rows = [...deckEditorModel({ registries: reg, run }).deck].filter((r) => r.cardId === 'core.heraldSpecial');
+  assert.ok(rows.length > 0, 'core.heraldSpecial row found');
   for (const r of rows) {
     assert.notEqual(r.source, 'basic');
     assert.equal(rankZeroLabelId(r.source, false), `deckEditor.source.${r.source}`);
     assert.notEqual(rankZeroLabelId(r.source, false), 'deckEditor.rank.basic');
   }
   const filtered = deckEditorModel({ registries: reg, run, view: { filters: { source: ['basic'] } } });
-  assert.ok(![...filtered.deck, ...filtered.collection].some((r) => r.cardId === 'core.smash'), 'Basic filter hides Smash');
+  assert.ok(![...filtered.deck, ...filtered.collection].some((r) => r.cardId === 'core.heraldSpecial'), 'Basic filter hides the class spell');
 });
 
 test('the rank-0 badge label per source: basic reads Basic, every other source its own chip label', async () => {
@@ -228,11 +241,11 @@ async function renderedBadges(registries, run) {
   return out;
 }
 
-test('DOM: Core Herald Smash renders its source label, not Basic (reverting the rankNode call site fails this)', async () => {
+test('DOM: Core Herald weapon art renders its source label, not Basic (reverting the rankNode call site fails this)', async () => {
   const badges = await renderedBadges(reg, start('herald'));
-  const smash = badges.filter((b) => b.row.cardId === 'core.smash');
-  assert.ok(smash.length > 0, 'a rendered Smash row with a rank badge');
-  for (const b of smash) { assert.equal(b.rank, 0); assert.equal(b.text, 'Reward'); assert.equal(b.shown, false); }
+  const art = badges.filter((b) => b.row.cardId === 'blightTouch');
+  assert.ok(art.length > 0, 'a rendered weapon-art row with a rank badge');
+  for (const b of art) { assert.equal(b.rank, 0); assert.equal(b.text, 'Cantrip'); assert.notEqual(b.text, 'Basic'); assert.equal(b.shown, false); }
 });
 
 test('sweep: every Core class deck row and a legacy deck badge Basic iff the Basic filter shows it', async () => {
