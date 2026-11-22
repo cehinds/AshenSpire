@@ -125,7 +125,8 @@ export function CreateSaveTransfer(storage, unpinnedRegistries = null)
             throw new Error('Unsupported save file. Export a backup from Download & saves.');
         }
         // A save wipe (epoch raise) discarded old progress on purpose: an export from an older epoch must not bring it back.
-        const exportEpoch = Number.isInteger(data.epoch) && data.epoch >= 1 ? data.epoch : 1;
+        const stamped = data.epoch;
+        const exportEpoch = typeof stamped === 'number' && Number.isInteger(stamped) && stamped >= 1 ? stamped : 1;
         if (exportEpoch < ReadEpochStamp(storage))
         {
             throw Object.assign(
