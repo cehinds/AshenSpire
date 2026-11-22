@@ -108,7 +108,7 @@ function itemFaces() {
   };
   for (const a of b.equipment.armaments) {
     const tags = tagFam['armament:' + a.id] || [];
-    const it = { kind: a.kind === 'weapon' ? 'weapon' : a.kind, id: a.id, name: a.name, rarity: a.rarity, base: a.geom, sub: a.kind, mods: parseMods(a.mods),
+    const it = { kind: 'weapon', id: a.id, name: a.name, rarity: a.rarity, base: a.geom, sub: a.kind, mods: parseMods(a.mods),
       props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]), poise: a.poiseThreshold, weight: a.weight, dmgType: a.physicalDamageType, range: a.range };
     const kit = a.weaponCardPackage?.combatKit || {};
     const ap = profile[kit.attackProfileId || a.attackProfile], gp = profile[kit.guardProfileId || a.guardProfile];
