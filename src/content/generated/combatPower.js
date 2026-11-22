@@ -3,7 +3,7 @@
 // raw = effect power over 3 rounds, cp = raw - rarity discount, rank 0 = Unranked, 1..10 (src/model/combatPower.js).
 
 export const cardCombatPower = {
- "blightTouch": {"raw":12,"cp":7,"rank":2,"rarity":"rare"},
+ "blightTouch": {"raw":9,"cp":4,"rank":1,"rarity":"rare"},
  "core.acidSplash": {"raw":13,"cp":13,"rank":4,"rarity":"common"},
  "core.advance": {"raw":-1,"cp":-1,"rank":0,"rarity":"common"},
  "core.arcaneSiphon": {"raw":8,"cp":6,"rank":2,"rarity":"uncommon"},
@@ -110,8 +110,8 @@ export const cardCombatPower = {
  "core.whirlwind": {"raw":14,"cp":9,"rank":3,"rarity":"rare"},
  "core.wideSweep": {"raw":8,"cp":8,"rank":2,"rarity":"common"},
  "core.witherDraught": {"raw":23,"cp":21,"rank":6,"rarity":"uncommon"},
- "greatswordSunderingHew": {"raw":31,"cp":26,"rank":7,"rarity":"rare"},
- "twinFang": {"raw":19,"cp":14,"rank":4,"rarity":"rare"}
+ "greatswordSunderingHew": {"raw":8,"cp":3,"rank":1,"rarity":"rare"},
+ "twinFang": {"raw":8,"cp":3,"rank":1,"rarity":"rare"}
 };
 
 export const itemCombatPower = {
@@ -236,18 +236,18 @@ export const itemCombatPower = {
  "relic:wrathCoil": {"raw":2,"cp":-3,"rank":0,"rarity":"rare"},
  "relic:wyrmHeart": {"raw":12,"cp":7,"rank":2,"rarity":"rare"},
  "weapon:arbalest": {"raw":1,"cp":-4,"rank":0,"rarity":"rare"},
- "weapon:ashenClaymore": {"raw":22,"cp":20,"rank":5,"rarity":"uncommon"},
+ "weapon:ashenClaymore": {"raw":5,"cp":3,"rank":1,"rarity":"uncommon"},
  "weapon:ashStaff": {"raw":12,"cp":12,"rank":3,"rarity":"common"},
  "weapon:battleaxe": {"raw":-12,"cp":-12,"rank":0,"rarity":"common"},
  "weapon:beardedAxe": {"raw":-5,"cp":-5,"rank":0,"rarity":"common"},
  "weapon:beastClaws": {"raw":9,"cp":7,"rank":2,"rarity":"uncommon"},
  "weapon:blightRod": {"raw":34,"cp":32,"rank":8,"rarity":"uncommon"},
- "weapon:boneSceptre": {"raw":36,"cp":34,"rank":9,"rarity":"uncommon"},
- "weapon:boneTalisman": {"raw":11,"cp":9,"rank":3,"rarity":"uncommon"},
+ "weapon:boneSceptre": {"raw":33,"cp":31,"rank":8,"rarity":"uncommon"},
+ "weapon:boneTalisman": {"raw":8,"cp":6,"rank":2,"rarity":"uncommon"},
  "weapon:broadsword": {"raw":-1,"cp":-3,"rank":0,"rarity":"uncommon"},
  "weapon:buckler": {"raw":-1,"cp":-1,"rank":0,"rarity":"common"},
  "weapon:cinderAxe": {"raw":33,"cp":31,"rank":8,"rarity":"uncommon"},
- "weapon:dagger": {"raw":16,"cp":16,"rank":4,"rarity":"common"},
+ "weapon:dagger": {"raw":11,"cp":11,"rank":3,"rarity":"common"},
  "weapon:duelistsFoil": {"raw":13,"cp":8,"rank":2,"rarity":"rare"},
  "weapon:duskChime": {"raw":28,"cp":23,"rank":6,"rarity":"rare"},
  "weapon:emberlightSceptre": {"raw":22,"cp":17,"rank":5,"rarity":"rare"},
@@ -257,7 +257,7 @@ export const itemCombatPower = {
  "weapon:frostSpear": {"raw":39,"cp":37,"rank":10,"rarity":"uncommon"},
  "weapon:goldboughBranch": {"raw":42,"cp":37,"rank":10,"rarity":"rare"},
  "weapon:gorefireBrand": {"raw":45,"cp":40,"rank":10,"rarity":"rare"},
- "weapon:greatsword": {"raw":9,"cp":7,"rank":2,"rarity":"uncommon"},
+ "weapon:greatsword": {"raw":-8,"cp":-10,"rank":0,"rarity":"uncommon"},
  "weapon:grimoire": {"raw":2,"cp":0,"rank":0,"rarity":"uncommon"},
  "weapon:halberd": {"raw":1,"cp":-1,"rank":0,"rarity":"uncommon"},
  "weapon:handCrossbow": {"raw":12,"cp":12,"rank":3,"rarity":"common"},
@@ -265,7 +265,7 @@ export const itemCombatPower = {
  "weapon:ironKnuckles": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
  "weapon:katana": {"raw":18,"cp":16,"rank":4,"rarity":"uncommon"},
  "weapon:kiteShield": {"raw":-5,"cp":-5,"rank":0,"rarity":"common"},
- "weapon:kris": {"raw":22,"cp":20,"rank":5,"rarity":"uncommon"},
+ "weapon:kris": {"raw":17,"cp":15,"rank":4,"rarity":"uncommon"},
  "weapon:lantern": {"raw":11,"cp":11,"rank":3,"rarity":"common"},
  "weapon:leatherWhip": {"raw":11,"cp":11,"rank":3,"rarity":"common"},
  "weapon:longbow": {"raw":15,"cp":13,"rank":4,"rarity":"uncommon"},
@@ -284,7 +284,7 @@ export const itemCombatPower = {
  "weapon:shortbow": {"raw":15,"cp":15,"rank":4,"rarity":"common"},
  "weapon:spikedShield": {"raw":11,"cp":9,"rank":3,"rarity":"uncommon"},
  "weapon:starstoneStaff": {"raw":41,"cp":39,"rank":10,"rarity":"uncommon"},
- "weapon:stiletto": {"raw":17,"cp":12,"rank":3,"rarity":"rare"},
+ "weapon:stiletto": {"raw":12,"cp":7,"rank":2,"rarity":"rare"},
  "weapon:stormSceptre": {"raw":16,"cp":14,"rank":4,"rarity":"uncommon"},
  "weapon:straightSword": {"raw":3,"cp":3,"rank":1,"rarity":"common"},
  "weapon:sunTalisman": {"raw":28,"cp":26,"rank":7,"rarity":"uncommon"},
@@ -295,5 +295,5 @@ export const itemCombatPower = {
  "weapon:twinblade": {"raw":17,"cp":12,"rank":3,"rarity":"rare"},
  "weapon:warhammer": {"raw":3,"cp":1,"rank":1,"rarity":"uncommon"},
  "weapon:wyrmhornStaff": {"raw":20,"cp":15,"rank":4,"rarity":"rare"},
- "weapon:zweihander": {"raw":23,"cp":18,"rank":5,"rarity":"rare"}
+ "weapon:zweihander": {"raw":6,"cp":1,"rank":1,"rarity":"rare"}
 };
