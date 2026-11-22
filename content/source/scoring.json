@@ -381,6 +381,15 @@
       "why": "A dead draw: minus one draw (3) each time it is drawn, ~once in 3R."
     }
   },
+  "effectCount": {
+    "weight": 2,
+    "skipFirst": true,
+    "riders": [
+      "poise"
+    ],
+    "rule": "Owner 2026-11-21: + weight for each distinct real effect type on a card that scores > 0, beyond the first. Real effects: damage, Block, each status, draw, heal, restores, cleanse, counter, reflect, pull, move, utility. Not counted: SP/MP costs, tag bonuses, keywords, multipliers, and riders (Poise counts only on a card that deals no damage).",
+    "why": "A card that does several different things is worth more than its parts: it fits more turns and more decks."
+  },
   "tags": {
     "maneuver:smash": {
       "weight": 1,

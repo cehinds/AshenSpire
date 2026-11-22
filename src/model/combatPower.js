@@ -96,6 +96,15 @@ export function scoreCard(c, scoring = shippedScoring) {
     if (d.min !== undefined) v = d.min < 0 ? Math.min(v, d.min) : Math.max(v, d.min);
     add(k, v);
   }
+  // Owner 2026-11-21 (scoring.effectCount): + weight per distinct real effect type scoring > 0, beyond the first (skipFirst).
+  // Not effects: costs, tag bonuses, keywords, multipliers; a rider (Poise) counts only on a card with no damage.
+  const EC = scoring.effectCount;
+  if (EC && EC.weight) {
+    const notEffect = new Set(['SP', 'MP', 'HP cost', 'discard', 'counterstrike', 'copy', ...c.tags, ...c.kw]);
+    const riders = new Set(EC.riders || []);
+    const n = Object.entries(parts).filter(([k, v]) => v > 0 && !notEffect.has(k) && !(riders.has(k) && parts.damage > 0)).length;
+    add('effect count', EC.weight * Math.max(0, n - (EC.skipFirst ? 1 : 0)));
+  }
   const raw = rnd(Object.values(parts).reduce((s, v) => s + v, 0));
   return { raw, parts, positive: P };
 }
