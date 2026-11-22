@@ -51,7 +51,7 @@ export function faceOf(def, row) {
   return f;
 }
 
-function measureCards() {
+export function measureCards() {
   const byId = new Map();
   const kitOwner = new Map(); // weapon-art id -> the first class whose starting weapon grants it (the reference class for its score)
   for (const classId of CLASSES) {

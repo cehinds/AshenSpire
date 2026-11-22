@@ -32,21 +32,21 @@
   "effects": {
     "damage": {
       "weight": 1,
-      "per": 1,
+      "per": 3,
       "basis": "final damage, hits summed",
       "projection": "unit",
       "why": "The unit. Strike: 1 SP -> 5 final damage."
     },
     "block": {
       "weight": 1,
-      "per": 2,
+      "per": 3,
       "basis": "final Block",
       "projection": "Defend 1 SP -> 10 Block = Strike 1 SP -> 5 damage",
       "why": "Parity per SP; Block over I in a round is wasted, so it is worth half a damage point."
     },
     "ward": {
-      "weight": 1,
-      "per": 2,
+      "weight": 2,
+      "per": 1,
       "basis": "final Ward",
       "projection": "as Block",
       "why": "Magical Block."
@@ -59,7 +59,7 @@
       "why": "Pays only on Break; a third of HP damage."
     },
     "heal": {
-      "weight": 1,
+      "weight": 3,
       "per": 1,
       "basis": "HP healed",
       "projection": "HP persists between fights",
@@ -67,41 +67,41 @@
     },
     "loseHp": {
       "weight": -1,
-      "per": 1,
+      "per": 2,
       "basis": "self HP lost",
       "projection": "mirror of heal",
       "why": "Nonlethal still costs run HP."
     },
     "draw": {
-      "weight": 3,
+      "weight": 2,
       "per": 1,
       "basis": "per card",
       "projection": "V x 0.6 (an average card, minus the cost to play it)",
       "why": "A drawn card is about 60% of a play."
     },
     "restoreMana": {
-      "weight": 5,
+      "weight": 4,
       "per": 1,
       "basis": "per MP",
       "projection": "MP cost x 0.7",
       "why": "Under MP's price so mana engines cannot loop for free."
     },
     "restoreStamina": {
-      "weight": 4,
+      "weight": 5,
       "per": 1,
       "basis": "per SP",
       "projection": "SP cost x 0.8",
       "why": "Under SP's price."
     },
     "gainEnergy": {
-      "weight": 4,
+      "weight": 5,
       "per": 1,
       "basis": "per energy",
       "projection": "as SP",
       "why": ""
     },
     "gainBarrier": {
-      "weight": 2,
+      "weight": 3,
       "per": 1,
       "basis": "per stack",
       "projection": "as the barrier status",
@@ -115,28 +115,28 @@
       "why": "mechanics.json reflect; 1 stack spent per hit."
     },
     "evadeStack": {
-      "weight": 5,
+      "weight": 8,
       "per": 1,
       "basis": "per stack",
       "projection": "as the evade status",
       "why": ""
     },
     "counterStack": {
-      "weight": 4,
+      "weight": 3,
       "per": 1,
       "basis": "per stack",
       "projection": "one hit x 0.5 absorbed + 0.1 returned",
       "why": "FixCore counter.returnFraction 0.5, returnPerStack 0.1, decays 1."
     },
     "moveEngagement": {
-      "weight": 1,
+      "weight": 3,
       "per": 1,
       "basis": "flat",
       "projection": "saves the +1 SP melee row tax ~20% of the time",
       "why": "Positioning."
     },
     "pullEnemy": {
-      "weight": 2,
+      "weight": 3,
       "per": 1,
       "basis": "flat",
       "projection": "removes a row tax for the fight",
@@ -157,7 +157,7 @@
       "why": ""
     },
     "removeStatus": {
-      "weight": 2,
+      "weight": 3,
       "per": 1,
       "basis": "per debuff removed from self",
       "projection": "one enemy debuff (Weak 1 ~ 1, Frail ~1) x 1.5 rounds",
@@ -178,7 +178,7 @@
       "why": "Value depends on the card: review by hand."
     },
     "buildup": {
-      "weight": 1,
+      "weight": 2,
       "per": 1,
       "basis": "per buildup point",
       "projection": "as one stack of its status",
@@ -199,7 +199,7 @@
       "why": "Enemy AR x0.75 (FixCore weakARMultiplier), decays 1/turn."
     },
     "frail": {
-      "weight": 1,
+      "weight": 4,
       "target": "enemy",
       "projection": "EB x pEB x 0.25 per round",
       "why": "Enemy Block x0.75, decays 1/turn; enemies Block about 30% of turns."
@@ -211,7 +211,7 @@
       "why": "loseHp = stacks at turn start, decays 1; +5% damage taken per stack (FixCore elements.burn)."
     },
     "venom": {
-      "weight": 2,
+      "weight": 4,
       "target": "enemy",
       "projection": "ticks N, N-1, N-2 HP",
       "why": "loseHp = stacks at turn start, decays 1."
@@ -223,19 +223,19 @@
       "why": "loseHp = stacks each turn, duration 3."
     },
     "necroticBlight": {
-      "weight": 2,
+      "weight": 8,
       "target": "enemy",
       "projection": "3N x necrotic 0.7",
       "why": "As Crimson Blight at the necrotic x0.7 multiplier."
     },
     "bleed": {
-      "weight": 1,
+      "weight": 2,
       "target": "enemy",
       "projection": "burst 8 (burstMin) + 3 Poise per 7 stacks (threshold)",
       "why": "No decay; bursts at 7 stacks. Scored per stack toward the burst."
     },
     "frost": {
-      "weight": 1,
+      "weight": 4,
       "target": "enemy",
       "projection": "burst 4 + 1 Weak per 10 stacks",
       "why": "No decay; bursts at 10 stacks into Weak + Frost-exposed."
@@ -295,19 +295,19 @@
       "why": "statuses.json staggered."
     },
     "regen": {
-      "weight": 3,
+      "weight": 8,
       "target": "self",
       "projection": "heal N per round, no decay: 3N",
       "why": "Heals stacks each turn start."
     },
     "strength": {
-      "weight": 2,
+      "weight": 15,
       "target": "self",
       "projection": "+1 authored per attack x 0.35 x 2 attacks x 3 rounds",
       "why": "attackDamageAdd 1, no decay."
     },
     "dexterity": {
-      "weight": 1,
+      "weight": 15,
       "target": "self",
       "projection": "+1 authored Block per Block card x 0.49 x 3 rounds / 2 per point, 1.4 Block cards per round",
       "why": "blockAdd 1, no decay."
@@ -319,31 +319,31 @@
       "why": "unique, decays at turn end."
     },
     "barrier": {
-      "weight": 2,
+      "weight": 8,
       "target": "self",
       "projection": "absorbs part of one hit this round",
       "why": "Shared ward word; decays per turn."
     },
     "ward": {
-      "weight": 1,
+      "weight": 8,
       "target": "self",
       "projection": "magical Block, decays per turn",
       "why": "Shared ward word."
     },
     "stoneskin": {
-      "weight": 4,
+      "weight": 8,
       "target": "self",
       "projection": "retain ~4 final Block for 2 rounds, / 2 per Block point",
       "why": "retainBlock, duration 2."
     },
     "evade": {
-      "weight": 5,
+      "weight": 10,
       "target": "self",
       "projection": "blanks ~80% of one hit (3 Evasion), lose 1 stack/round",
       "why": "FixCore accuracy.evadeStackBase 3."
     },
     "invulnerability": {
-      "weight": 12,
+      "weight": 15,
       "target": "self",
       "projection": "blocks all damage for ~2 enemy actions",
       "why": "Full protection."
@@ -3623,23 +3623,24 @@
     "maxUpgrades": 10
   },
   "rank": {
-    "rule": "combat power = effect power after costs (raw score) - rarity discount; rank comes from combat power",
+    "rule": "combat power = raw - rarity discount; Unranked <= 0; Rank k = 4k-3..4k (Rank 1 = 1-4 ... Rank 10 = 37-40); 40 is the ceiling for every card and item, upgrades included (owner, 2026-11-21)",
     "unrankedMax": 0,
-    "width": 2,
+    "width": 4,
     "maxRank": 10,
     "bands": {
       "Unranked": "<= 0",
-      "Rank 1": "1..2",
-      "Rank 2": "3..4",
-      "Rank 3": "5..6",
-      "Rank 4": "7..8",
-      "Rank 5": "9..10",
-      "Rank 6": "11..12",
-      "Rank 7": "13..14",
-      "Rank 8": "15..16",
-      "Rank 9": "17..18",
-      "Rank 10": ">= 19"
-    }
+      "Rank 1": "1..4",
+      "Rank 2": "5..8",
+      "Rank 3": "9..12",
+      "Rank 4": "13..16",
+      "Rank 5": "17..20",
+      "Rank 6": "21..24",
+      "Rank 7": "25..28",
+      "Rank 8": "29..32",
+      "Rank 9": "33..36",
+      "Rank 10": "37..40"
+    },
+    "maxCp": 40
   },
   "items": {
     "rule": "item power = kit (weapons) + Poise threshold + range + modifiers/stats + property rules + damage-type tags, all over 3 rounds; combat power = item power - rarity discount (boss 7); rank from combat power, same bands as cards",
@@ -4377,17 +4378,17 @@
       {
         "id": "act1",
         "minRank": 0,
-        "maxRank": 3
+        "maxRank": 2
       },
       {
         "id": "act2",
-        "minRank": 1,
-        "maxRank": 6
+        "minRank": 0,
+        "maxRank": 5
       },
       {
         "id": "act3",
-        "minRank": 3,
-        "maxRank": 10
+        "minRank": 0,
+        "maxRank": 7
       }
     ]
   },

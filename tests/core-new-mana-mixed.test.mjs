@@ -34,9 +34,11 @@ const def = id => profile.content.cards.find(card => card.id === id);
 const matchesTradition = (classId, id) => !def(id).tags.includes('camp:spell')
   || def(id).tags.includes(`tradition:${classId === 'herald' ? 'divine' : 'arcane'}`);
 const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
+// Level lists (owner 2026-11-21): offers draw from the act's rank band, so the seeds are spread over the three acts (act 1 + seed % 3).
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
+  run.actNumber = 1 + (seed % 3);
   return run;
 };
 // An offer is a pure function of (class, seed, floor): a fresh run and a fresh RNG each time. Both 600-seed tests below

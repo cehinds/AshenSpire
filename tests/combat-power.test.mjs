@@ -30,9 +30,10 @@ test('combat power: every item scores what the standalone simulator scores (raw 
 test('combat power: rank bands and rarity discounts', () => {
   assert.equal(rankOf(0), 0); assert.equal(rankOf(-7), 0);
   assert.equal(rankName(0), 'Unranked');
-  assert.deepEqual([1, 2, 3, 4, 18, 19, 20, 99].map(cp => rankOf(cp)), [1, 1, 2, 2, 9, 10, 10, 10]);
-  assert.equal(rankName(rankOf(2)), 'Rank 1');
-  assert.equal(rankRange(0), '<= 0'); assert.equal(rankRange(4), '7-8'); assert.equal(rankRange(10), '>= 19');
+  assert.deepEqual([1, 4, 5, 8, 36, 37, 40, 99].map(cp => rankOf(cp)), [1, 1, 2, 2, 9, 10, 10, 10]);
+  assert.equal(rankName(rankOf(4)), 'Rank 1');
+  assert.equal(rankRange(0), '<= 0'); assert.equal(rankRange(4), '13-16'); assert.equal(rankRange(10), '37-40');
+  assert.equal(scoring.rank.maxCp, 40);
   assert.equal(combatPower(10, 'common'), 10);
   assert.equal(combatPower(10, 'uncommon'), 8);
   assert.equal(combatPower(10, 'rare'), 5);
@@ -53,8 +54,9 @@ test('combat power: scoring overrides change the result and the shipped table is
 
 test('combat power: rounding is half away from zero for cards', () => {
   const face = { ...fixture('combat-power-core-faces.json')[0], statuses: [], kw: [], tags: [], sp: 0, mp: 0, dmg: 0, blk: 1, poise: 0, draw: 0, heal: 0, loseHp: 0 };
-  assert.equal(scoreCard(face).raw, 1); // 0.5 -> 1
-  assert.equal(scoreCard({ ...face, blk: -1 }).raw, -1); // -0.5 -> -1
+  // a face worth exactly half a point under the shipped weights (damage 1 per 3, HP cost -1 per 2)
+  assert.equal(scoreCard({ ...face, blk: 0, dmg: 3, loseHp: 1 }).raw, 1); // 0.5 -> 1
+  assert.equal(scoreCard({ ...face, blk: 0, loseHp: 1 }).raw, -1); // -0.5 -> -1
 });
 
 test('combat power: the generated table is fresh and covers every Core card and item', () => {
@@ -65,5 +67,6 @@ test('combat power: the generated table is fresh and covers every Core card and 
   for (const row of [...Object.values(cardCombatPower), ...Object.values(itemCombatPower)]) {
     assert.equal(row.cp, combatPower(row.raw, row.rarity));
     assert.equal(row.rank, rankOf(row.cp));
+    assert.ok(row.cp <= scoring.rank.maxCp, `cp ${row.cp} over the ${scoring.rank.maxCp} ceiling`);
   }
 });

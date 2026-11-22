@@ -7,7 +7,7 @@
 //
 //   raw  = effect power after costs, over 3 rounds (scoreCard / scoreItem)
 //   cp   = raw - rarity discount (combatPower)
-//   rank = Unranked (cp <= 0), Rank k for cp 2k-1..2k, Rank 10 for cp >= 19 (rankOf)
+//   rank = Unranked (cp <= 0), Rank k for cp (width*(k-1)+1)..(width*k), capped at maxRank; rank.maxCp (40) is the ceiling (rankOf)
 //
 // A face is the simulator's card model: {name, cls, rarity, camp, type, sp, mp, dmg, hits, blk, poise, statuses: [[id, stacks, 'enemy'|'self']],
 // kw, tags, draw, heal, loseHp, discard, restoreSp, restoreMp, cleanse, counter, reflect, pull, move, holdOne, boost, cull, shuffle, copy, attr}.
@@ -114,7 +114,7 @@ export const rankName = (k) => (k === 0 ? 'Unranked' : 'Rank ' + k);
 /** The combat-power band of a rank, as text. */
 export function rankRange(k, scoring = shippedScoring) {
   const RK = slimOf(scoring).rank, lo = (RK.width * k) - (RK.width - 1);
-  return k === 0 ? `<= ${RK.unrankedMax}` : k === RK.maxRank ? `>= ${lo}` : `${lo}-${lo + RK.width - 1}`;
+  return k === 0 ? `<= ${RK.unrankedMax}` : k === RK.maxRank ? (RK.maxCp ? `${lo}-${RK.maxCp}` : `>= ${lo}`) : `${lo}-${lo + RK.width - 1}`;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
