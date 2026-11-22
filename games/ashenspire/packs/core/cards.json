@@ -4581,7 +4581,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 27
+          "amount": 28
         },
         {
           "op": "applyStatus",
