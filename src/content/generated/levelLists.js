@@ -49,6 +49,7 @@ export const levelLists = {
    "core.smokeVeil",
    "core.spark",
    "core.starfall",
+   "core.starseerSpecial",
    "core.stoneSigil",
    "core.stormBlessing",
    "core.strike",

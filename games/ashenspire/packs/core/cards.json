@@ -166,7 +166,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 36
+        "amount": 32
       }
     ],
     "tags": [
@@ -197,12 +197,6 @@
         "op": "damage",
         "target": "enemy",
         "amount": 18
-      },
-      {
-        "op": "applyStatus",
-        "target": "enemy",
-        "status": "vulnerable",
-        "stacks": 2
       }
     ],
     "tags": [
@@ -212,7 +206,7 @@
       "school:force",
       "tradition:arcane"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Deal {damage} damage.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
