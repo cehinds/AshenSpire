@@ -7,7 +7,9 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
 import { createRng } from '../src/engine/rng.js';
-import { cardRewardRarityWeights, rollCardRewardIds } from '../src/engine/encounters.js';
+import { cardRewardRarityWeights, rollCardRewardIds, rollSkillDraftIds } from '../src/engine/encounters.js';
+import { createRunState } from '../src/model/state.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
 const r = createRegistries(contentBundle);
 const rarity = id => r.cards.get(id).rarity;
 const CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
@@ -19,6 +21,55 @@ const poolSizes = classId => {
   return n;
 };
 const withRewards = patch => validateContent({ ...contentBundle, balance: { ...contentBundle.balance, rewards: { ...contentBundle.balance.rewards, ...patch } } });
+
+const casterLoadout = classId => {
+  const run = createRunState({ registries: r, classId, seed: 5 });
+  run.loadout.sets.rightHand[0] = classId === 'herald' ? 'boneSceptre' : 'starstoneStaff';
+  run.loadout.sets.leftHand[0] = null;
+  run.loadout.active.rightHand = 0;
+  run.loadout.active.leftHand = 0;
+  return run.loadout;
+};
+
+// Restored from origin/dev, minus the retired per-class rarity table: reward pools keep their schools and martial pools stay free of caster schools.
+test('caster reward pools retain schools without adding caster schools to martial rewards', () => {
+  const schools = new Set(r.nodes.filter(node => node.parentId === 'card').map(node => node.id));
+  for (const classId of ['herald', 'starseer']) {
+    for (const id of r.classes.get(classId).cardPool) {
+      if (id.startsWith('base.')) {
+        const profile = combatProfileFor(r.cards.get(id));
+        assert.ok(profile.camp === 'physical' || profile.camp === 'spell' && profile.school, `${classId}/${id}: modular rewards retain their canonical school`);
+        continue;
+      }
+      assert.ok(r.cards.get(id).tags.some(tag => schools.has(tag)), `${classId}/${id}: reward has a draft school`);
+    }
+  }
+  for (const classId of ['reaver', 'rogue']) {
+    for (const id of r.classes.get(classId).cardPool) {
+      assert.ok(!r.cards.get(id).tags.includes('starstone') && !r.cards.get(id).tags.includes('ritual'), `${classId}/${id}: no caster school leaked`);
+    }
+  }
+});
+
+// Restored from origin/dev: the skill-draft level gates, without any rarity-share assertion (the table is one for every class now).
+test('caster skill-draft gates stay closed until earned: level 1 commons only, level 4 no rares, level 7 reaches rares', () => {
+  for (const classId of ['herald', 'starseer']) {
+    const loadout = casterLoadout(classId);
+    let middleUncommon = 0;
+    const drafts = { common: 0, uncommon: 0, rare: 0 };
+    for (let seed = 1; seed <= 600; seed++) {
+      const args = { classId, loadout, skillId: 'item:magic-focus', pool: 'normal' };
+      const low = rollSkillDraftIds(r, createRng(seed), { ...args, level: 1 });
+      assert.ok(low.length && low.every(id => rarity(id) === 'common'), `${classId}: level one offers commons only`);
+      const middle = rollSkillDraftIds(r, createRng(seed), { ...args, level: 4 });
+      assert.ok(middle.length && middle.every(id => rarity(id) !== 'rare'), `${classId}: level four offers no rares`);
+      middleUncommon += middle.some(id => rarity(id) === 'uncommon') ? 1 : 0;
+      drafts[rarity(rollSkillDraftIds(r, createRng(seed), { ...args, level: 7 })[0])]++;
+    }
+    assert.ok(middleUncommon > 0, `${classId}: level four reaches uncommon cards`);
+    assert.ok(drafts.rare > 0, `${classId}: level seven reaches rare cards`);
+  }
+});
 
 test('every class reads the same authored table, and the old per-class override is gone', () => {
   assert.equal(r.balance.rewards.rarityWeightsByClass, undefined);
