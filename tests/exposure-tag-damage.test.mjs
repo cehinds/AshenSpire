@@ -81,7 +81,7 @@ test('each exposure answers only its own tags', () => {
 const lowBase = [
   ['starbladePhalanx', 'starstone', 'frostExposed', 3, 1.25],
   ['ashenMote', 'ritual', 'insanityExposed', 8, 1.3],
-  ['blightTouch', 'ritual', 'insanityExposed', 8, 1.3],
+  ['blightTouch', 'ritual', 'insanityExposed', 10, 1.3], // owner 2026-11-21: Blight Touch's authored damage is 10 (was 8)
 ];
 for (const [cardId, tag, status, authoredBase, multiplier] of lowBase) {
   test(`exposure bonus rounds up: base-${authoredBase} ${cardId} (${tag}) gains damage vs ${status}, preview == hit`, () => {
@@ -91,7 +91,7 @@ for (const [cardId, tag, status, authoredBase, multiplier] of lowBase) {
     const clean = solo(shipped, cardId, null);
     const exposed = solo(shipped, cardId, status);
     assert.equal(clean.hits[0], authoredBase);
-    assert.equal(exposed.hits[0], authoredBase + Math.ceil(authoredBase * (multiplier - 1)), `tagged bonus rounds up (${clean.hits[0]} -> ${exposed.hits[0]})`);
+    assert.equal(exposed.hits[0], authoredBase + Math.ceil(+(authoredBase * (multiplier - 1)).toFixed(9)), `tagged bonus rounds up (${clean.hits[0]} -> ${exposed.hits[0]})`);
     assert.equal(exposed.preview, exposed.hits[0], 'preview states the rounded-up hit');
   });
 }
