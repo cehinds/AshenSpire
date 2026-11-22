@@ -271,13 +271,15 @@
     "cost": 1,
     "type": "attack",
     "flavor": "Two knives, worn crosswise.\n\nOne for the hound, one for its handler. The weald's blight-hounds were the Wardens' before the Burning, and run yet with Bastion kennelmen who turned with the pack.\n\nA handler may be reasoned with, briefly. Never twice.",
-    "keywords": [],
+    "keywords": [
+      "ethereal"
+    ],
     "icon": "sword",
     "effects": [
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 30,
+        "amount": 45,
         "hits": 2
       },
       {
@@ -293,7 +295,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 38,
+          "amount": 56,
           "hits": 2
         },
         {
