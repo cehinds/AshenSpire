@@ -4385,7 +4385,7 @@
         "op": "applyStatus",
         "target": "enemy",
         "status": "burn",
-        "stacks": 3
+        "stacks": 2
       }
     ],
     "tags": [

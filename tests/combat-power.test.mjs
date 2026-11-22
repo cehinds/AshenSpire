@@ -54,8 +54,9 @@ test('combat power: scoring overrides change the result and the shipped table is
 
 test('combat power: rounding is half away from zero for cards', () => {
   const face = { ...fixture('combat-power-core-faces.json')[0], statuses: [], kw: [], tags: [], sp: 0, mp: 0, dmg: 0, blk: 1, poise: 0, draw: 0, heal: 0, loseHp: 0 };
-  assert.equal(scoreCard(face).raw, 1); // 0.5 -> 1
-  assert.equal(scoreCard({ ...face, blk: -1 }).raw, -1); // -0.5 -> -1
+  // a face worth exactly half a point under the shipped weights (damage 1 per 3, HP cost -1 per 2)
+  assert.equal(scoreCard({ ...face, blk: 0, dmg: 3, loseHp: 1 }).raw, 1); // 0.5 -> 1
+  assert.equal(scoreCard({ ...face, blk: 0, loseHp: 1 }).raw, -1); // -0.5 -> -1
 });
 
 test('combat power: the generated table is fresh and covers every Core card and item', () => {

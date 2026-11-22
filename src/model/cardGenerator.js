@@ -5,8 +5,8 @@
 //
 //   1. target cp  = the given combatPower (never over scoring.rank.maxCp), or a cp inside the rank band (picked by the seed); raw target = cp + rarity discount;
 //   2. the face (src/model/combatPower.js baseFace) gets SP/MP costs and one primary effect (damage for attacks, Block for skills),
-//      plus an optional Poise rider (attack) or draw (skill); the primary amount is solved so the rounded raw score equals the target;
-//      a target too low for any effect adds an HP-cost drawback instead of going unreachable;
+//      plus an optional Poise rider (attack) or draw (skill); the primary amount is searched against the live weights (scoring.effects)
+//      so the rounded raw score equals the target; a target below the base drops the rider, then adds an HP-cost drawback;
 //   3. the AUTHORED effect amounts are converted back from the face numbers with the scorer's authored-to-final constants
 //      (scoring.model.AUTH_PHYS / AUTH_SPELL / AUTH_BLOCK; the unarmed attack baseline from scoring.items.kit and the Block add of 6 that
 //      scoring.items.kit.weaponArt documents): face damage = 3 + 0.35 x authored (spell 0.5), face Block = 6 + 0.49 x authored.
@@ -57,17 +57,16 @@ export function generateFace(input, { scoring = shippedScoring } = {}) {
   if (camp === 'spell') face.tags.push('tradition:arcane');
   face.sp = pick(rand, 3); face.mp = camp === 'spell' ? pick(rand, 2) : 0;
   if (face.mp) face.sp = Math.max(1, face.sp); // a Mana card costs at least 1 action (balance.mana.minActionCost)
-  let value = raw + 5 * face.sp + 7 * face.mp; // what the effects must be worth
-  if (value < 1) { face.sp = 0; face.mp = 0; value = raw; }
-  const drawback = Math.max(0, 1 - value); // a target below any effect: one point of effect, the rest as lost HP
-  if (drawback) { face.loseHp = drawback; value = 1; }
-  if (type === 'attack') {
-    const poise = value >= 3 ? pick(rand, Math.min(3, Math.floor(value / 2)) + 1) : 0; // value in damage points: poise/3 each
-    face.poise = 3 * poise; face.dmg = value - poise;
-  } else {
-    const draw = value >= 6 ? pick(rand, Math.min(2, Math.floor(value / 6)) + 1) : 0;
-    face.draw = draw; face.blk = 2 * (value - 3 * draw);
-  }
+  // Riders first, then the primary amount is solved against the live weights (scoring.effects), so any weight table works.
+  const key = type === 'attack' ? 'dmg' : 'blk';
+  if (type === 'attack') face.poise = 3 * pick(rand, 3); else face.draw = pick(rand, 2);
+  const rawOf = () => scoreCard(face, scoring).raw;
+  const solve = () => { for (let v = 0; v <= 999; v++) { face[key] = v; const r = rawOf(); if (r === raw) return true; if (r > raw) return false; } return false; };
+  // a target below the base: drop the rider, then the costs' floor is reached by an HP-cost drawback, one point at a time
+  let ok = solve();
+  if (!ok) { face.poise = 0; face.draw = 0; ok = solve(); }
+  for (let hp = 1; !ok && hp <= 99; hp++) { face.loseHp = hp; ok = solve(); }
+  if (!ok) throw new Error(`cardGenerator: no face reaches raw ${raw} (${JSON.stringify(input)})`);
   const check = combatPower(scoreCard(face, scoring).raw, rarity, scoring);
   if (check !== cp) throw new Error(`cardGenerator: face scores ${check}, wanted ${cp} (${JSON.stringify(input)})`);
   return { face, cp, target: { rarity, cls, camp, type, seed } };
