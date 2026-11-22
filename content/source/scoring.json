@@ -392,7 +392,7 @@
   },
   "tags": {
     "maneuver:smash": {
-      "weight": 3,
+      "weight": 1,
       "projection": "+50% Poise vs Guard (~1 Poise point) + extra vs physical Guard",
       "why": "Smash stance edge.",
       "domain": "maneuver",
@@ -551,7 +551,7 @@
       "label": "Piercing"
     },
     "trait:reaction": {
-      "weight": 5,
+      "weight": 3,
       "projection": "played on the enemy turn: Block matches the telegraphed hit, ~0.4 V saved",
       "why": "Timing.",
       "domain": "trait",
