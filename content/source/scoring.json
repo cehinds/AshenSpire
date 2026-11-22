@@ -357,14 +357,12 @@
   },
   "keywords": {
     "exhaust": {
-      "multiplier": -0.3333333333333333,
-      "min": -1,
-      "why": "Lost for the fight; a card comes back about once in 3R (REDRAW 1), so 1/3 of its value."
+      "flat": -4,
+      "why": "Lost for the fight: a flat price, not a share of the card's power (owner 2026-11-22, 'flat rate'; -4 is the starting value to tune)."
     },
     "ethereal": {
-      "multiplier": -0.3333333333333333,
-      "min": -1,
-      "why": "Lost if not played the turn drawn; ~1/3 of draws."
+      "flat": -4,
+      "why": "Lost if not played the turn drawn: a flat price, not a share of the card's power (owner 2026-11-22, 'flat rate'; -4 is the starting value to tune)."
     },
     "retain": {
       "multiplier": 0.25,
