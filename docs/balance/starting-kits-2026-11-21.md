@@ -63,3 +63,7 @@ Armour (default outfit): raw 0, cp 0, rank 0.
 
 Budget totals: 10 cards, 2 special, max rank 1, raw total 1 (limit 20).
 
+
+## Caster Mana (owner, 2026-11-22)
+
+Arcane Spark costs 1 SP + 1 MP (3 damage, no keywords; cantrips may cost up to 1 MP). Casters get 3 MP per fight and no Mana back each turn (`resources.manaPerTurn` 0), shared with Arcane Ward, Glimmer Veil, the class spell and Blight Touch, so in long fights most Sparks wait for Mana.

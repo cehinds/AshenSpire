@@ -311,15 +311,12 @@
     "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 0,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
     "mirrors": "attack",
     "icon": "attack",
-    "keywords": [
-      "exhaust",
-      "ethereal"
-    ],
+    "keywords": [],
     "effects": [
       {
         "op": "damage",

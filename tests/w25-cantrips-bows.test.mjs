@@ -42,10 +42,10 @@ test('a bow card plays as an attack at Reach', () => {
 
 const cantrips = cards.filter(card => tagsOf(card).includes('rank.cantrip'));
 
-test('every cantrip is free of Mana and costs at most 1 Stamina (SPEC: a 0 SP / 0 MP card is not a cantrip)', () => {
+test('every cantrip costs at most 1 Mana and at most 1 Stamina (SPEC: a 0 SP / 0 MP card is not a cantrip; owner 2026-11-22: up to 1 MP)', () => {
   assert.ok(cantrips.length >= 24, `found ${cantrips.length}`);
   for (const card of cantrips) {
-    if (card.id !== 'core.galePush') assert.equal(card.manaCost, 0, card.id); // Gale Push costs 1 MP (owner 2026-11-19)
+    assert.ok(card.manaCost <= 1, card.id); // owner 2026-11-22: a cantrip may cost up to 1 MP (Gale Push 2026-11-19, Arcane Spark 2026-11-22)
     assert.ok(card.staminaCost <= 1, card.id);
   }
 });

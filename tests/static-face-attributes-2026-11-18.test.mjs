@@ -87,7 +87,9 @@ test('an untyped spell face reads the wielded armament type, as the combat carri
     // The INT/WIS bonus belongs to the magic channel; only the scaled authored base has a physical share.
     const base = Math.ceil(hit.sources.find(source => source.id === 'base').amount * effects.baseDamageMultiplier);
     const physical = base * (1 - share);
-    const expected = Math.floor((attributed.effective - physical + physical * effects.physicalDamageMultiplier) * effects.playerDamageMultiplier);
+    // Owner 2026-11-22 (Arcane Spark prints 3): mirror ScalePhysicalDamage - a positive physical part never rounds below 1.
+    const scaledPhysical = physical > 0 && effects.physicalDamageMultiplier > 0 ? Math.max(Math.min(1, physical), physical * effects.physicalDamageMultiplier) : 0;
+    const expected = Math.floor((attributed.effective - physical + scaledPhysical) * effects.playerDamageMultiplier);
     assert.equal(number(face(run, 'core.cantrip')), expected, `${classId} Arcane Spark outside combat`);
     assert.equal(number(face(combat, 'core.cantrip')), expected, `${classId} Arcane Spark in the pile viewer`);
   }
