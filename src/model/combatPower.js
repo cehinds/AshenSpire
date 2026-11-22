@@ -16,7 +16,7 @@
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
 
 /** Round half away from zero (the simulator's `rnd`). */
-export const rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5));
+export const rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
 
 /** A blank card face; callers spread their own fields over it. */
 export const baseFace = () => ({
@@ -24,11 +24,8 @@ export const baseFace = () => ({
   draw: 0, heal: 0, loseHp: 0, discard: 0, restoreSp: 0, restoreMp: 0, cleanse: 0, counter: 0, reflect: 0, pull: 0, move: 0, holdOne: 0, boost: 0, cull: 0, shuffle: 0, copy: 0, attr: 0,
 });
 
-// The slim view of a scoring table: just what the scorer reads, computed once per table.
-const slimCache = new WeakMap();
+// The slim view of a scoring table: just what the scorer reads. Not cached: the simulator edits weights in place.
 function slimOf(full) {
-  const cached = slimCache.get(full);
-  if (cached) return cached;
   const tags = {};
   for (const [k, v] of Object.entries(full.tags || {})) {
     if (k[0] === '$' || !v || !(v.weight || v.multiplier || v.pMultiplier || v.perN)) continue;
@@ -36,16 +33,14 @@ function slimOf(full) {
     for (const kk of ['weight', 'per', 'multiplier', 'pMultiplier', 'perN']) if (kk in v) o[kk] = v[kk];
     tags[k] = o;
   }
-  const slim = {
+  return {
     full, model: full.model, tags, rank: full.rank, keywords: full.keywords,
     costs: Object.fromEntries(Object.entries(full.costs).map(([k, v]) => [k, v.weight])),
     effects: Object.fromEntries(Object.entries(full.effects).map(([k, v]) => [k, [v.weight, v.per]])),
     statuses: Object.fromEntries(Object.entries(full.statuses).map(([k, v]) => [k, [v.weight, v.target]])),
     decayOne: new Set(full.cardModel.decayOneStatuses),
-    discount: { ...full.rarity.discount, ...(full.items?.rarityDiscount || {}) },
+    discount: { ...(full.items?.rarityDiscount || {}), ...full.rarity.discount }, // rarity.discount first; items.rarityDiscount adds boss
   };
-  slimCache.set(full, slim);
-  return slim;
 }
 
 const triOf = (S, n) => { let s = 0; for (let t = 0; t < S.model.R; t++) s += Math.max(n - t, 0); return s; };
@@ -206,7 +201,7 @@ export function scoreItem(it, scoring = shippedScoring, rules = {}) {
   if (typeof it.poise === 'number' && it.kind !== 'relic') { const pv = (it.poise - I.poiseThreshold.baseline) * I.poiseThreshold.perPoint; if (pv) parts['Poise threshold'] = pv; }
   const rg = it.range ? 'range:' + it.range : null;
   if (rg && S.tags[rg] && S.tags[rg].weight) parts[rg] = S.tags[rg].weight * plays.strike;
-  const raw = Math.round(Object.values(parts).reduce((s, v) => s + v, 0));
+  const raw = Math.round(Object.values(parts).reduce((s, v) => s + v, 0)) + 0;
   const disc = S.discount[it.rarity] || 0;
   return { raw, disc, cp: raw - disc, parts };
 }
