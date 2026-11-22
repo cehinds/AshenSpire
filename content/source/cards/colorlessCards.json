@@ -277,18 +277,30 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 15,
+        "amount": 30,
         "hits": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 3
       }
     ],
-    "textTemplate": "Deal {damage} damage {hits} times.",
+    "textTemplate": "Deal {damage} damage {hits} times. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 22,
+          "amount": 38,
           "hits": 2
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 3
         }
       ]
     }
