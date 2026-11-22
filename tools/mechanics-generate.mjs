@@ -63,7 +63,9 @@ function listJs(dir) {
   return out;
 }
 
-const sources = ['src/engine', 'src/model'].flatMap(listJs).map(file => ({ file, lines: read(file).split('\n') }));
+// combatPower.js scores cards (it names statuses and traits as weight keys); it does not run them, so it is never the "Lives in" reader.
+const NOT_READERS = new Set(['src/model/combatPower.js']);
+const sources = ['src/engine', 'src/model'].flatMap(listJs).filter(file => !NOT_READERS.has(file)).map(file => ({ file, lines: read(file).split('\n') }));
 const isComment = line => /^\s*(\/\/|\*|\/\*)/.test(line);
 function findReader(patterns) {
   for (const { file, lines } of sources) {
