@@ -68,9 +68,10 @@ test('two enemies, the far one needs Advance: each quote is the HP that enemy lo
   // And against the near enemy of a second fight: the quote and the HP lost agree there too.
   const { combat, card } = fixture();
   combat.rangeState.engagements['["enemy:e2","player:player"]'] = 1;
-  const near = quoteFor(combat, card, 'e1'), dealt = playOn(combat, card, 'e1');
+  const near = quoteFor(combat, card, 'e1'), faceBefore = preview(combat, card.instanceId, 'e1').staminaCost || 0, dealt = playOn(combat, card, 'e1');
   assert.deepEqual(dealt.hits, near.hits);
-  assert.equal(dealt.stamina, preview(combat, card.instanceId, 'e1').staminaCost || 0);
+  // Priced before the play: the stance it enters now cuts the next copy to 0 (no cost minimum, owner 2026-11-22), so a face read afterwards is not the cost paid.
+  assert.equal(dealt.stamina, faceBefore);
 });
 
 test('a play that takes no HP shows its cause word: Blocked, or Evaded when an Evade stack cancels it', () => {

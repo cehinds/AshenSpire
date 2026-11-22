@@ -261,6 +261,8 @@ function playFight(classId, seed, tally) {
   const takeReactions = seed % 2 === 1;
   for (let turn = 0; turn < 5 && !combat.result; turn++) {
     const refused = refusalsFor(combat);
+    // With no cost minimum (owner 2026-11-22) the bot can afford every reaction card on its own turn and spends them all, so no prompt would ever reach the enemy turn: keep them in hand.
+    for (const held of combat.piles.hand) if ((reg.cards.get(held.cardId)?.tags || []).includes('trait:reaction')) refused.add(held.instanceId);
     for (let plays = 0; plays < 12 && !combat.result && combat.phase === 'player'; plays++) {
       if (combat.pendingReaction || combat.pendingCardChoice || combat.pendingAbilityDiscard) break;
       const card = firstAffordableCard(reg, combat, refused);

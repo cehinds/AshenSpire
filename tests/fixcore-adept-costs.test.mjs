@@ -44,16 +44,16 @@ test('Adept costs use the equipped class tag, authoritative Spell camp and only 
 });
 
 // Owner ruling 2026-11-22: the Magic Adept (Graduate) Mana cut may reach 0 on the player's turn; the Martial (SP) cut still stops at one.
-test('own-turn reduction stops at one (Mana: zero for the Graduate), matching enemy reactions reach zero, and authored free lanes stay free', () => {
+test('the own-turn reduction has no floor (owner 2026-11-22, no card has a minimum; it stopped at one before), matching enemy reactions reach zero, and authored free lanes stay free', () => {
   for (const [classId, card, cost] of [['reaver', physical, stanceStaminaCost], ['starseer', magic, stanceManaCost]]) {
     const ctx = unit(classId, card);
-    assert.equal(cost(1, ctx.player, card, ctx), cost === stanceManaCost ? 0 : 1);
+    assert.equal(cost(1, ctx.player, card, ctx), 0);
     assert.equal(cost(0, ctx.player, card, ctx), 0);
     ctx.phase = 'enemy';
     assert.equal(cost(1, ctx.player, card, ctx), 0);
     assert.equal(cost(3, ctx.player, card, ctx), 2, 'the old generic reaction cut does not stack');
     assert.equal(cost(0, ctx.player, card, ctx), 0);
-    assert.equal(cost(1, ctx.player, { ...card, cardTags: [] }, ctx), cost === stanceManaCost ? 0 : 1, 'only a reaction earns the zero SP floor; the Graduate Mana cut floors at 0 anyway (2026-11-22)');
+    assert.equal(cost(1, ctx.player, { ...card, cardTags: [] }, ctx), 0, 'no card has a minimum, reaction or not (owner 2026-11-22)');
     delete ctx.player.combatStance;
     assert.equal(cost(3, ctx.player, card, ctx), 3, 'entering a stance cannot discount that play');
   }
