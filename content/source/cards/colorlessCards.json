@@ -75,15 +75,8 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 7
-        },
-        {
-          "op": "applyStatus",
-          "target": "enemy",
-          "status": "vulnerable",
-          "stacks": 3
         }
-      ],
-      "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable."
+      ]
     }
   },
   {
