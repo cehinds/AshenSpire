@@ -1424,7 +1424,7 @@
     "class": "herald",
     "rarity": "rare",
     "cost": 1,
-    "manaCost": 1,
+    "manaCost": 0,
     "type": "attack",
     "flavor": "The Chapel's gravebinders sing it low, so the dead will not wake to hear what they are owed.\n\nThe verse has seven stanzas. Only the first three are written down, and the bell-ringers are paid not to ask after the rest.",
     "keywords": [],
@@ -1433,13 +1433,13 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 12
+        "amount": 24
       },
       {
         "op": "applyStatus",
         "target": "enemy",
         "status": "crimsonBlight",
-        "stacks": 6
+        "stacks": 3
       }
     ],
     "textTemplate": "Deal {damage} damage. Apply {crimsonBlight} Crimson Blight.",
@@ -1448,13 +1448,13 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 16
+          "amount": 30
         },
         {
           "op": "applyStatus",
           "target": "enemy",
           "status": "crimsonBlight",
-          "stacks": 8
+          "stacks": 4
         }
       ]
     }
