@@ -3,24 +3,39 @@
 // cross-reference data earlier sections built (and the data this one hands on).
 
 export function rewardScheduleProblems(b, err, ctx) {
-  if (b.balance?.rewards?.rarityWeightsByClass !== undefined) {
-    const overrides = b.balance.rewards.rarityWeightsByClass;
+  // THE REWARD RARITY TABLE (owner ruling 2026-11-21): one table for every
+  // class. Rare is under 10% of every source's row, and the chance a specific
+  // card is offered (weight / that class's pool of the rarity) falls as
+  // rarity rises: common > uncommon > rare.
+  if (b.balance?.rewards?.rarityWeightsByClass !== undefined) err('balance.rewards.rarityWeightsByClass', 'retired: reward rarity is one table for every class (balance.rewards.rarityWeights)');
+  if (b.balance?.rewards?.rarityWeights !== undefined) {
+    const table = b.balance.rewards.rarityWeights;
     const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-    const root = 'balance.rewards.rarityWeightsByClass';
-    if (!object(overrides)) err(root, 'must be an object keyed by class id');
-    else for (const [classId, pools] of Object.entries(overrides)) {
-      const path = `${root}.${classId}`;
-      if (!(b.classes || []).some(cls => cls.id === classId)) err(path, 'unknown class id');
-      if (!object(pools)) { err(path, 'must be an object keyed by reward pool'); continue; }
-      for (const [pool, weights] of Object.entries(pools)) {
-        const poolPath = `${path}.${pool}`;
-        if (!['normal', 'elite', 'boss'].includes(pool)) err(poolPath, 'unknown reward pool');
-        if (!object(weights)) { err(poolPath, 'must be a rarity weight object'); continue; }
-        for (const rarity of Object.keys(weights)) if (!['common', 'uncommon', 'rare'].includes(rarity)) err(`${poolPath}.${rarity}`, 'unknown reward rarity');
-        for (const rarity of ['common', 'uncommon', 'rare']) {
-          if (!Number.isFinite(weights[rarity]) || weights[rarity] < 0) err(`${poolPath}.${rarity}`, 'must be a finite non-negative weight');
-        }
-        if (!(weights.common + weights.uncommon + weights.rare > 0)) err(poolPath, 'must have a positive total weight');
+    const root = 'balance.rewards.rarityWeights';
+    const rarities = ['common', 'uncommon', 'rare'];
+    if (!object(table)) err(root, 'must be an object keyed by reward pool');
+    else for (const [pool, weights] of Object.entries(table)) {
+      if (pool.startsWith('$')) continue;
+      const path = `${root}.${pool}`;
+      if (!['normal', 'elite', 'boss'].includes(pool)) err(path, 'unknown reward pool');
+      if (!object(weights)) { err(path, 'must be a rarity weight object'); continue; }
+      for (const rarity of Object.keys(weights)) if (!rarities.includes(rarity)) err(`${path}.${rarity}`, 'unknown reward rarity');
+      let finite = true;
+      for (const rarity of rarities) {
+        if (!Number.isFinite(weights[rarity]) || weights[rarity] < 0) { err(`${path}.${rarity}`, 'must be a finite non-negative weight'); finite = false; }
+      }
+      if (!finite) continue;
+      const total = weights.common + weights.uncommon + weights.rare;
+      if (!(total > 0)) { err(path, 'must have a positive total weight'); continue; }
+      if (weights.rare / total >= 0.1) err(`${path}.rare`, `rare must be under 10% of the ${pool} row, is ${(100 * weights.rare / total).toFixed(1)}%`);
+      const cards = new Map((Array.isArray(b.cards) ? b.cards : []).map(card => [card.id, card]));
+      for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+        const pools = { common: 0, uncommon: 0, rare: 0 };
+        for (const id of cls.cardPool || []) { const rarity = cards.get(id)?.rarity; if (rarity in pools) pools[rarity]++; }
+        const each = rarity => (pools[rarity] && weights[rarity] > 0 ? weights[rarity] / pools[rarity] : null);
+        const [c, u, r] = rarities.map(each);
+        if (c !== null && u !== null && !(c > u)) err(path, `${cls.id}: a specific uncommon card (${u.toFixed(3)}) must be rarer than a specific common (${c.toFixed(3)})`);
+        if (u !== null && r !== null && !(u > r)) err(path, `${cls.id}: a specific rare card (${r.toFixed(3)}) must be rarer than a specific uncommon (${u.toFixed(3)})`);
       }
     }
   }

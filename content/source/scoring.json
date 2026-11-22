@@ -2315,7 +2315,7 @@
         5
       ]
     },
-    "rule": "adjusted = raw - discount; every card targets the same adjusted band. Discount is a fixed design constant that rises with rarity; reward drop rates must keep rare < uncommon < common per card for every class (follow-up: balance.rewards.rarityWeightsByClass)."
+    "rule": "adjusted = raw - discount; every card targets the same adjusted band. Discount is a fixed design constant that rises with rarity; reward drop rates must keep rare < uncommon < common per card for every class (enforced by the balance.rewards.rarityWeights validator)."
   },
   "upgrade": {
     "menu": [
