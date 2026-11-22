@@ -10,7 +10,6 @@ import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
-import { balanceMana } from '../src/content/generated/balanceMana.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -55,7 +54,7 @@ test('every card is authored in its class, costs SP and MP, is not a cantrip, an
     const card = def(id);
     assert.equal(card.class, cls, id);
     assert.ok(card.manaCost >= 1, `${id} costs mana`);
-    assert.ok(card.staminaCost >= balanceMana.minActionCost, `${id}: a mana card costs at least ${balanceMana.minActionCost} SP (balance.mana.minActionCost)`);
+    assert.ok(card.staminaCost >= 0, `${id}: no cost minimum (owner ruling 2026-11-22), so SP is only non-negative`);
     assert.ok(['uncommon', 'rare'].includes(card.rarity), id);
     assert.ok(!card.tags.includes('rank.cantrip'), `${id} is not a cantrip`);
     // No Exposure floor on a Mana spell (owner ruling 2026-11-22): per-hit Exposure is authored per card.

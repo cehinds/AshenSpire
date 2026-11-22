@@ -1392,7 +1392,7 @@ _No comments were written beside these numbers in the old balance.js._
 ### balanceMana.json — mana
 
 - **`mana`** — Mana is an additional cost beside the single turn-Stamina cost.
-  minActionCost retains its serialized name; the old additive floor is zero.
+  The minActionCost and minStaminaCost floors are retired (owner ruling 2026-11-22: no card has a cost minimum).
 
 ### balanceDeck.json — deck
 

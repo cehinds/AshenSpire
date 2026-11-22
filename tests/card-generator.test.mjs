@@ -57,7 +57,7 @@ test('card generator: output has the Core card shape and passes the card templat
     for (const key of ['id', 'name', 'class', 'rarity', 'cost', 'staminaCost', 'manaCost', 'costRule', 'type', 'icon', 'keywords', 'effects', 'tags', 'textTemplate']) assert.ok(key in card, `${card.id}: missing ${key}`);
     for (const e of card.effects) { assert.ok(coreOps.has(e.op), `${card.id}: effect op ${e.op}`); assert.ok(e.amount >= 1, `${card.id}: amount`); }
     for (const t of card.tags) assert.ok(coreTags.has(t), `${card.id}: tag ${t} is not used by a Core card`);
-    if (card.manaCost > 0) assert.ok(card.cost >= 1, `${card.id}: a Mana card costs at least 1 action`);
+    assert.ok(card.cost >= 0, `${card.id}: no cost minimum (owner ruling 2026-11-22)`);
     if (card.effects.some(e => e.op === 'damage')) assert.ok(['physical', 'magic'].includes(card.damageSchool) && Number.isInteger(card.exposureBuildupPerHit), `${card.id}: damage carrier`);
     validateCardTemplates(card, `cards.${card.id}`, err);
   }
