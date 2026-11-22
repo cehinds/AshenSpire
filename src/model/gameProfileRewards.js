@@ -386,6 +386,9 @@ export function GameProfileArmamentOffer(registries, run, rng, { offerId, pool =
     if (owned.has(id)) continue;
     candidates.push({ kind: 'armor', id, type: 'armour', family: `armour:${armourGroupOf.get(`${run.class}:${id}`) || ''}`, sub: id });
   }
+  // Owner 2026-11-21: level lists: weapons and armour come from the act's rank band (an empty band keeps every candidate of the kind).
+  const tier = tierFor(run), weaponRows = candidates.filter(row => row.kind === 'weapons'), armourRows = candidates.filter(row => row.kind === 'armor');
+  candidates.splice(0, candidates.length, ...filterToBand('weapon', tier, weaponRows, { keyOf: row => row.id }), ...filterToBand('armour', tier, armourRows, { keyOf: row => `${run.class}.${row.id}` }));
   const min = Number.isInteger(rule.min) && rule.min > 0 ? rule.min : 1, max = Number.isInteger(rule.max) && rule.max >= min ? rule.max : min;
   const wanted = min === max ? min : rng.int('cardRewards', min, max);
   const chosen = [];
