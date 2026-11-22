@@ -29,7 +29,7 @@ export function tierFor(run, scoring = shippedScoring) {
 
 function entriesOf(kind, table) {
   if (kind === 'cards') return Object.entries(table.cardCombatPower).map(([id, row]) => [id, row]);
-  if (!ITEM_KINDS.includes(kind)) throw new Error(`levelLists: unknown kind '${kind}'`);
+  if (!LEVEL_KINDS.includes(kind)) throw new Error(`levelLists: unknown kind '${kind}'`);
   const prefix = kind + ':';
   return Object.entries(table.itemCombatPower).filter(([key]) => key.startsWith(prefix)).map(([key, row]) => [key.slice(prefix.length), row]);
 }
