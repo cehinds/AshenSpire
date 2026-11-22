@@ -28,8 +28,8 @@ export const ENEMY_BLOCK_RETUNE = Object.freeze({
 const blockOf = (profile, id) => profile.content.cards.find(card => card.id === id).effects.find(effect => effect.op === 'block').amount;
 const enemyIds = profile => new Set((profile.content.enemyCards || []).map(card => card.id));
 
-test('Defend authors 8 Block and every retuned enemy guard carries its new number', () => {
-  assert.equal(blockOf(current, 'core.defend'), 8);
+test('Defend authors 0 Block (final Block 4, owner 2026-11-21; was 8) and every retuned enemy guard carries its new number', () => {
+  assert.equal(blockOf(current, 'core.defend'), 0);
   assert.equal(blockOf(current, 'core.counter'), 5, 'Counter is unchanged');
   assert.equal(blockOf(saved, 'core.counter'), 5);
   for (const [id, [, after]] of Object.entries(ENEMY_BLOCK_RETUNE)) assert.equal(blockOf(current, id), after, id);
