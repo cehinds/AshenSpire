@@ -215,6 +215,7 @@ export const levelLists = {
    "core.steadyHands",
    "core.stormBlessing",
    "core.stormLash",
+   "core.stormcall",
    "core.strike",
    "core.stunningBlow",
    "core.sweep",

@@ -91,7 +91,7 @@ export const cardCombatPower = {
  "core.steadyHands": {"raw":12,"cp":12,"rank":3,"rarity":"common"},
  "core.stormBlessing": {"raw":3,"cp":1,"rank":1,"rarity":"uncommon"},
  "core.stormLash": {"raw":14,"cp":14,"rank":4,"rarity":"common"},
- "core.stormcall": {"raw":54,"cp":49,"rank":10,"rarity":"rare"},
+ "core.stormcall": {"raw":33,"cp":28,"rank":7,"rarity":"rare"},
  "core.strike": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
  "core.stunningBlow": {"raw":6,"cp":4,"rank":1,"rarity":"uncommon"},
  "core.sweep": {"raw":2,"cp":2,"rank":1,"rarity":"common"},

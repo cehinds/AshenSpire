@@ -4550,7 +4550,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "damage",
@@ -4575,7 +4575,7 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies.",
+    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies. Exhaust.",
     "upgrade": {
       "effects": [
         {
@@ -4587,7 +4587,7 @@
           "op": "applyStatus",
           "target": "allEnemies",
           "status": "shock",
-          "stacks": 3
+          "stacks": 2
         }
       ]
     },
