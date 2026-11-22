@@ -8,12 +8,12 @@
 // Run after `npm run combat-power`: the lists read src/content/generated/combatPower.js.
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { buildLevelLists } from '../src/model/levelLists.js';
+import { BuildLevelLists } from '../src/model/levelLists.js';
 
 const OUT = fileURLToPath(new URL('../src/content/generated/levelLists.js', import.meta.url));
 const lines = (ids, pad) => '[\n' + ids.map((id) => pad + ' ' + JSON.stringify(id)).join(',\n') + '\n' + pad + ']';
 
-export function render(lists = buildLevelLists()) {
+export function render(lists = BuildLevelLists()) {
   const cards = Object.entries(lists.cards).map(([t, ids]) => ` ${JSON.stringify(t)}: ${lines(ids, ' ')}`).join(',\n');
   const items = Object.entries(lists.items).map(([t, kinds]) => ` ${JSON.stringify(t)}: {\n`
     + Object.entries(kinds).map(([k, ids]) => `  ${JSON.stringify(k)}: ${lines(ids, '  ')}`).join(',\n') + '\n }').join(',\n');

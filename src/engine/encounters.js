@@ -66,7 +66,7 @@ export function rollRuneReward(registries, rng, pool, relicIds) {
 // where every caller already finds them.
 import { cardRewardRarityWeights } from '../model/rewardOdds.js';
 import { tagIdsFor } from '../content/tags.js';
-import { filterToBand } from '../model/levelLists.js';
+import { FilterToBand } from '../model/levelLists.js';
 export { cardRewardRarityWeights };
 
 /**
@@ -137,7 +137,7 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
     }
     let options = byRarity[rarity].filter((id) => !picks.includes(id));
     if (!options.length) continue;
-    if (tierId) options = filterToBand('cards', tierId, options);
+    if (tierId) options = FilterToBand('cards', tierId, options);
     picks.push(pickWithAffinity(rng, options, affinity));
   }
   return picks;

@@ -5,9 +5,9 @@
 // weights; no weight lives in this file. The arithmetic (order of operations, rounding) mirrors the simulator it was ported from, so a
 // card or item scores the same number here and there.
 //
-//   raw  = effect power after costs, over 3 rounds (scoreCard / scoreItem)
-//   cp   = raw - rarity discount (combatPower)
-//   rank = Unranked (cp <= 0), Rank k for cp (width*(k-1)+1)..(width*k), capped at maxRank; rank.maxCp (40) is the ceiling (rankOf)
+//   raw  = effect power after costs, over 3 rounds (ScoreCard / ScoreItem)
+//   cp   = raw - rarity discount (CombatPower)
+//   rank = Unranked (cp <= 0), Rank k for cp (width*(k-1)+1)..(width*k), capped at maxRank; rank.maxCp (40) is the ceiling (RankOf)
 //
 // A face is the simulator's card model: {name, cls, rarity, camp, type, sp, mp, dmg, hits, blk, poise, statuses: [[id, stacks, 'enemy'|'self']],
 // kw, tags, draw, heal, loseHp, discard, restoreSp, restoreMp, cleanse, counter, reflect, pull, move, holdOne, boost, cull, shuffle, copy, attr}.
@@ -16,10 +16,10 @@
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
 
 /** Round half away from zero (the simulator's `rnd`). */
-export const rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
+export const Rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
 
 /** A blank card face; callers spread their own fields over it. */
-export const baseFace = () => ({
+export const BaseFace = () => ({
   name: '', cls: 'colorless', rarity: 'common', camp: 'physical', type: 'attack', sp: 1, mp: 0, dmg: 0, hits: 1, blk: 0, poise: 0, statuses: [], kw: [], tags: [],
   draw: 0, heal: 0, loseHp: 0, discard: 0, restoreSp: 0, restoreMp: 0, cleanse: 0, counter: 0, reflect: 0, pull: 0, move: 0, holdOne: 0, boost: 0, cull: 0, shuffle: 0, copy: 0, attr: 0,
 });
@@ -59,7 +59,7 @@ function exactStatus(S, id, n) {
 }
 
 /** Score a card face: {raw, parts, positive}. `positive` is P, the sum of the positive non-cost parts. */
-export function scoreCard(c, scoring = shippedScoring) {
+export function ScoreCard(c, scoring = shippedScoring) {
   const S = slimOf(scoring), M = S.model, CM = scoring.cardModel;
   const parts = {};
   const add = (k, v) => { if (v) parts[k] = (parts[k] || 0) + v; };
@@ -105,23 +105,23 @@ export function scoreCard(c, scoring = shippedScoring) {
     const n = Object.entries(parts).filter(([k, v]) => v > 0 && !notEffect.has(k) && !(riders.has(k) && parts.damage > 0)).length;
     add('effect count', EC.weight * Math.max(0, n - (EC.skipFirst ? 1 : 0)));
   }
-  const raw = rnd(Object.values(parts).reduce((s, v) => s + v, 0));
+  const raw = Rnd(Object.values(parts).reduce((s, v) => s + v, 0));
   return { raw, parts, positive: P };
 }
 
 /** Combat power: raw score minus the rarity discount (cards and items share one table; boss comes from scoring.items.rarityDiscount). */
-export function combatPower(raw, rarity, scoring = shippedScoring) {
+export function CombatPower(raw, rarity, scoring = shippedScoring) {
   return raw - (slimOf(scoring).discount[rarity] || 0);
 }
 
 /** Rank number from combat power: 0 = Unranked, 1..maxRank. */
-export function rankOf(cp, scoring = shippedScoring) {
+export function RankOf(cp, scoring = shippedScoring) {
   const RK = slimOf(scoring).rank;
   return cp <= RK.unrankedMax ? 0 : Math.min(RK.maxRank, Math.ceil(cp / RK.width));
 }
-export const rankName = (k) => (k === 0 ? 'Unranked' : 'Rank ' + k);
+export const RankName = (k) => (k === 0 ? 'Unranked' : 'Rank ' + k);
 /** The combat-power band of a rank, as text. */
-export function rankRange(k, scoring = shippedScoring) {
+export function RankRange(k, scoring = shippedScoring) {
   const RK = slimOf(scoring).rank, lo = (RK.width * k) - (RK.width - 1);
   return k === 0 ? `<= ${RK.unrankedMax}` : k === RK.maxRank ? (RK.maxCp ? `${lo}-${RK.maxCp}` : `>= ${lo}`) : `${lo}-${lo + RK.width - 1}`;
 }
@@ -152,9 +152,9 @@ function modOf(S, key) {
   return { label: key, calc: S.full.items.unmodelledMod.calc };
 }
 /** Label of an item modifier key ("strike.damage" -> "Strike damage"). */
-export const modLabel = (key, scoring = shippedScoring) => modOf(slimOf(scoring), key).label;
+export const ModLabel = (key, scoring = shippedScoring) => modOf(slimOf(scoring), key).label;
 /** Points of one item modifier at value n. */
-export function modValue(key, n, scoring = shippedScoring) {
+export function ModValue(key, n, scoring = shippedScoring) {
   const S = slimOf(scoring), m = modOf(S, key), x = +n || 0;
   const start = m.pre === 'extraHits' ? Math.max(0, x - 1) : m.pre === 'flag' ? (x ? 1 : 0) : x;
   return applyCalc(S, start, m.calc);
@@ -173,10 +173,10 @@ function opValueOf(S, op) {
   return 'flat' in e ? e.flat : applyCalc(S, a, e.calc);
 }
 /** Points of one property-rule op (restoreMana, draw, applyStatus, ...). */
-export const opValue = (op, scoring = shippedScoring) => opValueOf(slimOf(scoring), op);
+export const OpValue = (op, scoring = shippedScoring) => opValueOf(slimOf(scoring), op);
 
 /** Points of a property rule ({triggers: [{on, cond, once, perTurn, do}], passives}) over 3 rounds. */
-export function propertyValue(rule, scoring = shippedScoring) {
+export function PropertyValue(rule, scoring = shippedScoring) {
   if (!rule) return 0;
   const S = slimOf(scoring), PT = scoring.items.propertyTriggers, freq = PT.frequencyIn3Rounds;
   let v = 0;
@@ -195,17 +195,17 @@ export function propertyValue(rule, scoring = shippedScoring) {
  * Score an item: {raw, disc, cp, parts}. `rules` maps each property tag in item.props to its rule.
  * Item raw rounds with Math.round (half toward +infinity), as the simulator does; card raw rounds half away from zero.
  */
-export function scoreItem(it, scoring = shippedScoring, rules = {}) {
+export function ScoreItem(it, scoring = shippedScoring, rules = {}) {
   const S = slimOf(scoring), M = S.model, I = scoring.items, plays = I.plays;
   const parts = {};
-  for (const [k, n] of it.mods || []) { const v = modValue(k, n, scoring); const label = modLabel(k, scoring); if (v) parts[label] = (parts[label] || 0) + v; }
-  for (const t of it.props || []) { const v = propertyValue(rules[t], scoring); if (v) parts['prop:' + t] = (parts['prop:' + t] || 0) + v; }
+  for (const [k, n] of it.mods || []) { const v = ModValue(k, n, scoring); const label = ModLabel(k, scoring); if (v) parts[label] = (parts[label] || 0) + v; }
+  for (const t of it.props || []) { const v = PropertyValue(rules[t], scoring); if (v) parts['prop:' + t] = (parts['prop:' + t] || 0) + v; }
   for (const t of it.tags || []) { if (t.startsWith('range:')) continue; const w = S.tags[t]; if (w && w.weight) parts[t] = w.weight * (w.per === 'hit' ? plays.strike : 1); }
   if (it.kind === 'weapon') {
     const atkAuth = it.magicShare ? (1 - it.magicShare) * M.AUTH_PHYS + it.magicShare * M.AUTH_SPELL : M.AUTH_PHYS;
     const atk = ((it.attackBase ?? I.kit.unarmedAttack) - I.kit.unarmedAttack) * atkAuth * plays.strike; if (atk) parts['Attack profile'] = atk;
     const grd = ((it.guardBase ?? I.kit.unarmedGuard) - I.kit.unarmedGuard) * M.AUTH_BLOCK / 2 * plays.defend; if (grd) parts['Guard profile'] = grd;
-    if (it.art) { const a = scoreCard(Object.assign(baseFace(), JSON.parse(JSON.stringify(it.art))), scoring).raw * plays.weaponArt; if (a) parts['Weapon art: ' + it.art.name] = a; }
+    if (it.art) { const a = ScoreCard(Object.assign(BaseFace(), JSON.parse(JSON.stringify(it.art))), scoring).raw * plays.weaponArt; if (a) parts['Weapon art: ' + it.art.name] = a; }
   }
   if (typeof it.poise === 'number' && it.kind !== 'relic') { const pv = (it.poise - I.poiseThreshold.baseline) * I.poiseThreshold.perPoint; if (pv) parts['Poise threshold'] = pv; }
   const rg = it.range ? 'range:' + it.range : null;
@@ -222,9 +222,9 @@ const cap = (s) => s[0].toUpperCase() + s.slice(1);
 const numeral = (N, rk) => N.roman[rk] || '';
 
 /** Parts of a card's convention name: {name, effect, base, rank, source, baseSource}. */
-export function cardNameParts(c, ups = 0, scoring = shippedScoring) {
+export function CardNameParts(c, ups = 0, scoring = shippedScoring) {
   const G = scoring.naming.card, N = scoring.naming;
-  const s = scoreCard(c, scoring);
+  const s = ScoreCard(c, scoring);
   const top = Object.entries(s.parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).sort((a, b) => b[1] - a[1]);
   const elementTag = c.tags.find((t) => t.startsWith('school:') && G.element[t]) || c.tags.find((t) => t.startsWith('damage:') && G.element[t]);
   let effect = null, source = null;
@@ -242,13 +242,13 @@ export function cardNameParts(c, ups = 0, scoring = shippedScoring) {
   const man = c.tags.find((t) => t.startsWith('maneuver:') && G.base[t]);
   const area = c.tags.includes(scoring.cardModel.areaTag);
   const base = man ? G.base[man] : c.type === 'attack' || c.dmg > 0 ? G.base[`attack:${area ? 'area:' : ''}${c.camp}`] : G.base[`skill:${c.camp}`];
-  const rk = rankOf(combatPower(s.raw, c.rarity, scoring), scoring);
+  const rk = RankOf(CombatPower(s.raw, c.rarity, scoring), scoring);
   if (effect === base || (effect === 'Guarding' && base === 'Guard')) effect = G.fallback[c.camp];
   const name = [effect, base, numeral(N, rk)].filter(Boolean).join(' ') + (ups ? ` +${ups}` : '');
   return { name, effect, base, rank: rk, source, baseSource: man || (c.type === 'attack' ? 'attack' : 'skill') + ':' + c.camp + (area ? ' (area)' : '') };
 }
 /** A card's convention name, e.g. "Searing Strike III". */
-export const cardName = (c, ups = 0, scoring = shippedScoring) => cardNameParts(c, ups, scoring).name;
+export const CardName = (c, ups = 0, scoring = shippedScoring) => CardNameParts(c, ups, scoring).name;
 
 function propWord(tag, rules, scoring) {
   const S = slimOf(scoring), W = scoring.naming, p = rules[tag];
@@ -261,25 +261,25 @@ function propWord(tag, rules, scoring) {
 }
 
 /** Parts of an item's convention name: {name, effect, base, rank, source}. */
-export function itemNameParts(it, ups = 0, scoring = shippedScoring, rules = {}) {
-  const W = scoring.naming, s = scoreItem(it, scoring, rules);
+export function ItemNameParts(it, ups = 0, scoring = shippedScoring, rules = {}) {
+  const W = scoring.naming, s = ScoreItem(it, scoring, rules);
   const top = Object.entries(s.parts).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])[0];
   let effect = 'Plain', source = 'none';
   if (top) {
     source = top[0];
     effect = top[0].startsWith('prop:') ? propWord(top[0].slice(5), rules, scoring)
-      : top[0].startsWith('Weapon art: ') ? cardNameParts(Object.assign(baseFace(), JSON.parse(JSON.stringify(it.art))), 0, scoring).effect
+      : top[0].startsWith('Weapon art: ') ? CardNameParts(Object.assign(BaseFace(), JSON.parse(JSON.stringify(it.art))), 0, scoring).effect
         : W.item.mod[top[0]] || W.card.effect[top[0]] || W.card.element[top[0]] || 'Fabled';
   }
   const lastWord = String(it.name || '').split(' ').pop();
   const b = it.base || '';
   const base = it.kind === 'armour' && W.itemArmourSuffixes.includes(lastWord) ? lastWord
     : W.item.base[b] || (b.startsWith('staff') ? 'Staff' : it.kind === 'armour' ? 'Robes' : it.kind === 'relic' ? 'Relic' : cap(b || it.kind));
-  const rk = rankOf(s.cp, scoring);
+  const rk = RankOf(s.cp, scoring);
   return { name: [effect, base, numeral(W, rk)].filter(Boolean).join(' ') + (ups ? ` +${ups}` : ''), effect, base, rank: rk, source };
 }
 /** An item's convention name. */
-export const itemName = (it, ups = 0, scoring = shippedScoring, rules = {}) => itemNameParts(it, ups, scoring, rules).name;
+export const ItemName = (it, ups = 0, scoring = shippedScoring, rules = {}) => ItemNameParts(it, ups, scoring, rules).name;
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Enemy combat power (pre-existing export of this module, used by levelup.js for XP weight; unrelated to the card and item scoring above)

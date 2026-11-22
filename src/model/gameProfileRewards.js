@@ -13,7 +13,7 @@ import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
 import { createRng } from './rng.js';
-import { tierFor, filterToBand } from './levelLists.js';
+import { TierFor, FilterToBand } from './levelLists.js';
 import { carriedIds } from './loadout/ownership.js';
 import { ThemedItemPick, ItemIsThemed } from './itemThemePick.js';
 import { GearTypeEffectsEnabled } from './gearEffects.js';
@@ -196,7 +196,7 @@ const BAND_KIND={combatCards:'cards',weapons:'weapon',armor:'armour',relics:'rel
 function BandedRewardIds(run,kind,ids) {
   const band=BAND_KIND[kind];
   if(!band)return ids;
-  return filterToBand(band,tierFor(run),ids,band==='armour'?{keyOf:id=>`${run.class}.${id}`}:undefined);
+  return FilterToBand(band,TierFor(run),ids,band==='armour'?{keyOf:id=>`${run.class}.${id}`}:undefined);
 }
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[],pool='normal'}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
@@ -387,8 +387,8 @@ export function GameProfileArmamentOffer(registries, run, rng, { offerId, pool =
     candidates.push({ kind: 'armor', id, type: 'armour', family: `armour:${armourGroupOf.get(`${run.class}:${id}`) || ''}`, sub: id });
   }
   // Owner 2026-11-21: level lists: weapons and armour come from the act's rank band (an empty band keeps every candidate of the kind).
-  const tier = tierFor(run), weaponRows = candidates.filter(row => row.kind === 'weapons'), armourRows = candidates.filter(row => row.kind === 'armor');
-  candidates.splice(0, candidates.length, ...filterToBand('weapon', tier, weaponRows, { keyOf: row => row.id }), ...filterToBand('armour', tier, armourRows, { keyOf: row => `${run.class}.${row.id}` }));
+  const tier = TierFor(run), weaponRows = candidates.filter(row => row.kind === 'weapons'), armourRows = candidates.filter(row => row.kind === 'armor');
+  candidates.splice(0, candidates.length, ...FilterToBand('weapon', tier, weaponRows, { keyOf: row => row.id }), ...FilterToBand('armour', tier, armourRows, { keyOf: row => `${run.class}.${row.id}` }));
   const min = Number.isInteger(rule.min) && rule.min > 0 ? rule.min : 1, max = Number.isInteger(rule.max) && rule.max >= min ? rule.max : min;
   const wanted = min === max ? min : rng.int('cardRewards', min, max);
   const chosen = [];

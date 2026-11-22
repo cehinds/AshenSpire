@@ -14,7 +14,7 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { contentBundle as b } from '../src/content/index.js';
 import { scoring } from '../src/content/generated/scoring.js';
-import { baseFace, scoreCard, scoreItem, combatPower, rankOf } from '../src/model/combatPower.js';
+import { BaseFace, ScoreCard, ScoreItem, CombatPower, RankOf } from '../src/model/combatPower.js';
 import { registries, holdable, measure, CLASSES, tagOf } from './lib/cardBudgetMeasure.mjs';
 
 const OUT = fileURLToPath(new URL('../src/content/generated/combatPower.js', import.meta.url));
@@ -28,7 +28,7 @@ const OP_FIELD = { draw: 'draw', heal: 'heal', loseHp: 'loseHp', discard: 'disca
 
 /** The scorer's card face for a measured Core card. */
 export function faceOf(def, row) {
-  const f = baseFace();
+  const f = BaseFace();
   Object.assign(f, { name: def.name, cls: def.class, rarity: def.rarity, type: def.type, camp: (def.tags || []).includes('camp:spell') ? 'spell' : 'physical' });
   f.sp = row.costs.sp; f.mp = row.costs.mp;
   f.dmg = row.final.damage || 0; f.hits = Math.max(1, row.final.hits || 1);
@@ -92,7 +92,7 @@ function itemFaces() {
   const artFace = (id, item) => {
     const c = cardsById[id] || cardsById['core.' + id]; if (!c) return null;
     const spell = c.damageSchool && c.damageSchool !== 'physical';
-    const m = { ...baseFace(), name: c.name, camp: spell ? 'spell' : 'physical', type: c.type === 'attack' ? 'attack' : 'skill', sp: c.staminaCost ?? c.cost ?? 1,
+    const m = { ...BaseFace(), name: c.name, camp: spell ? 'spell' : 'physical', type: c.type === 'attack' ? 'attack' : 'skill', sp: c.staminaCost ?? c.cost ?? 1,
       mp: c.manaCost ?? item.weaponArtManaCost ?? 0, kw: [...(c.keywords || [])], tags: [...(c.tags || [])] };
     let dA = 0, bA = 0, pA = 0, hits = 1;
     for (const e of c.effects || []) {
@@ -141,14 +141,14 @@ export function buildTable() {
   const cardCombatPower = {};
   const faces = measureCards();
   for (const id of Object.keys(faces).sort()) {
-    const f = faces[id], raw = scoreCard(f).raw, cp = combatPower(raw, f.rarity);
-    cardCombatPower[id] = { raw, cp, rank: rankOf(cp), rarity: f.rarity };
+    const f = faces[id], raw = ScoreCard(f).raw, cp = CombatPower(raw, f.rarity);
+    cardCombatPower[id] = { raw, cp, rank: RankOf(cp), rarity: f.rarity };
   }
   const itemCombatPower = {};
   const { items, rules } = itemFaces();
   for (const it of items.sort((x, y) => (x.kind + ':' + x.id).localeCompare(y.kind + ':' + y.id))) {
-    const s = scoreItem(it, scoring, rules);
-    itemCombatPower[it.kind + ':' + it.id] = { raw: s.raw, cp: s.cp, rank: rankOf(s.cp), rarity: it.rarity };
+    const s = ScoreItem(it, scoring, rules);
+    itemCombatPower[it.kind + ':' + it.id] = { raw: s.raw, cp: s.cp, rank: RankOf(s.cp), rarity: it.rarity };
   }
   return { cardCombatPower, itemCombatPower };
 }
