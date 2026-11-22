@@ -7,7 +7,8 @@ export const cardCombatPower = {
  "core.acidSplash": {"raw":7,"cp":7,"rank":2,"rarity":"common"},
  "core.advance": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
  "core.arcaneSiphon": {"raw":-4,"cp":-6,"rank":0,"rarity":"uncommon"},
- "core.arcaneWard": {"raw":5,"cp":5,"rank":2,"rarity":"common"},
+ "core.arcaneWard": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
+ "core.ashenShell": {"raw":-4,"cp":-4,"rank":0,"rarity":"common"},
  "core.astralBolt": {"raw":-10,"cp":-12,"rank":0,"rarity":"uncommon"},
  "core.backstep": {"raw":1,"cp":-1,"rank":0,"rarity":"uncommon"},
  "core.batteringGale": {"raw":5,"cp":3,"rank":1,"rarity":"uncommon"},
@@ -40,6 +41,7 @@ export const cardCombatPower = {
  "core.galePush": {"raw":-6,"cp":-6,"rank":0,"rarity":"common"},
  "core.gash": {"raw":3,"cp":3,"rank":1,"rarity":"common"},
  "core.glacialSpike": {"raw":9,"cp":7,"rank":2,"rarity":"uncommon"},
+ "core.glimmerVeil": {"raw":-1,"cp":-1,"rank":0,"rarity":"common"},
  "core.glimpse": {"raw":3,"cp":3,"rank":1,"rarity":"common"},
  "core.graveToll": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
  "core.guidingWhisper": {"raw":14,"cp":14,"rank":4,"rarity":"common"},
@@ -91,6 +93,7 @@ export const cardCombatPower = {
  "core.starseerSpecial": {"raw":-3,"cp":-5,"rank":0,"rarity":"uncommon"},
  "core.steadyGuard": {"raw":2,"cp":2,"rank":1,"rarity":"common"},
  "core.steadyHands": {"raw":6,"cp":6,"rank":2,"rarity":"common"},
+ "core.stoneSigil": {"raw":-3,"cp":-3,"rank":0,"rarity":"common"},
  "core.stormBlessing": {"raw":-4,"cp":-6,"rank":0,"rarity":"uncommon"},
  "core.stormLash": {"raw":2,"cp":2,"rank":1,"rarity":"common"},
  "core.stormcall": {"raw":17,"cp":12,"rank":3,"rarity":"rare"},
@@ -107,7 +110,7 @@ export const cardCombatPower = {
  "core.whirlwind": {"raw":0,"cp":-5,"rank":0,"rarity":"rare"},
  "core.wideSweep": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
  "core.witherDraught": {"raw":13,"cp":11,"rank":3,"rarity":"uncommon"},
- "greatswordSunderingHew": {"raw":-1,"cp":-6,"rank":0,"rarity":"rare"},
+ "greatswordSunderingHew": {"raw":1,"cp":-4,"rank":0,"rarity":"rare"},
  "twinFang": {"raw":-6,"cp":-11,"rank":0,"rarity":"rare"}
 };
 
@@ -233,7 +236,7 @@ export const itemCombatPower = {
  "relic:wrathCoil": {"raw":2,"cp":-3,"rank":0,"rarity":"rare"},
  "relic:wyrmHeart": {"raw":12,"cp":7,"rank":2,"rarity":"rare"},
  "weapon:arbalest": {"raw":-6,"cp":-11,"rank":0,"rarity":"rare"},
- "weapon:ashenClaymore": {"raw":3,"cp":1,"rank":1,"rarity":"uncommon"},
+ "weapon:ashenClaymore": {"raw":11,"cp":9,"rank":3,"rarity":"uncommon"},
  "weapon:ashStaff": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
  "weapon:battleaxe": {"raw":-21,"cp":-21,"rank":0,"rarity":"common"},
  "weapon:beardedAxe": {"raw":-12,"cp":-12,"rank":0,"rarity":"common"},
@@ -254,7 +257,7 @@ export const itemCombatPower = {
  "weapon:frostSpear": {"raw":35,"cp":33,"rank":9,"rarity":"uncommon"},
  "weapon:goldboughBranch": {"raw":35,"cp":30,"rank":8,"rarity":"rare"},
  "weapon:gorefireBrand": {"raw":34,"cp":29,"rank":8,"rarity":"rare"},
- "weapon:greatsword": {"raw":-12,"cp":-14,"rank":0,"rarity":"uncommon"},
+ "weapon:greatsword": {"raw":-4,"cp":-6,"rank":0,"rarity":"uncommon"},
  "weapon:grimoire": {"raw":-3,"cp":-5,"rank":0,"rarity":"uncommon"},
  "weapon:halberd": {"raw":-8,"cp":-10,"rank":0,"rarity":"uncommon"},
  "weapon:handCrossbow": {"raw":5,"cp":5,"rank":2,"rarity":"common"},
@@ -292,5 +295,5 @@ export const itemCombatPower = {
  "weapon:twinblade": {"raw":16,"cp":11,"rank":3,"rarity":"rare"},
  "weapon:warhammer": {"raw":-4,"cp":-6,"rank":0,"rarity":"uncommon"},
  "weapon:wyrmhornStaff": {"raw":10,"cp":5,"rank":2,"rarity":"rare"},
- "weapon:zweihander": {"raw":4,"cp":-1,"rank":0,"rarity":"rare"}
+ "weapon:zweihander": {"raw":12,"cp":7,"rank":2,"rarity":"rare"}
 };
