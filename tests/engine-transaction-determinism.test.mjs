@@ -52,6 +52,8 @@ function legacyFight(setup) {
 function withoutGearPierce(combat) {
   // These immutable historical fixtures predate the three new Pierce snapshot fields.
   for (const key of ['builtInElements', 'skinStatus', 'earthSource']) delete combat.fixCoreRules.pierce[key];
+  // ...and the Magic Adept zero Mana floor key (owner ruling 2026-11-22): a fight saved before it keeps floor 1 and its original state.
+  delete combat.fixCoreRules.stance?.adeptMinimumCost;
   return combat;
 }
 function preGearFight(setup, profile = legacyGearProfile(preRetreatProfile)) {

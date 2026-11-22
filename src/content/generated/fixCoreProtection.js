@@ -341,6 +341,10 @@ export const fixCoreProtection = [
             "minimumCost": {
               "type": "integer",
               "minimum": 0
+            },
+            "adeptMinimumCost": {
+              "type": "integer",
+              "minimum": 0
             }
           },
           "required": [

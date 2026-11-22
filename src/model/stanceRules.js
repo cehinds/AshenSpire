@@ -173,10 +173,15 @@ export function spellChain(entity, carrier) {
 export function stanceManaCost(base, entity, carrier, ctx) {
   if (!fixCoreEnabled(ctx) || !(base > 0)) return base;
   if (core2ActionPolicyEnabled(ctx) && entity?.kind !== 'enemy') {
-    const adept = isSpellCard(carrier) && hasAdept(ctx, entity, 'training.graduate') && (sameStance(entity, carrier) || defensiveFamily(entity, carrier));
+    const graduate = isSpellCard(carrier) && hasAdept(ctx, entity, 'training.graduate');
+    const adept = graduate && (sameStance(entity, carrier) || defensiveFamily(entity, carrier));
     if (!adept && !spellChain(entity, carrier)) return base;
     const cfg = fixCoreRules(ctx, entity, carrier).stance;
-    return Math.max(adept ? adeptMinimum(ctx, carrier, cfg.minimumCost) : cfg.minimumCost, base - cfg.discount);
+    // Owner ruling 2026-11-22: the Magic Adept (Graduate) cut may reach 0 MP on the player's turn (stance.adeptMinimumCost).
+    // The Adept cut and the successive-Spell cut are one reduction (SPEC), so a Graduate's successive-Spell cut shares the floor;
+    // a non-Graduate keeps stance.minimumCost.
+    const floor = graduate ? Math.min(cfg.minimumCost, cfg.adeptMinimumCost ?? cfg.minimumCost) : cfg.minimumCost;
+    return Math.max(graduate ? adeptMinimum(ctx, carrier, floor) : floor, base - cfg.discount);
   }
   if (!(sameStance(entity, carrier) || spellChain(entity, carrier))) return base;
   const cfg = fixCoreRules(ctx, entity, carrier).stance;

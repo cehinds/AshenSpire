@@ -88,13 +88,13 @@ test('Star Spark pays two MP (one printed, one spell surcharge) and applies no V
 
 test('current robes, Focus and Prepared keep spell quotes, payment and restored snapshots in agreement', () => {
   // Independent worked prices: spells add 1 MP and (except Cantrip) 1 SP;
-  // Prepared cuts SP by 1 and positive printed MP by 1 (Adept's floor is 1).
+  // Prepared cuts SP by 1 and positive printed MP by 1 (the Graduate's floor is 0, owner 2026-11-22).
   // Robes then cut final MP by 1; a Focus cuts it by exactly 1 only in Prepared.
   // In particular, robes cancel Cantrip's surcharge even though it prints 0 MP.
   const prices = [
-    ['core.cometLance', [2, 1], [1, 1], [1, 0]],
+    ['core.cometLance', [2, 1], [1, 0], [1, 0]], // Prepared: Graduate cut 1 -> 0 (owner 2026-11-22), then +1 surcharge, -1 robe
     ['core.meteor', [2, 3], [1, 2], [1, 1]],
-    ['core.cantrip', [1, 0], [0, 0], [0, 0]],
+    ['core.cantrip', [1, 1], [0, 0], [0, 0]], // Arcane Spark prints 1 MP (owner 2026-11-22): plain 1 + 1 surcharge - 1 robe
     // A current gear profile without spellCosts has neither surcharge nor its SP cut.
     // Meteor stays 3 MP plain / 2 MP with Adept, before robe -1 and Prepared Focus -1.
     ['core.meteor', [1, 2], [1, 1], [1, 0], false],
