@@ -3,7 +3,7 @@
 // raw = effect power over 3 rounds, cp = raw - rarity discount, rank 0 = Unranked, 1..10 (src/model/combatPower.js).
 
 export const cardCombatPower = {
- "blightTouch": {"raw":2,"cp":-3,"rank":0,"rarity":"rare"},
+ "blightTouch": {"raw":8,"cp":3,"rank":1,"rarity":"rare"},
  "core.acidSplash": {"raw":7,"cp":7,"rank":2,"rarity":"common"},
  "core.advance": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
  "core.arcaneSiphon": {"raw":-4,"cp":-6,"rank":0,"rarity":"uncommon"},
@@ -242,8 +242,8 @@ export const itemCombatPower = {
  "weapon:beardedAxe": {"raw":-12,"cp":-12,"rank":0,"rarity":"common"},
  "weapon:beastClaws": {"raw":7,"cp":5,"rank":2,"rarity":"uncommon"},
  "weapon:blightRod": {"raw":36,"cp":34,"rank":9,"rarity":"uncommon"},
- "weapon:boneSceptre": {"raw":21,"cp":19,"rank":5,"rarity":"uncommon"},
- "weapon:boneTalisman": {"raw":-2,"cp":-4,"rank":0,"rarity":"uncommon"},
+ "weapon:boneSceptre": {"raw":27,"cp":25,"rank":7,"rarity":"uncommon"},
+ "weapon:boneTalisman": {"raw":4,"cp":2,"rank":1,"rarity":"uncommon"},
  "weapon:broadsword": {"raw":-5,"cp":-7,"rank":0,"rarity":"uncommon"},
  "weapon:buckler": {"raw":-6,"cp":-6,"rank":0,"rarity":"common"},
  "weapon:cinderAxe": {"raw":32,"cp":30,"rank":8,"rarity":"uncommon"},
