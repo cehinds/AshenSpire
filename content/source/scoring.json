@@ -1327,21 +1327,21 @@
       "label": "Spell"
     },
     "maneuver:attack": {
-      "weight": 1,
+      "weight": 0,
       "projection": "identity",
       "why": "Stance; attack, defend and casting are the baseline.",
       "domain": "maneuver",
       "label": "Attack"
     },
     "maneuver:defend": {
-      "weight": 1,
+      "weight": 0,
       "projection": "identity",
       "why": "Stance; attack, defend and casting are the baseline.",
       "domain": "maneuver",
       "label": "Defend"
     },
     "maneuver:casting": {
-      "weight": 2,
+      "weight": 0,
       "projection": "identity",
       "why": "Stance; attack, defend and casting are the baseline.",
       "domain": "maneuver",
