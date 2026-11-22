@@ -183,6 +183,7 @@ export const levelLists = {
    "core.manaLash",
    "core.manaSurge",
    "core.mendingTouch",
+   "core.meteor",
    "core.mindLance",
    "core.mirrorGuard",
    "core.openArchive",

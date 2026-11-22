@@ -54,7 +54,7 @@ export const cardCombatPower = {
  "core.manaLash": {"raw":14,"cp":12,"rank":3,"rarity":"uncommon"},
  "core.manaSurge": {"raw":4,"cp":4,"rank":1,"rarity":"starter"},
  "core.mendingTouch": {"raw":14,"cp":14,"rank":4,"rarity":"common"},
- "core.meteor": {"raw":63,"cp":58,"rank":10,"rarity":"rare"},
+ "core.meteor": {"raw":33,"cp":28,"rank":7,"rarity":"rare"},
  "core.mindLance": {"raw":17,"cp":15,"rank":4,"rarity":"uncommon"},
  "core.mirrorGuard": {"raw":-4,"cp":-6,"rank":0,"rarity":"uncommon"},
  "core.moteShield": {"raw":34,"cp":34,"rank":9,"rarity":"common"},
