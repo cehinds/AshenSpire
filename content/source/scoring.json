@@ -4393,7 +4393,7 @@
     ]
   },
   "starter": {
-    "rule": "10 cards: 4 attack basics, 4 defend basics, 1 class specialty (uncommon), 1 weapon art (rare, Rank 1). All but the art Unranked (combat power <= 0); the art at Rank 1 (combat power 1-2). Starting armour Unranked.",
+    "rule": "10 cards: 4 attack basics, 4 defend basics, 1 class specialty (uncommon), 1 weapon art (rare, Rank 1). All but the art Unranked (combat power <= 0); the art at Rank 1 (combat power 1-4). Starting armour Unranked.",
     "deck": {
       "attackBasics": 4,
       "defendBasics": 4,

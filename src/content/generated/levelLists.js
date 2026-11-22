@@ -340,6 +340,7 @@ export const levelLists = {
     "boneTalisman",
     "broadsword",
     "buckler",
+    "dagger",
     "duelistsFoil",
     "estoc",
     "flail",
