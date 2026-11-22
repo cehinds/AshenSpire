@@ -1,0 +1,38 @@
+{
+  "request": "Starting cards: 10 cards (martial: 4 Strike, 4 Defend, 1 specialty, 1 weapon art; casters: attack cantrips, defensive cantrips, 1 class spell, 1 weapon art), basics Unranked, weapon arts rare Rank 1; cards rescored with the owner's combat-power weights (owner, 2026-11-21).",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "reaver-opening-hand",
+      "url": "?shot=combat&shotSeed=4&shotClass=reaver",
+      "ready": ".hand .card",
+      "settleMs": 2500,
+      "success": [
+        { "kind": "count", "label": "An opening hand is dealt", "selector": ".hand .card", "min": 3 },
+        { "kind": "count", "label": "The starter deck's Strike or Defend is in hand", "selector": ".hand .card[data-card-id$=\"strike\"], .hand .card[data-card-id$=\"defend\"]", "min": 1 },
+        { "kind": "within", "label": "Hand stays inside the app", "selector": ".hand", "container": "#app" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0 }
+      ],
+      "failure": [
+        { "kind": "count", "label": "Counter (no longer a starter) is in the opening hand", "selector": ".hand .card[data-card-id$=\"counter\"]", "min": 1 }
+      ]
+    },
+    {
+      "name": "starseer-opening-hand",
+      "url": "?shot=combat&shotSeed=4&shotClass=starseer",
+      "ready": ".hand .card",
+      "settleMs": 2500,
+      "success": [
+        { "kind": "count", "label": "An opening hand is dealt", "selector": ".hand .card", "min": 3 },
+        { "kind": "within", "label": "Hand stays inside the app", "selector": ".hand", "container": "#app" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0 }
+      ],
+      "failure": [
+        { "kind": "count", "label": "Granted Mana Surge still in the starting deck's hand", "selector": ".hand .card[data-card-id$=\"manaSurge\"]", "min": 1 }
+      ]
+    }
+  ]
+}
