@@ -144,6 +144,7 @@ export const DEFAULT_CARD_ART = Object.freeze({
   "urgentHeal": "assets/cards/default-outline/icons/heal.svg",
   "bloodPact": "assets/cards/default-outline/icons/blood.svg",
   "blightTouch": "assets/cards/default-outline/icons/plague.svg",
+  "gravebinderLament": "assets/cards/default-outline/icons/plague.svg",
   "flagellation": "assets/cards/default-outline/icons/chain.svg",
   "penance": "assets/cards/default-outline/icons/candle.svg",
   "litany": "assets/cards/default-outline/icons/candle.svg",
