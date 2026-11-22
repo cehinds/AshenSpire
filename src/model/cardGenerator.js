@@ -3,7 +3,7 @@
 // Pure and headless; not wired into any reward pool. generateCard({rarity, rank | combatPower, cls, camp, type, seed}, {scoring}) returns a
 // Core cards.json-shaped definition (id `gen.<seed>`) whose scoreCard face lands EXACTLY on the target combat power:
 //
-//   1. target cp  = the given combatPower, or a cp inside the rank band (picked by the seed); raw target = cp + rarity discount;
+//   1. target cp  = the given combatPower (never over scoring.rank.maxCp), or a cp inside the rank band (picked by the seed); raw target = cp + rarity discount;
 //   2. the face (src/model/combatPower.js baseFace) gets SP/MP costs and one primary effect (damage for attacks, Block for skills),
 //      plus an optional Poise rider (attack) or draw (skill); the primary amount is solved so the rounded raw score equals the target;
 //      a target too low for any effect adds an HP-cost drawback instead of going unreachable;
@@ -19,13 +19,16 @@ const hash = (s) => { let h = 2166136261; for (const ch of String(s)) { h ^= ch.
 function prng(seed) { let a = hash(seed); return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const pick = (rand, n) => Math.floor(rand() * n);
 
-/** The combat power a rank's band holds, chosen by the seed (Unranked: 0 down to -2; the top rank: maxRank band floor and up). */
+/** The hard combat-power ceiling: scoring.rank.maxCp, else the top of the top rank's band (maxRank x width). */
+export const maxCpOf = (scoring = shippedScoring) => scoring.rank.maxCp ?? scoring.rank.maxRank * scoring.rank.width;
+
+/** A combat power inside a rank's band, chosen by the seed. Band edges come from scoring.rank (width, maxRank, maxCp, unrankedMax). */
 export function targetCp(rank, rand, scoring = shippedScoring) {
   const RK = scoring.rank;
-  if (rank === 0) return 0 - pick(rand, 3);
-  if (rank < 0 || rank > RK.maxRank) throw new Error(`cardGenerator: rank ${rank} is outside 0..${RK.maxRank}`);
-  const top = rank * RK.width;
-  return rank === RK.maxRank ? top - (RK.width - 1) + pick(rand, 3) : top - pick(rand, RK.width);
+  if (rank === 0) return RK.unrankedMax - pick(rand, 3);
+  if (!Number.isInteger(rank) || rank < 0 || rank > RK.maxRank) throw new Error(`cardGenerator: rank ${rank} is outside 0..${RK.maxRank}`);
+  const hi = Math.min(rank * RK.width, maxCpOf(scoring)), lo = Math.min((rank - 1) * RK.width + 1, hi); // a lowered ceiling pins a high rank to it
+  return lo + pick(rand, hi - lo + 1);
 }
 
 const authoredDamage = (face, camp, scoring) => Math.max(1, Math.round((face - scoring.items.kit.unarmedAttack) / (camp === 'spell' ? scoring.model.AUTH_SPELL : scoring.model.AUTH_PHYS)));
@@ -46,6 +49,7 @@ export function generateFace(input, { scoring = shippedScoring } = {}) {
   if (Number.isFinite(input.combatPower)) cp = Math.round(input.combatPower);
   else if (Number.isInteger(input.rank)) cp = targetCp(input.rank, rand, scoring);
   else throw new Error('cardGenerator: give a rank or a combatPower');
+  if (cp > maxCpOf(scoring)) throw new Error(`cardGenerator: combat power ${cp} is over the ceiling ${maxCpOf(scoring)} (scoring.rank.maxCp)`);
   const raw = cp + scoring.rarity.discount[rarity];
 
   const face = Object.assign(baseFace(), { cls, rarity, camp, type });

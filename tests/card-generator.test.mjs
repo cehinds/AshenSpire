@@ -1,7 +1,7 @@
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { generateCard, generateFace } from '../src/model/cardGenerator.js';
+import { generateCard, generateFace, maxCpOf } from '../src/model/cardGenerator.js';
 import { scoreCard, combatPower, rankOf } from '../src/model/combatPower.js';
 import { contentBundle } from '../src/content/index.js';
 import { validateCardTemplates } from '../src/model/validate/templates.js';
@@ -20,11 +20,25 @@ test('card generator: every rarity x rank 0-5 x shape x seed lands exactly on it
 });
 
 test('card generator: an explicit combatPower is honoured, including very low and very high', () => {
-  for (const combatPower_ of [-12, -5, 0, 1, 7, 19, 30]) for (const rarity of ['common', 'rare']) {
+  for (const combatPower_ of [-12, -5, 0, 1, 7, 19, maxCpOf(scoring)]) for (const rarity of ['common', 'rare']) {
     const { face, cp } = generateFace({ rarity, combatPower: combatPower_, seed: 3 });
     assert.equal(cp, combatPower_);
     assert.equal(combatPower(scoreCard(face).raw, rarity), combatPower_);
   }
+});
+
+test('card generator: never emits a card over the combat-power ceiling (scoring.rank.maxCp); every rank 0-max stays inside its band', () => {
+  const ceiling = maxCpOf(scoring);
+  for (const rarity of RARITIES) for (let rank = 0; rank <= scoring.rank.maxRank; rank++) for (const shape of shapes) for (let seed = 1; seed <= 15; seed++) {
+    const { face, cp } = generateFace({ rarity, rank, seed, ...shape });
+    assert.ok(cp <= ceiling, `${rarity} rank ${rank} cp ${cp} over ${ceiling}`);
+    assert.equal(rankOf(cp), rank);
+    assert.ok(combatPower(scoreCard(face).raw, rarity) <= ceiling);
+  }
+  assert.throws(() => generateFace({ rarity: 'common', combatPower: ceiling + 1 }), /over the ceiling/);
+  const low = { ...scoring, rank: { ...scoring.rank, maxCp: 10 } };
+  assert.throws(() => generateFace({ rarity: 'common', combatPower: 11 }, { scoring: low }), /over the ceiling/);
+  for (let seed = 1; seed <= 20; seed++) assert.equal(generateFace({ rarity: 'rare', rank: scoring.rank.maxRank, seed }, { scoring: low }).cp, 10);
 });
 
 test('card generator: output has the Core card shape and passes the card template validator', () => {
