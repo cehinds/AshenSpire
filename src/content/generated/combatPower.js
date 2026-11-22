@@ -63,7 +63,7 @@ export const cardCombatPower = {
  "core.pebbleThrow": {"raw":5,"cp":3,"rank":1,"rarity":"uncommon"},
  "core.pommelStrike": {"raw":11,"cp":11,"rank":3,"rarity":"common"},
  "core.purifyingLight": {"raw":10,"cp":8,"rank":2,"rarity":"uncommon"},
- "core.pyreLash": {"raw":41,"cp":39,"rank":10,"rarity":"uncommon"},
+ "core.pyreLash": {"raw":26,"cp":24,"rank":6,"rarity":"uncommon"},
  "core.quickGuard": {"raw":2,"cp":0,"rank":0,"rarity":"uncommon"},
  "core.radiantVerdict": {"raw":33,"cp":28,"rank":7,"rarity":"rare"},
  "core.rakingSweep": {"raw":15,"cp":13,"rank":4,"rarity":"uncommon"},

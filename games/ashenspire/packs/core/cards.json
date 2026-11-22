@@ -4368,7 +4368,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "loseHp",
@@ -4398,9 +4398,9 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
-      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
       "effects": [
         {
           "op": "damage",
