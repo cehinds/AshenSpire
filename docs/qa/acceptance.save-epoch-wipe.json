@@ -1,0 +1,85 @@
+{
+  "request": "One-time HARD save wipe for the balance overhaul (owner ruling 2026-11-21): every existing save is discarded on boot, run slots and meta/profile, and the title says so once.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "title-after-epoch-wipe",
+      "url": "?qa=epochwipe",
+      "ready": "#app",
+      "actions": [
+        {
+          "key": "Enter"
+        },
+        {
+          "wait": {
+            "ms": 9000
+          }
+        }
+      ],
+      "settleMs": 2500,
+      "seedStorage": {
+        "sote_run_v1": "{\"schemaVersion\":1,\"class\":\"warrior\",\"actNumber\":1,\"floor\":3,\"seedString\":\"old\"}",
+        "sote_meta_v1": "{\"schemaVersion\":1}",
+        "sote_run_archived": "{}"
+      },
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Notice is on the title",
+          "selector": ".save-wipe-notice"
+        },
+        {
+          "kind": "text",
+          "label": "Notice says all progress was reset for the balance overhaul",
+          "selector": ".save-wipe-notice",
+          "includes": "All progress, unlocks and history were reset for the balance overhaul."
+        },
+        {
+          "kind": "count",
+          "label": "No Continue button",
+          "selector": ".slot-continue",
+          "eq": 0
+        },
+        {
+          "kind": "within",
+          "label": "Notice stays on screen",
+          "selector": ".save-wipe-notice",
+          "container": "#app"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Old save still offered as Continue",
+          "selector": ".slot-continue"
+        },
+        {
+          "kind": "text",
+          "label": "Old build-wipe wording shown instead",
+          "selector": ".save-wipe-notice",
+          "includes": "older build"
+        }
+      ]
+    }
+  ]
+}
