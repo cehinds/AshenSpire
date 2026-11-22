@@ -5384,3 +5384,16 @@ armour,starseer,sagesRobe,item:armor
 armour,starseer,sagesRobe,starstone
 armour,starseer,sagesRobe,oath
 armour,starseer,sagesRobe,classification.armour
+card,,gravebinderLament,fx:ritual
+card,,gravebinderLament,fx:blight
+card,,gravebinderLament,source:spell
+card,,gravebinderLament,delivery:melee
+card,,gravebinderLament,theme:blight
+card,,gravebinderLament,classification.attack
+card,,gravebinderLament,ritual
+card,,gravebinderLament,camp:spell
+card,,gravebinderLament,range:melee
+card,,gravebinderLament,school:decay
+card,,gravebinderLament,damage:decay
+card,,gravebinderLament,maneuver:casting
+card,,gravebinderLament,tradition:divine
