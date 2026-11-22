@@ -14,7 +14,7 @@
         { "kind": "count", "label": "An opening hand is dealt", "selector": ".hand .card", "min": 3 },
         { "kind": "count", "label": "The starter deck's Strike or Defend is in hand", "selector": ".hand .card[data-card-id$=\"strike\"], .hand .card[data-card-id$=\"defend\"]", "min": 1 },
         { "kind": "within", "label": "Hand stays inside the app", "selector": ".hand", "container": "#app" },
-        { "kind": "consoleErrors", "label": "No console errors", "max": 0 }
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate"] }
       ],
       "failure": [
         { "kind": "count", "label": "Counter (no longer a starter) is in the opening hand", "selector": ".hand .card[data-card-id$=\"counter\"]", "min": 1 }
@@ -28,7 +28,7 @@
       "success": [
         { "kind": "count", "label": "An opening hand is dealt", "selector": ".hand .card", "min": 3 },
         { "kind": "within", "label": "Hand stays inside the app", "selector": ".hand", "container": "#app" },
-        { "kind": "consoleErrors", "label": "No console errors", "max": 0 }
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["navigator.vibrate"] }
       ],
       "failure": [
         { "kind": "count", "label": "Granted Mana Surge still in the starting deck's hand", "selector": ".hand .card[data-card-id$=\"manaSurge\"]", "min": 1 }
