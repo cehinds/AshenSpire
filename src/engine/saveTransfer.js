@@ -126,7 +126,9 @@ export function CreateSaveTransfer(storage, unpinnedRegistries = null)
         }
         // A save wipe (epoch raise) discarded old progress on purpose: an export from an older epoch must not bring it back.
         const stamped = data.epoch;
-        const exportEpoch = typeof stamped === 'number' && Number.isInteger(stamped) && stamped >= 1 ? stamped : 1;
+        const exportEpoch = typeof stamped === 'number' && Number.isInteger(stamped) && stamped >= 1
+            ? stamped
+            : 1;
         if (exportEpoch < ReadEpochStamp(storage))
         {
             throw Object.assign(

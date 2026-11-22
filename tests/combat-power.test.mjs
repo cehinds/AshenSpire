@@ -85,3 +85,11 @@ test('RankRange labels agree with RankOf when unrankedMax is not 0', () => {
   }
   assert.equal(RankRange(1), '1-4', 'the shipped table (unrankedMax 0) is unchanged');
 });
+
+test('the effect count sees a status even when a tag shares its part key', async () => {
+  const { BaseFace } = await import('../src/model/combatPower.js');
+  const face = tags => Object.assign(BaseFace(), { sp: 1, dmg: 4, statuses: [['venom', 2, 'enemy']], tags });
+  const plain = ScoreCard(face([])), tagged = ScoreCard(face(['venom']));
+  assert.ok(plain.parts['effect count'] > 0, 'damage + Venom is two effects');
+  assert.equal(tagged.parts['effect count'], plain.parts['effect count'], 'a venom tag does not hide the Venom status');
+});

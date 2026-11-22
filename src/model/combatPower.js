@@ -63,24 +63,28 @@ export function ScoreCard(c, scoring = shippedScoring) {
   const S = slimOf(scoring), M = S.model, CM = scoring.cardModel;
   const parts = {};
   const add = (k, v) => { if (v) parts[k] = (parts[k] || 0) + v; };
+  // `fx` mirrors only the effect parts (damage, block, statuses ...), so the effect count never mistakes a tag or keyword that
+  // happens to share a part key with a status (a `venom` tag and the Venom status) for, or hides it from, an effect.
+  const fx = {};
+  const addFx = (k, v) => { add(k, v); if (v) fx[k] = (fx[k] || 0) + v; };
   const area = c.tags.includes(CM.areaTag) ? M.ENEMIES : 1;
   add('SP', S.costs.sp * c.sp); add('MP', S.costs.mp * c.mp);
-  add('damage', ew(S, 'damage', c.dmg) * area);
-  add('block', ew(S, 'block', c.blk));
-  add('poise', ew(S, 'poiseDamage', c.poise) * area);
+  addFx('damage', ew(S, 'damage', c.dmg) * area);
+  addFx('block', ew(S, 'block', c.blk));
+  addFx('poise', ew(S, 'poiseDamage', c.poise) * area);
   for (const [s, n, tgt] of c.statuses) {
     const st = S.statuses[s]; if (!st) continue;
     const self = tgt === 'self', good = (st[1] === 'self') === self;
     const exact = exactStatus(S, s, n);
     const v = exact !== null ? exact : st[0] * (S.decayOne.has(s) ? Math.min(n, M.R) : n);
-    add(s, v * (good ? 1 : -1) * (self ? 1 : area));
+    addFx(s, v * (good ? 1 : -1) * (self ? 1 : area));
   }
-  add('draw', ew(S, 'draw', c.draw)); add('heal', ew(S, 'heal', c.heal)); add('HP cost', ew(S, 'loseHp', c.loseHp));
-  add('discard', ew(S, 'discard', c.discard)); add('SP restore', ew(S, 'restoreStamina', c.restoreSp)); add('MP restore', ew(S, 'restoreMana', c.restoreMp));
-  add('cleanse', ew(S, 'removeStatus', c.cleanse)); add('counter', ew(S, 'counterStack', c.counter)); add('reflect', ew(S, 'applyReflect', c.reflect));
-  add('pull', ew(S, 'pullEnemy', c.pull)); add('move', ew(S, 'moveEngagement', c.move));
+  addFx('draw', ew(S, 'draw', c.draw)); addFx('heal', ew(S, 'heal', c.heal)); addFx('HP cost', ew(S, 'loseHp', c.loseHp));
+  addFx('discard', ew(S, 'discard', c.discard)); addFx('SP restore', ew(S, 'restoreStamina', c.restoreSp)); addFx('MP restore', ew(S, 'restoreMana', c.restoreMp));
+  addFx('cleanse', ew(S, 'removeStatus', c.cleanse)); addFx('counter', ew(S, 'counterStack', c.counter)); addFx('reflect', ew(S, 'applyReflect', c.reflect));
+  addFx('pull', ew(S, 'pullEnemy', c.pull)); addFx('move', ew(S, 'moveEngagement', c.move));
   const U = CM.utility;
-  add('utility', c.holdOne * U.holdOne + c.boost * U.boost + c.cull * U.cull + c.shuffle * U.shuffle + c.attr * U.attr);
+  addFx('utility', c.holdOne * U.holdOne + c.boost * U.boost + c.cull * U.cull + c.shuffle * U.shuffle + c.attr * U.attr);
   for (const t of c.tags) {
     const w = S.tags[t]; if (!w || !w.weight) continue;
     add(t, w.weight * (w.per === 'hit' ? Math.max(1, c.hits) * area : 1));
@@ -97,12 +101,12 @@ export function ScoreCard(c, scoring = shippedScoring) {
     add(k, v);
   }
   // Owner 2026-11-21 (scoring.effectCount): + weight per distinct real effect type scoring > 0, beyond the first (skipFirst).
-  // Not effects: costs, tag bonuses, keywords, multipliers; a rider (Poise) counts only on a card with no damage.
+  // Not effects: costs, tag bonuses, keywords, multipliers (only `fx` parts count, so a tag sharing a status's part key cannot hide it); a rider (Poise) counts only on a card with no damage.
   const EC = scoring.effectCount;
   if (EC && EC.weight) {
-    const notEffect = new Set(['SP', 'MP', 'HP cost', 'discard', 'counterstrike', 'copy', ...c.tags, ...c.kw]);
+    const notEffect = new Set(['SP', 'MP', 'HP cost', 'discard']);
     const riders = new Set(EC.riders || []);
-    const n = Object.entries(parts).filter(([k, v]) => v > 0 && !notEffect.has(k) && !(riders.has(k) && parts.damage > 0)).length;
+    const n = Object.entries(fx).filter(([k, v]) => v > 0 && !notEffect.has(k) && !(riders.has(k) && fx.damage > 0)).length;
     add('effect count', EC.weight * Math.max(0, n - (EC.skipFirst ? 1 : 0)));
   }
   const raw = Rnd(Object.values(parts).reduce((s, v) => s + v, 0));
