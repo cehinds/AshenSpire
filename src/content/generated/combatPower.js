@@ -99,7 +99,7 @@ export const cardCombatPower = {
  "core.stormcall": {"raw":33,"cp":28,"rank":7,"rarity":"rare"},
  "core.strike": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
  "core.stunningBlow": {"raw":4,"cp":2,"rank":1,"rarity":"uncommon"},
- "core.sweep": {"raw":2,"cp":2,"rank":1,"rarity":"common"},
+ "core.sweep": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
  "core.temperedEdge": {"raw":1,"cp":-4,"rank":0,"rarity":"rare"},
  "core.upsetRanks": {"raw":-1,"cp":-3,"rank":0,"rarity":"uncommon"},
  "core.venomSpray": {"raw":8,"cp":8,"rank":2,"rarity":"common"},

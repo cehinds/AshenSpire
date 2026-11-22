@@ -94,8 +94,8 @@
       "manaCost": 0
     },
     "sp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 2,
+      "staminaCost": 2,
       "manaCost": 0
     },
     "mp": {
@@ -104,8 +104,8 @@
       "manaCost": 0
     },
     "sp,mp": {
-      "cost": 1,
-      "staminaCost": 1,
+      "cost": 2,
+      "staminaCost": 2,
       "manaCost": 0
     }
   },
