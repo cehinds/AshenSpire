@@ -5,8 +5,11 @@
 export const levelLists = {
  cards: {
   "act1": [
+   "blightTouch",
    "core.advance",
    "core.arcaneSiphon",
+   "core.arcaneWard",
+   "core.ashenShell",
    "core.astralBolt",
    "core.backstep",
    "core.batteringGale",
@@ -31,6 +34,7 @@ export const levelLists = {
    "core.galePull",
    "core.galePush",
    "core.gash",
+   "core.glimmerVeil",
    "core.glimpse",
    "core.graveToll",
    "core.hammerBlow",
@@ -76,6 +80,7 @@ export const levelLists = {
    "core.starseerSpecial",
    "core.steadyGuard",
    "core.steadyHands",
+   "core.stoneSigil",
    "core.stormBlessing",
    "core.stormLash",
    "core.strike",
@@ -88,12 +93,17 @@ export const levelLists = {
    "core.wardingGlance",
    "core.whetstoneNick",
    "core.whirlwind",
-   "core.wideSweep"
+   "core.wideSweep",
+   "greatswordSunderingHew",
+   "twinFang"
   ],
   "act2": [
+   "blightTouch",
    "core.acidSplash",
    "core.advance",
    "core.arcaneSiphon",
+   "core.arcaneWard",
+   "core.ashenShell",
    "core.astralBolt",
    "core.backstep",
    "core.batteringGale",
@@ -125,6 +135,7 @@ export const levelLists = {
    "core.galePush",
    "core.gash",
    "core.glacialSpike",
+   "core.glimmerVeil",
    "core.glimpse",
    "core.graveToll",
    "core.guidingWhisper",
@@ -175,6 +186,7 @@ export const levelLists = {
    "core.starseerSpecial",
    "core.steadyGuard",
    "core.steadyHands",
+   "core.stoneSigil",
    "core.stormBlessing",
    "core.stormLash",
    "core.stormcall",
@@ -190,12 +202,17 @@ export const levelLists = {
    "core.whetstoneNick",
    "core.whirlwind",
    "core.wideSweep",
-   "core.witherDraught"
+   "core.witherDraught",
+   "greatswordSunderingHew",
+   "twinFang"
   ],
   "act3": [
+   "blightTouch",
    "core.acidSplash",
    "core.advance",
    "core.arcaneSiphon",
+   "core.arcaneWard",
+   "core.ashenShell",
    "core.astralBolt",
    "core.backstep",
    "core.batteringGale",
@@ -228,6 +245,7 @@ export const levelLists = {
    "core.galePush",
    "core.gash",
    "core.glacialSpike",
+   "core.glimmerVeil",
    "core.glimpse",
    "core.graveToll",
    "core.guidingWhisper",
@@ -279,6 +297,7 @@ export const levelLists = {
    "core.starseerSpecial",
    "core.steadyGuard",
    "core.steadyHands",
+   "core.stoneSigil",
    "core.stormBlessing",
    "core.stormLash",
    "core.stormcall",
@@ -294,14 +313,15 @@ export const levelLists = {
    "core.whetstoneNick",
    "core.whirlwind",
    "core.wideSweep",
-   "core.witherDraught"
+   "core.witherDraught",
+   "greatswordSunderingHew",
+   "twinFang"
   ]
  },
  items: {
   "act1": {
    "weapon": [
     "arbalest",
-    "ashenClaymore",
     "ashStaff",
     "battleaxe",
     "beardedAxe",
@@ -309,7 +329,6 @@ export const levelLists = {
     "boneTalisman",
     "broadsword",
     "buckler",
-    "dagger",
     "duelistsFoil",
     "estoc",
     "flamberge",
@@ -320,7 +339,6 @@ export const levelLists = {
     "huntersRecurve",
     "ironKnuckles",
     "kiteShield",
-    "kris",
     "lantern",
     "leatherWhip",
     "longbow",
@@ -463,7 +481,6 @@ export const levelLists = {
     "battleaxe",
     "beardedAxe",
     "beastClaws",
-    "boneSceptre",
     "boneTalisman",
     "broadsword",
     "buckler",

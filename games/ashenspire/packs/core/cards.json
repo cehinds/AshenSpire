@@ -400,7 +400,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 4
+        "amount": 3
       },
       {
         "op": "applyStatus",
