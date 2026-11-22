@@ -35,10 +35,12 @@ test('over 200 doors skills and powers are at least half the offered combat card
   assert.ok(nonAttack / cards >= 0.5, `${nonAttack}/${cards}`);
 });
 
-test('first doors vary across 50 seeds: no card in more than 35% of doors, 45+ distinct cards', () => {
+// Level lists (owner 2026-11-21): the act-1 band (Rank 0-3) holds fewer scored cards than the whole pool, so the most common first-door card
+// is a little commoner than the unbanded 35% (measured 18/50 with the band, 57 distinct): now no card in more than 40% of doors, 45+ distinct cards.
+test('first doors vary across 50 seeds: no card in more than 40% of doors, 45+ distinct cards', () => {
   const freq = new Map();
   for (let s = 1; s <= 50; s++) for (const o of door(s).options) if (o.kind === 'combatCards' || o.kind === 'weaponArts') freq.set(o.id, (freq.get(o.id) || 0) + 1);
   const top = Math.max(...freq.values());
-  assert.ok(top <= 50 * 0.35, `top card in ${top}/50 doors`);
+  assert.ok(top <= 50 * 0.4, `top card in ${top}/50 doors`);
   assert.ok(freq.size >= 45, `${freq.size} distinct`);
 });
