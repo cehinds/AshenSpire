@@ -51,7 +51,7 @@ export function faceOf(def, row) {
   return f;
 }
 
-function measureCards() {
+export function measureCards() {
   const byId = new Map();
   for (const classId of CLASSES) {
     const { ids } = holdable(classId);
