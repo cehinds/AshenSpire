@@ -20,20 +20,22 @@ const start = (classId) => createRunState({ registries: reg, classId, seed: 511,
 const legacyReg = legacyCoreRegistries();
 const startLegacy = (classId) => createRunState({ registries: legacyReg, classId, seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 
+// Owner ruling 2026-11-21: ten cards each. Martial: 4 Strike-type attacks, 4 Defends, a class specialty and the weapon art.
+// Casters: 4 attack cantrips, 4 defensive cantrips, a class spell and the weapon art.
 const DECKS = {
-  reaver: { 'core.strike': 2, 'core.defend': 3, 'core.counter': 1, 'core.smash': 1, 'core.sweep': 1, 'core.ironbreaker': 1, 'core.rallyingRoar': 1, 'greatswordSunderingHew': 1 },
-  rogue: { 'core.strike': 2, 'core.defend': 2, 'core.counter': 1, 'core.evade': 1, 'core.smash': 1, 'core.sweep': 1, 'core.feint': 1, 'core.venomedEdge': 1, 'twinFang': 1 },
-  starseer: { 'core.cantrip': 2, 'core.starseerSpecial': 1, 'core.astralBolt': 1, 'base.ethereal': 3, 'core.smash': 1, 'core.sweep': 1, 'core.manaSurge': 1, blightTouch: 1 },
-  herald: { 'core.cantrip': 2, 'base.ethereal': 2, 'base.exhaust': 1, 'core.smash': 1, 'core.sweep': 1, 'core.smite': 1, 'core.sanctifiedWard': 1, 'core.manaSurge': 1, blightTouch: 1 },
+  reaver: { 'core.strike': 4, 'core.defend': 4, 'core.reaverSpecial': 1, greatswordSunderingHew: 1 },
+  rogue: { 'core.strike': 4, 'core.defend': 4, 'core.rogueSpecial': 1, twinFang: 1 },
+  starseer: { 'core.cantrip': 4, 'core.arcaneWard': 1, 'core.glimmerVeil': 1, 'core.stoneSigil': 1, 'core.ashenShell': 1, 'core.starseerSpecial': 1, blightTouch: 1 },
+  herald: { 'core.cantrip': 4, 'core.arcaneWard': 1, 'core.glimmerVeil': 1, 'core.stoneSigil': 1, 'core.ashenShell': 1, 'core.heraldSpecial': 1, blightTouch: 1 },
 };
 
 for (const [classId, expected] of Object.entries(DECKS)) {
-  test(`Core ${classId} starts with its exact 11-card deck (owner stance-starter design, Wave 1)`, () => {
+  test(`Core ${classId} starts with its exact 10-card deck (owner ruling 2026-11-21)`, () => {
     const run = start(classId);
-    assert.equal(run.deck.length, 11);
+    assert.equal(run.deck.length, 10);
     assert.deepEqual(counts(run.deck), expected);
     assert.deepEqual(run.sideboard, []);
-    // The ledger is seeded from the authored list; weapon-granted arts (Sundering Hew, Mana Surge ...) are not in it.
+    // The ledger is seeded from the authored list; the weapon-granted art (Sundering Hew, Twin Fang, Blight Touch) are not in it.
     for (const id of gameProfileStarterDeck(run, classId)) assert.ok(run.collectedCardIds.includes(id), `${id} is in the collection ledger`);
   });
 
@@ -250,3 +252,35 @@ test('sweep: every Core class deck row and a legacy deck badge Basic iff the Bas
     for (const b of zero) assert.equal(b.text === 'Basic', b.shown, `${name}: ${b.row.cardId} (${b.row.source}) badge "${b.text}" vs Basic filter ${b.shown}`);
   }
 });
+
+// Owner ruling 2026-11-21: starting decks are Unranked basics plus one uncommon specialty and one rare Rank 1 weapon art,
+// inside the budget in content/source/scoring.json (starter.budget); starting armour is Unranked.
+import { scoring } from '../src/content/generated/scoring.js';
+import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
+
+for (const classId of Object.keys(DECKS)) {
+  test(`Core ${classId} starting deck passes the starter budget and the rank recipe`, () => {
+    const b = scoring.starter.budget;
+    const cards = Object.entries(DECKS[classId]).flatMap(([id, n]) => Array(n).fill(id));
+    assert.ok(cards.length >= b.cardsMin && cards.length <= b.cardsMax, `${cards.length} cards`);
+    const rows = cards.map(id => ({ id, ...cardCombatPower[id] }));
+    for (const r of rows) assert.ok(r.raw !== undefined, `${r.id} has a combat power row`);
+    const special = rows.filter(r => r.rarity !== 'common' || r.rank > 0);
+    assert.ok(special.length <= b.maxSpecial, `${special.length} special cards: ${special.map(r => r.id)}`);
+    for (const r of rows) assert.ok(r.rank <= b.maxRankPerCard, `${r.id} rank ${r.rank}`);
+    const rawTotal = rows.reduce((sum, r) => sum + Math.max(r.raw, b.rawFloorPerCard), 0);
+    assert.ok(rawTotal <= b.rawTotalMax, `raw total ${rawTotal} > ${b.rawTotalMax}`);
+    // The recipe: every card but the weapon art is Unranked (cp <= 0); the art is rare at Rank 1.
+    const art = rows.filter(r => r.rarity === 'rare');
+    assert.equal(art.length, 1, 'exactly one rare weapon art');
+    assert.equal(art[0].rank, 1, `${art[0].id} is Rank 1 (cp ${art[0].cp})`);
+    for (const r of rows.filter(x => x !== art[0])) assert.ok(r.cp <= 0, `${r.id} cp ${r.cp} is Unranked`);
+    assert.equal(rows.filter(r => r.rarity === 'uncommon').length, 1, 'one uncommon specialty');
+  });
+
+  test(`Core ${classId} starting armour is Unranked`, () => {
+    const row = itemCombatPower[`armour:${classId}.default`];
+    assert.ok(row, 'armour row');
+    assert.ok(row.cp <= 0, `cp ${row.cp}`);
+  });
+}
