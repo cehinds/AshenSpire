@@ -41,6 +41,7 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:fbf370e6b803b5dde87934ba7bb0e0789209ea33dc1ce45c2642f4eee9fd8f1d',
   'sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7',
   'sha256:e5b5d5b558969077b703152b30648fd7e49830b8caa2cb0b94d7ad788f820573',
   'sha256:edf0d924c49e924157a7c4250168a0e470ad3cf282f63d7439ab66eca9f8d8b0',
@@ -159,7 +160,8 @@ const PREVIOUS_RUNTIMES = new Set([
 // Combined Gear, stat traditions and Smash rules retain every parent runtime above.
 // Card tradition labels move to uiStrings.csv (card.tradition.*, #2892 review): wording only, no rule; edf0d9... is now in PREVIOUS_RUNTIMES.
 // Merging dev (card tradition labels, spell traditions) into the Retreat reach rules and drawbacks (chore/RetreatReachRules): dev's 7d13f1... and this branch's e5b5d5... are now in PREVIOUS_RUNTIMES.
-const FIXED_EVASION_RUNTIME = 'sha256:fbf370e6b803b5dde87934ba7bb0e0789209ea33dc1ce45c2642f4eee9fd8f1d';
+// The Magic Adept zero Mana floor (2026-11-22, owner ruling: stance.adeptMinimumCost in fixCoreMechanics.json and the combat.stance parameter schema) moves it again; fbf370... is now in PREVIOUS_RUNTIMES, and a fight saved without the key keeps floor 1.
+const FIXED_EVASION_RUNTIME = 'sha256:d5db9a0655276f175cdbeb8299a6e91853c22408b4410fb80ee3674db79a90fa';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
