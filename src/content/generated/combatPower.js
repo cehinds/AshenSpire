@@ -276,7 +276,7 @@ export const itemCombatPower = {
  "weapon:scythe": {"raw":17,"cp":15,"rank":4,"rarity":"uncommon"},
  "weapon:shortbow": {"raw":15,"cp":15,"rank":4,"rarity":"common"},
  "weapon:spikedShield": {"raw":11,"cp":9,"rank":3,"rarity":"uncommon"},
- "weapon:starstoneStaff": {"raw":43,"cp":41,"rank":10,"rarity":"uncommon"},
+ "weapon:starstoneStaff": {"raw":41,"cp":39,"rank":10,"rarity":"uncommon"},
  "weapon:stiletto": {"raw":-1,"cp":-6,"rank":0,"rarity":"rare"},
  "weapon:stormSceptre": {"raw":16,"cp":14,"rank":4,"rarity":"uncommon"},
  "weapon:straightSword": {"raw":3,"cp":3,"rank":1,"rarity":"common"},

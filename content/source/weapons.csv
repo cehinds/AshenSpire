@@ -45,7 +45,7 @@ lantern,Lantern,shield,either,common,lantern,0.85,6B5D45,C9A227,shieldAttack,shi
 torch,Torch,shield,either,common,torch,0.90,6B5D45,C9502E,shieldAttack,shieldGuard,weaponTechnique,strike.burn=+2|spell:fire.hitFireVulnerable=+1,,Fire remembers what steel forgets.,10,,2,2,1,0,,blunt,melee,
 parryDagger,Parrying Dagger,shield,either,uncommon,dagger,0.85,C0B8A6,7FA8C9,shieldAttack,shieldGuard,weaponTechnique,strike.poise=+2,,Held wrong on purpose.,7,,3,3,1,0,,piercing,melee,metal
 ashStaff,Ash Staff,staff,either,common,staffOrb,1.00,6B5D45,C9A227,staffMagicAttack,staffGuard,staffTechnique,power.potency=+2,,"Grey wood, warm at the grip.",10,,3,3,1,0,,blunt,reach,
-starstoneStaff,Starstone Staff,staff,either,uncommon,staffCrystal,1.00,6B5D45,7FA8C9,staffMagicAttack,staffGuard,staffTechnique,power.potency=+2|strike.frost=+1,,The stone hums before you do.,7,,3,3,1,0,,blunt,reach,metal
+starstoneStaff,Starstone Staff,staff,either,uncommon,staffCrystal,1.00,6B5D45,7FA8C9,staffMagicAttack,staffGuard,staffTechnique,power.potency=+1|strike.frost=+1,,The stone hums before you do.,7,,3,3,1,0,,blunt,reach,metal
 boneSceptre,Bone Sceptre,staff,either,uncommon,staffSkull,1.00,B8AE98,B5541C,sceptreArcaneAttack,sceptreGuard,staffTechnique,power.potency=+1|strike.blight=+1,,Someone knelt for this once.,7,,4,4,1,0,,blunt,reach,
 emberlightSceptre,Emberlight Sceptre,staff,either,rare,staffFlame,1.00,6B5D45,C9A227,sceptreArcaneAttack,sceptreGuard,staffTechnique,power.potency=+3,,It keeps a little of the guiding flame.,4,,4,4,1,0,,blunt,reach,
 goldboughBranch,Goldbough Branch,staff,either,rare,staffBranch,1.00,6B5D45,C9A227,sceptreArcaneAttack,sceptreGuard,staffTechnique,power.potency=+2|self.regen=+1,,"Cut, and still growing.",4,,4,4,1,0,,blunt,reach,
