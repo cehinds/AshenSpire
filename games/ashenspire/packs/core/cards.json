@@ -389,18 +389,20 @@
     "name": "Glimmer Veil",
     "class": "colorless",
     "rarity": "common",
-    "cost": 2,
-    "staminaCost": 2,
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
     "icon": "shield",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "block",
         "target": "self",
-        "amount": 3
+        "amount": 1
       },
       {
         "op": "applyStatus",

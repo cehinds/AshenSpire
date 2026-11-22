@@ -55,7 +55,8 @@ test('elemental and Divine cantrips retain school riders while Arcane schools ke
     const school = schoolOf(card);
     if (!school || school === 'lightning' || card.id === 'core.galePull') continue; // Gale Pull (section 22) is Force by tag and moves rows instead of applying a status
     if (school === 'alteration' || school === 'illusion') {
-      const utility = { 'core.manaSurge': 'restoreMana', 'core.glimpse': 'draw', 'core.wardingGlance': 'block', 'core.moteShield': 'block' };
+      // Owner ruling 2026-11-21: the four casters' defensive cantrips (Arcane Ward, Glimmer Veil, Stone Sigil, Ashen Shell) are Alteration Block cantrips.
+      const utility = { 'core.manaSurge': 'restoreMana', 'core.glimpse': 'draw', 'core.wardingGlance': 'block', 'core.moteShield': 'block', 'core.arcaneWard': 'block', 'core.glimmerVeil': 'block', 'core.stoneSigil': 'block', 'core.ashenShell': 'block' };
       assert.ok(utility[card.id], `${card.id}: named Arcane utility cantrip`);
       for (const effects of [card.effects, card.upgrade?.effects || card.effects]) assert.ok(effects.some(effect => effect.op === utility[card.id] && effect.amount >= 1), `${card.id}: actual Arcane utility`);
       continue;
