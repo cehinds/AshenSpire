@@ -57,18 +57,17 @@ function defendBlock(reg, classId, dexterity = 0) {
   return (combat.player.block || 0) - before;
 }
 
-test('a played Defend averages 8-10 Block over the classes with their starting kit, and stays under 20 with heavy Dexterity', () => {
-  // Measured 2026-11-20 (kit / +2 DEX / +8 DEX): Reaver 10/11/16, Rogue 13/14/19, Starseer 8/10/14, Herald 8/10/14. Before: 11-16 kit.
+// Owner ruling 2026-11-21 (Defend template: 1 SP, final Block 4, Unranked) retires the 2026-11-20 "Defend averages 8-10 Block" band.
+// The measured face is the neutral-kit Defend the combat-power table scores; stats and armour add on top of it in play.
+test('the starter Defend gives final Block 4 and is Unranked (owner 2026-11-21; replaces the 8-10 average band)', async () => {
+  const { measureCards } = await import('../tools/combat-power-report.mjs');
+  const { cardCombatPower } = await import('../src/content/generated/combatPower.js');
+  assert.equal(measureCards()['core.defend'].blk, 4, 'final Block of the measured Defend');
+  assert.ok(cardCombatPower['core.defend'].cp <= 0, `Defend cp ${cardCombatPower['core.defend'].cp} is Unranked`);
+  assert.equal(cardCombatPower['core.defend'].rank, 0);
   const reg = registriesFor(current);
-  const mean = values => values.reduce((a, b) => a + b, 0) / values.length;
-  const rows = ['reaver', 'rogue', 'starseer', 'herald'].map(classId =>
-    ({ classId, kit: defendBlock(reg, classId), typical: defendBlock(reg, classId, 2), heavy: defendBlock(reg, classId, 8) }));
-  const kitMean = mean(rows.map(row => row.kit));
-  assert.ok(kitMean >= 8 && kitMean <= 10, `Defend averages ${kitMean} with the starting kits`);
-  assert.ok(mean(rows.map(row => row.typical)) <= 12, 'Defend with +2 Dexterity averages at most 12');
-  for (const row of rows) {
-    assert.ok(row.kit <= 13, `${row.classId} Defend with its kit gives ${row.kit}`);
-    assert.ok(row.heavy < 20, `${row.classId} Defend with +8 Dexterity gives ${row.heavy}`);
+  for (const classId of ['reaver', 'rogue', 'starseer', 'herald']) {
+    assert.ok(defendBlock(reg, classId, 8) < 20, `${classId} Defend with +8 Dexterity stays under 20`);
   }
 });
 
