@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/combatPower.js",
-    "symbol": "scoreCard"
+    "file": "src/model/combatTacticsRules.js",
+    "symbol": "traitValuesProblems"
   }
 }
