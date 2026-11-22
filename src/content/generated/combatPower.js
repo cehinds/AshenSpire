@@ -26,7 +26,7 @@ export const cardCombatPower = {
  "core.dawnBulwark": {"raw":-12,"cp":-17,"rank":0,"rarity":"rare"},
  "core.dawnFlame": {"raw":19,"cp":19,"rank":5,"rarity":"common"},
  "core.dazzleFlare": {"raw":27,"cp":27,"rank":7,"rarity":"common"},
- "core.defend": {"raw":2,"cp":2,"rank":1,"rarity":"common"},
+ "core.defend": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
  "core.drivingThrust": {"raw":15,"cp":15,"rank":4,"rarity":"common"},
  "core.eclipse": {"raw":38,"cp":33,"rank":9,"rarity":"rare"},
  "core.emberFlick": {"raw":24,"cp":24,"rank":6,"rarity":"common"},
