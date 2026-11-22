@@ -103,7 +103,8 @@ test('an old profile future shop offer matches Dev items and RNG, and cached off
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 511 }), rng = createRng(41);
   const offer = gameProfileShopStock(registries, run, rng, { shopId: 'old-smith' });
-  assert.deepEqual(offer.options.map(row => row.id), ['shortbow', 'dagger', 'straightSword', 'progression-whisperglass-die', 'sacrificialKnife', 'crackedLantern', 'base.modify-card-stance', 'base.weak', 'base.bind', 'poiseBreaker', 'greatswordSunderingHew', 'core.reaverSpecial', 'wondrousDraught', 'blightCoating', 'flaskOfFerocity', 'wayfarerPlate', 'nightweave', 'riteVestments']);
+  // Shop banding (owner ruling, 2026-11-22): shop shelves draw from the act's rank band like rewards, so the weapon, armour and relic shelves differ from the Dev oracle's; the card shelf, the draw counters and the cached-offer rule are unchanged.
+  assert.deepEqual(offer.options.map(row => row.id), ['buckler', 'straightSword', 'kiteShield', 'progression-whisperglass-die', 'curedHide', 'sacrificialKnife', 'base.modify-card-stance', 'base.weak', 'base.bind', 'poiseBreaker', 'greatswordSunderingHew', 'core.reaverSpecial', 'wondrousDraught', 'blightCoating', 'flaskOfFerocity', 'bastion', 'wayfarerPlate', 'riteVestments']);
   assert.equal(rng.getCounters().shop, 21);
   assert.equal(Object.values(rng.getCounters()).reduce((sum, n) => sum + n, 0), 21);
   const before = rng.getCounters();
