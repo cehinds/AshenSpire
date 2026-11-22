@@ -218,7 +218,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-20 on the Retreat reach merge: 7d13f1... (dev) and e5b5d5... (this branch before dev) are now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-22: the Magic Adept zero Mana floor (stance.playerMinimumCost, owner ruling) moves the runtime hash; fbf370... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-22: no card has a cost minimum (owner ruling); d5db9a... is now in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:a5c68d23829dca78e12749ab6d743b6e9c27e0915d952afe870f6355169e4474');
+  // Re-pinned 2026-11-22: cost.manaOnly is a data mechanic now (the cost-minimum validator rule is gone) and Exhaust/Ethereal score flat (owner rulings); a5c68d... is now in PREVIOUS_RUNTIMES.
+  assert.equal(profile.lock.runtimeHash, 'sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

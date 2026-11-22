@@ -41,6 +41,7 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:a5c68d23829dca78e12749ab6d743b6e9c27e0915d952afe870f6355169e4474',
   'sha256:d5db9a0655276f175cdbeb8299a6e91853c22408b4410fb80ee3674db79a90fa',
   'sha256:fbf370e6b803b5dde87934ba7bb0e0789209ea33dc1ce45c2642f4eee9fd8f1d',
   'sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7',
@@ -163,7 +164,8 @@ const PREVIOUS_RUNTIMES = new Set([
 // Merging dev (card tradition labels, spell traditions) into the Retreat reach rules and drawbacks (chore/RetreatReachRules): dev's 7d13f1... and this branch's e5b5d5... are now in PREVIOUS_RUNTIMES.
 // The Magic Adept zero Mana floor (2026-11-22, owner ruling: stance.playerMinimumCost in fixCoreMechanics.json and the combat.stance parameter schema) moves it again; fbf370... is now in PREVIOUS_RUNTIMES, and a fight saved without the key keeps floor 1.
 // No card has a cost minimum (owner ruling 2026-11-22: stance.playerMinimumCost, the retired balance.mana floors, the upgrade cost steps) moves it once more; d5db9a... is now in PREVIOUS_RUNTIMES.
-const FIXED_EVASION_RUNTIME = 'sha256:a5c68d23829dca78e12749ab6d743b6e9c27e0915d952afe870f6355169e4474';
+// The cost.manaOnly mechanic is data now (its cardCosts.js validator rule went with the cost minimums) and Exhaust/Ethereal are flat in scoring: the runtime artifact moves once more; a5c68d... is now in PREVIOUS_RUNTIMES.
+const FIXED_EVASION_RUNTIME = 'sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
