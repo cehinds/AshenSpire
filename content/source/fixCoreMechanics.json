@@ -73,7 +73,7 @@
     "effectivenessMultiplier": 1.25,
     "discount": 1,
     "minimumCost": 1,
-    "adeptMinimumCost": 0
+    "playerMinimumCost": 0
   },
   "stanceBenefits": {
     "version": 1,

@@ -56,7 +56,6 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
   face.tags = [`camp:${camp}`, ...(camp === 'spell' ? ['source:spell', 'maneuver:casting'] : [type === 'attack' ? 'maneuver:attack' : 'maneuver:defend']), `classification.${type}`];
   if (camp === 'spell') face.tags.push('tradition:arcane');
   face.sp = pick(rand, 3); face.mp = camp === 'spell' ? pick(rand, 2) : 0;
-  if (face.mp) face.sp = Math.max(1, face.sp); // a Mana card costs at least 1 action (balance.mana.minActionCost)
   // Riders first, then the primary amount is solved against the live weights (scoring.effects), so any weight table works.
   const key = type === 'attack' ? 'dmg' : 'blk';
   if (type === 'attack') face.poise = 3 * pick(rand, 3); else face.draw = pick(rand, 2);

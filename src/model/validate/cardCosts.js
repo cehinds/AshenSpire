@@ -8,7 +8,6 @@ export function cardCostProblems(b, err, ctx) {
   // Secondary costs are semantic bounds, not merely integer shapes. A negative
   // cost would mint the resource when a card is played.
   // Core cards carry their tags in the tagging relation, not on the row.
-  const manaOnlyIds = new Set((Array.isArray(b.tagging) ? b.tagging : []).filter(row => row?.family === 'card' && row.tagId === 'cost.manaOnly').map(row => row.objectId));
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
     if (card?.gradeProfiles) {
       if (!['spell','maneuver'].includes(card.abilityKind)) err(`cards.${card.id}.abilityKind`,'graded card requires authored spell/maneuver identity');
@@ -40,22 +39,6 @@ export function cardCostProblems(b, err, ctx) {
     if (card && card.staminaCost != null && Number.isInteger(card.staminaCost) && card.staminaCost < 0) {
       err(`cards.${card.id || '?'}.staminaCost`, 'must be >= 0');
     }
-    // MANA IS THE THIRD COST LINE (plan phase 8, proposal §7.1): a card that
-    // costs Mana costs at least balance.mana.minActionCost action and
-    // minStaminaCost stamina — base and upgrade alike, each field inheriting
-    // the base's when the upgrade leaves it unsaid. Refused BY NAME.
-    // A card tagged cost.manaOnly (owner, 2026-11-15) is the one exception: it spends Mana alone, 0 Stamina (engine/spellCosts.js).
-    const manaFloor = b.balance && b.balance.mana;
-    const manaOnly = !!card && ([...(card.tags || []), ...(card.cardTags || [])].includes('cost.manaOnly') || manaOnlyIds.has(card.id));
-    if (card && !manaOnly && manaFloor && Number.isInteger(manaFloor.minActionCost) && Number.isInteger(manaFloor.minStaminaCost)) {
-      const faces = [['', card], ['.upgrade', card.upgrade ? { cost: card.cost, manaCost: card.manaCost, staminaCost: card.staminaCost, ...card.upgrade } : null]];
-      for (const [suffix, face] of faces) {
-        if (!face || !(Number.isInteger(face.manaCost) && face.manaCost > 0)) continue;
-        const action = face.cost === 'X' ? Infinity : face.cost;
-        const stamina = Number.isInteger(face.staminaCost) ? face.staminaCost : 0;
-        if (!(Number.isFinite(action) ? action >= manaFloor.minActionCost : true)) err(`cards.${card.id || '?'}${suffix}.cost`, `'${card.name || card.id}' costs Mana, so it costs at least ${manaFloor.minActionCost} action (balance.mana.minActionCost); it costs ${face.cost}`);
-        if (stamina < manaFloor.minStaminaCost) err(`cards.${card.id || '?'}${suffix}.staminaCost`, `'${card.name || card.id}' costs Mana, so it costs at least ${manaFloor.minStaminaCost} stamina (balance.mana.minStaminaCost); it costs ${stamina}`);
-      }
-    }
+    // No card has a cost minimum (owner ruling 2026-11-22): the Mana-card floor balance.mana.minActionCost / minStaminaCost is retired.
   }
 }

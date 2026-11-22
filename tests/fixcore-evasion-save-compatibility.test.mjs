@@ -216,8 +216,9 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
   // Re-pinned 2026-11-20 (#2892 review): card tradition labels move to uiStrings.csv (card.tradition.*); wording only, edf0d9... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-20 on the Retreat reach merge: 7d13f1... (dev) and e5b5d5... (this branch before dev) are now in PREVIOUS_RUNTIMES.
-  // Re-pinned 2026-11-22: the Magic Adept zero Mana floor (stance.adeptMinimumCost, owner ruling) moves the runtime hash; fbf370... is now in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:d5db9a0655276f175cdbeb8299a6e91853c22408b4410fb80ee3674db79a90fa');
+  // Re-pinned 2026-11-22: the Magic Adept zero Mana floor (stance.playerMinimumCost, owner ruling) moves the runtime hash; fbf370... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-22: no card has a cost minimum (owner ruling); d5db9a... is now in PREVIOUS_RUNTIMES.
+  assert.equal(profile.lock.runtimeHash, 'sha256:a5c68d23829dca78e12749ab6d743b6e9c27e0915d952afe870f6355169e4474');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
