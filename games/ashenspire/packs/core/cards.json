@@ -2157,7 +2157,7 @@
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 4,
+        "amount": 8,
         "nonlethal": true
       },
       {
@@ -2169,7 +2169,7 @@
         "op": "applyStatus",
         "target": "enemy",
         "status": "burn",
-        "stacks": 3
+        "stacks": 1
       }
     ],
     "tags": [
@@ -2487,7 +2487,7 @@
         "op": "applyStatus",
         "target": "allEnemies",
         "status": "burn",
-        "stacks": 2
+        "stacks": 1
       }
     ],
     "tags": [
@@ -4574,13 +4574,13 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 28
+        "amount": 17
       },
       {
         "op": "applyStatus",
         "target": "allEnemies",
         "status": "burn",
-        "stacks": 3
+        "stacks": 2
       }
     ],
     "tags": [
@@ -4600,13 +4600,13 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 36
+          "amount": 25
         },
         {
           "op": "applyStatus",
           "target": "allEnemies",
           "status": "burn",
-          "stacks": 4
+          "stacks": 3
         }
       ]
     },
@@ -4690,9 +4690,15 @@
     "keywords": ["exhaust"],
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 4,
+        "nonlethal": true
+      },
+      {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 18
+        "amount": 17
       },
       {
         "op": "applyStatus",
@@ -4712,8 +4718,9 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies. Exhaust.",
+    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
+      "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies. Exhaust.",
       "effects": [
         {
           "op": "damage",
@@ -4826,7 +4833,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 30
+        "amount": 29
       },
       {
         "op": "block",
