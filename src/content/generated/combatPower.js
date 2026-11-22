@@ -239,7 +239,7 @@ export const itemCombatPower = {
  "weapon:boneTalisman": {"raw":-1,"cp":-3,"rank":0,"rarity":"uncommon"},
  "weapon:broadsword": {"raw":-1,"cp":-3,"rank":0,"rarity":"uncommon"},
  "weapon:buckler": {"raw":-1,"cp":-1,"rank":0,"rarity":"common"},
- "weapon:cinderAxe": {"raw":45,"cp":43,"rank":10,"rarity":"uncommon"},
+ "weapon:cinderAxe": {"raw":33,"cp":31,"rank":8,"rarity":"uncommon"},
  "weapon:dagger": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
  "weapon:duelistsFoil": {"raw":13,"cp":8,"rank":2,"rarity":"rare"},
  "weapon:duskChime": {"raw":28,"cp":23,"rank":6,"rarity":"rare"},
