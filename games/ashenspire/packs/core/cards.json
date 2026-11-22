@@ -2164,7 +2164,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "loseHp",
@@ -2193,9 +2193,9 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
-      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
       "effects": [
         {
           "op": "damage",
@@ -2488,7 +2488,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "damage",
@@ -2499,7 +2499,7 @@
         "op": "applyStatus",
         "target": "allEnemies",
         "status": "burn",
-        "stacks": 3
+        "stacks": 2
       }
     ],
     "tags": [
@@ -2512,7 +2512,7 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies. Exhaust.",
     "upgrade": {
       "effects": [
         {
@@ -2524,7 +2524,7 @@
           "op": "applyStatus",
           "target": "allEnemies",
           "status": "burn",
-          "stacks": 3
+          "stacks": 2
         }
       ]
     },
@@ -4516,7 +4516,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "loseHp",
@@ -4546,9 +4546,9 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
-      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
       "effects": [
         {
           "op": "damage",
@@ -4579,13 +4579,14 @@
     "type": "attack",
     "icon": "attack",
     "keywords": [
+      "ethereal",
       "exhaust"
     ],
     "effects": [
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 15
+        "amount": 28
       },
       {
         "op": "applyStatus",
@@ -4605,13 +4606,13 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies. Exhaust.",
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies. Ethereal. Exhaust.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 22
+          "amount": 36
         },
         {
           "op": "applyStatus",
@@ -4698,7 +4699,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "damage",
@@ -4723,19 +4724,19 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies.",
+    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies. Exhaust.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 27
+          "amount": 28
         },
         {
           "op": "applyStatus",
           "target": "allEnemies",
           "status": "shock",
-          "stacks": 3
+          "stacks": 2
         }
       ]
     },
@@ -4826,7 +4827,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "loseHp",
@@ -4860,25 +4861,25 @@
       "cost.manaOnly",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
-      "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
+      "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Exhaust.",
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 46
+          "amount": 42
         },
         {
           "op": "block",
           "target": "self",
-          "amount": 14
+          "amount": 20
         },
         {
           "op": "applyStatus",
           "target": "self",
           "status": "regen",
-          "stacks": 3
+          "stacks": 2
         }
       ]
     },
