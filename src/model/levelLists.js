@@ -8,7 +8,8 @@
 //   levelList(kind, tierId, opts)     -> ids of `kind` ('cards' | 'weapon' | 'armour' | 'relic') whose rank is inside the band;
 //                                        every id of the kind when the band would be empty (the scoring.json rule)
 //   buildLevelLists(opts)             -> the whole generated structure {cards: {tier: ids}, items: {tier: {kind: ids}}}
-//   filterToBand(kind, tierId, ids)   -> ids narrowed to the tier's band via the generated lists; unchanged when that would leave none
+//   filterToBand(kind, tierId, ids)   -> ids narrowed to the tier's band via the generated lists (ids the scoring does not know stay);
+//                                        unchanged when that would leave none
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
 import { cardCombatPower, itemCombatPower } from '../content/generated/combatPower.js';
 import { levelLists as generatedLists } from '../content/generated/levelLists.js';
@@ -53,14 +54,28 @@ export function buildLevelLists({ scoring = shippedScoring, table = shippedTable
   return { cards, items };
 }
 
+const knownCache = new WeakMap();
+/** Every id the lists know for a kind: the union of the tiers' lists (the tiers together cover every rank, so this is every scored id). */
+function knownIds(lists, kind) {
+  let byKind = knownCache.get(lists);
+  if (!byKind) knownCache.set(lists, byKind = {});
+  if (!byKind[kind]) {
+    const out = new Set();
+    for (const tier of Object.values(kind === 'cards' ? lists.cards || {} : Object.fromEntries(Object.entries(lists.items || {}).map(([t, k]) => [t, k[kind] || []])))) for (const id of tier) out.add(id);
+    byKind[kind] = out;
+  }
+  return byKind[kind];
+}
+
 /**
  * Narrow candidate ids to a tier's band using the generated lists. `keyOf` maps a candidate to the list's id (armour is listed
- * as "<class>.<id>"). Falls back to the unfiltered candidates when none is inside the band, so a draw never empties.
+ * as "<class>.<id>"). A candidate the scoring does not know (no row in the combat-power table, e.g. a legacy card) has no rank to
+ * judge and stays in. Falls back to the unfiltered candidates when none is inside the band, so a draw never empties.
  */
 export function filterToBand(kind, tierId, ids, { lists = generatedLists, keyOf = (id) => id } = {}) {
   const list = kind === 'cards' ? lists.cards && lists.cards[tierId] : lists.items && lists.items[tierId] && lists.items[tierId][kind];
   if (!list) return ids;
-  const allowed = new Set(list);
-  const kept = ids.filter((id) => allowed.has(keyOf(id)));
+  const allowed = new Set(list), known = knownIds(lists, kind);
+  const kept = ids.filter((id) => allowed.has(keyOf(id)) || !known.has(keyOf(id)));
   return kept.length ? kept : ids;
 }
