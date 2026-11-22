@@ -15,7 +15,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 4
       }
     ],
     "tags": [
@@ -44,7 +44,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 8
+        "amount": 3
       }
     ],
     "tags": [
@@ -154,7 +154,7 @@
     "id": "core.reaverSpecial",
     "name": "Sundering Art",
     "class": "reaver",
-    "rarity": "starter",
+    "rarity": "uncommon",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 1,
@@ -184,7 +184,7 @@
     "id": "core.starseerSpecial",
     "name": "Star Spark",
     "class": "starseer",
-    "rarity": "starter",
+    "rarity": "uncommon",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 1,
@@ -196,7 +196,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 18
+        "amount": 16
       },
       {
         "op": "applyStatus",
@@ -221,7 +221,7 @@
     "id": "core.rogueSpecial",
     "name": "Quick Guard",
     "class": "rogue",
-    "rarity": "starter",
+    "rarity": "uncommon",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
@@ -248,7 +248,7 @@
     "id": "core.heraldSpecial",
     "name": "Lasting Resolve",
     "class": "herald",
-    "rarity": "starter",
+    "rarity": "uncommon",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
@@ -314,7 +314,7 @@
     "id": "core.cantrip",
     "name": "Arcane Spark",
     "class": "colorless",
-    "rarity": "starter",
+    "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
@@ -322,12 +322,14 @@
     "type": "attack",
     "mirrors": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": [
+      "ethereal"
+    ],
     "effects": [
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       }
     ],
     "tags": [
@@ -343,6 +345,44 @@
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.arcaneWard",
+    "name": "Arcane Ward",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 14
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "ward",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "school:alteration",
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
+    ],
+    "textTemplate": "Gain {block} Block. Gain {ward} Ward.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   },
   {
     "id": "core.manaSurge",

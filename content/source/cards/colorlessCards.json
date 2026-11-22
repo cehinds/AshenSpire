@@ -43,7 +43,7 @@
     "id": "greatswordSunderingHew",
     "name": "Sundering Hew",
     "class": "colorless",
-    "rarity": "uncommon",
+    "rarity": "rare",
     "cost": 2,
     "manaCost": 1,
     "costRule": "fixed",
@@ -55,7 +55,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 36
+        "amount": 24
       },
       {
         "op": "poiseDamage",
@@ -75,7 +75,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 48
+          "amount": 32
         },
         {
           "op": "poiseDamage",
@@ -267,7 +267,7 @@
     "id": "twinFang",
     "name": "Twin Fang",
     "class": "colorless",
-    "rarity": "common",
+    "rarity": "rare",
     "cost": 1,
     "type": "attack",
     "flavor": "Two knives, worn crosswise.\n\nOne for the hound, one for its handler. The weald's blight-hounds were the Wardens' before the Burning, and run yet with Bastion kennelmen who turned with the pack.\n\nA handler may be reasoned with, briefly. Never twice.",
@@ -277,7 +277,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 15,
         "hits": 2
       }
     ],
@@ -287,7 +287,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6,
+          "amount": 22,
           "hits": 2
         }
       ]
