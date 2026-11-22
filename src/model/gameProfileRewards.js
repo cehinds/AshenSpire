@@ -13,6 +13,7 @@ import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
 import { createRng } from './rng.js';
+import { tierFor, filterToBand } from './levelLists.js';
 import { carriedIds } from './loadout/ownership.js';
 import { ThemedItemPick, ItemIsThemed } from './itemThemePick.js';
 import { GearTypeEffectsEnabled } from './gearEffects.js';
@@ -190,6 +191,13 @@ function weightedPotionPick(rule,run,rng,stream,ids) {
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
   return ids.at(-1);
 }
+const BAND_KIND={combatCards:'cards',weapons:'weapon',armor:'armour',relics:'relic'};
+/** BandedRewardIds(run, kind, ids) -> ids inside the run's act rank band (model/levelLists.js), or ids when the band holds none. */
+function BandedRewardIds(run,kind,ids) {
+  const band=BAND_KIND[kind];
+  if(!band)return ids;
+  return filterToBand(band,tierFor(run),ids,band==='armour'?{keyOf:id=>`${run.class}.${id}`}:undefined);
+}
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[],pool='normal'}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
@@ -226,6 +234,9 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     const kind=itemsPerCategory===null?pickRewardCategory(rng,stream,kinds,groups):kinds[0];
     if(!kind)break;
     let ids=available[kind];
+    // Owner 2026-11-21: level lists. Outside shops, narrow cards, weapons, armour and relics to the act's combat-power rank band
+    // (model/levelLists.js); an empty band keeps the whole pool. The filter draws nothing, so seeded streams only see a smaller list.
+    if(source!=='shop')ids=BandedRewardIds(run,kind,ids);
     // Most card rewards are rank 1+; a small authored chance lets a lower-rank card through.
     const rule=gameContent(run,'rewards')?.eligibility?.combatCards;
     if(kind==='combatCards'&&rule){
