@@ -13,12 +13,12 @@ const bind = profile => bindGameProfileRegistries(createRegistries(applyGameProf
 const core = resolveGameProfile('core'), reg = bind(core);
 const off = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { 'reward-ranks': { stanceCoverage: { enabled: false } } } }), regOff = bind(off);
 const templates = new Map();
-// The Core Reaver opens on strike/defend/counter/smash/sweep (the 2026-11-14 starter) and lacks only casting. `fresh` first adds the
-// Sweep and Draw cards the old shared deck held, so it misses no stance. Owner 2026-11-01: Evade is a tag, not a stance, so
+// The Core Reaver opens on Strike, Defend, its smash-stance class card and Sundering Hew (owner ruling 2026-11-21), so it lacks Counter,
+// Sweep and casting. `fresh` first adds the Counter, Sweep and Draw cards the old shared deck held, so it misses no stance. Owner 2026-11-01: Evade is a tag, not a stance, so
 // the Evade card is a Defend-stance card and no longer counts as its own stance for coverage.
 const bare = (r = reg) => createRunState({ seed: 1, classId: 'reaver', registries: r });
 const fresh = (r = reg) => {
-  if (!templates.has(r)) { const run = bare(r); for (const cardId of ['core.sweep', 'base.draw']) run.deck.push({ instanceId: `t:${cardId}`, cardId, upgraded: false }); templates.set(r, run); }
+  if (!templates.has(r)) { const run = bare(r); for (const cardId of ['core.counter', 'core.sweep', 'base.draw']) run.deck.push({ instanceId: `t:${cardId}`, cardId, upgraded: false }); templates.set(r, run); }
   return structuredClone(templates.get(r));
 };
 const own = (run, cardId) => run.sideboard.push({ instanceId: `t:${cardId}`, cardId, upgraded: false });
@@ -26,9 +26,9 @@ const offer = (r, run, seed, source = 'combat') => gameProfileRewardOffers(r, ru
 const stanceOfId = id => stanceOf(reg.cards.get(id))?.maneuver ?? null;
 const SEEDS = Array.from({ length: 12 }, (_, i) => i);
 
-test('the Core Reaver opening deck lacks only the casting stance: it opens with Sweep (Evade is not a stance)', () => {
-  assert.deepEqual(missingBasicStances(bare(), reg), ['casting']);
-  assert.ok(bare().deck.some(card => card.cardId === 'core.sweep'));
+test('the Core Reaver opening deck lacks the casting, counter and sweep stances (Evade is not a stance)', () => {
+  assert.deepEqual([...missingBasicStances(bare(), reg)].sort(), ['casting', 'counter', 'sweep']);
+  assert.ok(!bare().deck.some(card => card.cardId === 'core.sweep'));
 });
 test('missingBasicStances lists only stances with no owned card', () => {
   const run = fresh();

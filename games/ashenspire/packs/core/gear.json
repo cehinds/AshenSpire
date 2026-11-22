@@ -370,12 +370,6 @@
       "file": "content/source/weapons.csv",
       "id": "boneSceptre"
     },
-    "grantedCards": [
-      {
-        "card": "core.manaSurge",
-        "copies": 1
-      }
-    ],
     "range": "reach"
   },
   {

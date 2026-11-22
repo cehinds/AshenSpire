@@ -4402,7 +4402,7 @@
     ]
   },
   "starter": {
-    "rule": "10 cards: 4 attack basics, 4 defend basics, 1 class specialty (uncommon), 1 weapon art (rare, Rank 1). All but the art Unranked (combat power <= 0); the art at Rank 1 (combat power 1-2). Starting armour Unranked.",
+    "rule": "10 cards: 4 attack basics, 4 defend basics, 1 class specialty (uncommon), 1 weapon art (rare, Rank 1). All but the art Unranked (combat power <= 0); the art at Rank 1 (combat power 1-4). Starting armour Unranked.",
     "deck": {
       "attackBasics": 4,
       "defendBasics": 4,
@@ -4417,6 +4417,15 @@
         "rank": 1
       }
     },
-    "armourMaxRank": 0
+    "armourMaxRank": 0,
+    "budget": {
+      "cardsMin": 9,
+      "cardsMax": 11,
+      "maxSpecial": 2,
+      "maxRankPerCard": 2,
+      "rawTotalMax": 20,
+      "rawFloorPerCard": -2,
+      "why": "A starting deck is plain: 9-11 cards, at most 2 of them special (non-common, or ranked above Unranked), none above Rank 2, and the sum of each card's raw power (floored at -2 so a very weak card cannot pay for a strong one) no higher than 20. Measured 2026-11-21: reaver -1, rogue -1, starseer 2, herald 1."
+    }
   }
 }

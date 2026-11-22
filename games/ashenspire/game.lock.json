@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:e94b706f4536181d319281ed2d27e4bc9900bf5a67011c9e84e6fba7cb37c06d",
+      "hash": "sha256:8d8c3a94b39f5a2e5c0be7a39b5a0fd5d7c206a3ff5b6aca9ebb1fa12f08dd62",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -634,7 +634,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:65d26e9f1ba0db8760d78847024fa8c6aafbbe04dd6433caafd264813b83b83c"
+          "hash": "sha256:3c6941a50860d22909109caf7a060eacfb4c201f382da1fbb60d08c66317cabe"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
@@ -664,7 +664,7 @@
           "path": "games/ashenspire/packs/core/gear.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:acc86733b0526ca9d4dde0cdcba21f00adef55dfeb125627f4712e51ada993a8"
+          "hash": "sha256:3e03d4b5ee0de7c6f125260daf709d0c3e41b14dbe1f8752af222add49546696"
         },
         {
           "path": "games/ashenspire/packs/core/pack.json",
@@ -682,7 +682,7 @@
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:e2a4742058e003a2bb6558a0160d893044711d8069a046630e3e12f28a100518"
+          "hash": "sha256:082f4cafbed2bf9d0ea4035cb0f8065632945f95d81828d9fd70c8c6ac665d12"
         },
         {
           "path": "games/ashenspire/packs/core/rests.json",
@@ -712,7 +712,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:84fb22b27d0e69ba9bd4366d656bbbdb8bac2111c8a95964ccd6db21cc781412"
+          "hash": "sha256:5fab92b9e74036a679475a1e2d0bc8d64704111c67aa35e21a8d3dc09825ea1e"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:fbf370e6b803b5dde87934ba7bb0e0789209ea33dc1ce45c2642f4eee9fd8f1d"
     },
     "core": {
-      "hash": "sha256:e94b706f4536181d319281ed2d27e4bc9900bf5a67011c9e84e6fba7cb37c06d",
+      "hash": "sha256:8d8c3a94b39f5a2e5c0be7a39b5a0fd5d7c206a3ff5b6aca9ebb1fa12f08dd62",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1358,7 +1358,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:65d26e9f1ba0db8760d78847024fa8c6aafbbe04dd6433caafd264813b83b83c"
+          "hash": "sha256:3c6941a50860d22909109caf7a060eacfb4c201f382da1fbb60d08c66317cabe"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
@@ -1388,7 +1388,7 @@
           "path": "games/ashenspire/packs/core/gear.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:acc86733b0526ca9d4dde0cdcba21f00adef55dfeb125627f4712e51ada993a8"
+          "hash": "sha256:3e03d4b5ee0de7c6f125260daf709d0c3e41b14dbe1f8752af222add49546696"
         },
         {
           "path": "games/ashenspire/packs/core/pack.json",
@@ -1406,7 +1406,7 @@
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:e2a4742058e003a2bb6558a0160d893044711d8069a046630e3e12f28a100518"
+          "hash": "sha256:082f4cafbed2bf9d0ea4035cb0f8065632945f95d81828d9fd70c8c6ac665d12"
         },
         {
           "path": "games/ashenspire/packs/core/rests.json",
@@ -1436,7 +1436,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:84fb22b27d0e69ba9bd4366d656bbbdb8bac2111c8a95964ccd6db21cc781412"
+          "hash": "sha256:5fab92b9e74036a679475a1e2d0bc8d64704111c67aa35e21a8d3dc09825ea1e"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",

@@ -6,7 +6,7 @@
 //   node tools/combat-power-report.mjs --check    # exit 1 when the generated file is stale (npm run combat-power:check)
 //   node tools/combat-power-report.mjs --print    # print the table to stdout, write nothing
 //
-// Cards: each Core card is measured in-engine exactly as tools/card-budget-report.mjs does (tools/lib/cardBudgetMeasure.mjs: final
+// Cards: each Core card, and each starting weapon art, is measured in-engine exactly as tools/card-budget-report.mjs does (tools/lib/cardBudgetMeasure.mjs: final
 // damage, Block + Ward, Poise, counter/reflect/evade stacks, resolved SP/MP for the reference class), then turned into the scorer's card
 // face: statuses, keywords, tags and the other ops come from the card definition. Items: weapons (incl. shields and staves) carry their
 // attack/guard profile and weapon-art face, armour and relics their modifiers and property rules; the same extraction the simulator embeds.
@@ -53,8 +53,10 @@ export function faceOf(def, row) {
 
 export function measureCards() {
   const byId = new Map();
+  const kitOwner = new Map(); // weapon-art id -> the first class whose starting weapon grants it (the reference class for its score)
   for (const classId of CLASSES) {
-    const { ids } = holdable(classId);
+    const { ids, kit } = holdable(classId);
+    for (const id of kit) if (!kitOwner.has(id)) kitOwner.set(id, classId);
     for (const id of ids) {
       let row; try { row = measure(classId, id); } catch { continue; }
       if (row.error || row.playError) continue;
@@ -65,9 +67,10 @@ export function measureCards() {
   // Reference class per card, as card-budget-report.mjs: the owning class, else Starseer for spells, else Reaver.
   const faces = {};
   for (const [id, classes] of byId) {
-    if (!id.startsWith('core.')) continue;
+    if (!id.startsWith('core.') && !kitOwner.has(id)) continue;
     const first = Object.values(classes)[0];
-    const refClass = first.pool !== 'colorless' ? first.pool : first.camp === 'spell' ? 'starseer' : 'reaver';
+    // Owner, 2026-11-21: the weapon art each class starts with (Sundering Hew, Twin Fang, Blight Touch) is in the table, scored as its starting class plays it.
+    const refClass = kitOwner.has(id) ? kitOwner.get(id) : first.pool !== 'colorless' ? first.pool : first.camp === 'spell' ? 'starseer' : 'reaver';
     faces[id] = faceOf(registries.cards.get(id), classes[refClass] || first);
   }
   return faces;
