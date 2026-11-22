@@ -21,8 +21,8 @@
       "why": "SP is 3 per turn; 1 SP = 1/3 of a turn = D/3 = 5 points."
     },
     "mp": {
-      "weight": -7,
-      "why": "MP does not refill each turn: x1.4 SP. Matches what 1 MP buys on 1/1 spells (cometLance, searingRay)."
+      "weight": -8,
+      "why": "MP is worth twice SP (owner 2026-11-22): mp weight = 2 x sp weight."
     },
     "action": {
       "weight": -2,
