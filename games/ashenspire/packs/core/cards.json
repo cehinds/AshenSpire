@@ -348,14 +348,11 @@
     "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 0,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "skill",
     "icon": "shield",
-    "keywords": [
-      "ethereal",
-      "exhaust"
-    ],
+    "keywords": [],
     "effects": [
       {
         "op": "block",
@@ -375,7 +372,6 @@
       "maneuver:casting",
       "classification.skill",
       "school:alteration",
-      "rank.cantrip",
       "tradition:arcane",
       "tradition:divine"
     ],
@@ -389,14 +385,11 @@
     "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 0,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "skill",
     "icon": "shield",
-    "keywords": [
-      "exhaust",
-      "ethereal"
-    ],
+    "keywords": [],
     "effects": [
       {
         "op": "block",
@@ -416,7 +409,6 @@
       "maneuver:casting",
       "classification.skill",
       "school:alteration",
-      "rank.cantrip",
       "tradition:arcane",
       "tradition:divine"
     ],

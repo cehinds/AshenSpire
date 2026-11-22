@@ -53,7 +53,7 @@ for (const [classId, expected] of Object.entries(DECKS)) {
     const isDefence = d => (d.type === 'skill' && (d.effects || []).some(e => e.op === 'block'));
     assert.equal(basics.filter(isDefence).length, 4, 'four defences');
     assert.equal(basics.filter(d => d.type === 'attack').length, 4, 'four attacks');
-    for (const d of basics) assert.equal(d.tags.includes('rank.cantrip') || d.tags.includes('maneuver:attack') || d.tags.includes('maneuver:defend'), true, `${d.id} is a basic or a cantrip`);
+    for (const d of basics) assert.equal(d.tags.includes('rank.cantrip') || d.tags.includes('maneuver:casting') || d.tags.includes('maneuver:attack') || d.tags.includes('maneuver:defend'), true, `${d.id} is a basic, a cantrip or a 1 MP starter spell (owner 2026-11-21: Ward and Veil cost 1 MP)`);
     if (caster) for (const d of basics) assert.ok(d.tags.includes('camp:spell'), `${d.id} is a cantrip`);
     else for (const d of basics) assert.ok(d.tags.includes('camp:physical'), `${d.id} is a Strike or Defend type`);
     const maxMana = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.maxMana;
@@ -85,7 +85,8 @@ for (const [classId, expected] of Object.entries(DECKS)) {
 test('Core editor offers only collected definitions under the matching Adept (legacy unlimited rules, owner ruling 2026-10-23)', async () => {
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
   // Owner ruling 2026-11-21: Counter, Smash, Sweep and Evade left the starting decks, so only Strike and Defend are collected basics.
-  const CASTER_BASICS = ['core.cantrip', 'core.arcaneWard', 'core.glimmerVeil', 'core.stoneSigil', 'core.ashenShell'];
+  // Owner ruling 2026-11-21: Arcane Ward and Glimmer Veil cost 1 MP and are no longer rank.cantrip, so they are not unlimited basics.
+  const CASTER_BASICS = ['core.cantrip', 'core.stoneSigil', 'core.ashenShell'];
   const expected = { reaver: ['core.strike', 'core.defend'],
     rogue: ['core.strike', 'core.defend'], starseer: CASTER_BASICS, herald: CASTER_BASICS };
   for (const id of Object.keys(expected)) assert.deepEqual(unlimitedCardIds(startLegacy(id)), expected[id]);

@@ -2125,12 +2125,12 @@
     "mp": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 0
+      "manaCost": 1
     },
     "sp,mp": {
       "cost": 1,
       "staminaCost": 1,
-      "manaCost": 0
+      "manaCost": 1
     }
   },
   "core.glimmerVeil": {
@@ -2147,12 +2147,12 @@
     "mp": {
       "cost": 0,
       "staminaCost": 0,
-      "manaCost": 0
+      "manaCost": 1
     },
     "sp,mp": {
       "cost": 1,
       "staminaCost": 1,
-      "manaCost": 0
+      "manaCost": 1
     }
   },
   "core.stoneSigil": {
