@@ -4408,6 +4408,15 @@
         "rank": 1
       }
     },
-    "armourMaxRank": 0
+    "armourMaxRank": 0,
+    "budget": {
+      "cardsMin": 9,
+      "cardsMax": 11,
+      "maxSpecial": 2,
+      "maxRankPerCard": 2,
+      "rawTotalMax": 20,
+      "rawFloorPerCard": -2,
+      "why": "A starting deck is plain: 9-11 cards, at most 2 of them special (non-common, or ranked above Unranked), none above Rank 2, and the sum of each card's raw power (floored at -2 so a very weak card cannot pay for a strong one) no higher than 20. Measured 2026-11-21: reaver -3, rogue -3, starseer 1, herald 1."
+    }
   }
 }
