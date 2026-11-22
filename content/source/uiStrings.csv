@@ -365,6 +365,7 @@ reward.progress.xp,,{xp} / {next} XP,{xp} of {next} XP toward level {level}.,
 reward.progress.capped,,Max,This track has reached its ceiling; XP still banks.,
 reward.progress.more,,+{count} other skill{plural},Tracks the panel does not list.,
 # ---- the title screen -----------------------------------------------------
+title.saveWipe.epoch,,"All progress, unlocks and history were reset for the balance overhaul.",The one-time save reset notice on the title.,
 title.save.eyebrow,,Your climb,The saved run Continue resumes.,
 title.save.identity,,Slot {slot} · Seed {seed},Which save Continue loads.,
 title.save.aria,,Saved climb in slot {slot},,
