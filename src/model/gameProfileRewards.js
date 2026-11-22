@@ -234,9 +234,10 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     const kind=itemsPerCategory===null?pickRewardCategory(rng,stream,kinds,groups):kinds[0];
     if(!kind)break;
     let ids=available[kind];
-    // Owner 2026-11-21: level lists. Outside shops, narrow cards, weapons, armour and relics to the act's combat-power rank band
-    // (model/levelLists.js); an empty band keeps the whole pool. The filter draws nothing, so seeded streams only see a smaller list.
-    if(source!=='shop')ids=BandedRewardIds(run,kind,ids);
+    // Owner 2026-11-21 / 2026-11-22: level lists. Rewards AND shop shelves narrow cards, weapons, armour and relics to the act's
+    // combat-power rank band (model/levelLists.js); an empty band keeps the whole pool. The filter draws nothing, so seeded
+    // streams only see a smaller list. The owned-card exclusion and the shown-card history weighting run on the banded list.
+    ids=BandedRewardIds(run,kind,ids);
     // Most card rewards are rank 1+; a small authored chance lets a lower-rank card through.
     const rule=gameContent(run,'rewards')?.eligibility?.combatCards;
     if(kind==='combatCards'&&rule){

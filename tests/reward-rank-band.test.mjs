@@ -7,7 +7,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardOffers, gameProfileShopStock } from '../src/model/gameProfileRewards.js';
 import { rollCardRewardIds } from '../src/engine/encounters.js';
 import { cardCombatPower } from '../src/content/generated/combatPower.js';
 import { scoring } from '../src/content/generated/scoring.js';
@@ -54,4 +54,16 @@ test('an empty band falls back to the unfiltered pool (legacy door, synthetic re
   const unfiltered = new Set(); for (let s = 1; s <= 40; s++) for (const id of rollCardRewardIds(mk([...high, ...low]), createRng(s), { classId: 'x', pool: 'normal' })) unfiltered.add(id);
   assert.ok(high.some(id => unfiltered.has(id)), 'without tierId the high cards are still offered');
   assert.deepEqual(rollCardRewardIds(mk([...high, ...low]), createRng(9), { classId: 'x', pool: 'normal', tierId: 'act1' }), rollCardRewardIds(mk([...high, ...low]), createRng(9), { classId: 'x', pool: 'normal', tierId: 'act1' }));
+});
+
+// Owner 2026-11-22: shop card stock comes from the act's rank band like rewards (owned-card exclusion and history weighting unchanged).
+test('shop card shelves hold only cards inside the act band, and a higher act reaches the cards act 1 hides', () => {
+  const stock = (seed, act) => gameProfileShopStock(reg, fresh(seed, act), createRng(seed), { shopId: 'm' }).options.filter(x => x.kind === 'combatCards').map(x => x.id);
+  const seen = new Set(), high = new Set();
+  for (const seed of SEEDS) {
+    for (const id of stock(seed, 1)) { const row = cardCombatPower[id]; if (!row) continue; seen.add(id); assert.ok(row.rank >= act1.minRank && row.rank <= act1.maxRank, `${id} rank ${row.rank}`); }
+    for (const id of stock(seed, 3)) if (cardCombatPower[id]?.rank > act1.maxRank) high.add(id);
+  }
+  assert.ok(seen.size > 5, `only ${seen.size} distinct scored shop cards seen`);
+  assert.ok(high.size > 0);
 });
