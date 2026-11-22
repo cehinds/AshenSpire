@@ -322,12 +322,15 @@
     "type": "attack",
     "mirrors": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": [
+      "exhaust",
+      "ethereal"
+    ],
     "effects": [
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       }
     ],
     "tags": [
@@ -356,7 +359,8 @@
     "type": "skill",
     "icon": "shield",
     "keywords": [
-      "ethereal"
+      "ethereal",
+      "exhaust"
     ],
     "effects": [
       {
@@ -396,7 +400,8 @@
     "type": "skill",
     "icon": "shield",
     "keywords": [
-      "exhaust"
+      "exhaust",
+      "ethereal"
     ],
     "effects": [
       {
