@@ -4678,7 +4678,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "loseHp",
@@ -4712,25 +4712,25 @@
       "cost.manaOnly",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
-      "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
+      "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Exhaust.",
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 46
+          "amount": 42
         },
         {
           "op": "block",
           "target": "self",
-          "amount": 14
+          "amount": 20
         },
         {
           "op": "applyStatus",
           "target": "self",
           "status": "regen",
-          "stacks": 3
+          "stacks": 2
         }
       ]
     },

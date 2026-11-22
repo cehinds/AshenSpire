@@ -65,7 +65,7 @@ export const cardCombatPower = {
  "core.purifyingLight": {"raw":10,"cp":8,"rank":2,"rarity":"uncommon"},
  "core.pyreLash": {"raw":41,"cp":39,"rank":10,"rarity":"uncommon"},
  "core.quickGuard": {"raw":2,"cp":0,"rank":0,"rarity":"uncommon"},
- "core.radiantVerdict": {"raw":52,"cp":47,"rank":10,"rarity":"rare"},
+ "core.radiantVerdict": {"raw":33,"cp":28,"rank":7,"rarity":"rare"},
  "core.rakingSweep": {"raw":15,"cp":13,"rank":4,"rarity":"uncommon"},
  "core.rallyingRoar": {"raw":8,"cp":6,"rank":2,"rarity":"uncommon"},
  "core.reapingArc": {"raw":5,"cp":5,"rank":2,"rarity":"common"},

@@ -192,6 +192,7 @@ export const levelLists = {
    "core.pommelStrike",
    "core.purifyingLight",
    "core.quickGuard",
+   "core.radiantVerdict",
    "core.rakingSweep",
    "core.rallyingRoar",
    "core.reapingArc",
