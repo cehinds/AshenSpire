@@ -27,7 +27,7 @@ export const cardCombatPower = {
  "core.drivingThrust": {"raw":15,"cp":15,"rank":4,"rarity":"common"},
  "core.eclipse": {"raw":38,"cp":33,"rank":9,"rarity":"rare"},
  "core.emberFlick": {"raw":24,"cp":24,"rank":6,"rarity":"common"},
- "core.emberWave": {"raw":60,"cp":58,"rank":10,"rarity":"uncommon"},
+ "core.emberWave": {"raw":29,"cp":27,"rank":7,"rarity":"uncommon"},
  "core.evade": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
  "core.expose": {"raw":11,"cp":11,"rank":3,"rarity":"common"},
  "core.feint": {"raw":9,"cp":7,"rank":2,"rarity":"uncommon"},

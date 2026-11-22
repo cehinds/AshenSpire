@@ -158,6 +158,7 @@ export const levelLists = {
    "core.defend",
    "core.drivingThrust",
    "core.emberFlick",
+   "core.emberWave",
    "core.evade",
    "core.expose",
    "core.feint",
