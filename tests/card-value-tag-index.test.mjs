@@ -14,6 +14,8 @@ import * as model from '../src/model/attackCardDamage.js';
 // Only the content digest and 14 projected-card hashes move; the other methods and error cases are unchanged.
 // Recaptured 2026-11-19 with the same pinned independent oracle after the gear vocabulary and Diamond Skin label pass.
 // Content/configuration and projected-card hashes move; validation/error rows and the oracle model identities are unchanged.
+// Recaptured 2026-11-21 with the same pinned independent oracle after the score-engine card retunes and starter decks (owner rulings A-F):
+// only the content digest and 28 materialize/project hashes (cases embedding real content) move; validation/error rows and the oracle identities are unchanged.
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/card-value-tag-index-baseline.json', import.meta.url)));
 for (const [name, bundle] of cardValueIndexCases()) {
   for (const method of ['materializeCardValueBonuses', 'projectAttackCardDamageBundle', 'attackCardDamageConfigProblems']) {
