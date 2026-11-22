@@ -224,10 +224,8 @@ function options(base, current, applied, limits, rarity = 0) {
   const sized = (kind) => scale * SIZE_MULT[kind][rarity];
   const restricted = RESTRICTED_TYPES.has(type);
   const found = {};
-  const spMin = Math.max(1, limits.minStaminaCost | 0);
-  const actionMin = Math.max(1, limits.minActionCost | 0);
 
-  // cost: once per card; SP never below 1, MP never below 1, cost tracks staminaCost.
+  // cost: once per card; no card has a cost minimum (owner ruling 2026-11-22), so -1 SP and -1 MP stay on offer until the cost reaches 0. Cost tracks staminaCost.
   if (!applied.some((s) => s.k === 'cost')) {
     const pools = [];
     const by = {};
@@ -236,16 +234,16 @@ function options(base, current, applied, limits, rarity = 0) {
       const floor = hitFloor(current, currentHits(current.effects || []));
       // Common -1, rare -2 in one pool; the uncommon cut (-1 SP and -1 MP) is a combo built below.
       const cut = rarity === 2 ? 2 : 1;
-      by.sp = biggest(cut, scale, (n) => current.staminaCost - n >= spMin && current.cost - n >= actionMin && floor <= current.staminaCost - n);
+      by.sp = biggest(cut, scale, (n) => current.staminaCost - n >= 0 && current.cost - n >= 0 && floor <= current.staminaCost - n);
       if (by.sp) pools.push('sp');
     }
-    // A basic costs no Mana and a cantrip at most 1 (owner, 2026-11-22), so no Mana cut is offered on one, or on a copy that becomes one.
-    if (Number.isInteger(current.manaCost) && !basicDef(base) && !tagsOf(current).includes(RANK_DOWN_TAG)) {
-      by.mp = biggest(rarity === 2 ? 2 : 1, scale, (n) => current.manaCost - n >= 1);
+    // Owner ruling 2026-11-22: no card has a minimum, so a Mana cut is offered on any card with Mana to cut, a cantrip or a Basic included, until it reaches 0.
+    if (Number.isInteger(current.manaCost)) {
+      by.mp = biggest(rarity === 2 ? 2 : 1, scale, (n) => current.manaCost - n >= 0);
       if (by.mp) pools.push('mp');
     }
     if (rarity === 1) {
-      const one = { sp: current.staminaCost - 1 >= spMin && current.cost - 1 >= actionMin && !!by.sp, mp: !!by.mp };
+      const one = { sp: current.staminaCost - 1 >= 0 && current.cost - 1 >= 0 && !!by.sp, mp: !!by.mp };
       if (one.sp && one.mp) found.cost = { combo: ['sp', 'mp'] };
     } else if (pools.length) found.cost = { pools, by };
   }
@@ -517,7 +515,7 @@ function optionsByRarity(base, current, applied, limits) {
 }
 
 /**
- * rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits?) → the next (limits: minStaminaCost, minActionCost, rank)
+ * rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits?) → the next (limits: scale, rank, ...)
  * stored step. `appliedSteps` are the steps the card already has; `rng` is
  * upgradeStepRng(run.seed, instanceId, stepIndex). Filters the options to the
  * ones the card is eligible for, then makes a weighted pick; if none is

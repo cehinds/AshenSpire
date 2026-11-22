@@ -342,7 +342,7 @@ export const fixCoreProtection = [
               "type": "integer",
               "minimum": 0
             },
-            "adeptMinimumCost": {
+            "playerMinimumCost": {
               "type": "integer",
               "minimum": 0
             }

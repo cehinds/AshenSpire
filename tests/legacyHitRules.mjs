@@ -31,7 +31,7 @@ function stripCounterStacks() {
 const THEME_B_KEYS = [['counter', 'armedWhileStacks'], ['counter', 'enemyBadgeStacks'], ['stanceBenefits', 'defend', 'poiseFloorWhileBlock'],
   ['stanceBenefits', 'defend', 'poiseFloorWardMagic'], ['stanceBenefits', 'prepared', 'meleeDamageTakenMultiplier'], ['stanceBenefits', 'neutral', 'damageTakenMultiplier'],
   // Owner ruling 2026-11-22: the Magic Adept zero Mana floor key is newer than every fight these wrappers rebuild; such a fight keeps floor 1.
-  ['stance', 'adeptMinimumCost']];
+  ['stance', 'playerMinimumCost']];
 function stripThemeB() {
   const saved = new Map();
   for (const path of THEME_B_KEYS) {

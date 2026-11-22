@@ -16,7 +16,7 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
-// Recaptured 2026-11-22 for the Magic Adept zero Mana floor (owner ruling; stance.adeptMinimumCost): 27 profile, runtime, snapshot and save hash leaves moved; every event, RNG, receipt and continuation value is unchanged.
+// Recaptured 2026-11-22 for the Magic Adept zero Mana floor (owner ruling; stance.playerMinimumCost): 27 profile, runtime, snapshot and save hash leaves moved; every event, RNG, receipt and continuation value is unchanged.
 // Recaptured 2026-11-21 for the score-engine starter decks and card retunes (owner rulings A-F): the Reaver starter deck changed, so the three current-profile scenarios' shuffle counters, events, RNG hashes and continuations moved with it (the preceding 521250 capture's behaviour fields were moved the same way); every profile, snapshot and save hash moved with the card data; the historical scenario moved only in snapshot, stored and loaded.
 // Recaptured 2026-11-21 for reward uniqueness and card copy (#2928: reward-ranks.skipOwned, shops cardCopy, Scribe's Mirror): exactly 24 leaves moved,
 // all profile, snapshot and save hashes of the three current-profile scenarios; events, RNG, receipts and continuations unchanged.
@@ -138,7 +138,7 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   let combat;
   try { combat = api.createRunCombat({ registries, run, rng: api.createRng(seed), encounter, enemyIds: encounter.enemies }); } finally { if (shippedBands !== undefined) api.fixCoreMechanics.bands = shippedBands; }
   // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
-  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux; delete combat.fixCoreRules?.stance?.adeptMinimumCost; // the Magic Adept zero Mana floor key (owner ruling 2026-11-22) is newer than this fight
+  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux; delete combat.fixCoreRules?.stance?.playerMinimumCost; // the Magic Adept zero Mana floor key (owner ruling 2026-11-22) is newer than this fight
   // Wave 2 batch 5 legacy fixture: the Counter-stack keys are newer than this baseline and the Counter stance still returns 25% of the HP lost, as in a fight saved before the ruling.
   if (combat.fixCoreRules?.counter) for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete combat.fixCoreRules.counter[key];
   if (combat.fixCoreRules?.stanceBenefits?.counter) combat.fixCoreRules.stanceBenefits.counter = { ...combat.fixCoreRules.stanceBenefits.counter, hpReturnFraction: 0.25 };
