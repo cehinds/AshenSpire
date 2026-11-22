@@ -3,6 +3,9 @@
 // raw = effect power over 3 rounds, cp = raw - rarity discount, rank 0 = Unranked, 1..10 (src/model/combatPower.js).
 
 export const cardCombatPower = {
+ "base.ethereal": {"raw":-4,"cp":-4,"rank":0,"rarity":"common"},
+ "base.exhaust": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
+ "blightTouch": {"raw":2,"cp":2,"rank":1,"rarity":"common"},
  "core.acidSplash": {"raw":1,"cp":1,"rank":1,"rarity":"common"},
  "core.advance": {"raw":-4,"cp":-4,"rank":0,"rarity":"common"},
  "core.arcaneSiphon": {"raw":3,"cp":1,"rank":1,"rarity":"uncommon"},
@@ -104,7 +107,9 @@ export const cardCombatPower = {
  "core.whetstoneNick": {"raw":4,"cp":-1,"rank":0,"rarity":"rare"},
  "core.whirlwind": {"raw":4,"cp":-1,"rank":0,"rarity":"rare"},
  "core.wideSweep": {"raw":4,"cp":4,"rank":2,"rarity":"common"},
- "core.witherDraught": {"raw":2,"cp":0,"rank":0,"rarity":"uncommon"}
+ "core.witherDraught": {"raw":2,"cp":0,"rank":0,"rarity":"uncommon"},
+ "greatswordSunderingHew": {"raw":10,"cp":8,"rank":4,"rarity":"uncommon"},
+ "twinFang": {"raw":-3,"cp":-3,"rank":0,"rarity":"common"}
 };
 
 export const itemCombatPower = {
