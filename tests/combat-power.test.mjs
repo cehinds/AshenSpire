@@ -70,3 +70,18 @@ test('combat power: the generated table is fresh and covers every Core card and 
     assert.ok(row.cp <= scoring.rank.maxCp, `cp ${row.cp} over the ${scoring.rank.maxCp} ceiling`);
   }
 });
+
+test('RankRange labels agree with RankOf when unrankedMax is not 0', () => {
+  const custom = { ...scoring, rank: { ...scoring.rank, unrankedMax: 2 } };
+  const parse = label => { const m = /^(\d+)-(\d+)$/.exec(label); return m ? [Number(m[1]), Number(m[2])] : null; };
+  assert.equal(RankRange(0, custom), '<= 2');
+  assert.equal(RankRange(1, custom), '3-4', 'Rank 1 starts at unrankedMax + 1');
+  assert.equal(RankRange(2, custom), '5-8');
+  for (let cp = -1; cp <= scoring.rank.maxCp; cp++) {
+    const k = RankOf(cp, custom);
+    if (k === 0) { assert.ok(cp <= 2, `cp ${cp}`); continue; }
+    const [lo, hi] = parse(RankRange(k, custom));
+    assert.ok(cp >= lo && cp <= hi, `cp ${cp} is Rank ${k} but its label is ${RankRange(k, custom)}`);
+  }
+  assert.equal(RankRange(1), '1-4', 'the shipped table (unrankedMax 0) is unchanged');
+});

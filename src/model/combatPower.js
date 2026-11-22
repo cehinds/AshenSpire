@@ -120,10 +120,12 @@ export function RankOf(cp, scoring = shippedScoring) {
   return cp <= RK.unrankedMax ? 0 : Math.min(RK.maxRank, Math.ceil(cp / RK.width));
 }
 export const RankName = (k) => (k === 0 ? 'Unranked' : 'Rank ' + k);
-/** The combat-power band of a rank, as text. */
+/** The combat-power band of a rank, as text; it matches RankOf (Rank 1 starts just above unrankedMax, every later rank is `width` wide). */
 export function RankRange(k, scoring = shippedScoring) {
-  const RK = slimOf(scoring).rank, lo = (RK.width * k) - (RK.width - 1);
-  return k === 0 ? `<= ${RK.unrankedMax}` : k === RK.maxRank ? (RK.maxCp ? `${lo}-${RK.maxCp}` : `>= ${lo}`) : `${lo}-${lo + RK.width - 1}`;
+  const RK = slimOf(scoring).rank;
+  if (k === 0) return `<= ${RK.unrankedMax}`;
+  const lo = k === 1 ? RK.unrankedMax + 1 : RK.width * (k - 1) + 1;
+  return k === RK.maxRank ? (RK.maxCp ? `${lo}-${RK.maxCp}` : `>= ${lo}`) : `${lo}-${RK.width * k}`;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
