@@ -23,7 +23,7 @@ const number = text => Number(/\d+/.exec(text)[0]);
 
 test('a face with no run keeps the authored number', () => {
   assert.equal(number(cardPlainText(registries, { cardId: 'core.strike' }, {})), 6);
-  assert.equal(number(cardPlainText(registries, { cardId: 'core.defend' }, {})), 8); // Block-per-card retune, owner 2026-11-20 (was 10)
+  assert.equal(number(cardPlainText(registries, { cardId: 'core.defend' }, {})), 0); // Defend authors 0 Block (final Block 4), owner 2026-11-21 (was 8, before that 10)
 });
 
 test('Strike and Defend add STR and DEX through the shipped multipliers', () => {
@@ -33,7 +33,7 @@ test('Strike and Defend add STR and DEX through the shipped multipliers', () => 
     const strike = Math.floor((Math.ceil(6 * effects.baseDamageMultiplier) + attributes.strength * effects.strengthDamageWeight)
       * effects.physicalDamageMultiplier * effects.playerDamageMultiplier);
     const armourBlock = classId === 'reaver' ? 3 : 1; // Heavy +3, Light +1 on Block cards.
-    const defend = Math.floor((8 + armourBlock + attributes.dexterity * effects.dexterityBlockWeight) * effects.blockGainMultiplier);
+    const defend = Math.floor((0 + armourBlock + attributes.dexterity * effects.dexterityBlockWeight) * effects.blockGainMultiplier);
     assert.equal(number(face(run, 'core.strike')), strike, `${classId} Strike`);
     assert.equal(number(face(run, 'core.defend')), defend, `${classId} Defend`);
   }
