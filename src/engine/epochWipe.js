@@ -30,7 +30,8 @@ function gameKeys(storage) {
   return keys;
 }
 
-function readEpoch(storage) {
+/** ReadEpochStamp(storage) → the stored save epoch (1 when missing or unreadable). Exports record it; imports compare it. */
+export function ReadEpochStamp(storage) {
   let raw = null;
   try { raw = storage.getItem(EPOCH_STAMP_KEY); } catch { /* blocked storage */ }
   const n = Number.parseInt(raw ?? '', 10);
@@ -42,7 +43,7 @@ function readEpoch(storage) {
  * `cleared` is true only when at least one key was removed (the notice shows then).
  */
 export function ApplyEpochWipe(storage, { epoch }) {
-  const previous = readEpoch(storage);
+  const previous = ReadEpochStamp(storage);
   if (!(Number.isFinite(epoch) && previous < epoch)) return { cleared: false, keys: 0, previous };
   const keys = gameKeys(storage);
   // Stamp FIRST and read it back: only a verified stamp makes the wipe safe (else the next boot would wipe again, or a

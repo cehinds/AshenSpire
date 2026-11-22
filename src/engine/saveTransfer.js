@@ -10,6 +10,7 @@ import {
 } from './save.js';
 import { offlinePlay } from '../content/offlinePlay.js';
 import { LoadSavedRunContext } from './savedRunContext.js';
+import { ReadEpochStamp } from './epochWipe.js';
 
 /** @typedef {import('./savedRunContext.js').SaveContextRegistries} SaveContextRegistries */
 /** @typedef {Record<string, string | null>} BackupEntries */
@@ -27,7 +28,11 @@ import { LoadSavedRunContext } from './savedRunContext.js';
  * @property {typeof offlinePlay.saveFormat} format
  * @property {typeof offlinePlay.saveVersion} version
  * @property {BackupEntries} entries
+ * @property {number} [epoch] the save epoch the export was taken under (absent: epoch 1, before epochs were recorded)
  */
+
+/** The error code a refused pre-epoch import carries; the screen shows the offline.import.staleEpoch string for it. */
+export const STALE_EPOCH_CODE = 'staleEpoch';
 
 /** @typedef {{ slots: TransferSlots, hasProfile: boolean }} TransferInspection */
 
@@ -83,6 +88,7 @@ export function CreateSaveTransfer(storage, unpinnedRegistries = null)
     const snapshot = (entries = readEntries()) => ({
         format: offlinePlay.saveFormat,
         version: offlinePlay.saveVersion,
+        epoch: ReadEpochStamp(storage),
         entries: Object.fromEntries(
             keys.map(
                 key => [
@@ -117,6 +123,15 @@ export function CreateSaveTransfer(storage, unpinnedRegistries = null)
         if (!isBackupEnvelope(data))
         {
             throw new Error('Unsupported save file. Export a backup from Download & saves.');
+        }
+        // A save wipe (epoch raise) discarded old progress on purpose: an export from an older epoch must not bring it back.
+        const exportEpoch = Number.isInteger(data.epoch) && data.epoch >= 1 ? data.epoch : 1;
+        if (exportEpoch < ReadEpochStamp(storage))
+        {
+            throw Object.assign(
+                new Error('This backup is from before the last save reset and cannot be imported.'),
+                { code: STALE_EPOCH_CODE },
+            );
         }
 
         const temporary = createMemoryStorage();
