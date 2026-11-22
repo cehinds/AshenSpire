@@ -8,7 +8,7 @@
 //   levelList(kind, tierId, opts)     -> ids of `kind` ('cards' | 'weapon' | 'armour' | 'relic') whose rank is inside the band;
 //                                        every id of the kind when the band would be empty (the scoring.json rule)
 //   buildLevelLists(opts)             -> the whole generated structure {cards: {tier: ids}, items: {tier: {kind: ids}}}
-//   filterToBand(kind, tierId, ids)   -> ids narrowed to the tier's band via the generated lists (ids the scoring does not know stay);
+//   filterToBand(kind, tierId, ids)   -> ids narrowed to the tier's band via the generated lists (ids the scoring does not know stay; an id the scoring knows but no tier lists is out of every band);
 //                                        unchanged when that would leave none
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
 import { cardCombatPower, itemCombatPower } from '../content/generated/combatPower.js';
@@ -54,6 +54,12 @@ export function buildLevelLists({ scoring = shippedScoring, table = shippedTable
   return { cards, items };
 }
 
+const tableIdCache = {};
+/** Every id the shipped combat-power table scores for a kind (armour as "<class>.<id>"). */
+function tableIds(kind) {
+  return tableIdCache[kind] || (tableIdCache[kind] = new Set(entriesOf(kind, shippedTable).map(([id]) => id)));
+}
+
 const knownCache = new WeakMap();
 /** Every id the lists know for a kind: the union of the tiers' lists (the tiers together cover every rank, so this is every scored id). */
 function knownIds(lists, kind) {
@@ -75,7 +81,9 @@ function knownIds(lists, kind) {
 export function filterToBand(kind, tierId, ids, { lists = generatedLists, keyOf = (id) => id } = {}) {
   const list = kind === 'cards' ? lists.cards && lists.cards[tierId] : lists.items && lists.items[tierId] && lists.items[tierId][kind];
   if (!list) return ids;
-  const allowed = new Set(list), known = knownIds(lists, kind);
+  // Known ids: every id the scoring table scores, not the union of the tiers' lists. The tiers do not have to cover every rank
+  // (act3 tops out below the highest rank), and a scored id above the top band must stay OUT, not pass as "unknown".
+  const allowed = new Set(list), known = lists === generatedLists ? tableIds(kind) : knownIds(lists, kind);
   const kept = ids.filter((id) => allowed.has(keyOf(id)) || !known.has(keyOf(id)));
   return kept.length ? kept : ids;
 }
