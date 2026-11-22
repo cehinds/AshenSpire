@@ -20,7 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/content/statuses.js",
-    "source": "content/source/statuses.json"
+    "file": "src/model/combatPower.js",
+    "symbol": "exactStatus"
   }
 }
