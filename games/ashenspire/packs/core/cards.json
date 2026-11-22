@@ -4430,7 +4430,9 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "damage",
@@ -4455,19 +4457,19 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies. Exhaust.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 27
+          "amount": 22
         },
         {
           "op": "applyStatus",
           "target": "allEnemies",
           "status": "burn",
-          "stacks": 3
+          "stacks": 4
         }
       ]
     },

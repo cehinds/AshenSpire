@@ -3623,23 +3623,24 @@
     "maxUpgrades": 10
   },
   "rank": {
-    "rule": "combat power = effect power after costs (raw score) - rarity discount; rank comes from combat power",
+    "rule": "combat power = raw - rarity discount; Unranked <= 0; Rank k = 4k-3..4k (Rank 1 = 1-4 ... Rank 10 = 37-40); 40 is the ceiling for every card and item, upgrades included (owner, 2026-11-21)",
     "unrankedMax": 0,
-    "width": 2,
+    "width": 4,
     "maxRank": 10,
     "bands": {
       "Unranked": "<= 0",
-      "Rank 1": "1..2",
-      "Rank 2": "3..4",
-      "Rank 3": "5..6",
-      "Rank 4": "7..8",
-      "Rank 5": "9..10",
-      "Rank 6": "11..12",
-      "Rank 7": "13..14",
-      "Rank 8": "15..16",
-      "Rank 9": "17..18",
-      "Rank 10": ">= 19"
-    }
+      "Rank 1": "1..4",
+      "Rank 2": "5..8",
+      "Rank 3": "9..12",
+      "Rank 4": "13..16",
+      "Rank 5": "17..20",
+      "Rank 6": "21..24",
+      "Rank 7": "25..28",
+      "Rank 8": "29..32",
+      "Rank 9": "33..36",
+      "Rank 10": "37..40"
+    },
+    "maxCp": 40
   },
   "items": {
     "rule": "item power = kit (weapons) + Poise threshold + range + modifiers/stats + property rules + damage-type tags, all over 3 rounds; combat power = item power - rarity discount (boss 7); rank from combat power, same bands as cards",
