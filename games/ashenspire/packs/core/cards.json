@@ -4431,13 +4431,14 @@
     "type": "attack",
     "icon": "attack",
     "keywords": [
+      "ethereal",
       "exhaust"
     ],
     "effects": [
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 15
+        "amount": 28
       },
       {
         "op": "applyStatus",
@@ -4457,13 +4458,13 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies. Exhaust.",
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies. Ethereal. Exhaust.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 22
+          "amount": 36
         },
         {
           "op": "applyStatus",

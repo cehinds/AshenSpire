@@ -151,6 +151,7 @@ export const levelLists = {
    "core.cinderWard",
    "core.cleansingEmbers",
    "core.closingDodge",
+   "core.conflagration",
    "core.counter",
    "core.dawnBulwark",
    "core.dawnFlame",

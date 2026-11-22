@@ -18,7 +18,7 @@ export const cardCombatPower = {
  "core.cleansingEmbers": {"raw":8,"cp":6,"rank":2,"rarity":"uncommon"},
  "core.closingDodge": {"raw":7,"cp":5,"rank":2,"rarity":"uncommon"},
  "core.cometLance": {"raw":35,"cp":33,"rank":9,"rarity":"uncommon"},
- "core.conflagration": {"raw":50,"cp":45,"rank":10,"rarity":"rare"},
+ "core.conflagration": {"raw":28,"cp":23,"rank":6,"rarity":"rare"},
  "core.counter": {"raw":22,"cp":22,"rank":6,"rarity":"common"},
  "core.dawnBulwark": {"raw":-12,"cp":-17,"rank":0,"rarity":"rare"},
  "core.dawnFlame": {"raw":19,"cp":19,"rank":5,"rarity":"common"},
