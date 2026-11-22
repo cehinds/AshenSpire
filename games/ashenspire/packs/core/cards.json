@@ -44,7 +44,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 8
+        "amount": 0
       }
     ],
     "tags": [
@@ -125,8 +125,8 @@
     "name": "Sweep",
     "class": "colorless",
     "rarity": "common",
-    "cost": 1,
-    "staminaCost": 1,
+    "cost": 2,
+    "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -166,7 +166,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 36
+        "amount": 32
       }
     ],
     "tags": [
@@ -197,12 +197,6 @@
         "op": "damage",
         "target": "enemy",
         "amount": 18
-      },
-      {
-        "op": "applyStatus",
-        "target": "enemy",
-        "status": "vulnerable",
-        "stacks": 2
       }
     ],
     "tags": [
@@ -212,7 +206,7 @@
       "school:force",
       "tradition:arcane"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Deal {damage} damage.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
@@ -322,12 +316,15 @@
     "type": "attack",
     "mirrors": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": [
+      "exhaust",
+      "ethereal"
+    ],
     "effects": [
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       }
     ],
     "tags": [
@@ -351,13 +348,11 @@
     "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 0,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "skill",
     "icon": "shield",
-    "keywords": [
-      "ethereal"
-    ],
+    "keywords": [],
     "effects": [
       {
         "op": "block",
@@ -377,7 +372,6 @@
       "maneuver:casting",
       "classification.skill",
       "school:alteration",
-      "rank.cantrip",
       "tradition:arcane",
       "tradition:divine"
     ],
@@ -391,13 +385,11 @@
     "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 0,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "skill",
     "icon": "shield",
-    "keywords": [
-      "exhaust"
-    ],
+    "keywords": [],
     "effects": [
       {
         "op": "block",
@@ -417,7 +409,6 @@
       "maneuver:casting",
       "classification.skill",
       "school:alteration",
-      "rank.cantrip",
       "tradition:arcane",
       "tradition:divine"
     ],

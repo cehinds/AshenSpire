@@ -15,6 +15,7 @@
     "balance:card-budget": "node tools/card-budget-report.mjs",
     "combat-power": "node tools/combat-power-report.mjs",
     "combat-power:check": "node tools/combat-power-report.mjs --check",
+    "cards:generate": "node tools/generate-cards.mjs",
     "level-lists": "node tools/level-lists.mjs",
     "level-lists:check": "node tools/level-lists.mjs --check",
     "qa:redraw-probe": "node tools/redraw-probe.mjs",

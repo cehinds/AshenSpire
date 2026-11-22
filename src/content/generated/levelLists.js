@@ -49,6 +49,7 @@ export const levelLists = {
    "core.smokeVeil",
    "core.spark",
    "core.starfall",
+   "core.starseerSpecial",
    "core.stoneSigil",
    "core.stormBlessing",
    "core.strike",
@@ -60,7 +61,9 @@ export const levelLists = {
    "core.venomedEdge",
    "core.wardingGlance",
    "core.whetstoneNick",
-   "core.wideSweep"
+   "core.wideSweep",
+   "greatswordSunderingHew",
+   "twinFang"
   ],
   "act2": [
    "blightTouch",
@@ -148,6 +151,7 @@ export const levelLists = {
    "core.whetstoneNick",
    "core.whirlwind",
    "core.wideSweep",
+   "greatswordSunderingHew",
    "twinFang"
   ],
   "act3": [
@@ -259,9 +263,11 @@ export const levelLists = {
   "act1": {
    "weapon": [
     "arbalest",
+    "ashenClaymore",
     "battleaxe",
     "beardedAxe",
     "beastClaws",
+    "boneTalisman",
     "broadsword",
     "buckler",
     "duelistsFoil",
@@ -277,11 +283,13 @@ export const levelLists = {
     "rapier",
     "reapersCrescent",
     "roundShield",
+    "stiletto",
     "straightSword",
     "thornWhip",
     "thunderMallet",
     "towerShield",
-    "warhammer"
+    "warhammer",
+    "zweihander"
    ],
    "armour": [
     "herald.default",

@@ -55,21 +55,15 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 48
+        "amount": 36
       },
       {
         "op": "poiseDamage",
         "target": "enemy",
-        "amount": 5
-      },
-      {
-        "op": "applyStatus",
-        "target": "enemy",
-        "status": "vulnerable",
-        "stacks": 2
+        "amount": 2
       }
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
     "upgrade": {
       "effects": [
         {
@@ -81,12 +75,6 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 7
-        },
-        {
-          "op": "applyStatus",
-          "target": "enemy",
-          "status": "vulnerable",
-          "stacks": 3
         }
       ]
     }
@@ -279,14 +267,14 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 45,
+        "amount": 26,
         "hits": 2
       },
       {
         "op": "applyStatus",
         "target": "enemy",
         "status": "vulnerable",
-        "stacks": 3
+        "stacks": 2
       }
     ],
     "textTemplate": "Deal {damage} damage {hits} times. Apply {vulnerable} Vulnerable.",

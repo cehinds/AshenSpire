@@ -149,8 +149,8 @@ test('current rewards can draw the expanded authored pool and preserve old balan
   // Owner 2026-11-17: cards that need allies (base.needs-allies) join no pool until ally mechanics exist.
   for(const id of pack.groups['base.current-rewards'].members)assert.equal(legacy.classes.get('reaver').cardPool.includes(id),!pack.groups['base.needs-allies'].members.includes(id),id);
   const old=contentBundle.cards.find(row=>row.id==='greatswordSunderingHew');
-  // Owner ruling 2026-11-21: Sundering Hew is a rare Rank 1 weapon art (48 damage, 2 Vulnerable).
-  assert.deepEqual([old.cost,old.manaCost,old.effects[0].amount],[2,1,48]);
+  // Owner ruling 2026-11-21: Sundering Hew is a rare Rank 1 weapon art (36 damage, 2 Poise damage; was 48 damage, 2 Vulnerable).
+  assert.deepEqual([old.cost,old.manaCost,old.effects[0].amount],[2,1,36]);
 });
 test('closed opcode/formula/reference validation and duplicate author IDs fail by name',()=>{
   for(const mutation of [card=>card.effects=[{op:'fakeCardEffect'}],card=>card.effects=[{op:'damage',target:'enemy',amount:{f:'fakeFormula'}}],card=>card.effects=[{op:'applyStatus',target:'self',status:'missing-status',stacks:1}]]) {

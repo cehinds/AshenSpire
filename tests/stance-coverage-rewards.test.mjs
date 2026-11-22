@@ -53,7 +53,9 @@ test('the Reaver deck missing sweep: every combat and level offer holds a sweep-
 });
 test('the reserved slot is never a stance already owned', () => {
   // The reserved card is any basic or cantrip of the dropped card's stance (several Core cards share Attack now), never an owned stance.
-  for (const dropped of ['core.sweep', 'core.strike', 'core.counter']) {
+  // Owner ruling 2026-11-21 (combat-power ranks and the tier-band reward rolls): Counter scores Rank 5 (cp 20), outside the first door's band, so no
+  // Counter card is offered as a reserved basic; Sweep and Strike still are.
+  for (const dropped of ['core.sweep', 'core.strike']) {
     const run = fresh(); run.deck = run.deck.filter(card => card.cardId !== dropped);
     const accepted = reg.cards.all().map(card => card.id).filter(id => stanceOfId(id) === stanceOfId(dropped));
     assert.ok(accepted.includes(dropped));

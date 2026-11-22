@@ -1419,6 +1419,47 @@
     }
   },
   {
+    "id": "gravebinderLament",
+    "name": "Gravebinder's Lament",
+    "class": "herald",
+    "rarity": "rare",
+    "cost": 1,
+    "manaCost": 0,
+    "type": "attack",
+    "flavor": "The Chapel's gravebinders sing it low, so the dead will not wake to hear what they are owed.\n\nThe verse has seven stanzas. Only the first three are written down, and the bell-ringers are paid not to ask after the rest.",
+    "keywords": [],
+    "icon": "blight",
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 24
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "crimsonBlight",
+        "stacks": 3
+      }
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {crimsonBlight} Crimson Blight.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 30
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "crimsonBlight",
+          "stacks": 4
+        }
+      ]
+    }
+  },
+  {
     "id": "witheringTouch",
     "name": "Withering Touch",
     "class": "herald",
