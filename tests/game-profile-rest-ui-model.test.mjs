@@ -99,17 +99,17 @@ test('the Core deck editor mints collected trained basics and rejects uncollecte
   const session = openDeckEdit(registries, draft);
   const before = structuredClone(draft);
   const editor = deckEditorModel({ registries, run: draft });
-  assert.deepEqual(editor.collection.filter(tile => tile.unlimited).map(tile => tile.cardId), ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep']); // the 2026-11-14 starter deck also collects Smash and Sweep
+  assert.deepEqual(editor.collection.filter(tile => tile.unlimited).map(tile => tile.cardId), ['core.strike', 'core.defend']); // owner ruling 2026-11-21: the starter deck collects only Strike and Defend
   assert.ok(editor.collection.filter(tile => tile.unlimited).every(tile => run.collectedCardIds.includes(tile.cardId)));
   assert.throws(() => session.add('basic:core.evade'), /not an unlimited card id/);
   assert.equal(editor.collection.some(tile => tile.key === 'basic:attack' || tile.key === 'basic:guard'), false);
   assert.throws(() => session.add('basic:attack'), /not an unlimited card id/);
   assert.deepEqual(draft, before, 'the formerly enabled legacy tile cannot alter a configured draft');
-  const removed = draft.deck.find(card => card.cardId === 'core.counter');
+  const removed = draft.deck.find(card => card.cardId === 'core.defend');
   assert.equal(session.remove(removed.instanceId).ok, true);
   assert.equal(draft.deck.length, run.deck.length - 1);
   assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), false, 'a pristine trained basic is backed by sticky collection knowledge');
-  assert.equal(session.add('basic:core.counter').ok, true);
+  assert.equal(session.add('basic:core.defend').ok, true);
   assert.equal(draft.deck.at(-1).cardId, removed.cardId);
   assert.equal(session.confirm().ok, true);
   assert.throws(() => commitGameProfileRest(registries, run, 'strategize', { draft }), /Unknown rest service/, 'D10: deck editing is not a rest service');
