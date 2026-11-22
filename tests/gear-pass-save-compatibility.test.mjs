@@ -115,7 +115,8 @@ test('pre-type profiles keep Dev future armament and Blacksmith offers without n
   // Independent oracle: Dev 6727a25530050d63aaa3d960a0d8e3d1855e9fc4, seed511 / offer RNG41: its Codex-expanded catalog with legacy gear rules.
   const { registries, run } = world(false), rng = createRng(41);
   const offer = GameProfileArmamentOffer(registries, run, rng, { offerId: 'old-boss', pool: 'boss' });
-  assert.deepEqual(offer.options, [{ kind: 'weapons', id: 'kiteShield' }, { kind: 'armor', id: 'riteVestments' }]);
+  // Level lists (owner, 2026-11-21): the offer draws from the act's rank band, so the candidate set (and the same RNG's weapon pick) differs from the Dev oracle's: kiteShield -> halberd. The armour pick and the draw counter are unchanged.
+  assert.deepEqual(offer.options, [{ kind: 'weapons', id: 'halberd' }, { kind: 'armor', id: 'riteVestments' }]);
   assert.equal(rng.getCounters().cardRewards, 9);
   const other = world(false), smithRng = createRng(41);
   const smith = coreBlacksmithShelves(other.registries, smithRng, other.run);
