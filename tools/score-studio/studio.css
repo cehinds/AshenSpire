@@ -758,3 +758,5 @@ body.studio-body .add-feature-desc:empty { display: none; }
 body.studio-body .add-feature-desc strong { color: var(--st-text); }
 body.studio-body .desc-scores { display: block; }
 body.studio-body .desc-gaps { white-space: nowrap; }
+body.studio-body .export-naming-note { margin: var(--studio-gap-1) 0; font-size: 12px; color: var(--st-warn); }
+body.studio-body .export-naming-note:empty { display: none; }

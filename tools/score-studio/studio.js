@@ -403,9 +403,10 @@ function writeDraftNow() {
 // Saves the local draft after a change has been applied, debounced so typing stays cheap.
 let draftTimer = null;
 let draftPending = false;
-function saveDraft() {
+function saveDraft({ autoName = true } = {}) {
   // Every mutation ends here, so this is where auto-named cards follow edits, weight changes and loads.
-  syncAutoNames();
+  // An edit that asks not to rename (typing a name or card text) passes autoName: false.
+  if (autoName !== false) syncAutoNames();
   clearTimeout(draftTimer);
   draftPending = true;
   draftTimer = setTimeout(writeDraftNow, DRAFT_SAVE_DELAY_MS);
@@ -603,8 +604,9 @@ function romanFor(rank) {
   return roman[rank] || '';
 }
 
+// A name's words without its rank numeral, upgrade mark or "(Copy)", so a duplicate keeps its source's noun.
 function nameWords(name) {
-  return String(name || '').trim().split(/\s+/).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word));
+  return String(name || '').trim().split(/\s+/).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word) && !/^\(Copy\)$/i.test(word));
 }
 
 function nameParts(def, sc = scoreCardEntry(def)) {
@@ -1456,7 +1458,7 @@ function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoTex
   renderInspector();
   updateCardTileInPlace(def.id);
   computeShiftCount();
-  saveDraft();
+  saveDraft({ autoName });
 }
 
 // ---------------------------------------------------------------------------
@@ -1592,8 +1594,8 @@ function renderNamingWordsGroup(container, query) {
     const table = state.scoring.naming.card[namingTable];
     if ((table[namingKey] || '') === value) return;
     pushHistory();
-    if (value) table[namingKey] = value;
-    else delete table[namingKey];
+    // An emptied word keeps its row, so it can be filled in again.
+    table[namingKey] = value;
     saveDraft();
     renderInspector();
   });
@@ -1844,7 +1846,32 @@ function buildScoringDiff() {
     }
   };
   walk(state.repoScoring, state.scoring);
+  // Naming words the studio only seeded (the repo has none and nobody edited them) are not an edit;
+  // the export dialog still says it will add them.
+  if (namingWordsSeedOnly()) return lines.filter((line) => !NAMING_WORD_PATHS.some((path) => line.startsWith(path)));
   return lines;
+}
+
+const NAMING_WORD_PATHS = ['naming.card.prefix', 'naming.card.suffix'];
+
+function repoHasNamingWords() {
+  const card = state.repoScoring?.naming?.card;
+  return Boolean(card?.prefix && card?.suffix);
+}
+
+function namingWordsSeedOnly() {
+  if (repoHasNamingWords()) return false;
+  const card = state.scoring?.naming?.card;
+  return JSON.stringify(card?.prefix) === JSON.stringify(DEFAULT_NAME_PREFIX)
+    && JSON.stringify(card?.suffix) === JSON.stringify(DEFAULT_NAME_SUFFIX);
+}
+
+// The export dialog's note when export will add the naming word tables to a scoring.json without them.
+function namingWordsExportNote() {
+  if (repoHasNamingWords()) return '';
+  const card = state.scoring?.naming?.card;
+  const count = (table) => Object.values(table || {}).filter(Boolean).length;
+  return `Adds naming words (${count(card?.prefix)} prefixes, ${count(card?.suffix)} suffixes) to naming.card.`;
 }
 
 async function loadFromRepo(customPath = state.repoPath) {
@@ -1984,7 +2011,6 @@ function populateCardOptions() {
 }
 
 function syncAllViews() {
-  ensureNamingWords(state.repoScoring);
   ensureNamingWords(state.scoring);
   populateRankFilter();
   populateCardOptions();
@@ -2271,12 +2297,13 @@ function wireEvents() {
   const nameInput = document.getElementById('edit-name');
   nameInput.addEventListener('focus', () => nameBurst.end());
   nameInput.addEventListener('input', (e) => {
+    // Snapshot first, so undo brings Auto-name back on along with the old name.
+    nameBurst.begin();
     const def = selectedCardDef();
     if (def?._autoName) {
       def._autoName = false;
       toast('Auto-name off: you named this card');
     }
-    nameBurst.begin();
     mutateSelectedCard((d) => { d.name = e.target.value; }, { recordHistory: false, autoName: false });
   });
   // Auto-name is per card. Turning it on records where the name starts from (its last word and its
@@ -2647,6 +2674,7 @@ function wireEvents() {
     const diff = buildScoringDiff();
     document.getElementById('export-modal-path').textContent = `Target: ${path} (${diff.length} change(s))`;
     document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
+    document.getElementById('export-modal-naming').textContent = namingWordsExportNote();
     renderRankShiftList();
     document.getElementById('export-modal').showModal();
   });

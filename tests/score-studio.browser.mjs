@@ -187,6 +187,15 @@ try {
   assert.notEqual(autoName.after, autoName.before, `adding a status renames an auto-named card (${autoName.before} -> ${autoName.after})`);
   assert.ok(autoName.scrollWidth <= autoName.clientWidth, `the generated title fits its box (${autoName.scrollWidth} <= ${autoName.clientWidth})`);
 
+  // 8. A duplicate is auto-named from its source's noun, never "(Copy)".
+  const duplicateName = await page.evaluate(() => {
+    document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"]').click();
+    document.getElementById('btn-duplicate-card').click();
+    return { name: document.getElementById('edit-name').value, autoName: document.getElementById('toggle-auto-name').checked };
+  });
+  assert.ok(duplicateName.autoName, 'a duplicate starts with Auto-name on');
+  assert.doesNotMatch(duplicateName.name, /\(Copy\)/, `the duplicate's auto name has no "(Copy)" (${duplicateName.name})`);
+
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
   await page.close();
