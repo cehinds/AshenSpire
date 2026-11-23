@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ScoreCard, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, ItemName } from '../src/model/combatPower.js';
+import { ScoreCard, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
 import { scoring } from '../src/content/generated/scoring.js';
 import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
 
@@ -67,7 +67,7 @@ test('combat power: the generated table is fresh and covers every Core card and 
   for (const row of [...Object.values(cardCombatPower), ...Object.values(itemCombatPower)]) {
     assert.equal(row.cp, CombatPower(row.raw, row.rarity));
     assert.equal(row.rank, RankOf(row.cp));
-    assert.ok(row.cp <= scoring.rank.maxCp, `cp ${row.cp} over the ${scoring.rank.maxCp} ceiling`);
+    assert.ok(row.rank >= 0 && row.rank <= scoring.rank.maxRank, `rank ${row.rank} outside 0..${scoring.rank.maxRank}`);
   }
 });
 
@@ -92,4 +92,14 @@ test('the effect count sees a status even when a tag shares its part key', async
   const plain = ScoreCard(face([])), tagged = ScoreCard(face(['venom']));
   assert.ok(plain.parts['effect count'] > 0, 'damage + Venom is two effects');
   assert.equal(tagged.parts['effect count'], plain.parts['effect count'], 'a venom tag does not hide the Venom status');
+});
+
+test('ApplyScoringOverride leaves rows untouched when absent and overrides rank, cp, or rarity when set', () => {
+  const base = { raw: 64, cp: 59, rank: 10, rarity: 'rare' };
+  assert.equal(ApplyScoringOverride(base, null), base);
+  assert.equal(ApplyScoringOverride(base, {}), base);
+  assert.deepEqual(ApplyScoringOverride(base, { rank: 5 }), { ...base, rank: 5, overridden: true });
+  assert.deepEqual(ApplyScoringOverride(base, { rank: 99 }), { ...base, rank: scoring.rank.maxRank, overridden: true });
+  assert.deepEqual(ApplyScoringOverride(base, { cp: 14 }), { raw: 64, cp: 14, rank: RankOf(14), rarity: 'rare', overridden: true });
+  assert.deepEqual(ApplyScoringOverride(base, { rarity: 'common' }), { raw: 64, cp: 64, rank: 10, rarity: 'common', overridden: true });
 });

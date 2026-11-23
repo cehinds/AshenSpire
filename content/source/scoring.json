@@ -100,13 +100,6 @@
       "projection": "as SP",
       "why": ""
     },
-    "gainBarrier": {
-      "weight": 3,
-      "per": 1,
-      "basis": "per stack",
-      "projection": "as the barrier status",
-      "why": ""
-    },
     "applyReflect": {
       "weight": 4,
       "per": 1,
@@ -317,12 +310,6 @@
       "target": "self",
       "projection": "next card x1.25 (stance prepared) + unlocks Prepared riders",
       "why": "unique, decays at turn end."
-    },
-    "barrier": {
-      "weight": 8,
-      "target": "self",
-      "projection": "absorbs part of one hit this round",
-      "why": "Shared ward word; decays per turn."
     },
     "ward": {
       "weight": 8,
@@ -1093,13 +1080,6 @@
       "domain": "card",
       "label": "Pierce"
     },
-    "precision": {
-      "weight": 0,
-      "projection": "identity",
-      "why": "Card family (pool and synergy key). Synergy value is scored on the card that tests it.",
-      "domain": "card",
-      "label": "Precision"
-    },
     "ranged": {
       "weight": 0,
       "projection": "identity",
@@ -1359,13 +1339,6 @@
       "domain": "presentation",
       "label": "ash"
     },
-    "fx:barrier": {
-      "weight": 0,
-      "projection": "identity",
-      "why": "Sprite and visual selection only; the blurb says \"no combat modifier\".",
-      "domain": "presentation",
-      "label": "barrier"
-    },
     "fx:bind": {
       "weight": 0,
       "projection": "identity",
@@ -1484,13 +1457,6 @@
       "why": "Sprite and visual selection only; the blurb says \"no combat modifier\".",
       "domain": "presentation",
       "label": "pierce"
-    },
-    "fx:precision": {
-      "weight": 0,
-      "projection": "identity",
-      "why": "Sprite and visual selection only; the blurb says \"no combat modifier\".",
-      "domain": "presentation",
-      "label": "precision"
     },
     "fx:ranged": {
       "weight": 0,
@@ -2093,13 +2059,6 @@
       "why": "Categorised identity or a rider marker; the rider is an effect and scores there.",
       "domain": "technique",
       "label": "Paired Strikes"
-    },
-    "technique:precision": {
-      "weight": 0,
-      "projection": "identity",
-      "why": "Categorised identity or a rider marker; the rider is an effect and scores there.",
-      "domain": "technique",
-      "label": "Precision"
     },
     "ability:rime-mirror": {
       "weight": 0,
@@ -2805,22 +2764,6 @@
         "apply": {
           "addStatus": [
             "dexterity",
-            1,
-            "self"
-          ]
-        },
-        "need": null
-      },
-      {
-        "id": "self:barrier",
-        "group": "new",
-        "label": "Gain barrier 1",
-        "value": "status:barrier",
-        "minRank": "common",
-        "size": null,
-        "apply": {
-          "addStatus": [
-            "barrier",
             1,
             "self"
           ]
@@ -4237,7 +4180,6 @@
         "strength": "Mighty",
         "dexterity": "Nimble",
         "prepared": "Poised",
-        "barrier": "Barrier",
         "ward": "Warded",
         "stoneskin": "Stoneskin",
         "evade": "Evasive",
@@ -4425,5 +4367,8 @@
       "rawFloorPerCard": -2,
       "why": "A starting deck is plain: 9-11 cards, at most 2 of them special (non-common, or ranked above Unranked), none above Rank 2, and the sum of each card's raw power (floored at -2 so a very weak card cannot pay for a strong one) no higher than 20. Measured 2026-11-21: reaver -1, rogue -1, starseer 2, herald 1."
     }
+  },
+  "overrides": {
+    "$comment": "Optional per-id overrides ({raw, cp, rank, rarity}) for unique cards or items (e.g. \"core.conflagration\" or \"weapon:longsword\"); empty by default so scoring drives every rank."
   }
 }

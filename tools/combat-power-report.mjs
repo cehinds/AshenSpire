@@ -14,7 +14,7 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { contentBundle as b } from '../src/content/index.js';
 import { scoring } from '../src/content/generated/scoring.js';
-import { BaseFace, ScoreCard, ScoreItem, CombatPower, RankOf } from '../src/model/combatPower.js';
+import { BaseFace, ScoreCard, ScoreItem, CombatPower, RankOf, ApplyScoringOverride } from '../src/model/combatPower.js';
 import { registries, holdable, measure, CLASSES, tagOf } from './lib/cardBudgetMeasure.mjs';
 
 const OUT = fileURLToPath(new URL('../src/content/generated/combatPower.js', import.meta.url));
@@ -40,8 +40,7 @@ export function faceOf(def, row) {
     const amount = typeof e.amount === 'number' ? e.amount : 1;
     if (e.op === 'applyStatus') {
       if (typeof e.status === 'string' && typeof e.stacks === 'number' && statusIds.has(e.status)) f.statuses.push([e.status, e.stacks, e.target === 'self' ? 'self' : 'enemy']);
-    } else if (e.op === 'gainBarrier') f.statuses.push(['barrier', amount, 'self']);
-    else if (e.op === 'restorePoise') f.blk += amount;
+    } else if (e.op === 'restorePoise') f.blk += amount;
     else if (OP_FIELD[e.op]) f[OP_FIELD[e.op]] += amount;
     else if (e.op === 'removeStatus') { if (e.target === 'self') f.cleanse += 1; }
     else if (e.op === 'moveEngagement') f.move += 1;
@@ -138,17 +137,23 @@ function itemFaces() {
 // Table
 // ---------------------------------------------------------------------------------------------------------------------
 export function buildTable() {
+  const overrideFor = (key, def) => {
+    const a = scoring.overrides && typeof scoring.overrides[key] === 'object' ? scoring.overrides[key] : null;
+    const b = def && typeof def.scoringOverride === 'object' ? def.scoringOverride : null;
+    return (a || b) ? { ...(a || {}), ...(b || {}) } : null;
+  };
   const cardCombatPower = {};
   const faces = measureCards();
   for (const id of Object.keys(faces).sort()) {
     const f = faces[id], raw = ScoreCard(f).raw, cp = CombatPower(raw, f.rarity);
-    cardCombatPower[id] = { raw, cp, rank: RankOf(cp), rarity: f.rarity };
+    cardCombatPower[id] = ApplyScoringOverride({ raw, cp, rank: RankOf(cp), rarity: f.rarity }, overrideFor(id, registries.cards.get(id)), scoring);
   }
   const itemCombatPower = {};
   const { items, rules } = itemFaces();
   for (const it of items.sort((x, y) => (x.kind + ':' + x.id).localeCompare(y.kind + ':' + y.id))) {
     const s = ScoreItem(it, scoring, rules);
-    itemCombatPower[it.kind + ':' + it.id] = { raw: s.raw, cp: s.cp, rank: RankOf(s.cp), rarity: it.rarity };
+    const key = it.kind + ':' + it.id;
+    itemCombatPower[key] = ApplyScoringOverride({ raw: s.raw, cp: s.cp, rank: RankOf(s.cp), rarity: it.rarity }, overrideFor(key, it), scoring);
   }
   return { cardCombatPower, itemCombatPower };
 }

@@ -132,6 +132,21 @@ export function RankRange(k, scoring = shippedScoring) {
   return k === RK.maxRank ? (RK.maxCp ? `${lo}-${RK.maxCp}` : `>= ${lo}`) : `${lo}-${RK.width * k}`;
 }
 
+/** Apply an optional per-card/item override ({raw, cp, rank, rarity}) to a scored row; returns row unchanged when absent. */
+export function ApplyScoringOverride(row, override, scoring = shippedScoring) {
+  if (!override || typeof override !== 'object') return row;
+  const hasRarity = typeof override.rarity === 'string' && override.rarity.length > 0;
+  const hasRaw = Number.isFinite(override.raw);
+  const hasCp = Number.isFinite(override.cp);
+  const hasRank = Number.isInteger(override.rank);
+  if (!hasRarity && !hasRaw && !hasCp && !hasRank) return row;
+  const rarity = hasRarity ? override.rarity : row.rarity;
+  const raw = hasRaw ? override.raw : row.raw;
+  const cp = hasCp ? override.cp : CombatPower(raw, rarity, scoring);
+  const rank = hasRank ? Math.max(0, Math.min(slimOf(scoring).rank.maxRank, override.rank)) : RankOf(cp, scoring);
+  return { ...row, raw, cp, rank, rarity, overridden: true };
+}
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Items
 // ---------------------------------------------------------------------------------------------------------------------------------
