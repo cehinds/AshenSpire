@@ -11,8 +11,14 @@
   <link rel="stylesheet" href="styles/ui.css" />
   <link rel="stylesheet" href="styles/combat.css" />
   <link rel="stylesheet" href="styles/kit.css" />
+  <link rel="stylesheet" href="styles/responsive-type.css" />
+  <link rel="stylesheet" href="styles/player-polish-icons.css" />
+  <link rel="stylesheet" href="styles/player-polish.css" />
   <link rel="stylesheet" href="styles/illustrated-cards.css" />
   <link rel="stylesheet" href="styles/corrupted-cards.css" />
+  <link rel="stylesheet" href="styles/combat-expansion.css" />
+  <link rel="stylesheet" href="styles/combat-layers.css" />
+  <link rel="stylesheet" href="styles/combat-symbol-colors.css" />
   <!-- Studio rules are scoped under body.studio-body so the game sheets above cannot restyle the studio chrome. -->
   <link rel="stylesheet" href="tools/score-studio/studio.css" />
 </head>
@@ -83,11 +89,19 @@
                 <button id="view-grid" class="s-btn is-active">Grid</button>
                 <button id="view-single" class="s-btn">Single</button>
               </div>
+              <label class="scale-control" title="Resize gallery cards">Card size
+                <input id="card-scale-slider" type="range" min="140" max="280" value="185" />
+              </label>
+              <label class="scale-control" title="Resize the inspector's card preview">Preview size
+                <input id="inspector-scale-slider" type="range" min="130" max="260" value="175" />
+              </label>
               <span class="studio-muted pool-label pool-label-panel"></span>
             </div>
           </div>
           <div id="cards-grid" class="cards-grid"></div>
         </div>
+
+        <div id="inspector-resizer" class="inspector-resizer" title="Drag to resize the inspector" role="separator" aria-orientation="vertical"></div>
 
         <aside id="card-inspector" class="card-inspector" aria-label="Card inspector">
           <div class="inspector-sheet-head">
@@ -102,10 +116,27 @@
           <details class="inspector-section" data-section="basics" open>
             <summary class="section-head">
               <h3>Card Basics</h3>
-              <button id="btn-send-sandbox" class="s-btn">Test in Combat Sandbox</button>
+              <div class="inspector-card-actions">
+                <button id="btn-send-sandbox" class="s-btn">Test in Sandbox</button>
+                <div class="studio-menu">
+                  <button id="btn-card-actions" class="s-btn s-btn-icon" title="Card actions" aria-label="Card actions" aria-haspopup="true" aria-expanded="false" aria-controls="card-actions-menu">⋯</button>
+                  <div id="card-actions-menu" class="studio-menu-panel is-right" hidden>
+                    <button id="btn-duplicate-card" class="menu-item">Duplicate card</button>
+                    <button id="btn-reset-card" class="menu-item hidden">Reset edits on this card</button>
+                    <button id="btn-delete-card" class="menu-item hidden">Delete custom card</button>
+                  </div>
+                </div>
+              </div>
             </summary>
             <div class="form-grid">
-              <label>Name <input id="edit-name" type="text" /></label>
+              <div class="form-wide">
+                <label for="edit-name">Name</label>
+                <div class="name-input-row">
+                  <input id="edit-name" type="text" />
+                  <button id="btn-auto-name" class="s-btn" type="button" title="Name the card from its tags, main effect and rank">Auto-Name</button>
+                  <label class="studio-toggle" title="Rename the card as you edit its features"><input id="toggle-auto-name" type="checkbox" /> Auto</label>
+                </div>
+              </div>
               <label>Card Type
                 <select id="edit-type">
                   <option value="attack">Attack</option>
@@ -157,7 +188,7 @@
               <div class="form-wide">
                 <label for="edit-text">Card text</label>
                 <textarea id="edit-text" rows="3" spellcheck="true"></textarea>
-                <span class="studio-muted text-hint">Use {tokens} like {damage} or {frail} to show the card's numbers.</span>
+                <span class="studio-muted text-hint">Use {tokens} like {damage} or {frail} to show the card's numbers. <button id="btn-text-from-effects" class="link-btn" type="button" title="Replace the text with one written from the card's effects">Write from effects</button></span>
                 <div id="text-warnings" class="text-warnings" role="status"></div>
               </div>
             </div>
@@ -166,13 +197,23 @@
           <details class="inspector-section" data-section="features" open>
             <summary class="section-head">
               <h3>Active Features</h3>
-              <div class="add-feature-bar">
-                <select id="add-feature-select" aria-label="Add feature to card">
-                  <option value="">+ Add Feature...</option>
-                </select>
-                <button id="btn-add-feature" class="s-btn">Add</button>
-              </div>
             </summary>
+            <div class="add-feature-bar">
+              <select id="add-feature-select" aria-label="Add feature to card">
+                <option value="">+ Add Effect, Status, Keyword, or Tag...</option>
+              </select>
+              <button id="btn-add-feature" class="s-btn" type="button">Add</button>
+            </div>
+            <div class="quick-add-chips" id="quick-add-chips">
+              <button type="button" class="q-chip" data-quick-add="effect:damage">+ Damage</button>
+              <button type="button" class="q-chip" data-quick-add="effect:block">+ Block</button>
+              <button type="button" class="q-chip" data-quick-add="effect:poiseDamage">+ Poise</button>
+              <button type="button" class="q-chip" data-quick-add="effect:draw">+ Draw</button>
+              <button type="button" class="q-chip" data-quick-add="status:burn">+ Burn</button>
+              <button type="button" class="q-chip" data-quick-add="status:venom">+ Venom</button>
+              <button type="button" class="q-chip" data-quick-add="kw:exhaust">+ Exhaust</button>
+              <button type="button" class="q-chip" data-quick-add="kw:retain">+ Retain</button>
+            </div>
             <div id="active-features-list" class="active-features-list"></div>
           </details>
 
@@ -273,6 +314,7 @@
           <label>Enemy
             <select id="sandbox-enemy"></select>
           </label>
+          <button id="btn-sandbox-refill" class="s-btn" title="Top up SP and MP to test high-cost cards">Refill SP/MP</button>
           <button id="btn-sandbox-reset" class="s-btn">Reset</button>
           <button id="btn-sandbox-endturn" class="s-btn">End Turn</button>
         </div>
