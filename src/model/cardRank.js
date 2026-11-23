@@ -11,6 +11,18 @@ export function cardRank(instance) {
 }
 
 /**
+ * VisibleCardRank(instance) → the rank the card face shows (playingCard.js rankBadge): the instance's own rank, else its
+ * authored ability rank, else 0 for an unranked card (no badge, "Basic" or "Cantrip"). Unlike cardRank it does not floor
+ * at 1, so an unranked card and a "Rank 1" card read differently.
+ */
+export function VisibleCardRank(instance) {
+  const rank = instance && instance.rank;
+  if (Number.isInteger(rank) && rank >= 1) return rank;
+  const abilityRank = instance && instance.abilityRank;
+  return Number.isInteger(abilityRank) && abilityRank >= 1 ? abilityRank : 0;
+}
+
+/**
  * The ops a rank may move, best first (SPEC §13.4o): a card's PRIMARY NUMBER is
  * what it is for — damage, then Block, then healing, then a status it applies,
  * then poise damage. Costs (loseHp) and tempo (draw, energy, mana, discard)

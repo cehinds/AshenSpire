@@ -59,6 +59,7 @@ test('claiming a rank-up raises the chosen card by one rank, its slots follow, a
   // Owner 2026-11-18: a combat rank-up is always its own step (bonus: true), never one of the card picks.
   assert.deepEqual(offer.options[index], { kind: 'rankUps', id: 'cardRank', bonus: true });
   const card = RankUpCandidates(registries, run)[0];
+  card.rank = 1; // a "Rank 1" card: slots are rank + 1, so each raise opens one
   const rank = InstanceRank(card), slots = UpgradeSlots(run, card);
   assert.throws(() => claimGameProfileReward(registries, run, offer.id, index), /Choose a card/);
   assert.throws(() => claimGameProfileReward(registries, run, offer.id, index, { instanceId: 'nobody' }), /cannot be ranked up/);

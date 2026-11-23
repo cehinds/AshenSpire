@@ -25,6 +25,7 @@ test('Sleeping Smith offers the rank-up as one more choice, with its own id and 
 test('the event raises the picked card one rank, opens a slot, and takes its cinders once', () => {
   const run = newRun(); run.cinders = 100;
   const card = RankUpCandidates(registries, run)[0];
+  card.rank = 1; // a "Rank 1" card: slots are rank + 1, so each raise opens one
   const rank = InstanceRank(card), slots = UpgradeSlots(run, card);
   play(run, card);
   assert.equal(InstanceRank(card), rank + 1);

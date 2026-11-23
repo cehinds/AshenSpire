@@ -31,11 +31,21 @@ test('raising a card adds one rank and its upgrade slots follow', () => {
   const run = newRun();
   const card = RankUpCandidates(registries, run)[0];
   assert.ok(card, 'a fresh run holds a rankable card');
+  card.rank = 1; // a "Rank 1" card: slots are rank + 1, so each raise opens one
   const before = InstanceRank(card), slots = UpgradeSlots(run, card);
   const receipt = RaiseCardRank(registries, run, card.instanceId);
   assert.deepEqual([receipt.instanceId, receipt.rank], [card.instanceId, before + 1]);
   assert.equal(InstanceRank(card), before + 1);
   assert.equal(UpgradeSlots(run, card), slots + 1);
+});
+
+test('raising an unranked card (no badge, 1 slot) makes it Rank 2 with 3 slots', () => {
+  const run = newRun();
+  const card = RankUpCandidates(registries, run)[0];
+  assert.equal(card.rank, undefined);
+  assert.equal(UpgradeSlots(run, card), 1);
+  RaiseCardRank(registries, run, card.instanceId);
+  assert.deepEqual([card.rank, UpgradeSlots(run, card)], [2, 3]);
 });
 
 test('only rankable cards are offered: unknown ids, equipment-bound cards and cards at the ceiling are refused', () => {

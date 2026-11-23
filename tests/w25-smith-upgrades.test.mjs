@@ -15,7 +15,7 @@ import { SmithUpgradeCost, SmithUpgradeSlots, RollSmithOptions, SmithOptionPool 
 import { ItemFamily, ItemCategory, ItemUpgradeCount, ItemPropertyIds } from '../src/model/itemPicks.js';
 import { gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
 import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
-import { UpgradeSlots } from '../src/model/cardUpgradeLimits.js';
+import { UpgradeSlots, WeaponSmithLevel } from '../src/model/cardUpgradeLimits.js';
 import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
@@ -105,12 +105,13 @@ test('a stale quote is refused; an option not offered is refused; slots end the 
   assert.match(full.reason, /upgrade slots/);
 });
 
-test('picks count as the weapon\'s smith level for card slots, and an old save (no picks) is unchanged', () => {
+test(`picks raise the weapon's smith level but no longer add card slots (owner 2026-11-23), and an old save (no picks) is unchanged`, () => {
   const run = smithRun();
   const strike = run.deck.find((c) => c.cardId === 'core.strike');
-  assert.equal(UpgradeSlots(run, strike), 2);
+  assert.equal(UpgradeSlots(run, strike), 1);
   run.itemUpgradePicks = { [GS]: [{ id: 'ar', k: 'stat', stat: 'ar', n: 1 }] };
-  assert.equal(UpgradeSlots(run, strike), 3);
+  assert.equal(WeaponSmithLevel(run, strike), 1);
+  assert.equal(UpgradeSlots(run, strike), 1);
   assert.equal(ItemCategory(run, GS), 'greatsword');
 });
 
