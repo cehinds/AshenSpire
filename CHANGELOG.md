@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-22
 
-- **Score Studio and custom scoring upload** ([#2951](https://github.com/cehinds/AshenSpire/pull/2951), `0.7.5.54`). Adds a local Score Studio (`npm run studio`) with a procedural card-art gallery, searchable weight editor, Art & Layers stack editor, live combat sandbox with Config A/B slots, and safe repo export. Settings → Advanced → Import JSON now also accepts a custom `scoring.json` file.
+- **Score Studio and custom scoring upload** ([#2951](https://github.com/cehinds/AshenSpire/pull/2951), `0.7.5.56`). Adds a local Score Studio (`npm run studio`) with a procedural card-art gallery, searchable weight editor, Art & Layers stack editor, live combat sandbox with Config A/B slots, and safe repo export. Settings → Advanced → Import JSON now also accepts a custom `scoring.json` file.
 - **A fresh start: plain ten-card decks and cards ranked by power** ([#2950](https://github.com/cehinds/AshenSpire/pull/2950), `0.7.5.54`). Every save, unlock and history entry is reset once for this balance overhaul. Each class starts with ten cards: four basic attacks, four basic defences or defensive cantrips, one class card and one weapon art. Every card and item now has a combat-power rank from Unranked to Rank 10, and rewards come from your act's ranks. Rare rewards are under one in ten for every class. Shops stock from the same ranks. Several of the strongest spells now Exhaust, Herald gains Gravebinder's Lament, four new defensive cantrips join the pool, and a cantrip may cost up to 1 Mana. A save exported before the reset can no longer be imported.
 
 ## 2026-11-21
