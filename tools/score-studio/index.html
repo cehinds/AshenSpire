@@ -19,33 +19,44 @@
 <body class="studio-body">
   <header class="studio-topbar">
     <div class="studio-brand">
-      <span class="studio-logo">ASHENSPIRE</span>
       <span class="studio-title">Score Studio</span>
       <span id="draft-status" class="studio-pill">Synced with repo</span>
     </div>
     <nav class="studio-tabs" role="tablist" aria-label="Score Studio workspaces">
-      <button class="studio-tab is-active" data-tab="cards" role="tab" aria-selected="true">Cards &amp; Decks</button>
+      <button class="studio-tab is-active" data-tab="cards" role="tab" aria-selected="true"><span class="tab-long">Cards &amp; Decks</span><span class="tab-short">Cards</span></button>
       <button class="studio-tab" data-tab="weights" role="tab" aria-selected="false">Weights <span id="shift-count-badge" class="badge hidden">0</span></button>
-      <button class="studio-tab" data-tab="art" role="tab" aria-selected="false">Art &amp; Layers</button>
-      <button class="studio-tab" data-tab="sandbox" role="tab" aria-selected="false">Live Combat Sandbox</button>
+      <button class="studio-tab" data-tab="art" role="tab" aria-selected="false"><span class="tab-long">Art &amp; Layers</span><span class="tab-short">Art</span></button>
+      <button class="studio-tab" data-tab="sandbox" role="tab" aria-selected="false"><span class="tab-long">Combat Sandbox</span><span class="tab-short">Sandbox</span></button>
     </nav>
     <div class="studio-actions">
-      <button id="btn-undo" class="s-btn" title="Undo (Ctrl+Z)" disabled>Undo</button>
-      <button id="btn-redo" class="s-btn" title="Redo (Ctrl+Y)" disabled>Redo</button>
-      <button id="btn-revert" class="s-btn s-btn-warn" title="Reload last saved in-game scoring.json">Revert to In-Game</button>
-      <button id="btn-export-repo" class="s-btn s-btn-primary">Export to Repo</button>
-      <button id="btn-download-json" class="s-btn">Download JSON</button>
-      <label class="s-btn s-file-btn">Upload JSON<input id="input-upload-json" type="file" accept=".json" hidden /></label>
+      <button id="btn-undo" class="s-btn s-btn-icon" title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)" disabled>↶</button>
+      <button id="btn-redo" class="s-btn s-btn-icon" title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)" disabled>↷</button>
+      <button id="btn-export-repo" class="s-btn s-btn-primary">Export…</button>
+      <div class="studio-menu">
+        <button id="btn-more" class="s-btn s-btn-icon" title="More" aria-label="More" aria-haspopup="true" aria-expanded="false" aria-controls="more-menu">⋯</button>
+        <div id="more-menu" class="studio-menu-panel is-right" hidden>
+          <button id="btn-revert" class="menu-item">Revert to in-game…</button>
+          <hr />
+          <button id="btn-download-json" class="menu-item">Download JSON</button>
+          <label class="menu-item s-file-btn">Upload JSON…<input id="input-upload-json" type="file" accept=".json" hidden /></label>
+          <hr />
+          <div class="menu-section">
+            <label class="menu-label" for="repo-path-input">Repo file</label>
+            <div class="menu-path-row">
+              <input id="repo-path-input" type="text" value="content/source/scoring.json" spellcheck="false" />
+              <button id="btn-load-path" class="s-btn">Load</button>
+            </div>
+            <span id="path-status" class="studio-muted">Default: content/source/scoring.json</span>
+          </div>
+          <label class="studio-toggle menu-item"><input id="toggle-autosave" type="checkbox" checked /> Auto-save draft</label>
+        </div>
+      </div>
     </div>
   </header>
 
-  <div class="studio-pathbar">
-    <label for="repo-path-input">Repo Config Path:</label>
-    <input id="repo-path-input" type="text" value="content/source/scoring.json" spellcheck="false" />
-    <button id="btn-load-path" class="s-btn s-btn-sm">Load Path</button>
-    <span id="path-status" class="studio-muted">Default: content/source/scoring.json</span>
-    <span class="studio-spacer"></span>
-    <label class="studio-toggle"><input id="toggle-autosave" type="checkbox" checked /> Draft auto-save (local temp copy)</label>
+  <div id="art-missing-banner" class="studio-banner" role="status" hidden>
+    <span>Card art is missing. Run <code>node tools/fetch-art.mjs --pack light,common</code>, then reload.</span>
+    <button id="btn-dismiss-art-banner" class="s-btn s-btn-icon" title="Dismiss" aria-label="Dismiss">×</button>
   </div>
 
   <main class="studio-main">
@@ -54,52 +65,45 @@
       <div class="cards-layout">
         <div class="cards-gallery-pane">
           <div class="filter-bar">
-            <input id="card-search" type="search" placeholder="Search cards by name, tag, effect..." />
-            <select id="filter-type" aria-label="Card type">
-              <option value="all">All Types</option>
-              <option value="attack">Attack</option>
-              <option value="skill">Skill</option>
-              <option value="power">Power</option>
-              <option value="guard">Guard</option>
-              <option value="strike">Strike</option>
-              <option value="curse">Curse</option>
-              <option value="status">Status</option>
-            </select>
-            <select id="filter-class" aria-label="Class">
-              <option value="all">All Classes</option>
-              <option value="reaver">Reaver</option>
-              <option value="rogue">Rogue</option>
-              <option value="starseer">Starseer</option>
-              <option value="herald">Herald</option>
-              <option value="colorless">Colorless</option>
-            </select>
-            <select id="filter-rank" aria-label="Rank">
-              <option value="all">All Ranks</option>
-            </select>
-            <select id="filter-shift" aria-label="Rank shift">
-              <option value="all">All Cards</option>
-              <option value="shifted">Shifted Only</option>
-            </select>
-            <div class="view-toggle" role="group" aria-label="Gallery view">
-              <button id="view-grid" class="s-btn s-btn-sm is-active">Grid (4–5/row)</button>
-              <button id="view-single" class="s-btn s-btn-sm">Single</button>
+            <div class="filter-row">
+              <input id="card-search" type="search" placeholder="Search cards by name, tag, effect" aria-label="Search cards" />
+              <button id="btn-filters" class="s-btn" aria-expanded="false" aria-controls="filter-panel">Filters <span id="filter-count" class="badge hidden">0</span></button>
+              <button id="btn-new-card" class="s-btn s-btn-primary">+ New</button>
+              <span class="studio-muted pool-label pool-label-row"></span>
             </div>
-            <button id="btn-new-card" class="s-btn s-btn-sm s-btn-primary">+ New Card</button>
+            <div id="filter-panel" class="filter-panel" hidden>
+              <select id="filter-type" aria-label="Card type"><option value="all">All Types</option></select>
+              <select id="filter-class" aria-label="Class"><option value="all">All Classes</option></select>
+              <select id="filter-rank" aria-label="Rank"><option value="all">All Ranks</option></select>
+              <select id="filter-shift" aria-label="Rank shift">
+                <option value="all">All Cards</option>
+                <option value="shifted">Shifted Only</option>
+              </select>
+              <div class="view-toggle" role="group" aria-label="Gallery view">
+                <button id="view-grid" class="s-btn is-active">Grid</button>
+                <button id="view-single" class="s-btn">Single</button>
+              </div>
+              <span class="studio-muted pool-label pool-label-panel"></span>
+            </div>
           </div>
           <div id="cards-grid" class="cards-grid"></div>
         </div>
 
-        <aside id="card-inspector" class="card-inspector">
+        <aside id="card-inspector" class="card-inspector" aria-label="Card inspector">
+          <div class="inspector-sheet-head">
+            <button id="btn-inspector-back" class="s-btn">← Cards</button>
+            <strong id="inspector-sheet-title"></strong>
+          </div>
           <div class="inspector-preview-wrap">
             <div id="inspector-card-preview" class="inspector-card-preview"></div>
             <div id="inspector-score-summary" class="inspector-score-summary"></div>
           </div>
 
-          <div class="inspector-section">
-            <div class="section-head">
+          <details class="inspector-section" data-section="basics" open>
+            <summary class="section-head">
               <h3>Card Basics</h3>
-              <button id="btn-send-sandbox" class="s-btn s-btn-sm s-btn-primary">Test in Combat Sandbox</button>
-            </div>
+              <button id="btn-send-sandbox" class="s-btn">Test in Combat Sandbox</button>
+            </summary>
             <div class="form-grid">
               <label>Name <input id="edit-name" type="text" /></label>
               <label>Card Type
@@ -151,36 +155,38 @@
               <label><span class="cost-label">MP Cost <span id="cost-score-mp" class="feature-score"></span></span><input id="edit-mp" type="number" min="0" max="10" /></label>
               <label><span class="cost-label">HP Cost <span id="cost-score-hp" class="feature-score"></span></span><input id="edit-loseHp" type="number" min="0" max="50" /></label>
             </div>
-          </div>
+          </details>
 
-          <div class="inspector-section">
-            <div class="section-head">
+          <details class="inspector-section" data-section="features" open>
+            <summary class="section-head">
               <h3>Active Features</h3>
               <div class="add-feature-bar">
                 <select id="add-feature-select" aria-label="Add feature to card">
                   <option value="">+ Add Feature...</option>
                 </select>
-                <button id="btn-add-feature" class="s-btn s-btn-sm">Add</button>
+                <button id="btn-add-feature" class="s-btn">Add</button>
               </div>
-            </div>
+            </summary>
             <div id="active-features-list" class="active-features-list"></div>
-          </div>
+          </details>
 
-          <div class="inspector-section">
-            <div class="section-head">
+          <details class="inspector-section" data-section="override" open>
+            <summary class="section-head">
               <h3>Scoring Override</h3>
               <label class="studio-toggle"><input id="edit-override-enabled" type="checkbox" /> Enable override</label>
-            </div>
+            </summary>
             <div id="override-fields" class="form-grid hidden">
               <label>Override Rank <input id="edit-override-rank" type="number" min="0" max="10" placeholder="auto" /></label>
               <label>Override CP <input id="edit-override-cp" type="number" placeholder="auto" /></label>
             </div>
-          </div>
+          </details>
 
-          <div class="inspector-section">
-            <h3>Score Breakdown</h3>
+          <details class="inspector-section" data-section="breakdown" open>
+            <summary class="section-head">
+              <h3>Score Breakdown</h3>
+            </summary>
             <div id="score-parts-list" class="score-parts-list"></div>
-          </div>
+          </details>
         </aside>
       </div>
     </section>
@@ -211,9 +217,9 @@
           <div class="section-head">
             <h3>Procedural Layer Stack &amp; Priority</h3>
             <div>
-              <button id="btn-add-layer" class="s-btn s-btn-sm s-btn-primary">+ Add Layer</button>
-              <button id="btn-save-art" class="s-btn s-btn-sm">Save Layers to Repo</button>
-              <button id="btn-download-art" class="s-btn s-btn-sm">Download JSON</button>
+              <button id="btn-add-layer" class="s-btn">+ Add Layer</button>
+              <button id="btn-save-art" class="s-btn">Save Layers to Repo</button>
+              <button id="btn-download-art" class="s-btn">Download JSON</button>
             </div>
           </div>
           <p class="studio-muted">Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.</p>
@@ -236,13 +242,18 @@
     <section id="tab-sandbox" class="studio-panel">
       <div class="sandbox-toolbar">
         <div class="ab-controls">
-          <strong>A/B Testing:</strong>
-          <button id="btn-slot-a-save" class="s-btn s-btn-sm">Save → Slot A</button>
-          <button id="btn-slot-a-load" class="s-btn s-btn-sm">Load Slot A</button>
-          <button id="btn-slot-b-save" class="s-btn s-btn-sm">Save → Slot B</button>
-          <button id="btn-slot-b-load" class="s-btn s-btn-sm">Load Slot B</button>
+          <div class="studio-menu">
+            <button id="btn-slots" class="s-btn" aria-haspopup="true" aria-expanded="false" aria-controls="slots-menu">Slots ▾</button>
+            <div id="slots-menu" class="studio-menu-panel" hidden>
+              <button id="btn-slot-a-save" class="menu-item">Save to A</button>
+              <button id="btn-slot-a-load" class="menu-item">Load A</button>
+              <hr />
+              <button id="btn-slot-b-save" class="menu-item">Save to B</button>
+              <button id="btn-slot-b-load" class="menu-item">Load B</button>
+            </div>
+          </div>
           <span id="ab-active-label" class="studio-pill">Draft</span>
-          <button id="btn-apply-sandbox" class="s-btn s-btn-primary">Apply to Sandbox</button>
+          <button id="btn-apply-sandbox" class="s-btn">Apply</button>
         </div>
         <div class="scenario-controls">
           <label>Class
@@ -256,8 +267,8 @@
           <label>Enemy
             <select id="sandbox-enemy"></select>
           </label>
-          <button id="btn-sandbox-reset" class="s-btn">Reset Fight</button>
-          <button id="btn-sandbox-endturn" class="s-btn s-btn-warn">End Turn</button>
+          <button id="btn-sandbox-reset" class="s-btn">Reset</button>
+          <button id="btn-sandbox-endturn" class="s-btn">End Turn</button>
         </div>
       </div>
       <div class="sandbox-arena">
@@ -267,7 +278,7 @@
         </div>
         <div class="sandbox-hand-section">
           <div class="section-head">
-            <h3>Opening Hand (edited card injected first — click a card to play)</h3>
+            <h3>Hand: tap a card to play. Your edited card is first.</h3>
             <span id="sandbox-turn-info" class="studio-muted"></span>
           </div>
           <div id="sandbox-hand" class="sandbox-hand"></div>

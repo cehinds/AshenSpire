@@ -376,12 +376,16 @@ function renderCardsGrid() {
     tile.dataset.cardId = def.id;
     tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta"><span class="cp-chip" title="${esc(def.name)}">${esc(def.name)} · CP ${sc.cp}${sc.overridden ? '*' : ''}</span><span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>${shiftHtml}</div>`;
     renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
-    tile.addEventListener('click', () => {
+    tile.tabIndex = 0;
+    const selectTile = () => {
       state.selectedCardId = def.id;
       document.querySelectorAll('.studio-card-tile.is-selected').forEach((n) => n.classList.remove('is-selected'));
       tile.classList.add('is-selected');
       renderInspector();
-    });
+      if (isNarrowLayout()) openInspectorSheet();
+    };
+    tile.addEventListener('click', selectTile);
+    tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTile(); } });
     grid.appendChild(tile);
   }
   computeShiftCount();
@@ -433,6 +437,7 @@ function renderInspector() {
   state.selectedCardId = def.id;
 
   renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
+  document.getElementById('inspector-sheet-title').textContent = def.name || '';
   const sc = scoreCardEntry(def);
   renderScoreSummary(def, sc);
 
@@ -1022,6 +1027,7 @@ async function loadFromRepo(customPath = state.repoPath) {
     localStorage.setItem(PATH_STORAGE_KEY, state.repoPath);
     document.getElementById('repo-path-input').value = state.repoPath;
     document.getElementById('path-status').textContent = data.scoringExists ? `Loaded: ${data.scoringPath}` : `New path (will create): ${data.scoringPath}`;
+    document.getElementById('draft-status').title = `Repo file: ${data.scoringPath}`;
     recomputeBaselineRanks();
     syncAllViews();
     toast(`Loaded ${data.scoringPath}`);
@@ -1076,8 +1082,36 @@ function populateRankFilter() {
   sel.value = prev || 'all';
 }
 
+const capitalise = (text) => (text ? text[0].toUpperCase() + text.slice(1) : text);
+
+// Fills a select with the values that actually occur, keeping the current choice when it still exists.
+function fillSelect(select, values, allLabel = null) {
+  const previous = select.value;
+  select.innerHTML = '';
+  if (allLabel) select.append(new Option(allLabel, 'all'));
+  for (const value of values) select.append(new Option(capitalise(value), value));
+  const keep = previous === 'all' ? Boolean(allLabel) : values.includes(previous);
+  select.value = keep ? previous : (allLabel ? 'all' : values[0] ?? '');
+}
+
+// Type, class and rarity choices come from the loaded cards, so no option matches nothing.
+function populateCardOptions() {
+  const distinct = (field, fallback) => [...new Set(state.cards.map((c) => c[field] || fallback))].sort();
+  const types = distinct('type', 'attack');
+  const classes = distinct('class', 'colorless');
+  const rarities = distinct('rarity', 'common');
+  fillSelect(document.getElementById('filter-type'), types, 'All Types');
+  fillSelect(document.getElementById('filter-class'), classes, 'All Classes');
+  fillSelect(document.getElementById('edit-type'), types);
+  fillSelect(document.getElementById('edit-class'), classes);
+  fillSelect(document.getElementById('edit-rarity'), rarities);
+  const poolText = `Core pool · ${state.cards.length} cards`;
+  document.querySelectorAll('.pool-label').forEach((el) => { el.textContent = poolText; });
+}
+
 function syncAllViews() {
   populateRankFilter();
+  populateCardOptions();
   populateAddFeatureDropdown();
   renderCardsGrid();
   renderInspector();
@@ -1086,9 +1120,157 @@ function syncAllViews() {
 }
 
 // ---------------------------------------------------------------------------
+// Chrome: menus, shortcuts, filter panel, collapsible sections, inspector sheet
+// ---------------------------------------------------------------------------
+const FILTERS_OPEN_KEY = 'ashenspire:scoreStudioFiltersOpen:v1';
+const SECTIONS_KEY = 'ashenspire:scoreStudioSections:v1';
+const NARROW_LAYOUT_QUERY = '(max-width: 900px)';
+
+function readStoredJson(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function writeStoredJson(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
+}
+
+const isNarrowLayout = () => window.matchMedia(NARROW_LAYOUT_QUERY).matches;
+
+function menuParts(menu) {
+  const button = menu.querySelector(':scope > button[aria-controls]');
+  return { button, panel: document.getElementById(button.getAttribute('aria-controls')) };
+}
+
+function closeMenus(except = null) {
+  document.querySelectorAll('.studio-menu').forEach((menu) => {
+    if (menu === except) return;
+    const { button, panel } = menuParts(menu);
+    panel.hidden = true;
+    button.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function anyMenuOpen() {
+  return [...document.querySelectorAll('.studio-menu-panel')].some((panel) => !panel.hidden);
+}
+
+function setupMenus() {
+  document.querySelectorAll('.studio-menu').forEach((menu) => {
+    const { button, panel } = menuParts(menu);
+    button.addEventListener('click', () => {
+      const opening = panel.hidden;
+      closeMenus(menu);
+      panel.hidden = !opening;
+      button.setAttribute('aria-expanded', String(opening));
+      if (opening) panel.querySelector('button, input')?.focus();
+    });
+    // Picking an action closes the menu; the path field, Load and the auto-save toggle keep it open.
+    panel.addEventListener('click', (e) => {
+      if (e.target.closest('button.menu-item')) closeMenus();
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.studio-menu')) closeMenus();
+  });
+}
+
+function setupShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (anyMenuOpen()) {
+        closeMenus();
+        return;
+      }
+      if (document.body.classList.contains('inspector-open') && !document.querySelector('dialog[open]')) {
+        closeInspectorSheet();
+      }
+      return;
+    }
+    const modifier = e.ctrlKey || e.metaKey;
+    if (!modifier) return;
+    // Inside a text field, leave undo to the browser so typing can be undone natively.
+    const target = e.target;
+    const inTextField = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
+    if (inTextField) return;
+    const key = e.key.toLowerCase();
+    if (key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('btn-undo').click();
+    } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+      e.preventDefault();
+      document.getElementById('btn-redo').click();
+    }
+  });
+}
+
+function activeFilterCount() {
+  return ['filter-type', 'filter-class', 'filter-rank', 'filter-shift']
+    .filter((id) => document.getElementById(id).value !== 'all').length;
+}
+
+function updateFilterCount() {
+  const badge = document.getElementById('filter-count');
+  const count = activeFilterCount();
+  badge.textContent = String(count);
+  badge.classList.toggle('hidden', count === 0);
+}
+
+function setFiltersOpen(open) {
+  document.getElementById('filter-panel').hidden = !open;
+  document.getElementById('btn-filters').setAttribute('aria-expanded', String(open));
+  writeStoredJson(FILTERS_OPEN_KEY, open);
+}
+
+function setupFilterPanel() {
+  setFiltersOpen(readStoredJson(FILTERS_OPEN_KEY, false) === true);
+  document.getElementById('btn-filters').addEventListener('click', () => {
+    setFiltersOpen(document.getElementById('filter-panel').hidden);
+  });
+}
+
+// Inspector sections remember whether they are open. Controls in a section header (buttons, selects,
+// the override toggle) are interactive content, so clicking them does not toggle the section.
+function setupSections() {
+  const stored = readStoredJson(SECTIONS_KEY, {});
+  document.querySelectorAll('details.inspector-section[data-section]').forEach((section) => {
+    const name = section.dataset.section;
+    if (Object.hasOwn(stored, name)) section.open = stored[name] === true;
+    section.addEventListener('toggle', () => {
+      const current = readStoredJson(SECTIONS_KEY, {});
+      current[name] = section.open;
+      writeStoredJson(SECTIONS_KEY, current);
+    });
+  });
+}
+
+let sheetReturnCardId = null;
+function openInspectorSheet() {
+  sheetReturnCardId = state.selectedCardId;
+  const def = selectedCardDef();
+  document.getElementById('inspector-sheet-title').textContent = def?.name || '';
+  document.body.classList.add('inspector-open');
+  document.getElementById('card-inspector').scrollTop = 0;
+  document.getElementById('btn-inspector-back').focus();
+}
+
+function closeInspectorSheet() {
+  document.body.classList.remove('inspector-open');
+  const tile = sheetReturnCardId && document.querySelector(`.studio-card-tile[data-card-id="${CSS.escape(sheetReturnCardId)}"]`);
+  if (tile) {
+    tile.scrollIntoView({ block: 'center' });
+    tile.focus({ preventScroll: true });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Wire Events & Boot
 // ---------------------------------------------------------------------------
 function wireEvents() {
+  setupMenus();
+  setupShortcuts();
+  setupFilterPanel();
+  setupSections();
+  document.getElementById('btn-inspector-back').addEventListener('click', closeInspectorSheet);
+
   // Tabs
   document.querySelectorAll('.studio-tab').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1100,10 +1282,13 @@ function wireEvents() {
     });
   });
 
-  // Filters & view toggle
-  ['card-search', 'filter-type', 'filter-class', 'filter-rank', 'filter-shift'].forEach((id) => {
-    document.getElementById(id).addEventListener('input', renderCardsGrid);
-    document.getElementById(id).addEventListener('change', renderCardsGrid);
+  // Filters & view toggle: the search box filters as you type, selects on change (one render each).
+  document.getElementById('card-search').addEventListener('input', renderCardsGrid);
+  ['filter-type', 'filter-class', 'filter-rank', 'filter-shift'].forEach((id) => {
+    document.getElementById(id).addEventListener('change', () => {
+      updateFilterCount();
+      renderCardsGrid();
+    });
   });
   document.getElementById('view-grid').addEventListener('click', () => { state.viewMode = 'grid'; document.getElementById('view-grid').classList.add('is-active'); document.getElementById('view-single').classList.remove('is-active'); renderCardsGrid(); });
   document.getElementById('view-single').addEventListener('click', () => { state.viewMode = 'single'; document.getElementById('view-single').classList.add('is-active'); document.getElementById('view-grid').classList.remove('is-active'); renderCardsGrid(); });
