@@ -17,6 +17,7 @@ import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
 const PATH_STORAGE_KEY = 'ashenspire:scoreStudioPath:v1';
+const isLocalServer = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 
 // Bootstrap real game registries
 const profile = Profile.resolveGameProfile('default');
@@ -726,6 +727,13 @@ function buildScoringDiff() {
 }
 
 async function loadFromRepo(customPath = state.repoPath) {
+  if (!isLocalServer) {
+    state.repoScoring = clone(shippedScoring);
+    state.scoring = clone(shippedScoring);
+    recomputeBaselineRanks();
+    syncAllViews();
+    return;
+  }
   try {
     const r = await fetch(`/__studio/config?scoringPath=${encodeURIComponent(customPath)}`);
     const data = await r.json();
@@ -1072,6 +1080,15 @@ async function boot() {
 
   initSandboxEnemies();
   wireEvents();
+
+  if (!isLocalServer) {
+    document.querySelector('.studio-pathbar')?.classList.add('hidden');
+    document.getElementById('btn-export-repo')?.classList.add('hidden');
+    document.getElementById('btn-save-art')?.classList.add('hidden');
+    document.getElementById('btn-download-json')?.classList.add('s-btn-primary');
+    document.getElementById('draft-status').textContent = 'Web mode — Download JSON to export';
+  }
+
   await loadFromRepo(state.repoPath);
 
   // Restore local draft temp copy if present
