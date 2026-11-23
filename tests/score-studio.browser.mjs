@@ -58,6 +58,21 @@ try {
   });
   assert.equal(stable.after, stable.before, 'retyping the same name leaves the score unchanged');
 
+  // 2c. Card Basics fields carry weight chips, and the inspector card shows the breakdown's rank as a badge.
+  const fieldAndRank = await page.evaluate(() => {
+    const rankText = document.querySelector('.rank-pill')?.textContent || '';
+    return {
+      rarityChip: document.getElementById('field-score-rarity')?.textContent.trim() || '',
+      targetChip: document.getElementById('field-score-target')?.textContent.trim() || '',
+      badge: document.querySelector('#inspector-card-preview .studio-rank-badge')?.textContent.trim() || '',
+      rankNumber: rankText.match(/Rank: (?:Rank (\d+)|Unranked)/)?.[1] ?? '0',
+    };
+  });
+  assert.match(fieldAndRank.rarityChip, /^[−+-±]\d/, `the Rarity chip shows a signed number (${fieldAndRank.rarityChip})`);
+  assert.match(fieldAndRank.targetChip, /[−+-±]\d/, `the Target chip shows a signed number (${fieldAndRank.targetChip})`);
+  const ROMAN = ['U', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+  assert.equal(fieldAndRank.badge, ROMAN[Number(fieldAndRank.rankNumber)], 'the inspector card\'s rank badge matches the breakdown rank');
+
   // 3. A weight edit reaches the local draft. The draft used to be written before the edit was applied.
   const draftWeight = await page.evaluate(async ({ key, settle }) => {
     document.querySelector('.studio-tab[data-tab="weights"]').click();

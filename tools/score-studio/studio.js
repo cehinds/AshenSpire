@@ -801,7 +801,43 @@ function dropStaleTextClauses(def) {
 // One card face path for the gallery, inspector, Art preview and sandbox hand: the card under its live id
 // (so edits reach the face and the engine), projected the way the game projects profile cards, drawn under
 // its class's reference run, then fitted.
-function renderCardWithLayers(def, container) {
+// The card's combat-power rank as a small badge on the art (the game's face has no rank). Studio only.
+// Colour shows the move against the repo baseline: up green, down red, unchanged neutral.
+function studioCardFor(def) {
+  const id = String(def.id || '').startsWith(LIVE_ID_PREFIX) ? def.id.slice(LIVE_ID_PREFIX.length) : def.id;
+  return state.cards.find((c) => c.id === id) || def;
+}
+
+function rankBadgeParts(def, sc) {
+  const card = studioCardFor(def);
+  const score = sc || scoreCardEntry(card);
+  const base = state.baselineRanks[card.id];
+  const shift = base === undefined || base === score.rank ? 'same' : score.rank > base ? 'up' : 'down';
+  return {
+    text: romanFor(score.rank) || 'U',
+    title: `${RankName(score.rank)} · CP ${score.cp}${shift === 'same' ? '' : ` (was ${RankName(base)})`}`,
+    shift,
+  };
+}
+
+function setRankBadge(container, def, sc = null) {
+  let badge = container.querySelector(':scope > .studio-rank-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'studio-rank-badge';
+    container.appendChild(badge);
+  }
+  try {
+    const parts = rankBadgeParts(def, sc);
+    badge.textContent = parts.text;
+    badge.title = parts.title;
+    badge.dataset.shift = parts.shift;
+  } catch {
+    badge.remove();
+  }
+}
+
+function renderCardWithLayers(def, container, sc = null) {
   container.innerHTML = '';
   const liveId = liveCardIdFor(def);
   try {
@@ -842,6 +878,7 @@ function renderCardWithLayers(def, container) {
     }
     container.appendChild(overlay);
   }
+  setRankBadge(container, def, sc);
 }
 
 // ---------------------------------------------------------------------------
@@ -871,7 +908,7 @@ function updateCardTileInPlace(cardId) {
   const shiftHtml = (baseRank !== undefined && baseRank !== sc.rank)
     ? `<span class="${sc.rank > baseRank ? 'shift-up' : 'shift-down'}">${sc.rank > baseRank ? '↑' : '↓'} R${baseRank}→R${sc.rank}</span>`
     : '';
-  renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
+  renderCardWithLayers(def, tile.querySelector('.studio-card-stage'), sc);
   tile.querySelector('.studio-card-meta').innerHTML = tileMetaHtml(def, sc, shiftHtml);
 }
 
@@ -919,7 +956,7 @@ function renderCardsGrid() {
     tile.className = 'studio-card-tile' + (def.id === state.selectedCardId ? ' is-selected' : '');
     tile.dataset.cardId = def.id;
     tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta">${tileMetaHtml(def, sc, shiftHtml)}</div>`;
-    renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
+    renderCardWithLayers(def, tile.querySelector('.studio-card-stage'), sc);
     tile.tabIndex = 0;
     const selectTile = () => {
       state.selectedCardId = def.id;
@@ -1405,6 +1442,7 @@ function textFromEffects(def) {
 // never rebuilding the feature list, so focus and a held spinner survive.
 function refreshInspectorScoreInPlace(def) {
   const sc = scoreCardEntry(def);
+  setRankBadge(document.getElementById('inspector-card-preview'), def, sc);
   renderScoreSummary(def, sc);
   renderScoreParts(def, sc);
   renderCostChips(def, sc);
@@ -2162,7 +2200,17 @@ function setFiltersOpen(open) {
   writeStoredJson(FILTERS_OPEN_KEY, open);
 }
 
+const RANK_BADGES_KEY = 'ashenspire:scoreStudioRankBadges:v1';
+
+function setRankBadgesShown(shown) {
+  document.body.classList.toggle('hide-rank-badges', !shown);
+  document.getElementById('toggle-rank-badges').checked = shown;
+  writeStoredJson(RANK_BADGES_KEY, shown);
+}
+
 function setupFilterPanel() {
+  setRankBadgesShown(readStoredJson(RANK_BADGES_KEY, true) !== false);
+  document.getElementById('toggle-rank-badges').addEventListener('change', (e) => setRankBadgesShown(e.target.checked));
   setFiltersOpen(readStoredJson(FILTERS_OPEN_KEY, false) === true);
   document.getElementById('btn-filters').addEventListener('click', () => {
     setFiltersOpen(document.getElementById('filter-panel').hidden);
