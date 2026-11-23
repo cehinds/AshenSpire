@@ -932,18 +932,90 @@ function renderScoreSummary(def, sc) {
   `;
 }
 
+const TARGET_LABELS = Object.freeze({
+  enemy: 'Single enemy',
+  allEnemies: 'All enemies',
+  randomEnemy: 'Random enemy',
+  self: 'Self',
+  ally: 'Ally',
+  allAllies: 'All allies',
+});
+const NO_SCORE_EFFECT_TITLE = "Doesn't change the score; used for naming and rewards";
+
+function rarityDiscount(rarity, scoringRef = state.scoring) {
+  // Same lookup as CombatPower: rarity.discount wins over items.rarityDiscount.
+  const discounts = { ...(scoringRef.items?.rarityDiscount || {}), ...(scoringRef.rarity?.discount || {}) };
+  return safeNum(discounts[rarity], 0);
+}
+
+// How much one property of the card moves its raw score: rescore a copy with that property set to a
+// neutral value and take the difference. Zero means ScoreCard does not read it.
+function rawScoreDelta(face, neutralize) {
+  const neutral = { ...face, tags: [...face.tags], kw: [...face.kw], statuses: face.statuses.map((s) => [...s]) };
+  neutralize(neutral);
+  return ScoreCard(face, state.scoring).raw - ScoreCard(neutral, state.scoring).raw;
+}
+
+function breakdownPill(text, value, title) {
+  const tone = value === null ? 'zero' : value > 0 ? 'pos' : value < 0 ? 'neg' : 'zero';
+  return `<span class="part-pill ${tone}" title="${esc(title || '')}">${esc(text)}</span>`;
+}
+
+function signedDelta(value) {
+  return value === 0 ? '±0' : formatScore(value);
+}
+
+// The Card row: rarity, targeting and the properties that do (or do not) move the score.
+function cardBreakdownPills(def, sc) {
+  const S = state.scoring;
+  const face = sc.face;
+  const pills = [];
+  const discount = rarityDiscount(sc.rarity);
+  pills.push(breakdownPill(`${capitalise(sc.rarity)} −${discount}`, discount ? -discount : 0, `Rarity discount: CP = raw − ${discount}`));
+
+  const target = getCardTarget(def);
+  const areaTag = S.cardModel?.areaTag || 'targeting:area';
+  const isArea = face.tags.includes(areaTag);
+  const targetDelta = rawScoreDelta(face, (neutral) => {
+    neutral.tags = neutral.tags.filter((t) => !t.startsWith('targeting:') && !t.startsWith('targeting.'));
+    neutral.tags.push('targeting:single');
+  });
+  const targetCount = isArea ? ` ×${S.model?.ENEMIES ?? 2}` : '';
+  pills.push(breakdownPill(`${TARGET_LABELS[target] || capitalise(target)}${targetCount} ${signedDelta(targetDelta)}`, targetDelta,
+    targetDelta ? 'Change against the same card hitting a single enemy' : NO_SCORE_EFFECT_TITLE));
+
+  const neutralProperties = [
+    ['Class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
+    ['Type', capitalise(face.type), (neutral) => { neutral.type = 'skill'; }],
+    ['Camp', capitalise(face.camp), (neutral) => { neutral.camp = 'physical'; }],
+  ];
+  for (const [, label, neutralize] of neutralProperties) {
+    const delta = rawScoreDelta(face, neutralize);
+    pills.push(breakdownPill(`${label} ${signedDelta(delta)}`, delta, delta ? 'Change against the neutral choice' : NO_SCORE_EFFECT_TITLE));
+  }
+  if (sc.overridden) pills.push(breakdownPill(`Override → ${RankName(sc.rank)} / CP ${sc.cp}`, null, 'A scoring override sets this card\'s rank or CP'));
+  return pills.join('');
+}
+
 function renderScoreParts(def, sc) {
   const partsEl = document.getElementById('score-parts-list');
-  partsEl.innerHTML = '';
-  // The rank comes first, then the parts that add up to it.
   const baseRank = state.baselineRanks[def.id];
   const shifted = baseRank !== undefined && baseRank !== sc.rank;
-  const rankPill = document.createElement('span');
-  rankPill.className = 'part-pill rank-pill';
-  rankPill.textContent = `Rank: ${RankName(sc.rank)}${shifted ? ` (was ${RankName(baseRank)})` : ''}`;
-  rankPill.title = `CP ${sc.cp} · ${actForRank(sc.rank)}`;
-  partsEl.appendChild(rankPill);
-  partsEl.insertAdjacentHTML('beforeend', scoreMathTableHtml(sc));
+  const discount = rarityDiscount(sc.rarity);
+  const raw = ScoreCard(sc.face, state.scoring).raw;
+  const baseCp = raw - discount;
+  const rankTitle = `${actForRank(sc.rank)}${shifted ? ` (was ${RankName(baseRank)})` : ''}`;
+  const partPills = Object.entries(sc.parts || {})
+    .map(([k, v]) => breakdownPill(`${k}: ${formatScore(v)}`, Math.round(v * 10) / 10, ''))
+    .join('');
+  const formula = `Raw ${raw} − rarity ${discount} = CP ${baseCp} → ${RankName(RankOf(baseCp, state.scoring))}`
+    + (sc.overridden ? `; override → CP ${sc.cp}, ${RankName(sc.rank)}` : '');
+  partsEl.innerHTML = `
+    <span class="part-pill rank-pill" title="${esc(rankTitle)}">Rank: ${esc(RankName(sc.rank))} (CP ${esc(sc.cp)})${shifted ? ` (was ${esc(RankName(baseRank))})` : ''}</span>
+    <div class="breakdown-row" data-breakdown="card"><span class="breakdown-label">Card</span>${cardBreakdownPills(def, sc)}</div>
+    <div class="breakdown-row" data-breakdown="parts"><span class="breakdown-label">Parts</span>${partPills || '<span class="studio-muted">None</span>'}</div>
+    <div class="breakdown-formula" id="breakdown-formula">${esc(formula)}</div>
+    <details class="breakdown-math"><summary>Math</summary>${scoreMathTableHtml(sc)}</details>`;
 }
 
 // Every scoring term with the formula behind it, then raw score, rarity discount and CP.

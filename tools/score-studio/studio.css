@@ -713,3 +713,11 @@ body.studio-body .text-warnings:empty { display: none; }
 body.studio-body .text-warn-chip { color: var(--st-warn); border: 1px solid var(--st-warn); border-radius: 4px; padding: 0 4px; font-size: 10px; white-space: nowrap; }
 /* The form grid stacks label text over its control; the Auto toggle beside Name stays on one line. */
 body.studio-body .name-input-row .studio-toggle { flex-direction: row; align-items: center; white-space: nowrap; }
+
+/* SCORE BREAKDOWN: rank, the Card row, the Parts row, the formula, and the math table on demand. */
+body.studio-body .part-pill.zero { color: var(--studio-score-zero); }
+body.studio-body .breakdown-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+body.studio-body .breakdown-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--st-muted); min-width: 36px; }
+body.studio-body .breakdown-formula { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--st-text); }
+body.studio-body .breakdown-math { width: 100%; }
+body.studio-body .breakdown-math > summary { cursor: pointer; font-size: 11px; color: var(--st-muted); }

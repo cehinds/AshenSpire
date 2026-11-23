@@ -37,6 +37,16 @@ try {
   });
   assert.ok(face.width > 0 && face.height < face.width * 2, `card face is card-shaped (${Math.round(face.width)}x${Math.round(face.height)})`);
 
+  // 2b. The Score Breakdown formula adds up to the CP the inspector shows.
+  const breakdown = await page.evaluate(() => ({
+    formula: document.getElementById('breakdown-formula')?.textContent || '',
+    summaryCp: document.querySelector('.inspector-score-big')?.textContent || '',
+  }));
+  const formulaParts = breakdown.formula.match(/^Raw (-?[\d.]+) − rarity (-?[\d.]+) = CP (-?[\d.]+)/);
+  assert.ok(formulaParts, `breakdown formula line is shown (${breakdown.formula})`);
+  assert.equal(Number(formulaParts[1]) - Number(formulaParts[2]), Number(formulaParts[3]), 'raw minus rarity equals CP in the formula');
+  assert.equal(`CP ${formulaParts[3]}`, breakdown.summaryCp.trim(), 'the formula CP matches the inspector CP');
+
   // 3. A weight edit reaches the local draft. The draft used to be written before the edit was applied.
   const draftWeight = await page.evaluate(async ({ key, settle }) => {
     document.querySelector('.studio-tab[data-tab="weights"]').click();
