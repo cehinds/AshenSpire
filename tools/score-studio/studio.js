@@ -814,7 +814,8 @@ function rankBadgeParts(def, sc) {
   const base = state.baselineRanks[card.id];
   const shift = base === undefined || base === score.rank ? 'same' : score.rank > base ? 'up' : 'down';
   return {
-    text: romanFor(score.rank) || 'U',
+    // naming.roman stops at X; a rank past it (Max Rank raised in Weights) shows as its number.
+    text: romanFor(score.rank) || (score.rank ? String(score.rank) : 'U'),
     title: `${RankName(score.rank)} · CP ${score.cp}${shift === 'same' ? '' : ` (was ${RankName(base)})`}`,
     shift,
   };
@@ -2120,6 +2121,8 @@ function syncAllViews() {
   renderInspector();
   renderWeights();
   renderArtTab();
+  // The sandbox hand's rank badges follow undo, redo, slot loads, imports and Revert too.
+  if (state.sandbox.combat) renderSandbox();
 }
 
 // ---------------------------------------------------------------------------
