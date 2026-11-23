@@ -39,22 +39,22 @@ const upgrade = (run, instanceId) => {
 test('Core Blacksmith: any deck card upgrades for cinders and no stones, even past the free allowance', () => {
   const run = smithRun(coreOut, 0);
   const card = strikes(run)[0];
-  // Owner, 2026-11-17: a Blacksmith card upgrade costs 50 + 35 per earlier upgrade + 25 per rank above 1 (these Strikes: rank 3).
+  // Owner, 2026-11-17, tripled 2026-11-23: a Blacksmith card upgrade costs 150 + 105 per earlier upgrade + 75 per rank above 1 (these Strikes: rank 3).
   const first = upgrade(run, card.instanceId);
-  assert.deepEqual([first.n, first.spentStones, run.smithingStones, run.cinders], [1, 0, 0, 1900]);
+  assert.deepEqual([first.n, first.spentStones, run.smithingStones, run.cinders], [1, 0, 0, 1700]);
   // A rest site charges 1 stone for this second upgrade; the Blacksmith takes one stone off, so 0.
   const second = upgrade(run, card.instanceId);
-  assert.deepEqual([second.n, second.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 1765]);
+  assert.deepEqual([second.n, second.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 1295]);
   assert.equal(upgradeCount(card), 2);
   assert.deepEqual(card.upgradeSteps, [first.step, second.step]);
 });
 
 test('Core Blacksmith: no per-visit limit; the player upgrades while they can pay cinders, and a short purse is refused', () => {
-  const run = smithRun(coreOut, 3, 31, 640);
+  const run = smithRun(coreOut, 3, 31, 1920);
   const [a, b] = strikes(run); // the Reaver starts with two Strikes now
   for (const card of [a, b, a, b, a]) upgrade(run, card.instanceId);
   assert.equal(run.smithingStones, 3, 'the stones are never touched');
-  assert.equal(run.cinders, 0, 'five upgrades at 100, 100, 135, 135 and 170 cinders (50 + 35 per earlier upgrade + 2 x 25 for rank 3)');
+  assert.equal(run.cinders, 0, 'five upgrades at 300, 300, 405, 405 and 510 cinders (150 + 105 per earlier upgrade + 2 x 75 for rank 3)');
   assert.equal(upgradeCount(a), 3);
   const refused = upgradeArtPlan(coreOut, run, a.instanceId);
   assert.equal(refused.ok, false);

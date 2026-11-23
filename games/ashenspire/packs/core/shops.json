@@ -77,20 +77,20 @@
     "stoneDiscount": 1,
     "prices": {
       "tierUpgrade": [
-        60,
-        100,
-        150
+        180,
+        300,
+        450
       ],
-      "cardUpgrade": 50,
-      "cardUpgradePerUpgrade": 35,
-      "cardUpgradePerRank": 25,
-      "rankUp": 120
+      "cardUpgrade": 150,
+      "cardUpgradePerUpgrade": 105,
+      "cardUpgradePerRank": 75,
+      "rankUp": 240
     },
     "rankUpStones": 1,
     "cardCopy": {
       "stockChancePct": 30,
       "uses": 2,
-      "price": 140
+      "price": 280
     },
     "upgradeRankChance": 20,
     "armamentStock": [
@@ -120,7 +120,7 @@
   "cardCopy": {
     "stockChancePct": 20,
     "uses": 1,
-    "price": 160
+    "price": 320
   },
   "trader": {
     "always": [

@@ -9,8 +9,8 @@
   "cardCost": { "common": [135, 165], "uncommon": [204, 246], "rare": [405, 480] },
   "relicCost": { "common": [420, 480], "uncommon": [600, 690], "rare": [810, 900] },
   "flaskCost": [150, 240],
-  "removeBase": 225,
-  "removeStep": 75,
+  "removeBase": 450,
+  "removeStep": 150,
   "sellFraction": 0.5,
   "sellBack": true,
   "$note": {

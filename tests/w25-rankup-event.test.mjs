@@ -1,4 +1,4 @@
-// W25-R: an event can raise a card's rank. The Sleeping Smith's new choice pays 40 cinders only when a card rises.
+// W25-R: an event can raise a card's rank. The Sleeping Smith's new choice pays 80 cinders only when a card rises.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
@@ -18,7 +18,7 @@ test('Sleeping Smith offers the rank-up as one more choice, with its own id and 
   const smith = registries.events.get('sleepingSmith');
   const choice = smith.choices.find(row => row.effects.some(e => e.op === 'rankUpCard'));
   assert.ok(choice, 'the choice exists');
-  assert.deepEqual(choice.requires, { cinders: 40, rankableCard: true });
+  assert.deepEqual(choice.requires, { cinders: 80, rankableCard: true });
   assert.equal(smith.choices.length, 4);
 });
 
@@ -66,13 +66,13 @@ test('with no card able to rise the choice is unavailable, keeps the cinders and
   assert.equal(JSON.stringify(run.history), historyBefore);
 });
 
-test('with a candidate and the cinders the choice is open and commits: rank rises, 40 paid', () => {
+test('with a candidate and the cinders the choice is open and commits: rank rises, 80 paid (owner 2026-11-23: doubled)', () => {
   const run = newRun(); run.cinders = 100;
   const choice = smithChoice();
   assert.equal(choiceAffordable(choice, run, registries), true);
   const ranks = run.deck.map(card => InstanceRank(card));
   commitEventChoice({ run, registries, rng: { float: () => 0.5, pick: (_s, l) => l[0] } }, { eventId: 'sleepingSmith', choiceId: choice.id });
-  assert.equal(run.cinders, 60);
+  assert.equal(run.cinders, 20);
   assert.equal(run.deck.reduce((n, card, i) => n + InstanceRank(card) - ranks[i], 0), 1);
   assert.equal(ChoiceUnmetRequirement(choice, { ...run, cinders: 10 }, registries), 'cinders');
 });

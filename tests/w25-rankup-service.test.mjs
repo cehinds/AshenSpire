@@ -24,7 +24,7 @@ test('the data holds the owner numbers: 5% normal, 25% elite and boss, 15% per s
   assert.equal(CombatRankUpChance(run, 'elite'), 25);
   assert.equal(CombatRankUpChance(run, 'boss'), 25);
   assert.equal(ShopRankUpChance(run), 15);
-  assert.equal(ShopRankUpPrice(run), 120);
+  assert.equal(ShopRankUpPrice(run), 240);
 });
 
 test('raising a card adds one rank and its upgrade slots follow', () => {

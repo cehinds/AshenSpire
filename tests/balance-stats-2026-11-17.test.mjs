@@ -259,18 +259,18 @@ test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bos
   }
 });
 
-test('item 7: an upgrade costs about 50 cinders at the least and rises with rank and with the earlier upgrades', async () => {
+test('item 7: an upgrade costs about 150 cinders at the least (tripled 2026-11-23) and rises with rank and with the earlier upgrades', async () => {
   const { SmithUpgradeCost } = await import('../src/model/smithUpgrade.js');
   const { CardUpgradePrice } = await import('../src/model/blacksmithConfig.js');
   const run = newRun('reaver');
   // Item upgrades (the Blacksmith's picks): upgrade n of an item raised `rank` times.
-  assert.equal(SmithUpgradeCost(1, 0, run).cinders, 50);
+  assert.equal(SmithUpgradeCost(1, 0, run).cinders, 150);
   for (let n = 1; n < 10; n++) {
     assert.ok(SmithUpgradeCost(n + 1, 0, run).cinders > SmithUpgradeCost(n, 0, run).cinders, `item upgrade ${n + 1} costs more than ${n}`);
     assert.ok(SmithUpgradeCost(n, 1, run).cinders > SmithUpgradeCost(n, 0, run).cinders, `a ranked item's upgrade ${n} costs more`);
   }
   // Card upgrades at a Blacksmith: by the card's earlier upgrades and its rank.
-  assert.equal(CardUpgradePrice(run), 50);
+  assert.equal(CardUpgradePrice(run), 150);
   assert.ok(CardUpgradePrice(run, { upgrades: 1 }) > CardUpgradePrice(run));
   assert.ok(CardUpgradePrice(run, { rank: 2 }) > CardUpgradePrice(run));
   assert.ok(CardUpgradePrice(run, { upgrades: 2, rank: 3 }) > CardUpgradePrice(run, { upgrades: 2, rank: 2 }));
@@ -291,7 +291,7 @@ test('item 7: resuming a run without stat-point gear preserves its Blacksmith it
   const options = run => SmithOptionPool(run, item).filter(row => row.pick.k === 'stat').map(row => row.pick.id);
   assert.equal(PlanSmithUpgrade(resumed, item).cinders, 25);
   assert.deepEqual(options(resumed), ['ar', 'dr', 'attr:strength', 'attr:constitution']);
-  assert.equal(PlanSmithUpgrade(current, item).cinders, 50);
+  assert.equal(PlanSmithUpgrade(current, item).cinders, 150);
   assert.deepEqual(options(current), ['poise', 'attr:strength', 'attr:constitution']);
 });
 

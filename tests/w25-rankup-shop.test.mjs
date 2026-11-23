@@ -47,8 +47,8 @@ test('the shelf costs the Blacksmith price and rides the saved stock: a reload n
   const run = newRun(21);
   const { shopId, stock } = shopWithRankUp(run);
   const at = shelf(stock);
-  assert.equal(stock.options[at].price, 120);
-  assert.equal(gameProfileShopPurchasePlan(registries, run, shopId, at).price, 120);
+  assert.equal(stock.options[at].price, 240);
+  assert.equal(gameProfileShopPurchasePlan(registries, run, shopId, at).price, 240);
   const again = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
   assert.equal(again.options.filter((option) => option.kind === 'rankUps').length, 1);
   // A stock saved before this service has no shelf and never grows one.
@@ -72,8 +72,8 @@ test('buying raises the chosen card, takes the cinders once, and stocks no repla
   assert.throws(() => purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), quote), /Choose a card/);
   assert.equal(run.cinders, 500, 'a refused purchase spends nothing');
   const receipt = purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), { ...quote, instanceId: card.instanceId });
-  assert.deepEqual([receipt.kind, receipt.price, receipt.rank], ['rankUps', 120, rank + 1]);
-  assert.equal(run.cinders, 380);
+  assert.deepEqual([receipt.kind, receipt.price, receipt.rank], ['rankUps', 240, rank + 1]);
+  assert.equal(run.cinders, 260);
   assert.equal(InstanceRank(RankUpCandidates(registries, run).find((row) => row.instanceId === card.instanceId)), rank + 1);
   const after = run.gameProfileRewardOffers[`shop:${shopId}`];
   assert.equal(after.options.length, options, 'nothing restocked');

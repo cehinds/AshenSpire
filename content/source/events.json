@@ -375,16 +375,16 @@
         "resultText": "The hum stops the moment you lift it."
       },
       {
-        "label": "Leave him a coin (pay 40 cinders, rank up a random card)",
+        "label": "Leave him a coin (pay 80 cinders, rank up a random card)",
         "requires": {
-          "cinders": 40,
+          "cinders": 80,
           "rankableCard": true
         },
         "effects": [
           {
             "op": "rankUpCard",
             "random": true,
-            "cost": 40
+            "cost": 80
           }
         ],
         "resultText": "His hammer falls once in his sleep, and one card comes back a rank higher."

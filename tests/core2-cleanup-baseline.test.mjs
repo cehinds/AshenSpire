@@ -16,6 +16,7 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-23 for the upgrade economy rebalance (owner: upgrade prices x3, service prices x2 in Core's shops.json): exactly 24 profile, snapshot and save hash leaves moved; events, RNG, receipts, continuations and runtime hashes are unchanged.
 // Recaptured 2026-11-22 (no cost minimums, owner ruling: the cost.manaOnly validator rule is retired, so the runtime artifact moves again): 27 profile, runtime, snapshot and save hash leaves moved (15 snapshots, 3 each of profile hash, runtimeHash, stored and loaded); every event, RNG, receipt and continuation value is unchanged.
 // Recaptured 2026-11-22 for the Magic Adept zero Mana floor (owner ruling; stance.playerMinimumCost): 27 profile, runtime, snapshot and save hash leaves moved; every event, RNG, receipt and continuation value is unchanged.
 // Recaptured 2026-11-21 for the score-engine starter decks and card retunes (owner rulings A-F): the Reaver starter deck changed, so the three current-profile scenarios' shuffle counters, events, RNG hashes and continuations moved with it (the preceding 521250 capture's behaviour fields were moved the same way); every profile, snapshot and save hash moved with the card data; the historical scenario moved only in snapshot, stored and loaded.
