@@ -2125,6 +2125,19 @@ function rememberSection(section) {
 
 function setupSections() {
   document.querySelectorAll('details[data-section]').forEach(rememberSection);
+  document.getElementById('btn-collapse-all').addEventListener('click', () => setAllSectionsOpen(false));
+  document.getElementById('btn-expand-all').addEventListener('click', () => setAllSectionsOpen(true));
+}
+
+// Folds or opens every section on every tab, and remembers it, including weight groups drawn later.
+function setAllSectionsOpen(open) {
+  const stored = readStoredJson(SECTIONS_KEY, {});
+  document.querySelectorAll('details[data-section]').forEach((section) => {
+    section.open = open;
+    stored[section.dataset.section] = open;
+  });
+  writeStoredJson(SECTIONS_KEY, stored);
+  toast(open ? 'Expanded all sections' : 'Collapsed all sections');
 }
 
 let sheetReturnCardId = null;
