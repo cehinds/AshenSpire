@@ -7,7 +7,7 @@
 //
 //   raw  = effect power after costs, over 3 rounds (ScoreCard / ScoreItem)
 //   cp   = raw - rarity discount (CombatPower)
-//   rank = Unranked (cp <= 0), Rank k for cp (width*(k-1)+1)..(width*k), capped at maxRank; rank.maxCp (40) is the ceiling (RankOf)
+//   rank = Unranked (cp <= 0), Rank k for cp (width*(k-1)+1)..(width*k), capped at maxRank; rank.maxCp (40) bounds generated cards while authored top rank is open-ended (RankOf)
 //
 // A face is the simulator's card model: {name, cls, rarity, camp, type, sp, mp, dmg, hits, blk, poise, statuses: [[id, stacks, 'enemy'|'self']],
 // kw, tags, draw, heal, loseHp, discard, restoreSp, restoreMp, cleanse, counter, reflect, pull, move, holdOne, boost, cull, shuffle, copy, attr}.

@@ -65,8 +65,11 @@ test('combat power: the generated table is fresh and covers every Core card and 
   assert.ok(Object.keys(cardCombatPower).length >= 95);
   assert.equal(Object.keys(itemCombatPower).length, 181);
   for (const row of [...Object.values(cardCombatPower), ...Object.values(itemCombatPower)]) {
-    assert.equal(row.cp, CombatPower(row.raw, row.rarity));
-    assert.equal(row.rank, RankOf(row.cp));
+    assert.ok(Number.isFinite(row.raw) && Number.isFinite(row.cp), `non-finite score ${JSON.stringify(row)}`);
+    if (!row.overridden) {
+      assert.equal(row.cp, CombatPower(row.raw, row.rarity));
+      assert.equal(row.rank, RankOf(row.cp));
+    }
     assert.ok(row.rank >= 0 && row.rank <= scoring.rank.maxRank, `rank ${row.rank} outside 0..${scoring.rank.maxRank}`);
   }
 });

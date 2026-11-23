@@ -572,7 +572,7 @@
     },
     "trait:persistent": {
       "weight": 5,
-      "projection": "Precision survives the turn",
+      "projection": "effect survives the turn",
       "why": "",
       "domain": "trait",
       "label": "Persistent"
@@ -3573,7 +3573,7 @@
     "maxUpgrades": 10
   },
   "rank": {
-    "rule": "combat power = raw - rarity discount; Unranked <= 0; Rank k = 4k-3..4k (Rank 1 = 1-4 ... Rank 10 = 37-40); 40 is the ceiling for every card and item, upgrades included (owner, 2026-11-21)",
+    "rule": "combat power = raw - rarity discount; Unranked <= 0; Rank k = 4k-3..4k (Rank 1 = 1-4 ... Rank 10 = 37+); maxCp (40) bounds generated cards while authored Rank 10 is open-ended (owner, 2026-11-22)",
     "unrankedMax": 0,
     "width": 4,
     "maxRank": 10,
@@ -3588,7 +3588,7 @@
       "Rank 7": "25..28",
       "Rank 8": "29..32",
       "Rank 9": "33..36",
-      "Rank 10": "37..40"
+      "Rank 10": "37+"
     },
     "maxCp": 40
   },

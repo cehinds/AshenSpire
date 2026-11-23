@@ -111,7 +111,8 @@ function itemFaces() {
   for (const a of b.equipment.armaments) {
     const tags = tagFam['armament:' + a.id] || [];
     const it = { kind: 'weapon', id: a.id, name: a.name, rarity: a.rarity, base: a.geom, sub: a.kind, mods: parseMods(a.mods),
-      props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]), poise: a.poiseThreshold, weight: a.weight, dmgType: a.physicalDamageType, range: a.range };
+      props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]), poise: a.poiseThreshold, weight: a.weight, dmgType: a.physicalDamageType, range: a.range,
+      ...(a.scoringOverride ? { scoringOverride: a.scoringOverride } : {}) };
     const kit = a.weaponCardPackage?.combatKit || {};
     const ap = profile[kit.attackProfileId || a.attackProfile], gp = profile[kit.guardProfileId || a.guardProfile];
     it.attackBase = ap ? ap.baseValue : 3; it.magicShare = ap?.magicShare ? +ap.magicShare : 0; it.guardBase = gp ? gp.baseValue : 1;
@@ -122,13 +123,15 @@ function itemFaces() {
   for (const a of b.equipment.armour) {
     const tags = tagFam['armour:' + a.classId + '/' + a.id] || tagFam['armour:' + a.id] || [];
     items.push({ kind: 'armour', id: a.classId + '.' + a.id, name: a.name, rarity: a.unlock ? 'uncommon' : 'common', base: a.material || 'cloth', sub: a.classId, mods: parseMods(a.mods),
-      props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]), poise: a.poiseThreshold });
+      props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]), poise: a.poiseThreshold,
+      ...(a.scoringOverride ? { scoringOverride: a.scoringOverride } : {}) });
   }
   for (const r of b.relics) {
     const tags = [...new Set([...(tagFam['relic:' + r.id] || []), ...(r.properties || [])])];
     items.push({ kind: 'relic', id: r.id, name: r.name, rarity: r.rarity, base: r.icon,
       mods: (r.passives?.modifiers || []).map(m => ['passive.' + m.tag + (m.resource ? '.' + m.resource : m.school ? '.' + m.school : ''), m.amount]),
-      props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]) });
+      props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]),
+      ...(r.scoringOverride ? { scoringOverride: r.scoringOverride } : {}) });
   }
   return { items, rules: Object.fromEntries(Object.entries(rules).map(([k, r]) => [k, ruleOf(r)])) };
 }
@@ -138,8 +141,9 @@ function itemFaces() {
 // ---------------------------------------------------------------------------------------------------------------------
 export function buildTable() {
   const overrideFor = (key, def) => {
-    const a = scoring.overrides && typeof scoring.overrides[key] === 'object' ? scoring.overrides[key] : null;
-    const b = def && typeof def.scoringOverride === 'object' ? def.scoringOverride : null;
+    const rawA = scoring.overrides && scoring.overrides[key];
+    const a = rawA && typeof rawA === 'object' ? rawA : null;
+    const b = def && def.scoringOverride && typeof def.scoringOverride === 'object' ? def.scoringOverride : null;
     return (a || b) ? { ...(a || {}), ...(b || {}) } : null;
   };
   const cardCombatPower = {};
