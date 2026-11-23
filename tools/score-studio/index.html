@@ -85,18 +85,28 @@
               <option value="shifted">Shifted Only</option>
             </select>
             <div class="view-toggle" role="group" aria-label="Gallery view">
-              <button id="view-grid" class="s-btn s-btn-sm is-active">Grid (4–5/row)</button>
+              <button id="view-grid" class="s-btn s-btn-sm is-active">Grid</button>
               <button id="view-single" class="s-btn s-btn-sm">Single</button>
             </div>
+            <label class="scale-control" title="Resize gallery cards">Card Size
+              <input id="card-scale-slider" type="range" min="140" max="280" value="185" />
+            </label>
             <button id="btn-new-card" class="s-btn s-btn-sm s-btn-primary">+ New Card</button>
           </div>
           <div id="cards-grid" class="cards-grid"></div>
         </div>
 
+        <div id="inspector-resizer" class="inspector-resizer" title="Drag to resize Card Designer panel" role="separator" aria-orientation="vertical"></div>
+
         <aside id="card-inspector" class="card-inspector">
           <div class="inspector-preview-wrap">
             <div id="inspector-card-preview" class="inspector-card-preview"></div>
-            <div id="inspector-score-summary" class="inspector-score-summary"></div>
+            <div class="inspector-preview-side">
+              <div id="inspector-score-summary" class="inspector-score-summary"></div>
+              <label class="scale-control" title="Scale inspector card preview">Preview Size
+                <input id="inspector-scale-slider" type="range" min="130" max="260" value="175" />
+              </label>
+            </div>
           </div>
 
           <div class="inspector-section">
@@ -110,7 +120,13 @@
               </div>
             </div>
             <div class="form-grid">
-              <label>Name <input id="edit-name" type="text" /></label>
+              <label class="full-span">Name
+                <div class="name-input-row">
+                  <input id="edit-name" type="text" />
+                  <button id="btn-auto-name" class="s-btn s-btn-sm" type="button" title="Generate dynamic convention name from effects and rank">Auto-Name</button>
+                  <label class="studio-toggle" title="Automatically update card name as you edit features"><input id="toggle-auto-name" type="checkbox" /> Auto</label>
+                </div>
+              </label>
               <label>Card Type
                 <select id="edit-type">
                   <option value="attack">Attack</option>

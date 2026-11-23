@@ -12,7 +12,7 @@ import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
@@ -620,6 +620,10 @@ function mutateSelectedCard(fn) {
   fn(def);
   def._edited = true;
   rebuildTextTemplate(def);
+  if (document.getElementById('toggle-auto-name')?.checked) {
+    const sc = scoreCardEntry(def);
+    def.name = CardName(sc.face, 0, state.scoring);
+  }
   // Async targeted update: refresh only inspector + this one card tile!
   renderInspector();
   updateCardTileInPlace(def.id);
@@ -1030,6 +1034,51 @@ function wireEvents() {
 
   // Card inspector edits
   document.getElementById('edit-name').addEventListener('input', (e) => mutateSelectedCard((d) => { d.name = e.target.value; }));
+  document.getElementById('btn-auto-name').addEventListener('click', () => {
+    const def = state.cards.find((c) => c.id === state.selectedCardId);
+    if (!def) return;
+    const generated = CardName(scoreCardEntry(def).face, 0, state.scoring);
+    mutateSelectedCard((d) => { d.name = generated; });
+    toast(`Generated name: "${generated}"`);
+  });
+
+  // Card grid scale, inspector preview scale, and draggable inspector resizer
+  const cardsLayout = document.querySelector('.cards-layout');
+  const savedInspectorW = Number(localStorage.getItem('ashenspire:studioInspectorW'));
+  if (savedInspectorW >= 340 && savedInspectorW <= 780) cardsLayout.style.setProperty('--inspector-width', `${savedInspectorW}px`);
+
+  document.getElementById('card-scale-slider').addEventListener('input', (e) => {
+    document.getElementById('cards-grid').style.setProperty('--card-tile-width', `${e.target.value}px`);
+    requestAnimationFrame(() => document.querySelectorAll('#cards-grid .card').forEach((el) => fitCardFace(el)));
+  });
+  document.getElementById('inspector-scale-slider').addEventListener('input', (e) => {
+    document.getElementById('inspector-card-preview').style.setProperty('--inspector-card-width', `${e.target.value}px`);
+    const cardEl = document.querySelector('#inspector-card-preview .card');
+    if (cardEl) requestAnimationFrame(() => fitCardFace(cardEl));
+  });
+
+  const resizer = document.getElementById('inspector-resizer');
+  let draggingResizer = false;
+  resizer.addEventListener('pointerdown', (e) => {
+    draggingResizer = true;
+    resizer.classList.add('is-dragging');
+    resizer.setPointerCapture(e.pointerId);
+  });
+  resizer.addEventListener('pointermove', (e) => {
+    if (!draggingResizer) return;
+    const width = Math.max(340, Math.min(780, Math.round(window.innerWidth - e.clientX)));
+    cardsLayout.style.setProperty('--inspector-width', `${width}px`);
+    localStorage.setItem('ashenspire:studioInspectorW', String(width));
+  });
+  const stopDrag = () => {
+    if (!draggingResizer) return;
+    draggingResizer = false;
+    resizer.classList.remove('is-dragging');
+    const cardEl = document.querySelector('#inspector-card-preview .card');
+    if (cardEl) requestAnimationFrame(() => fitCardFace(cardEl));
+  };
+  resizer.addEventListener('pointerup', stopDrag);
+  resizer.addEventListener('pointercancel', stopDrag);
   document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }));
   document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }));
   document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }));
