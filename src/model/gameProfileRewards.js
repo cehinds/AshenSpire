@@ -12,6 +12,7 @@ import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
+import { RankedCardPrice } from './rankedCardPrice.js';
 import { createRng } from './rng.js';
 import { TierFor, FilterToBand } from './levelLists.js';
 import { carriedIds } from './loadout/ownership.js';
@@ -559,7 +560,9 @@ function rollOfferPrice(registries,run,rng,table,option) {
     :(registries.equipment.armour||[]).find(item=>item.id===option.id&&item.classId===run.class);
   const range=Array.isArray(row)?row:row[def?.rarity]??row.common;
   if(!Array.isArray(range)||range.length!==2||!range.every(Number.isSafeInteger)||range[0]<0||range[1]<range[0])throw new Error(`Invalid shop price range for ${option.kind}`);
-  return rng.int('shop',range[0],range[1]);
+  const price=rng.int('shop',range[0],range[1]);
+  // Owner 2026-11-23: a ranked card offer costs +rankPricePct% per visible rank (rankedCardPrice.js); shop offers roll no rank today.
+  return option.kind==='combatCards'||option.kind==='weaponArts'?RankedCardPrice(run,price,option):price;
 }
 export { shopOfferPrice };
 export function gameProfileShopPurchasePlan(registries,run,shopId,index) {

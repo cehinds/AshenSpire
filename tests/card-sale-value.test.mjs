@@ -71,3 +71,32 @@ test('a multiplier of 1 sells cards like everything else', () => {
   assert.equal(plain, Math.floor(cheapest(run, registries.cards.get(card.cardId).rarity) * 0.5));
   assert.ok(doubled > plain);
 });
+
+// Owner 2026-11-23: a card's rank raises its buy price by rankPricePct (25) percent per visible rank, and the card sale cap
+// reads that rank-raised price.
+test('the data holds the owner number: +25% per visible rank', async () => {
+  const { RankPricePct } = await import('../src/model/rankedCardPrice.js');
+  const { run } = visit();
+  assert.equal(RankPricePct(run), 25);
+});
+
+test('a ranked card costs +25% per visible rank, rounded; an unranked card the plain price', async () => {
+  const { RankedCardPrice } = await import('../src/model/rankedCardPrice.js');
+  const { run } = visit();
+  assert.equal(RankedCardPrice(run, 100, { cardId: 'core.strike' }), 100, 'no badge: +0');
+  assert.equal(RankedCardPrice(run, 100, { cardId: 'core.strike', rank: 1 }), 125, '"Rank 1": +25%');
+  assert.equal(RankedCardPrice(run, 100, { cardId: 'core.strike', rank: 4 }), 200, '"Rank 4": +100%');
+  assert.equal(RankedCardPrice(run, 34, { cardId: 'core.strike', rank: 1 }), 43, 'whole cinders (42.5 rounds to 43)');
+});
+
+test('a ranked card sells against its rank-raised price: more than unranked, never above that price', () => {
+  const { run, card } = visit();
+  const basis = cheapest(run, registries.cards.get(card.cardId).rarity);
+  const unranked = gameProfileShopSalePlan(registries, run, SHOP, 'combatCards', card.instanceId).price;
+  card.rank = 4;
+  const raised = Math.round(basis * 2);
+  const ranked = gameProfileShopSalePlan(registries, run, SHOP, 'combatCards', card.instanceId).price;
+  assert.equal(ranked, Math.min(2 * Math.floor(raised * 0.5), raised));
+  assert.ok(ranked > unranked, `${ranked} > ${unranked}`);
+  assert.ok(ranked <= raised, 'never above the rank-raised buy price');
+});
