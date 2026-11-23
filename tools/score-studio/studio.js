@@ -78,6 +78,7 @@ const state = {
   cards: [],            // editable card definitions + derived faces
   baselineRanks: {},    // id -> baseline rank under repoScoring
   selectedCardId: null,
+  selectedLayerIdx: 0,
   viewMode: 'grid',
   artLayers: {
     version: 1,
@@ -376,6 +377,15 @@ function computeShiftCount() {
   return shifted;
 }
 
+function tileMetaHtml(def, sc, shiftHtml) {
+  return `<div class="studio-card-meta-title" title="${esc(def.name)}">${esc(def.name)}</div>
+    <div class="studio-card-meta-row">
+      <span class="cp-chip">CP ${sc.cp}${sc.overridden ? '*' : ''}</span>
+      <span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>
+      ${shiftHtml}
+    </div>`;
+}
+
 function updateCardTileInPlace(cardId) {
   const tile = document.querySelector(`.studio-card-tile[data-card-id="${CSS.escape(cardId)}"]`);
   const def = state.cards.find((c) => c.id === cardId);
@@ -386,11 +396,7 @@ function updateCardTileInPlace(cardId) {
     ? `<span class="${sc.rank > baseRank ? 'shift-up' : 'shift-down'}">${sc.rank > baseRank ? '↑' : '↓'} R${baseRank}→R${sc.rank}</span>`
     : '';
   renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
-  tile.querySelector('.studio-card-meta').innerHTML = `
-    <span class="cp-chip" title="${esc(def.name)}">${esc(def.name)} · CP ${sc.cp}${sc.overridden ? '*' : ''}</span>
-    <span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>
-    ${shiftHtml}
-  `;
+  tile.querySelector('.studio-card-meta').innerHTML = tileMetaHtml(def, sc, shiftHtml);
 }
 
 function renderCardsGrid() {
@@ -425,7 +431,7 @@ function renderCardsGrid() {
     const tile = document.createElement('div');
     tile.className = 'studio-card-tile' + (def.id === state.selectedCardId ? ' is-selected' : '');
     tile.dataset.cardId = def.id;
-    tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta"><span class="cp-chip" title="${esc(def.name)}">${esc(def.name)} · CP ${sc.cp}${sc.overridden ? '*' : ''}</span><span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>${shiftHtml}</div>`;
+    tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta">${tileMetaHtml(def, sc, shiftHtml)}</div>`;
     renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
     tile.addEventListener('click', () => {
       state.selectedCardId = def.id;
@@ -639,19 +645,20 @@ function renderWeights() {
   const container = document.getElementById('weights-container');
   container.innerHTML = '';
 
+  const R = state.repoScoring;
   const groups = [
-    { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
-    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({ id: k, label: `${k} (per ${v.per})`, val: v.weight, set: (n) => { state.scoring.effects[k].weight = n; } })) },
-    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
-    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => ({ id: k, label: k + (v.flat !== undefined ? ' (flat)' : ' (mult)'), val: v.flat ?? v.multiplier, step: v.flat !== undefined ? 1 : 0.05, set: (n) => { if (v.flat !== undefined) state.scoring.keywords[k].flat = n; else state.scoring.keywords[k].multiplier = n; } })) },
-    { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
+    { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
+    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({ id: k, label: `${k} (per ${v.per})`, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; } })) },
+    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
+    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => ({ id: k, label: k + (v.flat !== undefined ? ' (flat)' : ' (mult)'), val: v.flat ?? v.multiplier, base: R.keywords?.[k]?.flat ?? R.keywords?.[k]?.multiplier, step: v.flat !== undefined ? 1 : 0.05, set: (n) => { if (v.flat !== undefined) state.scoring.keywords[k].flat = n; else state.scoring.keywords[k].multiplier = n; } })) },
+    { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, base: R.rarity?.discount?.[k], set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
     { key: 'rank', title: 'Rank Bands', entries: [
-      { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
-      { id: 'width', label: 'Band Width', val: state.scoring.rank.width, set: (n) => { state.scoring.rank.width = Math.max(1, n); } },
-      { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
-      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; } },
+      { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, base: R.rank?.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
+      { id: 'width', label: 'Band Width', val: state.scoring.rank.width, base: R.rank?.width, set: (n) => { state.scoring.rank.width = Math.max(1, n); } },
+      { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, base: R.rank?.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
+      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; } },
     ] },
-    { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => k[0] !== '$' && v && (v.weight !== 0 || v.multiplier || v.pMultiplier)).map(([k, v]) => ({ id: k, label: `${v.label || k} (${k})`, val: v.weight || v.multiplier || v.pMultiplier, step: v.weight !== 0 ? 1 : 0.05, set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; } })) },
+    { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => k[0] !== '$' && v && (v.weight !== 0 || v.multiplier || v.pMultiplier)).map(([k, v]) => ({ id: k, label: `${v.label || k} (${k})`, val: v.weight || v.multiplier || v.pMultiplier, base: R.tags?.[k]?.weight || R.tags?.[k]?.multiplier || R.tags?.[k]?.pMultiplier, step: v.weight !== 0 ? 1 : 0.05, set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; } })) },
   ];
 
   for (const g of groups) {
@@ -662,15 +669,26 @@ function renderWeights() {
     card.className = 'weight-group-card';
     card.innerHTML = `<h3>${esc(g.title)}</h3>`;
     for (const r of rows) {
+      const modified = r.base !== undefined && r.val !== r.base;
       const row = document.createElement('div');
-      row.className = 'weight-row';
-      row.innerHTML = `<span>${esc(r.label)}</span><input type="number" step="${r.step || 1}" value="${r.val}" />`;
+      row.className = 'weight-row' + (modified ? ' is-modified' : '');
+      row.innerHTML = `<span>${esc(r.label)}</span><input type="number" step="${r.step || 1}" value="${r.val}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="Reset to ${r.base}">↺</button>`;
       row.querySelector('input').addEventListener('change', (ev) => {
         const n = Number(ev.target.value);
         if (!Number.isFinite(n)) return;
         pushHistory();
         r.set(n);
         computeShiftCount();
+        renderWeights();
+        renderInspector();
+        renderCardsGrid();
+      });
+      row.querySelector('.weight-reset-btn').addEventListener('click', () => {
+        if (r.base === undefined) return;
+        pushHistory();
+        r.set(r.base);
+        computeShiftCount();
+        renderWeights();
         renderInspector();
         renderCardsGrid();
       });
@@ -703,10 +721,12 @@ function renderArtTab() {
   const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
   if (previewDef) renderCardWithLayers(previewDef, document.getElementById('art-live-preview'));
 
+  if (state.selectedLayerIdx >= state.artLayers.layers.length) state.selectedLayerIdx = Math.max(0, state.artLayers.layers.length - 1);
   list.innerHTML = '';
   state.artLayers.layers.forEach((layer, idx) => {
     const el = document.createElement('div');
-    el.className = 'layer-card';
+    el.className = 'layer-card' + (idx === state.selectedLayerIdx ? ' is-selected' : '');
+    el.dataset.layerCardIdx = String(idx);
     el.innerHTML = `
       <div class="layer-card-head">
         <strong>#${idx + 1} · ${esc(layer.name || layer.id)}</strong>
@@ -740,9 +760,11 @@ function renderArtTab() {
             ${['normal', 'screen', 'multiply', 'overlay', 'color'].map((m) => `<option value="${m}" ${layer.blendMode === m ? 'selected' : ''}>${m}</option>`).join('')}
           </select>
         </label>
+        <label>X % <input type="number" data-l-num="x" data-l-idx="${idx}" min="0" max="100" value="${layer.x ?? 50}" /></label>
+        <label>Y % <input type="number" data-l-num="y" data-l-idx="${idx}" min="0" max="100" value="${layer.y ?? 50}" /></label>
+        <label>Scale % <input type="number" data-l-num="scale" data-l-idx="${idx}" min="10" max="150" value="${layer.scale ?? 80}" /></label>
         <label>Z-Index <input type="number" data-l-num="zIndex" data-l-idx="${idx}" value="${layer.zIndex ?? 1}" /></label>
-        <label>X % / Scale % <input type="number" data-l-num="scale" data-l-idx="${idx}" min="10" max="150" value="${layer.scale ?? 80}" /></label>
-        <label>Opacity (${layer.opacity ?? 100}%) <input type="range" data-l-num="opacity" data-l-idx="${idx}" min="0" max="100" value="${layer.opacity ?? 100}" /></label>
+        <label style="grid-column: span 2;">Opacity (<span class="opacity-val">${layer.opacity ?? 100}%</span>) <input type="range" data-l-num="opacity" data-l-idx="${idx}" min="0" max="100" value="${layer.opacity ?? 100}" /></label>
       </div>`;
     list.appendChild(el);
   });
@@ -754,16 +776,17 @@ function renderArtTab() {
   for (const a of assets.filter((x) => !aq || `${x.id} ${x.name}`.toLowerCase().includes(aq)).slice(0, 60)) {
     const t = document.createElement('div');
     t.className = 'asset-thumb';
-    t.title = `${a.id} — ${a.name} (click to assign to top layer)`;
-    t.innerHTML = `<img src="${esc(a.path)}" loading="lazy" alt="" /><div>${esc(a.id)}</div>`;
+    t.title = `${a.id} — ${a.name} (click to assign to selected layer #${state.selectedLayerIdx + 1})`;
+    t.innerHTML = `<img src="${esc(a.path)}" loading="lazy" alt="" /><div title="${esc(a.id)}">${esc(a.id)}</div>`;
     t.addEventListener('click', () => {
-      if (!state.artLayers.layers.length) return;
+      const targetLayer = state.artLayers.layers[state.selectedLayerIdx] || state.artLayers.layers[0];
+      if (!targetLayer) return;
       pushHistory();
-      state.artLayers.layers[0].assetId = a.id;
+      targetLayer.assetId = a.id;
       renderArtTab();
       renderCardsGrid();
       renderInspector();
-      toast(`Assigned ${a.id} to layer #1`);
+      toast(`Assigned ${a.id} to layer #${state.selectedLayerIdx + 1}`);
     });
     gal.appendChild(t);
   }
@@ -1095,21 +1118,26 @@ function wireEvents() {
     if (n > 0) d.effects.push({ op: 'loseHp', target: 'self', amount: n });
   }));
 
-  // Add / edit / remove active features
-  document.getElementById('btn-add-feature').addEventListener('click', () => {
-    const val = document.getElementById('add-feature-select').value;
+  // Add / edit / remove active features (instant add on dropdown select OR quick-add chip)
+  const addFeatureValue = (val) => {
     if (!val) return;
     const [kind, key] = [val.slice(0, val.indexOf(':')), val.slice(val.indexOf(':') + 1)];
     mutateSelectedCard((d) => {
       d.effects ||= [];
       d.keywords ||= [];
       d.tags ||= [];
-      if (kind === 'effect') d.effects.push({ op: key, target: getCardTarget(d), amount: key === 'damage' ? 6 : 2 });
+      if (kind === 'effect') d.effects.push({ op: key, target: getCardTarget(d), amount: key === 'damage' ? 6 : key === 'block' ? 5 : 2 });
       else if (kind === 'status') d.effects.push({ op: 'applyStatus', status: key, stacks: 2, target: state.scoring.statuses?.[key]?.target || 'enemy' });
       else if (kind === 'kw' && !d.keywords.includes(key)) d.keywords.push(key);
       else if (kind === 'tag' && !d.tags.includes(key)) d.tags.push(key);
     });
     document.getElementById('add-feature-select').value = '';
+  };
+  document.getElementById('btn-add-feature').addEventListener('click', () => addFeatureValue(document.getElementById('add-feature-select').value));
+  document.getElementById('add-feature-select').addEventListener('change', (e) => addFeatureValue(e.target.value));
+  document.getElementById('quick-add-chips').addEventListener('click', (e) => {
+    const val = e.target.dataset?.quickAdd;
+    if (val) addFeatureValue(val);
   });
 
   document.getElementById('active-features-list').addEventListener('click', (e) => {
@@ -1169,11 +1197,20 @@ function wireEvents() {
   });
   document.getElementById('asset-search').addEventListener('input', renderArtTab);
   document.getElementById('art-layers-list').addEventListener('click', (e) => {
+    const cardEl = e.target.closest('.layer-card');
+    if (cardEl && e.target.dataset.lUp === undefined && e.target.dataset.lDown === undefined && e.target.dataset.lDel === undefined) {
+      const selIdx = Number(cardEl.dataset.layerCardIdx);
+      if (!Number.isNaN(selIdx) && selIdx !== state.selectedLayerIdx) {
+        state.selectedLayerIdx = selIdx;
+        document.querySelectorAll('#art-layers-list .layer-card').forEach((n, i) => n.classList.toggle('is-selected', i === selIdx));
+      }
+      return;
+    }
     const idx = Number(e.target.dataset.lUp ?? e.target.dataset.lDown ?? e.target.dataset.lDel);
     if (Number.isNaN(idx)) return;
     pushHistory();
-    if (e.target.dataset.lUp !== undefined && idx > 0) [state.artLayers.layers[idx - 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx - 1]];
-    if (e.target.dataset.lDown !== undefined && idx < state.artLayers.layers.length - 1) [state.artLayers.layers[idx + 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx + 1]];
+    if (e.target.dataset.lUp !== undefined && idx > 0) { [state.artLayers.layers[idx - 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx - 1]]; state.selectedLayerIdx = idx - 1; }
+    if (e.target.dataset.lDown !== undefined && idx < state.artLayers.layers.length - 1) { [state.artLayers.layers[idx + 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx + 1]]; state.selectedLayerIdx = idx + 1; }
     if (e.target.dataset.lDel !== undefined) state.artLayers.layers.splice(idx, 1);
     renderArtTab();
     renderCardsGrid();
@@ -1186,7 +1223,13 @@ function wireEvents() {
     if (!layer) return;
     if (e.target.dataset.lEnabled !== undefined) layer.enabled = e.target.checked;
     else if (e.target.dataset.lField) layer[e.target.dataset.lField] = e.target.value;
-    else if (e.target.dataset.lNum) layer[e.target.dataset.lNum] = Number(e.target.value) || 0;
+    else if (e.target.dataset.lNum) {
+      layer[e.target.dataset.lNum] = Number(e.target.value) || 0;
+      if (e.target.dataset.lNum === 'opacity') {
+        const span = e.target.closest('label')?.querySelector('.opacity-val');
+        if (span) span.textContent = `${layer.opacity}%`;
+      }
+    }
     markDirty();
     // Update live preview in place without rebuilding #art-layers-list (preserves focus & slider drag)
     const cardSel = document.getElementById('art-preview-card-select');
