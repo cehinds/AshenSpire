@@ -23,6 +23,15 @@ export function VendorSaleStock(run, shopId) {
   return offer?.source === 'shop' ? offer : null;
 }
 const tableKinds = { weapons: 'armament', armor: 'armour', relics: 'relic', potions: 'flask', combatCards: 'card', weaponArts: 'weaponArt' };
+const CARD_SALE_KINDS = new Set(['combatCards', 'weaponArts']);
+/**
+ * A card's sale (owner, 2026-11-23): `balance.shop.cardSellMultiplier` times the ordinary sale, never above the buy-price
+ * basis the sale is figured from, so buying a card and selling it back never profits. Other kinds keep the ordinary sale.
+ */
+function CardSalePrice(registries, sale, basis) {
+  const multiplier = registries.balance.shop.cardSellMultiplier;
+  return Number.isFinite(multiplier) && multiplier > 0 ? Math.min(Math.floor(sale * multiplier), basis) : sale;
+}
 function salePrice(registries, run, stock, kind, def) {
   const table = gameModule(run, 'shops')?.priceTable ?? gameContent(run, 'shops')?.priceTable;
   const row = table?.[tableKinds[kind]], range = Array.isArray(row) ? row : row?.[def?.rarity] ?? row?.common;
@@ -30,7 +39,9 @@ function salePrice(registries, run, stock, kind, def) {
   const paid = run.gameProfileShopPurchasePrices?.[`${kind}:${def?.id}`];
   const basis = Number.isSafeInteger(paid) && paid >= 0 ? Math.min(minimum, paid) : minimum;
   const fraction = registries.balance.shop.sellFraction;
-  return Number.isSafeInteger(basis) && basis >= 0 && fraction > 0 && fraction < 1 ? Math.floor(basis * fraction) : 0;
+  if (!(Number.isSafeInteger(basis) && basis >= 0 && fraction > 0 && fraction < 1)) return 0;
+  const sale = Math.floor(basis * fraction);
+  return CARD_SALE_KINDS.has(kind) ? CardSalePrice(registries, sale, basis) : sale;
 }
 function withMerchant(run, stock) {
   const draft = structuredClone(run);
