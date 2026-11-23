@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AshenSpire — Score Studio</title>
+  <base href="../../" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/combat.css" />
+  <link rel="stylesheet" href="tools/score-studio/studio.css" />
+</head>
+<body class="studio-body">
+  <header class="studio-topbar">
+    <div class="studio-brand">
+      <span class="studio-logo">ASHENSPIRE</span>
+      <span class="studio-title">Score Studio</span>
+      <span id="draft-status" class="studio-pill">Synced with repo</span>
+    </div>
+    <nav class="studio-tabs" role="tablist" aria-label="Score Studio workspaces">
+      <button class="studio-tab is-active" data-tab="cards" role="tab" aria-selected="true">Cards &amp; Decks</button>
+      <button class="studio-tab" data-tab="weights" role="tab" aria-selected="false">Weights <span id="shift-count-badge" class="badge hidden">0</span></button>
+      <button class="studio-tab" data-tab="art" role="tab" aria-selected="false">Art &amp; Layers</button>
+      <button class="studio-tab" data-tab="sandbox" role="tab" aria-selected="false">Live Combat Sandbox</button>
+    </nav>
+    <div class="studio-actions">
+      <button id="btn-undo" class="s-btn" title="Undo (Ctrl+Z)" disabled>Undo</button>
+      <button id="btn-redo" class="s-btn" title="Redo (Ctrl+Y)" disabled>Redo</button>
+      <button id="btn-revert" class="s-btn s-btn-warn" title="Reload last saved in-game scoring.json">Revert to In-Game</button>
+      <button id="btn-export-repo" class="s-btn s-btn-primary">Export to Repo</button>
+      <button id="btn-download-json" class="s-btn">Download JSON</button>
+      <label class="s-btn s-file-btn">Upload JSON<input id="input-upload-json" type="file" accept=".json" hidden /></label>
+    </div>
+  </header>
+
+  <div class="studio-pathbar">
+    <label for="repo-path-input">Repo Config Path:</label>
+    <input id="repo-path-input" type="text" value="content/source/scoring.json" spellcheck="false" />
+    <button id="btn-load-path" class="s-btn s-btn-sm">Load Path</button>
+    <span id="path-status" class="studio-muted">Default: content/source/scoring.json</span>
+    <span class="studio-spacer"></span>
+    <label class="studio-toggle"><input id="toggle-autosave" type="checkbox" checked /> Draft auto-save (local temp copy)</label>
+  </div>
+
+  <main class="studio-main">
+    <!-- TAB 1: CARDS & DECKS -->
+    <section id="tab-cards" class="studio-panel is-active">
+      <div class="cards-layout">
+        <div class="cards-gallery-pane">
+          <div class="filter-bar">
+            <input id="card-search" type="search" placeholder="Search cards by name, tag, effect..." />
+            <select id="filter-type" aria-label="Card type">
+              <option value="all">All Types</option>
+              <option value="attack">Attack</option>
+              <option value="skill">Skill</option>
+              <option value="power">Power</option>
+              <option value="guard">Guard</option>
+              <option value="strike">Strike</option>
+              <option value="curse">Curse</option>
+              <option value="status">Status</option>
+            </select>
+            <select id="filter-class" aria-label="Class">
+              <option value="all">All Classes</option>
+              <option value="reaver">Reaver</option>
+              <option value="rogue">Rogue</option>
+              <option value="starseer">Starseer</option>
+              <option value="herald">Herald</option>
+              <option value="colorless">Colorless</option>
+            </select>
+            <select id="filter-rank" aria-label="Rank">
+              <option value="all">All Ranks</option>
+            </select>
+            <select id="filter-shift" aria-label="Rank shift">
+              <option value="all">All Cards</option>
+              <option value="shifted">Shifted Only</option>
+            </select>
+            <div class="view-toggle" role="group" aria-label="Gallery view">
+              <button id="view-grid" class="s-btn s-btn-sm is-active">Grid (4–5/row)</button>
+              <button id="view-single" class="s-btn s-btn-sm">Single</button>
+            </div>
+            <button id="btn-new-card" class="s-btn s-btn-sm s-btn-primary">+ New Card</button>
+          </div>
+          <div id="cards-grid" class="cards-grid"></div>
+        </div>
+
+        <aside id="card-inspector" class="card-inspector">
+          <div class="inspector-preview-wrap">
+            <div id="inspector-card-preview" class="inspector-card-preview"></div>
+            <div id="inspector-score-summary" class="inspector-score-summary"></div>
+          </div>
+
+          <div class="inspector-section">
+            <div class="section-head">
+              <h3>Card Basics</h3>
+              <button id="btn-send-sandbox" class="s-btn s-btn-sm s-btn-primary">Test in Combat Sandbox</button>
+            </div>
+            <div class="form-grid">
+              <label>Name <input id="edit-name" type="text" /></label>
+              <label>Card Type
+                <select id="edit-type">
+                  <option value="attack">Attack</option>
+                  <option value="skill">Skill</option>
+                  <option value="power">Power</option>
+                  <option value="guard">Guard</option>
+                  <option value="strike">Strike</option>
+                  <option value="curse">Curse</option>
+                  <option value="status">Status</option>
+                </select>
+              </label>
+              <label>Class
+                <select id="edit-class">
+                  <option value="colorless">Colorless</option>
+                  <option value="reaver">Reaver</option>
+                  <option value="rogue">Rogue</option>
+                  <option value="starseer">Starseer</option>
+                  <option value="herald">Herald</option>
+                </select>
+              </label>
+              <label>Rarity
+                <select id="edit-rarity">
+                  <option value="starter">Starter</option>
+                  <option value="common">Common</option>
+                  <option value="uncommon">Uncommon</option>
+                  <option value="rare">Rare</option>
+                  <option value="boss">Boss</option>
+                </select>
+              </label>
+              <label>Camp
+                <select id="edit-camp">
+                  <option value="physical">Physical</option>
+                  <option value="spell">Spell</option>
+                </select>
+              </label>
+              <label>Target
+                <select id="edit-target">
+                  <option value="enemy">Single Enemy</option>
+                  <option value="allEnemies">All Enemies</option>
+                  <option value="randomEnemy">Random Enemy</option>
+                  <option value="self">Self</option>
+                  <option value="ally">Single Ally</option>
+                  <option value="allAllies">All Allies</option>
+                </select>
+              </label>
+              <label>SP Cost <input id="edit-sp" type="number" min="0" max="10" /></label>
+              <label>MP Cost <input id="edit-mp" type="number" min="0" max="10" /></label>
+              <label>HP Cost <input id="edit-loseHp" type="number" min="0" max="50" /></label>
+            </div>
+          </div>
+
+          <div class="inspector-section">
+            <div class="section-head">
+              <h3>Active Features</h3>
+              <div class="add-feature-bar">
+                <select id="add-feature-select" aria-label="Add feature to card">
+                  <option value="">+ Add Feature...</option>
+                </select>
+                <button id="btn-add-feature" class="s-btn s-btn-sm">Add</button>
+              </div>
+            </div>
+            <div id="active-features-list" class="active-features-list"></div>
+          </div>
+
+          <div class="inspector-section">
+            <div class="section-head">
+              <h3>Scoring Override</h3>
+              <label class="studio-toggle"><input id="edit-override-enabled" type="checkbox" /> Enable override</label>
+            </div>
+            <div id="override-fields" class="form-grid hidden">
+              <label>Override Rank <input id="edit-override-rank" type="number" min="0" max="10" placeholder="auto" /></label>
+              <label>Override CP <input id="edit-override-cp" type="number" placeholder="auto" /></label>
+            </div>
+          </div>
+
+          <div class="inspector-section">
+            <h3>Score Breakdown</h3>
+            <div id="score-parts-list" class="score-parts-list"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- TAB 2: WEIGHTS -->
+    <section id="tab-weights" class="studio-panel">
+      <div class="weights-toolbar">
+        <input id="weights-search" type="search" placeholder="Search weights by name, group, or key (e.g. exhaust, evade, burn, mp)..." />
+        <select id="weights-group-filter" aria-label="Weight group">
+          <option value="all">All Groups</option>
+          <option value="costs">Costs (SP / MP)</option>
+          <option value="effects">Effects</option>
+          <option value="statuses">Statuses</option>
+          <option value="keywords">Keywords</option>
+          <option value="rarity">Rarity Discounts</option>
+          <option value="rank">Rank Bands</option>
+          <option value="tags">Weighted Tags</option>
+        </select>
+        <div id="weights-impact-summary" class="studio-muted"></div>
+      </div>
+      <div id="weights-container" class="weights-container"></div>
+    </section>
+
+    <!-- TAB 3: ART & LAYERS -->
+    <section id="tab-art" class="studio-panel">
+      <div class="art-layout">
+        <div class="art-controls-pane">
+          <div class="section-head">
+            <h3>Procedural Layer Stack &amp; Priority</h3>
+            <div>
+              <button id="btn-add-layer" class="s-btn s-btn-sm s-btn-primary">+ Add Layer</button>
+              <button id="btn-save-art" class="s-btn s-btn-sm">Save Layers to Repo</button>
+              <button id="btn-download-art" class="s-btn s-btn-sm">Download JSON</button>
+            </div>
+          </div>
+          <p class="studio-muted">Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.</p>
+          <div id="art-layers-list" class="art-layers-list"></div>
+        </div>
+        <div class="art-preview-pane">
+          <div class="section-head">
+            <h3>Live Layered Preview</h3>
+            <select id="art-preview-card-select" aria-label="Preview card"></select>
+          </div>
+          <div id="art-live-preview" class="art-live-preview"></div>
+          <h4>Available Cutout Assets (<span id="asset-count">0</span>)</h4>
+          <input id="asset-search" type="search" placeholder="Filter PNG assets (e.g. burn, venom, shield, background)..." />
+          <div id="asset-gallery" class="asset-gallery"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: LIVE COMBAT SANDBOX -->
+    <section id="tab-sandbox" class="studio-panel">
+      <div class="sandbox-toolbar">
+        <div class="ab-controls">
+          <strong>A/B Testing:</strong>
+          <button id="btn-slot-a-save" class="s-btn s-btn-sm">Save → Slot A</button>
+          <button id="btn-slot-a-load" class="s-btn s-btn-sm">Load Slot A</button>
+          <button id="btn-slot-b-save" class="s-btn s-btn-sm">Save → Slot B</button>
+          <button id="btn-slot-b-load" class="s-btn s-btn-sm">Load Slot B</button>
+          <span id="ab-active-label" class="studio-pill">Draft</span>
+          <button id="btn-apply-sandbox" class="s-btn s-btn-primary">Apply to Sandbox</button>
+        </div>
+        <div class="scenario-controls">
+          <label>Class
+            <select id="sandbox-class">
+              <option value="reaver">Reaver</option>
+              <option value="rogue">Rogue</option>
+              <option value="starseer">Starseer</option>
+              <option value="herald">Herald</option>
+            </select>
+          </label>
+          <label>Enemy
+            <select id="sandbox-enemy"></select>
+          </label>
+          <button id="btn-sandbox-reset" class="s-btn">Reset Fight</button>
+          <button id="btn-sandbox-endturn" class="s-btn s-btn-warn">End Turn</button>
+        </div>
+      </div>
+      <div class="sandbox-arena">
+        <div class="sandbox-combatants">
+          <div id="sandbox-player-panel" class="combatant-box"></div>
+          <div id="sandbox-enemy-panel" class="combatant-box"></div>
+        </div>
+        <div class="sandbox-hand-section">
+          <div class="section-head">
+            <h3>Opening Hand (edited card injected first — click a card to play)</h3>
+            <span id="sandbox-turn-info" class="studio-muted"></span>
+          </div>
+          <div id="sandbox-hand" class="sandbox-hand"></div>
+        </div>
+        <div class="sandbox-log-section">
+          <h3>Combat Log</h3>
+          <div id="sandbox-log" class="sandbox-log"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- EXPORT CONFIRMATION MODAL -->
+  <dialog id="export-modal" class="studio-modal">
+    <form method="dialog">
+      <h3>Confirm Export to Repository</h3>
+      <p id="export-modal-path" class="studio-muted"></p>
+      <div id="export-modal-diff" class="export-diff"></div>
+      <div class="modal-actions">
+        <button value="cancel" class="s-btn">Cancel</button>
+        <button id="btn-confirm-export" value="confirm" class="s-btn s-btn-primary">Write &amp; Rebuild Tables</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="studio-toast" class="studio-toast hidden" role="status" aria-live="polite"></div>
+
+  <script type="module" src="tools/score-studio/studio.js"></script>
+</body>
+</html>

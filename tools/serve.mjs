@@ -50,6 +50,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
+import { readStudioConfig, saveStudioScoring, saveStudioArtLayers } from './score-studio-save.mjs';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
 import { authoringRoot, compositeSourcePath, isAuthoringFile } from './art-authoring.mjs';
 import { existsSync, readdirSync, statSync, watch as fsWatch } from 'node:fs';
@@ -399,6 +400,42 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           }
           const changes = JSON.parse(Buffer.concat(chunks).toString('utf8')).changes;
           reply(200, { ok: true, ...await saveFirstStepDefaults(rootResolved, changes) });
+        } catch (error) { reply(400, { ok: false, error: error.message }); }
+        return;
+      }
+      if (urlPath === '/__studio/config' || urlPath === '/__studio/scoring' || urlPath === '/__studio/art-layers') {
+        const remote = req.socket.remoteAddress || '';
+        const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
+        const host = req.headers.host || '';
+        const safeHost = /^(localhost|127\.0\.0\.1):\d+$/.test(host);
+        const reply = (status, value) => {
+          res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+          res.end(JSON.stringify(value));
+        };
+        if (!local || !safeHost) { reply(403, { ok: false, error: 'Score Studio API is localhost-only.' }); return; }
+        if (urlPath === '/__studio/config' && req.method === 'GET') {
+          try {
+            const u = new URL(req.url, `http://${host}`);
+            reply(200, { ok: true, ...readStudioConfig(rootResolved, { scoringPath: u.searchParams.get('scoringPath') || '', artLayersPath: u.searchParams.get('artLayersPath') || '' }) });
+          } catch (error) { reply(400, { ok: false, error: error.message }); }
+          return;
+        }
+        if (req.method !== 'POST' || req.headers.origin !== `http://${host}` || !String(req.headers['content-type']).startsWith('application/json')) {
+          reply(403, { ok: false, error: 'Save must come from the local Score Studio.' }); return;
+        }
+        try {
+          const chunks = []; let size = 0;
+          for await (const chunk of req) {
+            size += chunk.length;
+            if (size > 1048576) throw new Error('Configuration payload exceeds 1 MB.');
+            chunks.push(chunk);
+          }
+          const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+          if (urlPath === '/__studio/scoring') {
+            reply(200, { ok: true, ...saveStudioScoring(rootResolved, body) });
+          } else {
+            reply(200, { ok: true, ...saveStudioArtLayers(rootResolved, body) });
+          }
         } catch (error) { reply(400, { ok: false, error: error.message }); }
         return;
       }

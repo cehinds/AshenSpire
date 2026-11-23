@@ -11,6 +11,7 @@
     "build:standalone": "node tools/launch.mjs --build-only",
     "serve": "node tools/serve.mjs --no-open",
     "dev": "node tools/serve.mjs --watch",
+    "studio": "node tools/score-studio/launch.mjs",
     "qa:sandbox": "node tools/qa-sandbox.mjs",
     "balance:card-budget": "node tools/card-budget-report.mjs",
     "combat-power": "node tools/combat-power-report.mjs",

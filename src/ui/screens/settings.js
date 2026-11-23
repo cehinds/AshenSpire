@@ -42,6 +42,7 @@ import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, parseAdvancedConfigFile, isRetiredLegacySettingKey } from '../../model/advancedConfig.js';
+import { validateScoringConfig, setCustomScoring, clearCustomScoring, hasCustomScoring } from '../../model/activeScoring.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
@@ -2656,6 +2657,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // A raised floor is reported, not thrown: the rest of the file lands.
         const warnings = [];
         const text = await file.text();
+        if (!openingOnly) {
+          let maybeScoring = null;
+          try { maybeScoring = JSON.parse(text); } catch { /* fall through to advancedConfig parser */ }
+          if (maybeScoring && typeof maybeScoring === 'object' && maybeScoring.model && maybeScoring.costs && maybeScoring.effects && maybeScoring.statuses) {
+            const applied = setCustomScoring(maybeScoring);
+            if (!applied.ok) throw new Error(`Invalid scoring JSON: ${applied.errors.join(' ')}`);
+            showSettingsNotice(`Loaded custom scoring configuration (${file.name}). Card and item scoring now use it.`);
+            return;
+          }
+        }
         const changes = parseAdvancedConfigFile(text, contentBundle, settings, SETTINGS_ROWS, warnings, { dropRetiredLegacy: true });
         const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
         if (outside.length) {
