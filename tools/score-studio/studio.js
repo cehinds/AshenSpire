@@ -413,13 +413,7 @@ function renderInspector() {
 
   renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
   const sc = scoreCardEntry(def);
-  const baseRank = state.baselineRanks[def.id];
-  const shiftTxt = (baseRank !== undefined && baseRank !== sc.rank) ? ` (was ${RankName(baseRank)})` : '';
-  document.getElementById('inspector-score-summary').innerHTML = `
-    <div class="inspector-score-big">CP ${sc.cp}</div>
-    <div><strong>${esc(RankName(sc.rank))}</strong> · ${esc(actForRank(sc.rank))}${esc(shiftTxt)}</div>
-    <div class="studio-muted">Raw: ${sc.raw} · Rarity: ${esc(sc.rarity)}${sc.overridden ? ' · Overridden' : ''}</div>
-  `;
+  renderScoreSummary(def, sc);
 
   document.getElementById('edit-name').value = def.name || '';
   document.getElementById('edit-type').value = def.type || 'attack';
@@ -440,9 +434,12 @@ function renderInspector() {
   document.getElementById('edit-override-rank').value = Number.isInteger(ov?.rank) ? ov.rank : '';
   document.getElementById('edit-override-cp').value = Number.isFinite(ov?.cp) ? ov.cp : '';
 
-  // Active features list (only what is on this card!)
+  // Active features list (only what is on this card). Each row carries a score chip.
   const list = document.getElementById('active-features-list');
   list.innerHTML = '';
+  const chips = featureScoreChips(featureScoreRows(def), sc.parts || {});
+  let rowIndex = 0;
+  const chipFor = () => chipHtml(chips[rowIndex++]);
 
   (def.effects || []).forEach((eff, idx) => {
     if (eff.op === 'loseHp') return;
@@ -451,7 +448,8 @@ function renderInspector() {
     if (eff.op === 'applyStatus') {
       row.innerHTML = `
         <span>Status: <strong>${esc(eff.status)}</strong></span>
-        <div>
+        <div class="feature-controls">
+          ${chipFor()}
           <input type="number" min="1" max="30" value="${eff.stacks ?? 1}" data-eff-stacks="${idx}" />
           <select data-eff-target="${idx}">
             <option value="enemy" ${eff.target !== 'self' ? 'selected' : ''}>Enemy</option>
@@ -462,7 +460,8 @@ function renderInspector() {
     } else {
       row.innerHTML = `
         <span>Effect: <strong>${esc(eff.op)}</strong></span>
-        <div>
+        <div class="feature-controls">
+          ${chipFor()}
           <input type="number" min="1" max="99" value="${eff.amount ?? 1}" data-eff-amt="${idx}" />
           <button class="s-btn s-btn-sm" data-rm-eff="${idx}">×</button>
         </div>`;
@@ -475,15 +474,14 @@ function renderInspector() {
     row.className = 'feature-row';
     const w = state.scoring.keywords?.[kw];
     const note = w ? (w.flat !== undefined ? `${w.flat}` : `×${w.multiplier}`) : '';
-    row.innerHTML = `<span>Keyword: <strong>${esc(kw)}</strong> <span class="studio-muted">${esc(note)}</span></span><button class="s-btn s-btn-sm" data-rm-kw="${idx}">×</button>`;
+    row.innerHTML = `<span>Keyword: <strong>${esc(kw)}</strong> <span class="studio-muted">${esc(note)}</span></span><div class="feature-controls">${chipFor()}<button class="s-btn s-btn-sm" data-rm-kw="${idx}">×</button></div>`;
     list.appendChild(row);
   });
 
-  const shownTags = (def.tags || []).filter((t) => !t.startsWith('camp:') && !t.startsWith('classification.') && !t.startsWith('targeting'));
-  shownTags.forEach((tag) => {
+  shownTagsOf(def).forEach((tag) => {
     const row = document.createElement('div');
     row.className = 'feature-row';
-    row.innerHTML = `<span>Tag: <strong>${esc(tag)}</strong></span><button class="s-btn s-btn-sm" data-rm-tag="${esc(tag)}">×</button>`;
+    row.innerHTML = `<span>Tag: <strong>${esc(tag)}</strong></span><div class="feature-controls">${chipFor()}<button class="s-btn s-btn-sm" data-rm-tag="${esc(tag)}">×</button></div>`;
     list.appendChild(row);
   });
 
@@ -491,19 +489,223 @@ function renderInspector() {
     list.innerHTML = '<div class="studio-muted">No active features. Use "+ Add Feature" above.</div>';
   }
 
-  // Score breakdown pills
+  renderCostChips(def, sc);
+  renderScoreParts(sc);
+}
+
+// ---------------------------------------------------------------------------
+// Score chips: how much each feature row adds to the card's raw score
+// ---------------------------------------------------------------------------
+// ScoreCard part key (src/model/combatPower.js) and scoring.effects weight entry for each effect op.
+const EFFECT_SCORE_KEYS = Object.freeze({
+  damage:         { part: 'damage',     weight: 'damage' },
+  block:          { part: 'block',      weight: 'block' },
+  ward:           { part: 'block',      weight: 'block' },
+  poiseDamage:    { part: 'poise',      weight: 'poiseDamage' },
+  draw:           { part: 'draw',       weight: 'draw' },
+  heal:           { part: 'heal',       weight: 'heal' },
+  discard:        { part: 'discard',    weight: 'discard' },
+  restoreStamina: { part: 'SP restore', weight: 'restoreStamina' },
+  gainEnergy:     { part: 'SP restore', weight: 'restoreStamina' },
+  restoreMana:    { part: 'MP restore', weight: 'restoreMana' },
+  removeStatus:   { part: 'cleanse',    weight: 'removeStatus' },
+  applyReflect:   { part: 'reflect',    weight: 'applyReflect' },
+  pullEnemy:      { part: 'pull',       weight: 'pullEnemy' },
+  swapRows:       { part: 'pull',       weight: 'pullEnemy' },
+  moveEngagement: { part: 'move',       weight: 'moveEngagement' },
+});
+// Effects the scorer counts once per effect, whatever the amount (see cardDefToFace).
+const COUNTED_ONCE_OPS = new Set(['removeStatus', 'pullEnemy', 'swapRows', 'moveEngagement']);
+// Statuses ScoreCard values with a closed form instead of weight x stacks (exactStatus in combatPower.js).
+const EXACT_SCORED_STATUSES = new Set(['burn', 'venom', 'shock', 'chill']);
+const SCORE_CHIP_TITLE = 'raw score points (before the rarity discount)';
+const SCORE_MATCH_TOLERANCE = 0.05;
+
+function shownTagsOf(def) {
+  return (def.tags || []).filter((t) => !t.startsWith('camp:') && !t.startsWith('classification.') && !t.startsWith('targeting'));
+}
+
+function formatScore(value) {
+  const rounded = Math.round(value * 10) / 10;
+  if (rounded === 0) return '0';
+  return `${rounded > 0 ? '+' : ''}${rounded}`;
+}
+
+function scoreClass(value) {
+  const rounded = Math.round(value * 10) / 10;
+  return rounded > 0 ? 'is-pos' : rounded < 0 ? 'is-neg' : 'is-zero';
+}
+
+// One entry per Active Features row, in render order: which part it feeds and how to explain it.
+function featureScoreRows(def) {
+  const rows = [];
+  for (const eff of def.effects || []) {
+    if (eff.op === 'loseHp') continue;
+    if (eff.op === 'applyStatus') {
+      const status = state.scoring.statuses?.[eff.status];
+      const selfTarget = eff.target === 'self';
+      const helpsPlayer = status ? (status.target === 'self') === selfTarget : true;
+      rows.push({
+        part: status ? eff.status : null,
+        count: eff.stacks ?? 1,
+        unitWeight: status?.weight,
+        per: 1,
+        sign: helpsPlayer ? 1 : -1,
+        exact: EXACT_SCORED_STATUSES.has(eff.status),
+        capAt: state.scoring.cardModel?.decayOneStatuses?.includes(eff.status) ? state.scoring.model?.R : null,
+      });
+      continue;
+    }
+    const keys = EFFECT_SCORE_KEYS[eff.op];
+    const effectWeight = keys ? state.scoring.effects?.[keys.weight] : null;
+    const counted = eff.op === 'removeStatus' && eff.target !== 'self' ? 0 : COUNTED_ONCE_OPS.has(eff.op) ? 1 : (eff.amount ?? 1) * (eff.op === 'damage' ? (eff.hits || 1) : 1);
+    rows.push({
+      part: keys?.part ?? null,
+      count: counted,
+      unitWeight: effectWeight?.weight,
+      per: effectWeight?.per ?? 1,
+      sign: 1,
+    });
+  }
+  for (const kw of def.keywords || []) rows.push({ part: kw, count: null });
+  for (const tag of shownTagsOf(def)) rows.push({ part: tag, count: null });
+  return rows;
+}
+
+// Turns rows into chips. The total always comes from ScoreCard's parts, so a chip matches the real score.
+// Rows sharing a part key (two damage effects) show the total on the first row only.
+function featureScoreChips(rows, parts) {
+  const firstRowForPart = new Map();
+  return rows.map((row, index) => {
+    if (!row.part) return null;
+    if (firstRowForPart.has(row.part)) return { count: row.count, shared: true };
+    firstRowForPart.set(row.part, index);
+    const total = parts[row.part] || 0;
+    return { count: row.count, total, title: scoreChipTitle(row, rows, total) };
+  });
+}
+
+function scoreChipTitle(row, rows, total) {
+  const totalText = `${formatScore(total)} ${SCORE_CHIP_TITLE}`;
+  if (row.count === null || row.unitWeight === undefined) return `${totalText[0].toUpperCase()}${totalText.slice(1)}`;
+  if (row.exact) return `${row.count} stacks = ${totalText} (grows faster per stack)`;
+  const sameRows = rows.filter((r) => r.part === row.part);
+  const count = sameRows.reduce((sum, r) => sum + r.count, 0);
+  const expected = sameRows.reduce((sum, r) => sum + r.sign * r.unitWeight * r.count / r.per, 0);
+  const capped = row.capAt && count > row.capAt;
+  const adjusted = Math.abs(expected - total) > SCORE_MATCH_TOLERANCE;
+  const note = capped ? ' (capped)' : adjusted ? ' (adjusted by targeting)' : '';
+  return `${row.unitWeight} per ${row.per} × ${count} = ${totalText}${note}`;
+}
+
+function chipHtml(chip) {
+  if (!chip) return '';
+  const countHtml = chip.count === null || chip.count === undefined ? '' : `<span class="feature-count">×${chip.count}</span>`;
+  if (chip.shared) return `<span class="feature-score is-zero" title="Counted in the row above">${countHtml}<span class="feature-total">in ↑</span></span>`;
+  return `<span class="feature-score ${scoreClass(chip.total)}" title="${esc(chip.title)}">${countHtml}<span class="feature-total">${formatScore(chip.total)}</span></span>`;
+}
+
+// Score chips beside the SP, MP and HP cost inputs in Card Basics.
+function renderCostChips(def, sc) {
+  const parts = sc.parts || {};
+  const hpEffect = (def.effects || []).find((e) => e.op === 'loseHp');
+  const loseHpWeight = state.scoring.effects?.loseHp;
+  const costRows = [
+    { id: 'cost-score-sp', part: 'SP', count: def.staminaCost ?? def.cost ?? 0, unitWeight: state.scoring.costs?.sp?.weight, per: 1, sign: 1 },
+    { id: 'cost-score-mp', part: 'MP', count: def.manaCost ?? 0, unitWeight: state.scoring.costs?.mp?.weight, per: 1, sign: 1 },
+    { id: 'cost-score-hp', part: 'HP cost', count: hpEffect?.amount ?? 0, unitWeight: loseHpWeight?.weight, per: loseHpWeight?.per ?? 1, sign: 1 },
+  ];
+  for (const row of costRows) {
+    const el = document.getElementById(row.id);
+    if (!el) continue;
+    const total = parts[row.part] || 0;
+    el.outerHTML = chipHtml({ count: row.count, total, title: scoreChipTitle(row, [row], total) }).replace('<span class="feature-score', `<span id="${row.id}" class="feature-score`);
+  }
+}
+
+function renderScoreSummary(def, sc) {
+  const baseRank = state.baselineRanks[def.id];
+  const shiftTxt = (baseRank !== undefined && baseRank !== sc.rank) ? ` (was ${RankName(baseRank)})` : '';
+  document.getElementById('inspector-score-summary').innerHTML = `
+    <div class="inspector-score-big">CP ${sc.cp}</div>
+    <div><strong>${esc(RankName(sc.rank))}</strong> · ${esc(actForRank(sc.rank))}${esc(shiftTxt)}</div>
+    <div class="studio-muted">Raw: ${sc.raw} · Rarity: ${esc(sc.rarity)}${sc.overridden ? ' · Overridden' : ''}</div>
+  `;
+}
+
+function renderScoreParts(sc) {
   const partsEl = document.getElementById('score-parts-list');
   partsEl.innerHTML = '';
   for (const [k, v] of Object.entries(sc.parts || {})) {
     const pill = document.createElement('span');
     pill.className = `part-pill ${v >= 0 ? 'pos' : 'neg'}`;
-    pill.textContent = `${k}: ${v > 0 ? '+' : ''}${Math.round(v * 10) / 10}`;
+    pill.textContent = `${k}: ${formatScore(v)}`;
     partsEl.appendChild(pill);
   }
 }
 
+// Live rescore while a number is being typed or spun: updates chips, summary and breakdown in place,
+// never rebuilding the feature list, so focus and a held spinner survive.
+function refreshInspectorScoreInPlace(def) {
+  const sc = scoreCardEntry(def);
+  renderScoreSummary(def, sc);
+  renderScoreParts(sc);
+  renderCostChips(def, sc);
+  const chips = featureScoreChips(featureScoreRows(def), sc.parts || {});
+  const rowsEls = [...document.querySelectorAll('#active-features-list .feature-row')];
+  rowsEls.forEach((rowEl, index) => {
+    const oldChip = rowEl.querySelector('.feature-score');
+    const html = chipHtml(chips[index]);
+    if (oldChip && html) oldChip.outerHTML = html;
+  });
+}
+
+function selectedCardDef() {
+  return state.cards.find((c) => c.id === state.selectedCardId);
+}
+
+// One undo step per burst of typing or spinner ticks; the burst ends after a pause or a new focus.
+function createEditBurst() {
+  let open = false;
+  let timer = null;
+  return {
+    begin() {
+      if (!open) {
+        pushHistory();
+        open = true;
+      }
+      clearTimeout(timer);
+      timer = setTimeout(() => { open = false; }, TEXT_EDIT_BURST_MS);
+    },
+    end() {
+      open = false;
+      clearTimeout(timer);
+    },
+  };
+}
+
+// Applies a typed or spun number without rebuilding the inspector, then rescores in place.
+function applyLiveCardEdit(burst, fn) {
+  const def = selectedCardDef();
+  if (!def) return;
+  burst.begin();
+  fn(def);
+  def._edited = true;
+  refreshInspectorScoreInPlace(def);
+  saveDraft();
+}
+
+// Refreshes what sits outside the feature list once a number edit is committed.
+function commitLiveCardEdit() {
+  const def = selectedCardDef();
+  if (!def) return;
+  renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
+  updateCardTileInPlace(def.id);
+  computeShiftCount();
+}
+
 function mutateSelectedCard(fn, { recordHistory = true } = {}) {
-  const def = state.cards.find((c) => c.id === state.selectedCardId);
+  const def = selectedCardDef();
   if (!def) return;
   if (recordHistory) pushHistory();
   fn(def);
@@ -891,18 +1093,12 @@ function wireEvents() {
   });
 
   // Card inspector edits
-  // Name typing records one undo step per editing burst, not one per keystroke.
-  let nameBurstOpen = false;
-  let nameBurstTimer = null;
+  // Typing and spinner holds record one undo step per editing burst, not one per keystroke or tick.
+  const nameBurst = createEditBurst();
   const nameInput = document.getElementById('edit-name');
-  nameInput.addEventListener('focus', () => { nameBurstOpen = false; });
+  nameInput.addEventListener('focus', () => nameBurst.end());
   nameInput.addEventListener('input', (e) => {
-    if (!nameBurstOpen) {
-      pushHistory();
-      nameBurstOpen = true;
-    }
-    clearTimeout(nameBurstTimer);
-    nameBurstTimer = setTimeout(() => { nameBurstOpen = false; }, TEXT_EDIT_BURST_MS);
+    nameBurst.begin();
     mutateSelectedCard((d) => { d.name = e.target.value; }, { recordHistory: false });
   });
   document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }));
@@ -913,13 +1109,36 @@ function wireEvents() {
     d.tags.push(`camp:${e.target.value}`);
   }));
   document.getElementById('edit-target').addEventListener('change', (e) => mutateSelectedCard((d) => setCardTarget(d, e.target.value)));
-  document.getElementById('edit-sp').addEventListener('change', (e) => mutateSelectedCard((d) => { d.staminaCost = Math.max(0, Number(e.target.value) || 0); d.cost = d.staminaCost; }));
-  document.getElementById('edit-mp').addEventListener('change', (e) => mutateSelectedCard((d) => { d.manaCost = Math.max(0, Number(e.target.value) || 0); }));
-  document.getElementById('edit-loseHp').addEventListener('change', (e) => mutateSelectedCard((d) => {
-    const n = Math.max(0, Number(e.target.value) || 0);
-    d.effects = (d.effects || []).filter((x) => x.op !== 'loseHp');
-    if (n > 0) d.effects.push({ op: 'loseHp', target: 'self', amount: n });
-  }));
+  // Cost inputs rescore live on every keystroke or spinner tick; the tile and preview refresh on change.
+  const costBurst = createEditBurst();
+  const nonNegative = (input) => Math.max(0, Number(input.value) || 0);
+  const costSetters = {
+    'edit-sp': (d, n) => { d.staminaCost = n; d.cost = n; },
+    'edit-mp': (d, n) => { d.manaCost = n; },
+    // Edits the HP cost effect in place so the feature rows' effect indexes stay valid while typing.
+    'edit-loseHp': (d, n) => {
+      d.effects ||= [];
+      const hpEffect = d.effects.find((x) => x.op === 'loseHp');
+      if (hpEffect) hpEffect.amount = n;
+      else if (n > 0) d.effects.push({ op: 'loseHp', target: 'self', amount: n });
+    },
+  };
+  for (const [inputId, setCost] of Object.entries(costSetters)) {
+    const input = document.getElementById(inputId);
+    input.addEventListener('focus', () => costBurst.end());
+    input.addEventListener('input', () => applyLiveCardEdit(costBurst, (d) => setCost(d, nonNegative(input))));
+    input.addEventListener('change', () => {
+      applyLiveCardEdit(costBurst, (d) => setCost(d, nonNegative(input)));
+      commitLiveCardEdit();
+    });
+  }
+  // A zero HP cost removes the effect; that reorders effects, so rebuild the inspector once editing ends.
+  document.getElementById('edit-loseHp').addEventListener('blur', () => {
+    const def = selectedCardDef();
+    if (def?.effects?.some((x) => x.op === 'loseHp' && !x.amount)) {
+      mutateSelectedCard((d) => { d.effects = d.effects.filter((x) => !(x.op === 'loseHp' && !x.amount)); }, { recordHistory: false });
+    }
+  });
 
   // Add / edit / remove active features
   document.getElementById('btn-add-feature').addEventListener('click', () => {
@@ -946,9 +1165,27 @@ function wireEvents() {
     else if (rmKw !== undefined) mutateSelectedCard((d) => { d.keywords.splice(Number(rmKw), 1); });
     else if (rmTag !== undefined) mutateSelectedCard((d) => { d.tags = d.tags.filter((t) => t !== rmTag); });
   });
-  document.getElementById('active-features-list').addEventListener('change', (e) => {
-    if (e.target.dataset.effAmt !== undefined) mutateSelectedCard((d) => { d.effects[Number(e.target.dataset.effAmt)].amount = Number(e.target.value) || 0; });
-    if (e.target.dataset.effStacks !== undefined) mutateSelectedCard((d) => { d.effects[Number(e.target.dataset.effStacks)].stacks = Number(e.target.value) || 1; });
+  // Amount and stack inputs rescore live without rebuilding the list, so focus and spinner holds survive.
+  const featureBurst = createEditBurst();
+  const featureList = document.getElementById('active-features-list');
+  const applyFeatureNumber = (target) => {
+    if (target.dataset.effAmt !== undefined) {
+      applyLiveCardEdit(featureBurst, (d) => { d.effects[Number(target.dataset.effAmt)].amount = Number(target.value) || 0; });
+      return true;
+    }
+    if (target.dataset.effStacks !== undefined) {
+      applyLiveCardEdit(featureBurst, (d) => { d.effects[Number(target.dataset.effStacks)].stacks = Number(target.value) || 1; });
+      return true;
+    }
+    return false;
+  };
+  featureList.addEventListener('focusin', () => featureBurst.end());
+  featureList.addEventListener('input', (e) => applyFeatureNumber(e.target));
+  featureList.addEventListener('change', (e) => {
+    if (applyFeatureNumber(e.target)) {
+      commitLiveCardEdit();
+      return;
+    }
     if (e.target.dataset.effTarget !== undefined) mutateSelectedCard((d) => { d.effects[Number(e.target.dataset.effTarget)].target = e.target.value; });
   });
 

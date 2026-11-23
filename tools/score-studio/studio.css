@@ -10,6 +10,9 @@
   --st-warn: #e09f3e;
   --st-good: #4cc38a;
   --st-bad: #e56b6f;
+  --studio-score-pos: #5fd39a;
+  --studio-score-neg: #f07a7e;
+  --studio-score-zero: #8f9bb3;
 }
 
 body.studio-body {
@@ -292,6 +295,40 @@ body.studio-body .feature-row {
 }
 body.studio-body .feature-row input[type="number"] { width: 62px; background: var(--st-bg); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 2px 5px; }
 body.studio-body .feature-row select { background: var(--st-bg); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 2px 5px; font-size: 11px; }
+body.studio-body .feature-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Score chips: what a feature row or cost adds to the raw score. */
+body.studio-body .feature-score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: help;
+}
+body.studio-body .feature-score:empty { display: none; }
+body.studio-body .feature-score.is-pos { color: var(--studio-score-pos); }
+body.studio-body .feature-score.is-neg { color: var(--studio-score-neg); }
+body.studio-body .feature-score.is-zero { color: var(--studio-score-zero); }
+body.studio-body .feature-count {
+  color: var(--st-muted);
+  font-weight: 500;
+}
+body.studio-body .cost-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 body.studio-body .score-parts-list { display: flex; flex-wrap: wrap; gap: 5px; }
 body.studio-body .part-pill { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 5px; padding: 2px 7px; font-size: 11px; }
 body.studio-body .part-pill.pos { border-color: rgba(76,195,138,.45); color: var(--st-good); }
