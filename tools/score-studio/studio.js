@@ -7,16 +7,18 @@ import * as Profile from '../../src/model/gameProfile.js';
 import { createRunState } from '../../src/model/state.js';
 import { createRng } from '../../src/engine/rng.js';
 import { createRunCombat } from '../../src/engine/runCombat.js';
-import { dispatch } from '../../src/engine/combat.js';
-import { renderCard } from '../../src/ui/components/card.js';
+import { dispatch, previewCard, cardPlayCosts } from '../../src/engine/combat.js';
+import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
+import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
 const PATH_STORAGE_KEY = 'ashenspire:scoreStudioPath:v1';
+const isLocalServer = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 
 // Bootstrap real game registries
 const profile = Profile.resolveGameProfile('default');
@@ -36,10 +38,41 @@ const studioRegistries = {
   },
 };
 const UNLOCK_META = { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } };
-const previewRun = createRunState({ registries: studioRegistries, classId: 'reaver', seed: 31, profileMeta: UNLOCK_META });
+const REF_CLASSES = ['reaver', 'starseer', 'rogue', 'herald'];
+const refContexts = new Map();
+function refContextFor(def) {
+  const isSpell = (def.tags || []).includes('camp:spell') || (def.damageSchool && def.damageSchool !== 'physical');
+  const cls = REF_CLASSES.includes(def.class) ? def.class : (isSpell ? 'starseer' : 'reaver');
+  if (!refContexts.has(cls)) {
+    const run = createRunState({ registries: studioRegistries, classId: cls, seed: 31, profileMeta: UNLOCK_META });
+    run.relics = [];
+    const combat = createRunCombat({ registries: studioRegistries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
+    dispatch(combat, { type: 'setReactions', enabled: false });
+    const enemy = combat.enemies[0];
+    enemy.actorIntentRevealed = true;
+    enemy.weaknesses = [];
+    enemy.hp = enemy.maxHp = 5000;
+    enemy.ratings = { ...enemy.ratings, poise: 1000 };
+    enemy.persistentPoise = { value: 1000, max: 1000 };
+    Object.assign(combat.player, { stamina: 10, maxStamina: 10, mana: 10, maxMana: 10, energy: 10, energyMax: 10 });
+    refContexts.set(cls, { cls, run, combat, enemy });
+  }
+  return refContexts.get(cls);
+}
+const CARD_SHAPE_PROPS = cardShapeCssProperties();
 
 const clone = (v) => structuredClone(v);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const safeNum = (v, fb = 0) => { const n = Number(v); return Number.isFinite(n) ? n : fb; };
+const ALLOWED_BLEND_MODES = new Set(['normal', 'screen', 'multiply', 'overlay', 'color']);
+const offenseAmount = (hit) => {
+  const rows = (hit?.sources || []).filter((s) => s.stage === 'offense' && typeof s.effective === 'number' && Number.isFinite(s.effective));
+  return rows.length ? rows[rows.length - 1].effective : (hit?.incoming ?? 0);
+};
+function safeCardName(face, scoringRef) {
+  const withNaming = scoringRef?.naming ? scoringRef : { ...scoringRef, naming: shippedScoring.naming };
+  return CardName(face, 0, withNaming);
+}
 
 // ---------------------------------------------------------------------------
 // State
@@ -55,6 +88,7 @@ const state = {
   cards: [],            // editable card definitions + derived faces
   baselineRanks: {},    // id -> baseline rank under repoScoring
   selectedCardId: null,
+  selectedLayerIdx: 0,
   viewMode: 'grid',
   artLayers: {
     version: 1,
@@ -69,25 +103,146 @@ const state = {
 // ---------------------------------------------------------------------------
 // Card <-> Face conversion
 // ---------------------------------------------------------------------------
+const KIND_BY_TYPE = {
+  attack: 'classification.attack',
+  skill: 'classification.skill',
+  power: 'classification.power',
+  guard: 'classification.guard',
+  strike: 'classification.strike',
+  curse: 'classification.curse',
+  status: 'classification.statusCard',
+};
+
+function normalizeStudioCard(def) {
+  if (!def || Object.isFrozen(def)) return def;
+  const kind = KIND_BY_TYPE[def.type] || 'classification.attack';
+  def.tags = Array.isArray(def.tags) ? def.tags.filter((t) => !t.startsWith('classification.')) : [];
+  def.tags.push(kind);
+  def.kindIds = [kind];
+  def.icon = def.icon || (def.type === 'attack' || def.type === 'strike' ? 'attack' : 'skill');
+  const isSpell = def.tags.includes('camp:spell');
+  def.damageSchool = isSpell ? 'magic' : 'physical';
+  def.staminaCost = Math.max(0, Number(def.staminaCost ?? def.cost ?? 0) || 0);
+  def.cost = def.staminaCost;
+  def.manaCost = Math.max(0, Number(def.manaCost ?? 0) || 0);
+  def.effects = Array.isArray(def.effects) ? def.effects : [];
+  def.keywords = Array.isArray(def.keywords) ? def.keywords : [];
+  return def;
+}
+
+/** Register an edited/custom card under a live ID that bypasses frozen profile pack lookup so previewCard & dispatch run live edits. */
+function liveCardIdFor(def) {
+  normalizeStudioCard(def);
+  if (!def._edited && !def._custom) {
+    studioCardOverrides.set(def.id, def);
+    return def.id;
+  }
+  const liveId = `__studio_live_${def.id}`;
+  const liveDef = { ...clone(def), id: liveId };
+  studioCardOverrides.set(def.id, def);
+  studioCardOverrides.set(liveId, liveDef);
+  return liveId;
+}
+
+function measureFinalValues(def) {
+  const liveId = liveCardIdFor(def);
+  const isSpell = (def.tags || []).includes('camp:spell') || (def.damageSchool && def.damageSchool !== 'physical');
+  const { combat, enemy } = refContextFor(def);
+  const probeId = '__studio_probe';
+  combat.piles.hand.push({ instanceId: probeId, cardId: liveId, upgraded: false });
+  const measured = {
+    sp: def.staminaCost ?? def.cost ?? 0,
+    mp: def.manaCost ?? 0,
+    dmg: 0,
+    hits: 1,
+    blk: 0,
+    poise: 0,
+    counter: (def.tags || []).includes('maneuver:counter') ? 1 : 0,
+    reflect: 0,
+    evade: 0,
+    authoredDmg: 0,
+    authoredBlk: 0,
+    usedPreview: false,
+  };
+  for (const e of def.effects || []) {
+    const amt = typeof e.amount === 'number' ? e.amount : 0;
+    if (e.op === 'damage') measured.authoredDmg += amt * (e.hits || 1);
+    else if (e.op === 'block' || e.op === 'ward') measured.authoredBlk += amt;
+  }
+  try {
+    const prev = previewCard(combat, probeId, enemy.id);
+    if (prev?.costs) {
+      if (Number.isFinite(prev.costs.stamina)) measured.sp = prev.costs.stamina;
+      if (Number.isFinite(prev.costs.mana)) measured.mp = prev.costs.mana;
+    }
+    if (prev && Array.isArray(prev.values) && prev.values.length) {
+      measured.usedPreview = true;
+      for (const v of prev.values) {
+        if (v.op === 'damage') {
+          const r = v.damageReceipt?.hits || [];
+          const perHit = r.length ? r.map(offenseAmount) : (v.hitDamages || []);
+          const hits = Math.max(1, perHit.length || v.hits || 1);
+          measured.hits = Math.max(measured.hits, hits);
+          measured.dmg += perHit.length
+            ? perHit.reduce((n, x) => n + x, 0)
+            : (Number.isFinite(v.totalDamage) ? v.totalDamage : ((v.faceValue ?? v.value ?? 0) * hits));
+          measured.poise += Object.values(v.perTargetPoise || {}).reduce((n, x) => n + (Number.isFinite(x?.removed) ? x.removed : 0), 0);
+        } else if (v.op === 'block' || v.op === 'ward') {
+          measured.blk += safeNum(v.value, 0);
+        } else if (v.op === 'poiseDamage') {
+          const pRemoved = Object.values(v.perTargetPoise || {}).reduce((n, x) => n + (Number.isFinite(x?.removed) ? x.removed : 0), 0);
+          measured.poise += (isSpell && pRemoved > 0) ? pRemoved : safeNum(v.value, 0);
+        } else if (v.op === 'applyStatus' && v.status === 'evade') {
+          measured.evade += safeNum(v.value, 0);
+        } else if (v.op === 'applyReflect') {
+          measured.reflect += safeNum(v.value, 0);
+        }
+      }
+    }
+  } catch { /* fallback below */ } finally {
+    const i = combat.piles.hand.findIndex((c) => c.instanceId === probeId);
+    if (i >= 0) combat.piles.hand.splice(i, 1);
+  }
+  if (!measured.usedPreview) {
+    for (const e of def.effects || []) {
+      const amt = typeof e.amount === 'number' ? e.amount : 1;
+      if (e.op === 'damage') { measured.dmg += amt * (e.hits || 1); measured.hits = Math.max(measured.hits, e.hits || 1); }
+      else if (e.op === 'block' || e.op === 'ward') measured.blk += amt;
+      else if (e.op === 'poiseDamage') measured.poise += amt;
+      else if (e.op === 'applyReflect') measured.reflect += amt;
+    }
+  }
+  return measured;
+}
+
 function cardDefToFace(def, scoringRef) {
   const f = BaseFace();
   const tags = Array.isArray(def.tags) ? [...def.tags] : [];
+  const m = measureFinalValues(def);
   f.name = def.name || def.id;
   f.cls = def.class || 'colorless';
   f.rarity = def.rarity || 'common';
   f.type = def.type || 'attack';
   f.camp = tags.includes('camp:spell') || (def.damageSchool && def.damageSchool !== 'physical') ? 'spell' : 'physical';
-  f.sp = def.staminaCost ?? def.cost ?? 0;
-  f.mp = def.manaCost ?? 0;
+  f.sp = m.sp;
+  f.mp = m.mp;
+  f.dmg = m.dmg;
+  f.hits = m.hits;
+  f.blk = m.blk;
+  f.poise = m.poise;
+  f.counter = m.counter;
+  f.reflect = m.reflect;
   f.kw = Array.isArray(def.keywords) ? [...def.keywords] : [];
   f.tags = tags;
+  f._meta = m;
+  if (m.evade > 0) f.statuses.push(['evade', m.evade, 'self']);
   const statusIds = new Set(Object.keys(scoringRef.statuses || {}));
   for (const e of def.effects || []) {
     const amt = typeof e.amount === 'number' ? e.amount : 1;
-    if (e.op === 'damage') { f.dmg += amt * (e.hits || 1); f.hits = Math.max(f.hits, e.hits || 1); }
-    else if (e.op === 'block' || e.op === 'ward') f.blk += amt;
-    else if (e.op === 'poiseDamage') f.poise += amt;
-    else if (e.op === 'applyStatus' && statusIds.has(e.status)) f.statuses.push([e.status, e.stacks ?? 1, e.target === 'self' ? 'self' : 'enemy']);
+    if (e.op === 'applyStatus' && statusIds.has(e.status) && typeof e.stacks === 'number' && Number.isFinite(e.stacks)) {
+      if (e.status === 'evade' && m.evade > 0) continue;
+      f.statuses.push([e.status, e.stacks, e.target === 'self' ? 'self' : 'enemy']);
+    } else if (e.op === 'restorePoise') f.blk += amt;
     else if (e.op === 'draw') f.draw += amt;
     else if (e.op === 'heal') f.heal += amt;
     else if (e.op === 'loseHp') f.loseHp += amt;
@@ -95,10 +250,11 @@ function cardDefToFace(def, scoringRef) {
     else if (e.op === 'restoreStamina' || e.op === 'gainEnergy') f.restoreSp += amt;
     else if (e.op === 'restoreMana') f.restoreMp += amt;
     else if (e.op === 'removeStatus' && e.target === 'self') f.cleanse += 1;
-    else if (e.op === 'applyReflect') f.reflect += amt;
+    else if (e.op === 'applyReflect' && !m.usedPreview && m.reflect === 0) f.reflect += amt;
     else if (e.op === 'moveEngagement') f.move += 1;
     else if (e.op === 'pullEnemy' || e.op === 'swapRows') f.pull += 1;
   }
+  if (def.ramp && !f.tags.includes('ramp.honed')) f.tags.push('ramp.honed');
   return f;
 }
 
@@ -162,7 +318,8 @@ function pushHistory() {
   state.undoStack.push(JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers }));
   if (state.undoStack.length > 40) state.undoStack.shift();
   state.redoStack = [];
-  markDirty();
+  document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
+  document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
 }
 
 function markDirty() {
@@ -193,6 +350,9 @@ function restoreSnapshot(snapStr) {
   state.scoring = snap.scoring;
   state.cards = snap.cards;
   state.artLayers = snap.artLayers;
+  studioCardOverrides.clear();
+  if (!state.cards.some((c) => c.id === state.selectedCardId)) state.selectedCardId = state.cards[0]?.id || null;
+  markDirty();
   syncAllViews();
 }
 
@@ -216,12 +376,18 @@ function matchingCustomLayers(def) {
 
 function renderCardWithLayers(def, container) {
   container.innerHTML = '';
-  studioCardOverrides.set(def.id, def);
+  const liveId = liveCardIdFor(def);
   try {
-    const el = renderCard(studioRegistries, { cardId: def.id }, { rules: previewRun, showArt: true });
-    if (el) container.appendChild(el);
-  } catch {
-    container.innerHTML = `<div style="padding:10px;text-align:center;"><strong>${esc(def.name)}</strong><div class="studio-muted">${esc(def.type)}</div></div>`;
+    const { run } = refContextFor(def);
+    const liveDef = studioCardOverrides.get(liveId) || def;
+    const el = renderCard(studioRegistries, { cardId: liveId }, { inspection: false, level: 'inspect', definition: liveDef, rules: run, showArt: true });
+    if (el) {
+      for (const [k, v] of Object.entries(CARD_SHAPE_PROPS)) el.style.setProperty(k, v);
+      container.appendChild(el);
+      requestAnimationFrame(() => { if (el.isConnected) fitCardFace(el); });
+    }
+  } catch (err) {
+    container.innerHTML = `<div style="padding:10px;text-align:center;"><strong>${esc(def.name)}</strong><div class="studio-muted">${esc(def.type)} (${esc(err.message)})</div></div>`;
   }
   const layers = matchingCustomLayers(def);
   if (layers.length) {
@@ -233,7 +399,17 @@ function renderCardWithLayers(def, container) {
       const img = document.createElement('img');
       img.src = asset.path;
       img.alt = '';
-      img.style.cssText = `position:absolute;left:${l.x ?? 50}%;top:${l.y ?? 50}%;width:${l.scale ?? 80}%;height:${l.scale ?? 80}%;object-fit:contain;transform:translate(-50%,-50%);opacity:${(l.opacity ?? 100) / 100};mix-blend-mode:${l.blendMode || 'normal'};z-index:${l.zIndex ?? 1};pointer-events:none;`;
+      img.style.position = 'absolute';
+      img.style.left = `${safeNum(l.x, 50)}%`;
+      img.style.top = `${safeNum(l.y, 50)}%`;
+      img.style.width = `${safeNum(l.scale, 80)}%`;
+      img.style.height = `${safeNum(l.scale, 80)}%`;
+      img.style.objectFit = 'contain';
+      img.style.transform = 'translate(-50%,-50%)';
+      img.style.opacity = String(Math.max(0, Math.min(100, safeNum(l.opacity, 100))) / 100);
+      img.style.mixBlendMode = ALLOWED_BLEND_MODES.has(l.blendMode) ? l.blendMode : 'normal';
+      img.style.zIndex = String(Math.round(safeNum(l.zIndex, 1)));
+      img.style.pointerEvents = 'none';
       overlay.appendChild(img);
     }
     container.appendChild(overlay);
@@ -258,6 +434,15 @@ function computeShiftCount() {
   return shifted;
 }
 
+function tileMetaHtml(def, sc, shiftHtml) {
+  return `<div class="studio-card-meta-title" title="${esc(def.name)}">${esc(def.name)}</div>
+    <div class="studio-card-meta-row">
+      <span class="cp-chip">CP ${sc.cp}${sc.overridden ? '*' : ''}</span>
+      <span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>
+      ${shiftHtml}
+    </div>`;
+}
+
 function updateCardTileInPlace(cardId) {
   const tile = document.querySelector(`.studio-card-tile[data-card-id="${CSS.escape(cardId)}"]`);
   const def = state.cards.find((c) => c.id === cardId);
@@ -268,11 +453,7 @@ function updateCardTileInPlace(cardId) {
     ? `<span class="${sc.rank > baseRank ? 'shift-up' : 'shift-down'}">${sc.rank > baseRank ? '↑' : '↓'} R${baseRank}→R${sc.rank}</span>`
     : '';
   renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
-  tile.querySelector('.studio-card-meta').innerHTML = `
-    <span class="cp-chip" title="${esc(def.name)}">${esc(def.name)} · CP ${sc.cp}${sc.overridden ? '*' : ''}</span>
-    <span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>
-    ${shiftHtml}
-  `;
+  tile.querySelector('.studio-card-meta').innerHTML = tileMetaHtml(def, sc, shiftHtml);
 }
 
 function renderCardsGrid() {
@@ -307,7 +488,7 @@ function renderCardsGrid() {
     const tile = document.createElement('div');
     tile.className = 'studio-card-tile' + (def.id === state.selectedCardId ? ' is-selected' : '');
     tile.dataset.cardId = def.id;
-    tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta"><span class="cp-chip" title="${esc(def.name)}">${esc(def.name)} · CP ${sc.cp}${sc.overridden ? '*' : ''}</span><span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>${shiftHtml}</div>`;
+    tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta">${tileMetaHtml(def, sc, shiftHtml)}</div>`;
     renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
     tile.addEventListener('click', () => {
       state.selectedCardId = def.id;
@@ -376,6 +557,8 @@ function renderInspector() {
   `;
 
   document.getElementById('edit-name').value = def.name || '';
+  document.getElementById('btn-delete-card')?.classList.toggle('hidden', !def._custom);
+  document.getElementById('btn-reset-card')?.classList.toggle('hidden', !def._edited || def._custom);
   document.getElementById('edit-type').value = def.type || 'attack';
   document.getElementById('edit-class').value = def.class || 'colorless';
   document.getElementById('edit-rarity').value = def.rarity || 'common';
@@ -403,10 +586,14 @@ function renderInspector() {
     const row = document.createElement('div');
     row.className = 'feature-row';
     if (eff.op === 'applyStatus') {
+      const stacksIsNum = eff.stacks == null || (typeof eff.stacks === 'number' && Number.isFinite(eff.stacks));
+      const stacksCtrl = stacksIsNum
+        ? `<input type="number" min="1" max="30" value="${esc(safeNum(eff.stacks, 1))}" data-eff-stacks="${idx}" />`
+        : `<span class="studio-muted" title="Formula-computed stack count">formula</span>`;
       row.innerHTML = `
         <span>Status: <strong>${esc(eff.status)}</strong></span>
         <div>
-          <input type="number" min="1" max="30" value="${eff.stacks ?? 1}" data-eff-stacks="${idx}" />
+          ${stacksCtrl}
           <select data-eff-target="${idx}">
             <option value="enemy" ${eff.target !== 'self' ? 'selected' : ''}>Enemy</option>
             <option value="self" ${eff.target === 'self' ? 'selected' : ''}>Self</option>
@@ -414,10 +601,14 @@ function renderInspector() {
           <button class="s-btn s-btn-sm" data-rm-eff="${idx}">×</button>
         </div>`;
     } else {
+      const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
+      const amtCtrl = amtIsNum
+        ? `<input type="number" min="1" max="99" value="${esc(safeNum(eff.amount, 1))}" data-eff-amt="${idx}" />`
+        : `<span class="studio-muted" title="Formula-computed value">formula</span>`;
       row.innerHTML = `
         <span>Effect: <strong>${esc(eff.op)}</strong></span>
         <div>
-          <input type="number" min="1" max="99" value="${eff.amount ?? 1}" data-eff-amt="${idx}" />
+          ${amtCtrl}
           <button class="s-btn s-btn-sm" data-rm-eff="${idx}">×</button>
         </div>`;
     }
@@ -445,23 +636,75 @@ function renderInspector() {
     list.innerHTML = '<div class="studio-muted">No active features. Use "+ Add Feature" above.</div>';
   }
 
-  // Score breakdown pills
+  // Score breakdown math table (explicit formula for every term)
   const partsEl = document.getElementById('score-parts-list');
-  partsEl.innerHTML = '';
-  for (const [k, v] of Object.entries(sc.parts || {})) {
-    const pill = document.createElement('span');
-    pill.className = `part-pill ${v >= 0 ? 'pos' : 'neg'}`;
-    pill.textContent = `${k}: ${v > 0 ? '+' : ''}${Math.round(v * 10) / 10}`;
-    partsEl.appendChild(pill);
-  }
+  const S = state.scoring;
+  const area = (sc.face.tags || []).includes(S.cardModel?.areaTag || 'targeting:area') ? (S.model?.ENEMIES || 2) : 1;
+  const formulaNote = (k) => {
+    if (k === 'SP') return `${sc.face.sp} SP × ${S.costs.sp.weight}`;
+    if (k === 'MP') return `${sc.face.mp} MP × ${S.costs.mp.weight}`;
+    if (k === 'damage') return `${sc.face.dmg} final (authored ${sc.face._meta?.authoredDmg ?? sc.face.dmg}) × ${S.effects.damage.weight}/${S.effects.damage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
+    if (k === 'block') return `${sc.face.blk} final (authored ${sc.face._meta?.authoredBlk ?? sc.face.blk}) × ${S.effects.block.weight}/${S.effects.block.per}`;
+    if (k === 'poise') return `${sc.face.poise} Poise × ${S.effects.poiseDamage.weight}/${S.effects.poiseDamage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
+    if (k === 'effect count') return `multi-effect bonus (+${S.effectCount?.weight ?? 5}/extra)`;
+    if (S.keywords?.[k]) return S.keywords[k].flat !== undefined ? `flat ${S.keywords[k].flat}` : `×${S.keywords[k].multiplier}`;
+    if (S.statuses?.[k]) return `status over ${S.model?.R || 3}R${area > 1 && S.statuses[k].target === 'enemy' ? ` × ${area} AoE` : ''}`;
+    return 'weight';
+  };
+  const disc = safeNum(S.rarity?.discount?.[sc.rarity] ?? S.items?.rarityDiscount?.[sc.rarity], 0);
+  const rowsHtml = Object.entries(sc.parts || {}).map(([k, v]) => {
+    const val = Math.round(safeNum(v, 0) * 10) / 10;
+    return `<tr><td>${esc(k)}</td><td class="formula">${esc(formulaNote(k))}</td><td class="num ${val >= 0 ? 'pos' : 'neg'}">${val > 0 ? '+' : ''}${esc(val)}</td></tr>`;
+  }).join('');
+  partsEl.innerHTML = `<table class="score-math-table"><tbody>
+    ${rowsHtml}
+    <tr class="total"><td>Raw score</td><td class="formula">rounded sum</td><td class="num">${esc(sc.raw)}</td></tr>
+    <tr><td>Rarity discount</td><td class="formula">${esc(sc.rarity)} (−${esc(disc)})</td><td class="num neg">${disc ? `−${esc(disc)}` : '0'}</td></tr>
+    <tr class="total"><td>Combat Power (CP)</td><td class="formula">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}${sc.overridden ? ' (override)' : ''}</td><td class="num">${esc(sc.cp)}</td></tr>
+  </tbody></table>`;
 }
 
-function mutateSelectedCard(fn) {
+function rebuildTextTemplate(def) {
+  const parts = [];
+  const area = (def.tags || []).includes('targeting:area') ? ' to ALL enemies' : '';
+  for (const e of def.effects || []) {
+    const amt = typeof e.amount === 'number' ? e.amount : 1;
+    if (e.op === 'damage') parts.push(`Deal {damage} damage${e.hits > 1 ? ` ${e.hits} times` : ''}${area}.`);
+    else if (e.op === 'block') parts.push(`Gain {block} Block.`);
+    else if (e.op === 'ward') parts.push(`Gain ${amt} Ward.`);
+    else if (e.op === 'gainBarrier') parts.push(`Gain ${amt} Barrier.`);
+    else if (e.op === 'poiseDamage') parts.push(`Deal {poiseDamage} Poise damage${area}.`);
+    else if (e.op === 'restorePoise') parts.push(`Restore ${amt} Poise.`);
+    else if (e.op === 'applyStatus') parts.push(`${e.target === 'self' ? 'Gain' : 'Apply'} ${typeof e.stacks === 'number' ? e.stacks : 1} ${e.status}${e.target !== 'self' ? area : ''}.`);
+    else if (e.op === 'draw') parts.push(`Draw ${amt} card${amt === 1 ? '' : 's'}.`);
+    else if (e.op === 'discard') parts.push(`Discard ${amt} card${amt === 1 ? '' : 's'}.`);
+    else if (e.op === 'heal') parts.push(`Heal ${amt} HP.`);
+    else if (e.op === 'loseHp') parts.push(`Lose ${amt} HP.`);
+    else if (e.op === 'restoreStamina' || e.op === 'gainEnergy') parts.push(`Gain ${amt} SP.`);
+    else if (e.op === 'restoreMana') parts.push(`Gain ${amt} MP.`);
+    else if (e.op === 'applyReflect') parts.push(`Gain ${amt} Reflect.`);
+    else if (e.op === 'removeStatus') parts.push(`Remove a debuff.`);
+    else if (e.op === 'moveEngagement') parts.push(`Shift engagement.`);
+    else if (e.op === 'pullEnemy') parts.push(`Pull enemy.`);
+    else if (e.op === 'swapRows') parts.push(`Swap rows.`);
+    else parts.push(`${e.op}${typeof e.amount === 'number' ? ` ${e.amount}` : ''}.`);
+  }
+  for (const kw of def.keywords || []) parts.push(kw[0].toUpperCase() + kw.slice(1) + '.');
+  def.textTemplate = parts.join(' ') || 'No effect.';
+}
+
+function mutateSelectedCard(fn, { rebuildText = true, autoName = true, recordHistory = true } = {}) {
   const def = state.cards.find((c) => c.id === state.selectedCardId);
   if (!def) return;
-  pushHistory();
+  if (recordHistory) pushHistory();
   fn(def);
   def._edited = true;
+  if (rebuildText) rebuildTextTemplate(def);
+  if (autoName && document.getElementById('toggle-auto-name')?.checked) {
+    const sc = scoreCardEntry(def);
+    def.name = safeCardName(sc.face, state.scoring);
+  }
+  markDirty();
   // Async targeted update: refresh only inspector + this one card tile!
   renderInspector();
   updateCardTileInPlace(def.id);
@@ -477,19 +720,35 @@ function renderWeights() {
   const container = document.getElementById('weights-container');
   container.innerHTML = '';
 
+  const R = state.repoScoring;
   const groups = [
-    { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
-    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({ id: k, label: `${k} (per ${v.per})`, val: v.weight, set: (n) => { state.scoring.effects[k].weight = n; } })) },
-    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
-    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => ({ id: k, label: k + (v.flat !== undefined ? ' (flat)' : ' (mult)'), val: v.flat ?? v.multiplier, step: v.flat !== undefined ? 1 : 0.05, set: (n) => { if (v.flat !== undefined) state.scoring.keywords[k].flat = n; else state.scoring.keywords[k].multiplier = n; } })) },
-    { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
+    { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
+    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({ id: k, label: `${k} (per ${v.per})`, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; } })) },
+    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
+    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => ({ id: k, label: k + (v.flat !== undefined ? ' (flat)' : ' (mult)'), val: v.flat ?? v.multiplier, base: R.keywords?.[k]?.flat ?? R.keywords?.[k]?.multiplier, step: v.flat !== undefined ? 1 : 0.05, set: (n) => { if (v.flat !== undefined) state.scoring.keywords[k].flat = n; else state.scoring.keywords[k].multiplier = n; } })) },
+    { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, base: R.rarity?.discount?.[k], set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
     { key: 'rank', title: 'Rank Bands', entries: [
-      { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
-      { id: 'width', label: 'Band Width', val: state.scoring.rank.width, set: (n) => { state.scoring.rank.width = Math.max(1, n); } },
-      { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
-      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; } },
+      { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, base: R.rank?.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
+      { id: 'width', label: 'Band Width', val: state.scoring.rank.width, base: R.rank?.width, set: (n) => { state.scoring.rank.width = Math.max(1, n); } },
+      { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, base: R.rank?.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
+      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; } },
     ] },
-    { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => k[0] !== '$' && v && (v.weight !== 0 || v.multiplier || v.pMultiplier)).map(([k, v]) => ({ id: k, label: `${v.label || k} (${k})`, val: v.weight || v.multiplier || v.pMultiplier, step: v.weight !== 0 ? 1 : 0.05, set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; } })) },
+    { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => {
+      if (k[0] === '$' || !v) return false;
+      const bv = R.tags?.[k];
+      return v.weight !== 0 || v.multiplier !== undefined || v.pMultiplier !== undefined || (bv && (bv.weight !== 0 || bv.multiplier !== undefined || bv.pMultiplier !== undefined));
+    }).map(([k, v]) => {
+      const bv = R.tags?.[k];
+      const isMult = v.multiplier !== undefined || v.pMultiplier !== undefined;
+      return {
+        id: k,
+        label: `${v.label || k} (${k})`,
+        val: v.multiplier ?? v.pMultiplier ?? v.weight ?? 0,
+        base: bv ? (bv.multiplier ?? bv.pMultiplier ?? bv.weight ?? 0) : undefined,
+        step: isMult ? 0.05 : 1,
+        set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; },
+      };
+    }) },
   ];
 
   for (const g of groups) {
@@ -500,15 +759,30 @@ function renderWeights() {
     card.className = 'weight-group-card';
     card.innerHTML = `<h3>${esc(g.title)}</h3>`;
     for (const r of rows) {
+      const numVal = safeNum(r.val, 0);
+      const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
+      const modified = baseNum !== undefined && numVal !== baseNum;
       const row = document.createElement('div');
-      row.className = 'weight-row';
-      row.innerHTML = `<span>${esc(r.label)}</span><input type="number" step="${r.step || 1}" value="${r.val}" />`;
+      row.className = 'weight-row' + (modified ? ' is-modified' : '');
+      row.innerHTML = `<span>${esc(r.label)}</span><input type="number" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(`Reset to ${baseNum ?? numVal}`)}">↺</button>`;
       row.querySelector('input').addEventListener('change', (ev) => {
         const n = Number(ev.target.value);
         if (!Number.isFinite(n)) return;
         pushHistory();
         r.set(n);
+        markDirty();
         computeShiftCount();
+        renderWeights();
+        renderInspector();
+        renderCardsGrid();
+      });
+      row.querySelector('.weight-reset-btn').addEventListener('click', () => {
+        if (baseNum === undefined) return;
+        pushHistory();
+        r.set(baseNum);
+        markDirty();
+        computeShiftCount();
+        renderWeights();
         renderInspector();
         renderCardsGrid();
       });
@@ -527,24 +801,29 @@ function renderArtTab() {
   const assets = Object.values(reviewedCardArtCatalog.assets || {});
   document.getElementById('asset-count').textContent = String(assets.length);
 
-  // Preview card selector
+  // Preview card selector (always synced with current card roster)
   const cardSel = document.getElementById('art-preview-card-select');
-  if (!cardSel.options.length) {
-    for (const c of state.cards) {
-      const o = document.createElement('option');
-      o.value = c.id;
-      o.textContent = c.name;
-      cardSel.appendChild(o);
-    }
+  const prevVal = cardSel.value;
+  cardSel.innerHTML = '';
+  for (const c of state.cards) {
+    const o = document.createElement('option');
+    o.value = c.id;
+    o.textContent = c.name || c.id;
+    cardSel.appendChild(o);
   }
-  cardSel.value = state.selectedCardId || state.cards[0]?.id || '';
+  const preferredId = state.cards.some((c) => c.id === state.selectedCardId)
+    ? state.selectedCardId
+    : (state.cards.some((c) => c.id === prevVal) ? prevVal : (state.cards[0]?.id || ''));
+  cardSel.value = preferredId;
   const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
   if (previewDef) renderCardWithLayers(previewDef, document.getElementById('art-live-preview'));
 
+  if (state.selectedLayerIdx >= state.artLayers.layers.length) state.selectedLayerIdx = Math.max(0, state.artLayers.layers.length - 1);
   list.innerHTML = '';
   state.artLayers.layers.forEach((layer, idx) => {
     const el = document.createElement('div');
-    el.className = 'layer-card';
+    el.className = 'layer-card' + (idx === state.selectedLayerIdx ? ' is-selected' : '');
+    el.dataset.layerCardIdx = String(idx);
     el.innerHTML = `
       <div class="layer-card-head">
         <strong>#${idx + 1} · ${esc(layer.name || layer.id)}</strong>
@@ -578,9 +857,11 @@ function renderArtTab() {
             ${['normal', 'screen', 'multiply', 'overlay', 'color'].map((m) => `<option value="${m}" ${layer.blendMode === m ? 'selected' : ''}>${m}</option>`).join('')}
           </select>
         </label>
-        <label>Z-Index <input type="number" data-l-num="zIndex" data-l-idx="${idx}" value="${layer.zIndex ?? 1}" /></label>
-        <label>X % / Scale % <input type="number" data-l-num="scale" data-l-idx="${idx}" min="10" max="150" value="${layer.scale ?? 80}" /></label>
-        <label>Opacity (${layer.opacity ?? 100}%) <input type="range" data-l-num="opacity" data-l-idx="${idx}" min="0" max="100" value="${layer.opacity ?? 100}" /></label>
+        <label>X % <input type="number" data-l-num="x" data-l-idx="${idx}" min="0" max="100" value="${esc(safeNum(layer.x, 50))}" /></label>
+        <label>Y % <input type="number" data-l-num="y" data-l-idx="${idx}" min="0" max="100" value="${esc(safeNum(layer.y, 50))}" /></label>
+        <label>Scale % <input type="number" data-l-num="scale" data-l-idx="${idx}" min="10" max="150" value="${esc(safeNum(layer.scale, 80))}" /></label>
+        <label>Z-Index <input type="number" data-l-num="zIndex" data-l-idx="${idx}" value="${esc(safeNum(layer.zIndex, 1))}" /></label>
+        <label style="grid-column: span 2;"><span style="white-space:nowrap;">Opacity (<span class="opacity-val">${esc(safeNum(layer.opacity, 100))}%</span>)</span><input type="range" data-l-num="opacity" data-l-idx="${idx}" min="0" max="100" value="${esc(safeNum(layer.opacity, 100))}" /></label>
       </div>`;
     list.appendChild(el);
   });
@@ -592,16 +873,18 @@ function renderArtTab() {
   for (const a of assets.filter((x) => !aq || `${x.id} ${x.name}`.toLowerCase().includes(aq)).slice(0, 60)) {
     const t = document.createElement('div');
     t.className = 'asset-thumb';
-    t.title = `${a.id} — ${a.name} (click to assign to top layer)`;
-    t.innerHTML = `<img src="${esc(a.path)}" loading="lazy" alt="" /><div>${esc(a.id)}</div>`;
+    t.title = `${a.id} — ${a.name} (click to assign to selected layer #${state.selectedLayerIdx + 1})`;
+    t.innerHTML = `<img src="${esc(a.path)}" loading="lazy" alt="" /><div title="${esc(a.id)}">${esc(a.id)}</div>`;
     t.addEventListener('click', () => {
-      if (!state.artLayers.layers.length) return;
+      const targetLayer = state.artLayers.layers[state.selectedLayerIdx] || state.artLayers.layers[0];
+      if (!targetLayer) return;
       pushHistory();
-      state.artLayers.layers[0].assetId = a.id;
+      targetLayer.assetId = a.id;
+      markDirty();
       renderArtTab();
       renderCardsGrid();
       renderInspector();
-      toast(`Assigned ${a.id} to layer #1`);
+      toast(`Assigned ${a.id} to layer #${state.selectedLayerIdx + 1}`);
     });
     gal.appendChild(t);
   }
@@ -616,7 +899,7 @@ function initSandboxEnemies() {
   for (const e of registries.enemies.all()) {
     const o = document.createElement('option');
     o.value = e.id;
-    o.textContent = `${e.name || e.id} (HP ${Array.isArray(e.hp) ? e.hp[0] : e.hp})`;
+    o.textContent = e.name || e.id;
     sel.appendChild(o);
   }
   if (registries.enemies.has('wanderingSoldier')) sel.value = 'wanderingSoldier';
@@ -626,21 +909,27 @@ function startSandboxCombat() {
   const classId = document.getElementById('sandbox-class').value || 'reaver';
   const enemyId = document.getElementById('sandbox-enemy').value || 'wanderingSoldier';
   const activeCard = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[0];
-  if (activeCard) studioCardOverrides.set(activeCard.id, activeCard);
+  const liveId = activeCard ? liveCardIdFor(activeCard) : null;
 
   const run = createRunState({ registries: studioRegistries, classId, seed: 42, profileMeta: UNLOCK_META });
   const combat = createRunCombat({ registries: studioRegistries, run, rng: createRng(42), enemyIds: [enemyId] });
-  if (activeCard) {
-    // Inject the edited/selected card straight into the front of the opening hand!
-    combat.piles.hand.unshift({ instanceId: 'studio-test-card', cardId: activeCard.id, upgraded: false });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  if (activeCard && liveId) {
+    combat.piles.hand.unshift({ instanceId: 'studio-test-card', cardId: liveId, upgraded: false });
+    // Ensure the player can immediately play their edited card on Turn 1 (using real resolved play costs)
+    let costs = { stamina: activeCard.staminaCost || 0, mana: activeCard.manaCost || 0, energy: activeCard.cost || 0 };
+    try { costs = cardPlayCosts(combat, 'studio-test-card'); } catch { /* fallback to authored costs */ }
+    if ((costs.stamina || 0) > (combat.player.stamina ?? 0)) combat.player.stamina = costs.stamina;
+    if ((costs.mana || 0) > (combat.player.mana ?? 0)) combat.player.mana = costs.mana;
+    if ((costs.energy || 0) > (combat.player.energy ?? 0)) combat.player.energy = costs.energy;
   }
   state.sandbox = {
     combat,
     classId,
     enemyId,
     appliedScoring: clone(state.scoring),
-    customCardId: activeCard?.id || null,
-    log: [`Combat started: ${classId} vs ${enemyId}. Injected "${activeCard?.name || 'none'}" into opening hand.`],
+    customCardId: liveId,
+    log: [`Combat started: ${classId} vs ${registries.enemies.get(enemyId)?.name || enemyId}. Injected "${activeCard?.name || 'none'}" into opening hand.`],
   };
   renderSandbox();
 }
@@ -652,6 +941,12 @@ function renderSandbox() {
   const e = combat.enemies[0];
   document.getElementById('sandbox-turn-info').textContent = `Turn ${combat.turn} · Phase: ${combat.phase} · Config: ${state.abSlots.activeLabel}`;
 
+  const fmtStatuses = (actor) => Object.entries(actor?.statuses || {})
+    .map(([k, v]) => [k, typeof v === 'number' ? v : (v?.stacks ?? 0)])
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => `${k} ${n}`)
+    .join(', ') || 'None';
+
   document.getElementById('sandbox-player-panel').innerHTML = `
     <h4>Player (${esc(state.sandbox.classId)})</h4>
     <div class="stat-line">
@@ -660,7 +955,7 @@ function renderSandbox() {
       <span>SP: <strong>${p.stamina ?? p.energy ?? 0}</strong></span>
       <span>MP: <strong>${p.mana ?? 0}</strong></span>
     </div>
-    <div class="studio-muted">Statuses: ${esc(Object.entries(p.statuses || {}).filter(([, v]) => v > 0).map(([k, v]) => `${k} ${v}`).join(', ') || 'None')}</div>
+    <div class="studio-muted">Statuses: ${esc(fmtStatuses(p))}</div>
   `;
 
   document.getElementById('sandbox-enemy-panel').innerHTML = e ? `
@@ -670,7 +965,7 @@ function renderSandbox() {
       <span>Block: <strong>${e.block || 0}</strong></span>
       <span>Poise: <strong>${e.poiseMeter?.current ?? 0}/${e.poiseMeter?.max ?? 0}</strong></span>
     </div>
-    <div class="studio-muted">Statuses: ${esc(Object.entries(e.statuses || {}).filter(([, v]) => v > 0).map(([k, v]) => `${k} ${v}`).join(', ') || 'None')}</div>
+    <div class="studio-muted">Statuses: ${esc(fmtStatuses(e))}</div>
   ` : '<div class="studio-muted">No enemies remaining.</div>';
 
   const handEl = document.getElementById('sandbox-hand');
@@ -684,16 +979,36 @@ function renderSandbox() {
     stage.className = 'studio-card-stage';
     renderCardWithLayers(def, stage);
     wrap.appendChild(stage);
+    let costLabel = 'Play';
+    try {
+      const c = cardPlayCosts(combat, inst.instanceId);
+      const parts = [];
+      if (c.stamina) parts.push(`${c.stamina} SP`);
+      if (c.mana) parts.push(`${c.mana} MP`);
+      costLabel = parts.length ? `Play (${parts.join(' · ')})` : 'Play (Free)';
+    } catch { /* fallback */ }
     const foot = document.createElement('div');
     foot.className = 'studio-card-meta';
-    foot.innerHTML = `<span>${inst.instanceId === 'studio-test-card' ? '★ Edited Card' : esc(def.name)}</span><span class="cp-chip">Play</span>`;
+    foot.innerHTML = `<div class="studio-card-meta-row"><span>${inst.instanceId === 'studio-test-card' ? '★ Edited Card' : esc(def.name)}</span><span class="cp-chip">${esc(costLabel)}</span></div>`;
     wrap.appendChild(foot);
     wrap.addEventListener('click', () => {
       try {
-        const targetId = combat.enemies.find((x) => x.hp > 0)?.id || null;
-        const res = dispatch(combat, { type: 'playCard', cardInstanceId: inst.instanceId, targetId });
+        let needsTarget = false;
+        let targetId = null;
+        try {
+          const pv = previewCard(combat, inst.instanceId);
+          needsTarget = Boolean(pv?.needsTarget);
+        } catch { needsTarget = false; }
+        if (needsTarget) {
+          const defTarget = getCardTarget(def);
+          targetId = (defTarget === 'self' || defTarget === 'ally' || defTarget === 'allAllies')
+            ? combat.player.id
+            : (combat.enemies.find((x) => x.hp > 0)?.id || null);
+        }
+        const intent = { type: 'playCard', cardInstanceId: inst.instanceId, ...(needsTarget && targetId ? { targetId } : {}) };
+        const res = dispatch(combat, intent);
         if (res && res.error) state.sandbox.log.unshift(`Cannot play ${def.name}: ${res.error}`);
-        else state.sandbox.log.unshift(`Played ${def.name}${targetId ? ` → ${e?.name || targetId}` : ''}`);
+        else state.sandbox.log.unshift(`Played ${def.name}${needsTarget && targetId ? ` → ${targetId === combat.player.id ? 'Player' : (e?.name || targetId)}` : ''}`);
       } catch (err) {
         state.sandbox.log.unshift(`Play error: ${err.message}`);
       }
@@ -726,6 +1041,13 @@ function buildScoringDiff() {
 }
 
 async function loadFromRepo(customPath = state.repoPath) {
+  if (!isLocalServer) {
+    state.repoScoring = clone(shippedScoring);
+    state.scoring = clone(shippedScoring);
+    recomputeBaselineRanks();
+    syncAllViews();
+    return;
+  }
   try {
     const r = await fetch(`/__studio/config?scoringPath=${encodeURIComponent(customPath)}`);
     const data = await r.json();
@@ -797,51 +1119,163 @@ function wireEvents() {
   document.getElementById('view-grid').addEventListener('click', () => { state.viewMode = 'grid'; document.getElementById('view-grid').classList.add('is-active'); document.getElementById('view-single').classList.remove('is-active'); renderCardsGrid(); });
   document.getElementById('view-single').addEventListener('click', () => { state.viewMode = 'single'; document.getElementById('view-single').classList.add('is-active'); document.getElementById('view-grid').classList.remove('is-active'); renderCardsGrid(); });
 
-  // New card
+  // New / Duplicate / Reset / Delete card
   document.getElementById('btn-new-card').addEventListener('click', () => {
     pushHistory();
     const id = `custom.card_${Date.now().toString(36)}`;
-    const card = { id, name: 'New Custom Card', class: 'colorless', rarity: 'uncommon', type: 'attack', staminaCost: 1, manaCost: 0, effects: [{ op: 'damage', target: 'enemy', amount: 8 }], keywords: [], tags: ['camp:physical', 'classification.attack', 'targeting:single'], textTemplate: 'Deal {damage} damage.', _custom: true };
+    const card = normalizeStudioCard({
+      id, name: 'New Custom Card', class: 'colorless', rarity: 'uncommon', type: 'attack', icon: 'attack',
+      cost: 1, staminaCost: 1, manaCost: 0, damageSchool: 'physical',
+      effects: [{ op: 'damage', target: 'enemy', amount: 8 }],
+      keywords: [], tags: ['camp:physical', 'maneuver:attack', 'source:weapon', 'classification.attack', 'targeting:single'],
+      textTemplate: 'Deal {damage} damage.', _custom: true,
+    });
     state.cards.unshift(card);
     state.selectedCardId = id;
+    markDirty();
     renderCardsGrid();
     renderInspector();
     toast('Created custom card');
   });
 
+  document.getElementById('btn-duplicate-card').addEventListener('click', () => {
+    const src = state.cards.find((c) => c.id === state.selectedCardId);
+    if (!src) return;
+    pushHistory();
+    const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true });
+    state.cards.unshift(copy);
+    state.selectedCardId = copy.id;
+    markDirty();
+    renderCardsGrid();
+    renderInspector();
+    toast(`Duplicated "${src.name}"`);
+  });
+
+  document.getElementById('btn-reset-card').addEventListener('click', () => {
+    const idx = state.cards.findIndex((c) => c.id === state.selectedCardId);
+    if (idx < 0) return;
+    const orig = registries.cards.get(state.cards[idx].id);
+    if (!orig) return;
+    pushHistory();
+    state.cards[idx] = clone(orig);
+    studioCardOverrides.delete(orig.id);
+    studioCardOverrides.delete(`__studio_live_${orig.id}`);
+    if (state.scoring.overrides) delete state.scoring.overrides[orig.id];
+    markDirty();
+    renderCardsGrid();
+    renderInspector();
+    toast(`Reverted "${orig.name}" to repo baseline`);
+  });
+
+  document.getElementById('btn-delete-card').addEventListener('click', () => {
+    const idx = state.cards.findIndex((c) => c.id === state.selectedCardId);
+    if (idx < 0 || !state.cards[idx]._custom) return;
+    const removed = state.cards[idx];
+    pushHistory();
+    state.cards.splice(idx, 1);
+    studioCardOverrides.delete(removed.id);
+    studioCardOverrides.delete(`__studio_live_${removed.id}`);
+    if (state.scoring.overrides) delete state.scoring.overrides[removed.id];
+    state.selectedCardId = state.cards[Math.min(idx, state.cards.length - 1)]?.id || null;
+    markDirty();
+    renderCardsGrid();
+    renderInspector();
+    toast(`Deleted "${removed.name}"`);
+  });
+
   // Card inspector edits
-  document.getElementById('edit-name').addEventListener('input', (e) => mutateSelectedCard((d) => { d.name = e.target.value; }));
-  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }));
-  document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }));
-  document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }));
+  let nameUndoPushed = false;
+  const editNameEl = document.getElementById('edit-name');
+  editNameEl.addEventListener('focus', () => { nameUndoPushed = false; });
+  editNameEl.addEventListener('input', (e) => {
+    const autoToggle = document.getElementById('toggle-auto-name');
+    if (autoToggle?.checked) autoToggle.checked = false;
+    const recordHistory = !nameUndoPushed;
+    nameUndoPushed = true;
+    mutateSelectedCard((d) => { d.name = e.target.value; }, { rebuildText: false, autoName: false, recordHistory });
+  });
+  document.getElementById('btn-auto-name').addEventListener('click', () => {
+    const def = state.cards.find((c) => c.id === state.selectedCardId);
+    if (!def) return;
+    const generated = safeCardName(scoreCardEntry(def).face, state.scoring);
+    mutateSelectedCard((d) => { d.name = generated; }, { rebuildText: false, autoName: false });
+    toast(`Generated name: "${generated}"`);
+  });
+
+  // Card grid scale, inspector preview scale, and draggable inspector resizer
+  const cardsLayout = document.querySelector('.cards-layout');
+  const savedInspectorW = Number(localStorage.getItem('ashenspire:studioInspectorW'));
+  if (savedInspectorW >= 340 && savedInspectorW <= 780) cardsLayout.style.setProperty('--inspector-width', `${savedInspectorW}px`);
+
+  document.getElementById('card-scale-slider').addEventListener('input', (e) => {
+    document.getElementById('cards-grid').style.setProperty('--card-tile-width', `${e.target.value}px`);
+    requestAnimationFrame(() => document.querySelectorAll('#cards-grid .card').forEach((el) => fitCardFace(el)));
+  });
+  document.getElementById('inspector-scale-slider').addEventListener('input', (e) => {
+    document.getElementById('inspector-card-preview').style.setProperty('--inspector-card-width', `${e.target.value}px`);
+    const cardEl = document.querySelector('#inspector-card-preview .card');
+    if (cardEl) requestAnimationFrame(() => fitCardFace(cardEl));
+  });
+
+  const resizer = document.getElementById('inspector-resizer');
+  let draggingResizer = false;
+  resizer.addEventListener('pointerdown', (e) => {
+    draggingResizer = true;
+    resizer.classList.add('is-dragging');
+    resizer.setPointerCapture(e.pointerId);
+  });
+  resizer.addEventListener('pointermove', (e) => {
+    if (!draggingResizer) return;
+    const maxW = Math.max(340, Math.min(780, window.innerWidth - 300));
+    const width = Math.max(340, Math.min(maxW, Math.round(window.innerWidth - e.clientX)));
+    cardsLayout.style.setProperty('--inspector-width', `${width}px`);
+    localStorage.setItem('ashenspire:studioInspectorW', String(width));
+  });
+  const stopDrag = () => {
+    if (!draggingResizer) return;
+    draggingResizer = false;
+    resizer.classList.remove('is-dragging');
+    const cardEl = document.querySelector('#inspector-card-preview .card');
+    if (cardEl) requestAnimationFrame(() => fitCardFace(cardEl));
+  };
+  resizer.addEventListener('pointerup', stopDrag);
+  resizer.addEventListener('pointercancel', stopDrag);
+  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }, { rebuildText: false }));
+  document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }, { rebuildText: false }));
+  document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }, { rebuildText: false }));
   document.getElementById('edit-camp').addEventListener('change', (e) => mutateSelectedCard((d) => {
     d.tags = (d.tags || []).filter((t) => !t.startsWith('camp:'));
     d.tags.push(`camp:${e.target.value}`);
-  }));
+  }, { rebuildText: false }));
   document.getElementById('edit-target').addEventListener('change', (e) => mutateSelectedCard((d) => setCardTarget(d, e.target.value)));
-  document.getElementById('edit-sp').addEventListener('change', (e) => mutateSelectedCard((d) => { d.staminaCost = Math.max(0, Number(e.target.value) || 0); d.cost = d.staminaCost; }));
-  document.getElementById('edit-mp').addEventListener('change', (e) => mutateSelectedCard((d) => { d.manaCost = Math.max(0, Number(e.target.value) || 0); }));
+  document.getElementById('edit-sp').addEventListener('change', (e) => mutateSelectedCard((d) => { d.staminaCost = Math.max(0, Number(e.target.value) || 0); d.cost = d.staminaCost; }, { rebuildText: false }));
+  document.getElementById('edit-mp').addEventListener('change', (e) => mutateSelectedCard((d) => { d.manaCost = Math.max(0, Number(e.target.value) || 0); }, { rebuildText: false }));
   document.getElementById('edit-loseHp').addEventListener('change', (e) => mutateSelectedCard((d) => {
     const n = Math.max(0, Number(e.target.value) || 0);
     d.effects = (d.effects || []).filter((x) => x.op !== 'loseHp');
     if (n > 0) d.effects.push({ op: 'loseHp', target: 'self', amount: n });
   }));
 
-  // Add / edit / remove active features
-  document.getElementById('btn-add-feature').addEventListener('click', () => {
-    const val = document.getElementById('add-feature-select').value;
+  // Add / edit / remove active features (instant add on dropdown select OR quick-add chip)
+  const addFeatureValue = (val) => {
     if (!val) return;
     const [kind, key] = [val.slice(0, val.indexOf(':')), val.slice(val.indexOf(':') + 1)];
     mutateSelectedCard((d) => {
       d.effects ||= [];
       d.keywords ||= [];
       d.tags ||= [];
-      if (kind === 'effect') d.effects.push({ op: key, target: getCardTarget(d), amount: key === 'damage' ? 6 : 2 });
+      if (kind === 'effect') d.effects.push({ op: key, target: getCardTarget(d), amount: key === 'damage' ? 6 : key === 'block' ? 5 : 2 });
       else if (kind === 'status') d.effects.push({ op: 'applyStatus', status: key, stacks: 2, target: state.scoring.statuses?.[key]?.target || 'enemy' });
       else if (kind === 'kw' && !d.keywords.includes(key)) d.keywords.push(key);
       else if (kind === 'tag' && !d.tags.includes(key)) d.tags.push(key);
     });
     document.getElementById('add-feature-select').value = '';
+  };
+  document.getElementById('btn-add-feature').addEventListener('click', () => addFeatureValue(document.getElementById('add-feature-select').value));
+  document.getElementById('add-feature-select').addEventListener('change', (e) => addFeatureValue(e.target.value));
+  document.getElementById('quick-add-chips').addEventListener('click', (e) => {
+    const val = e.target.dataset?.quickAdd;
+    if (val) addFeatureValue(val);
   });
 
   document.getElementById('active-features-list').addEventListener('click', (e) => {
@@ -874,7 +1308,7 @@ function wireEvents() {
     d.scoringOverride = ov;
     state.scoring.overrides ||= {};
     state.scoring.overrides[d.id] = ov;
-  });
+  }, { rebuildText: false, autoName: false });
   document.getElementById('edit-override-enabled').addEventListener('change', applyOv);
   document.getElementById('edit-override-rank').addEventListener('change', applyOv);
   document.getElementById('edit-override-cp').addEventListener('change', applyOv);
@@ -893,6 +1327,8 @@ function wireEvents() {
   document.getElementById('btn-add-layer').addEventListener('click', () => {
     pushHistory();
     state.artLayers.layers.push({ id: `layer-${Date.now().toString(36)}`, name: 'New Layer', matchKind: 'default', matchValue: '', mode: 'stack', assetId: 'Z.effect.5', zIndex: state.artLayers.layers.length + 1, x: 50, y: 50, scale: 80, opacity: 60, blendMode: 'screen', enabled: true });
+    state.selectedLayerIdx = state.artLayers.layers.length - 1;
+    markDirty();
     renderArtTab();
   });
   document.getElementById('art-preview-card-select').addEventListener('change', (e) => {
@@ -901,31 +1337,53 @@ function wireEvents() {
   });
   document.getElementById('asset-search').addEventListener('input', renderArtTab);
   document.getElementById('art-layers-list').addEventListener('click', (e) => {
+    const cardEl = e.target.closest('.layer-card');
+    if (cardEl && e.target.dataset.lUp === undefined && e.target.dataset.lDown === undefined && e.target.dataset.lDel === undefined) {
+      const selIdx = Number(cardEl.dataset.layerCardIdx);
+      if (!Number.isNaN(selIdx) && selIdx !== state.selectedLayerIdx) {
+        state.selectedLayerIdx = selIdx;
+        document.querySelectorAll('#art-layers-list .layer-card').forEach((n, i) => n.classList.toggle('is-selected', i === selIdx));
+      }
+      return;
+    }
     const idx = Number(e.target.dataset.lUp ?? e.target.dataset.lDown ?? e.target.dataset.lDel);
     if (Number.isNaN(idx)) return;
     pushHistory();
-    if (e.target.dataset.lUp !== undefined && idx > 0) [state.artLayers.layers[idx - 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx - 1]];
-    if (e.target.dataset.lDown !== undefined && idx < state.artLayers.layers.length - 1) [state.artLayers.layers[idx + 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx + 1]];
+    if (e.target.dataset.lUp !== undefined && idx > 0) { [state.artLayers.layers[idx - 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx - 1]]; state.selectedLayerIdx = idx - 1; }
+    if (e.target.dataset.lDown !== undefined && idx < state.artLayers.layers.length - 1) { [state.artLayers.layers[idx + 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx + 1]]; state.selectedLayerIdx = idx + 1; }
     if (e.target.dataset.lDel !== undefined) state.artLayers.layers.splice(idx, 1);
+    markDirty();
     renderArtTab();
     renderCardsGrid();
     renderInspector();
   });
+  let layerEditHistoryPushed = false;
+  document.getElementById('art-layers-list').addEventListener('focusin', () => { layerEditHistoryPushed = false; });
   document.getElementById('art-layers-list').addEventListener('input', (e) => {
     const idx = Number(e.target.dataset.lIdx ?? e.target.dataset.lEnabled);
     if (Number.isNaN(idx)) return;
     const layer = state.artLayers.layers[idx];
     if (!layer) return;
+    if (!layerEditHistoryPushed) { pushHistory(); layerEditHistoryPushed = true; }
     if (e.target.dataset.lEnabled !== undefined) layer.enabled = e.target.checked;
     else if (e.target.dataset.lField) layer[e.target.dataset.lField] = e.target.value;
-    else if (e.target.dataset.lNum) layer[e.target.dataset.lNum] = Number(e.target.value) || 0;
+    else if (e.target.dataset.lNum) {
+      layer[e.target.dataset.lNum] = safeNum(e.target.value, 0);
+      if (e.target.dataset.lNum === 'opacity') {
+        const span = e.target.closest('label')?.querySelector('.opacity-val');
+        if (span) span.textContent = `${layer.opacity}%`;
+      }
+    }
     markDirty();
     // Update live preview in place without rebuilding #art-layers-list (preserves focus & slider drag)
     const cardSel = document.getElementById('art-preview-card-select');
     const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
     if (previewDef) renderCardWithLayers(previewDef, document.getElementById('art-live-preview'));
     renderInspector();
-    if (state.selectedCardId) updateCardTileInPlace(state.selectedCardId);
+  });
+  document.getElementById('art-layers-list').addEventListener('change', () => {
+    layerEditHistoryPushed = false;
+    renderCardsGrid();
   });
   document.getElementById('btn-save-art').addEventListener('click', async () => {
     try {
@@ -937,8 +1395,10 @@ function wireEvents() {
   });
   document.getElementById('btn-download-art').addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(state.artLayers, null, 2) + '\n'], { type: 'application/json' });
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'cardArtLayers.json' });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'cardArtLayers.json' });
     a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
   // Sandbox + A/B Testing
@@ -953,6 +1413,7 @@ function wireEvents() {
     state.scoring = clone(state.abSlots[slot]);
     state.abSlots.activeLabel = `Slot ${slot}`;
     document.getElementById('ab-active-label').textContent = `Slot ${slot}`;
+    markDirty();
     syncAllViews();
     toast(`Loaded Slot ${slot}`);
   };
@@ -961,14 +1422,29 @@ function wireEvents() {
   document.getElementById('btn-slot-a-load').addEventListener('click', () => loadAB('A'));
   document.getElementById('btn-slot-b-load').addEventListener('click', () => loadAB('B'));
   document.getElementById('btn-apply-sandbox').addEventListener('click', () => { startSandboxCombat(); toast('Applied current config to Combat Sandbox'); });
+  document.getElementById('btn-sandbox-refill').addEventListener('click', () => {
+    if (!state.sandbox.combat) return;
+    const sp = Math.max(state.sandbox.combat.player.maxStamina || 3, 10);
+    const mp = Math.max(state.sandbox.combat.player.maxMana || 3, 10);
+    state.sandbox.combat.player.stamina = sp;
+    state.sandbox.combat.player.mana = mp;
+    state.sandbox.log.unshift(`Refilled player to ${sp} SP & ${mp} MP.`);
+    renderSandbox();
+  });
   document.getElementById('btn-sandbox-reset').addEventListener('click', startSandboxCombat);
   document.getElementById('sandbox-class').addEventListener('change', startSandboxCombat);
   document.getElementById('sandbox-enemy').addEventListener('change', startSandboxCombat);
   document.getElementById('btn-sandbox-endturn').addEventListener('click', () => {
-    if (!state.sandbox.combat) return;
+    const combat = state.sandbox.combat;
+    if (!combat) return;
+    if (combat.result) { state.sandbox.log.unshift(`Combat already ended (${combat.result}). Click Reset Fight to start again.`); renderSandbox(); return; }
     try {
-      dispatch(state.sandbox.combat, { type: 'endTurn' });
-      state.sandbox.log.unshift(`Ended turn → Turn ${state.sandbox.combat.turn}`);
+      dispatch(combat, { type: 'endTurn' });
+      for (let guard = 0; guard < 8 && combat.pendingReaction && !combat.result; guard++) {
+        dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+      }
+      if (combat.result) state.sandbox.log.unshift(`Combat ended: ${combat.result}`);
+      else state.sandbox.log.unshift(`Ended turn → Turn ${combat.turn}`);
     } catch (err) {
       state.sandbox.log.unshift(`End turn error: ${err.message}`);
     }
@@ -1032,8 +1508,10 @@ function wireEvents() {
 
   document.getElementById('btn-download-json').addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(state.scoring, null, 2) + '\n'], { type: 'application/json' });
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'scoring.json' });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'scoring.json' });
     a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast('Downloaded scoring.json');
   });
 
@@ -1046,6 +1524,7 @@ function wireEvents() {
       if (errors.length) throw new Error(errors.join(' '));
       pushHistory();
       state.scoring = parsed;
+      markDirty();
       syncAllViews();
       toast(`Loaded ${file.name}`);
     } catch (err) {
@@ -1072,6 +1551,15 @@ async function boot() {
 
   initSandboxEnemies();
   wireEvents();
+
+  if (!isLocalServer) {
+    document.querySelector('.studio-pathbar')?.classList.add('hidden');
+    document.getElementById('btn-export-repo')?.classList.add('hidden');
+    document.getElementById('btn-save-art')?.classList.add('hidden');
+    document.getElementById('btn-download-json')?.classList.add('s-btn-primary');
+    document.getElementById('draft-status').textContent = 'Web mode — Download JSON to export';
+  }
+
   await loadFromRepo(state.repoPath);
 
   // Restore local draft temp copy if present

@@ -1194,6 +1194,30 @@ function sourceAssetPlan(outDir, mainRef) {
   }
   return plan;
 }
+/** Publish Score Studio from dev's tip at /score-studio/ so it can be used directly on GitHub Pages (Download JSON mode). */
+function publishScoreStudio(outDir) {
+  const devRef = refFor('dev');
+  if (!devRef || !inTree(devRef, 'tools/score-studio/index.html')) return false;
+  const studioDir = join(outDir, 'score-studio');
+  mkdirSync(studioDir, { recursive: true });
+  extractTree(devRef, ['src', 'styles', 'tools/score-studio'], studioDir);
+  try {
+    const manifest = JSON.parse(git(['show', `${devRef}:art-manifest.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).assets || {};
+    for (const [id, row] of Object.entries(manifest)) {
+      if (!id.startsWith('assets-display/card-cutouts/') && !id.startsWith('assets/cards/') && !id.startsWith('assets/card-components/')) continue;
+      const rec = row.light || row.common;
+      if (!rec || !/^[0-9a-f]{64}$/.test(rec.sha256 || '')) continue;
+      const from = join(outDir, objectPath(rec.sha256, id));
+      if (!existsSync(from)) continue;
+      mkdirSync(dirname(join(studioDir, id)), { recursive: true });
+      cpSync(from, join(studioDir, id));
+    }
+  } catch { /* best-effort art hydration when object store is present */ }
+  writeFileSync(join(studioDir, 'index.html'),
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=tools/score-studio/"><title>AshenSpire — Score Studio</title></head><body><p>Opening <a href="tools/score-studio/">Score Studio</a>…</p><script>location.replace("tools/score-studio/");</script></body></html>\n');
+  return true;
+}
+
 function writeSourceAssets(outDir, mainRef) {
   const plan = sourceAssetPlan(outDir, mainRef);
   if (!plan) return;
@@ -1544,6 +1568,7 @@ function assemble(outDir, keepOverride) {
   // discovery below, so they are named by this tool and not listed as other pages.
   const previews = previewsDir ? publishBranchPreviews(outDir, readBranchPreviews(previewsDir, previewSkips)) : [];
   for (const s of previewSkips) console.log(`  SKIPPED preview ${s.branch}: ${s.reason}`);
+  publishScoreStudio(outDir);
   const generatedNames = new Set([...BRANCHES.map((branch) => branch.split('/')[0]), 'index.html', 'builds.json', 'objects', 'packs', 'branches', SW_FILE]);
   const otherPages = discoverPages(outDir, generatedNames);
   const root = rootIndex(branchData, generatedAt, otherPages, previews);
