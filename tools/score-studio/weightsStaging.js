@@ -1,11 +1,9 @@
 // tools/score-studio/weightsStaging.js — pure helpers for the Weights tab's staged edits (owner, 2026-11-23).
 //
-// Weight edits collect in a pending copy of the scoring config. Nothing rescores until Apply copies that
-// pending copy onto the applied config. No DOM here, so tests/score-studio.test.mjs can run it in Node.
-
-// Sections the studio edits outside the Weights tab (card overrides, naming words). Apply keeps their
-// applied values, so staging a weight never undoes a card edit made while the weight was pending.
-export const LIVE_SECTIONS = Object.freeze(['overrides', 'naming']);
+// Weight edits collect in a pending copy of the scoring config, next to the base it was copied from. Nothing
+// rescores until Apply. Apply replays only what differs between base and pending onto the applied config as
+// it is then, so an undo, an A/B slot load, a naming-word edit or a card override made meanwhile survives.
+// No DOM here, so tests/score-studio.test.mjs can run it in Node.
 
 // Override fields that fix a card's score, and so its rank. A rarity override is not a rank pin.
 export const RANK_PIN_FIELDS = Object.freeze(['rank', 'cp', 'raw']);
@@ -15,8 +13,8 @@ export const STUDIO_SAVE_PATH = 'tools/score-studio/saved-scoring.json';
 
 const isPlainObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-// Every leaf path whose value differs between two scoring configs, as 'a.b.c' strings.
-export function ScoringDiffPaths(from, to)
+// Every leaf whose value differs between two configs, as key arrays (keys may hold dots, e.g. "rank.cantrip").
+export function ScoringDiffKeys(from, to)
 {
   const paths = [];
   const walk = (before, after, prefix) =>
@@ -24,25 +22,44 @@ export function ScoringDiffPaths(from, to)
     const keys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
     for (const key of keys)
     {
-      const path = prefix ? `${prefix}.${key}` : key;
+      const path = [...prefix, key];
       if (isPlainObject(before?.[key]) && isPlainObject(after?.[key])) walk(before[key], after[key], path);
       else if (JSON.stringify(before?.[key]) !== JSON.stringify(after?.[key])) paths.push(path);
     }
   };
-  walk(from, to, '');
+  walk(from, to, []);
   return paths;
 }
 
-// The config Apply produces. Staged edits replace every weight section; an import replaces everything.
-export function MergePendingScoring(applied, pending, { replaceAll = false } = {})
+// The same differences as 'a.b.c' strings, for counts and messages.
+export function ScoringDiffPaths(from, to)
 {
-  const merged = structuredClone(pending);
-  if (replaceAll) return merged;
-  for (const section of LIVE_SECTIONS)
+  return ScoringDiffKeys(from, to).map((path) => path.join('.'));
+}
+
+function readPath(root, path)
+{
+  return path.reduce((node, key) => (isPlainObject(node) ? node[key] : undefined), root);
+}
+
+function writePath(root, path, value)
+{
+  let node = root;
+  for (const key of path.slice(0, -1))
   {
-    if (applied?.[section] === undefined) delete merged[section];
-    else merged[section] = structuredClone(applied[section]);
+    if (!isPlainObject(node[key])) node[key] = {};
+    node = node[key];
   }
+  const last = path[path.length - 1];
+  if (value === undefined) delete node[last];
+  else node[last] = structuredClone(value);
+}
+
+// The config Apply produces: the applied config with every staged difference (base -> pending) replayed on it.
+export function MergePendingScoring(applied, base, pending)
+{
+  const merged = structuredClone(applied);
+  for (const path of ScoringDiffKeys(base, pending)) writePath(merged, path, readPath(pending, path));
   return merged;
 }
 

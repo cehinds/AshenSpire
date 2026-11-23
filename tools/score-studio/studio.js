@@ -96,7 +96,7 @@ const state = {
   autosave: true,
   draftStorageFailed: false,
   pendingScoring: null,        // staged weight edits; null when none (applied on Apply, owner 2026-11-23)
-  pendingReplacesAll: false,   // true when the pending copy came from an import or the saved config
+  pendingBase: null,           // the applied config the pending copy was taken from; Apply replays base -> pending
   undoStack: [],
   redoStack: [],
   cards: [],            // editable card definitions + derived faces
@@ -391,7 +391,7 @@ function writeDraftNow() {
           savedAt: new Date().toISOString(),
           scoring: state.scoring,
           pendingScoring: state.pendingScoring,
-          pendingReplacesAll: state.pendingReplacesAll,
+          pendingBase: state.pendingBase,
           artLayers: state.artLayers,
           customCards: editedCards(),
         }));
@@ -1584,10 +1584,11 @@ function renderWeights({ shifts = true } = {}) {
       };
     }) },
   ];
-  // Built twice: once from the applied config (to mark pending rows), once from the pending copy.
+  // Built from the applied config (to mark pending rows) and from the config Apply would produce.
   const appliedGroups = buildGroups();
-  const groups = state.pendingScoring ? withScoring(state.pendingScoring, buildGroups) : appliedGroups;
-  const appliedEntry = (groupKey, id) => appliedGroups.find((ag) => ag.key === groupKey)?.entries.find((e) => e.id === id);
+  const staged = stagedScoring();
+  const groups = staged ? withScoring(staged, buildGroups) : appliedGroups;
+  const entryIn = (groupList, groupKey, id) => groupList.find((eg) => eg.key === groupKey)?.entries.find((e) => e.id === id);
 
   for (const g of groups) {
     if (groupF !== 'all' && g.key !== groupF) continue;
@@ -1603,7 +1604,7 @@ function renderWeights({ shifts = true } = {}) {
     for (const r of rows) {
       const numVal = safeNum(r.val, 0);
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
-      const applied = appliedEntry(g.key, r.id);
+      const applied = entryIn(appliedGroups, g.key, r.id);
       const row = document.createElement('div');
       row.className = 'weight-row' + (r.per ? ' has-per' : '');
       const kind = WEIGHT_GROUP_KINDS[g.key];
@@ -1628,18 +1629,25 @@ function renderWeights({ shifts = true } = {}) {
         row.title = pending ? 'Staged: Apply to rescore the cards' : '';
         resetBtn.classList.toggle('is-clean', !modified);
       };
+      // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
+      const showStored = () => {
+        const stored = entryIn(withScoring(stagedScoring() || state.scoring, buildGroups), g.key, r.id);
+        if (stored) input.value = String(safeNum(stored.val, 0));
+        if (stored?.per && perInput) perInput.value = String(stored.per.value);
+        markRow();
+      };
       markRow();
       input.addEventListener('change', () => {
         const n = Number(input.value);
         if (!Number.isFinite(n)) return;
         applyWeightEdit(() => r.set(n));
-        markRow();
+        showStored();
       });
       perInput?.addEventListener('change', () => {
         const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
         if (!r.per.options && !Number.isFinite(next)) return;
         applyWeightEdit(() => r.per.set(next));
-        markRow();
+        showStored();
       });
       resetBtn.addEventListener('click', () => {
         const perChanged = perDiffers(r.per?.base);
@@ -1648,9 +1656,7 @@ function renderWeights({ shifts = true } = {}) {
           if (baseNum !== undefined) r.set(baseNum);
           if (perChanged) r.per.set(r.per.base);
         });
-        if (baseNum !== undefined) input.value = String(baseNum);
-        if (perChanged) perInput.value = String(r.per.base);
-        markRow();
+        showStored();
       });
       if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
       card.appendChild(row);
@@ -1680,7 +1686,9 @@ function perControlHtml(entry) {
 // Weight edits are staged (owner, 2026-11-23): they change only the pending copy, so nothing rescores or
 // redraws until Apply. Apply is one undo step; Discard drops the pending copy.
 function applyWeightEdit(apply) {
-  state.pendingScoring ||= clone(state.scoring);
+  // Rebase on the applied config as it is now (an undo or A/B load may have changed it), then edit.
+  state.pendingScoring = stagedScoring() || clone(state.scoring);
+  state.pendingBase = clone(state.scoring);
   withScoring(state.pendingScoring, apply);
   updateWeightsToolbar();
   saveDraft({ autoName: false });
@@ -1693,9 +1701,9 @@ function withScoring(scoring, fn) {
   try { return fn(); } finally { state.scoring = applied; }
 }
 
-// The config Apply would produce, or null when nothing is staged.
+// The config Apply would produce: the applied config with the staged differences replayed on it, or null.
 function stagedScoring() {
-  return state.pendingScoring ? MergePendingScoring(state.scoring, state.pendingScoring, { replaceAll: state.pendingReplacesAll }) : null;
+  return state.pendingScoring && state.pendingBase ? MergePendingScoring(state.scoring, state.pendingBase, state.pendingScoring) : null;
 }
 
 function pendingWeightCount() {
@@ -1705,7 +1713,7 @@ function pendingWeightCount() {
 
 function clearPendingWeights() {
   state.pendingScoring = null;
-  state.pendingReplacesAll = false;
+  state.pendingBase = null;
 }
 
 function applyPendingWeights() {
@@ -1737,7 +1745,7 @@ function stageWholeScoring(scoring, sourceName) {
   state.pendingScoring = clone(scoring);
   // Seed naming words as the applied copy is seeded, so they do not count as staged changes.
   ensureNamingWords(state.pendingScoring);
-  state.pendingReplacesAll = true;
+  state.pendingBase = clone(state.scoring);
   document.querySelector('.studio-tab[data-tab="weights"]')?.click();
   renderWeights({ shifts: false });
   saveDraft({ autoName: false });
@@ -2276,7 +2284,12 @@ async function acceptNewRanks() {
     }
   }
   const moved = rankShifts().length;
-  await writeScoringToGame(GAME_SCORING_PATH, `${moved} card(s) took their new rank in the game`);
+  const written = await writeScoringToGame(GAME_SCORING_PATH, `${moved} card(s) took their new rank in the game`);
+  if (!written && pinned.length) {
+    // The pins are cleared in the studio (Undo restores them); show that and keep it in the draft.
+    syncAllViews();
+    saveDraft();
+  }
 }
 
 function discardSummaryHtml() {
@@ -3102,9 +3115,9 @@ async function boot() {
       const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
         .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
       state.scoring = draft.scoring;
-      if (draft.pendingScoring && ValidateScoringConfig(draft.pendingScoring).length === 0) {
+      if (draft.pendingScoring && draft.pendingBase && ValidateScoringConfig(draft.pendingScoring).length === 0) {
         state.pendingScoring = draft.pendingScoring;
-        state.pendingReplacesAll = draft.pendingReplacesAll === true;
+        state.pendingBase = draft.pendingBase;
       }
       if (draftArtLayers) state.artLayers = draftArtLayers;
       for (const draftCard of draftCards) {

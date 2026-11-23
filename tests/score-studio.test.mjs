@@ -94,24 +94,35 @@ test('pages-site publishScoreStudio extracts every module tree transitively impo
   assert.ok(seen.size > 10, `Expected transitive module closure > 10 files, got ${seen.size}`);
 });
 
-test('weights staging: Apply keeps live sections, diffs leaf paths, and clears only rank pins', async () => {
+test('weights staging: Apply replays only staged differences onto the applied config, and clears only rank pins', async () => {
   const { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } = await import('../tools/score-studio/weightsStaging.js');
-  const applied = structuredClone(shippedScoring);
-  applied.overrides = { 'core.example': { rank: 2 } };
-  const pending = structuredClone(shippedScoring);
-  pending.costs.sp.weight += 3;
-  pending.overrides = {};
+  const base = structuredClone(shippedScoring);
+  base.costs.sp.weight = 4;
+  const pending = structuredClone(base);
+  pending.costs.mp.weight += 2;
 
-  assert.deepEqual(ScoringDiffPaths(applied, applied), []);
-  assert.ok(ScoringDiffPaths(applied, pending).includes('costs.sp.weight'));
+  assert.deepEqual(ScoringDiffPaths(base, base), []);
+  assert.deepEqual(ScoringDiffPaths(base, pending), ['costs.mp.weight']);
 
-  // Staged weight edits never undo a card override made while they were pending.
-  const merged = MergePendingScoring(applied, pending);
-  assert.equal(merged.costs.sp.weight, pending.costs.sp.weight);
-  assert.deepEqual(merged.overrides, applied.overrides);
-  assert.deepEqual(ScoringDiffPaths(applied, merged), ['costs.sp.weight']);
-  // An import replaces everything, overrides included.
-  assert.deepEqual(MergePendingScoring(applied, pending, { replaceAll: true }).overrides, {});
+  // An undo after staging (SP back to its old value) and a card override made meanwhile both survive Apply.
+  const applied = structuredClone(base);
+  applied.costs.sp.weight = 1;
+  applied.overrides = { ...applied.overrides, 'core.example': { rank: 2 } };
+  const merged = MergePendingScoring(applied, base, pending);
+  assert.equal(merged.costs.sp.weight, 1);
+  assert.equal(merged.costs.mp.weight, pending.costs.mp.weight);
+  assert.deepEqual(merged.overrides['core.example'], { rank: 2 });
+  assert.deepEqual(ScoringDiffPaths(applied, merged), ['costs.mp.weight']);
+
+  // Keys with dots (tag ids like "rank.cantrip") and removed keys replay exactly.
+  const dotted = structuredClone(base);
+  dotted.tags = { ...dotted.tags, 'rank.test': { weight: 3 } };
+  delete dotted.rank.unrankedMax;
+  const replayed = MergePendingScoring(applied, base, dotted);
+  assert.deepEqual(replayed.tags['rank.test'], { weight: 3 });
+  assert.equal('unrankedMax' in replayed.rank, false);
+  assert.equal(replayed.rank === applied.rank, false, 'Apply never mutates the applied config');
+  assert.equal('unrankedMax' in applied.rank, true);
 
   assert.equal(HasRankPin({ rank: 1 }), true);
   assert.equal(HasRankPin({ cp: 40 }), true);
