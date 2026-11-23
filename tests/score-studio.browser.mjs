@@ -58,6 +58,21 @@ try {
   });
   assert.equal(stable.after, stable.before, 'retyping the same name leaves the score unchanged');
 
+  // 2c. Card Basics fields carry weight chips, and the inspector card shows the breakdown's rank as a badge.
+  const fieldAndRank = await page.evaluate(() => {
+    const rankText = document.querySelector('.rank-pill')?.textContent || '';
+    return {
+      rarityChip: document.getElementById('field-score-rarity')?.textContent.trim() || '',
+      targetChip: document.getElementById('field-score-target')?.textContent.trim() || '',
+      badge: document.querySelector('#inspector-card-preview .studio-rank-badge')?.textContent.trim() || '',
+      rankNumber: rankText.match(/Rank: (?:Rank (\d+)|Unranked)/)?.[1] ?? '0',
+    };
+  });
+  assert.match(fieldAndRank.rarityChip, /^[−+±-]\d/, `the Rarity chip shows a signed number (${fieldAndRank.rarityChip})`);
+  assert.match(fieldAndRank.targetChip, /[−+±-]\d/, `the Target chip shows a signed number (${fieldAndRank.targetChip})`);
+  const ROMAN = ['U', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+  assert.equal(fieldAndRank.badge, ROMAN[Number(fieldAndRank.rankNumber)], 'the inspector card\'s rank badge matches the breakdown rank');
+
   // 3. A weight edit reaches the local draft. The draft used to be written before the edit was applied.
   const draftWeight = await page.evaluate(async ({ key, settle }) => {
     document.querySelector('.studio-tab[data-tab="weights"]').click();
@@ -70,6 +85,22 @@ try {
     return { next, saved: JSON.parse(localStorage.getItem(key))?.scoring?.costs?.sp?.weight };
   }, { key: DRAFT_KEY, settle: DRAFT_SETTLE_MS });
   assert.equal(draftWeight.saved, draftWeight.next, 'the draft holds the weight just typed');
+
+  // 3b. An effect's "per" edit reaches the draft and marks its row changed.
+  const draftPer = await page.evaluate(async ({ key, settle }) => {
+    document.querySelector('.studio-tab[data-tab="weights"]').click();
+    const input = document.querySelector('.weight-row.has-per input.weight-per');
+    const effect = input.getAttribute('aria-label').replace(/ per$/, '');
+    const next = Number(input.value) + 1;
+    input.value = String(next);
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, settle));
+    const row = document.querySelector(`.weight-row.has-per input.weight-per[aria-label="${effect} per"]`).closest('.weight-row');
+    document.querySelector('.studio-tab[data-tab="cards"]').click();
+    return { next, modified: row.classList.contains('is-modified'), saved: JSON.parse(localStorage.getItem(key))?.scoring?.effects?.[effect]?.per };
+  }, { key: DRAFT_KEY, settle: DRAFT_SETTLE_MS });
+  assert.equal(draftPer.saved, draftPer.next, 'the draft holds the per just typed');
+  assert.ok(draftPer.modified, 'the edited per marks its weight row changed');
 
   // 4. Renaming the selected card changes the name on its tile.
   const renamed = await page.evaluate(() => {
