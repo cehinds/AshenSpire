@@ -13,7 +13,7 @@
 // kw, tags, draw, heal, loseHp, discard, restoreSp, restoreMp, cleanse, counter, reflect, pull, move, holdOne, boost, cull, shuffle, copy, attr}.
 // An item is {kind, id, name, rarity, base, mods: [[key, n]], props: [tag], tags, poise, range, attackBase, magicShare, guardBase, art}; the
 // property rules its `props` name are passed as `rules` ({tag: {triggers, passives}}).
-import { scoring as shippedScoring } from '../content/generated/scoring.js';
+import { GetActiveScoring } from './activeScoring.js';
 
 /** Round half away from zero (the simulator's `rnd`). */
 export const Rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
@@ -59,7 +59,7 @@ function exactStatus(S, id, n) {
 }
 
 /** Score a card face: {raw, parts, positive}. `positive` is P, the sum of the positive non-cost parts. */
-export function ScoreCard(c, scoring = shippedScoring) {
+export function ScoreCard(c, scoring = GetActiveScoring()) {
   const S = slimOf(scoring), M = S.model, CM = scoring.cardModel;
   const parts = {};
   const add = (k, v) => { if (v) parts[k] = (parts[k] || 0) + v; };
@@ -114,18 +114,18 @@ export function ScoreCard(c, scoring = shippedScoring) {
 }
 
 /** Combat power: raw score minus the rarity discount (cards and items share one table; boss comes from scoring.items.rarityDiscount). */
-export function CombatPower(raw, rarity, scoring = shippedScoring) {
+export function CombatPower(raw, rarity, scoring = GetActiveScoring()) {
   return raw - (slimOf(scoring).discount[rarity] || 0);
 }
 
 /** Rank number from combat power: 0 = Unranked, 1..maxRank. */
-export function RankOf(cp, scoring = shippedScoring) {
+export function RankOf(cp, scoring = GetActiveScoring()) {
   const RK = slimOf(scoring).rank;
   return cp <= RK.unrankedMax ? 0 : Math.min(RK.maxRank, Math.ceil(cp / RK.width));
 }
 export const RankName = (k) => (k === 0 ? 'Unranked' : 'Rank ' + k);
 /** The combat-power band of a rank, as text; it matches RankOf (Rank 1 starts just above unrankedMax, every later rank is `width` wide). */
-export function RankRange(k, scoring = shippedScoring) {
+export function RankRange(k, scoring = GetActiveScoring()) {
   const RK = slimOf(scoring).rank;
   if (k === 0) return `<= ${RK.unrankedMax}`;
   const lo = k === 1 ? RK.unrankedMax + 1 : RK.width * (k - 1) + 1;
@@ -133,7 +133,7 @@ export function RankRange(k, scoring = shippedScoring) {
 }
 
 /** Apply an optional per-card/item override ({raw, cp, rank, rarity}) to a scored row; returns row unchanged when absent. */
-export function ApplyScoringOverride(row, override, scoring = shippedScoring) {
+export function ApplyScoringOverride(row, override, scoring = GetActiveScoring()) {
   if (!override || typeof override !== 'object') return row;
   const hasRarity = typeof override.rarity === 'string' && override.rarity.length > 0;
   const hasRaw = Number.isFinite(override.raw);
@@ -173,9 +173,9 @@ function modOf(S, key) {
   return { label: key, calc: S.full.items.unmodelledMod.calc };
 }
 /** Label of an item modifier key ("strike.damage" -> "Strike damage"). */
-export const ModLabel = (key, scoring = shippedScoring) => modOf(slimOf(scoring), key).label;
+export const ModLabel = (key, scoring = GetActiveScoring()) => modOf(slimOf(scoring), key).label;
 /** Points of one item modifier at value n. */
-export function ModValue(key, n, scoring = shippedScoring) {
+export function ModValue(key, n, scoring = GetActiveScoring()) {
   const S = slimOf(scoring), m = modOf(S, key), x = +n || 0;
   const start = m.pre === 'extraHits' ? Math.max(0, x - 1) : m.pre === 'flag' ? (x ? 1 : 0) : x;
   return applyCalc(S, start, m.calc);
@@ -194,10 +194,10 @@ function opValueOf(S, op) {
   return 'flat' in e ? e.flat : applyCalc(S, a, e.calc);
 }
 /** Points of one property-rule op (restoreMana, draw, applyStatus, ...). */
-export const OpValue = (op, scoring = shippedScoring) => opValueOf(slimOf(scoring), op);
+export const OpValue = (op, scoring = GetActiveScoring()) => opValueOf(slimOf(scoring), op);
 
 /** Points of a property rule ({triggers: [{on, cond, once, perTurn, do}], passives}) over 3 rounds. */
-export function PropertyValue(rule, scoring = shippedScoring) {
+export function PropertyValue(rule, scoring = GetActiveScoring()) {
   if (!rule) return 0;
   const S = slimOf(scoring), PT = scoring.items.propertyTriggers, freq = PT.frequencyIn3Rounds;
   let v = 0;
@@ -216,7 +216,7 @@ export function PropertyValue(rule, scoring = shippedScoring) {
  * Score an item: {raw, disc, cp, parts}. `rules` maps each property tag in item.props to its rule.
  * Item raw rounds with Math.round (half toward +infinity), as the simulator does; card raw rounds half away from zero.
  */
-export function ScoreItem(it, scoring = shippedScoring, rules = {}) {
+export function ScoreItem(it, scoring = GetActiveScoring(), rules = {}) {
   const S = slimOf(scoring), M = S.model, I = scoring.items, plays = I.plays;
   const parts = {};
   for (const [k, n] of it.mods || []) { const v = ModValue(k, n, scoring); const label = ModLabel(k, scoring); if (v) parts[label] = (parts[label] || 0) + v; }
@@ -243,7 +243,7 @@ const cap = (s) => s[0].toUpperCase() + s.slice(1);
 const numeral = (N, rk) => N.roman[rk] || '';
 
 /** Parts of a card's convention name: {name, effect, base, rank, source, baseSource}. */
-export function CardNameParts(c, ups = 0, scoring = shippedScoring) {
+export function CardNameParts(c, ups = 0, scoring = GetActiveScoring()) {
   const G = scoring.naming.card, N = scoring.naming;
   const s = ScoreCard(c, scoring);
   const top = Object.entries(s.parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).sort((a, b) => b[1] - a[1]);
@@ -269,7 +269,7 @@ export function CardNameParts(c, ups = 0, scoring = shippedScoring) {
   return { name, effect, base, rank: rk, source, baseSource: man || (c.type === 'attack' ? 'attack' : 'skill') + ':' + c.camp + (area ? ' (area)' : '') };
 }
 /** A card's convention name, e.g. "Searing Strike III". */
-export const CardName = (c, ups = 0, scoring = shippedScoring) => CardNameParts(c, ups, scoring).name;
+export const CardName = (c, ups = 0, scoring = GetActiveScoring()) => CardNameParts(c, ups, scoring).name;
 
 function propWord(tag, rules, scoring) {
   const S = slimOf(scoring), W = scoring.naming, p = rules[tag];
@@ -282,7 +282,7 @@ function propWord(tag, rules, scoring) {
 }
 
 /** Parts of an item's convention name: {name, effect, base, rank, source}. */
-export function ItemNameParts(it, ups = 0, scoring = shippedScoring, rules = {}) {
+export function ItemNameParts(it, ups = 0, scoring = GetActiveScoring(), rules = {}) {
   const W = scoring.naming, s = ScoreItem(it, scoring, rules);
   const top = Object.entries(s.parts).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])[0];
   let effect = 'Plain', source = 'none';
@@ -300,7 +300,7 @@ export function ItemNameParts(it, ups = 0, scoring = shippedScoring, rules = {})
   return { name: [effect, base, numeral(W, rk)].filter(Boolean).join(' ') + (ups ? ` +${ups}` : ''), effect, base, rank: rk, source };
 }
 /** An item's convention name. */
-export const ItemName = (it, ups = 0, scoring = shippedScoring, rules = {}) => ItemNameParts(it, ups, scoring, rules).name;
+export const ItemName = (it, ups = 0, scoring = GetActiveScoring(), rules = {}) => ItemNameParts(it, ups, scoring, rules).name;
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Enemy combat power (pre-existing export of this module, used by levelup.js for XP weight; unrelated to the card and item scoring above)
