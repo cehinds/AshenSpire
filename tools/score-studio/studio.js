@@ -255,6 +255,7 @@ function cardDefToFace(def, scoringRef) {
   f.kw = Array.isArray(def.keywords) ? [...def.keywords] : [];
   f.tags = tags;
   f._meta = m;
+  f.categories = cardCategoriesOf(def);
   if (m.evade > 0) f.statuses.push(['evade', m.evade, 'self']);
   const statusIds = new Set(Object.keys(scoringRef.statuses || {}));
   for (const e of def.effects || []) {
@@ -276,6 +277,67 @@ function cardDefToFace(def, scoringRef) {
   }
   if (def.ramp && !f.tags.includes('ramp.honed')) f.tags.push('ramp.honed');
   return f;
+}
+
+// ---------------------------------------------------------------------------
+// Card Type and Martial / Magic
+// ---------------------------------------------------------------------------
+// The studio's Card Type is the card's play style: its authored type plus the maneuver tag the game reads
+// (combatProfileFor). Martial is the physical camp, Magic the spell camp; both is a physical hit with a magic
+// share (the game's packet hit).
+const CARD_KINDS = Object.freeze(['attack', 'skill', 'spell', 'sweep', 'counter', 'defend', 'power', 'curse', 'status']);
+const KIND_MANEUVERS = Object.freeze({ attack: 'attack', sweep: 'sweep', counter: 'counter', defend: 'defend', spell: 'casting' });
+const PLAIN_KINDS = Object.freeze(['power', 'curse', 'status']);
+const HYBRID_MAGIC_SHARE = 0.5;
+const SCHOOL_CATEGORIES = Object.freeze(['martial', 'magic']);
+
+const hasDamageEffect = (def) => (def.effects || []).some((e) => e.op === 'damage');
+
+function cardKindOf(def) {
+  const tags = def.tags || [];
+  if (PLAIN_KINDS.includes(def.type)) return def.type;
+  if (tags.includes('maneuver:casting') || tags.includes('camp:spell')) return 'spell';
+  for (const kind of ['sweep', 'counter', 'defend', 'attack']) if (tags.includes(`maneuver:${kind}`)) return kind;
+  return def.type === 'attack' ? 'attack' : 'skill';
+}
+
+function setCardKind(def, kind) {
+  const keep = (def.tags || []).filter((t) => !t.startsWith('maneuver:') && t !== 'source:spell' && !t.startsWith('classification.'));
+  const maneuver = KIND_MANEUVERS[kind];
+  if (PLAIN_KINDS.includes(kind)) def.type = kind;
+  else if (kind === 'attack' || kind === 'sweep') def.type = 'attack';
+  else if (kind === 'skill' || kind === 'defend') def.type = 'skill';
+  else def.type = hasDamageEffect(def) ? 'attack' : 'skill';
+  def.tags = [...keep, ...(maneuver ? [`maneuver:${maneuver}`] : []), `classification.${def.type}`];
+  if (kind === 'spell') setCardSchools(def, { martial: false, magic: true });
+  else if (cardSchoolsOf(def).magic && !cardSchoolsOf(def).martial) setCardSchools(def, { martial: true, magic: false });
+}
+
+function cardSchoolsOf(def) {
+  const spell = (def.tags || []).includes('camp:spell');
+  return { martial: !spell, magic: spell || safeNum(def.magicShare, 0) > 0 };
+}
+
+function setCardSchools(def, { martial, magic }) {
+  const tags = (def.tags || []).filter((t) => !t.startsWith('camp:') && t !== 'source:spell');
+  const spellOnly = magic && !martial;
+  tags.push(spellOnly ? 'camp:spell' : 'camp:physical');
+  if (spellOnly) {
+    tags.push('source:spell');
+    def.damageSchool = def.damageSchool && def.damageSchool !== 'physical' ? def.damageSchool : 'magic';
+  } else if (def.damageSchool && def.damageSchool !== 'physical') def.damageSchool = 'physical';
+  if (magic && martial) def.magicShare = safeNum(def.magicShare, 0) > 0 && def.magicShare < 1 ? def.magicShare : HYBRID_MAGIC_SHARE;
+  else delete def.magicShare;
+  def.tags = tags;
+  // A spell plays by casting; leaving Magic drops casting back to a plain attack or skill.
+  if (spellOnly && cardKindOf(def) !== 'spell' && !PLAIN_KINDS.includes(def.type)) setCardKind(def, 'spell');
+  else if (!spellOnly && def.tags.includes('maneuver:casting')) setCardKind(def, hasDamageEffect(def) ? 'attack' : 'skill');
+}
+
+// The scoring categories the studio card belongs to (ScoreCard's scoring.categories).
+function cardCategoriesOf(def) {
+  const schools = cardSchoolsOf(def);
+  return [...(schools.martial ? ['martial'] : []), ...(schools.magic ? ['magic'] : []), cardKindOf(def)];
 }
 
 function getCardTarget(def) {
@@ -1075,10 +1137,12 @@ function renderInspector() {
   const textInput = document.getElementById('edit-text');
   if (textInput.value !== (def.textTemplate || '')) textInput.value = def.textTemplate || '';
   renderTextWarnings(def);
-  document.getElementById('edit-type').value = def.type || 'attack';
+  document.getElementById('edit-type').value = cardKindOf(def);
   document.getElementById('edit-class').value = def.class || 'colorless';
   document.getElementById('edit-rarity').value = def.rarity || 'common';
-  document.getElementById('edit-camp').value = (def.tags || []).includes('camp:spell') ? 'spell' : 'physical';
+  const schools = cardSchoolsOf(def);
+  document.getElementById('edit-martial').checked = schools.martial;
+  document.getElementById('edit-magic').checked = schools.magic;
   document.getElementById('edit-target').value = getCardTarget(def);
   document.getElementById('edit-sp').value = def.staminaCost ?? def.cost ?? 0;
   document.getElementById('edit-mp').value = def.manaCost ?? 0;
@@ -1373,8 +1437,11 @@ function cardPropertyScores(def, sc) {
 
   const neutralProperties = [
     ['class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
-    ['type', capitalise(face.type), (neutral) => { neutral.type = 'skill'; }],
-    ['camp', capitalise(face.camp), (neutral) => { neutral.camp = 'physical'; }],
+    ['type', capitalise(face.categories.at(-1)), (neutral) => { neutral.type = 'skill'; neutral.categories = [...neutral.categories.slice(0, -1), 'skill']; }],
+    ['camp', face.categories.filter((c) => SCHOOL_CATEGORIES.includes(c)).map(capitalise).join(' + '), (neutral) => {
+      neutral.camp = 'physical';
+      neutral.categories = ['martial', ...neutral.categories.filter((c) => !SCHOOL_CATEGORIES.includes(c))];
+    }],
   ];
   for (const [field, label, neutralize] of neutralProperties) {
     const delta = rawScoreDelta(face, neutralize);
@@ -1435,6 +1502,7 @@ function scoreMathTableHtml(sc) {
     if (k === 'damage') return `${sc.face.dmg} final (authored ${sc.face._meta?.authoredDmg ?? sc.face.dmg}) × ${S.effects.damage.weight}/${S.effects.damage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
     if (k === 'block') return `${sc.face.blk} final (authored ${sc.face._meta?.authoredBlk ?? sc.face.blk}) × ${S.effects.block.weight}/${S.effects.block.per}`;
     if (k === 'poise') return `${sc.face.poise} Poise × ${S.effects.poiseDamage.weight}/${S.effects.poiseDamage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
+    if (k.startsWith('category:')) { const w = S.categories?.[k.slice(9)]; return w?.multiplier ? `×${w.weight} of positive score` : `${capitalise(k.slice(9))} flat`; }
     if (k === 'effect count') return `multi-effect bonus (+${S.effectCount?.weight ?? 5}/extra)`;
     if (S.keywords?.[k]) return S.keywords[k].flat !== undefined ? `flat ${S.keywords[k].flat}` : `×${S.keywords[k].multiplier}`;
     if (S.statuses?.[k]) return `status over ${S.model?.R || 3}R${area > 1 && S.statuses[k].target === 'enemy' ? ` × ${area} AoE` : ''}`;
@@ -1603,6 +1671,20 @@ function renderWeights() {
       { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, base: R.rank?.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
       { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; } },
     ] },
+    { key: 'categories', title: 'Categories', entries: CATEGORY_KEYS.map((k) => {
+      const v = categoryWeight(state.scoring, k);
+      const bv = R.categories?.[k];
+      return {
+        id: k,
+        label: capitalise(k),
+        val: v.weight,
+        base: bv?.weight,
+        step: v.multiplier ? 0.05 : 1,
+        set: (n) => { categoryWeight(state.scoring, k).weight = n; },
+        // Flat adds the weight; multiplier scales the positive score by it. Switching resets to the no-change value.
+        mult: { value: Boolean(v.multiplier), base: bv ? Boolean(bv.multiplier) : undefined, set: (on) => { Object.assign(categoryWeight(state.scoring, k), { multiplier: on, weight: on ? 1 : 0 }); } },
+      };
+    }) },
     { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => {
       if (k[0] === '$' || !v) return false;
       const bv = R.tags?.[k];
@@ -1637,17 +1719,18 @@ function renderWeights() {
     for (const r of rows) {
       const numVal = safeNum(r.val, 0);
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
-      const perChanged = Boolean(r.per) && r.per.base !== undefined && r.per.value !== r.per.base;
+      const perChanged = (Boolean(r.per) && r.per.base !== undefined && r.per.value !== r.per.base)
+        || (Boolean(r.mult) && r.mult.base !== undefined && r.mult.value !== r.mult.base);
       const modified = (baseNum !== undefined && numVal !== baseNum) || perChanged;
       const row = document.createElement('div');
-      row.className = 'weight-row' + (r.per ? ' has-per' : '') + (modified ? ' is-modified' : '');
+      row.className = 'weight-row' + (r.per || r.mult ? ' has-per' : '') + (modified ? ' is-modified' : '');
       const kind = WEIGHT_GROUP_KINDS[g.key];
       const info = kind ? describeFeature(kind, r.id) : null;
       const labelHtml = info
         ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
         : `<span>${esc(r.label)}</span>`;
       const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
-      row.innerHTML = `${labelHtml}${perControlHtml(r)}<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} weight`)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(resetTitle)}">↺</button>`;
+      row.innerHTML = `${labelHtml}${perControlHtml(r)}${multControlHtml(r)}<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} weight`)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(resetTitle)}">↺</button>`;
       row.querySelector('.weight-input').addEventListener('change', (ev) => {
         const n = Number(ev.target.value);
         if (!Number.isFinite(n) || n === numVal) return;
@@ -1658,11 +1741,13 @@ function renderWeights() {
         if ((!r.per.options && !Number.isFinite(next)) || next === r.per.value) return;
         applyWeightEdit(() => r.per.set(next));
       });
+      row.querySelector('.weight-mult')?.addEventListener('change', (ev) => applyWeightEdit(() => r.mult.set(ev.target.checked)));
       row.querySelector('.weight-reset-btn').addEventListener('click', () => {
         if (baseNum === undefined && !perChanged) return;
         applyWeightEdit(() => {
+          if (r.mult && r.mult.base !== undefined && r.mult.value !== r.mult.base) r.mult.set(r.mult.base);
           if (baseNum !== undefined) r.set(baseNum);
-          if (perChanged) r.per.set(r.per.base);
+          if (r.per && r.per.base !== undefined && r.per.value !== r.per.base) r.per.set(r.per.base);
         });
       });
       if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
@@ -1673,6 +1758,21 @@ function renderWeights() {
   if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
   renderDescriptionGaps();
   computeShiftCount();
+}
+
+// Score categories (ScoreCard's scoring.categories): Martial, Magic and each Card Type.
+const CATEGORY_KEYS = Object.freeze(['martial', 'magic', ...CARD_KINDS]);
+
+function categoryWeight(scoring, key) {
+  scoring.categories ||= {};
+  scoring.categories[key] ||= { weight: 0, multiplier: false };
+  return scoring.categories[key];
+}
+
+// "× mult" switch for a category weight: off adds the weight flat, on multiplies the positive score.
+function multControlHtml(entry) {
+  if (!entry.mult) return '';
+  return `<label class="weight-per-label" title="Off: add the weight. On: multiply the card's positive score by it."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiplier</label>`;
 }
 
 // The values a tag's per can take: score once per action, or once per hit.
@@ -2150,7 +2250,6 @@ function populateCardOptions() {
   const rarities = distinct('rarity', 'common');
   fillSelect(document.getElementById('filter-type'), types, 'All Types');
   fillSelect(document.getElementById('filter-class'), classes, 'All Classes');
-  fillSelect(document.getElementById('edit-type'), types);
   fillSelect(document.getElementById('edit-class'), classes);
   fillSelect(document.getElementById('edit-rarity'), rarities);
   const poolText = `Core pool · ${state.cards.length} cards`;
@@ -2536,13 +2635,17 @@ function wireEvents() {
   };
   resizer.addEventListener('pointerup', stopResizerDrag);
   resizer.addEventListener('pointercancel', stopResizerDrag);
-  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }));
+  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => setCardKind(d, e.target.value)));
   document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }));
   document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }));
-  document.getElementById('edit-camp').addEventListener('change', (e) => mutateSelectedCard((d) => {
-    d.tags = (d.tags || []).filter((t) => !t.startsWith('camp:'));
-    d.tags.push(`camp:${e.target.value}`);
-  }));
+  // Martial and Magic: at least one stays ticked; both is a hybrid hit.
+  const schoolBoxes = ['edit-martial', 'edit-magic'].map((id) => document.getElementById(id));
+  for (const box of schoolBoxes) {
+    box.addEventListener('change', () => {
+      if (!schoolBoxes.some((b) => b.checked)) box.checked = true;
+      mutateSelectedCard((d) => setCardSchools(d, { martial: schoolBoxes[0].checked, magic: schoolBoxes[1].checked }));
+    });
+  }
   document.getElementById('edit-target').addEventListener('change', (e) => mutateSelectedCard((d) => setCardTarget(d, e.target.value)));
   // Cost inputs rescore live on every keystroke or spinner tick; the tile and preview refresh on change.
   const costBurst = createEditBurst();

@@ -415,6 +415,10 @@ body.studio-body .section-head > .studio-toggle {
 body.studio-body .section-head > button { flex: none; }
 body.studio-body .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 body.studio-body .form-grid label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
+body.studio-body .form-grid .studio-field { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
+body.studio-body .form-grid .school-checks { display: flex; align-items: center; gap: 12px; min-height: 30px; }
+body.studio-body .form-grid .studio-check { flex-direction: row; align-items: center; gap: 6px; font-size: 12px; color: var(--st-text); cursor: pointer; }
+body.studio-body .form-grid .studio-check input { width: auto; margin: 0; accent-color: var(--st-accent, #6aa0ff); }
 
 body.studio-body .add-feature-bar { display: flex; gap: var(--studio-gap-1); width: 100%; margin-bottom: var(--studio-gap-2); }
 body.studio-body .add-feature-bar select { flex: 1 1 auto; min-width: 0; }
@@ -790,3 +794,4 @@ body.studio-body .weight-per-label { display: inline-flex; align-items: center; 
 body.studio-body .weight-per-label input,
 body.studio-body .weight-per-label select { width: 58px; box-sizing: border-box; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 4px; text-align: right; }
 body.studio-body .weight-per-label select { width: 72px; text-align: left; }
+body.studio-body .weight-per-label input.weight-mult { width: auto; margin: 0; accent-color: var(--st-accent, #6aa0ff); cursor: pointer; }
