@@ -251,7 +251,7 @@
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .section-head h3 { margin: 0; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.form-grid label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
+.form-grid label, .form-grid .field-group { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
 
 .add-feature-bar { display: flex; gap: 6px; width: 100%; margin-bottom: 8px; }
 .add-feature-bar select { flex: 1; min-width: 0; width: 100%; }
