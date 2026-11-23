@@ -7,7 +7,7 @@ import * as Profile from '../../src/model/gameProfile.js';
 import { createRunState } from '../../src/model/state.js';
 import { createRng } from '../../src/engine/rng.js';
 import { createRunCombat } from '../../src/engine/runCombat.js';
-import { dispatch, previewCard } from '../../src/engine/combat.js';
+import { dispatch, previewCard, cardPlayCosts } from '../../src/engine/combat.js';
 import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
@@ -816,11 +816,15 @@ function startSandboxCombat() {
 
   const run = createRunState({ registries: studioRegistries, classId, seed: 42, profileMeta: UNLOCK_META });
   const combat = createRunCombat({ registries: studioRegistries, run, rng: createRng(42), enemyIds: [enemyId] });
+  dispatch(combat, { type: 'setReactions', enabled: false });
   if (activeCard && liveId) {
     combat.piles.hand.unshift({ instanceId: 'studio-test-card', cardId: liveId, upgraded: false });
-    // Ensure the player can immediately play their edited card on Turn 1
-    if ((activeCard.staminaCost || 0) > (combat.player.stamina ?? 0)) combat.player.stamina = activeCard.staminaCost;
-    if ((activeCard.manaCost || 0) > (combat.player.mana ?? 0)) combat.player.mana = activeCard.manaCost;
+    // Ensure the player can immediately play their edited card on Turn 1 (using real resolved play costs)
+    let costs = { stamina: activeCard.staminaCost || 0, mana: activeCard.manaCost || 0, energy: activeCard.cost || 0 };
+    try { costs = cardPlayCosts(combat, 'studio-test-card'); } catch { /* fallback to authored costs */ }
+    if ((costs.stamina || 0) > (combat.player.stamina ?? 0)) combat.player.stamina = costs.stamina;
+    if ((costs.mana || 0) > (combat.player.mana ?? 0)) combat.player.mana = costs.mana;
+    if ((costs.energy || 0) > (combat.player.energy ?? 0)) combat.player.energy = costs.energy;
   }
   state.sandbox = {
     combat,
@@ -878,9 +882,17 @@ function renderSandbox() {
     stage.className = 'studio-card-stage';
     renderCardWithLayers(def, stage);
     wrap.appendChild(stage);
+    let costLabel = 'Play';
+    try {
+      const c = cardPlayCosts(combat, inst.instanceId);
+      const parts = [];
+      if (c.stamina) parts.push(`${c.stamina} SP`);
+      if (c.mana) parts.push(`${c.mana} MP`);
+      costLabel = parts.length ? `Play (${parts.join(' · ')})` : 'Play (Free)';
+    } catch { /* fallback */ }
     const foot = document.createElement('div');
     foot.className = 'studio-card-meta';
-    foot.innerHTML = `<span>${inst.instanceId === 'studio-test-card' ? '★ Edited Card' : esc(def.name)}</span><span class="cp-chip">Play</span>`;
+    foot.innerHTML = `<div class="meta-row"><span>${inst.instanceId === 'studio-test-card' ? '★ Edited Card' : esc(def.name)}</span><span class="cp-chip">${esc(costLabel)}</span></div>`;
     wrap.appendChild(foot);
     wrap.addEventListener('click', () => {
       try {
@@ -1284,10 +1296,16 @@ function wireEvents() {
   document.getElementById('sandbox-class').addEventListener('change', startSandboxCombat);
   document.getElementById('sandbox-enemy').addEventListener('change', startSandboxCombat);
   document.getElementById('btn-sandbox-endturn').addEventListener('click', () => {
-    if (!state.sandbox.combat) return;
+    const combat = state.sandbox.combat;
+    if (!combat) return;
+    if (combat.result) { state.sandbox.log.unshift(`Combat already ended (${combat.result}). Click Reset Fight to start again.`); renderSandbox(); return; }
     try {
-      dispatch(state.sandbox.combat, { type: 'endTurn' });
-      state.sandbox.log.unshift(`Ended turn → Turn ${state.sandbox.combat.turn}`);
+      dispatch(combat, { type: 'endTurn' });
+      for (let guard = 0; guard < 8 && combat.pendingReaction && !combat.result; guard++) {
+        dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+      }
+      if (combat.result) state.sandbox.log.unshift(`Combat ended: ${combat.result}`);
+      else state.sandbox.log.unshift(`Ended turn → Turn ${combat.turn}`);
     } catch (err) {
       state.sandbox.log.unshift(`End turn error: ${err.message}`);
     }
