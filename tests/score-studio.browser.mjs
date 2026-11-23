@@ -1,4 +1,5 @@
 // PLAYWRIGHT_MODULE=/path/to/playwright CHROME=/path/to/chrome node tests/score-studio.browser.mjs
+// Like the other tests/*.browser.mjs files it is run by hand: no workflow or run-node.mjs list picks these up.
 // Real Chromium on the real Score Studio page (tools/score-studio/). Guards the audit's broken basics:
 // card faces render at card size (the game's card stylesheets are linked), an edit reaches the local
 // draft (auto-save runs after the edit, not before), and the card face shows what the inspector edits.
@@ -71,6 +72,22 @@ try {
     return { next: String(next), shown: shown() };
   });
   assert.equal(cost.shown, cost.next, 'the inspector card shows the edited SP cost');
+
+  // 6. Removing the effects a card's text names flags the stale {tokens}, under the text box and on the tile.
+  //    Acid Splash's text is "Apply {frail} Frail and {vulnerable} Vulnerable."
+  const stale = await page.evaluate(() => {
+    const tile = document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"]');
+    tile.click();
+    while (document.querySelector('#active-features-list [data-rm-eff]')) {
+      document.querySelector('#active-features-list [data-rm-eff]').click();
+    }
+    return {
+      warnings: document.getElementById('text-warnings').innerText,
+      tileMarked: Boolean(document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"] .text-warn-chip')),
+    };
+  });
+  assert.match(stale.warnings, /Card text mentions \{frail\}, but the card has no Frail effect\./, 'a removed status is named as a stale token');
+  assert.ok(stale.tileMarked, 'the gallery tile is marked when its card text has stale tokens');
 
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);

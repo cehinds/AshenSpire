@@ -154,6 +154,12 @@
               <label><span class="cost-label">SP Cost <span id="cost-score-sp" class="feature-score"></span></span><input id="edit-sp" type="number" min="0" max="10" /></label>
               <label><span class="cost-label">MP Cost <span id="cost-score-mp" class="feature-score"></span></span><input id="edit-mp" type="number" min="0" max="10" /></label>
               <label><span class="cost-label">HP Cost <span id="cost-score-hp" class="feature-score"></span></span><input id="edit-loseHp" type="number" min="0" max="50" /></label>
+              <div class="form-wide">
+                <label for="edit-text">Card text</label>
+                <textarea id="edit-text" rows="3" spellcheck="true"></textarea>
+                <span class="studio-muted text-hint">Use {tokens} like {damage} or {frail} to show the card's numbers.</span>
+                <div id="text-warnings" class="text-warnings" role="status"></div>
+              </div>
             </div>
           </details>
 

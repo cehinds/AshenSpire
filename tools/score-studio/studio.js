@@ -13,6 +13,8 @@ import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.genera
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
 import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
+import { staticCardTokens } from '../../src/model/playingCard.js';
+import { tokenRe } from '../../src/model/validate.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -280,6 +282,59 @@ function projectEditedCard(def) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Card text: tokens in textTemplate that no longer resolve
+// ---------------------------------------------------------------------------
+// The game fills {tokens} in a card's text from its effects (staticCardTokens). A token whose effect was
+// removed has nothing to fill it, so the face would print the raw {token}. The same function decides here.
+function staleTextTokens(def) {
+  const template = def.textTemplate || '';
+  if (!template.includes('{')) return [];
+  let tokens;
+  try {
+    tokens = staticCardTokens(projectEditedCard(def), studioRegistries, previewRun);
+  } catch {
+    return [];
+  }
+  const mentioned = [...new Set([...template.matchAll(tokenRe())].map((match) => match[1]))];
+  return mentioned.filter((token) => tokens[token] === undefined || tokens[token] === null);
+}
+
+function tokenLabel(token) {
+  const root = token.split('.')[0];
+  const status = registries.statuses?.has?.(root) ? registries.statuses.get(root) : null;
+  return status?.name || capitalise(root);
+}
+
+// Only edited cards can have gone stale; shipped cards are checked by the content build.
+function hasStaleText(def) {
+  return Boolean(def._edited || def._custom) && staleTextTokens(def).length > 0;
+}
+
+const STALE_TEXT_CHIP = '<span class="text-warn-chip" title="Card text has a {token} with no matching effect">⚠ text</span>';
+
+function renderTextWarnings(def) {
+  const warnings = staleTextTokens(def).map((token) => `Card text mentions {${token}}, but the card has no ${tokenLabel(token)} effect.`);
+  document.getElementById('text-warnings').innerHTML = warnings.map((line) => `<div>${esc(line)}</div>`).join('');
+}
+
+// Plain clauses + Add Feature appends when the card text does not mention the new token yet.
+function clauseForNewFeature(kind, key) {
+  if (kind === 'status') return { token: key, clause: `Apply {${key}} ${tokenLabel(key)}.` };
+  if (kind === 'effect' && key === 'damage') return { token: 'damage', clause: 'Deal {damage} damage.' };
+  if (kind === 'effect' && key === 'block') return { token: 'block', clause: 'Gain {block} Block.' };
+  if (kind === 'effect' && key === 'draw') return { token: 'draw', clause: 'Draw {draw}.' };
+  return null;
+}
+
+function appendClauseForFeature(def, kind, key) {
+  const addition = clauseForNewFeature(kind, key);
+  if (!addition) return;
+  const template = def.textTemplate || '';
+  if (template.includes(`{${addition.token}}`)) return;
+  def.textTemplate = `${template.trim()} ${addition.clause}`.trim();
+}
+
 function renderCardWithLayers(def, container) {
   container.innerHTML = '';
   studioCardOverrides.set(def.id, def);
@@ -339,6 +394,7 @@ function updateCardTileInPlace(cardId) {
     <span class="cp-chip" title="${esc(def.name)}">${esc(def.name)} · CP ${sc.cp}${sc.overridden ? '*' : ''}</span>
     <span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>
     ${shiftHtml}
+    ${hasStaleText(def) ? STALE_TEXT_CHIP : ''}
   `;
 }
 
@@ -374,7 +430,7 @@ function renderCardsGrid() {
     const tile = document.createElement('div');
     tile.className = 'studio-card-tile' + (def.id === state.selectedCardId ? ' is-selected' : '');
     tile.dataset.cardId = def.id;
-    tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta"><span class="cp-chip" title="${esc(def.name)}">${esc(def.name)} · CP ${sc.cp}${sc.overridden ? '*' : ''}</span><span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>${shiftHtml}</div>`;
+    tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta"><span class="cp-chip" title="${esc(def.name)}">${esc(def.name)} · CP ${sc.cp}${sc.overridden ? '*' : ''}</span><span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>${shiftHtml}${hasStaleText(def) ? STALE_TEXT_CHIP : ''}</div>`;
     renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
     tile.tabIndex = 0;
     const selectTile = () => {
@@ -442,6 +498,9 @@ function renderInspector() {
   renderScoreSummary(def, sc);
 
   document.getElementById('edit-name').value = def.name || '';
+  const textInput = document.getElementById('edit-text');
+  if (textInput.value !== (def.textTemplate || '')) textInput.value = def.textTemplate || '';
+  renderTextWarnings(def);
   document.getElementById('edit-type').value = def.type || 'attack';
   document.getElementById('edit-class').value = def.class || 'colorless';
   document.getElementById('edit-rarity').value = def.rarity || 'common';
@@ -1343,6 +1402,13 @@ function wireEvents() {
     nameBurst.begin();
     mutateSelectedCard((d) => { d.name = e.target.value; }, { recordHistory: false });
   });
+  const textBurst = createEditBurst();
+  const textInput = document.getElementById('edit-text');
+  textInput.addEventListener('focus', () => textBurst.end());
+  textInput.addEventListener('input', (e) => {
+    textBurst.begin();
+    mutateSelectedCard((d) => { d.textTemplate = e.target.value; }, { recordHistory: false });
+  });
   document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }));
   document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }));
   document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }));
@@ -1395,6 +1461,7 @@ function wireEvents() {
       else if (kind === 'status') d.effects.push({ op: 'applyStatus', status: key, stacks: 2, target: state.scoring.statuses?.[key]?.target || 'enemy' });
       else if (kind === 'kw' && !d.keywords.includes(key)) d.keywords.push(key);
       else if (kind === 'tag' && !d.tags.includes(key)) d.tags.push(key);
+      appendClauseForFeature(d, kind, key);
     });
     document.getElementById('add-feature-select').value = '';
   });

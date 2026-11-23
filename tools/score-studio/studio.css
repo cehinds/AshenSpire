@@ -646,3 +646,23 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
   body.studio-body .scenario-controls label { display: flex; align-items: center; gap: var(--studio-gap-1); min-width: 0; }
   body.studio-body .scenario-controls select { max-width: 100%; }
 }
+
+/* CARD TEXT: the editable rules text and its stale-token warnings. */
+body.studio-body .form-wide { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
+body.studio-body .form-wide textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 56px;
+  resize: vertical;
+  background: var(--st-surface-2);
+  color: var(--st-text);
+  border: 1px solid var(--st-border);
+  border-radius: var(--studio-radius);
+  padding: var(--studio-gap-1) var(--studio-gap-2);
+  font: 12px/1.4 inherit;
+  font-family: inherit;
+}
+body.studio-body .text-hint { font-size: 11px; }
+body.studio-body .text-warnings { display: flex; flex-direction: column; gap: 2px; color: var(--st-warn); font-size: 11px; }
+body.studio-body .text-warnings:empty { display: none; }
+body.studio-body .text-warn-chip { color: var(--st-warn); border: 1px solid var(--st-warn); border-radius: 4px; padding: 0 4px; font-size: 10px; white-space: nowrap; }
