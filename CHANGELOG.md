@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-23
+
+- **Score Studio cleaned up: working cards, live scores, procedural names and text** ([#2957](https://github.com/cehinds/AshenSpire/pull/2957), `0.7.5.62`). Card faces render properly and follow every edit, at the game's card shape. One slim top bar with a ⋯ menu replaces three rows of buttons, every section folds, and on a phone the cards sit two per row with a full-screen inspector. Each feature shows its score live, the Score Breakdown leads with rank and CP and shows what rarity and targeting add, and each status, keyword and tag says what it does. Auto-name and Auto text build a card's name and rules text from its effects and rank. Drafts save after each edit and survive closing the tab, and Revert asks first.
+
 ## 2026-11-22
 
 - **Score Studio on GitHub Pages loads engine modules and UI assets** ([#2956](https://github.com/cehinds/AshenSpire/pull/2956), `0.7.5.62`). Includes the `engine/` tree plus UI icon and font assets when publishing `/score-studio/` to GitHub Pages, with a transitive module-closure test so Pages deployments cannot miss an imported tree.

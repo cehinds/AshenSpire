@@ -12,12 +12,21 @@ import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
+import { staticCardTokens } from '../../src/model/playingCard.js';
+import { tokenRe } from '../../src/model/validate.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
 const PATH_STORAGE_KEY = 'ashenspire:scoreStudioPath:v1';
+const DRAFT_SAVE_DELAY_MS = 300;
+const TEXT_EDIT_BURST_MS = 1000;
+const UNDO_DEPTH = 40;
+const INSPECTOR_WIDTH_KEY = 'ashenspire:studioInspectorW';
+const INSPECTOR_WIDTH_MIN = 340;
+const INSPECTOR_WIDTH_MAX = 780;
+// On GitHub Pages there is no local server: the studio runs on shipped scoring and exports by Download JSON.
 const isLocalServer = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 
 // Bootstrap real game registries
@@ -40,6 +49,8 @@ const studioRegistries = {
 const UNLOCK_META = { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } };
 const REF_CLASSES = ['reaver', 'starseer', 'rogue', 'herald'];
 const refContexts = new Map();
+// One reference run and combat per class: scoring measures each card's final in-play values here, and card
+// faces are drawn under the same run, so a card reads as its class would see it.
 function refContextFor(def) {
   const isSpell = (def.tags || []).includes('camp:spell') || (def.damageSchool && def.damageSchool !== 'physical');
   const cls = REF_CLASSES.includes(def.class) ? def.class : (isSpell ? 'starseer' : 'reaver');
@@ -82,7 +93,7 @@ const state = {
   scoring: clone(shippedScoring),
   repoPath: localStorage.getItem(PATH_STORAGE_KEY) || 'content/source/scoring.json',
   autosave: true,
-  dirty: false,
+  draftStorageFailed: false,
   undoStack: [],
   redoStack: [],
   cards: [],            // editable card definitions + derived faces
@@ -96,6 +107,7 @@ const state = {
       { id: 'layer-1', name: 'Fire Overlay', matchKind: 'tag', matchValue: 'school:fire', mode: 'stack', assetId: 'Z.effect.5', zIndex: 10, x: 50, y: 50, scale: 85, opacity: 35, blendMode: 'screen', enabled: true },
     ],
   },
+  repoArtLayers: null,  // art layers as loaded from the repo (or the built-in default); set in boot
   abSlots: { A: null, B: null, activeLabel: 'Draft' },
   sandbox: { combat: null, classId: 'reaver', enemyId: 'wanderingSoldier', appliedScoring: null, customCardId: null, log: [] },
 };
@@ -130,20 +142,28 @@ function normalizeStudioCard(def) {
   return def;
 }
 
-/** Register an edited/custom card under a live ID that bypasses frozen profile pack lookup so previewCard & dispatch run live edits. */
+const LIVE_ID_PREFIX = '__studio_live_';
+
+// An edited or custom card is registered under a live id the game profile does not know, so previewCard,
+// dispatch and renderCard all read the studio's copy instead of the shipped profile card.
 function liveCardIdFor(def) {
   normalizeStudioCard(def);
   if (!def._edited && !def._custom) {
     studioCardOverrides.set(def.id, def);
     return def.id;
   }
-  const liveId = `__studio_live_${def.id}`;
-  const liveDef = { ...clone(def), id: liveId };
+  const liveId = `${LIVE_ID_PREFIX}${def.id}`;
+  // Register the edited copy the way the game projects the shipped card (projectEditedCard), so previewCard
+  // prices and measures it with the same rules. The raw authored copy missed the projection, and the spell
+  // cost rules then charged an extra MP: renaming Acid Splash dropped it from CP 13 to CP 5.
+  const liveDef = { ...clone(projectEditedCard(def)), id: liveId };
   studioCardOverrides.set(def.id, def);
   studioCardOverrides.set(liveId, liveDef);
   return liveId;
 }
 
+// The card's final in-play numbers (cost, damage, block, poise...) measured by previewCard in its class's
+// reference combat, so the score matches what the card does in a fight.
 function measureFinalValues(def) {
   const liveId = liveCardIdFor(def);
   const isSpell = (def.tags || []).includes('camp:spell') || (def.damageSchool && def.damageSchool !== 'physical');
@@ -314,35 +334,87 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.add('hidden'), 2800);
 }
 
-function pushHistory() {
-  state.undoStack.push(JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers }));
-  if (state.undoStack.length > 40) state.undoStack.shift();
-  state.redoStack = [];
+function snapshotState() {
+  return JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers });
+}
+
+function updateUndoButtons() {
   document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
   document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
 }
 
-function markDirty() {
-  state.dirty = true;
-  document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
-  document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
+// Records an undo point for the state as it is now. Call before mutating; call saveDraft() after.
+function pushHistory() {
+  state.undoStack.push(snapshotState());
+  if (state.undoStack.length > UNDO_DEPTH) state.undoStack.shift();
+  state.redoStack = [];
+  updateUndoButtons();
+}
+
+function editedCards() {
+  return state.cards.filter((c) => c._edited || c._custom);
+}
+
+function weightChangeCount() {
+  return buildScoringDiff().length;
+}
+
+function artLayersChanged() {
+  return JSON.stringify(state.artLayers) !== JSON.stringify(state.repoArtLayers);
+}
+
+function isDirty() {
+  return weightChangeCount() > 0 || editedCards().length > 0 || artLayersChanged();
+}
+
+function refreshDirtyStatus() {
   const pill = document.getElementById('draft-status');
-  pill.classList.add('is-dirty');
+  const dirty = isDirty();
+  pill.classList.toggle('is-dirty', dirty);
+  if (!dirty) pill.textContent = 'Synced with repo';
+  else if (!state.autosave) pill.textContent = 'Unsaved edits';
+  else if (state.draftStorageFailed) pill.textContent = 'Unsaved edits (storage full)';
+  else pill.textContent = 'Draft auto-saved (local temp copy)';
+}
+
+function writeDraftNow() {
+  clearTimeout(draftTimer);
+  draftPending = false;
+  state.draftStorageFailed = false;
   if (state.autosave) {
     try {
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
-        savedAt: new Date().toISOString(),
-        scoring: state.scoring,
-        artLayers: state.artLayers,
-        customCards: state.cards.filter((c) => c._edited || c._custom),
-      }));
-      pill.textContent = 'Draft auto-saved (local temp copy)';
+      if (isDirty()) {
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+          savedAt: new Date().toISOString(),
+          scoring: state.scoring,
+          artLayers: state.artLayers,
+          customCards: editedCards(),
+        }));
+      } else {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
     } catch {
-      pill.textContent = 'Unsaved edits (storage full)';
+      state.draftStorageFailed = true;
     }
-  } else {
-    pill.textContent = 'Unsaved edits';
   }
+  refreshDirtyStatus();
+}
+
+// Saves the local draft after a change has been applied, debounced so typing stays cheap.
+let draftTimer = null;
+let draftPending = false;
+function saveDraft({ autoName = true } = {}) {
+  // Every mutation ends here, so this is where auto-named cards follow edits, weight changes and loads.
+  // An edit that asks not to rename (typing a name or card text) passes autoName: false.
+  if (autoName !== false) syncAutoNames();
+  clearTimeout(draftTimer);
+  draftPending = true;
+  draftTimer = setTimeout(writeDraftNow, DRAFT_SAVE_DELAY_MS);
+}
+
+// Writes a pending draft at once, so closing or hiding the tab inside the debounce loses nothing.
+function flushDraft() {
+  if (draftPending) writeDraftNow();
 }
 
 function restoreSnapshot(snapStr) {
@@ -352,8 +424,8 @@ function restoreSnapshot(snapStr) {
   state.artLayers = snap.artLayers;
   studioCardOverrides.clear();
   if (!state.cards.some((c) => c.id === state.selectedCardId)) state.selectedCardId = state.cards[0]?.id || null;
-  markDirty();
   syncAllViews();
+  saveDraft();
 }
 
 // ---------------------------------------------------------------------------
@@ -374,13 +446,369 @@ function matchingCustomLayers(def) {
     .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
 }
 
+const STUDIO_ONLY_FIELDS = ['_edited', '_custom', 'scoringOverride', '_autoName', '_autoNameCore', '_autoNameBudget'];
+
+// ---------------------------------------------------------------------------
+// Feature descriptions: what a status, keyword, tag or effect does in play, and how it scores
+// ---------------------------------------------------------------------------
+// Game text comes from what the game already shows players (status and keyword tooltips, tag blurbs);
+// scoring text from the scoring table (weight, why, projection). Nothing here is hand-written copy.
+const TAG_INFO = new Map((Array.isArray(registries.tags) ? registries.tags : []).map((tag) => [tag.id, tag]));
+const NO_DESCRIPTION = 'No description yet';
+
+function registryEntry(registry, id) {
+  try { return registry?.has?.(id) ? registry.get(id) : null; } catch { return null; }
+}
+
+function weightText(entry, unit = '') {
+  if (!entry) return '';
+  const bits = [];
+  if (Number.isFinite(entry.flat)) bits.push(`flat ${entry.flat}`);
+  if (Number.isFinite(entry.weight) && entry.weight !== 0) bits.push(`${entry.weight}${entry.per ? ` per ${entry.per}` : unit}`);
+  if (Number.isFinite(entry.multiplier)) bits.push(`×${entry.multiplier}`);
+  if (Number.isFinite(entry.pMultiplier)) bits.push(`×${entry.pMultiplier} of the card's positive score`);
+  if (Number.isFinite(entry.perN)) bits.push(`${entry.perN} each`);
+  if (entry.conditional) bits.push('conditional');
+  return bits.join(', ') || 'no weight';
+}
+
+// { title, does, scores, missing } for one feature. kind: 'status' | 'keyword' | 'tag' | 'effect' | 'cost'.
+function describeFeature(kind, id) {
+  const S = state.scoring;
+  let title = id;
+  let does = null;
+  let entry = null;
+  let unit = '';
+  if (kind === 'status') {
+    const status = registryEntry(registries.statuses, id);
+    title = status?.name || capitalise(id);
+    does = status?.tooltip || null;
+    entry = S.statuses?.[id];
+    unit = entry?.target ? ` per stack (${entry.target})` : ' per stack';
+  } else if (kind === 'keyword') {
+    const keyword = registryEntry(registries.keywords, id);
+    title = keyword?.name || capitalise(id);
+    does = keyword?.tooltip || null;
+    entry = S.keywords?.[id];
+  } else if (kind === 'tag') {
+    const tag = TAG_INFO.get(id);
+    title = S.tags?.[id]?.label || tag?.label || id;
+    does = tag?.blurb || null;
+    entry = S.tags?.[id];
+  } else if (kind === 'effect') {
+    const keys = EFFECT_SCORE_KEYS[id];
+    title = capitalise(id);
+    entry = S.effects?.[keys?.weight || id];
+  } else if (kind === 'cost') {
+    title = `${id.toUpperCase()} cost`;
+    entry = S.costs?.[id];
+    unit = ' per point';
+  }
+  const why = entry?.why || '';
+  const scoresParts = [weightText(entry, unit), why && `${why}${entry?.projection ? ` (${entry.projection})` : ''}`].filter(Boolean);
+  const scores = entry ? scoresParts.join(' · ') : null;
+  return { kind, title, does, scores, missing: !does && !why };
+}
+
+function describePartKey(key) {
+  const S = state.scoring;
+  if (S.statuses?.[key]) return describeFeature('status', key);
+  if (S.keywords?.[key]) return describeFeature('keyword', key);
+  if (S.tags?.[key]) return describeFeature('tag', key);
+  if (key === 'SP' || key === 'MP') return describeFeature('cost', key.toLowerCase());
+  const op = Object.keys(EFFECT_SCORE_KEYS).find((candidate) => EFFECT_SCORE_KEYS[candidate].part === key);
+  return op ? describeFeature('effect', op) : null;
+}
+
+// Statuses, keywords and tags have player text in the game; effects and costs do not, so they get no
+// "Does" line rather than a gap.
+const KINDS_WITH_GAME_TEXT = new Set(['status', 'keyword', 'tag']);
+const showsDoes = (info) => Boolean(info?.does) || KINDS_WITH_GAME_TEXT.has(info?.kind);
+
+// Plain text for a title attribute.
+function featureTitleText(info) {
+  if (!info) return '';
+  return [showsDoes(info) && `Does: ${info.does || NO_DESCRIPTION}`, info.scores && `Scores: ${info.scores}`].filter(Boolean).join('\n');
+}
+
+// The ⓘ button and the hidden line it opens, for a row that holds a feature.
+function infoButtonHtml() {
+  return '<button type="button" class="info-btn" aria-expanded="false" aria-label="What this does">ⓘ</button>';
+}
+function infoLineHtml(info) {
+  if (!info) return '';
+  const does = info.does ? esc(info.does) : `<span class="no-desc">${NO_DESCRIPTION}</span>`;
+  return `<div class="feature-desc" hidden>${showsDoes(info) ? `<div><strong>Does:</strong> ${does}</div>` : ''}${info.scores ? `<div><strong>Scores:</strong> ${esc(info.scores)}</div>` : ''}</div>`;
+}
+
+// One handler for every ⓘ in a container: it opens or closes the line in the same row.
+function wireInfoButtons(container, rowSelector) {
+  container.addEventListener('click', (e) => {
+    const button = e.target.closest('.info-btn');
+    if (!button) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const line = button.closest(rowSelector)?.querySelector('.feature-desc');
+    if (!line) return;
+    line.hidden = !line.hidden;
+    button.setAttribute('aria-expanded', String(!line.hidden));
+  });
+}
+
+function featureValueInfo(value) {
+  if (!value) return null;
+  const [kind, key] = [value.slice(0, value.indexOf(':')), value.slice(value.indexOf(':') + 1)];
+  const map = { effect: 'effect', status: 'status', kw: 'keyword', tag: 'tag' };
+  return map[kind] ? describeFeature(map[kind], key) : null;
+}
+
+function renderAddFeatureDescription() {
+  const line = document.getElementById('add-feature-desc');
+  if (!line) return;
+  const info = featureValueInfo(document.getElementById('add-feature-select').value);
+  if (!info) { line.textContent = ''; return; }
+  const doesHtml = info.does ? esc(info.does) : showsDoes(info) ? `<span class="no-desc">${NO_DESCRIPTION}</span>` : '';
+  line.innerHTML = `<strong>${esc(info.title)}.</strong> ${doesHtml}${info.scores ? ` <span class="desc-scores">Scores: ${esc(info.scores)}</span>` : ''}`;
+}
+
+// ---------------------------------------------------------------------------
+// Auto-name: "<Adjective> <core noun> [of <Noun>] <Rank numeral>"
+// ---------------------------------------------------------------------------
+// The adjective and the "of" noun are data (scoring.naming.card.prefix / .suffix, part key -> word),
+// editable in the Weights tab and written into scoring.json on export. Seeded with these defaults.
+const DEFAULT_NAME_PREFIX = Object.freeze({
+  frail: 'Brittle', vulnerable: 'Exposing', weak: 'Sapping', burn: 'Searing', bleed: 'Serrated', venom: 'Venomous',
+  frost: 'Rime', chill: 'Rime', shock: 'Crackling', damage: 'Keen', block: 'Warding', draw: 'Keen-eyed',
+  heal: 'Mending', poise: 'Crushing', 'SP restore': 'Second-wind', 'MP restore': 'Draining',
+});
+const DEFAULT_NAME_SUFFIX = Object.freeze({
+  frail: 'Frailty', vulnerable: 'Ruin', weak: 'Weakness', burn: 'Embers', bleed: 'Bleeding', venom: 'Venom',
+  frost: 'Winter', chill: 'Winter', shock: 'Storms', damage: 'Might', block: 'the Wall', draw: 'Insight',
+  heal: 'Mercy', poise: 'Ruin', 'SP restore': 'Vigor', 'MP restore': 'Mana',
+});
+const AUTO_NAME_MIN_WORDS = 2;
+const AUTO_NAME_SUFFIX_MIN_WORDS = 4;
+const NON_NAME_PARTS = new Set(['SP', 'MP', 'effect count', 'HP cost', 'discard']);
+
+// Adds the word tables when a scoring table has none, to both the working and the repo copy so the
+// seed itself is not an edit.
+function ensureNamingWords(scoringRef) {
+  if (!scoringRef) return;
+  const card = ((scoringRef.naming ||= clone(shippedScoring.naming || {})).card ||= {});
+  card.prefix ||= { ...DEFAULT_NAME_PREFIX };
+  card.suffix ||= { ...DEFAULT_NAME_SUFFIX };
+}
+
+function romanFor(rank) {
+  const roman = state.scoring.naming?.roman || shippedScoring.naming?.roman || [];
+  return roman[rank] || '';
+}
+
+// A name's words without its rank numeral, upgrade mark or "(Copy)", so a duplicate keeps its source's noun.
+function nameWords(name) {
+  return String(name || '').trim().split(/\s+/).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word) && !/^\(Copy\)$/i.test(word));
+}
+
+function nameParts(def, sc = scoreCardEntry(def)) {
+  try {
+    return CardNameParts(sc.face, 0, state.scoring.naming ? state.scoring : { ...state.scoring, naming: shippedScoring.naming });
+  } catch {
+    return { name: def.name, effect: null, base: null, rank: sc.rank, source: null };
+  }
+}
+
+// Turning Auto-name on keeps the card's own noun and length: Acid Splash stays a "... Splash".
+function startAutoName(def) {
+  const words = nameWords(def.name);
+  def._autoNameCore = def._custom && /^New Custom Card$/.test(def.name) ? '' : (words[words.length - 1] || '');
+  def._autoNameBudget = Math.max(AUTO_NAME_MIN_WORDS, words.length);
+}
+
+// The title box of a card face and the smallest font its fitter will use, measured once from a rendered
+// card (every illustrated card shares the frame). A candidate fits when it fits at that smallest font.
+let titleMetric = null;
+function measureTitleMetric() {
+  if (titleMetric) return titleMetric;
+  const node = document.querySelector('.studio-card-stage [data-card-binding="name"], #inspector-card-preview [data-card-binding="name"]');
+  const face = node?.closest('.illustrated-card-face');
+  if (!node || !face || !node.clientWidth) return null;
+  const scale = face.clientWidth / Number(face.dataset.designWidth || face.clientWidth);
+  const style = getComputedStyle(node);
+  titleMetric = {
+    fontFamily: style.fontFamily,
+    fontWeight: style.fontWeight,
+    minFontPx: Number(node.dataset.minFont || parseFloat(style.fontSize) / scale) * scale,
+    boxPx: node.clientWidth,
+  };
+  return titleMetric;
+}
+
+let measureCanvas = null;
+function titleFits(text) {
+  const metric = measureTitleMetric();
+  if (!metric) return true;
+  measureCanvas ||= document.createElement('canvas');
+  const ctx = measureCanvas.getContext('2d');
+  ctx.font = `${metric.fontWeight} ${metric.minFontPx}px ${metric.fontFamily}`;
+  return ctx.measureText(text).width <= metric.boxPx;
+}
+
+function wordFor(table, key) {
+  return state.scoring.naming?.card?.[table]?.[key] || null;
+}
+
+// The name Auto-name gives a card now.
+function autoNameFor(def, sc = scoreCardEntry(def)) {
+  const parts = nameParts(def, sc);
+  const ranked = Object.entries(sc.parts || {})
+    .filter(([key, value]) => value > 0 && !NON_NAME_PARTS.has(key))
+    .sort((a, b) => b[1] - a[1])
+    .map(([key]) => key);
+  const adjectiveKey = parts.source && parts.source !== 'fallback' ? parts.source : ranked[0];
+  const adjective = (adjectiveKey && wordFor('prefix', adjectiveKey)) || parts.effect || null;
+  const suffixKey = ranked.find((key) => key !== adjectiveKey && wordFor('suffix', key));
+  const suffix = suffixKey ? wordFor('suffix', suffixKey) : null;
+  const core = def._autoNameCore || parts.base || 'Card';
+  const numeral = romanFor(sc.rank);
+  const withNumeral = (words) => [...words, numeral].filter(Boolean).join(' ');
+  const budget = Math.max(AUTO_NAME_MIN_WORDS, def._autoNameBudget || AUTO_NAME_MIN_WORDS);
+  const candidates = [];
+  if (adjective && suffix && budget >= AUTO_NAME_SUFFIX_MIN_WORDS) candidates.push(withNumeral([adjective, core, 'of', suffix]));
+  if (adjective) candidates.push(withNumeral([adjective, core]));
+  candidates.push(withNumeral([core]));
+  // Measure, don't count: drop the suffix, then the adjective, until the title fits. The numeral stays.
+  return candidates.find((candidate) => titleFits(candidate)) || candidates[candidates.length - 1];
+}
+
+// Renames every auto-named card whose name has moved. Runs after every mutation (from saveDraft and
+// mutateSelectedCard), so weight changes, slot loads and uploads rename too, inside the same undo step.
+function syncAutoNames({ render = true } = {}) {
+  const renamed = [];
+  for (const def of state.cards) {
+    if (!def._autoName) continue;
+    const name = autoNameFor(def);
+    if (name === def.name) continue;
+    def.name = name;
+    renamed.push(def);
+  }
+  if (!render || !renamed.length) return renamed;
+  for (const def of renamed) updateCardTileInPlace(def.id);
+  const selected = selectedCardDef();
+  if (selected && renamed.includes(selected)) {
+    const nameInput = document.getElementById('edit-name');
+    if (document.activeElement !== nameInput) nameInput.value = selected.name;
+    document.getElementById('inspector-sheet-title').textContent = selected.name;
+    renderCardWithLayers(selected, document.getElementById('inspector-card-preview'));
+    renderNameHint(selected);
+  }
+  return renamed;
+}
+
+// The muted line under Name: what the name is built from.
+function renderNameHint(def, sc = scoreCardEntry(def)) {
+  const hint = document.getElementById('name-hint');
+  if (!hint) return;
+  const parts = nameParts(def, sc);
+  const source = parts.source && parts.source !== 'fallback' ? parts.source : 'no main effect';
+  hint.textContent = `From ${source} · ${def._autoNameCore || parts.base || 'Card'} · ${RankName(sc.rank)}`;
+}
+
+// The game draws core cards from the profile's own card list (projectGameCard in src/model/gameProfile.js),
+// not from the registry, so an edited card would show its shipped face. Project the edited copy the same
+// way, from a profile whose card list holds it, and hand the result to renderCard as its definition.
+function projectEditedCard(def) {
+  const profile = refContextFor(def).run.gameProfile;
+  const content = profile?.content;
+  if (!content) return def;
+  const authored = Object.fromEntries(Object.entries(def).filter(([key]) => !STUDIO_ONLY_FIELDS.includes(key)));
+  // A resource variant for this card would overwrite the edited costs, so leave it out.
+  const { [def.id]: _shippedVariants, ...otherVariants } = content.resourceVariants || {};
+  const subject = { gameProfile: { ...profile, content: { ...content, cards: [authored], resourceVariants: otherVariants } } };
+  try {
+    return Profile.projectGameCard(subject, def.id) || def;
+  } catch {
+    return def;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Card text: tokens in textTemplate that no longer resolve
+// ---------------------------------------------------------------------------
+// The game fills {tokens} in a card's text from its effects (staticCardTokens). A token whose effect was
+// removed has nothing to fill it, so the face would print the raw {token}. The same function decides here.
+function staleTextTokens(def) {
+  const template = def.textTemplate || '';
+  if (!template.includes('{')) return [];
+  let tokens;
+  try {
+    tokens = staticCardTokens(projectEditedCard(def), studioRegistries, refContextFor(def).run);
+  } catch {
+    return [];
+  }
+  const mentioned = [...new Set([...template.matchAll(tokenRe())].map((match) => match[1]))];
+  return mentioned.filter((token) => tokens[token] === undefined || tokens[token] === null);
+}
+
+function tokenLabel(token) {
+  const root = token.split('.')[0];
+  const status = registries.statuses?.has?.(root) ? registries.statuses.get(root) : null;
+  return status?.name || capitalise(root);
+}
+
+// Only edited cards can have gone stale; shipped cards are checked by the content build.
+function hasStaleText(def) {
+  return Boolean(def._edited || def._custom) && staleTextTokens(def).length > 0;
+}
+
+const STALE_TEXT_CHIP = '<span class="text-warn-chip" title="Card text has a {token} with no matching effect">⚠ text</span>';
+
+function renderTextWarnings(def) {
+  const warnings = staleTextTokens(def).map((token) => `Card text mentions {${token}}, but the card has no ${tokenLabel(token)} effect.`);
+  document.getElementById('text-warnings').innerHTML = warnings.map((line) => `<div>${esc(line)}</div>`).join('');
+}
+
+// Plain clauses + Add Feature appends when the card text does not mention the new token yet.
+function clauseForNewFeature(kind, key) {
+  if (kind === 'status') return { token: key, clause: `Apply {${key}} ${tokenLabel(key)}.` };
+  if (kind === 'effect' && key === 'damage') return { token: 'damage', clause: 'Deal {damage} damage.' };
+  if (kind === 'effect' && key === 'block') return { token: 'block', clause: 'Gain {block} Block.' };
+  if (kind === 'effect' && key === 'draw') return { token: 'draw', clause: 'Draw {draw}.' };
+  return null;
+}
+
+function appendClauseForFeature(def, kind, key) {
+  const addition = clauseForNewFeature(kind, key);
+  if (!addition) return;
+  const template = def.textTemplate || '';
+  if (template.includes(`{${addition.token}}`)) return;
+  def.textTemplate = `${template.trim()} ${addition.clause}`.trim();
+}
+
+// The other half of appendClauseForFeature: removing an effect drops each sentence of the card text whose
+// {tokens} the card no longer has any of, so a removed Frail stops showing on the face. A sentence that
+// still names a live token stays, and its stale token is flagged under the text box instead.
+function dropStaleTextClauses(def) {
+  const stale = new Set(staleTextTokens(def));
+  if (!stale.size) return;
+  const sentences = (def.textTemplate || '').split(/(?<=[.!?])\s+/);
+  const kept = sentences.filter((sentence) => {
+    const tokens = [...sentence.matchAll(tokenRe())].map((match) => match[1]);
+    return !tokens.length || tokens.some((token) => !stale.has(token));
+  });
+  def.textTemplate = kept.join(' ').trim();
+}
+
+// One card face path for the gallery, inspector, Art preview and sandbox hand: the card under its live id
+// (so edits reach the face and the engine), projected the way the game projects profile cards, drawn under
+// its class's reference run, then fitted.
 function renderCardWithLayers(def, container) {
   container.innerHTML = '';
   const liveId = liveCardIdFor(def);
   try {
     const { run } = refContextFor(def);
     const liveDef = studioCardOverrides.get(liveId) || def;
-    const el = renderCard(studioRegistries, { cardId: liveId }, { inspection: false, level: 'inspect', definition: liveDef, rules: run, showArt: true });
+    const definition = liveId === def.id ? liveDef : projectEditedCard(liveDef);
+    const el = renderCard(studioRegistries, { cardId: liveId }, { inspection: false, level: 'inspect', definition, rules: run, showArt: true });
     if (el) {
       for (const [k, v] of Object.entries(CARD_SHAPE_PROPS)) el.style.setProperty(k, v);
       container.appendChild(el);
@@ -434,15 +862,6 @@ function computeShiftCount() {
   return shifted;
 }
 
-function tileMetaHtml(def, sc, shiftHtml) {
-  return `<div class="studio-card-meta-title" title="${esc(def.name)}">${esc(def.name)}</div>
-    <div class="studio-card-meta-row">
-      <span class="cp-chip">CP ${sc.cp}${sc.overridden ? '*' : ''}</span>
-      <span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>
-      ${shiftHtml}
-    </div>`;
-}
-
 function updateCardTileInPlace(cardId) {
   const tile = document.querySelector(`.studio-card-tile[data-card-id="${CSS.escape(cardId)}"]`);
   const def = state.cards.find((c) => c.id === cardId);
@@ -454,6 +873,17 @@ function updateCardTileInPlace(cardId) {
     : '';
   renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
   tile.querySelector('.studio-card-meta').innerHTML = tileMetaHtml(def, sc, shiftHtml);
+}
+
+// Tile caption: the name on its own line, then CP, rank and act, the rank shift, and the stale-text marker.
+function tileMetaHtml(def, sc, shiftHtml) {
+  return `<div class="studio-card-meta-title" title="${esc(def.name)}">${esc(def.name)}</div>
+    <div class="studio-card-meta-row">
+      <span class="cp-chip">CP ${esc(sc.cp)}${sc.overridden ? '*' : ''}</span>
+      <span class="rank-chip">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}</span>
+      ${shiftHtml}
+      ${hasStaleText(def) ? STALE_TEXT_CHIP : ''}
+    </div>`;
 }
 
 function renderCardsGrid() {
@@ -490,12 +920,16 @@ function renderCardsGrid() {
     tile.dataset.cardId = def.id;
     tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta">${tileMetaHtml(def, sc, shiftHtml)}</div>`;
     renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
-    tile.addEventListener('click', () => {
+    tile.tabIndex = 0;
+    const selectTile = () => {
       state.selectedCardId = def.id;
       document.querySelectorAll('.studio-card-tile.is-selected').forEach((n) => n.classList.remove('is-selected'));
       tile.classList.add('is-selected');
       renderInspector();
-    });
+      if (isNarrowLayout()) openInspectorSheet();
+    };
+    tile.addEventListener('click', selectTile);
+    tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTile(); } });
     grid.appendChild(tile);
   }
   computeShiftCount();
@@ -547,18 +981,18 @@ function renderInspector() {
   state.selectedCardId = def.id;
 
   renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
+  document.getElementById('inspector-sheet-title').textContent = def.name || '';
   const sc = scoreCardEntry(def);
-  const baseRank = state.baselineRanks[def.id];
-  const shiftTxt = (baseRank !== undefined && baseRank !== sc.rank) ? ` (was ${RankName(baseRank)})` : '';
-  document.getElementById('inspector-score-summary').innerHTML = `
-    <div class="inspector-score-big">CP ${sc.cp}</div>
-    <div><strong>${esc(RankName(sc.rank))}</strong> · ${esc(actForRank(sc.rank))}${esc(shiftTxt)}</div>
-    <div class="studio-muted">Raw: ${sc.raw} · Rarity: ${esc(sc.rarity)}${sc.overridden ? ' · Overridden' : ''}</div>
-  `;
+  renderScoreSummary(def, sc);
 
   document.getElementById('edit-name').value = def.name || '';
-  document.getElementById('btn-delete-card')?.classList.toggle('hidden', !def._custom);
-  document.getElementById('btn-reset-card')?.classList.toggle('hidden', !def._edited || def._custom);
+  document.getElementById('toggle-auto-name').checked = Boolean(def._autoName);
+  renderNameHint(def, sc);
+  document.getElementById('btn-delete-card').classList.toggle('hidden', !def._custom);
+  document.getElementById('btn-reset-card').classList.toggle('hidden', !def._edited || Boolean(def._custom));
+  const textInput = document.getElementById('edit-text');
+  if (textInput.value !== (def.textTemplate || '')) textInput.value = def.textTemplate || '';
+  renderTextWarnings(def);
   document.getElementById('edit-type').value = def.type || 'attack';
   document.getElementById('edit-class').value = def.class || 'colorless';
   document.getElementById('edit-rarity').value = def.rarity || 'common';
@@ -577,40 +1011,48 @@ function renderInspector() {
   document.getElementById('edit-override-rank').value = Number.isInteger(ov?.rank) ? ov.rank : '';
   document.getElementById('edit-override-cp').value = Number.isFinite(ov?.cp) ? ov.cp : '';
 
-  // Active features list (only what is on this card!)
+  // Active features list (only what is on this card). Each row carries a score chip.
   const list = document.getElementById('active-features-list');
   list.innerHTML = '';
+  const chips = featureScoreChips(featureScoreRows(def), sc.parts || {});
+  let rowIndex = 0;
+  const chipFor = () => chipHtml(chips[rowIndex++]);
 
   (def.effects || []).forEach((eff, idx) => {
     if (eff.op === 'loseHp') return;
     const row = document.createElement('div');
     row.className = 'feature-row';
     if (eff.op === 'applyStatus') {
+      // A formula-driven count has no number to edit.
       const stacksIsNum = eff.stacks == null || (typeof eff.stacks === 'number' && Number.isFinite(eff.stacks));
       const stacksCtrl = stacksIsNum
         ? `<input type="number" min="1" max="30" value="${esc(safeNum(eff.stacks, 1))}" data-eff-stacks="${idx}" />`
-        : `<span class="studio-muted" title="Formula-computed stack count">formula</span>`;
+        : '<span class="studio-muted" title="Formula-computed stack count">formula</span>';
       row.innerHTML = `
-        <span>Status: <strong>${esc(eff.status)}</strong></span>
-        <div>
+        <span class="feature-label" title="${esc(featureTitleText(describeFeature('status', eff.status)))}">Status: <strong>${esc(eff.status)}</strong> ${infoButtonHtml()}</span>
+        <div class="feature-controls">
+          ${chipFor()}
           ${stacksCtrl}
           <select data-eff-target="${idx}">
             <option value="enemy" ${eff.target !== 'self' ? 'selected' : ''}>Enemy</option>
             <option value="self" ${eff.target === 'self' ? 'selected' : ''}>Self</option>
           </select>
           <button class="s-btn s-btn-sm" data-rm-eff="${idx}">×</button>
-        </div>`;
+        </div>
+        ${infoLineHtml(describeFeature('status', eff.status))}`;
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
       const amtCtrl = amtIsNum
         ? `<input type="number" min="1" max="99" value="${esc(safeNum(eff.amount, 1))}" data-eff-amt="${idx}" />`
-        : `<span class="studio-muted" title="Formula-computed value">formula</span>`;
+        : '<span class="studio-muted" title="Formula-computed value">formula</span>';
       row.innerHTML = `
-        <span>Effect: <strong>${esc(eff.op)}</strong></span>
-        <div>
+        <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(eff.op)}</strong> ${infoButtonHtml()}</span>
+        <div class="feature-controls">
+          ${chipFor()}
           ${amtCtrl}
           <button class="s-btn s-btn-sm" data-rm-eff="${idx}">×</button>
-        </div>`;
+        </div>
+        ${infoLineHtml(describeFeature('effect', eff.op))}`;
     }
     list.appendChild(row);
   });
@@ -620,15 +1062,16 @@ function renderInspector() {
     row.className = 'feature-row';
     const w = state.scoring.keywords?.[kw];
     const note = w ? (w.flat !== undefined ? `${w.flat}` : `×${w.multiplier}`) : '';
-    row.innerHTML = `<span>Keyword: <strong>${esc(kw)}</strong> <span class="studio-muted">${esc(note)}</span></span><button class="s-btn s-btn-sm" data-rm-kw="${idx}">×</button>`;
+    const info = describeFeature('keyword', kw);
+    row.innerHTML = `<span class="feature-label" title="${esc(featureTitleText(info))}">Keyword: <strong>${esc(kw)}</strong> <span class="studio-muted">${esc(note)}</span> ${infoButtonHtml()}</span><div class="feature-controls">${chipFor()}<button class="s-btn s-btn-sm" data-rm-kw="${idx}">×</button></div>${infoLineHtml(info)}`;
     list.appendChild(row);
   });
 
-  const shownTags = (def.tags || []).filter((t) => !t.startsWith('camp:') && !t.startsWith('classification.') && !t.startsWith('targeting'));
-  shownTags.forEach((tag) => {
+  shownTagsOf(def).forEach((tag) => {
     const row = document.createElement('div');
     row.className = 'feature-row';
-    row.innerHTML = `<span>Tag: <strong>${esc(tag)}</strong></span><button class="s-btn s-btn-sm" data-rm-tag="${esc(tag)}">×</button>`;
+    const info = describeFeature('tag', tag);
+    row.innerHTML = `<span class="feature-label" title="${esc(featureTitleText(info))}">Tag: <strong>${esc(tag)}</strong> ${infoButtonHtml()}</span><div class="feature-controls">${chipFor()}<button class="s-btn s-btn-sm" data-rm-tag="${esc(tag)}">×</button></div>${infoLineHtml(info)}`;
     list.appendChild(row);
   });
 
@@ -636,8 +1079,238 @@ function renderInspector() {
     list.innerHTML = '<div class="studio-muted">No active features. Use "+ Add Feature" above.</div>';
   }
 
-  // Score breakdown math table (explicit formula for every term)
+  renderCostChips(def, sc);
+  renderScoreParts(def, sc);
+}
+
+// ---------------------------------------------------------------------------
+// Score chips: how much each feature row adds to the card's raw score
+// ---------------------------------------------------------------------------
+// ScoreCard part key (src/model/combatPower.js) and scoring.effects weight entry for each effect op.
+const EFFECT_SCORE_KEYS = Object.freeze({
+  damage:         { part: 'damage',     weight: 'damage' },
+  block:          { part: 'block',      weight: 'block' },
+  ward:           { part: 'block',      weight: 'block' },
+  poiseDamage:    { part: 'poise',      weight: 'poiseDamage' },
+  draw:           { part: 'draw',       weight: 'draw' },
+  heal:           { part: 'heal',       weight: 'heal' },
+  discard:        { part: 'discard',    weight: 'discard' },
+  restoreStamina: { part: 'SP restore', weight: 'restoreStamina' },
+  gainEnergy:     { part: 'SP restore', weight: 'restoreStamina' },
+  restoreMana:    { part: 'MP restore', weight: 'restoreMana' },
+  removeStatus:   { part: 'cleanse',    weight: 'removeStatus' },
+  applyReflect:   { part: 'reflect',    weight: 'applyReflect' },
+  pullEnemy:      { part: 'pull',       weight: 'pullEnemy' },
+  swapRows:       { part: 'pull',       weight: 'pullEnemy' },
+  moveEngagement: { part: 'move',       weight: 'moveEngagement' },
+});
+// Effects the scorer counts once per effect, whatever the amount (see cardDefToFace).
+const COUNTED_ONCE_OPS = new Set(['removeStatus', 'pullEnemy', 'swapRows', 'moveEngagement']);
+// Statuses ScoreCard values with a closed form instead of weight x stacks (exactStatus in combatPower.js).
+const EXACT_SCORED_STATUSES = new Set(['burn', 'venom', 'shock', 'chill']);
+const SCORE_CHIP_TITLE = 'raw score points (before the rarity discount)';
+const SCORE_MATCH_TOLERANCE = 0.05;
+
+function shownTagsOf(def) {
+  return (def.tags || []).filter((t) => !t.startsWith('camp:') && !t.startsWith('classification.') && !t.startsWith('targeting'));
+}
+
+function formatScore(value) {
+  const rounded = Math.round(value * 10) / 10;
+  if (rounded === 0) return '0';
+  return `${rounded > 0 ? '+' : ''}${rounded}`;
+}
+
+function scoreClass(value) {
+  const rounded = Math.round(value * 10) / 10;
+  return rounded > 0 ? 'is-pos' : rounded < 0 ? 'is-neg' : 'is-zero';
+}
+
+// One entry per Active Features row, in render order: which part it feeds and how to explain it.
+function featureScoreRows(def) {
+  const rows = [];
+  for (const eff of def.effects || []) {
+    if (eff.op === 'loseHp') continue;
+    if (eff.op === 'applyStatus') {
+      const status = state.scoring.statuses?.[eff.status];
+      const selfTarget = eff.target === 'self';
+      const helpsPlayer = status ? (status.target === 'self') === selfTarget : true;
+      rows.push({
+        part: status ? eff.status : null,
+        count: eff.stacks ?? 1,
+        unitWeight: status?.weight,
+        per: 1,
+        sign: helpsPlayer ? 1 : -1,
+        exact: EXACT_SCORED_STATUSES.has(eff.status),
+        capAt: state.scoring.cardModel?.decayOneStatuses?.includes(eff.status) ? state.scoring.model?.R : null,
+      });
+      continue;
+    }
+    const keys = EFFECT_SCORE_KEYS[eff.op];
+    const effectWeight = keys ? state.scoring.effects?.[keys.weight] : null;
+    const counted = eff.op === 'removeStatus' && eff.target !== 'self' ? 0 : COUNTED_ONCE_OPS.has(eff.op) ? 1 : (eff.amount ?? 1) * (eff.op === 'damage' ? (eff.hits || 1) : 1);
+    rows.push({
+      part: keys?.part ?? null,
+      count: counted,
+      unitWeight: effectWeight?.weight,
+      per: effectWeight?.per ?? 1,
+      sign: 1,
+    });
+  }
+  for (const kw of def.keywords || []) rows.push({ part: kw, count: null });
+  for (const tag of shownTagsOf(def)) rows.push({ part: tag, count: null });
+  return rows;
+}
+
+// Turns rows into chips. The total always comes from ScoreCard's parts, so a chip matches the real score.
+// Rows sharing a part key (two damage effects) show the total on the first row only.
+function featureScoreChips(rows, parts) {
+  const firstRowForPart = new Map();
+  return rows.map((row, index) => {
+    if (!row.part) return null;
+    if (firstRowForPart.has(row.part)) return { count: row.count, shared: true };
+    firstRowForPart.set(row.part, index);
+    const total = parts[row.part] || 0;
+    return { count: row.count, total, title: scoreChipTitle(row, rows, total) };
+  });
+}
+
+function scoreChipTitle(row, rows, total) {
+  const totalText = `${formatScore(total)} ${SCORE_CHIP_TITLE}`;
+  if (row.count === null || row.unitWeight === undefined) return `${totalText[0].toUpperCase()}${totalText.slice(1)}`;
+  if (row.exact) return `${row.count} stacks = ${totalText} (grows faster per stack)`;
+  const sameRows = rows.filter((r) => r.part === row.part);
+  const count = sameRows.reduce((sum, r) => sum + r.count, 0);
+  const expected = sameRows.reduce((sum, r) => sum + r.sign * r.unitWeight * r.count / r.per, 0);
+  const capped = row.capAt && count > row.capAt;
+  const adjusted = Math.abs(expected - total) > SCORE_MATCH_TOLERANCE;
+  const note = capped ? ' (capped)' : adjusted ? ' (adjusted by targeting)' : '';
+  return `${row.unitWeight} per ${row.per} × ${count} = ${totalText}${note}`;
+}
+
+function chipHtml(chip) {
+  if (!chip) return '';
+  const countHtml = chip.count === null || chip.count === undefined ? '' : `<span class="feature-count">×${chip.count}</span>`;
+  if (chip.shared) return `<span class="feature-score is-zero" title="Counted in the row above">${countHtml}<span class="feature-total">in ↑</span></span>`;
+  return `<span class="feature-score ${scoreClass(chip.total)}" title="${esc(chip.title)}">${countHtml}<span class="feature-total">${formatScore(chip.total)}</span></span>`;
+}
+
+// Score chips beside the SP, MP and HP cost inputs in Card Basics.
+function renderCostChips(def, sc) {
+  const parts = sc.parts || {};
+  const hpEffect = (def.effects || []).find((e) => e.op === 'loseHp');
+  const loseHpWeight = state.scoring.effects?.loseHp;
+  const costRows = [
+    { id: 'cost-score-sp', part: 'SP', count: def.staminaCost ?? def.cost ?? 0, unitWeight: state.scoring.costs?.sp?.weight, per: 1, sign: 1 },
+    { id: 'cost-score-mp', part: 'MP', count: def.manaCost ?? 0, unitWeight: state.scoring.costs?.mp?.weight, per: 1, sign: 1 },
+    { id: 'cost-score-hp', part: 'HP cost', count: hpEffect?.amount ?? 0, unitWeight: loseHpWeight?.weight, per: loseHpWeight?.per ?? 1, sign: 1 },
+  ];
+  for (const row of costRows) {
+    const el = document.getElementById(row.id);
+    if (!el) continue;
+    const total = parts[row.part] || 0;
+    el.outerHTML = chipHtml({ count: row.count, total, title: scoreChipTitle(row, [row], total) }).replace('<span class="feature-score', `<span id="${row.id}" class="feature-score`);
+  }
+}
+
+function renderScoreSummary(def, sc) {
+  const baseRank = state.baselineRanks[def.id];
+  const shiftTxt = (baseRank !== undefined && baseRank !== sc.rank) ? ` (was ${RankName(baseRank)})` : '';
+  document.getElementById('inspector-score-summary').innerHTML = `
+    <div class="inspector-score-big">CP ${sc.cp}</div>
+    <div><strong>${esc(RankName(sc.rank))}</strong> · ${esc(actForRank(sc.rank))}${esc(shiftTxt)}</div>
+    <div class="studio-muted">Raw: ${sc.raw} · Rarity: ${esc(sc.rarity)}${sc.overridden ? ' · Overridden' : ''}</div>
+  `;
+}
+
+const TARGET_LABELS = Object.freeze({
+  enemy: 'Single enemy',
+  allEnemies: 'All enemies',
+  randomEnemy: 'Random enemy',
+  self: 'Self',
+  ally: 'Ally',
+  allAllies: 'All allies',
+});
+const NO_SCORE_EFFECT_TITLE = "Doesn't change the score; used for naming and rewards";
+
+function rarityDiscount(rarity, scoringRef = state.scoring) {
+  // Same lookup as CombatPower: rarity.discount wins over items.rarityDiscount.
+  const discounts = { ...(scoringRef.items?.rarityDiscount || {}), ...(scoringRef.rarity?.discount || {}) };
+  return safeNum(discounts[rarity], 0);
+}
+
+// How much one property of the card moves its raw score: rescore a copy with that property set to a
+// neutral value and take the difference. Zero means ScoreCard does not read it.
+function rawScoreDelta(face, neutralize) {
+  const neutral = { ...face, tags: [...face.tags], kw: [...face.kw], statuses: face.statuses.map((s) => [...s]) };
+  neutralize(neutral);
+  return ScoreCard(face, state.scoring).raw - ScoreCard(neutral, state.scoring).raw;
+}
+
+function breakdownPill(text, value, title) {
+  const tone = value === null ? 'zero' : value > 0 ? 'pos' : value < 0 ? 'neg' : 'zero';
+  return `<span class="part-pill ${tone}" title="${esc(title || '')}">${esc(text)}</span>`;
+}
+
+function signedDelta(value) {
+  return value === 0 ? '±0' : formatScore(value);
+}
+
+// The Card row: rarity, targeting and the properties that do (or do not) move the score.
+function cardBreakdownPills(def, sc) {
+  const S = state.scoring;
+  const face = sc.face;
+  const pills = [];
+  const discount = rarityDiscount(sc.rarity);
+  pills.push(breakdownPill(`${capitalise(sc.rarity)} −${discount}`, discount ? -discount : 0, `Rarity discount: CP = raw − ${discount}`));
+
+  const target = getCardTarget(def);
+  const areaTag = S.cardModel?.areaTag || 'targeting:area';
+  const isArea = face.tags.includes(areaTag);
+  const targetDelta = rawScoreDelta(face, (neutral) => {
+    neutral.tags = neutral.tags.filter((t) => !t.startsWith('targeting:') && !t.startsWith('targeting.'));
+    neutral.tags.push('targeting:single');
+  });
+  const targetCount = isArea ? ` ×${S.model?.ENEMIES ?? 2}` : '';
+  pills.push(breakdownPill(`${TARGET_LABELS[target] || capitalise(target)}${targetCount} ${signedDelta(targetDelta)}`, targetDelta,
+    targetDelta ? 'Change against the same card hitting a single enemy' : NO_SCORE_EFFECT_TITLE));
+
+  const neutralProperties = [
+    ['Class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
+    ['Type', capitalise(face.type), (neutral) => { neutral.type = 'skill'; }],
+    ['Camp', capitalise(face.camp), (neutral) => { neutral.camp = 'physical'; }],
+  ];
+  for (const [, label, neutralize] of neutralProperties) {
+    const delta = rawScoreDelta(face, neutralize);
+    pills.push(breakdownPill(`${label} ${signedDelta(delta)}`, delta, delta ? 'Change against the neutral choice' : NO_SCORE_EFFECT_TITLE));
+  }
+  if (sc.overridden) pills.push(breakdownPill(`Override → ${RankName(sc.rank)} / CP ${sc.cp}`, null, 'A scoring override sets this card\'s rank or CP'));
+  return pills.join('');
+}
+
+function renderScoreParts(def, sc) {
   const partsEl = document.getElementById('score-parts-list');
+  const baseRank = state.baselineRanks[def.id];
+  const shifted = baseRank !== undefined && baseRank !== sc.rank;
+  const discount = rarityDiscount(sc.rarity);
+  const raw = ScoreCard(sc.face, state.scoring).raw;
+  const baseCp = raw - discount;
+  const rankTitle = `${actForRank(sc.rank)}${shifted ? ` (was ${RankName(baseRank)})` : ''}`;
+  const partPills = Object.entries(sc.parts || {})
+    .map(([k, v]) => breakdownPill(`${k}: ${formatScore(v)}`, Math.round(v * 10) / 10, featureTitleText(describePartKey(k))))
+    .join('');
+  const formula = `Raw ${raw} − rarity ${discount} = CP ${baseCp} → ${RankName(RankOf(baseCp, state.scoring))}`
+    + (sc.overridden ? `; override → CP ${sc.cp}, ${RankName(sc.rank)}` : '');
+  partsEl.innerHTML = `
+    <span class="part-pill rank-pill" title="${esc(rankTitle)}">Rank: ${esc(RankName(sc.rank))} (CP ${esc(sc.cp)})${shifted ? ` (was ${esc(RankName(baseRank))})` : ''}</span>
+    <div class="breakdown-row" data-breakdown="card"><span class="breakdown-label">Card</span>${cardBreakdownPills(def, sc)}</div>
+    <div class="breakdown-row" data-breakdown="parts"><span class="breakdown-label">Parts</span>${partPills || '<span class="studio-muted">None</span>'}</div>
+    <div class="breakdown-formula" id="breakdown-formula">${esc(formula)}</div>
+    <details class="breakdown-math"><summary>Math</summary>${scoreMathTableHtml(sc)}</details>`;
+}
+
+// Every scoring term with the formula behind it, then raw score, rarity discount and CP.
+function scoreMathTableHtml(sc) {
   const S = state.scoring;
   const area = (sc.face.tags || []).includes(S.cardModel?.areaTag || 'targeting:area') ? (S.model?.ENEMIES || 2) : 1;
   const formulaNote = (k) => {
@@ -651,64 +1324,141 @@ function renderInspector() {
     if (S.statuses?.[k]) return `status over ${S.model?.R || 3}R${area > 1 && S.statuses[k].target === 'enemy' ? ` × ${area} AoE` : ''}`;
     return 'weight';
   };
-  const disc = safeNum(S.rarity?.discount?.[sc.rarity] ?? S.items?.rarityDiscount?.[sc.rarity], 0);
+  const discount = safeNum(S.rarity?.discount?.[sc.rarity] ?? S.items?.rarityDiscount?.[sc.rarity], 0);
   const rowsHtml = Object.entries(sc.parts || {}).map(([k, v]) => {
     const val = Math.round(safeNum(v, 0) * 10) / 10;
     return `<tr><td>${esc(k)}</td><td class="formula">${esc(formulaNote(k))}</td><td class="num ${val >= 0 ? 'pos' : 'neg'}">${val > 0 ? '+' : ''}${esc(val)}</td></tr>`;
   }).join('');
-  partsEl.innerHTML = `<table class="score-math-table"><tbody>
+  return `<table class="score-math-table"><tbody>
     ${rowsHtml}
     <tr class="total"><td>Raw score</td><td class="formula">rounded sum</td><td class="num">${esc(sc.raw)}</td></tr>
-    <tr><td>Rarity discount</td><td class="formula">${esc(sc.rarity)} (−${esc(disc)})</td><td class="num neg">${disc ? `−${esc(disc)}` : '0'}</td></tr>
+    <tr><td>Rarity discount</td><td class="formula">${esc(sc.rarity)} (−${esc(discount)})</td><td class="num neg">${discount ? `−${esc(discount)}` : '0'}</td></tr>
     <tr class="total"><td>Combat Power (CP)</td><td class="formula">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}${sc.overridden ? ' (override)' : ''}</td><td class="num">${esc(sc.cp)}</td></tr>
   </tbody></table>`;
 }
 
-function rebuildTextTemplate(def) {
+// A plain text written from the card's effects. Used by "Write from effects" and, while the card text's
+// Auto toggle is on, after every feature edit; with Auto off the card text is the designer's own.
+function textFromEffects(def) {
   const parts = [];
   const area = (def.tags || []).includes('targeting:area') ? ' to ALL enemies' : '';
   for (const e of def.effects || []) {
     const amt = typeof e.amount === 'number' ? e.amount : 1;
     if (e.op === 'damage') parts.push(`Deal {damage} damage${e.hits > 1 ? ` ${e.hits} times` : ''}${area}.`);
-    else if (e.op === 'block') parts.push(`Gain {block} Block.`);
+    else if (e.op === 'block') parts.push('Gain {block} Block.');
     else if (e.op === 'ward') parts.push(`Gain ${amt} Ward.`);
     else if (e.op === 'gainBarrier') parts.push(`Gain ${amt} Barrier.`);
     else if (e.op === 'poiseDamage') parts.push(`Deal {poiseDamage} Poise damage${area}.`);
     else if (e.op === 'restorePoise') parts.push(`Restore ${amt} Poise.`);
-    else if (e.op === 'applyStatus') parts.push(`${e.target === 'self' ? 'Gain' : 'Apply'} ${typeof e.stacks === 'number' ? e.stacks : 1} ${e.status}${e.target !== 'self' ? area : ''}.`);
-    else if (e.op === 'draw') parts.push(`Draw ${amt} card${amt === 1 ? '' : 's'}.`);
+    else if (e.op === 'applyStatus') parts.push(`${e.target === 'self' ? 'Gain' : 'Apply'} {${e.status}} ${tokenLabel(e.status)}${e.target !== 'self' ? area : ''}.`);
+    else if (e.op === 'draw') parts.push('Draw {draw}.');
     else if (e.op === 'discard') parts.push(`Discard ${amt} card${amt === 1 ? '' : 's'}.`);
     else if (e.op === 'heal') parts.push(`Heal ${amt} HP.`);
     else if (e.op === 'loseHp') parts.push(`Lose ${amt} HP.`);
     else if (e.op === 'restoreStamina' || e.op === 'gainEnergy') parts.push(`Gain ${amt} SP.`);
     else if (e.op === 'restoreMana') parts.push(`Gain ${amt} MP.`);
     else if (e.op === 'applyReflect') parts.push(`Gain ${amt} Reflect.`);
-    else if (e.op === 'removeStatus') parts.push(`Remove a debuff.`);
-    else if (e.op === 'moveEngagement') parts.push(`Shift engagement.`);
-    else if (e.op === 'pullEnemy') parts.push(`Pull enemy.`);
-    else if (e.op === 'swapRows') parts.push(`Swap rows.`);
+    else if (e.op === 'removeStatus') parts.push('Remove a debuff.');
+    else if (e.op === 'moveEngagement') parts.push('Shift engagement.');
+    else if (e.op === 'pullEnemy') parts.push('Pull enemy.');
+    else if (e.op === 'swapRows') parts.push('Swap rows.');
     else parts.push(`${e.op}${typeof e.amount === 'number' ? ` ${e.amount}` : ''}.`);
   }
-  for (const kw of def.keywords || []) parts.push(kw[0].toUpperCase() + kw.slice(1) + '.');
-  def.textTemplate = parts.join(' ') || 'No effect.';
+  for (const kw of def.keywords || []) parts.push(`${capitalise(kw)}.`);
+  return parts.join(' ') || 'No effect.';
 }
 
-function mutateSelectedCard(fn, { rebuildText = true, autoName = true, recordHistory = true } = {}) {
-  const def = state.cards.find((c) => c.id === state.selectedCardId);
+// Live rescore while a number is being typed or spun: updates chips, summary and breakdown in place,
+// never rebuilding the feature list, so focus and a held spinner survive.
+function refreshInspectorScoreInPlace(def) {
+  const sc = scoreCardEntry(def);
+  renderScoreSummary(def, sc);
+  renderScoreParts(def, sc);
+  renderCostChips(def, sc);
+  const chips = featureScoreChips(featureScoreRows(def), sc.parts || {});
+  const rowsEls = [...document.querySelectorAll('#active-features-list .feature-row')];
+  rowsEls.forEach((rowEl, index) => {
+    const oldChip = rowEl.querySelector('.feature-score');
+    const html = chipHtml(chips[index]);
+    if (oldChip && html) oldChip.outerHTML = html;
+  });
+}
+
+function selectedCardDef() {
+  return state.cards.find((c) => c.id === state.selectedCardId);
+}
+
+// One undo step per burst of typing or spinner ticks; the burst ends after a pause or a new focus.
+function createEditBurst() {
+  let open = false;
+  let timer = null;
+  return {
+    begin() {
+      if (!open) {
+        pushHistory();
+        open = true;
+      }
+      clearTimeout(timer);
+      timer = setTimeout(() => { open = false; }, TEXT_EDIT_BURST_MS);
+    },
+    end() {
+      open = false;
+      clearTimeout(timer);
+    },
+  };
+}
+
+// Applies a typed or spun number without rebuilding the inspector, then rescores in place.
+function applyLiveCardEdit(burst, fn) {
+  const def = selectedCardDef();
+  if (!def) return;
+  // A change event that repeats the value the input already applied records no undo step.
+  const probe = clone(def);
+  fn(probe);
+  if (JSON.stringify(probe) === JSON.stringify(def)) return;
+  burst.begin();
+  fn(def);
+  def._edited = true;
+  applyAutoText(def);
+  refreshInspectorScoreInPlace(def);
+  saveDraft();
+}
+
+// Card text Auto: while on, every feature edit rewrites the card text from its effects, the way Auto
+// renames the card. Typing in the text box turns it off, so the designer's own words are never overwritten.
+const AUTO_TEXT_KEY = 'ashenspire:scoreStudioAutoText:v1';
+const isAutoText = () => Boolean(document.getElementById('toggle-auto-text')?.checked);
+
+function applyAutoText(def) {
+  if (!isAutoText()) return;
+  def.textTemplate = textFromEffects(def);
+  const textInput = document.getElementById('edit-text');
+  if (textInput && document.activeElement !== textInput) textInput.value = def.textTemplate;
+}
+
+// Refreshes what sits outside the feature list once a number edit is committed.
+function commitLiveCardEdit() {
+  const def = selectedCardDef();
+  if (!def) return;
+  renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
+  updateCardTileInPlace(def.id);
+  computeShiftCount();
+}
+
+function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoText = true } = {}) {
+  const def = selectedCardDef();
   if (!def) return;
   if (recordHistory) pushHistory();
   fn(def);
   def._edited = true;
-  if (rebuildText) rebuildTextTemplate(def);
-  if (autoName && document.getElementById('toggle-auto-name')?.checked) {
-    const sc = scoreCardEntry(def);
-    def.name = safeCardName(sc.face, state.scoring);
-  }
-  markDirty();
-  // Async targeted update: refresh only inspector + this one card tile!
+  // Auto text and Auto-name run in the same step as the edit, so one undo reverts all three.
+  if (autoText) applyAutoText(def);
+  if (autoName) syncAutoNames({ render: false });
+  // Targeted update: refresh only the inspector and this one card tile.
   renderInspector();
   updateCardTileInPlace(def.id);
   computeShiftCount();
+  saveDraft({ autoName });
 }
 
 // ---------------------------------------------------------------------------
@@ -755,22 +1505,31 @@ function renderWeights() {
     if (groupF !== 'all' && g.key !== groupF) continue;
     const rows = g.entries.filter((e) => !q || `${g.title} ${e.id} ${e.label}`.toLowerCase().includes(q));
     if (!rows.length) continue;
-    const card = document.createElement('div');
-    card.className = 'weight-group-card';
-    card.innerHTML = `<h3>${esc(g.title)}</h3>`;
+    const card = document.createElement('details');
+    card.className = 'weight-group-card studio-section';
+    card.dataset.section = `weights-${g.key}`;
+    card.open = true;
+    card.innerHTML = `<summary class="section-head"><h3>${esc(g.title)}</h3></summary>`;
+    rememberSection(card);
+    wireInfoButtons(card, '.weight-row');
     for (const r of rows) {
       const numVal = safeNum(r.val, 0);
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
       const modified = baseNum !== undefined && numVal !== baseNum;
       const row = document.createElement('div');
       row.className = 'weight-row' + (modified ? ' is-modified' : '');
-      row.innerHTML = `<span>${esc(r.label)}</span><input type="number" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(`Reset to ${baseNum ?? numVal}`)}">↺</button>`;
+      const kind = WEIGHT_GROUP_KINDS[g.key];
+      const info = kind ? describeFeature(kind, r.id) : null;
+      const labelHtml = info
+        ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
+        : `<span>${esc(r.label)}</span>`;
+      row.innerHTML = `${labelHtml}<input type="number" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(`Reset to ${baseNum ?? numVal}`)}">↺</button>`;
       row.querySelector('input').addEventListener('change', (ev) => {
         const n = Number(ev.target.value);
-        if (!Number.isFinite(n)) return;
+        if (!Number.isFinite(n) || n === numVal) return;
         pushHistory();
         r.set(n);
-        markDirty();
+        saveDraft();
         computeShiftCount();
         renderWeights();
         renderInspector();
@@ -780,17 +1539,67 @@ function renderWeights() {
         if (baseNum === undefined) return;
         pushHistory();
         r.set(baseNum);
-        markDirty();
+        saveDraft();
         computeShiftCount();
         renderWeights();
         renderInspector();
         renderCardsGrid();
       });
+      if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
       card.appendChild(row);
     }
     container.appendChild(card);
   }
+  if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
+  renderDescriptionGaps();
   computeShiftCount();
+}
+
+// Which feature kind each weight group's rows are, for their descriptions.
+const WEIGHT_GROUP_KINDS = Object.freeze({ costs: 'cost', effects: 'effect', statuses: 'status', keywords: 'keyword', tags: 'tag' });
+
+// How many scoring tags have no description from the game or the scoring table.
+function renderDescriptionGaps() {
+  const gaps = document.getElementById('weights-desc-gaps');
+  if (!gaps) return;
+  const missing = Object.keys(state.scoring.tags || {}).filter((k) => k[0] !== '$' && describeFeature('tag', k).missing).length;
+  gaps.textContent = missing ? `${missing} tag${missing === 1 ? ' has' : 's have'} no description` : 'Every tag has a description';
+}
+
+// The Auto-name word tables: per scoring part, the adjective ("Brittle") and the "of" noun ("Frailty").
+function renderNamingWordsGroup(container, query) {
+  ensureNamingWords(state.scoring);
+  const words = state.scoring.naming.card;
+  const keys = [...new Set([...Object.keys(words.prefix || {}), ...Object.keys(words.suffix || {})])].sort();
+  const rows = keys.filter((key) => !query || `naming words ${key} ${words.prefix[key] || ''} ${words.suffix[key] || ''}`.toLowerCase().includes(query));
+  if (!rows.length) return;
+  const group = document.createElement('details');
+  group.className = 'weight-group-card studio-section naming-words-group';
+  group.dataset.section = 'weights-naming';
+  group.open = true;
+  group.innerHTML = '<summary class="section-head"><h3>Naming words</h3></summary><div class="naming-word-row naming-word-head"><span>Part</span><span>Adjective</span><span>"of" noun</span></div>';
+  rememberSection(group);
+  for (const key of rows) {
+    const row = document.createElement('div');
+    row.className = 'naming-word-row';
+    row.innerHTML = `<span>${esc(key)}</span>
+      <input type="text" data-naming-table="prefix" data-naming-key="${esc(key)}" value="${esc(words.prefix[key] || '')}" aria-label="${esc(`Adjective for ${key}`)}" />
+      <input type="text" data-naming-table="suffix" data-naming-key="${esc(key)}" value="${esc(words.suffix[key] || '')}" aria-label="${esc(`"of" noun for ${key}`)}" />`;
+    group.appendChild(row);
+  }
+  group.addEventListener('change', (e) => {
+    const { namingTable, namingKey } = e.target.dataset;
+    if (!namingTable) return;
+    const value = e.target.value.trim();
+    const table = state.scoring.naming.card[namingTable];
+    if ((table[namingKey] || '') === value) return;
+    pushHistory();
+    // An emptied word keeps its row, so it can be filled in again.
+    table[namingKey] = value;
+    saveDraft();
+    renderInspector();
+  });
+  container.appendChild(group);
 }
 
 // ---------------------------------------------------------------------------
@@ -880,7 +1689,7 @@ function renderArtTab() {
       if (!targetLayer) return;
       pushHistory();
       targetLayer.assetId = a.id;
-      markDirty();
+      saveDraft();
       renderArtTab();
       renderCardsGrid();
       renderInspector();
@@ -1037,7 +1846,32 @@ function buildScoringDiff() {
     }
   };
   walk(state.repoScoring, state.scoring);
+  // Naming words the studio only seeded (the repo has none and nobody edited them) are not an edit;
+  // the export dialog still says it will add them.
+  if (namingWordsSeedOnly()) return lines.filter((line) => !NAMING_WORD_PATHS.some((path) => line.startsWith(path)));
   return lines;
+}
+
+const NAMING_WORD_PATHS = ['naming.card.prefix', 'naming.card.suffix'];
+
+function repoHasNamingWords() {
+  const card = state.repoScoring?.naming?.card;
+  return Boolean(card?.prefix && card?.suffix);
+}
+
+function namingWordsSeedOnly() {
+  if (repoHasNamingWords()) return false;
+  const card = state.scoring?.naming?.card;
+  return JSON.stringify(card?.prefix) === JSON.stringify(DEFAULT_NAME_PREFIX)
+    && JSON.stringify(card?.suffix) === JSON.stringify(DEFAULT_NAME_SUFFIX);
+}
+
+// The export dialog's note when export will add the naming word tables to a scoring.json without them.
+function namingWordsExportNote() {
+  if (repoHasNamingWords()) return '';
+  const card = state.scoring?.naming?.card;
+  const count = (table) => Object.values(table || {}).filter(Boolean).length;
+  return `Adds naming words (${count(card?.prefix)} prefixes, ${count(card?.suffix)} suffixes) to naming.card.`;
 }
 
 async function loadFromRepo(customPath = state.repoPath) {
@@ -1046,7 +1880,7 @@ async function loadFromRepo(customPath = state.repoPath) {
     state.scoring = clone(shippedScoring);
     recomputeBaselineRanks();
     syncAllViews();
-    return;
+    return true;
   }
   try {
     const r = await fetch(`/__studio/config?scoringPath=${encodeURIComponent(customPath)}`);
@@ -1056,17 +1890,79 @@ async function loadFromRepo(customPath = state.repoPath) {
       state.repoScoring = clone(data.scoring);
       state.scoring = clone(data.scoring);
     }
-    if (data.artLayers?.layers) state.artLayers = data.artLayers;
+    if (data.artLayers?.layers) {
+      state.artLayers = clone(data.artLayers);
+      state.repoArtLayers = clone(data.artLayers);
+    }
     state.repoPath = data.scoringPath;
     localStorage.setItem(PATH_STORAGE_KEY, state.repoPath);
     document.getElementById('repo-path-input').value = state.repoPath;
     document.getElementById('path-status').textContent = data.scoringExists ? `Loaded: ${data.scoringPath}` : `New path (will create): ${data.scoringPath}`;
+    document.getElementById('draft-status').title = `Repo file: ${data.scoringPath}`;
     recomputeBaselineRanks();
     syncAllViews();
     toast(`Loaded ${data.scoringPath}`);
+    return true;
   } catch (err) {
     document.getElementById('path-status').textContent = `Offline / fallback to shipped scoring (${err.message})`;
+    // Still show the shipped scoring so the studio works without the local server.
+    recomputeBaselineRanks();
+    syncAllViews();
+    return false;
   }
+}
+
+const RANK_SHIFT_LIST_LIMIT = 40;
+
+// Cards whose rank differs from the repo baseline, for the export dialog.
+function rankShifts() {
+  return state.cards
+    .map((card) => ({ card, now: scoreCardEntry(card).rank, before: state.baselineRanks[card.id] }))
+    .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
+}
+
+function renderRankShiftList() {
+  const shifts = rankShifts();
+  document.getElementById('export-modal-shift-count').textContent = shifts.length === 1 ? '1 card changes rank' : `${shifts.length} cards change rank`;
+  const list = document.getElementById('export-modal-shifts');
+  const shown = shifts.slice(0, RANK_SHIFT_LIST_LIMIT).map((shift) => {
+    const direction = shift.now > shift.before ? 'shift-up' : 'shift-down';
+    return `<li><span>${esc(shift.card.name)}</span><span class="${direction}">${esc(RankName(shift.before))} → ${esc(RankName(shift.now))}</span></li>`;
+  });
+  const hidden = shifts.length - RANK_SHIFT_LIST_LIMIT;
+  if (hidden > 0) shown.push(`<li class="studio-muted">+${hidden} more</li>`);
+  list.innerHTML = shown.join('');
+}
+
+function discardSummaryHtml() {
+  const weightChanges = weightChangeCount();
+  const cardsEdited = editedCards().length;
+  const lines = [
+    `${weightChanges} weight change(s)`,
+    `${cardsEdited} edited or new card(s)`,
+    artLayersChanged() ? 'Art layer changes' : 'No art layer changes',
+  ];
+  return `<ul>${lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>`;
+}
+
+async function revertToRepo() {
+  clearTimeout(draftTimer);
+  try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch { /* storage unavailable */ }
+  const keepSelection = state.selectedCardId;
+  studioCardOverrides.clear();
+  state.cards = buildCardList();
+  state.selectedCardId = state.cards.some((c) => c.id === keepSelection) ? keepSelection : state.cards[0]?.id || null;
+  state.undoStack = [];
+  state.redoStack = [];
+  updateUndoButtons();
+  // Revert to the last loaded repo copy first, so a failed reload (server offline) still reverts.
+  state.scoring = clone(state.repoScoring);
+  state.artLayers = clone(state.repoArtLayers);
+  const reloaded = await loadFromRepo(state.repoPath);
+  state.artLayers = clone(state.repoArtLayers);
+  syncAllViews();
+  refreshDirtyStatus();
+  toast(reloaded ? 'Reverted to the repo version' : 'Reverted to the last loaded repo copy (server offline)');
 }
 
 function recomputeBaselineRanks() {
@@ -1087,8 +1983,37 @@ function populateRankFilter() {
   sel.value = prev || 'all';
 }
 
+const capitalise = (text) => (text ? text[0].toUpperCase() + text.slice(1) : text);
+
+// Fills a select with the values that actually occur, keeping the current choice when it still exists.
+function fillSelect(select, values, allLabel = null) {
+  const previous = select.value;
+  select.innerHTML = '';
+  if (allLabel) select.append(new Option(allLabel, 'all'));
+  for (const value of values) select.append(new Option(capitalise(value), value));
+  const keep = previous === 'all' ? Boolean(allLabel) : values.includes(previous);
+  select.value = keep ? previous : (allLabel ? 'all' : values[0] ?? '');
+}
+
+// Type, class and rarity choices come from the loaded cards, so no option matches nothing.
+function populateCardOptions() {
+  const distinct = (field, fallback) => [...new Set(state.cards.map((c) => c[field] || fallback))].sort();
+  const types = distinct('type', 'attack');
+  const classes = distinct('class', 'colorless');
+  const rarities = distinct('rarity', 'common');
+  fillSelect(document.getElementById('filter-type'), types, 'All Types');
+  fillSelect(document.getElementById('filter-class'), classes, 'All Classes');
+  fillSelect(document.getElementById('edit-type'), types);
+  fillSelect(document.getElementById('edit-class'), classes);
+  fillSelect(document.getElementById('edit-rarity'), rarities);
+  const poolText = `Core pool · ${state.cards.length} cards`;
+  document.querySelectorAll('.pool-label').forEach((el) => { el.textContent = poolText; });
+}
+
 function syncAllViews() {
+  ensureNamingWords(state.scoring);
   populateRankFilter();
+  populateCardOptions();
   populateAddFeatureDropdown();
   renderCardsGrid();
   renderInspector();
@@ -1097,9 +2022,187 @@ function syncAllViews() {
 }
 
 // ---------------------------------------------------------------------------
+// Chrome: menus, shortcuts, filter panel, collapsible sections, inspector sheet
+// ---------------------------------------------------------------------------
+const FILTERS_OPEN_KEY = 'ashenspire:scoreStudioFiltersOpen:v1';
+const SECTIONS_KEY = 'ashenspire:scoreStudioSections:v1';
+const NARROW_LAYOUT_QUERY = '(max-width: 900px)';
+
+function readStoredJson(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function writeStoredJson(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
+}
+
+const isNarrowLayout = () => window.matchMedia(NARROW_LAYOUT_QUERY).matches;
+
+function menuParts(menu) {
+  const button = menu.querySelector(':scope > button[aria-controls]');
+  return { button, panel: document.getElementById(button.getAttribute('aria-controls')) };
+}
+
+function closeMenus(except = null) {
+  document.querySelectorAll('.studio-menu').forEach((menu) => {
+    if (menu === except) return;
+    const { button, panel } = menuParts(menu);
+    panel.hidden = true;
+    button.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function anyMenuOpen() {
+  return [...document.querySelectorAll('.studio-menu-panel')].some((panel) => !panel.hidden);
+}
+
+function setupMenus() {
+  document.querySelectorAll('.studio-menu').forEach((menu) => {
+    const { button, panel } = menuParts(menu);
+    button.addEventListener('click', () => {
+      const opening = panel.hidden;
+      closeMenus(menu);
+      panel.hidden = !opening;
+      button.setAttribute('aria-expanded', String(opening));
+      if (opening) panel.querySelector('button, input')?.focus();
+    });
+    // Picking an action closes the menu; the path field, Load and the auto-save toggle keep it open.
+    panel.addEventListener('click', (e) => {
+      if (e.target.closest('button.menu-item')) closeMenus();
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.studio-menu')) closeMenus();
+  });
+}
+
+const TEXT_ENTRY_INPUT_TYPES = new Set(['text', 'search', 'number', 'email', 'url', 'tel', 'password']);
+
+// Fields where the browser's own undo applies to what was typed; checkboxes and selects are not among them.
+function isTextEntry(target) {
+  if (target instanceof HTMLTextAreaElement) return true;
+  if (target instanceof HTMLInputElement) return TEXT_ENTRY_INPUT_TYPES.has(target.type);
+  return Boolean(target?.isContentEditable);
+}
+
+function setupShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (anyMenuOpen()) {
+        closeMenus();
+        return;
+      }
+      if (document.body.classList.contains('inspector-open') && !document.querySelector('dialog[open]')) {
+        closeInspectorSheet();
+      }
+      return;
+    }
+    const modifier = e.ctrlKey || e.metaKey;
+    if (!modifier) return;
+    // Inside a text field, leave undo to the browser so typing can be undone natively.
+    if (isTextEntry(e.target)) return;
+    const key = e.key.toLowerCase();
+    if (key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('btn-undo').click();
+    } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+      e.preventDefault();
+      document.getElementById('btn-redo').click();
+    }
+  });
+}
+
+function activeFilterCount() {
+  return ['filter-type', 'filter-class', 'filter-rank', 'filter-shift']
+    .filter((id) => document.getElementById(id).value !== 'all').length;
+}
+
+function updateFilterCount() {
+  const badge = document.getElementById('filter-count');
+  const count = activeFilterCount();
+  badge.textContent = String(count);
+  badge.classList.toggle('hidden', count === 0);
+}
+
+function setFiltersOpen(open) {
+  document.getElementById('filter-panel').hidden = !open;
+  document.getElementById('btn-filters').setAttribute('aria-expanded', String(open));
+  writeStoredJson(FILTERS_OPEN_KEY, open);
+}
+
+function setupFilterPanel() {
+  setFiltersOpen(readStoredJson(FILTERS_OPEN_KEY, false) === true);
+  document.getElementById('btn-filters').addEventListener('click', () => {
+    setFiltersOpen(document.getElementById('filter-panel').hidden);
+  });
+}
+
+// Every collapsible section remembers whether it is open. Controls in a section header (buttons, selects,
+// the override toggle) are interactive content, so clicking them does not toggle the section.
+function rememberSection(section) {
+  const name = section.dataset.section;
+  const stored = readStoredJson(SECTIONS_KEY, {});
+  if (Object.hasOwn(stored, name)) section.open = stored[name] === true;
+  section.addEventListener('toggle', () => {
+    const current = readStoredJson(SECTIONS_KEY, {});
+    current[name] = section.open;
+    writeStoredJson(SECTIONS_KEY, current);
+  });
+}
+
+function setupSections() {
+  document.querySelectorAll('details[data-section]').forEach(rememberSection);
+  document.getElementById('btn-collapse-all').addEventListener('click', () => setAllSectionsOpen(false));
+  document.getElementById('btn-expand-all').addEventListener('click', () => setAllSectionsOpen(true));
+}
+
+// Folds or opens every section on every tab, and remembers it, including weight groups drawn later.
+function setAllSectionsOpen(open) {
+  const stored = readStoredJson(SECTIONS_KEY, {});
+  document.querySelectorAll('details[data-section]').forEach((section) => {
+    section.open = open;
+    stored[section.dataset.section] = open;
+  });
+  writeStoredJson(SECTIONS_KEY, stored);
+  toast(open ? 'Expanded all sections' : 'Collapsed all sections');
+}
+
+let sheetReturnCardId = null;
+function openInspectorSheet() {
+  sheetReturnCardId = state.selectedCardId;
+  const def = selectedCardDef();
+  document.getElementById('inspector-sheet-title').textContent = def?.name || '';
+  document.body.classList.add('inspector-open');
+  document.getElementById('card-inspector').scrollTop = 0;
+  document.getElementById('btn-inspector-back').focus();
+}
+
+function closeInspectorSheet() {
+  document.body.classList.remove('inspector-open');
+  const tile = sheetReturnCardId && document.querySelector(`.studio-card-tile[data-card-id="${CSS.escape(sheetReturnCardId)}"]`);
+  if (tile) {
+    tile.scrollIntoView({ block: 'center' });
+    tile.focus({ preventScroll: true });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Wire Events & Boot
 // ---------------------------------------------------------------------------
 function wireEvents() {
+  setupMenus();
+  // Flush a pending draft save when the tab is hidden or closed.
+  window.addEventListener('pagehide', flushDraft);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushDraft();
+  });
+  setupShortcuts();
+  setupFilterPanel();
+  setupSections();
+  document.getElementById('btn-inspector-back').addEventListener('click', closeInspectorSheet);
+  document.getElementById('btn-dismiss-art-banner').addEventListener('click', () => {
+    document.getElementById('art-missing-banner').hidden = true;
+  });
+
   // Tabs
   document.querySelectorAll('.studio-tab').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1111,15 +2214,18 @@ function wireEvents() {
     });
   });
 
-  // Filters & view toggle
-  ['card-search', 'filter-type', 'filter-class', 'filter-rank', 'filter-shift'].forEach((id) => {
-    document.getElementById(id).addEventListener('input', renderCardsGrid);
-    document.getElementById(id).addEventListener('change', renderCardsGrid);
+  // Filters & view toggle: the search box filters as you type, selects on change (one render each).
+  document.getElementById('card-search').addEventListener('input', renderCardsGrid);
+  ['filter-type', 'filter-class', 'filter-rank', 'filter-shift'].forEach((id) => {
+    document.getElementById(id).addEventListener('change', () => {
+      updateFilterCount();
+      renderCardsGrid();
+    });
   });
   document.getElementById('view-grid').addEventListener('click', () => { state.viewMode = 'grid'; document.getElementById('view-grid').classList.add('is-active'); document.getElementById('view-single').classList.remove('is-active'); renderCardsGrid(); });
   document.getElementById('view-single').addEventListener('click', () => { state.viewMode = 'single'; document.getElementById('view-single').classList.add('is-active'); document.getElementById('view-grid').classList.remove('is-active'); renderCardsGrid(); });
 
-  // New / Duplicate / Reset / Delete card
+  // New / Duplicate / Reset / Delete card (the last three live in Card Basics' ⋯ menu)
   document.getElementById('btn-new-card').addEventListener('click', () => {
     pushHistory();
     const id = `custom.card_${Date.now().toString(36)}`;
@@ -1128,26 +2234,28 @@ function wireEvents() {
       cost: 1, staminaCost: 1, manaCost: 0, damageSchool: 'physical',
       effects: [{ op: 'damage', target: 'enemy', amount: 8 }],
       keywords: [], tags: ['camp:physical', 'maneuver:attack', 'source:weapon', 'classification.attack', 'targeting:single'],
-      textTemplate: 'Deal {damage} damage.', _custom: true,
+      textTemplate: 'Deal {damage} damage.', _custom: true, _autoName: true,
     });
+    startAutoName(card);
     state.cards.unshift(card);
     state.selectedCardId = id;
-    markDirty();
     renderCardsGrid();
     renderInspector();
+    saveDraft();
     toast('Created custom card');
   });
 
   document.getElementById('btn-duplicate-card').addEventListener('click', () => {
-    const src = state.cards.find((c) => c.id === state.selectedCardId);
+    const src = selectedCardDef();
     if (!src) return;
     pushHistory();
-    const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true });
+    const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true, _autoName: true });
+    startAutoName(copy);
     state.cards.unshift(copy);
     state.selectedCardId = copy.id;
-    markDirty();
     renderCardsGrid();
     renderInspector();
+    saveDraft();
     toast(`Duplicated "${src.name}"`);
   });
 
@@ -1159,11 +2267,11 @@ function wireEvents() {
     pushHistory();
     state.cards[idx] = clone(orig);
     studioCardOverrides.delete(orig.id);
-    studioCardOverrides.delete(`__studio_live_${orig.id}`);
+    studioCardOverrides.delete(`${LIVE_ID_PREFIX}${orig.id}`);
     if (state.scoring.overrides) delete state.scoring.overrides[orig.id];
-    markDirty();
     renderCardsGrid();
     renderInspector();
+    saveDraft();
     toast(`Reverted "${orig.name}" to repo baseline`);
   });
 
@@ -1174,39 +2282,68 @@ function wireEvents() {
     pushHistory();
     state.cards.splice(idx, 1);
     studioCardOverrides.delete(removed.id);
-    studioCardOverrides.delete(`__studio_live_${removed.id}`);
+    studioCardOverrides.delete(`${LIVE_ID_PREFIX}${removed.id}`);
     if (state.scoring.overrides) delete state.scoring.overrides[removed.id];
     state.selectedCardId = state.cards[Math.min(idx, state.cards.length - 1)]?.id || null;
-    markDirty();
     renderCardsGrid();
     renderInspector();
+    saveDraft();
     toast(`Deleted "${removed.name}"`);
   });
 
   // Card inspector edits
-  let nameUndoPushed = false;
-  const editNameEl = document.getElementById('edit-name');
-  editNameEl.addEventListener('focus', () => { nameUndoPushed = false; });
-  editNameEl.addEventListener('input', (e) => {
-    const autoToggle = document.getElementById('toggle-auto-name');
-    if (autoToggle?.checked) autoToggle.checked = false;
-    const recordHistory = !nameUndoPushed;
-    nameUndoPushed = true;
-    mutateSelectedCard((d) => { d.name = e.target.value; }, { rebuildText: false, autoName: false, recordHistory });
+  // Typing and spinner holds record one undo step per editing burst, not one per keystroke or tick.
+  const nameBurst = createEditBurst();
+  const nameInput = document.getElementById('edit-name');
+  nameInput.addEventListener('focus', () => nameBurst.end());
+  nameInput.addEventListener('input', (e) => {
+    // Snapshot first, so undo brings Auto-name back on along with the old name.
+    nameBurst.begin();
+    const def = selectedCardDef();
+    if (def?._autoName) {
+      def._autoName = false;
+      toast('Auto-name off: you named this card');
+    }
+    mutateSelectedCard((d) => { d.name = e.target.value; }, { recordHistory: false, autoName: false });
   });
-  document.getElementById('btn-auto-name').addEventListener('click', () => {
-    const def = state.cards.find((c) => c.id === state.selectedCardId);
-    if (!def) return;
-    const generated = safeCardName(scoreCardEntry(def).face, state.scoring);
-    mutateSelectedCard((d) => { d.name = generated; }, { rebuildText: false, autoName: false });
-    toast(`Generated name: "${generated}"`);
+  // Auto-name is per card. Turning it on records where the name starts from (its last word and its
+  // length), then renames at once; the toggle and the rename are one undo step.
+  document.getElementById('toggle-auto-name').addEventListener('change', (e) => {
+    const on = e.target.checked;
+    mutateSelectedCard((d) => {
+      d._autoName = on;
+      if (on) startAutoName(d);
+    });
+  });
+  const textBurst = createEditBurst();
+  const textInput = document.getElementById('edit-text');
+  textInput.addEventListener('focus', () => textBurst.end());
+  textInput.addEventListener('input', (e) => {
+    const autoTextToggle = document.getElementById('toggle-auto-text');
+    if (autoTextToggle?.checked) {
+      autoTextToggle.checked = false;
+      writeStoredJson(AUTO_TEXT_KEY, false);
+    }
+    textBurst.begin();
+    mutateSelectedCard((d) => { d.textTemplate = e.target.value; }, { recordHistory: false, autoName: false, autoText: false });
+  });
+  document.getElementById('btn-text-from-effects').addEventListener('click', () => {
+    mutateSelectedCard((d) => { d.textTemplate = textFromEffects(d); }, { autoName: false, autoText: false });
+  });
+  const autoTextToggle = document.getElementById('toggle-auto-text');
+  autoTextToggle.checked = readStoredJson(AUTO_TEXT_KEY, false) === true;
+  autoTextToggle.addEventListener('change', () => {
+    writeStoredJson(AUTO_TEXT_KEY, autoTextToggle.checked);
+    // Turning Auto on writes the text straight away; turning it off keeps the text as it is.
+    if (autoTextToggle.checked) mutateSelectedCard(() => {}, { autoName: false });
   });
 
-  // Card grid scale, inspector preview scale, and draggable inspector resizer
+  // Gallery card size and inspector preview size (Filters panel), and the inspector resizer (desktop only)
   const cardsLayout = document.querySelector('.cards-layout');
-  const savedInspectorW = Number(localStorage.getItem('ashenspire:studioInspectorW'));
-  if (savedInspectorW >= 340 && savedInspectorW <= 780) cardsLayout.style.setProperty('--inspector-width', `${savedInspectorW}px`);
-
+  const savedInspectorWidth = Number(readStoredJson(INSPECTOR_WIDTH_KEY, 0));
+  if (savedInspectorWidth >= INSPECTOR_WIDTH_MIN && savedInspectorWidth <= INSPECTOR_WIDTH_MAX) {
+    cardsLayout.style.setProperty('--inspector-width', `${savedInspectorWidth}px`);
+  }
   document.getElementById('card-scale-slider').addEventListener('input', (e) => {
     document.getElementById('cards-grid').style.setProperty('--card-tile-width', `${e.target.value}px`);
     requestAnimationFrame(() => document.querySelectorAll('#cards-grid .card').forEach((el) => fitCardFace(el)));
@@ -1216,47 +2353,70 @@ function wireEvents() {
     const cardEl = document.querySelector('#inspector-card-preview .card');
     if (cardEl) requestAnimationFrame(() => fitCardFace(cardEl));
   });
-
   const resizer = document.getElementById('inspector-resizer');
   let draggingResizer = false;
   resizer.addEventListener('pointerdown', (e) => {
+    if (isNarrowLayout()) return;
     draggingResizer = true;
     resizer.classList.add('is-dragging');
     resizer.setPointerCapture(e.pointerId);
   });
   resizer.addEventListener('pointermove', (e) => {
     if (!draggingResizer) return;
-    const maxW = Math.max(340, Math.min(780, window.innerWidth - 300));
-    const width = Math.max(340, Math.min(maxW, Math.round(window.innerWidth - e.clientX)));
+    const maxWidth = Math.max(INSPECTOR_WIDTH_MIN, Math.min(INSPECTOR_WIDTH_MAX, window.innerWidth - 300));
+    const width = Math.max(INSPECTOR_WIDTH_MIN, Math.min(maxWidth, Math.round(window.innerWidth - e.clientX)));
     cardsLayout.style.setProperty('--inspector-width', `${width}px`);
-    localStorage.setItem('ashenspire:studioInspectorW', String(width));
+    writeStoredJson(INSPECTOR_WIDTH_KEY, width);
   });
-  const stopDrag = () => {
+  const stopResizerDrag = () => {
     if (!draggingResizer) return;
     draggingResizer = false;
     resizer.classList.remove('is-dragging');
     const cardEl = document.querySelector('#inspector-card-preview .card');
     if (cardEl) requestAnimationFrame(() => fitCardFace(cardEl));
   };
-  resizer.addEventListener('pointerup', stopDrag);
-  resizer.addEventListener('pointercancel', stopDrag);
-  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }, { rebuildText: false }));
-  document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }, { rebuildText: false }));
-  document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }, { rebuildText: false }));
+  resizer.addEventListener('pointerup', stopResizerDrag);
+  resizer.addEventListener('pointercancel', stopResizerDrag);
+  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }));
+  document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }));
+  document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }));
   document.getElementById('edit-camp').addEventListener('change', (e) => mutateSelectedCard((d) => {
     d.tags = (d.tags || []).filter((t) => !t.startsWith('camp:'));
     d.tags.push(`camp:${e.target.value}`);
-  }, { rebuildText: false }));
-  document.getElementById('edit-target').addEventListener('change', (e) => mutateSelectedCard((d) => setCardTarget(d, e.target.value)));
-  document.getElementById('edit-sp').addEventListener('change', (e) => mutateSelectedCard((d) => { d.staminaCost = Math.max(0, Number(e.target.value) || 0); d.cost = d.staminaCost; }, { rebuildText: false }));
-  document.getElementById('edit-mp').addEventListener('change', (e) => mutateSelectedCard((d) => { d.manaCost = Math.max(0, Number(e.target.value) || 0); }, { rebuildText: false }));
-  document.getElementById('edit-loseHp').addEventListener('change', (e) => mutateSelectedCard((d) => {
-    const n = Math.max(0, Number(e.target.value) || 0);
-    d.effects = (d.effects || []).filter((x) => x.op !== 'loseHp');
-    if (n > 0) d.effects.push({ op: 'loseHp', target: 'self', amount: n });
   }));
+  document.getElementById('edit-target').addEventListener('change', (e) => mutateSelectedCard((d) => setCardTarget(d, e.target.value)));
+  // Cost inputs rescore live on every keystroke or spinner tick; the tile and preview refresh on change.
+  const costBurst = createEditBurst();
+  const nonNegative = (input) => Math.max(0, Number(input.value) || 0);
+  const costSetters = {
+    'edit-sp': (d, n) => { d.staminaCost = n; d.cost = n; },
+    'edit-mp': (d, n) => { d.manaCost = n; },
+    // Edits the HP cost effect in place so the feature rows' effect indexes stay valid while typing.
+    'edit-loseHp': (d, n) => {
+      d.effects ||= [];
+      const hpEffect = d.effects.find((x) => x.op === 'loseHp');
+      if (hpEffect) hpEffect.amount = n;
+      else if (n > 0) d.effects.push({ op: 'loseHp', target: 'self', amount: n });
+    },
+  };
+  for (const [inputId, setCost] of Object.entries(costSetters)) {
+    const input = document.getElementById(inputId);
+    input.addEventListener('focus', () => costBurst.end());
+    input.addEventListener('input', () => applyLiveCardEdit(costBurst, (d) => setCost(d, nonNegative(input))));
+    input.addEventListener('change', () => {
+      applyLiveCardEdit(costBurst, (d) => setCost(d, nonNegative(input)));
+      commitLiveCardEdit();
+    });
+  }
+  // A zero HP cost removes the effect; that reorders effects, so rebuild the inspector once editing ends.
+  document.getElementById('edit-loseHp').addEventListener('blur', () => {
+    const def = selectedCardDef();
+    if (def?.effects?.some((x) => x.op === 'loseHp' && !x.amount)) {
+      mutateSelectedCard((d) => { d.effects = d.effects.filter((x) => !(x.op === 'loseHp' && !x.amount)); }, { recordHistory: false });
+    }
+  });
 
-  // Add / edit / remove active features (instant add on dropdown select OR quick-add chip)
+  // Add features: picking from the list adds at once, as do the quick-add chips; Add repeats the pick.
   const addFeatureValue = (val) => {
     if (!val) return;
     const [kind, key] = [val.slice(0, val.indexOf(':')), val.slice(val.indexOf(':') + 1)];
@@ -1268,27 +2428,51 @@ function wireEvents() {
       else if (kind === 'status') d.effects.push({ op: 'applyStatus', status: key, stacks: 2, target: state.scoring.statuses?.[key]?.target || 'enemy' });
       else if (kind === 'kw' && !d.keywords.includes(key)) d.keywords.push(key);
       else if (kind === 'tag' && !d.tags.includes(key)) d.tags.push(key);
+      appendClauseForFeature(d, kind, key);
     });
     document.getElementById('add-feature-select').value = '';
   };
   document.getElementById('btn-add-feature').addEventListener('click', () => addFeatureValue(document.getElementById('add-feature-select').value));
-  document.getElementById('add-feature-select').addEventListener('change', (e) => addFeatureValue(e.target.value));
-  document.getElementById('quick-add-chips').addEventListener('click', (e) => {
-    const val = e.target.dataset?.quickAdd;
-    if (val) addFeatureValue(val);
-  });
+  // Picking from the list describes the feature first; Add (or Enter) adds it. Quick-add chips add at once.
+  const addSelect = document.getElementById('add-feature-select');
+  addSelect.addEventListener('change', renderAddFeatureDescription);
+  addSelect.addEventListener('input', renderAddFeatureDescription);
+  addSelect.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addFeatureValue(addSelect.value); renderAddFeatureDescription(); } });
+  document.getElementById('btn-add-feature').addEventListener('click', renderAddFeatureDescription);
+  const quickChips = document.getElementById('quick-add-chips');
+  for (const chip of quickChips.querySelectorAll('[data-quick-add]')) chip.title = featureTitleText(featureValueInfo(chip.dataset.quickAdd));
+  quickChips.addEventListener('click', (e) => addFeatureValue(e.target.dataset?.quickAdd));
+  wireInfoButtons(document.getElementById('active-features-list'), '.feature-row');
 
   document.getElementById('active-features-list').addEventListener('click', (e) => {
     const rmEff = e.target.dataset.rmEff;
     const rmKw = e.target.dataset.rmKw;
     const rmTag = e.target.dataset.rmTag;
-    if (rmEff !== undefined) mutateSelectedCard((d) => { d.effects.splice(Number(rmEff), 1); });
+    if (rmEff !== undefined) mutateSelectedCard((d) => { d.effects.splice(Number(rmEff), 1); dropStaleTextClauses(d); });
     else if (rmKw !== undefined) mutateSelectedCard((d) => { d.keywords.splice(Number(rmKw), 1); });
     else if (rmTag !== undefined) mutateSelectedCard((d) => { d.tags = d.tags.filter((t) => t !== rmTag); });
   });
-  document.getElementById('active-features-list').addEventListener('change', (e) => {
-    if (e.target.dataset.effAmt !== undefined) mutateSelectedCard((d) => { d.effects[Number(e.target.dataset.effAmt)].amount = Number(e.target.value) || 0; });
-    if (e.target.dataset.effStacks !== undefined) mutateSelectedCard((d) => { d.effects[Number(e.target.dataset.effStacks)].stacks = Number(e.target.value) || 1; });
+  // Amount and stack inputs rescore live without rebuilding the list, so focus and spinner holds survive.
+  const featureBurst = createEditBurst();
+  const featureList = document.getElementById('active-features-list');
+  const applyFeatureNumber = (target) => {
+    if (target.dataset.effAmt !== undefined) {
+      applyLiveCardEdit(featureBurst, (d) => { d.effects[Number(target.dataset.effAmt)].amount = Number(target.value) || 0; });
+      return true;
+    }
+    if (target.dataset.effStacks !== undefined) {
+      applyLiveCardEdit(featureBurst, (d) => { d.effects[Number(target.dataset.effStacks)].stacks = Number(target.value) || 1; });
+      return true;
+    }
+    return false;
+  };
+  featureList.addEventListener('focusin', () => featureBurst.end());
+  featureList.addEventListener('input', (e) => applyFeatureNumber(e.target));
+  featureList.addEventListener('change', (e) => {
+    if (applyFeatureNumber(e.target)) {
+      commitLiveCardEdit();
+      return;
+    }
     if (e.target.dataset.effTarget !== undefined) mutateSelectedCard((d) => { d.effects[Number(e.target.dataset.effTarget)].target = e.target.value; });
   });
 
@@ -1308,7 +2492,7 @@ function wireEvents() {
     d.scoringOverride = ov;
     state.scoring.overrides ||= {};
     state.scoring.overrides[d.id] = ov;
-  }, { rebuildText: false, autoName: false });
+  });
   document.getElementById('edit-override-enabled').addEventListener('change', applyOv);
   document.getElementById('edit-override-rank').addEventListener('change', applyOv);
   document.getElementById('edit-override-cp').addEventListener('change', applyOv);
@@ -1328,8 +2512,8 @@ function wireEvents() {
     pushHistory();
     state.artLayers.layers.push({ id: `layer-${Date.now().toString(36)}`, name: 'New Layer', matchKind: 'default', matchValue: '', mode: 'stack', assetId: 'Z.effect.5', zIndex: state.artLayers.layers.length + 1, x: 50, y: 50, scale: 80, opacity: 60, blendMode: 'screen', enabled: true });
     state.selectedLayerIdx = state.artLayers.layers.length - 1;
-    markDirty();
     renderArtTab();
+    saveDraft();
   });
   document.getElementById('art-preview-card-select').addEventListener('change', (e) => {
     state.selectedCardId = e.target.value;
@@ -1337,6 +2521,7 @@ function wireEvents() {
   });
   document.getElementById('asset-search').addEventListener('input', renderArtTab);
   document.getElementById('art-layers-list').addEventListener('click', (e) => {
+    // A click elsewhere on a layer card selects it; asset thumbnails then assign to that layer.
     const cardEl = e.target.closest('.layer-card');
     if (cardEl && e.target.dataset.lUp === undefined && e.target.dataset.lDown === undefined && e.target.dataset.lDel === undefined) {
       const selIdx = Number(cardEl.dataset.layerCardIdx);
@@ -1352,11 +2537,12 @@ function wireEvents() {
     if (e.target.dataset.lUp !== undefined && idx > 0) { [state.artLayers.layers[idx - 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx - 1]]; state.selectedLayerIdx = idx - 1; }
     if (e.target.dataset.lDown !== undefined && idx < state.artLayers.layers.length - 1) { [state.artLayers.layers[idx + 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx + 1]]; state.selectedLayerIdx = idx + 1; }
     if (e.target.dataset.lDel !== undefined) state.artLayers.layers.splice(idx, 1);
-    markDirty();
     renderArtTab();
     renderCardsGrid();
     renderInspector();
+    saveDraft();
   });
+  // Typing and slider drags in a layer record one undo step per focus.
   let layerEditHistoryPushed = false;
   document.getElementById('art-layers-list').addEventListener('focusin', () => { layerEditHistoryPushed = false; });
   document.getElementById('art-layers-list').addEventListener('input', (e) => {
@@ -1374,8 +2560,8 @@ function wireEvents() {
         if (span) span.textContent = `${layer.opacity}%`;
       }
     }
-    markDirty();
-    // Update live preview in place without rebuilding #art-layers-list (preserves focus & slider drag)
+    saveDraft();
+    // Update the live preview in place without rebuilding #art-layers-list (keeps focus and slider drags).
     const cardSel = document.getElementById('art-preview-card-select');
     const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
     if (previewDef) renderCardWithLayers(previewDef, document.getElementById('art-live-preview'));
@@ -1390,6 +2576,9 @@ function wireEvents() {
       const r = await fetch('/__studio/art-layers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artLayers: state.artLayers }) });
       const data = await r.json();
       if (!data.ok) throw new Error(data.error);
+      state.repoArtLayers = clone(state.artLayers);
+      writeDraftNow();
+      refreshDirtyStatus();
       toast(`Saved ${data.layerCount} art layer(s) to ${data.path}`);
     } catch (err) { toast(`Save failed: ${err.message}`); }
   });
@@ -1413,8 +2602,8 @@ function wireEvents() {
     state.scoring = clone(state.abSlots[slot]);
     state.abSlots.activeLabel = `Slot ${slot}`;
     document.getElementById('ab-active-label').textContent = `Slot ${slot}`;
-    markDirty();
     syncAllViews();
+    saveDraft();
     toast(`Loaded Slot ${slot}`);
   };
   document.getElementById('btn-slot-a-save').addEventListener('click', () => saveAB('A'));
@@ -1437,9 +2626,10 @@ function wireEvents() {
   document.getElementById('btn-sandbox-endturn').addEventListener('click', () => {
     const combat = state.sandbox.combat;
     if (!combat) return;
-    if (combat.result) { state.sandbox.log.unshift(`Combat already ended (${combat.result}). Click Reset Fight to start again.`); renderSandbox(); return; }
+    if (combat.result) { state.sandbox.log.unshift(`Combat already ended (${combat.result}). Click Reset to start again.`); renderSandbox(); return; }
     try {
       dispatch(combat, { type: 'endTurn' });
+      // Reactions are off in the sandbox; decline any the enemy turn still offers so the turn can finish.
       for (let guard = 0; guard < 8 && combat.pendingReaction && !combat.result; guard++) {
         dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
       }
@@ -1454,28 +2644,28 @@ function wireEvents() {
   // Topbar Undo / Redo / Revert / Export / Download / Upload / Path
   document.getElementById('btn-undo').addEventListener('click', () => {
     if (!state.undoStack.length) return;
-    state.redoStack.push(JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers }));
+    state.redoStack.push(snapshotState());
     restoreSnapshot(state.undoStack.pop());
-    document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
-    document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
+    updateUndoButtons();
   });
   document.getElementById('btn-redo').addEventListener('click', () => {
     if (!state.redoStack.length) return;
-    state.undoStack.push(JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers }));
+    state.undoStack.push(snapshotState());
     restoreSnapshot(state.redoStack.pop());
-    document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
-    document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
+    updateUndoButtons();
   });
-  document.getElementById('toggle-autosave').addEventListener('change', (e) => { state.autosave = e.target.checked; });
+  document.getElementById('toggle-autosave').addEventListener('change', (e) => {
+    state.autosave = e.target.checked;
+    writeDraftNow();
+  });
   document.getElementById('btn-load-path').addEventListener('click', () => loadFromRepo(document.getElementById('repo-path-input').value));
-  document.getElementById('btn-revert').addEventListener('click', async () => {
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    await loadFromRepo(state.repoPath);
-    state.dirty = false;
-    const pill = document.getElementById('draft-status');
-    pill.classList.remove('is-dirty');
-    pill.textContent = 'Reverted to last in-game version';
+
+  // Revert asks first, in the page, and says what will be thrown away.
+  document.getElementById('btn-revert').addEventListener('click', () => {
+    document.getElementById('revert-modal-summary').innerHTML = discardSummaryHtml();
+    document.getElementById('revert-modal').showModal();
   });
+  document.getElementById('btn-confirm-revert').addEventListener('click', revertToRepo);
 
   document.getElementById('btn-export-repo').addEventListener('click', () => {
     const errors = ValidateScoringConfig(state.scoring);
@@ -1484,6 +2674,8 @@ function wireEvents() {
     const diff = buildScoringDiff();
     document.getElementById('export-modal-path').textContent = `Target: ${path} (${diff.length} change(s))`;
     document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
+    document.getElementById('export-modal-naming').textContent = namingWordsExportNote();
+    renderRankShiftList();
     document.getElementById('export-modal').showModal();
   });
 
@@ -1494,13 +2686,10 @@ function wireEvents() {
       const data = await r.json();
       if (!data.ok) throw new Error(data.error);
       state.repoScoring = clone(state.scoring);
-      state.dirty = false;
       recomputeBaselineRanks();
       syncAllViews();
-      const pill = document.getElementById('draft-status');
-      pill.classList.remove('is-dirty');
-      pill.textContent = `Exported to ${data.path}`;
-      toast(`Exported & rebuilt tables (${data.rebuilt.length} script(s))`);
+      writeDraftNow();
+      toast(`Exported to ${data.path} and rebuilt tables (${data.rebuilt.length} script(s))`);
     } catch (err) {
       toast(`Export failed: ${err.message}`);
     }
@@ -1524,8 +2713,8 @@ function wireEvents() {
       if (errors.length) throw new Error(errors.join(' '));
       pushHistory();
       state.scoring = parsed;
-      markDirty();
       syncAllViews();
+      saveDraft();
       toast(`Loaded ${file.name}`);
     } catch (err) {
       toast(`Invalid JSON: ${err.message}`);
@@ -1537,12 +2726,37 @@ function wireEvents() {
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
-async function boot() {
-  state.cards = registries.cards.all()
-    .filter((c) => c && c.id && c.name && !c.ruleTemplate && (c.id.startsWith('core.') || c._custom))
+const ART_CHECK_TIMEOUT_MS = 2000;
+
+// Without the art cache every card shows broken images; say why and how to fix it.
+async function checkCardArt() {
+  const images = [...document.querySelectorAll('#cards-grid img')];
+  if (!images.length) return;
+  const settled = (img) => new Promise((resolve) => {
+    if (img.complete) return resolve();
+    img.addEventListener('load', resolve, { once: true });
+    img.addEventListener('error', resolve, { once: true });
+  });
+  await Promise.race([
+    Promise.all(images.map(settled)),
+    new Promise((resolve) => setTimeout(resolve, ART_CHECK_TIMEOUT_MS)),
+  ]);
+  const failed = images.filter((img) => img.complete && img.naturalWidth === 0).length;
+  if (failed > images.length / 2) document.getElementById('art-missing-banner').hidden = false;
+}
+
+// The studio works on the core card pool only (owner, 2026-11-22).
+function buildCardList() {
+  return registries.cards.all()
+    .filter((c) => c && c.id && c.name && !c.ruleTemplate && c.id.startsWith('core.'))
     .map((c) => clone(c))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function boot() {
+  state.cards = buildCardList();
   state.selectedCardId = state.cards[0]?.id || null;
+  state.repoArtLayers = clone(state.artLayers);
 
   try {
     const ab = JSON.parse(localStorage.getItem(AB_STORAGE_KEY) || 'null');
@@ -1552,34 +2766,37 @@ async function boot() {
   initSandboxEnemies();
   wireEvents();
 
+  // Web mode (GitHub Pages): nothing can be written to the repo, so the repo controls go and
+  // Download JSON in the More menu is how work leaves the studio.
   if (!isLocalServer) {
-    document.querySelector('.studio-pathbar')?.classList.add('hidden');
-    document.getElementById('btn-export-repo')?.classList.add('hidden');
-    document.getElementById('btn-save-art')?.classList.add('hidden');
-    document.getElementById('btn-download-json')?.classList.add('s-btn-primary');
-    document.getElementById('draft-status').textContent = 'Web mode — Download JSON to export';
+    for (const id of ['btn-export-repo', 'btn-save-art', 'btn-revert']) document.getElementById(id)?.classList.add('hidden');
+    document.querySelector('#more-menu .menu-section')?.classList.add('hidden');
+    document.getElementById('draft-status').title = 'Web mode: use Download JSON in the More menu to export';
   }
 
   await loadFromRepo(state.repoPath);
 
-  // Restore local draft temp copy if present
+  // Restore local draft temp copy if present. Everything is checked first; state changes only after.
   try {
     const draft = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
     if (draft?.scoring && ValidateScoringConfig(draft.scoring).length === 0) {
+      const draftArtLayers = Array.isArray(draft.artLayers?.layers) ? draft.artLayers : null;
+      const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
+        .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
       state.scoring = draft.scoring;
-      if (draft.artLayers?.layers) state.artLayers = draft.artLayers;
-      if (Array.isArray(draft.customCards)) {
-        for (const cc of draft.customCards) {
-          const i = state.cards.findIndex((c) => c.id === cc.id);
-          if (i >= 0) state.cards[i] = cc;
-          else state.cards.unshift(cc);
-        }
+      if (draftArtLayers) state.artLayers = draftArtLayers;
+      for (const draftCard of draftCards) {
+        const i = state.cards.findIndex((c) => c.id === draftCard.id);
+        if (i >= 0) state.cards[i] = draftCard;
+        else state.cards.unshift(draftCard);
       }
-      document.getElementById('draft-status').textContent = 'Restored local draft temp copy';
-      document.getElementById('draft-status').classList.add('is-dirty');
       syncAllViews();
+      refreshDirtyStatus();
+      if (isDirty()) document.getElementById('draft-status').textContent = 'Restored local draft temp copy';
+      return;
     }
   } catch { /* ignore */ }
+  refreshDirtyStatus();
 }
 
-boot();
+boot().then(checkCardArt);
