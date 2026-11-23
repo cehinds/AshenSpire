@@ -260,11 +260,32 @@ function matchingCustomLayers(def) {
     .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
 }
 
+const STUDIO_ONLY_FIELDS = ['_edited', '_custom', 'scoringOverride'];
+
+// The game draws core cards from the profile's own card list (projectGameCard in src/model/gameProfile.js),
+// not from the registry, so an edited card would show its shipped face. Project the edited copy the same
+// way, from a profile whose card list holds it, and hand the result to renderCard as its definition.
+function projectEditedCard(def) {
+  const profile = previewRun.gameProfile;
+  const content = profile?.content;
+  if (!content) return def;
+  const authored = Object.fromEntries(Object.entries(def).filter(([key]) => !STUDIO_ONLY_FIELDS.includes(key)));
+  // A resource variant for this card would overwrite the edited costs, so leave it out.
+  const { [def.id]: _shippedVariants, ...otherVariants } = content.resourceVariants || {};
+  const subject = { gameProfile: { ...profile, content: { ...content, cards: [authored], resourceVariants: otherVariants } } };
+  try {
+    return Profile.projectGameCard(subject, def.id) || def;
+  } catch {
+    return def;
+  }
+}
+
 function renderCardWithLayers(def, container) {
   container.innerHTML = '';
   studioCardOverrides.set(def.id, def);
+  const edited = def._edited || def._custom;
   try {
-    const el = renderCard(studioRegistries, { cardId: def.id }, { rules: previewRun, showArt: true });
+    const el = renderCard(studioRegistries, { cardId: def.id }, { rules: previewRun, showArt: true, ...(edited ? { definition: projectEditedCard(def) } : {}) });
     if (el) container.appendChild(el);
   } catch {
     container.innerHTML = `<div style="padding:10px;text-align:center;"><strong>${esc(def.name)}</strong><div class="studio-muted">${esc(def.type)}</div></div>`;

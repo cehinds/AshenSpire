@@ -175,25 +175,28 @@ body.studio-body .studio-card-tile {
 }
 body.studio-body .studio-card-tile:hover { border-color: var(--st-accent); transform: translateY(-2px); }
 body.studio-body .studio-card-tile.is-selected { border-color: var(--st-accent); box-shadow: 0 0 0 2px rgba(106,166,255,.25); }
-body.studio-body .studio-card-stage {
+/* Card stages use the game's own card ratio (--card-ratio, 2:3 in illustrated-cards.css), so faces are
+   never stretched: the card fills the stage width and its height follows from the ratio. */
+body.studio-body .studio-card-stage,
+body.studio-body .inspector-card-preview,
+body.studio-body .art-live-preview {
   position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 5.4;
-  overflow: hidden;
-  border-radius: 7px;
-  background: #0d1016;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  aspect-ratio: var(--card-ratio, 2 / 3);
 }
-body.studio-body .studio-card-stage .card {
+body.studio-body .studio-card-stage .card,
+body.studio-body .inspector-card-preview .card,
+body.studio-body .art-live-preview .card {
   width: 100% !important;
-  height: 100% !important;
+  height: auto !important;
   min-width: 0 !important;
   max-width: none !important;
   margin: 0 !important;
-  pointer-events: none;
 }
+body.studio-body .studio-card-stage {
+  width: 100%;
+  border-radius: 7px;
+}
+body.studio-body .studio-card-stage .card { pointer-events: none; }
 body.studio-body .studio-card-meta {
   display: flex;
   justify-content: space-between;
@@ -226,13 +229,9 @@ body.studio-body .inspector-preview-wrap {
 }
 body.studio-body .inspector-card-preview {
   width: 165px;
-  aspect-ratio: 4 / 5.4;
-  position: relative;
   flex-shrink: 0;
   border-radius: 8px;
-  overflow: hidden;
 }
-body.studio-body .inspector-card-preview .card { width: 100% !important; height: 100% !important; margin: 0 !important; }
 body.studio-body .inspector-score-summary { display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
 body.studio-body .inspector-score-big { font-size: 22px; font-weight: 800; color: var(--st-accent); }
 
@@ -352,8 +351,7 @@ body.studio-body .layer-card { background: var(--st-surface); border: 1px solid 
 body.studio-body .layer-card-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
 body.studio-body .layer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 body.studio-body .layer-grid label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
-body.studio-body .art-live-preview { width: 220px; aspect-ratio: 4 / 5.4; margin: 10px auto 14px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--st-border); }
-body.studio-body .art-live-preview .card { width: 100% !important; height: 100% !important; margin: 0 !important; }
+body.studio-body .art-live-preview { width: 220px; margin: 10px auto 14px; border-radius: 10px; }
 body.studio-body .asset-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; max-height: 260px; overflow-y: auto; }
 body.studio-body .asset-thumb { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 6px; padding: 4px; text-align: center; cursor: pointer; font-size: 10px; overflow: hidden; }
 body.studio-body .asset-thumb img { width: 100%; height: 48px; object-fit: contain; display: block; }
