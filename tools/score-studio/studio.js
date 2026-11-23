@@ -104,6 +104,7 @@ const KIND_BY_TYPE = {
 };
 
 function normalizeStudioCard(def) {
+  if (!def || Object.isFrozen(def)) return def;
   const kind = KIND_BY_TYPE[def.type] || 'classification.attack';
   def.tags = Array.isArray(def.tags) ? def.tags.filter((t) => !t.startsWith('classification.')) : [];
   def.tags.push(kind);
@@ -764,7 +765,7 @@ function renderArtTab() {
         <label>Y % <input type="number" data-l-num="y" data-l-idx="${idx}" min="0" max="100" value="${layer.y ?? 50}" /></label>
         <label>Scale % <input type="number" data-l-num="scale" data-l-idx="${idx}" min="10" max="150" value="${layer.scale ?? 80}" /></label>
         <label>Z-Index <input type="number" data-l-num="zIndex" data-l-idx="${idx}" value="${layer.zIndex ?? 1}" /></label>
-        <label style="grid-column: span 2;">Opacity (<span class="opacity-val">${layer.opacity ?? 100}%</span>) <input type="range" data-l-num="opacity" data-l-idx="${idx}" min="0" max="100" value="${layer.opacity ?? 100}" /></label>
+        <label style="grid-column: span 2;"><span style="white-space:nowrap;">Opacity (<span class="opacity-val">${layer.opacity ?? 100}%</span>)</span><input type="range" data-l-num="opacity" data-l-idx="${idx}" min="0" max="100" value="${layer.opacity ?? 100}" /></label>
       </div>`;
     list.appendChild(el);
   });
