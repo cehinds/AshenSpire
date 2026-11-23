@@ -47,6 +47,17 @@ try {
   assert.equal(Number(formulaParts[1]) - Number(formulaParts[2]), Number(formulaParts[3]), 'raw minus rarity equals CP in the formula');
   assert.equal(`CP ${formulaParts[3]}`, breakdown.summaryCp.trim(), 'the formula CP matches the inspector CP');
 
+  // 2c. An edit that changes nothing the score reads keeps the score. The edited copy used to skip the game's
+  //     card projection, so retyping Acid Splash's own name charged it an extra MP and dropped CP 13 to CP 5.
+  const stable = await page.evaluate(() => {
+    document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"]').click();
+    const before = document.getElementById('breakdown-formula').textContent;
+    const input = document.getElementById('edit-name');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    return { before, after: document.getElementById('breakdown-formula').textContent };
+  });
+  assert.equal(stable.after, stable.before, 'retyping the same name leaves the score unchanged');
+
   // 3. A weight edit reaches the local draft. The draft used to be written before the edit was applied.
   const draftWeight = await page.evaluate(async ({ key, settle }) => {
     document.querySelector('.studio-tab[data-tab="weights"]').click();

@@ -153,7 +153,10 @@ function liveCardIdFor(def) {
     return def.id;
   }
   const liveId = `${LIVE_ID_PREFIX}${def.id}`;
-  const liveDef = { ...clone(def), id: liveId };
+  // Register the edited copy the way the game projects the shipped card (projectEditedCard), so previewCard
+  // prices and measures it with the same rules. The raw authored copy missed the projection, and the spell
+  // cost rules then charged an extra MP: renaming Acid Splash dropped it from CP 13 to CP 5.
+  const liveDef = { ...clone(projectEditedCard(def)), id: liveId };
   studioCardOverrides.set(def.id, def);
   studioCardOverrides.set(liveId, liveDef);
   return liveId;
