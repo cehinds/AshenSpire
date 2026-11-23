@@ -499,6 +499,11 @@ body.studio-body .weight-group-card { background: var(--st-surface); border: 1px
 body.studio-body .weight-group-card h3 { margin: 0 0 8px 0; font-size: 13px; color: var(--st-accent); }
 body.studio-body .weight-row { display: grid; grid-template-columns: minmax(0, 1fr) 92px 26px; gap: 6px; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, .04); }
 body.studio-body .weight-row.is-modified { background: rgba(224, 159, 62, .09); border-radius: 4px; padding: 4px 6px; margin: 0 -6px; }
+/* Staged weight edits: marked until Apply (or Discard). */
+body.studio-body .weights-toolbar { flex-wrap: wrap; }
+body.studio-body .weights-actions { display: flex; flex-wrap: wrap; gap: var(--studio-gap-1); align-items: center; }
+body.studio-body .weight-row.is-pending { background: rgba(106, 166, 255, .12); box-shadow: inset 3px 0 0 var(--st-accent); border-radius: 4px; padding: 4px 6px; margin: 0 -6px; }
+body.studio-body .weight-row.is-pending .weight-input { border-color: var(--st-accent); }
 body.studio-body .weight-row input { width: 88px; box-sizing: border-box; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 6px; text-align: right; }
 body.studio-body .weight-reset-btn { background: transparent; border: 1px solid var(--st-border); color: var(--st-warn); border-radius: 4px; cursor: pointer; font-size: 11px; padding: 2px 4px; }
 body.studio-body .weight-reset-btn.is-clean { visibility: hidden; }

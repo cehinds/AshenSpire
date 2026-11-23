@@ -16,6 +16,7 @@ import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameP
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe } from '../../src/model/validate.js';
+import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } from './weightsStaging.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -94,6 +95,8 @@ const state = {
   repoPath: localStorage.getItem(PATH_STORAGE_KEY) || 'content/source/scoring.json',
   autosave: true,
   draftStorageFailed: false,
+  pendingScoring: null,        // staged weight edits; null when none (applied on Apply, owner 2026-11-23)
+  pendingReplacesAll: false,   // true when the pending copy came from an import or the saved config
   undoStack: [],
   redoStack: [],
   cards: [],            // editable card definitions + derived faces
@@ -364,7 +367,7 @@ function artLayersChanged() {
 }
 
 function isDirty() {
-  return weightChangeCount() > 0 || editedCards().length > 0 || artLayersChanged();
+  return weightChangeCount() > 0 || pendingWeightCount() > 0 || editedCards().length > 0 || artLayersChanged();
 }
 
 function refreshDirtyStatus() {
@@ -387,6 +390,8 @@ function writeDraftNow() {
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
           savedAt: new Date().toISOString(),
           scoring: state.scoring,
+          pendingScoring: state.pendingScoring,
+          pendingReplacesAll: state.pendingReplacesAll,
           artLayers: state.artLayers,
           customCards: editedCards(),
         }));
@@ -1536,14 +1541,16 @@ function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoTex
 // ---------------------------------------------------------------------------
 // Weights Tab
 // ---------------------------------------------------------------------------
-function renderWeights() {
+// Rows show the pending copy when weight edits are staged; a row whose value differs from the applied
+// config is marked pending. `shifts: false` skips rescoring every card for the rank-shift summary.
+function renderWeights({ shifts = true } = {}) {
   const q = document.getElementById('weights-search').value.trim().toLowerCase();
   const groupF = document.getElementById('weights-group-filter').value;
   const container = document.getElementById('weights-container');
   container.innerHTML = '';
 
   const R = state.repoScoring;
-  const groups = [
+  const buildGroups = () => [
     { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
     { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({
       id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; },
@@ -1577,6 +1584,10 @@ function renderWeights() {
       };
     }) },
   ];
+  // Built twice: once from the applied config (to mark pending rows), once from the pending copy.
+  const appliedGroups = buildGroups();
+  const groups = state.pendingScoring ? withScoring(state.pendingScoring, buildGroups) : appliedGroups;
+  const appliedEntry = (groupKey, id) => appliedGroups.find((ag) => ag.key === groupKey)?.entries.find((e) => e.id === id);
 
   for (const g of groups) {
     if (groupF !== 'all' && g.key !== groupF) continue;
@@ -1592,33 +1603,54 @@ function renderWeights() {
     for (const r of rows) {
       const numVal = safeNum(r.val, 0);
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
-      const perChanged = Boolean(r.per) && r.per.base !== undefined && r.per.value !== r.per.base;
-      const modified = (baseNum !== undefined && numVal !== baseNum) || perChanged;
+      const applied = appliedEntry(g.key, r.id);
       const row = document.createElement('div');
-      row.className = 'weight-row' + (r.per ? ' has-per' : '') + (modified ? ' is-modified' : '');
+      row.className = 'weight-row' + (r.per ? ' has-per' : '');
       const kind = WEIGHT_GROUP_KINDS[g.key];
       const info = kind ? describeFeature(kind, r.id) : null;
       const labelHtml = info
         ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
         : `<span>${esc(r.label)}</span>`;
       const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
-      row.innerHTML = `${labelHtml}${perControlHtml(r)}<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} weight`)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(resetTitle)}">↺</button>`;
-      row.querySelector('.weight-input').addEventListener('change', (ev) => {
-        const n = Number(ev.target.value);
-        if (!Number.isFinite(n) || n === numVal) return;
+      row.innerHTML = `${labelHtml}${perControlHtml(r)}<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} weight`)}" /><button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button>`;
+      const input = row.querySelector('.weight-input');
+      const perInput = row.querySelector('.weight-per');
+      const resetBtn = row.querySelector('.weight-reset-btn');
+      // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
+      const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
+      const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
+      const markRow = () => {
+        const value = Number(input.value);
+        const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base);
+        const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value);
+        row.classList.toggle('is-modified', modified);
+        row.classList.toggle('is-pending', pending);
+        row.title = pending ? 'Staged: Apply to rescore the cards' : '';
+        resetBtn.classList.toggle('is-clean', !modified);
+      };
+      markRow();
+      input.addEventListener('change', () => {
+        const n = Number(input.value);
+        if (!Number.isFinite(n)) return;
         applyWeightEdit(() => r.set(n));
+        markRow();
       });
-      row.querySelector('.weight-per')?.addEventListener('change', (ev) => {
-        const next = r.per.options ? ev.target.value : Math.max(1, Math.round(Number(ev.target.value)));
-        if ((!r.per.options && !Number.isFinite(next)) || next === r.per.value) return;
+      perInput?.addEventListener('change', () => {
+        const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
+        if (!r.per.options && !Number.isFinite(next)) return;
         applyWeightEdit(() => r.per.set(next));
+        markRow();
       });
-      row.querySelector('.weight-reset-btn').addEventListener('click', () => {
+      resetBtn.addEventListener('click', () => {
+        const perChanged = perDiffers(r.per?.base);
         if (baseNum === undefined && !perChanged) return;
         applyWeightEdit(() => {
           if (baseNum !== undefined) r.set(baseNum);
           if (perChanged) r.per.set(r.per.base);
         });
+        if (baseNum !== undefined) input.value = String(baseNum);
+        if (perChanged) perInput.value = String(r.per.base);
+        markRow();
       });
       if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
       card.appendChild(row);
@@ -1627,7 +1659,8 @@ function renderWeights() {
   }
   if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
   renderDescriptionGaps();
-  computeShiftCount();
+  updateWeightsToolbar();
+  if (shifts) computeShiftCount();
 }
 
 // The values a tag's per can take: score once per action, or once per hit.
@@ -1644,17 +1677,84 @@ function perControlHtml(entry) {
   return `<label class="weight-per-label">per <input type="number" class="weight-per" min="1" step="1" value="${esc(safeNum(entry.per.value, 1))}" aria-label="${esc(label)}" /></label>`;
 }
 
-// Every weight edit takes the same path: one undo step, the draft, rank shifts, and every view that shows
-// a score (inspector, gallery and the sandbox hand's rank badges).
+// Weight edits are staged (owner, 2026-11-23): they change only the pending copy, so nothing rescores or
+// redraws until Apply. Apply is one undo step; Discard drops the pending copy.
 function applyWeightEdit(apply) {
+  state.pendingScoring ||= clone(state.scoring);
+  withScoring(state.pendingScoring, apply);
+  updateWeightsToolbar();
+  saveDraft({ autoName: false });
+}
+
+// Runs fn with state.scoring swapped for another config, so the Weights rows' setters write into it.
+function withScoring(scoring, fn) {
+  const applied = state.scoring;
+  state.scoring = scoring;
+  try { return fn(); } finally { state.scoring = applied; }
+}
+
+// The config Apply would produce, or null when nothing is staged.
+function stagedScoring() {
+  return state.pendingScoring ? MergePendingScoring(state.scoring, state.pendingScoring, { replaceAll: state.pendingReplacesAll }) : null;
+}
+
+function pendingWeightCount() {
+  const staged = stagedScoring();
+  return staged ? ScoringDiffPaths(state.scoring, staged).length : 0;
+}
+
+function clearPendingWeights() {
+  state.pendingScoring = null;
+  state.pendingReplacesAll = false;
+}
+
+function applyPendingWeights() {
+  const staged = stagedScoring();
+  if (!staged) return;
+  const count = ScoringDiffPaths(state.scoring, staged).length;
+  const errors = ValidateScoringConfig(staged);
+  if (errors.length) { toast(`Cannot apply: ${errors[0]}`); return; }
   pushHistory();
-  apply();
+  state.scoring = staged;
+  clearPendingWeights();
+  syncAllViews();
   saveDraft();
-  computeShiftCount();
-  renderWeights();
-  renderInspector();
-  renderCardsGrid();
-  if (state.sandbox.combat) renderSandbox();
+  toast(`Applied ${count} weight change(s). ${computeShiftCount()} card(s) now differ in rank from the game.`);
+}
+
+function discardPendingWeights() {
+  if (!state.pendingScoring) return;
+  clearPendingWeights();
+  renderWeights({ shifts: false });
+  saveDraft({ autoName: false });
+  toast('Discarded staged weight edits');
+}
+
+// Stages a whole scoring config (an imported file or the saved config) for review; Apply makes it live.
+function stageWholeScoring(scoring, sourceName) {
+  const errors = ValidateScoringConfig(scoring);
+  if (errors.length) throw new Error(errors.join(' '));
+  state.pendingScoring = clone(scoring);
+  // Seed naming words as the applied copy is seeded, so they do not count as staged changes.
+  ensureNamingWords(state.pendingScoring);
+  state.pendingReplacesAll = true;
+  document.querySelector('.studio-tab[data-tab="weights"]')?.click();
+  renderWeights({ shifts: false });
+  saveDraft({ autoName: false });
+  toast(`Staged ${sourceName}: ${pendingWeightCount()} change(s). Review, then Apply.`);
+}
+
+function updateWeightsToolbar() {
+  const apply = document.getElementById('btn-weights-apply');
+  if (!apply) return;
+  const count = pendingWeightCount();
+  apply.textContent = count ? `Apply (${count})` : 'Apply';
+  apply.disabled = count === 0;
+  document.getElementById('btn-weights-discard').disabled = !state.pendingScoring;
+  const accept = document.getElementById('btn-weights-accept-ranks');
+  accept.disabled = count > 0;
+  accept.title = count > 0 ? 'Apply or discard the staged edits first' : 'Write the applied weights to the game so every card takes its new rank';
+  refreshDirtyStatus();
 }
 
 // Which feature kind each weight group's rows are, for their descriptions.
@@ -1977,6 +2077,7 @@ function namingWordsExportNote() {
 }
 
 async function loadFromRepo(customPath = state.repoPath) {
+  clearPendingWeights();
   if (!isLocalServer) {
     state.repoScoring = clone(shippedScoring);
     state.scoring = clone(shippedScoring);
@@ -2023,10 +2124,9 @@ function rankShifts() {
     .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
 }
 
-function renderRankShiftList() {
-  const shifts = rankShifts();
-  document.getElementById('export-modal-shift-count').textContent = shifts.length === 1 ? '1 card changes rank' : `${shifts.length} cards change rank`;
-  const list = document.getElementById('export-modal-shifts');
+function renderRankShiftList(shifts = rankShifts(), countId = 'export-modal-shift-count', listId = 'export-modal-shifts') {
+  document.getElementById(countId).textContent = shifts.length === 1 ? '1 card changes rank' : `${shifts.length} cards change rank`;
+  const list = document.getElementById(listId);
   const shown = shifts.slice(0, RANK_SHIFT_LIST_LIMIT).map((shift) => {
     const direction = shift.now > shift.before ? 'shift-up' : 'shift-down';
     return `<li><span>${esc(shift.card.name)}</span><span class="${direction}">${esc(RankName(shift.before))} → ${esc(RankName(shift.now))}</span></li>`;
@@ -2034,6 +2134,149 @@ function renderRankShiftList() {
   const hidden = shifts.length - RANK_SHIFT_LIST_LIMIT;
   if (hidden > 0) shown.push(`<li class="studio-muted">+${hidden} more</li>`);
   list.innerHTML = shown.join('');
+}
+
+const GAME_SCORING_PATH = 'content/source/scoring.json';
+// Weights toolbar buttons that need the local server (hidden in web mode).
+const WEIGHTS_REPO_BUTTON_IDS = Object.freeze(['btn-weights-save', 'btn-weights-load-saved', 'btn-weights-export-game', 'btn-weights-accept-ranks']);
+
+const exportPath = () => document.getElementById('repo-path-input').value.trim() || GAME_SCORING_PATH;
+
+// A note for exports and saves: they carry the applied weights, never the staged ones.
+function stagedNotIncludedNote() {
+  const count = pendingWeightCount();
+  return count ? ` ${count} staged edit(s) are not included until Apply.` : '';
+}
+
+function openExportDialog() {
+  const errors = ValidateScoringConfig(state.scoring);
+  if (errors.length) { toast(`Validation failed: ${errors[0]}`); return; }
+  const diff = buildScoringDiff();
+  document.getElementById('export-modal-path').textContent = `Target: ${exportPath()} (${diff.length} change(s))`;
+  document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
+  document.getElementById('export-modal-naming').textContent = namingWordsExportNote() + stagedNotIncludedNote();
+  renderRankShiftList();
+  document.getElementById('export-modal').showModal();
+}
+
+// Writes the applied scoring to a repo file and rebuilds the game's scoring, combat-power and Act tables.
+async function writeScoringToGame(path, doneNote = 'Exported') {
+  try {
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: state.scoring, rebuild: true }) });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error);
+    state.repoScoring = clone(state.scoring);
+    recomputeBaselineRanks();
+    syncAllViews();
+    writeDraftNow();
+    toast(`${doneNote}: ${data.path}, rebuilt ${data.rebuilt.length} table script(s)`);
+    return true;
+  } catch (err) {
+    toast(`Export failed: ${err.message}`);
+    return false;
+  }
+}
+
+function downloadScoringJson() {
+  const blob = new Blob([JSON.stringify(state.scoring, null, 2) + '\n'], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'scoring.json' });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`Downloaded scoring.json.${stagedNotIncludedNote()}`);
+}
+
+// An imported file is staged, not applied: the owner reviews it in the Weights tab, then Applies.
+async function importScoringFile(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    stageWholeScoring(JSON.parse(await file.text()), file.name);
+  } catch (err) {
+    toast(`Invalid JSON: ${err.message}`);
+  }
+  e.target.value = '';
+}
+
+// Save keeps the applied weights as the studio's own config, apart from the game's scoring.json.
+async function saveStudioConfig() {
+  try {
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: STUDIO_SAVE_PATH, scoring: state.scoring, rebuild: false }) });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error);
+    toast(`Saved to ${data.path}.${stagedNotIncludedNote()}`);
+  } catch (err) {
+    toast(`Save failed: ${err.message}`);
+  }
+}
+
+async function openSavedConfig() {
+  try {
+    const r = await fetch(`/__studio/config?scoringPath=${encodeURIComponent(STUDIO_SAVE_PATH)}`);
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error);
+    if (!data.scoringExists) { toast('Nothing saved yet: Save first'); return; }
+    stageWholeScoring(data.scoring, 'the saved config');
+  } catch (err) {
+    toast(`Open saved failed: ${err.message}`);
+  }
+}
+
+// The rank a card scores with no override holding it in place.
+function unpinnedRank(def) {
+  const face = cardDefToFace(def, state.scoring);
+  const raw = ScoreCard(face, state.scoring).raw;
+  return RankOf(CombatPower(raw, face.rarity, state.scoring), state.scoring);
+}
+
+function cardOverride(def) {
+  const fromScoring = state.scoring.overrides?.[def.id];
+  return (fromScoring || def.scoringOverride) ? { ...(fromScoring || {}), ...(def.scoringOverride || {}) } : null;
+}
+
+// Cards whose override pins a rank the applied weights no longer give them. Accept new ranks clears these pins.
+function stalePinnedCards() {
+  return state.cards.filter((def) => HasRankPin(cardOverride(def)) && unpinnedRank(def) !== scoreCardEntry(def).rank);
+}
+
+// The game derives every card's rank (and so its Act) from scoring.json when the tables rebuild, so accepting
+// the new ranks is: clear stale rank pins, write the applied weights to the game, rebuild.
+function openAcceptRanksDialog() {
+  if (pendingWeightCount() > 0) { toast('Apply or discard the staged edits first'); return; }
+  const errors = ValidateScoringConfig(state.scoring);
+  if (errors.length) { toast(`Validation failed: ${errors[0]}`); return; }
+  const pinned = stalePinnedCards();
+  const pinnedIds = new Set(pinned.map((def) => def.id));
+  const shifts = state.cards
+    .map((card) => ({ card, now: pinnedIds.has(card.id) ? unpinnedRank(card) : scoreCardEntry(card).rank, before: state.baselineRanks[card.id] }))
+    .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
+  document.getElementById('ranks-modal-pins').textContent = pinned.length
+    ? `Clears the pinned rank on ${pinned.length} card(s): ${pinned.slice(0, 8).map((def) => def.name).join(', ')}${pinned.length > 8 ? ', ...' : ''}`
+    : 'No card has a pinned rank to clear.';
+  renderRankShiftList(shifts, 'ranks-modal-shift-count', 'ranks-modal-shifts');
+  document.getElementById('ranks-modal').showModal();
+}
+
+async function acceptNewRanks() {
+  const pinned = stalePinnedCards();
+  if (pinned.length) {
+    pushHistory();
+    for (const def of pinned) {
+      if (state.scoring.overrides?.[def.id]) {
+        const kept = WithoutRankPin(state.scoring.overrides[def.id]);
+        if (kept) state.scoring.overrides[def.id] = kept;
+        else delete state.scoring.overrides[def.id];
+      }
+      if (def.scoringOverride) {
+        const kept = WithoutRankPin(def.scoringOverride);
+        if (kept) def.scoringOverride = kept;
+        else delete def.scoringOverride;
+        def._edited = true;
+      }
+    }
+  }
+  const moved = rankShifts().length;
+  await writeScoringToGame(GAME_SCORING_PATH, `${moved} card(s) took their new rank in the game`);
 }
 
 function discardSummaryHtml() {
@@ -2781,60 +3024,21 @@ function wireEvents() {
   });
   document.getElementById('btn-confirm-revert').addEventListener('click', revertToRepo);
 
-  document.getElementById('btn-export-repo').addEventListener('click', () => {
-    const errors = ValidateScoringConfig(state.scoring);
-    if (errors.length) { toast(`Validation failed: ${errors[0]}`); return; }
-    const path = document.getElementById('repo-path-input').value.trim() || 'content/source/scoring.json';
-    const diff = buildScoringDiff();
-    document.getElementById('export-modal-path').textContent = `Target: ${path} (${diff.length} change(s))`;
-    document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
-    document.getElementById('export-modal-naming').textContent = namingWordsExportNote();
-    renderRankShiftList();
-    document.getElementById('export-modal').showModal();
-  });
+  document.getElementById('btn-export-repo').addEventListener('click', openExportDialog);
+  document.getElementById('btn-confirm-export').addEventListener('click', () => writeScoringToGame(exportPath()));
+  document.getElementById('btn-download-json').addEventListener('click', downloadScoringJson);
+  document.getElementById('input-upload-json').addEventListener('change', importScoringFile);
 
-  document.getElementById('btn-confirm-export').addEventListener('click', async () => {
-    const path = document.getElementById('repo-path-input').value.trim() || 'content/source/scoring.json';
-    try {
-      const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: state.scoring, rebuild: true }) });
-      const data = await r.json();
-      if (!data.ok) throw new Error(data.error);
-      state.repoScoring = clone(state.scoring);
-      recomputeBaselineRanks();
-      syncAllViews();
-      writeDraftNow();
-      toast(`Exported to ${data.path} and rebuilt tables (${data.rebuilt.length} script(s))`);
-    } catch (err) {
-      toast(`Export failed: ${err.message}`);
-    }
-  });
-
-  document.getElementById('btn-download-json').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(state.scoring, null, 2) + '\n'], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'scoring.json' });
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast('Downloaded scoring.json');
-  });
-
-  document.getElementById('input-upload-json').addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const parsed = JSON.parse(await file.text());
-      const errors = ValidateScoringConfig(parsed);
-      if (errors.length) throw new Error(errors.join(' '));
-      pushHistory();
-      state.scoring = parsed;
-      syncAllViews();
-      saveDraft();
-      toast(`Loaded ${file.name}`);
-    } catch (err) {
-      toast(`Invalid JSON: ${err.message}`);
-    }
-    e.target.value = '';
-  });
+  // Weights toolbar: staged edits, the studio's saved config, import, export and accepting the new ranks.
+  document.getElementById('btn-weights-apply').addEventListener('click', applyPendingWeights);
+  document.getElementById('btn-weights-discard').addEventListener('click', discardPendingWeights);
+  document.getElementById('btn-weights-save').addEventListener('click', saveStudioConfig);
+  document.getElementById('btn-weights-load-saved').addEventListener('click', openSavedConfig);
+  document.getElementById('input-weights-import').addEventListener('change', importScoringFile);
+  document.getElementById('btn-weights-export-game').addEventListener('click', openExportDialog);
+  document.getElementById('btn-weights-export-download').addEventListener('click', downloadScoringJson);
+  document.getElementById('btn-weights-accept-ranks').addEventListener('click', openAcceptRanksDialog);
+  document.getElementById('btn-confirm-accept-ranks').addEventListener('click', acceptNewRanks);
 }
 
 // ---------------------------------------------------------------------------
@@ -2883,7 +3087,7 @@ async function boot() {
   // Web mode (GitHub Pages): nothing can be written to the repo, so the repo controls go and
   // Download JSON in the More menu is how work leaves the studio.
   if (!isLocalServer) {
-    for (const id of ['btn-export-repo', 'btn-save-art', 'btn-revert']) document.getElementById(id)?.classList.add('hidden');
+    for (const id of ['btn-export-repo', 'btn-save-art', 'btn-revert', ...WEIGHTS_REPO_BUTTON_IDS]) document.getElementById(id)?.classList.add('hidden');
     document.querySelector('#more-menu .menu-section')?.classList.add('hidden');
     document.getElementById('draft-status').title = 'Web mode: use Download JSON in the More menu to export';
   }
@@ -2898,6 +3102,10 @@ async function boot() {
       const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
         .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
       state.scoring = draft.scoring;
+      if (draft.pendingScoring && ValidateScoringConfig(draft.pendingScoring).length === 0) {
+        state.pendingScoring = draft.pendingScoring;
+        state.pendingReplacesAll = draft.pendingReplacesAll === true;
+      }
       if (draftArtLayers) state.artLayers = draftArtLayers;
       for (const draftCard of draftCards) {
         const i = state.cards.findIndex((c) => c.id === draftCard.id);

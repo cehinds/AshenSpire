@@ -93,3 +93,34 @@ test('pages-site publishScoreStudio extracts every module tree transitively impo
   }
   assert.ok(seen.size > 10, `Expected transitive module closure > 10 files, got ${seen.size}`);
 });
+
+test('weights staging: Apply keeps live sections, diffs leaf paths, and clears only rank pins', async () => {
+  const { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } = await import('../tools/score-studio/weightsStaging.js');
+  const applied = structuredClone(shippedScoring);
+  applied.overrides = { 'core.example': { rank: 2 } };
+  const pending = structuredClone(shippedScoring);
+  pending.costs.sp.weight += 3;
+  pending.overrides = {};
+
+  assert.deepEqual(ScoringDiffPaths(applied, applied), []);
+  assert.ok(ScoringDiffPaths(applied, pending).includes('costs.sp.weight'));
+
+  // Staged weight edits never undo a card override made while they were pending.
+  const merged = MergePendingScoring(applied, pending);
+  assert.equal(merged.costs.sp.weight, pending.costs.sp.weight);
+  assert.deepEqual(merged.overrides, applied.overrides);
+  assert.deepEqual(ScoringDiffPaths(applied, merged), ['costs.sp.weight']);
+  // An import replaces everything, overrides included.
+  assert.deepEqual(MergePendingScoring(applied, pending, { replaceAll: true }).overrides, {});
+
+  assert.equal(HasRankPin({ rank: 1 }), true);
+  assert.equal(HasRankPin({ cp: 40 }), true);
+  assert.equal(HasRankPin({ rarity: 'rare' }), false);
+  assert.equal(HasRankPin(null), false);
+  assert.deepEqual(WithoutRankPin({ rank: 1, cp: 3, raw: 2, rarity: 'rare' }), { rarity: 'rare' });
+  assert.equal(WithoutRankPin({ rank: 1 }), null);
+
+  // The studio's saved config sits outside content/, which the game build sweeps for stray sources.
+  assert.ok(!STUDIO_SAVE_PATH.startsWith('content/'));
+  assert.ok(STUDIO_SAVE_PATH.endsWith('.json'));
+});
