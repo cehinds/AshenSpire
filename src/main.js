@@ -126,6 +126,8 @@ import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.j
 import { seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoiceAsync } from './model/settingsDefaults.js';
 import { BUILD_VERSION, SOURCE as BUILD_SOURCE } from './buildversion.js';
 import { ApplyBuildWipe, BuildSaveId } from './engine/buildWipe.js';
+import { ApplyEpochWipe } from './engine/epochWipe.js';
+import { CUSTOM_SCORING_STORAGE_KEY, SetCustomScoring } from './model/activeScoring.js';
 import { DrawSaveWipeNotice } from './ui/components/saveWipeNotice.js';
 import { uiConfig } from './config/generated/ui.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
@@ -382,6 +384,12 @@ if (shotState === 'crisis') {
 let persistentStorage = false;
 try { persistentStorage = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
 // Dev toggle (content/config/ui/presentation/saves.json): a new build clears old run saves; settings are kept.
+// One-time HARD wipe (saves.json epoch): every game key, profile included; before the build wipe and before any save is read.
+const epochWipe = ApplyEpochWipe(bootStorage, { epoch: uiConfig.presentation.saves.behavior.epoch });
+try {
+  const savedScoringRaw = bootStorage.getItem(CUSTOM_SCORING_STORAGE_KEY);
+  if (savedScoringRaw) SetCustomScoring(JSON.parse(savedScoringRaw));
+} catch { /* ignore unreadable custom scoring */ }
 const saveWipe = ApplyBuildWipe(bootStorage, { enabled: uiConfig.presentation.saves.behavior.discardOnNewBuild === true, buildId: BuildSaveId({ version: BUILD_VERSION, source: BUILD_SOURCE }) });
 const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: persistentStorage ? navigator.locks : null });
 
@@ -1104,7 +1112,7 @@ function afterBootArt(fn) {
 // null (no notice), 'failed', 'retrying' or 'again' (a Retry failed too).
 let artNoticeState = null;
 function drawArtNotice(root) {
-  DrawSaveWipeNotice(root, saveWipe.cleared);
+  DrawSaveWipeNotice(root, epochWipe.cleared || saveWipe.cleared, epochWipe.cleared ? t('title.saveWipe.epoch') : undefined);
   if (!artNoticeState) { root.querySelector('.art-load-notice')?.remove(); return; }
   mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: artNoticeState }), onRetry: retryArtFromTitle });
 }

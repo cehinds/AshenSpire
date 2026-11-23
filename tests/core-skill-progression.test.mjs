@@ -92,6 +92,8 @@ test('an explicitly used offhand pays that group, and a granted utility card rec
   assert.ok(skillXpReceipt(combat)['item:shield'] > 0);
   assert.equal(skillXpReceipt(combat)['item:blade'], undefined);
   const { combat: herald } = live('herald');
+  // Owner ruling 2026-11-21: the shipped sceptre no longer grants Mana Surge, so lend one as the granting item would.
+  herald.piles.hand.push({ instanceId: 'granted:boneSceptre:core.manaSurge:0', cardId: 'core.manaSurge', upgraded: false, equipmentRole: 'granted', grantedBy: 'boneSceptre' });
   play(herald, 'core.manaSurge');
   assert.deepEqual(herald.skillXp.player.xp, { 'item:magic-focus': 0 });
   recordSkillXp(herald, { type: 'combatEnd', victory: true });

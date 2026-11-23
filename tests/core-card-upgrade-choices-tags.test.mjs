@@ -93,10 +93,10 @@ test('a school change on a non-damaging spell projects a valid face and profile'
 
 test('an element step carries the exposure an authored card of that school builds, so combat reads both', async () => {
   const { nextUpgradeOptions } = await import('../src/model/cardUpgradeLimits.js');
-  const floor = registries.balance.exposure.buildupPerManaSpell;
+  const floor = registries.balance.exposure.elementUpgradeBuildup;
   const authored = [...registries.cards.ids()].map((id) => registries.cards.get(id)).find((c) => c.id.startsWith('core.') && c.damageSchool === 'magic' && c.manaCost > 0 && c.exposureBuildupPerHit > 0);
   assert.ok(authored, 'an authored Mana spell of the magic school');
-  assert.ok(authored.exposureBuildupPerHit >= floor, 'the floor is what the least authored one builds');
+  assert.equal(floor, 5, 'an element step carries the shipped balance.exposure.elementUpgradeBuildup (not a floor on any card, owner 2026-11-22)');
   const run = { seed: 504, gameProfile: profile };
   const element = [];
   for (let n = 0; n < 200; n += 1) {

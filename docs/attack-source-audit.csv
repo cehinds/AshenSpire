@@ -145,6 +145,7 @@
 "card","","zealotryCard","power","false","false","","","spell","","divine","","","",""
 "card","","bloodHarvest","attack","true","false","spell","decay","spell","casting","decay","","delivery:area","","theme:blood"
 "card","","painOffering","attack","true","false","spell","decay","spell","casting","decay","","","","theme:blood"
+"card","","gravebinderLament","attack","true","false","spell","decay","spell","casting","decay","","delivery:melee","","theme:blight"
 "card","","witheringTouch","attack","true","false","spell","decay","spell","casting","decay","","delivery:melee","","theme:blight"
 "card","","desperateRite","attack","true","false","spell","decay","spell","casting","decay","","","",""
 "card","","emberTideCard","power","false","false","","","spell","","decay","","","",""

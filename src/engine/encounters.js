@@ -66,6 +66,7 @@ export function rollRuneReward(registries, rng, pool, relicIds) {
 // where every caller already finds them.
 import { cardRewardRarityWeights } from '../model/rewardOdds.js';
 import { tagIdsFor } from '../content/tags.js';
+import { FilterToBand } from '../model/levelLists.js';
 export { cardRewardRarityWeights };
 
 /**
@@ -99,8 +100,10 @@ function pickWithAffinity(rng, options, affinity) {
 /**
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
  * card ids (rarity-weighted per pool; elites offer +1 with Feral Eye).
+ * With `tierId` (model/levelLists.js: 'act1'..), after the rarity roll the rarity's candidates are narrowed to that tier's combat-power
+ * rank band; a band with none left keeps the whole rarity pool. The filter draws nothing. Absent `tierId`: unfiltered, as before.
  */
-export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false, combatExpansionVersion = 1 }) {
+export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false, combatExpansionVersion = 1, tierId = null }) {
   const bal = registries.balance.rewards;
   let count = bal.cardChoices;
   if (pool === 'elite' && passiveFlag(registries, relicIds, 'eliteExtraCardReward')) count += 1;
@@ -132,8 +135,9 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
         break;
       }
     }
-    const options = byRarity[rarity].filter((id) => !picks.includes(id));
+    let options = byRarity[rarity].filter((id) => !picks.includes(id));
     if (!options.length) continue;
+    if (tierId) options = FilterToBand('cards', tierId, options);
     picks.push(pickWithAffinity(rng, options, affinity));
   }
   return picks;
@@ -171,9 +175,9 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
  * so the shipped schedule writes exactly the bytes it wrote before.
  * Pure of the run: the caller hands in the level-ups the fight bought.
  */
-export function rollCombatCardOffer(registries, rng, { classId, pool, relicIds = [], flatRarity = false, draftWaiting = false, levelUps = 0, combatExpansionVersion = 1 } = {}) {
+export function rollCombatCardOffer(registries, rng, { classId, pool, relicIds = [], flatRarity = false, draftWaiting = false, levelUps = 0, combatExpansionVersion = 1, tierId = null } = {}) {
   const plan = cardRewardPlan(registries.balance, { pool, levelsGained: levelUps, draftWaiting }, rng);
-  const roll = () => rollCardRewardIds(registries, rng, { classId, pool, relicIds, flatRarity, combatExpansionVersion });
+  const roll = () => rollCardRewardIds(registries, rng, { classId, pool, relicIds, flatRarity, combatExpansionVersion, tierId });
   const cardIds = plan.offerCard ? roll() : [];
   const levelCards = [];
   for (let i = 0; i < plan.levelCards; i++) {

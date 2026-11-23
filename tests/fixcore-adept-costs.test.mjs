@@ -43,16 +43,17 @@ test('Adept costs use the equipped class tag, authoritative Spell camp and only 
   assert.equal(stanceStaminaCost(3, ctx.player, { ...physical, manaCost: 9 }, ctx, 9), 2, 'MP cost alone does not make a Spell');
 });
 
-test('own-turn reduction stops at one, matching enemy reactions reach zero, and authored free lanes stay free', () => {
+// Owner ruling 2026-11-22: the Magic Adept (Graduate) Mana cut may reach 0 on the player's turn; the Martial (SP) cut still stops at one.
+test('the own-turn reduction has no floor (owner 2026-11-22, no card has a minimum; it stopped at one before), matching enemy reactions reach zero, and authored free lanes stay free', () => {
   for (const [classId, card, cost] of [['reaver', physical, stanceStaminaCost], ['starseer', magic, stanceManaCost]]) {
     const ctx = unit(classId, card);
-    assert.equal(cost(1, ctx.player, card, ctx), 1);
+    assert.equal(cost(1, ctx.player, card, ctx), 0);
     assert.equal(cost(0, ctx.player, card, ctx), 0);
     ctx.phase = 'enemy';
     assert.equal(cost(1, ctx.player, card, ctx), 0);
     assert.equal(cost(3, ctx.player, card, ctx), 2, 'the old generic reaction cut does not stack');
     assert.equal(cost(0, ctx.player, card, ctx), 0);
-    assert.equal(cost(1, ctx.player, { ...card, cardTags: [] }, ctx), 1, 'only a reaction earns the zero floor');
+    assert.equal(cost(1, ctx.player, { ...card, cardTags: [] }, ctx), 0, 'no card has a minimum, reaction or not (owner 2026-11-22)');
     delete ctx.player.combatStance;
     assert.equal(cost(3, ctx.player, card, ctx), 3, 'entering a stance cannot discount that play');
   }
@@ -104,12 +105,12 @@ test('native Smash entry, matching preview, affordability and actual payment agr
   assert.equal(out.events.find(row => row.type === 'cardPlayed').staminaSpent, 1);
 });
 
-test('native Frost Counter has a zero-MP matching reaction quote and identical snapshot-resumed payment', () => {
+test('native Frost Counter has a zero-MP matching quote (own turn and reaction) and identical snapshot-resumed payment', () => {
   const ctx = native('starseer');
   ctx.piles.hand = [{ instanceId: 'frost', cardId: 'frostCounter', upgraded: false }];
   ctx.player.combatStance = stanceOf(resolveCombatCard(ctx, ctx.piles.hand[0]));
   ctx.player.stamina = 2; ctx.player.mana = 0;
-  assert.deepEqual(cardPlayCosts(ctx, 'frost'), { energy: 1, stamina: 1, mana: 1 }, 'own-turn MP floor is one');
+  assert.deepEqual(cardPlayCosts(ctx, 'frost'), { energy: 1, stamina: 1, mana: 0 }, 'own-turn Graduate MP floor is zero (owner 2026-11-22)');
   dispatch(ctx, { type: 'endTurn' });
   const option = ctx.pendingReaction?.options.find(row => row.cardId === 'frostCounter' && row.play.upcastTier === undefined);
   assert.ok(option, 'zero Mana remains affordable during a matching reaction');

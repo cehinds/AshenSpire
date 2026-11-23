@@ -73,8 +73,8 @@ Returns the **effective card def** (frozen, cached). Upgrade merge rules:
 | `poise.playerImpactPerHit` (2) | the Poise damage an enemy blow that draws blood deals the player (SPEC §13.4k) |
 | `derivedStatRules.rules.poise` | the player's poise max per point of Constitution, beside body armour and relic `poiseThresholdAdd` (SPEC §13.4k, §13.4l). Retired from `balance.poise` in plan phase 9; a copy there is refused by name |
 | `stagger.player` | `{ actionLoss, statuses: { <statusId>: stacks } }` — what a player Stagger takes: actions off the next turn and the statuses applied |
-| `mana.minActionCost` / `minStaminaCost` (1 / 1) | a card that costs Mana costs at least these (validation) |
-| `exposure.staggerBreakPoise` / `resonanceSpreadPct` / `buildupPerManaSpell` (6 / 50 / 5) | the focus properties' numbers and the Mana spell's buildup floor |
+| `mana.focusManaDiscount` / `focusItemType` | the Focus Mana discount (the `minActionCost` / `minStaminaCost` floors are retired: no card has a cost minimum, owner ruling 2026-11-22) |
+| `exposure.staggerBreakPoise` / `resonanceSpreadPct` / `elementUpgradeBuildup` (6 / 50 / 5) | the focus properties' numbers and the buildup an element-granting upgrade gives (no floor on any card, owner 2026-11-22) |
 | `poise.onFill` ([]) | effects enqueued when a poise meter fills, `owner`/`self` = the Staggered enemy. **This is where content applies its "staggered" status** (e.g. `damageTakenMult: 1.5` + a `playerTurnEnd` hook that removes itself). The engine never names that status. |
 | `startingCinders` (20; 0 before 2026-09-24) | initial cinders in `createRunState` |
 

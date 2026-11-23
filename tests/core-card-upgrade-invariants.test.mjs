@@ -49,10 +49,10 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
         const kinds = instance.upgradeSteps.map((x) => x.k);
         assert.ok(kinds.filter((k) => k === 'cost').length <= 1 && kinds.filter((k) => k === 'hits').length <= 1, `${where}: cost or hits more than once`);
         assert.equal(face.cost, plain.cost - (plain.staminaCost - face.staminaCost) - 0, `${where}: cost must track staminaCost`);
-        if (base.staminaCost > 0) assert.ok(face.staminaCost >= 1, `${where}: SP floor`);
+        assert.ok(face.staminaCost >= 0 && face.staminaCost <= base.staminaCost, `${where}: SP never negative (no cost minimum, owner 2026-11-22)`);
         const cantripped = instance.upgradeSteps.some((x) => x.k === 'tag' && x.tag === 'rank.cantrip');
-        // a cantrip costs no Mana (owner, 2026-11-01): a rank-down step zeroes it; otherwise the MP floor holds (a Mana-only spell, batch 4, has no Stamina to floor)
-        if (base.manaCost > 0) assert.ok(cantripped ? face.manaCost === 0 : face.manaCost >= 1 && (base.staminaCost > 0 ? face.cost >= 1 : face.cost >= 0), `${where}: MP floor`);
+        // No card has a cost minimum (owner 2026-11-22): a Mana cut may reach 0 on any card; a rank-down step zeroes it.
+        if (base.manaCost > 0) assert.ok(cantripped ? face.manaCost === 0 : face.manaCost >= 0 && face.manaCost <= base.manaCost && face.cost >= 0, `${where}: MP never negative`);
       }
     }
   }

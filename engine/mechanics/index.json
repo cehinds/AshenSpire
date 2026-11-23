@@ -245,7 +245,7 @@
       "id": "cost.manaOnly",
       "tag": "cost.manaOnly",
       "family": "cost",
-      "portability": "legacy",
+      "portability": "data",
       "modules": []
     },
     {

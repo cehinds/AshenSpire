@@ -1,5 +1,5 @@
 # ManaOnly (`cost.manaOnly`)
 Tag cost.manaOnly in the cost family.
 - Carried by: cards.
-- Lives in: `src/model/validate/cardCosts.js` (`cardCostProblems`).
-- Portability: legacy (service.json is empty until the behaviour moves to catalog ops).
+- Lives in: data only; no JavaScript reads it.
+- Portability: data (classification or presentation only).

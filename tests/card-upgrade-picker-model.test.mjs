@@ -345,12 +345,12 @@ test('copies whose next upgrade rolls differently share one row that shows the f
   assert.equal(rows[0].nextDiffers, steps.size > 1, 'the row says so when the copies would roll differently');
 });
 
-test('the smith list: two Strikes, an upgraded Strike and the weapon art are three rows, the art disabled with its reason', () => {
+test('the smith list: three Strikes, an upgraded Strike and the weapon art are three rows, the art disabled with its reason', () => {
   const run = newRun(); run.smithingStones = 3;
-  run.deck.push({ ...strike(run), instanceId: 'extra-strike' });
+  // Owner ruling 2026-11-21: the Reaver starts with four Strikes.
   const strikes = run.deck.filter(c => c.cardId === 'core.strike');
-  assert.equal(strikes.length, 3);
-  strikes[2].upgraded = true; strikes[2].upgradeSteps = [{ k: 'authored' }];
+  assert.equal(strikes.length, 4);
+  strikes[3].upgraded = true; strikes[3].upgradeSteps = [{ k: 'authored' }];
   const art = run.deck.find(c => c.cardId === 'greatswordSunderingHew');
   assert.ok(art && (art.grantedBy || art.sourceArmamentId), 'the starting weapon grants its art');
   const rows = cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike' || r.cardId === art.cardId);
@@ -358,7 +358,7 @@ test('the smith list: two Strikes, an upgraded Strike and the weapon art are thr
   const plain = rows.find(r => r.cardId === 'core.strike' && r.upgrades === 0);
   const upgraded = rows.find(r => r.cardId === 'core.strike' && r.upgrades === 1);
   const weapon = rows.find(r => r.cardId === art.cardId);
-  assert.equal(plain.copies, 2);
+  assert.equal(plain.copies, 3);
   assert.equal(upgraded.copies, 1);
   assert.equal(weapon.disabled, true);
   assert.equal(weapon.ok, false);
@@ -409,9 +409,9 @@ test('blacksmith rows list 2 options for a Basic card and 3 for a ranked one; th
   assert.equal(strikeRow.options.length, 2, 'Strike is Basic');
   assert.equal(strikeRow.plan.options.length, 2);
   assert.deepEqual(strikeRow.options[0].step, plain.rows.find(r => r.cardId === 'core.strike').plan.step);
-  // Ironbreaker and Rallying Roar are Reaver starters now (0 MP, so few distinct rolls): the rule asks for 3 slots on a ranked card,
+  // Owner ruling 2026-11-21: the Reaver's ranked starters are its class card and its weapon art. The rule asks for 3 slots on a ranked card,
   // and a card with fewer distinct candidates shows fewer rows (cardUpgradeLimits.nextUpgradeOptions).
-  for (const id of ['core.ironbreaker', 'core.rallyingRoar']) {
+  for (const id of ['core.reaverSpecial']) {
     const row = smith.rows.find(r => r.cardId === id);
     assert.ok(row, `${id} is in the Reaver deck`);
     assert.equal(upgradeChoiceCount(registries.cards.get(id), row.instance || {}, { blacksmith: true }), 3, `${id} is ranked`);

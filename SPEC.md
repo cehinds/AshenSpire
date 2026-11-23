@@ -708,7 +708,7 @@ Every card's Stamina (SP) and Mana (MP) cost is derived by formula, in every fig
 
 **Shipped tunables**: `spDivisor` 6; `mpDivisor` 8; `damageWeight` 1.5 on steps 1 / 3 / 5 / 8 / 12; `rankWeight` 1; `rankWeightMp` 4; `castingEffortWeight` 6; `restoreWeight` 1; `statusWeight` 2 (no stack cap); `smashPoiseBase` 3; Ethereal -1; smash, sweep and heavy tags 0 (the floor prices a base smash).
 
-**Targets**: most basic and cantrip cards cost 1 Stamina and no Mana; smashes and sweeps cost 2; rank 1–2 cost 1 SP + 1 MP, or 2 SP; most rank 1–3 spells cost 1–2 Mana; many magic cards cost at least 1 SP (0-SP magic still possible); higher SP usually means lower MP.
+**Targets**: most basic cards cost 1 Stamina and no Mana, and most cantrips 1 Stamina and 0-1 Mana; smashes and sweeps cost 2; rank 1–2 cost 1 SP + 1 MP, or 2 SP; most rank 1–3 spells cost 1–2 Mana; many magic cards cost at least 1 SP (0-SP magic still possible); higher SP usually means lower MP.
 
 **Layering and opt-outs**
 - The derived SP and MP replace the authored `cost` and `manaCost`. Per-card rules then apply on top: relic and power reductions, Mana discounts, upcast surcharges (only for stored upcast ranks; upcasting is off, §4.8). Equipment and status mods apply after, so a mod's flat bonus is added to the scaled number and not scaled.
@@ -991,7 +991,7 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
   - A chip is a fixed square, the size of a combat badge, holding the trigger's own mark (damage-type, element or status symbol, `model/weaknessIcons.js`, never a letter); tooltip on hover, focus and tap ("Weak to Piercing: +25% damage"), same text as its accessible name.
 
 **Lightning, Shocked, Damp and Bedrock.** Core combat on the Lightning damage type; the Lightning rider (1 Weak after HP loss) is unchanged in the legacy and expanded profiles; in Core 2 the Weak comes from *School statuses* below.
-- **Spark** (`core.spark`): Core Cantrip (tags `rank.cantrip`, `lightning`, `school:lightning`), 3 Lightning damage, 1 SP, 0 MP (a cantrip costs no Mana); upgraded 4.
+- **Spark** (`core.spark`): Core Cantrip (tags `rank.cantrip`, `lightning`, `school:lightning`), 3 Lightning damage, 1 SP, 0 MP (a cantrip costs 0-1 Mana); upgraded 4.
 - **Lightning hit** = a card or enemy move with the `lightning` tag or dealing Lightning damage.
   - *Metal conducts:* a target using metal equipment (row `material: metal`; Core weapons, shields, armour are tagged) takes the hit at +1 Precision for the attacker (+1 Accuracy on that hit).
   - *Shock contest* (stream `combatContest`): after HP loss the hit tries to inflict 1 Shocked. Roll d20 + (target's current Shocked stacks × (caster INT + WIS + card rank)) vs DC = target's current Poise + STR + DEX + CON + level (d20 helper `engine/d20Chance.js` and the roll log; the receipt shows total vs DC). Card rank = the played copy's `cardRank` (§13.4o; 1 when absent). Success: 1 Shocked.
@@ -2350,11 +2350,10 @@ Summary: a place's tags decide what resting there restores; `engine/locations.js
 
 ### 13.4k Mana is the second cost line, a focus owns its break, and the player has a Poise meter
 
-- **Mana is never the first cost line.** A card that costs Mana costs at least `balance.mana.minActionCost` (1) Stamina, base and upgrade alike. Actions and Stamina are one pool (`src/model/turnStamina.js`); `minStaminaCost` is retired at 0.
-  - `validate.js` refuses a card under the floor BY NAME (`cards.<id>.cost: '<name>' costs Mana, so it costs at least 1 action …`); an upgrade inherits the base's lines where it leaves them unsaid.
+- **No card has a cost minimum (owner ruling 2026-11-22: "No card has minimums. Let the procedural weights handle that.").** The rule that a card costing Mana costs at least `balance.mana.minActionCost` (1) Stamina is removed, with both keys `minActionCost` and `minStaminaCost` and the validator's by-name refusal; a Mana card may cost 0 SP. Actions and Stamina are one pool (`src/model/turnStamina.js`). Balance comes from the combat-power weights (`content/source/scoring.json`), not a floor.
   - The four signature arts cost 1 Stamina + 1 Mana (the 2 / 2 price waits on run-stamped card costs). Starstone Pebble, Comet Fragment, Starblade Phalanx, Starlance and Frost Nova cost Stamina only (Comet Fragment 1); their `cardExposure.csv` rows read 1. Seven Mana powers whose upgrade was "costs 0" drop the Mana line instead.
   - An X-cost Mana card passes the floor (`face.cost === 'X'`). Refused by name: a negative floor, a missing `balance.mana`, a `balance.stagger.player` status the bundle lacks.
-  - A Mana spell (school builds Arcane Exposure) builds at least `balance.exposure.buildupPerManaSpell` (5) per hit, refused by name below it; every such `cardExposure.csv` row reads 5. A spell with no Mana line keeps 1 (Blight Touch: Stamina, no Mana).
+  - **No Exposure floor (owner ruling 2026-11-22).** Exposure per hit is authored per card (`cardExposure.csv` and grade traits); a Mana spell may build any non-negative amount, and the profile validator no longer refuses a low value. The retired `balance.exposure.buildupPerManaSpell` floor is now `balance.exposure.elementUpgradeBuildup` (5), only the buildup an upgrade that gives a card a new damage school carries. Authored rows are unchanged.
 - **Focus Mana discount.**
   - Applies only while the card's player is in the Prepared stance (`activeCombatStance`, maneuver `casting`/`prepared`); no discount in any other stance or none.
   - Needs an equipped armament with the Focus item type (`balance.mana.focusItemType`, tag `item:magic-focus`: staves, sceptres, rods, chimes). Then every magic card's Mana cost drops by `balance.mana.focusManaDiscount` (1), floored at 0: `max(MP − 1, 0)`.
@@ -2485,7 +2484,7 @@ Every level gives something; no level is points-only. Rewards stack, repeated bo
 - **Draft rank.** A skill draft rolls each offered card's rank (`skills.js rollDraftRank`) 1 to min(level, `rankMax` 10), weight of rank *r* proportional to *r*, on the `cardRewards` stream. The offer carries `ranks` (checked on load); the taken card keeps it. Rarity stays the gate for which cards are offered; the upgrade row raises rank, not rarity.
 - **Rank-up row.** Each level from 2 on of a card-school track (weapon, focus, dual-wield) queues one rank-up (`skills.<id>.pendingRankUps`, absent on an older save; level 1 queues none). The door offers each as a `skillRankUp` row (`rewards.skillRankUps`, key `skillRankUp:<skillId>:<ordinal>`, deferred and reserved like a draft) beside that level's draft. It lists the run's ordinary cards of the track's schools with rank below the track level (`skills.js rankUpCandidates`: deck then sideboard; equipment-bound and item-owned cards excluded), each at the rank it would reach. Confirm raises the card one rank (`raiseCardRank`; pick kept in `pendingReward.chosenRankUps`). With no candidate the row says so and waits. A taken rank-up must name its card, and a saved rank-up's track must be a card-school track.
 - **Rank-up bonus** (Core runs, card ranks on). A rank-up also offers 2 to 3 bonus options; the player picks one before confirming.
-  - Rolled by the blacksmith's upgrade generator (damage, Block, Poise, Stamina or Mana cut, a tag, the rest of its pool) under the same eligibility rules (no cut below 1 SP or 1 Mana, none on a cantrip's Mana, the multi-hit floor, the +100% guard), with each numeric amount multiplied by `balance.skill.rankUpBonusScale` (shipped 2), rounded, and never past a normal upgrade's guards.
+  - Rolled by the blacksmith's upgrade generator (damage, Block, Poise, Stamina or Mana cut, a tag, the rest of its pool) under the same eligibility rules (a cut may reach 0 SP or 0 Mana, owner ruling 2026-11-22; the multi-hit floor and the +100% guard remain), with each numeric amount multiplied by `balance.skill.rankUpBonusScale` (shipped 2), rounded, and never past a normal upgrade's guards.
   - 3 options when the generator has 3 distinct ones, else 2 (1, or none, when that is all it has). Seeded by (run seed, card instance, step count) with its own salt, seeing the card at its new rank, so a reload shows the same options.
   - The pick is one ordinary upgrade step (`bonus: true`): a gift that does not use the free upgrade the new rank earns but counts toward the 10-step cap. The card's designed `authored` upgrade is not an option. The rank's upgrade range expansion is unchanged.
 - **Respec.** Lowers queued rank-ups by the levels lost and drops the track's deferred drafts and rank-ups waiting for a level above 1 (the ledger re-offers what it still queues). Ranks already raised stay.
@@ -2817,7 +2816,7 @@ Core only (Legacy and Current keep the single authored upgrade). Design and buil
   - A card with no eligible step left is fully upgraded: both refusals read "Fully upgraded" and cannot be bought again.
 - **What a step does.**
   - Step 1 is the card's authored upgrade if it has one; otherwise, and for every later step, a seeded procedural step.
-  - Caps: a status never past its cap; damage or block gain never past +100% of base; cost never below 1; cost and hits once per card. Never touches a conditional or HP-loss effect.
+  - Caps: a status never past its cap; damage or block gain never past +100% of base; cost never below 0 (owner ruling 2026-11-22, no card has a minimum: a -1 SP or -1 MP step stays on offer until that cost reaches 0, on every card); cost and hits once per card. Never touches a conditional or HP-loss effect.
   - Power, status and curse cards take only a cost step. Retain is offered (an `fx` step; Core keeps a Retain card in hand at end of turn).
   - Roll = `mulberry32(hash(run.seed, instanceId + offer key, stepIndex))`, so preview equals commit. The step is stored on the card (`upgradeSteps`), never re-derived. Name: `Name+` for one upgrade, `Name+N` for N.
   - **Offer key** (owner, 2026-11-20): every upgrade source (a Blacksmith or trader visit, a rest site or Shrine visit, a reward offer) takes the next `run.upgradeOfferSerial` and stores it as `offerKey` on its record (`shopStock`, the rest visit, `gameProfilePendingReward`). Every upgrade roll folds it into its seed: card steps, option count, two-effect combos, rank-up bonus, Blacksmith rank chance, item options and category change. Options stay fixed for the stay (close and reopen a card: same options) and re-roll at the next source. A record without a key (an older save) rolls as before.
@@ -2861,9 +2860,9 @@ Core only (Legacy and Current keep the single authored upgrade). Design and buil
 
   - Item options follow the same rule: attribute picks (STR, DEX, CON, INT, WIS, Mana, +1 attribute properties) are one family; the six edges (elemental damage or a status on a hit) one; then Poise, resistances, start-of-turn Block, stances, hand flow and deck building.
 
-- **Cantrip and Basic Mana.** A cantrip or Basic costs no Mana, printed or upgrade-made (`core.mendingTouch` prints 0 MP; the validator refuses a `rank.cantrip` card with Mana).
+- **Cantrip and Basic Mana.** A Basic costs no Mana. A cantrip costs 0 or 1 Mana, printed or upgrade-made (owner, 2026-11-22; it was 0 from 2026-11-01): `core.mendingTouch` prints 0 MP, `core.cantrip` (Arcane Spark) prints 1 MP; the validator refuses a `rank.cantrip` card, base or upgrade, that costs 2 or more Mana.
   - Rank down sets the copy's Mana cost to 0 wherever the card resolves (saved copies included); the preview reads e.g. Mana 2 → 0.
-  - No -1 Mana (`cost`) step is offered on a cantrip, a Basic or a copy that became one.
+  - Owner ruling 2026-11-22 (no card has a minimum): a -1 Mana (`cost`) step is offered on any card that still has Mana to cut, a cantrip, a Basic or a copy that became one included, until its Mana reaches 0 (the old rule that withheld it is removed).
   - A card paying 0 Stamina is not offered rank down (a 0/0 cantrip is forbidden).
 - **The choice (Blacksmith only).** The player picks one of 2 or 3 rolled options (an even, seeded draw per card, upgrade number and offer key; 2 for a Basic card and 3 for a ranked one only when no run is given). A rest site offers 1 option up to the third upgrade, then 2 (some with two effects); event free upgrades keep the single roll. Fewer show when fewer families are eligible.
   - Options are of distinct families from the same per-step seeded stream; the first is exactly the single roll, so preview equals commit.
@@ -3508,7 +3507,7 @@ Shipped Core 2 rolls no Perception for intents and shows no hit chance (`percept
 
 - **Adept discounts (Core 2).** Equipped Reaver/Rogue Martial Adept: −1 SP on a nonspell card. Equipped Starseer/Herald Magic Adept: −1 MP on a spell/Magic card per Core `isSpellCard`/the shared combat-profile rule (incl. mirrored Cantrips with profile camp Spell). Only when already in the matching stance before playing the card.
 - **Defend stance (physical or spell):** every defensive card (Defend, Counter; an Evade card is a Defend card) takes the cut in the class's own lane (a physical Defend stance discounts a Ward cantrip and the reverse). Counter stance and every offensive stance keep the exact stance-and-camp match.
-- Discounts apply on the player's turn (floor 1) and to enemy-turn reactions (floor 0). Exception: Counter, Reaction cost.
+- Discounts apply on the player's turn and to enemy-turn reactions with no floor above 0 (owner rulings 2026-11-22: the Magic Adept (Graduate) Mana cut may reach 0 MP, then "No card has minimums" widened it to every player-turn stance cut, SP and MP; `stance.playerMinimumCost: 0`, which also covers the Graduate's successive-Spell cut because the two are one reduction). `stance.minimumCost` (1) still prices enemy plans and fights saved without the key. Exception: Counter, Reaction cost. The Martial Adept SP cut and every non-Adept stance, Prepared or Focus discount keep floor 1. Exception: Counter, Reaction cost.
 - Not discounted: the other resource lane, wrong-classification cards, a stance entered by that card, zero-cost and X-cost cards.
 - At most one same-stance cut; Mana Surge's separate rule stays without stacking a reaction or Adept cut. The same-stance Magic Adept cut and the successive-Spell Mana cut are one MP reduction when both apply (successive-Spell timing unchanged across mirrored stance changes). Range/Advance charges and upcast prices are independent.
 - **Mirrored spells** (sceptre/staff Strike, Ward, Channel; Arcane Spark) take the basic card's stance and type for matchups but stay Spells and Cantrips: corner shows the spell mark; footer shows the spell mark, the basic card's mark and its word (e.g. "ATTACK", "SMASH"); they count as Spells for the successive-Spell Mana cut. Others say "SPELL". Core 2 only (Current/v2 keeps the casting stance and old faces).
@@ -3702,7 +3701,7 @@ Owner requests of 2026-11-14 and 2026-11-15 (the "Wave 2.5" list, batch 3). Pres
 - **Rank-up.** A won fight offers a chance to rank up a card (5%; 25% after an elite or boss), and 25% of those arrive as an extra Bonus pick. The shop offers a rank-up at 15% chance, at the Blacksmith's price; the Sleeping Smith rank-up costs 40 cinders.
 - **Armoury item properties.** Weapons, armour and relics carry properties shown in the Armoury.
 - **Bows are Reach attacks.** `maneuver:ranged` stays loadable so old saves keep working.
-- **Cantrips** cost no Mana and 1 Stamina, and need 1 or more stacks of their element's status.
+- **Cantrips** cost 0-1 Mana and 1 Stamina, and need 1 or more stacks of their element's status.
 - **School riders.** Attacks may carry a status rider that matches their school.
 - **Broken.** A Poise break reads "Broken" (the legacy "Staggered" wording stays only on a legacy-rule path).
 - **Player HUD.** The player's HP and Poise numbers match the enemy mini HUD's.

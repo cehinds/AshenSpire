@@ -9572,23 +9572,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const bal = contentBundle.balance;
     const said = (r) => (r.errors || []).map((e) => `${e.path}: ${e.msg ?? e.message}`);
     const withCards = (mut) => validateContent({ ...contentBundle, cards: contentBundle.cards.map(mut) });
-    // THE COST RULE: a card that costs Mana costs the floors too, base and upgrade.
+    // THE COST RULE: owner ruling 2026-11-22, "No card has minimums": a Mana card may cost 0 action, base and upgrade (balance.mana.minActionCost/minStaminaCost are retired).
     assert(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, staminaCost: 0 } : c)).ok, 'Mana needs only the primary stamina cost, never a second stamina line');
-    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, cost: 0 } : c))).some((e) => /cards\.gorefireSlash\.cost: .*at least 1 action/.test(e)), 'a Mana card with no action line is refused by name');
-    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', cost: 0 } } : c))).some((e) => /cards\.gorefireSlash\.upgrade\.cost/.test(e)), 'an upgrade that drops the action line under a Mana cost is refused by name');
+    assert(!said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, cost: 0 } : c))).some((e) => /cards\.gorefireSlash\.cost/.test(e)), 'a Mana card with no action line is valid (no cost minimum, owner 2026-11-22)');
+    assert(!said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', cost: 0 } } : c))).some((e) => /cards\.gorefireSlash\.upgrade\.cost/.test(e)), 'an upgrade that drops the action line under a Mana cost is valid (no cost minimum, owner 2026-11-22)');
     assert(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', manaCost: 0, cost: 0, staminaCost: 0 } } : c)).ok, 'an upgrade that drops the Mana line may drop the others too');
-    assert(REG.cards.get('supernova').cost === 'X' && REG.cards.get('supernova').manaCost > 0, 'an X-cost Mana card ships, and passes: X is at least one action');
-    assert(said(validateContent({ ...contentBundle, balance: { ...bal, mana: { minActionCost: -1, minStaminaCost: 1 } } })).some((e) => /balance\.mana\.minActionCost/.test(e)), 'a negative floor is refused by name');
+    assert(REG.cards.get('supernova').cost === 'X' && REG.cards.get('supernova').manaCost > 0, 'an X-cost Mana card ships');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, mana: { ...bal.mana, minActionCost: 1 } } })).some((e) => /balance\.mana\.minActionCost: Unknown field/.test(e)), 'the retired minActionCost floor key is refused by name (owner 2026-11-22)');
     const { mana: _noMana, ...sansMana } = bal;
     assert(said(validateContent({ ...contentBundle, balance: sansMana })).some((e) => /^balance\.mana:/.test(e)), 'a bundle without the Mana floor is refused by name');
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
+    // Owner ruling 2026-11-22: no Exposure floor; a Mana spell grade that builds little Exposure is valid.
     const lowGrade = withCards(card => card.id === 'starstoneArc' ? { ...card, gradeProfiles: card.gradeProfiles.map(profile => ({ ...profile, traits: { ...profile.traits, exposureBuildupPerHit: 1 } })) } : card);
-    assert(said(lowGrade).some((e) => /cards\.starstoneArc\.gradeProfiles.*at least 5 Exposure per hit/.test(e)), 'a Mana spell grade building less than buildupPerManaSpell is refused by name');
-    assert(said(withCards(card => {
+    assert(!said(lowGrade).some((e) => /Exposure per hit/.test(e)), 'a Mana spell grade may build any non-negative Exposure (no floor)');
+    assert(!said(withCards(card => {
       if (card.id !== 'starShower') return card;
       const { gradeProfiles, abilityKind, abilityRank, abilityFamily, legacyFace, ...legacy } = card;
       return { ...legacy, ...legacyFace, upgrade: { ...card.upgrade, manaCost: 1, staminaCost: 1 } };
-    })).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a legacy upgrade introducing Mana also requires the spell buildup floor');
+    })).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a legacy upgrade introducing Mana needs no Exposure floor (owner ruling 2026-11-22)');
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');

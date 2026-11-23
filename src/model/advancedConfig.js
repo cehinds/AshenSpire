@@ -611,8 +611,6 @@ const BALANCE_LABELS = Object.freeze({
   'stagger.player.actionLoss': 'Stamina you lose when your meter fills',
   'stagger.player.statuses.vulnerable': 'Vulnerable stacks when your meter fills',
   'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
-  'mana.minActionCost': 'Least action cost of a mana card',
-  'mana.minStaminaCost': 'Least stamina cost of a mana card',
   'mana.focusManaDiscount': 'Mana off every magic card in prepared stance with a focus armament equipped',
   'level.maxLevelsPerFight': 'Most levels one award can give',
 });
@@ -933,8 +931,7 @@ const LEGACY_BALANCE_PATHS = new Set([
 
 // ---- PER-CLASS VALUES THAT WIN OVER A GLOBAL, BY A SWITCH (2026-09-23) -----
 //
-// A class's reward-rarity table replaces the global one outright, and a class's
-// strike bias replaces the default — but nothing on screen said which was in
+// A class's strike bias replaces the default — but nothing on screen said which was in
 // force, or let a class go back to following the global. Each now has a
 // "uses its own …" switch (model/settingOverrides.js). It starts ON because
 // these classes ship their own values; turning it off drops the class entry
@@ -943,15 +940,6 @@ const LEGACY_BALANCE_PATHS = new Set([
 function balanceOwnRows(bundle) {
   const rows = [];
   const className = (id) => bundle.classes?.find((row) => row.id === id)?.name || word(id);
-  for (const classId of Object.keys(bundle.balance?.rewards?.rarityWeightsByClass || {})) {
-    const member = `${ADVANCED_CONFIG_PREFIX}balance.rewards.rarityWeightsByClass.${classId}`;
-    rows.push({
-      cat: 'Advanced', advancedGroup: 'Rewards', key: ownKey(member), def: true,
-      own: { member, defaultOn: true, dropPath: ['balance', 'rewards', 'rarityWeightsByClass', classId] },
-      label: `${className(classId)} uses its own reward rarity`, searchPath: `rewards rarity ${classId} own override`,
-      note: `On: ${className(classId)}'s combat rewards use the table below. Off: they use Reward rarity, like every other class. Applies to a new run.`,
-    });
-  }
   for (const [classId, entry] of Object.entries(bundle.balance?.equipment?.startingDeck?.classes || {})) {
     if (!Number.isFinite(entry?.strikeBias)) continue;
     const member = `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.classes.${classId}.strikeBias`;
@@ -1012,8 +1000,6 @@ function withGates(rows, bundle) {
   const swapRuleIds = (bundle.balance?.equipment?.swapCostRules || []).map((rule) => rule.id);
   const owns = rows.filter((row) => row.own);
   const inheritedKey = (key) => {
-    const rarity = key.match(/^gameConfig\.balance\.rewards\.rarityWeightsByClass\.[^.]+\.(.+)$/);
-    if (rarity) return `${ADVANCED_CONFIG_PREFIX}balance.rewards.rarityWeights.${rarity[1]}`;
     if (/startingDeck\.classes\.[^.]+\.strikeBias$/.test(key)) return `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.defaultStrikeBias`;
     return null;
   };

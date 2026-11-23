@@ -80,6 +80,7 @@ test('the live mode plan keeps affordable Advance playable after Retreat grows, 
   assert.ok(discarded >= 0);
   combat.piles.hand.push(combat.piles.discard.splice(discarded, 1)[0]);
   combat.player.energy = combat.player.stamina = 1;
+  combat.player.combatStance = null; // the previous play's stance would now cut the price to 0 (no cost minimum, owner 2026-11-22); compare the same casting conditions
   const plan = cardChoicePlan(combat, 'qa0');
   assert.deepEqual(plan.options.map(option => [option.id, option.costs.stamina, option.affordable]), [['advance', 1, true], ['retreat', 2, false]]);
   const { document, restore } = installDom();

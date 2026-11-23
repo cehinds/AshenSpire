@@ -57,14 +57,11 @@ export function balanceRowProblems(b, err, ctx) {
   // player poise coefficient — each required, each number refused by name.
   if (b.balance) {
     const mana = b.balance.mana;
-    if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.mana', 'must be an object { minActionCost, minStaminaCost } — the card cost rule reads it (plan phase 8)');
+    if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.mana', 'must be an object { focusManaDiscount, focusItemType } — the Focus Mana discount reads it (plan phase 8)');
     else {
-      for (const key of Object.keys(mana)) if (!['minActionCost', 'minStaminaCost', 'focusManaDiscount', 'focusItemType'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
+      for (const key of Object.keys(mana)) if (!['focusManaDiscount', 'focusItemType'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
       if (!(Number.isInteger(mana.focusManaDiscount) && mana.focusManaDiscount >= 0)) err('balance.mana.focusManaDiscount', `must be a non-negative integer, got ${JSON.stringify(mana.focusManaDiscount)}`);
       if (typeof mana.focusItemType !== 'string' || !mana.focusItemType) err('balance.mana.focusItemType', 'must be an item-type tag id');
-      for (const key of ['minActionCost', 'minStaminaCost']) {
-        if (!(Number.isInteger(mana[key]) && mana[key] >= 0)) err(`balance.mana.${key}`, `must be a non-negative integer, got ${JSON.stringify(mana[key])}`);
-      }
     }
     const stagger = b.balance.stagger;
     const player = stagger && typeof stagger === 'object' && !Array.isArray(stagger) ? stagger.player : undefined;
@@ -136,7 +133,7 @@ export function balanceRowProblems(b, err, ctx) {
       if (!payoff || !(b.statuses || []).some(status => status.id === payoff.status)) err('balance.exposure.defaultPayoff.status', 'must name a status');
       if (!Number.isInteger(payoff?.value) || payoff.value < 0) err('balance.exposure.defaultPayoff.value', 'must be a non-negative integer');
       if (!Number.isInteger(payoff?.duration) || payoff.duration <= 0) err('balance.exposure.defaultPayoff.duration', 'must be a positive integer');
-      if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
+      if (!(Number.isInteger(exposure.elementUpgradeBuildup) && exposure.elementUpgradeBuildup >= 0)) err('balance.exposure.elementUpgradeBuildup', `must be a non-negative integer, got ${JSON.stringify(exposure.elementUpgradeBuildup)}`);
       if (!(Number.isInteger(exposure.resonanceSpreadPct) && exposure.resonanceSpreadPct >= 0 && exposure.resonanceSpreadPct <= 100)) err('balance.exposure.resonanceSpreadPct', `must be an integer percent 0–100, got ${JSON.stringify(exposure.resonanceSpreadPct)}`);
     }
   }
