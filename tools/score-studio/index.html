@@ -133,9 +133,9 @@
                 <label for="edit-name">Name</label>
                 <div class="name-input-row">
                   <input id="edit-name" type="text" />
-                  <button id="btn-auto-name" class="s-btn" type="button" title="Name the card from its tags, main effect and rank">Auto-Name</button>
-                  <label class="studio-toggle" title="Rename the card as you edit its features"><input id="toggle-auto-name" type="checkbox" /> Auto</label>
+                  <label class="studio-switch" title="Name the card from its main effect, its noun and its rank, and keep the name up to date as you edit"><input id="toggle-auto-name" type="checkbox" role="switch" /> Auto-name</label>
                 </div>
+                <span id="name-hint" class="studio-muted name-hint"></span>
               </div>
               <label>Card Type
                 <select id="edit-type">
@@ -254,6 +254,7 @@
           <option value="rarity">Rarity Discounts</option>
           <option value="rank">Rank Bands</option>
           <option value="tags">Weighted Tags</option>
+          <option value="naming">Naming words</option>
         </select>
         <div id="weights-impact-summary" class="studio-muted"></div>
       </div>

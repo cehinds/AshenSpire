@@ -12,7 +12,7 @@ import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe } from '../../src/model/validate.js';
@@ -404,6 +404,8 @@ function writeDraftNow() {
 let draftTimer = null;
 let draftPending = false;
 function saveDraft() {
+  // Every mutation ends here, so this is where auto-named cards follow edits, weight changes and loads.
+  syncAutoNames();
   clearTimeout(draftTimer);
   draftPending = true;
   draftTimer = setTimeout(writeDraftNow, DRAFT_SAVE_DELAY_MS);
@@ -443,7 +445,148 @@ function matchingCustomLayers(def) {
     .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
 }
 
-const STUDIO_ONLY_FIELDS = ['_edited', '_custom', 'scoringOverride'];
+const STUDIO_ONLY_FIELDS = ['_edited', '_custom', 'scoringOverride', '_autoName', '_autoNameCore', '_autoNameBudget'];
+
+// ---------------------------------------------------------------------------
+// Auto-name: "<Adjective> <core noun> [of <Noun>] <Rank numeral>"
+// ---------------------------------------------------------------------------
+// The adjective and the "of" noun are data (scoring.naming.card.prefix / .suffix, part key -> word),
+// editable in the Weights tab and written into scoring.json on export. Seeded with these defaults.
+const DEFAULT_NAME_PREFIX = Object.freeze({
+  frail: 'Brittle', vulnerable: 'Exposing', weak: 'Sapping', burn: 'Searing', bleed: 'Serrated', venom: 'Venomous',
+  frost: 'Rime', chill: 'Rime', shock: 'Crackling', damage: 'Keen', block: 'Warding', draw: 'Keen-eyed',
+  heal: 'Mending', poise: 'Crushing', 'SP restore': 'Second-wind', 'MP restore': 'Draining',
+});
+const DEFAULT_NAME_SUFFIX = Object.freeze({
+  frail: 'Frailty', vulnerable: 'Ruin', weak: 'Weakness', burn: 'Embers', bleed: 'Bleeding', venom: 'Venom',
+  frost: 'Winter', chill: 'Winter', shock: 'Storms', damage: 'Might', block: 'the Wall', draw: 'Insight',
+  heal: 'Mercy', poise: 'Ruin', 'SP restore': 'Vigor', 'MP restore': 'Mana',
+});
+const AUTO_NAME_MIN_WORDS = 2;
+const AUTO_NAME_SUFFIX_MIN_WORDS = 4;
+const NON_NAME_PARTS = new Set(['SP', 'MP', 'effect count', 'HP cost', 'discard']);
+
+// Adds the word tables when a scoring table has none, to both the working and the repo copy so the
+// seed itself is not an edit.
+function ensureNamingWords(scoringRef) {
+  if (!scoringRef) return;
+  const card = ((scoringRef.naming ||= clone(shippedScoring.naming || {})).card ||= {});
+  card.prefix ||= { ...DEFAULT_NAME_PREFIX };
+  card.suffix ||= { ...DEFAULT_NAME_SUFFIX };
+}
+
+function romanFor(rank) {
+  const roman = state.scoring.naming?.roman || shippedScoring.naming?.roman || [];
+  return roman[rank] || '';
+}
+
+function nameWords(name) {
+  return String(name || '').trim().split(/\s+/).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word));
+}
+
+function nameParts(def, sc = scoreCardEntry(def)) {
+  try {
+    return CardNameParts(sc.face, 0, state.scoring.naming ? state.scoring : { ...state.scoring, naming: shippedScoring.naming });
+  } catch {
+    return { name: def.name, effect: null, base: null, rank: sc.rank, source: null };
+  }
+}
+
+// Turning Auto-name on keeps the card's own noun and length: Acid Splash stays a "... Splash".
+function startAutoName(def) {
+  const words = nameWords(def.name);
+  def._autoNameCore = def._custom && /^New Custom Card$/.test(def.name) ? '' : (words[words.length - 1] || '');
+  def._autoNameBudget = Math.max(AUTO_NAME_MIN_WORDS, words.length);
+}
+
+// The title box of a card face and the smallest font its fitter will use, measured once from a rendered
+// card (every illustrated card shares the frame). A candidate fits when it fits at that smallest font.
+let titleMetric = null;
+function measureTitleMetric() {
+  if (titleMetric) return titleMetric;
+  const node = document.querySelector('.studio-card-stage [data-card-binding="name"], #inspector-card-preview [data-card-binding="name"]');
+  const face = node?.closest('.illustrated-card-face');
+  if (!node || !face || !node.clientWidth) return null;
+  const scale = face.clientWidth / Number(face.dataset.designWidth || face.clientWidth);
+  const style = getComputedStyle(node);
+  titleMetric = {
+    fontFamily: style.fontFamily,
+    fontWeight: style.fontWeight,
+    minFontPx: Number(node.dataset.minFont || parseFloat(style.fontSize) / scale) * scale,
+    boxPx: node.clientWidth,
+  };
+  return titleMetric;
+}
+
+let measureCanvas = null;
+function titleFits(text) {
+  const metric = measureTitleMetric();
+  if (!metric) return true;
+  measureCanvas ||= document.createElement('canvas');
+  const ctx = measureCanvas.getContext('2d');
+  ctx.font = `${metric.fontWeight} ${metric.minFontPx}px ${metric.fontFamily}`;
+  return ctx.measureText(text).width <= metric.boxPx;
+}
+
+function wordFor(table, key) {
+  return state.scoring.naming?.card?.[table]?.[key] || null;
+}
+
+// The name Auto-name gives a card now.
+function autoNameFor(def, sc = scoreCardEntry(def)) {
+  const parts = nameParts(def, sc);
+  const ranked = Object.entries(sc.parts || {})
+    .filter(([key, value]) => value > 0 && !NON_NAME_PARTS.has(key))
+    .sort((a, b) => b[1] - a[1])
+    .map(([key]) => key);
+  const adjectiveKey = parts.source && parts.source !== 'fallback' ? parts.source : ranked[0];
+  const adjective = (adjectiveKey && wordFor('prefix', adjectiveKey)) || parts.effect || null;
+  const suffixKey = ranked.find((key) => key !== adjectiveKey && wordFor('suffix', key));
+  const suffix = suffixKey ? wordFor('suffix', suffixKey) : null;
+  const core = def._autoNameCore || parts.base || 'Card';
+  const numeral = romanFor(sc.rank);
+  const withNumeral = (words) => [...words, numeral].filter(Boolean).join(' ');
+  const budget = Math.max(AUTO_NAME_MIN_WORDS, def._autoNameBudget || AUTO_NAME_MIN_WORDS);
+  const candidates = [];
+  if (adjective && suffix && budget >= AUTO_NAME_SUFFIX_MIN_WORDS) candidates.push(withNumeral([adjective, core, 'of', suffix]));
+  if (adjective) candidates.push(withNumeral([adjective, core]));
+  candidates.push(withNumeral([core]));
+  // Measure, don't count: drop the suffix, then the adjective, until the title fits. The numeral stays.
+  return candidates.find((candidate) => titleFits(candidate)) || candidates[candidates.length - 1];
+}
+
+// Renames every auto-named card whose name has moved. Runs after every mutation (from saveDraft and
+// mutateSelectedCard), so weight changes, slot loads and uploads rename too, inside the same undo step.
+function syncAutoNames({ render = true } = {}) {
+  const renamed = [];
+  for (const def of state.cards) {
+    if (!def._autoName) continue;
+    const name = autoNameFor(def);
+    if (name === def.name) continue;
+    def.name = name;
+    renamed.push(def);
+  }
+  if (!render || !renamed.length) return renamed;
+  for (const def of renamed) updateCardTileInPlace(def.id);
+  const selected = selectedCardDef();
+  if (selected && renamed.includes(selected)) {
+    const nameInput = document.getElementById('edit-name');
+    if (document.activeElement !== nameInput) nameInput.value = selected.name;
+    document.getElementById('inspector-sheet-title').textContent = selected.name;
+    renderCardWithLayers(selected, document.getElementById('inspector-card-preview'));
+    renderNameHint(selected);
+  }
+  return renamed;
+}
+
+// The muted line under Name: what the name is built from.
+function renderNameHint(def, sc = scoreCardEntry(def)) {
+  const hint = document.getElementById('name-hint');
+  if (!hint) return;
+  const parts = nameParts(def, sc);
+  const source = parts.source && parts.source !== 'fallback' ? parts.source : 'no main effect';
+  hint.textContent = `From ${source} · ${def._autoNameCore || parts.base || 'Card'} · ${RankName(sc.rank)}`;
+}
 
 // The game draws core cards from the profile's own card list (projectGameCard in src/model/gameProfile.js),
 // not from the registry, so an edited card would show its shipped face. Project the edited copy the same
@@ -718,6 +861,8 @@ function renderInspector() {
   renderScoreSummary(def, sc);
 
   document.getElementById('edit-name').value = def.name || '';
+  document.getElementById('toggle-auto-name').checked = Boolean(def._autoName);
+  renderNameHint(def, sc);
   document.getElementById('btn-delete-card').classList.toggle('hidden', !def._custom);
   document.getElementById('btn-reset-card').classList.toggle('hidden', !def._edited || Boolean(def._custom));
   const textInput = document.getElementById('edit-text');
@@ -1177,10 +1322,9 @@ function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoTex
   if (recordHistory) pushHistory();
   fn(def);
   def._edited = true;
+  // Auto text and Auto-name run in the same step as the edit, so one undo reverts all three.
   if (autoText) applyAutoText(def);
-  if (autoName && document.getElementById('toggle-auto-name')?.checked) {
-    def.name = safeCardName(scoreCardEntry(def).face, state.scoring);
-  }
+  if (autoName) syncAutoNames({ render: false });
   // Targeted update: refresh only the inspector and this one card tile.
   renderInspector();
   updateCardTileInPlace(def.id);
@@ -1270,7 +1414,44 @@ function renderWeights() {
     }
     container.appendChild(card);
   }
+  if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
   computeShiftCount();
+}
+
+// The Auto-name word tables: per scoring part, the adjective ("Brittle") and the "of" noun ("Frailty").
+function renderNamingWordsGroup(container, query) {
+  ensureNamingWords(state.scoring);
+  const words = state.scoring.naming.card;
+  const keys = [...new Set([...Object.keys(words.prefix || {}), ...Object.keys(words.suffix || {})])].sort();
+  const rows = keys.filter((key) => !query || `naming words ${key} ${words.prefix[key] || ''} ${words.suffix[key] || ''}`.toLowerCase().includes(query));
+  if (!rows.length) return;
+  const group = document.createElement('details');
+  group.className = 'weight-group-card studio-section naming-words-group';
+  group.dataset.section = 'weights-naming';
+  group.open = true;
+  group.innerHTML = '<summary class="section-head"><h3>Naming words</h3></summary><div class="naming-word-row naming-word-head"><span>Part</span><span>Adjective</span><span>"of" noun</span></div>';
+  rememberSection(group);
+  for (const key of rows) {
+    const row = document.createElement('div');
+    row.className = 'naming-word-row';
+    row.innerHTML = `<span>${esc(key)}</span>
+      <input type="text" data-naming-table="prefix" data-naming-key="${esc(key)}" value="${esc(words.prefix[key] || '')}" aria-label="${esc(`Adjective for ${key}`)}" />
+      <input type="text" data-naming-table="suffix" data-naming-key="${esc(key)}" value="${esc(words.suffix[key] || '')}" aria-label="${esc(`"of" noun for ${key}`)}" />`;
+    group.appendChild(row);
+  }
+  group.addEventListener('change', (e) => {
+    const { namingTable, namingKey } = e.target.dataset;
+    if (!namingTable) return;
+    const value = e.target.value.trim();
+    const table = state.scoring.naming.card[namingTable];
+    if ((table[namingKey] || '') === value) return;
+    pushHistory();
+    if (value) table[namingKey] = value;
+    else delete table[namingKey];
+    saveDraft();
+    renderInspector();
+  });
+  container.appendChild(group);
 }
 
 // ---------------------------------------------------------------------------
@@ -1657,6 +1838,8 @@ function populateCardOptions() {
 }
 
 function syncAllViews() {
+  ensureNamingWords(state.repoScoring);
+  ensureNamingWords(state.scoring);
   populateRankFilter();
   populateCardOptions();
   populateAddFeatureDropdown();
@@ -1866,8 +2049,9 @@ function wireEvents() {
       cost: 1, staminaCost: 1, manaCost: 0, damageSchool: 'physical',
       effects: [{ op: 'damage', target: 'enemy', amount: 8 }],
       keywords: [], tags: ['camp:physical', 'maneuver:attack', 'source:weapon', 'classification.attack', 'targeting:single'],
-      textTemplate: 'Deal {damage} damage.', _custom: true,
+      textTemplate: 'Deal {damage} damage.', _custom: true, _autoName: true,
     });
+    startAutoName(card);
     state.cards.unshift(card);
     state.selectedCardId = id;
     renderCardsGrid();
@@ -1880,7 +2064,8 @@ function wireEvents() {
     const src = selectedCardDef();
     if (!src) return;
     pushHistory();
-    const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true });
+    const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true, _autoName: true });
+    startAutoName(copy);
     state.cards.unshift(copy);
     state.selectedCardId = copy.id;
     renderCardsGrid();
@@ -1927,17 +2112,22 @@ function wireEvents() {
   const nameInput = document.getElementById('edit-name');
   nameInput.addEventListener('focus', () => nameBurst.end());
   nameInput.addEventListener('input', (e) => {
-    const autoToggle = document.getElementById('toggle-auto-name');
-    if (autoToggle?.checked) autoToggle.checked = false;
+    const def = selectedCardDef();
+    if (def?._autoName) {
+      def._autoName = false;
+      toast('Auto-name off: you named this card');
+    }
     nameBurst.begin();
     mutateSelectedCard((d) => { d.name = e.target.value; }, { recordHistory: false, autoName: false });
   });
-  document.getElementById('btn-auto-name').addEventListener('click', () => {
-    const def = selectedCardDef();
-    if (!def) return;
-    const generated = safeCardName(scoreCardEntry(def).face, state.scoring);
-    mutateSelectedCard((d) => { d.name = generated; }, { autoName: false });
-    toast(`Generated name: "${generated}"`);
+  // Auto-name is per card. Turning it on records where the name starts from (its last word and its
+  // length), then renames at once; the toggle and the rename are one undo step.
+  document.getElementById('toggle-auto-name').addEventListener('change', (e) => {
+    const on = e.target.checked;
+    mutateSelectedCard((d) => {
+      d._autoName = on;
+      if (on) startAutoName(d);
+    });
   });
   const textBurst = createEditBurst();
   const textInput = document.getElementById('edit-text');

@@ -158,6 +158,22 @@ try {
   assert.deepEqual(sections.missing, [], 'every studio section is collapsible');
   assert.equal(sections.stored, false, 'a folded section is remembered');
 
+  // 7. Auto-name: a new card starts with it on; adding a status renames it, and the name fits its title box.
+  const autoName = await page.evaluate(async () => {
+    document.getElementById('btn-new-card').click();
+    const before = document.getElementById('edit-name').value;
+    const toggleOn = document.getElementById('toggle-auto-name').checked;
+    const select = document.getElementById('add-feature-select');
+    select.value = 'status:weak';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const title = document.querySelector('#inspector-card-preview [data-card-binding="name"]');
+    return { before, after: document.getElementById('edit-name').value, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
+  });
+  assert.ok(autoName.toggleOn, 'a new card starts with Auto-name on');
+  assert.notEqual(autoName.after, autoName.before, `adding a status renames an auto-named card (${autoName.before} -> ${autoName.after})`);
+  assert.ok(autoName.scrollWidth <= autoName.clientWidth, `the generated title fits its box (${autoName.scrollWidth} <= ${autoName.clientWidth})`);
+
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
   await page.close();
