@@ -511,7 +511,7 @@ function renderInspector() {
   }
 
   renderCostChips(def, sc);
-  renderScoreParts(sc);
+  renderScoreParts(def, sc);
 }
 
 // ---------------------------------------------------------------------------
@@ -654,9 +654,17 @@ function renderScoreSummary(def, sc) {
   `;
 }
 
-function renderScoreParts(sc) {
+function renderScoreParts(def, sc) {
   const partsEl = document.getElementById('score-parts-list');
   partsEl.innerHTML = '';
+  // The rank comes first, then the parts that add up to it.
+  const baseRank = state.baselineRanks[def.id];
+  const shifted = baseRank !== undefined && baseRank !== sc.rank;
+  const rankPill = document.createElement('span');
+  rankPill.className = 'part-pill rank-pill';
+  rankPill.textContent = `Rank: ${RankName(sc.rank)}${shifted ? ` (was ${RankName(baseRank)})` : ''}`;
+  rankPill.title = `CP ${sc.cp} · ${actForRank(sc.rank)}`;
+  partsEl.appendChild(rankPill);
   for (const [k, v] of Object.entries(sc.parts || {})) {
     const pill = document.createElement('span');
     pill.className = `part-pill ${v >= 0 ? 'pos' : 'neg'}`;
@@ -670,7 +678,7 @@ function renderScoreParts(sc) {
 function refreshInspectorScoreInPlace(def) {
   const sc = scoreCardEntry(def);
   renderScoreSummary(def, sc);
-  renderScoreParts(sc);
+  renderScoreParts(def, sc);
   renderCostChips(def, sc);
   const chips = featureScoreChips(featureScoreRows(def), sc.parts || {});
   const rowsEls = [...document.querySelectorAll('#active-features-list .feature-row')];

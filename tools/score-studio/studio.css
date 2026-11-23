@@ -332,6 +332,7 @@ body.studio-body .score-parts-list { display: flex; flex-wrap: wrap; gap: 5px; }
 body.studio-body .part-pill { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 5px; padding: 2px 7px; font-size: 11px; }
 body.studio-body .part-pill.pos { border-color: rgba(76,195,138,.45); color: var(--st-good); }
 body.studio-body .part-pill.neg { border-color: rgba(229,107,111,.45); color: var(--st-bad); }
+body.studio-body .part-pill.rank-pill { border-color: var(--st-accent); color: var(--st-accent); font-weight: 700; cursor: help; }
 
 /* WEIGHTS */
 body.studio-body .weights-toolbar { display: flex; gap: 8px; align-items: center; padding: 10px 14px; background: var(--st-surface); border-bottom: 1px solid var(--st-border); }
