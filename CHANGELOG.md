@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-23
 
+- **Martial Adept stance discount stops at 1 SP on your turn** ([#2958](https://github.com/cehinds/AshenSpire/pull/2958), `0.7.5.66`). A Reaver or Rogue playing a martial card in the stance they are already in pays 1 SP less, but never less than 1 on their own turn. Only a Reaction played on the enemy's turn can drop to 0 SP. The Mana discount is unchanged.
 - **Score Studio shows each card's rank and what every field adds** ([#2959](https://github.com/cehinds/AshenSpire/pull/2959), `0.7.5.66`). Rarity, Target, Camp, Card Type and Class show what they add to a card's score, every card wears its rank (green when it rose, red when it fell, and a Filters toggle hides it), and the Weights tab can change each effect's and damage tag's "per".
 - **Score Studio cleaned up: working cards, live scores, procedural names and text** ([#2957](https://github.com/cehinds/AshenSpire/pull/2957), `0.7.5.64`). Card faces render properly and follow every edit, at the game's card shape. One slim top bar with a ⋯ menu replaces three rows of buttons, every section folds, and on a phone the cards sit two per row with a full-screen inspector. Each feature shows its score live, the Score Breakdown leads with rank and CP and shows what rarity and targeting add, and each status, keyword and tag says what it does. Auto-name and Auto text build a card's name and rules text from its effects and rank. Drafts save after each edit and survive closing the tab, and Revert asks first.
 

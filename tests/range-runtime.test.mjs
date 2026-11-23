@@ -56,8 +56,7 @@ test('Advance once, attack twice, pay once; growing the distance re-charges', ()
   }
   const second = previewCard(ctx, again.instanceId, 'e1');
   assert.equal(second.range.routes[0].advanceSp, 0, 'second attack has no Advance cost');
-  // The first Strike entered its stance, whose same-stance cut now takes the second Strike's 1 SP to 0 (no cost minimum, owner 2026-11-22).
-  assert.equal(second.staminaCost, first.staminaCost - 2 - 1);
+  assert.equal(second.staminaCost, first.staminaCost - 2);
   ctx.rangeState = { ...ctx.rangeState, engagements: { ...ctx.rangeState.engagements, [key]: 2 } };
   assert.equal(previewCard(ctx, again.instanceId, 'e1').range.routes[0].advanceSp, 2, 'distance grown again is paid again');
 });
