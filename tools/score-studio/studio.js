@@ -448,6 +448,129 @@ function matchingCustomLayers(def) {
 const STUDIO_ONLY_FIELDS = ['_edited', '_custom', 'scoringOverride', '_autoName', '_autoNameCore', '_autoNameBudget'];
 
 // ---------------------------------------------------------------------------
+// Feature descriptions: what a status, keyword, tag or effect does in play, and how it scores
+// ---------------------------------------------------------------------------
+// Game text comes from what the game already shows players (status and keyword tooltips, tag blurbs);
+// scoring text from the scoring table (weight, why, projection). Nothing here is hand-written copy.
+const TAG_INFO = new Map((Array.isArray(registries.tags) ? registries.tags : []).map((tag) => [tag.id, tag]));
+const NO_DESCRIPTION = 'No description yet';
+
+function registryEntry(registry, id) {
+  try { return registry?.has?.(id) ? registry.get(id) : null; } catch { return null; }
+}
+
+function weightText(entry, unit = '') {
+  if (!entry) return '';
+  const bits = [];
+  if (Number.isFinite(entry.flat)) bits.push(`flat ${entry.flat}`);
+  if (Number.isFinite(entry.weight) && entry.weight !== 0) bits.push(`${entry.weight}${entry.per ? ` per ${entry.per}` : unit}`);
+  if (Number.isFinite(entry.multiplier)) bits.push(`×${entry.multiplier}`);
+  if (Number.isFinite(entry.pMultiplier)) bits.push(`×${entry.pMultiplier} of the card's positive score`);
+  if (Number.isFinite(entry.perN)) bits.push(`${entry.perN} each`);
+  if (entry.conditional) bits.push('conditional');
+  return bits.join(', ') || 'no weight';
+}
+
+// { title, does, scores, missing } for one feature. kind: 'status' | 'keyword' | 'tag' | 'effect' | 'cost'.
+function describeFeature(kind, id) {
+  const S = state.scoring;
+  let title = id;
+  let does = null;
+  let entry = null;
+  let unit = '';
+  if (kind === 'status') {
+    const status = registryEntry(registries.statuses, id);
+    title = status?.name || capitalise(id);
+    does = status?.tooltip || null;
+    entry = S.statuses?.[id];
+    unit = entry?.target ? ` per stack (${entry.target})` : ' per stack';
+  } else if (kind === 'keyword') {
+    const keyword = registryEntry(registries.keywords, id);
+    title = keyword?.name || capitalise(id);
+    does = keyword?.tooltip || null;
+    entry = S.keywords?.[id];
+  } else if (kind === 'tag') {
+    const tag = TAG_INFO.get(id);
+    title = S.tags?.[id]?.label || tag?.label || id;
+    does = tag?.blurb || null;
+    entry = S.tags?.[id];
+  } else if (kind === 'effect') {
+    const keys = EFFECT_SCORE_KEYS[id];
+    title = capitalise(id);
+    entry = S.effects?.[keys?.weight || id];
+  } else if (kind === 'cost') {
+    title = `${id.toUpperCase()} cost`;
+    entry = S.costs?.[id];
+    unit = ' per point';
+  }
+  const why = entry?.why || '';
+  const scoresParts = [weightText(entry, unit), why && `${why}${entry?.projection ? ` (${entry.projection})` : ''}`].filter(Boolean);
+  const scores = entry ? scoresParts.join(' · ') : null;
+  return { kind, title, does, scores, missing: !does && !why };
+}
+
+function describePartKey(key) {
+  const S = state.scoring;
+  if (S.statuses?.[key]) return describeFeature('status', key);
+  if (S.keywords?.[key]) return describeFeature('keyword', key);
+  if (S.tags?.[key]) return describeFeature('tag', key);
+  if (key === 'SP' || key === 'MP') return describeFeature('cost', key.toLowerCase());
+  const op = Object.keys(EFFECT_SCORE_KEYS).find((candidate) => EFFECT_SCORE_KEYS[candidate].part === key);
+  return op ? describeFeature('effect', op) : null;
+}
+
+// Statuses, keywords and tags have player text in the game; effects and costs do not, so they get no
+// "Does" line rather than a gap.
+const KINDS_WITH_GAME_TEXT = new Set(['status', 'keyword', 'tag']);
+const showsDoes = (info) => Boolean(info?.does) || KINDS_WITH_GAME_TEXT.has(info?.kind);
+
+// Plain text for a title attribute.
+function featureTitleText(info) {
+  if (!info) return '';
+  return [showsDoes(info) && `Does: ${info.does || NO_DESCRIPTION}`, info.scores && `Scores: ${info.scores}`].filter(Boolean).join('\n');
+}
+
+// The ⓘ button and the hidden line it opens, for a row that holds a feature.
+function infoButtonHtml() {
+  return '<button type="button" class="info-btn" aria-expanded="false" aria-label="What this does">ⓘ</button>';
+}
+function infoLineHtml(info) {
+  if (!info) return '';
+  const does = info.does ? esc(info.does) : `<span class="no-desc">${NO_DESCRIPTION}</span>`;
+  return `<div class="feature-desc" hidden>${showsDoes(info) ? `<div><strong>Does:</strong> ${does}</div>` : ''}${info.scores ? `<div><strong>Scores:</strong> ${esc(info.scores)}</div>` : ''}</div>`;
+}
+
+// One handler for every ⓘ in a container: it opens or closes the line in the same row.
+function wireInfoButtons(container, rowSelector) {
+  container.addEventListener('click', (e) => {
+    const button = e.target.closest('.info-btn');
+    if (!button) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const line = button.closest(rowSelector)?.querySelector('.feature-desc');
+    if (!line) return;
+    line.hidden = !line.hidden;
+    button.setAttribute('aria-expanded', String(!line.hidden));
+  });
+}
+
+function featureValueInfo(value) {
+  if (!value) return null;
+  const [kind, key] = [value.slice(0, value.indexOf(':')), value.slice(value.indexOf(':') + 1)];
+  const map = { effect: 'effect', status: 'status', kw: 'keyword', tag: 'tag' };
+  return map[kind] ? describeFeature(map[kind], key) : null;
+}
+
+function renderAddFeatureDescription() {
+  const line = document.getElementById('add-feature-desc');
+  if (!line) return;
+  const info = featureValueInfo(document.getElementById('add-feature-select').value);
+  if (!info) { line.textContent = ''; return; }
+  const doesHtml = info.does ? esc(info.does) : showsDoes(info) ? `<span class="no-desc">${NO_DESCRIPTION}</span>` : '';
+  line.innerHTML = `<strong>${esc(info.title)}.</strong> ${doesHtml}${info.scores ? ` <span class="desc-scores">Scores: ${esc(info.scores)}</span>` : ''}`;
+}
+
+// ---------------------------------------------------------------------------
 // Auto-name: "<Adjective> <core noun> [of <Noun>] <Rank numeral>"
 // ---------------------------------------------------------------------------
 // The adjective and the "of" noun are data (scoring.naming.card.prefix / .suffix, part key -> word),
@@ -904,7 +1027,7 @@ function renderInspector() {
         ? `<input type="number" min="1" max="30" value="${esc(safeNum(eff.stacks, 1))}" data-eff-stacks="${idx}" />`
         : '<span class="studio-muted" title="Formula-computed stack count">formula</span>';
       row.innerHTML = `
-        <span>Status: <strong>${esc(eff.status)}</strong></span>
+        <span class="feature-label" title="${esc(featureTitleText(describeFeature('status', eff.status)))}">Status: <strong>${esc(eff.status)}</strong> ${infoButtonHtml()}</span>
         <div class="feature-controls">
           ${chipFor()}
           ${stacksCtrl}
@@ -913,19 +1036,21 @@ function renderInspector() {
             <option value="self" ${eff.target === 'self' ? 'selected' : ''}>Self</option>
           </select>
           <button class="s-btn s-btn-sm" data-rm-eff="${idx}">×</button>
-        </div>`;
+        </div>
+        ${infoLineHtml(describeFeature('status', eff.status))}`;
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
       const amtCtrl = amtIsNum
         ? `<input type="number" min="1" max="99" value="${esc(safeNum(eff.amount, 1))}" data-eff-amt="${idx}" />`
         : '<span class="studio-muted" title="Formula-computed value">formula</span>';
       row.innerHTML = `
-        <span>Effect: <strong>${esc(eff.op)}</strong></span>
+        <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(eff.op)}</strong> ${infoButtonHtml()}</span>
         <div class="feature-controls">
           ${chipFor()}
           ${amtCtrl}
           <button class="s-btn s-btn-sm" data-rm-eff="${idx}">×</button>
-        </div>`;
+        </div>
+        ${infoLineHtml(describeFeature('effect', eff.op))}`;
     }
     list.appendChild(row);
   });
@@ -935,14 +1060,16 @@ function renderInspector() {
     row.className = 'feature-row';
     const w = state.scoring.keywords?.[kw];
     const note = w ? (w.flat !== undefined ? `${w.flat}` : `×${w.multiplier}`) : '';
-    row.innerHTML = `<span>Keyword: <strong>${esc(kw)}</strong> <span class="studio-muted">${esc(note)}</span></span><div class="feature-controls">${chipFor()}<button class="s-btn s-btn-sm" data-rm-kw="${idx}">×</button></div>`;
+    const info = describeFeature('keyword', kw);
+    row.innerHTML = `<span class="feature-label" title="${esc(featureTitleText(info))}">Keyword: <strong>${esc(kw)}</strong> <span class="studio-muted">${esc(note)}</span> ${infoButtonHtml()}</span><div class="feature-controls">${chipFor()}<button class="s-btn s-btn-sm" data-rm-kw="${idx}">×</button></div>${infoLineHtml(info)}`;
     list.appendChild(row);
   });
 
   shownTagsOf(def).forEach((tag) => {
     const row = document.createElement('div');
     row.className = 'feature-row';
-    row.innerHTML = `<span>Tag: <strong>${esc(tag)}</strong></span><div class="feature-controls">${chipFor()}<button class="s-btn s-btn-sm" data-rm-tag="${esc(tag)}">×</button></div>`;
+    const info = describeFeature('tag', tag);
+    row.innerHTML = `<span class="feature-label" title="${esc(featureTitleText(info))}">Tag: <strong>${esc(tag)}</strong> ${infoButtonHtml()}</span><div class="feature-controls">${chipFor()}<button class="s-btn s-btn-sm" data-rm-tag="${esc(tag)}">×</button></div>${infoLineHtml(info)}`;
     list.appendChild(row);
   });
 
@@ -1168,7 +1295,7 @@ function renderScoreParts(def, sc) {
   const baseCp = raw - discount;
   const rankTitle = `${actForRank(sc.rank)}${shifted ? ` (was ${RankName(baseRank)})` : ''}`;
   const partPills = Object.entries(sc.parts || {})
-    .map(([k, v]) => breakdownPill(`${k}: ${formatScore(v)}`, Math.round(v * 10) / 10, ''))
+    .map(([k, v]) => breakdownPill(`${k}: ${formatScore(v)}`, Math.round(v * 10) / 10, featureTitleText(describePartKey(k))))
     .join('');
   const formula = `Raw ${raw} − rarity ${discount} = CP ${baseCp} → ${RankName(RankOf(baseCp, state.scoring))}`
     + (sc.overridden ? `; override → CP ${sc.cp}, ${RankName(sc.rank)}` : '');
@@ -1382,13 +1509,19 @@ function renderWeights() {
     card.open = true;
     card.innerHTML = `<summary class="section-head"><h3>${esc(g.title)}</h3></summary>`;
     rememberSection(card);
+    wireInfoButtons(card, '.weight-row');
     for (const r of rows) {
       const numVal = safeNum(r.val, 0);
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
       const modified = baseNum !== undefined && numVal !== baseNum;
       const row = document.createElement('div');
       row.className = 'weight-row' + (modified ? ' is-modified' : '');
-      row.innerHTML = `<span>${esc(r.label)}</span><input type="number" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(`Reset to ${baseNum ?? numVal}`)}">↺</button>`;
+      const kind = WEIGHT_GROUP_KINDS[g.key];
+      const info = kind ? describeFeature(kind, r.id) : null;
+      const labelHtml = info
+        ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
+        : `<span>${esc(r.label)}</span>`;
+      row.innerHTML = `${labelHtml}<input type="number" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(`Reset to ${baseNum ?? numVal}`)}">↺</button>`;
       row.querySelector('input').addEventListener('change', (ev) => {
         const n = Number(ev.target.value);
         if (!Number.isFinite(n) || n === numVal) return;
@@ -1410,12 +1543,25 @@ function renderWeights() {
         renderInspector();
         renderCardsGrid();
       });
+      if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
       card.appendChild(row);
     }
     container.appendChild(card);
   }
   if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
+  renderDescriptionGaps();
   computeShiftCount();
+}
+
+// Which feature kind each weight group's rows are, for their descriptions.
+const WEIGHT_GROUP_KINDS = Object.freeze({ costs: 'cost', effects: 'effect', statuses: 'status', keywords: 'keyword', tags: 'tag' });
+
+// How many scoring tags have no description from the game or the scoring table.
+function renderDescriptionGaps() {
+  const gaps = document.getElementById('weights-desc-gaps');
+  if (!gaps) return;
+  const missing = Object.keys(state.scoring.tags || {}).filter((k) => k[0] !== '$' && describeFeature('tag', k).missing).length;
+  gaps.textContent = missing ? `${missing} tag${missing === 1 ? ' has' : 's have'} no description` : 'Every tag has a description';
 }
 
 // The Auto-name word tables: per scoring part, the adjective ("Brittle") and the "of" noun ("Frailty").
@@ -2247,8 +2393,16 @@ function wireEvents() {
     document.getElementById('add-feature-select').value = '';
   };
   document.getElementById('btn-add-feature').addEventListener('click', () => addFeatureValue(document.getElementById('add-feature-select').value));
-  document.getElementById('add-feature-select').addEventListener('change', (e) => addFeatureValue(e.target.value));
-  document.getElementById('quick-add-chips').addEventListener('click', (e) => addFeatureValue(e.target.dataset?.quickAdd));
+  // Picking from the list describes the feature first; Add (or Enter) adds it. Quick-add chips add at once.
+  const addSelect = document.getElementById('add-feature-select');
+  addSelect.addEventListener('change', renderAddFeatureDescription);
+  addSelect.addEventListener('input', renderAddFeatureDescription);
+  addSelect.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addFeatureValue(addSelect.value); renderAddFeatureDescription(); } });
+  document.getElementById('btn-add-feature').addEventListener('click', renderAddFeatureDescription);
+  const quickChips = document.getElementById('quick-add-chips');
+  for (const chip of quickChips.querySelectorAll('[data-quick-add]')) chip.title = featureTitleText(featureValueInfo(chip.dataset.quickAdd));
+  quickChips.addEventListener('click', (e) => addFeatureValue(e.target.dataset?.quickAdd));
+  wireInfoButtons(document.getElementById('active-features-list'), '.feature-row');
 
   document.getElementById('active-features-list').addEventListener('click', (e) => {
     const rmEff = e.target.dataset.rmEff;

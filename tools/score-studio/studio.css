@@ -741,3 +741,20 @@ body.studio-body .name-hint { font-size: 11px; }
 body.studio-body .naming-word-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 6px; align-items: center; padding: 3px 0; }
 body.studio-body .naming-word-head { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--st-muted); }
 body.studio-body .naming-word-row input { width: 100%; box-sizing: border-box; min-width: 0; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 6px; }
+
+/* FEATURE DESCRIPTIONS: an ⓘ beside each feature opens what it does in play and how it scores. */
+body.studio-body .feature-row { flex-wrap: wrap; }
+body.studio-body .feature-label { min-width: 0; }
+body.studio-body .info-btn { background: none; border: 0; padding: 0 2px; color: var(--st-muted); font-size: 12px; line-height: 1; cursor: pointer; vertical-align: baseline; }
+body.studio-body .info-btn:hover,
+body.studio-body .info-btn[aria-expanded="true"] { color: var(--st-accent); }
+body.studio-body .info-btn:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 1px; border-radius: 3px; }
+body.studio-body .feature-desc { flex-basis: 100%; display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--st-muted); padding-top: 4px; }
+body.studio-body .feature-desc strong { color: var(--st-text); font-weight: 600; }
+body.studio-body .weight-row .feature-desc { grid-column: 1 / -1; }
+body.studio-body .no-desc { color: var(--studio-score-zero); font-style: italic; }
+body.studio-body .add-feature-desc { font-size: 11px; margin: -4px 0 var(--studio-gap-2); }
+body.studio-body .add-feature-desc:empty { display: none; }
+body.studio-body .add-feature-desc strong { color: var(--st-text); }
+body.studio-body .desc-scores { display: block; }
+body.studio-body .desc-gaps { white-space: nowrap; }

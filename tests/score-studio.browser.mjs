@@ -158,6 +158,18 @@ try {
   assert.deepEqual(sections.missing, [], 'every studio section is collapsible');
   assert.equal(sections.stored, false, 'a folded section is remembered');
 
+  // 6b. A status row's ⓘ opens what the status does in play, from the game's own tooltip.
+  const statusInfo = await page.evaluate(() => {
+    document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"]').click();
+    document.querySelector('[data-quick-add="status:burn"]').click();
+    const row = [...document.querySelectorAll('#active-features-list .feature-row')].find((r) => r.querySelector('[data-eff-stacks]'));
+    row.querySelector('.info-btn').click();
+    const line = row.querySelector('.feature-desc');
+    return { hidden: line.hidden, does: line.innerText.match(/Does:\s*(.*)/)?.[1]?.trim() || '' };
+  });
+  assert.equal(statusInfo.hidden, false, 'the ⓘ opens the status description');
+  assert.ok(statusInfo.does.length > 0 && !/No description yet/.test(statusInfo.does), `a status row says what it does (${statusInfo.does})`);
+
   // 7. Auto-name: a new card starts with it on; adding a status renames it, and the name fits its title box.
   const autoName = await page.evaluate(async () => {
     document.getElementById('btn-new-card').click();
@@ -166,6 +178,7 @@ try {
     const select = document.getElementById('add-feature-select');
     select.value = 'status:weak';
     select.dispatchEvent(new Event('change', { bubbles: true }));
+    document.getElementById('btn-add-feature').click();
     await new Promise((resolve) => setTimeout(resolve, 300));
     const title = document.querySelector('#inspector-card-preview [data-card-binding="name"]');
     return { before, after: document.getElementById('edit-name').value, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
