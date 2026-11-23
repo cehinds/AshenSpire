@@ -584,11 +584,13 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
 /* NARROW SCREENS (900px and below): one column, the page scrolls instead of inner boxes,
    and the inspector opens as a full-screen sheet when a card is tapped. */
 @media (max-width: 900px) {
+  /* The game's sheets make html a fixed-size box with overflow hidden, so a page-height body could not be
+     scrolled by wheel or touch. The body is the scroller instead, one viewport tall. */
   body.studio-body {
-    height: auto;
-    min-height: 100vh;
+    height: 100dvh;
     overflow-x: hidden;
-    overflow-y: visible;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
   body.studio-body .studio-topbar {
     position: sticky;
@@ -631,7 +633,7 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
     height: auto;
     overflow: visible;
   }
-  body.studio-body .studio-main { display: block; }
+  body.studio-body .studio-main { display: block; flex: 0 0 auto; }
 
   /* Cards: tiles at least 160px wide (two per row on a phone), filters in a two-column grid. */
   body.studio-body .cards-layout { display: block; }

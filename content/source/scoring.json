@@ -376,13 +376,17 @@
     "why": "A card that does several different things is worth more than its parts: it fits more turns and more decks."
   },
   "categories": {
-    "rule": "Owner 2026-11-23: each category a card belongs to (Martial or Magic, both for a hybrid, and its card type) adds weight to the raw score; with multiplier on, the positive score is scaled by weight instead (1 = no change).",
+    "rule": "Owner 2026-11-23: each category a card belongs to (Martial, Magic, Hybrid when it is both, and its card type) adds weight to the raw score; with multiplier on, the positive score is scaled by weight instead (1 = no change).",
     "martial": {
       "weight": 0,
       "multiplier": false
     },
     "magic": {
       "weight": 0,
+      "multiplier": false
+    },
+    "hybrid": {
+      "weight": 10,
       "multiplier": false
     },
     "attack": {

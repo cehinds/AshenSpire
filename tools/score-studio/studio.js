@@ -289,7 +289,7 @@ const CARD_KINDS = Object.freeze(['attack', 'skill', 'spell', 'sweep', 'counter'
 const KIND_MANEUVERS = Object.freeze({ attack: 'attack', sweep: 'sweep', counter: 'counter', defend: 'defend', spell: 'casting' });
 const PLAIN_KINDS = Object.freeze(['power', 'curse', 'status']);
 const HYBRID_MAGIC_SHARE = 0.5;
-const SCHOOL_CATEGORIES = Object.freeze(['martial', 'magic']);
+const SCHOOL_CATEGORIES = Object.freeze(['martial', 'magic', 'hybrid']);
 
 const hasDamageEffect = (def) => (def.effects || []).some((e) => e.op === 'damage');
 
@@ -337,7 +337,8 @@ function setCardSchools(def, { martial, magic }) {
 // The scoring categories the studio card belongs to (ScoreCard's scoring.categories).
 function cardCategoriesOf(def) {
   const schools = cardSchoolsOf(def);
-  return [...(schools.martial ? ['martial'] : []), ...(schools.magic ? ['magic'] : []), cardKindOf(def)];
+  const hybrid = schools.martial && schools.magic;
+  return [...(schools.martial ? ['martial'] : []), ...(schools.magic ? ['magic'] : []), ...(hybrid ? ['hybrid'] : []), cardKindOf(def)];
 }
 
 function getCardTarget(def) {
@@ -1438,7 +1439,7 @@ function cardPropertyScores(def, sc) {
   const neutralProperties = [
     ['class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
     ['type', capitalise(face.categories.at(-1)), (neutral) => { neutral.type = 'skill'; neutral.categories = [...neutral.categories.slice(0, -1), 'skill']; }],
-    ['camp', face.categories.filter((c) => SCHOOL_CATEGORIES.includes(c)).map(capitalise).join(' + '), (neutral) => {
+    ['camp', face.categories.filter((c) => c === 'martial' || c === 'magic').map(capitalise).join(' + '), (neutral) => {
       neutral.camp = 'physical';
       neutral.categories = ['martial', ...neutral.categories.filter((c) => !SCHOOL_CATEGORIES.includes(c))];
     }],
@@ -1676,7 +1677,7 @@ function renderWeights() {
       const bv = R.categories?.[k];
       return {
         id: k,
-        label: capitalise(k),
+        label: k === 'hybrid' ? 'Hybrid (Martial + Magic)' : capitalise(k),
         val: v.weight,
         base: bv?.weight,
         step: v.multiplier ? 0.05 : 1,
@@ -1761,7 +1762,7 @@ function renderWeights() {
 }
 
 // Score categories (ScoreCard's scoring.categories): Martial, Magic and each Card Type.
-const CATEGORY_KEYS = Object.freeze(['martial', 'magic', ...CARD_KINDS]);
+const CATEGORY_KEYS = Object.freeze([...SCHOOL_CATEGORIES, ...CARD_KINDS]);
 
 function categoryWeight(scoring, key) {
   scoring.categories ||= {};

@@ -24,10 +24,12 @@ export const BaseFace = () => ({
   draw: 0, heal: 0, loseHp: 0, discard: 0, restoreSp: 0, restoreMp: 0, cleanse: 0, counter: 0, reflect: 0, pull: 0, move: 0, holdOne: 0, boost: 0, cull: 0, shuffle: 0, copy: 0, attr: 0,
 });
 
-/** The scoring categories a face belongs to: Martial and/or Magic, then its card type. A face may list its own (`categories`). */
+/** The scoring categories a face belongs to: Martial and/or Magic (and Hybrid when both), then its card type. A face may list its own (`categories`). */
 export function CardCategories(face) {
   if (Array.isArray(face.categories)) return face.categories;
-  return [face.camp === 'spell' ? 'magic' : 'martial', face.type];
+  // A physical hit with a magic share (the game's packet hit) is both.
+  const hybrid = face.camp !== 'spell' && face.magicShare > 0;
+  return [face.camp === 'spell' ? 'magic' : 'martial', ...(hybrid ? ['magic', 'hybrid'] : []), face.type];
 }
 
 // The slim view of a scoring table: just what the scorer reads. Not cached: the simulator edits weights in place.
