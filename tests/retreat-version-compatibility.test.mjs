@@ -154,7 +154,7 @@ for (const profileIsCurrent of [false, true]) for (const savedPolicy of [0, 1]) 
       costs.push(shown);
       assert.equal(before - combat.player.stamina, shown);
     }
-    // The same-stance Adept cut has no floor of 1 (owner ruling 2026-11-22, no card has a minimum): from the second play the printed price (1, or 2 and 3 as Retreat grows) loses 1.
-    assert.deepEqual(costs, savedPolicy === 1 ? [1, 1, 2] : [1, 0, 0]);
+    // The same-stance Martial Adept cut stops at 1 SP on the player's turn (owner 2026-11-23), so the printed price is unchanged by it here.
+    assert.deepEqual(costs, savedPolicy === 1 ? [1, 2, 3] : [1, 1, 1]);
   });
 }
