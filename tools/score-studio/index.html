@@ -5,8 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AshenSpire — Score Studio</title>
   <base href="../../" />
+  <!-- Game sheets the card renderer needs, in the game's own order (see index.html). -->
   <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/tokens.generated.css" />
+  <link rel="stylesheet" href="styles/ui.css" />
   <link rel="stylesheet" href="styles/combat.css" />
+  <link rel="stylesheet" href="styles/kit.css" />
+  <link rel="stylesheet" href="styles/illustrated-cards.css" />
+  <link rel="stylesheet" href="styles/corrupted-cards.css" />
+  <!-- Studio rules are scoped under body.studio-body so the game sheets above cannot restyle the studio chrome. -->
   <link rel="stylesheet" href="tools/score-studio/studio.css" />
 </head>
 <body class="studio-body">
