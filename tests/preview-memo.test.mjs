@@ -104,6 +104,7 @@ test('selected modes keep separate live prices on the same fight and each repeat
   const index = combat.piles.discard.findIndex(card => card.instanceId === 'qa0');
   assert.ok(index >= 0, 'Dodge Roll remains reusable');
   combat.piles.hand.push(combat.piles.discard.splice(index, 1)[0]);
+  combat.player.combatStance = null; // the first play's stance would now cut the price to 0 (no cost minimum, owner 2026-11-22)
   const { memo, calls } = counted(combat);
   const advance = memo.previewCard(combat, 'qa0', undefined, undefined, { choice: 'advance' });
   const retreat = memo.previewCard(combat, 'qa0', undefined, undefined, { choice: 'retreat' });

@@ -1,6 +1,7 @@
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
-// Owner ruling 2026-10-19 (Core): equipped gear grants cards; the Bone Sceptre grants Mana Surge
-// (1 SP, gain 2 Mana) to any class holding it.
+// Owner ruling 2026-10-19 (Core): equipped gear grants cards (gear.grantedCards).
+// Owner ruling 2026-11-21: the shipped Bone Sceptre no longer grants Mana Surge. The grant mechanism is still live,
+// so these tests run on a fixture profile in which the Bone Sceptre grants Mana Surge (1 SP, gain 2 Mana); the shipped Core is checked separately.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -12,7 +13,9 @@ test('gear.grantedCards is validated at profile construction, naming the item an
   const pack = catalog.bundles[authors.core.core].manifest.packs.find(row => row.id === 'ashen.core-content');
   const build = (mutate) => {
     const copy = JSON.parse(JSON.stringify(catalog));
-    mutate(copy.packs[`${pack.id}@${pack.version}`].content.gear.find(item => item.id === 'boneSceptre'));
+    const item = copy.packs[`${pack.id}@${pack.version}`].content.gear.find(item => item.id === 'boneSceptre');
+    item.grantedCards = [{ card: 'core.manaSurge', copies: 1 }]; // the shipped sceptre grants nothing (owner 2026-11-21): the fixture row stands in
+    mutate(item);
     return () => resolveGameAuthor(authors.core, copy);
   };
   assert.doesNotThrow(build(() => {}), 'the shipped Core bundle validates');
@@ -37,9 +40,16 @@ import { dispatch } from '../src/engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { withWeaponRack } from './withWeaponRack.mjs';
+import { gameDigest } from '../engine/kernel/gameConfig.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
-const reg = bindGameProfileRegistries(createRegistries(withWeaponRack(applyGameProfileToContent(contentBundle, profile))), profile);
+const shippedReg = bindGameProfileRegistries(createRegistries(withWeaponRack(applyGameProfileToContent(contentBundle, profile))), profile);
+// Fixture: the same Core with a Bone Sceptre that grants one Mana Surge.
+const grantProfile = structuredClone(profile);
+grantProfile.content.gear.find(item => item.id === 'boneSceptre').grantedCards = [{ card: 'core.manaSurge', copies: 1 }];
+delete grantProfile.hash;
+grantProfile.hash = gameDigest(grantProfile);
+const reg = bindGameProfileRegistries(createRegistries(withWeaponRack(applyGameProfileToContent(contentBundle, grantProfile))), grantProfile);
 const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const start = (classId, seed = 511) => createRunState({ registries: reg, classId, seed, profileMeta: meta });
 const surges = (run) => run.deck.filter((c) => c.cardId === 'core.manaSurge');
@@ -67,7 +77,25 @@ test('the card is Mana Surge: 1 SP, no Mana cost, gains 2 Mana, reads "Gain 2 Ma
   if (cardFaceText) assert.match(JSON.stringify(cardFaceText(def)), /Gain 2 Mana/);
 });
 
-test('fresh Core Starseer and Herald each hold exactly one granted Mana Surge; Reaver and Rogue none', () => {
+test('the shipped Core grants no Mana Surge: fresh casters start with ten cards, and older saves holding it still load (owner 2026-11-21)', () => {
+  const shippedStart = (classId) => createRunState({ registries: shippedReg, classId, seed: 511, profileMeta: meta });
+  for (const id of ['starseer', 'herald', 'reaver', 'rogue']) {
+    const run = shippedStart(id);
+    assert.equal(run.deck.filter((c) => c.cardId === 'core.manaSurge').length, 0, id);
+    assert.equal(run.deck.length, 10, `${id} starts with ten cards`);
+    assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
+  }
+  // An older save whose deck holds the granted card still loads and keeps playing.
+  const old = shippedStart('herald');
+  old.deck.push({ cardId: 'core.manaSurge', instanceId: 'granted:boneSceptre:core.manaSurge:0', upgraded: false, equipmentRole: 'granted', grantedBy: 'boneSceptre' });
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(old, createRng(511));
+  const loaded = saves.loadRun(shippedReg);
+  assert.ok(loaded, JSON.stringify(saves.runStatus()));
+  assert.ok(loaded.deck.length >= 10);
+});
+
+test('with a granting sceptre, a fresh Starseer and Herald hold exactly one granted Mana Surge; Reaver and Rogue none', () => {
   for (const id of ['starseer', 'herald']) {
     const run = start(id);
     const found = surges(run);
@@ -77,16 +105,6 @@ test('fresh Core Starseer and Herald each hold exactly one granted Mana Surge; R
     assert.equal(found[0].instanceId, 'granted:boneSceptre:core.manaSurge:0');
   }
   for (const id of ['reaver', 'rogue']) assert.equal(surges(start(id)).length, 0, id);
-});
-
-test('Starseer replaces Resource Gain and both sceptre classes start with eleven cards', () => {
-  const run = start('starseer');
-  assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
-  assert.equal(run.deck.length, 11, 'the starting weapon art replaces the class special');
-  assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 9);
-  const herald = start('herald');
-  assert.equal(herald.deck.length, 11, 'Herald authors nine cards plus granted Mana Surge and Blight Touch');
-  assert.equal(herald.deck.filter(c => c.cardId === 'base.ethereal').length, 2);
 });
 
 test('a Reaver gains Mana Surge on equipping a Bone Sceptre, loses it on unequip, never duplicates', () => {

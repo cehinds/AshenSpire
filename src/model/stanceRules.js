@@ -106,7 +106,7 @@ export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0)
       }
       if (!(base > 0) || carrier?.cost === 'X' || isSpellCard(carrier) || !hasAdept(ctx, entity, 'training.basic')) return base;
       const cfg = fixCoreRules(ctx, entity, carrier).stance;
-      return Math.max(adeptMinimum(ctx, carrier, cfg.minimumCost), base - cfg.discount);
+      return Math.max(adeptMinimum(ctx, carrier, cfg.playerMinimumCost ?? cfg.minimumCost), base - cfg.discount);
     }
     if (!same) return base;
     const tags = carrier?.cardTags || carrier?.tags || [];
@@ -173,10 +173,13 @@ export function spellChain(entity, carrier) {
 export function stanceManaCost(base, entity, carrier, ctx) {
   if (!fixCoreEnabled(ctx) || !(base > 0)) return base;
   if (core2ActionPolicyEnabled(ctx) && entity?.kind !== 'enemy') {
-    const adept = isSpellCard(carrier) && hasAdept(ctx, entity, 'training.graduate') && (sameStance(entity, carrier) || defensiveFamily(entity, carrier));
+    const graduate = isSpellCard(carrier) && hasAdept(ctx, entity, 'training.graduate');
+    const adept = graduate && (sameStance(entity, carrier) || defensiveFamily(entity, carrier));
     if (!adept && !spellChain(entity, carrier)) return base;
     const cfg = fixCoreRules(ctx, entity, carrier).stance;
-    return Math.max(adept ? adeptMinimum(ctx, carrier, cfg.minimumCost) : cfg.minimumCost, base - cfg.discount);
+    // Owner rulings 2026-11-22: no card has a minimum, so every player-turn stance cut (Adept, successive Spell) may reach 0 (stance.playerMinimumCost);
+    // stance.minimumCost keeps pricing enemy plans and fights saved without the key.
+    return Math.max(adeptMinimum(ctx, carrier, cfg.playerMinimumCost ?? cfg.minimumCost), base - cfg.discount);
   }
   if (!(sameStance(entity, carrier) || spellChain(entity, carrier))) return base;
   const cfg = fixCoreRules(ctx, entity, carrier).stance;

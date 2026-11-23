@@ -116,7 +116,8 @@ test('current deck and pile Mana faces share final gear pricing with quotes, pay
         assert.equal(pile.mana, quote.mana, `${label}: Prepared pile equals the live quote`);
         assert.ok(combat.player.itemProps.cardRules.filter(row => row.stat === 'manaCost' && row.conds.some(cond => cond.name === 'stance')).length <= 1, `${label}: built-in Focus is one shared effect`);
         const base = classId === 'starseer' && printedMana > 0 ? Math.max(0, printedMana - 1) : printedMana; // Starseer is a Graduate; Reaver is not.
-        assert.equal(pile.mana, Math.max(0, base + 1 - robe - focus), `${label}: one Focus plus independent robe`);
+        const chainCut = cardId === 'core.cantrip' ? 1 : 0; // a mirrored cantrip takes the successive-Spell cut, and with no cost minimum (owner 2026-11-22) it may reach 0 for a non-Graduate too
+        assert.equal(pile.mana, Math.max(0, base + 1 - robe - focus - chainCut), `${label}: one Focus plus independent robe`);
         assert.deepEqual(serializeCombatSnapshot(combat), snapshot, `${label}: faces and quotes are pure`);
         const restored = restoreCombatSnapshot({ registries: currentReg, snapshot, rng: createRng(5, counters), expectedGameProfile: combat.gameProfile });
         const play = ctx => dispatch(ctx, { type: 'playCard', cardInstanceId: 'face-mana', targetId: ctx.enemies[0].id });

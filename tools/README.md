@@ -98,6 +98,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `combat-layer-contract.mjs` | Shared by the rendered-layer probe and its source-side known-bad regression. | tests combat-fade-order; tools combat-layer-qa |
 | `combat-log-touch-qa.mjs` | Exercise the log with browser-native taps/drags. No app state injection. | tests combat-log-modal |
 | `combat-mobile-touch-qa.mjs` | Real touch gestures against the authored starting hand. No combat state is | tests combat-inspect-visibility |
+| `combat-power-report.mjs` | Combat-power table (2026-11-21): measures every Core card and item in a neutral fight, scores it with src/model/combatPower.js and writes src/content/generated/combatPower.js. | npm combat-power, combat-power:check; tests combat-power, core-starting-decks |
 | `concept-cutout.mjs` | concept-cutout — turn the four class concept paintings into the | tools component-refs, painted-poses, pose-cutout +2; docs CREDITS.md, asset-data/classes/SUCCESSOR-CONTRACT.md, docs/ART-REPO-PLAN.md +4; other asset-data/classes/rejected-inputs.json, asset-data/sprites/class-sprites.manifest.json +2 |
 | `config-build.mjs` | config-build — compile content/config/**.json into | wf sync-dev-to-alternative-dev; tests build-lock, deck-editor-costs, engine-export +3; tools content-build, engine-export, launch +1; docs DEVELOPER.md, content/config/README.md, docs/COMPONENT-MODEL-ARCHITECTURE.md +8; other package.json, src/config/generated/ui.js +14 |
 | `confirmation-modal.mjs` | Focused acceptance for QA remediation #4: Load and Quit Without Saving use | tools escape-back, plantsites-baseline.json; docs DEVELOPER.md, docs/COMPONENT-CATALOG.md |
@@ -111,6 +112,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `creationbrief.mjs` | creationbrief — D26's short form, observed on glass. | tools browser, foldsurvivors, release-shots; docs CHANGELOG.md, DEVELOPER.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +3 |
 | `credits-check.mjs` | credits-check — does every asset directory have a CREDITS row, and | wf ci; tests run-node; docs CREDITS.md, SPEC.md, docs/ART-REPO-PLAN.md +4 |
 | `css-strip.mjs` | tools/css-strip.mjs — drop /* … */ comments from CSS the bundle inlines. | tests boot-splash, historical-ui-icons; tools buildversion, bundle |
+| `generate-cards.mjs` | Card generator CLI (2026-11-21): prints generated card definitions of a target combat power as JSON; writes nothing. | npm cards:generate; tests card-generator |
 | `js-preamble.mjs` | Omit ordinary leading module comments from emitted JavaScript, stopping at the first code token and preserving licenses and directives. | tests js-preamble; tools buildversion, bundle |
 | `derived-tables.mjs` | Derived, read-only tables of the resolved Core profile (owner 2026-10-17): every character's attributes | tests derived-tables |
 | `desktop_scene_export.py` | Re-encode only reviewed desktop scene layers; phone exports stay byte-identical. | tools alternative-art-build.py (Python import) |
@@ -167,6 +169,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `jev.mjs` | tools/jev.mjs — the deterministic-first gate: triage logs against tools/jev.rules.json, run the fast checks, regen, restamp, devmerge. | tests jev; docs .claude/skills/jev/SKILL.md, DEVELOPER.md, docs/ai/AI-ROUTING.md |
 | `launch.mjs` | launch — the one-click launcher. | wf sync-dev-to-alternative-dev, ci, dev-preview +3; tests build-lock; tools actionreach, asset-pack, axisfit +29; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, content/config/README.md +24; other .gitignore, docs/architecture-handoff/source-map.json +10 |
 | `layered-art.mjs` | (no header comment) | tests display-art-cache, layered-art-pack; tools asset-pack, buildversion, bundle +1 |
+| `level-lists.mjs` | Level lists (2026-11-21): writes src/content/generated/levelLists.js, the cards and items per level from the combat-power ranks. | npm level-lists, level-lists:check |
 | `level-pace-sim.mjs` | Character level reached at the end of each act, walked over the real act maps (owner 2026-11-18 pace targets). | docs docs/balance/level-pace-2026-11-18.md |
 | `literal-asset-references.mjs` | Checks missing literal assets; only exact, explicitly optional generated recipient atlas properties may use the static fallback. | tools bundle; tests literal-asset-references; docs RECIPIENT-EFFECTS |
 | `recipient-effects-export.py` | Validates and stages approved three-frame PNG strips, tier copies, source hashes and provenance for art intake. | docs RECIPIENT-EFFECTS |

@@ -154,6 +154,7 @@ for (const profileIsCurrent of [false, true]) for (const savedPolicy of [0, 1]) 
       costs.push(shown);
       assert.equal(before - combat.player.stamina, shown);
     }
-    assert.deepEqual(costs, savedPolicy === 1 ? [1, 2, 3] : [1, 1, 1]);
+    // The same-stance Adept cut has no floor of 1 (owner ruling 2026-11-22, no card has a minimum): from the second play the printed price (1, or 2 and 3 as Retreat grows) loses 1.
+    assert.deepEqual(costs, savedPolicy === 1 ? [1, 1, 2] : [1, 0, 0]);
   });
 }

@@ -75,8 +75,8 @@ test('cost table over every shipped Core 2 spell and cantrip: base, Prepared, Fo
   }
 });
 
-test('literal prices: a 1 SP / 1 MP spell is 2/2 plain, 1/2 in Prepared, 2/1 with a Focus, 1/1 with both; a cantrip (Mana Surge is one) is 1/1, 0/1, 1/0, 0/0', () => {
-  for (const [id, base, prepared, focus, both] of [['core.cometLance', [2, 2], [1, 2], [2, 1], [1, 1]], ['core.cantrip', [1, 1], [0, 1], [1, 0], [0, 0]], ['core.manaSurge', [1, 1], [0, 1], [1, 0], [0, 0]]]) {
+test('literal prices: a 1 SP / 1 MP spell is 2/2 plain, 1/1 in Prepared, 2/1 with a Focus, 1/0 with both; a cantrip (Mana Surge is one) is 1/1, 0/1, 1/0, 0/0', () => {
+  for (const [id, base, prepared, focus, both] of [['core.cometLance', [2, 2], [1, 1], [2, 1], [1, 0]], ['core.cantrip', [1, 2], [0, 1], [1, 1], [0, 0]] /* Arcane Spark prints 1 MP (owner 2026-11-22): +1 surcharge; the Graduate's Prepared cut floors at 0 (owner 2026-11-22), like Comet Lance */, ['core.manaSurge', [1, 1], [0, 1], [1, 0], [0, 0]]]) {
     for (const [hand, stance, want] of [['greatsword', null, base], ['greatsword', PREPARED, prepared], ['boneSceptre', null, focus], ['boneSceptre', PREPARED, both]]) {
       const { costs } = costsIn({ hand, stance, id });
       assert.deepEqual([costs.stamina, costs.mana], want, `${id} ${hand} ${stance ? 'Prepared' : 'no stance'}`);
@@ -88,7 +88,7 @@ test('a cantrip after a first spell with a Focus costs 0 SP and 0 MP, and the pa
   const { combat } = fight(); // its own fight: this test plays cards
   combat.loadout.sets.rightHand[0] = 'boneSceptre';
   const [first, second] = combat.piles.hand;
-  first.cardId = 'core.cometLance'; second.cardId = 'core.cantrip';
+  first.cardId = 'core.cometLance'; second.cardId = 'core.mendingTouch'; // a 0 MP cantrip: Arcane Spark prints 1 MP since the owner ruling of 2026-11-22 (SPEC.md Cantrip and Basic Mana) and a Graduate's stance cut floors at 0 on the player's turn since 2026-11-22
   const open = cardPlayCosts(combat, second.instanceId);
   assert.deepEqual([open.stamina, open.mana], [1, 0], 'before the first cast: 1 SP, 0 MP (Focus took the surcharge back)');
   const [energy, mana] = [combat.player.energy, combat.player.mana];
@@ -100,7 +100,7 @@ test('a cantrip after a first spell with a Focus costs 0 SP and 0 MP, and the pa
   assert.deepEqual([after.stamina, after.mana], [0, 0]);
   assert.equal(previewCard(combat, second.instanceId).manaCost, 0);
   const [e1, m1] = [combat.player.energy, combat.player.mana];
-  dispatch(combat, { type: 'playCard', cardInstanceId: second.instanceId, targetId: combat.enemies[0].id });
+  dispatch(combat, { type: 'playCard', cardInstanceId: second.instanceId, targetId: combat.player.id });
   assert.equal(e1 - combat.player.energy, 0, 'paid 0 SP');
   assert.equal(m1 - combat.player.mana, 0, 'paid 0 MP');
 });

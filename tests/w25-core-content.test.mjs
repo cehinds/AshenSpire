@@ -67,7 +67,8 @@ test('played as a reaction, Jab pays 1 Stamina and strikes the attacker before t
 // authored `damage` effects only; poiseDamage, Block and statuses did not change).
 // Venom Spray's upgraded damage was raised 3 -> 4 (6 -> 8 doubled) by the no-op upgrade pass (w25-upgrade-no-ops: Venom is capped at 3, so the upgrade
 // had to change something else); the entry below is the value that pass left, so the doubling check still holds for it.
-const SPELL_DAMAGE_BEFORE = {"starseerSpecial":[[9],[]],"cantrip":[[6],[]],"cinderDart":[[3],[4]],"galePush":[[3],[5]],"galePull":[[3],[5]],"starfall":[[8],[11]],"cometLance":[[12],[16]],"searingRay":[[9],[13]],"meteor":[[30],[38]],"judgment":[[10],[13]],"arcaneSiphon":[[7],[10]],"emberWave":[[3],[5]],"eclipse":[[6],[9]],"astralBolt":[[7],[10]],"censure":[[5],[7]],"smite":[[8],[10]],"manaLash":[[6],[8]],"frostNip":[[3],[4]],"spark":[[3],[4]],"emberFlick":[[2],[3]],"dazzleFlare":[[2],[3]],"palmFlame":[[4],[5]],"rimeBite":[[2],[3]],"brittleTouch":[[1],[2]],"dawnFlame":[[4],[6]],"venomSpray":[[2],[4]],"graveToll":[[3],[4]],"rendingHex":[[2],[3]],"acidSplash":[[3],[4]],"jolt":[[4],[6]],"shockingGrasp":[[3],[4]],"stormLash":[[3],[5]]};
+// Owner ruling 2026-11-21 (starter budget): Arcane Spark prints 3 (was 6) so the starter cantrips stay Unranked.
+const SPELL_DAMAGE_BEFORE = {"starseerSpecial":[[9],[]],"cantrip":[[3],[]],"cinderDart":[[3],[4]],"galePush":[[3],[5]],"galePull":[[3],[5]],"starfall":[[8],[11]],"cometLance":[[12],[16]],"searingRay":[[9],[13]],"meteor":[[30],[38]],"judgment":[[10],[13]],"arcaneSiphon":[[7],[10]],"emberWave":[[3],[5]],"eclipse":[[6],[9]],"astralBolt":[[7],[10]],"censure":[[5],[7]],"smite":[[8],[10]],"manaLash":[[6],[8]],"frostNip":[[3],[4]],"spark":[[3],[4]],"emberFlick":[[2],[3]],"dazzleFlare":[[2],[3]],"palmFlame":[[4],[5]],"rimeBite":[[2],[3]],"brittleTouch":[[1],[2]],"dawnFlame":[[4],[6]],"venomSpray":[[2],[4]],"graveToll":[[3],[4]],"rendingHex":[[2],[3]],"acidSplash":[[3],[4]],"jolt":[[4],[6]],"shockingGrasp":[[3],[4]],"stormLash":[[3],[5]]};
 
 // Owner, 2026-11-15: "Halve cantrip damage": a `rank.cantrip` card is back at its pre-doubling damage (floor, at least 1); every other spell keeps the doubling.
 test('retained legacy Spell damage keeps its doubling and cantrip baseline while tradition rebalances are explicit', () => {
@@ -109,7 +110,7 @@ test('a cast cantrip deals its halved damage, and the hit meets Poise before HP'
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c1', targetId: target.id });
   const dealt = out.events.find(event => event.type === 'damageDealt');
   const hit = dealt.damageReceipt.hits[0];
-  assert.equal(hit.sources.find(row => row.id === 'base').amount, 6 + 1, 'Cantrip authored 6 after the halving, plus the current Sceptre magic damage 1');
+  assert.equal(hit.sources.find(row => row.id === 'base').amount, 3 + 1, 'Cantrip authored 3 (owner 2026-11-21 starter budget), plus the current Sceptre magic damage 1');
   assert.ok(dealt.poiseAbsorbed > 0, 'Poise took its share first');
   assert.equal(hit.hpLoss, hit.incoming - hit.poiseReduced, 'HP only took what Poise left');
   assert.equal(500 - target.hp, dealt.hpLoss);

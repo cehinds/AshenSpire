@@ -66,19 +66,22 @@ test('addStatus only when the card applies no status, from its school', () => {
   assert.ok(!kindsFor(dmg(6, { tags: [], damageSchool: undefined })).has('addStatus'));
 });
 
-test('cost: at most once; SP never below 1; MP keeps mana >= 1; cost tracks staminaCost', () => {
-  assert.ok(!kindsFor(dmg(6)).has('cost'), '1 SP card cannot go lower');
+test('cost: at most once; SP and MP cuts reach 0 (owner 2026-11-22, no card has a minimum); cost tracks staminaCost', () => {
+  assert.ok(kindsFor(dmg(6)).has('cost'), '1 SP card can still lose its SP (owner 2026-11-22)');
+  assert.ok(!kindsFor(dmg(6, { cost: 0, staminaCost: 0 })).has('cost'), 'a 0 SP, 0 MP card has nothing to cut');
   const two = dmg(6, { cost: 2, staminaCost: 2 });
   const step = (() => { for (let i = 0; i < 400; i += 1) { const s = rollUpgradeStep(two, [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === 'cost') return s; } })();
   assert.deepEqual(step, { k: 'cost', pool: 'sp' });
   const after = applyUpgradeSteps(two, [step]);
   assert.deepEqual([after.staminaCost, after.cost], [1, 1]);
+  const one = applyUpgradeSteps(dmg(6), [{ k: 'cost', pool: 'sp' }]);
+  assert.deepEqual([one.staminaCost, one.cost], [0, 0], 'a 1 SP card drops to 0 SP');
   assert.ok(!kindsFor(two, [step]).has('cost'), 'once per card');
   const mp1 = dmg(6, { manaCost: 1 });
-  assert.ok(!kindsFor(mp1).has('cost'));
+  assert.ok(kindsFor(mp1).has('cost'), 'a 1 MP card can drop to 0 MP (owner 2026-11-22)');
   const mp3 = dmg(6, { manaCost: 3 });
   const seen = new Set(); for (let i = 0; i < 400; i += 1) { const s = rollUpgradeStep(mp3, [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === 'cost') seen.add(s.pool); }
-  assert.deepEqual([...seen], ['mp'].sort());
+  assert.deepEqual([...seen].sort(), ['mp', 'sp'], 'a 1 SP 3 MP card can cut either (owner 2026-11-22)');
   assert.ok(!kindsFor(dmg(6, { cost: 2, staminaCost: 1 })).has('cost'), 'cost must equal staminaCost');
   assert.ok(!kindsFor(dmg(6, { cost: 'X', staminaCost: 2 })).has('cost'));
 });
@@ -114,12 +117,12 @@ test('power, status and curse cards take only cost, then are maxed (null)', () =
     const card = { id: 't.p', name: 'P', type, cost: 2, staminaCost: 2, manaCost: 0, keywords: [], tags: ['camp:physical'],
       effects: [{ op: 'block', target: 'self', amount: 4 }, { op: 'damage', target: 'enemy', amount: 3 }] };
     assert.deepEqual([...kindsFor(card)].sort(), ['cost']);
-    assert.deepEqual([...kindsFor({ ...card, cost: 1, staminaCost: 1 })], ['none']);
+    assert.deepEqual([...kindsFor({ ...card, cost: 0, staminaCost: 0 })], ['none']);
   }
 });
 
 test('when nothing is eligible the card is maxed: the roll is null, never a filler step', () => {
-  const capped = dmg(6, { rarity: 'common', type: 'power', effects: [{ op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 }] });
+  const capped = dmg(6, { rarity: 'common', type: 'power', cost: 0, staminaCost: 0, effects: [{ op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 }] });
   assert.equal(rollUpgradeStep(capped, [], 0, upgradeStepRng(1, 'x', 0)), null);
   // Rolling until null always ends, and never past the cap of 10 steps a card can hold.
   const steps = [];

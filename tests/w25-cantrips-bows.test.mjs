@@ -42,10 +42,10 @@ test('a bow card plays as an attack at Reach', () => {
 
 const cantrips = cards.filter(card => tagsOf(card).includes('rank.cantrip'));
 
-test('every cantrip is free of Mana and costs at most 1 Stamina (SPEC: a 0 SP / 0 MP card is not a cantrip)', () => {
+test('every cantrip costs at most 1 Mana and at most 1 Stamina (SPEC: a 0 SP / 0 MP card is not a cantrip; owner 2026-11-22: up to 1 MP)', () => {
   assert.ok(cantrips.length >= 24, `found ${cantrips.length}`);
   for (const card of cantrips) {
-    if (card.id !== 'core.galePush') assert.equal(card.manaCost, 0, card.id); // Gale Push costs 1 MP (owner 2026-11-19)
+    assert.ok(card.manaCost <= 1, card.id); // owner 2026-11-22: a cantrip may cost up to 1 MP (Gale Push 2026-11-19, Arcane Spark 2026-11-22)
     assert.ok(card.staminaCost <= 1, card.id);
   }
 });
@@ -55,7 +55,8 @@ test('elemental and Divine cantrips retain school riders while Arcane schools ke
     const school = schoolOf(card);
     if (!school || school === 'lightning' || card.id === 'core.galePull') continue; // Gale Pull (section 22) is Force by tag and moves rows instead of applying a status
     if (school === 'alteration' || school === 'illusion') {
-      const utility = { 'core.manaSurge': 'restoreMana', 'core.glimpse': 'draw', 'core.wardingGlance': 'block', 'core.moteShield': 'block' };
+      // Owner ruling 2026-11-21: the four casters' defensive cantrips (Arcane Ward, Glimmer Veil, Stone Sigil, Ashen Shell) are Alteration Block cantrips.
+      const utility = { 'core.manaSurge': 'restoreMana', 'core.glimpse': 'draw', 'core.wardingGlance': 'block', 'core.moteShield': 'block', 'core.arcaneWard': 'block', 'core.glimmerVeil': 'block', 'core.stoneSigil': 'block', 'core.ashenShell': 'block' };
       assert.ok(utility[card.id], `${card.id}: named Arcane utility cantrip`);
       for (const effects of [card.effects, card.upgrade?.effects || card.effects]) assert.ok(effects.some(effect => effect.op === utility[card.id] && effect.amount >= 1), `${card.id}: actual Arcane utility`);
       continue;

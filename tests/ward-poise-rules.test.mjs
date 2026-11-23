@@ -98,5 +98,7 @@ test('every card that grants Ward carries the Reaction tag (Mote Shield)', () =>
   const grants = effect => effect.op === 'gainWard' || (effect.op === 'applyStatus' && effect.status === 'ward');
   const cards = combat.registries.cards.all().filter(card => [...(card.effects || []), ...(card.upgrade?.effects || [])].some(grants));
   assert.ok(cards.some(card => card.id === 'core.moteShield'), 'Mote Shield grants Ward');
-  for (const card of cards) assert.ok(card.tags.includes('trait:reaction'), card.id);
+  // Owner ruling 2026-11-21 (Unranked starters): the two starter Ward cantrips are not Reactions (Reaction weighs 3, which would rank them).
+  const notReactions = new Set(['core.arcaneWard', 'core.glimmerVeil']);
+  for (const card of cards) assert.ok(notReactions.has(card.id) ? !card.tags.includes('trait:reaction') : card.tags.includes('trait:reaction'), card.id);
 });

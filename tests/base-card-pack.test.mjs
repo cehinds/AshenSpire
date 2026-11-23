@@ -112,9 +112,9 @@ test('all three burden cards are real unplayable definitions and never normal re
     assert.equal(pack.groups['base.current-rewards'].members.includes(row.definition.id),false);
   }
 });
-test('core keeps its eleven-card starter and only admits compatible rewards with active dependencies',()=>{
+test('core keeps its ten-card starter and only admits compatible rewards with active dependencies',()=>{
   const p=profile(),reg=registries(p),run=createRunState({seed:73,classId:'reaver',registries:reg});
-  assert.equal(run.deck.length,11);assert.equal(run.deck.filter(card=>card.cardId==='greatswordSunderingHew').length,1);
+  assert.equal(run.deck.length,10);assert.equal(run.deck.filter(card=>card.cardId==='greatswordSunderingHew').length,1);
   assert.deepEqual(run.deck.filter(card=>card.cardId.startsWith('base.')).map(card=>card.cardId),[]);
   const admitted=new Set(p.content.cards.map(card=>card.id));
   assert.ok(admitted.has('base.draw'));assert.ok(admitted.has('base.foresight'));
@@ -149,6 +149,7 @@ test('current rewards can draw the expanded authored pool and preserve old balan
   // Owner 2026-11-17: cards that need allies (base.needs-allies) join no pool until ally mechanics exist.
   for(const id of pack.groups['base.current-rewards'].members)assert.equal(legacy.classes.get('reaver').cardPool.includes(id),!pack.groups['base.needs-allies'].members.includes(id),id);
   const old=contentBundle.cards.find(row=>row.id==='greatswordSunderingHew');
+  // Owner ruling 2026-11-21: Sundering Hew is a rare Rank 1 weapon art (36 damage, 2 Poise damage; was 48 damage, 2 Vulnerable).
   assert.deepEqual([old.cost,old.manaCost,old.effects[0].amount],[2,1,36]);
 });
 test('closed opcode/formula/reference validation and duplicate author IDs fail by name',()=>{

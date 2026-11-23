@@ -12,7 +12,7 @@ const fresh = new Set(combatExpansionNewCards.map(card => card.id));
 test('every existing Spell card has a source-authored expansion row and no invented id', () => {
   const spellIds = contentBundle.cards.filter(card => !fresh.has(card.id) && card.minCombatExpansionVersion !== 2 && !card.ashenBlight
     && combatProfileFor(card).camp === 'spell').map(card => card.id);
-  assert.equal(spellIds.length, 118);
+  assert.equal(spellIds.length, 119); // +1: Gravebinder's Lament
   for (const id of spellIds) assert(combatExpansionCardOverlay[id], id);
   for (const id of Object.keys(combatExpansionCardOverlay)) assert(cards.has(id), id);
 });

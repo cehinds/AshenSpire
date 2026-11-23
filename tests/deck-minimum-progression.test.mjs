@@ -108,6 +108,8 @@ test('a Starseer with Basic Training cannot add Skullsplitter or an enemy move; 
   const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
   const run = createRunState({ seed: 11, classId: 'starseer', registries, runId: 'bt-starseer', profileMeta: meta });
   run.relics = [...(run.relics || []), 'basicTraining'];
+  // Owner ruling 2026-11-21: the Starseer's ten-card starter is all spells, so no martial Basic is collected at the start; collect two.
+  run.collectedCardIds.push('core.strike', 'core.defend');
   const ids = ItemUnlimitedCardIds(run);
   assert.ok(ids.length > 0 && ids.length < 20, `a short list, got ${ids.length}`);
   for (const forbidden of ['core.skullsplitter', 'wanderingSoldier.slash', 'blightHound.bite']) {

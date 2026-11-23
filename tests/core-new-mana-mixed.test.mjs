@@ -10,8 +10,6 @@ import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
-import { balanceMana } from '../src/content/generated/balanceMana.js';
-import { balanceExposure } from '../src/content/generated/balanceExposure.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -34,9 +32,11 @@ const def = id => profile.content.cards.find(card => card.id === id);
 const matchesTradition = (classId, id) => !def(id).tags.includes('camp:spell')
   || def(id).tags.includes(`tradition:${classId === 'herald' ? 'divine' : 'arcane'}`);
 const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
+// Level lists (owner 2026-11-21): offers draw from the act's rank band, so the seeds are spread over the three acts (act 1 + seed % 3).
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
+  run.actNumber = 1 + (seed % 3);
   return run;
 };
 // An offer is a pure function of (class, seed, floor): a fresh run and a fresh RNG each time. Both 600-seed tests below
@@ -54,10 +54,10 @@ test('every card is authored in its class, costs SP and MP, is not a cantrip, an
     const card = def(id);
     assert.equal(card.class, cls, id);
     assert.ok(card.manaCost >= 1, `${id} costs mana`);
-    assert.ok(card.staminaCost >= balanceMana.minActionCost, `${id}: a mana card costs at least ${balanceMana.minActionCost} SP (balance.mana.minActionCost)`);
+    assert.ok(card.staminaCost >= 0, `${id}: no cost minimum (owner ruling 2026-11-22), so SP is only non-negative`);
     assert.ok(['uncommon', 'rare'].includes(card.rarity), id);
     assert.ok(!card.tags.includes('rank.cantrip'), `${id} is not a cantrip`);
-    if (card.damageSchool === 'magic') assert.ok(card.exposureBuildupPerHit >= balanceExposure.buildupPerManaSpell, `${id}: a magic attack builds at least ${balanceExposure.buildupPerManaSpell} Arcane Exposure per hit`);
+    // No Exposure floor on a Mana spell (owner ruling 2026-11-22): per-hit Exposure is authored per card.
     if (cls === 'starseer' || cls === 'herald' || cls === 'colorless') assert.ok(card.tags.includes('camp:spell'), id);
   }
   assert.equal(ALL.length, 6);

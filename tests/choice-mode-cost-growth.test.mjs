@@ -17,7 +17,7 @@ function recycle(c, id) {
     if (index >= 0 && pile !== c.piles.hand) c.piles.hand.push(pile.splice(index, 1)[0]);
   }
   // Compare the same casting conditions; a previous play may enter a discounted stance.
-  c.player.stanceId = null;
+  c.player.stanceId = null; c.player.combatStance = null; // the stance cut no longer stops at 1 (owner 2026-11-22), so it must not leak into the next quote
 }
 const quote = (c, id = 'qa0', choice = 'retreat') => previewCard(c, id, undefined, undefined, { choice });
 function play(c, id = 'qa0', choice = 'retreat') {
@@ -155,7 +155,7 @@ test('an authored perCard mode shares fresh-copy counts without affecting other 
   const cards = { ...registries.cards, get: id => id === def.id ? def : registries.cards.get(id) };
   const c = bandsFight({ registries: { ...registries, cards }, hand: [def.id, def.id], classId: 'rogue', stamina: 10 });
   assert.equal(play(c, 'qa0'), 1);
-  c.player.stanceId = null;
+  c.player.stanceId = null; c.player.combatStance = null; // the stance cut no longer stops at 1 (owner 2026-11-22), so it must not leak into the next quote
   assert.equal(quote(c, 'qa1', 'advance').staminaCost, 1);
   assert.equal(play(c, 'qa1'), 2);
 });
