@@ -8,7 +8,7 @@ import { scoring as shippedScoring } from '../content/generated/scoring.js';
 
 export const CUSTOM_SCORING_STORAGE_KEY = 'ashenspire:customScoring';
 
-const REQUIRED_SECTIONS = ['model', 'costs', 'effects', 'statuses', 'keywords', 'rank', 'rarity', 'tags'];
+const REQUIRED_SECTIONS = ['model', 'cardModel', 'costs', 'effects', 'statuses', 'keywords', 'rank', 'rarity', 'tags'];
 
 let activeOverride = null;
 

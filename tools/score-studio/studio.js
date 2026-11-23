@@ -487,7 +487,7 @@ function renderWeights() {
       { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
       { id: 'width', label: 'Band Width', val: state.scoring.rank.width, set: (n) => { state.scoring.rank.width = Math.max(1, n); } },
       { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
-      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, set: (n) => { state.scoring.effectCount.weight = n; } },
+      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; } },
     ] },
     { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => k[0] !== '$' && v && (v.weight !== 0 || v.multiplier || v.pMultiplier)).map(([k, v]) => ({ id: k, label: `${v.label || k} (${k})`, val: v.weight || v.multiplier || v.pMultiplier, step: v.weight !== 0 ? 1 : 0.05, set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; } })) },
   ];
@@ -920,9 +920,12 @@ function wireEvents() {
     else if (e.target.dataset.lField) layer[e.target.dataset.lField] = e.target.value;
     else if (e.target.dataset.lNum) layer[e.target.dataset.lNum] = Number(e.target.value) || 0;
     markDirty();
-    renderArtTab();
+    // Update live preview in place without rebuilding #art-layers-list (preserves focus & slider drag)
+    const cardSel = document.getElementById('art-preview-card-select');
+    const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
+    if (previewDef) renderCardWithLayers(previewDef, document.getElementById('art-live-preview'));
     renderInspector();
-    updateCardTileInPlace(state.selectedCardId);
+    if (state.selectedCardId) updateCardTileInPlace(state.selectedCardId);
   });
   document.getElementById('btn-save-art').addEventListener('click', async () => {
     try {
@@ -1077,6 +1080,13 @@ async function boot() {
     if (draft?.scoring && ValidateScoringConfig(draft.scoring).length === 0) {
       state.scoring = draft.scoring;
       if (draft.artLayers?.layers) state.artLayers = draft.artLayers;
+      if (Array.isArray(draft.customCards)) {
+        for (const cc of draft.customCards) {
+          const i = state.cards.findIndex((c) => c.id === cc.id);
+          if (i >= 0) state.cards[i] = cc;
+          else state.cards.unshift(cc);
+        }
+      }
       document.getElementById('draft-status').textContent = 'Restored local draft temp copy';
       document.getElementById('draft-status').classList.add('is-dirty');
       syncAllViews();

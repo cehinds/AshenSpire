@@ -3,7 +3,7 @@
 // Used by tools/serve.mjs on localhost only. All paths are validated to stay inside the repository root.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { resolve, relative, dirname, sep } from 'node:path';
+import { resolve, relative, dirname, sep, isAbsolute } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ValidateScoringConfig } from '../src/model/activeScoring.js';
 
@@ -16,7 +16,7 @@ function resolveRepoPath(rootDir, relPath, fallback) {
   const rootResolved = resolve(rootDir);
   const target = resolve(rootResolved, cleaned);
   const rel = relative(rootResolved, target);
-  if (rel.startsWith('..') || rel.includes(`..${sep}`) || target === rootResolved) {
+  if (isAbsolute(rel) || rel === '' || rel === '..' || rel.startsWith(`..${sep}`) || target === rootResolved) {
     throw new Error(`Path "${chosen}" escapes the repository root.`);
   }
   if (!target.endsWith('.json')) {

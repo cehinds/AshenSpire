@@ -413,13 +413,15 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           res.end(JSON.stringify(value));
         };
         if (!local || !safeHost) { reply(403, { ok: false, error: 'Score Studio API is localhost-only.' }); return; }
-        if (urlPath === '/__studio/config' && req.method === 'GET') {
+        if (urlPath === '/__studio/config') {
+          if (req.method !== 'GET') { reply(405, { ok: false, error: 'Method not allowed on /__studio/config.' }); return; }
           try {
             const u = new URL(req.url, `http://${host}`);
             reply(200, { ok: true, ...readStudioConfig(rootResolved, { scoringPath: u.searchParams.get('scoringPath') || '', artLayersPath: u.searchParams.get('artLayersPath') || '' }) });
           } catch (error) { reply(400, { ok: false, error: error.message }); }
           return;
         }
+        if (!editorWrite) { reply(403, { ok: false, error: 'Score Studio repo writes require --editor-write (launch via `npm run studio`).' }); return; }
         if (req.method !== 'POST' || req.headers.origin !== `http://${host}` || !String(req.headers['content-type']).startsWith('application/json')) {
           reply(403, { ok: false, error: 'Save must come from the local Score Studio.' }); return;
         }

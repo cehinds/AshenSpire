@@ -10,7 +10,7 @@ const port = process.argv.includes('--port') ? process.argv[process.argv.indexOf
 const noOpen = process.argv.includes('--no-open');
 const url = `http://localhost:${port}/tools/score-studio/`;
 
-const child = spawn(process.execPath, [resolve(root, 'tools/serve.mjs'), '--host', 'localhost', '--port', port, '--no-open'], {
+const child = spawn(process.execPath, [resolve(root, 'tools/serve.mjs'), '--host', 'localhost', '--port', port, '--no-open', '--editor-write'], {
   cwd: root,
   stdio: 'inherit',
 });

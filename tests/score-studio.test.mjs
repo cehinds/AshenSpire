@@ -15,6 +15,9 @@ test('activeScoring: validates config, activates override for ScoreCard, and cle
 
   assert.ok(ValidateScoringConfig(null).length > 0);
   assert.ok(ValidateScoringConfig({}).length > 0);
+  const noCardModel = structuredClone(shippedScoring);
+  delete noCardModel.cardModel;
+  assert.ok(ValidateScoringConfig(noCardModel).some((m) => m.includes('cardModel')));
   assert.deepEqual(ValidateScoringConfig(shippedScoring), []);
 
   const custom = structuredClone(shippedScoring);
@@ -43,6 +46,10 @@ test('score-studio-save: reads/writes custom paths inside repo and rejects escap
     assert.equal(loaded.artLayersExists, false);
 
     assert.throws(() => readStudioConfig(dir, { scoringPath: '../outside.json' }), /escapes the repository root/);
+    if (process.platform === 'win32') {
+      const otherDrive = dir[0].toUpperCase() === 'Z' ? 'Y:/outside.json' : 'Z:/outside.json';
+      assert.throws(() => readStudioConfig(dir, { scoringPath: otherDrive }), /escapes the repository root/);
+    }
     assert.throws(() => saveStudioScoring(dir, { path: 'content/source/scoring.txt', scoring: shippedScoring, rebuild: false }), /must be a \.json file/);
     assert.throws(() => saveStudioScoring(dir, { path: 'content/source/custom.json', scoring: {}, rebuild: false }), /Invalid scoring configuration/);
 
