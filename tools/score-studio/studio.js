@@ -1257,12 +1257,20 @@ function signedDelta(value) {
 }
 
 // The Card row: rarity, targeting and the properties that do (or do not) move the score.
-function cardBreakdownPills(def, sc) {
+// What each card property does to the score. One source for the Score Breakdown "Card" row and the
+// weight chips beside the Card Basics fields, so the two always show the same numbers.
+// field: the Card Basics field it belongs to; value: signed effect on the score; count: "×N" targets.
+function cardPropertyScores(def, sc) {
   const S = state.scoring;
   const face = sc.face;
-  const pills = [];
   const discount = rarityDiscount(sc.rarity);
-  pills.push(breakdownPill(`${capitalise(sc.rarity)} −${discount}`, discount ? -discount : 0, `Rarity discount: CP = raw − ${discount}`));
+  const rows = [{
+    field: 'rarity',
+    label: capitalise(sc.rarity),
+    value: discount ? -discount : 0,
+    text: `−${discount}`,
+    title: `Rarity discount: CP = raw − ${discount}`,
+  }];
 
   const target = getCardTarget(def);
   const areaTag = S.cardModel?.areaTag || 'targeting:area';
@@ -1271,25 +1279,50 @@ function cardBreakdownPills(def, sc) {
     neutral.tags = neutral.tags.filter((t) => !t.startsWith('targeting:') && !t.startsWith('targeting.'));
     neutral.tags.push('targeting:single');
   });
-  const targetCount = isArea ? ` ×${S.model?.ENEMIES ?? 2}` : '';
-  pills.push(breakdownPill(`${TARGET_LABELS[target] || capitalise(target)}${targetCount} ${signedDelta(targetDelta)}`, targetDelta,
-    targetDelta ? 'Change against the same card hitting a single enemy' : NO_SCORE_EFFECT_TITLE));
+  rows.push({
+    field: 'target',
+    label: TARGET_LABELS[target] || capitalise(target),
+    count: isArea ? S.model?.ENEMIES ?? 2 : null,
+    value: targetDelta,
+    text: signedDelta(targetDelta),
+    title: targetDelta ? 'Change against the same card hitting a single enemy' : 'Scores the same as hitting a single enemy',
+  });
 
   const neutralProperties = [
-    ['Class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
-    ['Type', capitalise(face.type), (neutral) => { neutral.type = 'skill'; }],
-    ['Camp', capitalise(face.camp), (neutral) => { neutral.camp = 'physical'; }],
+    ['class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
+    ['type', capitalise(face.type), (neutral) => { neutral.type = 'skill'; }],
+    ['camp', capitalise(face.camp), (neutral) => { neutral.camp = 'physical'; }],
   ];
-  for (const [, label, neutralize] of neutralProperties) {
+  for (const [field, label, neutralize] of neutralProperties) {
     const delta = rawScoreDelta(face, neutralize);
-    pills.push(breakdownPill(`${label} ${signedDelta(delta)}`, delta, delta ? 'Change against the neutral choice' : NO_SCORE_EFFECT_TITLE));
+    rows.push({ field, label, value: delta, text: signedDelta(delta), title: delta ? 'Change against the neutral choice' : NO_SCORE_EFFECT_TITLE });
   }
+  return rows;
+}
+
+function cardBreakdownPills(def, sc, propertyScores = cardPropertyScores(def, sc)) {
+  const pills = propertyScores.map((row) => breakdownPill(`${row.label}${row.count ? ` ×${row.count}` : ''} ${row.text}`, row.value, row.title));
   if (sc.overridden) pills.push(breakdownPill(`Override → ${RankName(sc.rank)} / CP ${sc.cp}`, null, 'A scoring override sets this card\'s rank or CP'));
   return pills.join('');
 }
 
+// Weight chips beside Rarity, Target, Camp, Card Type and Class, in the cost chips' style.
+function renderFieldChips(def, sc, propertyScores = cardPropertyScores(def, sc)) {
+  for (const row of propertyScores) {
+    const el = document.getElementById(`field-score-${row.field}`);
+    if (!el) continue;
+    const tone = row.value > 0 ? 'is-pos' : row.value < 0 ? 'is-neg' : 'is-zero';
+    const countHtml = row.count ? `<span class="feature-count">×${esc(row.count)}</span>` : '';
+    el.className = `feature-score ${tone}`;
+    el.title = `${row.label}: ${row.text}. ${row.title}`;
+    el.innerHTML = `${countHtml}<span class="feature-total">${esc(row.text)}</span>`;
+  }
+}
+
 function renderScoreParts(def, sc) {
   const partsEl = document.getElementById('score-parts-list');
+  const propertyScores = cardPropertyScores(def, sc);
+  renderFieldChips(def, sc, propertyScores);
   const baseRank = state.baselineRanks[def.id];
   const shifted = baseRank !== undefined && baseRank !== sc.rank;
   const discount = rarityDiscount(sc.rarity);
@@ -1303,7 +1336,7 @@ function renderScoreParts(def, sc) {
     + (sc.overridden ? `; override → CP ${sc.cp}, ${RankName(sc.rank)}` : '');
   partsEl.innerHTML = `
     <span class="part-pill rank-pill" title="${esc(rankTitle)}">Rank: ${esc(RankName(sc.rank))} (CP ${esc(sc.cp)})${shifted ? ` (was ${esc(RankName(baseRank))})` : ''}</span>
-    <div class="breakdown-row" data-breakdown="card"><span class="breakdown-label">Card</span>${cardBreakdownPills(def, sc)}</div>
+    <div class="breakdown-row" data-breakdown="card"><span class="breakdown-label">Card</span>${cardBreakdownPills(def, sc, propertyScores)}</div>
     <div class="breakdown-row" data-breakdown="parts"><span class="breakdown-label">Parts</span>${partPills || '<span class="studio-muted">None</span>'}</div>
     <div class="breakdown-formula" id="breakdown-formula">${esc(formula)}</div>
     <details class="breakdown-math"><summary>Math</summary>${scoreMathTableHtml(sc)}</details>`;
