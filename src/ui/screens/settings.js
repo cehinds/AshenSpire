@@ -42,7 +42,7 @@ import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, parseAdvancedConfigFile, isRetiredLegacySettingKey } from '../../model/advancedConfig.js';
-import { validateScoringConfig, setCustomScoring, clearCustomScoring, hasCustomScoring } from '../../model/activeScoring.js';
+import { CUSTOM_SCORING_STORAGE_KEY, SetCustomScoring } from '../../model/activeScoring.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
@@ -2661,8 +2661,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
           let maybeScoring = null;
           try { maybeScoring = JSON.parse(text); } catch { /* fall through to advancedConfig parser */ }
           if (maybeScoring && typeof maybeScoring === 'object' && maybeScoring.model && maybeScoring.costs && maybeScoring.effects && maybeScoring.statuses) {
-            const applied = setCustomScoring(maybeScoring);
+            const applied = SetCustomScoring(maybeScoring);
             if (!applied.ok) throw new Error(`Invalid scoring JSON: ${applied.errors.join(' ')}`);
+            try { localStorage.setItem(CUSTOM_SCORING_STORAGE_KEY, JSON.stringify(maybeScoring)); } catch { /* storage unavailable */ }
             showSettingsNotice(`Loaded custom scoring configuration (${file.name}). Card and item scoring now use it.`);
             return;
           }

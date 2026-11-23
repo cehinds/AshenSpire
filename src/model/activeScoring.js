@@ -1,8 +1,8 @@
-// src/model/activeScoring.js — runtime scoring configuration resolver with optional localStorage override.
+// src/model/activeScoring.js — pure runtime scoring configuration resolver.
 //
-// Pure and headless: safe in Node and browsers. When a player or designer uploads a custom scoring.json
-// in Settings (stored under localStorage['ashenspire:customScoring']), getActiveScoring() returns it;
-// otherwise it returns the shipped scoring table from src/content/generated/scoring.js.
+// Pure and headless (no browser globals): defaults to the shipped scoring table from
+// src/content/generated/scoring.js, and supports an explicit in-memory override activated
+// by the UI layer (e.g. when the player uploads a custom scoring.json in Settings).
 
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
 
@@ -10,11 +10,10 @@ export const CUSTOM_SCORING_STORAGE_KEY = 'ashenspire:customScoring';
 
 const REQUIRED_SECTIONS = ['model', 'costs', 'effects', 'statuses', 'keywords', 'rank', 'rarity', 'tags'];
 
-let cachedOverride = null;
-let loadedFromStorage = false;
+let activeOverride = null;
 
 /** Validate a scoring JSON object; returns an array of error messages (empty when valid). */
-export function validateScoringConfig(obj) {
+export function ValidateScoringConfig(obj) {
   const errors = [];
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
     return ['Scoring configuration must be a JSON object.'];
@@ -36,51 +35,26 @@ export function validateScoringConfig(obj) {
   return errors;
 }
 
-function readStorageOverride() {
-  if (loadedFromStorage) return cachedOverride;
-  loadedFromStorage = true;
-  try {
-    const ls = globalThis.localStorage;
-    if (!ls) return null;
-    const raw = ls.getItem(CUSTOM_SCORING_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (validateScoringConfig(parsed).length === 0) {
-      cachedOverride = parsed;
-      return cachedOverride;
-    }
-  } catch { /* ignore malformed storage */ }
-  return null;
-}
-
-/** Return the active scoring table (custom override if loaded, else shipped scoring). */
-export function getActiveScoring() {
-  return readStorageOverride() || shippedScoring;
+/** Return the active scoring table (custom override if active, else shipped scoring). */
+export function GetActiveScoring() {
+  return activeOverride || shippedScoring;
 }
 
 /** Whether a custom scoring configuration is currently active. */
-export function hasCustomScoring() {
-  return Boolean(readStorageOverride());
+export function HasCustomScoring() {
+  return Boolean(activeOverride);
 }
 
-/** Validate and activate a custom scoring JSON object (persisted in localStorage when available). */
-export function setCustomScoring(obj) {
-  const errors = validateScoringConfig(obj);
+/** Validate and activate a custom scoring JSON object in memory. */
+export function SetCustomScoring(obj) {
+  const errors = ValidateScoringConfig(obj);
   if (errors.length) return { ok: false, errors };
-  cachedOverride = structuredClone(obj);
-  loadedFromStorage = true;
-  try {
-    globalThis.localStorage?.setItem(CUSTOM_SCORING_STORAGE_KEY, JSON.stringify(cachedOverride));
-  } catch { /* quota or unavailable storage */ }
+  activeOverride = structuredClone(obj);
   return { ok: true, errors: [] };
 }
 
 /** Clear any custom scoring override and revert to the shipped table. */
-export function clearCustomScoring() {
-  cachedOverride = null;
-  loadedFromStorage = true;
-  try {
-    globalThis.localStorage?.removeItem(CUSTOM_SCORING_STORAGE_KEY);
-  } catch { /* ignore */ }
+export function ClearCustomScoring() {
+  activeOverride = null;
   return { ok: true };
 }

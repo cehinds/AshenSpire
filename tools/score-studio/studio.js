@@ -12,7 +12,7 @@ import { renderCard } from '../../src/ui/components/card.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
 import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, ApplyScoringOverride } from '../../src/model/combatPower.js';
-import { validateScoringConfig } from '../../src/model/activeScoring.js';
+import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -999,7 +999,7 @@ function wireEvents() {
   });
 
   document.getElementById('btn-export-repo').addEventListener('click', () => {
-    const errors = validateScoringConfig(state.scoring);
+    const errors = ValidateScoringConfig(state.scoring);
     if (errors.length) { toast(`Validation failed: ${errors[0]}`); return; }
     const path = document.getElementById('repo-path-input').value.trim() || 'content/source/scoring.json';
     const diff = buildScoringDiff();
@@ -1039,7 +1039,7 @@ function wireEvents() {
     if (!file) return;
     try {
       const parsed = JSON.parse(await file.text());
-      const errors = validateScoringConfig(parsed);
+      const errors = ValidateScoringConfig(parsed);
       if (errors.length) throw new Error(errors.join(' '));
       pushHistory();
       state.scoring = parsed;
@@ -1074,7 +1074,7 @@ async function boot() {
   // Restore local draft temp copy if present
   try {
     const draft = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
-    if (draft?.scoring && validateScoringConfig(draft.scoring).length === 0) {
+    if (draft?.scoring && ValidateScoringConfig(draft.scoring).length === 0) {
       state.scoring = draft.scoring;
       if (draft.artLayers?.layers) state.artLayers = draft.artLayers;
       document.getElementById('draft-status').textContent = 'Restored local draft temp copy';

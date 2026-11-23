@@ -4,30 +4,30 @@ import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { scoring as shippedScoring } from '../src/content/generated/scoring.js';
-import { validateScoringConfig, getActiveScoring, setCustomScoring, clearCustomScoring, hasCustomScoring } from '../src/model/activeScoring.js';
+import { ValidateScoringConfig, GetActiveScoring, SetCustomScoring, ClearCustomScoring, HasCustomScoring } from '../src/model/activeScoring.js';
 import { ScoreCard, BaseFace } from '../src/model/combatPower.js';
 import { readStudioConfig, saveStudioScoring, saveStudioArtLayers } from '../tools/score-studio-save.mjs';
 
 test('activeScoring: validates config, activates override for ScoreCard, and cleanly reverts', () => {
-  clearCustomScoring();
-  assert.equal(hasCustomScoring(), false);
-  assert.equal(getActiveScoring(), shippedScoring);
+  ClearCustomScoring();
+  assert.equal(HasCustomScoring(), false);
+  assert.equal(GetActiveScoring(), shippedScoring);
 
-  assert.ok(validateScoringConfig(null).length > 0);
-  assert.ok(validateScoringConfig({}).length > 0);
-  assert.deepEqual(validateScoringConfig(shippedScoring), []);
+  assert.ok(ValidateScoringConfig(null).length > 0);
+  assert.ok(ValidateScoringConfig({}).length > 0);
+  assert.deepEqual(ValidateScoringConfig(shippedScoring), []);
 
   const custom = structuredClone(shippedScoring);
   custom.costs.sp.weight = -9;
   const face = { ...BaseFace(), sp: 1, dmg: 6 };
   const baseRaw = ScoreCard(face).raw;
 
-  assert.equal(setCustomScoring(custom).ok, true);
-  assert.equal(hasCustomScoring(), true);
+  assert.equal(SetCustomScoring(custom).ok, true);
+  assert.equal(HasCustomScoring(), true);
   assert.equal(ScoreCard(face).raw, baseRaw + (-9 - shippedScoring.costs.sp.weight));
 
-  clearCustomScoring();
-  assert.equal(hasCustomScoring(), false);
+  ClearCustomScoring();
+  assert.equal(HasCustomScoring(), false);
   assert.equal(ScoreCard(face).raw, baseRaw);
 });
 

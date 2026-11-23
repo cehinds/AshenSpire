@@ -5,7 +5,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, relative, dirname, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { validateScoringConfig } from '../src/model/activeScoring.js';
+import { ValidateScoringConfig } from '../src/model/activeScoring.js';
 
 export const DEFAULT_SCORING_PATH = 'content/source/scoring.json';
 export const DEFAULT_ART_LAYERS_PATH = 'content/source/cardArtLayers.json';
@@ -43,7 +43,7 @@ export function readStudioConfig(rootDir, { scoringPath, artLayersPath } = {}) {
 }
 
 export function saveStudioScoring(rootDir, { path: relPath, scoring, rebuild = true } = {}) {
-  const errors = validateScoringConfig(scoring);
+  const errors = ValidateScoringConfig(scoring);
   if (errors.length) {
     throw new Error(`Invalid scoring configuration: ${errors.join(' ')}`);
   }
