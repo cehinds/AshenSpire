@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname, resolve, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { scoring as shippedScoring } from '../src/content/generated/scoring.js';
 import { ValidateScoringConfig, GetActiveScoring, SetCustomScoring, ClearCustomScoring, HasCustomScoring } from '../src/model/activeScoring.js';
 import { ScoreCard, BaseFace } from '../src/model/combatPower.js';
@@ -63,4 +64,32 @@ test('score-studio-save: reads/writes custom paths inside repo and rejects escap
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('pages-site publishScoreStudio extracts every module tree transitively imported by Score Studio', () => {
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const pagesSrc = readFileSync(join(root, 'tools/pages-site.mjs'), 'utf8');
+  const treesMatch = pagesSrc.match(/const SCORE_STUDIO_TREES = \[([^\]]+)\]/);
+  assert.ok(treesMatch, 'SCORE_STUDIO_TREES constant must exist in tools/pages-site.mjs');
+  const extractedTrees = [...treesMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+
+  const seen = new Set();
+  const queue = [join(root, 'tools/score-studio/studio.js')];
+  const importRe = /(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"](\.[^'"]+)['"]/g;
+  while (queue.length) {
+    const file = queue.pop();
+    if (seen.has(file) || !existsSync(file)) continue;
+    seen.add(file);
+    const rel = relative(root, file).replace(/\\/g, '/');
+    assert.ok(
+      extractedTrees.some((t) => rel === t || rel.startsWith(`${t}/`)),
+      `Score Studio imports "${rel}" which is not covered by SCORE_STUDIO_TREES (${extractedTrees.join(', ')})`
+    );
+    const src = readFileSync(file, 'utf8');
+    for (const m of src.matchAll(importRe)) {
+      const target = resolve(dirname(file), m[1]);
+      if (existsSync(target)) queue.push(target);
+    }
+  }
+  assert.ok(seen.size > 10, `Expected transitive module closure > 10 files, got ${seen.size}`);
 });
