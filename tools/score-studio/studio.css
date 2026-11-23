@@ -156,17 +156,17 @@
 .studio-card-stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5.4;
-  overflow: hidden;
   border-radius: 7px;
   background: #0d1016;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 6px 4px 2px;
+  overflow: visible;
 }
 .studio-card-stage .card {
   width: 100% !important;
-  height: 100% !important;
+  height: auto !important;
   min-width: 0 !important;
   max-width: none !important;
   margin: 0 !important;
@@ -203,14 +203,14 @@
   padding: 10px;
 }
 .inspector-card-preview {
-  width: 165px;
-  aspect-ratio: 4 / 5.4;
+  width: 175px;
   position: relative;
   flex-shrink: 0;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
+  padding: 6px 4px 2px;
 }
-.inspector-card-preview .card { width: 100% !important; height: 100% !important; margin: 0 !important; }
+.inspector-card-preview .card { width: 100% !important; height: auto !important; margin: 0 !important; }
 .inspector-score-summary { display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
 .inspector-score-big { font-size: 22px; font-weight: 800; color: var(--st-accent); }
 
@@ -240,10 +240,14 @@
 }
 .feature-row input[type="number"] { width: 62px; background: var(--st-bg); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 2px 5px; }
 .feature-row select { background: var(--st-bg); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 2px 5px; font-size: 11px; }
-.score-parts-list { display: flex; flex-wrap: wrap; gap: 5px; }
-.part-pill { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 5px; padding: 2px 7px; font-size: 11px; }
-.part-pill.pos { border-color: rgba(76,195,138,.45); color: var(--st-good); }
-.part-pill.neg { border-color: rgba(229,107,111,.45); color: var(--st-bad); }
+.score-parts-list { display: flex; flex-direction: column; gap: 4px; }
+.score-math-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.score-math-table td { padding: 3px 4px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.score-math-table td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.score-math-table td.formula { color: var(--st-muted); font-size: 11px; }
+.score-math-table tr.total td { border-top: 1px solid var(--st-border); border-bottom: 0; padding-top: 6px; font-weight: 700; color: var(--st-text); }
+.score-math-table td.pos { color: var(--st-good); }
+.score-math-table td.neg { color: var(--st-bad); }
 
 /* WEIGHTS */
 .weights-toolbar { display: flex; gap: 8px; align-items: center; padding: 10px 14px; background: var(--st-surface); border-bottom: 1px solid var(--st-border); }
@@ -263,8 +267,8 @@
 .layer-card-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
 .layer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .layer-grid label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
-.art-live-preview { width: 220px; aspect-ratio: 4 / 5.4; margin: 10px auto 14px; position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--st-border); }
-.art-live-preview .card { width: 100% !important; height: 100% !important; margin: 0 !important; }
+.art-live-preview { width: 220px; margin: 10px auto 14px; position: relative; border-radius: 10px; overflow: visible; padding: 6px 4px 2px; border: 1px solid var(--st-border); }
+.art-live-preview .card { width: 100% !important; height: auto !important; margin: 0 !important; }
 .asset-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; max-height: 260px; overflow-y: auto; }
 .asset-thumb { background: var(--st-surface-2); border: 1px solid var(--st-border); border-radius: 6px; padding: 4px; text-align: center; cursor: pointer; font-size: 10px; overflow: hidden; }
 .asset-thumb img { width: 100%; height: 48px; object-fit: contain; display: block; }

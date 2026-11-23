@@ -7,8 +7,9 @@ import * as Profile from '../../src/model/gameProfile.js';
 import { createRunState } from '../../src/model/state.js';
 import { createRng } from '../../src/engine/rng.js';
 import { createRunCombat } from '../../src/engine/runCombat.js';
-import { dispatch } from '../../src/engine/combat.js';
-import { renderCard } from '../../src/ui/components/card.js';
+import { dispatch, previewCard } from '../../src/engine/combat.js';
+import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
+import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
 import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, ApplyScoringOverride } from '../../src/model/combatPower.js';
@@ -37,7 +38,28 @@ const studioRegistries = {
   },
 };
 const UNLOCK_META = { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } };
-const previewRun = createRunState({ registries: studioRegistries, classId: 'reaver', seed: 31, profileMeta: UNLOCK_META });
+const REF_CLASSES = ['reaver', 'starseer', 'rogue', 'herald'];
+const refContexts = new Map();
+function refContextFor(def) {
+  const isSpell = (def.tags || []).includes('camp:spell') || (def.damageSchool && def.damageSchool !== 'physical');
+  const cls = REF_CLASSES.includes(def.class) ? def.class : (isSpell ? 'starseer' : 'reaver');
+  if (!refContexts.has(cls)) {
+    const run = createRunState({ registries: studioRegistries, classId: cls, seed: 31, profileMeta: UNLOCK_META });
+    run.relics = [];
+    const combat = createRunCombat({ registries: studioRegistries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
+    dispatch(combat, { type: 'setReactions', enabled: false });
+    const enemy = combat.enemies[0];
+    enemy.weaknesses = [];
+    enemy.hp = enemy.maxHp = 5000;
+    enemy.ratings = { ...enemy.ratings, poise: 1000 };
+    enemy.persistentPoise = { value: 1000, max: 1000 };
+    Object.assign(combat.player, { stamina: 10, maxStamina: 10, mana: 10, maxMana: 10, energy: 10, energyMax: 10 });
+    refContexts.set(cls, { cls, run, combat, enemy });
+  }
+  return refContexts.get(cls);
+}
+const previewRun = refContextFor({ class: 'reaver' }).run;
+const CARD_SHAPE_PROPS = cardShapeCssProperties();
 
 const clone = (v) => structuredClone(v);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -70,9 +92,54 @@ const state = {
 // ---------------------------------------------------------------------------
 // Card <-> Face conversion
 // ---------------------------------------------------------------------------
+function measureFinalValues(def) {
+  studioCardOverrides.set(def.id, def);
+  const { combat, enemy } = refContextFor(def);
+  const probeId = '__studio_probe';
+  combat.piles.hand.push({ instanceId: probeId, cardId: def.id, upgraded: false });
+  const measured = { dmg: 0, hits: 1, blk: 0, poise: 0, authoredDmg: 0, authoredBlk: 0, usedPreview: false };
+  for (const e of def.effects || []) {
+    const amt = typeof e.amount === 'number' ? e.amount : 0;
+    if (e.op === 'damage') measured.authoredDmg += amt * (e.hits || 1);
+    else if (e.op === 'block' || e.op === 'ward') measured.authoredBlk += amt;
+  }
+  try {
+    const prev = previewCard(combat, probeId, enemy.id);
+    if (prev && Array.isArray(prev.values) && prev.values.length) {
+      measured.usedPreview = true;
+      for (const v of prev.values) {
+        if (v.op === 'damage') {
+          const hits = Math.max(1, v.hits || 1);
+          measured.hits = Math.max(measured.hits, hits);
+          measured.dmg += Number.isFinite(v.totalDamage) ? v.totalDamage : ((v.faceValue ?? v.value ?? 0) * hits);
+          const pRemoved = v.perTargetPoise?.[enemy.id]?.removed;
+          if (Number.isFinite(pRemoved)) measured.poise += pRemoved;
+        } else if (v.op === 'block' || v.op === 'ward') {
+          measured.blk += Number(v.value) || 0;
+        } else if (v.op === 'poiseDamage') {
+          measured.poise += Number(v.value) || 0;
+        }
+      }
+    }
+  } catch { /* fallback below */ } finally {
+    const i = combat.piles.hand.findIndex((c) => c.instanceId === probeId);
+    if (i >= 0) combat.piles.hand.splice(i, 1);
+  }
+  if (!measured.usedPreview) {
+    for (const e of def.effects || []) {
+      const amt = typeof e.amount === 'number' ? e.amount : 1;
+      if (e.op === 'damage') { measured.dmg += amt * (e.hits || 1); measured.hits = Math.max(measured.hits, e.hits || 1); }
+      else if (e.op === 'block' || e.op === 'ward') measured.blk += amt;
+      else if (e.op === 'poiseDamage') measured.poise += amt;
+    }
+  }
+  return measured;
+}
+
 function cardDefToFace(def, scoringRef) {
   const f = BaseFace();
   const tags = Array.isArray(def.tags) ? [...def.tags] : [];
+  const m = measureFinalValues(def);
   f.name = def.name || def.id;
   f.cls = def.class || 'colorless';
   f.rarity = def.rarity || 'common';
@@ -80,15 +147,18 @@ function cardDefToFace(def, scoringRef) {
   f.camp = tags.includes('camp:spell') || (def.damageSchool && def.damageSchool !== 'physical') ? 'spell' : 'physical';
   f.sp = def.staminaCost ?? def.cost ?? 0;
   f.mp = def.manaCost ?? 0;
+  f.dmg = m.dmg;
+  f.hits = m.hits;
+  f.blk = m.blk;
+  f.poise = m.poise;
   f.kw = Array.isArray(def.keywords) ? [...def.keywords] : [];
   f.tags = tags;
+  f._meta = m;
   const statusIds = new Set(Object.keys(scoringRef.statuses || {}));
   for (const e of def.effects || []) {
     const amt = typeof e.amount === 'number' ? e.amount : 1;
-    if (e.op === 'damage') { f.dmg += amt * (e.hits || 1); f.hits = Math.max(f.hits, e.hits || 1); }
-    else if (e.op === 'block' || e.op === 'ward') f.blk += amt;
-    else if (e.op === 'poiseDamage') f.poise += amt;
-    else if (e.op === 'applyStatus' && statusIds.has(e.status)) f.statuses.push([e.status, e.stacks ?? 1, e.target === 'self' ? 'self' : 'enemy']);
+    if (e.op === 'applyStatus' && statusIds.has(e.status)) f.statuses.push([e.status, e.stacks ?? 1, e.target === 'self' ? 'self' : 'enemy']);
+    else if (e.op === 'restorePoise') f.blk += amt;
     else if (e.op === 'draw') f.draw += amt;
     else if (e.op === 'heal') f.heal += amt;
     else if (e.op === 'loseHp') f.loseHp += amt;
@@ -100,6 +170,7 @@ function cardDefToFace(def, scoringRef) {
     else if (e.op === 'moveEngagement') f.move += 1;
     else if (e.op === 'pullEnemy' || e.op === 'swapRows') f.pull += 1;
   }
+  if (def.ramp && !f.tags.includes('ramp.honed')) f.tags.push('ramp.honed');
   return f;
 }
 
@@ -219,8 +290,13 @@ function renderCardWithLayers(def, container) {
   container.innerHTML = '';
   studioCardOverrides.set(def.id, def);
   try {
-    const el = renderCard(studioRegistries, { cardId: def.id }, { rules: previewRun, showArt: true });
-    if (el) container.appendChild(el);
+    const { run } = refContextFor(def);
+    const el = renderCard(studioRegistries, { cardId: def.id }, { inspection: false, level: 'inspect', definition: def, rules: run, showArt: true });
+    if (el) {
+      for (const [k, v] of Object.entries(CARD_SHAPE_PROPS)) el.style.setProperty(k, v);
+      container.appendChild(el);
+      requestAnimationFrame(() => { if (el.isConnected) fitCardFace(el); });
+    }
   } catch {
     container.innerHTML = `<div style="padding:10px;text-align:center;"><strong>${esc(def.name)}</strong><div class="studio-muted">${esc(def.type)}</div></div>`;
   }
@@ -446,15 +522,52 @@ function renderInspector() {
     list.innerHTML = '<div class="studio-muted">No active features. Use "+ Add Feature" above.</div>';
   }
 
-  // Score breakdown pills
+  // Score breakdown math table (explicit formula for every term)
   const partsEl = document.getElementById('score-parts-list');
-  partsEl.innerHTML = '';
-  for (const [k, v] of Object.entries(sc.parts || {})) {
-    const pill = document.createElement('span');
-    pill.className = `part-pill ${v >= 0 ? 'pos' : 'neg'}`;
-    pill.textContent = `${k}: ${v > 0 ? '+' : ''}${Math.round(v * 10) / 10}`;
-    partsEl.appendChild(pill);
+  const S = state.scoring;
+  const area = (sc.face.tags || []).includes(S.cardModel?.areaTag || 'targeting:area') ? (S.model?.ENEMIES || 2) : 1;
+  const formulaNote = (k) => {
+    if (k === 'SP') return `${sc.face.sp} SP × ${S.costs.sp.weight}`;
+    if (k === 'MP') return `${sc.face.mp} MP × ${S.costs.mp.weight}`;
+    if (k === 'damage') return `${sc.face.dmg} final (authored ${sc.face._meta?.authoredDmg ?? sc.face.dmg}) × ${S.effects.damage.weight}/${S.effects.damage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
+    if (k === 'block') return `${sc.face.blk} final (authored ${sc.face._meta?.authoredBlk ?? sc.face.blk}) × ${S.effects.block.weight}/${S.effects.block.per}`;
+    if (k === 'poise') return `${sc.face.poise} Poise × ${S.effects.poiseDamage.weight}/${S.effects.poiseDamage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
+    if (k === 'effect count') return `multi-effect bonus (+${S.effectCount?.weight ?? 5}/extra)`;
+    if (S.keywords?.[k]) return S.keywords[k].flat !== undefined ? `flat ${S.keywords[k].flat}` : `×${S.keywords[k].multiplier}`;
+    if (S.statuses?.[k]) return `status over ${S.model?.R || 3}R${area > 1 && S.statuses[k].target === 'enemy' ? ` × ${area} AoE` : ''}`;
+    return 'weight';
+  };
+  const disc = (S.rarity?.discount?.[sc.rarity] ?? S.items?.rarityDiscount?.[sc.rarity] ?? 0);
+  const rowsHtml = Object.entries(sc.parts || {}).map(([k, v]) => {
+    const val = Math.round(v * 10) / 10;
+    return `<tr><td>${esc(k)}</td><td class="formula">${esc(formulaNote(k))}</td><td class="num ${val >= 0 ? 'pos' : 'neg'}">${val > 0 ? '+' : ''}${val}</td></tr>`;
+  }).join('');
+  partsEl.innerHTML = `<table class="score-math-table"><tbody>
+    ${rowsHtml}
+    <tr class="total"><td>Raw score</td><td class="formula">rounded sum</td><td class="num">${sc.raw}</td></tr>
+    <tr><td>Rarity discount</td><td class="formula">${esc(sc.rarity)} (−${disc})</td><td class="num neg">${disc ? `−${disc}` : '0'}</td></tr>
+    <tr class="total"><td>Combat Power (CP)</td><td class="formula">${esc(RankName(sc.rank))} · ${esc(actForRank(sc.rank))}${sc.overridden ? ' (override)' : ''}</td><td class="num">${sc.cp}</td></tr>
+  </tbody></table>`;
+}
+
+function rebuildTextTemplate(def) {
+  const parts = [];
+  const area = (def.tags || []).includes('targeting:area') ? ' to ALL enemies' : '';
+  for (const e of def.effects || []) {
+    if (e.op === 'damage') parts.push(`Deal {damage} damage${e.hits > 1 ? ` ${e.hits} times` : ''}${area}.`);
+    else if (e.op === 'block') parts.push(`Gain {block} Block.`);
+    else if (e.op === 'poiseDamage') parts.push(`Deal {poiseDamage} Poise damage${area}.`);
+    else if (e.op === 'applyStatus') parts.push(`${e.target === 'self' ? 'Gain' : 'Apply'} ${e.stacks ?? 1} ${e.status}${e.target !== 'self' ? area : ''}.`);
+    else if (e.op === 'draw') parts.push(`Draw ${e.amount ?? 1} card${(e.amount ?? 1) === 1 ? '' : 's'}.`);
+    else if (e.op === 'heal') parts.push(`Heal ${e.amount ?? 1} HP.`);
+    else if (e.op === 'loseHp') parts.push(`Lose ${e.amount ?? 1} HP.`);
+    else if (e.op === 'restoreStamina') parts.push(`Gain ${e.amount ?? 1} SP.`);
+    else if (e.op === 'restoreMana') parts.push(`Gain ${e.amount ?? 1} MP.`);
+    else if (e.op === 'applyReflect') parts.push(`Gain ${e.amount ?? 1} Reflect.`);
+    else if (e.op === 'removeStatus') parts.push(`Remove a debuff.`);
   }
+  for (const kw of def.keywords || []) parts.push(kw[0].toUpperCase() + kw.slice(1) + '.');
+  def.textTemplate = parts.join(' ') || 'No effect.';
 }
 
 function mutateSelectedCard(fn) {
@@ -463,6 +576,7 @@ function mutateSelectedCard(fn) {
   pushHistory();
   fn(def);
   def._edited = true;
+  rebuildTextTemplate(def);
   // Async targeted update: refresh only inspector + this one card tile!
   renderInspector();
   updateCardTileInPlace(def.id);
@@ -653,6 +767,12 @@ function renderSandbox() {
   const e = combat.enemies[0];
   document.getElementById('sandbox-turn-info').textContent = `Turn ${combat.turn} · Phase: ${combat.phase} · Config: ${state.abSlots.activeLabel}`;
 
+  const fmtStatuses = (actor) => Object.entries(actor?.statuses || {})
+    .map(([k, v]) => [k, typeof v === 'number' ? v : (v?.stacks ?? 0)])
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => `${k} ${n}`)
+    .join(', ') || 'None';
+
   document.getElementById('sandbox-player-panel').innerHTML = `
     <h4>Player (${esc(state.sandbox.classId)})</h4>
     <div class="stat-line">
@@ -661,7 +781,7 @@ function renderSandbox() {
       <span>SP: <strong>${p.stamina ?? p.energy ?? 0}</strong></span>
       <span>MP: <strong>${p.mana ?? 0}</strong></span>
     </div>
-    <div class="studio-muted">Statuses: ${esc(Object.entries(p.statuses || {}).filter(([, v]) => v > 0).map(([k, v]) => `${k} ${v}`).join(', ') || 'None')}</div>
+    <div class="studio-muted">Statuses: ${esc(fmtStatuses(p))}</div>
   `;
 
   document.getElementById('sandbox-enemy-panel').innerHTML = e ? `
@@ -671,7 +791,7 @@ function renderSandbox() {
       <span>Block: <strong>${e.block || 0}</strong></span>
       <span>Poise: <strong>${e.poiseMeter?.current ?? 0}/${e.poiseMeter?.max ?? 0}</strong></span>
     </div>
-    <div class="studio-muted">Statuses: ${esc(Object.entries(e.statuses || {}).filter(([, v]) => v > 0).map(([k, v]) => `${k} ${v}`).join(', ') || 'None')}</div>
+    <div class="studio-muted">Statuses: ${esc(fmtStatuses(e))}</div>
   ` : '<div class="studio-muted">No enemies remaining.</div>';
 
   const handEl = document.getElementById('sandbox-hand');
