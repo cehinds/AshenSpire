@@ -1544,7 +1544,10 @@ function renderWeights() {
   const R = state.repoScoring;
   const groups = [
     { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
-    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({ id: k, label: `${k} (per ${v.per})`, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; } })) },
+    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({
+      id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; },
+      per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
+    })) },
     { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
     { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => ({ id: k, label: k + (v.flat !== undefined ? ' (flat)' : ' (mult)'), val: v.flat ?? v.multiplier, base: R.keywords?.[k]?.flat ?? R.keywords?.[k]?.multiplier, step: v.flat !== undefined ? 1 : 0.05, set: (n) => { if (v.flat !== undefined) state.scoring.keywords[k].flat = n; else state.scoring.keywords[k].multiplier = n; } })) },
     { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, base: R.rarity?.discount?.[k], set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
@@ -1568,6 +1571,8 @@ function renderWeights() {
         base: bv ? (bv.multiplier ?? bv.pMultiplier ?? bv.weight ?? 0) : undefined,
         step: isMult ? 0.05 : 1,
         set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; },
+        // Damage-type tags score once per action or once per hit (ScoreCard reads per === 'hit').
+        per: v.per !== undefined ? { value: v.per, base: bv?.per, options: TAG_PER_OPTIONS, set: (n) => { state.scoring.tags[k].per = n; } } : null,
       };
     }) },
   ];
@@ -1586,35 +1591,33 @@ function renderWeights() {
     for (const r of rows) {
       const numVal = safeNum(r.val, 0);
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
-      const modified = baseNum !== undefined && numVal !== baseNum;
+      const perChanged = Boolean(r.per) && r.per.base !== undefined && r.per.value !== r.per.base;
+      const modified = (baseNum !== undefined && numVal !== baseNum) || perChanged;
       const row = document.createElement('div');
-      row.className = 'weight-row' + (modified ? ' is-modified' : '');
+      row.className = 'weight-row' + (r.per ? ' has-per' : '') + (modified ? ' is-modified' : '');
       const kind = WEIGHT_GROUP_KINDS[g.key];
       const info = kind ? describeFeature(kind, r.id) : null;
       const labelHtml = info
         ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
         : `<span>${esc(r.label)}</span>`;
-      row.innerHTML = `${labelHtml}<input type="number" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(`Reset to ${baseNum ?? numVal}`)}">↺</button>`;
-      row.querySelector('input').addEventListener('change', (ev) => {
+      const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
+      row.innerHTML = `${labelHtml}${perControlHtml(r)}<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} weight`)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(resetTitle)}">↺</button>`;
+      row.querySelector('.weight-input').addEventListener('change', (ev) => {
         const n = Number(ev.target.value);
         if (!Number.isFinite(n) || n === numVal) return;
-        pushHistory();
-        r.set(n);
-        saveDraft();
-        computeShiftCount();
-        renderWeights();
-        renderInspector();
-        renderCardsGrid();
+        applyWeightEdit(() => r.set(n));
+      });
+      row.querySelector('.weight-per')?.addEventListener('change', (ev) => {
+        const next = r.per.options ? ev.target.value : Math.max(1, Math.round(Number(ev.target.value)));
+        if ((!r.per.options && !Number.isFinite(next)) || next === r.per.value) return;
+        applyWeightEdit(() => r.per.set(next));
       });
       row.querySelector('.weight-reset-btn').addEventListener('click', () => {
-        if (baseNum === undefined) return;
-        pushHistory();
-        r.set(baseNum);
-        saveDraft();
-        computeShiftCount();
-        renderWeights();
-        renderInspector();
-        renderCardsGrid();
+        if (baseNum === undefined && !perChanged) return;
+        applyWeightEdit(() => {
+          if (baseNum !== undefined) r.set(baseNum);
+          if (perChanged) r.per.set(r.per.base);
+        });
       });
       if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
       card.appendChild(row);
@@ -1624,6 +1627,33 @@ function renderWeights() {
   if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
   renderDescriptionGaps();
   computeShiftCount();
+}
+
+// The values a tag's per can take: score once per action, or once per hit.
+const TAG_PER_OPTIONS = Object.freeze(['action', 'hit']);
+
+// "per [n]" for effects (a whole number of at least 1) and a per select for damage-type tags.
+function perControlHtml(entry) {
+  if (!entry.per) return '';
+  const label = `${entry.label} per`;
+  if (entry.per.options) {
+    const options = [...new Set([...entry.per.options, entry.per.value])];
+    return `<label class="weight-per-label">per <select class="weight-per" aria-label="${esc(label)}">${options.map((option) => `<option value="${esc(option)}" ${option === entry.per.value ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></label>`;
+  }
+  return `<label class="weight-per-label">per <input type="number" class="weight-per" min="1" step="1" value="${esc(safeNum(entry.per.value, 1))}" aria-label="${esc(label)}" /></label>`;
+}
+
+// Every weight edit takes the same path: one undo step, the draft, rank shifts, and every view that shows
+// a score (inspector, gallery and the sandbox hand's rank badges).
+function applyWeightEdit(apply) {
+  pushHistory();
+  apply();
+  saveDraft();
+  computeShiftCount();
+  renderWeights();
+  renderInspector();
+  renderCardsGrid();
+  if (state.sandbox.combat) renderSandbox();
 }
 
 // Which feature kind each weight group's rows are, for their descriptions.

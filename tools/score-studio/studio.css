@@ -783,3 +783,10 @@ body.studio-body .studio-rank-badge {
 body.studio-body .studio-rank-badge[data-shift="up"] { border-color: var(--st-good); color: var(--st-good); }
 body.studio-body .studio-rank-badge[data-shift="down"] { border-color: var(--st-bad); color: var(--st-bad); }
 body.studio-body.hide-rank-badges .studio-rank-badge { display: none; }
+
+/* Weight rows with a per: label, "per [n]", the weight, reset. */
+body.studio-body .weight-row.has-per { grid-template-columns: minmax(0, 1fr) auto 92px 26px; }
+body.studio-body .weight-per-label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--st-muted); white-space: nowrap; }
+body.studio-body .weight-per-label input,
+body.studio-body .weight-per-label select { width: 58px; box-sizing: border-box; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 4px; text-align: right; }
+body.studio-body .weight-per-label select { width: 72px; text-align: left; }
