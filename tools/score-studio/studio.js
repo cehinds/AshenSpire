@@ -15,7 +15,7 @@ import { scoring as shippedScoring } from '../../src/content/generated/scoring.j
 import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
-import { tokenRe } from '../../src/model/validate.js';
+import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -749,6 +749,50 @@ function staleTextTokens(def) {
   return mentioned.filter((token) => tokens[token] === undefined || tokens[token] === null);
 }
 
+// ---------------------------------------------------------------------------
+// Face numbers: the amount box holds what the card prints
+// ---------------------------------------------------------------------------
+// The profile's balance settings (effects.baseDamageMultiplier, physical and player scales, STR, Block
+// gain) turn an authored amount into a smaller printed one: Core prints 12 authored damage as 5. The
+// studio edits the printed number and stores the authored amount that prints it, so the card, the fight
+// and the CP all follow what was typed.
+const FACE_AMOUNT_SEARCH_MAX = 999;
+
+function faceAmountFor(def, effectIndex) {
+  const binding = computeTokenBindings(def.effects || []).find((b) => b.index === effectIndex && b.field === 'amount');
+  if (!binding) return null;
+  try {
+    const value = staticCardTokens(projectEditedCard(def), studioRegistries, refContextFor(def).run)[binding.token];
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function faceAmountAt(def, effectIndex, amount) {
+  const trial = clone(def);
+  trial.effects[effectIndex].amount = amount;
+  return faceAmountFor(trial, effectIndex);
+}
+
+// The smallest authored amount whose printed number reaches the typed one (the print only rises with the
+// amount). When rounding skips the typed number, the nearer of the two neighbours wins.
+function authoredAmountForFace(def, effectIndex, wanted) {
+  if (faceAmountAt(def, effectIndex, wanted) === null) return wanted;
+  let low = 0;
+  let high = FACE_AMOUNT_SEARCH_MAX;
+  if (faceAmountAt(def, effectIndex, high) < wanted) return high;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (faceAmountAt(def, effectIndex, middle) >= wanted) high = middle;
+    else low = middle + 1;
+  }
+  if (low === 0) return low;
+  const above = faceAmountAt(def, effectIndex, low);
+  const below = faceAmountAt(def, effectIndex, low - 1);
+  return wanted - below < above - wanted ? low - 1 : low;
+}
+
 function tokenLabel(token) {
   const root = token.split('.')[0];
   const status = registries.statuses?.has?.(root) ? registries.statuses.get(root) : null;
@@ -1081,7 +1125,7 @@ function renderInspector() {
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
       const amtCtrl = amtIsNum
-        ? `<input type="number" min="1" max="99" value="${esc(safeNum(eff.amount, 1))}" data-eff-amt="${idx}" />`
+        ? `<input type="number" min="1" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The number the card shows" />`
         : '<span class="studio-muted" title="Formula-computed value">formula</span>';
       row.innerHTML = `
         <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(eff.op)}</strong> ${infoButtonHtml()}</span>
@@ -1186,7 +1230,8 @@ function featureScoreRows(def) {
     }
     const keys = EFFECT_SCORE_KEYS[eff.op];
     const effectWeight = keys ? state.scoring.effects?.[keys.weight] : null;
-    const counted = eff.op === 'removeStatus' && eff.target !== 'self' ? 0 : COUNTED_ONCE_OPS.has(eff.op) ? 1 : (eff.amount ?? 1) * (eff.op === 'damage' ? (eff.hits || 1) : 1);
+    const amount = faceAmountFor(def, def.effects.indexOf(eff)) ?? eff.amount ?? 1;
+    const counted = eff.op === 'removeStatus' && eff.target !== 'self' ? 0 : COUNTED_ONCE_OPS.has(eff.op) ? 1 : amount * (eff.op === 'damage' ? (eff.hits || 1) : 1);
     rows.push({
       part: keys?.part ?? null,
       count: counted,
@@ -2571,7 +2616,9 @@ function wireEvents() {
   const featureList = document.getElementById('active-features-list');
   const applyFeatureNumber = (target) => {
     if (target.dataset.effAmt !== undefined) {
-      applyLiveCardEdit(featureBurst, (d) => { d.effects[Number(target.dataset.effAmt)].amount = Number(target.value) || 0; });
+      const effectIndex = Number(target.dataset.effAmt);
+      const wanted = Number(target.value) || 0;
+      applyLiveCardEdit(featureBurst, (d) => { d.effects[effectIndex].amount = authoredAmountForFace(d, effectIndex, wanted); });
       return true;
     }
     if (target.dataset.effStacks !== undefined) {
