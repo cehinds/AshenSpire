@@ -1033,6 +1033,9 @@ async function loadFromRepo(customPath = state.repoPath) {
     toast(`Loaded ${data.scoringPath}`);
   } catch (err) {
     document.getElementById('path-status').textContent = `Offline / fallback to shipped scoring (${err.message})`;
+    // Still show the shipped scoring so the studio works without the local server.
+    recomputeBaselineRanks();
+    syncAllViews();
   }
 }
 
@@ -1292,6 +1295,9 @@ function wireEvents() {
   setupFilterPanel();
   setupSections();
   document.getElementById('btn-inspector-back').addEventListener('click', closeInspectorSheet);
+  document.getElementById('btn-dismiss-art-banner').addEventListener('click', () => {
+    document.getElementById('art-missing-banner').hidden = true;
+  });
 
   // Tabs
   document.querySelectorAll('.studio-tab').forEach((btn) => {
@@ -1627,6 +1633,25 @@ function wireEvents() {
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
+const ART_CHECK_TIMEOUT_MS = 2000;
+
+// Without the art cache every card shows broken images; say why and how to fix it.
+async function checkCardArt() {
+  const images = [...document.querySelectorAll('#cards-grid img')];
+  if (!images.length) return;
+  const settled = (img) => new Promise((resolve) => {
+    if (img.complete) return resolve();
+    img.addEventListener('load', resolve, { once: true });
+    img.addEventListener('error', resolve, { once: true });
+  });
+  await Promise.race([
+    Promise.all(images.map(settled)),
+    new Promise((resolve) => setTimeout(resolve, ART_CHECK_TIMEOUT_MS)),
+  ]);
+  const failed = images.filter((img) => img.complete && img.naturalWidth === 0).length;
+  if (failed > images.length / 2) document.getElementById('art-missing-banner').hidden = false;
+}
+
 // The studio works on the core card pool only (owner, 2026-11-22).
 function buildCardList() {
   return registries.cards.all()
@@ -1671,4 +1696,4 @@ async function boot() {
   refreshDirtyStatus();
 }
 
-boot();
+boot().then(checkCardArt);
