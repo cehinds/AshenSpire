@@ -208,6 +208,8 @@ function refreshDirtyStatus() {
 }
 
 function writeDraftNow() {
+  clearTimeout(draftTimer);
+  draftPending = false;
   state.draftStorageFailed = false;
   if (state.autosave) {
     try {
@@ -230,9 +232,16 @@ function writeDraftNow() {
 
 // Saves the local draft after a change has been applied, debounced so typing stays cheap.
 let draftTimer = null;
+let draftPending = false;
 function saveDraft() {
   clearTimeout(draftTimer);
+  draftPending = true;
   draftTimer = setTimeout(writeDraftNow, DRAFT_SAVE_DELAY_MS);
+}
+
+// Writes a pending draft at once, so closing or hiding the tab inside the debounce loses nothing.
+function flushDraft() {
+  if (draftPending) writeDraftNow();
 }
 
 function restoreSnapshot(snapStr) {
@@ -781,6 +790,10 @@ function createEditBurst() {
 function applyLiveCardEdit(burst, fn) {
   const def = selectedCardDef();
   if (!def) return;
+  // A change event that repeats the value the input already applied records no undo step.
+  const probe = clone(def);
+  fn(probe);
+  if (JSON.stringify(probe) === JSON.stringify(def)) return;
   burst.begin();
   fn(def);
   def._edited = true;
@@ -847,9 +860,10 @@ function renderWeights() {
       row.innerHTML = `<span>${esc(r.label)}</span><input type="number" step="${r.step || 1}" value="${r.val}" />`;
       row.querySelector('input').addEventListener('change', (ev) => {
         const n = Number(ev.target.value);
-        if (!Number.isFinite(n)) return;
+        if (!Number.isFinite(n) || n === r.val) return;
         pushHistory();
         r.set(n);
+        r.val = n;
         computeShiftCount();
         renderInspector();
         renderCardsGrid();
@@ -1090,11 +1104,13 @@ async function loadFromRepo(customPath = state.repoPath) {
     recomputeBaselineRanks();
     syncAllViews();
     toast(`Loaded ${data.scoringPath}`);
+    return true;
   } catch (err) {
     document.getElementById('path-status').textContent = `Offline / fallback to shipped scoring (${err.message})`;
     // Still show the shipped scoring so the studio works without the local server.
     recomputeBaselineRanks();
     syncAllViews();
+    return false;
   }
 }
 
@@ -1141,11 +1157,14 @@ async function revertToRepo() {
   state.undoStack = [];
   state.redoStack = [];
   updateUndoButtons();
-  await loadFromRepo(state.repoPath);
+  // Revert to the last loaded repo copy first, so a failed reload (server offline) still reverts.
+  state.scoring = clone(state.repoScoring);
+  state.artLayers = clone(state.repoArtLayers);
+  const reloaded = await loadFromRepo(state.repoPath);
   state.artLayers = clone(state.repoArtLayers);
   syncAllViews();
   refreshDirtyStatus();
-  toast('Reverted to the repo version');
+  toast(reloaded ? 'Reverted to the repo version' : 'Reverted to the last loaded repo copy (server offline)');
 }
 
 function recomputeBaselineRanks() {
@@ -1257,6 +1276,15 @@ function setupMenus() {
   });
 }
 
+const TEXT_ENTRY_INPUT_TYPES = new Set(['text', 'search', 'number', 'email', 'url', 'tel', 'password']);
+
+// Fields where the browser's own undo applies to what was typed; checkboxes and selects are not among them.
+function isTextEntry(target) {
+  if (target instanceof HTMLTextAreaElement) return true;
+  if (target instanceof HTMLInputElement) return TEXT_ENTRY_INPUT_TYPES.has(target.type);
+  return Boolean(target?.isContentEditable);
+}
+
 function setupShortcuts() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -1272,9 +1300,7 @@ function setupShortcuts() {
     const modifier = e.ctrlKey || e.metaKey;
     if (!modifier) return;
     // Inside a text field, leave undo to the browser so typing can be undone natively.
-    const target = e.target;
-    const inTextField = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
-    if (inTextField) return;
+    if (isTextEntry(e.target)) return;
     const key = e.key.toLowerCase();
     if (key === 'z' && !e.shiftKey) {
       e.preventDefault();
@@ -1350,6 +1376,11 @@ function closeInspectorSheet() {
 // ---------------------------------------------------------------------------
 function wireEvents() {
   setupMenus();
+  // Flush a pending draft save when the tab is hidden or closed.
+  window.addEventListener('pagehide', flushDraft);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushDraft();
+  });
   setupShortcuts();
   setupFilterPanel();
   setupSections();
@@ -1574,6 +1605,9 @@ function wireEvents() {
       const r = await fetch('/__studio/art-layers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artLayers: state.artLayers }) });
       const data = await r.json();
       if (!data.ok) throw new Error(data.error);
+      state.repoArtLayers = clone(state.artLayers);
+      writeDraftNow();
+      refreshDirtyStatus();
       toast(`Saved ${data.layerCount} art layer(s) to ${data.path}`);
     } catch (err) { toast(`Save failed: ${err.message}`); }
   });
@@ -1741,18 +1775,19 @@ async function boot() {
   wireEvents();
   await loadFromRepo(state.repoPath);
 
-  // Restore local draft temp copy if present
+  // Restore local draft temp copy if present. Everything is checked first; state changes only after.
   try {
     const draft = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
     if (draft?.scoring && ValidateScoringConfig(draft.scoring).length === 0) {
+      const draftArtLayers = Array.isArray(draft.artLayers?.layers) ? draft.artLayers : null;
+      const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
+        .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
       state.scoring = draft.scoring;
-      if (draft.artLayers?.layers) state.artLayers = draft.artLayers;
-      if (Array.isArray(draft.customCards)) {
-        for (const cc of draft.customCards) {
-          const i = state.cards.findIndex((c) => c.id === cc.id);
-          if (i >= 0) state.cards[i] = cc;
-          else state.cards.unshift(cc);
-        }
+      if (draftArtLayers) state.artLayers = draftArtLayers;
+      for (const draftCard of draftCards) {
+        const i = state.cards.findIndex((c) => c.id === draftCard.id);
+        if (i >= 0) state.cards[i] = draftCard;
+        else state.cards.unshift(draftCard);
       }
       syncAllViews();
       refreshDirtyStatus();
