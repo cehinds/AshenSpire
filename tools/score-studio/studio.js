@@ -17,6 +17,9 @@ import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
 const PATH_STORAGE_KEY = 'ashenspire:scoreStudioPath:v1';
+const DRAFT_SAVE_DELAY_MS = 300;
+const TEXT_EDIT_BURST_MS = 1000;
+const UNDO_DEPTH = 40;
 
 // Bootstrap real game registries
 const profile = Profile.resolveGameProfile('default');
@@ -49,7 +52,7 @@ const state = {
   scoring: clone(shippedScoring),
   repoPath: localStorage.getItem(PATH_STORAGE_KEY) || 'content/source/scoring.json',
   autosave: true,
-  dirty: false,
+  draftStorageFailed: false,
   undoStack: [],
   redoStack: [],
   cards: [],            // editable card definitions + derived faces
@@ -62,6 +65,7 @@ const state = {
       { id: 'layer-1', name: 'Fire Overlay', matchKind: 'tag', matchValue: 'school:fire', mode: 'stack', assetId: 'Z.effect.5', zIndex: 10, x: 50, y: 50, scale: 85, opacity: 35, blendMode: 'screen', enabled: true },
     ],
   },
+  repoArtLayers: null,  // art layers as loaded from the repo (or the built-in default); set in boot
   abSlots: { A: null, B: null, activeLabel: 'Draft' },
   sandbox: { combat: null, classId: 'reaver', enemyId: 'wanderingSoldier', appliedScoring: null, customCardId: null, log: [] },
 };
@@ -158,34 +162,75 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.add('hidden'), 2800);
 }
 
-function pushHistory() {
-  state.undoStack.push(JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers }));
-  if (state.undoStack.length > 40) state.undoStack.shift();
-  state.redoStack = [];
-  markDirty();
+function snapshotState() {
+  return JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers });
 }
 
-function markDirty() {
-  state.dirty = true;
+function updateUndoButtons() {
   document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
   document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
+}
+
+// Records an undo point for the state as it is now. Call before mutating; call saveDraft() after.
+function pushHistory() {
+  state.undoStack.push(snapshotState());
+  if (state.undoStack.length > UNDO_DEPTH) state.undoStack.shift();
+  state.redoStack = [];
+  updateUndoButtons();
+}
+
+function editedCards() {
+  return state.cards.filter((c) => c._edited || c._custom);
+}
+
+function weightChangeCount() {
+  return buildScoringDiff().length;
+}
+
+function artLayersChanged() {
+  return JSON.stringify(state.artLayers) !== JSON.stringify(state.repoArtLayers);
+}
+
+function isDirty() {
+  return weightChangeCount() > 0 || editedCards().length > 0 || artLayersChanged();
+}
+
+function refreshDirtyStatus() {
   const pill = document.getElementById('draft-status');
-  pill.classList.add('is-dirty');
+  const dirty = isDirty();
+  pill.classList.toggle('is-dirty', dirty);
+  if (!dirty) pill.textContent = 'Synced with repo';
+  else if (!state.autosave) pill.textContent = 'Unsaved edits';
+  else if (state.draftStorageFailed) pill.textContent = 'Unsaved edits (storage full)';
+  else pill.textContent = 'Draft auto-saved (local temp copy)';
+}
+
+function writeDraftNow() {
+  state.draftStorageFailed = false;
   if (state.autosave) {
     try {
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
-        savedAt: new Date().toISOString(),
-        scoring: state.scoring,
-        artLayers: state.artLayers,
-        customCards: state.cards.filter((c) => c._edited || c._custom),
-      }));
-      pill.textContent = 'Draft auto-saved (local temp copy)';
+      if (isDirty()) {
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+          savedAt: new Date().toISOString(),
+          scoring: state.scoring,
+          artLayers: state.artLayers,
+          customCards: editedCards(),
+        }));
+      } else {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
     } catch {
-      pill.textContent = 'Unsaved edits (storage full)';
+      state.draftStorageFailed = true;
     }
-  } else {
-    pill.textContent = 'Unsaved edits';
   }
+  refreshDirtyStatus();
+}
+
+// Saves the local draft after a change has been applied, debounced so typing stays cheap.
+let draftTimer = null;
+function saveDraft() {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(writeDraftNow, DRAFT_SAVE_DELAY_MS);
 }
 
 function restoreSnapshot(snapStr) {
@@ -194,6 +239,7 @@ function restoreSnapshot(snapStr) {
   state.cards = snap.cards;
   state.artLayers = snap.artLayers;
   syncAllViews();
+  saveDraft();
 }
 
 // ---------------------------------------------------------------------------
@@ -456,16 +502,17 @@ function renderInspector() {
   }
 }
 
-function mutateSelectedCard(fn) {
+function mutateSelectedCard(fn, { recordHistory = true } = {}) {
   const def = state.cards.find((c) => c.id === state.selectedCardId);
   if (!def) return;
-  pushHistory();
+  if (recordHistory) pushHistory();
   fn(def);
   def._edited = true;
-  // Async targeted update: refresh only inspector + this one card tile!
+  // Targeted update: refresh only the inspector and this one card tile.
   renderInspector();
   updateCardTileInPlace(def.id);
   computeShiftCount();
+  saveDraft();
 }
 
 // ---------------------------------------------------------------------------
@@ -511,6 +558,7 @@ function renderWeights() {
         computeShiftCount();
         renderInspector();
         renderCardsGrid();
+        saveDraft();
       });
       card.appendChild(row);
     }
@@ -601,6 +649,7 @@ function renderArtTab() {
       renderArtTab();
       renderCardsGrid();
       renderInspector();
+      saveDraft();
       toast(`Assigned ${a.id} to layer #1`);
     });
     gal.appendChild(t);
@@ -734,7 +783,10 @@ async function loadFromRepo(customPath = state.repoPath) {
       state.repoScoring = clone(data.scoring);
       state.scoring = clone(data.scoring);
     }
-    if (data.artLayers?.layers) state.artLayers = data.artLayers;
+    if (data.artLayers?.layers) {
+      state.artLayers = clone(data.artLayers);
+      state.repoArtLayers = clone(data.artLayers);
+    }
     state.repoPath = data.scoringPath;
     localStorage.setItem(PATH_STORAGE_KEY, state.repoPath);
     document.getElementById('repo-path-input').value = state.repoPath;
@@ -745,6 +797,34 @@ async function loadFromRepo(customPath = state.repoPath) {
   } catch (err) {
     document.getElementById('path-status').textContent = `Offline / fallback to shipped scoring (${err.message})`;
   }
+}
+
+function discardSummaryHtml() {
+  const weightChanges = weightChangeCount();
+  const cardsEdited = editedCards().length;
+  const lines = [
+    `${weightChanges} weight change(s)`,
+    `${cardsEdited} edited or new card(s)`,
+    artLayersChanged() ? 'Art layer changes' : 'No art layer changes',
+  ];
+  return `<ul>${lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>`;
+}
+
+async function revertToRepo() {
+  clearTimeout(draftTimer);
+  try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch { /* storage unavailable */ }
+  const keepSelection = state.selectedCardId;
+  studioCardOverrides.clear();
+  state.cards = buildCardList();
+  state.selectedCardId = state.cards.some((c) => c.id === keepSelection) ? keepSelection : state.cards[0]?.id || null;
+  state.undoStack = [];
+  state.redoStack = [];
+  updateUndoButtons();
+  await loadFromRepo(state.repoPath);
+  state.artLayers = clone(state.repoArtLayers);
+  syncAllViews();
+  refreshDirtyStatus();
+  toast('Reverted to the repo version');
 }
 
 function recomputeBaselineRanks() {
@@ -806,11 +886,25 @@ function wireEvents() {
     state.selectedCardId = id;
     renderCardsGrid();
     renderInspector();
+    saveDraft();
     toast('Created custom card');
   });
 
   // Card inspector edits
-  document.getElementById('edit-name').addEventListener('input', (e) => mutateSelectedCard((d) => { d.name = e.target.value; }));
+  // Name typing records one undo step per editing burst, not one per keystroke.
+  let nameBurstOpen = false;
+  let nameBurstTimer = null;
+  const nameInput = document.getElementById('edit-name');
+  nameInput.addEventListener('focus', () => { nameBurstOpen = false; });
+  nameInput.addEventListener('input', (e) => {
+    if (!nameBurstOpen) {
+      pushHistory();
+      nameBurstOpen = true;
+    }
+    clearTimeout(nameBurstTimer);
+    nameBurstTimer = setTimeout(() => { nameBurstOpen = false; }, TEXT_EDIT_BURST_MS);
+    mutateSelectedCard((d) => { d.name = e.target.value; }, { recordHistory: false });
+  });
   document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }));
   document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }));
   document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }));
@@ -894,6 +988,7 @@ function wireEvents() {
     pushHistory();
     state.artLayers.layers.push({ id: `layer-${Date.now().toString(36)}`, name: 'New Layer', matchKind: 'default', matchValue: '', mode: 'stack', assetId: 'Z.effect.5', zIndex: state.artLayers.layers.length + 1, x: 50, y: 50, scale: 80, opacity: 60, blendMode: 'screen', enabled: true });
     renderArtTab();
+    saveDraft();
   });
   document.getElementById('art-preview-card-select').addEventListener('change', (e) => {
     state.selectedCardId = e.target.value;
@@ -910,6 +1005,7 @@ function wireEvents() {
     renderArtTab();
     renderCardsGrid();
     renderInspector();
+    saveDraft();
   });
   document.getElementById('art-layers-list').addEventListener('input', (e) => {
     const idx = Number(e.target.dataset.lIdx ?? e.target.dataset.lEnabled);
@@ -919,7 +1015,7 @@ function wireEvents() {
     if (e.target.dataset.lEnabled !== undefined) layer.enabled = e.target.checked;
     else if (e.target.dataset.lField) layer[e.target.dataset.lField] = e.target.value;
     else if (e.target.dataset.lNum) layer[e.target.dataset.lNum] = Number(e.target.value) || 0;
-    markDirty();
+    saveDraft();
     // Update live preview in place without rebuilding #art-layers-list (preserves focus & slider drag)
     const cardSel = document.getElementById('art-preview-card-select');
     const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
@@ -954,6 +1050,7 @@ function wireEvents() {
     state.abSlots.activeLabel = `Slot ${slot}`;
     document.getElementById('ab-active-label').textContent = `Slot ${slot}`;
     syncAllViews();
+    saveDraft();
     toast(`Loaded Slot ${slot}`);
   };
   document.getElementById('btn-slot-a-save').addEventListener('click', () => saveAB('A'));
@@ -978,28 +1075,28 @@ function wireEvents() {
   // Topbar Undo / Redo / Revert / Export / Download / Upload / Path
   document.getElementById('btn-undo').addEventListener('click', () => {
     if (!state.undoStack.length) return;
-    state.redoStack.push(JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers }));
+    state.redoStack.push(snapshotState());
     restoreSnapshot(state.undoStack.pop());
-    document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
-    document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
+    updateUndoButtons();
   });
   document.getElementById('btn-redo').addEventListener('click', () => {
     if (!state.redoStack.length) return;
-    state.undoStack.push(JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers }));
+    state.undoStack.push(snapshotState());
     restoreSnapshot(state.redoStack.pop());
-    document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
-    document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
+    updateUndoButtons();
   });
-  document.getElementById('toggle-autosave').addEventListener('change', (e) => { state.autosave = e.target.checked; });
+  document.getElementById('toggle-autosave').addEventListener('change', (e) => {
+    state.autosave = e.target.checked;
+    writeDraftNow();
+  });
   document.getElementById('btn-load-path').addEventListener('click', () => loadFromRepo(document.getElementById('repo-path-input').value));
-  document.getElementById('btn-revert').addEventListener('click', async () => {
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    await loadFromRepo(state.repoPath);
-    state.dirty = false;
-    const pill = document.getElementById('draft-status');
-    pill.classList.remove('is-dirty');
-    pill.textContent = 'Reverted to last in-game version';
+
+  // Revert asks first, in the page, and says what will be thrown away.
+  document.getElementById('btn-revert').addEventListener('click', () => {
+    document.getElementById('revert-modal-summary').innerHTML = discardSummaryHtml();
+    document.getElementById('revert-modal').showModal();
   });
+  document.getElementById('btn-confirm-revert').addEventListener('click', revertToRepo);
 
   document.getElementById('btn-export-repo').addEventListener('click', () => {
     const errors = ValidateScoringConfig(state.scoring);
@@ -1018,13 +1115,10 @@ function wireEvents() {
       const data = await r.json();
       if (!data.ok) throw new Error(data.error);
       state.repoScoring = clone(state.scoring);
-      state.dirty = false;
       recomputeBaselineRanks();
       syncAllViews();
-      const pill = document.getElementById('draft-status');
-      pill.classList.remove('is-dirty');
-      pill.textContent = `Exported to ${data.path}`;
-      toast(`Exported & rebuilt tables (${data.rebuilt.length} script(s))`);
+      writeDraftNow();
+      toast(`Exported to ${data.path} and rebuilt tables (${data.rebuilt.length} script(s))`);
     } catch (err) {
       toast(`Export failed: ${err.message}`);
     }
@@ -1047,6 +1141,7 @@ function wireEvents() {
       pushHistory();
       state.scoring = parsed;
       syncAllViews();
+      saveDraft();
       toast(`Loaded ${file.name}`);
     } catch (err) {
       toast(`Invalid JSON: ${err.message}`);
@@ -1058,12 +1153,18 @@ function wireEvents() {
 // ---------------------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------------------
-async function boot() {
-  state.cards = registries.cards.all()
-    .filter((c) => c && c.id && c.name && !c.ruleTemplate && (c.id.startsWith('core.') || c._custom))
+// The studio works on the core card pool only (owner, 2026-11-22).
+function buildCardList() {
+  return registries.cards.all()
+    .filter((c) => c && c.id && c.name && !c.ruleTemplate && c.id.startsWith('core.'))
     .map((c) => clone(c))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function boot() {
+  state.cards = buildCardList();
   state.selectedCardId = state.cards[0]?.id || null;
+  state.repoArtLayers = clone(state.artLayers);
 
   try {
     const ab = JSON.parse(localStorage.getItem(AB_STORAGE_KEY) || 'null');
@@ -1087,11 +1188,13 @@ async function boot() {
           else state.cards.unshift(cc);
         }
       }
-      document.getElementById('draft-status').textContent = 'Restored local draft temp copy';
-      document.getElementById('draft-status').classList.add('is-dirty');
       syncAllViews();
+      refreshDirtyStatus();
+      if (isDirty()) document.getElementById('draft-status').textContent = 'Restored local draft temp copy';
+      return;
     }
   } catch { /* ignore */ }
+  refreshDirtyStatus();
 }
 
 boot();

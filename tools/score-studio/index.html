@@ -293,6 +293,19 @@
     </form>
   </dialog>
 
+  <!-- REVERT CONFIRMATION MODAL -->
+  <dialog id="revert-modal" class="studio-modal">
+    <form method="dialog">
+      <h3>Revert to the repo version?</h3>
+      <p class="studio-muted">This throws away your draft and clears undo history:</p>
+      <div id="revert-modal-summary" class="export-diff"></div>
+      <div class="modal-actions">
+        <button value="cancel" class="s-btn">Keep editing</button>
+        <button id="btn-confirm-revert" value="confirm" class="s-btn s-btn-warn">Discard and revert</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="studio-toast" class="studio-toast hidden" role="status" aria-live="polite"></div>
 
   <script type="module" src="tools/score-studio/studio.js"></script>
