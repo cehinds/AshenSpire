@@ -124,6 +124,12 @@ test('weights staging: Apply replays only staged differences onto the applied co
   assert.equal(replayed.rank === applied.rank, false, 'Apply never mutates the applied config');
   assert.equal('unrankedMax' in applied.rank, true);
 
+  // A file carrying "__proto__" keys never reaches Object.prototype.
+  const hostile = JSON.parse(JSON.stringify(base).replace('"tags":{', '"tags":{"__proto__":{"weight":3},'));
+  assert.deepEqual(ScoringDiffPaths(base, hostile), []);
+  MergePendingScoring(applied, base, hostile);
+  assert.equal(({}).weight, undefined);
+
   assert.equal(HasRankPin({ rank: 1 }), true);
   assert.equal(HasRankPin({ cp: 40 }), true);
   assert.equal(HasRankPin({ rarity: 'rare' }), false);

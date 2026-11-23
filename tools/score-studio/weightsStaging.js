@@ -13,13 +13,17 @@ export const STUDIO_SAVE_PATH = 'tools/score-studio/saved-scoring.json';
 
 const isPlainObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
+// Keys an imported file could use to reach Object.prototype; never diffed, read or written.
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const ownKeys = (node) => Object.keys(node || {}).filter((key) => !UNSAFE_KEYS.has(key));
+
 // Every leaf whose value differs between two configs, as key arrays (keys may hold dots, e.g. "rank.cantrip").
 export function ScoringDiffKeys(from, to)
 {
   const paths = [];
   const walk = (before, after, prefix) =>
   {
-    const keys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
+    const keys = new Set([...ownKeys(before), ...ownKeys(after)]);
     for (const key of keys)
     {
       const path = [...prefix, key];
@@ -39,15 +43,16 @@ export function ScoringDiffPaths(from, to)
 
 function readPath(root, path)
 {
-  return path.reduce((node, key) => (isPlainObject(node) ? node[key] : undefined), root);
+  return path.reduce((node, key) => (isPlainObject(node) && Object.hasOwn(node, key) ? node[key] : undefined), root);
 }
 
 function writePath(root, path, value)
 {
+  if (path.some((key) => UNSAFE_KEYS.has(key))) return;
   let node = root;
   for (const key of path.slice(0, -1))
   {
-    if (!isPlainObject(node[key])) node[key] = {};
+    if (!Object.hasOwn(node, key) || !isPlainObject(node[key])) node[key] = {};
     node = node[key];
   }
   const last = path[path.length - 1];
