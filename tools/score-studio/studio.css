@@ -368,14 +368,14 @@ body.studio-body .inspector-section {
 }
 body.studio-body .inspector-section h3 { margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--st-muted); }
 /* Collapsible sections: the summary is the header row; a chevron on the right shows open or closed. */
-body.studio-body details.inspector-section > summary {
+body.studio-body details[data-section] > summary {
   list-style: none;
   cursor: pointer;
   position: relative;
   padding-right: 22px;
 }
-body.studio-body details.inspector-section > summary::-webkit-details-marker { display: none; }
-body.studio-body details.inspector-section > summary::after {
+body.studio-body details[data-section] > summary::-webkit-details-marker { display: none; }
+body.studio-body details[data-section] > summary::after {
   content: '▾';
   position: absolute;
   right: 2px;
@@ -385,9 +385,9 @@ body.studio-body details.inspector-section > summary::after {
   font-size: 12px;
   transition: transform .12s ease;
 }
-body.studio-body details.inspector-section:not([open]) > summary { margin-bottom: 0; }
-body.studio-body details.inspector-section:not([open]) > summary::after { transform: translateY(-50%) rotate(-90deg); }
-body.studio-body details.inspector-section > summary:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; border-radius: 4px; }
+body.studio-body details[data-section]:not([open]) > summary { margin-bottom: 0; }
+body.studio-body details[data-section]:not([open]) > summary::after { transform: translateY(-50%) rotate(-90deg); }
+body.studio-body details[data-section] > summary:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; border-radius: 4px; }
 body.studio-body .inspector-sheet-head { display: none; }
 /* Section headers: title on the left, controls on the right. When there is no room,
    the controls drop to their own full-width row instead of overflowing the panel. */
@@ -721,3 +721,11 @@ body.studio-body .breakdown-label { font-size: 10px; text-transform: uppercase; 
 body.studio-body .breakdown-formula { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--st-text); }
 body.studio-body .breakdown-math { width: 100%; }
 body.studio-body .breakdown-math > summary { cursor: pointer; font-size: 11px; color: var(--st-muted); }
+
+/* Every section outside the inspector folds too (Art panes, sandbox hand and log, weight groups) and
+   remembers how it was left. The summary is the header row, with the same chevron as the inspector. */
+body.studio-body .studio-section + .studio-section { margin-top: 14px; }
+body.studio-body details.weight-group-card > summary h3 { margin: 0; }
+body.studio-body details.weight-group-card[open] > summary { margin-bottom: 8px; }
+body.studio-body .text-auto-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+body.studio-body .text-auto-row .studio-toggle { flex-direction: row; align-items: center; gap: 4px; white-space: nowrap; }

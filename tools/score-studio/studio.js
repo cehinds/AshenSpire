@@ -516,6 +516,20 @@ function appendClauseForFeature(def, kind, key) {
   def.textTemplate = `${template.trim()} ${addition.clause}`.trim();
 }
 
+// The other half of appendClauseForFeature: removing an effect drops each sentence of the card text whose
+// {tokens} the card no longer has any of, so a removed Frail stops showing on the face. A sentence that
+// still names a live token stays, and its stale token is flagged under the text box instead.
+function dropStaleTextClauses(def) {
+  const stale = new Set(staleTextTokens(def));
+  if (!stale.size) return;
+  const sentences = (def.textTemplate || '').split(/(?<=[.!?])\s+/);
+  const kept = sentences.filter((sentence) => {
+    const tokens = [...sentence.matchAll(tokenRe())].map((match) => match[1]);
+    return !tokens.length || tokens.some((token) => !stale.has(token));
+  });
+  def.textTemplate = kept.join(' ').trim();
+}
+
 // One card face path for the gallery, inspector, Art preview and sandbox hand: the card under its live id
 // (so edits reach the face and the engine), projected the way the game projects profile cards, drawn under
 // its class's reference run, then fitted.
@@ -1049,8 +1063,8 @@ function scoreMathTableHtml(sc) {
   </tbody></table>`;
 }
 
-// A plain text written from the card's effects. Only used when the designer asks for it ("Write from
-// effects"); the card text is otherwise the designer's own and is never rewritten behind their back.
+// A plain text written from the card's effects. Used by "Write from effects" and, while the card text's
+// Auto toggle is on, after every feature edit; with Auto off the card text is the designer's own.
 function textFromEffects(def) {
   const parts = [];
   const area = (def.tags || []).includes('targeting:area') ? ' to ALL enemies' : '';
@@ -1131,8 +1145,21 @@ function applyLiveCardEdit(burst, fn) {
   burst.begin();
   fn(def);
   def._edited = true;
+  applyAutoText(def);
   refreshInspectorScoreInPlace(def);
   saveDraft();
+}
+
+// Card text Auto: while on, every feature edit rewrites the card text from its effects, the way Auto
+// renames the card. Typing in the text box turns it off, so the designer's own words are never overwritten.
+const AUTO_TEXT_KEY = 'ashenspire:scoreStudioAutoText:v1';
+const isAutoText = () => Boolean(document.getElementById('toggle-auto-text')?.checked);
+
+function applyAutoText(def) {
+  if (!isAutoText()) return;
+  def.textTemplate = textFromEffects(def);
+  const textInput = document.getElementById('edit-text');
+  if (textInput && document.activeElement !== textInput) textInput.value = def.textTemplate;
 }
 
 // Refreshes what sits outside the feature list once a number edit is committed.
@@ -1144,12 +1171,13 @@ function commitLiveCardEdit() {
   computeShiftCount();
 }
 
-function mutateSelectedCard(fn, { recordHistory = true, autoName = true } = {}) {
+function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoText = true } = {}) {
   const def = selectedCardDef();
   if (!def) return;
   if (recordHistory) pushHistory();
   fn(def);
   def._edited = true;
+  if (autoText) applyAutoText(def);
   if (autoName && document.getElementById('toggle-auto-name')?.checked) {
     def.name = safeCardName(scoreCardEntry(def).face, state.scoring);
   }
@@ -1204,9 +1232,12 @@ function renderWeights() {
     if (groupF !== 'all' && g.key !== groupF) continue;
     const rows = g.entries.filter((e) => !q || `${g.title} ${e.id} ${e.label}`.toLowerCase().includes(q));
     if (!rows.length) continue;
-    const card = document.createElement('div');
-    card.className = 'weight-group-card';
-    card.innerHTML = `<h3>${esc(g.title)}</h3>`;
+    const card = document.createElement('details');
+    card.className = 'weight-group-card studio-section';
+    card.dataset.section = `weights-${g.key}`;
+    card.open = true;
+    card.innerHTML = `<summary class="section-head"><h3>${esc(g.title)}</h3></summary>`;
+    rememberSection(card);
     for (const r of rows) {
       const numVal = safeNum(r.val, 0);
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
@@ -1750,19 +1781,21 @@ function setupFilterPanel() {
   });
 }
 
-// Inspector sections remember whether they are open. Controls in a section header (buttons, selects,
+// Every collapsible section remembers whether it is open. Controls in a section header (buttons, selects,
 // the override toggle) are interactive content, so clicking them does not toggle the section.
-function setupSections() {
+function rememberSection(section) {
+  const name = section.dataset.section;
   const stored = readStoredJson(SECTIONS_KEY, {});
-  document.querySelectorAll('details.inspector-section[data-section]').forEach((section) => {
-    const name = section.dataset.section;
-    if (Object.hasOwn(stored, name)) section.open = stored[name] === true;
-    section.addEventListener('toggle', () => {
-      const current = readStoredJson(SECTIONS_KEY, {});
-      current[name] = section.open;
-      writeStoredJson(SECTIONS_KEY, current);
-    });
+  if (Object.hasOwn(stored, name)) section.open = stored[name] === true;
+  section.addEventListener('toggle', () => {
+    const current = readStoredJson(SECTIONS_KEY, {});
+    current[name] = section.open;
+    writeStoredJson(SECTIONS_KEY, current);
   });
+}
+
+function setupSections() {
+  document.querySelectorAll('details[data-section]').forEach(rememberSection);
 }
 
 let sheetReturnCardId = null;
@@ -1910,11 +1943,23 @@ function wireEvents() {
   const textInput = document.getElementById('edit-text');
   textInput.addEventListener('focus', () => textBurst.end());
   textInput.addEventListener('input', (e) => {
+    const autoTextToggle = document.getElementById('toggle-auto-text');
+    if (autoTextToggle?.checked) {
+      autoTextToggle.checked = false;
+      writeStoredJson(AUTO_TEXT_KEY, false);
+    }
     textBurst.begin();
-    mutateSelectedCard((d) => { d.textTemplate = e.target.value; }, { recordHistory: false, autoName: false });
+    mutateSelectedCard((d) => { d.textTemplate = e.target.value; }, { recordHistory: false, autoName: false, autoText: false });
   });
   document.getElementById('btn-text-from-effects').addEventListener('click', () => {
-    mutateSelectedCard((d) => { d.textTemplate = textFromEffects(d); }, { autoName: false });
+    mutateSelectedCard((d) => { d.textTemplate = textFromEffects(d); }, { autoName: false, autoText: false });
+  });
+  const autoTextToggle = document.getElementById('toggle-auto-text');
+  autoTextToggle.checked = readStoredJson(AUTO_TEXT_KEY, false) === true;
+  autoTextToggle.addEventListener('change', () => {
+    writeStoredJson(AUTO_TEXT_KEY, autoTextToggle.checked);
+    // Turning Auto on writes the text straight away; turning it off keeps the text as it is.
+    if (autoTextToggle.checked) mutateSelectedCard(() => {}, { autoName: false });
   });
 
   // Gallery card size and inspector preview size (Filters panel), and the inspector resizer (desktop only)
@@ -2019,7 +2064,7 @@ function wireEvents() {
     const rmEff = e.target.dataset.rmEff;
     const rmKw = e.target.dataset.rmKw;
     const rmTag = e.target.dataset.rmTag;
-    if (rmEff !== undefined) mutateSelectedCard((d) => { d.effects.splice(Number(rmEff), 1); });
+    if (rmEff !== undefined) mutateSelectedCard((d) => { d.effects.splice(Number(rmEff), 1); dropStaleTextClauses(d); });
     else if (rmKw !== undefined) mutateSelectedCard((d) => { d.keywords.splice(Number(rmKw), 1); });
     else if (rmTag !== undefined) mutateSelectedCard((d) => { d.tags = d.tags.filter((t) => t !== rmTag); });
   });

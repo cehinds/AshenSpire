@@ -94,21 +94,69 @@ try {
   });
   assert.equal(cost.shown, cost.next, 'the inspector card shows the edited SP cost');
 
-  // 6. Removing the effects a card's text names flags the stale {tokens}, under the text box and on the tile.
-  //    Acid Splash's text is "Apply {frail} Frail and {vulnerable} Vulnerable."
-  const stale = await page.evaluate(() => {
+  // 6. Removing the effects a card's text names drops those sentences from the text, so the face stops
+  //    listing them. Acid Splash's text is "Apply {frail} Frail and {vulnerable} Vulnerable."
+  const removed = await page.evaluate(() => {
     const tile = document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"]');
     tile.click();
     while (document.querySelector('#active-features-list [data-rm-eff]')) {
       document.querySelector('#active-features-list [data-rm-eff]').click();
     }
     return {
+      text: document.getElementById('edit-text').value,
+      warnings: document.getElementById('text-warnings').innerText.trim(),
+      face: document.querySelector('#inspector-card-preview').innerText,
+    };
+  });
+  assert.ok(!removed.text.includes('{frail}') && !removed.text.includes('{vulnerable}'), `removed statuses leave the card text (${removed.text})`);
+  assert.equal(removed.warnings, '', 'no stale-token warning once the sentences are gone');
+  assert.ok(!/Frail|\{frail\}/.test(removed.face), 'the card face no longer lists the removed Frail');
+
+  // 6b. A {token} typed into the text with no effect behind it is still flagged, under the text box and on the tile.
+  const stale = await page.evaluate(() => {
+    const input = document.getElementById('edit-text');
+    input.value = 'Apply {frail} Frail.';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    return {
       warnings: document.getElementById('text-warnings').innerText,
       tileMarked: Boolean(document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"] .text-warn-chip')),
     };
   });
-  assert.match(stale.warnings, /Card text mentions \{frail\}, but the card has no Frail effect\./, 'a removed status is named as a stale token');
+  assert.match(stale.warnings, /Card text mentions \{frail\}, but the card has no Frail effect\./, 'a typed token with no effect is named as stale');
   assert.ok(stale.tileMarked, 'the gallery tile is marked when its card text has stale tokens');
+
+  // 7. Card text Auto writes the text from the effects and keeps it in step as features change.
+  const auto = await page.evaluate(() => {
+    const toggle = document.getElementById('toggle-auto-text');
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event('change', { bubbles: true }));
+    const afterOn = document.getElementById('edit-text').value;
+    document.querySelector('[data-quick-add="effect:block"]').click();
+    const afterAdd = document.getElementById('edit-text').value;
+    const input = document.getElementById('edit-text');
+    input.value = 'My own words.';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    return { afterOn, afterAdd, offAfterTyping: !toggle.checked };
+  });
+  assert.equal(auto.afterOn, 'No effect.', 'Auto rewrites the text straight away');
+  assert.match(auto.afterAdd, /Gain \{block\} Block\./, 'Auto adds the new effect to the text');
+  assert.ok(auto.offAfterTyping, 'typing in the text box turns Auto off');
+
+  // 8. Every section folds: the Art panes, the sandbox hand and log, and each weight group, and it remembers.
+  const sections = await page.evaluate((key) => {
+    document.querySelector('.studio-tab[data-tab="weights"]').click();
+    const required = ['art-layers', 'art-preview', 'art-assets', 'sandbox-hand', 'sandbox-log', 'weights-costs', 'basics', 'features', 'override', 'breakdown'];
+    const missing = required.filter((name) => !document.querySelector(`details[data-section="${name}"] > summary`));
+    const log = document.querySelector('details[data-section="sandbox-log"]');
+    log.open = false;
+    return new Promise((resolve) => setTimeout(() => {
+      resolve({ missing, stored: JSON.parse(localStorage.getItem(key) || '{}')['sandbox-log'] });
+      log.open = true;
+      document.querySelector('.studio-tab[data-tab="cards"]').click();
+    }, 50));
+  }, 'ashenspire:scoreStudioSections:v1');
+  assert.deepEqual(sections.missing, [], 'every studio section is collapsible');
+  assert.equal(sections.stored, false, 'a folded section is remembered');
 
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);

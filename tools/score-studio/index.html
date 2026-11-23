@@ -186,7 +186,10 @@
               <label><span class="cost-label">MP Cost <span id="cost-score-mp" class="feature-score"></span></span><input id="edit-mp" type="number" min="0" max="10" /></label>
               <label><span class="cost-label">HP Cost <span id="cost-score-hp" class="feature-score"></span></span><input id="edit-loseHp" type="number" min="0" max="50" /></label>
               <div class="form-wide">
-                <label for="edit-text">Card text</label>
+                <div class="text-auto-row">
+                  <label for="edit-text">Card text</label>
+                  <label class="studio-toggle" title="Rewrite the card text from its effects as you edit its features"><input id="toggle-auto-text" type="checkbox" /> Auto</label>
+                </div>
                 <textarea id="edit-text" rows="3" spellcheck="true"></textarea>
                 <span class="studio-muted text-hint">Use {tokens} like {damage} or {frail} to show the card's numbers. <button id="btn-text-from-effects" class="link-btn" type="button" title="Replace the text with one written from the card's effects">Write from effects</button></span>
                 <div id="text-warnings" class="text-warnings" role="status"></div>
@@ -261,26 +264,34 @@
     <section id="tab-art" class="studio-panel">
       <div class="art-layout">
         <div class="art-controls-pane">
-          <div class="section-head">
-            <h3>Procedural Layer Stack &amp; Priority</h3>
-            <div>
-              <button id="btn-add-layer" class="s-btn">+ Add Layer</button>
-              <button id="btn-save-art" class="s-btn">Save Layers to Repo</button>
-              <button id="btn-download-art" class="s-btn">Download JSON</button>
-            </div>
-          </div>
-          <p class="studio-muted">Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.</p>
-          <div id="art-layers-list" class="art-layers-list"></div>
+          <details class="studio-section" data-section="art-layers" open>
+            <summary class="section-head">
+              <h3>Procedural Layer Stack &amp; Priority</h3>
+              <div>
+                <button id="btn-add-layer" class="s-btn">+ Add Layer</button>
+                <button id="btn-save-art" class="s-btn">Save Layers to Repo</button>
+                <button id="btn-download-art" class="s-btn">Download JSON</button>
+              </div>
+            </summary>
+            <p class="studio-muted">Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.</p>
+            <div id="art-layers-list" class="art-layers-list"></div>
+          </details>
         </div>
         <div class="art-preview-pane">
-          <div class="section-head">
-            <h3>Live Layered Preview</h3>
-            <select id="art-preview-card-select" aria-label="Preview card"></select>
-          </div>
-          <div id="art-live-preview" class="art-live-preview"></div>
-          <h4>Available Cutout Assets (<span id="asset-count">0</span>)</h4>
-          <input id="asset-search" type="search" placeholder="Filter PNG assets (e.g. burn, venom, shield, background)..." />
-          <div id="asset-gallery" class="asset-gallery"></div>
+          <details class="studio-section" data-section="art-preview" open>
+            <summary class="section-head">
+              <h3>Live Layered Preview</h3>
+              <select id="art-preview-card-select" aria-label="Preview card"></select>
+            </summary>
+            <div id="art-live-preview" class="art-live-preview"></div>
+          </details>
+          <details class="studio-section" data-section="art-assets" open>
+            <summary class="section-head">
+              <h3>Available Cutout Assets (<span id="asset-count">0</span>)</h3>
+            </summary>
+            <input id="asset-search" type="search" placeholder="Filter PNG assets (e.g. burn, venom, shield, background)..." />
+            <div id="asset-gallery" class="asset-gallery"></div>
+          </details>
         </div>
       </div>
     </section>
@@ -324,17 +335,17 @@
           <div id="sandbox-player-panel" class="combatant-box"></div>
           <div id="sandbox-enemy-panel" class="combatant-box"></div>
         </div>
-        <div class="sandbox-hand-section">
-          <div class="section-head">
+        <details class="sandbox-hand-section studio-section" data-section="sandbox-hand" open>
+          <summary class="section-head">
             <h3>Hand: tap a card to play. Your edited card is first.</h3>
             <span id="sandbox-turn-info" class="studio-muted"></span>
-          </div>
+          </summary>
           <div id="sandbox-hand" class="sandbox-hand"></div>
-        </div>
-        <div class="sandbox-log-section">
-          <h3>Combat Log</h3>
+        </details>
+        <details class="sandbox-log-section studio-section" data-section="sandbox-log" open>
+          <summary class="section-head"><h3>Combat Log</h3></summary>
           <div id="sandbox-log" class="sandbox-log"></div>
-        </div>
+        </details>
       </div>
     </section>
   </main>
