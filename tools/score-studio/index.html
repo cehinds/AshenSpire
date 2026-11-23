@@ -6,7 +6,18 @@
   <title>AshenSpire — Score Studio</title>
   <base href="../../" />
   <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/tokens.generated.css" />
+  <link rel="stylesheet" href="styles/ui.css" />
+  <link rel="stylesheet" href="styles/kit.css" />
   <link rel="stylesheet" href="styles/combat.css" />
+  <link rel="stylesheet" href="styles/responsive-type.css" />
+  <link rel="stylesheet" href="styles/player-polish-icons.css" />
+  <link rel="stylesheet" href="styles/player-polish.css" />
+  <link rel="stylesheet" href="styles/illustrated-cards.css" />
+  <link rel="stylesheet" href="styles/corrupted-cards.css" />
+  <link rel="stylesheet" href="styles/combat-expansion.css" />
+  <link rel="stylesheet" href="styles/combat-layers.css" />
+  <link rel="stylesheet" href="styles/combat-symbol-colors.css" />
   <link rel="stylesheet" href="tools/score-studio/studio.css" />
 </head>
 <body class="studio-body">
@@ -74,27 +85,49 @@
               <option value="shifted">Shifted Only</option>
             </select>
             <div class="view-toggle" role="group" aria-label="Gallery view">
-              <button id="view-grid" class="s-btn s-btn-sm is-active">Grid (4–5/row)</button>
+              <button id="view-grid" class="s-btn s-btn-sm is-active">Grid</button>
               <button id="view-single" class="s-btn s-btn-sm">Single</button>
             </div>
+            <label class="scale-control" title="Resize gallery cards">Card Size
+              <input id="card-scale-slider" type="range" min="140" max="280" value="185" />
+            </label>
             <button id="btn-new-card" class="s-btn s-btn-sm s-btn-primary">+ New Card</button>
           </div>
           <div id="cards-grid" class="cards-grid"></div>
         </div>
 
+        <div id="inspector-resizer" class="inspector-resizer" title="Drag to resize Card Designer panel" role="separator" aria-orientation="vertical"></div>
+
         <aside id="card-inspector" class="card-inspector">
           <div class="inspector-preview-wrap">
             <div id="inspector-card-preview" class="inspector-card-preview"></div>
-            <div id="inspector-score-summary" class="inspector-score-summary"></div>
+            <div class="inspector-preview-side">
+              <div id="inspector-score-summary" class="inspector-score-summary"></div>
+              <label class="scale-control" title="Scale inspector card preview">Preview Size
+                <input id="inspector-scale-slider" type="range" min="130" max="260" value="175" />
+              </label>
+            </div>
           </div>
 
           <div class="inspector-section">
             <div class="section-head">
               <h3>Card Basics</h3>
-              <button id="btn-send-sandbox" class="s-btn s-btn-sm s-btn-primary">Test in Combat Sandbox</button>
+              <div class="inspector-card-actions">
+                <button id="btn-duplicate-card" class="s-btn s-btn-sm" title="Duplicate this card">Duplicate</button>
+                <button id="btn-reset-card" class="s-btn s-btn-sm hidden" title="Revert edits on this card">Reset</button>
+                <button id="btn-delete-card" class="s-btn s-btn-sm s-btn-warn hidden" title="Delete custom card">Delete</button>
+                <button id="btn-send-sandbox" class="s-btn s-btn-sm s-btn-primary">Test in Sandbox</button>
+              </div>
             </div>
             <div class="form-grid">
-              <label>Name <input id="edit-name" type="text" /></label>
+              <div class="full-span field-group">
+                <label for="edit-name">Name</label>
+                <div class="name-input-row">
+                  <input id="edit-name" type="text" />
+                  <button id="btn-auto-name" class="s-btn s-btn-sm" type="button" title="Generate dynamic convention name from effects and rank">Auto-Name</button>
+                  <label class="studio-toggle" title="Automatically update card name as you edit features"><input id="toggle-auto-name" type="checkbox" /> Auto</label>
+                </div>
+              </div>
               <label>Card Type
                 <select id="edit-type">
                   <option value="attack">Attack</option>
@@ -149,12 +182,22 @@
           <div class="inspector-section">
             <div class="section-head">
               <h3>Active Features</h3>
-              <div class="add-feature-bar">
-                <select id="add-feature-select" aria-label="Add feature to card">
-                  <option value="">+ Add Feature...</option>
-                </select>
-                <button id="btn-add-feature" class="s-btn s-btn-sm">Add</button>
-              </div>
+            </div>
+            <div class="add-feature-bar">
+              <select id="add-feature-select" aria-label="Add feature to card">
+                <option value="">+ Add Effect, Status, Keyword, or Tag...</option>
+              </select>
+              <button id="btn-add-feature" class="s-btn s-btn-sm s-btn-primary" type="button">Add</button>
+            </div>
+            <div class="quick-add-chips" id="quick-add-chips">
+              <button type="button" class="q-chip" data-quick-add="effect:damage">+ Damage</button>
+              <button type="button" class="q-chip" data-quick-add="effect:block">+ Block</button>
+              <button type="button" class="q-chip" data-quick-add="effect:poiseDamage">+ Poise</button>
+              <button type="button" class="q-chip" data-quick-add="effect:draw">+ Draw</button>
+              <button type="button" class="q-chip" data-quick-add="status:burn">+ Burn</button>
+              <button type="button" class="q-chip" data-quick-add="status:venom">+ Venom</button>
+              <button type="button" class="q-chip" data-quick-add="kw:exhaust">+ Exhaust</button>
+              <button type="button" class="q-chip" data-quick-add="kw:retain">+ Retain</button>
             </div>
             <div id="active-features-list" class="active-features-list"></div>
           </div>
@@ -249,6 +292,7 @@
           <label>Enemy
             <select id="sandbox-enemy"></select>
           </label>
+          <button id="btn-sandbox-refill" class="s-btn" title="Top up SP and MP to test high-cost cards">Refill SP/MP</button>
           <button id="btn-sandbox-reset" class="s-btn">Reset Fight</button>
           <button id="btn-sandbox-endturn" class="s-btn s-btn-warn">End Turn</button>
         </div>
