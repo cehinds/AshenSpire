@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AshenSpire — Score Studio</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d0b08'/%3E%3Cpath d='M32 6 L40 58 H24 Z' fill='%23c9a227'/%3E%3C/svg%3E" />
   <base href="../../" />
   <!-- Game sheets the card renderer needs, in the game's own order (see index.html). -->
   <link rel="stylesheet" href="styles/base.css" />
@@ -98,6 +99,7 @@
               <label class="scale-control" title="Resize the inspector's card preview">Preview size
                 <input id="inspector-scale-slider" type="range" min="130" max="260" value="175" />
               </label>
+              <label class="studio-toggle" title="Show each card's combat-power rank on the art"><input id="toggle-rank-badges" type="checkbox" checked /> Show rank on cards</label>
               <span class="studio-muted pool-label pool-label-panel"></span>
             </div>
           </div>
@@ -140,7 +142,7 @@
                 </div>
                 <span id="name-hint" class="studio-muted name-hint"></span>
               </div>
-              <label>Card Type
+              <label><span class="cost-label">Card Type <span id="field-score-type" class="feature-score"></span></span>
                 <select id="edit-type">
                   <option value="attack">Attack</option>
                   <option value="skill">Skill</option>
@@ -151,7 +153,7 @@
                   <option value="status">Status</option>
                 </select>
               </label>
-              <label>Class
+              <label><span class="cost-label">Class <span id="field-score-class" class="feature-score"></span></span>
                 <select id="edit-class">
                   <option value="colorless">Colorless</option>
                   <option value="reaver">Reaver</option>
@@ -160,7 +162,7 @@
                   <option value="herald">Herald</option>
                 </select>
               </label>
-              <label>Rarity
+              <label><span class="cost-label">Rarity <span id="field-score-rarity" class="feature-score"></span></span>
                 <select id="edit-rarity">
                   <option value="starter">Starter</option>
                   <option value="common">Common</option>
@@ -169,13 +171,13 @@
                   <option value="boss">Boss</option>
                 </select>
               </label>
-              <label>Camp
+              <label><span class="cost-label">Camp <span id="field-score-camp" class="feature-score"></span></span>
                 <select id="edit-camp">
                   <option value="physical">Physical</option>
                   <option value="spell">Spell</option>
                 </select>
               </label>
-              <label>Target
+              <label><span class="cost-label">Target <span id="field-score-target" class="feature-score"></span></span>
                 <select id="edit-target">
                   <option value="enemy">Single Enemy</option>
                   <option value="allEnemies">All Enemies</option>
