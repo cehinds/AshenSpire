@@ -240,12 +240,45 @@ body.studio-body .inspector-section {
   padding: 10px;
 }
 body.studio-body .inspector-section h3 { margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--st-muted); }
-body.studio-body .section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+/* Section headers: title on the left, controls on the right. When there is no room,
+   the controls drop to their own full-width row instead of overflowing the panel. */
+body.studio-body .section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-width: 0;
+}
 body.studio-body .section-head h3 { margin: 0; }
+body.studio-body .inspector-section .section-head h3 {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+body.studio-body .section-head > div,
+body.studio-body .section-head > .studio-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+body.studio-body .section-head > button { flex: none; }
 body.studio-body .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 body.studio-body .form-grid label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
 
-body.studio-body .add-feature-bar { display: flex; gap: 4px; }
+body.studio-body .section-head > .add-feature-bar {
+  display: flex;
+  flex: 1 1 220px;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-width: 0;
+}
+body.studio-body .section-head > .add-feature-bar select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+body.studio-body .section-head > .add-feature-bar button { flex: none; }
 body.studio-body .active-features-list { display: flex; flex-direction: column; gap: 6px; }
 body.studio-body .feature-row {
   display: flex;
@@ -311,3 +344,17 @@ body.studio-body .export-diff { background: #0e1117; border: 1px solid var(--st-
 body.studio-body .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
 body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; background: var(--st-surface-2); border: 1px solid var(--st-accent); color: var(--st-text); padding: 8px 14px; border-radius: 8px; font-weight: 600; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,.5); }
+
+/* NARROW SCREENS: stack the two-column workspaces so no panel runs past the screen edge. */
+@media (max-width: 760px) {
+  body.studio-body .cards-layout,
+  body.studio-body .art-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  body.studio-body .cards-gallery-pane,
+  body.studio-body .art-controls-pane {
+    border-right: none;
+    border-bottom: 1px solid var(--st-border);
+  }
+}
