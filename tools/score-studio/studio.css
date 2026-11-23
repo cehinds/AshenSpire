@@ -495,7 +495,38 @@ body.studio-body .sandbox-hand-card:hover { border-color: var(--st-accent); tran
 body.studio-body .sandbox-log { background: #0e1117; border: 1px solid var(--st-border); border-radius: 8px; padding: 10px; max-height: 180px; overflow-y: auto; font-family: ui-monospace, Consolas, monospace; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
 
 /* MODAL & TOAST */
-body.studio-body .studio-modal { background: var(--st-surface); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 10px; padding: 18px; max-width: 560px; width: 90vw; }
+/* Dialogs sit in the middle of the screen and scroll inside when long. */
+body.studio-body .studio-modal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(560px, calc(100vw - 2 * var(--studio-gap-3)));
+  height: fit-content;
+  max-height: min(85vh, calc(100vh - 2 * var(--studio-gap-3)));
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--st-surface);
+  color: var(--st-text);
+  border: 1px solid var(--st-border);
+  border-radius: 10px;
+  padding: 18px;
+}
+body.studio-body .studio-modal h3 { margin: 0 0 var(--studio-gap-2); }
+body.studio-body .export-shift-count { margin: var(--studio-gap-2) 0 var(--studio-gap-1); font-size: 13px; }
+body.studio-body .export-shifts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: var(--studio-gap-3);
+  scrollbar-gutter: stable;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+body.studio-body .export-shifts li { display: flex; justify-content: space-between; gap: var(--studio-gap-2); padding: 2px 0; border-bottom: 1px solid rgba(255, 255, 255, .04); }
 body.studio-body .studio-modal::backdrop { background: rgba(0,0,0,.65); }
 body.studio-body .export-diff { background: #0e1117; border: 1px solid var(--st-border); border-radius: 6px; padding: 10px; max-height: 260px; overflow-y: auto; font-family: ui-monospace, Consolas, monospace; font-size: 12px; margin: 10px 0; white-space: pre-wrap; }
 body.studio-body .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }

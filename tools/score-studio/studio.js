@@ -1036,6 +1036,28 @@ async function loadFromRepo(customPath = state.repoPath) {
   }
 }
 
+const RANK_SHIFT_LIST_LIMIT = 40;
+
+// Cards whose rank differs from the repo baseline, for the export dialog.
+function rankShifts() {
+  return state.cards
+    .map((card) => ({ card, now: scoreCardEntry(card).rank, before: state.baselineRanks[card.id] }))
+    .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
+}
+
+function renderRankShiftList() {
+  const shifts = rankShifts();
+  document.getElementById('export-modal-shift-count').textContent = shifts.length === 1 ? '1 card changes rank' : `${shifts.length} cards change rank`;
+  const list = document.getElementById('export-modal-shifts');
+  const shown = shifts.slice(0, RANK_SHIFT_LIST_LIMIT).map((shift) => {
+    const direction = shift.now > shift.before ? 'shift-up' : 'shift-down';
+    return `<li><span>${esc(shift.card.name)}</span><span class="${direction}">${esc(RankName(shift.before))} → ${esc(RankName(shift.now))}</span></li>`;
+  });
+  const hidden = shifts.length - RANK_SHIFT_LIST_LIMIT;
+  if (hidden > 0) shown.push(`<li class="studio-muted">+${hidden} more</li>`);
+  list.innerHTML = shown.join('');
+}
+
 function discardSummaryHtml() {
   const weightChanges = weightChangeCount();
   const cardsEdited = editedCards().length;
@@ -1556,6 +1578,7 @@ function wireEvents() {
     const diff = buildScoringDiff();
     document.getElementById('export-modal-path').textContent = `Target: ${path} (${diff.length} change(s))`;
     document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
+    renderRankShiftList();
     document.getElementById('export-modal').showModal();
   });
 
