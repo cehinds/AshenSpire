@@ -92,11 +92,51 @@ const state = {
 // ---------------------------------------------------------------------------
 // Card <-> Face conversion
 // ---------------------------------------------------------------------------
-function measureFinalValues(def) {
+const KIND_BY_TYPE = {
+  attack: 'classification.attack',
+  skill: 'classification.skill',
+  power: 'classification.power',
+  guard: 'classification.guard',
+  strike: 'classification.strike',
+  curse: 'classification.curse',
+  status: 'classification.statusCard',
+};
+
+function normalizeStudioCard(def) {
+  const kind = KIND_BY_TYPE[def.type] || 'classification.attack';
+  def.tags = Array.isArray(def.tags) ? def.tags.filter((t) => !t.startsWith('classification.')) : [];
+  def.tags.push(kind);
+  def.kindIds = [kind];
+  def.icon = def.icon || (def.type === 'attack' || def.type === 'strike' ? 'attack' : 'skill');
+  const isSpell = def.tags.includes('camp:spell');
+  def.damageSchool = isSpell ? 'magic' : 'physical';
+  def.staminaCost = Math.max(0, Number(def.staminaCost ?? def.cost ?? 0) || 0);
+  def.cost = def.staminaCost;
+  def.manaCost = Math.max(0, Number(def.manaCost ?? 0) || 0);
+  def.effects = Array.isArray(def.effects) ? def.effects : [];
+  def.keywords = Array.isArray(def.keywords) ? def.keywords : [];
+  return def;
+}
+
+/** Register an edited/custom card under a live ID that bypasses frozen profile pack lookup so previewCard & dispatch run live edits. */
+function liveCardIdFor(def) {
+  normalizeStudioCard(def);
+  if (!def._edited && !def._custom) {
+    studioCardOverrides.set(def.id, def);
+    return def.id;
+  }
+  const liveId = `__studio_live_${def.id}`;
+  const liveDef = { ...clone(def), id: liveId };
   studioCardOverrides.set(def.id, def);
+  studioCardOverrides.set(liveId, liveDef);
+  return liveId;
+}
+
+function measureFinalValues(def) {
+  const liveId = liveCardIdFor(def);
   const { combat, enemy } = refContextFor(def);
   const probeId = '__studio_probe';
-  combat.piles.hand.push({ instanceId: probeId, cardId: def.id, upgraded: false });
+  combat.piles.hand.push({ instanceId: probeId, cardId: liveId, upgraded: false });
   const measured = { dmg: 0, hits: 1, blk: 0, poise: 0, authoredDmg: 0, authoredBlk: 0, usedPreview: false };
   for (const e of def.effects || []) {
     const amt = typeof e.amount === 'number' ? e.amount : 0;
@@ -288,17 +328,18 @@ function matchingCustomLayers(def) {
 
 function renderCardWithLayers(def, container) {
   container.innerHTML = '';
-  studioCardOverrides.set(def.id, def);
+  const liveId = liveCardIdFor(def);
   try {
     const { run } = refContextFor(def);
-    const el = renderCard(studioRegistries, { cardId: def.id }, { inspection: false, level: 'inspect', definition: def, rules: run, showArt: true });
+    const liveDef = studioCardOverrides.get(liveId) || def;
+    const el = renderCard(studioRegistries, { cardId: liveId }, { inspection: false, level: 'inspect', definition: liveDef, rules: run, showArt: true });
     if (el) {
       for (const [k, v] of Object.entries(CARD_SHAPE_PROPS)) el.style.setProperty(k, v);
       container.appendChild(el);
       requestAnimationFrame(() => { if (el.isConnected) fitCardFace(el); });
     }
-  } catch {
-    container.innerHTML = `<div style="padding:10px;text-align:center;"><strong>${esc(def.name)}</strong><div class="studio-muted">${esc(def.type)}</div></div>`;
+  } catch (err) {
+    container.innerHTML = `<div style="padding:10px;text-align:center;"><strong>${esc(def.name)}</strong><div class="studio-muted">${esc(def.type)} (${esc(err.message)})</div></div>`;
   }
   const layers = matchingCustomLayers(def);
   if (layers.length) {
@@ -453,6 +494,8 @@ function renderInspector() {
   `;
 
   document.getElementById('edit-name').value = def.name || '';
+  document.getElementById('btn-delete-card')?.classList.toggle('hidden', !def._custom);
+  document.getElementById('btn-reset-card')?.classList.toggle('hidden', !def._edited || def._custom);
   document.getElementById('edit-type').value = def.type || 'attack';
   document.getElementById('edit-class').value = def.class || 'colorless';
   document.getElementById('edit-rarity').value = def.rarity || 'common';
@@ -731,7 +774,7 @@ function initSandboxEnemies() {
   for (const e of registries.enemies.all()) {
     const o = document.createElement('option');
     o.value = e.id;
-    o.textContent = `${e.name || e.id} (HP ${Array.isArray(e.hp) ? e.hp[0] : e.hp})`;
+    o.textContent = e.name || e.id;
     sel.appendChild(o);
   }
   if (registries.enemies.has('wanderingSoldier')) sel.value = 'wanderingSoldier';
@@ -741,21 +784,23 @@ function startSandboxCombat() {
   const classId = document.getElementById('sandbox-class').value || 'reaver';
   const enemyId = document.getElementById('sandbox-enemy').value || 'wanderingSoldier';
   const activeCard = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[0];
-  if (activeCard) studioCardOverrides.set(activeCard.id, activeCard);
+  const liveId = activeCard ? liveCardIdFor(activeCard) : null;
 
   const run = createRunState({ registries: studioRegistries, classId, seed: 42, profileMeta: UNLOCK_META });
   const combat = createRunCombat({ registries: studioRegistries, run, rng: createRng(42), enemyIds: [enemyId] });
-  if (activeCard) {
-    // Inject the edited/selected card straight into the front of the opening hand!
-    combat.piles.hand.unshift({ instanceId: 'studio-test-card', cardId: activeCard.id, upgraded: false });
+  if (activeCard && liveId) {
+    combat.piles.hand.unshift({ instanceId: 'studio-test-card', cardId: liveId, upgraded: false });
+    // Ensure the player can immediately play their edited card on Turn 1
+    if ((activeCard.staminaCost || 0) > (combat.player.stamina ?? 0)) combat.player.stamina = activeCard.staminaCost;
+    if ((activeCard.manaCost || 0) > (combat.player.mana ?? 0)) combat.player.mana = activeCard.manaCost;
   }
   state.sandbox = {
     combat,
     classId,
     enemyId,
     appliedScoring: clone(state.scoring),
-    customCardId: activeCard?.id || null,
-    log: [`Combat started: ${classId} vs ${enemyId}. Injected "${activeCard?.name || 'none'}" into opening hand.`],
+    customCardId: liveId,
+    log: [`Combat started: ${classId} vs ${registries.enemies.get(enemyId)?.name || enemyId}. Injected "${activeCard?.name || 'none'}" into opening hand.`],
   };
   renderSandbox();
 }
@@ -925,16 +970,62 @@ function wireEvents() {
   document.getElementById('view-grid').addEventListener('click', () => { state.viewMode = 'grid'; document.getElementById('view-grid').classList.add('is-active'); document.getElementById('view-single').classList.remove('is-active'); renderCardsGrid(); });
   document.getElementById('view-single').addEventListener('click', () => { state.viewMode = 'single'; document.getElementById('view-single').classList.add('is-active'); document.getElementById('view-grid').classList.remove('is-active'); renderCardsGrid(); });
 
-  // New card
+  // New / Duplicate / Reset / Delete card
   document.getElementById('btn-new-card').addEventListener('click', () => {
     pushHistory();
     const id = `custom.card_${Date.now().toString(36)}`;
-    const card = { id, name: 'New Custom Card', class: 'colorless', rarity: 'uncommon', type: 'attack', staminaCost: 1, manaCost: 0, effects: [{ op: 'damage', target: 'enemy', amount: 8 }], keywords: [], tags: ['camp:physical', 'classification.attack', 'targeting:single'], textTemplate: 'Deal {damage} damage.', _custom: true };
+    const card = normalizeStudioCard({
+      id, name: 'New Custom Card', class: 'colorless', rarity: 'uncommon', type: 'attack', icon: 'attack',
+      cost: 1, staminaCost: 1, manaCost: 0, damageSchool: 'physical',
+      effects: [{ op: 'damage', target: 'enemy', amount: 8 }],
+      keywords: [], tags: ['camp:physical', 'maneuver:attack', 'source:weapon', 'classification.attack', 'targeting:single'],
+      textTemplate: 'Deal {damage} damage.', _custom: true,
+    });
     state.cards.unshift(card);
     state.selectedCardId = id;
     renderCardsGrid();
     renderInspector();
     toast('Created custom card');
+  });
+
+  document.getElementById('btn-duplicate-card').addEventListener('click', () => {
+    const src = state.cards.find((c) => c.id === state.selectedCardId);
+    if (!src) return;
+    pushHistory();
+    const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true });
+    state.cards.unshift(copy);
+    state.selectedCardId = copy.id;
+    renderCardsGrid();
+    renderInspector();
+    toast(`Duplicated "${src.name}"`);
+  });
+
+  document.getElementById('btn-reset-card').addEventListener('click', () => {
+    const idx = state.cards.findIndex((c) => c.id === state.selectedCardId);
+    if (idx < 0) return;
+    const orig = registries.cards.get(state.cards[idx].id);
+    if (!orig) return;
+    pushHistory();
+    state.cards[idx] = clone(orig);
+    studioCardOverrides.delete(orig.id);
+    studioCardOverrides.delete(`__studio_live_${orig.id}`);
+    renderCardsGrid();
+    renderInspector();
+    toast(`Reverted "${orig.name}" to repo baseline`);
+  });
+
+  document.getElementById('btn-delete-card').addEventListener('click', () => {
+    const idx = state.cards.findIndex((c) => c.id === state.selectedCardId);
+    if (idx < 0 || !state.cards[idx]._custom) return;
+    const removed = state.cards[idx];
+    pushHistory();
+    state.cards.splice(idx, 1);
+    studioCardOverrides.delete(removed.id);
+    studioCardOverrides.delete(`__studio_live_${removed.id}`);
+    state.selectedCardId = state.cards[Math.min(idx, state.cards.length - 1)]?.id || null;
+    renderCardsGrid();
+    renderInspector();
+    toast(`Deleted "${removed.name}"`);
   });
 
   // Card inspector edits
@@ -1089,6 +1180,13 @@ function wireEvents() {
   document.getElementById('btn-slot-a-load').addEventListener('click', () => loadAB('A'));
   document.getElementById('btn-slot-b-load').addEventListener('click', () => loadAB('B'));
   document.getElementById('btn-apply-sandbox').addEventListener('click', () => { startSandboxCombat(); toast('Applied current config to Combat Sandbox'); });
+  document.getElementById('btn-sandbox-refill').addEventListener('click', () => {
+    if (!state.sandbox.combat) return;
+    state.sandbox.combat.player.stamina = Math.max(state.sandbox.combat.player.maxStamina || 3, 6);
+    state.sandbox.combat.player.mana = Math.max(state.sandbox.combat.player.maxMana || 3, 6);
+    state.sandbox.log.unshift('Refilled player SP & MP to 6.');
+    renderSandbox();
+  });
   document.getElementById('btn-sandbox-reset').addEventListener('click', startSandboxCombat);
   document.getElementById('sandbox-class').addEventListener('change', startSandboxCombat);
   document.getElementById('sandbox-enemy').addEventListener('change', startSandboxCombat);

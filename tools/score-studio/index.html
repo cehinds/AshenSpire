@@ -102,7 +102,12 @@
           <div class="inspector-section">
             <div class="section-head">
               <h3>Card Basics</h3>
-              <button id="btn-send-sandbox" class="s-btn s-btn-sm s-btn-primary">Test in Combat Sandbox</button>
+              <div class="inspector-card-actions">
+                <button id="btn-duplicate-card" class="s-btn s-btn-sm" title="Duplicate this card">Duplicate</button>
+                <button id="btn-reset-card" class="s-btn s-btn-sm hidden" title="Revert edits on this card">Reset</button>
+                <button id="btn-delete-card" class="s-btn s-btn-sm s-btn-warn hidden" title="Delete custom card">Delete</button>
+                <button id="btn-send-sandbox" class="s-btn s-btn-sm s-btn-primary">Test in Sandbox</button>
+              </div>
             </div>
             <div class="form-grid">
               <label>Name <input id="edit-name" type="text" /></label>
@@ -260,6 +265,7 @@
           <label>Enemy
             <select id="sandbox-enemy"></select>
           </label>
+          <button id="btn-sandbox-refill" class="s-btn" title="Top up SP and MP to test high-cost cards">Refill SP/MP</button>
           <button id="btn-sandbox-reset" class="s-btn">Reset Fight</button>
           <button id="btn-sandbox-endturn" class="s-btn s-btn-warn">End Turn</button>
         </div>
