@@ -1,3 +1,4 @@
+import { OwnCardRank } from './cardRank.js';
 import { unusedInstanceId as unusedInstanceId_ } from './cardInstanceIdentity.js';
 import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCopyLimit_, ItemUnlimitedCardIds } from './deckCopyLimit.js';
 // src/model/deckRules.js — the deck editor's rules, without its screen (SPEC §14.1).
@@ -231,7 +232,7 @@ export function moveToSideboard(registries, run, instanceId) {
   run.deck.splice(index, 1);
   // A pristine plain basic has nothing to keep; an upgraded, modded or ranked
   // one is kept like any owned card and comes back before a fresh one is minted.
-  const pristine = !card.upgraded && !(Array.isArray(card.mods) && card.mods.length) && !(card.rank > 1) && !(card.abilityRank > 0) && !(card.smithingLevel > 0);
+  const pristine = !card.upgraded && !(Array.isArray(card.mods) && card.mods.length) && !(OwnCardRank(card) > 0) && !(card.abilityRank > 0) && !(card.smithingLevel > 0);
   if (!card.equipmentRole && !card.grantedBy && unlimitedCardIds(run).includes(card.cardId) && pristine) return true;
   sideboard(run).push(card);
   return true;
@@ -275,7 +276,7 @@ export function isEquippedRun(run) { return !!(run && run.loadout) && gameModule
  */
 export function isSetAsideBasic(card, run = null) {
   if (!card || card.equipmentRole || !isUnlimitedBasic(card, run)) return false;
-  return !!card.upgraded || (Array.isArray(card.mods) && card.mods.length > 0) || card.rank > 1 || card.abilityRank > 0 || card.smithingLevel > 0;
+  return !!card.upgraded || (Array.isArray(card.mods) && card.mods.length > 0) || OwnCardRank(card) > 0 || card.abilityRank > 0 || card.smithingLevel > 0;
 }
 
 /**
@@ -391,9 +392,9 @@ export function commitDeckEditDraft(registries, run, edited, settings = {}) {
   for (const card of after) {
     const owned = before.get(card.instanceId);
     if (owned && JSON.stringify(owned) !== JSON.stringify(card)) throw new Error('Deck editing cannot modify an owned card');
-    if (!owned && (!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.mods?.length || Object.keys(card).some(key => !['instanceId','cardId','upgraded'].includes(key)))) throw new Error('Deck editing cannot invent a limited or enhanced card');
+    if (!owned && (!isUnlimitedBasic(card, run) || card.upgraded || OwnCardRank(card) > 0 || card.mods?.length || Object.keys(card).some(key => !['instanceId','cardId','upgraded'].includes(key)))) throw new Error('Deck editing cannot invent a limited or enhanced card');
   }
-  for (const [id, card] of before) if ((!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.abilityRank > 0 || card.smithingLevel > 0 || card.mods?.length) && !after.some(row => row.instanceId === id)) throw new Error('Deck editing cannot delete an owned limited card');
+  for (const [id, card] of before) if ((!isUnlimitedBasic(card, run) || card.upgraded || OwnCardRank(card) > 0 || card.abilityRank > 0 || card.smithingLevel > 0 || card.mods?.length) && !after.some(row => row.instanceId === id)) throw new Error('Deck editing cannot delete an owned limited card');
   for (const id of new Set(edited.deck.map(card => card.cardId))) if (edited.deck.filter(card => card.cardId === id).length > deckCopyLimit(registries, id, settings, run)) throw new Error('Deck editing exceeds the card copy limit');
   recordCollectedCards(run);
   for (const key of EDIT_STATE_KEYS) {

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:9e6045a38ee639f00a15e358b23e18a6ecb3409b09186c0e4191460505ed4788",
+      "hash": "sha256:d931bb87c9daf73ec425c9208dc3567fa461249485fc11c3b9351e675b074b65",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -34,7 +34,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics,retreatRuleFaces}.js",
-          "hash": "sha256:83b9ad869065569ed7db2153e4c15da89ece77548a0f4194633626a5b9002962"
+          "hash": "sha256:1862bd9fe6f4224c8a0ad48ecc31322eb739bcc6326dbd74f8f68e18f4b05c14"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -376,7 +376,7 @@
           "path": "engine/modules/progression/settings.schema.json",
           "id": "progression",
           "version": "1.0.0",
-          "hash": "sha256:7ba9f0c360cc887dcf6d2f4ba4d9d18480dfb2362d3d020889c008a16e9d6487"
+          "hash": "sha256:5d4e45bb490f5eaae2192109327da777fbc46d704d0067986dc9f1165e2e36f3"
         },
         {
           "path": "engine/modules/reactions/defaults.json",
@@ -706,7 +706,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:3d6f47ab1557896eae64fea9350091a53e427504a055857f54bbf7e51c1ed47a"
+          "hash": "sha256:ba51e19559e94b8d9d264b2c7f5675573b3924396f2417775428c5be8b431583"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -723,10 +723,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f"
+      "runtimeHash": "sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3"
     },
     "core": {
-      "hash": "sha256:9e6045a38ee639f00a15e358b23e18a6ecb3409b09186c0e4191460505ed4788",
+      "hash": "sha256:d931bb87c9daf73ec425c9208dc3567fa461249485fc11c3b9351e675b074b65",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -758,7 +758,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics,retreatRuleFaces}.js",
-          "hash": "sha256:83b9ad869065569ed7db2153e4c15da89ece77548a0f4194633626a5b9002962"
+          "hash": "sha256:1862bd9fe6f4224c8a0ad48ecc31322eb739bcc6326dbd74f8f68e18f4b05c14"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -1100,7 +1100,7 @@
           "path": "engine/modules/progression/settings.schema.json",
           "id": "progression",
           "version": "1.0.0",
-          "hash": "sha256:7ba9f0c360cc887dcf6d2f4ba4d9d18480dfb2362d3d020889c008a16e9d6487"
+          "hash": "sha256:5d4e45bb490f5eaae2192109327da777fbc46d704d0067986dc9f1165e2e36f3"
         },
         {
           "path": "engine/modules/reactions/defaults.json",
@@ -1430,7 +1430,7 @@
           "path": "games/ashenspire/packs/core/shops.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:3d6f47ab1557896eae64fea9350091a53e427504a055857f54bbf7e51c1ed47a"
+          "hash": "sha256:ba51e19559e94b8d9d264b2c7f5675573b3924396f2417775428c5be8b431583"
         },
         {
           "path": "games/ashenspire/packs/core/starterDeck.json",
@@ -1447,7 +1447,7 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f"
+      "runtimeHash": "sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3"
     }
   }
 }

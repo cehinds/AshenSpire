@@ -48,6 +48,7 @@ test('a second upgrade of the card in a later visit costs a stone; none with 0 s
   const next = fixture(0).run;
   const c2 = strike(next);
   c2.upgraded = true; c2.upgradeSteps = [{ k: 'authored' }];
+  c2.rank = 1; // a Rank 1 Strike has 2 slots (rank + 1)
   assert.throws(() => commitGameProfileRest(registries, next, 'upgradeCard', { instanceId: c2.instanceId }), /Smithing Stone/);
   assert.equal(upgradeCount(c2), 1);
   next.smithingStones = 1;

@@ -7,7 +7,7 @@ import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMec
 import { validateFixCoreRules } from '../src/model/fixCoreMechanics.js';
 
 test('shipped data holds the approved spell cost and flux numbers and the validator guards them', () => {
-  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 1, staminaSurcharge: 1, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, focusManaDiscount: 1 });
+  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 1, staminaSurcharge: 0, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, focusManaDiscount: 1 });
   assert.deepEqual(shipped.elementFlux, { version: 1, multiplier: 1.25 });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   const { spellCosts, elementFlux, ...saved } = shipped;
@@ -36,12 +36,14 @@ const SPELLS = profile.content.cards.filter(card => cardManaCategory(reg, reg.ca
 const PREPARED = { maneuver: 'casting', camp: 'spell' };
 const fightCache = new Map();
 // One fight per (hand, stance, rules) is reused for every card: pricing reads the fight and never changes it.
-function costsIn({ hand, stance, id, legacy = false }) {
-  const key = `${hand}|${stance ? 'prepared' : ''}|${legacy}`;
+// savedSurcharge: a fight saved before the owner ruling of 2026-11-23 keeps staminaSurcharge 1 in its own rules snapshot.
+function costsIn({ hand, stance, id, legacy = false, savedSurcharge = false }) {
+  const key = `${hand}|${stance ? 'prepared' : ''}|${legacy}|${savedSurcharge}`;
   if (!fightCache.has(key)) {
     // These tables isolate the spellCosts rule against its pre-gear price; live flux/payment fixtures below keep current equipment.
     const { combat } = fight({ legacy, registries: printedCostRegistries });
     if (legacy) { delete combat.fixCoreRules.spellCosts; delete combat.fixCoreRules.elementFlux; }
+    if (savedSurcharge) combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
     combat.loadout.sets.rightHand[0] = hand;
     if (stance) combat.player.combatStance = { ...stance };
     fightCache.set(key, combat);
@@ -52,35 +54,44 @@ function costsIn({ hand, stance, id, legacy = false }) {
   return { costs: cardPlayCosts(combat, card.instanceId), preview: previewCard(combat, card.instanceId), combat };
 }
 // The rule written out on top of the price the fight charged before the ruling (its stance cuts, such as a Graduate's same-stance Mana cut, are unchanged):
-// Mana +1; Stamina +1 unless a cantrip (or X-cost); Prepared -1 Stamina; a Focus item -1 Mana; floors at 0. `before` is the same card priced with the rule off.
-function expected(card, before, { prepared, focus }) {
+// Mana +1; Stamina +surcharge unless a cantrip (or X-cost): 0 since the owner ruling of 2026-11-23, 1 in a fight saved before it; Prepared -1 Stamina;
+// a Focus item -1 Mana; floors at 0. `before` is the same card priced with the rule off.
+function expected(card, before, { prepared, focus, surcharge }) {
   const cantrip = card.tags.includes('rank.cantrip'), x = card.cost === 'X', manaOnly = card.tags.includes('cost.manaOnly');
-  return { stamina: x ? null : Math.max(0, before.stamina + (cantrip || manaOnly ? 0 : 1) - (prepared ? 1 : 0)), mana: Math.max(0, before.mana + 1 - (focus ? 1 : 0)) };
+  return { stamina: x ? null : Math.max(0, before.stamina + (cantrip || manaOnly ? 0 : surcharge) - (prepared ? 1 : 0)), mana: Math.max(0, before.mana + 1 - (focus ? 1 : 0)) };
 }
 
 test('cost table over every shipped Core 2 spell and cantrip: base, Prepared, Focus, both (shown = paid)', () => {
   assert.ok(SPELLS.length >= 60, 'the table covers the whole shipped spell list');
   assert.ok(SPELLS.some(card => card.tags.includes('rank.cantrip')) && SPELLS.some(card => !card.tags.includes('rank.cantrip')));
-  for (const card of SPELLS) {
+  for (const [surcharge, savedSurcharge] of [[0, false], [1, true]]) for (const card of SPELLS) {
     for (const [name, hand, stance] of [['base', 'greatsword', null], ['Prepared', 'greatsword', PREPARED], ['Focus', 'boneSceptre', null], ['both', 'boneSceptre', PREPARED]]) {
       // Before the ruling: no Focus item, so nothing but the stance's own cuts is in this price.
       const before = costsIn({ hand: 'greatsword', stance, id: card.id, legacy: true }).costs;
-      const want = expected(card, before, { prepared: !!stance, focus: hand === 'boneSceptre' });
-      const { costs, preview } = costsIn({ hand, stance, id: card.id });
-      if (want.stamina !== null) assert.equal(costs.stamina, want.stamina, `${card.id} ${name} SP`);
-      assert.equal(costs.mana, want.mana, `${card.id} ${name} MP`);
-      assert.equal(preview.manaCost, costs.mana, `${card.id} ${name}: the preview shows the Mana paid`);
-      assert.equal(costs.energy, costs.stamina, `${card.id} ${name}: Stamina paid is the Action cost`);
+      const want = expected(card, before, { prepared: !!stance, focus: hand === 'boneSceptre', surcharge });
+      const { costs, preview } = costsIn({ hand, stance, id: card.id, savedSurcharge });
+      const label = `${card.id} ${name}${savedSurcharge ? ' (saved before 2026-11-23)' : ''}`;
+      if (want.stamina !== null) assert.equal(costs.stamina, want.stamina, `${label} SP`);
+      assert.equal(costs.mana, want.mana, `${label} MP`);
+      assert.equal(preview.manaCost, costs.mana, `${label}: the preview shows the Mana paid`);
+      assert.equal(costs.energy, costs.stamina, `${label}: Stamina paid is the Action cost`);
     }
   }
 });
 
-test('literal prices: a 1 SP / 1 MP spell is 2/2 plain, 1/1 in Prepared, 2/1 with a Focus, 1/0 with both; a cantrip (Mana Surge is one) is 1/1, 0/1, 1/0, 0/0', () => {
-  for (const [id, base, prepared, focus, both] of [['core.cometLance', [2, 2], [1, 1], [2, 1], [1, 0]], ['core.cantrip', [1, 2], [0, 1], [1, 1], [0, 0]] /* Arcane Spark prints 1 MP (owner 2026-11-22): +1 surcharge; the Graduate's Prepared cut floors at 0 (owner 2026-11-22), like Comet Lance */, ['core.manaSurge', [1, 1], [0, 1], [1, 0], [0, 0]]]) {
+test('literal prices: a 1 SP / 1 MP spell is 1/2 plain, 0/1 in Prepared, 1/1 with a Focus, 0/0 with both; a cantrip (Mana Surge is one) is 1/1, 0/1, 1/0, 0/0', () => {
+  for (const [id, base, prepared, focus, both] of [['core.cometLance', [1, 2], [0, 1], [1, 1], [0, 0]] /* no Stamina surcharge since the owner ruling of 2026-11-23 */, ['core.cantrip', [1, 2], [0, 1], [1, 1], [0, 0]] /* Arcane Spark prints 1 MP (owner 2026-11-22): +1 surcharge; the Graduate's Prepared cut floors at 0 (owner 2026-11-22), like Comet Lance */, ['core.manaSurge', [1, 1], [0, 1], [1, 0], [0, 0]]]) {
     for (const [hand, stance, want] of [['greatsword', null, base], ['greatsword', PREPARED, prepared], ['boneSceptre', null, focus], ['boneSceptre', PREPARED, both]]) {
       const { costs } = costsIn({ hand, stance, id });
       assert.deepEqual([costs.stamina, costs.mana], want, `${id} ${hand} ${stance ? 'Prepared' : 'no stance'}`);
     }
+  }
+});
+
+test('literal prices in a fight saved before 2026-11-23 (staminaSurcharge 1): a 1 SP / 1 MP spell is still 2/2 plain, 1/1 in Prepared, 2/1 with a Focus, 1/0 with both', () => {
+  for (const [hand, stance, want] of [['greatsword', null, [2, 2]], ['greatsword', PREPARED, [1, 1]], ['boneSceptre', null, [2, 1]], ['boneSceptre', PREPARED, [1, 0]]]) {
+    const { costs } = costsIn({ hand, stance, id: 'core.cometLance', savedSurcharge: true });
+    assert.deepEqual([costs.stamina, costs.mana], want, `core.cometLance ${hand} ${stance ? 'Prepared' : 'no stance'}`);
   }
 });
 

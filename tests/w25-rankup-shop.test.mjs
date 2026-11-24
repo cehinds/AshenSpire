@@ -1,4 +1,6 @@
 // W25-R: some shops stock "Rank up a card" at the Blacksmith's price (15% of shops); buying asks for the card.
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
+import { OwnCardRank } from '../src/model/cardRank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -17,7 +19,12 @@ import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const registries = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), {})), profile);
-const newRun = (seed = 9) => createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup-shop' });
+// Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
+const newRun = (seed = 9) => {
+  const run = createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup-shop' });
+  FillUpgradeSlots(run);
+  return run;
+};
 const shelf = (stock) => stock.options.findIndex((option) => option.kind === 'rankUps');
 
 function shopWithRankUp(run) {
@@ -47,8 +54,8 @@ test('the shelf costs the Blacksmith price and rides the saved stock: a reload n
   const run = newRun(21);
   const { shopId, stock } = shopWithRankUp(run);
   const at = shelf(stock);
-  assert.equal(stock.options[at].price, 120);
-  assert.equal(gameProfileShopPurchasePlan(registries, run, shopId, at).price, 120);
+  assert.equal(stock.options[at].price, 240);
+  assert.equal(gameProfileShopPurchasePlan(registries, run, shopId, at).price, 240);
   const again = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
   assert.equal(again.options.filter((option) => option.kind === 'rankUps').length, 1);
   // A stock saved before this service has no shelf and never grows one.
@@ -66,15 +73,15 @@ test('buying raises the chosen card, takes the cinders once, and stocks no repla
   const at = shelf(stock);
   run.cinders = 500;
   const card = RankUpCandidates(registries, run)[0];
-  const rank = InstanceRank(card), options = stock.options.length;
+  const rank = OwnCardRank(card), options = stock.options.length;
   const quote = gameProfileShopPurchasePlan(registries, run, shopId, at);
   assert.equal(quote.ok, true, quote.reason);
   assert.throws(() => purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), quote), /Choose a card/);
   assert.equal(run.cinders, 500, 'a refused purchase spends nothing');
   const receipt = purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), { ...quote, instanceId: card.instanceId });
-  assert.deepEqual([receipt.kind, receipt.price, receipt.rank], ['rankUps', 120, rank + 1]);
-  assert.equal(run.cinders, 380);
-  assert.equal(InstanceRank(RankUpCandidates(registries, run).find((row) => row.instanceId === card.instanceId)), rank + 1);
+  assert.deepEqual([receipt.kind, receipt.price, receipt.rank], ['rankUps', 240, rank + 1]);
+  assert.equal(run.cinders, 260);
+  assert.equal(OwnCardRank(RankUpCandidates(registries, run).find((row) => row.instanceId === card.instanceId)), rank + 1);
   const after = run.gameProfileRewardOffers[`shop:${shopId}`];
   assert.equal(after.options.length, options, 'nothing restocked');
   assert.ok(after.taken.includes(at));
@@ -110,4 +117,58 @@ test('a fresh stock with the rank-up shelf takes one more than a plain stock, so
   assert.equal(run.gameProfileRewardOffers[`shop:${shopId}`].takeCount, plainHere + 1);
   const again = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
   assert.equal(again.takeCount, plainHere + 1, 'a reload does not raise it again');
+});
+
+test('the shelf price is the Rank 1 price; a chosen card pays the rank-up price times the rank it reaches (owner 2026-11-23)', async () => {
+  const { RankUpPrice } = await import('../src/model/rankUpService.js');
+  assert.deepEqual([1, 2, 5].map((rank) => RankUpPrice(240, rank)), [240, 480, 1200]);
+  const run = newRun(21);
+  const { shopId, stock } = shopWithRankUp(run);
+  const at = shelf(stock);
+  run.cinders = 5000;
+  const card = RankUpCandidates(registries, run)[0];
+  card.rank = 2;
+  FillUpgradeSlots(run, [card]);
+  const shelfQuote = gameProfileShopPurchasePlan(registries, run, shopId, at);
+  assert.equal(shelfQuote.price, 240);
+  const picked = gameProfileShopPurchasePlan(registries, run, shopId, at, { instanceId: card.instanceId });
+  assert.equal(picked.price, 720, 'Rank 2 to Rank 3: three times');
+  assert.throws(() => purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), { ...shelfQuote, instanceId: card.instanceId }), /changed/);
+  const receipt = purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), { ...shelfQuote, instanceId: card.instanceId, price: picked.price });
+  assert.deepEqual([receipt.price, run.cinders], [720, 5000 - 720]);
+});
+
+test('the rank-up pick names each card its own price', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  await withKitDom(async () => {
+    const { RankUpCardRows } = await import('../src/ui/components/rankUpCardModal.js');
+    const run = newRun(21);
+    const [plain, ranked] = RankUpCandidates(registries, run);
+    ranked.rank = 1;
+    FillUpgradeSlots(run, [ranked]);
+    run.cinders = 5000;
+    const rows = RankUpCardRows(registries, run, 240);
+    assert.match(rows.find((r) => r.id === plain.instanceId).text, /240 cinders/);
+    assert.match(rows.find((r) => r.id === ranked.instanceId).text, /480 cinders/);
+  });
+});
+
+// Review fix (2026-11-23): a card whose rank-up price is past the purse is disabled before the pick, with the shop's line.
+test('the rank-up pick disables a card the player cannot afford, with "Not enough cinders."', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  await withKitDom(async () => {
+    const { RankUpCardRows } = await import('../src/ui/components/rankUpCardModal.js');
+    const run = newRun(21);
+    const [plain, ranked] = RankUpCandidates(registries, run);
+    ranked.rank = 1;
+    FillUpgradeSlots(run, [plain, ranked]);
+    run.cinders = 300; // Rank 1 costs 240, Rank 2 costs 480
+    const rows = RankUpCardRows(registries, run, 240);
+    const row = (card) => rows.find((r) => r.id === card.instanceId);
+    assert.deepEqual([row(plain).disabled, row(ranked).disabled], [false, true]);
+    assert.equal(row(ranked).text, 'Not enough cinders.');
+    assert.match(row(plain).text, /240 cinders/);
+    run.cinders = 480;
+    assert.equal(RankUpCardRows(registries, run, 240).find((r) => r.id === ranked.instanceId).disabled, false, 'exactly enough is enough');
+  });
 });

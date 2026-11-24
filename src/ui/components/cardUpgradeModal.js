@@ -431,7 +431,7 @@ export function MountCardUpgradeModal(
         }
     }
 
-    // The upgrade and its price are two chips (owner, 2026-11-17), so on a phone the price wraps under the step
+    // The rank, the upgrade and its price are separate chips (owner, 2026-11-17), so on a phone the price wraps under the step
     // instead of one long chip being cut off. A rank-up names its own step and is free, so it has one chip.
     function readRowChips(row)
     {
@@ -447,7 +447,9 @@ export function MountCardUpgradeModal(
             from: row.levelFrom,
             to: row.levelTo,
         });
+        // The card's rank and upgrades lead (row.chipLabel: "Basic · 0 upgrades", "Rank 1 · 1 upgrade").
         return [
+            row.chipLabel,
             upgradeStatus,
             row.costLabel,
         ].filter(Boolean);
