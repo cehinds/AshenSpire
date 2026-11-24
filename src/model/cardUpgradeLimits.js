@@ -194,7 +194,8 @@ export function nextUpgradeStep(run, instance, base, registries) {
  * the card is at the 10-upgrade cap or maxed (no step is eligible any more).
  */
 export function upgradeCost(run, instance, def, registries) {
-  if (upgradeCount(instance) + 1 > MAX_CARD_UPGRADES) return null;
+  // The cap counts slot-using upgrades only, like the slots check: a rank-up bonus step is a gift (paidUpgradeCount).
+  if (paidUpgradeCount(instance) + 1 > MAX_CARD_UPGRADES) return null;
   if (def && instance && nextUpgradeStep(run, instance, def, registries) === null) return null;
   // A rank-up bonus step does not use a free upgrade (paidUpgradeCount).
   return paidUpgradeCount(instance) + 1 <= freeAllowance(instance, def) ? 0 : 1;
@@ -215,12 +216,14 @@ export function canUpgrade(registries, run, instance) {
   if (instance.sourceArmamentId || instance.grantedBy) return refuse('armament', `${def.name} is upgraded with its armament.`);
   const slots = UpgradeSlots(run, instance);
   // A rank-up bonus step is a gift and uses no slot, so a rank-up leaves one slot free (owner, 2026-11-23).
-  if (paidUpgradeCount(instance) + 1 > slots && n <= MAX_CARD_UPGRADES) {
+  // The 10 cap counts the same slot-using upgrades, so bonus steps never hold a card short of its slots.
+  const paid = paidUpgradeCount(instance) + 1;
+  if (paid > slots && paid <= MAX_CARD_UPGRADES) {
     return refuse('slots', `${def.name} has ${slots} upgrade ${slots === 1 ? 'slot' : 'slots'} (rank + 1); raise its rank for more.`);
   }
   const cost = upgradeCost(run, instance, def, registries);
   if (cost === null) {
-    return n > MAX_CARD_UPGRADES ? refuse('cap', `${def.name} is already at ${MAX_CARD_UPGRADES} upgrades.`)
+    return paid > MAX_CARD_UPGRADES ? refuse('cap', `${def.name} is already at ${MAX_CARD_UPGRADES} upgrades.`)
       : refuse('maxed', `${def.name} is fully upgraded.`);
   }
   if (cost > stonesOf(run)) return refuse('stones', `Needs ${cost} Smithing Stone; you have ${stonesOf(run)}.`, cost);

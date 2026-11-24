@@ -139,3 +139,41 @@ test('a profile with no rankUp data, or a run that cannot rank cards, offers not
   assert.deepEqual(RankUpCandidates(registries, noRanks), []);
   assert.equal(CombatRankUpChance(noRanks, 'elite'), 0);
 });
+
+// Review fix (2026-11-23): rank-up bonus steps use no slot, so they do not count toward the 10-upgrade cap either.
+// Five skill rank-ups leave a Rank 5 card with 5 bonus steps; it can still fill its 6 slots and rank up again.
+test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (bonus steps skip the 10 cap)', async () => {
+  const { awardSkillXp, xpToNext, coreCardRanks, raiseCardRank } = await import('../src/model/skills.js');
+  const { rankUpBonusOptions } = await import('../src/model/rankUpBonus.js');
+  const { planCardUpgrade, commitCardUpgrade } = await import('../src/model/cardUpgradeService.js');
+  const { canUpgrade } = await import('../src/model/cardUpgradeLimits.js');
+  const { paidUpgradeCount, upgradeCount, upgradeStepsProblems } = await import('../src/model/cardUpgrade.js');
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'w25-cap', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  run.smithingStones = 99;
+  const xp = Array.from({ length: 8 }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0);
+  awardSkillXp(registries, run, 'item:blade', xp, { queueRewards: false, queueRankUps: coreCardRanks(run) });
+  const strike = run.deck.find((c) => c.cardId === 'core.strike');
+  const fill = () => {
+    while (paidUpgradeCount(strike) < UpgradeSlots(run, strike)) {
+      const quote = planCardUpgrade(run, registries, strike.instanceId);
+      assert.equal(quote.ok, true, quote.reason);
+      commitCardUpgrade(run, registries, quote);
+    }
+  };
+  const rankUp = () => {
+    const options = rankUpBonusOptions(registries, run, strike);
+    assert.ok(raiseCardRank(registries, run, 'item:blade', strike.instanceId, options[0]?.step ?? null), 'the rank-up lands');
+  };
+  for (let i = 0; i < 5; i += 1) { fill(); rankUp(); }
+  assert.equal(strike.rank, 5);
+  assert.equal(UpgradeSlots(run, strike), 6);
+  assert.equal(paidUpgradeCount(strike), 5);
+  assert.equal(upgradeCount(strike), 10, 'five paid steps and five bonus steps');
+  assert.equal(canUpgrade(registries, run, strike).ok, true, 'the sixth slot can still be bought');
+  fill();
+  assert.equal(paidUpgradeCount(strike), 6);
+  assert.equal(RankUpBlock(run, strike), '');
+  rankUp();
+  assert.equal(strike.rank, 6);
+  assert.deepEqual(upgradeStepsProblems(strike, 'card'), [], 'a save holding the card stays valid');
+});
