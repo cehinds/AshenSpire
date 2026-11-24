@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ScoreCard, CardCategories, CardKind, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
+import { BaseFace, ScoreCard, CardCategories, CardKind, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, CardNameParts, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
 import { scoring } from '../src/content/generated/scoring.js';
 import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
 
@@ -122,4 +122,46 @@ test('combat power: category weights add flat or scale the positive score, and d
   const scaled = ScoreCard(face, withWeights({ [type]: { weight: 2, multiplier: true } }));
   assert.equal(scaled.parts[`category:${type}`], base.positive);
   assert.equal(ScoreCard(face, withWeights({ [type]: { weight: 1, multiplier: true } })).raw, base.raw);
+});
+
+// Owner 2026-11-24: <rarity> <second effect> <element (magic only)> <base> <rank numeral><upgrade mark>.
+const nameFace = (o) => Object.assign(BaseFace(), o);
+const martialHit = (o = {}) => nameFace({ sp: 1, dmg: 3, tags: ['camp:physical', 'maneuver:attack', 'range:melee'], ...o });
+const magicHit = (tags, o = {}) => nameFace({ camp: 'spell', sp: 0, mp: 1, dmg: 3, tags: ['camp:spell', ...tags], ...o });
+
+test('card names: a common martial melee hit with only damage is "Strike"', () => {
+  assert.equal(CardName(martialHit()), 'Strike');
+  assert.equal(CardName(martialHit(), 1), 'Strike+');
+  assert.equal(CardName(martialHit(), 2), 'Strike+2');
+});
+
+test('card names: rarity word and second-effect word', () => {
+  const searing = martialHit({ rarity: 'uncommon', sp: 2, statuses: [['burn', 1, 'enemy']] });
+  assert.equal(CardName(searing), 'Improved Searing Strike');
+  const greater = martialHit({ rarity: 'rare', dmg: 12, statuses: [['burn', 2, 'enemy']] });
+  assert.equal(CardNameParts(greater).rank, 2);
+  assert.equal(CardName(greater, 1), 'Greater Searing Strike II+');
+  assert.equal(CardName(greater, 2), 'Greater Searing Strike II+2');
+});
+
+test('card names: range picks the base word, and the base word names its range', () => {
+  assert.equal(CardName(martialHit({ tags: ['camp:physical', 'range:reach'] })), 'Shot');
+  assert.equal(CardName(martialHit({ tags: ['camp:physical'] })), 'Strike'); // martial defaults to melee
+  assert.equal(CardName(magicHit(['school:fire', 'tradition:arcane'])), 'Flame Bolt'); // magic defaults to reach
+  assert.equal(CardName(magicHit(['range:melee', 'tradition:arcane'])), 'Arcane Touch');
+  assert.equal(CardName(magicHit(['targeting:area', 'school:frost'])), 'Frost Wave');
+});
+
+test('card names: magic always has an element word, from school, damage or tradition', () => {
+  assert.equal(CardName(magicHit(['damage:fire'])), 'Flame Bolt');
+  assert.equal(CardName(magicHit(['tradition:divine'])), 'Divine Bolt');
+  assert.equal(CardName(magicHit(['tradition:arcane', 'tradition:divine'])), 'Arcane Bolt');
+  assert.equal(CardName(magicHit([])), 'Arcane Bolt');
+  // A hybrid hit (martial with a magic share) takes the magic words.
+  assert.match(CardName(martialHit({ magicShare: 0.5, tags: ['camp:physical', 'range:melee', 'damage:frost'] })), /^Frost Touch( [IVX]+)?$/);
+});
+
+test('card names: a skill names its top effect; a heal-only divine rite is "Mending Divine Rite"', () => {
+  const rite = nameFace({ camp: 'spell', type: 'skill', sp: 0, mp: 1, heal: 3, tags: ['camp:spell', 'tradition:divine'] });
+  assert.match(CardName(rite), /^Mending Divine Rite( [IVX]+)?$/);
 });

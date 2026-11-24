@@ -303,7 +303,8 @@ export function CardNameParts(c, ups = 0, scoring = GetActiveScoring()) {
   }
   // Second-effect word: the highest-scoring part the base word does not already name. Attack bases name damage; a skill base
   // names nothing, so its top effect is the word; maneuvers follow the DUP table.
-  const named = new Set(!man && isAttack ? ['damage'] : []);
+  // A range-built base (Strike, Shot, Touch, Bolt) also names its range tag.
+  const named = new Set(!man && isAttack ? ['damage', ...(area ? [] : Object.keys(G.range))] : []);
   const DUP = { block: ['maneuver:defend', 'maneuver:counter'], counter: ['maneuver:counter'], evade: ['maneuver:evade'], 'maneuver:smash': ['maneuver:smash'], 'maneuver:sweep': ['maneuver:sweep'] };
   const top = Object.entries(s.parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).sort((x, y) => y[1] - x[1]);
   const dmgV = s.parts.damage || 0;
