@@ -47,6 +47,7 @@ bow,card,Bow,7FA8C9,➶,,,,,A bow draw and arrow release.
 retreat,card,Retreat,7FA8C9,↩,,,,,"A weapon with this tag puts an Ethereal, Exhaust Retreat card in your hand each turn. Retreat ends your Advance and sends front-row foes to the back row."
 pullRetreat,card,Pull,7FA8C9,↪,,,,,"Removes a Retreat stack from its target; with none left the target comes forward to the front row."
 guard,card,Guard,7FA8C9,🛡,,,,,"Bracing, blocking, holding the line."
+bonusPoise,card,Bonus Poise,A066E0,◈,,,,,"Adds temporary Bonus Poise stacks (+5 Poise per stack, purple on the Poise bar), separate from Ward."
 blood,card,Blood,8A1A1A,🩸,,,,,"Bleed, and the letting of it."
 gorefire,card,Gorefire,C9502E,🔥,,,,,The blood-and-flame stance.
 starstone,card,Starstone,7FA8C9,✦,,,,,Astral sorcery: charges and combos.

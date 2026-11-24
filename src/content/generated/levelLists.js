@@ -108,7 +108,6 @@ export const levelLists = {
    "core.mendingTouch",
    "core.mindLance",
    "core.mirrorGuard",
-   "core.moteShield",
    "core.openArchive",
    "core.pebbleThrow",
    "core.pommelStrike",
