@@ -37,6 +37,15 @@ Status: designed, not started. Starts after `feature/ProceduralCardNames` lands 
   2-3 effects, statuses, schools and SP/MP costs while every card still lands exactly on its target
   CP (ScoreCard). Names come from the convention name (CardName).
 
+## Acts, shops and rewards (owner addition, 2026-11-24)
+
+- Per act: which ranks and cards can appear (today `scoring.levelLists.tiers` minRank/maxRank and
+  `src/content/generated/levelLists.js`), editable per act.
+- Per source (card rewards, shop shelves, events, elites/bosses): rank odds and rarity odds per act,
+  and any card pinned in or out. Find the owner files (balanceRewards.json rarityWeights, shop
+  pricing/stock in games/ashenspire/packs/core/shops.json, level lists) before writing.
+- Show a small table per act: rank x source with the odds, and a preview roll of a few offers.
+
 ## Deck editor modal (first cut)
 
 - Per class tab: starting deck list with copy steppers; Regenerate starting deck from rules
