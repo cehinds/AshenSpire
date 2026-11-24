@@ -193,11 +193,10 @@ function measureFinalValues(def) {
     else if (e.op === 'block' || e.op === 'ward') measured.authoredBlk += amt;
   }
   try {
+    // SP and MP stay the costs typed in Card Basics. The reference fight reprices an edited card (the multi-hit
+    // SP floor turned Feint's 0 SP into 3; a stance cut kept Brace at 0 SP whatever was typed), so the score
+    // charged for a cost the chip did not show. Every shipped Core card measures its authored cost anyway.
     const prev = previewCard(combat, probeId, enemy.id);
-    if (prev?.costs) {
-      if (Number.isFinite(prev.costs.stamina)) measured.sp = prev.costs.stamina;
-      if (Number.isFinite(prev.costs.mana)) measured.mp = prev.costs.mana;
-    }
     if (prev && Array.isArray(prev.values) && prev.values.length) {
       measured.usedPreview = true;
       for (const v of prev.values) {
