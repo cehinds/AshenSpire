@@ -177,3 +177,16 @@ test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (b
   assert.equal(strike.rank, 6);
   assert.deepEqual(upgradeStepsProblems(strike, 'card'), [], 'a save holding the card stays valid');
 });
+
+// Review fix (2026-11-23): a missing setting counts as on, so saved runs get the rule too; the help text says so.
+test('the full-upgrade rule help text says it is on by default, not that it waits for new runs', async () => {
+  const { uiStrings } = await import('../src/content/generated/uiStrings.js');
+  const row = uiStrings.find((r) => r.id === 'gameProfile.settings.rankUpNeedsFull');
+  assert.ok(row);
+  const text = JSON.stringify(row);
+  assert.doesNotMatch(text, /Applies to new runs/);
+  assert.match(text, /On by default\./);
+  const saved = newRun();
+  delete saved.gameProfile.modules.progression.rankUpNeedsFullUpgrades;
+  assert.equal(RankUpNeedsFullUpgrades(saved), true, 'a saved run without the setting gets the rule');
+});

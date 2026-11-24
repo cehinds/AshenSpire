@@ -1881,7 +1881,7 @@ gameProfile.settings.xpPolicy,,Class and used weapon XP only. Rates apply to new
 gameProfile.settings.xpBounds,,XP multiplier must be between 0 and 10.,,
 gameProfile.settings.classXpMultiplier,,Class XP multiplier,,
 gameProfile.settings.weaponXpMultiplier,,Used weapon XP multiplier,,
-gameProfile.settings.rankUpNeedsFull,,Rank-up needs a fully upgraded card,"A card ranks up only once all its upgrade slots are used. Applies to new runs.",
+gameProfile.settings.rankUpNeedsFull,,Rank-up needs a fully upgraded card,"A card ranks up only once all its upgrade slots are used. On by default.",
 creation.startingResources,,Starting resources,,
 card.artPlaceholder,,Card,,
 
