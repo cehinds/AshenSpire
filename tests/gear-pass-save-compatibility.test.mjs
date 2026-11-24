@@ -23,6 +23,9 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/comba
 function world(enabled) {
   const snapshot = structuredClone(resolveGameProfile('default'));
   if (!enabled) delete snapshot.modules.gear.typeEffectsVersion;
+  // The Blacksmith oracle below was captured with a rack of six; Core's rack size became a [4, 6] range (owner,
+  // 2026-11-20), so this snapshot keeps the fixed six (and every art) the oracle measured.
+  if (snapshot.content?.shops?.blacksmith) { snapshot.content.shops.blacksmith.armamentStock = 6; delete snapshot.content.shops.blacksmith.weaponArtStock; }
   const { hash: _hash, ...payload } = snapshot;
   snapshot.hash = 'sha256:' + createHash('sha256').update(canonicalGameJSON(payload)).digest('hex');
   const profile = resolveGameProfile(snapshot);
@@ -100,7 +103,8 @@ test('an old profile future shop offer matches Dev items and RNG, and cached off
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 511 }), rng = createRng(41);
   const offer = gameProfileShopStock(registries, run, rng, { shopId: 'old-smith' });
-  assert.deepEqual(offer.options.map(row => row.id), ['shortbow', 'dagger', 'straightSword', 'progression-whisperglass-die', 'sacrificialKnife', 'crackedLantern', 'base.modify-card-stance', 'base.weak', 'base.bind', 'poiseBreaker', 'greatswordSunderingHew', 'core.reaverSpecial', 'wondrousDraught', 'blightCoating', 'flaskOfFerocity', 'wayfarerPlate', 'nightweave', 'riteVestments']);
+  // Shop banding (owner ruling, 2026-11-22): shop shelves draw from the act's rank band like rewards, so the weapon, armour and relic shelves differ from the Dev oracle's; the card shelf, the draw counters and the cached-offer rule are unchanged.
+  assert.deepEqual(offer.options.map(row => row.id), ['buckler', 'straightSword', 'kiteShield', 'progression-whisperglass-die', 'curedHide', 'sacrificialKnife', 'base.modify-card-stance', 'base.weak', 'base.bind', 'poiseBreaker', 'greatswordSunderingHew', 'core.reaverSpecial', 'wondrousDraught', 'blightCoating', 'flaskOfFerocity', 'bastion', 'wayfarerPlate', 'riteVestments']);
   assert.equal(rng.getCounters().shop, 21);
   assert.equal(Object.values(rng.getCounters()).reduce((sum, n) => sum + n, 0), 21);
   const before = rng.getCounters();
@@ -112,7 +116,8 @@ test('pre-type profiles keep Dev future armament and Blacksmith offers without n
   // Independent oracle: Dev 6727a25530050d63aaa3d960a0d8e3d1855e9fc4, seed511 / offer RNG41: its Codex-expanded catalog with legacy gear rules.
   const { registries, run } = world(false), rng = createRng(41);
   const offer = GameProfileArmamentOffer(registries, run, rng, { offerId: 'old-boss', pool: 'boss' });
-  assert.deepEqual(offer.options, [{ kind: 'weapons', id: 'kiteShield' }, { kind: 'armor', id: 'riteVestments' }]);
+  // Level lists (owner, 2026-11-21): the offer draws from the act's rank band, so the candidate set (and the same RNG's weapon pick) differs from the Dev oracle's: kiteShield -> halberd. The armour pick and the draw counter are unchanged.
+  assert.deepEqual(offer.options, [{ kind: 'weapons', id: 'halberd' }, { kind: 'armor', id: 'riteVestments' }]);
   assert.equal(rng.getCounters().cardRewards, 9);
   const other = world(false), smithRng = createRng(41);
   const smith = coreBlacksmithShelves(other.registries, smithRng, other.run);

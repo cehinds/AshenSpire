@@ -1,4 +1,5 @@
 // Group equivalent rendered versions while retaining the original card references.
+import { OwnCardRank } from './cardRank.js';
 function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
   if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])]));
@@ -7,7 +8,7 @@ function stable(value) {
 export function cardVariantKey(card) {
   const { instanceId, equipmentAttackSlotId, ...variant } = card;
   variant.upgraded = !!variant.upgraded;
-  variant.rank = Number.isInteger(variant.rank) ? variant.rank : 1;
+  variant.rank = OwnCardRank(variant); // 0 unranked: a Rank 1 copy is its own variant (owner, 2026-11-23)
   if (!variant.mods?.length) delete variant.mods;
   return JSON.stringify(stable(variant));
 }

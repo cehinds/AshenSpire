@@ -14,7 +14,7 @@ test('the battlefield grid switch is no longer a setting, and nothing promotes i
     assert.ok(!display.some(r=>r.key===key||r.key==='gameConfig.presentation.movementEnabled'));
   }
   assert.ok(!(key in SETTINGS_DEFAULTS.values));
-  assert.equal(presentationConfig().showFormationGrid,false);
+  assert.equal(presentationConfig().showFormationGrid,false, "the battlefield grid defaults off (owner, 2026-11-19)");
 });
 
 test('the battlefield grid defaults off and preserves an explicit saved preference',()=>{

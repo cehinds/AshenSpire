@@ -30,20 +30,24 @@ test('an attr step changes no play of the card but records its run bonus', () =>
   assert.deepEqual(out.effects, applyUpgradeSteps(strike, [{ k: 'authored' }]).effects);
 });
 
-test('the roll offers it on spells only, and rarely', () => {
+test('a random roll never offers it; a card whose upgradeMenu names it is offered it, on spells only', () => {
   const spells = registries.cards.ids().map(id => registries.cards.get(id)).filter(d => (d.tags || []).includes('camp:spell') && (d.effects || []).some(e => e.op === 'damage')).slice(0, 3);
   const strike = registries.cards.get('core.strike');
-  let spellAttr = 0, spellBoost = 0, strikeAttr = 0;
-  for (let seed = 0; seed < 600; seed += 1) {
-    for (const def of spells) for (const step of rollUpgradeOptions(def, [], 1, upgradeStepRng(seed, `i${seed}`, 1), {}, 1)) {
-      if (step.k === 'attr') { spellAttr += 1; assert.ok(['intelligence', 'wisdom'].includes(step.stat)); assert.equal(step.n, 1); }
-      if (step.k === 'fx' && step.fx === 'boost') spellBoost += 1;
+  // Owner, 2026-11-20: no dud upgrades. `attr` is in DUD_KINDS, so only an authored upgradeMenu can name it.
+  let plainAttr = 0, menuSpellAttr = 0, menuStrikeAttr = 0;
+  for (const idx of [0, 4, 8, 9, 10]) for (let seed = 0; seed < 300; seed += 1) {
+    for (const def of spells) {
+      for (const step of rollUpgradeOptions(def, [], idx, upgradeStepRng(seed, `i${seed}`, idx), {}, 3)) if (step.k === 'attr') plainAttr += 1;
+      for (const step of rollUpgradeOptions({ ...def, upgradeMenu: ['attr'] }, [], idx, upgradeStepRng(seed, `i${seed}`, idx), {}, 1)) {
+        if (step.k === 'attr') { menuSpellAttr += 1; assert.ok(['intelligence', 'wisdom'].includes(step.stat)); assert.equal(step.n, 1); }
+      }
     }
-    for (const step of rollUpgradeOptions(strike, [], 1, upgradeStepRng(seed, `i${seed}`, 1), {}, 3)) if (step.k === 'attr') strikeAttr += 1;
+    for (const step of rollUpgradeOptions(strike, [], idx, upgradeStepRng(seed, `i${seed}`, idx), {}, 3)) if (step.k === 'attr') plainAttr += 1;
+    for (const step of rollUpgradeOptions({ ...strike, upgradeMenu: ['attr'] }, [], idx, upgradeStepRng(seed, `i${seed}`, idx), {}, 3)) if (step.k === 'attr') menuStrikeAttr += 1;
   }
-  assert.ok(spellAttr > 0, 'offered on a spell');
-  assert.equal(strikeAttr, 0, 'never on a physical attack');
-  assert.ok(spellAttr < spellBoost, `a run bonus (${spellAttr}) is rarer than a boost (${spellBoost})`);
+  assert.equal(plainAttr, 0, 'a random roll never offers the run attribute');
+  assert.ok(menuSpellAttr > 0, 'a spell whose upgradeMenu names it is offered it');
+  assert.equal(menuStrikeAttr, 0, 'never on a physical attack, even when its menu names it');
 });
 
 test('the run-long +1 INT applies to the effective attributes, the ratings, the sheet and a fight; it leaves with the card', () => {

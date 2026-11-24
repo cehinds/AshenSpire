@@ -22,7 +22,7 @@ const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBund
 
 function smithRun(registries, stones, seed = 31, cinders = 2000) {
   const run = createRunState({ seed, classId: 'reaver', registries, runId: 'bs-cards' });
-  run.itemUpgradeLevels = { ...run.itemUpgradeLevels, 'armament/greatsword': 9 }; // all ten card upgrade slots (rank + weapon level + 1)
+  for (const card of run.deck) card.rank = 3; // four card upgrade slots (rank + 1)
   run.smithingStones = stones;
   run.cinders = cinders;
   run.seenEvents = [];
@@ -39,22 +39,22 @@ const upgrade = (run, instanceId) => {
 test('Core Blacksmith: any deck card upgrades for cinders and no stones, even past the free allowance', () => {
   const run = smithRun(coreOut, 0);
   const card = strikes(run)[0];
-  // Owner, 2026-11-17: a Blacksmith card upgrade costs 50 + 35 per earlier upgrade + 25 per rank above 1 (Strike: rank 1).
+  // Owner, 2026-11-17, tripled 2026-11-23: a Blacksmith card upgrade costs 150 + 105 per earlier upgrade + 75 per rank above 1 (these Strikes: rank 3).
   const first = upgrade(run, card.instanceId);
-  assert.deepEqual([first.n, first.spentStones, run.smithingStones, run.cinders], [1, 0, 0, 1950]);
+  assert.deepEqual([first.n, first.spentStones, run.smithingStones, run.cinders], [1, 0, 0, 1700]);
   // A rest site charges 1 stone for this second upgrade; the Blacksmith takes one stone off, so 0.
   const second = upgrade(run, card.instanceId);
-  assert.deepEqual([second.n, second.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 1865]);
+  assert.deepEqual([second.n, second.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 1295]);
   assert.equal(upgradeCount(card), 2);
   assert.deepEqual(card.upgradeSteps, [first.step, second.step]);
 });
 
 test('Core Blacksmith: no per-visit limit; the player upgrades while they can pay cinders, and a short purse is refused', () => {
-  const run = smithRun(coreOut, 3, 31, 390);
+  const run = smithRun(coreOut, 3, 31, 1920);
   const [a, b] = strikes(run); // the Reaver starts with two Strikes now
   for (const card of [a, b, a, b, a]) upgrade(run, card.instanceId);
   assert.equal(run.smithingStones, 3, 'the stones are never touched');
-  assert.equal(run.cinders, 0, 'five upgrades at 50, 50, 85, 85 and 120 cinders (50 + 35 per earlier upgrade)');
+  assert.equal(run.cinders, 0, 'five upgrades at 300, 300, 405, 405 and 510 cinders (150 + 105 per earlier upgrade + 2 x 75 for rank 3)');
   assert.equal(upgradeCount(a), 3);
   const refused = upgradeArtPlan(coreOut, run, a.instanceId);
   assert.equal(refused.ok, false);
@@ -144,4 +144,35 @@ test('Core Blacksmith: a sideboard card plans and commits an upgrade, and a side
   assert.equal(run.deck.length, 0);
   assert.ok(upgradeableArts(coreOut, run).length > 0);
   assert.ok(serviceCandidates(coreOut, run, "upgradeArt").length > 0, "the Blacksmith button counts sideboard-only candidates");
+});
+
+// Review fix (2026-11-23): the 20% rank roll on Blacksmith work lands only when the full-upgrade rank-up rule allows it
+// with the new step on; otherwise the card keeps its rank.
+test('Core Blacksmith: the rank roll lands only when the card is fully upgraded after the work', async () => {
+  const { UpgradeGrantsRank } = await import('../src/model/blacksmith.js');
+  const { InstanceRank } = await import('../src/model/rankUpService.js');
+  const landing = (run, card) => {
+    const base = card.instanceId;
+    for (let i = 0; i < 500; i += 1) {
+      card.instanceId = `${base}~${i}`;
+      if (UpgradeGrantsRank(run, card)) return;
+    }
+    assert.fail('no landing roll found');
+  };
+  const blocked = smithRun(coreOut, 0, 31, 9000);
+  const held = strikes(blocked)[0];
+  held.rank = 2; // three slots: one upgrade leaves it short of full
+  landing(blocked, held);
+  const first = upgrade(blocked, held.instanceId);
+  assert.equal(first.rankedUp, undefined);
+  assert.equal(InstanceRank(held), 2, 'a Rank 2 card with 1 of 3 slots used stays Rank 2');
+
+  const full = smithRun(coreOut, 0, 31, 9000);
+  const card = strikes(full)[0];
+  card.rank = 1; // two slots
+  upgrade(full, card.instanceId);
+  landing(full, card);
+  const last = upgrade(full, card.instanceId);
+  assert.equal(last.rankedUp, 2, 'the step that fills the last slot may raise the rank');
+  assert.equal(InstanceRank(card), 2);
 });

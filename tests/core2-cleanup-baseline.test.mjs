@@ -16,9 +16,49 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-24 (Ward as a health buffer: fixCoreMechanics.ward hpPerStack 5, routing "hpBuffer"): 34 profile, runtime, snapshot and save hash leaves moved (27 current + 7 historical snapshot/save); every event, RNG, receipt, continuation and historical profile is unchanged.
+// Recaptured 2026-11-24 on merging dev (#2964 spell Stamina surcharge) into the upgrade economy rebalance (#2963): exactly 24 profile, snapshot and save hash leaves moved from dev's capture; events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-23 for shops.json rankedOfferChancePct (owner: shops sometimes stock ranked cards): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
+// Recaptured 2026-11-23 for the progression schema's rankUpNeedsFullUpgrades row (module schema joins the profile): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
+// Recaptured 2026-11-23 again for shops.json rankPricePct (owner: +25% buy price per visible card rank): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
+// Recaptured 2026-11-23 for the upgrade economy rebalance (owner: upgrade prices x3, service prices x2 in Core's shops.json): exactly 24 profile, snapshot and save hash leaves moved; events, RNG, receipts, continuations and runtime hashes are unchanged.
+// Recaptured 2026-11-23 (spell Stamina surcharge dropped, owner ruling: spellCosts.staminaSurcharge 0 moves the runtime artifact): 27 profile, runtime, snapshot and save hash leaves moved (15 snapshots, 3 each of profile hash, runtimeHash, stored and loaded); every event, RNG, receipt and continuation value is unchanged (these fights drop spellCosts, as before).
+// Recaptured 2026-11-22 (no cost minimums, owner ruling: the cost.manaOnly validator rule is retired, so the runtime artifact moves again): 27 profile, runtime, snapshot and save hash leaves moved (15 snapshots, 3 each of profile hash, runtimeHash, stored and loaded); every event, RNG, receipt and continuation value is unchanged.
+// Recaptured 2026-11-22 for the Magic Adept zero Mana floor (owner ruling; stance.playerMinimumCost): 27 profile, runtime, snapshot and save hash leaves moved; every event, RNG, receipt and continuation value is unchanged.
+// Recaptured 2026-11-21 for the score-engine starter decks and card retunes (owner rulings A-F): the Reaver starter deck changed, so the three current-profile scenarios' shuffle counters, events, RNG hashes and continuations moved with it (the preceding 521250 capture's behaviour fields were moved the same way); every profile, snapshot and save hash moved with the card data; the historical scenario moved only in snapshot, stored and loaded.
+// Recaptured 2026-11-21 for reward uniqueness and card copy (#2928: reward-ranks.skipOwned, shops cardCopy, Scribe's Mirror): exactly 24 leaves moved,
+// all profile, snapshot and save hashes of the three current-profile scenarios; events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-20 on merging dev again (card changes, #2902): the runtime hash is unchanged (fbf370e6...); only the profile, snapshot and save hash leaves moved (card data joins the profile); every events, RNG, receipt and continuation hash is unchanged.
+// Recaptured 2026-11-20 on merging dev (0.7.4.242, spell traditions) into the Retreat reach rules and drawbacks: only profile, runtime, snapshot and save hash leaves moved
+// (the new retreatRulesVersion and spellRewardPolicyVersion module defaults and the Retreat card faces join the profile); every events, RNG, receipt and continuation hash is unchanged (the tradition-policy test below proves it).
+// Recaptured 2026-11-19 for saved Retreat opt-in after Dev 213: exactly 27 current profile/runtime/snapshot/save hashes moved.
+// Native and production agree; the complete historical scenario, events, receipts, continuations and RNG values are unchanged.
+// Recaptured 2026-11-20 for effects.statusBlockWeight (the Dexterity status adds Block): 24 leaves moved against dev (after #2915), all of them profile, snapshot
+// and save hashes of the three current-profile scenarios; every event, RNG, receipt and continuation hash is unchanged.
+// Recaptured 2026-11-20 once for the version-free save hash: contentVersion is normalised before hashing, so only the 8 stored/loaded leaves moved; release cuts no longer move them.
+// Recaptured 2026-11-20 again for the card.tradition.* uiStrings rows (#2892 review): runtime and
+// current-profile hash leaves only (27).
+// Recaptured 2026-11-20 after merging dev's Sage's Robe signatureMods row into the Arcane/Divine
+// branch: only current-profile profile/runtime/snapshot/save hash leaves moved; the tradition-policy
+// control below still proves events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-20 for the Block-per-card retune (Defend 8, enemy guards at most 12): the same 24 profile, snapshot and save hash
+// leaves of the three current-profile scenarios moved; events, RNG, receipts, continuations and the historical scenario are unchanged.
+// Recaptured 2026-11-20 for stat-buff cards gaining Exhaust (#2902): the 24 profile, snapshot and save hash leaves of the three
+// current-profile scenarios moved; events, RNG, receipts, continuations and the historical scenario are unchanged.
+// Recaptured 2026-11-20 for Sage's Robe's signatureMods row in Core's gear pack: exactly 24 leaves moved, the profile, snapshot and save hashes of the three
+// current-profile scenarios. Every event, RNG, receipt and continuation hash, the runtime hash and the whole historical scenario are unchanged.
+// Recaptured again 2026-11-19 after the bare content Poise row returned to CON (default profile
+// still overrides to WIS): 27 profile/runtime/snapshot/stored hash leaves moved; nothing else.
+// Recaptured 2026-11-20 for varied vendor shelf sizes: exactly 24 current profile/snapshot/save hashes moved; events, RNG,
+// receipts, continuations, runtime hashes and the historical scenario are unchanged.
+// Recaptured 2026-11-19 for versioned Arcane/Divine casting and Wisdom Poise.
+// Only profile/runtime pins and snapshot/save digests move; events, RNG,
+// receipts and continuations match the preserved preceding 521250 capture.
+// Historical profiles normalize the new effects marker to 0 and retain their rules.
 // Recaptured 2026-11-19 after merging Defend-only Smash from Dev 4fc475a249: exactly 27 current profile/runtime/snapshot/save hashes differ from each parent.
 // Native and production agree; full historical scenarios and every event, RNG, receipt and continuation remain unchanged. Historical fights omit the new Smash override.
 // Both concurrent Smash integrations independently measured 27 changed current hash leaves with unchanged historical behavior.
+// Recaptured 2026-11-20 (chore/RemoveDeadEffectTags: Precision tags become Pierce, Foresight/Veil/Charm/Grease reworked, crit feats removed): only the profile, snapshot, stored and loaded hashes moved; events, RNG, receipts, continuations and the runtime hash are unchanged.
 // Incoming Dev previously revalidated the same historical capture at runtime 04de9306 before combining stat traditions.
 // Recaptured 2026-11-19 for stat allocation on incoming Dev 6232329243: exactly 27 current profile/runtime/snapshot/save hashes moved.
 // The entire historical scenario and every event, RNG, receipt and continuation match incoming Dev; native and production agree, and the JS01 no-Gear guard stays intact.
@@ -56,6 +96,7 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // Recaptured 2026-11-15 (ci-fixes added the core.retreat and core.upsetRanks resource variants, which moved the profile hash and so only the snapshot, stored and loaded hashes; with those entries reverted and the config regenerated the earlier values return). Earlier: (W25-BANDS merge with batch 5: the fights are made without `bands`, so every events, rng and continuation hash equals dev's; only the profile, runtime, snapshot, stored and loaded hashes moved). Earlier note (Wave 2 batch 5, the Counter-stack rule moved the runtime hash): only the profile hash and the snapshot, stored and loaded hashes moved
 // (they embed it); every events, rng and continuation hash is identical, with the legacy fixture in openFight (no Counter-stack keys, the stance's 25% return) in place.
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline.json', import.meta.url), 'utf8'));
+const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline-521250.json', import.meta.url), 'utf8'));
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;
@@ -73,7 +114,7 @@ function memoryStorage() {
   };
 }
 
-function openFight(api, enemyId, encounterId, profileId) {
+function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   let profile;
   if (profileId === 'historical') {
     const storage = memoryStorage();
@@ -92,8 +133,10 @@ function openFight(api, enemyId, encounterId, profileId) {
     storage.setItem(api.runKey(1), JSON.stringify({ gameProfile: profile }));
     profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
   }
-  const content = api.applyGameProfileToContent(api.contentBundle, profile);
+  const applied = api.applyGameProfileToContent(api.contentBundle, profile);
+  const content = contentVersion === undefined ? applied : { ...applied, version: contentVersion };
   const registries = api.bindGameProfileRegistries(api.createRegistries(content), profile);
+  if (contentVersion !== undefined) assert.equal(registries.contentVersion, contentVersion);
   const run = api.createRunState({ registries, classId: 'reaver', seed, runId: `js01-${profileId}-${enemyId}` });
   const encounter = registries.encounters.get(encounterId);
   assert.deepEqual(plain(encounter.enemies), [enemyId]);
@@ -103,7 +146,7 @@ function openFight(api, enemyId, encounterId, profileId) {
   let combat;
   try { combat = api.createRunCombat({ registries, run, rng: api.createRng(seed), encounter, enemyIds: encounter.enemies }); } finally { if (shippedBands !== undefined) api.fixCoreMechanics.bands = shippedBands; }
   // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
-  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
+  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux; delete combat.fixCoreRules?.stance?.playerMinimumCost; // the Magic Adept zero Mana floor key (owner ruling 2026-11-22) is newer than this fight
   // Wave 2 batch 5 legacy fixture: the Counter-stack keys are newer than this baseline and the Counter stance still returns 25% of the HP lost, as in a fight saved before the ruling.
   if (combat.fixCoreRules?.counter) for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete combat.fixCoreRules.counter[key];
   if (combat.fixCoreRules?.stanceBenefits?.counter) combat.fixCoreRules.stanceBenefits.counter = { ...combat.fixCoreRules.stanceBenefits.counter, hpReturnFraction: 0.25 };
@@ -131,12 +174,18 @@ function checkpoint(api, combat) {
   };
 }
 
-function hashRun(json) {
+// Release cuts rewrite the content version (version-advance.yml), and a saved run records it, so the
+// raw bytes would change at every cut. The recorded version is swapped for a constant only when it
+// equals the version the registries really carry: a save that drops or mis-records it still moves the hash.
+const CONTENT_VERSION_STAMP = '<contentVersion>';
+function hashRun(json, contentVersion) {
   const payload = JSON.parse(json);
   delete payload.savedAt;
+  if (payload.contentVersion === contentVersion) payload.contentVersion = CONTENT_VERSION_STAMP;
   return hashJson(payload);
 }
 
+let lastStoredContentVersion;
 function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
   const storage = memoryStorage();
   const manager = api.createSaveManager(storage);
@@ -144,7 +193,10 @@ function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
     run, combat, nodeId: run.mapNodeId || 'n1_4', encounterId: encounter.id,
   });
   manager.saveRun(run, combat.rng);
-  const stored = hashRun(storage.getItem(api.runKey(1)));
+  const storedJson = storage.getItem(api.runKey(1));
+  assert.equal(JSON.parse(storedJson).contentVersion, registries.contentVersion);
+  lastStoredContentVersion = JSON.parse(storedJson).contentVersion;
+  const stored = hashRun(storedJson, registries.contentVersion);
   const loaded = manager.loadRun(registries);
   assert.ok(loaded, manager.runStatus().reason);
   assert.equal(loaded.gameProfile.hash, profile.hash);
@@ -156,7 +208,7 @@ function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
     expectedGameProfile: loaded.gameProfile,
   });
   assert.equal(restored.core2ActionRulesVersion, combat.core2ActionRulesVersion);
-  return { restored, save: { stored, loaded: hashRun(api.serializeRun(loaded, { inline: true })) } };
+  return { restored, save: { stored, loaded: hashRun(api.serializeRun(loaded, { inline: true }), registries.contentVersion) } };
 }
 
 function continued(api, combat, restored, action) {
@@ -177,8 +229,8 @@ function continued(api, combat, restored, action) {
   return { live, afterRestore };
 }
 
-function baseline(api, profileId, enemyId, encounterId, prepare, action) {
-  const setup = openFight(api, enemyId, encounterId, profileId);
+function baseline(api, profileId, enemyId, encounterId, prepare, action, { contentVersion } = {}) {
+  const setup = openFight(api, enemyId, encounterId, profileId, contentVersion);
   const { combat, profile } = setup;
   const start = checkpoint(api, combat);
   const receipt = prepare(setup);
@@ -267,6 +319,21 @@ test('the original historical profile fixture keeps its provenance', () => {
   assert.equal(digest(historicalBytes), fixture.historicalProfileSha256);
 });
 
+test('the tradition-policy recapture preserves preceding events, RNG, receipts and continuations', () => {
+  for (const [name, current] of Object.entries(fixture.scenarios)) {
+    const previous = previousFixture.scenarios[name];
+    assert.deepEqual(current.receipt, previous.receipt, `${name}: same receipt`);
+    assert.equal(current.profile.actionPolicy, previous.profile.actionPolicy);
+    for (const key of ['start', 'pending', 'restored', 'live', 'afterRestore']) {
+      const { snapshot: oldSnapshot, ...oldBehavior } = previous[key];
+      const { snapshot: newSnapshot, ...newBehavior } = current[key];
+      assert.deepEqual(newBehavior, oldBehavior, `${name}: ${key} behavior`);
+    }
+    if (name === 'historical action policy') assert.deepEqual(current.profile, previous.profile);
+    else assert.equal(previous.profile.runtimeHash, 'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772');
+  }
+});
+
 for (const [name, ...scenario] of scenarios) {
   test(`Core 2 cleanup baseline: ${name}`, () => {
     const source = baseline(native, ...scenario);
@@ -275,3 +342,19 @@ for (const [name, ...scenario] of scenarios) {
     assert.deepEqual(source, fixture.scenarios[name], 'compare against the immutable JS01 capture');
   });
 }
+
+test('the saved-run baseline does not depend on the content version', () => {
+  for (const [name, ...scenario] of scenarios) {
+    lastStoredContentVersion = undefined;
+    const result = baseline(native, ...scenario, { contentVersion: '9.99.99' });
+    assert.equal(lastStoredContentVersion, '9.99.99', `${name}: the save recorded the overridden version`);
+    assert.deepEqual(result, fixture.scenarios[name], name);
+  }
+});
+
+test('the saved-run hash still sees a wrong content version', () => {
+  const json = JSON.stringify({ contentVersion: '1.2.3', gold: 5 });
+  assert.equal(hashRun(json, '1.2.3'), hashRun(JSON.stringify({ contentVersion: '9.9.9', gold: 5 }), '9.9.9'));
+  assert.notEqual(hashRun(json, '1.2.3'), hashRun(json, '9.9.9'));
+  assert.notEqual(hashRun(json, '1.2.3'), hashRun(JSON.stringify({ contentVersion: '1.2.3', gold: 6 }), '1.2.3'));
+});

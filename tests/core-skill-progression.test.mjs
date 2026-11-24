@@ -1,3 +1,4 @@
+import { StampOfferKey } from '../src/model/upgradeOffer.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -91,6 +92,8 @@ test('an explicitly used offhand pays that group, and a granted utility card rec
   assert.ok(skillXpReceipt(combat)['item:shield'] > 0);
   assert.equal(skillXpReceipt(combat)['item:blade'], undefined);
   const { combat: herald } = live('herald');
+  // Owner ruling 2026-11-21: the shipped sceptre no longer grants Mana Surge, so lend one as the granting item would.
+  herald.piles.hand.push({ instanceId: 'granted:boneSceptre:core.manaSurge:0', cardId: 'core.manaSurge', upgraded: false, equipmentRole: 'granted', grantedBy: 'boneSceptre' });
   play(herald, 'core.manaSurge');
   assert.deepEqual(herald.skillXp.player.xp, { 'item:magic-focus': 0 });
   recordSkillXp(herald, { type: 'combatEnd', victory: true });
@@ -321,7 +324,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   const screens = [], notices = [], deps = { runCombatEnd, foldCombatPlaysEver, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, settleConfiguredSkillProgression, skillLevelNotices,
     combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier,
-    SyncHudCinders: () => {} };
+    SyncHudCinders: () => {}, StampOfferKey };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
@@ -598,7 +601,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     // The one victory screen (W2-E): the combined door asks VictorySpoils for its strip; a marker stands in for it here.
     VictorySpoils: (_registries, _run, receipt) => ({ spoilsFor: receipt }),
     // The header purse sync draws nothing without a document.
-    SyncHudCinders: () => {} };
+    SyncHudCinders: () => {}, StampOfferKey };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'receipts', 'offers', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;

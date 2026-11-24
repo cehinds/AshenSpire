@@ -76,15 +76,22 @@ test('effective cost table: 0 SP and 2 or 3 MP plain and Prepared; a Focus item 
   }
 });
 
-test('a card without the mark still pays the +1 Stamina surcharge (Comet Lance stays 2 SP / 2 MP)', () => {
+test('a card without the mark pays its printed Stamina (no surcharge since 2026-11-23: Comet Lance is 1 SP / 2 MP); a fight saved before that keeps 2 SP / 2 MP', () => {
   const costs = costsOf('core.cometLance', { hand: 'greatsword', stance: null });
-  assert.deepEqual([costs.stamina, costs.mana], [2, 2]);
+  assert.deepEqual([costs.stamina, costs.mana], [1, 2]);
+  const { combat } = fight({ registries: printedCostRegistries });
+  combat.loadout.sets.rightHand[0] = 'greatsword';
+  combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // the rules snapshot of a fight saved before the owner ruling of 2026-11-23
+  const card = combat.piles.hand[0]; card.cardId = 'core.cometLance';
+  const saved = cardPlayCosts(combat, card.instanceId);
+  assert.deepEqual([saved.stamina, saved.mana], [2, 2], 'a saved fight keeps the +1 Stamina surcharge on an unmarked spell');
 });
 
 test('a fight created before the mark (no manaOnlyTag key) has no exemption: the +1 Stamina surcharge lands on a mana-only card', () => {
   const { combat } = fight({ registries: printedCostRegistries });
   combat.loadout.sets.rightHand[0] = 'greatsword';
   delete combat.fixCoreRules.spellCosts.manaOnlyTag;
+  combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // a fight that old predates the 2026-11-23 drop of the surcharge too
   const card = combat.piles.hand[0]; card.cardId = 'core.pyreLash';
   const costs = cardPlayCosts(combat, card.instanceId);
   assert.deepEqual([costs.stamina, costs.mana], [1, 2], 'without the key the +1 Stamina surcharge applies again (the card has no exemption in an older fight)');
@@ -145,6 +152,7 @@ test('each new card is offered to its own class (colorless to every caster) and 
   const seen = { starseer: new Set(), herald: new Set(), rogue: new Set() };
   for (const classId of Object.keys(seen)) for (let seed = 1; seed <= 400; seed++) {
     const run = live(classId, seed); run.floor = 1 + (seed % 6);
+    run.actNumber = 1 + (seed % 3); // owner 2026-11-21: rewards come from the act's rank band, so class eligibility is checked across acts 1-3
     // Give each class enough Mana for every printed price to isolate class eligibility.
     run.maxMana = 2;
     for (const option of gameProfileRewardOffers(reg, run, createRng(seed + 50000), { offerId: 'ms' }).options) if (option.kind === 'combatCards') seen[classId].add(option.id);

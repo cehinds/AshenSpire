@@ -76,11 +76,14 @@ test('offers at map depth 4+ reach unowned higher-rank cards of each class over 
   for (const classId of Object.keys(classOf)) {
     const expected = [...colorless, ...classOf[classId]];
     const starterRun = live(classId, []);
+    // Owner 2026-11-20 (reward-ranks.skipOwned): an owned card is never offered, so eligibility is asked with the expected cards out of the deck.
+    starterRun.deck = starterRun.deck.filter(card => !expected.includes(card.cardId));
     for (const id of expected) assert.ok(gameProfileRewardPools(registries, starterRun).combatCards.includes(id), `${classId} is eligible for ${id}`);
     const seen = new Set();
     for (let seed = 1; seed <= 1200; seed++) {
       const run = live(classId, [], seed);
       run.floor = 4;
+      run.actNumber = 1 + (seed % 3); // level lists (owner 2026-11-21): offers draw from the act's rank band; spread the seeds over the acts
       // Feint starts in the Rogue's deck. This samples reachability before the separate owned-copy weight applies.
       run.deck = run.deck.filter(card => !expected.includes(card.cardId));
       for (const option of gameProfileRewardOffers(registries, run, createRng(seed + 40000), { offerId: 'b2' }).options) if (option.kind === 'combatCards') seen.add(option.id);

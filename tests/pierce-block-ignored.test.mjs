@@ -89,17 +89,18 @@ test('a saved fight without stack Pierce retains the fraction bypass and separat
   assert.equal(receipt.hpLoss, 11);
 });
 
-test('Pierce with Ward up: what Block holds is Block, and Poise still absorbs the whole rest', () => {
+test('Pierce with Ward up: Block absorbs first minus Pierce, then Ward health buffer absorbs before Poise + HP', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 0 });
   enemy.block = 5;
-  Statuses.applyStatus(combat, enemy, 'ward', 1, enemy);
+  Statuses.applyStatus(combat, enemy, 'ward', 1, enemy); // 5 Ward HP
   enemy.persistentPoise.value = 60;
   const receipt = hit(combat, enemy, { ...PIERCE, pierceStacks: 2 });
   const incoming = receipt.damageReceipt.hits[0].incoming;
-  assert.equal(receipt.wardBlockFirst, true);
+  assert.equal(receipt.wardHpBuffer, true);
   assert.equal(receipt.blocked, 3, 'Block 5 less the 2 ignored');
-  assert.equal(receipt.poiseMitigated, incoming - 3, 'Poise absorbs everything Block did not, 100%');
-  assert.equal(receipt.hpLoss, 0);
+  assert.equal(receipt.wardHpAbsorbed, 5, 'Ward absorbs 5 after Block');
+  const afterWard = incoming - 3 - 5;
+  assert.equal(receipt.poiseMitigated + receipt.hpLoss, afterWard, 'overflow past Ward splits into Poise + HP');
 });
 
 test('Pierce settings validate every new field and reject malformed saved combat rules', () => {

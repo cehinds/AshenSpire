@@ -66,6 +66,24 @@ export function renderCombatLogEntries(container, entries, { detailed = false, p
   container.replaceChildren(...nodes);
 }
 
+/** The log as plain text, round by round, with the receipts when `detailed` is on. Copy reads this. */
+function combatLogText(entries, detailed = false) {
+  const lines = [];
+  let round;
+  for (const entry of entries) {
+    if (entry.round !== round) {
+      round = entry.round;
+      if (lines.length) lines.push('');
+      lines.push(t('combat.log.round', { round }));
+    }
+    lines.push(Array.isArray(entry.segments) && entry.segments.length
+      ? entry.segments.map(segment => typeof segment?.text === 'string' ? segment.text : '').join('')
+      : entry.text);
+    if (detailed) lines.push(...damageReceiptLines(entry.damageReceipt), ...rollReceiptLines(entry.rollReceipt));
+  }
+  return lines.length ? lines.join('\n') : tFull('combat.log.empty');
+}
+
 /**
  * openCombatLogModal({ entries, opener, onClose }) → { panel, setEntries, close }.
  * Opens scrolled to the newest entry. Closing returns focus to `opener`.
@@ -87,20 +105,7 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
   let closed = false, copyReset = null;
   copyButton.addEventListener('click', async () => {
     if (copyButton.disabled) return;
-    let round;
-    const lines = [];
-    for (const entry of currentEntries) {
-      if (entry.round !== round) {
-        round = entry.round;
-        if (lines.length) lines.push('');
-        lines.push(t('combat.log.round', { round }));
-      }
-      lines.push(Array.isArray(entry.segments) && entry.segments.length
-        ? entry.segments.map(segment => typeof segment?.text === 'string' ? segment.text : '').join('')
-        : entry.text);
-      if (detailed) lines.push(...damageReceiptLines(entry.damageReceipt), ...rollReceiptLines(entry.rollReceipt));
-    }
-    const text = lines.length ? lines.join('\n') : tFull('combat.log.empty');
+    const text = combatLogText(currentEntries, detailed);
     copyButton.disabled = true;
     clearTimeout(copyReset);
     try {
@@ -109,7 +114,7 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
       copyButton.textContent = t('common.copied');
     } catch {
       if (closed) return;
-      // Keep the selected log available for manual copy when clipboard access is blocked.
+      // Keep the log selected for a manual copy when clipboard access is blocked.
       const range = document.createRange();
       range.selectNodeContents(list);
       const selection = getSelection();

@@ -3,11 +3,15 @@
   "traditions": {
     "arcane": {
       "label": "Arcane",
-      "attribute": "intelligence"
+      "attribute": "intelligence",
+      "offense": 2,
+      "support": 1
     },
     "divine": {
       "label": "Divine",
-      "attribute": "wisdom"
+      "attribute": "wisdom",
+      "offense": 1,
+      "support": 3
     }
   },
   "schools": {
@@ -49,5 +53,16 @@
     "necrotic": [
       "divine"
     ]
+  },
+  "offensiveStatuses": [
+    "burn",
+    "shock",
+    "necroticBuildup",
+    "bleed",
+    "venom"
+  ],
+  "classTraditions": {
+    "starseer": "arcane",
+    "herald": "divine"
   }
 }

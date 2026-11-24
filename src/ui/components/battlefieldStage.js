@@ -1,5 +1,5 @@
 import { wireLayeredEnvironment } from './layeredEnvironment.js';
-import { mobileFloorShadowTop, holdFloorShadowTop } from '../models/MobileFloorModel.js';
+import { CombatBackdropInputs, BackdropGridLines, HeldBackdropGrid, BackdropScreenKey } from '../models/CombatBackdropFitModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { logicalViewport, CanvasBox, viewViewportBox, matchViewMedia } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -17,9 +17,8 @@ import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeA
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
-import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition as combatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork, BackRowEnemySizes, HandAnchorLayoutKey } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, ScaleFormationPlan } from '../models/AlternativeFormationModel.js';
 import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
 import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
@@ -653,7 +652,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // window always places, a frame whose bodies did not move (within half a pixel) skips the placement, and two such
   // frames in a row end the window. Lite samples every second frame, except the one that closes the window.
   let trackFresh = true, trackStable = 0, trackTick = 0, trackBodies = null;
-  const lite = () => document.documentElement.dataset.performance === 'lite';
+  const lite = () => document.documentElement.dataset.effects === 'off';
   // Effects off settles the HUD at the start and end of a move, exactly as reduced motion does.
   const stillHud = () => reducedMotionRequested() || effectsOff();
   // Classic figures report no `busy`: their actions are finite CSS animations (a hit holds its displaced pose
@@ -708,6 +707,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const relayoutConfig = uiConfig.presentation.combatFormationModel.behavior.relayout;
   const placedFrames = new WeakSet();
   let laidOut = null, forcePending = false, layoutEpoch = 0, placedFormationKey = null;
+  let backdropRequest = 0;
+  // combatLayout's W4 bands: the HUD, the hand's context band and the footer (not --combat-field-overlap).
+  const BACKDROP_BAND_VARS = ['--w4-band-hud', '--w4-band-context', '--w4-band-footer'];
   // The layout's inputs are the combat canvas and the bands it is cut into, never the real window
   // (owner, 2026-11-14: one configuration per form factor, only scaled). A window resize inside a
   // form factor changes neither, so nothing relays out; a form-factor switch changes the canvas, and
@@ -878,6 +880,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         ? Math.max(0, miniHudGroupHeight(hudGrid) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) * fit : 0;
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         art,
+        // An enemy in the engine's back row is drawn smaller by the layout (BackRowEnemySizes), not by CSS.
+        backRow: frame.classList.contains('enemy') && frame.dataset.bandRow === 'back',
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
         leadingHeight, leadingWidth, artLeading: Math.max(ceiling * zoom, racked),
@@ -900,9 +904,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const handLeft = readRestingHand()?.left ?? fieldRect.left;
     // Preserve the incoming remount cache's subpixel tolerance; raw geometry
     // still validates the hand's authored resting envelope above.
-    const stableHandKey = handKey?.split(':').map(value => Number.isFinite(Number(value))
-      ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
-    const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':' + stableHandKey;
+    // The resting cards' top is in the key: the hand publishes it after its own layout, and an anchor kept from
+    // before it settled stood the lone player's feet above the cards (owner, 2026-11-20).
+    const handLayoutKey = HandAnchorLayoutKey({ fieldWidth: fieldRect.width, fieldHeight: fieldRect.height, pageZoom, handKey,
+      restTop: parseFloat(hand?.style.getPropertyValue('--hand-rest-top')) });
     // The lone player's feet floor: the strip's top, or the resting cards' top where the stage stretches down to them.
     const cardsFloor = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.stageExtent?.mode === 'handTop'
       ? parseFloat(hand?.style.getPropertyValue('--hand-rest-top')) * (handRect ? handRect.height / (hand.clientHeight || handRect.height || 1) : 1) : NaN;
@@ -913,12 +918,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     combat.dataset.composition = 'option-c';
     combat.dataset.waistOverlap = String(solo && logicalViewport().height > 480);
     const fitFormation = () => {
-      const viewportSizes = fitViewportSprites({ width: fieldRect.width, actors,
+      const viewportSizes = BackRowEnemySizes(fitViewportSprites({ width: fieldRect.width, actors,
         viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow), unit: fit,
         // Judge the fit on the positions composition will use: a solo
         // player's feet stay above the hand.
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
-        solo: solo && logicalViewport().height > 480 });
+        solo: solo && logicalViewport().height > 480 }), actors);
       combat.dataset.spriteLastResort = viewportSizes.lastResort ? viewportSizes.lastResort.toFixed(3) : '';
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         perspectiveGrid: true, unit: fit,
@@ -1121,6 +1126,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       setStyle(frame, 'zIndex', '');
       // Depth stays within a role's plane: players always paint over enemies.
       setVar(sprite, '--combat-depth', String(depthOrder.indexOf(slot.layer)));
+      // A back-row enemy's HUD plates shrink with its body (BackRowEnemySizes), so neighbouring plates keep their gap on a phone.
+      setVar(frame, '--combat-hud-row-scale', String(actor.backRow
+        ? uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.backRowEnemyScale ?? 1 : 1));
       setData(frame, 'formationRow', slot.formationRow);
       setData(frame, 'visualBand', slot.visualBand);
       setData(frame, 'formationRole', slot.formationRole);
@@ -1561,54 +1569,50 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         }
       }
     }
-    const rect = combat.getBoundingClientRect();
     // Last layout write of the refit: the HUD, ribbon and intents are settled.
-    // The combat box above is unchanged by the Inspect marks.
     if (!targetHud) placeEnemyInspect();
     else centerTargetOverheads();
     if (!targetHud) placeHitBadges();
     syncFloorShadows();
-    // Fit the sky from the top of the combat screen, including the HUD.
-    // Extending a field-only crop upward can expose empty space above the
-    // painting. Continuing behind cards must not move the ground line.
+    // A window resize that only scales the screen keeps the key, and the held box and lines, which are local px.
+    fitCombatBackdrop({ plan, narrow, screenKey: BackdropScreenKey({ canvasWidth: now.width, canvasHeight: now.height, narrow,
+      formFactor: document.documentElement.dataset.formFactor, bands: BACKDROP_BAND_VARS.map(name => combat.style.getPropertyValue(name)) }) });
+    field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
+    field.dispatchEvent(new Event('battlefieldgeometrychange'));
+  };
+  // The backdrop is fitted apart from the formation pass (owner, 2026-11-20: a fixed picture). Its inputs are the
+  // combat box, the zoom, the device, the scene and the empty grid's lines, held per screen in layoutState (co-op
+  // re-wires the stage): it follows the combat box as it settles, and a later pass on the same screen, such as a
+  // death after the hand changed size, leaves it as it was.
+  // Fit the sky from the top of the combat screen, including the HUD. Extending a field-only crop upward can expose
+  // empty space above the painting. Continuing behind cards must not move the ground line.
+  // `pass` is the formation pass that just ran, when called from one; its `screenKey` names the screen.
+  function fitCombatBackdrop(pass = null) {
+    cancelAnimationFrame(backdropRequest);
+    backdropRequest = 0;
+    if (!field.isConnected) return;
+    const combat = field.closest('.combat');
+    const measuredField = field.getBoundingClientRect();
+    const zoom = measuredField.width / field.offsetWidth || 1;
+    const rect = combat.getBoundingClientRect();
+    // Only a formation pass stores the field box and lines, from its own plan and field, for the screen it ran on.
+    if (pass) layoutState.backdropGrid = HeldBackdropGrid(layoutState.backdropGrid,
+      BackdropGridLines({ plan: pass.plan, zoom, narrow: pass.narrow, screenKey: pass.screenKey,
+        fieldTop: measuredField.top - rect.top, fieldHeight: Math.round(measuredField.height * 64) / 64 }));
+    const grid = layoutState.backdropGrid;
+    if (!grid) return;
     const backdrop = combat.querySelector('.environment-backdrop');
     // Its width is read BEFORE the two variables below are written: they are
     // set on the fight's root, so a read after them restyled the whole screen
     // once more. The width is the root's (inset: 0), never the height written.
     const backdropWidth = backdrop ? backdrop.clientWidth : 0;
-    combat.style.setProperty('--environment-top', '0px');
-    combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
-    const fieldTop = (fieldRect.top - rect.top) / zoom;
-    // Continue real ground past the lowered footer fade, including on phones
-    // where the hand consumes much of the viewport. Keep the same horizon.
-    const sceneHeight = fieldTop + fieldRect.height / zoom;
-    const floorShadowTop = mobileFloorShadowTop(placed.filter(({frame}) => frame.classList.contains('enemy') && !frame.classList.contains('dead')).map(({frame,sprite}) => {
-      const box = sprite.getBoundingClientRect(), style = getComputedStyle(sprite), shadow = getComputedStyle(sprite, '::before');
-      const spriteZoom = box.height / (parseFloat(style.height) || sprite.offsetHeight || 1);
-      const translatedY = new DOMMatrix(shadow.transform === 'none' ? undefined : shadow.transform).m42;
-      return { band: frame.dataset.visualBand,
-        top: box.bottom - (parseFloat(shadow.bottom) + parseFloat(shadow.height) - translatedY) * spriteZoom };
-    }));
-
-    fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
-      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
-      standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow,
-      coverFloor: true, zoom, floorTop: plan.visualBands?.length ? fieldTop + plan.visualBands[0].top / zoom : undefined, floorShadowTop: holdFloorShadowTop(layoutState, Number.isFinite(floorShadowTop) ? (floorShadowTop - rect.top) / zoom : undefined) });
-    if (backdrop) fitSceneBackdrop(backdrop, {
-      width: backdropWidth, height: rect.height / zoom, zoom,
-      windowTop: 0, windowHeight: sceneHeight,
-      // Owner 2026-11-13: the floor's top stands at a fixed share of the whole
-      // combat screen (scenes/w4a-combat.json floorPercent: 75 = floor covers
-      // the bottom 75%), not at the back rank's feet, which left back-rank
-      // enemies standing on the tree line.
-      groundY: (rect.height / zoom) * (1 - wireframeUi.scene.floorFraction),
-      config: battlefieldBackdropConfig({ height: sceneHeight,
-        fieldTop, fieldHeight: fieldRect.height / zoom,
-        formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
-    });
-    field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
-    field.dispatchEvent(new Event('battlefieldgeometrychange'));
-  };
+    setVar(combat, '--environment-top', '0px');
+    setVar(combat, '--environment-height', `${rect.height / zoom}px`);
+    const backdropInputs = CombatBackdropInputs({ combatWidth: rect.width, combatHeight: rect.height, zoom, grid });
+    fitAlternativeBackdrop(combat, backdropInputs.alternative);
+    if (backdrop) fitSceneBackdrop(backdrop, { width: backdropWidth, ...backdropInputs.environment });
+  }
+  const scheduleBackdrop = () => { if (!backdropRequest) backdropRequest = requestAnimationFrame(() => fitCombatBackdrop()); };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(() => refresh()); };
   const scheduleForced = () => { forcePending = true; schedule(); };
   // An art image that finishes loading settles the bounds the fit fell back from (the whole sprite box): that one
@@ -1638,6 +1642,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   combatHost.addEventListener('combatantselectionchange', selectionChanged);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
+  const backdropObserver = new ResizeObserver(scheduleBackdrop);
+  backdropObserver.observe(combatHost);
   // CSS zoom can move the rendered floor without changing the observed
   // element's unzoomed content box. Refit after responsive UI settings settle.
   // The root's inline style is rewritten by many unrelated custom properties
@@ -1679,6 +1685,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     lastSeenViewport = viewport;
     if (setting !== lastSettingKey || settingChange) { lastSettingKey = setting; scheduleForced(); }
     else schedule();
+    scheduleBackdrop();
   });
   layoutObserver.observe(document.documentElement, {
     // The two scene words are named here rather than left to ride on
@@ -1693,6 +1700,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'],
   });
   window.addEventListener('resize', schedule);
+  window.addEventListener('resize', scheduleBackdrop);
   const poseObserver = new MutationObserver(mutations => {
     // Selection tint and control visibility need the HUD's one-shot geometry,
     // not a new 900ms body-motion window. Pose/source and action changes keep it.
@@ -1713,6 +1721,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   poseObserver.observe(field, { subtree: true, attributes: true, attributeOldValue: true,
     attributeFilter: ['src', 'data-pose', 'data-rest', 'data-stance', 'data-animating', 'class'] });
+  // A back-row enemy is drawn smaller by the layout (BackRowEnemySizes): a change of engine row refits once.
+  const bandRowObserver = new MutationObserver(scheduleForced);
+  bandRowObserver.observe(field, { subtree: true, attributes: true, attributeFilter: ['data-band-row'] });
   // Both accessibility inputs can change while a fight is on screen. Settle
   // once after motion is disabled, and resume frame tracking only after it is
   // enabled again; otherwise the HUD can retain the last idle-frame offset.
@@ -1745,12 +1756,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     cancelAnimationFrame(overheadRequest);
     cancelAnimationFrame(rackRequest);
     rackObserver.disconnect();
+    cancelAnimationFrame(backdropRequest);
     resizeObserver.disconnect();
+    backdropObserver.disconnect();
     layoutObserver.disconnect();
     poseObserver.disconnect();
+    bandRowObserver.disconnect();
     reducedMedia?.removeEventListener('change', reconcileReducedMotion);
     reducedSettingObserver.disconnect();
     window.removeEventListener('resize', schedule);
+    window.removeEventListener('resize', scheduleBackdrop);
     document.fonts?.removeEventListener?.('loadingdone', fontsLoaded);
     detachObserver.disconnect();
     if (releaseActiveStage === release) releaseActiveStage = null;

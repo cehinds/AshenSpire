@@ -140,8 +140,8 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   for (const old of pre.tagFamilyDomains) assert.ok(pairs.has(`${old.family}|${old.domain}`), `pairing ${old.family}×${old.domain} is derived`);
   // The additions, by name, so a stray one cannot hide among them.
   const addedDomains = TAG_DOMAINS.map((d) => d.id).filter((id) => !pre.tagDomains.some((d) => d.id === id)).sort();
-  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'range', 'scaling', 'school', 'targeting', 'trait', 'utility'],
-    'the roots that joined are the framework\'s nine plus four named tactical domains');
+  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'range', 'scaling', 'school', 'targeting', 'tradition', 'trait', 'utility'],
+    'the roots that joined are exactly the named framework, tactical and spell tradition domains');
   const addedTags = TAGS.filter((t) => !pre.tags.some((o) => o.id === t.id));
   // Plan phase 5a's property nodes: the class card's leaning and the four
   // kit relics' rules. Named, so a stray chip cannot hide among them.
@@ -174,6 +174,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     camp: ['camp:physical', 'camp:spell'],
     maneuver: ['maneuver:attack', 'maneuver:defend', 'maneuver:counter', 'maneuver:sweep', 'maneuver:ranged', 'maneuver:smash', 'maneuver:casting'],
     school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay', 'school:earth'], // Earth: owner decision 5, 2026-10-12
+    tradition: ['tradition:arcane', 'tradition:divine'],
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     range: ['range:melee', 'range:reach', 'range:ranged'],
     trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:persistent', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
@@ -196,9 +197,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     assert.equal(tag.domain, 'technique');
     assert.ok(tag.label && tag.blurb && tag.glyph && tag.color, `${id} has visible presentation and an authored description`);
   }
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse', 'retreat'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse', 'retreat', 'pullRetreat'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
     'every tag that joined is a framework node, named property, Bow, approved ability, named tactical identity or exact FixCore identity');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', 'retreat', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', 'retreat', 'pullRetreat', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 
@@ -219,7 +220,7 @@ test('every object states exactly one kind, the one its collection and type name
   }
   // The original 513, forty cards, ten relics, fifty new class feats, and the
   // twenty existing mastery feats now participating in the kind registry.
-  assert.equal(contentBundle.classSkillFeats.length, 70);
+  assert.equal(contentBundle.classSkillFeats.length, 58, "12 crit feats removed (owner, 2026-11-20: crits and Precision are gone from Core)");
   // Plus the two enemy reaction moves (gildedGuard, bindingRiposte; docs/combat-card-traits-contract.md).
   assert.equal(contentBundle.enemyMoves.length, 237, 'the scoped enemy move collection contains all 237 authored actions');
   // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).

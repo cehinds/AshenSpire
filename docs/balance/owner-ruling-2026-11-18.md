@@ -312,6 +312,19 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - **Robes (owner):** the unarmoured type gives **+1 max MP**. A specific robe can add more as its own bonus (Nightweave +1), with no cap; a rare robe may later add +2.
 - **Map (owner):** the longer acts are accepted for playtest (Act 1 sim win rate 95% → 85%). The V widens gradually with depth. By the pre-boss rest the player must not see another branch's pre-boss rest or boss; hiding the other branches' boss nodes is an acceptable way to get there.
 
+**Amended 2026-11-19 (owner):** reaching through Retreat costs 1 Advance (1 SP) per Retreat stack, not per side. Each Advance spends one stack. Retreat sources must carry a real cost (Exhaust, rising cost, high MP cost, or a drawback debuff). There are free Advance sources: a few 0-SP Advance cards, an Advance tag on some existing cards (the card includes one free Advance), and Advance as an upgrade option.
+
+**Retreat-source drawbacks (owner, approved 2026-11-19):**
+- `core.retreat` (the weapon's free card): a weapon with the retreat tag adds the Retreat card to your hand each turn, as now. It costs 0 SP the first time, Exhausts, and its cost rises by 1 SP each use in that fight (counted per fight, not per card copy, since each copy is a fresh Exhausting instance). Ethereal stays as it is.
+- `core.backstep` (colourless): also applies Frail 1 to yourself.
+- Rogue Backstep: gains Exhaust.
+- `core.hitAndRun`: gains Exhaust.
+- Dodge Roll: the Retreat mode costs +1 SP each play (escalating); the Advance mode is unchanged.
+- `core.galePush`: also costs 1 MP.
+- Hammer Smash inflicts Retreat only when it Poise-breaks the target (built on chore/GearPassMechanics later).
+- The bow end-of-turn Retreat sets your stacks to max(current, 1) while in Defend stance: no extra stack when you already hold one (built on chore/GearPassMechanics later).
+- Approved free-Advance content: 4 free Advance cards (Press On, Lunge In, Slip Close, Overreach), the Advance tag on Driving Thrust, Storm Lash, Closing Dodge, Shadowstep, Dodge Roll's Advance mode and the Advance card (0 SP), and an `fx:advance` upgrade option (low weight). Built on a follow-up branch.
+
 ## 23. No hidden caps (owner, 2026-11-18)
 - Stats, stacks and bonuses are uncapped by design: almost anything may in theory reach 999. The owner balances with cost and consequence, not ceilings.
 - New work adds no caps or clamps unless a ruling names one. Floors that stop a value going negative (a cost of at least 0, HP of at least 0) are fine. Caps that already exist stay until the owner reviews them.
@@ -325,3 +338,12 @@ Every item of a type carries its type's base effect. An item's own signature (se
 - The new Magic Absorption card costs **2 SP, 0 MP** and has two drawbacks chosen from Exhaust, Ethereal, Escalating, Vulnerable, Weak, bind, paralysis or self-damage. Its first upgrade guarantees **Reaction**, plus another tag or drawback easing.
 - **Initial trial defaults (orchestrator-decided):** start with **3 stacks**, continuing the prior trial, and choose **Exhaust + Ethereal** as the two starting drawbacks.
 - Implementation is queued with the later magic-card pass; this amendment adds no Magic Absorption mechanic to GearPass.
+
+## 25. Buff-card drawbacks (owner, 2026-11-19)
+- Most buff cards carry a drawback before upgrade: Exhaust, a high cost, an escalating cost, Ethereal, a buff to an enemy, a discard, Wound/Dazed status cards added to the deck, or a negative status on the user. Upgrades can remove or soften the drawback as an option.
+- Upgrade options favour easing the drawback or improving effectiveness/cost: at early upgrade levels they are offered about 3:1 against new-effect options; additional effects come mostly at later levels.
+
+## 26. Amendment: gear pool lines are dropped only where resolved points feed the pool (owner, 2026-11-20)
+- Amends §23's treatment of item max HP / Mana / Stamina lines on resolved Core gear. An item's own `self.maxHp`, `self.maxMana` or `self.maxStamina` line is dropped only when that item's resolved stat points already feed the pool, through `content/source/derivedStatRules.json`: HP from Constitution, Mana from Wisdom, Stamina from Dexterity. Otherwise the line stays, uncapped (the greatsword's authored +999 max HP stays; Bastion's -1 max SP stays, it has no Dexterity).
+- A type or armour group base line always stays (the Robes +1 max MP). A robe's own max MP line stays unless its resolved points feed Mana (Nightweave's Wisdom does, so it keeps the type +1 only).
+- Saves: runs in progress recalculate. A run holding the double-counted pool drops it at its next re-derive, with no per-run marker. Current HP clamps to the new max and is never healed.

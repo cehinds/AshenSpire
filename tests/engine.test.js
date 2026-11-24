@@ -125,7 +125,7 @@ import { advancedConfigProblems, configuredContentBundle } from '../src/model/ad
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
 import { advancedConfigSettings } from '../src/model/advancedConfig.js';
-import { settingOn, resolveTapSize, resolveLevelUpValue, settingsRow, categoryHandler, generalGroups, GENERAL_GROUPS, fullscreenCapability } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, settingsRow, categoryHandler, generalGroups, GENERAL_GROUPS, fullscreenCapability } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -4790,13 +4790,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ---- 4. armour answers to the OTHER route, and it is not a kind test ---
     const armourPool = fits(armorSlot, eq_.armour.filter((o) => o.classId === 'reaver'));
     assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
-    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default,wayfarerPlate,nightweave,riteVestments,gutterLeathers',
-      'a fresh profile owns its starting set and four attribute-gated shared sets');
+    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default',
+      'a fresh run owns only its starting armour');
     const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh, profileWardrobe: true });
     eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set (profile wardrobe)');
     // Owner, 2026-11-05: in a run the profile wardrobe is not the inventory.
     const inRun = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
-    eq(armourPool.filter((p) => inRun.has(p)).length, 5, 'a profile unlock does not make a set owned inside a run');
+    eq(armourPool.filter((p) => inRun.has(p)).length, 1, 'a profile unlock does not make a set owned inside a run');
     assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
       'the pool question is asked of the piece, not spelled as an if on its kind');
 
@@ -5763,7 +5763,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       };
       const meta = { unlocked: over.unlocked || [], found: over.available || [] };
       return {
-        owned: ownership(reg, { meta, loadout: over.loadout || null }),
+        owned: ownership(reg, { meta, loadout: over.loadout || null, profileWardrobe: true }),
         unlockById: new Map((REG.unlocks || []).map((u) => [u.id, u])),
         drops,
       };
@@ -7119,78 +7119,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'and a ruleset-6 table that spells a tier is refused — there is none to set');
   });
 
-  // ---- 60d. the typed level value, and every door a field opens ------------
-  test('60d. a typed level value resolves to an integer in domain, whatever is stored', () => {
-    // Constantine, 2026-08-17: "i don't want a dial for hte level up, I want to
-    // be able to enter the value myself and maybe a slider with it that is
-    // synced with the value." A ladder could only ever hold four legal values;
-    // a FIELD can hold anything, so these are the edges that did not exist
-    // before the control changed.
-    const row = settingsRow('levelUpValue');
-    eq(row.type, 'number', 'the level value is a typed field, not a chip ladder');
-    eq(row.min, REG.balance.levelUp.pointsPerLevelMin, 'its floor is the authored one');
-    eq(row.max, REG.balance.levelUp.pointsPerLevelMax, 'and so is its ceiling — no number is typed in the UI');
-    // ONE DOMAIN, TWO CONTROLS: the field and the slider are rendered from this
-    // row, so there is nothing for them to disagree about.
-
-    const cases = [
-      [undefined, 1, 'unset is the default'],
-      ['', 1, 'an empty field is the default and NOT a zero'],
-      [null, 1, 'null is the default'],
-      ['lots', 1, 'a word is the default — unreadable is unset'],
-      [NaN, 1, 'NaN is the default'],
-      [Infinity, 1, 'Infinity is the default'],
-      [0, 1, 'zero clamps up: a level that grants nothing is a purchase that does nothing'],
-      [-3, 1, 'a negative clamps up — levelling can never take a point away'],
-      [1, 1, 'the floor itself is legal'],
-      [7, 7, 'an arbitrary value in domain is kept, which is the whole ask'],
-      ['  7  ', 7, 'whitespace is trimmed, because a field lets him type it'],
-      ['7', 7, 'a string of digits is a number — this is what an input element gives us'],
-      [2.7, 2, 'a fraction FLOORS: attributes are integers and floor is this tree\'s rounding'],
-      [20, 20, 'the ceiling itself is legal'],
-      [21, 20, 'one past the ceiling clamps down'],
-      [1e9, 20, 'and so does absurdity'],
-    ];
-    for (const [stored, want, why] of cases) {
-      eq(resolveLevelUpValue({ levelUpValue: stored }), want, `${JSON.stringify(stored)} → ${want}: ${why}`);
-    }
-
-    // THE PROPERTY UNDER ALL OF THAT, stated once: whatever is in the profile,
-    // what the model receives is an integer inside the domain. A hand-edited
-    // profile is the same door as a typed field.
-    for (const [stored] of cases) {
-      const v = resolveLevelUpValue({ levelUpValue: stored });
-      assert(Number.isInteger(v) && v >= row.min && v <= row.max,
-        `${JSON.stringify(stored)} resolved to ${v}, which is in domain and whole`);
-    }
-
-    // AND IT REACHES THE GAME. A value he types mid-run applies to the NEXT
-    // level bought — no new run, nothing snapshotted — which is the promise the
-    // row's own note makes to him.
+  // ---- 60d. the level value is authored (owner, 2026-11-20: the Level-up value row was dropped)
+  test('60d. a level reached grants the authored balance.levelUp.pointsPerLevel', () => {
     const run = createRunState({ seed: 0x7ed, classId: 'reaver', registries: REG });
-    const typed = resolveLevelUpValue({ levelUpValue: '7' });
-    awardLevelXp(REG, run, xpToNextLevel(REG, 1), { pointsPerLevel: typed });
-    eq(run.level.unspentPoints, 7, 'a level reached at a typed 7 grants seven points');
-    for (let i = 0; i < 7; i++) applyLevelUp(REG, run, 'constitution');
-    eq(run.attributes.constitution - REG.attributeRules.presets.lean.reaver.constitution, 7, 'all seven assigned to one stat');
-    eq(run.levelPoints, 7, 'and records seven assigned');
-    eq(run.level.level, 2, 'from ONE level');
-    // …mid-run, he changes his mind. The next level answers the new number and
-    // the run stays loadable.
-    awardLevelXp(REG, run, xpToNextLevel(REG, 2), { pointsPerLevel: resolveLevelUpValue({ levelUpValue: '2' }) });
-    eq(run.level.unspentPoints, 2);
-    applyLevelUp(REG, run, 'wisdom'); applyLevelUp(REG, run, 'wisdom');
-    eq(run.levelPoints, 9, 'nine points over two levels at two different typed values');
-    run.seedString = 'TYPED';
-    const store = createMemoryStorage();
-    createSaveManager(store).saveRun(run);
-    assert(createSaveManager(store).loadRun(REG) !== null,
-      'and the run still loads — typing a new value mid-climb cannot archive a save');
-
-    // THE PLANT'S TARGET, named so the next reader can find it: with the clamp
-    // removed, `0` reaches the model and a level grants nothing. Watched red.
-    const zero = resolveLevelUpValue({ levelUpValue: 0 });
-    assert(zero >= 1, 'the floor is what stops an earned level from granting nothing');
+    const authored = REG.balance.levelUp.pointsPerLevel;
+    assert(Number.isInteger(authored) && authored >= 1, 'the authored value is a whole number of at least 1');
+    awardLevelXp(REG, run, xpToNextLevel(REG, 1), { pointsPerLevel: authored });
+    eq(run.level.unspentPoints, authored, 'one level grants the authored points');
   });
 
   // ---- 60e. the affordability predicate the fold reads ---------------------
@@ -7263,24 +7198,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio,Game rules',
       'General offers Display, Combat, Audio and the custom Game rules section');
     const combatTopics = generalGroups('Combat');
-    eq([...combatTopics.keys()].join(','), 'Auto combat & pacing,Animation & effects,Combat log,Range,Armaments',
+    eq([...combatTopics.keys()].join(','), 'Auto combat & pacing,Animation & effects,Combat log,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Auto combat & pacing').map((r) => r.key).join(','),
       'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,enemyAttackMs,enemyFloaterIntervalMs,combatPacingPreset,animSpeed',
       'auto combat and every pacing dial are under one name, first');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,effects,motionAttack,motionHit,motionIdle,motionDefeat,screenShake,showPlayedCard,manaRing',
-      'every quality, shake, sprite, played-card and upcast switch is under one name');
+      'useSprites,effectsMenu,showPlayedCard,manaRing',
+      'every quality, shake, sprite and played-card switch is under one name');
     eq(combatTopics.get('Combat log').map(r => r.key).join(','),
       'combatLogConsole,combatLogPlayerColor,combatLogEnemyColor',
       'console access and log identity colors share the Combat log topic');
     eq(combat.find(r => r.key === 'combatLogConsole').def, false, 'Console shortcut defaults off');
     eq(combat.find(r => r.key === 'combatLogConsole').type, 'toggle', 'Console shortcut is an ordinary toggle');
     eq(combat.find(r => r.key === 'combatLogConsole').debugTopic, undefined, 'Console shortcut has no developer gate');
-    eq(combatTopics.get('Range').map(r => r.key).join(','),
+    eq(categoryHandler('Advanced').rows.filter(r => r.advancedGroup === 'Range').map(r => r.key).join(','),
       'rangeMechanics,rangeAdvanceSpPerBand,rangeReachPrecisionBonus,rangeThrowPrecisionPenalty',
-      'new-run range rules have their own Combat topic');
-    eq(combat.find(r => r.key === 'askToUpcastAfterTarget').def, false, 'upcast prompting defaults off');
+      'new-run range rules are their own Advanced group (owner, 2026-11-20)');
+    eq(combat.some(r => r.key === 'askToUpcastAfterTarget'), false, 'the upcast prompt row is gone (owner, 2026-11-20)');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
       'armamentsPresentation,armamentsPhonePlacement',
       'the combat Armaments cluster is filed with combat, not with the accent colour');
@@ -7295,7 +7230,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the bag that mixed combat pacing with the title entrance is gone');
     eq(displayTopics.get('Title screen').map((r) => r.key).join(','), 'titleCityHold',
       'what is left of it is named for the title screen it actually holds');
-    for (const key of ['combatLogConsole', 'combatLogPlayerColor', 'combatLogEnemyColor', 'useSprites', 'animSpeed', 'effects', 'motionAttack', 'motionHit', 'motionIdle', 'motionDefeat', 'screenShake', 'showPlayedCard',
+    for (const key of ['combatLogConsole', 'combatLogPlayerColor', 'combatLogEnemyColor', 'useSprites', 'animSpeed', 'effectsMenu', 'showPlayedCard',
       'armamentsPresentation', 'armamentsPhonePlacement']) {
       eq(categoryHandler('General').rows.filter((r) => r.key === key).length, 1,
         `${key} has exactly one home in the General tab`);
@@ -7643,6 +7578,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
     const vigil = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil');
     const defaultArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'default');
+    assert(!equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
+      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'an alternate starter does not also grant the default armour');
+    worn.loadout.boughtArmour = [{ classId: 'reaver', id: defaultArmour.id }];
     assert(equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
       ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the creation armour can be switched away from');
     assert(ownership(REG, { meta: {}, loadout: worn.loadout }).has(vigil),
@@ -9634,23 +9572,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const bal = contentBundle.balance;
     const said = (r) => (r.errors || []).map((e) => `${e.path}: ${e.msg ?? e.message}`);
     const withCards = (mut) => validateContent({ ...contentBundle, cards: contentBundle.cards.map(mut) });
-    // THE COST RULE: a card that costs Mana costs the floors too, base and upgrade.
+    // THE COST RULE: owner ruling 2026-11-22, "No card has minimums": a Mana card may cost 0 action, base and upgrade (balance.mana.minActionCost/minStaminaCost are retired).
     assert(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, staminaCost: 0 } : c)).ok, 'Mana needs only the primary stamina cost, never a second stamina line');
-    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, cost: 0 } : c))).some((e) => /cards\.gorefireSlash\.cost: .*at least 1 action/.test(e)), 'a Mana card with no action line is refused by name');
-    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', cost: 0 } } : c))).some((e) => /cards\.gorefireSlash\.upgrade\.cost/.test(e)), 'an upgrade that drops the action line under a Mana cost is refused by name');
+    assert(!said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, cost: 0 } : c))).some((e) => /cards\.gorefireSlash\.cost/.test(e)), 'a Mana card with no action line is valid (no cost minimum, owner 2026-11-22)');
+    assert(!said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', cost: 0 } } : c))).some((e) => /cards\.gorefireSlash\.upgrade\.cost/.test(e)), 'an upgrade that drops the action line under a Mana cost is valid (no cost minimum, owner 2026-11-22)');
     assert(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', manaCost: 0, cost: 0, staminaCost: 0 } } : c)).ok, 'an upgrade that drops the Mana line may drop the others too');
-    assert(REG.cards.get('supernova').cost === 'X' && REG.cards.get('supernova').manaCost > 0, 'an X-cost Mana card ships, and passes: X is at least one action');
-    assert(said(validateContent({ ...contentBundle, balance: { ...bal, mana: { minActionCost: -1, minStaminaCost: 1 } } })).some((e) => /balance\.mana\.minActionCost/.test(e)), 'a negative floor is refused by name');
+    assert(REG.cards.get('supernova').cost === 'X' && REG.cards.get('supernova').manaCost > 0, 'an X-cost Mana card ships');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, mana: { ...bal.mana, minActionCost: 1 } } })).some((e) => /balance\.mana\.minActionCost: Unknown field/.test(e)), 'the retired minActionCost floor key is refused by name (owner 2026-11-22)');
     const { mana: _noMana, ...sansMana } = bal;
     assert(said(validateContent({ ...contentBundle, balance: sansMana })).some((e) => /^balance\.mana:/.test(e)), 'a bundle without the Mana floor is refused by name');
     assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
+    // Owner ruling 2026-11-22: no Exposure floor; a Mana spell grade that builds little Exposure is valid.
     const lowGrade = withCards(card => card.id === 'starstoneArc' ? { ...card, gradeProfiles: card.gradeProfiles.map(profile => ({ ...profile, traits: { ...profile.traits, exposureBuildupPerHit: 1 } })) } : card);
-    assert(said(lowGrade).some((e) => /cards\.starstoneArc\.gradeProfiles.*at least 5 Exposure per hit/.test(e)), 'a Mana spell grade building less than buildupPerManaSpell is refused by name');
-    assert(said(withCards(card => {
+    assert(!said(lowGrade).some((e) => /Exposure per hit/.test(e)), 'a Mana spell grade may build any non-negative Exposure (no floor)');
+    assert(!said(withCards(card => {
       if (card.id !== 'starShower') return card;
       const { gradeProfiles, abilityKind, abilityRank, abilityFamily, legacyFace, ...legacy } = card;
       return { ...legacy, ...legacyFace, upgrade: { ...card.upgrade, manaCost: 1, staminaCost: 1 } };
-    })).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a legacy upgrade introducing Mana also requires the spell buildup floor');
+    })).some((e) => /cardExposure\.starShower\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a legacy upgrade introducing Mana needs no Exposure floor (owner ruling 2026-11-22)');
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');
@@ -9719,6 +9658,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE ROW THE RUN WAS BORN WITH, which is the whole point of the snapshot:
     // the lean creation mode converts at a fifth, so the live tier is a fifth
     // of the authored one and the authored table is not what the receipt reads.
+    // REG is the bare content bundle, which keeps the legacy CON Poise row so
+    // saved runs are not repriced. Profile-bound runs (spellTraditionsVersion 1,
+    // docs/ARCANE-DIVINE-RULES.md) get the Wisdom row instead; that path is
+    // asserted in tests/spell-tradition-combat.test.mjs.
     // The 2026-10-06 default gives Poise base 1 plus one per CON. Reaver's
     // CON 2 gives three attribute Poise before equipment and relics.
     const poiseRow = run.derivedStatRuleSnapshot.rules.rules.poise;

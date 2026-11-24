@@ -15,7 +15,7 @@ import { SmithUpgradeCost, SmithUpgradeSlots, RollSmithOptions, SmithOptionPool 
 import { ItemFamily, ItemCategory, ItemUpgradeCount, ItemPropertyIds } from '../src/model/itemPicks.js';
 import { gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
 import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
-import { UpgradeSlots } from '../src/model/cardUpgradeLimits.js';
+import { UpgradeSlots, WeaponSmithLevel } from '../src/model/cardUpgradeLimits.js';
 import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
@@ -30,9 +30,9 @@ function smithRun({ classId = 'reaver', stones = 40, cinders = 5000, seed = 31 }
 }
 const GS = 'armament/greatsword';
 
-test('cost table: cinders 50, 85, 120, 155 then +35 (owner 2026-11-17); stones 1 for upgrades 1-3, 2 for 4-6, 3 for 7-9', () => {
+test('cost table: cinders 150, 255, 360, 465 then +105 (owner 2026-11-17, tripled 2026-11-23); stones 1 for upgrades 1-3, 2 for 4-6, 3 for 7-9', () => {
   const rows = Array.from({ length: 10 }, (_, i) => SmithUpgradeCost(i + 1, 0, profile));
-  assert.deepEqual(rows.map((r) => r.cinders), [50, 85, 120, 155, 190, 225, 260, 295, 330, 365]);
+  assert.deepEqual(rows.map((r) => r.cinders), [150, 255, 360, 465, 570, 675, 780, 885, 990, 1095]);
   assert.deepEqual(rows.map((r) => r.stones), [1, 1, 1, 2, 2, 2, 3, 3, 3, 4]);
 });
 
@@ -72,16 +72,16 @@ test('the blacksmith quote prices upgrade n and commit applies the chosen option
   const ratingsBefore = gameProfileRatingReceipt(registries, run).totals;
   let quote = blacksmithUpgradePlan(registries, run, GS);
   assert.equal(quote.ok, true, quote.reason);
-  assert.deepEqual([quote.stones, quote.cost, quote.n], [1, 50, 1]);
+  assert.deepEqual([quote.stones, quote.cost, quote.n], [1, 150, 1]);
   const pick = quote.options.find((o) => o.k === 'stat' && o.stat === 'poise') || quote.options[0];
   const stonesBefore = run.smithingStones;
   const receipt = commitBlacksmithUpgrade(registries, run, { ...quote, optionId: pick.id });
   assert.equal(receipt.pick.id, pick.id);
-  assert.deepEqual([run.smithingStones, run.cinders], [stonesBefore - 1, 5000 - 50]);
+  assert.deepEqual([run.smithingStones, run.cinders], [stonesBefore - 1, 5000 - 150]);
   assert.equal(ItemUpgradeCount(run, GS), 1);
   assert.equal(run.itemUpgradeLevels?.[GS] || 0, 0, 'the fixed tier ladder is untouched');
   quote = blacksmithUpgradePlan(registries, run, GS);
-  assert.deepEqual([quote.stones, quote.cost, quote.n], [1, 85, 2]);
+  assert.deepEqual([quote.stones, quote.cost, quote.n], [1, 255, 2]);
   if (pick.stat === 'poise') assert.equal(gameProfileRatingReceipt(registries, run).totals.poise, ratingsBefore.poise + pick.n);
 });
 
@@ -105,12 +105,13 @@ test('a stale quote is refused; an option not offered is refused; slots end the 
   assert.match(full.reason, /upgrade slots/);
 });
 
-test('picks count as the weapon\'s smith level for card slots, and an old save (no picks) is unchanged', () => {
+test(`picks raise the weapon's smith level but no longer add card slots (owner 2026-11-23), and an old save (no picks) is unchanged`, () => {
   const run = smithRun();
   const strike = run.deck.find((c) => c.cardId === 'core.strike');
-  assert.equal(UpgradeSlots(run, strike), 2);
+  assert.equal(UpgradeSlots(run, strike), 1);
   run.itemUpgradePicks = { [GS]: [{ id: 'ar', k: 'stat', stat: 'ar', n: 1 }] };
-  assert.equal(UpgradeSlots(run, strike), 3);
+  assert.equal(WeaponSmithLevel(run, strike), 1);
+  assert.equal(UpgradeSlots(run, strike), 1);
   assert.equal(ItemCategory(run, GS), 'greatsword');
 });
 
@@ -119,11 +120,12 @@ test('item rank-up: +1 upgrade slot for the rank-up price; slots never pass the 
   const run = smithRun();
   assert.equal(SmithUpgradeSlots(run, GS), 6);
   const quote = ItemRankUpPlan(registries, run, GS);
-  assert.deepEqual([quote.ok, quote.stones, quote.cost], [true, 1, 120], quote.reason);
+  assert.deepEqual([quote.ok, quote.stones, quote.cost], [true, 1, 240], quote.reason);
   const [stonesBefore, cindersBefore] = [run.smithingStones, run.cinders];
   CommitItemRankUp(registries, run, quote);
   assert.equal(SmithUpgradeSlots(run, GS), 7);
-  assert.deepEqual([run.smithingStones, run.cinders], [stonesBefore - 1, cindersBefore - 120]);
+  assert.deepEqual([run.smithingStones, run.cinders], [stonesBefore - 1, cindersBefore - 240]);
+  assert.equal(ItemRankUpPlan(registries, run, GS).cost, 480, 'the next rank costs the rank-up price twice (owner 2026-11-23)');
   assert.throws(() => CommitItemRankUp(registries, run, quote), /changed|Inspect/);
   run.itemRanks[GS] = 99;
   assert.equal(SmithUpgradeSlots(run, GS), 12);

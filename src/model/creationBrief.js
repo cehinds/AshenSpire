@@ -193,7 +193,7 @@ function attributeCycle(weight, perIncrease) {
 // The compact face names benefits that grow per point, without amounts or
 // retired rating names. Detailed formulas remain in the disclosure.
 const MAIN_BENEFITS = [
-  ['ar', 'Physical damage'], ['dr', 'Block'], ['hp', 'Health'],
+  ['ar', 'Physical damage'], ['dr', 'Defense'], ['hp', 'Health'],
   ['poise', 'Poise'], ['pr', 'Magic damage'], ['handSize', 'Hand size'],
 ];
 
@@ -255,7 +255,7 @@ function mainBenefitSummary(registries, attributeId, feeds, ratings, context, ra
     const points = feed ? feed.points : attributeCycle(rating.weight, 1);
     const gain = feed ? feed.perTier : points && Math.round(points * rating.weight * 100) / 100;
     const multiplier = Number.isFinite(rating?.multiplier) ? rating.multiplier : 1;
-    return points === 1 && gain * multiplier >= 1 ? [traditions && id === 'dr' ? 'Block' : label] : [];
+    return points === 1 && gain * multiplier >= 1 ? [label] : [];
   });
   if (magic?.perPoint) labels.push(magic.label);
   return labels.join(' · ');

@@ -141,8 +141,8 @@ test('weapon cards add their source equipment rating without a tier', async () =
   for (const id of ['ar', 'dr', 'pr']) assert.doesNotMatch(ratingHtml, new RegExp(`data-rating-id="${id}"`));
   assert.doesNotMatch(ratingHtml, /\b(AR|DR|PR)\b/);
   assert.deepEqual([surface.poise.ratings.ar, surface.poise.ratings.dr, surface.poise.ratings.pr], [3, 1, 1], 'STR, DEX and INT alone');
-  // Wayfarer Plate adds Poise 8.
-  assert.match(ratingHtml, /data-rating-id="poise"[\s\S]*?Constitution <b>2<\/b> × 1 → floor = <b>2<\/b>[\s\S]*?<b>8<\/b> Wayfarer Plate[\s\S]*?= <strong>11<\/strong>/);
+  // Wayfarer Plate adds Poise 4 (owner, 2026-11-21: starting armour Unranked).
+  assert.match(ratingHtml, /data-rating-id="poise"[\s\S]*?Constitution <b>2<\/b> × 1 → floor = <b>2<\/b>[\s\S]*?<b>4<\/b> Wayfarer Plate[\s\S]*?= <strong>7<\/strong>/);
   assert.match(ratingHtml, /data-rating-id="ward"[\s\S]*?Wisdom <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?= <strong>2<\/strong>/);
 });
 
@@ -312,7 +312,7 @@ test('a set’s Poise is its own value, its weight follows it, and it has no AR,
   const { createRunState } = await import('../src/model/state.js');
   const { pieceWeight } = await import('../src/model/statProjection.js');
   const authored = contentBundle.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default');
-  assert.equal(authored.poiseThreshold, 8);
+  assert.equal(authored.poiseThreshold, 4);
   assert.equal(itemRatingColumn(contentBundle.equipment, authored, 'poise'), 'poiseThreshold');
   for (const id of ['ar', 'dr', 'pr', 'ward']) {
     assert.equal(itemRatingColumn(contentBundle.equipment, authored, id), null, `${id} has no armour column to stamp`);
@@ -325,7 +325,7 @@ test('a set’s Poise is its own value, its weight follows it, and it has no AR,
   assert.equal(authoredItemRatings(configured.equipment, set).poise, 3);
   const { mechanics } = await import('../src/framework/data/mechanics.js');
   assert.equal(pieceWeight(set), Math.round(3 * mechanics.weight.itemWeightScale * 10) / 10, 'a set’s Poise IS its weight (rescaled by itemWeightScale) — the row’s note says so');
-  assert.equal(contentBundle.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8,
+  assert.equal(contentBundle.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 4,
     'and the authored bundle is untouched');
 
   // A rating a set has no column for still reaches combat, through the rules.
@@ -346,11 +346,11 @@ test('with ratings off, an item rating moves nothing', () => {
   };
   const configured = configuredContentBundle(contentBundle, settings);
   assert.equal(configured.balance.combatRatings.enabled, false);
-  assert.equal(configured.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8);
+  assert.equal(configured.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 4);
   // And an older run, which `configuredContentBundle` forces off by version.
   const older = configuredContentBundle(contentBundle, { schemaVersion: 1, overrides: { 'gameConfig.combatRatings.itemRatings.armor:reaver:default.poise': 1 } });
   assert.equal(older.balance.combatRatings.enabled, false);
-  assert.equal(older.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8);
+  assert.equal(older.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 4);
 });
 
 // ONE STORED NUMBER, ONE ANSWER. A hand-edited profile can hold anything; the
@@ -371,8 +371,8 @@ test('a stored number reads the same in the panel and on the item', async () => 
   // Unreadable is unset, in both, which is the authored value.
   for (const raw of ['', null, 'lots']) {
     const settings = { [key]: raw };
-    assert.equal(resolveNumberRow(settings, row), 8);
-    assert.equal(configuredContentBundle(contentBundle, settings).equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8);
+    assert.equal(resolveNumberRow(settings, row), 4);
+    assert.equal(configuredContentBundle(contentBundle, settings).equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 4);
   }
 });
 

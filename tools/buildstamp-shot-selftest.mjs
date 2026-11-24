@@ -38,10 +38,10 @@ import { INPUT_ROOTS, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
-// `engine/kernel` is imported by src/model (gameConfig.js, rewardPolicy.js), so a
-// served copy that omits it never boots the title and every placement reads blank.
-// It is not an INPUT_ROOT (the digest does not see it); the page needs it.
-const COPY = [...INPUT_ROOTS, 'engine/kernel', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
+// src/model imports engine/kernel (gameConfig/rewardPolicy) and engine/runtime
+// (mechanics bindings). Neither is an INPUT_ROOT, but omitting either prevents
+// the copied page's module graph from booting before its stamp can be measured.
+const COPY = [...INPUT_ROOTS, 'engine/kernel', 'engine/runtime', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
 const css = (root, text) => appendFileSync(resolve(root, 'styles/ui.css'), `\n${text}\n`, 'utf8');
 const edit = (root, rel, fn) => {

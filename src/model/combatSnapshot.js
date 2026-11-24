@@ -129,6 +129,7 @@ function entityProblems(entity, path, { player = false } = {}) {
     if (!finite(entity[key])) problems.push(`${path}.${key} must be finite`);
   }
   if (entity.wardBlock !== undefined && (!Number.isInteger(entity.wardBlock) || entity.wardBlock < 0 || !finite(entity.block) || entity.wardBlock > entity.block)) problems.push(`${path}.wardBlock must be a whole number between 0 and block`);
+  if (entity.wardHp !== undefined && (!Number.isSafeInteger(entity.wardHp) || entity.wardHp < 0)) problems.push(`${path}.wardHp must be a whole number of at least 0`);
   for (const key of ['poiseGuard', 'wardGuard']) {
     if (entity[key] !== undefined && (!Number.isInteger(entity[key]) || entity[key] < 0)) problems.push(`${path}.${key} must be a whole number of at least 0`);
   }

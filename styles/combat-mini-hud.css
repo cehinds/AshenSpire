@@ -24,6 +24,12 @@
   width: var(--mh-w) !important;
   align-items: flex-start !important;
 }
+/* A back-row enemy's plates are drawn at the layout's back-row scale (--combat-hud-row-scale, set from perspectiveGrid.backRowEnemyScale),
+   about their top centre: the placement reads the scaled height, so the plates' bottom still stands its gap above the head. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters { scale: var(--combat-hud-row-scale, 1); transform-origin: 50% 0; }
+/* `scale` makes the rack a stacking context, which traps its children's z-index. Lift the rack itself just above the fade layer
+   (combat-layers.css): above every sprite and the fade, below fx, the toolbar, hit badges, floaters and reading panels. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters { z-index: calc(var(--combat-layer-fade, 375) + 1); }
 /* The intent row is centred over the HP bar (not the Block shield): its left edge sits on the bar's centre, then translate pulls it back half its own
    width. It keeps its max-content width so its hit area does not grow (combat-target-responsive.css zeroes translate with a less specific selector). */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > :is(.intent, .player-action-intent) {
@@ -89,16 +95,25 @@
 /* Broken: the bar reads empty and says so, in the Broken colour, until Broken ends and it refills. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar[data-broken='true'] .m-value.m-value { color: var(--danger, var(--gold)); }
 
-/* Bonus Poise (owner, 2026-11-15): while Poise is above its base maximum the bar's bonus part is a blue segment past the base maximum,
-   and the number reads "8/8" in yellow then "+5" in blue. Player and enemies share this mini HUD. */
+/* Bonus Poise (owner, 2026-11-15; swapped to purple 2026-11-24): while Poise is above its base maximum the bar's bonus part is a purple segment past the base maximum,
+   and the number reads "8/8" in yellow then "+5" in purple. Player and enemies share this mini HUD. */
 :root .combat .combatant .combat-health-poise-bar .m-track > .m-bonus-seg {
-  position: absolute; inset-block: 0; left: var(--bonus-from, 100%); width: var(--bonus-width, 0); background: var(--barrier-blue); border-radius: inherit; pointer-events: none;
+  position: absolute; inset-block: 0; left: var(--bonus-from, 100%); width: var(--bonus-width, 0); background: var(--ward-purple); border-radius: inherit; pointer-events: none;
 }
-:root .combat .combatant .combat-health-poise-bar .m-value .m-bonus { color: var(--barrier-blue); }
+:root .combat .combatant .combat-health-poise-bar .m-value .m-bonus { color: var(--ward-purple); }
 /* A bonus makes the number longer ("10/10 +5"), and the mini HUD reserves a fixed value slot: a lane at the screen edge would push the "+5" past the viewport.
    While a bonus shows, the plate takes the number's own width and the bar gives up that room, so the row never grows past the HUD (owner, 2026-11-15, 390x844). */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar[data-bonus] > .m-well { flex: 0 1 var(--mh-bar-w); }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar[data-bonus] > .m-plate.m-plate { flex: 0 0 auto; }
+
+/* Ward health buffer (owner, 2026-11-24): blue segment on the HP bar past current HP, "+N" in blue, and narrow-screen plate fit. */
+:root .combat .combatant .combat-health-meter .m-track > .m-ward-seg {
+  position: absolute; inset-block: 0; left: var(--ward-from, 100%); width: var(--ward-width, 0); background: var(--barrier-blue); border-radius: inherit; pointer-events: none;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.35);
+}
+:root .combat .combatant .combat-health-meter .m-value .m-ward-bonus { color: var(--barrier-blue); font-weight: 600; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-meter[data-ward-bonus] > .m-well { flex: 0 1 var(--mh-bar-w); }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-meter[data-ward-bonus] > .m-plate.m-plate { flex: 0 0 auto; }
 
 /* The badge row: every badge kind and the status tray, one size, one row. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-badges {

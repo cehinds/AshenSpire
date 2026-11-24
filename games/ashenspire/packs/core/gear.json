@@ -370,12 +370,6 @@
       "file": "content/source/weapons.csv",
       "id": "boneSceptre"
     },
-    "grantedCards": [
-      {
-        "card": "core.manaSurge",
-        "copies": 1
-      }
-    ],
     "range": "reach"
   },
   {
@@ -1583,6 +1577,9 @@
     "points": {},
     "classes": [
       "starseer"
+    ],
+    "signatureMods": [
+      "start.turnWard=+1"
     ],
     "source": {
       "file": "content/source/outfits.csv",

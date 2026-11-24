@@ -2,7 +2,7 @@
 // headless target rules live below UI in model/friendlyTargets.js so the
 // authoritative engine never depends on DOM-facing modules.
 
-import { liteRendering } from '../performance.js';
+import { OutlineTargetSilhouette } from '../performance.js';
 
 export const TARGET_COLORS = Object.freeze({
   enemy: '#e0463c',
@@ -53,7 +53,7 @@ export function renderTargetSilhouette(combatantEl, relationship) {
   const color = TARGET_COLORS[relationship];
   const spriteWrap = combatantEl && combatantEl.querySelector('.sprite');
   if (!color || !spriteWrap) return false;
-  const light = liteRendering();
+  const light = OutlineTargetSilhouette(); // Lite or Shadows forced Off: the outline keeps the relationship colour
   const clone = light ? null : tintedClone(spriteWrap, color);
   if (!light && !clone) return false;
   const holder = document.createElement('div');

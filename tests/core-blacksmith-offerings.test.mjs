@@ -29,10 +29,12 @@ function smithRun(registries) {
   return run;
 }
 
-test('Core Blacksmith stock offers the five Core offerings and no Smithing Stone shelf', () => {
+test('Core Blacksmith stock offers the five Core offerings (and the copy service only some visits) and no Smithing Stone shelf', () => {
   const run = smithRun(coreOut);
-  assert.deepEqual([...run.shopStock.offerings].sort(), [...CORE_BLACKSMITH_OFFERINGS].sort());
-  assert.deepEqual([...CORE_BLACKSMITH_OFFERINGS], ['upgrade', 'upgradeArt', 'rankUp', 'armaments', 'weaponArts']);
+  const copies = run.shopStock.offerings.includes('cardCopy');
+  assert.deepEqual([...run.shopStock.offerings].sort(), [...CORE_BLACKSMITH_OFFERINGS].filter(id => copies || id !== 'cardCopy').sort());
+  assert.equal(!!run.shopStock.cardCopy, copies);
+  assert.deepEqual([...CORE_BLACKSMITH_OFFERINGS], ['upgrade', 'upgradeArt', 'rankUp', 'armaments', 'weaponArts', 'cardCopy']);
   assert.equal(run.shopStock.armaments.length, 6);
   assert.ok(run.shopStock.weaponArts.length >= 1);
   assert.equal(run.shopStock.smithStones, undefined);

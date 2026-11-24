@@ -13,7 +13,7 @@ import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
 import { ElementPreviewBreak } from './elementIdentity.js';
-import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { fixCoreWardDisabled, FixCoreWardHpPerStack, EffectiveWardHp } from '../model/fixCoreMechanics.js';
 import { DefendPoiseFloor, HeldStance } from './stanceBenefits.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
@@ -112,6 +112,7 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
  * Poise damage) and, when that empties Poise, the Staggered stance and Vulnerable. Shared by the card preview and the intent projection.
  */
 export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = null) {
+  const hpBefore = defender.previewHpRemaining ?? defender.hp;
   // The Block held when this hit arrived, for a Poise rider that follows it (live: the tactical receipt's blockBefore). Preview copy only.
   defender.previewBlockAtHit = defender.block || 0;
   defender.block = receipt.blockRemaining;
@@ -123,16 +124,31 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = n
     if (held) { const left = held.stacks - receipt.skinSpent, next = { ...defender.statuses }; if (left > 0) next[skin] = { ...held, stacks: left }; else delete next[skin]; defender.statuses = next; }
   }
   if (!fixCoreEnabled(ctx)) return;
+  if (receipt.wardHpAbsorbed > 0) {
+    const wardAfter = Math.max(0, EffectiveWardHp(ctx, defender) - receipt.wardHpAbsorbed);
+    defender.wardHp = wardAfter;
+    const nextStatuses = { ...(defender.statuses || {}) };
+    if (wardAfter > 0) {
+      const per = FixCoreWardHpPerStack(ctx);
+      if (per > 0 && nextStatuses.ward) nextStatuses.ward = { ...nextStatuses.ward, stacks: Math.ceil(wardAfter / per) };
+    } else {
+      delete nextStatuses.ward;
+    }
+    defender.statuses = nextStatuses;
+  }
   if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
   if (defender.persistentPoise) {
     const poiseBefore = defender.persistentPoise.value;
     defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
-    if (poiseBefore > 0 && defender.persistentPoise.value === 0) {
+    // Live play breaks Poise only when the direct hit leaves the target alive.
+    // Keep a detached HP timeline too: a lethal Divine contact cannot add Smite.
+    if (poiseBefore > 0 && defender.persistentPoise.value === 0 && (!Number.isFinite(hpBefore) || hpBefore > receipt.hpLoss)) {
       previewPoiseBreak(ctx, defender);
       // Shown = dealt: a divine hit that breaks Poise also Smites (live: elementIdentity OnPoiseBreak), so the quoted HP carries it.
       if (!receipt.evaded) receipt.hpLoss += ElementPreviewBreak(ctx, attacker, defender, receipt.element?.id, receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount) || 0;
     }
   }
+  if (Number.isFinite(hpBefore)) defender.previewHpRemaining = Math.max(0, hpBefore - receipt.hpLoss);
 }
 
 /** A detached copy of an attacker whose HP and defenses a previewed reflected return may spend. */
@@ -171,6 +187,7 @@ function previewAttackerHpLoss(ctx, attacker, amount) {
     if (token) {
       adjustCount(attacker.previewConsumables, token.id, -1);
       attacker.hp = reviveHp(attacker.maxHp, token.hpPct);
+      attacker.previewHpRemaining = attacker.hp;
       return false;
     }
   }

@@ -50,10 +50,11 @@ test('a rank-up raises an ordinary owned card of the schools, never past the tra
   assert.ok(!ids.includes('own-top'), 'a card at the track level cannot rise');
   assert.equal(raiseCardRank(registries, run, BLADE, 'own-top'), null);
   assert.equal(run.skills[BLADE].pendingRankUps, 2, 'a refused raise spends nothing');
-  assert.equal(raiseCardRank(registries, run, BLADE, 'own-rend').rank, 2);
+  // Owner 2026-11-23: an unranked card rises to Rank 1, then Rank 2.
+  assert.equal(raiseCardRank(registries, run, BLADE, 'own-rend').rank, 1);
   assert.equal(run.skills[BLADE].pendingRankUps, 1);
   raiseCardRank(registries, run, BLADE, 'own-rend');
-  assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 3);
+  assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 2);
   assert.equal(raiseCardRank(registries, run, BLADE, 'own-rend'), null, 'an empty ledger raises nothing');
   assert.deepEqual(validateRunShape(run).filter((p) => /rank/i.test(p)), []);
 });
@@ -90,12 +91,12 @@ test('the reward door raises the chosen card and spends the rank-up', async () =
     // The rank-up opens the Blacksmith's card-upgrade picker (playtest 2026-11-17 item 45a).
     const mine = () => document.querySelector('.card-upgrade-row[data-instance-id="own-rend"]');
     assert.ok(mine(), 'the owned card is offered');
-    assert.match(mine().querySelector('.co-chip').textContent, /Rank 1 → 2/, 'shown with the rank it would rise to');
+    assert.match(mine().querySelector('.co-chip').textContent, /Basic → Rank 1/, 'shown with the rank it would rise to (an unranked card reads Basic)');
     mine().click();
     assert.equal(run.deck.find(c => c.instanceId === 'own-rend').rank, undefined, 'choosing the card spends nothing');
     assert.ok(document.querySelector('.card-upgrade-faces'), 'the before and after faces open under it');
     document.querySelector('.card-upgrade-confirm').click();
-    assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 2);
+    assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 1);
     assert.equal(run.skills[BLADE].pendingRankUps, 0);
     assert.ok(persisted > 0);
     assert.equal(app.querySelector('.reward-kind[data-kind="skillRankUp"]').dataset.state, 'taken');

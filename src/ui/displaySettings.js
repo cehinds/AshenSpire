@@ -18,7 +18,7 @@ import { setCombatPacing } from './animationPace.js';
 import { setAnimSpeed } from './fx.js';
 import { resolveMusicEnabled, AUDIO_DEFAULTS } from './audio.js';
 import { SHIPPED_MUSIC_FOLDER } from '../content/music.js';
-import { resolvePerformanceMode, resolveCombatPacing, effectsEnabled, motionFlags, coarsePointer } from './performance.js';
+import { resolveCombatPacing, effectsEnabled, motionFlags, FxFlags, SurfaceFlags, coarsePointer } from './performance.js';
 import { clearPosePreloads } from './services/posePreloads.js';
 import { scheduleCardFits } from './components/card.js';
 import { updateUprightGate } from './components/upright.js';
@@ -469,6 +469,20 @@ export function applyCardSizeSettings(settings) {
   }
 }
 
+/**
+ * ApplySurfaceFlags(root, settings) — blur and shadows (owner, 2026-11-20): writes
+ * `data-fx-blur` / `data-fx-shadows` = on|off on the root when the player forced
+ * one, and removes it for Auto so styles/perf-lite.css keeps its phones-only rule.
+ */
+export function ApplySurfaceFlags(root, settings = {}) {
+  const flags = SurfaceFlags(settings);
+  for (const kind of Object.keys(flags)) {
+    const name = `fx${kind[0].toUpperCase()}${kind.slice(1)}`;
+    if (flags[kind]) root.dataset[name] = flags[kind];
+    else delete root.dataset[name];
+  }
+}
+
 export function applyDisplaySettings(settings) {
   applyCardArtStyle(settings);
   applyDisplayAppearance(settings);
@@ -494,15 +508,16 @@ export function applyDisplaySettings(settings) {
   document.documentElement.dataset.enemySpawnRow = advancedPresentation.enemySpawnRow;
   document.documentElement.dataset.playerSpawnColumn = advancedPresentation.playerSpawnColumn;
   document.documentElement.dataset.enemySpawnColumn = advancedPresentation.enemySpawnColumn;
-  const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
-  document.documentElement.dataset.performance = quality;
-  // Effects (owner, 2026-10-30): `data-performance` stays the CSS hook (lite = off);
-  // `data-effects` is its readable alias. The fighter-motion options are body
-  // classes (`motion-attack-off`, ...), each independent of Effects.
+  // Effects (owner, 2026-10-30): `data-effects` is the one root hook (off is the old Lite).
+  // The fighter-motion options are body classes (`motion-attack-off`, ...), each independent of Effects.
   document.documentElement.dataset.effects = effectsEnabled(settings) ? 'on' : 'off';
+  // Effects sub-switches: `data-fx-glow="off"` etc., read by FxOff(kind).
+  const fx = FxFlags(settings);
+  for (const kind of Object.keys(fx)) document.documentElement.dataset[`fx${kind[0].toUpperCase()}${kind.slice(1)}`] = fx[kind] ? 'on' : 'off';
+  ApplySurfaceFlags(document.documentElement, settings);
   const motion = motionFlags(settings);
   for (const kind of Object.keys(motion)) document.body.classList.toggle(`motion-${kind}-off`, !motion[kind]);
-  if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
+  if (!effectsEnabled(settings) || settings.reducedMotion) clearPosePreloads();
   configureTooltipSettings(settings);
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
@@ -571,7 +586,7 @@ export function applyDisplaySettings(settings) {
   document.documentElement.dataset.walkedFade = wf;
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
-  document.documentElement.dataset.ambient = quality === 'lite' ? 'off' : amb;
+  document.documentElement.dataset.ambient = effectsEnabled(settings) ? amb : 'off';
   // Accent theme → CSS variables on the root (falls back to gold).
   const accent = ACCENTS[settings.accent] || ACCENTS.gold;
   const root = document.documentElement.style;

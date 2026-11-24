@@ -137,7 +137,7 @@ state-root-data-short-false,":root[data-short='false'] (state hook set by JS, no
 state-root-data-shot-arcane-matrix,":root[data-shot-arcane='matrix'] (state hook set by JS, not a media query)",styles/combat.css,topbar; player-zone; hand-area; field; enemy-row [5 uses],state,styles/combat.css
 state-root-data-composition-short-wide,":root[data-composition='short-wide'] (state hook set by JS, not a media query)",styles/combat.css,hand; card; cost; mana-cost; cname; art; ctype; ctext; selected; combat; player-zone; enemy-row (+20) [42 uses],state,styles/combat.css
 state-body-reduced-motion,"body.reduced-motion (state hook set by JS, not a media query)",styles/combat.css,combat-potion-tray; primary; ember; shop-pane; rest-traveler-foreground [6 uses],state,styles/combat.css
-state-root-data-performance-lite,":root[data-performance='lite'] (state hook set by JS, not a media query)",styles/combat.css,aim-outline; backdrop; sprite; facing [4 uses],state,styles/combat.css
+state-root-data-performance-lite,":root[data-effects='off'] (state hook set by JS, not a media query)",styles/combat.css,aim-outline; backdrop; sprite; facing [4 uses],state,styles/combat.css
 state-root-data-formation-grid-true,":root[data-formation-grid='true'] (state hook set by JS, not a media query)",styles/combat.css,formation-grid [1 use],state,styles/combat.css
 state-root-data-formation-movement-true,":root[data-formation-movement='true'] (state hook set by JS, not a media query)",styles/combat.css,formation-grid; formation-grid-cell [2 uses],state,styles/combat.css
 state-root-data-hud-show-vitality-false,":root[data-hud-show-vitality='false'] (state hook set by JS, not a media query)",styles/hud-visibility.css,hud-vitals-panel [1 use],state,styles/hud-visibility.css

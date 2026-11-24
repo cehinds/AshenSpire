@@ -5,8 +5,8 @@ import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { TargetQuote } from '../models/TargetQuoteModel.js';
 import { acFor } from '../models/acBadge.js';
-import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft, PoiseBonusView } from '../models/CombatHealthModel.js';
-import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
+import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft, PoiseBonusView, HealthWardView } from '../models/CombatHealthModel.js';
+import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff, FixCoreCounterStacks, EffectiveWardHp } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { ApplyCombatBeat, CaptureCombatDisplay, PlayCostEvents, RequoteHeldHand } from '../models/CombatPlaybackModel.js';
 import { PendingCombatTargetPlan, ResolveTargetHudAction } from '../models/CombatTargetingModel.js';
@@ -59,7 +59,7 @@ import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, EnemyCastEff
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 import { DecorateRecipientEffects, CreateRecipientEffectState } from '../recipientEffectEvents.js';
-import { PlayRecipientEffectLayers } from '../recipientEffectSprites.js';
+import { PlayRecipientEffectLayers, PrewarmCombatRecipientEffects } from '../recipientEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { createToast } from '../components/toast.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
@@ -149,7 +149,7 @@ import { ArmLongPress } from '../pressable.js';
 import { KeepIntentRowsInside } from '../components/intentRowFit.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
-import { combatHealthRow, ApplyPoiseBonus } from '../components/combatHealth.js';
+import { combatHealthRow, ApplyPoiseBonus, ApplyHealthWard } from '../components/combatHealth.js';
 import { protectionPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -192,12 +192,15 @@ import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { resolveCombatCard } from '../../engine/combatExpansion.js';
 import { PlayConditionReachable, PlayConditionTargetPlan } from '../../engine/cardBehavior.js';
 import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
-import { upcastOptions } from '../../model/upcasting.js';
+import { UpcastingOffered, UPCASTING_ENABLED } from '../../model/upcasting.js';
 import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
 import { proposalCardPlan } from '../../engine/proposalStatusRuntime.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 import { NonlethalHpRefusal } from '../../model/cardHpCost.js';
 
+// The upcast prompt after choosing a target is off (owner, 2026-11-20: the Ask to upcast setting was
+// dropped; Core 2 never offered it). Turning it on is this one edit.
+const ASK_TO_UPCAST_AFTER_TARGET = false;
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
@@ -257,7 +260,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const projectCombatIntent = (target, enemyId) => target === combat
     ? previewMemo.memo(`project:${enemyId}`, () => projectIntentUncached(target, enemyId)) : projectIntentUncached(target, enemyId);
   function previewCard(target, instanceId, targetId, ranks, options) {
-    return memoPreviewCard(target, instanceId, targetId, ranks, options ?? { rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance' });
+    return memoPreviewCard(target, instanceId, targetId, ranks, { rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance', ...options });
   }
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -265,6 +268,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
+  // Start decoding impact sprites now; never awaited, so the fight is not delayed.
+  void PrewarmCombatRecipientEffects();
   SetFaceCostCombat(combat); // pile faces (no preview) are priced by this fight's stance and loadout, as the hand is
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -771,7 +776,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The upcast control is built from the preview's upcast options and the chosen tier: when either moves, the card is rebuilt.
     rebuildKey: entry => {
       const def = entry.preview?.resolvedDefinition;
-      if (combat.combatExpansionVersion !== 2 || !def || !upcastOptions(def).length) return '';
+      if (combat.combatExpansionVersion !== 2 || !UpcastingOffered(def)) return '';
       return JSON.stringify([def.upcast.baseTier, upcastChoicePlan(def).options.map(option => [option.id, option.name]),
         upcastRanksByCard.get(entry.inst.instanceId) ?? def.upcast.baseTier, entry.preview.name]);
     },
@@ -1503,7 +1508,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           && !(pv.costIsX && combat.player.energy <= 0);
         entry = { id: inst.instanceId, kind: combatProfileFor(def)?.maneuver ?? kindForCard(def)?.maneuver ?? null, offense: pv.needsTarget === true,
           cost: pv.costIsX ? 0 : pv.cost, manaCost: pv.manaCost, staminaCost: pv.staminaCost || 0, playable };
-        byId.set(inst.instanceId, { needsTarget: pv.needsTarget, plan, choice: autoChoice.choice, rank: ranks ?? def.upcast?.baseTier ?? 0 });
+        byId.set(inst.instanceId, { needsTarget: pv.needsTarget, plan, choice: autoChoice.choice, rank: UPCASTING_ENABLED ? ranks ?? def.upcast?.baseTier ?? 0 : undefined });
       } catch { /* a card the preview cannot resolve is not playable */ }
       hand.push(entry);
     }
@@ -1699,9 +1704,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderReactionNote() {
     reactionNote.attach(combatEl);
-    const note = latestReactionNote(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length), { after: reactionNoteSeen,
+    // Only the entries after the last note shown can hold a new one: read that tail, never a copy of the
+    // whole log (it grows all fight, and this runs on every render).
+    const start = Math.max(0, reactionNoteSeen + 1), shown = disp?.logLength ?? combat.eventLog.length;
+    if (start >= shown) return;
+    const note = latestReactionNote(combat.eventLog.slice(start, shown), {
       registries, players: [{ id: 'player', name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name) }], enemies: combat.enemies });
-    if (note) { reactionNoteSeen = note.index; reactionNote.show(note.text); }
+    if (note) { reactionNoteSeen = start + note.index; reactionNote.show(note.text); }
   }
 
   function renderTopbar() {
@@ -1912,7 +1921,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // the sentence that must change with them.
   function poiseTip(kind, entity = null) {
     return (bar) => {
-      if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
+      if (bar.id === 'hp') {
+        const wardHp = EffectiveWardHp(combat, entity || combat.player);
+        return wardHp > 0
+          ? `${esc(helpText('hp'))}<br>${esc(tFull('combat.protection.hpWardAria', { hp: (entity || combat.player).hp, maxHp: (entity || combat.player).maxHp, ward: wardHp }))}`
+          : esc(helpText('hp'));
+      }
+      if (bar.id === 'block') return esc(helpText(bar.id));
       if (['precision', 'evasion', 'critChance'].includes(bar.id)) return esc(tFull(`combat.stat.${bar.id}`));
       if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(tFull(`combat.protection.${bar.id}`));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id));
@@ -2069,6 +2084,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       precisionHelp: fixCoreEnabled(combat) ? registries.statuses.get('precision', entity)?.tooltip : undefined,
       poiseHelp: poiseHelpText(combat, v),
       broken: !!v.broken, // Wave 3: re-render the Poise bar and the fighter when Broken starts or ends
+      wardHp: EffectiveWardHp(combat, v),
       wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
     };
     const arcane = procPlan && !stackHidden.has('arcaneExposure') ? arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents) : null;
@@ -2101,12 +2117,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, precisionHelp, poiseHelp, wardHelp, persistent: true,
           poise: poiseEl });
         bars.insertBefore(row, next);
+        ApplyHealthWard(el, HealthWardView(v.hp, v.maxHp, hp.wardHp));
         if (poiseEl) {
           poiseEl.dataset.broken = String(!!v.broken);
           // Broken: the empty bar says so in words until Broken ends and it refills (the bar's own number would read 0).
           const poiseValue = poiseEl.querySelector('.m-value');
           if (v.broken && poiseValue) { poiseValue.textContent = t('combat.broken.label'); poiseValue.setAttribute('aria-label', t('combat.broken.label')); }
-          // Bonus Poise (owner, 2026-11-15): "8/8" in yellow then "+5" in blue, and a blue segment on the bar, while Poise is above its base maximum.
+          // Bonus Poise (owner, 2026-11-15; purple 2026-11-24): "8/8" in yellow then "+5" in purple, and a purple segment on the bar, while Poise is above its base maximum.
           if (!v.broken) ApplyPoiseBonus(poiseEl, PoiseBonusView(v.persistentPoise));
         }
       }
@@ -2236,7 +2253,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
     const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, run.class);
-    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.effects]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
     const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return false;
@@ -2343,6 +2360,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!existing) box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
+      // Self-and-all (owner 2026-11-18 section 22): the player is a legal target of a card that affects them and every enemy.
+      else if (selected && pendingTargetPlan().legalIds.includes(combat.player.id)) playCard(selected, combat.player.id);
       else if (!selected && selectedFlask == null) selectCombatant('player');
     });
     if (!existing) box.addEventListener('click', event => {
@@ -2426,7 +2445,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     syncWeaknessDiscovery();
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
-      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance]);
+      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.effects]);
       let record = enemyFrames.get(enemy.id);
       if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; wrote = true; }
       // `combat.player` is deliberately not part of this key, but the intent is: it reads the player through
@@ -2699,6 +2718,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (reason) return unavailable(reason);
     // The hand render already treats a card the engine cannot resolve (stranded by a combat-ending play,
     // or a snapshot older than the fight) as inert; its availability sentence must not throw instead.
+    // Price it the way the hand face is priced: a selected card against its aimed enemy, else untargeted.
     let pv;
     try {
       const targetId = selected === instanceId
@@ -2718,6 +2738,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     } };
   }
 
+  /** Each pool the card is short in, with the live need and have; '' when it is affordable. */
   function cardResourceReason(pv) {
     const player = combat.player;
     const actionCost = pv.costIsX ? 0 : pv.cost;
@@ -2786,6 +2807,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function unplayableReason(inst) {
     const def = resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
+    // The engine refuses a restricted play ("Restricted by <status>"), so the hand names that effect first.
     const restriction = proposalCardPlan(combat, combat.player, def);
     if (!restriction.allowed) {
       const status = /^Restricted by (.+)$/.exec(restriction.refusal || '')?.[1];
@@ -2930,7 +2952,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function wireUpcastControl(card, inst, preview) {
-    if (combat.combatExpansionVersion !== 2 || !upcastOptions(preview.resolvedDefinition).length) return;
+    if (combat.combatExpansionVersion !== 2 || !UpcastingOffered(preview.resolvedDefinition)) return;
     const baseTier = preview.resolvedDefinition.upcast.baseTier;
     const selectedTier = upcastRanksByCard.get(inst.instanceId) ?? baseTier;
     const controls = document.createElement('div'); controls.className = 'card-upcast-controls';
@@ -3099,14 +3121,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         bounds: frame.querySelector('.sprite')?.getBoundingClientRect(),
       })));
       if (forbidden && !directLegal) return { legal: false, enemies: [], flick };
-      const wrongSide = dragTargetMode === 'none' ? !!directEnemy : !!directPlayer;
+      const playerLegal = targetPlan.legalIds.includes(combat.player.id); // self-and-all: the player is a drop target too
+      const wrongSide = dragTargetMode === 'none' ? !!directEnemy : !!directPlayer && !playerLegal;
       if (wrongSide) return { legal: false, enemies: [], flick };
       if (dragTargetMode === 'single') {
         const enemy = directLegal ? directEnemy : flick ? nearestEnemy(point.x, point.y, targetPlan.legalIds) : null;
         return { legal: !!enemy, enemies: enemy ? [enemy] : [], targetId: enemy?.dataset.eid, flick };
       }
       if (dragTargetMode === 'all') {
-        const enemies = flick || directEnemy ? enemyElsFor(targetPlan.legalIds) : [];
+        const enemies = flick || directEnemy || (directPlayer && playerLegal) ? enemyElsFor(targetPlan.legalIds) : [];
         return { legal: enemies.length > 0, enemies, flick };
       }
       return { legal: flick || !!directPlayer, enemies: [], flick };
@@ -3583,7 +3606,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const handCard = option => combat.piles.hand.find(card => card.instanceId === option.play.cardInstanceId);
     const summarize = option => summarizeCardOption(registries, combat, option, {
       defOf: o => { const inst = handCard(o); return inst ? resolveCombatCard(combat, inst, { upcastTier: o.play.upcastTier }) : null; },
-      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier, { rangeRoute: o.play.rangeRoute ?? 'advance' }),
+      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier, { rangeRoute: o.play.rangeRoute ?? 'advance', choice: o.play.choice }),
       // The engine's own predicate evaluator, for the card owner against the fight as it stands now.
       conditionHolds: (effect, o) => evalPredicate(combat, effect.if, { owner: combat.player, source: combat.player, meta: {},
         target: combat.enemies.find(enemy => enemy.id === (o.play.targetId ?? o.sourceId ?? pending.sourceId)) }),
@@ -3920,14 +3943,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     renderHand({ refreshHitChances: false });
   }
   // Why a queued play can no longer go ahead (checked when its turn comes), or null.
-  function queuedPlayProblem({ instanceId, targetId, rank }) {
+  function queuedPlayProblem({ instanceId, targetId, rank, choice }) {
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
     if (!inst) return 'This card is no longer in your hand.';
     const blocked = unplayableReason(inst);
     if (blocked) return blocked;
     if (targetId && (!getEntity(combat, targetId)?.alive || !cardTargets(instanceId).legalIds.includes(targetId))) return 'Its target is gone.';
     let pv;
-    try { pv = previewCard(combat, instanceId, targetId, rank); } catch { return 'This card cannot be played now.'; }
+    try { pv = previewCard(combat, instanceId, targetId, rank, { choice }); } catch { return 'This card cannot be played now.'; }
     const needEnergy = pv.costIsX ? 0 : pv.cost;
     if (combat.player.energy < needEnergy) return `Not enough ${t('combat.actions')} (needs ${needEnergy}, have ${combat.player.energy}).`;
     if (combat.player.mana < pv.manaCost) return `Not enough mana (needs ${pv.manaCost}, have ${combat.player.mana}).`;
@@ -3983,8 +4006,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const blocked = unplayableReason(inst);
     if (blocked) { refusePlay(instanceId, `unplayable: ${blocked}`, blocked); return; }
     const definition = resolveCombatCard(combat, inst);
-    const rank = chosenUpcastRanks ?? upcastRanksByCard.get(instanceId) ?? definition.upcast?.baseTier ?? 0;
-    if (chosenUpcastRanks === null && readSettings().askToUpcastAfterTarget && upcastOptions(definition).length) {
+    // With upcasting off no rank is sent: the engine plays the printed card.
+    const rank = UPCASTING_ENABLED ? chosenUpcastRanks ?? upcastRanksByCard.get(instanceId) ?? definition.upcast?.baseTier ?? 0 : undefined;
+    if (chosenUpcastRanks === null && ASK_TO_UPCAST_AFTER_TARGET && UpcastingOffered(definition)) {
       if (expansionChoiceShell) { refusePlay(instanceId, 'upcast choice already open'); return; }
       if (targetId) lastTargetId = targetId;
       expansionChoiceShell = openUpcastChoice({ definition, opener: combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`),
@@ -3994,7 +4018,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const plan = cardTargets(instanceId);
           const previousTarget = targetId ?? (plan.mode === 'friendly' ? combat.player.id : null);
           // An area card (allEnemies) has no single destination: play it now.
-          const step = upcastNextStep(plan, previewCard(combat, instanceId, undefined, Number(selectedRank)).needsTarget, previousTarget);
+          const step = upcastNextStep(plan, previewCard(combat, instanceId, undefined, Number(selectedRank), { choice }).needsTarget, previousTarget);
           if (step === 'retarget') {
             selected = plan.mode === 'enemy' ? instanceId : null;
             selfArm = plan.mode === 'friendly' ? instanceId : null;
@@ -4016,7 +4040,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         return;
       }
     }
-    const finalPreview = previewCard(combat, instanceId, targetId, rank);
+    const finalPreview = previewCard(combat, instanceId, targetId, rank, { choice });
     const needEnergy = finalPreview.costIsX ? 0 : finalPreview.cost;
     const needStamina = finalPreview.staminaCost || 0;
     if (combat.player.energy < needEnergy) { refusePlay(instanceId, `cost ${needEnergy} > energy ${combat.player.energy}`, `Not enough ${t('combat.actions')} (needs ${needEnergy}, have ${combat.player.energy}).`); return; }

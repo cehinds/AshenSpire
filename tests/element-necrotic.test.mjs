@@ -28,7 +28,7 @@ test('necrotic deals x0.7 and ignores Poise: the pool neither absorbs nor drops,
 
 test('live: a necrotic hit never touches Poise, and the quote is what is lost', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 4 });
-  const played = play(combat, 'core.graveToll', enemy.id);
+  const played = play(combat, 'core.venomSpray', enemy.id);
   const dealt = combat.eventLog.find(event => event.type === 'damageDealt');
   assert.deepEqual([dealt.poiseMitigated, dealt.poiseDamage ?? 0], [0, 0], 'the hit neither met Poise nor drained it (the card prints a status whose own strain is not the hit)');
   assert.equal(played.lost.e1, played.row.faceValue);
@@ -38,7 +38,7 @@ test('live: a necrotic hit never touches Poise, and the quote is what is lost', 
 test('current Decay build-up uses WIS, at least 1, ignoring higher INT', () => {
   for (const [wisdom, stacks] of [[4, 4], [0, 1]]) {
     const { combat, enemy } = fight({ enemies: 1, poise: 0, attributes: { wisdom, intelligence: 9 } });
-    const played = play(combat, 'core.graveToll', enemy.id);
+    const played = play(combat, 'core.venomSpray', enemy.id, { upgraded: true });
     assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `WIS ${wisdom}, INT 9`);
     assert.equal(played.lost.e1, played.row.faceValue, 'shown = dealt');
     assert.ok(played.lost.e1 > 0, 'the live hit landed');
@@ -57,17 +57,17 @@ test('archived 6727 with elements enabled retains INT build-up and leaves the li
   assert.deepEqual(archivedProfile, archivedBefore, 'the supplied profile was not mutated');
   assert.deepEqual(profile, liveBefore, 'the default profile was not rebound');
   const current = fight({ attributes: { wisdom: 4, intelligence: 9 } });
-  play(current.combat, 'core.graveToll', current.enemy.id);
+  play(current.combat, 'core.venomSpray', current.enemy.id, { upgraded: true });
   assert.equal(getStacks(current.enemy, 'necroticBuildup'), 4, 'a subsequent default fight still uses WIS');
 });
 
 test('with Poise left necrotic adds no build-up; an elements-disabled old fight also adds none', () => {
   const held = fight({ enemies: 1, poise: 50 });
-  const played = play(held.combat, 'core.graveToll', held.enemy.id);
+  const played = play(held.combat, 'core.venomSpray', held.enemy.id);
   assert.equal(getStacks(held.enemy, 'necroticBuildup'), 0, 'Poise left: no build-up');
   assert.equal(played.lost.e1, played.row.faceValue, 'the damage still ignores Poise');
   const old = fight({ enemies: 1, legacy: true });
-  play(old.combat, 'core.graveToll', old.enemy.id);
+  play(old.combat, 'core.venomSpray', old.enemy.id);
   assert.equal(getStacks(old.enemy, 'necroticBuildup'), 0, 'an old fight builds nothing');
 });
 
@@ -98,7 +98,7 @@ test('against an undead target necrotic heals it by the damage, adds no build-up
   enemy.hp = 400;
   const receipt = hit(combat, enemy);
   assert.deepEqual([receipt.hpLoss, receipt.element.heal], [0, 7]);
-  const played = play(combat, 'core.graveToll', enemy.id);
+  const played = play(combat, 'core.venomSpray', enemy.id);
   assert.equal(played.row.faceValue, 0);
   assert.ok(enemy.hp > 400, 'healed');
   assert.equal(getStacks(enemy, 'necroticBuildup'), 0);

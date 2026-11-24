@@ -1,5 +1,5 @@
-// Owner, 2026-11-15 (W25-W): while bonus Poise (Barrier stacks) is above the base maximum the Poise bar's bonus part is blue and the number
-// reads "8/8" in yellow followed by "+5" in blue; player and enemy HUDs share the mini HUD, so the one renderer covers both.
+// Owner, 2026-11-15 (W25-W; swapped to purple 2026-11-24): while bonus Poise (Barrier stacks) is above the base maximum the Poise bar's bonus part is purple and the number
+// reads "8/8" in yellow followed by "+5" in purple; player and enemy HUDs share the mini HUD, so the one renderer covers both.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PoiseBonusView } from '../src/ui/models/CombatHealthModel.js';
@@ -21,14 +21,14 @@ test('PoiseBonusView is null with no bonus stack, or once damage has eaten the b
 });
 
 for (const who of ['player', 'enemy']) {
-  test(`the ${who} Poise meter shows "8/8" then "+5" and a blue bonus segment`, () => withKitDom(() => {
+  test(`the ${who} Poise meter shows "8/8" then "+5" and a purple bonus segment`, () => withKitDom(() => {
     const el = meter({ id: 'poise', value: '13/13', cur: 13, max: 13, pct: 100 });
     el.dataset.who = who;
     ApplyPoiseBonus(el, PoiseBonusView({ value: 13, max: 13, barrierBonus: 5 }));
     const value = el.querySelector('.m-value');
     assert.match(value.textContent, /8\/8/, 'the base figure');
     assert.doesNotMatch(value.textContent, /13/, 'the full maximum is not printed');
-    assert.equal(value.querySelector('.m-bonus').textContent.trim(), '+5', 'the bonus figure, in its own (blue) span');
+    assert.equal(value.querySelector('.m-bonus').textContent.trim(), '+5', 'the bonus figure, in its own (purple) span');
     assert.equal(el.dataset.bonus, '5');
     const seg = el.querySelector('.m-track .m-bonus-seg');
     assert.ok(seg, 'a bonus segment on the track');

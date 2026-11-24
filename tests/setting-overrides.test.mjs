@@ -18,7 +18,7 @@ const rows = categoryHandler('Advanced').rows;
 const row = (key) => rows.find((candidate) => candidate.key === key) || settingsRow(key);
 
 test('every new switch is a known key, so a configuration file carrying them imports', () => {
-  const file = { [OWN_REQUIREMENT]: true, 'gameConfig.own.balance.rewards.rarityWeightsByClass.herald': false };
+  const file = { [OWN_REQUIREMENT]: true, 'gameConfig.own.balance.equipment.startingDeck.classes.starseer.strikeBias': false };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(file), contentBundle), file);
   assert.ok(advancedConfigRows(contentBundle).some((candidate) => candidate.key === OWN_REQUIREMENT));
 });

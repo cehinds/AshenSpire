@@ -1,3 +1,4 @@
+import { ProjectRetreatRuleFace } from './retreatRuleFaces.js';
 // Immutable per-run configuration snapshots. No mutable active-profile singleton.
 import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
@@ -8,6 +9,7 @@ import { applyUpgradeSteps, upgradeCount, upgradeStepsOf, ApplyDrawbackSteps } f
 import { cardRank, rankedEffectsCapped } from './cardRank.js';
 import { applyRamp, playsEverOf } from './cardRamp.js';
 import { ProjectEnemyContent } from './enemyProjection.js';
+import { CardSpellTraditions, SpellTraditionsActive } from './spellTraditions.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
 // resolves return a fresh deep-frozen copy (callers rely on distinct snapshots) instead of re-hashing.
@@ -49,6 +51,10 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
     if (!alternate) throw new GameConfigError(`$/content/cards/${id}`,'missing authored disabled-resource variant');
   }
   let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
+  chosen = ProjectRetreatRuleFace(chosen, subject?.gameProfile ? subject : { gameProfile: subjectProfile(subject) });
+  if (SpellTraditionsActive({ gameProfile: subject.gameProfile || subject }) && chosen.tags?.includes('camp:spell')) {
+    chosen.tags = [...new Set([...chosen.tags, ...CardSpellTraditions(chosen).map(id => 'tradition:' + id)])];
+  }
   // An upgraded copy applies def.upgrade once, over the base, exactly as Legacy resolveCard does (ability-grade cards excepted).
   if (typeof idOrInstance === 'object' && upgradeCount(idOrInstance) && !Array.isArray(chosen.gradeProfiles)) chosen = dataClone(applyUpgradeSteps(chosen, upgradeStepsOf(idOrInstance)));
   // A ranked ability card keeps its grade numbers; only a drawback-removal step applies to it (review of #2819).
@@ -99,9 +105,31 @@ function projectWeaponArtResources(bundle,profile) {
     return out;
   });
 }
+// Item signatures (SPEC "The gear vocabulary", owner 2026-11-19). A profile-owned content.gear row may carry `signatureMods`; when the
+// array is PRESENT (an empty one included) it replaces the matched piece's authored raw mods, and when it is absent the piece is untouched.
+// The type / armour-group base is not here: GearPieceMods adds it on top of whatever `mods` the piece holds, so it still applies unchanged.
+// Projecting the registry piece itself, once, is what makes stat pools (runMods), card rules and turn grants (GearSummary) and the
+// equipment help text read one and the same piece; a per-reader override would be three facts that could disagree.
+// Gated on typeEffectsVersion 1 as well as on presence: a saved profile without the type pass keeps its original item modifiers (SPEC,
+// the `typeEffectsVersion` opt-in paragraph), and a signature without the type pass would strip the raw mods while the gear vocabulary that
+// replaces them (turnGrant and the rest) stays switched off. Existing saves never carry the key, so presence alone already pins them.
+// `bundle` is the caller's private clone (cloneLegacy) and every replaced piece is a new object, so neither the base content nor the
+// frozen profile snapshot is written to.
+function projectGearSignatures(bundle,profile) {
+  if(gameModule(profile,'gear')?.typeEffectsVersion !== 1 || !bundle.equipment) return;
+  const rows=(gameContent(profile,'gear')||[]).filter(row=>Array.isArray(row.signatureMods));
+  if(!rows.length) return;
+  const signatureOf=piece=>rows.find(row=>(row.source?.id || row.id)===piece.id && (row.kind==='armor')===(piece.kind==='armor')
+    && (piece.kind!=='armor' || !row.classes || row.classes.includes(piece.classId)));
+  for (const key of ['armaments','armour']) bundle.equipment[key]=(bundle.equipment[key]||[]).map(piece=>{
+    const row=signatureOf(piece);
+    return row ? {...piece,mods:[...row.signatureMods]} : piece;
+  });
+}
 /** @param {string | object} [profileOrAuthor] */
 export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default') {
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
+  bundle.cards = (bundle.cards || []).map(def => ProjectRetreatRuleFace(def, { gameProfile: profile }));
   if(profile.foundation.mode === 'legacy') return bundle;
   if(gameModule(profile,'cards')?.mode === 'configured') {
     const additions=gameContent(profile,'cards').map(def=>projectGameCard(profile,def.id,{rampless:true}));
@@ -112,6 +140,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     bundle.tagging=[...(bundle.tagging||[]).filter(row=>row.family!=='card'||!raw.some(def=>def.id===row.objectId)),...additions.flatMap(def=>(def.tags||[]).map(tagId=>({family:'card',objectId:def.id,tagId})))];
   }
   projectWeaponArtResources(bundle,profile);
+  projectGearSignatures(bundle,profile);
   if(gameModule(profile,'class-selection')) {
     bundle.classes=(bundle.classes||[]).map(def=>{
       const row=gameContent(profile,'classes').find(item=>item.id===def.id);
@@ -159,6 +188,24 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
   }
   if (gameModule(profile, 'effects')?.fixCoreVersion === 1) {
     ProjectEnemyContent(bundle, profile.content, baseBundle, cloneLegacy);
+  }
+  if (SpellTraditionsActive({ gameProfile: profile })) {
+    // Base-library and enemy-projected cards also use the canonical tag join.
+    // Derive their membership from authored school identity, in the same way
+    // as profile cards, rather than leaving their visible icons unregistered.
+    const tagsByCard = new Map();
+    for (const row of bundle.tagging || []) if (row.family === 'card') {
+      if (!tagsByCard.has(row.objectId)) tagsByCard.set(row.objectId, []);
+      tagsByCard.get(row.objectId).push(row.tagId);
+    }
+    for (const card of bundle.cards || []) {
+      const tags = tagsByCard.get(card.id) || [];
+      if (!tags.includes('camp:spell')) continue;
+      for (const id of CardSpellTraditions({ ...card, tags })) {
+        const tagId = 'tradition:' + id;
+        if (!tags.includes(tagId)) bundle.tagging.push({ family: 'card', objectId: card.id, tagId });
+      }
+    }
   }
   return bundle;
 }

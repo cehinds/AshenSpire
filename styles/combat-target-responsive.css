@@ -139,7 +139,7 @@
 :root .combat .combatant .intent .intent-damage-scope { display:none; }
 
 /* Lite: one drop-shadow instead of three on the matchup-highlighted sprite. */
-:root[data-performance='lite'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+:root[data-effects='off'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
   filter: drop-shadow(0 0 1.5px var(--combat-matchup-color, var(--ember))) !important;
 }
 
@@ -264,13 +264,8 @@
   background:var(--panel); color:var(--muted); pointer-events:none; white-space:nowrap; z-index:var(--combat-layer-selection);
 }
 :root .combat .combatant[data-band-row='back'] .band-row-tag { opacity:.85; }
-/* Two visible ranks: a back-row enemy stands a little behind and above its front-row neighbour, smaller, and its HUD plates move with it
-   (individual translate/scale leave the stage's own transform alone). */
-:root .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-14px / var(--ui-zoom,1)); scale:.9; transform-origin:50% 100%; }
-
-/* W25-BANDS, phone: the player's HUD hangs above the figure in the enemy rows' band, so the back rank stands higher here (its plates ride with it)
-   and its lower body ends above the player's bars; the front rank, the grid and the player stay where they were. */
-:root[data-layout='narrow'] .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-46px / var(--ui-zoom,1)); }
+/* Two visible ranks: a back-row enemy is drawn smaller (perspectiveGrid.backRowEnemyScale) and stands in its own cell, both by the
+   layout (BackRowEnemySizes), so its drawn feet and its cell agree (owner, 2026-11-20). */
 
 /* Owner 2026-11-17 ("it's hard for the player to know how much poise damage they are taking"): the Poise an attack costs sits inside the
    attack's own action, small and gold (the Poise hammer of the HP-bar badge), so the row still holds five actions. BREAKS YOU floats above it, takes

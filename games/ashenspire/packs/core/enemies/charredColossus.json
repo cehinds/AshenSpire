@@ -64,7 +64,8 @@
       "aiWeight": 25,
       "maxConsecutive": 1,
       "costSource": "stance",
-      "legacyMove": "harden"
+      "legacyMove": "harden",
+      "coreBlock": "card"
     },
     "card:charredColossus.advance": {
       "aiWeight": 0,

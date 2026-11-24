@@ -1,0 +1,275 @@
+{
+  "request": "sp and mp don't react the same in the score studio. for some reason, sp starts at -10 instead of 0; when I make something 0 costing, it makes it -10. I can't set my damage below certain numbers at times. (Owner chose A: the damage box sets the card's own number before the hero's bonus, so 0 and 1 always work; the card face still shows the hero's total.)",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "feint-sp-zero",
+      "url": "/tools/score-studio/",
+      "ready": ".studio-card-tile[data-card-id=\"core.feint\"]",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".studio-card-tile[data-card-id=\"core.feint\"]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": "#edit-sp"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "key": "Control+A"
+        },
+        {
+          "key": "0"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "SP chip reads x0 0 on a multi-hit card",
+          "selector": "#cost-score-sp",
+          "matches": "^×0\\s*0$"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (missing card art 404s ignored: art packs are not fetched on this machine)",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "SP chip charges a cost at 0 SP",
+          "selector": "#cost-score-sp",
+          "matches": "-\\d"
+        }
+      ]
+    },
+    {
+      "name": "brace-sp-two",
+      "url": "/tools/score-studio/",
+      "ready": ".studio-card-tile[data-card-id=\"core.brace\"]",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".studio-card-tile[data-card-id=\"core.brace\"]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": "#edit-sp"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "key": "Control+A"
+        },
+        {
+          "key": "2"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "SP chip reads x2 -8 (2 x the SP weight)",
+          "selector": "#cost-score-sp",
+          "matches": "^×2\\s*-8$"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (missing card art 404s ignored: art packs are not fetched on this machine)",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "SP chip ignores the typed 2",
+          "selector": "#cost-score-sp",
+          "matches": "^×2\\s*0$"
+        }
+      ]
+    },
+    {
+      "name": "arcane-spark-damage-one",
+      "url": "/tools/score-studio/",
+      "ready": ".studio-card-tile[data-card-id=\"core.spark\"]",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".studio-card-tile[data-card-id=\"core.spark\"]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": "#active-features-list [data-eff-amt]"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "key": "Control+A"
+        },
+        {
+          "key": "1"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "Damage row keeps 1 (the chip re-reads the stored amount)",
+          "selector": "#active-features-list .feature-row .feature-count",
+          "includes": "×1"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (missing card art 404s ignored: art packs are not fetched on this machine)",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "Damage snapped back to 3",
+          "selector": "#active-features-list .feature-row .feature-count",
+          "matches": "^×3$"
+        }
+      ]
+    },
+    {
+      "name": "arcane-spark-damage-zero",
+      "url": "/tools/score-studio/",
+      "ready": ".studio-card-tile[data-card-id=\"core.spark\"]",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".studio-card-tile[data-card-id=\"core.spark\"]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": "#active-features-list [data-eff-amt]"
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        },
+        {
+          "key": "Control+A"
+        },
+        {
+          "key": "0"
+        },
+        {
+          "key": "Tab"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "Damage row keeps 0 (the chip re-reads the stored amount)",
+          "selector": "#active-features-list .feature-row .feature-count",
+          "includes": "×0"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors (missing card art 404s ignored: art packs are not fetched on this machine)",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource: the server responded with a status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "Damage snapped back to 3",
+          "selector": "#active-features-list .feature-row .feature-count",
+          "matches": "^×3$"
+        }
+      ]
+    }
+  ]
+}

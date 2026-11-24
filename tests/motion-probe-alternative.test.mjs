@@ -13,7 +13,7 @@ const idleSource = source.slice(source.indexOf('async function idle('), source.i
 // Exercise the production browser predicate on the real alternative figure
 // tree, with observed Web Animations, frame bounds and painted pixel samples.
 async function inspect({ moving = false, imageMotion = false, duplicate = false, flat = false, opacityOnly = false,
-  scriptMove = false, scale = false, unloaded = false, transparent = false, canvas = false,
+  scriptMove = false, scale = false, rotate = false, unloaded = false, transparent = false, canvas = false,
   blank = false, lateBlank = false, pixelChange = false } = {}) {
   const dom=rewardDom(),restoreDom=installDom(dom),oldImage=globalThis.Image;
   globalThis.Image=function Image(){return dom.document.createElement('img');};
@@ -38,7 +38,7 @@ async function inspect({ moving = false, imageMotion = false, duplicate = false,
       node.getAnimations=()=>[];
     }
     image.complete=true;image.naturalWidth=unloaded?0:1024;
-    const animation={playState:'running',effect:{getKeyframes:()=>opacityOnly?[{opacity:1},{opacity:.5}]:[{translate:'0 0'},{translate:flat?'0 0':'0 -4px'}]}};
+    const animation={playState:'running',effect:{getKeyframes:()=>opacityOnly?[{opacity:1},{opacity:.5}]:rotate?[{rotate:'0deg'},{rotate:'5deg'}]:[{translate:'0 0'},{translate:flat?'0 0':'0 -4px'}]}};
     for(const carrier of duplicate?[stage,image]:imageMotion?[image]:moving||flat||opacityOnly?[stage]:[])carrier.getAnimations=()=>[animation];
     const browser={document:dom.document,requestAnimationFrame(callback){frames++;callback(frames*16);},
       getComputedStyle:node=>({visibility:'visible',display:'block',opacity:transparent&&node===figure?'0':'1'})};
@@ -79,6 +79,30 @@ test('non-displacing aura feedback and a static animation do not count as a figh
   for(const options of [{opacityOnly:true},{flat:true}]){
     const {verdicts:[clean]}=await inspect(options);assert.equal(clean.ok,true,clean.detail);
   }
+});
+
+test('a rotating canvas carrier is refused even when its sampled bounds stay fixed',async()=>{
+  const {verdicts:[verdict]}=await inspect({canvas:true,moving:true,rotate:true});
+  assert.equal(verdict.ok,false);
+  assert.match(verdict.detail,/figure moves while resting/);
+});
+
+test('Rendered nested-rest inspection sees a hidden animated canvas in the current card stage',async()=>{
+  const dom=rewardDom(),restoreDom=installDom(dom);
+  try{
+    const frame=dom.document.createElement('div');frame.className='combatant player';
+    const sprite=dom.document.createElement('div');sprite.className='sprite';
+    const stage=dom.document.createElement('div');stage.className='pose-stage painted-stage alternative-card-stage';stage.dataset.still='';
+    const canvas=dom.document.createElement('canvas');stage.appendChild(canvas);sprite.appendChild(stage);frame.appendChild(sprite);dom.document.body.appendChild(frame);
+    canvas.classList[Symbol.iterator]=function*(){yield*canvas.className.split(/\s+/).filter(Boolean);};
+    const start=source.indexOf("      const carrier = '.alternative-card-stage';");
+    const predicate=source.slice(start,source.indexOf('      check(inner.length',start));
+    const inspectNested=async(animationName)=>runInNewContext(`(async()=>{${predicate}\nreturn inner;})()`,{
+      s:{evaluate:expression=>runInNewContext(expression,{document:dom.document,getComputedStyle:()=>({visibility:'hidden',animationName})})}
+    });
+    assert.deepEqual(Array.from(await inspectNested('none')),[],'hidden static art is allowed');
+    assert.deepEqual(Array.from(await inspectNested('sprite-idle')),['canvas.'],'hidden rest art cannot keep a bob');
+  }finally{restoreDom();}
 });
 
 test('the alternative flipbook plant opens the actual production fallback and schedules its six src frames', () => {

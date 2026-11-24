@@ -69,11 +69,13 @@ test('a real current run keeps HP receipts aligned through XP, Wisdom allocation
 test('flat equipment Mana and Stamina addends and permanent HP adjustments are each displayed once', () => {
   const robe = world(undefined, 'starseer');
   wear(robe, 'sagesRobe');
-  assert.equal(robe.run.equipmentPoolBonuses.maxMana, 2, 'the authored robe and its type each supply one Mana');
+  // Sage's Robe's signature (2026-11-19) replaced its raw +1 Mana; the robe type alone supplies one.
+  assert.equal(robe.run.equipmentPoolBonuses.maxMana, 1, 'the robe type supplies one Mana and the signature adds none');
   poolsAgree(robe);
   const leathers = world();
   wear(leathers, 'gutterLeathers');
-  assert.equal(leathers.run.equipmentPoolBonuses.maxStamina, 1, 'the real leather signature supplies one Stamina');
+  // Owner, 2026-11-20: Gutter Leathers' own +1 max Stamina is dropped because its +1 Dexterity already feeds Stamina (derivedStatRules.json), so it is not counted twice.
+  assert.equal(leathers.run.equipmentPoolBonuses.maxStamina, 0, 'the leather +1 Stamina line is dropped: its Dexterity point already feeds the pool');
   leathers.run.maxHpAdjustment = 7;
   reconcileRunLoadoutHp(leathers.registries, leathers.run);
   const hp = poolsAgree(leathers).derived.find(row => row.id === 'hp');

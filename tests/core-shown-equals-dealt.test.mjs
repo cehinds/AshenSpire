@@ -106,6 +106,12 @@ function playChecked(combat, card, targetId, tally, label) {
     const weaknessStaggered = new Set();
     for (const event of cut >= 0 ? events.slice(0, cut) : events) {
       if (event.type === 'enemyStaggered' && event.cause === 'weakness') weaknessStaggered.add(event.targetId);
+      // Divine's Poise-break Smite belongs to the preceding contact. The quote
+      // includes this direct HP rider, emitted separately from damageDealt.
+      if (event.type === 'elementSmite' && event.sourceId === 'player') {
+        const hits = dealt.get(event.targetId);
+        if (hits?.length) hits[hits.length - 1] += event.amount;
+      }
       if (event.type !== 'damageDealt' || event.sourceId !== 'player' || event.cardInstanceId !== card.instanceId || !event.isAttack) continue;
       if (weaknessStaggered.has(event.targetId)) continue;
       (dealt.get(event.targetId) || dealt.set(event.targetId, []).get(event.targetId)).push(event.hpLoss);
@@ -255,6 +261,8 @@ function playFight(classId, seed, tally) {
   const takeReactions = seed % 2 === 1;
   for (let turn = 0; turn < 5 && !combat.result; turn++) {
     const refused = refusalsFor(combat);
+    // With no cost minimum (owner 2026-11-22) the bot can afford every reaction card on its own turn and spends them all, so no prompt would ever reach the enemy turn: keep them in hand.
+    for (const held of combat.piles.hand) if ((reg.cards.get(held.cardId)?.tags || []).includes('trait:reaction')) refused.add(held.instanceId);
     for (let plays = 0; plays < 12 && !combat.result && combat.phase === 'player'; plays++) {
       if (combat.pendingReaction || combat.pendingCardChoice || combat.pendingAbilityDiscard) break;
       const card = firstAffordableCard(reg, combat, refused);

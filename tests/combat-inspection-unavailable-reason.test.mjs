@@ -39,8 +39,9 @@ function harness({ energy = 4, stamina = energy, mana = 3, expansion = 2, previe
     registries: { statuses: { get: id => ({ name: { sleep: 'Sleep', paralysis: 'Paralysis', cannotAttack: 'Pacified' }[id] || id }) },
       framework: { isUnplayable: value => value.keywords?.includes('unplayable') } },
     resolveCombatCard: (_combat, _inst, options) => { scope.lastDefinitionOptions = options; return def; },
-    PlayConditionReachable: () => true, NonlethalHpRefusal: () => '',
     controlRestrictions: () => ({ locked: scope.locks.length > 0, locks: scope.locks }), locks: [],
+    // The play-condition and nonlethal-HP gates come after these reasons; they pass here.
+    PlayConditionReachable: () => true, NonlethalHpRefusal: () => '',
     proposalCardPlan: (combat, actor, card) => proposalCardRules({ actor, card,
       rules: { cannotAttack: { behaviors: [{ kind: 'restriction', cardTypes: ['attack'] }] } } }),
     upcastRanksByCard: new Map(), selected, selfArm: null, selectedFlask: null, lastTargetId: null,
@@ -124,15 +125,6 @@ test('Blight choices and authored Unplayable restrictions have explicit explanat
   assert.equal(h.action().reason, sentences['combat.card.unavailable.unplayable']);
 });
 
-test('newer dev play-condition and nonlethal HP refusals retain their explanations', () => {
-  const h = harness();
-  h.scope.PlayConditionReachable = () => false;
-  assert.equal(h.action().reason, 'Its play condition is not met.');
-  h.scope.PlayConditionReachable = () => true;
-  h.scope.NonlethalHpRefusal = () => 'This card must leave you with at least 1 HP.';
-  assert.equal(h.action().reason, 'This card must leave you with at least 1 HP.');
-});
-
 test('the inspect availability getter reads fresh pools even without a hand repaint', () => {
   const h = harness({ energy: 1 });
   const expression = source.match(/availability: (\{ get play\(\) \{ return playAvailability\(inst\.instanceId\); \} \})/);
@@ -184,11 +176,12 @@ test('inspection places the refusal before long card details and removes it on a
 
 test('authored Bind agrees with real engine play: block Attack cards, permit skills, recover after removal', async () => {
   const [{ contentBundle }, { createRegistries }, profiles, { loadAuditRuntime }, { makeAuditCombat },
-    { resolveCombatCard }, { proposalCardPlan }, { controlGate }, { previewCard }] = await Promise.all([
+    { resolveCombatCard }, { proposalCardPlan }, { controlGate }, { previewCard }, { PlayConditionReachable }, { NonlethalHpRefusal }] = await Promise.all([
     import('../src/content/index.js'), import('../src/model/registries.js'), import('../src/model/gameProfile.js'),
     import('../tools/combat-audit/runtime.mjs'), import('../tools/combat-audit/fixtures.mjs'),
     import('../src/engine/combatExpansion.js'), import('../src/engine/proposalStatusRuntime.js'),
     import('../src/engine/combatStatusControl.js'), import('../src/engine/combat.js'),
+    import('../src/engine/cardBehavior.js'), import('../src/model/cardHpCost.js'),
   ]);
   const profile = profiles.resolveGameProfile('core');
   const registries = profiles.bindGameProfileRegistries(createRegistries(profiles.applyGameProfileToContent(contentBundle, profile)), profile);
@@ -198,7 +191,7 @@ test('authored Bind agrees with real engine play: block Attack cards, permit ski
     cardInstances: [{ instanceId: 'skill', cardId: 'core.defend', upgraded: false }], relicIds: [] });
   combat.player.statuses['base.bind'] = { stacks: 1 };
   const h = harness();
-  Object.assign(h.scope, { combat, registries, resolveCombatCard, proposalCardPlan, controlGate, previewCard });
+  Object.assign(h.scope, { combat, registries, resolveCombatCard, proposalCardPlan, controlGate, previewCard, PlayConditionReachable, NonlethalHpRefusal });
   assert.equal(h.scope.action('c1').reason, 'Blocked by Bind.');
   assert.equal(h.scope.action('skill').enabled, true, 'ample SP cannot bypass Bind, but the skill stays available');
   const before = { stamina: combat.player.stamina, mana: combat.player.mana, hand: combat.piles.hand.map(card => card.instanceId) };

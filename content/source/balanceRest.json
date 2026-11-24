@@ -1,6 +1,7 @@
 {
   "hpSmallPct": 25,
   "hpPartialPct": 35,
+  "multiUseShrines": true,
   "mana": {
     "mode": "floorOrFull",
     "flat": 3,
@@ -12,6 +13,7 @@
   },
   "$note": {
     "hpSmallPct": "Percent of max HP a rough camp's small rest hands back.",
-    "hpPartialPct": "Percent of max HP a shrine's rest hands back."
+    "hpPartialPct": "Percent of max HP a shrine's rest hands back.",
+    "multiUseShrines": "A shrine stays open after a service: rest once, smith while you have stones, then leave when you choose. False: one service and you leave. Was the Multi-use Shrines setting."
   }
 }
