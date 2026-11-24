@@ -12,7 +12,7 @@ const RUN = { seed: 7, gameProfile: profile, rangePolicy: {} };
 const options = (cardId, steps = []) => {
   const base = registries.cards.get(cardId);
   const inst = { instanceId: 'k1', cardId, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) };
-  return nextUpgradeOptions(RUN, inst, base, registries, 60, { noAuthored: true });
+  return nextUpgradeOptions(RUN, inst, base, registries, 60, { noAuthored: true, everyFamily: true });
 };
 const counterStep = { k: 'fx', fx: 'counter', n: 1 };
 const isCounter = step => step.k === 'fx' && step.fx === 'counter';
@@ -24,6 +24,8 @@ test('+1 Counter is offered on a Counter card that has room under 3, and on no o
     const maneuver = (card.tags || []).includes('maneuver:counter');
     const offered = options(card.id).some(isCounter);
     if (!maneuver) assert.equal(offered, false, `${card.id} grants no Counter, so no +1 Counter`);
+    // A ranked ability card's grade table owns its numbers, so it is offered only drawback-removal steps (review of #2819).
+    else if (Array.isArray(card.gradeProfiles)) assert.equal(offered, false, `${card.id} is a ranked ability card: no +1 Counter`);
     else {
       const room = (rules.stacksByCard?.[card.id] ?? rules.stacksPerCard) + rules.stacksUpgradeBonus + 1 <= rules.stacksMax;
       assert.equal(offered, room, `${card.id}: offered exactly when the grant stays within ${rules.stacksMax}`);

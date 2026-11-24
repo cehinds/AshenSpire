@@ -24,6 +24,7 @@ import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot, bringStancesForward } from '../model/combatSnapshot.js';
+import { runMods, EQUIPMENT_POOL_FIELDS } from '../model/loadout.js';
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
 import { refillWeaknesses } from './weaknesses.js';
 import { bringRangesForward } from '../model/combatRanges.js';
@@ -190,6 +191,19 @@ function restoredPoolDeck(saved, fallback) {
   return saved === true || fallback === true;
 }
 
+/**
+ * A fight saved by build 0.7.4.216 can hold persistentPoise.barrierBonus (Ward/Barrier Poise) above its maximum: a stat change rebuilt the
+ * maximum without the bonus. Such a save was refused on every dispatch. Load gives the bonus back to the maximum (a fractional one is floored),
+ * so the run goes on; a healthy snapshot is untouched.
+ */
+function repairPoiseBonus(entity) {
+  const poise = entity?.persistentPoise;
+  if (!poise || typeof poise !== 'object' || poise.barrierBonus === undefined || !Number.isFinite(poise.barrierBonus)) return;
+  const bonus = Math.max(0, Math.floor(poise.barrierBonus));
+  if (bonus !== poise.barrierBonus) { if (bonus > 0) poise.barrierBonus = bonus; else delete poise.barrierBonus; }
+  if (bonus > poise.max && Number.isSafeInteger(poise.max)) poise.max += bonus;
+}
+
 export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck, expectedGameProfile = null }) {
   // A fight saved before the range rename reads melee/reach/ranged (combatRanges.js);
   // the caller's object is left as saved.
@@ -198,7 +212,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   bringStancesForward(saved);
   // Stack counts above the live cap (a cap changed since the save) load clamped, never refused.
   const enemies = Array.isArray(saved?.enemies) ? saved.enemies : [];
-  for (const entity of [saved?.player, ...enemies]) clampStackCounts(entity, saved?.fixCoreRules?.statusCaps === 'none');
+  for (const entity of [saved?.player, ...enemies]) { clampStackCounts(entity, saved?.fixCoreRules?.statusCaps === 'none'); repairPoiseBonus(entity); }
   if (saved?.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
@@ -382,6 +396,11 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   run.flaskCharges = structuredClone(combat.player.flaskCharges);
   run.equipmentPoolDeficits = structuredClone(combat.equipmentPoolDeficits);
   run.itemUpgradeLevels = structuredClone(combat.itemUpgradeLevels || {});
+  // Attribute-derived pool changes already travel in the saved formulas; only raw equipment bonuses belong in this addend.
+  if (combat.equipmentChanged && run.loadout) {
+    const mods = runMods(combat.registries, run.loadout, run.class, run);
+    run.equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map(field => [field, mods[field]]));
+  }
   delete run.armamentLevels;
   for (const field of ['hp', 'mana', 'stamina']) {
     run[field] = field === 'stamina' ? Math.min(combat.player.stamina, combat.player.maxStamina) : combat.player[field];

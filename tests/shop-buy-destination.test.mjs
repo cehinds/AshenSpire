@@ -51,7 +51,7 @@ test('a full deck refuses Add to deck and leaves the run untouched', () => {
 test('the host offers equip through the Armoury and keeps inventory as the dismissal', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /\['weapons', 'armor'\]\.includes\(receipt\?\.kind\)\) return offerShopEquip/);
-  assert.match(main, /showArmoury\(\{ equipItemId: id \}, showShop\)/);
+  assert.match(main, /showArmoury\(\{ equipItemId: id \}, refresh\)/, 'the Armoury returns to the shop it opened from, refreshed in place');
   assert.equal((main.match(/onArmamentPurchased: shopArmamentBought/g) || []).length, 1);
   assert.equal((main.match(/onCardPurchased: offerShopCardDestination/g) || []).length, 1);
   const smith = readFileSync(new URL('../src/ui/screens/blacksmith.js', import.meta.url), 'utf8');

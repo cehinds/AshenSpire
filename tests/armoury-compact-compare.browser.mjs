@@ -49,6 +49,12 @@ async function mount(page) {
 const rowSel = (code) => `.armoury-position-card[data-slot-position="${code}"]`;
 const wait = (page, ms) => page.waitForTimeout(ms);
 
+// The slot's item list is a modal (owner 2026-11-19): choose the item's row, then its Equip.
+async function pickInModal(page, id) {
+  await page.click(`.equip-item-choice [data-item-option="${id}"]`);
+  await page.click('.equip-item-choice .as-btn.primary');
+}
+
 try {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, reducedMotion: 'no-preference' });
   page.setDefaultTimeout(15000);
@@ -84,7 +90,7 @@ try {
 
   // Replace / Unequip do not move the selection.
   await page.click(`${rowSel(rows[0])} .armament-replace`);
-  await page.waitForSelector('.equip-picker-table');
+  await page.waitForSelector('.equip-item-choice');
   await page.waitForSelector('.armoury-position-card.is-inspected');
   assert.deepEqual(await selected(), [second], 'Replace leaves the selection alone');
 
@@ -125,9 +131,8 @@ try {
   const weaponRow = 'rightHand:0';
   const currentName = await page.$eval(`${rowSel(weaponRow)} .armament-position-name`, (n) => n.textContent);
   await page.click(`${rowSel(weaponRow)} .armament-replace`);
-  await page.waitForSelector('.equip-picker-table');
-  await page.waitForSelector('.equip-picker-row[data-item-id="ashStaff"] .equip-picker-act');
-  await page.click('.equip-picker-row[data-item-id="ashStaff"] .equip-picker-act');
+  await page.waitForSelector('.equip-item-choice');
+  await pickInModal(page, 'ashStaff');
   await page.waitForSelector('.equip-compare-modal');
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'nothing is equipped by merely choosing');
   assert.equal(await page.locator('.equip-compare-modal h2, .equip-compare-modal [id="equip-compare-title"]').first().innerText(), 'Replace Main Hand?');
@@ -156,7 +161,7 @@ try {
   if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/compare-weapon-desktop.png` });
   // The footer: Back and Equip, right-justified.
   const foot = await page.$eval('.equip-compare-modal .modal-foot-actions', (n) => { const box = n.closest('.equip-compare-modal').getBoundingClientRect(); const kids = [...n.children].map((c) => c.getBoundingClientRect()); return { right: box.right, lastRight: kids.at(-1).right, firstLeft: kids[0].left, left: box.left, labels: [...n.children].map((c) => c.textContent.trim()) }; });
-  assert.deepEqual(foot.labels, ['Back', 'Equip']);
+  assert.deepEqual(foot.labels, ['Back', 'Confirm']);
   assert.ok(foot.right - foot.lastRight < 40, 'Equip sits at the right edge');
   if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/compare-weapon-desktop.png` });
   assert.ok(foot.firstLeft - foot.left > 100, 'Back is not stretched to the left edge');
@@ -164,18 +169,18 @@ try {
   // Back (and Escape) returns to the picker without equipping.
   await page.click('.equip-compare-back');
   await page.waitForSelector('.equip-compare-modal', { state: 'detached' });
-  assert.ok(await page.locator('.equip-picker-table').isVisible(), 'back at the picker');
+  assert.ok(await page.locator('.equip-item-choice').isVisible(), 'back at the item list');
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'Back equipped nothing');
-  await page.click('.equip-picker-row[data-item-id="ashStaff"] .equip-picker-act');
+  await pickInModal(page, 'ashStaff');
   await page.waitForSelector('.equip-compare-modal');
   await page.keyboard.press('Escape');
   await page.waitForSelector('.equip-compare-modal', { state: 'detached' });
-  assert.ok(await page.locator('.equip-picker-table').isVisible(), 'Escape is Back');
+  assert.ok(await page.locator('.equip-item-choice').isVisible(), 'Escape is Back');
   assert.ok(await page.locator('.armoury').isVisible(), 'Escape did not close the Armoury');
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0);
 
   // Equip performs the existing equip.
-  await page.click('.equip-picker-row[data-item-id="ashStaff"] .equip-picker-act');
+  await pickInModal(page, 'ashStaff');
   await page.waitForSelector('.equip-compare-modal');
   await page.click('.equip-compare-equip');
   await page.waitForSelector('.equip-compare-modal', { state: 'detached' });
@@ -188,14 +193,15 @@ try {
   const spare = await page.evaluate(() => window.__armouryRun.loadout.boughtArmour?.[0]?.id);
   if (spare) {
     await page.click(`${rowSel('body:0')} .armament-replace`).catch(async () => { await page.click('.armoury-position-card.is-occupied .armament-replace'); });
-    await page.waitForSelector('.equip-picker-table');
-    await page.click(`.equip-picker-row[data-item-id="${spare}"] .equip-picker-act`);
+    await page.waitForSelector('.equip-item-choice');
+    await pickInModal(page, spare);
     await page.waitForSelector('.equip-compare-modal');
     const armourNames = await page.$$eval('.equip-compare-face', (nodes) => nodes.map((n) => n.dataset.compareSide));
     assert.deepEqual(armourNames, ['current', 'new']);
-    assert.ok(await page.locator('[data-compare-row="defenseRating"]').count(), 'armour lists DR');
+    // AR/DR/PR are removed (owner ruling 2026-11-18 §8, docs/balance/owner-ruling-2026-11-18.md): armour compares by Poise, not DR.
+    assert.equal(await page.locator('[data-compare-row="defenseRating"]').count(), 0, 'armour lists no DR row');
     assert.ok(await page.locator('[data-compare-row="poise"]').count(), 'armour lists Poise');
-    if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/compare-armour-desktop.png` });
+    if (SHOT_DIR) { await wait(page, 800); await page.screenshot({ path: `${SHOT_DIR}/compare-armour-desktop.png` }); }
   } else console.log('note: no spare Reaver outfit in content; armour comparison covered by the model test');
 
   // Reduced motion: no fade, simply gone.
@@ -214,6 +220,17 @@ try {
   await mount(phone);
   assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no horizontal overflow at 390');
   if (SHOT_DIR) await phone.screenshot({ path: `${SHOT_DIR}/equipment-phone.png` });
+  // The armour comparison on a phone: Poise, and no DR row (owner ruling 2026-11-18 §8).
+  if (spare) {
+    await phone.click(`${rowSel('body:0')} .armament-replace`).catch(async () => { await phone.click('.armoury-position-card.is-occupied .armament-replace'); });
+    await phone.waitForSelector('.equip-item-choice');
+    await pickInModal(phone, spare);
+    await phone.waitForSelector('.equip-compare-modal');
+    assert.equal(await phone.locator('[data-compare-row="defenseRating"]').count(), 0, 'phone: armour lists no DR row');
+    assert.ok(await phone.locator('[data-compare-row="poise"]').count(), 'phone: armour lists Poise');
+    assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'phone: the comparison stays inside 390');
+    if (SHOT_DIR) { await wait(phone, 800); await phone.screenshot({ path: `${SHOT_DIR}/compare-armour-phone.png` }); }
+  }
   if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/equipment-desktop.png` });
   assert.deepEqual(errors, [], 'no page errors');
   console.log('Armoury compact list, toast and Replace comparison behave as wireframed.');

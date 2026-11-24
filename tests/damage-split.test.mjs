@@ -70,11 +70,21 @@ const WEAPON_PHYSICAL_TYPE = {
   lantern: 'blunt', torch: 'blunt', parryDagger: 'piercing',
   ashStaff: 'blunt', starstoneStaff: 'blunt', boneSceptre: 'blunt', emberlightSceptre: 'blunt', goldboughBranch: 'blunt',
   blightRod: 'blunt', gorefireBrand: 'blunt', wyrmhornStaff: 'blunt', frostSpear: 'piercing', cinderAxe: 'slashing', duskChime: 'blunt',
+  // Codex armaments: points thrust, blades cut, and hammers/foci strike bluntly; sprite aliases do not decide damage type.
+  kris: 'piercing', stiletto: 'piercing', broadsword: 'slashing', flamberge: 'slashing',
+  rapier: 'piercing', estoc: 'piercing', duelistsFoil: 'piercing', ashenClaymore: 'slashing', zweihander: 'slashing',
+  pike: 'piercing', scythe: 'slashing', reapersCrescent: 'slashing',
+  mace: 'blunt', morningStar: 'blunt', flail: 'blunt', maul: 'blunt', thunderMallet: 'blunt',
+  beardedAxe: 'slashing', moonlitKatana: 'slashing', moonGlaives: 'slashing',
+  longbow: 'piercing', huntersRecurve: 'piercing', handCrossbow: 'piercing', arbalest: 'piercing',
+  leatherWhip: 'slashing', thornWhip: 'piercing', ironKnuckles: 'blunt', beastClaws: 'slashing',
+  stormSceptre: 'blunt', grimoire: 'blunt', prayerBook: 'blunt', sunTalisman: 'blunt', boneTalisman: 'blunt',
 };
 
 test('every weapon, shield and staff names its physical damage type, as authored', () => {
   const armaments = contentBundle.equipment.armaments;
   assert.equal(armaments.length, Object.keys(WEAPON_PHYSICAL_TYPE).length);
+  assert.deepEqual(armaments.map(piece => piece.id).sort(), Object.keys(WEAPON_PHYSICAL_TYPE).sort());
   for (const piece of armaments) assert.equal(piece.physicalDamageType, WEAPON_PHYSICAL_TYPE[piece.id], piece.id);
 });
 
@@ -129,8 +139,8 @@ test('the melee spell and technique magic shares are data, and each is an Advanc
   assert.deepEqual(combatRatingProblems({ ...config, magicSplit: { ...config.magicSplit, technique: 1.2 } }), ['Invalid split magic share']);
 });
 
-test('the school shares are data: force splits at half, alteration is all physical, the magic schools are all magic', () => {
-  assert.equal(combatRules.schools.force.magicShare, 0.5);
+test('the school shares are data: force and alteration are all physical, the magic schools are all magic', () => {
+  assert.equal(combatRules.schools.force.magicShare, 0, 'force is physical (owner 2026-11-18)');
   assert.equal(combatRules.schools.alteration.magicShare, 0);
   assert.equal(combatRules.schools.force.physicalType, 'blunt');
   assert.equal(combatRules.schools.alteration.physicalType, 'blunt');

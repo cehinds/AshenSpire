@@ -39,12 +39,14 @@ test('shared armor validates and preserves existing creation choices', () => {
   }
 });
 
-for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip ${id} only when its requirement is met`, () => {
+for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip purchased ${id} only when its requirement is met`, () => {
   const run = createRunState({ seed: 31, classId: cls, registries: r });
   const piece = r.equipment.armour.find(p => p.classId === cls && p.id === id);
   const [attribute, minimum] = Object.entries(piece.requirements.attributes)[0];
+  assert.equal(ownership(r, { loadout: run.loadout }).has(piece), false, 'shared armour requires acquisition');
+  run.loadout.boughtArmour = [{ classId: cls, id }];
   const owned = ownership(r, { loadout: run.loadout });
-  assert.ok(owned.has(piece), 'available in Armoury without profile unlock');
+  assert.ok(owned.has(piece), 'purchased armour belongs to this run');
   const ctx = { inCombat: false, classId: cls, attributes: { ...run.attributes, [attribute]: minimum - 1 } };
   const before = structuredClone(run.loadout);
   const beforePools = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina };
@@ -76,11 +78,10 @@ for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip 
   // SPEC §13.4m (lean scale, 2026-09-20): every outfit minimum rebased to 3 on the 1–4 scale.
   assert.equal(minimum, 3);
   assert.match(card.requirement, new RegExp(`\\b${minimum}\\b`));
-  // An armour's additive Defend Block is shown as the card's DR fact, not as a
-  // bonus row (src/model/equipmentCard.js; same rule as tests/equipmentCard.test.mjs).
+  // An armour's additive Defend Block is shown as the card's Block fact (DR is gone, ruling 2026-11-18 §8), not as a bonus row.
   const blockMods = piece.mods.filter(raw => /^defend\.block=[+-]/.test(raw));
   assert.equal(card.bonuses.length, 2 - blockMods.length);
-  assert.equal(card.facts.find(f => f.label === 'DR').value, blockMods.reduce((n, raw) => n + Number(raw.split('=')[1]), 0));
+  assert.equal(card.facts.find(f => f.label === 'Block').value, blockMods.reduce((n, raw) => n + Number(raw.split('=')[1]), 0));
   assert.equal(card.tags.length, 2);
   assert.ok(manifestIds().has(armourMenuAsset(cls, id)));
   const visual = paintedOutfit(cls, id);

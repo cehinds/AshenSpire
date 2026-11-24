@@ -15,6 +15,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { STEP_ARRIVAL_GUARD_MS } from '../src/ui/stepArrivalGuard.js';
 
 const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const ROOT = resolve(HERE, '..');
@@ -643,6 +644,8 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
         const refusal = await evaluate(`document.querySelector('#cz-start')?.dataset.refusal || null`);
         throw new Error(`${error.message}; Begin refuses: ${JSON.stringify(refusal)}`);
       });
+      // Review can be ready while its forward-press guard is still active.
+      await wait(STEP_ARRIVAL_GUARD_MS);
       await press('#cz-start');
       // Skip the opening sequence through its real door, then choose each
       // required mastery tier before the map can accept camera input.

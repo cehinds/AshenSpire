@@ -395,6 +395,7 @@ says so where a fact is not recorded.
 | Assets | Source | Rights |
 |---|---|---|
 | `asset-data/components/armoury.json` | Armoury UI component manifest (data, no artwork), written for this project in this repository | Project-owned; MIT with the code |
+| `asset-data/enemy-concepts/` | AshenSpire’s catalog of 32 dormant enemy designs. The corresponding original artwork was generated with OpenAI ImageGen under human direction and is maintained in [AI-Art](https://github.com/cehinds/AI-Art/pull/5). | Project-authored catalog metadata, MIT with the code ([LICENSE](LICENSE)). |
 | `asset-data/equipment/manifest.json`, `asset-data/poses/pose-sprites.manifest.json`, `asset-data/sprites/class-sprites.manifest.json`, `asset-data/enemy-poses/manifest.json`, `asset-data/enemy-states/manifest.json` | JSON manifests (data, no artwork) describing the art under the matching `assets/` folders, written by this repository's tools (`tools/equipment-blender.py`, `tools/pose-ship.mjs`, `tools/concept-cutout.mjs` and `tools/pose-cutout.mjs`, `art/enemy-poses/build.mjs`, `art/enemy-states/build.mjs`); moved out of `assets/` in #1367 | Project-owned; MIT with the code ([LICENSE](LICENSE)) |
 | `asset-data/fonts/OFL.txt` | The copyright notices of the bundled lore fonts under `assets/fonts/` and the SIL Open Font License 1.1 text (see the card lore faces row above) | SIL Open Font License 1.1: the notices and licence text the fonts' licence requires to be distributed with them |
 | `assets/framework/missing.svg`, `asset-data/framework/silence.txt` | Missing-asset placeholder glyph and silent audio-fallback stub, hand-written in this repository | Project-owned, CC0 |
@@ -874,3 +875,23 @@ backgrounds and effects remain separate components.
 ### Reviewed card-art cutouts (2026-10-30)
 
 The 73 additional status/mineral cutouts reuse existing project proposal PNGs byte-for-byte. Source URLs, SHA-256 hashes and original component labels are recorded in `asset-data/card-art/reviewed-library.json` and [AI-Art provenance](https://github.com/cehinds/AI-Art/blob/ashenspire-hd-assets-v25/provenance/AshenSpire/reviewed-card-cutouts.json). Existing authorship and unresolved provenance remain unchanged; reuse does not establish a new license.
+
+The default physical Skill object, `assets-display/card-cutouts/skill.object.png`, is first-party artwork generated with OpenAI image generation and selected by the project owner. The game uses the approved PNG bytes. The SHA-256 is recorded in [the reviewed card-art library](asset-data/card-art/reviewed-library.json).
+
+The stat modifier cutouts at `assets-display/card-cutouts/stat.*.png` are project-directed OpenAI ImageGen artwork selected by the project owner. The game uses the original transparent PNG bytes. The [reviewed card-art library](asset-data/card-art/reviewed-library.json) records their dimensions and SHA-256 hashes. AI-Art records the generation provenance in `provenance/AshenSpire/stat-buff-cutouts.json`.
+
+### Recipient impact, casting and reaction sprites (2026-11-18)
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/recipient-effects/` | Original OpenAI ImageGen pixel effects under human direction; [v27 provenance and SHA-256 catalog](https://github.com/cehinds/AI-Art/tree/ashenspire-hd-assets-v27/provenance/recipient-effects/v5) retain source PNGs, prompts and extraction records for all 35 strips. | Project-directed AI-generated artwork; no third-party artwork or license claimed. |
+
+Original pixel effects generated with OpenAI ImageGen under human direction.
+The 35 runtime strips use `assets/recipient-effects/v5/*.png` in both art tiers.
+[AI-Art PR #4](https://github.com/cehinds/AI-Art/pull/4) retains the original raw
+PNGs, exact generation prompts, extraction scripts and SHA-256 catalog under
+`provenance/recipient-effects/v5/`. The [recipient-effect guide](docs/RECIPIENT-EFFECTS.md)
+documents local export and preview. No third-party artwork or license is claimed;
+art publication and release pinning are separate. Debug SVG marks are authored
+game code. Ward and Evade reuse each affected actor's existing artwork and
+attribution rather than the demonstration silhouette sprite.

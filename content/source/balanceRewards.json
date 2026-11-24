@@ -18,26 +18,11 @@
     "$note": { "{kind}.{end}": "The {band} of the cinders that {pool} pays." }
   },
   "rarityWeights": {
-    "normal": { "common": 60, "uncommon": 35, "rare": 5 },
-    "elite": { "common": 45, "uncommon": 40, "rare": 15 },
-    "boss": { "common": 45, "uncommon": 40, "rare": 15 },
+    "normal": { "common": 65, "uncommon": 30, "rare": 5 },
+    "elite": { "common": 57, "uncommon": 35, "rare": 8 },
+    "boss": { "common": 52, "uncommon": 39, "rare": 9 },
     "$note": {
-      "{kind}.{rarity}": "How often {pool} offers {a rarity} card, weighed against the other rarities in its row. Classes with a table of their own use that instead."
-    }
-  },
-  "rarityWeightsByClass": {
-    "starseer": {
-      "normal": { "common": 35, "uncommon": 50, "rare": 15 },
-      "elite": { "common": 25, "uncommon": 50, "rare": 25 },
-      "boss": { "common": 20, "uncommon": 45, "rare": 35 }
-    },
-    "herald": {
-      "normal": { "common": 35, "uncommon": 50, "rare": 15 },
-      "elite": { "common": 25, "uncommon": 50, "rare": 25 },
-      "boss": { "common": 20, "uncommon": 45, "rare": 35 }
-    },
-    "$note": {
-      "{classId}.{kind}.{rarity}": "The {className}'s own reward odds: how often {pool} offers {a rarity} card, weighed against the other rarities in its row."
+      "{kind}.{rarity}": "How often {pool} offers {a rarity} card, weighed against the other rarities in its row. One table for every class: rare stays under 10% of every row, and a specific card is less likely as rarity rises given each rarity's pool size (validated)."
     }
   },
   "elementAffinity": {

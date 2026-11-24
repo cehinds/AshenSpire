@@ -22,7 +22,7 @@ function fixture({ legacyDeck = false } = {}) {
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'rest-ui-test' });
   run.gameProfile.content.rests = structuredClone(LEGACY_RESTS);
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; // the first rest of act 1 (a branch may open narrow)
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   run.hp = 1; run.mana = 0; run.stamina = 0; run.smithingStones = 0;
   run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
@@ -73,7 +73,8 @@ test('earned Constitution selection previews its new maximum and exactly matches
   const model = gameProfileRestModel(registries, run, visit);
   const con = model.attributes.find(row => row.id === 'constitution');
   assert.equal(con.available, true);
-  assert.equal(con.preview.maxHp, run.maxHp + 10);
+  // Owner, 2026-11-17: HP = 30 + 5 x (CON + level), so one CON point is 5 maximum HP.
+  assert.equal(con.preview.maxHp, run.maxHp + 5);
   assert.equal(con.preview.hp, con.preview.maxHp);
   assert.deepEqual(run, before);
   commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'constitution' });
@@ -98,17 +99,17 @@ test('the Core deck editor mints collected trained basics and rejects uncollecte
   const session = openDeckEdit(registries, draft);
   const before = structuredClone(draft);
   const editor = deckEditorModel({ registries, run: draft });
-  assert.deepEqual(editor.collection.filter(tile => tile.unlimited).map(tile => tile.cardId), ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep']); // the 2026-11-14 starter deck also collects Smash and Sweep
+  assert.deepEqual(editor.collection.filter(tile => tile.unlimited).map(tile => tile.cardId), ['core.strike', 'core.defend']); // owner ruling 2026-11-21: the starter deck collects only Strike and Defend
   assert.ok(editor.collection.filter(tile => tile.unlimited).every(tile => run.collectedCardIds.includes(tile.cardId)));
   assert.throws(() => session.add('basic:core.evade'), /not an unlimited card id/);
   assert.equal(editor.collection.some(tile => tile.key === 'basic:attack' || tile.key === 'basic:guard'), false);
   assert.throws(() => session.add('basic:attack'), /not an unlimited card id/);
   assert.deepEqual(draft, before, 'the formerly enabled legacy tile cannot alter a configured draft');
-  const removed = draft.deck.find(card => card.cardId === 'core.counter');
+  const removed = draft.deck.find(card => card.cardId === 'core.defend');
   assert.equal(session.remove(removed.instanceId).ok, true);
   assert.equal(draft.deck.length, run.deck.length - 1);
   assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), false, 'a pristine trained basic is backed by sticky collection knowledge');
-  assert.equal(session.add('basic:core.counter').ok, true);
+  assert.equal(session.add('basic:core.defend').ok, true);
   assert.equal(draft.deck.at(-1).cardId, removed.cardId);
   assert.equal(session.confirm().ok, true);
   assert.throws(() => commitGameProfileRest(registries, run, 'strategize', { draft }), /Unknown rest service/, 'D10: deck editing is not a rest service');
@@ -136,7 +137,7 @@ test('arriving with full pools but a spent flask records the flask refill (revie
   const run = createRunState({ seed: 74, classId: 'reaver', registries, runId: 'rest-flask-heal' });
   run.gameProfile.content.rests = structuredClone(LEGACY_RESTS);
   run.mapGraph = buildActMap(registries, createRng(74), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; // the first rest of act 1 (a branch may open narrow)
   run.hp = run.maxHp; run.mana = run.maxMana; run.stamina = run.maxStamina;
   run.flaskCharges.hpCurrent = 0;
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);

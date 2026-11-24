@@ -1,0 +1,45 @@
+{
+  "request": "Owner, 2026-11-17 (phone screenshot of an event): the image takes at least 50% of the viewport height and the modal fills the area; small, uniform side margins and padding; drop or shrink the EVENT label and the 'Choose a response' subtitle, smaller title and body font; limited scrolling, so at 390x844 a typical event's text (1-2 sentences, about 25 words) and all its choices fit or need at most a short scroll; no always-visible disabled Continue or its 'Choose a response first.' hint.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "event-before-a-response",
+      "url": "?shot=event&shotEvent=feralShrine",
+      "ready": ".event-door #choices button",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        { "kind": "visible", "label": "The event image is on screen", "selector": ".event-screen .polish-scene-painting" },
+        { "kind": "visible", "label": "The first response is on screen", "selector": ".event-door #choices button" },
+        { "kind": "within", "label": "The door stays inside the screen", "selector": ".event-door", "container": ".event-screen" },
+        { "kind": "within", "label": "The last response fits the door's body without scrolling", "selector": ".event-door #choices > :last-child", "container": ".event-door .modal-body" },
+        { "kind": "noOverlap", "label": "Image and door do not overlap", "a": ".event-screen .polish-scene-painting", "b": ".event-door" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate"] }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "The EVENT eyebrow is still shown", "selector": ".event-door .modal-eyebrow" },
+        { "kind": "visible", "label": "A disabled Continue is shown before a response", "selector": "#event-continue" },
+        { "kind": "visible", "label": "The 'Choose a response first.' hint is shown", "selector": ".event-door .as-reasonnote" }
+      ]
+    },
+    {
+      "name": "event-after-a-response",
+      "url": "?shot=event&shotEvent=feralShrine",
+      "ready": ".event-door #choices button",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".event-door #choices button:not([disabled]) >> nth=-1" },
+        { "wait": { "ms": 900 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "Continue appears once a response is taken", "selector": "#event-continue" }
+      ],
+      "failure": [
+        { "kind": "visible", "label": "The 'Choose a response first.' hint is still shown", "selector": ".event-door .as-reasonnote" }
+      ]
+    }
+  ]
+}

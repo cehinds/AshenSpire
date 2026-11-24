@@ -1,5 +1,5 @@
 // Playtest 2026-11-17 (items 31, 35): the icons under an enemy show its stance weakness. Prepared is weak to melee,
-// Idle (no stance) to all damage; any other stance, a Broken or Staggered one, or no stance row shows none.
+// Idle (no stance, a missing stance row included) to all damage; any other stance, or a Broken or Staggered one, shows none.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -18,11 +18,34 @@ test('under the rule, Prepared (and its casting id) is weak to melee and Idle to
   assert.deepEqual(StanceWeaknessFor({}, RULES), { stance: 'neutral', to: 'all', multiplier: 1.25 });
 });
 
-test('other stances, a broken stance and no stance row show no stance weakness', () => {
+test('other stances and a broken stance show no stance weakness', () => {
   for (const maneuver of ['attack', 'smash', 'sweep', 'counter', 'defend']) assert.equal(StanceWeaknessFor({ maneuver }, RULES), null, maneuver);
   assert.equal(StanceWeaknessFor({ maneuver: 'prepared', broken: true }, RULES), null);
   assert.equal(StanceWeaknessFor({ maneuver: 'neutral', staggered: true }, RULES), null);
-  assert.equal(StanceWeaknessFor(null, RULES), null);
+});
+
+// Owner, 2026-11-17: what the chip shows must match the damage rule. An enemy with no stance row takes the Idle x1.25 from every hit
+// (gameProfileCombat's stance-weakness stage reads a missing stance as 'neutral'), so it shows "weak to all damage" too.
+test('no stance row is Idle: the chip shows weak to all damage, matching the hit it takes', async () => {
+  for (const none of [null, undefined]) assert.deepEqual(StanceWeaknessFor(none, RULES), { stance: 'neutral', to: 'all', multiplier: 1.25 });
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { profileDamageReceipt } = await import('../src/engine/gameProfileCombat.js');
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const enemy = combat.enemies[0];
+  delete enemy.combatStance;
+  const chip = StanceWeaknessFor(enemy.combatStance, StanceBenefitRules(combat));
+  const hit = profileDamageReceipt(combat, combat.player, enemy, 20, { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' }, skipRatingBonus: true });
+  const stage = hit.damageReceipt.hits[0].sources.find(row => row.id === 'stance-weakness');
+  assert.ok(chip, 'the chip shows for a stance-less enemy');
+  assert.equal(stage?.multiplier, chip.multiplier, 'the hit takes exactly what the chip says');
 });
 
 // Review on #2814: a fight without the rule draws no chip. A legacy fight has no stanceBenefits block (every enemy is

@@ -4,6 +4,7 @@ import { approvedCardArt } from './layeredCardArt.js';
 import { cardRank } from '../model/cardRank.js';
 
 const actions = ['attack', 'smash', 'counter', 'evade', 'sweep', 'defend'];
+const weaponActions = ['attack', 'smash', 'counter', 'sweep'];
 const aliases = { defense: 'defend', evasion: 'evade' };
 const elements = ['force', 'fire', 'lightning', 'earth', 'frost', 'psychic', 'alteration', 'divine', 'necrotic', 'wind', 'blood'];
 const elementAliases = { alternation: 'alteration', illusion: 'psychic', decay: 'necrotic', cold: 'frost', holy: 'divine', sacred: 'divine', arcane: 'force' };
@@ -43,6 +44,16 @@ function backgroundColor(selected, category) {
       .toString(16).padStart(2, '0')).join(''));
   return { id: `element:${key}`, color };
 }
+// One approved effect layer per presentation `fx:` tag (asset-data/card-art/reviewed-library.json effectLayers).
+const effectLayers = Object.freeze(reviewed.effectLayers || {});
+const modifierArt = freeze(clone(reviewed.proceduralModifiers));
+const modifierLayers = [modifierArt.object, modifierArt.aura, modifierArt.chevrons];
+const modifierWidth = Math.max(...modifierLayers.map(layer => 2 * Math.abs(layer.x) + layer.width));
+const modifierHeight = Math.max(...modifierLayers.map(layer => 2 * Math.abs(layer.y) + layer.height));
+const modifierAssets = freeze(clone(Object.fromEntries([
+  modifierArt.chevrons.assetId,
+  ...Object.values(modifierArt.stats).map(stat => stat.assetId).filter(Boolean),
+].map(id => [id, reviewed.assets[id]]))));
 // Build a semantic sprite/template pool once. Record IDs and labels never route art.
 const spritesByAsset = new Map(), statusObjects = new Map();
 for (const recipe of Object.values(reviewed.records)) {
@@ -101,9 +112,124 @@ function withOpacity(sprite, intensity) {
   return result;
 }
 
-/** Pure presentation: only type, canonical tags and one-based rank select art. */
-export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}) {
-  tags = canonicalTags(tags);
+function statModifier(tag) {
+  const [polarity, rawStat, extra] = tag.split(':');
+  const key = rawStat?.toLowerCase();
+  const stat = Object.hasOwn(modifierArt.statAliases, key) ? modifierArt.statAliases[key] : key;
+  if (extra !== undefined || !Object.hasOwn(modifierArt.polarities, polarity)
+    || !Object.hasOwn(modifierArt.stats, stat)) return null;
+  const entry = modifierArt.stats[stat];
+  // Pending cutouts use the ordinary action and status art.
+  return modifierAssets[entry.assetId] ? { tag: `${polarity}:${stat}`, polarity, stat, ...entry } : null;
+}
+
+function selectStatModifiers(tags, allTags) {
+  const stats = new Set(tags.map(tag => statModifier(tag)?.stat));
+  const chosen = modifierArt.priority.find(id => stats.has(id));
+  if (!chosen) return [];
+  // Both directions of a winning stat still matter when they come from different effects.
+  const modifiers = new Map(allTags.map(statModifier).filter(Boolean).map(row => [row.tag, row]));
+  return [modifiers.get(`buff:${chosen}`), modifiers.get(`debuff:${chosen}`)].filter(Boolean);
+}
+
+function effectGroups(tags, secondaryTags) {
+  const normalize = tags => canonicalTags(canonicalTags(tags).map(tag => statModifier(tag)?.tag || tag));
+  const hasScope = /^(main|secondary):(?=(?:buff|debuff|effect|fx|status):)/;
+  const scoped = prefix => normalize(tags.filter(tag => tag.startsWith(prefix) && hasScope.test(tag)).map(tag => tag.slice(prefix.length)));
+  const explicitMain = new Set(scoped('main:'));
+  const secondarySet = new Set([...scoped('secondary:'), ...normalize(secondaryTags)]);
+  const unscoped = normalize(tags.map(tag => tag.replace(hasScope, '')));
+  const secondary = unscoped.filter(tag => secondarySet.has(tag));
+  const main = unscoped.filter(tag => explicitMain.has(tag) || !secondarySet.has(tag));
+  return { tags: unscoped, groups: { main, secondary } };
+}
+
+function groupObject(tags, allTags, registries) {
+  const modifiers = selectStatModifiers(tags, allTags);
+  // An explicit effect identity outranks compatibility aliases such as Retain.
+  const utility = base.selection.utility.find(rule => rule.tags.some(tag => tag.startsWith('effect:') && tags.includes(tag)))
+    || base.selection.utility.find(rule => rule.tags.some(tag => tags.includes(tag)));
+  const status = tags.filter(tag => tag.startsWith('status:')).map(tag => tag.slice(7))
+    .find(id => statusObjects.has(statusCueId(id)) && statusExists(registries, id));
+  const candidates = { stat: modifiers.length ? { modifiers } : null, utility: utility ? { utility } : null, status: status ? { status } : null };
+  return modifierArt.effectObjectOrder.map(kind => candidates[kind]).find(Boolean);
+}
+
+function statModifierLayers(modifiers, layout, coordinateSpace, startZ, primary) {
+  const { object, aura, chevrons, polarities } = modifierArt;
+  const { polarity, stat, assetId } = modifiers[0];
+  const opposing = modifiers.length > 1;
+  const size = Math.min(layout.width / modifierWidth, layout.height / modifierHeight, layout.maxSize);
+  const centerX = layout.x + layout.width / 2, centerY = layout.y + layout.height / 2;
+  const objectScale = layout.objectScale ? modifierArt.stats[stat].centerObjectScale ?? layout.objectScale : 1;
+  let zIndex = startZ;
+
+  function sprite(role, id, layer, direction, { filter, tint } = {}) {
+    const { path, name: label } = modifierAssets[id];
+    const { rotation, opacity, blendMode } = layer;
+    const offsetY = role === 'chevrons' ? layout.chevronsOffsetY : layout.objectOffsetY;
+    const x = centerX + layer.x * size, y = centerY + (layer.y + (offsetY ?? 0)) * size;
+    const layerScale = role === 'chevrons' ? size : size * objectScale;
+    const width = layer.width * layerScale, height = layer.height * layerScale;
+    const radians = rotation * Math.PI / 180;
+    const cosine = Math.cos(radians), sine = Math.sin(radians);
+    const z = zIndex++;
+    return {
+      id: `modifier-${direction}-${stat}-${role}`, assetId: id, path, label, zIndex: z,
+      ...(tint !== undefined ? { modifierTint: { polarity: direction, strength: tint } } : {}),
+      transform: { x, y, width, height, rotation, opacity, blendMode },
+      affine: [cosine, sine, -sine, cosine],
+      css: {
+        position: 'absolute', left: `${x / coordinateSpace.width * 100}%`, top: `${y / coordinateSpace.height * 100}%`,
+        width: `${width / coordinateSpace.width * 100}%`, height: `${height / coordinateSpace.height * 100}%`,
+        objectFit: 'contain', transformOrigin: '50% 50%', transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+        opacity: String(opacity), mixBlendMode: blendMode, ...(filter ? { filter } : {}), pointerEvents: 'none', zIndex: String(z),
+      },
+    };
+  }
+
+  const style = polarities[polarity];
+  const auraLayer = sprite('aura', assetId, aura, opposing ? 'mixed' : polarity, {
+    filter: opposing ? aura.mixedFilter : `${style.tint} ${style.aura}`,
+  });
+  const arrows = modifiers.map(({ polarity: direction }, index) => {
+    const layer = { ...chevrons, rotation: polarities[direction].rotation };
+    if (opposing) {
+      layer.x += (index === 0 ? -1 : 1) * chevrons.opposingX;
+      layer.width *= chevrons.opposingScale;
+      layer.height *= chevrons.opposingScale;
+    }
+    return sprite('chevrons', chevrons.assetId, layer, direction, {
+      tint: 1, filter: `drop-shadow(0 0 ${chevrons.glowRadius}px ${polarities[direction].glow})`,
+    });
+  });
+  if (primary) {
+    const { left, top, width, height, transform } = primary.css;
+    const opacity = aura.stanceOpacity;
+    Object.assign(auraLayer, { assetId: primary.assetId, path: primary.path, label: primary.label,
+      affine: primary.affine, transform: { ...primary.transform, opacity } });
+    Object.assign(auraLayer.css, { left, top, width, height, transform, opacity: String(opacity) });
+    return [auraLayer, ...arrows];
+  }
+  return [auraLayer, ...arrows, sprite('object', assetId, object, opposing ? 'mixed' : polarity,
+    { tint: !opposing && object.edgeTintStrength > 0 ? object.tintStrength : undefined })];
+}
+
+const layerPriority = new Map(modifierArt.layerOrder.map((role, index) => [role, index]));
+function spritePriority(sprite) {
+  const id = sprite.id;
+  if (id === 'background') return layerPriority.get('background');
+  if (id.endsWith('-chevrons')) return layerPriority.get('chevrons');
+  if (id === 'backEffect' || id.endsWith('-aura')) return layerPriority.get('aura');
+  if (/^(?:object|secondaryObject)(?:-|$)/.test(id) || id.endsWith('-object')) return layerPriority.get('object');
+  if (id === 'foreground' && /^Z\.effect\./.test(sprite.assetId)) return layerPriority.get('projectile');
+  return layerPriority.get('effect');
+}
+
+/** Pure presentation from effective card tags, effect roles and one-based rank. */
+export function proceduralCardArt({ type, tags, secondaryTags, rank } = {}, { registries } = {}) {
+  const context = effectGroups(canonicalTags(tags), secondaryTags);
+  tags = context.tags;
   const camp = identity(tags, 'camp:');
   if (camp !== 'physical' && camp !== 'spell') return null;
   const explicit = tags.some(tag => tag.startsWith('maneuver:'));
@@ -120,7 +246,8 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   // Defensive and utility icons keep their action silhouette.
   const rangedWeapon = tags.includes('range:ranged') || projectile
     && tags.some(tag => ['delivery:projectile', 'delivery:ranged', 'maneuver:ranged'].includes(tag));
-  const weapon = category === 'physical' && ['attack', 'smash', 'sweep', 'counter'].includes(maneuver)
+  const preserveWeapon = weaponActions.includes(maneuver);
+  const weapon = category === 'physical' && preserveWeapon
     ? rangedWeapon ? 'bow'
       : tags.includes('range:reach') ? 'spear' : null
     : null;
@@ -129,15 +256,23 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
   const selectedElements = identityElement.elements;
   const element = selectedElements[0] || (category === 'magical' ? 'force' : null);
   const templateElement = element === 'blood' ? 'force' : element;
-  const cueElements = selectedElements.length ? selectedElements : element ? [element] : [];
+  const stanceObjectWins = modifierArt.stanceActions.includes(maneuver);
+  const effectGroupsInOrder = modifierArt.effectGroupOrder.map(role => context.groups[role]);
+  const effectObject = stanceObjectWins ? null : effectGroupsInOrder.map(group => groupObject(group, tags, registries)).find(Boolean);
+  const visibleModifiers = effectObject?.modifiers
+    || effectGroupsInOrder.map(group => selectStatModifiers(group, tags)).find(group => group.length) || [];
+  const utility = effectObject?.utility;
+  const replacedStatuses = new Set(visibleModifiers.flatMap(modifier => modifier.statuses));
+  const cueRoom = 3 - Number(visibleModifiers.length > 0);
+  const cueElements = (selectedElements.length ? selectedElements : element ? [element] : []).slice(0, Math.min(cueRoom, 2));
   rank = cardRank({ rank });
   const statuses = tags.filter(tag => tag.startsWith('status:')).map(tag => tag.slice(7))
-    .filter(id => statusExists(registries, id)).slice(0, 3 - Math.min(cueElements.length, 2));
-  // Explicit effect identities outrank compatibility aliases such as Retain.
-  // Multiple explicit effects retain the approved catalog's deterministic order.
-  const utility = base.selection.utility.find(rule => rule.tags.some(tag => tag.startsWith('effect:') && tags.includes(tag)))
-    || base.selection.utility.find(rule => rule.tags.some(tag => tags.includes(tag)));
-  const key = JSON.stringify([category, maneuver, selectedElements, projectile, weapon, utility?.code, statuses, rank]);
+    .filter(id => !replacedStatuses.has(id) && statusExists(registries, id)).slice(0, cueRoom - cueElements.length);
+  // A presentation `fx:` tag paints its approved effect layer while the four visual identities have room (one at most).
+  const effectRoom = Math.min(1, cueRoom - cueElements.length - statuses.length);
+  const effects = tags.filter(tag => tag.startsWith('fx:') && Object.hasOwn(effectLayers, tag)).slice(0, effectRoom);
+  const modifierTags = visibleModifiers.map(modifier => modifier.tag);
+  const key = JSON.stringify([category, maneuver, selectedElements, projectile, weapon, utility?.code, effectObject?.status, Boolean(effectObject?.modifiers), statuses, effects, modifierTags, rank]);
   let cache = globalCache;
   if (registries && typeof registries === 'object') {
     if (!registryCaches.has(registries)) registryCaches.set(registries, new Map());
@@ -190,8 +325,23 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
       transform: 'translate(-50%, -50%) rotate(0deg) scale(1, 1)' });
   }
   // Status utilities can use their approved symbol, while action silhouettes stay fixed.
-  if (maneuver === 'skill' && !utility && statuses.length && statusObjects.get(statusCueId(statuses[0]))) {
-    art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObjects.get(statusCueId(statuses[0]))), id: 'object' }];
+  if (effectObject?.modifiers) {
+    art.sprites = art.sprites.filter(sprite => sprite.id === 'background');
+  } else if (maneuver === 'skill' && !utility) {
+    const statusObject = statusObjects.get(statusCueId(effectObject?.status));
+    if (statusObject) {
+      art.sprites = [art.sprites.find(sprite => sprite.id === 'background'), { ...clone(statusObject), id: 'object' }];
+    } else if (category === 'physical') {
+      const skillObject = clone(reviewed.proceduralObjects.skill);
+      art.sprites = art.sprites.map(sprite => {
+        if (sprite.id === 'object') {
+          return { ...skillObject, zIndex: sprite.zIndex, css: { ...skillObject.css, zIndex: sprite.css.zIndex } };
+        }
+        // The borrowed spell template uses a purple aura on both sides of the object.
+        if (sprite.assetId === 'I.effect.0') sprite.css.filter = 'grayscale(1)';
+        return sprite;
+      });
+    }
   }
   for (const sprite of art.sprites.filter(sprite => /^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
     const outline = weaponAssets.has(sprite.assetId)
@@ -234,21 +384,39 @@ export function proceduralCardArt({ type, tags, rank } = {}, { registries } = {}
       cueSprites.push(cue);
     }
   }
+  for (const tag of effects) {
+    const layer = clone(effectLayers[tag]);
+    layer.zIndex = statusZ++;
+    layer.css.zIndex = String(layer.zIndex);
+    cueSprites.push(layer);
+  }
   const intensity = 0.55 + (Math.min(rank, 5) - 1) * 0.1125;
   art.sprites = [...art.sprites, ...cueSprites].map(sprite => {
     const decorative = sprite.id !== 'background' && !/^(?:object|secondaryObject)(?:-|$)/.test(sprite.id);
     return decorative ? withOpacity(sprite, intensity) : sprite;
   });
-  // Every valid recipe has a decorative PNG whose opacity changes with rank.
-  if (!art.sprites.some(sprite => sprite.id !== 'background' && !/^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
+  // Ordinary recipes without an existing decoration receive the rank aura.
+  if (!visibleModifiers.length && !art.sprites.some(sprite => sprite.id !== 'background' && !/^(?:object|secondaryObject)(?:-|$)/.test(sprite.id))) {
     art.sprites.push({ ...withOpacity(spritesByAsset.get('I.effect.0'), intensity * 0.5), id: 'rank-aura' });
   }
+  if (visibleModifiers.length) {
+    const primary = effectObject?.modifiers ? null : art.sprites.find(sprite => sprite.id === 'object');
+    art.sprites.push(...statModifierLayers(visibleModifiers, modifierArt.center, art.coordinateSpace, statusZ, primary));
+  }
+  // Explicit bands keep underlying accents behind the primary art at every rank.
+  // Retain the order of components within a stance, including Counter's weapon.
+  const order = sprite => Number(sprite.css.zIndex ?? sprite.zIndex ?? 0);
+  art.sprites.sort((a, b) => spritePriority(a) - spritePriority(b) || order(a) - order(b))
+    .forEach((sprite, index) => {
+      sprite.zIndex = index;
+      sprite.css.zIndex = String(index);
+    });
   art.code = `procedural-${maneuver}-${selectedElements.join('+') || 'physical'}-${utility?.code || ''}${weapon ? `-${weapon}` : ''}`;
   art.path = art.sprites.find(sprite => sprite.id === 'background').path;
   const result = freeze({ kind: 'simple', path: art.path, fit: 'cover', position: '50% 50%', filter: '',
     category, maneuver, element, elements: selectedElements, rank, variant: Math.min(rank, 5), componentArt: art,
     statuses: statuses.map(id => ({ id })), layers: [],
-    visualCues: [`action:${maneuver}`, ...cueElements.slice(0, 2).map(id => `element:${id}`), ...statuses.map(id => `status:${id}`)] });
+    visualCues: [`action:${maneuver}`, ...modifierTags, ...cueElements.map(id => `element:${id}`), ...statuses.map(id => `status:${id}`), ...effects] });
   if (cache.size >= 512) cache.delete(cache.keys().next().value);
   cache.set(key, result);
   return result;

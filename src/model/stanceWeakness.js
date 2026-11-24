@@ -12,11 +12,12 @@ const weakens = multiplier => Number.isFinite(multiplier) && multiplier > 1;
  */
 export function StanceWeaknessFor(stance, rules)
 {
-    if (!stance || stance.broken || stance.staggered || rules?.version !== 1)
+    // No stance row is Idle, as the damage rule reads it (configuredStance: no stance is 'neutral', x1.25 from every hit), so it shows the chip too.
+    if (stance?.broken || stance?.staggered || rules?.version !== 1)
     {
         return null;
     }
-    const maneuver = stance.maneuver ?? 'neutral';
+    const maneuver = stance?.maneuver ?? 'neutral';
     if (PREPARED_MANEUVERS.has(maneuver) && weakens(rules.prepared?.meleeDamageTakenMultiplier))
     {
         return { stance: 'prepared', to: 'melee', multiplier: rules.prepared.meleeDamageTakenMultiplier };

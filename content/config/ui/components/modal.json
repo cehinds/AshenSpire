@@ -29,7 +29,6 @@
       "showNameButton": false,
       "gridGapPx": 6,
       "gridGapPhonePx": 4,
-      "gridPadTopPx": 16,
       "gridRowGapPx": 24
     },
     "cardUpgrade": {
@@ -102,6 +101,16 @@
       "idAttribute": "data-slot-option",
       "rowClassName": "equip-slot-option",
       "cancelLabelKey": "common.back"
+    },
+    "itemChoice": {
+      "extends": "optionChoice",
+      "className": "option-choice equip-item-choice",
+      "idAttribute": "data-item-option",
+      "rowClassName": "equip-item-option",
+      "commitLabelKey": "armoury.picker.act.equip",
+      "cancelLabelKey": "common.back",
+      "emptyTextKey": "armoury.picker.none",
+      "columns": 1
     }
   }
 }

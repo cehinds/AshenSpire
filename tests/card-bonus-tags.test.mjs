@@ -143,7 +143,8 @@ test('movement faces state direction, band count and selected target without inv
   for (const target of ['enemy', 'pendingAttacker']) for (const bands of [-1, 1]) {
     const def = { type: 'skill', effects: [{ op: 'moveEngagement', target, bands }] };
     const copy = text(cardFaceLines(def, null, legacy, null, { stanceEntry: false }));
-    assert.equal(copy, `${bands < 0 ? 'Close' : 'Retreat'} 1 band ${bands < 0 ? 'toward' : 'away from'} ${target === 'enemy' ? 'target' : 'attacker'}`);
+    // Owner 2026-11-18: a push on a foe inflicts Retreat, and the face says so.
+    assert.equal(copy, bands > 0 && target === 'enemy' ? 'Inflict Retreat' : `${bands < 0 ? 'Close' : 'Retreat'} 1 band ${bands < 0 ? 'toward' : 'away from'} ${target === 'enemy' ? 'target' : 'attacker'}`);
     assert.doesNotMatch(copy, /damage|Precision|Evade/);
   }
   const conditional = { type: 'skill', effects: [{ op: 'moveEngagement', target: 'pendingAttacker', bands: 1,
@@ -159,11 +160,11 @@ test('a visible Core Smash tag explains the standard matchup without repeating i
   const def = definition('core.reaverSpecial');
   const tags = cardSideTags(playingCardModel(core, { cardId: def.id }), def, core);
   const smash = tags.find(tag => tag.id === 'maneuver:smash');
-  assert.match(smash.blurb, /1\.25× damage, plus a quarter of their Block; half of it breaks Poise/);
+  assert.match(smash.blurb, /Against Defend: 1\.5× damage\. Against Prepared: 1\.25× damage\. Add a quarter of their Block; half of the total breaks Poise/);
   assert.match(cardTagRailHtml([smash]), /tabindex="0".*data-tip="Smash/);
   assert.deepEqual(faceWith(def, tags).map(line => line.kind), ['damage']);
   assert.doesNotMatch(text(faceWith(def, tags)), /Defend|Prepared|Poise|Precision/);
-  assert.match(text(cardFaceLines(def, null, core)), /Against Defend or Prepared/, 'without a represented tag the complete headless face keeps the rule');
+  assert.match(text(cardFaceLines(def, null, core)), /Against Defend: 1\.5× damage\. Against Prepared: 1\.25× damage/, 'without a represented tag the complete headless face keeps the rule');
   assert.ok(!cardSideTags(playingCardModel(core, { cardId: 'core.strike' }), definition('core.strike'), core).some(tag => tag.id === 'maneuver:smash'));
   assert.ok(!cardSideTags(playingCardModel(core, { cardId: def.id }), def, legacy).some(tag => tag.id === 'maneuver:smash'));
 });
@@ -211,7 +212,7 @@ test('delegating a status definition preserves target, duration, chance and cond
   const copy = text(faceWith(def, tags, null, legacy));
   assert.match(copy, /Prepared/);
   assert.match(copy, /before this card/);
-  assert.match(copy, /Stoneskin 2/);
+  assert.match(copy, /Diamond Skin 2/);
   assert.match(copy, /2 turns/);
   assert.match(copy, /an ally/);
   assert.match(copy, /50% chance/);

@@ -15,9 +15,9 @@ const cards = profile.content.cards;
 const tagsOf = card => card.cardTags ?? card.tags ?? [];
 const schoolOf = card => tagsOf(card).find(tag => tag.startsWith('school:'))?.slice(7) || '';
 const statusesOf = effects => (effects || []).filter(e => e.op === 'applyStatus').map(e => e.status);
-// The status a school's cards carry (owner: fire -> Burn, frost -> Chill, necrotic/decay -> Weak or its build-up, divine -> heal over time).
+// The status a school's cards carry (owner: fire -> Burn, frost -> Chill, necrotic/decay -> Weak or its build-up, divine -> regeneration or non-damaging suppression).
 // Lightning cantrips Shock through the Lightning contest rule on the hit (tests/element-lightning.test.mjs), so they print no status.
-const SCHOOL_STATUS = { fire: ['burn'], frost: ['chill'], divine: ['regen'], decay: ['venom', 'necroticBlight', 'weak', 'frail'], lightning: ['shock'] };
+const SCHOOL_STATUS = { fire: ['burn'], frost: ['chill'], divine: ['regen', 'weak', 'frail'], decay: ['venom', 'necroticBlight', 'weak', 'frail'], lightning: ['shock'] };
 
 test('no shipped card, authored or projected, carries maneuver:ranged; the nine bow cards are Reach attacks', () => {
   for (const card of contentBundle.cards) assert.ok(!objectTagIds('card', card.id).includes('maneuver:ranged'), card.id);
@@ -42,19 +42,34 @@ test('a bow card plays as an attack at Reach', () => {
 
 const cantrips = cards.filter(card => tagsOf(card).includes('rank.cantrip'));
 
-test('every cantrip is free of Mana and costs at most 1 Stamina (SPEC: a 0 SP / 0 MP card is not a cantrip)', () => {
+test('every cantrip costs at most 1 Mana and at most 1 Stamina (SPEC: a 0 SP / 0 MP card is not a cantrip; owner 2026-11-22: up to 1 MP)', () => {
   assert.ok(cantrips.length >= 24, `found ${cantrips.length}`);
   for (const card of cantrips) {
-    assert.equal(card.manaCost, 0, card.id);
+    assert.ok(card.manaCost <= 1, card.id); // owner 2026-11-22: a cantrip may cost up to 1 MP (Gale Push 2026-11-19, Arcane Spark 2026-11-22)
     assert.ok(card.staminaCost <= 1, card.id);
   }
 });
 
-test('every school cantrip applies at least 1 stack of its school status, at both grades', () => {
+test('elemental and Divine cantrips retain school riders while Arcane schools keep their authored utility', () => {
   for (const card of cantrips) {
     const school = schoolOf(card);
-    if (!school || school === 'lightning') continue;
+    if (!school || school === 'lightning' || card.id === 'core.galePull') continue; // Gale Pull (section 22) is Force by tag and moves rows instead of applying a status
+    if (school === 'alteration' || school === 'illusion') {
+      // Owner ruling 2026-11-21: the four casters' defensive cantrips (Arcane Ward, Glimmer Veil, Stone Sigil, Ashen Shell) are Alteration Block cantrips.
+      const utility = { 'core.manaSurge': 'restoreMana', 'core.glimpse': 'draw', 'core.wardingGlance': 'block', 'core.moteShield': 'block', 'core.arcaneWard': 'block', 'core.glimmerVeil': 'block', 'core.stoneSigil': 'block', 'core.ashenShell': 'block' };
+      assert.ok(utility[card.id], `${card.id}: named Arcane utility cantrip`);
+      for (const effects of [card.effects, card.upgrade?.effects || card.effects]) assert.ok(effects.some(effect => effect.op === utility[card.id] && effect.amount >= 1), `${card.id}: actual Arcane utility`);
+      continue;
+    }
     for (const [grade, effects] of [['base', card.effects], ['upgrade', card.upgrade.effects]]) {
+      if (school === 'force') {
+        // Force is a damage type, not a spell school; Gale Push explicitly carries Retreat.
+        assert.equal(card.id, 'core.galePush', `${grade}: the authored Force cantrip`);
+        for (const tag of ['school:force', 'retreat']) assert.ok(tagsOf(card).includes(tag), `${card.id} ${grade}: ${tag}`);
+        assert.deepEqual(effects.filter(effect => effect.op === 'moveEngagement'), [{ op: 'moveEngagement', target: 'enemy', bands: 1 }], `${grade}: inflict Retreat`);
+        assert.deepEqual(effects.filter(effect => effect.op === 'damage'), [{ op: 'damage', target: 'enemy', amount: grade === 'base' ? 3 : 5 }], `${grade}: the authored Force hit`);
+        continue;
+      }
       const found = (effects || []).filter(e => e.op === 'applyStatus' && SCHOOL_STATUS[school].includes(e.status));
       assert.ok(found.length && found.every(e => e.stacks >= 1), `${card.id} (${school}) ${grade}`);
     }
@@ -64,9 +79,10 @@ test('every school cantrip applies at least 1 stack of its school status, at bot
 test('a cantrip upgrade can add +1 stack of its status, Retain or a draw', () => {
   for (const id of ['core.frostNip', 'core.venomSpray', 'core.mendingTouch', 'core.cinderDart', 'core.dawnFlame']) {
     const base = reg.cards.get(id);
+    // `everyFamily` lists every eligible kind: a normal roll offers one option per family (#2932), so a 30-option probe would see one keyword, not Retain.
     const kinds = new Set();
     for (let seed = 1; seed <= 12; seed += 1) {
-      for (const step of rollUpgradeOptions(base, [], 0, upgradeStepRng(seed, 'probe', 0), {}, 30)) kinds.add(step.k === 'fx' ? `fx:${step.fx}` : step.k);
+      for (const step of rollUpgradeOptions(base, [], 0, upgradeStepRng(seed, 'probe', 0), { everyFamily: true }, 30)) kinds.add(step.k === 'fx' ? `fx:${step.fx}` : step.k);
     }
     // Venom Spray already prints Venom 3, the most a card can usefully apply (cardUpgradeSteps ENGINE_STACK_CAPS), so it offers no +1 stack.
     if (id !== 'core.venomSpray') assert.ok(kinds.has('stk'), `${id} offers +1 stack`);

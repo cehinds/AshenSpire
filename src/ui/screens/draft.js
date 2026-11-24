@@ -39,7 +39,7 @@ export function mountDraft(app, { registries, classId, rng, rounds = 3, choices 
     app.replaceChildren(el('div', { class: 'screen draft' }, [
       eyebrow('Custom climb'),
       titleL('Draft your deck'),
-      subtitle(`Pick ${round + 1} of ${rounds} — choose a card to add`),
+      subtitle(`Pick ${round + 1} of ${rounds}: choose a card to add`),
       grid,
       statPair({ key: 'Drafted so far', value: String(picked.length), attrs: { id: 'draft-count' } }),
     ]));

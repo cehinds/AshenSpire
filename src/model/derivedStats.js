@@ -65,6 +65,19 @@ export const DERIVED_STAT_IDS = Object.freeze(['energy', 'draw', 'hp', 'stamina'
 export const HAND_STAT_IDS = Object.freeze(['openingHand', 'draw', 'handSize']);
 export const RATING_STAT_IDS = Object.freeze(['ar', 'dr', 'pr', 'poise', 'ward']);
 export const STAT_ROW_RULESET_VERSION = 7;
+// RULESET 8: AR, DR AND PR ARE NOT STATS (owner, 2026-11-18: "str dex and int is more intuitive"). Physical damage adds STR, Block adds
+// DEX and magic damage adds max(INT, WIS), straight from the attributes, so the table carries no row for them. Their ids stay as the
+// INTERNAL names of those three damage channels (the entity's `ratings.ar|dr|pr`, a receipt's `ratingId`): a channel is read through
+// `resolvedRuleRow` below, which answers with the built-in attribute row whatever a saved table still says. A ruleset-7 snapshot
+// carries the old rows and still validates; it is priced by the attributes all the same.
+export const ATTRIBUTE_CHANNEL_RULESET_VERSION = 8;
+export const ATTRIBUTE_CHANNEL_IDS = Object.freeze(['ar', 'dr', 'pr']);
+const ATTRIBUTE_CHANNEL_ROWS = Object.freeze({
+  ar: Object.freeze({ base: 0, strength: 1 }),
+  dr: Object.freeze({ base: 0, dexterity: 1 }),
+  // Intelligence here; fixCoreMechanics.PrAttributeView swaps in max(INT, WIS) where a run reads it.
+  pr: Object.freeze({ base: 0, intelligence: 1 }),
+});
 const RULESET_7_ONLY = new Set(['openingHand', 'handSize', 'ar', 'dr', 'pr', 'ward']);
 // POISE BECAME A DERIVED ROW IN RULESET 5 (plan phase 9). Every ruleset before
 // it snapshotted five rows, and those snapshots are restored through this same
@@ -72,12 +85,13 @@ const RULESET_7_ONLY = new Set(['openingHand', 'handSize', 'ar', 'dr', 'pr', 'wa
 // constant: asking a version-4 save for a Poise row would archive it.
 export function derivedStatIdsFor(rulesetVersion) {
   const version = Number(rulesetVersion) || 0;
-  return DERIVED_STAT_IDS.filter((id) => (id !== 'poise' || version >= 5) && (!RULESET_7_ONLY.has(id) || version >= 7));
+  return DERIVED_STAT_IDS.filter((id) => (id !== 'poise' || version >= 5) && (!RULESET_7_ONLY.has(id) || version >= 7)
+    && !(ATTRIBUTE_CHANNEL_IDS.includes(id) && version >= ATTRIBUTE_CHANNEL_RULESET_VERSION));
 }
 export const DERIVED_STAT_ROUNDING = Object.freeze(['floor', 'ceil', 'round']);
 // v1 is readable only so an unreleased class-base Mana snapshot can migrate to
 // v2. New snapshots always use the authored v2 table.
-export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
+export const DERIVED_STAT_RULESET_VERSIONS = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8]);
 /** The first ruleset written in the one format above. */
 export const UNIFIED_RULESET_VERSION = 6;
 export const DERIVED_STAT_SNAPSHOT_VERSION = 3;
@@ -110,9 +124,11 @@ const CLASS_ROW_FIELDS = ['base', 'perLevel', 'min', 'max', 'attributeBaseline']
 // `pointsBaseline` is the hand rules' "points before bonuses", subtracted from
 // the attribute total before the tier; `multiplier` is the rating formula's
 // global multiplier, applied to the floored attribute total.
-const CARRIER_FIELDS = ['pointsPerIncrease', 'gain', 'rounding', 'perLevelEvery', 'cap', 'pointsBaseline', 'multiplier'];
+// `maxOf` (owner, 2026-11-17: Core MP reads max(INT, WIS)): the listed attributes count as one term, the highest of them.
+const CARRIER_FIELDS = ['pointsPerIncrease', 'gain', 'rounding', 'perLevelEvery', 'cap', 'pointsBaseline', 'multiplier', 'maxOf'];
 // Every key a row may carry that is NOT an attribute weight — the legacy
 // spellings included, because a normalized row is built by stripping these.
+const STORED_ROW_ATTRIBUTES_LIST = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const NON_WEIGHT_FIELDS = Object.freeze([...new Set([...RULE_FIELDS, ...UNIFIED_RULE_FIELDS, ...STAT_ROW_FIELDS, ...CARRIER_FIELDS])]);
 const PER_LEVEL_FIELDS = ['every', 'gain'];
 const OVERRIDE_FIELDS = ['defaults', 'rules'];
@@ -263,6 +279,9 @@ function validateUnifiedRule(out, value, path, options, partial) {
   }
   validatePoints(out, value.pointsPerIncrease, `${path}.pointsPerIncrease`, false);
   validateGain(out, value.gain, `${path}.gain`, false, options.classFields);
+  if (value.maxOf !== undefined && !(Array.isArray(value.maxOf) && value.maxOf.length > 1 && value.maxOf.every(id => STORED_ROW_ATTRIBUTES_LIST.includes(id)))) {
+    problem(out, `${path}.maxOf`, 'must list two or more attribute ids');
+  }
   validateRounding(out, value.rounding, `${path}.rounding`, false);
   validateCap(out, value.cap, `${path}.cap`, false);
   validatePerLevelGrowth(out, value.perLevel, `${path}.perLevel`, false);
@@ -429,6 +448,8 @@ function normalizeRulePatch(patch, attributeIds) {
  * indexing `rules` itself.
  */
 export function resolvedRuleRow(table, statId, classId = null) {
+  // A damage channel is the attribute itself, whatever the table says (see ATTRIBUTE_CHANNEL_RULESET_VERSION).
+  if (Object.hasOwn(ATTRIBUTE_CHANNEL_ROWS, statId)) return normalizeRule({ perLevel: 0, ...ATTRIBUTE_CHANNEL_ROWS[statId] });
   const row = table && table.rules && table.rules[statId];
   if (!plainObject(row)) return null;
   return rowForClass(normalizeRule({ ...normalizeDefaultsPatch((table && table.defaults) || {}), ...row }), classId);
@@ -623,6 +644,8 @@ export function resolveDerivedStatRules(source, options = {}) {
     }
     if (layer.rules) {
       for (const [id, patch] of Object.entries(layer.rules)) {
+        // A patch for a damage channel (a saved Advanced edit from before ruleset 8) names a row that no longer exists: it is dropped.
+        if (!replayed.rules[id] && ATTRIBUTE_CHANNEL_IDS.includes(id)) continue;
         if (!replayed.rules[id]) throw new Error(`Derived-stat override patches '${id}', which this ruleset ${replayed.rulesetVersion} table does not carry`);
         // `gainPerTier` and `sourceStat` describe a SINGLE-STAT TIERED row. On a
         // ruleset-6 row, whose weight already carries the coefficient, the same
@@ -745,6 +768,12 @@ export function deriveStatIncrease(row, { attributes, classDef, statId = 'derive
     const counted = Number.isFinite(row.attributeBaseline) && row.attributeBaseline > 0 ? Math.max(0, value - row.attributeBaseline) : value;
     terms[id] = Math.floor(counted * weight + EPSILON);
     points += terms[id];
+  }
+  // A `maxOf` row prices only the highest of its listed attributes' terms; the others count 0.
+  if (Array.isArray(row.maxOf) && row.maxOf.length > 1) {
+    const listed = row.maxOf.filter(id => Object.hasOwn(terms, id));
+    const best = listed.reduce((top, id) => (top === null || terms[id] > terms[top] ? id : top), null);
+    for (const id of listed) if (id !== best) { points -= terms[id]; terms[id] = 0; }
   }
   const gain = row.gain === undefined ? 1 : gainValue(row.gain, classDef, statId);
   const rounding = row.rounding === undefined ? 'floor' : row.rounding;

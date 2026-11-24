@@ -239,8 +239,11 @@
     "name": "Pearl of Sagacity",
     "rarity": "uncommon",
     "icon": "relic",
-    "textTemplate": "Every 6th card you play each combat: gain {gainEnergy} Stamina.",
-    "flavor": "It clouds when you are foolish. It has been cloudy for some time."
+    "textTemplate": "+1 max Mana. Every 6th card you play each combat: gain {gainEnergy} Stamina.",
+    "flavor": "It clouds when you are foolish. It has been cloudy for some time.",
+    "properties": [
+      "maxMana1"
+    ]
   },
   {
     "id": "blessedDew",
@@ -255,8 +258,11 @@
     "name": "Azure Sigil",
     "rarity": "uncommon",
     "icon": "mana",
-    "textTemplate": "The first Skill you play each combat: gain {gainEnergy} Stamina.",
-    "flavor": "Painted in a hand that trembled, by someone who steadied at the last stroke."
+    "textTemplate": "+1 max Mana. The first Skill you play each combat: gain {gainEnergy} Stamina.",
+    "flavor": "Painted in a hand that trembled, by someone who steadied at the last stroke.",
+    "properties": [
+      "maxMana1"
+    ]
   },
   {
     "id": "bloodstainedChalice",
@@ -349,7 +355,7 @@
     "name": "Crown of Stitches",
     "rarity": "boss",
     "icon": "relic",
-    "textTemplate": "Begin each combat with {strength} Strength — and {frail} Frail. New limbs are heavy.",
+    "textTemplate": "Begin each combat with {strength} Strength and {frail} Frail. New limbs are heavy.",
     "flavor": "It fits. That is the worst part."
   },
   {
@@ -597,9 +603,10 @@
     "rarity": "uncommon",
     "icon": "mana",
     "properties": [
-      "unlimitedCantrips"
+      "unlimitedCantrips",
+      "maxMana1"
     ],
-    "textTemplate": "Deck editing adds any number of cantrips (unranked spells).",
+    "textTemplate": "+1 max Mana. Deck editing adds any number of cantrips (unranked spells).",
     "flavor": "The seal on the scroll is cracked from being shown so often."
   },
   {
@@ -634,5 +641,16 @@
     ],
     "textTemplate": "Your deck may be 1 card smaller.",
     "flavor": "Cut back the weak growth, and the rest bears fruit."
+  },
+  {
+    "id": "scribesMirror",
+    "name": "Scribe's Mirror",
+    "rarity": "uncommon",
+    "icon": "relic",
+    "passives": {
+      "cardCopyOnPickup": 1
+    },
+    "textTemplate": "When you pick this up, copy one card you own.",
+    "flavor": "It shows the page, and then it shows it again."
   }
 ]

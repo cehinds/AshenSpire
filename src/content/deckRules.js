@@ -1,9 +1,10 @@
 // src/content/deckRules.js — the deck editor's rules (SPEC §14.1), as data.
 //
-// Every value here is a DEFAULT: Settings → Advanced → Deck shows one row per
-// key and reads its default from this object, and model/deckRules.js resolves a
-// profile's stored choices against it. The owner tunes these later; nothing
-// else in the tree may spell one of these numbers.
+// The authored rules. Only Play in deck order is still a Settings row (Advanced ›
+// Deck); the other rows were dropped (owner, 2026-11-20) and a stored key for
+// them is cleared at boot, so these values apply. model/deckRules.js resolves a
+// settings bag against this object. Nothing else in the tree may spell one of
+// these numbers.
 export const deckRules = Object.freeze({
   defaults: Object.freeze({
     // The editor exists at all. Off: the deck changes only through rewards,

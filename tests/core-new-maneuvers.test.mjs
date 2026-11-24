@@ -11,7 +11,7 @@ import { createRng } from '../src/engine/rng.js';
 import { legacyCoreProfile, legacyCoreRegistries } from './helpers/legacy-core-profile.mjs';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { deckCopyLimit } from '../src/model/deckRules.js';
-import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardOffers, gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
 import { reserveStanceCards } from '../src/model/stanceCoverage.js';
 
 // Pinned to the pre-rest Core (Armoury deck door, unlimited Basics/Cantrips): a saved run keeps that pinned profile. The shipped Core mints nothing (tests/core-deck-edit-at-rest.test.mjs).
@@ -70,17 +70,25 @@ test('every new card resolves at base and upgraded with its authored SP cost, a 
   for (const id of BASICS.filter(id => def(id).tags.some(tag => tag === 'maneuver:smash' || tag === 'maneuver:sweep'))) assert.equal(def(id).staminaCost, 2, `${id}: a basic smash or sweep costs 2 SP`);
 });
 
-test('offers at map depth 4+ reach every higher-rank card of each class over 1200 seeds', () => {
+test('offers at map depth 4+ reach unowned higher-rank cards of each class over 1200 seeds', () => {
   const classOf = { reaver: ['core.skullsplitter', 'core.whirlwind'], rogue: ['core.feint', 'core.hitAndRun'], starseer: [], herald: [] };
   const colorless = ['core.stunningBlow', 'core.rakingSweep'];
   for (const classId of Object.keys(classOf)) {
+    const expected = [...colorless, ...classOf[classId]];
+    const starterRun = live(classId, []);
+    // Owner 2026-11-20 (reward-ranks.skipOwned): an owned card is never offered, so eligibility is asked with the expected cards out of the deck.
+    starterRun.deck = starterRun.deck.filter(card => !expected.includes(card.cardId));
+    for (const id of expected) assert.ok(gameProfileRewardPools(registries, starterRun).combatCards.includes(id), `${classId} is eligible for ${id}`);
     const seen = new Set();
     for (let seed = 1; seed <= 1200; seed++) {
       const run = live(classId, [], seed);
       run.floor = 4;
+      run.actNumber = 1 + (seed % 3); // level lists (owner 2026-11-21): offers draw from the act's rank band; spread the seeds over the acts
+      // Feint starts in the Rogue's deck. This samples reachability before the separate owned-copy weight applies.
+      run.deck = run.deck.filter(card => !expected.includes(card.cardId));
       for (const option of gameProfileRewardOffers(registries, run, createRng(seed + 40000), { offerId: 'b2' }).options) if (option.kind === 'combatCards') seen.add(option.id);
     }
-    for (const id of [...colorless, ...classOf[classId]]) assert.ok(seen.has(id), `${classId} never offered ${id}`);
+    for (const id of expected) assert.ok(seen.has(id), `${classId} never offered ${id}`);
     for (const other of Object.keys(classOf).filter(c => c !== classId)) for (const id of classOf[other]) assert.ok(!seen.has(id), `${classId} was offered ${other}'s ${id}`);
   }
 });

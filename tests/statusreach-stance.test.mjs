@@ -17,8 +17,21 @@ test('stance statuses require a positive grant from an actual projected carrier'
   // so switching the stance-entry grant off no longer makes Evade unreachable; the carrier is still required (see the empty bundle below).
   assert.ok(disabled.reached.includes('evade'));
   assert.ok(disabled.witness.get('evade').some(route => route.startsWith('R8 authored Evade status')));
-  const noSpeakers = { ...contentBundle, cards: [], enemies: [] };
+  const noSpeakers = { ...contentBundle, cards: [], enemies: [],
+    equipment: { ...contentBundle.equipment, armaments: [], armour: [] } };
   const empty = statusReach(noSpeakers, { readFile });
   assert.ok(empty.unreached.includes('precision'), 'definitions without a carrier are not reach');
   assert.ok(empty.unreached.includes('evade'), 'definitions without a carrier are not reach');
+});
+
+test('a gear type needs an actual piece before its status vocabulary is reachable', () => {
+  const bare = { ...contentBundle, cards: [], enemies: [],
+    equipment: { ...contentBundle.equipment, armaments: [], armour: [] } };
+  const empty = statusReach(bare, { readFile });
+  assert.ok(empty.unreached.includes('evade'), 'the global Light armour group is only a definition');
+  const lightArmour = { ...bare, equipment: { ...bare.equipment,
+    armour: [{ id: 'gutterLeathers', kind: 'armor', classId: 'rogue', mods: [] }] } };
+  const carried = statusReach(lightArmour, { readFile });
+  assert.ok(carried.reached.includes('evade'), 'a real Light armour piece carries its group grant');
+  assert.ok(carried.witness.get('evade').some(route => route.startsWith('R4 equipMods:turnEvade via gutterLeathers')));
 });

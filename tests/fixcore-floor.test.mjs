@@ -125,7 +125,7 @@ test('a scripted Core 2 fight logs no decimal damage, block or protection value'
   combat.player.persistentPoise = { value: 30, max: 30 };
   const problems = [];
   const checkPreview = (card, targetId, path) => {
-    const { combatStatusRules, ...quantities } = previewCard(combat, card.instanceId, targetId);
+    const { combatStatusRules, faceRules, ...quantities } = previewCard(combat, card.instanceId, targetId); // faceRules: the profile's stat rules a static face reads, configuration like the receipt below
     // This detached inspection receipt is configuration, not an applied
     // quantity. Keep its intentional coefficients and scan everything else.
     assert.equal(combatStatusRules.recovery.pendingRemoval, 0.25);

@@ -1,4 +1,5 @@
 import { RANGES } from './combatRanges.js';
+import { SplitAfter } from './splitAfter.js';
 import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
 
 // A card definition with its authored upgrade merged over the base. A leaf
@@ -38,7 +39,9 @@ export function upgradedDefinition(base) {
 //                                  `retarget` 'area' | 'single' moves the first damage effect between enemy
 //                                  and allEnemies (amount x0.75 up, or x1.25 up), `damageSchool` sets the
 //                                  card's damage school (a magical property), with the `exposureBuildupPerHit` an
-//                                  authored card of that school carries (balance.exposure.buildupPerManaSpell)
+//                                  authored card of that school carries (balance.exposure.elementUpgradeBuildup)
+//                                  `packet` n (with `damage`, `damageSchool`): an element ADDS n magic damage to the hit, or raises the card's own packet
+//   (every step may carry `r`: 'uncommon' or 'rare', its rarity; none means common)
 //   fx { fx, ... }                 an effect-menu step (W25, owner 2026-11-14), see FX_KINDS below
 //   combo { steps }                two effects in one upgrade slot (a later upgrade's 20% roll): every inner step is an fx or a basic step
 export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag', 'fx', 'combo', 'attr']);
@@ -66,14 +69,19 @@ export const ELEMENT_IDENTITY = Object.freeze({
   holy: Object.freeze({ school: DIVINE, damage: 'sacred' }),
   fire: Object.freeze({ school: FIRE, damage: FIRE }),
 });
+// The three physical types a `dmgType` step (a `tag` step with `damage` and no `tag`) may set.
+export const PHYSICAL_DAMAGE_TYPES = Object.freeze(words('slashing piercing blunt'));
 export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
+// A rolled step may carry `r`, its rarity, for the picker's colour and label (owner, 2026-11-19). It changes no number: the size is in the step.
+export const UPGRADE_RARITIES = Object.freeze(words('common uncommon rare'));
 // The effect menu. Each id adds one effect the card did not have: block (n), draw (n), cycle (discard n then draw n),
 // cull (exhaust a card, draw 2), copy (add a copy of this card to the discard pile), shuffle (discard into draw),
 // retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR, DEX, INT or WIS
 // for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait), counter (+1 Counter stack a play; a Counter
 // card only, offered while its whole grant stays within the 1..3 a card may give: Wave 2 batch 5).
-export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter'));
+// unethereal (drop Ethereal) and steady (stop a rising cost) ease a drawback (playtest 2026-11-17, theme C).
+export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter unethereal steady'));
 export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
 // A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
 // fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
@@ -166,8 +174,26 @@ function applyStep(card, step) {
       break;
     }
     case 'stk': {
-      const effect = effects.find((e) => isPlainStatus(e) && e.status === step.status);
-      if (effect) effect.stacks += step.n;
+      // A signed step (owner, 2026-11-19) lowers a drawback: a self debuff or enemy buff's stacks, a discard's amount, or the cards
+      // an addCard adds. The effect is dropped at 0, with the sentence that named it.
+      if (step.op === 'discard' || step.op === 'addCard') {
+        const index = effects.findIndex((e) => (step.op === 'discard' ? isPlainEffect(e, 'discard') : e.op === 'addCard' && e.card !== card.id && Number.isFinite(e.count)));
+        if (index >= 0) {
+          const key = step.op === 'discard' ? 'amount' : 'count';
+          effects[index][key] += step.n;
+          if (effects[index][key] <= 0) { effects.splice(index, 1); dropEffectText(out, card, step.op === 'discard' ? /discard/i : /\badd\b.*\b(wound|dazed|slimed|guilt|cards?)\b/i); }
+        }
+      } else if (step.side) {
+        const onSelf = step.side === 'self';
+        const index = effects.findIndex((e) => isPlainStatus(e) && e.status === step.status && (onSelf ? e.target === 'self' : e.target === 'enemy' || e.target === 'allEnemies'));
+        if (index >= 0) {
+          effects[index].stacks += step.n;
+          if (effects[index].stacks <= 0) { effects.splice(index, 1); dropEffectText(out, card, new RegExp(`\\b${step.status}\\b`, 'i')); }
+        }
+      } else {
+        const effect = effects.find((e) => isPlainStatus(e) && e.status === step.status);
+        if (effect) effect.stacks += step.n;
+      }
       break;
     }
     case 'addStatus':
@@ -200,7 +226,8 @@ function applyStep(card, step) {
       break;
     }
     case 'tag': {
-      if (step.tag) {
+      const packet = Number.isFinite(step.packet) && step.packet > 0 ? step.packet : 0;
+      if (step.tag && !(packet && HoldsPacket(card))) {
         const family = Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix));
         const keep = (tag) => tag !== step.tag && !(family && (tag.startsWith(family) || (family === 'range:' && tag.startsWith('reach:'))));
         const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
@@ -221,8 +248,8 @@ function applyStep(card, step) {
           effects[index].amount = Math.max(1, Math.ceil(effects[index].amount * (area ? 0.75 : 1.25)));
         }
       }
-      if (step.damageSchool) out.damageSchool = step.damageSchool;
-      if (step.damage) {
+      if (step.damageSchool && !(packet && HoldsPacket(card))) out.damageSchool = step.damageSchool;
+      if (step.damage && !packet) {
         const keepType = (tag) => !tag.startsWith('damage:');
         const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
         for (const key of keys.length ? keys : ['tags']) out[key] = [...(out[key] || card[key] || []).filter(keepType), `damage:${step.damage}`];
@@ -238,6 +265,7 @@ function applyStep(card, step) {
       }
       if (Number.isInteger(step.exposureBuildupPerHit)) out.exposureBuildupPerHit = step.exposureBuildupPerHit;
       if (Number.isFinite(step.magicShare)) out.magicShare = step.magicShare;
+      if (packet) out = addElementPacket(out, card, step);
       break;
     }
     case 'fx':
@@ -252,7 +280,59 @@ function applyStep(card, step) {
   return out;
 }
 
+// The element packet (owner, 2026-11-19): a physical hit gains a magic part of `step.packet` damage on the same hit. The card keeps its type
+// and its maneuver; its one damage effect rises by the packet and its magic share becomes packet / total, so the engine's mixed-hit routing
+// (Barrier then Ward for the magic part, Block then Poise for the physical part) and later damage steps (which scale both parts in proportion)
+// need nothing else. A physical type the card already chose (a dmgType step) stays the physical part's. A card that already holds a packet
+// raises it by the same sizes: it never gains a second element.
+export const HoldsPacket = (card) => Number.isFinite(card?.magicShare) && card.magicShare > 0 && card.magicShare < 1 && UPGRADE_ELEMENTS.includes(card.damageSchool);
+function addElementPacket(out, card, step) {
+  const index = out.effects.findIndex((e) => isPlainEffect(e, 'damage') && (e.target === 'enemy' || e.target === 'allEnemies'));
+  if (index < 0) return out;
+  const held = HoldsPacket(card) ? card.magicShare : 0;
+  const before = out.effects[index].amount;
+  const after = before + step.packet;
+  out.effects[index].amount = after;
+  out.magicShare = (before * held + step.packet) / after;
+  if (!held) {
+    const physical = (card.cardTags ?? card.tags ?? []).find((tag) => tag.startsWith('damage:') && PHYSICAL_DAMAGE_TYPES.includes(tag.slice(7)));
+    if (physical) out.physicalDamageType = physical.slice(7);
+    const keepType = (tag) => !tag.startsWith('damage:');
+    const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
+    for (const key of keys.length ? keys : ['tags']) out[key] = [...(out[key] || card[key] || []).filter(keepType), `damage:${step.damage}`];
+    // The face says it: a second sentence names the magic part, and {damage} then reads the physical part alone (model/playingCard.js, engine/combat.js).
+    const sentence = `Deal {packet} ${PACKET_NAME[step.damage] || step.damage} damage.`;
+    if (typeof card.textTemplate === 'string' && card.textTemplate.includes('{damage}') && !card.textTemplate.includes('{packet}')) out.textTemplate = `${card.textTemplate.replace(/\s+$/, '')} ${sentence}`;
+    if (Array.isArray(card.faceTemplate) && !card.faceTemplate.some((line) => line.includes('{packet}'))) out.faceTemplate = [...card.faceTemplate, sentence];
+  }
+  return out;
+}
+const PACKET_NAME = Object.freeze({ fire: 'Fire', frost: 'Frost', arcane: 'Arcane', sacred: 'Holy' });
+
 const KEYWORD_OF = { retain: 'retain', innate: 'innate' };
+// The lifecycle tag a keyword carries. Built, not quoted: tools/mechanics-generate.mjs names the first file quoting a tag as the code
+// that runs it, and the Exhaust and Ethereal rules run in the engine (actions.js, combat.js endPlayerTurn), not in this upgrade step.
+const lifecycleTag = (word) => ['lifecycle', word].join('.');
+// A step that eases a drawback also drops the sentence and face line that named it, so the text follows the data (review of #2819).
+// Base cards draw their authored text and face lines (baseCardPresentation), so both are rewritten here, not only the derived face.
+const DRAWBACK_TEXT = Object.freeze({
+  unexhaust: /^Exhaust\.?$/i,
+  unethereal: /^Ethereal\.?$/i,
+  steady: /Stamina each play|per prior play/i,
+});
+function dropDrawbackText(out, card, fx) { dropEffectText(out, card, DRAWBACK_TEXT[fx]); }
+// Drop the sentences of a card's text and face lines that match `pattern`, unless that would leave none.
+function dropEffectText(out, card, pattern) {
+  if (typeof card.textTemplate === 'string') {
+    const sentences = SplitAfter(card.textTemplate, /\.\s+/);
+    const kept = sentences.filter((sentence) => !pattern.test(sentence.trim()));
+    if (kept.length) out.textTemplate = kept.join(' ');
+  }
+  if (Array.isArray(card.faceTemplate)) {
+    const kept = card.faceTemplate.filter((line) => !pattern.test(line.trim()));
+    if (kept.length) out.faceTemplate = kept;
+  }
+}
 const reactionTag = 'trait:reaction';
 // One effect-menu step on a card (an `fx` step). New effects are appended, so the card's own effects keep their indices.
 function applyFx(card, step) {
@@ -272,7 +352,10 @@ function applyFx(card, step) {
     case 'copy': effects.push({ op: 'addCard', card: card.id, count: 1, pile: 'discard' }); break;
     case 'shuffle': effects.push({ op: 'shuffleDiscardIntoDraw' }); break;
     case 'retain': case 'innate': out.keywords = [...new Set([...(card.keywords || []), KEYWORD_OF[step.fx]])]; break;
-    case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag('lifecycle.exhaust'); break;
+    case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag(lifecycleTag('exhaust')); dropDrawbackText(out, card, step.fx); break;
+    case 'unethereal': out.keywords = (card.keywords || []).filter((word) => word !== 'ethereal'); dropTag(lifecycleTag('ethereal')); dropDrawbackText(out, card, step.fx); break;
+    // A rising cost (costGrowth) stops: the card keeps its printed cost on every play.
+    case 'steady': out.costGrowth = { stamina: 0, mana: 0 }; dropDrawbackText(out, card, step.fx); break;
     case 'holdOne': effects.push({ op: 'retain', amount: 1 }); break;
     case 'boost':
       // A step with no `until` is a legacy STR / DEX "this turn" boost: the status it always was. Every other boost changes the live attribute (engine/liveStats.js).
@@ -282,7 +365,7 @@ function applyFx(card, step) {
     // A step rolled from 2026-11-14 carries `other`: one OTHER enemy, never the main target. A step saved before it keeps a random enemy.
     case 'target': {
       const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && e.target === 'enemy');
-      if (index >= 0) effects.push({ op: 'damage', target: step.other ? 'otherEnemy' : 'randomEnemy', amount: Math.max(1, Math.ceil(effects[index].amount / 2)) });
+      if (index >= 0) effects.push({ op: 'damage', target: step.other ? 'otherEnemy' : 'randomEnemy', amount: Math.max(1, Math.ceil(effects[index].amount * (Number.isFinite(step.share) ? step.share : 0.5))) });
       break;
     }
     case 'reaction': addTag(reactionTag); break;
@@ -301,6 +384,15 @@ function applyFx(card, step) {
 /** The steps with each `combo` replaced by its inner steps (a combo is two effects in one slot). */
 export const FlatSteps = (steps) => (steps || []).flatMap((step) => (step && step.k === 'combo' && Array.isArray(step.steps) ? step.steps : [step]));
 
+/** The rolled steps that only remove a drawback (keyword or rising cost). They are the steps a ranked ability card can take: its grade
+ * table owns its numbers, so no other step applies, but these never touch a number (review of #2819: the offer must equal the effect). */
+export const DrawbackSteps = Object.freeze(['unexhaust', 'unethereal', 'steady']);
+/** A ranked ability card's grade face with its drawback-removal steps applied; every other step is the grade table's to own. */
+export function ApplyDrawbackSteps(card, steps) {
+  const easing = FlatSteps(steps || []).filter((step) => step && step.k === 'fx' && DrawbackSteps.includes(step.fx));
+  return easing.reduce((out, step) => applyFx(out, step), card);
+}
+
 export function applyUpgradeSteps(base, steps) {
   if (!Array.isArray(steps) || !steps.length) return base;
   let card = steps[0].k === 'authored'
@@ -310,7 +402,7 @@ export function applyUpgradeSteps(base, steps) {
     if (steps[i].k === 'authored') throw new Error('An authored upgrade step must be the first step');
     card = applyStep(card, steps[i]);
   }
-  // Cantrips and basics cost no Mana (SPEC, card upgrades): a rank-down step zeroes the copy's Mana, whatever the
+  // Basics cost no Mana and a cantrip at most 1 (owner, 2026-11-22; SPEC, card upgrades): a rank-down step zeroes (inside both limits) the copy's Mana, whatever the
   // order of the steps, so a saved instance resolves the same way (no migration).
   if (FlatSteps(steps).some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) {
     card.manaCost = 0;
@@ -333,7 +425,9 @@ export function upgradeStepsProblems(instance, path) {
   if (steps === undefined) return [];
   if (!Array.isArray(steps)) return [`${path}.upgradeSteps must be an array when present`];
   const problems = [];
-  if (steps.length > MAX_CARD_UPGRADES) problems.push(`${path}.upgradeSteps holds at most ${MAX_CARD_UPGRADES} steps`);
+  // The cap counts slot-using steps; rank-up bonus steps (bonus: true) are gifts on top, at most one per rank-up.
+  const paid = steps.filter((step) => !(step && step.bonus === true)).length;
+  if (paid > MAX_CARD_UPGRADES || steps.length > 2 * MAX_CARD_UPGRADES) problems.push(`${path}.upgradeSteps holds at most ${MAX_CARD_UPGRADES} upgrades`);
   if (steps.length && instance.upgraded !== true) problems.push(`${path}.upgradeSteps requires upgraded: true`);
   steps.forEach((step, i) => {
     const at = `${path}.upgradeSteps[${i}]`;
@@ -343,8 +437,15 @@ export function upgradeStepsProblems(instance, path) {
     }
     if (step.k === 'authored' && i !== 0) problems.push(`${at}: an authored step may only be the first step`);
     const bad = (field) => problems.push(`${at}.${field} is not valid for a '${step.k}' step`);
-    if (['dmg', 'blk', 'stk', 'poise'].includes(step.k) && !isCount(step.n)) bad('n');
-    if (['stk', 'addStatus'].includes(step.k) && !(typeof step.status === 'string' && step.status)) bad('status');
+    if (step.r !== undefined && !UPGRADE_RARITIES.includes(step.r)) bad('r');
+    const easing = step.k === 'stk' && (step.op !== undefined || step.side !== undefined);
+    if (easing) {
+      // A signed drawback step: n is negative; `op` names a discard or addCard effect, `side` and `status` a status effect.
+      if (!(Number.isInteger(step.n) && step.n <= -1 && step.n >= -99)) bad('n');
+      if (step.op !== undefined && !['discard', 'addCard'].includes(step.op)) bad('op');
+      if (step.side !== undefined && !['self', 'enemy'].includes(step.side)) bad('side');
+    } else if (['dmg', 'blk', 'stk', 'poise'].includes(step.k) && !isCount(step.n)) bad('n');
+    if (['stk', 'addStatus'].includes(step.k) && step.op === undefined && !(typeof step.status === 'string' && step.status)) bad('status');
     if (step.k === 'addStatus' && !isCount(step.stacks)) bad('stacks');
     if (step.k === 'cost' && step.pool !== 'sp' && step.pool !== 'mp') bad('pool');
     if (step.k === 'cost' && step.n !== undefined && !isCount(step.n, 9)) bad('n');
@@ -354,6 +455,7 @@ export function upgradeStepsProblems(instance, path) {
       if (!FX_KINDS.includes(step.fx)) bad('fx');
       if (['block', 'draw', 'cycle', 'boost'].includes(step.fx) && !isCount(step.n, 20)) bad('n');
       if (step.fx === 'counter' && !isCount(step.n, 3)) bad('n');
+      if (step.share !== undefined && !(step.fx === 'target' && step.share > 0 && step.share <= 1)) bad('share');
       if (step.fx === 'boost' && !BOOST_STATS.includes(step.stat)) bad('stat');
       if (step.fx === 'boost' && step.until !== undefined && !BOOST_DURATIONS.includes(step.until)) bad('until');
       if (step.fx === 'boost' && step.until === undefined && !['strength', 'dexterity'].includes(step.stat)) bad('until');
@@ -369,8 +471,8 @@ export function upgradeStepsProblems(instance, path) {
       if (Array.isArray(inner) && inner.some((s) => s && (s.k === 'combo' || s.k === 'authored'))) bad('steps');
     }
     if (step.k === 'tag') {
-      if (step.tag === undefined && step.retarget === undefined && step.damageSchool === undefined) bad('tag');
-      if (step.damage !== undefined && !Object.values(ELEMENT_IDENTITY).some((identity) => identity.damage === step.damage)) bad('damage');
+      if (step.tag === undefined && step.retarget === undefined && step.damageSchool === undefined && step.damage === undefined) bad('tag');
+      if (step.damage !== undefined && !PHYSICAL_DAMAGE_TYPES.includes(step.damage) && !Object.values(ELEMENT_IDENTITY).some((identity) => identity.damage === step.damage)) bad('damage');
       if (step.tag !== undefined && step.tag !== RANK_DOWN_TAG) {
         const family = typeof step.tag === 'string' ? Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix)) : null;
         if (!family || !TAG_FAMILIES[family].includes(step.tag.slice(family.length))) bad('tag');
@@ -378,6 +480,7 @@ export function upgradeStepsProblems(instance, path) {
       if (step.retarget !== undefined && !TARGETING.includes(step.retarget)) bad('retarget');
       if (step.damageSchool !== undefined && !UPGRADE_ELEMENTS.includes(step.damageSchool)) bad('damageSchool');
       if (step.magicShare !== undefined && !(Number.isFinite(step.magicShare) && step.magicShare >= 0 && step.magicShare <= 1)) bad('magicShare');
+      if (step.packet !== undefined && !(Number.isInteger(step.packet) && step.packet >= 1 && step.packet <= 99)) bad('packet');
       if (step.exposureBuildupPerHit !== undefined && !(Number.isInteger(step.exposureBuildupPerHit) && step.exposureBuildupPerHit >= 0 && step.exposureBuildupPerHit <= 99)) bad('exposureBuildupPerHit');
     }
   });

@@ -4,6 +4,7 @@ import {contentBundle} from '../src/content/index.js';
 import {createRegistries} from '../src/model/registries.js';
 import {resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries,gameContent} from '../src/model/gameProfile.js';
 import {ConfiguredTraderCategories} from '../src/model/gameProfileShopKind.js';
+import { ShelfStockCounts } from '../src/model/vendorStockRange.js';
 import {createRunState} from '../src/model/state.js';
 import {createRng} from '../src/engine/rng.js';
 import {gameProfileRewardOffers,claimGameProfileReward,gameProfileShopStock,gameProfileShopPurchasePlan,purchaseGameProfileShopOffer} from '../src/model/gameProfileRewards.js';
@@ -32,12 +33,14 @@ test('combat doors offer only cards and weapon arts (owner 2026-11-14; the old 7
 });
 test('shop stock persists and failed purchases do not debit or grant',()=>{
  const run=fresh(),stock=gameProfileShopStock(reg,run,createRng(12),{shopId:'act1'});assert.equal(stock.price,10);
- // Traders vary (playtest 2026-11-17 item 42): this node's own shelves, always armaments, cards and relics, three items each.
+ // Traders vary (playtest 2026-11-17 item 42): this node's own shelves, always armaments, cards and relics; each shelf
+ // holds its own count from the configured range (owner 2026-11-20, vendorStockRange.js).
  const shelves=ConfiguredTraderCategories(run,'act1',gameContent(run,'rewards').categories);
  for(const kind of ['weapons','combatCards','relics'])assert.ok(shelves.includes(kind),kind);
  const counts=Object.groupBy(stock.options,row=>row.kind);
  assert.deepEqual(Object.keys(counts).sort(),[...shelves].sort());
- for(const kind of shelves.filter(kind=>kind!=='weaponArts'))assert.equal(counts[kind].length,3,kind);
+ const perShelf=ShelfStockCounts(run,'act1',shelves,gameContent(run,'shops').itemsPerCategory);
+ for(const kind of shelves.filter(kind=>kind!=='weaponArts')){assert.equal(counts[kind].length,perShelf[kind],kind);assert.ok(perShelf[kind]>=2&&perShelf[kind]<=4,kind);}
  assert.equal(stock.options.length,shelves.reduce((sum,kind)=>sum+counts[kind].length,0));
  if(shelves.includes('weaponArts'))assert.equal(counts.weaponArts.length,1,'the greatsword has two learnable arts and its default is granted; one costs mana a Reaver cannot pay, so playableOnly drops it (owner 2026-11-14)');
  const counters=createRng(71);const beforeCounters=counters.getCounters();

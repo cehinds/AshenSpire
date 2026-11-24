@@ -14,7 +14,8 @@ const build = modules => {
 // Module overrides merge into the defaults, so a neutral tag table names every authored tag.
 const NEUTRAL = { 'maneuver:casting': 1, 'maneuver:smash': 1, 'maneuver:counter': 1, 'maneuver:sweep': 1, default: 1 };
 // The depth bias and the recent-offer penalty (owner 2026-10-27, tests/core-reward-mix.test.mjs) are switched off here so these tests isolate ownership and tag weights.
-const NO_DEPTH = { recentOfferWindow: 0, depthBias: { earlyMaxDepth: 3, early: { basicOrCantrip: 1, mana: 1 }, late: { mana: 1, highRankMin: 2, highRank: 1 } } };
+// skipOwned (owner 2026-11-20) would drop owned cards outright; it is off here so the owned-copy weight can be measured.
+const NO_DEPTH = { skipOwned: false, recentOfferWindow: 0, depthBias: { earlyMaxDepth: 3, early: { basicOrCantrip: 1, mana: 1 }, late: { mana: 1, highRankMin: 2, highRank: 1 } } };
 const weighted = build({ 'reward-ranks': NO_DEPTH }), uniform = build({ 'reward-ranks': { ...NO_DEPTH, ownedCopyWeight: 1, tagWeights: NEUTRAL } });
 const starter = ['core.strike', 'core.strike', 'core.strike', 'core.defend', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade', 'base.draw', 'core.reaverSpecial'];
 function sample(registries, offers = 120, deck = starter) {

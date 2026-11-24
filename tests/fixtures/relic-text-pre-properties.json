@@ -93,7 +93,7 @@
   },
   "pearlOfSagacity": {
     "name": "Pearl of Sagacity",
-    "text": "Every 6th card you play each combat: gain 1 Stamina."
+    "text": "+1 max Mana. Every 6th card you play each combat: gain 1 Stamina."
   },
   "blessedDew": {
     "name": "Blessed Dew",
@@ -101,7 +101,7 @@
   },
   "azureSigil": {
     "name": "Azure Sigil",
-    "text": "The first Skill you play each combat: gain 1 Stamina."
+    "text": "+1 max Mana. The first Skill you play each combat: gain 1 Stamina."
   },
   "bloodstainedChalice": {
     "name": "Bloodstained Chalice",
@@ -145,7 +145,7 @@
   },
   "crownOfStitches": {
     "name": "Crown of Stitches",
-    "text": "Begin each combat with 2 Strength — and 1 Frail. New limbs are heavy."
+    "text": "Begin each combat with 2 Strength and 1 Frail. New limbs are heavy."
   },
   "wardenHorn": {
     "name": "Warden Horn",
@@ -301,7 +301,7 @@
   },
   "graduate": {
     "name": "Graduate",
-    "text": "Deck editing adds any number of cantrips (unranked spells)."
+    "text": "+1 max Mana. Deck editing adds any number of cantrips (unranked spells)."
   },
   "threadbareSatchel": {
     "name": "Threadbare Satchel",
@@ -314,5 +314,9 @@
   "pruningHook": {
     "name": "Pruning Hook",
     "text": "Your deck may be 1 card smaller."
+  },
+  "scribesMirror": {
+    "name": "Scribe's Mirror",
+    "text": "When you pick this up, copy one card you own."
   }
 }

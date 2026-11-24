@@ -17,6 +17,10 @@
 
 
 
+
+
+
+
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
 
 > **AI-made game.** The original game code, design, writing, artwork and music
@@ -65,28 +69,28 @@ for a red `deploy` job. Publication can lag source changes. For ZIPs, open a suc
 
 ## Screenshots
 
-Latest published Release candidate **0.7.2.47**, captured 2026-10-31 UTC.
-[Play this exact build](https://cehinds.github.io/AshenSpire/release/47/) · [Capture details](docs/qa/releases/0.7.2.47/README.md).
+Latest published Release candidate **0.7.3.232**, captured 2026-11-18 UTC.
+[Play this exact build](https://cehinds.github.io/AshenSpire/release/232/) · [Capture details](docs/preview/releases/0.7.3.232/README.md).
 Captures use the actual published Release and its native showcase states.
 Dev/Test can contain newer features. Select an image to view its full size.
 
 | Create a character | Explore a route |
 | --- | --- |
-| ![Release 0.7.2.47 creation with two class choices, one locked](docs/qa/releases/0.7.2.47/creation.png) | ![Release 0.7.2.47 map with a posed five-step route and encounter nodes](docs/qa/releases/0.7.2.47/map.png) |
+| ![Release 0.7.3.232 creation with two class choices, one locked](docs/preview/releases/0.7.3.232/creation.png) | ![Release 0.7.3.232 map with a posed five-step route and encounter nodes](docs/preview/releases/0.7.3.232/map.png) |
 | **Fight with cards** | **Visit shops and improve equipment** |
-| ![Release 0.7.2.47 combat with enemy intentions and cards in hand](docs/qa/releases/0.7.2.47/combat.png) | ![Release 0.7.2.47 configured shop offers, costs and services](docs/qa/releases/0.7.2.47/shop.png) |
+| ![Release 0.7.3.232 combat with enemy intentions and cards in hand](docs/preview/releases/0.7.3.232/combat.png) | ![Release 0.7.3.232 configured shop armament offers, costs and categories](docs/preview/releases/0.7.3.232/shop.png) |
 
 <details>
 <summary>Title screen</summary>
 
-![Release 0.7.2.47 title after native Enter](docs/qa/releases/0.7.2.47/title.png)
+![Release 0.7.3.232 native title showcase](docs/preview/releases/0.7.3.232/title.png)
 
 </details>
 
 <details>
 <summary>Phone combat — 390 × 844</summary>
 
-![Release 0.7.2.47 phone combat with enemy intentions, cards and turn controls](docs/qa/releases/0.7.2.47/combat-phone.png)
+![Release 0.7.3.232 phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.3.232/combat-phone.png)
 
 </details>
 

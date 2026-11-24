@@ -12,7 +12,7 @@ export function withoutStanceBenefits(combat) {
 export function withoutCounterStacks(combat) {
   if (combat?.fixCoreRules?.counter) {
     const counter = { ...combat.fixCoreRules.counter };
-    for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete counter[key];
+    for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete counter[key];
     combat.fixCoreRules = { ...combat.fixCoreRules, counter };
   }
   return combat;

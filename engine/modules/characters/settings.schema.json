@@ -48,22 +48,6 @@
             "maximum": 1000
           }
         },
-        "ar": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1000
-          }
-        },
-        "dr": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1000
-          }
-        },
         "hand": {
           "type": "object",
           "additionalProperties": {
@@ -77,8 +61,6 @@
         "hp",
         "sp",
         "mp",
-        "ar",
-        "dr",
         "hand"
       ],
       "additionalProperties": false

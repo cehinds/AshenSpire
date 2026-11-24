@@ -6,6 +6,7 @@ import { playingCardModel } from '../src/model/playingCard.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { illustratedCardHtml, CARD_LAYERS } from '../src/ui/components/illustratedCard.js';
 import { rewardDom } from './helpers/dom.mjs';
+import { CardSpellTraditions, SpellTraditionLabel } from '../src/model/spellTraditions.js';
 const reg = createRegistries(contentBundle);
 
 test('every ability family presents each authored rank and its canonical identity', () => {
@@ -14,9 +15,13 @@ test('every ability family presents each authored rank and its canonical identit
     assert.equal(model.abilityRank, abilityRank);
     assert.equal(model.rankBadge, abilityRank>0?`Rank ${abilityRank}`:null);
     assert.ok(model.rankHelp.includes(`Rank ${abilityRank}`));
-    assert.equal(model.type.abilityLabel, card.abilityKind === 'spell' ? abilityRank === 0 ? 'Cantrip' : 'Spell' : abilityRank === 0 ? 'Technique' : 'Combat Maneuver');
+    assert.equal(model.type.abilityLabel, card.abilityKind === 'spell' ? abilityRank === 0 ? 'Cantrip' : null : abilityRank === 0 ? 'Technique' : 'Combat Maneuver');
+    if (card.abilityKind === 'spell') {
+      assert.equal(model.type.label, SpellTraditionLabel(card).toUpperCase());
+      assert.deepEqual(model.sigils.traditions, CardSpellTraditions(card));
+    }
     assert.equal(model.type.weaponArt, abilityRank > 0 && model.costs.mana > 0 && card.tags.includes('source:weapon') ? 'Weapon Art' : null);
-    assert.ok(model.type.glyph && model.type.help.includes(model.type.abilityLabel));
+    assert.ok(model.type.glyph && model.type.help.includes(abilityRank === 0 ? model.type.abilityLabel : `Rank ${abilityRank}`));
   }
 });
 
@@ -30,7 +35,9 @@ test('rank zero is hidden and positive ranks are written out in the face rank la
       else{assert.ok(badge);assert.equal(badge.getAttribute('data-card-layer'),'9');
         assert.match(illustratedCardHtml(playingCardModel(reg,{cardId,abilityRank}),{rules:''}),new RegExp(`>Rank ${abilityRank}</span>`));}
       assert.equal(face.querySelector('.card-ability-type'), null);
-      assert.ok(face.querySelector('.combat-sigil-action'));
+      const model = playingCardModel(reg, { cardId, abilityRank });
+      if (model.sigils.traditions) assert.equal(face.querySelectorAll('.combat-sigil-tradition').length, model.sigils.traditions.length);
+      else assert.ok(face.querySelector('.combat-sigil-action'));
       assert.ok(face.getAttribute('aria-label').includes(abilityRank === 0 ? label : label === 'Cantrip' ? 'Spell' : 'Combat Maneuver'));
       assert.ok(face.getAttribute('aria-label').includes(`rank ${abilityRank}`));
     }

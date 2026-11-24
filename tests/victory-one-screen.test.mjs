@@ -50,12 +50,14 @@ test('the cinders line comes from the receipt, never from the live purse', async
   });
 });
 
-test('Add to deck, Add to library and a relic Confirm leave without a Continue press', async () => {
+// Owner 2026-11-18: a card door confirms in a modal; 2026-11-20: its answers are Add to deck and Send to library side by
+// side (one click each, no radio group). A relic keeps its Confirm.
+test('Add to deck, Send to library and a relic Confirm leave without a second Continue press', async () => {
   await withDom(async () => {
     const run = { class: 'reaver', deck: [], cinders: 0 };
     const kinds = [
       ['combatCards', 'core.strike', '#reward-card-confirm'],
-      ['combatCards', 'core.strike', '#reward-keep'],
+      ['combatCards', 'core.strike', '.confirmation-alternate'],
       ['relics', reg.relics.all()[0].id, '#reward-card-confirm'],
     ];
     for (const [kind, id, button] of kinds) {
@@ -65,9 +67,14 @@ test('Add to deck, Add to library and a relic Confirm leave without a Continue p
       const claim = i => { calls.push('claim'); offer.taken.push(i); offer.claimed = i; };
       MountGameProfileOffers(app, { registries: reg, run, offer, title: 'VICTORY', onTake: claim, onAddToDeck: claim, addRefusal: () => '', onContinue() { calls.push('continue'); } });
       app.querySelector('.reward-pick').click();
-      app.querySelector(button).click(); await settle();
-      assert.deepEqual(calls, ['claim', 'continue'], `${kind} ${button}: two clicks (select + take) reach what follows`);
+      if (kind === 'combatCards') {
+        app.querySelector('#reward-card-confirm').click();
+        document.querySelector(button === '#reward-card-confirm' ? '.confirmation-confirm' : button).click();
+        await new Promise(resolve => setTimeout(resolve, 0));
+      } else { app.querySelector(button).click(); await settle(); }
+      assert.deepEqual(calls, ['claim', 'continue'], `${kind} ${button}: select, then the confirmation, reach what follows`);
       app.remove();
+      await new Promise(resolve => setTimeout(resolve, 700));
     }
   });
 });

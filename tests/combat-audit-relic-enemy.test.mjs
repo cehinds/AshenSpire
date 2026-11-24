@@ -11,10 +11,10 @@ for (const mode of ['native', 'bundled']) {
     assert.match(report.sourceRevision, /^[0-9a-f]{40}$/);
     assert.equal(report.loader, mode);
     assert.deepEqual(report.counts, {
-      relics: 79, relicPropertyCarriers: 62, relicRules: 68, relicBranchesCovered: 68,
+      relics: 80, relicPropertyCarriers: 62, relicRules: 68, relicBranchesCovered: 68,
       relicConditionalFalseControls: 33, relicGatedBranches: report.counts.relicGatedBranches,
       relicGatedBranchesCovered: report.counts.relicGatedBranches,
-      relicPassives: 27, relicPassiveDeclarations: 31, relicPassiveEffects: 19, relicPassiveNoOpDeclarations: 12,
+      relicPassives: 28, relicPassiveDeclarations: 32, relicPassiveEffects: 20, relicPassiveNoOpDeclarations: 12,
       relicPassiveEffectsCovered: report.counts.relicPassiveEffects,
       statusModifierOutcomes: report.counts.statusModifierDeclarations, statusModifierDeclarations: report.counts.statusModifierDeclarations,
       statusProcBranches: 3, statusProcBranchesCovered: 3,
@@ -22,24 +22,24 @@ for (const mode of ['native', 'bundled']) {
       statusModifierConsumerDeclarations: 18, statusModifierConsumerOutcomesCovered: 18,
       statusResistanceBranches: 3, statusResistanceBranchesCovered: 3, statusControlBranches: 4, statusControlBranchesCovered: 4,
       statusTaggedVulnerabilityBranches: 3, statusTaggedVulnerabilityCovered: 3,
-      statuses: statusCount, statusesCovered: statusCount, enemies: 33, enemyMoves: 103, enemyMovesCovered: 103,
-      enemyReactionMoves: 2, enemyReactionScenariosCovered: 4, encounters: 35, classes: 4, encounterClassScenarios: 140, encounterClassCovered: 140,
+      statuses: statusCount, statusesCovered: statusCount, enemies: 65, enemyMoves: 235, enemyMovesCovered: 235,
+      enemyReactionMoves: 2, enemyReactionScenariosCovered: 4, encounters: 72, classes: 4, encounterClassScenarios: 288, encounterClassCovered: 288,
     });
     assert.equal(report.relics.missing.length, 0);
     assert.equal(report.relics.conditionalBranches, 33);
     assert.equal(report.relics.conditionalNegativeControls, 33);
     assert.equal(report.relics.gatedBranchesCovered, report.relics.gatedBranches);
-    assert.equal(report.relics.relicCoverage.length, 79);
-    assert.equal(report.relics.passiveIds, 27);
+    assert.equal(report.relics.relicCoverage.length, 80);
+    assert.equal(report.relics.passiveIds, 28);
     assert.equal(report.relics.passiveMissing.length, 0);
-    assert.equal(report.relics.passiveEffects, 19);
+    assert.equal(report.relics.passiveEffects, 20);
     assert.equal(report.relics.passiveNoOpDeclarations, 12);
-    assert.equal(report.relics.passiveDeclarations, 31);
+    assert.equal(report.relics.passiveDeclarations, 32);
     assert.deepEqual(report.relics.passiveEffectRows.map(row => `${row.relicId}:${row.key}`).sort(), [
       'ancestralHorn:powerCostReduction', 'cinderPouch:runeGainMult', 'crackedTear:flaskPowerMult', 'curedHide:poiseThresholdAdd',
       'emberFragment:restHealMult', 'feralEye:eliteExtraCardReward', 'forsakenMedallion:modifiers', 'paupersDiadem:powerCostReduction',
       'paupersDiadem:runeGainMult', 'prismaticThorn:exposureBuildupMult', 'prismaticThorn:flaskPowerMult', 'restlessClasp:flaskPowerMult',
-      'restlessClasp:restHealMult', 'saltedRelic:runeGainMult', 'sealstoneKey:revealUnknown', 'starstoneShard:modifiers',
+      'restlessClasp:restHealMult', 'saltedRelic:runeGainMult', 'scribesMirror:cardCopyOnPickup', 'sealstoneKey:revealUnknown', 'starstoneShard:modifiers',
       'wayfarersKnot:restHealMult', 'wayfarersKnot:runeGainMult', 'wyrmHeart:restDenied',
     ]);
     assert.ok(report.relics.passiveEffectRows.every(row => row.result === 'covered' && row.observed !== null));
@@ -51,11 +51,15 @@ for (const mode of ['native', 'bundled']) {
     ]);
     assert.ok(report.relics.passiveNoOpRows.every(row => row.result === 'no-op-declaration'));
     assert.deepEqual(report.relics.passiveEffectRows.filter(row => row.key !== 'modifiers').map(row => row.key).sort(), [
-      'eliteExtraCardReward', 'exposureBuildupMult', 'flaskPowerMult', 'flaskPowerMult', 'flaskPowerMult',
+      'cardCopyOnPickup', 'eliteExtraCardReward', 'exposureBuildupMult', 'flaskPowerMult', 'flaskPowerMult', 'flaskPowerMult',
       'poiseThresholdAdd', 'powerCostReduction', 'powerCostReduction', 'restDenied', 'restHealMult', 'restHealMult',
       'restHealMult', 'revealUnknown', 'runeGainMult', 'runeGainMult', 'runeGainMult', 'runeGainMult',
     ]);
     assert.equal(report.statuses.applyAndDecayCovered, statusCount);
+    const stoneSkin = report.statuses.rows.find(row => row.id === 'stoneHide');
+    assert.deepEqual({ before: stoneSkin.stacksBeforeDecay, after: stoneSkin.stacksAfterDecay,
+      retainedAtTurnEnd: stoneSkin.ownerTurnEndRetained, removed: stoneSkin.decayReceipt?.amount },
+    { before: 2, after: 0, retainedAtTurnEnd: true, removed: 2 }, 'Stone Skin exercises its actual owner-turn-start clock');
     assert.equal(report.statuses.modifierOutcomesCovered, report.statuses.modifierDeclarations);
     assert.equal(report.statuses.procBranchesCovered, 3);
     assert.equal(report.statuses.resistanceBranchesCovered, 3);

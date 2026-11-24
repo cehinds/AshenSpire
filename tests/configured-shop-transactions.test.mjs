@@ -32,9 +32,9 @@ const bytes = value => JSON.stringify(value);
 const purchase = (fixture, index, quote = null) => purchaseGameProfileShopOffer(registries, fixture.run, 'market', index, fixture.rng, quote);
 
 test('every purchased category replaces its slot with a different same-category eligible item or sells out', () => {
-  const kinds = new Set(fixture().stock.options.map(option => option.kind));
-  for (const kind of kinds) {
-    const f = fixture(), index = f.stock.options.findIndex(option => option.kind === kind), before = structuredClone(f.stock);
+  // Every buying shelf a trader can stock, each from a trader that stocks it (traders vary since item 42).
+  for (const kind of ['weapons', 'armor', 'relics', 'potions', 'combatCards', 'weaponArts']) {
+    const f = fixtureStocking(kind), index = f.stock.options.findIndex(option => option.kind === kind), before = structuredClone(f.stock);
     const receipt = purchase(f, index);
     const stock = f.run.gameProfileRewardOffers['shop:market'];
     assert.equal(receipt.kind, kind);

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "item",
   "label": "Magic Focus",
-  "description": "What this piece IS: the Armoury and the smith name it Magic Focus.",
+  "description": "What this piece IS: the Armoury and the smith name it Magic Focus. While in Prepared stance, an equipped Focus lowers the final Mana cost of each spell by 1 (never below 0). Only one Focus discount applies.",
   "attaches": [
     "gear"
   ],

@@ -15,6 +15,50 @@ export function motionFlags(settings = {}) {
     key === 'motionIdle' ? resolveMotionIdle(settings) : settings[key] !== false]));
 }
 
+/**
+ * The Effects sub-switches (owner, 2026-11-19), each default ON and each read only
+ * while the Effects master is on. Kind → settings key.
+ */
+export const FX_KEYS = Object.freeze({ glow: 'fxGlow', sparks: 'fxSparks', flash: 'fxFlash', hitstop: 'fxHitStop' });
+
+/** FxFlags(settings) → { glow, sparks, flash, hitstop } booleans: true when that effect plays (master on and sub-switch on). */
+export function FxFlags(settings = {}) {
+  const master = effectsEnabled(settings);
+  return Object.fromEntries(Object.entries(FX_KEYS).map(([kind, key]) => [kind, master && settings[key] !== false]));
+}
+
+/** FxOff(kind) → true when Effects is off or that sub-switch is off (root `data-fx-<kind>="off"`); kind is glow|sparks|flash|hitstop. */
+export function FxOff(kind) {
+  if (effectsOff()) return true;
+  return typeof document !== 'undefined' && document.documentElement?.dataset[`fx${kind[0].toUpperCase()}${kind.slice(1)}`] === 'off';
+}
+
+/**
+ * Blur and shadows (owner, 2026-11-20): two device-local choices, each 'auto', 'on'
+ * or 'off', independent of the Effects master. Auto keeps the phones-only rule
+ * (styles/perf-lite.css strips them on a phone with Effects off); on keeps them and
+ * off strips them on any device. Kind → settings key.
+ */
+export const SURFACE_KEYS = Object.freeze({ blur: 'fxBlur', shadows: 'fxShadows' });
+export const SURFACE_CHOICES = Object.freeze(['auto', 'on', 'off']);
+
+/** SurfaceFlags(settings) → { blur, shadows }: 'on' or 'off' when the player forced it, null for Auto (no root flag). */
+export function SurfaceFlags(settings = {}) {
+  return Object.fromEntries(Object.entries(SURFACE_KEYS).map(([kind, key]) =>
+    [kind, settings[key] === 'on' || settings[key] === 'off' ? settings[key] : null]));
+}
+
+/**
+ * EffectsSummary(settings) → { on, count, total }: the Effects master and how many of
+ * its visual sub-switches are on (the four FX_KEYS, screen shake and ambient).
+ * The Settings button reads it ("On · 5 of 6").
+ */
+export function EffectsSummary(settings = {}) {
+  const parts = [...Object.values(FX_KEYS).map(key => settings[key] !== false),
+    settings.screenShake !== false, settings.ambient !== 'off'];
+  return { on: effectsEnabled(settings), count: parts.filter(Boolean).length, total: parts.length };
+}
+
 /** coarsePointer() → true on a touch-first device. The one matchMedia read, here so tests can stub it. */
 export function coarsePointer() {
   return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
@@ -43,14 +87,15 @@ export function migrateEffectsSetting(settings) {
   return true;
 }
 
-// `coarse` is kept so callers need no change; the default is now off everywhere,
-// so a touch screen no longer decides anything.
-export function resolvePerformanceMode(settings = {}, coarse = false) { // eslint-disable-line no-unused-vars
-  return effectsEnabled(settings) ? 'full' : 'lite';
+/** liteRendering() → true when Effects is off (root `data-effects="off"`); the old Lite quality is that same state. */
+export function liteRendering() {
+  return typeof document !== 'undefined' && document.documentElement?.dataset.effects === 'off';
 }
 
-export function liteRendering() {
-  return typeof document !== 'undefined' && document.documentElement?.dataset.performance === 'lite';
+/** OutlineTargetSilhouette() → true when a target silhouette must be drawn as an outline, not a filter-tinted copy:
+ * under Lite, or when Shadows is forced Off (its filter reset would strip the tint and leave an uncoloured copy). */
+export function OutlineTargetSilhouette() {
+  return liteRendering() || (typeof document !== 'undefined' && document.documentElement?.dataset.fxShadows === 'off');
 }
 
 /** effectsOff() → true when the Effects switch is off (root `data-effects="off"`, set at boot by main.js; absent in bare test DOMs reads as on). */

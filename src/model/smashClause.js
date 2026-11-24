@@ -1,6 +1,6 @@
 // Core (FixCore) Smash text, one shared source for every card tagged maneuver:smash (no per-card edits).
-// Under a Core profile a Smash into Defend or Prepared deals damageMultiplier x its damage plus blockFraction of the
-// target's Block, poiseFraction of that to Poise (smashVsDefensive in fixCoreMechanics.json). The words are read from the
+// A Core Smash reads the multiplier for each active matchup, plus blockFraction of the target's Block and
+// poiseFraction of the total to Poise (smashVsDefensive in fixCoreMechanics.json). The words are read from the
 // same rules combat uses, so a profile with other numbers says them; other profiles keep the legacy wording.
 import { configuredStance } from './profileStance.js';
 import { smashBeatsStances, fill, ruleCtx, withCoreSmashBlurb } from './smashBlurb.js';
@@ -14,6 +14,12 @@ import { fixCoreEnabled } from './fixCoreMechanics.js';
 const hasDamageEffect = (def) => (def.effects || []).some(effect => effect?.op === 'damage');
 export const coreSmashCard = (def, ctx) => !!def && configuredStance(def) === 'smash' && hasDamageEffect(def) && fixCoreEnabled(ruleCtx(ctx)) && smashBeatsStances(ctx).length > 0;
 /** The card-face sentence for a Core Smash, else ''. */
-export const coreSmashClause = (def, ctx) => coreSmashCard(def, ctx) ? fill('card.smash.coreClause', ctx) : '';
+export const coreSmashClause = (def, ctx, rules = null) => {
+  const context = ruleCtx(ctx, rules);
+  return coreSmashCard(def, context) ? fill('card.smash.coreClause', context) : '';
+};
 /** The Smash tag help under a Core profile, else null (the caller keeps the node's legacy blurb). */
-export const coreSmashHelp = (def, ctx) => coreSmashCard(def, ctx) ? fill('tag.smash.coreHelp', ctx) : null;
+export const coreSmashHelp = (def, ctx, rules = null) => {
+  const context = ruleCtx(ctx, rules);
+  return coreSmashCard(def, context) ? fill('tag.smash.coreHelp', context) : null;
+};

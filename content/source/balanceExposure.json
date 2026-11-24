@@ -16,7 +16,7 @@
   "overchargeBuildupMult": 1.5,
   "staggerBreakPoise": 6,
   "resonanceSpreadPct": 50,
-  "buildupPerManaSpell": 5,
+  "elementUpgradeBuildup": 5,
   "$note": {
     "foldScale": "Multiplies a spell's old Arcane buildup before it joins the shared Poise impact.",
     "staggerBreakImpact": "Extra magical impact on spell hits while a focus carries Stagger Break.",
@@ -26,6 +26,6 @@
     "overchargeBuildupMult": "Multiplies the Arcane Exposure each hit builds while a focus carries Overcharge.",
     "staggerBreakPoise": "Poise damage Stagger Break deals to a foe whose Arcane Exposure you break.",
     "resonanceSpreadPct": "Percent of a broken foe's Exposure threshold that Resonance pours into every OTHER foe.",
-    "buildupPerManaSpell": "The least Arcane Exposure a card that costs Mana must build per hit, so a Mana spell always works toward a break faster than an action-only one."
+    "elementUpgradeBuildup": "Arcane Exposure per hit an upgrade that gives a card a new damage school builds. Not a floor: Exposure is authored per card (owner ruling 2026-11-22)."
   }
 }

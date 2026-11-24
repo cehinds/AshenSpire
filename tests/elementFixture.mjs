@@ -8,14 +8,18 @@ import { createRunCombat } from './withoutWeaknesses.mjs';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
-export const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Owner, 2026-11-18: the Core side damage and Block scales (x0.7) and the spell Poise doubling are pinned to 1 here; these suites pin the element rules' own arithmetic.
+export const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1, spellPoiseDamageMultiplier: 1 } } });
 export const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 export const ATTRIBUTES = { strength: 2, dexterity: 2, constitution: 2, wisdom: 1, intelligence: 1 };
 
 /** A fight with `enemies` plain enemies (500 HP, no Block, Poise `poise`), the player with `attributes`. */
-export function fight({ classId = 'starseer', enemies = 1, enemyId = 'wanderingSoldier', poise = 0, attributes = {}, undead = false, seed = 5, legacy = false, oldCaps = false, stanceWeakness = false } = {}) {
-  const run = createRunState({ registries: reg, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(seed), enemyIds: Array.from({ length: enemies }, () => enemyId) });
+export function fight({ registries: suppliedRegistries = reg, classId = 'starseer', enemies = 1, enemyId = 'wanderingSoldier', poise = 0, attributes = {}, undead = false, seed = 5, legacy = false, oldCaps = false, stanceWeakness = false, profile: pinnedProfile } = {}) {
+  // Explicit historical profiles retain their original policy; never rebind or mutate the shared live fixture.
+  const ownProfile = pinnedProfile === undefined ? null : structuredClone(pinnedProfile);
+  const registries = ownProfile === null ? suppliedRegistries : bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, ownProfile)), ownProfile);
+  const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: Array.from({ length: enemies }, () => enemyId) });
   for (const enemy of combat.enemies) {
     Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, persistentPoise: { value: poise, max: Math.max(20, poise) }, attributes: { ...ATTRIBUTES }, level: 1 });
     if (undead) enemy.tags = ['undead'];

@@ -465,8 +465,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        shard: ['0/4', '1/4', '2/4', '3/4']
+        # Windows discovery shard 2/4 hit the 15-minute test subprocess limit twice.
+        # Each old Windows group i/4 splits into i/8 and (i+4)/8.
+        include:
+          - { os: ubuntu-latest, shard: '0/4' }
+          - { os: ubuntu-latest, shard: '1/4' }
+          - { os: ubuntu-latest, shard: '2/4' }
+          - { os: ubuntu-latest, shard: '3/4' }
+          - { os: macos-latest, shard: '0/4' }
+          - { os: macos-latest, shard: '1/4' }
+          - { os: macos-latest, shard: '2/4' }
+          - { os: macos-latest, shard: '3/4' }
+          - { os: windows-latest, shard: '0/8' }
+          - { os: windows-latest, shard: '1/8' }
+          - { os: windows-latest, shard: '2/8' }
+          - { os: windows-latest, shard: '3/8' }
+          - { os: windows-latest, shard: '4/8' }
+          - { os: windows-latest, shard: '5/8' }
+          - { os: windows-latest, shard: '6/8' }
+          - { os: windows-latest, shard: '7/8' }
     steps:
       # Before checkout, deliberately: with autocrlf on (the Windows default) the
       # working tree gets CRLF bytes that were stored as LF, and the bundler reads
@@ -1488,13 +1505,29 @@ jobs:
       - name: …and that gate can fail (its known-bads, this leg's shard)
         run: node tools/verdict.mjs -- node tools/motion-probe.mjs --selftest --shard ${{ matrix.shard }}
 
+  browser-release-contrast:
+    name: release contrast across all gated palettes
+    if: ${{ (github.event_name == 'workflow_dispatch' && contains(fromJSON('["all","release"]'), inputs.stage)) || (github.event_name == 'push' && github.ref_name == 'release') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+      - uses: ./.github/actions/prepare
+        with:
+          packs: ${{ env.ART_PACKS }}
+      - uses: ./.github/actions/which-browser
+      - name: Measure rendered text and non-text contrast on the release source
+        run: node tools/contrast-audit.mjs --gate
+
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.
   # ---------------------------------------------------------------------------
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [stage, test, test-discovered, test-discovered-slow-windows, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-slot-load-plants, browser-full-run, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
+    needs: [stage, test, test-discovered, test-discovered-slow-windows, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-slot-load-plants, browser-full-run, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-plants, browser-layout-all, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first, browser-release-contrast]
     if: always()
     steps:
       - name: Stage summary, which jobs ran here and which did not
@@ -1515,7 +1548,7 @@ jobs:
             echo "release tree differs from test: functional suites ran"
           fi
           TEST_JOBS="test test-discovered test-discovered-slow-windows test-selftests parse-gate browser-guard browser-slot-load-plants browser-full-run browser-flask-menu browser-flask-menu-plants browser-guard-changelog browser-startup-plants"
-          RELEASE_JOBS="reproducible reproducible-agree display-first browser-guard-stamp browser-layout-guard browser-layout-plants browser-layout-all browser-layout-hintstrip browser-hintstrip-plants browser-motion"
+          RELEASE_JOBS="reproducible reproducible-agree display-first browser-guard-stamp browser-layout-guard browser-layout-plants browser-layout-all browser-layout-hintstrip browser-hintstrip-plants browser-motion browser-release-contrast"
           {
             echo "RAN_TEST=$ran_test"
             echo "RAN_RELEASE=$ran_release"
@@ -1686,13 +1719,9 @@ jobs:
           # restating it: one fact, one home. Second time tonight I wrote a boundary line
           # that dated itself, having just cut one for the same reason.
           # — Rune, 2026-07-28, at the 8e11c5a merge.
-          echo "  · anything about COLOUR. Contrast, hue, gamma, colourblind-safe mode and"
-          echo "    the High-contrast default (#10) are ALL unverified here: no job in this"
-          echo "    file runs a colour check of any kind. Every future PR touching colour"
-          echo "    gets a green that says nothing about what it changed — structurally,"
-          echo "    until a job is added. WHICH checks are unrun, and why no step was added"
-          echo "    to this workflow, is stated once in tools/palette-check.sh's header"
-          echo "    (\`CI DOES NOT RUN THIS\`); read that, not a copy of it kept here."
+          echo "  · colour outside the contrast audit's named targets and gated palettes."
+          echo "    The release-stage browser-release-contrast job measures those targets;"
+          echo "    it does not prove every colour, hue or gamma choice across the game."
           # Narrowed, same act and same reason as the playability line above: the
           # hint-strip gate reads rendered rects, so "nothing rendered" is no longer
           # true as written. What it never touched — and still does not — is ART.

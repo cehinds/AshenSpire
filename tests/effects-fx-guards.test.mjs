@@ -10,13 +10,13 @@ import { setCombatPacing } from '../src/ui/animationPace.js';
 import { effectsOff, motionOff } from '../src/ui/performance.js';
 setCombatPacing({ combatSpeed: 1 });
 
-function play(t, effects) {
+function play(t, effects, fx = {}) {
   let out;
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 10000 });
   t.mock.method(globalThis.performance, 'now', () => Date.now());
   withKitDom((dom) => {
     const priorRoot = dom.document.documentElement;
-    dom.document.documentElement = { dataset: { effects: effects ? 'on' : 'off' } };
+    dom.document.documentElement = { dataset: { effects: effects ? 'on' : 'off', ...fx } };
     const actor = dom.document.createElement('div');
     const target = dom.document.createElement('div');
     const layer = dom.document.createElement('div');
@@ -85,17 +85,27 @@ test('Effects-off CSS never blanks a figure\'s filter: focus ring, skill-selecte
   }
   // the three states that must stay visible are still defined, unconditionally
   assert.match(css, /\.combat \.combatant:focus-visible \.sprite \{ filter: drop-shadow/);
-  assert.doesNotMatch(css, /data-performance='lite'\]:not\(\[data-effects='off'\]\)/, 'the unreachable lite selector is gone');
+  assert.doesNotMatch(css, /data-performance/, 'data-effects is the one root hook (owner, 2026-11-20)');
 });
 
-test('image figures draw only the held stance glow with Effects off (no casting pulse)', async () => {
+test('no stylesheet or script reads or writes the retired data-performance hook', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const walk = (dir) => readdirSync(new URL(dir, import.meta.url), { withFileTypes: true })
+    .flatMap(e => e.isDirectory() ? walk(`${dir}${e.name}/`) : /\.(css|js)$/.test(e.name) ? [`${dir}${e.name}`] : []);
+  for (const file of [...walk('../styles/'), ...walk('../src/ui/')]) {
+    const text = readFileSync(new URL(file, import.meta.url), 'utf8');
+    assert.doesNotMatch(text, /\[data-performance=|dataset\.performance\b/, `${file} still uses data-performance; read data-effects`);
+  }
+});
+
+test('image figures draw only the held stance glow with Effects or Stance and aura glow off (no casting pulse)', async () => {
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../src/ui/paintedOutfits.js', import.meta.url), 'utf8');
-  assert.match(src, /effectsOff\(\) \? auraFilter\('ready', resting, \[\], false\)/);
+  assert.match(src, /FxOff\('glow'\) \? auraFilter\('ready', resting, \[\], false\)/);
   const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
   assert.doesNotMatch(fx, /timing\.scale === 0 \|\| effectsOff\(\)/, 'the hit-stop duration still flows into the timeline with Effects off');
   assert.doesNotMatch(fx, /holdFor = \(event\) => \(!effectsOff\(\)/);
-  assert.match(fx, /if \(holdMs && !effectsOff\(\)\) \{ actor\?\.hold\?\.\(holdMs\); hold\(ctx\.anchorFor\(beat\.actorId\), holdMs, ctx\.combatEl\); \}/, 'figure holds remain Effects-gated and belong to their originating combat mount');
+  assert.match(fx, /if \(holdMs && !FxOff\('hitstop'\)\) \{ actor\?\.hold\?\.\(holdMs\); hold\(ctx\.anchorFor\(beat\.actorId\), holdMs, ctx\.combatEl\); \}/, 'figure holds remain gated by Effects and Hit pause and belong to their originating combat mount');
 });
 
 test('idle motion off stops resting swaps but lets every action pose through', async () => {
@@ -137,4 +147,14 @@ test('Effects-off CSS keeps the recoil timing on .facing and never double-recoil
   const overrideAt = css.indexOf(".player .sprite.hitflash > :first-child { animation-name: hit-player-notint; }");
   const canvasAt = css.lastIndexOf(":root[data-effects='off'] .player .sprite.hitflash > .alternative-card-stage:not([data-still]):first-child,");
   assert.ok(overrideAt > 0 && canvasAt > overrideAt, 'the canvas exclusion comes after the recoil overrides and is more specific');
+});
+
+test('Effects sub-switches: Hit sparks off drops the particles, Hit pause off drops the hold', (t) => {
+  const noSparks = play(t, true, { fxSparks: 'off' });
+  assert.ok(!noSparks.classes.some(c => /fx-(slash|spark|shatter|glyph)/.test(c)), 'no particles: ' + noSparks.classes.join('|'));
+  assert.equal(noSparks.held, true, 'hit pause still plays');
+  const noPause = play(t, true, { fxHitstop: 'off' });
+  assert.equal(noPause.held, false, 'no figure hit-stop');
+  assert.deepEqual(noPause.actorHolds, [], 'no held action animation');
+  assert.ok(noPause.classes.some(c => /fx-slash/.test(c)), 'sparks still play');
 });

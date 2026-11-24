@@ -40,6 +40,7 @@ function captureEntity(combat, e, alive, projectCombatIntent)
         maxMana: e.maxMana,
         mana: e.mana,
         block: e.block,
+        ...(e.wardHp !== undefined ? { wardHp: e.wardHp } : {}),
         persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
         persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
         combatStance: e.combatStance ? { ...e.combatStance } : null,
@@ -48,6 +49,10 @@ function captureEntity(combat, e, alive, projectCombatIntent)
         // Wave 3: a Poise break makes the owner Broken (poise.breakRule "broken") until `brokenEnded`.
         broken: !!e.broken,
         combatEvade: e.combatEvade ? { ...e.combatEvade } : null,
+        // The Counter and Reflect badges are paced like every other badge: without these the HUD read the live fight, which End Turn
+        // has already advanced to the next player turn, so a held Counter vanished the moment the turn ended (owner playtest 2026-11-19).
+        counterStacks: e.counterStacks || 0,
+        reflectStacks: e.reflectStacks || 0,
         combatOwnerCycle: e.combatOwnerCycle,
         ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
         alive,
@@ -342,6 +347,18 @@ export function ApplyCombatBeat(disp, events, {
                     }
                 }
                 break;
+            case 'wardHpChanged':
+                if (t && Number.isFinite(e.value))
+                {
+                    t.wardHp = Math.max(0, Math.floor(e.value));
+                }
+                break;
+            case 'wardBroken':
+                if (t)
+                {
+                    t.wardHp = 0;
+                }
+                break;
             case 'persistentPoiseChanged':
                 if (t?.persistentPoise)
                 {
@@ -410,6 +427,10 @@ export function ApplyCombatBeat(disp, events, {
                     if (e.poiseRemaining !== undefined && t.persistentPoise)
                     {
                         t.persistentPoise.value = e.poiseRemaining;
+                    }
+                    if (e.wardHpRemaining !== undefined)
+                    {
+                        t.wardHp = Math.max(0, Math.floor(e.wardHpRemaining));
                     }
                     if (e.wardRemaining !== undefined && t.persistentWard)
                     {

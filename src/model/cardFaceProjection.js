@@ -198,7 +198,8 @@ function compactFaceProjection(def, { lines = null, authoredHtml = '', faceHtml 
   const projection = computedFaceProjection(def, { lines, authoredHtml, registries, effects });
   // The Inspect cue is a last resort: a card that authors a `faceTemplate` says its main effect in place of it
   // (owner, 2026-11-01). Downsides the computed face reserved (Exhaust, a payment) stay ahead of the summary.
-  if (faceHtml?.length && projection.clauses.some(clause => clause.kind === 'detail')) {
+  // A computed face that had to drop an effect (Radiant Spray at rank 4 lost its Starstone gain once Force read as one Blunt type, owner 2026-11-18) also hands over to the authored summary.
+  if (faceHtml?.length && (projection.clauses.some(clause => clause.kind === 'detail') || projection.omitted)) {
     const summaryText = [...faceHtml.map(plain), ...(def.keywords || []).filter(word => ['exhaust', 'ethereal'].includes(word))].join(' ').toLowerCase();
     const named = text => (text.match(/\b(?:take|lose|exhaust|discard|ethereal|unplayable|pay|offer|skip)\b|\bone play\b/gi) || [])
       .every(word => summaryText.includes(word.toLowerCase().split(' ')[0]));

@@ -1,6 +1,7 @@
 // tests/seats.test.mjs — SPEC §13 Seats: the falsifying commands, as a suite.
 //   node --test tests/seats.test.mjs
 import assert from 'node:assert/strict';
+import { CODEX_IDS } from '../tools/enemy-roster-table.mjs';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
@@ -105,14 +106,17 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
   const PRE_SEAT_UNGATED_EVENTS = ['goldboughAvatar', 'abandonedCart', 'weepingPilgrim', 'bloodstainedAltar', 'wanderingPhysician', 'goldenMoth', 'feralShrine', 'ancientRuneStone', 'graveOfTheNameless', 'sleepingSmith', 'wyrmTrial', 'discardedReliquary', 'omensAltar', 'rotPriestOffer', 'handspiderNest', 'fadedGrace', 'merchantsGhost', 'cinderbearDen', 'stakeOfTheMartyr', 'twoFingersRiddle'];
   for (const id of PRE_SEAT_UNGATED_EVENTS) assert.ok(REG.events.has(id), `pre-seat event '${id}' still ships`);
   const gates = contentBundle.eventHistoryRequirements || {};
-  const PRE_SEAT_REG = createRegistries({ ...contentBundle, events: contentBundle.events.filter((e) => gates[e.id] || PRE_SEAT_UNGATED_EVENTS.includes(e.id)) });
+  const PRE_SEAT_REG = createRegistries({ ...contentBundle, events: contentBundle.events.filter((e) => gates[e.id] || PRE_SEAT_UNGATED_EVENTS.includes(e.id)), encounters: contentBundle.encounters.filter((e) => !e.enemies.some((id) => CODEX_IDS.includes(id))) });
+  // Today's events, but not the Codex encounters (2026-11-18): this fixture fingerprints the map CODE against the pre-seat tree, and five
+  // new bosses legitimately change the branch count a map offers. It builds from contentBundle, not a pinned profile, so no pin gates them.
+  const LIVE_REG = createRegistries({ ...contentBundle, encounters: contentBundle.encounters.filter((e) => !e.enemies.some((id) => CODEX_IDS.includes(id))) });
   const fixture = JSON.parse(readFileSync(new URL('./fixtures/actmap-fingerprint-pre-seats.json', import.meta.url), 'utf8'));
   for (const [key, before] of Object.entries(fixture.maps)) {
     const [seed, tier] = key.split(':').map(Number);
     // And against TODAY's roster, every draw and every node but the picked
     // event id is still the pre-seat tree's: the new events moved no draw.
     const liveRng = createRng(seed);
-    const live = buildActMap(REG, liveRng, ORDER[tier - 1], tier);
+    const live = buildActMap(LIVE_REG, liveRng, ORDER[tier - 1], tier);
     // `rewardRolls` (SPEC §15.1) is appended after the fixture was taken; a
     // map draws nothing on it, so it is left out beside `seats` and asserted 0.
     // Shop offers, sigils and intent visibility likewise append after capture.
@@ -226,9 +230,9 @@ test('13.2 scenery follows the seat; the final tier\'s boss node is the causeway
 });
 
 test('13.2 the act title names the tier and the seat; without a seat the authored table still answers', () => {
-  assert.equal(actTitle(2, 'The Pale Marches'), 'ACT II — THE PALE MARCHES');
-  assert.equal(actTitle(5, 'The Cinder Reach'), 'ACT II — THE CINDER REACH · CYCLE 2');
-  assert.equal(actTitle(1), 'ACT I — THE FALLOW MARCHES');
+  assert.equal(actTitle(2, 'The Pale Marches'), 'ACT II: THE PALE MARCHES');
+  assert.equal(actTitle(5, 'The Cinder Reach'), 'ACT II: THE CINDER REACH · CYCLE 2');
+  assert.equal(actTitle(1), 'ACT I: THE FALLOW MARCHES');
 });
 
 test('seatOrderProblems names every defect', () => {

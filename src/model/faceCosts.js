@@ -1,6 +1,8 @@
+import { ApplyGearCardRules, GearSummary, GearConditionState, GearTypeEffectsEnabled } from './gearEffects.js';
+import { stanceManaCost, stanceStaminaCost } from './stanceRules.js';
 // Card faces without a combat preview (deck, rewards, shop, upgrade picker, and the draw and discard pile viewers) used to print the card's authored cost
 // while the fight priced it with the spell cost rule. Owner, 2026-11-15 (batch 4): show the price the player would pay.
-//   outside a fight: a face has no stance, so Prepared is not applied; the surcharges and the Focus discount (a Focus item in the run's loadout) are;
+//   outside a fight: a face has no stance, so Prepared is not applied; surcharges and always-on gear adjustments are;
 //   inside a fight (a pile viewer): the fight's own stance and loadout price it, exactly as the hand does, Prepared included.
 // A run made before the spell cost ruling carries no `spellCosts` rule and keeps printed costs. The UI shell registers the run (main.js) and the fight
 // (screens/combat.js), and the pricer (the engine's SpellCostAdjust: this model layer may not import the engine), and the faces read them live.
@@ -23,11 +25,21 @@ export function SetFaceCostPricer(fn) { pricer = typeof fn === 'function' ? fn :
  * The same object comes back when nothing changes (no run, a card that is no spell, a run without the rule, no pricer registered).
  */
 export function FaceCostProfile(registries, def, run = faceRun ?? runSource?.() ?? null) {
-  const profile = registries.framework.costProfile(def);
-  if (!pricer) return profile;
+  if (!pricer) return registries.framework.costProfile(def);
   const fight = faceCombat && !faceCombat.result ? faceCombat : null;
   const ctx = fight || (run && { registries, combatExpansionVersion: run.combatExpansionVersion, fixCoreRules: run.fixCoreRules, gameProfile: run.gameProfile, loadout: run.loadout, player: { classId: run.class } });
-  if (!ctx) return profile;
+  if (!ctx) return registries.framework.costProfile(def);
+  if (GearTypeEffectsEnabled(ctx) && !def.gearManaRules && !def.gearApplied?.some(row => row.stat === 'cost' || row.stat === 'manaCost')) {
+    const summary = GearSummary(registries, ctx.loadout, ctx.player?.classId, ctx);
+    const rules = (fight?.player?.itemProps?.cardRules || summary.cardRules).filter(row => row.stat === 'cost' || row.stat === 'manaCost');
+    def = ApplyGearCardRules(rules, def, GearConditionState(ctx.player, summary.mainWeaponType));
+  }
+  let profile = registries.framework.costProfile(def);
+  if (fight && GearTypeEffectsEnabled(ctx)) {
+    const mana = stanceManaCost(profile.mana || 0, ctx.player, def, ctx);
+    const stamina = stanceStaminaCost(profile.stamina || 0, ctx.player, def, ctx, profile.mana || 0);
+    profile = { ...profile, mana, stamina, ...(def.cost === 'X' ? {} : { action: stamina }) };
+  }
   const price = pricer(ctx, def, { stamina: profile.stamina || 0, mana: profile.mana || 0 });
   if (price.stamina === (profile.stamina || 0) && price.mana === (profile.mana || 0)) return profile;
   return { ...profile, mana: price.mana, stamina: price.stamina, ...(def.cost === 'X' ? {} : { action: price.stamina }) };

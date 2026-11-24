@@ -1,7 +1,9 @@
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
-import { gameModule } from '../model/gameProfile.js';
+import { gameModule, gameContent } from '../model/gameProfile.js';
+import { characterSettings, enemyEffectiveLevel } from '../../engine/kernel/gameConfig.js';
 import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../model/gameProfileRun.js';
 import { ItemPropertySummary } from '../model/itemProperties.js';
+import { GearSummary, GearItemProps } from '../model/gearEffects.js';
 import { configuredCombat, configuredModule } from './gameProfileCombat.js';
 // engine/runCombat.js — the one door a run's fight is built through.
 //
@@ -26,7 +28,7 @@ import { resolveCombatCard } from './combatExpansion.js';
 import { bindCoreSmithingEngine } from '../model/smithingCore.js';
 import { runHandRules } from '../model/handRules.js';
 import { playInDeckOrder } from '../model/deckRules.js';
-import { runMods, resolveSwapCostRule } from '../model/loadout.js';
+import { runMods, resolveSwapCostRule, EQUIPMENT_POOL_FIELDS } from '../model/loadout.js';
 import { isPoolDeckMode } from '../model/cardRemoval.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart, manaAtCombatEnd, manaDeficitAtCombatEnd } from '../framework/resources.js';
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
@@ -41,6 +43,12 @@ import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
   return enemyIds.map((enemyId, index) => {
+    // A Core elite or boss fights at its tier's level for this act (enemies.effectiveLevelByAct, owner 2026-11-17).
+    const act = Number.isSafeInteger(run.actNumber) && run.actNumber > 0 ? run.actNumber : 1;
+    const settings = run.gameProfile?.modules ? characterSettings(run.gameProfile.modules) : null;
+    const row = settings?.effectiveLevelByAct ? (gameContent(run, 'enemies') || []).find(entry => entry.id === enemyId) : null;
+    const effective = row ? enemyEffectiveLevel(row, settings, act) : null;
+    if (effective !== null) return effective;
     const profile = registries.enemies.get(enemyId)?.levelProfile;
     if (!profile) return 1;
     return resolveEnemyLevel(profile, {
@@ -160,7 +168,7 @@ export function createRunCombat({
     player: { ...runCombatPlayer(run),
       ...(configuredRatings ? { ratings: configuredRatings.totals, ratingSources: configuredRatings.sources,
         attributes: gameProfileEffectiveAttributes(registries, run),
-        itemProps: ItemPropertySummary(run), // W25 step 6: what the gear and relics set for this fight
+        itemProps: { ...ItemPropertySummary(run), ...GearItemProps(GearSummary(registries, run.loadout, run.class, run)) }, // W25 step 6 and the 2026-11-18 gear vocabulary: what the gear and relics set for this fight
         baseEvasionBonus: configuredRatings.baseEvasionBonus, basePrecisionBonus: configuredRatings.basePrecisionBonus } : {}),
       ...player },
     enemyIds,
@@ -208,6 +216,10 @@ export function runCombatEnd(run, combat) {
     if (field === 'mana') run.mana = manaAtCombatEnd({ currentMana: combat.player.mana, maxMana: combat.player.maxMana });
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
     run[maxField] = combat.player[maxField];
+  }
+  if (combat.equipmentChanged && run.loadout) {
+    const mods = runMods(combat.registries, run.loadout, run.class, run);
+    run.equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map(field => [field, mods[field]]));
   }
   run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
   run.equipmentPoolDeficits.mana = manaDeficitAtCombatEnd(run.equipmentPoolDeficits.mana ?? 0);

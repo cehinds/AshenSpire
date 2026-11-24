@@ -30,7 +30,7 @@ function smithRun(seed = 31) {
 const withPicks = (run, picks) => { run.itemUpgradePicks = { [GS]: picks }; return run; };
 const AR = { id: 'ar', k: 'stat', stat: 'ar', n: 1 }, DR = { id: 'dr', k: 'stat', stat: 'dr', n: 1 }, STR = { id: 'attr:strength', k: 'stat', stat: 'strength', n: 1 };
 
-test('only weapons change category, to any other category; the quote costs 1 stone and 75 cinders', () => {
+test('only weapons change category, to any other category; the quote costs 1 stone and 150 cinders (owner 2026-11-23: doubled)', () => {
   const run = smithRun();
   assert.equal(CanChangeCategory(registries, run, GS), true);
   assert.equal(CanChangeCategory(registries, run, `armor/reaver/${run.loadout.sets.armor[0]}`), false);
@@ -38,7 +38,7 @@ test('only weapons change category, to any other category; the quote costs 1 sto
   const choices = CategoryChoices(run, GS);
   assert.ok(choices.includes('sword') && choices.includes('staff') && !choices.includes('greatsword'));
   const plan = CategoryChangePlan(registries, run, GS, 'katana');
-  assert.deepEqual([plan.ok, plan.stones, plan.cinders, plan.cost], [true, 1, 75, 75], plan.reason);
+  assert.deepEqual([plan.ok, plan.stones, plan.cinders, plan.cost], [true, 1, 150, 150], plan.reason);
 });
 
 test('the keep limit is the upgrade count (at least 1) and at least 1 old property must carry over', () => {
@@ -71,7 +71,7 @@ test('commit: category set, kept picks stay, the rest are spent, new properties 
   assert.equal(run.itemUpgradePicks[GS][1].stat, 'dr');
   assert.equal(ItemUpgradeCount(run, GS), 3, 'the upgrade count holds');
   assert.deepEqual(run.itemProps[GS], quote.newProperties.map((row) => row.id));
-  assert.deepEqual([run.smithingStones, run.cinders], [4, 925]);
+  assert.deepEqual([run.smithingStones, run.cinders], [4, 850]);
   assert.equal(receipt.kept, 1);
   // the new properties come from the new category's pool, none already held
   for (const id of ItemPropertyIds(run, GS)) assert.ok(ITEM_PROPERTIES.find((row) => row.id === id).weights.magic > 0, id);
@@ -113,11 +113,15 @@ test('a change refused for a short purse keeps both purses; an old save loads an
   assert.equal(ItemCategory(old, GS), 'greatsword');
 });
 
-test('a magic weapon\'s old tier bonus moves to magic damage, and back, when its category changes', () => {
+// Owner, 2026-11-17 (gear `statPoints`): a Smith tier is attribute points on the item, never AR or PR, so a category
+// change moves no tier bonus between AR and magic damage; the ratings read the same either side of the change.
+test('a weapon\'s tier bonus stays attribute points, not AR or magic damage, when its category changes', () => {
   const run = smithRun();
+  const untiered = gameProfileRatingReceipt(registries, run).totals;
   run.itemUpgradeLevels = { [GS]: 2 };
   const martial = gameProfileRatingReceipt(registries, run).totals;
   run.itemCategories = { [GS]: 'staff' };
   const magic = gameProfileRatingReceipt(registries, run).totals;
-  assert.ok(magic.pr > martial.pr, 'PR rises with the tier once the weapon is magic');
+  assert.ok(martial.ar > untiered.ar, 'the tier raises the greatsword STR, so AR');
+  assert.deepEqual([magic.ar, magic.pr], [martial.ar, martial.pr], 'a category change moves no tier bonus');
 });

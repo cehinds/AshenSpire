@@ -1,3 +1,4 @@
+import { ChannelLabel } from '../../model/damageChannels.js';
 import { t, tFull } from '../strings.js';
 import { activeCombatStance } from '../../model/combatTacticsDisplay.js';
 import { ACTION_SIGILS } from '../../content/combatSigils.js';
@@ -36,6 +37,21 @@ export function PoiseBonusView(pool) {
   const max = count(pool.max), value = count(pool.value), base = Math.max(0, max - bonusMax);
   const bonus = Math.max(0, value - base);
   return bonus > 0 ? Object.freeze({ base, shown: Math.min(value, base), bonus, max, value }) : null;
+}
+
+/**
+ * Ward health buffer (Owner, 2026-11-24): Ward points sit on the HP bar past current HP (`+N` in blue).
+ * Returns { hp, maxHp, ward, totalMax, hpPct, wardFromPct, wardWidthPct } while wardHp > 0, else null.
+ */
+export function HealthWardView(hp, maxHp, wardHp) {
+  const ward = count(wardHp);
+  if (!(ward > 0)) return null;
+  const curHp = count(hp);
+  const baseMax = Math.max(1, count(maxHp));
+  const totalMax = Math.max(baseMax, curHp + ward);
+  const hpPct = Math.round(1000 * curHp / totalMax) / 10;
+  const wardWidthPct = Math.round(1000 * ward / totalMax) / 10;
+  return Object.freeze({ hp: curHp, maxHp: baseMax, ward, totalMax, hpPct, wardFromPct: hpPct, wardWidthPct });
 }
 
 export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, counterDecay = mechanics.counter.decayPerTurn, enemyCounter = false, reflectStacks = 0 } = {}) {
@@ -94,7 +110,7 @@ export function visibleBadges(badges, slots = BADGE_SLOTS) {
 
 /**
  * A fighter's stance summary (the badge is gone, owner 2026-11-05; this data builder has no caller in the UI now and is covered by tests only), or null (no stance, or not Core 2): { maneuver, label, help } with
- * help "Stance: Counter · +1 AR, +3 DR" built from the same rating bonuses the card inspector words.
+ * help "Stance: Counter · +1 STR, +3 DEX" built from the same rating bonuses the card inspector words.
  * `ctx` carries { registries, combatExpansionVersion: 2, stanceRules } as the card inspector builds it.
  */
 export function stanceBadgeFor(entity, ctx) {
@@ -102,6 +118,6 @@ export function stanceBadgeFor(entity, ctx) {
   if (!stance || stance.staggered || ctx?.combatExpansionVersion !== 2) return null;
   const label = ACTION_SIGILS[stance.maneuver === 'evade' ? 'defense' : stance.maneuver]?.label || String(stance.maneuver).replace(/^\w/, c => c.toUpperCase());
   const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, { combatStance: stance }, id)])
-    .filter(([, amount]) => amount > 0).map(([id, amount]) => `+${amount} ${id === 'ward' ? 'Ward' : id.toUpperCase()}`);
+    .filter(([, amount]) => amount > 0).map(([id, amount]) => `+${amount} ${id === 'ward' ? 'Ward' : ChannelLabel(id)}`);
   return { maneuver: stance.maneuver, label, help: `Stance: ${label}${bonuses.length ? ` · ${bonuses.join(', ')}` : ''}` };
 }

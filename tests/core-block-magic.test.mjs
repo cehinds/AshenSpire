@@ -8,7 +8,8 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { profileDamageReceipt,isPierceHit } from '../src/engine/gameProfileCombat.js';
 // Owner, 2026-10-25: Block soaks the whole hit, magic included, except floor(0.2 x damage) of a pierce hit (owner, 2026-10-26).
-const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{}});
+// Base and side scales pinned to 1: the subject is the pierce fraction of a 10 hit, not Core's halved base damage or its x0.7 side scale (owner, 2026-11-18).
+const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{effects:{baseDamageMultiplier:1,physicalDamageMultiplier: 1, playerDamageMultiplier: 1,enemyDamageMultiplier:1}}});
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 function liveCore() {
  const run=createRunState({registries:reg,classId:'reaver',seed:511,profileMeta:{gameProfileUnlocks:{core:{completedRunIds:['a','b','c']}}}});
@@ -39,11 +40,11 @@ test('the numeric Barrier pool is gone: it mitigates nothing (SPEC 4.1a)',()=>{
  assert.equal(r.blocked,4);
  assert.equal(r.barrierMitigated,0);
 });
-test('a pierce hit lets floor(0.2 x its damage) past Block',()=>{
+test('a pierce hit (one stack) ignores 1 Block',()=>{
  for (const carrier of [pierce,{...physical,tags:['pierce']},{...physical,authoredTags:['damage:piercing']}]) {
   const r=hit(carrier,50);
-  assert.equal(r.hpLoss,2,'floor(.2 * 10)');
-  assert.equal(r.blocked,8);
+  assert.equal(r.hpLoss,1,'one stack ignores 1 Block');
+  assert.equal(r.blocked,9);
   assert.equal(hit(carrier,1).blockRemaining,0,'Block is spent as the same hit without pierce would spend it');
   assert.equal(hit(carrier,1).hpLoss,10,'a Block of 1 is all pierced, so the whole hit reaches HP');
   assert.ok(isPierceHit(carrier.combatProfile,carrier));

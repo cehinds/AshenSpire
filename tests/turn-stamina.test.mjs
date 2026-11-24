@@ -10,19 +10,19 @@ import { validateContent } from '../src/model/validate.js';
 import { executeAction } from '../src/engine/actions.js';
 import { statRowValue } from '../src/model/derivedStats.js';
 
-test('stamina scales with Dexterity, Constitution, Wisdom, Intelligence and level', () => {
+test('stamina scales with Dexterity (+1 per 4) and level only', () => {
+  // Owner 2026-11-18 (ruling §9): SP = 3 + floor(DEX / 4); CON, WIS and INT no longer feed it.
   const row = contentBundle.derivedStatRules.rules.stamina;
   const value = (attributes, level = 1) => statRowValue(row, { attributes, level, statId: 'stamina' }).value;
   const base = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
   assert.equal(value(base), 3);
-  for (const [attribute, threshold] of [['dexterity', 4], ['constitution', 4], ['wisdom', 5], ['intelligence', 5]]) {
-    assert.equal(value({ ...base, [attribute]: threshold - 1 }), 3, attribute);
-    assert.equal(value({ ...base, [attribute]: threshold }), 4, attribute);
-  }
+  assert.equal(value({ ...base, dexterity: 3 }), 3, 'dexterity');
+  assert.equal(value({ ...base, dexterity: 4 }), 4, 'dexterity');
+  assert.equal(value({ ...base, dexterity: 8 }), 5, 'dexterity');
+  for (const attribute of ['constitution', 'wisdom', 'intelligence', 'strength']) assert.equal(value({ ...base, [attribute]: 100 }), 3, attribute);
   assert.equal(value(base, 10), 3);
   assert.equal(value(base, 11), 4);
-  assert.equal(value({ ...base, strength: 100 }), 3);
-  assert.equal(value({ ...base, dexterity: 4, constitution: 4, wisdom: 5, intelligence: 5 }, 11), 8);
+  assert.equal(value({ ...base, dexterity: 4 }, 11), 5);
 });
 
 const registries = createRegistries(contentBundle);

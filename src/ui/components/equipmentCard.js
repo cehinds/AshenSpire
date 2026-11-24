@@ -113,7 +113,7 @@ function applyCardTokens(card, tokens) {
  * level there: the creation picker shows rarity while you are choosing, the
  * combat hand does not show it at all.
  */
-export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, actionOwnsTouch = false, owned = null, level = null, surface = 'none', identity: identityOverride = null } = {}) {
+export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, inspectionActions = null, commands = {}, actionOwnsTouch = false, infoBadge = false, owned = null, level = null, surface = 'none', identity: identityOverride = null } = {}) {
   configureTooltipGlossary(registries);
   const model = presentation || equipmentCardModel(registries, piece);
   // `inspection: false` MEANS "no door on this face", NOT "this face says
@@ -251,15 +251,16 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   // Keep explanation gestures out of the containing equipment hold action.
   if (interactive) for (const type of ['pointerdown', 'touchstart', 'click', 'keydown']) card.addEventListener(type, event => event.stopPropagation());
   if (inspection) {
-    bindCardInspection(card, { title: model.name, readOnly: interactive, actionOwnsTouch, identity,
-      open: opener => {
+    bindCardInspection(card, { title: model.name, readOnly: interactive, actionOwnsTouch, identity, infoBadge,
+      open: (opener, overrides = {}) => {
         // THE DOOR READS ITS OWN FACE'S EXPLANATIONS, not this one's. The
         // outer card may be standing at `glance`, where it has not built a tag
         // or flavour explanation at all; the modal's face is at `inspect` and
         // has every one of them. Reading the outer array here is how the door
         // would come to show fewer tags the less the card beside it said.
         const full = renderEquipmentCard(registries, piece, { interactive: false, presentation, inspection: false, surface });
-        return openCardInspection({ title: model.name, card: full.card, details: equipmentDetails(full.explanations), opener });
+        return openCardInspection({ title: model.name, card: full.card, details: equipmentDetails(full.explanations), opener,
+          actions: overrides.actions ?? inspectionActions, commands: overrides.commands ?? commands });
       } });
     // EXACTLY THE TWO CARDS WHOSE LEVEL CHANGED, and they tell themselves. A
     // selection lights one card and douses one card; both events are fired on

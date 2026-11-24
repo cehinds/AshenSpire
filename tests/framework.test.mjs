@@ -567,8 +567,6 @@ test('importer refuses an armament whose weight is missing, non-numeric, negativ
   const first = contentBundle.equipment.armaments[0];
   assertThrows(() => importLegacyContent(withArmament({ weight: undefined })), /weight must be a non-negative integer/, 'missing weight');
   assertThrows(() => importLegacyContent(withArmament({ weight: 'heavy' })), /weight must be a non-negative integer/, 'non-numeric weight');
-  assertThrows(() => importLegacyContent(withArmament({ attackRating: -1 })), /attackRating must be a non-negative integer/, 'negative attackRating');
-  assertThrows(() => importLegacyContent(withArmament({ defenseRating: 1.5 })), /defenseRating must be a non-negative integer/, 'fractional defenseRating');
   assertThrows(() => importLegacyContent(withArmament({ weight: first.weight + 1 })), /must equal its poiseThreshold/, 'weight off its poise threshold');
   const ok = importLegacyContent(contentBundle);
   const imported = ok.entities.find((e) => e.explicitOverrides && e.explicitOverrides.legacyId === first.id);
@@ -581,11 +579,8 @@ test('importer refuses an armament whose weight is missing, non-numeric, negativ
   assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: undefined })), /poiseThreshold must be a non-negative integer/, 'missing armour poise');
   assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: -1 })), /poiseThreshold must be a non-negative integer/, 'negative armour poise');
   assertThrows(() => importLegacyContent(withArmour({ poiseThreshold: 'plate' })), /poiseThreshold must be a non-negative integer/, 'non-numeric armour poise');
-  // Armour's optional DR column: carried as authored, blank is 0, junk refused.
-  assertThrows(() => importLegacyContent(withArmour({ defenseRating: -1 })), /defenseRating must be blank or a non-negative integer/, 'negative armour DR');
-  const armourDr = (outfit) => ok.entities.find((e) => e.explicitOverrides?.legacyId === outfit.id && e.explicitOverrides?.legacyClassId === outfit.classId).explicitOverrides.defenseRating;
-  for (const outfit of contentBundle.equipment.armour) eq(armourDr(outfit), outfit.defenseRating === '' ? 0 : outfit.defenseRating, `${outfit.classId}/${outfit.id} imports its authored DR`);
-  assert(contentBundle.equipment.armour.some((outfit) => armourDr(outfit) > 0), 'at least one armour carries a DR, so the carry is exercised');
+  // An outfit authors no DR column any more (owner, 2026-11-18): nothing is carried.
+  assert(ok.entities.filter((e) => e.explicitOverrides?.legacyClassId).every((e) => !('defenseRating' in e.explicitOverrides)), 'no armour carries a DR');
 });
 
 test('bridge decisions match the legacy keyword rules for every card, base and upgraded', () => {
@@ -1071,15 +1066,15 @@ test('the bridge decides Weight Class through the framework service, with the Te
 test('the Armoury equip-load receipt counts authored armament weights and the armour rule, and is a readout only', () => {
   const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
   const r = playerLoadReceipt(LEGACY_REG, run);
-  // reaver start: straightSword 5 + roundShield 7 in hand, default armour poiseThreshold 8 (A-side rule),
+  // reaver start: straightSword 5 + roundShield 7 in hand, default armour poiseThreshold 4 (cp <= 0 starter armour, owner ruling D) (A-side rule),
   // each rescaled by mechanics.weight.itemWeightScale onto the lean attribute scale's capacity
   const scale = mechanicsHome.mechanics.weight.itemWeightScale;
   const tenth = (n) => Math.round(n * 10) / 10;
   eq(r.hands, tenth(tenth(5 * scale) + tenth(7 * scale)), 'hands weigh their authored weight, rescaled');
-  eq(r.armour, tenth(8 * scale), 'armour weighs its poiseThreshold under the A-side rule, rescaled');
+  eq(r.armour, tenth(4 * scale), 'armour weighs its poiseThreshold under the A-side rule, rescaled');
   eq(r.load, tenth(r.hands + r.armour), 'load sums both');
   eq(r.capacity, mechanicsHome.mechanics.weight.capacityBase + 2 * run.attributes.constitution + run.attributes.strength, 'capacity from mechanics.json and the run attributes');
-  eq(r.classId, 'medium', `the sword-and-shield reaver start stands Medium (${r.load} of ${r.capacity}, ${r.percent}%) — the class exists for the player`);
+  eq(r.classId, 'light', `the sword-and-shield reaver start stands Light under the cp<=0 starter armour (Poise 4; was Medium at Poise 8) (${r.load} of ${r.capacity}, ${r.percent}%) — the class exists for the player`);
   eq(r.active, true, 'every deck carries a Dodge Roll, so the class is consumed');
 });
 

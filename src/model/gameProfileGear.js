@@ -3,8 +3,10 @@ import { DeckAttributeBonuses } from './cardUpgrade.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { ItemStatBonus } from './itemPicks.js';
 import { ClassLevelAttributeBonus } from './classLevelBonus.js';
+import { GearIdOf } from './gearIds.js';
+import { GearSummary, GearTypeEffectsEnabled } from './gearEffects.js';
 const ATTRIBUTES = ['strength','dexterity','constitution','wisdom','intelligence'];
-const STATS = ['hp','mp','sp','ar','dr','poise','ward','evasion','precision',...ATTRIBUTES];
+const STATS = ['hp','mp','sp','poise','ward','evasion','precision',...ATTRIBUTES];
 // A single resolved-value path. Points are never also granted as raw bonuses.
 export function gameProfileEquipmentReceipt(registries, run) {
   const settings = gameModule(run,'gear');
@@ -15,7 +17,10 @@ export function gameProfileEquipmentReceipt(registries, run) {
     const id = sets[run.loadout.active?.[slot] || 0];
     if (!id) continue;
     const armor = slot === 'armor';
-    const item = catalog.find(item => (item.source?.id || item.id) === id && (item.kind === 'armor') === armor && (!item.classes || item.classes.includes(run.class)));
+    // A class's starting outfit row (`default`) names its gear item in the outfit's `gearId` column (owner, 2026-11-18), so the
+    // starting armour adds the Poise and attribute points the item carries.
+    const gearId = armor && GearTypeEffectsEnabled(run) ? GearIdOf((registries?.equipment?.armour || []).find(row => row.classId === run.class && row.id === id)) || id : id;
+    const item = catalog.find(item => (item.source?.id || item.id) === gearId && (item.kind === 'armor') === armor && (!item.classes || item.classes.includes(run.class)));
     if (!item) continue;
     const sourceId = armor ? `armor/${run.class}/${id}` : `armament/${id}`;
     const tier = run.itemUpgradeLevels?.[sourceId] || 0;
@@ -26,6 +31,9 @@ export function gameProfileEquipmentReceipt(registries, run) {
     for (const key of STATS) totals[key] += values[key] || 0;
     sources.push({ name:item.name.replace(/_/g,' '), kind:'equipment', sourceId, slot, itemId:item.id, ...values, resolved });
   }
+  // Owner, 2026-11-18: a piece's type or group base (Heavy +5 Poise, robes +3 DEX ...) adds stat points on top of its item points.
+  const base = GearSummary(registries, run.loadout, run.class, run).statPoints;
+  for (const key of STATS) if (base[key]) { totals[key] += base[key]; sources.push({ name: 'Equipment type', kind: 'equipment', sourceId: `type/${key}`, itemId: 'type', [key]: base[key] }); }
   // A held relic's properties are stat points too (a relic has no gear row, so nothing else adds them).
   for (const id of run.relics || []) {
     const bonus = ItemStatBonus(run, `relic/${id}`);

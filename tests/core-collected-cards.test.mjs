@@ -22,7 +22,7 @@ const collect = (run, card) => executeRunEffects({ run, registries, rng: createR
 test('Core collection knowledge survives acquisition and last removal before any save', () => {
   const run = live();
   // The lent weapon art is item-owned, so the ledger no longer starts with the class special.
-  assert.deepEqual(run.collectedCardIds, ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.ironbreaker', 'core.rallyingRoar']);
+  assert.deepEqual(run.collectedCardIds, ['core.strike', 'core.defend', 'core.reaverSpecial']);
   executeRunEffects({ run, registries, rng: createRng(run.seed) }, [
     { op: 'addCardToDeck', card: 'core.cantrip' }, { op: 'removeCardFromDeck', card: 'core.cantrip' },
   ]);
@@ -46,9 +46,10 @@ test('old Core saves backfill present loose cards without inventing history or l
   assert.ok(!loaded.collectedCardIds.includes('core.manaSurge'));
   assert.ok(!loaded.collectedCardIds.includes('core.evade'));
   delete loaded.collectedCardIds;
-  const counter = loaded.deck.find(card => card.cardId === 'core.counter');
-  assert.equal(removeDeckCard(loaded, counter.instanceId), true);
-  assert.ok(loaded.collectedCardIds.includes('core.counter'), 'an unsaved old run records the final copy before destruction');
+  // Owner ruling 2026-11-21: the Reaver no longer starts with a Counter; its Defend stands in.
+  const defend = loaded.deck.find(card => card.cardId === 'core.defend');
+  assert.equal(removeDeckCard(loaded, defend.instanceId), true);
+  assert.ok(loaded.collectedCardIds.includes('core.defend'), 'an unsaved old run records the final copy before destruction');
 });
 
 test('invalid collection ledgers fail by name and non-Core saves retain their existing shape', () => {

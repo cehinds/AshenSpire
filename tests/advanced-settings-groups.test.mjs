@@ -295,7 +295,7 @@ test('every setting has one home, and rows sharing a quantity sit together', asy
     const sub = advancedSubgroups(rows, section).find(group => group.rows.includes(row));
     return `${section} → ${sub.id}`;
   };
-  assert.equal(where('gameConfig.presentation.settingsWidthPercent'), 'Wireframes → Window', 'window size sits with the modal width it is clamped by');
+  assert.equal(where('gameConfig.presentation.settingsWidthPercent'), 'Developer → Layout', 'window size sits with the modal width it is clamped by (both in Developer › Layout, owner 2026-11-20)');
 
   // The battlefield / formation section was retired (owner, 2026-11-05): no tab, no rows.
   assert.ok(!ADVANCED_GROUP_IDS.includes('Battlefield'), 'there is no Battlefield tab');
@@ -347,7 +347,7 @@ test('a typed out-of-range number explains itself on its row, and the message ma
   assert.equal(typedNumberRefusal(row, String(row.def)), null, 'a legal value leaves no message');
   assert.equal(typedNumberRefusal(row, ''), null, 'an empty field is not a zero');
   const message = typedNumberRefusal(row, '999');
-  assert.ok(message.includes(`${row.min}–${row.max}`) && message.includes('was refused'));
+  assert.ok(message.includes(`${row.min} to ${row.max}`) && message.includes('was refused'));
   const used = resolveNumberRow({ [row.key]: '999' }, row);
   assert.equal(used, row.max, 'the clamp is what the message says is in use');
   assert.ok(message.includes(`The value in use is ${used}`));
