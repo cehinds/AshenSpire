@@ -30,6 +30,10 @@ const EFFECT_UNITS = Object.freeze({
 
 // Effects the scorer counts once per effect, whatever the amount (see cardDefToFace in studio.js).
 const COUNTED_ONCE_EFFECTS = new Set(['removeStatus', 'pullEnemy', 'swapRows', 'moveEngagement']);
+// Effects cardDefToFace (studio.js) scores with another row's weight (EFFECT_SCORE_KEYS there): their own box does nothing.
+const BORROWED_EFFECT_WEIGHTS = Object.freeze({ ward: 'block', restorePoise: 'block', gainEnergy: 'restoreStamina', swapRows: 'pullEnemy' });
+// Effects the scorer never reads; Evade stacks score through the evade status row.
+const UNREAD_EFFECTS = Object.freeze({ evadeStack: 'Not scored here: Evade uses the evade status row', addCard: 'Not scored yet', buildup: 'Not scored yet' });
 // Statuses ScoreCard values with a fixed formula that ignores the weight (exactStatus in combatPower.js).
 const FORMULA_STATUSES = new Set(['burn', 'venom', 'shock', 'chill']);
 // A round positive score for the multiplier examples.
@@ -162,11 +166,15 @@ function costExample(id, scoring)
 // ScoreCard's effect value: weight x amount / per (ew in combatPower.js).
 function effectExample(id, scoring, label)
 {
+  if (UNREAD_EFFECTS[id]) return UNREAD_EFFECTS[id];
+  const source = BORROWED_EFFECT_WEIGHTS[id];
+  if (source) return `Not this box: scored with the ${source} row (${effectExample(source, scoring, source).replace(effectUnit(source, source), effectUnit(id, label))})`;
   const entry = scoring.effects?.[id];
   if (!entry) return '';
   const per = Math.max(1, Number(entry.per) || 1);
   const weight = Number(entry.weight) || 0;
   if (COUNTED_ONCE_EFFECTS.has(id)) return `Counted once per card: ${signedPts(weight / per)}`;
+  if (id === 'counterStack') return `Any Counter card: ${signedPts(weight / per)}`;
   const amount = per * 2;
   return `${amount} ${effectUnit(id, label)} = ${pts(weight * amount / per)}`;
 }
@@ -244,7 +252,14 @@ function tagExample(id, scoring)
   switch (tagKind(tag))
   {
     case 'times':
+    {
+      // ScoreCard reads a tag multiplier only for the Counterstrike tag; the area tag instead scores damage, Poise
+      // and enemy statuses once per enemy (model.ENEMIES); any other multiplier tag is not scored.
+      const model = scoring.cardModel || {};
+      if (id === model.areaTag) return `Not this box: area effects count once per enemy (${num(scoring.model?.ENEMIES)} enemies)`;
+      if (id !== model.counterstrikeTag) return 'Not scored yet';
       return `Positive score ${EXAMPLE_POSITIVE_SCORE}: ${signedPts(EXAMPLE_POSITIVE_SCORE * ((Number(tag.multiplier) || 0) - 1))}`;
+    }
     case 'share':
       return `Positive score ${EXAMPLE_POSITIVE_SCORE}: ${signedPts(EXAMPLE_POSITIVE_SCORE * (Number(tag.pMultiplier) || 0))}`;
     case 'per':
@@ -252,6 +267,7 @@ function tagExample(id, scoring)
         ? `${EXAMPLE_HITS} hits = ${pts((Number(tag.weight) || 0) * EXAMPLE_HITS)}`
         : `Any card with it: ${signedPts(tag.weight)}`;
     default:
+      if (tag.perN !== undefined && id === scoring.cardModel?.honedTag) return `Any card with it: ${signedPts((Number(tag.weight) || 0) + (Number(tag.perN) || 0))}`;
       return `Any card with it: ${signedPts(tag.weight)}`;
   }
 }
