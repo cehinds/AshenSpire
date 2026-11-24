@@ -64,7 +64,7 @@ import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { stampCombatPlaysEver, foldCombatPlaysEver } from './model/playsEver.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
-import { pendingRankUpRows, coreCardRanks, stampSkillBonuses } from './model/skills.js';
+import { pendingRankUpRows, rankUpRowsReady, coreCardRanks, stampSkillBonuses } from './model/skills.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
@@ -2600,8 +2600,9 @@ function showGameProfileReward() {
   if (!pending.rankUpsOffered && coreCardRanks(run)) {
     // The door's rows are fixed the first time it opens and saved with its claim state (rankUpCheckpoint), so a
     // reload after a claim resumes the same door instead of rebuilding rows from the remaining ledger.
+    // A new door opens only when some queued card may rise now; with none ready the rank-ups stay queued and it is skipped.
     const rankUps = pending.rankUpRows || pendingRankUpRows(registries, run);
-    if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
+    if (!rankUps.length || (!pending.rankUpRows && !rankUpRowsReady(registries, run, rankUps))) { pending.rankUpsOffered = true; persistOrWarn(); }
     else return MountRewards(app, { registries, run, saves, rng,
       rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rankUps) },
       checkpoint: (pending.rankUpCheckpoint ||= {}),

@@ -300,6 +300,14 @@ export function pendingRankUpRows(registries, run) {
 }
 
 /**
+ * rankUpRowsReady(registries, run, rows) → whether any of these rank-up rows has a card the full-upgrade rule lets rise
+ * now (RankUpBlock). The after-fight door opens only then; with none ready the rank-ups stay queued for a later fight.
+ */
+export function rankUpRowsReady(registries, run, rows) {
+  return (rows || []).some((row) => rankUpCandidates(registries, run, row.skillId).some((card) => !RankUpBlock(run, card)));
+}
+
+/**
  * raiseCardRank(registries, run, skillId, instanceId, bonus?) → the instance raised by
  * one rank, spending one queued rank-up; null (and nothing written) when the
  * ledger holds none or the card is not a candidate.

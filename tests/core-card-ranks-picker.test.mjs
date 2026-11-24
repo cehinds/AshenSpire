@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { rankUpBonusOptions } from '../src/model/rankUpBonus.js';
-import { awardSkillXp, xpToNext, pendingRankUpRows, coreCardRanks } from '../src/model/skills.js';
+import { awardSkillXp, xpToNext, pendingRankUpRows, rankUpRowsReady, coreCardRanks } from '../src/model/skills.js';
 
 // Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
 const newRun = () => {
@@ -75,6 +75,8 @@ test('main.js offers the rank-up door once per victory for Core runs only', () =
   assert.match(block, /coreCardRanks\(run\)/);
   assert.match(block, /pendingRankUpRows\(registries, run\)/);
   assert.match(block, /rankUpsOffered/);
+  // A new door opens only when a queued card may rise now (review fix 2026-11-23).
+  assert.match(block, /!pending\.rankUpRows && !rankUpRowsReady\(registries, run, rankUps\)/);
   // A claim is saved with the door's rows and claim state, so a reload resumes it rather than re-offering.
   assert.match(block, /pending\.rankUpRows/);
   assert.match(block, /checkpoint: \(pending\.rankUpCheckpoint \|\|= \{\}\)/);
@@ -162,4 +164,28 @@ test('a rank-up with one bonus option commits that bonus', async () => {
     assert.equal(confirmed?.id, strike.instanceId);
     assert.deepEqual(confirmed.plan.step, lone.step, 'the lone bonus is what commits');
   });
+});
+
+// Review fix (2026-11-23): the after-fight rank-up door opens only when a queued card may rise now (the full-upgrade
+// rule). With none ready it is skipped and the rank-ups stay queued; when it does open, held-back cards show disabled.
+test('the rank-up door needs a ready card: none ready skips it and keeps the queue; held-back cards show disabled', async () => {
+  const { RankUpUpgradeModel } = await import('../src/ui/models/CardUpgradeModel.js');
+  const { projectGameCard } = await import('../src/model/gameProfile.js');
+  const { resolveCard } = await import('../src/model/registries.js');
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  level(run, 'item:blade', 3);
+  const queued = run.skills['item:blade'].pendingRankUps;
+  const rows = pendingRankUpRows(registries, run);
+  assert.equal(rows.length, 1, 'the rank-up is queued and its track has candidates');
+  assert.equal(rankUpRowsReady(registries, run, rows), false, 'no card has its slots filled: the door is skipped');
+  assert.equal(run.skills['item:blade'].pendingRankUps, queued, 'the rank-ups stay queued');
+  const strike = run.deck.find((c) => c.cardId === 'core.strike');
+  FillUpgradeSlots(run, [strike]);
+  assert.equal(rankUpRowsReady(registries, run, rows), true, 'one full card opens the door');
+  const faceOf = (instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
+  const model = RankUpUpgradeModel(registries, run, 'item:blade', strike.instanceId, { faceOf });
+  const mine = model.rows.find((row) => row.instanceId === strike.instanceId);
+  const held = model.rows.filter((row) => row.instanceId !== strike.instanceId);
+  assert.equal(mine.disabled, false);
+  assert.ok(held.length > 0 && held.every((row) => row.disabled && row.blockedReason), 'the others are listed, disabled, with the reason');
 });
