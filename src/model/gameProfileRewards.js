@@ -15,8 +15,11 @@ import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
 import { RankedCardPrice } from './rankedCardPrice.js';
-import { createRng } from './rng.js';
-import { TierFor, FilterToBand } from './levelLists.js';
+import { createRng, mulberry32 } from './rng.js';
+import { TierFor, FilterToBand, RankBandForLevel, FilterToRankBand } from './levelLists.js';
+import { ItemRankOf } from './itemRank.js';
+import { upgradeSeed } from './cardUpgradeSteps.js';
+import { characterLevel } from './levelup.js';
 import { carriedIds } from './loadout/ownership.js';
 import { ThemedItemPick, ItemIsThemed } from './itemThemePick.js';
 import { GearTypeEffectsEnabled } from './gearEffects.js';
@@ -66,7 +69,7 @@ function pools(registries, run, { claim = false } = {}) {
   const retired = claim ? null : new Set(rules?.eligibility?.excludeCardIds || []);
   // Owner 2026-11-20: eligibility.combatCards.skipOwned never offers a card the player already holds (deck or library), at any
   // rank: one copy of a card, and the copy service (cardCopyService.js) is the only way to a second. A claim still accepts it.
-  const skipOwned = !claim && cardRule?.skipOwned === true;
+  const skipOwned = !claim && cardRule?.skipOwned !== false;
   const cards = definitions.filter(card => (claim || SpellRewardEligible(registries, run, card)) && rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
     && !(skipOwned && ownedIds.has(card.id))
     && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
@@ -85,7 +88,7 @@ function pools(registries, run, { claim = false } = {}) {
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
     weaponArts: hasCards && equipment ? weaponArtPool(registries, run, rules, authoredArts, carried, claim).filter(id => !unpayable(registries.cards.get(id))) : [],
     potions: registries.flasks.all().filter(row=>gameModule(run,'resources')?.include?.includes('mp') || !row.effects.some(effect=>effect.op==='restoreMana')).map(row=>row.id),
-    armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.classId===row.classId&&owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
+    armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.classId===row.classId&&owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id) && !(run.loadout.storage||[]).includes(row.id)).map(row=>row.id) : [],
   };
 }
 // Owner 2026-11-05: the weapon-art pool is the default and learnable arts of the weapons the run carries (storage and sets),
@@ -195,11 +198,16 @@ function weightedPotionPick(rule,run,rng,stream,ids) {
   return ids.at(-1);
 }
 const BAND_KIND={combatCards:'cards',weapons:'weapon',armor:'armour',relics:'relic'};
-/** BandedRewardIds(run, kind, ids) -> ids inside the run's act rank band (model/levelLists.js), or ids when the band holds none. */
-function BandedRewardIds(run,kind,ids) {
+const RARE_RANK_BOOST_CHANCE = 0.1;
+function rollRareRankBoost(run, key) {
+  return mulberry32(upgradeSeed(run.seed, `rankBoost:${key}`, 0))() < RARE_RANK_BOOST_CHANCE;
+}
+/** BandedRewardIds(run, kind, ids, opts) -> ids inside the character-level rank band (with +2 elite, +3 boss, +1 rare). */
+function BandedRewardIds(run,kind,ids,{pool='normal',rareBoost=false}={}) {
   const band=BAND_KIND[kind];
   if(!band)return ids;
-  return FilterToBand(band,TierFor(run),ids,band==='armour'?{keyOf:id=>`${run.class}.${id}`}:undefined);
+  const {minRank,maxRank}=RankBandForLevel({level:characterLevel(run),pool,rareBoost});
+  return FilterToRankBand(band,ids,{minRank,maxRank,...(band==='armour'?{keyOf:id=>`${run.class}.${id}`}:{})});
 }
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[],pool='normal'}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
@@ -227,7 +235,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   }
   const shelfCounts=new Map();
   // Owner 2026-10-19: reserve slot(s) for a basic/cantrip card of a stance the character lacks (never in a shop).
-  if(source!=='shop'&&categories.includes('combatCards')&&(!groups.length||groups.some(group=>group.weight>0&&group.categories.includes('combatCards'))))for(const id of reserveStanceCards(registries,run,rng,stream,BandedRewardIds(run,'combatCards',available.combatCards),count-options.length)) {
+  if(source!=='shop'&&categories.includes('combatCards')&&(!groups.length||groups.some(group=>group.weight>0&&group.categories.includes('combatCards'))))for(const id of reserveStanceCards(registries,run,rng,stream,BandedRewardIds(run,'combatCards',available.combatCards,{pool}),count-options.length)) {
     options.push({kind:'combatCards',id});available.combatCards=available.combatCards.filter(value=>value!==id);
   }
   // Ordinary combat draws weighted groups. Shops independently fill each shelf.
@@ -237,10 +245,8 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     const kind=itemsPerCategory===null?pickRewardCategory(rng,stream,kinds,groups):kinds[0];
     if(!kind)break;
     let ids=available[kind];
-    // Owner 2026-11-21 / 2026-11-22: level lists. Rewards AND shop shelves narrow cards, weapons, armour and relics to the act's
-    // combat-power rank band (model/levelLists.js); an empty band keeps the whole pool. The filter draws nothing, so seeded
-    // streams only see a smaller list. The owned-card exclusion and the shown-card history weighting run on the banded list.
-    ids=BandedRewardIds(run,kind,ids);
+    const rareBoost = rollRareRankBoost(run, `${offerId}:${options.length}`);
+    ids=BandedRewardIds(run,kind,ids,{pool,rareBoost});
     // Most card rewards are rank 1+; a small authored chance lets a lower-rank card through.
     const rule=gameContent(run,'rewards')?.eligibility?.combatCards;
     if(kind==='combatCards'&&rule){
@@ -258,9 +264,11 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   }
   // Card ranks (SPEC 13.4o): a drafted card arrives at rank 1..min(its track's level, rankMax), rolled now so the
   // offer, its save and its reload show one card. Level 1 (or no matching track) rolls nothing and moves no stream.
-  if(source!=='shop'&&coreCardRanks(run))for(const option of options){
+  if(source!=='shop'&&coreCardRanks(run))for(const [index, option] of options.entries()){
     if(option.kind!=='combatCards')continue;
-    const rank=rollDraftRank(registries,rng,cardTrackLevel(registries,run,registries.cards.get(option.id)));
+    const rareBoost = rollRareRankBoost(run, `${offerId}:draft:${index}`);
+    const maxBand = RankBandForLevel({ level: characterLevel(run), pool, rareBoost }).maxRank;
+    const rank=Math.min(maxBand, rollDraftRank(registries,rng,cardTrackLevel(registries,run,registries.cards.get(option.id))));
     if(rank>1)option.rank=rank;
   }
   // Owner 2026-10-31: remember every card shown (offers are cached per offerId, so a reload never counts twice).
@@ -315,7 +323,7 @@ export function GameProfileEliteRelicOffer(registries, run, rng, { offerId } = {
   if (run.gameProfileRewardOffers?.[offerId]) return run.gameProfileRewardOffers[offerId];
   const rules = gameContent(run, 'rewards'), rule = rules?.eliteRelic;
   if (!rule) return null;
-  let ids = pools(registries, run).relics;
+  let ids = BandedRewardIds(run, 'relics', pools(registries, run).relics, { pool: 'elite', rareBoost: rollRareRankBoost(run, offerId) });
   const options = [];
   for (let n = Number.isInteger(rule.choices) ? rule.choices : 1; n > 0 && ids.length; n--) {
     const id = weightedRelicPick(rules.eligibility?.relics?.weights, rng, 'cardRewards', ids);
@@ -390,9 +398,9 @@ export function GameProfileArmamentOffer(registries, run, rng, { offerId, pool =
     if (owned.has(id)) continue;
     candidates.push({ kind: 'armor', id, type: 'armour', family: `armour:${armourGroupOf.get(`${run.class}:${id}`) || ''}`, sub: id });
   }
-  // Owner 2026-11-21: level lists: weapons and armour come from the act's rank band (an empty band keeps every candidate of the kind).
-  const tier = TierFor(run), weaponRows = candidates.filter(row => row.kind === 'weapons'), armourRows = candidates.filter(row => row.kind === 'armor');
-  candidates.splice(0, candidates.length, ...FilterToBand('weapon', tier, weaponRows, { keyOf: row => row.id }), ...FilterToBand('armour', tier, armourRows, { keyOf: row => `${run.class}.${row.id}` }));
+  const { minRank, maxRank } = RankBandForLevel({ level: characterLevel(run), pool, rareBoost: rollRareRankBoost(run, offerId) });
+  const weaponRows = candidates.filter(row => row.kind === 'weapons'), armourRows = candidates.filter(row => row.kind === 'armor');
+  candidates.splice(0, candidates.length, ...FilterToRankBand('weapon', weaponRows, { minRank, maxRank, keyOf: row => row.id }), ...FilterToRankBand('armour', armourRows, { minRank, maxRank, keyOf: row => `${run.class}.${row.id}` }));
   const min = Number.isInteger(rule.min) && rule.min > 0 ? rule.min : 1, max = Number.isInteger(rule.max) && rule.max >= min ? rule.max : min;
   const wanted = min === max ? min : rng.int('cardRewards', min, max);
   const chosen = [];
@@ -565,8 +573,12 @@ function rollOfferPrice(registries,run,rng,table,option) {
   const range=Array.isArray(row)?row:row[def?.rarity]??row.common;
   if(!Array.isArray(range)||range.length!==2||!range.every(Number.isSafeInteger)||range[0]<0||range[1]<range[0])throw new Error(`Invalid shop price range for ${option.kind}`);
   const price=rng.int('shop',range[0],range[1]);
-  // Owner 2026-11-23: a ranked card offer costs +rankPricePct% per visible rank (rankedCardPrice.js); shop offers roll no rank today.
-  return option.kind==='combatCards'||option.kind==='weaponArts'?RankedCardPrice(run,price,option):price;
+  if (option.kind==='combatCards'||option.kind==='weaponArts') return RankedCardPrice(run,price,option);
+  if (['weapons','armor','relics'].includes(option.kind)) {
+    const itemRank = ItemRankOf(option.kind, def, run.class);
+    return itemRank > 0 ? RankedCardPrice(run, price, { rank: itemRank }) : price;
+  }
+  return price;
 }
 export { shopOfferPrice };
 /**

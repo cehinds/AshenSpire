@@ -12,7 +12,7 @@
 import { ElementRulesOf, ElementOfHit, HitsAllTargets, ForceRules } from '../model/elementIdentityRules.js';
 import { SpellScalingValue, SpellTraditionsActive } from '../model/spellTraditions.js';
 import { actorRangeKey, engagementBand, movedEngagementState } from '../model/combatEngagement.js';
-import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
+import { StatusCapsLifted, ReceiptPoiseLoss } from '../model/fixCoreMechanics.js';
 import { BandsActive, SetEnemyRow } from './bandRows.js';
 import * as Statuses from './statuses.js';
 import * as Actions from './actions.js';
@@ -143,13 +143,13 @@ export function ElementReceiptFinish(ctx, carrier, receipt, view, pool) {
   const rules = ElementRulesOf(ctx);
   if (!rules || !receipt) return receipt;
   const element = ElementOfHit(carrier);
-  const dealt = (receipt.poiseMitigated || 0) + (receipt.poiseDrain || 0);
+  const dealt = ReceiptPoiseLoss(receipt);
   let extra = 0;
   if (view?.ignored > 0) extra += view.ignored;
   // A fight saved with `elements.force.poiseMultiplier` keeps the old Force: x1.5 Poise damage (extra = (multiplier - 1) of what the hit did).
   const force = ForceRules(ctx);
   if (element === 'force' && !receipt.evaded && force.poiseMultiplier !== null && force.poiseShare === null) extra += Math.floor(dealt * (force.poiseMultiplier - 1));
-  const left = Math.max(0, (pool?.value || 0) - (receipt.poiseMitigated || 0) - (receipt.poiseDrain || 0));
+  const left = Math.max(0, (pool?.value || 0) - dealt);
   const added = receipt.evaded ? 0 : Math.min(extra, left);
   if (added > 0) receipt.poiseDrain = (receipt.poiseDrain || 0) + added;
   receipt.element = { id: element, heal: receipt.element?.heal || 0, poiseAdded: added, poiseIgnored: view?.ignored || 0, ignoresPoise: !!view?.all };

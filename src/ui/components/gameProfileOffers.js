@@ -541,7 +541,7 @@ export function MountGameProfileOffers(appRoot, {
             && onEditDeck
             && canEditDeck
         );
-        keepButton.hidden = !isCardMode;
+        keepButton.hidden = !isCardMode || offer?.source === 'combat';
         const confirmLabelKey = isCardMode
             ? 'reward.configured.addToDeck'
             : CONFIRM_LABEL_KEY;
@@ -583,10 +583,13 @@ export function MountGameProfileOffers(appRoot, {
                 ];
                 if (!isCardKind(option.kind)) return [{ id: 'take', verb: translate(CONFIRM_LABEL_KEY), enabled: canTake, reason: '' }];
                 const refusal = addRefusal?.(optionIndex);
-                return [
+                const actions = [
                     { id: 'addToDeck', verb: translate('reward.configured.addToDeck'), enabled: canTake && !refusal, reason: refusal ? describeRefusal(refusal) : '' },
-                    { id: 'addToLibrary', verb: translate('reward.configured.sendToLibrary'), enabled: canTake, reason: '' },
                 ];
+                if (offer?.source !== 'combat') {
+                    actions.push({ id: 'addToLibrary', verb: translate('reward.configured.sendToLibrary'), enabled: canTake, reason: '' });
+                }
+                return actions;
             },
             commands: {
                 addToDeck: () => { selectOption(optionIndex); return commitPick(index => onAddToDeck(index)); },
@@ -1110,8 +1113,10 @@ function mountCardPickDoor(appRoot, doorArgs)
                 const deckReason = deckRefusalReason(optionIndex);
                 const actions = [
                     { id: 'addToDeck', verb: translate('reward.configured.addToDeck'), enabled: canTake && !deckReason, reason: deckReason },
-                    { id: 'addToLibrary', verb: translate('reward.configured.sendToLibrary'), enabled: canTake, reason: '' },
                 ];
+                if (offer?.source !== 'combat') {
+                    actions.push({ id: 'addToLibrary', verb: translate('reward.configured.sendToLibrary'), enabled: canTake, reason: '' });
+                }
                 if (onEditDeck && canEditDeck && picksAllowed === 1)
                 {
                     actions.push({ id: 'editDeck', verb: translate('reward.configured.editDeck'), enabled: canTake, reason: '' });

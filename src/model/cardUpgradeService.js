@@ -62,6 +62,8 @@ export function commitCardUpgrade(run, registries, quote) {
   run.smithingStones = (Number.isSafeInteger(run.smithingStones) ? run.smithingStones : 0) - plan.cost;
   instance.upgradeSteps = [...upgradeStepsOf(instance), step];
   instance.upgraded = true;
+  if (step?.nextRarity) instance.rarityOverride = step.nextRarity;
+  if (Number.isInteger(step?.nextRank) && step.nextRank > (instance.rank || 0)) instance.rank = step.nextRank;
   return { instanceId: plan.instanceId, step, n: plan.n, spentStones: plan.cost };
 }
 

@@ -340,6 +340,18 @@
       "target": "self",
       "projection": "redirects one hit",
       "why": "Taunt-like."
+    },
+    "wisdom": {
+      "weight": 15,
+      "target": "self",
+      "projection": "+1 Poise and +1 Divine damage per stack",
+      "why": "poiseAdd 1 + divineDamageAdd 1, no decay."
+    },
+    "intelligence": {
+      "weight": 15,
+      "target": "self",
+      "projection": "+1 magic damage (+2 Arcane) per stack",
+      "why": "magicDamageAdd 1 + arcaneDamageAdd 1, no decay."
     }
   },
   "keywords": {
@@ -2201,14 +2213,28 @@
       "why": "Legacy framework marker with no card using it.",
       "domain": "utility",
       "label": "manaCharge"
+    },
+    "dexDamage": {
+      "weight": 3,
+      "projection": "adds DEX to existing damage",
+      "why": "strictly adds Dexterity damage without replacing Strength.",
+      "domain": "card",
+      "label": "Deft"
+    },
+    "trait:recurring": {
+      "weight": 15,
+      "projection": "buffs recur at the start of every turn for the fight",
+      "why": "Owner ruling: default cost +15 CP, usually paired with Exhaust.",
+      "domain": "trait",
+      "label": "Recurring"
     }
   },
   "conditionals": {
     "probability": {
-      "4": 0.9,
-      "3": 0.7,
+      "1": 0.2,
       "2": 0.5,
-      "1": 0.2
+      "3": 0.7,
+      "4": 0.9
     },
     "tags": {
       "ability:ash-opener": 4,
@@ -3659,9 +3685,9 @@
       "unarmedNote": "bare hands: Strike 3, Guard 1 (the baseline a weapon profile is measured against)"
     },
     "poiseThreshold": {
-      "baseline": 4,
+      "baseline": 0,
       "perPoint": 0.5,
-      "why": "median piece is 4; each point delays a Break (skipped turn + Vulnerable)"
+      "why": "Poise on armaments strictly adds weighted poise."
     },
     "range": {
       "appliesTo": "every Strike (3 in 3 rounds)",
@@ -4244,7 +4270,8 @@
         "ramp.honed": "Honed",
         "finesse": "Deft",
         "trait:unavoidable": "True",
-        "trait:impact": "Impact"
+        "trait:impact": "Impact",
+        "dexDamage": "Deft"
       },
       "base": {
         "maneuver:smash": "Smash",

@@ -109,17 +109,7 @@ export function RecomputeLiveStats(ctx, entity) {
   const source = attributeRow(entity);
   if (source && base.attributeRow) for (const id of RATING_IDS) source[id] = whole(base.attributeRow[id] + delta(id));
   if (Number.isFinite(base.poiseMeterMax) && entity.poiseMeter) entity.poiseMeter.max = whole(base.poiseMeterMax + delta('poise'));
-  // Pools.
-  const hp = whole(base.maxHp + delta('hp'));
-  if (Number.isFinite(base.maxHp)) { entity.maxHp = Math.max(1, hp); entity.hp = Math.min(entity.hp, entity.maxHp); }
-  if (Number.isFinite(base.maxStamina)) {
-    const max = whole(base.maxStamina + delta('stamina'));
-    const grown = max - entity.maxStamina;
-    resize(entity, 'maxStamina', max, ['stamina']);
-    if (Number.isFinite(base.energyMax)) { resize(entity, 'energyMax', whole(base.energyMax + delta('stamina')), ['energy']); }
-    if (grown < 0 && Number.isFinite(entity.energy)) entity.energy = Math.min(entity.energy, entity.energyMax ?? max);
-  }
-  if (Number.isFinite(base.maxMana)) resize(entity, 'maxMana', whole(base.maxMana + delta('mana')), ['mana']);
+  // Temporary in-combat attribute boosts do NOT change HP, Stamina, or Mana maxima/pools.
   // Poise and Ward pools move by the same rating delta their maxima were priced from at the fight start.
   if (entity.persistentPoise && Number.isFinite(base.persistentPoiseMax)) {
     // Barrier and Ward stacks add their Poise on top (persistentPoise.barrierBonus, SPEC 4.1a). With a rating table the maximum comes from the

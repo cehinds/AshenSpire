@@ -15,7 +15,8 @@ import { coreStatusPresentation } from '../model/statusPresentation.js';
 import { startingWeaknesses } from './weaknesses.js';
 import { seedElementStatuses } from './elementLightning.js';
 import { scaleOwnElementActions } from './elementRules.js';
-import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules, FixCoreCounterStacks } from '../model/fixCoreMechanics.js';
+import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules, FixCoreCounterStacks, FixCoreWeaponPoiseRules } from '../model/fixCoreMechanics.js';
+import { WeaponPoiseDamage } from '../model/weaponPoise.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
@@ -587,6 +588,11 @@ function startPlayerTurn(combat) {
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });
+  for (const recurring of p.recurringBuffs || []) {
+    for (const eff of recurring.effects || []) {
+      combat.enqueue({ effect: eff, source: p, owner: p, target: p, meta: { recurring: true, cardId: recurring.cardId } });
+    }
+  }
   proposalTurn(combat,p,'start');
   fireOwnerHooks(combat, p, 'ownerTurnStart');
   drainQueue(combat);
@@ -1988,6 +1994,16 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   QueueItemSkillPlayed(combat, p, def); // W25 step 6: the first skill each turn draws
   const gearStrengthGrants = QueueGearCardPlayed(combat, p, def, cardRef); // owner, 2026-11-18: what playing a card grants (gear play grants)
   if (gearStrengthGrants.length) combat.pendingAbilityPlay.gearStrengthGrants = gearStrengthGrants;
+  const allCardTags = [...(def.tags || []), ...(cardRef.tags || []), ...(cardRef.authoredTags || [])];
+  if (allCardTags.includes('trait:recurring')) {
+    const recurringEffects = (tacticalEffects || []).filter((eff) =>
+      eff && eff.target === 'self' && (eff.op === 'changeAttribute' || (eff.op === 'applyStatus' && !['weak', 'frail', 'vulnerable', 'bleed', 'burn'].includes(eff.status)))
+    );
+    if (recurringEffects.length) {
+      p.recurringBuffs ||= [];
+      p.recurringBuffs.push({ cardId: inst.cardId, name: def.name, effects: structuredClone(recurringEffects) });
+    }
+  }
   drainQueue(combat);
   // An enemy reaction window on this card's own root: it resolves when the root resumes.
   if (Reactions.deferRootPlay(combat)) return;
@@ -2444,6 +2460,22 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         }
         // An element packet hit (owner, 2026-11-19) prints its physical part in {damage} and its magic part in {packet}: the card's authored amount rides on the row.
         if (carrier.magicShare > 0 && carrier.magicShare < 1) entry.packetBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
+        // Dynamic weapon poise damage when attacking (JSON-configured weapon poise, +20% bow/staff/sceptre, 1.25x Smash, 2x Smash vs Guarding).
+        const weaponPoiseRules = !isCounterReply && (!primary || primary.kind === 'enemy') ? FixCoreWeaponPoiseRules(combat) : null;
+        if (weaponPoiseRules) {
+          const aimedEnemy = target?.kind === 'enemy' && target.alive ? target : (living.length === 1 ? living[0] : null);
+          const hitCount = Math.max(1, Math.floor(entry.hits || 1));
+          const wp = WeaponPoiseDamage(combat, p, aimedEnemy, carrier, { defending: aimedEnemy?.combatStance?.maneuver || 'neutral', rules: weaponPoiseRules });
+          if (wp.amount > 0) {
+            entry.weaponPoise = wp.amount;
+            entry.weaponPoiseBase = wp.baseAmount;
+            entry.weaponPoiseTotal = wp.amount * hitCount;
+            entry.perTargetWeaponPoise = Object.fromEntries(reached.map(e => [
+              e.id,
+              WeaponPoiseDamage(combat, p, e, carrier, { defending: e.combatStance?.maneuver || 'neutral', rules: weaponPoiseRules }).amount * hitCount,
+            ]));
+          }
+        }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
         // the boosted number. Engine states the fact; display reads it.
@@ -2624,6 +2656,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     staminaCost: combat.combatExpansionVersion === 2 ? rangeCosts.stamina : shownCost,
     needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
     values,
+    ...((() => {
+      const wpTotal = values.reduce((sum, row) => sum + (row.op === 'damage' && row.weaponPoiseTotal > 0 ? row.weaponPoiseTotal : 0), 0);
+      return wpTotal > 0 ? { weaponPoise: wpTotal } : {};
+    })()),
     ...(supportCounterReturn ? { counterReturn: supportCounterReturn } : {}),
     // The Counter stacks this play grants (the card's own, plus Mail's gain bonus), the way Evade names its grant.
     ...(coreCounterCard && FixCoreCounterStacks(combat) && counterStackGrant > 0 ? { counterStackGrant } : {}),

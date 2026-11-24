@@ -415,8 +415,11 @@ export function renderCard(registries, ref, opts = {}) {
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null);
+    // Dynamic weapon poise fallback for authored-template cards when attacking.
+    const weaponPoiseNote = !faceLines && opts.preview?.weaponPoise > 0 && !/Poise/i.test(authoredRules)
+      ? ` <span class="val">${esc(opts.preview.weaponPoise)}</span> <span class="st-bleed">Poise</span>.` : '';
     // Under version-one combat a sentence that opens "In expanded combat," does not apply, so the face need not carry it.
-    const appliedRules = expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '');
+    const appliedRules = (expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '')) + weaponPoiseNote;
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
     const summaryHtml = Array.isArray(def.faceTemplate) && def.faceTemplate.length
       ? def.faceTemplate.map(line => fillTemplate({ id: def.id, type: def.type, tags: def.tags, cardTags: def.cardTags, combatProfile: def.combatProfile, evade: def.evade, textTemplate: line.replace(/\[v2:([^\]]*)\]/g, expanded ? '$1' : '').replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },

@@ -273,21 +273,40 @@ export function levelPace(registries, { pointsPerLevel = null } = {}) {
  * per-fight cap threw away, so the spoils receipt can say both (Codex, #1349).
  * A non-positive or non-finite amount writes nothing.
  */
+/**
+ * Count how many levels in `(fromLevel, toLevel]` grant an attribute point
+ * when points are awarded every `every` levels (e.g. 4, 8, 12, 16, 20).
+ */
+export function attributePointsEarnedBetween(fromLevel, toLevel, every = 4, pointsPerGrant = 1) {
+  if (!Number.isInteger(toLevel) || toLevel <= fromLevel || !Number.isInteger(pointsPerGrant) || pointsPerGrant <= 0) return 0;
+  const step = Number.isInteger(every) && every >= 1 ? every : 1;
+  let grants = 0;
+  for (let lv = fromLevel + 1; lv <= toLevel; lv += 1) {
+    if (lv % step === 0) grants += 1;
+  }
+  return grants * pointsPerGrant;
+}
+
 export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, grantStats = true } = {}) {
   if (!run) throw new Error('awardLevelXp: no run');
   if (!run.level || typeof run.level !== 'object') run.level = emptyLevel();
   const row = run.level;
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
-  if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0, gained: 0, discarded: 0 };
+  if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, rankUps: 0, thresholds: 0, gained: 0, discarded: 0 };
   const configured = gameModule(run,'progression');
   const perLevel = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const t = grantTable(registries);
+  const every = Number.isInteger(t.attributePointEveryLevels) && t.attributePointEveryLevels >= 1 ? t.attributePointEveryLevels : 4;
+  const rankUpPerLevel = Number.isInteger(t.rankUpPerLevel) && t.rankUpPerLevel >= 0 ? t.rankUpPerLevel : 1;
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
-  const points = levelUps * perLevel;
+  const points = attributePointsEarnedBetween(before, climb.level, every, perLevel);
+  const rankUps = configured?.cardRanks !== false ? levelUps * rankUpPerLevel : 0;
   row.xp = climb.xp;
   row.level = climb.level;
   row.unspentPoints += points;
+  if (rankUps > 0) row.pendingRankUps = (Number.isInteger(row.pendingRankUps) ? row.pendingRankUps : 0) + rankUps;
   let thresholds = 0;
   if (levelUps > 0) {
     thresholds = rederivePools(registries, run, `level ${before} → ${row.level}`);
@@ -297,10 +316,10 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
       field: 'level',
       was: { level: before, unspentPoints: row.unspentPoints - points },
       now: { level: row.level, unspentPoints: row.unspentPoints },
-      why: `${gain} XP paid; ${levelUps} level${levelUps === 1 ? '' : 's'} climbed at ${perLevel} point(s) each (${row.xp} XP toward level ${row.level + 1}, ${xpToNext(registries, row.level)} needed)${climb.cappedBy === 'fight' ? `; capped at ${levelUps} a fight, ${climb.discarded} XP past it discarded` : ''}`,
+      why: `${gain} XP paid; ${levelUps} level${levelUps === 1 ? '' : 's'} climbed (${points} attribute point(s), ${rankUps} rank-up(s)) (${row.xp} XP toward level ${row.level + 1}, ${xpToNext(registries, row.level)} needed)${climb.cappedBy === 'fight' ? `; capped at ${levelUps} a fight, ${climb.discarded} XP past it discarded` : ''}`,
     });
   }
-  return { before, after: row.level, levelUps, points, thresholds, gained: gain, discarded: climb.discarded };
+  return { before, after: row.level, levelUps, points, rankUps, thresholds, gained: gain, discarded: climb.discarded };
 }
 
 /**

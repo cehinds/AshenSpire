@@ -13,7 +13,7 @@ export const CARD_STAT_MODIFIER_IDS = Object.freeze([
 ]);
 
 const shippedStatuses = new Map(statuses.map(status => [status.id, status]));
-const legacyAttributes = { strength: 'attackDamageAdd', dexterity: 'blockAdd' };
+const legacyAttributes = { strength: 'attackDamageAdd', dexterity: 'blockAdd', wisdom: 'poiseAdd', intelligence: 'magicDamageAdd' };
 const maxLinkedDepth = 8;
 
 function registryRow(registry, id) {

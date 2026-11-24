@@ -14,6 +14,8 @@ import { mountRows } from './cardExtraction.js';
 import { syncZones } from './state.js';
 import { gameProfileWeaponArtIds } from './gameProfileRewards.js';
 import { RankedCardPrice } from './rankedCardPrice.js';
+import { ItemRankOf } from './itemRank.js';
+import { OwnCardRank } from './cardRank.js';
 
 const revision = stock => stock?.tradeRevision || 0;
 /** The stock a sale at `shopId` trades against: the trader's workshop or a Blacksmith visit when one is open, else the merchant's offer. */
@@ -25,6 +27,7 @@ export function VendorSaleStock(run, shopId) {
 }
 const tableKinds = { weapons: 'armament', armor: 'armour', relics: 'relic', potions: 'flask', combatCards: 'card', weaponArts: 'weaponArt' };
 const CARD_SALE_KINDS = new Set(['combatCards', 'weaponArts']);
+const RANKED_ITEM_KINDS = new Set(['weapons', 'armor', 'relics']);
 /**
  * A card's sale (owner, 2026-11-23): `balance.shop.cardSellMultiplier` times the ordinary sale, never above the buy-price
  * basis the sale is figured from, so buying a card and selling it back never profits. Other kinds keep the ordinary sale.
@@ -36,8 +39,12 @@ function CardSalePrice(registries, sale, basis) {
 function salePrice(registries, run, stock, kind, def, item = null) {
   const table = gameModule(run, 'shops')?.priceTable ?? gameContent(run, 'shops')?.priceTable;
   const row = table?.[tableKinds[kind]], range = Array.isArray(row) ? row : row?.[def?.rarity] ?? row?.common;
-  // A card's basis is its rank-raised buy price (rankedCardPrice.js), so the card sale cap reads the rank too.
-  const minimum = CARD_SALE_KINDS.has(kind) ? RankedCardPrice(run, range?.[0] ?? stock.price, item) : range?.[0] ?? stock.price;
+  const baseMin = range?.[0] ?? stock.price;
+  const minimum = CARD_SALE_KINDS.has(kind)
+    ? RankedCardPrice(run, baseMin, item)
+    : RANKED_ITEM_KINDS.has(kind) && def
+      ? RankedCardPrice(run, baseMin, { rank: ItemRankOf(kind, def, run.class) })
+      : baseMin;
   const paid = run.gameProfileShopPurchasePrices?.[`${kind}:${def?.id}`];
   const basis = Number.isSafeInteger(paid) && paid >= 0 ? Math.min(minimum, paid) : minimum;
   const fraction = registries.balance.shop.sellFraction;
@@ -141,4 +148,34 @@ export function commitGameProfileShopSale(registries, run, shopId, quote) {
     if (stock === liveStock) liveStock.tradeRevision = plan.revision + 1;
   }
   return { kind: plan.kind, identity: plan.identity, received: plan.price };
+}
+
+/**
+ * Group identical sellable cards (`combatCards`, `weaponArts`) into stacked rows with `count` and `instanceIds`.
+ * Non-card rows pass through with `count: 1`.
+ */
+export function StackCardSalePlans(plans = [], run = null) {
+  const out = [];
+  const cardStacks = new Map();
+  const sideboard = run?.sideboard || [];
+  for (const plan of plans) {
+    if (!CARD_SALE_KINDS.has(plan?.kind)) {
+      out.push({ ...plan, count: 1, instanceIds: [plan.identity], stackKey: `${plan.kind}:${plan.identity}` });
+      continue;
+    }
+    const inst = sideboard.find(card => card && card.instanceId === plan.identity);
+    const rank = OwnCardRank(inst);
+    const stepsKey = JSON.stringify(inst?.upgradeSteps || []);
+    const stackKey = [plan.kind, plan.def?.id || '', rank, inst?.upgraded ? 1 : 0, inst?.rarityOverride || '', stepsKey, plan.price, plan.ok ? 1 : 0, plan.reason || ''].join('|');
+    const existing = cardStacks.get(stackKey);
+    if (existing) {
+      existing.count += 1;
+      existing.instanceIds.push(plan.identity);
+    } else {
+      const entry = { ...plan, count: 1, instanceIds: [plan.identity], stackKey };
+      cardStacks.set(stackKey, entry);
+      out.push(entry);
+    }
+  }
+  return out;
 }

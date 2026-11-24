@@ -7,17 +7,18 @@ import { mulberry32 } from './rng.js';
 import { applyUpgradeSteps, MAX_CARD_UPGRADES, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
+import { EvaluateUpgradeStepCp } from './cardUpgradeCp.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 
 export { STACK_CAPS };
 // Owner ask 2026-10-31: poise, a range / targeting / stance / school / element change and a rank-down join the
 // pool. `range`..`rankDown` are all `tag` steps (cardUpgrade.js); they are separate options so a choice of
 // several never offers the same thing twice.
-const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5,
+const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, costSwap: 8, hits: 5,
   poise: 12, range: 3, targeting: 6, maneuver: 5, school: 4, dmgType: 5, element: 6, rankDown: 3,
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
-  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8, 'fx:counter': 8,
+  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8, 'fx:counter': 8, 'fx:recurring': 5,
   // Easing a drawback (playtest 2026-11-17, theme C): offered only on a card that has it, and weighted to come up.
   'fx:unethereal': 12, 'fx:steady': 12,
   // Owner, 2026-11-19: a signed `stk` lowers a drawback's count (self debuff, enemy buff, discard, added status cards); dropped at 0.
@@ -30,7 +31,7 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
 export const UPGRADE_GROUPS = Object.freeze(['ease', 'eff', 'new', 'identity']);
 const GROUP_OF = Object.freeze({
   'fx:unexhaust': 'ease', 'fx:unethereal': 'ease', 'fx:steady': 'ease', stkEase: 'ease',
-  dmg: 'eff', blk: 'eff', stk: 'eff', cost: 'eff', hits: 'eff', poise: 'eff', element: 'eff', rankDown: 'eff',
+  dmg: 'eff', blk: 'eff', stk: 'eff', cost: 'eff', costSwap: 'eff', hits: 'eff', poise: 'eff', element: 'eff', rankDown: 'eff',
   range: 'identity', targeting: 'identity', maneuver: 'identity', school: 'identity', dmgType: 'identity',
 });
 /** The group an option kind belongs to; every `fx:` effect and `addStatus` / `attr` is a new effect. */
@@ -141,10 +142,10 @@ export const UPGRADE_FAMILIES = Object.freeze({
   damage: Object.freeze(['dmg', 'hits', 'targeting', 'element', 'fx:target']),
   defense: Object.freeze(['blk', 'fx:block', 'fx:counter']),
   pressure: Object.freeze(['stk', 'stkEase', 'addStatus', 'poise']),
-  cost: Object.freeze(['cost', 'fx:steady', 'rankDown']),
+  cost: Object.freeze(['cost', 'costSwap', 'fx:steady', 'rankDown']),
   flow: Object.freeze(['fx:draw', 'fx:cycle', 'fx:shuffle', 'fx:cull', 'fx:copy']),
   keyword: Object.freeze(['fx:unexhaust', 'fx:innate', 'fx:retain', 'fx:holdOne', 'fx:unethereal']),
-  form: Object.freeze(['range', 'maneuver', 'school', 'dmgType', 'fx:reaction', 'attr']),
+  form: Object.freeze(['range', 'maneuver', 'school', 'dmgType', 'fx:reaction', 'fx:recurring', 'attr']),
 });
 // Kinds a random roll never offers (owner, 2026-11-20: no "no upgrade"): a run-long +1 attribute (`attr`) and a rank
 // down (`rankDown`) change nothing on a single play. Saved steps of these kinds still resolve; a card's authored
@@ -246,6 +247,16 @@ function options(base, current, applied, limits, rarity = 0) {
       const one = { sp: current.staminaCost - 1 >= 0 && current.cost - 1 >= 0 && !!by.sp, mp: !!by.mp };
       if (one.sp && one.mp) found.cost = { combo: ['sp', 'mp'] };
     } else if (pools.length) found.cost = { pools, by };
+  }
+  if (!applied.some((s) => s.k === 'costSwap')) {
+    const dirs = [];
+    if (Number.isInteger(current.manaCost) && current.manaCost >= 1 && typeof current.cost === 'number') dirs.push('mpToSp');
+    if (Number.isInteger(current.staminaCost) && current.cost === current.staminaCost && current.staminaCost >= 2
+      && !tagsOf(current).includes(RANK_DOWN_TAG)
+      && hitFloor({ ...current, manaCost: (current.manaCost || 0) + 1 }, currentHits(current.effects || [])) <= current.staminaCost - 2) {
+      dirs.push('spToMp');
+    }
+    if (dirs.length) found.costSwap = { dirs };
   }
   // A Power eases its drawbacks too (Ethereal, a rising cost, a debuff); it has no Exhaust to drop.
   if (type === 'power') addDrawbackEase(base, current, found);
@@ -370,6 +381,8 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity = 
   // Owner, 2026-11-14: Reaction is open to every stance (attack, smash, sweep, spells, skills). A card that already reacts (Defense, Counter,
   // or `trait:reaction`) and an X-cost card are left out; Powers never reach this menu.
   if (!tags.includes('trait:reaction') && !['defend', 'counter'].includes(maneuver) && !tags.includes('maneuver:defend') && !tags.includes('maneuver:counter') && current.cost !== 'X' && base.cost !== 'X') set('reaction');
+  const hasSelfBuff = effects.some((e) => e && e.target === 'self' && (e.op === 'changeAttribute' || (e.op === 'applyStatus' && !SELF_DEBUFFS.includes(e.status))));
+  if (hasSelfBuff && !tags.includes('trait:recurring')) set('recurring');
 }
 
 /** Ethereal and a rising cost (both `fx` steps) and the signed `stk` (proposal section 7) lower what a card's drawback costs. */
@@ -555,6 +568,7 @@ const stepOf = (kind, option, choice, rarity = 0) => {
       const pool = pickOf(option.pools);
       return rated(option.by?.[pool] > 1 ? { k: 'cost', pool, n: option.by[pool] } : { k: 'cost', pool });
     }
+    case 'costSwap': return rated({ k: 'costSwap', dir: pickOf(option.dirs) });
     case 'poise': return rated({ k: 'poise', n: option.n });
     case 'attr': return rated({ k: 'attr', stat: pickOf(option.stats), n: 1 });
     case 'range': case 'rankDown': return rated({ k: 'tag', tag: option.tag });
@@ -598,11 +612,18 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const allowed = (kind) => (menu ? menu.includes(kind) : !DUD_KINDS.includes(kind));
   // An ease above common is a combo of the ease and a partner step (`also`): the partner must be of a family still open, so the
   // combo never brings back a family already on offer. `optionAt` drops the closed partners; an ease with none left is closed.
+  const cpCheck = (r, kind, opt) => {
+    if (!opt || limits.playerLevel == null) return opt;
+    const probe = stepOf(kind, opt, 0, r);
+    const res = EvaluateUpgradeStepCp({ baseDef, currentDef: current, instance: limits.instance || null, step: probe, playerLevel: limits.playerLevel });
+    return res.allowed ? opt : null;
+  };
   const optionAt = (r, kind) => {
     const option = perRarity[r][kind];
-    if (!option?.also || limits.everyFamily) return option;
+    if (!option) return null;
+    if (!option.also || limits.everyFamily) return cpCheck(r, kind, option);
     const also = option.also.filter((partner) => !takenFamilies.has(UpgradeKindFamily(partner.kind, partner.option)));
-    return also.length ? { ...option, also } : null;
+    return also.length ? cpCheck(r, kind, { ...option, also }) : null;
   };
   const open = (r, kind) => !takenKinds.has(kind) && !takenFamilies.has(UpgradeKindFamily(kind, perRarity[r][kind])) && !!optionAt(r, kind);
   // kindsAt(r, group): the kinds still open at rarity r, in WEIGHTS order.
@@ -636,7 +657,16 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     const { key: rarity, rest: afterRarity } = pickByWeight(rarities, afterCategory);
     const inGroup = here(rarity);
     const { key: kind } = pickByWeight(inGroup.map((candidate) => [candidate, WEIGHTS[candidate]]), afterRarity);
-    const step = stepOf(kind, optionAt(rarity, kind), choice, rarity);
+    let step = stepOf(kind, optionAt(rarity, kind), choice, rarity);
+    if (limits.playerLevel != null) {
+      const cpRes = EvaluateUpgradeStepCp({ baseDef, currentDef: current, instance: limits.instance || null, step, playerLevel: limits.playerLevel });
+      const curRarity = limits.instance?.rarityOverride || current.rarity || baseDef.rarity || 'common';
+      const curRank = limits.cardRank ?? 0;
+      if (cpRes.allowed) {
+        if (cpRes.rarity && cpRes.rarity !== curRarity) step = { ...step, nextRarity: cpRes.rarity };
+        if (Number.isInteger(cpRes.rank) && cpRes.rank > curRank) step = { ...step, nextRank: cpRes.rank };
+      }
+    }
     out.push(step);
     // The picked family leaves the draw: the next option is of another family (with everyFamily, only the kind).
     if (limits.everyFamily) takenKinds.add(kind); else for (const family of [UpgradeKindFamily(kind, perRarity[rarity][kind]), ...UpgradeStepFamilies(step)]) takenFamilies.add(family);
