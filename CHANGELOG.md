@@ -32,13 +32,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
-
 ## 2026-11-24
 
 - **The desktop render check script is tidied** ([#2976](https://github.com/cehinds/AshenSpire/pull/2976), `0.7.5.84`). The packaged-app render check script is reformatted and typed, with no change in what it does.
-
-## 2026-11-24
-
 - **Ward is now a health buffer on the health bar** ([#2971](https://github.com/cehinds/AshenSpire/pull/2971), `0.7.5.84`). Ward no longer adds to Poise: each Ward stack adds 5 Ward HP in blue on the health bar, and hits resolve Block first, then Ward, then Poise and Health. Bonus Poise (`Gain N Poise`) is now shown in purple on the Poise bar. Fights saved before this keep their existing rules.
 - **Score Studio: search the Add Feature list** ([#2970](https://github.com/cehinds/AshenSpire/pull/2970), `0.7.5.82`). A search box narrows the list as you type, by name or description, and picks the best match so Enter adds it. Escape clears it.
 - **Score Studio weights say what each number does** ([#2965](https://github.com/cehinds/AshenSpire/pull/2965), `0.7.5.80`). Each row reads as a sentence, like "1 pts per 3 damage", with a live example under it, like "6 damage = 2 pts". Rows whose box the score does not use say so.
