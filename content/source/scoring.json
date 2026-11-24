@@ -4181,8 +4181,8 @@
         "damage:arcane": "Arcane",
         "school:decay": "Blight",
         "damage:decay": "Blight",
-        "school:divine": "Holy",
-        "damage:sacred": "Holy",
+        "school:divine": "Divine",
+        "damage:sacred": "Divine",
         "school:illusion": "Mind",
         "damage:psychic": "Mind",
         "school:earth": "Stone",
@@ -4287,7 +4287,7 @@
         "damage": "Keen"
       },
       "limit": {
-        "maxChars": 20,
+        "maxChars": 24,
         "keep": [
           "base",
           "rank",

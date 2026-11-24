@@ -175,8 +175,8 @@ const KEEP = ['base', 'rank', 'upgrade', 'element', 'effect', 'rarity'];
 // A rare Rank 2 frost bolt that burns: 'Greater Searing Frost Bolt II+' in full (31 characters).
 const frostBolt = magicHit(['school:frost'], { rarity: 'rare', mp: 0, dmg: 6, statuses: [['burn', 2, 'enemy']] });
 
-test('card names: the shipped limit is 20 characters, keeping base, rank, upgrade, element, effect, rarity', () => {
-  assert.deepEqual(scoring.naming.card.limit, { maxChars: 20, keep: KEEP });
+test('card names: the shipped limit is 24 characters, keeping base, rank, upgrade, element, effect, rarity', () => {
+  assert.deepEqual(scoring.naming.card.limit, { maxChars: 24, keep: KEEP });
 });
 
 test('card names: the length limit trims rarity, then effect, then element', () => {
@@ -188,7 +188,7 @@ test('card names: the length limit trims rarity, then effect, then element', () 
   const p2 = CardNameParts(frostBolt, 1, limitScoring({ maxChars: 20, keep: KEEP }));
   assert.equal(p2.name, 'Frost Bolt II+');
   assert.deepEqual(p2.dropped, ['rarity', 'effect']);
-  assert.equal(CardName(frostBolt, 1), 'Frost Bolt II+'); // the shipped limit
+  assert.equal(CardName(frostBolt, 1), 'Searing Frost Bolt II+'); // the shipped limit (24)
 });
 
 test('card names: base, rank and upgrade are never dropped, even when still too long', () => {
@@ -207,4 +207,10 @@ test('card names: no limit block means no limit', () => {
   const p = CardNameParts(frostBolt, 2, noLimit);
   assert.deepEqual(p.dropped, []);
   assert.equal(p.name, 'Greater Searing Frost Bolt II+2');
+});
+
+test('card names: the divine words are "Divine"', () => {
+  assert.equal(FullName(magicHit(['school:divine'])), 'Divine Bolt');
+  assert.equal(FullName(magicHit(['damage:sacred'])), 'Divine Bolt');
+  assert.equal(FullName(magicHit(['tradition:divine'])), 'Divine Bolt');
 });
