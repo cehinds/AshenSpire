@@ -17,10 +17,13 @@ import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeS
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
+import { DEFAULT_NAME_SET_ID, DefaultNameSet, CaptureNameSet, TurnOnAutoNames, ApplyNameSet, SortedNameSets, ValidNameSets, MergeNameSets, SplitSavedConfig, JoinSavedConfig, DefaultNameSetLabel } from './nameSets.js';
 import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
+// Saved name sets (Rename all), kept apart from the draft so they survive a clean or exported draft.
+const NAME_SETS_STORAGE_KEY = 'ashenspire:scoreStudioNameSets:v1';
 const PATH_STORAGE_KEY = 'ashenspire:scoreStudioPath:v1';
 const DRAFT_SAVE_DELAY_MS = 300;
 const TEXT_EDIT_BURST_MS = 1000;
@@ -112,6 +115,9 @@ const state = {
   },
   repoArtLayers: null,  // art layers as loaded from the repo (or the built-in default); set in boot
   abSlots: { A: null, B: null, activeLabel: 'Draft' },
+  // Rename all: the repo's authored names (never overwritten) and the saved name sets, newest first.
+  defaultNameSet: null,
+  nameSets: [],
   sandbox: { combat: null, classId: 'reaver', enemyId: 'wanderingSoldier', appliedScoring: null, customCardId: null, log: [] },
 };
 
@@ -704,6 +710,106 @@ function renderNameHint(def, sc = scoreCardEntry(def)) {
   const source = parts.source || 'no second effect';
   const trimmed = parts.dropped?.length ? ` · Trimmed: ${parts.dropped.join(', ')}` : '';
   hint.textContent = `Convention: ${parts.name}${trimmed} · from ${source} · ${RankName(sc.rank)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Rename all and name sets (owner, 2026-11-24)
+// ---------------------------------------------------------------------------
+// Rename all turns Auto-name on for every card. Before it, the owner may save the current names as a set;
+// Restore names puts back Default names (the repo's authored names) or a saved set, with Auto-name off.
+// Sets stay in the studio (local storage and the saved JSON config); Export never writes them.
+let selectedNameSetId = DEFAULT_NAME_SET_ID;
+
+function loadStoredNameSets() {
+  try { state.nameSets = SortedNameSets(ValidNameSets(JSON.parse(localStorage.getItem(NAME_SETS_STORAGE_KEY) || '[]'))); } catch { state.nameSets = []; }
+}
+
+function storeNameSets() {
+  try { localStorage.setItem(NAME_SETS_STORAGE_KEY, JSON.stringify(state.nameSets)); } catch { toast('Could not keep the name sets: browser storage is full'); }
+}
+
+function nameSetById(id) {
+  return id === DEFAULT_NAME_SET_ID ? state.defaultNameSet : state.nameSets.find((set) => set.id === id) || null;
+}
+
+function renderNameSetsList() {
+  const list = document.getElementById('restore-names-list');
+  if (!list) return;
+  if (!nameSetById(selectedNameSetId)) selectedNameSetId = DEFAULT_NAME_SET_ID;
+  const sets = [state.defaultNameSet, ...state.nameSets].filter(Boolean);
+  list.innerHTML = sets.map((set) => {
+    const id = esc(set.id);
+    const remove = set.id === DEFAULT_NAME_SET_ID ? '' : `<button type="button" class="name-set-delete" data-name-set-delete="${id}" title="Delete this saved set" aria-label="${esc(`Delete ${set.label}`)}">×</button>`;
+    return `<label class="name-set-row"><input type="radio" name="name-set" value="${id}" ${set.id === selectedNameSetId ? 'checked' : ''} /><span>${esc(set.label)}</span>${remove}</label>`;
+  }).join('');
+}
+
+function renameAll() {
+  pushHistory();
+  const count = TurnOnAutoNames(state.cards);
+  syncAutoNames({ render: false });
+  renderCardsGrid();
+  renderInspector();
+  saveDraft();
+  toast(count ? `Auto-name is on for ${count} more card(s). Undo puts the names back.` : 'Every card already uses Auto-name');
+}
+
+function openRenameAllDialog() {
+  const dialog = document.getElementById('rename-all-modal');
+  document.getElementById('rename-all-set-name').value = DefaultNameSetLabel();
+  dialog.returnValue = '';
+  dialog.showModal();
+}
+
+function finishRenameAllDialog() {
+  const choice = document.getElementById('rename-all-modal').returnValue;
+  if (choice !== 'save' && choice !== 'skip') return;
+  if (choice === 'save') {
+    const set = CaptureNameSet(state.cards, document.getElementById('rename-all-set-name').value);
+    state.nameSets = SortedNameSets([set, ...state.nameSets]);
+    storeNameSets();
+    renderNameSetsList();
+  }
+  renameAll();
+}
+
+function restoreSelectedNameSet() {
+  const set = nameSetById(selectedNameSetId);
+  if (!set) return;
+  pushHistory();
+  const count = ApplyNameSet(state.cards, set);
+  renderCardsGrid();
+  renderInspector();
+  saveDraft({ autoName: false });
+  closeMenus();
+  toast(count ? `Restored ${set.label} on ${count} card(s); Auto-name is off for them` : `Every card already has ${set.label}`);
+}
+
+function deleteNameSet(id) {
+  state.nameSets = state.nameSets.filter((set) => set.id !== id);
+  storeNameSets();
+  renderNameSetsList();
+}
+
+function wireNameSets() {
+  document.getElementById('btn-rename-all').addEventListener('click', openRenameAllDialog);
+  document.getElementById('rename-all-modal').addEventListener('close', finishRenameAllDialog);
+  // Enter in the name field saves (the form's first button is Cancel).
+  document.getElementById('rename-all-set-name').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    document.getElementById('rename-all-modal').close('save');
+  });
+  const list = document.getElementById('restore-names-list');
+  list.addEventListener('change', (e) => { if (e.target.name === 'name-set') selectedNameSetId = e.target.value; });
+  list.addEventListener('click', (e) => {
+    const remove = e.target.closest('[data-name-set-delete]');
+    if (!remove) return;
+    e.preventDefault();
+    deleteNameSet(remove.dataset.nameSetDelete);
+  });
+  document.getElementById('btn-restore-names-apply').addEventListener('click', restoreSelectedNameSet);
+  renderNameSetsList();
 }
 
 // The game draws core cards from the profile's own card list (projectGameCard in src/model/gameProfile.js),
@@ -2348,7 +2454,7 @@ async function importScoringFile(e) {
 // Save keeps the applied weights as the studio's own config, apart from the game's scoring.json.
 async function saveStudioConfig() {
   try {
-    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: STUDIO_SAVE_PATH, scoring: state.scoring, rebuild: false }) });
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: STUDIO_SAVE_PATH, scoring: JoinSavedConfig(state.scoring, state.nameSets), rebuild: false }) });
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
     toast(`Saved to ${data.path}.${stagedNotIncludedNote()}`);
@@ -2363,7 +2469,10 @@ async function openSavedConfig() {
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
     if (!data.scoringExists) { toast('Nothing saved yet: Save first'); return; }
-    stageWholeScoring(data.scoring, 'the saved config');
+    // The saved config carries the name sets beside the weights: the sets join the list, the weights are staged.
+    const saved = SplitSavedConfig(data.scoring);
+    if (saved.nameSets.length) { state.nameSets = MergeNameSets(state.nameSets, saved.nameSets); storeNameSets(); renderNameSetsList(); }
+    stageWholeScoring(saved.scoring, 'the saved config');
   } catch (err) {
     toast(`Open saved failed: ${err.message}`);
   }
@@ -2697,6 +2806,7 @@ function closeInspectorSheet() {
 // ---------------------------------------------------------------------------
 function wireEvents() {
   setupMenus();
+  wireNameSets();
   // Flush a pending draft save when the tab is hidden or closed.
   window.addEventListener('pagehide', flushDraft);
   document.addEventListener('visibilitychange', () => {
@@ -3224,6 +3334,9 @@ function buildCardList() {
 
 async function boot() {
   state.cards = buildCardList();
+  // Default names are the repo's authored names, taken before any draft is restored.
+  state.defaultNameSet = DefaultNameSet(state.cards);
+  loadStoredNameSets();
   state.selectedCardId = state.cards[0]?.id || null;
   state.repoArtLayers = clone(state.artLayers);
 

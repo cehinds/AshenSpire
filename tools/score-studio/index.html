@@ -81,6 +81,16 @@
               <button id="btn-new-card" class="s-btn s-btn-primary">+ New</button>
               <span class="studio-muted pool-label pool-label-row"></span>
             </div>
+            <div class="filter-row names-row">
+              <button id="btn-rename-all" class="s-btn" title="Turn Auto-name on for every card, so each shows its convention name. Nothing reaches the game until Export.">Rename all</button>
+              <div class="studio-menu">
+                <button id="btn-restore-names" class="s-btn" title="Put back Default names or a saved set of names" aria-haspopup="true" aria-expanded="false" aria-controls="restore-names-menu">Restore names ▾</button>
+                <div id="restore-names-menu" class="studio-menu-panel restore-names-panel" hidden>
+                  <div id="restore-names-list" class="restore-names-list" role="radiogroup" aria-label="Name sets"></div>
+                  <button id="btn-restore-names-apply" class="s-btn s-btn-primary" type="button" title="Give every card the chosen names and turn Auto-name off">Restore</button>
+                </div>
+              </div>
+            </div>
             <div id="filter-panel" class="filter-panel" hidden>
               <select id="filter-type" aria-label="Card type"><option value="all">All Types</option></select>
               <select id="filter-class" aria-label="Class"><option value="all">All Classes</option></select>
@@ -389,6 +399,20 @@
       <div class="modal-actions">
         <button value="cancel" class="s-btn">Cancel</button>
         <button id="btn-confirm-export" value="confirm" class="s-btn s-btn-primary">Write &amp; Rebuild Tables</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- RENAME ALL MODAL -->
+  <dialog id="rename-all-modal" class="studio-modal">
+    <form method="dialog">
+      <h3>Save the current names first?</h3>
+      <p class="studio-muted">Rename all gives every card its convention name. Save the names you have now to get them back later.</p>
+      <label class="rename-all-label">Name <input id="rename-all-set-name" type="text" maxlength="60" aria-label="Name for the saved names" /></label>
+      <div class="modal-actions">
+        <button value="cancel" class="s-btn" title="Keep the names as they are">Cancel</button>
+        <button id="btn-rename-all-skip" value="skip" class="s-btn" title="Rename all without saving the current names">Skip</button>
+        <button id="btn-rename-all-save" value="save" class="s-btn s-btn-primary" title="Save the current names, then rename all">Save</button>
       </div>
     </form>
   </dialog>

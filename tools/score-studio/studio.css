@@ -814,3 +814,15 @@ body.studio-body .naming-keep-item > span { flex: 1 1 auto; min-width: 0; }
 body.studio-body .naming-keep-move { min-width: 28px; min-height: 28px; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; cursor: pointer; }
 body.studio-body .naming-keep-move:disabled { opacity: 0.35; cursor: default; }
 body.studio-body .naming-limit-group.is-pending .naming-keep-list { outline: 1px dashed var(--st-border); outline-offset: 2px; }
+
+/* Rename all and Restore names: a row under the search bar, a list of name sets, and the save dialog. */
+body.studio-body .names-row { margin-top: var(--studio-gap-1); flex-wrap: wrap; }
+body.studio-body .restore-names-panel { gap: var(--studio-gap-1); }
+body.studio-body .restore-names-list { display: flex; flex-direction: column; gap: 2px; max-height: 240px; overflow-y: auto; }
+body.studio-body .name-set-row { display: flex; align-items: center; gap: var(--studio-gap-2); min-height: var(--studio-control-h); padding: 0 var(--studio-gap-1); border-radius: var(--studio-radius); font-size: 12px; cursor: pointer; }
+body.studio-body .name-set-row:hover { background: var(--st-surface-2); }
+body.studio-body .name-set-row > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+body.studio-body .name-set-delete { min-width: 28px; min-height: 28px; background: transparent; color: var(--st-muted); border: 1px solid var(--st-border); border-radius: 4px; cursor: pointer; }
+body.studio-body .name-set-delete:hover { color: var(--st-warn); border-color: var(--st-warn); }
+body.studio-body .rename-all-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; margin-top: var(--studio-gap-2); }
+body.studio-body .rename-all-label input { background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 6px 8px; }
