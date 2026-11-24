@@ -1116,11 +1116,44 @@ function populateAddFeatureDropdown() {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, v]) => [`tag:${k}`, `${v.label || k} (${k})`]),
   };
-  sel.innerHTML = '<option value="">+ Add Feature...</option>';
-  for (const [label, opts] of Object.entries(groups)) {
+  addFeatureGroups = groups;
+  renderAddFeatureOptions();
+}
+
+// The full Add Feature list, kept so the search box can rebuild the select with only the matches.
+let addFeatureGroups = {};
+
+// Every word a search can match: the label, the id, and the feature's description and score text.
+function addFeatureSearchText(value, label) {
+  return `${label} ${value} ${featureTitleText(featureValueInfo(value))}`.toLowerCase();
+}
+
+// Rebuild the select from the search box: each search word must appear in the option's text. A search with
+// matches picks the first, so its description shows and Add (or Enter) adds it.
+function renderAddFeatureOptions({ pickBest = false } = {}) {
+  const sel = document.getElementById('add-feature-select');
+  const search = document.getElementById('add-feature-search');
+  const words = (search?.value || '').toLowerCase().split(/\s+/).filter(Boolean);
+  const previous = sel.value;
+  let total = 0;
+  let matched = 0;
+  sel.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  sel.appendChild(placeholder);
+  for (const [label, opts] of Object.entries(addFeatureGroups)) {
+    total += opts.length;
+    // Name or id matches list first, then matches found only in the description.
+    const named = ([val, text]) => words.every((word) => `${text} ${val}`.toLowerCase().includes(word));
+    const hits = words.length ? opts.filter(([val, text]) => {
+      const haystack = addFeatureSearchText(val, text);
+      return words.every((word) => haystack.includes(word));
+    }).sort((a, b) => Number(named(b)) - Number(named(a))) : opts;
+    if (!hits.length) continue;
+    matched += hits.length;
     const og = document.createElement('optgroup');
     og.label = label;
-    for (const [val, text] of opts) {
+    for (const [val, text] of hits) {
       const o = document.createElement('option');
       o.value = val;
       o.textContent = text;
@@ -1128,6 +1161,17 @@ function populateAddFeatureDropdown() {
     }
     sel.appendChild(og);
   }
+  placeholder.textContent = !words.length ? '+ Add Feature...' : matched ? `${matched} match${matched === 1 ? '' : 'es'}` : 'No match';
+  if (search) search.placeholder = `Search ${total} features`;
+  const options = [...sel.querySelectorAll('optgroup option')];
+  // A rebuild that is not a new search (a rescore, undo, import) keeps the owner's pick while it is still listed.
+  if (!pickBest || !words.length) {
+    sel.value = options.some((o) => o.value === previous) ? previous : '';
+    return;
+  }
+  // A new search picks its best match: the first name match in any group, else the first description match.
+  const best = options.find((o) => words.every((word) => `${o.textContent} ${o.value}`.toLowerCase().includes(word))) || options[0];
+  sel.value = best ? best.value : '';
 }
 
 function renderInspector() {
@@ -3015,6 +3059,14 @@ function wireEvents() {
   addSelect.addEventListener('change', renderAddFeatureDescription);
   addSelect.addEventListener('input', renderAddFeatureDescription);
   addSelect.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addFeatureValue(addSelect.value); renderAddFeatureDescription(); } });
+  // Typing in the search narrows the list; Enter adds the picked match, Down moves into the list, Escape clears.
+  const addSearch = document.getElementById('add-feature-search');
+  addSearch.addEventListener('input', () => { renderAddFeatureOptions({ pickBest: true }); renderAddFeatureDescription(); });
+  addSearch.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addFeatureValue(addSelect.value); renderAddFeatureDescription(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); addSelect.focus(); }
+    else if (e.key === 'Escape' && addSearch.value) { e.preventDefault(); addSearch.value = ''; renderAddFeatureOptions(); renderAddFeatureDescription(); }
+  });
   document.getElementById('btn-add-feature').addEventListener('click', renderAddFeatureDescription);
   const quickChips = document.getElementById('quick-add-chips');
   for (const chip of quickChips.querySelectorAll('[data-quick-add]')) chip.title = featureTitleText(featureValueInfo(chip.dataset.quickAdd));
