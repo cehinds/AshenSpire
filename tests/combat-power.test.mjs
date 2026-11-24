@@ -230,3 +230,10 @@ test('card names: a limit with a keep order but no maxChars is no limit', () => 
   assert.deepEqual(p.dropped, []);
   assert.equal(p.name, 'Greater Searing Frost Bolt II+');
 });
+
+test('CardNameParts: a custom scoring table saved before the newer naming tables still names cards', () => {
+  const old = JSON.parse(JSON.stringify(scoring));
+  for (const table of ['range', 'defaultRange', 'tradition', 'defaultTradition', 'limit']) delete old.naming.card[table];
+  assert.equal(CardName(frostBolt, 0, old), CardName(frostBolt, 0, limitScoring(undefined)), 'missing tables fall back to the shipped words');
+  assert.match(CardName({ ...BaseFace(), dmg: 6 }, 0, old), /Strike/);
+});

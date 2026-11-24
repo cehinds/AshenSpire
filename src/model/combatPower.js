@@ -14,6 +14,7 @@
 // An item is {kind, id, name, rarity, base, mods: [[key, n]], props: [tag], tags, poise, range, attackBase, magicShare, guardBase, art}; the
 // property rules its `props` name are passed as `rules` ({tag: {triggers, passives}}).
 import { GetActiveScoring } from './activeScoring.js';
+import { scoring as shippedScoring } from '../content/generated/scoring.js';
 
 /** Round half away from zero (the simulator's `rnd`). */
 export const Rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
@@ -303,13 +304,22 @@ const sharesStem = (a, b) => Boolean(a && b) && a.slice(0, STEM_LETTERS).toLower
 // A card is magic when it is a spell, carries camp:spell, or is a hybrid hit with a magic share (magic words win).
 const isMagicFace = (c) => c.camp === 'spell' || (c.tags || []).includes('camp:spell') || c.magicShare > 0;
 
+// A scoring table's naming words over the shipped ones, so a custom table saved before a naming table existed still names cards.
+function NamingOf(scoring)
+{
+  const own = scoring.naming || {};
+  // limit is optional (absent = no limit), so it never falls back.
+  const { limit, ...shippedWords } = shippedScoring.naming.card;
+  return { ...shippedScoring.naming, ...own, card: { ...shippedWords, ...(own.card || {}) } };
+}
+
 /**
  * Parts of a card's convention name (owner, 2026-11-24):
  *   <rarity word> <second-effect word> <element word (magic only)> <base word> <rank numeral><upgrade mark>
  * Returns {name, rarityWord, effect, element, base, rank, upgrades, source, baseSource}. Every word is data in scoring.naming.card.
  */
 export function CardNameParts(c, ups = 0, scoring = GetActiveScoring()) {
-  const G = scoring.naming.card, N = scoring.naming;
+  const N = NamingOf(scoring), G = N.card;
   const s = ScoreCard(c, scoring);
   const tags = c.tags || [];
   const magic = isMagicFace(c), campKey = magic ? 'magic' : 'martial';
@@ -371,7 +381,7 @@ function propWord(tag, rules, scoring) {
 // A weapon art names its item by the art card's effect word, or its element, or the plain damage word.
 function weaponArtWord(art, scoring) {
   const p = CardNameParts(Object.assign(BaseFace(), JSON.parse(JSON.stringify(art))), 0, scoring);
-  return p.effect || p.element || scoring.naming.card.fallback.damage;
+  return p.effect || p.element || NamingOf(scoring).card.fallback.damage;
 }
 
 /** Parts of an item's convention name: {name, effect, base, rank, source}. */
