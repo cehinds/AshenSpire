@@ -1,4 +1,4 @@
-import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreWardDecay } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreWardDecay, FixCoreWardHpBuffer, FixCoreWardHpPerStack, EffectiveWardHp } from '../model/fixCoreMechanics.js';
 import { ItemStatusStacks } from './itemPropertyHooks.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mechanics } from '../framework/data/mechanics.js';
@@ -49,6 +49,8 @@ function syncPoolsAfterStatus(ctx, target) {
   syncPoiseMaximum(ctx, target);
 }
 
+const seatOf = (ctx, entity) => ctx?.playerIdForEntity && entity?.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {};
+
 /**
  * applyStatus(ctx, target, statusId, stacks, source?) — the applyStatus opcode
  * body. Interprets stackMode; feeds meters; refreshes durations; fires
@@ -61,6 +63,7 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null, op
   // Damp (SPEC 4.7): Burn applied to a Damp holder is halved.
   if (statusId === 'burn' && fixCoreEnabled(ctx)) stacks = dampBurnStacks(target, stacks);
   const before = getStacks(target, statusId);
+  const wardHpBefore = statusId === 'ward' && FixCoreWardHpBuffer(ctx) ? EffectiveWardHp(ctx, target) : 0;
   // Enemy weaknesses (SPEC 5.3): a status an opponent applies to an enemy weak to it lands with extra stacks.
   const weakBonus = stacks > 0 ? weaknessStackBonus(ctx, target, statusId, source) : 0;
   if (weakBonus > 0) ctx.emit?.('weaknessTriggered', { sourceId: source?.id || null, targetId: target.id, to: statusId, effect: 'stacks', amount: weakBonus });
@@ -71,6 +74,15 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null, op
     const tags = options.tags || [];
     if (inst && tags.some(tag => (typeof tag === 'string' ? tag : tag?.id) === 'trait:persistent')) {
       inst.persistentStacks = Math.min(inst.stacks, (inst.persistentStacks || 0) + Math.max(0, inst.stacks - before));
+    }
+  }
+  if (statusId === 'ward' && FixCoreWardHpBuffer(ctx)) {
+    const per = FixCoreWardHpPerStack(ctx);
+    const added = Math.max(0, getStacks(target, 'ward') - before);
+    if (per > 0 && added > 0 && target?.statuses?.ward) {
+      target.wardHp = wardHpBefore + added * per;
+      target.statuses.ward.stacks = Math.ceil(target.wardHp / per);
+      ctx.emit?.('wardHpChanged', { targetId: target.id, value: target.wardHp, delta: added * per, stacks: target.statuses.ward.stacks, source: 'status', ...seatOf(ctx, target) });
     }
   }
   syncPoolsAfterStatus(ctx, target);
@@ -221,6 +233,37 @@ function checkMeterFill(ctx, entity, statusId, def, inst) {
 
 export function removeStatus(ctx, target, statusId, opts = {}) {
   const before = getStacks(target, statusId);
+  if (statusId === 'ward' && FixCoreWardHpBuffer(ctx)) {
+    const beforeHp = EffectiveWardHp(ctx, target);
+    if (opts.reason === 'depleted') {
+      delete target.wardHp;
+      const result = removeStatusRaw(ctx, target, statusId, opts);
+      syncPoolsAfterStatus(ctx, target);
+      return result;
+    }
+    const per = FixCoreWardHpPerStack(ctx);
+    let result;
+    if (opts.amount === undefined) {
+      result = removeStatusRaw(ctx, target, statusId, opts);
+      delete target.wardHp;
+      if (beforeHp > 0) ctx.emit?.('wardHpChanged', { targetId: target.id, value: 0, delta: -beforeHp, stacks: 0, source: opts.reason || 'removed', ...seatOf(ctx, target) });
+    } else {
+      const afterHp = per > 0 ? Math.max(0, beforeHp - opts.amount * per) : 0;
+      if (afterHp === 0) {
+        delete target.wardHp;
+        result = removeStatusRaw(ctx, target, statusId, { ...opts, amount: undefined });
+      } else {
+        target.wardHp = afterHp;
+        const newStacks = Math.ceil(afterHp / per);
+        const stackLoss = Math.max(0, before - newStacks);
+        if (stackLoss > 0) result = removeStatusRaw(ctx, target, statusId, { ...opts, amount: stackLoss });
+        if (target.statuses?.ward) target.statuses.ward.stacks = newStacks;
+      }
+      if (afterHp !== beforeHp) ctx.emit?.('wardHpChanged', { targetId: target.id, value: afterHp, delta: afterHp - beforeHp, stacks: getStacks(target, 'ward'), source: opts.reason || 'removed', ...seatOf(ctx, target) });
+    }
+    syncPoolsAfterStatus(ctx, target);
+    return result;
+  }
   const result = removeStatusRaw(ctx, target, statusId, opts);
   TakeFromBreakGrant(target, statusId, before - getStacks(target, statusId));
   syncPoolsAfterStatus(ctx, target);

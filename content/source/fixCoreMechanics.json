@@ -5,10 +5,9 @@
   "statusCaps": "none",
   "ward": {
     "enabled": false,
-    "poisePerStack": 5,
-    "routing": "blockFirst",
-    "decayPerTurn": 1,
-    "breaksAtZeroPoise": true
+    "hpPerStack": 5,
+    "routing": "hpBuffer",
+    "decayPerTurn": 1
   },
   "ratings": {
     "prAttributes": ["intelligence", "wisdom"]

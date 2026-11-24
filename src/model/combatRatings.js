@@ -843,6 +843,7 @@ export function BarrierPoiseFactor(effect, source) {
  * fight's FixCore rules, the same Poise effect Barrier is (no separate Ward pool). A fight whose rules carry no `poisePerStack`
  * (saved before this ruling) gives none. It rides on the Poise `barrierBonus` field with Barrier's, so it is clamped the same way. */
 function wardPoiseBonus(ctx, entity) {
+  if (ctx?.fixCoreRules?.ward?.routing === 'hpBuffer') return 0;
   const per = ctx?.fixCoreRules?.ward?.poisePerStack;
   return Number.isInteger(per) && per > 0 ? Math.floor((entity?.statuses?.ward?.stacks || 0) * per) : 0;
 }

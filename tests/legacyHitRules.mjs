@@ -52,7 +52,11 @@ function stripThemeB() {
 function stripSection20() {
   const ward = fixCoreMechanics.ward, wardRows = Object.entries(ward), pierce = fixCoreMechanics.pierce, force = fixCoreMechanics.elements?.force;
   const poise = fixCoreMechanics.poise, poiseRows = Object.entries(poise);
-  delete ward.decayPerTurn; delete ward.breaksAtZeroPoise; delete poise.breakStatusStacks; poise.brokenDamageMultiplier = 1.5;
+  for (const key of Object.keys(ward)) delete ward[key];
+  ward.enabled = false;
+  ward.poisePerStack = 5;
+  ward.routing = 'blockFirst';
+  delete poise.breakStatusStacks; poise.brokenDamageMultiplier = 1.5;
   fixCoreMechanics.pierce = { blockBypassFraction: 0.2 };
   if (force) fixCoreMechanics.elements.force = { poiseMultiplier: 1.5 };
   return () => {

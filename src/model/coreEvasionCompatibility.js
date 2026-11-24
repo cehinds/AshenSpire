@@ -41,6 +41,7 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3',
   'sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f',
   'sha256:a5c68d23829dca78e12749ab6d743b6e9c27e0915d952afe870f6355169e4474',
   'sha256:d5db9a0655276f175cdbeb8299a6e91853c22408b4410fb80ee3674db79a90fa',
@@ -166,8 +167,8 @@ const PREVIOUS_RUNTIMES = new Set([
 // The Magic Adept zero Mana floor (2026-11-22, owner ruling: stance.playerMinimumCost in fixCoreMechanics.json and the combat.stance parameter schema) moves it again; fbf370... is now in PREVIOUS_RUNTIMES, and a fight saved without the key keeps floor 1.
 // No card has a cost minimum (owner ruling 2026-11-22: stance.playerMinimumCost, the retired balance.mana floors, the upgrade cost steps) moves it once more; d5db9a... is now in PREVIOUS_RUNTIMES.
 // The cost.manaOnly mechanic is data now (its cardCosts.js validator rule went with the cost minimums) and Exhaust/Ethereal are flat in scoring: the runtime artifact moves once more; a5c68d... is now in PREVIOUS_RUNTIMES.
-// The spell Stamina surcharge is dropped (owner ruling 2026-11-23: spellCosts.staminaSurcharge 1 -> 0 in fixCoreMechanics.json) and the runtime artifact moves once more; 0805e9... is now in PREVIOUS_RUNTIMES, and a fight saved with staminaSurcharge 1 keeps paying it from its own snapshotted rules.
-const FIXED_EVASION_RUNTIME = 'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3';
+// Ward health buffer (owner ruling 2026-11-24: ward.routing "hpBuffer", ward.hpPerStack 5 in fixCoreMechanics.json) moves the runtime artifact; e31663... joins PREVIOUS_RUNTIMES, and fights saved with blockFirst keep their snapshotted rules.
+const FIXED_EVASION_RUNTIME = 'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
