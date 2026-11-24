@@ -40,7 +40,7 @@ function captureEntity(combat, e, alive, projectCombatIntent)
         maxMana: e.maxMana,
         mana: e.mana,
         block: e.block,
-        wardHp: e.wardHp || 0,
+        ...(e.wardHp !== undefined ? { wardHp: e.wardHp } : {}),
         persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
         persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
         combatStance: e.combatStance ? { ...e.combatStance } : null,

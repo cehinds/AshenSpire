@@ -40,7 +40,7 @@ export function PoiseBonusView(pool) {
 }
 
 /**
- * Ward health buffer (Owner, 2026-11-24): Ward points sit on the HP bar past current HP (`+N` in purple).
+ * Ward health buffer (Owner, 2026-11-24): Ward points sit on the HP bar past current HP (`+N` in blue).
  * Returns { hp, maxHp, ward, totalMax, hpPct, wardFromPct, wardWidthPct } while wardHp > 0, else null.
  */
 export function HealthWardView(hp, maxHp, wardHp) {
