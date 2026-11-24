@@ -12,10 +12,11 @@ import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { BaseFace, CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
-import { tokenRe } from '../../src/model/validate.js';
+import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
+import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } from './weightsStaging.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -94,6 +95,8 @@ const state = {
   repoPath: localStorage.getItem(PATH_STORAGE_KEY) || 'content/source/scoring.json',
   autosave: true,
   draftStorageFailed: false,
+  pendingScoring: null,        // staged weight edits; null when none (applied on Apply, owner 2026-11-23)
+  pendingBase: null,           // the applied config the pending copy was taken from; Apply replays base -> pending
   undoStack: [],
   redoStack: [],
   cards: [],            // editable card definitions + derived faces
@@ -255,6 +258,7 @@ function cardDefToFace(def, scoringRef) {
   f.kw = Array.isArray(def.keywords) ? [...def.keywords] : [];
   f.tags = tags;
   f._meta = m;
+  f.magicShare = safeNum(def.magicShare, 0);
   if (m.evade > 0) f.statuses.push(['evade', m.evade, 'self']);
   const statusIds = new Set(Object.keys(scoringRef.statuses || {}));
   for (const e of def.effects || []) {
@@ -276,6 +280,66 @@ function cardDefToFace(def, scoringRef) {
   }
   if (def.ramp && !f.tags.includes('ramp.honed')) f.tags.push('ramp.honed');
   return f;
+}
+
+// ---------------------------------------------------------------------------
+// Card Type and Martial / Magic
+// ---------------------------------------------------------------------------
+// The studio's Card Type is the card's play style: its authored type plus the maneuver tag the game reads
+// (combatProfileFor). Martial is the physical camp, Magic the spell camp; both is a physical hit with a magic
+// share (the game's packet hit).
+const CARD_KINDS = Object.freeze(['attack', 'skill', 'spell', 'sweep', 'counter', 'defend', 'power', 'curse', 'status']);
+const KIND_MANEUVERS = Object.freeze({ attack: 'attack', sweep: 'sweep', counter: 'counter', defend: 'defend', spell: 'casting' });
+const PLAIN_KINDS = Object.freeze(['power', 'curse', 'status']);
+const HYBRID_MAGIC_SHARE = 0.5;
+const SCHOOL_CATEGORIES = Object.freeze(['martial', 'magic', 'hybrid']);
+
+const hasDamageEffect = (def) => (def.effects || []).some((e) => e.op === 'damage');
+
+// The same play style ScoreCard scores (CardKind), so the studio and the shipped table agree.
+const cardKindOf = (def) => CardKind(def);
+// Maneuvers outside the Card Type list; an Attack pick keeps them.
+const KEPT_ATTACK_MANEUVERS = Object.freeze(['maneuver:smash', 'maneuver:ranged']);
+
+function setCardKind(def, kind) {
+  const keptManeuver = kind === 'attack' ? (def.tags || []).find((t) => KEPT_ATTACK_MANEUVERS.includes(t)) : null;
+  const keep = (def.tags || []).filter((t) => !t.startsWith('maneuver:') && t !== 'source:spell' && !t.startsWith('classification.'));
+  const maneuver = keptManeuver ? keptManeuver.slice('maneuver:'.length) : KIND_MANEUVERS[kind];
+  if (PLAIN_KINDS.includes(kind)) def.type = kind;
+  else if (kind === 'attack' || kind === 'sweep') def.type = 'attack';
+  else if (kind === 'skill' || kind === 'defend') def.type = 'skill';
+  else def.type = hasDamageEffect(def) ? 'attack' : 'skill';
+  def.tags = [...keep, ...(maneuver ? [`maneuver:${maneuver}`] : []), `classification.${def.type}`];
+  if (kind === 'spell') setCardSchools(def, { martial: false, magic: true });
+  // Leaving Spell for a martial play style makes the card Martial; Power, Curse and Status keep their school.
+  else if (!PLAIN_KINDS.includes(kind) && cardSchoolsOf(def).magic && !cardSchoolsOf(def).martial) setCardSchools(def, { martial: true, magic: false });
+}
+
+function cardSchoolsOf(def) {
+  const spell = (def.tags || []).includes('camp:spell');
+  return { martial: !spell, magic: spell || safeNum(def.magicShare, 0) > 0 };
+}
+
+function setCardSchools(def, { martial, magic }) {
+  const tags = (def.tags || []).filter((t) => !t.startsWith('camp:') && t !== 'source:spell');
+  const spellOnly = magic && !martial;
+  tags.push(spellOnly ? 'camp:spell' : 'camp:physical');
+  if (spellOnly) {
+    tags.push('source:spell');
+    def.damageSchool = def.damageSchool && def.damageSchool !== 'physical' ? def.damageSchool : 'magic';
+  } else if (!magic && def.damageSchool && def.damageSchool !== 'physical') def.damageSchool = 'physical';
+  if (magic && martial) def.magicShare = safeNum(def.magicShare, 0) > 0 && def.magicShare < 1 ? def.magicShare : HYBRID_MAGIC_SHARE;
+  else delete def.magicShare;
+  def.tags = tags;
+  // A spell plays by casting; leaving Magic drops casting back to a plain attack or skill.
+  if (spellOnly && !def.tags.includes('maneuver:casting') && !PLAIN_KINDS.includes(def.type)) setCardKind(def, 'spell');
+  else if (!spellOnly && def.tags.includes('maneuver:casting')) setCardKind(def, hasDamageEffect(def) ? 'attack' : 'skill');
+}
+
+// The scoring categories the studio card belongs to (ScoreCard's scoring.categories).
+function cardCategoriesOf(def) {
+  const camp = (def.tags || []).includes('camp:spell') ? 'spell' : 'physical';
+  return CardCategories({ type: def.type, tags: def.tags, camp, magicShare: safeNum(def.magicShare, 0) });
 }
 
 function getCardTarget(def) {
@@ -364,7 +428,7 @@ function artLayersChanged() {
 }
 
 function isDirty() {
-  return weightChangeCount() > 0 || editedCards().length > 0 || artLayersChanged();
+  return weightChangeCount() > 0 || pendingWeightCount() > 0 || editedCards().length > 0 || artLayersChanged();
 }
 
 function refreshDirtyStatus() {
@@ -387,6 +451,8 @@ function writeDraftNow() {
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
           savedAt: new Date().toISOString(),
           scoring: state.scoring,
+          pendingScoring: state.pendingScoring,
+          pendingBase: state.pendingBase,
           artLayers: state.artLayers,
           customCards: editedCards(),
         }));
@@ -749,6 +815,50 @@ function staleTextTokens(def) {
   return mentioned.filter((token) => tokens[token] === undefined || tokens[token] === null);
 }
 
+// ---------------------------------------------------------------------------
+// Face numbers: the amount box holds what the card prints
+// ---------------------------------------------------------------------------
+// The profile's balance settings (effects.baseDamageMultiplier, physical and player scales, STR, Block
+// gain) turn an authored amount into a smaller printed one: Core prints 12 authored damage as 5. The
+// studio edits the printed number and stores the authored amount that prints it, so the card, the fight
+// and the CP all follow what was typed.
+const FACE_AMOUNT_SEARCH_MAX = 999;
+
+function faceAmountFor(def, effectIndex) {
+  const binding = computeTokenBindings(def.effects || []).find((b) => b.index === effectIndex && b.field === 'amount');
+  if (!binding) return null;
+  try {
+    const value = staticCardTokens(projectEditedCard(def), studioRegistries, refContextFor(def).run)[binding.token];
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function faceAmountAt(def, effectIndex, amount) {
+  const trial = clone(def);
+  trial.effects[effectIndex].amount = amount;
+  return faceAmountFor(trial, effectIndex);
+}
+
+// The smallest authored amount whose printed number reaches the typed one (the print only rises with the
+// amount). When rounding skips the typed number, the nearer of the two neighbours wins.
+function authoredAmountForFace(def, effectIndex, wanted) {
+  if (faceAmountAt(def, effectIndex, wanted) === null) return wanted;
+  let low = 0;
+  let high = FACE_AMOUNT_SEARCH_MAX;
+  if (faceAmountAt(def, effectIndex, high) < wanted) return high;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (faceAmountAt(def, effectIndex, middle) >= wanted) high = middle;
+    else low = middle + 1;
+  }
+  if (low === 0) return low;
+  const above = faceAmountAt(def, effectIndex, low);
+  const below = faceAmountAt(def, effectIndex, low - 1);
+  return wanted - below < above - wanted ? low - 1 : low;
+}
+
 function tokenLabel(token) {
   const root = token.split('.')[0];
   const status = registries.statuses?.has?.(root) ? registries.statuses.get(root) : null;
@@ -801,7 +911,44 @@ function dropStaleTextClauses(def) {
 // One card face path for the gallery, inspector, Art preview and sandbox hand: the card under its live id
 // (so edits reach the face and the engine), projected the way the game projects profile cards, drawn under
 // its class's reference run, then fitted.
-function renderCardWithLayers(def, container) {
+// The card's combat-power rank as a small badge on the art (the game's face has no rank). Studio only.
+// Colour shows the move against the repo baseline: up green, down red, unchanged neutral.
+function studioCardFor(def) {
+  const id = String(def.id || '').startsWith(LIVE_ID_PREFIX) ? def.id.slice(LIVE_ID_PREFIX.length) : def.id;
+  return state.cards.find((c) => c.id === id) || def;
+}
+
+function rankBadgeParts(def, sc) {
+  const card = studioCardFor(def);
+  const score = sc || scoreCardEntry(card);
+  const base = state.baselineRanks[card.id];
+  const shift = base === undefined || base === score.rank ? 'same' : score.rank > base ? 'up' : 'down';
+  return {
+    // naming.roman stops at X; a rank past it (Max Rank raised in Weights) shows as its number.
+    text: romanFor(score.rank) || (score.rank ? String(score.rank) : 'U'),
+    title: `${RankName(score.rank)} · CP ${score.cp}${shift === 'same' ? '' : ` (was ${RankName(base)})`}`,
+    shift,
+  };
+}
+
+function setRankBadge(container, def, sc = null) {
+  let badge = container.querySelector(':scope > .studio-rank-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'studio-rank-badge';
+    container.appendChild(badge);
+  }
+  try {
+    const parts = rankBadgeParts(def, sc);
+    badge.textContent = parts.text;
+    badge.title = parts.title;
+    badge.dataset.shift = parts.shift;
+  } catch {
+    badge.remove();
+  }
+}
+
+function renderCardWithLayers(def, container, sc = null) {
   container.innerHTML = '';
   const liveId = liveCardIdFor(def);
   try {
@@ -842,6 +989,7 @@ function renderCardWithLayers(def, container) {
     }
     container.appendChild(overlay);
   }
+  setRankBadge(container, def, sc);
 }
 
 // ---------------------------------------------------------------------------
@@ -871,7 +1019,7 @@ function updateCardTileInPlace(cardId) {
   const shiftHtml = (baseRank !== undefined && baseRank !== sc.rank)
     ? `<span class="${sc.rank > baseRank ? 'shift-up' : 'shift-down'}">${sc.rank > baseRank ? '↑' : '↓'} R${baseRank}→R${sc.rank}</span>`
     : '';
-  renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
+  renderCardWithLayers(def, tile.querySelector('.studio-card-stage'), sc);
   tile.querySelector('.studio-card-meta').innerHTML = tileMetaHtml(def, sc, shiftHtml);
 }
 
@@ -919,7 +1067,7 @@ function renderCardsGrid() {
     tile.className = 'studio-card-tile' + (def.id === state.selectedCardId ? ' is-selected' : '');
     tile.dataset.cardId = def.id;
     tile.innerHTML = `<div class="studio-card-stage"></div><div class="studio-card-meta">${tileMetaHtml(def, sc, shiftHtml)}</div>`;
-    renderCardWithLayers(def, tile.querySelector('.studio-card-stage'));
+    renderCardWithLayers(def, tile.querySelector('.studio-card-stage'), sc);
     tile.tabIndex = 0;
     const selectTile = () => {
       state.selectedCardId = def.id;
@@ -993,10 +1141,12 @@ function renderInspector() {
   const textInput = document.getElementById('edit-text');
   if (textInput.value !== (def.textTemplate || '')) textInput.value = def.textTemplate || '';
   renderTextWarnings(def);
-  document.getElementById('edit-type').value = def.type || 'attack';
+  document.getElementById('edit-type').value = cardKindOf(def);
   document.getElementById('edit-class').value = def.class || 'colorless';
   document.getElementById('edit-rarity').value = def.rarity || 'common';
-  document.getElementById('edit-camp').value = (def.tags || []).includes('camp:spell') ? 'spell' : 'physical';
+  const schools = cardSchoolsOf(def);
+  document.getElementById('edit-martial').checked = schools.martial;
+  document.getElementById('edit-magic').checked = schools.magic;
   document.getElementById('edit-target').value = getCardTarget(def);
   document.getElementById('edit-sp').value = def.staminaCost ?? def.cost ?? 0;
   document.getElementById('edit-mp').value = def.manaCost ?? 0;
@@ -1043,7 +1193,7 @@ function renderInspector() {
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
       const amtCtrl = amtIsNum
-        ? `<input type="number" min="1" max="99" value="${esc(safeNum(eff.amount, 1))}" data-eff-amt="${idx}" />`
+        ? `<input type="number" min="1" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The number the card shows" />`
         : '<span class="studio-muted" title="Formula-computed value">formula</span>';
       row.innerHTML = `
         <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(eff.op)}</strong> ${infoButtonHtml()}</span>
@@ -1148,7 +1298,8 @@ function featureScoreRows(def) {
     }
     const keys = EFFECT_SCORE_KEYS[eff.op];
     const effectWeight = keys ? state.scoring.effects?.[keys.weight] : null;
-    const counted = eff.op === 'removeStatus' && eff.target !== 'self' ? 0 : COUNTED_ONCE_OPS.has(eff.op) ? 1 : (eff.amount ?? 1) * (eff.op === 'damage' ? (eff.hits || 1) : 1);
+    const amount = faceAmountFor(def, def.effects.indexOf(eff)) ?? eff.amount ?? 1;
+    const counted = eff.op === 'removeStatus' && eff.target !== 'self' ? 0 : COUNTED_ONCE_OPS.has(eff.op) ? 1 : amount * (eff.op === 'damage' ? (eff.hits || 1) : 1);
     rows.push({
       part: keys?.part ?? null,
       count: counted,
@@ -1257,12 +1408,20 @@ function signedDelta(value) {
 }
 
 // The Card row: rarity, targeting and the properties that do (or do not) move the score.
-function cardBreakdownPills(def, sc) {
+// What each card property does to the score. One source for the Score Breakdown "Card" row and the
+// weight chips beside the Card Basics fields, so the two always show the same numbers.
+// field: the Card Basics field it belongs to; value: signed effect on the score; count: "×N" targets.
+function cardPropertyScores(def, sc) {
   const S = state.scoring;
   const face = sc.face;
-  const pills = [];
   const discount = rarityDiscount(sc.rarity);
-  pills.push(breakdownPill(`${capitalise(sc.rarity)} −${discount}`, discount ? -discount : 0, `Rarity discount: CP = raw − ${discount}`));
+  const rows = [{
+    field: 'rarity',
+    label: capitalise(sc.rarity),
+    value: discount ? -discount : 0,
+    text: `−${discount}`,
+    title: `Rarity discount: CP = raw − ${discount}`,
+  }];
 
   const target = getCardTarget(def);
   const areaTag = S.cardModel?.areaTag || 'targeting:area';
@@ -1271,25 +1430,55 @@ function cardBreakdownPills(def, sc) {
     neutral.tags = neutral.tags.filter((t) => !t.startsWith('targeting:') && !t.startsWith('targeting.'));
     neutral.tags.push('targeting:single');
   });
-  const targetCount = isArea ? ` ×${S.model?.ENEMIES ?? 2}` : '';
-  pills.push(breakdownPill(`${TARGET_LABELS[target] || capitalise(target)}${targetCount} ${signedDelta(targetDelta)}`, targetDelta,
-    targetDelta ? 'Change against the same card hitting a single enemy' : NO_SCORE_EFFECT_TITLE));
+  rows.push({
+    field: 'target',
+    label: TARGET_LABELS[target] || capitalise(target),
+    count: isArea ? S.model?.ENEMIES ?? 2 : null,
+    value: targetDelta,
+    text: signedDelta(targetDelta),
+    title: targetDelta ? 'Change against the same card hitting a single enemy' : 'Scores the same as hitting a single enemy',
+  });
 
+  const categories = CardCategories(face);
   const neutralProperties = [
-    ['Class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
-    ['Type', capitalise(face.type), (neutral) => { neutral.type = 'skill'; }],
-    ['Camp', capitalise(face.camp), (neutral) => { neutral.camp = 'physical'; }],
+    ['class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
+    ['type', capitalise(categories.at(-1)), (neutral) => { neutral.type = 'skill'; neutral.categories = [...categories.slice(0, -1), 'skill']; }],
+    ['camp', categories.filter((c) => c === 'martial' || c === 'magic').map(capitalise).join(' + '), (neutral) => {
+      neutral.camp = 'physical';
+      neutral.magicShare = 0;
+      neutral.categories = ['martial', ...categories.filter((c) => !SCHOOL_CATEGORIES.includes(c))];
+    }],
   ];
-  for (const [, label, neutralize] of neutralProperties) {
+  for (const [field, label, neutralize] of neutralProperties) {
     const delta = rawScoreDelta(face, neutralize);
-    pills.push(breakdownPill(`${label} ${signedDelta(delta)}`, delta, delta ? 'Change against the neutral choice' : NO_SCORE_EFFECT_TITLE));
+    rows.push({ field, label, value: delta, text: signedDelta(delta), title: delta ? 'Change against the neutral choice' : NO_SCORE_EFFECT_TITLE });
   }
+  return rows;
+}
+
+function cardBreakdownPills(def, sc, propertyScores = cardPropertyScores(def, sc)) {
+  const pills = propertyScores.map((row) => breakdownPill(`${row.label}${row.count ? ` ×${row.count}` : ''} ${row.text}`, row.value, row.title));
   if (sc.overridden) pills.push(breakdownPill(`Override → ${RankName(sc.rank)} / CP ${sc.cp}`, null, 'A scoring override sets this card\'s rank or CP'));
   return pills.join('');
 }
 
+// Weight chips beside Rarity, Target, Camp, Card Type and Class, in the cost chips' style.
+function renderFieldChips(def, sc, propertyScores = cardPropertyScores(def, sc)) {
+  for (const row of propertyScores) {
+    const el = document.getElementById(`field-score-${row.field}`);
+    if (!el) continue;
+    const tone = row.value > 0 ? 'is-pos' : row.value < 0 ? 'is-neg' : 'is-zero';
+    const countHtml = row.count ? `<span class="feature-count">×${esc(row.count)}</span>` : '';
+    el.className = `feature-score ${tone}`;
+    el.title = `${row.label}: ${row.text}. ${row.title}`;
+    el.innerHTML = `${countHtml}<span class="feature-total">${esc(row.text)}</span>`;
+  }
+}
+
 function renderScoreParts(def, sc) {
   const partsEl = document.getElementById('score-parts-list');
+  const propertyScores = cardPropertyScores(def, sc);
+  renderFieldChips(def, sc, propertyScores);
   const baseRank = state.baselineRanks[def.id];
   const shifted = baseRank !== undefined && baseRank !== sc.rank;
   const discount = rarityDiscount(sc.rarity);
@@ -1303,7 +1492,7 @@ function renderScoreParts(def, sc) {
     + (sc.overridden ? `; override → CP ${sc.cp}, ${RankName(sc.rank)}` : '');
   partsEl.innerHTML = `
     <span class="part-pill rank-pill" title="${esc(rankTitle)}">Rank: ${esc(RankName(sc.rank))} (CP ${esc(sc.cp)})${shifted ? ` (was ${esc(RankName(baseRank))})` : ''}</span>
-    <div class="breakdown-row" data-breakdown="card"><span class="breakdown-label">Card</span>${cardBreakdownPills(def, sc)}</div>
+    <div class="breakdown-row" data-breakdown="card"><span class="breakdown-label">Card</span>${cardBreakdownPills(def, sc, propertyScores)}</div>
     <div class="breakdown-row" data-breakdown="parts"><span class="breakdown-label">Parts</span>${partPills || '<span class="studio-muted">None</span>'}</div>
     <div class="breakdown-formula" id="breakdown-formula">${esc(formula)}</div>
     <details class="breakdown-math"><summary>Math</summary>${scoreMathTableHtml(sc)}</details>`;
@@ -1319,6 +1508,7 @@ function scoreMathTableHtml(sc) {
     if (k === 'damage') return `${sc.face.dmg} final (authored ${sc.face._meta?.authoredDmg ?? sc.face.dmg}) × ${S.effects.damage.weight}/${S.effects.damage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
     if (k === 'block') return `${sc.face.blk} final (authored ${sc.face._meta?.authoredBlk ?? sc.face.blk}) × ${S.effects.block.weight}/${S.effects.block.per}`;
     if (k === 'poise') return `${sc.face.poise} Poise × ${S.effects.poiseDamage.weight}/${S.effects.poiseDamage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
+    if (k.startsWith('category:')) { const w = S.categories?.[k.slice(9)]; return w?.multiplier ? `×${w.weight} of positive score` : `${capitalise(k.slice(9))} flat`; }
     if (k === 'effect count') return `multi-effect bonus (+${S.effectCount?.weight ?? 5}/extra)`;
     if (S.keywords?.[k]) return S.keywords[k].flat !== undefined ? `flat ${S.keywords[k].flat}` : `×${S.keywords[k].multiplier}`;
     if (S.statuses?.[k]) return `status over ${S.model?.R || 3}R${area > 1 && S.statuses[k].target === 'enemy' ? ` × ${area} AoE` : ''}`;
@@ -1372,6 +1562,7 @@ function textFromEffects(def) {
 // never rebuilding the feature list, so focus and a held spinner survive.
 function refreshInspectorScoreInPlace(def) {
   const sc = scoreCardEntry(def);
+  setRankBadge(document.getElementById('inspector-card-preview'), def, sc);
   renderScoreSummary(def, sc);
   renderScoreParts(def, sc);
   renderCostChips(def, sc);
@@ -1464,16 +1655,21 @@ function mutateSelectedCard(fn, { recordHistory = true, autoName = true, autoTex
 // ---------------------------------------------------------------------------
 // Weights Tab
 // ---------------------------------------------------------------------------
-function renderWeights() {
+// Rows show the pending copy when weight edits are staged; a row whose value differs from the applied
+// config is marked pending. `shifts: false` skips rescoring every card for the rank-shift summary.
+function renderWeights({ shifts = true } = {}) {
   const q = document.getElementById('weights-search').value.trim().toLowerCase();
   const groupF = document.getElementById('weights-group-filter').value;
   const container = document.getElementById('weights-container');
   container.innerHTML = '';
 
   const R = state.repoScoring;
-  const groups = [
+  const buildGroups = () => [
     { key: 'costs', title: 'Costs (SP / MP)', entries: Object.entries(state.scoring.costs || {}).map(([k, v]) => ({ id: k, label: k.toUpperCase(), val: v.weight, base: R.costs?.[k]?.weight, set: (n) => { state.scoring.costs[k].weight = n; } })) },
-    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({ id: k, label: `${k} (per ${v.per})`, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; } })) },
+    { key: 'effects', title: 'Effects', entries: Object.entries(state.scoring.effects || {}).map(([k, v]) => ({
+      id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; },
+      per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
+    })) },
     { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
     { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => ({ id: k, label: k + (v.flat !== undefined ? ' (flat)' : ' (mult)'), val: v.flat ?? v.multiplier, base: R.keywords?.[k]?.flat ?? R.keywords?.[k]?.multiplier, step: v.flat !== undefined ? 1 : 0.05, set: (n) => { if (v.flat !== undefined) state.scoring.keywords[k].flat = n; else state.scoring.keywords[k].multiplier = n; } })) },
     { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, base: R.rarity?.discount?.[k], set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
@@ -1483,6 +1679,20 @@ function renderWeights() {
       { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, base: R.rank?.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
       { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; } },
     ] },
+    { key: 'categories', title: 'Categories', entries: CATEGORY_KEYS.map((k) => {
+      const v = categoryWeight(state.scoring, k);
+      const bv = R.categories?.[k];
+      return {
+        id: k,
+        label: k === 'hybrid' ? 'Hybrid (Martial + Magic)' : capitalise(k),
+        val: v.weight,
+        base: bv?.weight,
+        step: v.multiplier ? 0.05 : 1,
+        set: (n) => { categoryWeight(state.scoring, k).weight = n; },
+        // Flat adds the weight; multiplier scales the positive score by it. Switching resets to the no-change value.
+        mult: { value: Boolean(v.multiplier), base: bv ? Boolean(bv.multiplier) : undefined, set: (on) => { Object.assign(categoryWeight(state.scoring, k), { multiplier: on, weight: on ? 1 : 0 }); } },
+      };
+    }) },
     { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => {
       if (k[0] === '$' || !v) return false;
       const bv = R.tags?.[k];
@@ -1497,9 +1707,16 @@ function renderWeights() {
         base: bv ? (bv.multiplier ?? bv.pMultiplier ?? bv.weight ?? 0) : undefined,
         step: isMult ? 0.05 : 1,
         set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; },
+        // Damage-type tags score once per action or once per hit (ScoreCard reads per === 'hit').
+        per: v.per !== undefined ? { value: v.per, base: bv?.per, options: TAG_PER_OPTIONS, set: (n) => { state.scoring.tags[k].per = n; } } : null,
       };
     }) },
   ];
+  // Built from the applied config (to mark pending rows) and from the config Apply would produce.
+  const appliedGroups = buildGroups();
+  const staged = stagedScoring();
+  const groups = staged ? withScoring(staged, buildGroups) : appliedGroups;
+  const entryIn = (groupList, groupKey, id) => groupList.find((eg) => eg.key === groupKey)?.entries.find((e) => e.id === id);
 
   for (const g of groups) {
     if (groupF !== 'all' && g.key !== groupF) continue;
@@ -1515,35 +1732,70 @@ function renderWeights() {
     for (const r of rows) {
       const numVal = safeNum(r.val, 0);
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
-      const modified = baseNum !== undefined && numVal !== baseNum;
+      const applied = entryIn(appliedGroups, g.key, r.id);
       const row = document.createElement('div');
-      row.className = 'weight-row' + (modified ? ' is-modified' : '');
+      row.className = 'weight-row' + (r.per || r.mult ? ' has-per' : '');
       const kind = WEIGHT_GROUP_KINDS[g.key];
       const info = kind ? describeFeature(kind, r.id) : null;
       const labelHtml = info
         ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
         : `<span>${esc(r.label)}</span>`;
-      row.innerHTML = `${labelHtml}<input type="number" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" /><button type="button" class="weight-reset-btn ${modified ? '' : 'is-clean'}" title="${esc(`Reset to ${baseNum ?? numVal}`)}">↺</button>`;
-      row.querySelector('input').addEventListener('change', (ev) => {
-        const n = Number(ev.target.value);
-        if (!Number.isFinite(n) || n === numVal) return;
-        pushHistory();
-        r.set(n);
-        saveDraft();
-        computeShiftCount();
-        renderWeights();
-        renderInspector();
-        renderCardsGrid();
+      const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
+      row.innerHTML = `${labelHtml}${perControlHtml(r)}${multControlHtml(r)}<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} weight`)}" /><button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button>`;
+      const input = row.querySelector('.weight-input');
+      const perInput = row.querySelector('.weight-per');
+      const multInput = row.querySelector('.weight-mult');
+      const resetBtn = row.querySelector('.weight-reset-btn');
+      // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
+      const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
+      const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
+      const multDiffers = (other) => Boolean(multInput) && other !== undefined && multInput.checked !== other;
+      const markRow = () => {
+        const value = Number(input.value);
+        const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base);
+        const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value);
+        row.classList.toggle('is-modified', modified);
+        row.classList.toggle('is-pending', pending);
+        row.title = pending ? 'Staged: Apply to rescore the cards' : '';
+        resetBtn.classList.toggle('is-clean', !modified);
+      };
+      // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
+      const showStored = () => {
+        const stored = entryIn(withScoring(stagedScoring() || state.scoring, buildGroups), g.key, r.id);
+        if (stored) input.value = String(safeNum(stored.val, 0));
+        if (stored?.per && perInput) perInput.value = String(stored.per.value);
+        if (stored?.mult && multInput) multInput.checked = stored.mult.value;
+        markRow();
+      };
+      markRow();
+      input.addEventListener('change', () => {
+        const n = Number(input.value);
+        if (!Number.isFinite(n)) return;
+        applyWeightEdit(() => r.set(n));
+        showStored();
       });
-      row.querySelector('.weight-reset-btn').addEventListener('click', () => {
-        if (baseNum === undefined) return;
-        pushHistory();
-        r.set(baseNum);
-        saveDraft();
-        computeShiftCount();
-        renderWeights();
-        renderInspector();
-        renderCardsGrid();
+      perInput?.addEventListener('change', () => {
+        const next = r.per.options ? perInput.value : Math.max(1, Math.round(Number(perInput.value)));
+        if (!r.per.options && !Number.isFinite(next)) return;
+        applyWeightEdit(() => r.per.set(next));
+        showStored();
+      });
+      multInput?.addEventListener('change', () => {
+        applyWeightEdit(() => r.mult.set(multInput.checked));
+        showStored();
+      });
+      resetBtn.addEventListener('click', () => {
+        const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base);
+        if (baseNum === undefined && !perChanged) return;
+        // Read the row's live controls: staged edits do not redraw it, so r.per / r.mult values can be stale.
+        const resetMult = multDiffers(r.mult?.base);
+        const resetPer = perDiffers(r.per?.base);
+        applyWeightEdit(() => {
+          if (resetMult) r.mult.set(r.mult.base);
+          if (baseNum !== undefined) r.set(baseNum);
+          if (resetPer) r.per.set(r.per.base);
+        });
+        showStored();
       });
       if (info) row.insertAdjacentHTML('beforeend', infoLineHtml(info));
       card.appendChild(row);
@@ -1552,7 +1804,120 @@ function renderWeights() {
   }
   if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
   renderDescriptionGaps();
-  computeShiftCount();
+  updateWeightsToolbar();
+  if (shifts) computeShiftCount();
+}
+
+// Score categories (ScoreCard's scoring.categories): Martial, Magic and each Card Type.
+const CATEGORY_KEYS = Object.freeze([...SCHOOL_CATEGORIES, ...CARD_KINDS]);
+
+function categoryWeight(scoring, key) {
+  scoring.categories ||= {};
+  // A category the table lacks starts at the repo's weight (Hybrid +10), not at 0.
+  scoring.categories[key] ||= clone(state.repoScoring?.categories?.[key] || { weight: 0, multiplier: false });
+  return scoring.categories[key];
+}
+
+// "× mult" switch for a category weight: off adds the weight flat, on multiplies the positive score.
+function multControlHtml(entry) {
+  if (!entry.mult) return '';
+  return `<label class="weight-per-label" title="Off: add the weight. On: multiply the card's positive score by it."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiplier</label>`;
+}
+
+// The values a tag's per can take: score once per action, or once per hit.
+const TAG_PER_OPTIONS = Object.freeze(['action', 'hit']);
+
+// "per [n]" for effects (a whole number of at least 1) and a per select for damage-type tags.
+function perControlHtml(entry) {
+  if (!entry.per) return '';
+  const label = `${entry.label} per`;
+  if (entry.per.options) {
+    const options = [...new Set([...entry.per.options, entry.per.value])];
+    return `<label class="weight-per-label">per <select class="weight-per" aria-label="${esc(label)}">${options.map((option) => `<option value="${esc(option)}" ${option === entry.per.value ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></label>`;
+  }
+  return `<label class="weight-per-label">per <input type="number" class="weight-per" min="1" step="1" value="${esc(safeNum(entry.per.value, 1))}" aria-label="${esc(label)}" /></label>`;
+}
+
+// Weight edits are staged (owner, 2026-11-23): they change only the pending copy, so nothing rescores or
+// redraws until Apply. Apply is one undo step; Discard drops the pending copy.
+function applyWeightEdit(apply) {
+  // Rebase on the applied config as it is now (an undo or A/B load may have changed it), then edit.
+  state.pendingScoring = stagedScoring() || clone(state.scoring);
+  state.pendingBase = clone(state.scoring);
+  withScoring(state.pendingScoring, apply);
+  updateWeightsToolbar();
+  saveDraft({ autoName: false });
+}
+
+// Runs fn with state.scoring swapped for another config, so the Weights rows' setters write into it.
+function withScoring(scoring, fn) {
+  const applied = state.scoring;
+  state.scoring = scoring;
+  try { return fn(); } finally { state.scoring = applied; }
+}
+
+// The config Apply would produce: the applied config with the staged differences replayed on it, or null.
+function stagedScoring() {
+  return state.pendingScoring && state.pendingBase ? MergePendingScoring(state.scoring, state.pendingBase, state.pendingScoring) : null;
+}
+
+function pendingWeightCount() {
+  const staged = stagedScoring();
+  return staged ? ScoringDiffPaths(state.scoring, staged).length : 0;
+}
+
+function clearPendingWeights() {
+  state.pendingScoring = null;
+  state.pendingBase = null;
+}
+
+function applyPendingWeights() {
+  const staged = stagedScoring();
+  if (!staged) return;
+  const count = ScoringDiffPaths(state.scoring, staged).length;
+  const errors = ValidateScoringConfig(staged);
+  if (errors.length) { toast(`Cannot apply: ${errors[0]}`); return; }
+  pushHistory();
+  state.scoring = staged;
+  clearPendingWeights();
+  syncAllViews();
+  saveDraft();
+  toast(`Applied ${count} weight change(s). ${computeShiftCount()} card(s) now differ in rank from the game.`);
+}
+
+function discardPendingWeights() {
+  if (!state.pendingScoring) return;
+  clearPendingWeights();
+  renderWeights({ shifts: false });
+  saveDraft({ autoName: false });
+  toast('Discarded staged weight edits');
+}
+
+// Stages a whole scoring config (an imported file or the saved config) for review; Apply makes it live.
+function stageWholeScoring(scoring, sourceName) {
+  const errors = ValidateScoringConfig(scoring);
+  if (errors.length) throw new Error(errors.join(' '));
+  state.pendingScoring = clone(scoring);
+  // Seed naming words as the applied copy is seeded, so they do not count as staged changes.
+  ensureNamingWords(state.pendingScoring);
+  state.pendingBase = clone(state.scoring);
+  document.querySelector('.studio-tab[data-tab="weights"]')?.click();
+  renderWeights({ shifts: false });
+  saveDraft({ autoName: false });
+  toast(`Staged ${sourceName}: ${pendingWeightCount()} change(s). Review, then Apply.`);
+}
+
+function updateWeightsToolbar() {
+  const apply = document.getElementById('btn-weights-apply');
+  if (!apply) return;
+  const count = pendingWeightCount();
+  apply.textContent = count ? `Apply (${count})` : 'Apply';
+  apply.disabled = count === 0;
+  document.getElementById('btn-weights-discard').disabled = !state.pendingScoring;
+  const accept = document.getElementById('btn-weights-accept-ranks');
+  accept.disabled = count > 0;
+  accept.title = count > 0 ? 'Apply or discard the staged edits first' : 'Write the applied weights to the game so every card takes its new rank';
+  refreshDirtyStatus();
 }
 
 // Which feature kind each weight group's rows are, for their descriptions.
@@ -1875,6 +2240,7 @@ function namingWordsExportNote() {
 }
 
 async function loadFromRepo(customPath = state.repoPath) {
+  clearPendingWeights();
   if (!isLocalServer) {
     state.repoScoring = clone(shippedScoring);
     state.scoring = clone(shippedScoring);
@@ -1921,10 +2287,9 @@ function rankShifts() {
     .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
 }
 
-function renderRankShiftList() {
-  const shifts = rankShifts();
-  document.getElementById('export-modal-shift-count').textContent = shifts.length === 1 ? '1 card changes rank' : `${shifts.length} cards change rank`;
-  const list = document.getElementById('export-modal-shifts');
+function renderRankShiftList(shifts = rankShifts(), countId = 'export-modal-shift-count', listId = 'export-modal-shifts') {
+  document.getElementById(countId).textContent = shifts.length === 1 ? '1 card changes rank' : `${shifts.length} cards change rank`;
+  const list = document.getElementById(listId);
   const shown = shifts.slice(0, RANK_SHIFT_LIST_LIMIT).map((shift) => {
     const direction = shift.now > shift.before ? 'shift-up' : 'shift-down';
     return `<li><span>${esc(shift.card.name)}</span><span class="${direction}">${esc(RankName(shift.before))} → ${esc(RankName(shift.now))}</span></li>`;
@@ -1932,6 +2297,154 @@ function renderRankShiftList() {
   const hidden = shifts.length - RANK_SHIFT_LIST_LIMIT;
   if (hidden > 0) shown.push(`<li class="studio-muted">+${hidden} more</li>`);
   list.innerHTML = shown.join('');
+}
+
+const GAME_SCORING_PATH = 'content/source/scoring.json';
+// Weights toolbar buttons that need the local server (hidden in web mode).
+const WEIGHTS_REPO_BUTTON_IDS = Object.freeze(['btn-weights-save', 'btn-weights-load-saved', 'btn-weights-export-game', 'btn-weights-accept-ranks']);
+
+const exportPath = () => document.getElementById('repo-path-input').value.trim() || GAME_SCORING_PATH;
+
+// A note for exports and saves: they carry the applied weights, never the staged ones.
+function stagedNotIncludedNote() {
+  const count = pendingWeightCount();
+  return count ? ` ${count} staged edit(s) are not included until Apply.` : '';
+}
+
+function openExportDialog() {
+  const errors = ValidateScoringConfig(state.scoring);
+  if (errors.length) { toast(`Validation failed: ${errors[0]}`); return; }
+  const diff = buildScoringDiff();
+  document.getElementById('export-modal-path').textContent = `Target: ${exportPath()} (${diff.length} change(s))`;
+  document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
+  document.getElementById('export-modal-naming').textContent = namingWordsExportNote() + stagedNotIncludedNote();
+  renderRankShiftList();
+  document.getElementById('export-modal').showModal();
+}
+
+// Writes the applied scoring to a repo file and rebuilds the game's scoring, combat-power and Act tables.
+async function writeScoringToGame(path, doneNote = 'Exported') {
+  try {
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: state.scoring, rebuild: true }) });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error);
+    state.repoScoring = clone(state.scoring);
+    recomputeBaselineRanks();
+    syncAllViews();
+    writeDraftNow();
+    toast(`${doneNote}: ${data.path}, rebuilt ${data.rebuilt.length} table script(s)`);
+    return true;
+  } catch (err) {
+    toast(`Export failed: ${err.message}`);
+    return false;
+  }
+}
+
+function downloadScoringJson() {
+  const blob = new Blob([JSON.stringify(state.scoring, null, 2) + '\n'], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'scoring.json' });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`Downloaded scoring.json.${stagedNotIncludedNote()}`);
+}
+
+// An imported file is staged, not applied: the owner reviews it in the Weights tab, then Applies.
+async function importScoringFile(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    stageWholeScoring(JSON.parse(await file.text()), file.name);
+  } catch (err) {
+    toast(`Invalid JSON: ${err.message}`);
+  }
+  e.target.value = '';
+}
+
+// Save keeps the applied weights as the studio's own config, apart from the game's scoring.json.
+async function saveStudioConfig() {
+  try {
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: STUDIO_SAVE_PATH, scoring: state.scoring, rebuild: false }) });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error);
+    toast(`Saved to ${data.path}.${stagedNotIncludedNote()}`);
+  } catch (err) {
+    toast(`Save failed: ${err.message}`);
+  }
+}
+
+async function openSavedConfig() {
+  try {
+    const r = await fetch(`/__studio/config?scoringPath=${encodeURIComponent(STUDIO_SAVE_PATH)}`);
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error);
+    if (!data.scoringExists) { toast('Nothing saved yet: Save first'); return; }
+    stageWholeScoring(data.scoring, 'the saved config');
+  } catch (err) {
+    toast(`Open saved failed: ${err.message}`);
+  }
+}
+
+// The rank a card scores with no override holding it in place.
+function unpinnedRank(def) {
+  const face = cardDefToFace(def, state.scoring);
+  const raw = ScoreCard(face, state.scoring).raw;
+  return RankOf(CombatPower(raw, face.rarity, state.scoring), state.scoring);
+}
+
+function cardOverride(def) {
+  const fromScoring = state.scoring.overrides?.[def.id];
+  return (fromScoring || def.scoringOverride) ? { ...(fromScoring || {}), ...(def.scoringOverride || {}) } : null;
+}
+
+// Cards whose override pins a rank the applied weights no longer give them. Accept new ranks clears these pins.
+function stalePinnedCards() {
+  return state.cards.filter((def) => HasRankPin(cardOverride(def)) && unpinnedRank(def) !== scoreCardEntry(def).rank);
+}
+
+// The game derives every card's rank (and so its Act) from scoring.json when the tables rebuild, so accepting
+// the new ranks is: clear stale rank pins, write the applied weights to the game, rebuild.
+function openAcceptRanksDialog() {
+  if (pendingWeightCount() > 0) { toast('Apply or discard the staged edits first'); return; }
+  const errors = ValidateScoringConfig(state.scoring);
+  if (errors.length) { toast(`Validation failed: ${errors[0]}`); return; }
+  const pinned = stalePinnedCards();
+  const pinnedIds = new Set(pinned.map((def) => def.id));
+  const shifts = state.cards
+    .map((card) => ({ card, now: pinnedIds.has(card.id) ? unpinnedRank(card) : scoreCardEntry(card).rank, before: state.baselineRanks[card.id] }))
+    .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
+  document.getElementById('ranks-modal-pins').textContent = pinned.length
+    ? `Clears the pinned rank on ${pinned.length} card(s): ${pinned.slice(0, 8).map((def) => def.name).join(', ')}${pinned.length > 8 ? ', ...' : ''}`
+    : 'No card has a pinned rank to clear.';
+  renderRankShiftList(shifts, 'ranks-modal-shift-count', 'ranks-modal-shifts');
+  document.getElementById('ranks-modal').showModal();
+}
+
+async function acceptNewRanks() {
+  const pinned = stalePinnedCards();
+  if (pinned.length) {
+    pushHistory();
+    for (const def of pinned) {
+      if (state.scoring.overrides?.[def.id]) {
+        const kept = WithoutRankPin(state.scoring.overrides[def.id]);
+        if (kept) state.scoring.overrides[def.id] = kept;
+        else delete state.scoring.overrides[def.id];
+      }
+      if (def.scoringOverride) {
+        const kept = WithoutRankPin(def.scoringOverride);
+        if (kept) def.scoringOverride = kept;
+        else delete def.scoringOverride;
+        def._edited = true;
+      }
+    }
+  }
+  const moved = rankShifts().length;
+  const written = await writeScoringToGame(GAME_SCORING_PATH, `${moved} card(s) took their new rank in the game`);
+  if (!written && pinned.length) {
+    // The pins are cleared in the studio (Undo restores them); show that and keep it in the draft.
+    syncAllViews();
+    saveDraft();
+  }
 }
 
 function discardSummaryHtml() {
@@ -2003,7 +2516,6 @@ function populateCardOptions() {
   const rarities = distinct('rarity', 'common');
   fillSelect(document.getElementById('filter-type'), types, 'All Types');
   fillSelect(document.getElementById('filter-class'), classes, 'All Classes');
-  fillSelect(document.getElementById('edit-type'), types);
   fillSelect(document.getElementById('edit-class'), classes);
   fillSelect(document.getElementById('edit-rarity'), rarities);
   const poolText = `Core pool · ${state.cards.length} cards`;
@@ -2019,6 +2531,8 @@ function syncAllViews() {
   renderInspector();
   renderWeights();
   renderArtTab();
+  // The sandbox hand's rank badges follow undo, redo, slot loads, imports and Revert too.
+  if (state.sandbox.combat) renderSandbox();
 }
 
 // ---------------------------------------------------------------------------
@@ -2129,7 +2643,17 @@ function setFiltersOpen(open) {
   writeStoredJson(FILTERS_OPEN_KEY, open);
 }
 
+const RANK_BADGES_KEY = 'ashenspire:scoreStudioRankBadges:v1';
+
+function setRankBadgesShown(shown) {
+  document.body.classList.toggle('hide-rank-badges', !shown);
+  document.getElementById('toggle-rank-badges').checked = shown;
+  writeStoredJson(RANK_BADGES_KEY, shown);
+}
+
 function setupFilterPanel() {
+  setRankBadgesShown(readStoredJson(RANK_BADGES_KEY, true) !== false);
+  document.getElementById('toggle-rank-badges').addEventListener('change', (e) => setRankBadgesShown(e.target.checked));
   setFiltersOpen(readStoredJson(FILTERS_OPEN_KEY, false) === true);
   document.getElementById('btn-filters').addEventListener('click', () => {
     setFiltersOpen(document.getElementById('filter-panel').hidden);
@@ -2377,13 +2901,17 @@ function wireEvents() {
   };
   resizer.addEventListener('pointerup', stopResizerDrag);
   resizer.addEventListener('pointercancel', stopResizerDrag);
-  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }));
+  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => setCardKind(d, e.target.value)));
   document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }));
   document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }));
-  document.getElementById('edit-camp').addEventListener('change', (e) => mutateSelectedCard((d) => {
-    d.tags = (d.tags || []).filter((t) => !t.startsWith('camp:'));
-    d.tags.push(`camp:${e.target.value}`);
-  }));
+  // Martial and Magic: at least one stays ticked; both is a hybrid hit.
+  const schoolBoxes = ['edit-martial', 'edit-magic'].map((id) => document.getElementById(id));
+  for (const box of schoolBoxes) {
+    box.addEventListener('change', () => {
+      if (!schoolBoxes.some((b) => b.checked)) box.checked = true;
+      mutateSelectedCard((d) => setCardSchools(d, { martial: schoolBoxes[0].checked, magic: schoolBoxes[1].checked }));
+    });
+  }
   document.getElementById('edit-target').addEventListener('change', (e) => mutateSelectedCard((d) => setCardTarget(d, e.target.value)));
   // Cost inputs rescore live on every keystroke or spinner tick; the tile and preview refresh on change.
   const costBurst = createEditBurst();
@@ -2457,7 +2985,9 @@ function wireEvents() {
   const featureList = document.getElementById('active-features-list');
   const applyFeatureNumber = (target) => {
     if (target.dataset.effAmt !== undefined) {
-      applyLiveCardEdit(featureBurst, (d) => { d.effects[Number(target.dataset.effAmt)].amount = Number(target.value) || 0; });
+      const effectIndex = Number(target.dataset.effAmt);
+      const wanted = Number(target.value) || 0;
+      applyLiveCardEdit(featureBurst, (d) => { d.effects[effectIndex].amount = authoredAmountForFace(d, effectIndex, wanted); });
       return true;
     }
     if (target.dataset.effStacks !== undefined) {
@@ -2667,60 +3197,21 @@ function wireEvents() {
   });
   document.getElementById('btn-confirm-revert').addEventListener('click', revertToRepo);
 
-  document.getElementById('btn-export-repo').addEventListener('click', () => {
-    const errors = ValidateScoringConfig(state.scoring);
-    if (errors.length) { toast(`Validation failed: ${errors[0]}`); return; }
-    const path = document.getElementById('repo-path-input').value.trim() || 'content/source/scoring.json';
-    const diff = buildScoringDiff();
-    document.getElementById('export-modal-path').textContent = `Target: ${path} (${diff.length} change(s))`;
-    document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
-    document.getElementById('export-modal-naming').textContent = namingWordsExportNote();
-    renderRankShiftList();
-    document.getElementById('export-modal').showModal();
-  });
+  document.getElementById('btn-export-repo').addEventListener('click', openExportDialog);
+  document.getElementById('btn-confirm-export').addEventListener('click', () => writeScoringToGame(exportPath()));
+  document.getElementById('btn-download-json').addEventListener('click', downloadScoringJson);
+  document.getElementById('input-upload-json').addEventListener('change', importScoringFile);
 
-  document.getElementById('btn-confirm-export').addEventListener('click', async () => {
-    const path = document.getElementById('repo-path-input').value.trim() || 'content/source/scoring.json';
-    try {
-      const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: state.scoring, rebuild: true }) });
-      const data = await r.json();
-      if (!data.ok) throw new Error(data.error);
-      state.repoScoring = clone(state.scoring);
-      recomputeBaselineRanks();
-      syncAllViews();
-      writeDraftNow();
-      toast(`Exported to ${data.path} and rebuilt tables (${data.rebuilt.length} script(s))`);
-    } catch (err) {
-      toast(`Export failed: ${err.message}`);
-    }
-  });
-
-  document.getElementById('btn-download-json').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(state.scoring, null, 2) + '\n'], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'scoring.json' });
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast('Downloaded scoring.json');
-  });
-
-  document.getElementById('input-upload-json').addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const parsed = JSON.parse(await file.text());
-      const errors = ValidateScoringConfig(parsed);
-      if (errors.length) throw new Error(errors.join(' '));
-      pushHistory();
-      state.scoring = parsed;
-      syncAllViews();
-      saveDraft();
-      toast(`Loaded ${file.name}`);
-    } catch (err) {
-      toast(`Invalid JSON: ${err.message}`);
-    }
-    e.target.value = '';
-  });
+  // Weights toolbar: staged edits, the studio's saved config, import, export and accepting the new ranks.
+  document.getElementById('btn-weights-apply').addEventListener('click', applyPendingWeights);
+  document.getElementById('btn-weights-discard').addEventListener('click', discardPendingWeights);
+  document.getElementById('btn-weights-save').addEventListener('click', saveStudioConfig);
+  document.getElementById('btn-weights-load-saved').addEventListener('click', openSavedConfig);
+  document.getElementById('input-weights-import').addEventListener('change', importScoringFile);
+  document.getElementById('btn-weights-export-game').addEventListener('click', openExportDialog);
+  document.getElementById('btn-weights-export-download').addEventListener('click', downloadScoringJson);
+  document.getElementById('btn-weights-accept-ranks').addEventListener('click', openAcceptRanksDialog);
+  document.getElementById('btn-confirm-accept-ranks').addEventListener('click', acceptNewRanks);
 }
 
 // ---------------------------------------------------------------------------
@@ -2769,7 +3260,7 @@ async function boot() {
   // Web mode (GitHub Pages): nothing can be written to the repo, so the repo controls go and
   // Download JSON in the More menu is how work leaves the studio.
   if (!isLocalServer) {
-    for (const id of ['btn-export-repo', 'btn-save-art', 'btn-revert']) document.getElementById(id)?.classList.add('hidden');
+    for (const id of ['btn-export-repo', 'btn-save-art', 'btn-revert', ...WEIGHTS_REPO_BUTTON_IDS]) document.getElementById(id)?.classList.add('hidden');
     document.querySelector('#more-menu .menu-section')?.classList.add('hidden');
     document.getElementById('draft-status').title = 'Web mode: use Download JSON in the More menu to export';
   }
@@ -2784,6 +3275,15 @@ async function boot() {
       const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
         .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
       state.scoring = draft.scoring;
+      // A draft saved before a category existed takes the repo's weight for it (Hybrid +10 reaches old drafts).
+      for (const [key, weight] of Object.entries(state.repoScoring.categories || {})) {
+        if (key === 'rule' || state.scoring.categories?.[key]) continue;
+        (state.scoring.categories ||= {})[key] = clone(weight);
+      }
+      if (draft.pendingScoring && draft.pendingBase && ValidateScoringConfig(draft.pendingScoring).length === 0) {
+        state.pendingScoring = draft.pendingScoring;
+        state.pendingBase = draft.pendingBase;
+      }
       if (draftArtLayers) state.artLayers = draftArtLayers;
       for (const draftCard of draftCards) {
         const i = state.cards.findIndex((c) => c.id === draftCard.id);

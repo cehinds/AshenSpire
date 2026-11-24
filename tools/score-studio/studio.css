@@ -415,6 +415,10 @@ body.studio-body .section-head > .studio-toggle {
 body.studio-body .section-head > button { flex: none; }
 body.studio-body .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 body.studio-body .form-grid label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
+body.studio-body .form-grid .studio-field { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
+body.studio-body .form-grid .school-checks { display: flex; align-items: center; gap: 12px; min-height: 30px; }
+body.studio-body .form-grid .studio-check { flex-direction: row; align-items: center; gap: 6px; font-size: 12px; color: var(--st-text); cursor: pointer; }
+body.studio-body .form-grid .studio-check input { width: auto; margin: 0; accent-color: var(--st-accent, #6aa0ff); }
 
 body.studio-body .add-feature-bar { display: flex; gap: var(--studio-gap-1); width: 100%; margin-bottom: var(--studio-gap-2); }
 body.studio-body .add-feature-bar select { flex: 1 1 auto; min-width: 0; }
@@ -499,6 +503,11 @@ body.studio-body .weight-group-card { background: var(--st-surface); border: 1px
 body.studio-body .weight-group-card h3 { margin: 0 0 8px 0; font-size: 13px; color: var(--st-accent); }
 body.studio-body .weight-row { display: grid; grid-template-columns: minmax(0, 1fr) 92px 26px; gap: 6px; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, .04); }
 body.studio-body .weight-row.is-modified { background: rgba(224, 159, 62, .09); border-radius: 4px; padding: 4px 6px; margin: 0 -6px; }
+/* Staged weight edits: marked until Apply (or Discard). */
+body.studio-body .weights-toolbar { flex-wrap: wrap; }
+body.studio-body .weights-actions { display: flex; flex-wrap: wrap; gap: var(--studio-gap-1); align-items: center; }
+body.studio-body .weight-row.is-pending { background: rgba(106, 166, 255, .12); box-shadow: inset 3px 0 0 var(--st-accent); border-radius: 4px; padding: 4px 6px; margin: 0 -6px; }
+body.studio-body .weight-row.is-pending .weight-input { border-color: var(--st-accent); }
 body.studio-body .weight-row input { width: 88px; box-sizing: border-box; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 6px; text-align: right; }
 body.studio-body .weight-reset-btn { background: transparent; border: 1px solid var(--st-border); color: var(--st-warn); border-radius: 4px; cursor: pointer; font-size: 11px; padding: 2px 4px; }
 body.studio-body .weight-reset-btn.is-clean { visibility: hidden; }
@@ -580,16 +589,19 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
 /* NARROW SCREENS (900px and below): one column, the page scrolls instead of inner boxes,
    and the inspector opens as a full-screen sheet when a card is tapped. */
 @media (max-width: 900px) {
+  /* The game's sheets make html a fixed-size box with overflow hidden, so a page-height body could not be
+     scrolled by wheel or touch. The body is the scroller instead, one viewport tall. */
   body.studio-body {
-    height: auto;
-    min-height: 100vh;
+    height: 100dvh;
     overflow-x: hidden;
-    overflow-y: visible;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
   body.studio-body .studio-topbar {
     position: sticky;
     top: 0;
     z-index: 20;
+    flex-shrink: 0;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "brand actions"
@@ -627,7 +639,7 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
     height: auto;
     overflow: visible;
   }
-  body.studio-body .studio-main { display: block; }
+  body.studio-body .studio-main { display: block; flex: 0 0 auto; }
 
   /* Cards: tiles at least 160px wide (two per row on a phone), filters in a two-column grid. */
   body.studio-body .cards-layout { display: block; }
@@ -760,3 +772,34 @@ body.studio-body .desc-scores { display: block; }
 body.studio-body .desc-gaps { white-space: nowrap; }
 body.studio-body .export-naming-note { margin: var(--studio-gap-1) 0; font-size: 12px; color: var(--st-warn); }
 body.studio-body .export-naming-note:empty { display: none; }
+
+/* RANK BADGE: the card's rank at the bottom-right of its art (above the rules box at 63% of the height),
+   clear of the cost gems, title and banner. Studio only. */
+body.studio-body .studio-rank-badge {
+  position: absolute;
+  right: 8%;
+  bottom: 39%;
+  z-index: 6;
+  min-width: 1.6em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(13, 16, 22, .85);
+  border: 1px solid var(--st-border);
+  color: var(--st-text);
+  font: 700 11px/1.4 Georgia, 'Times New Roman', serif;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  pointer-events: auto;
+  cursor: help;
+}
+body.studio-body .studio-rank-badge[data-shift="up"] { border-color: var(--st-good); color: var(--st-good); }
+body.studio-body .studio-rank-badge[data-shift="down"] { border-color: var(--st-bad); color: var(--st-bad); }
+body.studio-body.hide-rank-badges .studio-rank-badge { display: none; }
+
+/* Weight rows with a per: label, "per [n]", the weight, reset. */
+body.studio-body .weight-row.has-per { grid-template-columns: minmax(0, 1fr) auto 92px 26px; }
+body.studio-body .weight-per-label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--st-muted); white-space: nowrap; }
+body.studio-body .weight-per-label input,
+body.studio-body .weight-per-label select { width: 58px; box-sizing: border-box; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 4px; text-align: right; }
+body.studio-body .weight-per-label select { width: 72px; text-align: left; }
+body.studio-body .weight-per-label input.weight-mult { width: auto; margin: 0; accent-color: var(--st-accent, #6aa0ff); cursor: pointer; }

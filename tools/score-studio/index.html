@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AshenSpire — Score Studio</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d0b08'/%3E%3Cpath d='M32 6 L40 58 H24 Z' fill='%23c9a227'/%3E%3C/svg%3E" />
   <base href="../../" />
   <!-- Game sheets the card renderer needs, in the game's own order (see index.html). -->
   <link rel="stylesheet" href="styles/base.css" />
@@ -98,6 +99,7 @@
               <label class="scale-control" title="Resize the inspector's card preview">Preview size
                 <input id="inspector-scale-slider" type="range" min="130" max="260" value="175" />
               </label>
+              <label class="studio-toggle" title="Show each card's combat-power rank on the art"><input id="toggle-rank-badges" type="checkbox" checked /> Show rank on cards</label>
               <span class="studio-muted pool-label pool-label-panel"></span>
             </div>
           </div>
@@ -140,18 +142,20 @@
                 </div>
                 <span id="name-hint" class="studio-muted name-hint"></span>
               </div>
-              <label>Card Type
+              <label><span class="cost-label">Card Type <span id="field-score-type" class="feature-score"></span></span>
                 <select id="edit-type">
                   <option value="attack">Attack</option>
                   <option value="skill">Skill</option>
+                  <option value="spell">Spell</option>
+                  <option value="sweep">Sweep</option>
+                  <option value="counter">Counter</option>
+                  <option value="defend">Defend</option>
                   <option value="power">Power</option>
-                  <option value="guard">Guard</option>
-                  <option value="strike">Strike</option>
                   <option value="curse">Curse</option>
                   <option value="status">Status</option>
                 </select>
               </label>
-              <label>Class
+              <label><span class="cost-label">Class <span id="field-score-class" class="feature-score"></span></span>
                 <select id="edit-class">
                   <option value="colorless">Colorless</option>
                   <option value="reaver">Reaver</option>
@@ -160,7 +164,7 @@
                   <option value="herald">Herald</option>
                 </select>
               </label>
-              <label>Rarity
+              <label><span class="cost-label">Rarity <span id="field-score-rarity" class="feature-score"></span></span>
                 <select id="edit-rarity">
                   <option value="starter">Starter</option>
                   <option value="common">Common</option>
@@ -169,13 +173,13 @@
                   <option value="boss">Boss</option>
                 </select>
               </label>
-              <label>Camp
-                <select id="edit-camp">
-                  <option value="physical">Physical</option>
-                  <option value="spell">Spell</option>
-                </select>
-              </label>
-              <label>Target
+              <div class="studio-field"><span class="cost-label">School <span id="field-score-camp" class="feature-score"></span></span>
+                <div class="school-checks">
+                  <label class="studio-check"><input id="edit-martial" type="checkbox" /> Martial</label>
+                  <label class="studio-check"><input id="edit-magic" type="checkbox" /> Magic</label>
+                </div>
+              </div>
+              <label><span class="cost-label">Target <span id="field-score-target" class="feature-score"></span></span>
                 <select id="edit-target">
                   <option value="enemy">Single Enemy</option>
                   <option value="allEnemies">All Enemies</option>
@@ -257,9 +261,25 @@
           <option value="keywords">Keywords</option>
           <option value="rarity">Rarity Discounts</option>
           <option value="rank">Rank Bands</option>
+          <option value="categories">Categories</option>
           <option value="tags">Weighted Tags</option>
           <option value="naming">Naming words</option>
         </select>
+        <div class="weights-actions" role="group" aria-label="Weight changes">
+          <button id="btn-weights-apply" class="s-btn s-btn-primary" disabled title="Rescore every card with the staged weights">Apply</button>
+          <button id="btn-weights-discard" class="s-btn" disabled title="Drop the staged weight edits">Discard</button>
+          <button id="btn-weights-save" class="s-btn" title="Keep the applied weights as the studio's saved config">Save</button>
+          <button id="btn-weights-load-saved" class="s-btn" title="Stage the studio's saved config for review">Open saved</button>
+          <label class="s-btn s-file-btn" title="Stage a scoring JSON file for review">Import JSON<input id="input-weights-import" type="file" accept=".json" hidden /></label>
+          <div class="studio-menu">
+            <button id="btn-weights-export" class="s-btn" aria-haspopup="true" aria-expanded="false" aria-controls="weights-export-menu">Export ▾</button>
+            <div id="weights-export-menu" class="studio-menu-panel" hidden>
+              <button id="btn-weights-export-game" class="menu-item">To game…</button>
+              <button id="btn-weights-export-download" class="menu-item">Download JSON</button>
+            </div>
+          </div>
+          <button id="btn-weights-accept-ranks" class="s-btn" title="Write the applied weights to the game so every card takes its new rank">Accept new ranks…</button>
+        </div>
         <div id="weights-impact-summary" class="studio-muted"></div>
         <div id="weights-desc-gaps" class="studio-muted desc-gaps"></div>
       </div>
@@ -368,6 +388,21 @@
       <div class="modal-actions">
         <button value="cancel" class="s-btn">Cancel</button>
         <button id="btn-confirm-export" value="confirm" class="s-btn s-btn-primary">Write &amp; Rebuild Tables</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ACCEPT NEW RANKS MODAL -->
+  <dialog id="ranks-modal" class="studio-modal">
+    <form method="dialog">
+      <h3>Accept the new ranks in the game?</h3>
+      <p class="studio-muted">Writes the applied weights to content/source/scoring.json and rebuilds the rank and Act tables.</p>
+      <p id="ranks-modal-pins" class="export-naming-note"></p>
+      <h4 id="ranks-modal-shift-count" class="export-shift-count"></h4>
+      <ul id="ranks-modal-shifts" class="export-shifts"></ul>
+      <div class="modal-actions">
+        <button value="cancel" class="s-btn">Cancel</button>
+        <button id="btn-confirm-accept-ranks" value="confirm" class="s-btn s-btn-primary">Accept ranks</button>
       </div>
     </form>
   </dialog>

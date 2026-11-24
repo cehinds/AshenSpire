@@ -91,7 +91,7 @@ test('rest and blacksmith quotes offer Quickstep only the upgrade its grade appl
 function backToHand(c, id) {
   for (const pile of Object.values(c.piles)) { const at = pile.findIndex((card) => card.instanceId === id); if (at >= 0 && pile !== c.piles.hand) c.piles.hand.push(pile.splice(at, 1)[0]); }
 }
-// What the third play of ONE copy costs, after its two earlier plays (the Attack stance the first play enters takes 1 off, with no floor of 1: owner 2026-11-22).
+// What the third play of ONE copy costs, after its two earlier plays (the Attack stance the first play enters takes 1 off, never below 1 on the player's turn: owner 2026-11-23).
 function thirdPlayCost(cardId, steps, classId = 'reaver') {
   const c = fight([inst('a', cardId, steps)], classId);
   dispatch(c, { type: 'playCard', cardInstanceId: 'a', targetId: c.enemies[0].id });
@@ -105,10 +105,10 @@ function thirdPlayCost(cardId, steps, classId = 'reaver') {
 
 test('a steady upgrade holds the printed cost on every play', () => {
   assert.equal(thirdPlayCost('base.cost-per-use', null).stamina, 2, 'the third play costs 2 more, less the stance cut');
-  assert.equal(thirdPlayCost('base.cost-per-use', [{ k: 'fx', fx: 'steady' }]).stamina, 0, 'the steady copy keeps its printed cost (1), less the stance cut that no longer stops at 1');
+  assert.equal(thirdPlayCost('base.cost-per-use', [{ k: 'fx', fx: 'steady' }]).stamina, 1, 'the steady copy keeps its printed cost');
 });
 
-// The first play enters the casting stance; later plays take its 1-Stamina stance cut (no floor of 1, owner 2026-11-22), so the rise shows from the third play.
+// The first play enters the casting stance; later plays take its 1-Stamina stance cut (never below 1 on the player's turn, owner 2026-11-23), so the rise shows from the third play.
 test('Hold Block costs more each play; upgraded it never rises', () => {
   const plays = (steps) => {
     const c = fight([{ instanceId: 'a', cardId: 'base.retain-block', upgraded: !!steps }], 'reaver');
@@ -117,8 +117,8 @@ test('Hold Block costs more each play; upgraded it never rises', () => {
   const base = plays(false);
   const held = plays(true);
   assert.equal(base[2] - base[1], 1, `the third play costs 1 more than the second: ${base}`);
-  assert.equal(held[1], held[2], `the upgrade holds the cost after the first play: ${held}`);
-  assert.equal(base[2], held[2] + 2, `the rising copy pays more by its third play: ${base} vs ${held}`);
+  assert.equal(new Set(held).size, 1, `the upgrade holds the cost: ${held}`);
+  assert.equal(base[2], held[2] + 1, `the rising copy pays more by its third play: ${base} vs ${held}`);
 });
 
 test('a rising cost counts plays of each copy, never another copy', () => {
@@ -127,7 +127,7 @@ test('a rising cost counts plays of each copy, never another copy', () => {
   dispatch(c, { type: 'playCard', cardInstanceId: 'a' });
   const before = c.player.stamina;
   dispatch(c, { type: 'playCard', cardInstanceId: 'b' });
-  assert.equal(before - c.player.stamina, 0, 'a fresh copy pays its printed cost (1) less the stance cut, whatever other copies did');
+  assert.equal(before - c.player.stamina, 1, 'a fresh copy pays its printed cost (less nothing), whatever other copies did');
   backToHand(c, 'a');
   const again = c.player.stamina;
   dispatch(c, { type: 'playCard', cardInstanceId: 'a' });
