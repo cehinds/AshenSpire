@@ -8,7 +8,7 @@ import { sourceRatingValue, magicShareOf, splitContactParts, PacketSplit, Packet
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { ScaleCardBaseDamage, ScalePhysicalDamage, isSpellCard } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreWardHpBuffer, EffectiveWardHp, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
@@ -356,13 +356,48 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const incoming = amount;
   const parts = packetHit ? PacketSplit({base,share,physicalBonus:ratingBonus,magicBonus:packetPower,magicMultiplier:packetMagicMultiplier,physicalMultiplier,total:incoming}) : splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
-  let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, magicPoise = 0, blockSpent = null;
-  // Ward (owner, 2026-11-01, SPEC 4.1a): while the target holds Ward stacks ALL damage, physical and magical, goes to Poise first (100%),
-  // the overflow spills to Block, and what is left reaches HP. A pierce hit still lets its fraction of what Block soaked through.
-  const wardRouted = modern && (target?.statuses?.ward?.stacks || 0) > 0;
-  // Owner, 2026-11-15 (W25-W): under `ward.routing: "blockFirst"` the hit meets Block FIRST; Poise then absorbs the whole remainder 1:1 (no leak) until it is empty, then HP.
+  let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, magicPoise = 0, blockSpent = null, wardHpAbsorbed = 0;
+  // Ward health buffer (owner, 2026-11-24): Block > Ward > Poise + Health.
+  const wardHpMode = modern && FixCoreWardHpBuffer(ctx);
+  const wardHpPool = wardHpMode ? EffectiveWardHp(ctx, target) : 0;
+  // Legacy Ward (owner, 2026-11-01 / 2026-11-15): saved fights without `routing: "hpBuffer"` route through Poise.
+  const wardRouted = modern && !wardHpMode && (target?.statuses?.ward?.stacks || 0) > 0;
   const wardBlockFirst = wardRouted && FixCoreWardBlockFirst(ctx);
-  if (wardBlockFirst) {
+  if (wardHpMode && wardHpPool > 0) {
+    const total = physical + magical;
+    const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
+    blockSpent = blockSoak;
+    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
+    pierceBypassed = Math.min(bypassAmount, blockSoak);
+    blocked = blockSoak - pierceBypassed;
+    const afterBlock = total - blocked;
+    transition('block', 'Block', total, afterBlock, 'mitigation');
+    wardHpAbsorbed = Math.min(afterBlock, wardHpPool);
+    wardMitigated = wardHpAbsorbed;
+    const afterWard = afterBlock - wardHpAbsorbed;
+    transition('ward-hp', 'Ward (health buffer)', afterBlock, afterWard, 'mitigation');
+    if (afterWard > 0) {
+      const absorbed = blocked + wardHpAbsorbed;
+      const remPhysical = Math.max(0, physical - absorbed);
+      const remMagical = Math.max(0, afterWard - remPhysical);
+      const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
+      const forceShare = smashRule ? null : ForcePoiseShare(ctx, carrier);
+      const normalPoise = smashRule ? { amount: remPhysical, reduced: 0, sources: [] } : protectionReceipt(ctx, target, 'physical', remPhysical);
+      const poise = forceShare === null ? normalPoise : ForcePoiseReceipt(target, remPhysical, forceShare, normalPoise);
+      const poiseMeetsMagic = fixCoreWardDisabled(ctx);
+      magicPoise = poiseMeetsMagic && !smashRule ? Math.min(remMagical, Math.max(0, poisePool - poise.reduced)) : 0;
+      const magicToHp = remMagical - magicPoise;
+      poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * afterWard)) : 0;
+      poiseMitigated = poise.reduced + magicPoise;
+      sources.push(...poise.sources);
+      if (magicPoise > 0) sources.push({ id: 'poise-magic', label: 'Poise meets the spell', amount: -magicPoise, requested: remMagical, effective: magicToHp, stage: 'mitigation', operation: 'add' });
+      amount = poise.amount + magicToHp;
+    } else {
+      poiseMitigated = 0;
+      poiseDrain = 0;
+      amount = 0;
+    }
+  } else if (wardBlockFirst) {
     const total = physical + magical;
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
@@ -484,6 +519,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   return { ...(pierceOut.spent > 0 ? { skinSpent: pierceOut.spent } : {}), raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
+    ...(wardHpMode && wardHpAbsorbed > 0 ? { wardHpBuffer: true, wardHpAbsorbed } : {}),
     ...(wardRouted ? { wardRouted: true } : {}), ...(wardBlockFirst ? { wardBlockFirst: true } : {}),
     hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null && !evaded,
     hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain, ...(poiseSpared ? { poiseSpared } : {}),

@@ -105,6 +105,21 @@ export function FixCoreWardDecay(ctx, entity, fallback) {
 /** FixCoreWardBreaksAtZeroPoise(ctx) -> true when a Poise break strips every Ward stack. */
 export const FixCoreWardBreaksAtZeroPoise = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.breaksAtZeroPoise === true;
 export const FixCoreWardBlockFirst = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.routing === 'blockFirst';
+/** FixCoreWardHpBuffer(ctx) -> true when Ward adds a health buffer (Block > Ward > Poise + Health). */
+export const FixCoreWardHpBuffer = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.routing === 'hpBuffer';
+/** FixCoreWardHpPerStack(ctx) -> Ward HP per stack when hpBuffer routing is active, else 0. */
+export function FixCoreWardHpPerStack(ctx) {
+  if (!FixCoreWardHpBuffer(ctx)) return 0;
+  const per = rawRules(ctx).ward?.hpPerStack;
+  return Number.isInteger(per) && per > 0 ? per : 0;
+}
+/** EffectiveWardHp(ctx, entity) -> current Ward health buffer points on entity under hpBuffer routing, else 0. */
+export function EffectiveWardHp(ctx, entity) {
+  if (!FixCoreWardHpBuffer(ctx) || !entity) return 0;
+  if (!(entity.statuses?.ward?.stacks > 0)) return 0;
+  if (Number.isFinite(entity.wardHp)) return Math.max(0, Math.floor(entity.wardHp));
+  return Math.max(0, Math.floor(entity.statuses.ward.stacks * FixCoreWardHpPerStack(ctx)));
+}
 // Owner, 2026-11-14 (W25): PR (spell damage) is priced from max(INT, WIS). `ratings.prAttributes` lists the attributes PR reads the highest
 // of; rules without the key (a run or fight made before this ruling) keep PR on Intelligence alone.
 export const FIXCORE_PR_ATTRIBUTE_IDS = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
@@ -213,11 +228,12 @@ export function validateFixCoreRules(rules) {
   if (rules.spellTraditionsVersion !== undefined && ![0, 1].includes(rules.spellTraditionsVersion)) throw new Error('FixCore spellTraditionsVersion must be 0 or 1');
   if (rules.retreatRulesVersion !== undefined && ![0, 1].includes(rules.retreatRulesVersion)) throw new Error('FixCore retreatRulesVersion must be 0 or 1');
   const known = new Set(['retreatRulesVersion','spellTraditionsVersion','version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','bands','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
-  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing', 'decayPerTurn', 'breaksAtZeroPoise'].includes(key))
+  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'hpPerStack', 'routing', 'decayPerTurn', 'breaksAtZeroPoise'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0))
+    || (rules.ward.hpPerStack !== undefined && !(Number.isInteger(rules.ward.hpPerStack) && rules.ward.hpPerStack >= 0))
     || (rules.ward.decayPerTurn !== undefined && !(Number.isInteger(rules.ward.decayPerTurn) && rules.ward.decayPerTurn >= 0))
     || (rules.ward.breaksAtZeroPoise !== undefined && typeof rules.ward.breaksAtZeroPoise !== 'boolean')
-    || (rules.ward.routing !== undefined && rules.ward.routing !== 'blockFirst'))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number, routing?:"blockFirst", decayPerTurn?:whole number, breaksAtZeroPoise?:boolean}');
+    || (rules.ward.routing !== undefined && !['blockFirst', 'hpBuffer'].includes(rules.ward.routing)))) throw new Error('FixCore ward requires {enabled:boolean, hpPerStack?:whole number, poisePerStack?:whole number, routing?:"blockFirst"|"hpBuffer", decayPerTurn?:whole number, breaksAtZeroPoise?:boolean}');
   if (rules.statusCaps !== undefined && rules.statusCaps !== 'none') throw new Error('FixCore statusCaps requires "none" (or no key: the old caps)');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
@@ -356,6 +372,10 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
   };
   if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
   else if (id === 'staggered') row.tooltip = row.description = facts[id];
+  else if (id === 'ward' && rules.ward?.routing === 'hpBuffer' && rules.ward?.hpPerStack > 0) {
+    const decay = rules.ward.decayPerTurn ?? rules.statuses.decayAmount;
+    row.tooltip = row.description = tFull('status.ward.tooltipHpBuffer', { hp: rules.ward.hpPerStack, decay, decayHp: decay * rules.ward.hpPerStack });
+  }
   else if (id === 'ward' && rules.ward?.poisePerStack > 0) {
     const tokens = { poise: rules.ward.poisePerStack, decay: rules.ward.decayPerTurn ?? rules.statuses.decayAmount };
     row.tooltip = row.description = [tFull(rules.ward.routing === 'blockFirst' ? 'status.ward.tooltipBlockFirst' : 'status.ward.tooltipPoiseFirst', tokens),

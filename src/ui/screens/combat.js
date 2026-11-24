@@ -5,8 +5,8 @@ import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { TargetQuote } from '../models/TargetQuoteModel.js';
 import { acFor } from '../models/acBadge.js';
-import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft, PoiseBonusView } from '../models/CombatHealthModel.js';
-import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff, FixCoreCounterStacks } from '../../model/fixCoreMechanics.js';
+import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft, PoiseBonusView, HealthWardView } from '../models/CombatHealthModel.js';
+import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff, FixCoreCounterStacks, EffectiveWardHp } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { ApplyCombatBeat, CaptureCombatDisplay, PlayCostEvents, RequoteHeldHand } from '../models/CombatPlaybackModel.js';
 import { PendingCombatTargetPlan, ResolveTargetHudAction } from '../models/CombatTargetingModel.js';
@@ -149,7 +149,7 @@ import { ArmLongPress } from '../pressable.js';
 import { KeepIntentRowsInside } from '../components/intentRowFit.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
-import { combatHealthRow, ApplyPoiseBonus } from '../components/combatHealth.js';
+import { combatHealthRow, ApplyPoiseBonus, ApplyHealthWard } from '../components/combatHealth.js';
 import { protectionPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -1921,7 +1921,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // the sentence that must change with them.
   function poiseTip(kind, entity = null) {
     return (bar) => {
-      if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
+      if (bar.id === 'hp') {
+        const wardHp = EffectiveWardHp(combat, entity || combat.player);
+        return wardHp > 0
+          ? `${esc(helpText('hp'))}<br>${esc(tFull('combat.protection.hpWardAria', { hp: (entity || combat.player).hp, maxHp: (entity || combat.player).maxHp, ward: wardHp }))}`
+          : esc(helpText('hp'));
+      }
+      if (bar.id === 'block') return esc(helpText(bar.id));
       if (['precision', 'evasion', 'critChance'].includes(bar.id)) return esc(tFull(`combat.stat.${bar.id}`));
       if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(tFull(`combat.protection.${bar.id}`));
       if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id));
@@ -2078,6 +2084,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       precisionHelp: fixCoreEnabled(combat) ? registries.statuses.get('precision', entity)?.tooltip : undefined,
       poiseHelp: poiseHelpText(combat, v),
       broken: !!v.broken, // Wave 3: re-render the Poise bar and the fighter when Broken starts or ends
+      wardHp: EffectiveWardHp(combat, v),
       wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
     };
     const arcane = procPlan && !stackHidden.has('arcaneExposure') ? arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents) : null;
@@ -2110,12 +2117,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, precisionHelp, poiseHelp, wardHelp, persistent: true,
           poise: poiseEl });
         bars.insertBefore(row, next);
+        ApplyHealthWard(el, HealthWardView(v.hp, v.maxHp, hp.wardHp));
         if (poiseEl) {
           poiseEl.dataset.broken = String(!!v.broken);
           // Broken: the empty bar says so in words until Broken ends and it refills (the bar's own number would read 0).
           const poiseValue = poiseEl.querySelector('.m-value');
           if (v.broken && poiseValue) { poiseValue.textContent = t('combat.broken.label'); poiseValue.setAttribute('aria-label', t('combat.broken.label')); }
-          // Bonus Poise (owner, 2026-11-15): "8/8" in yellow then "+5" in blue, and a blue segment on the bar, while Poise is above its base maximum.
+          // Bonus Poise (owner, 2026-11-15; purple 2026-11-24): "8/8" in yellow then "+5" in purple, and a purple segment on the bar, while Poise is above its base maximum.
           if (!v.broken) ApplyPoiseBonus(poiseEl, PoiseBonusView(v.persistentPoise));
         }
       }

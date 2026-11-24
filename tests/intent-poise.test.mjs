@@ -97,7 +97,7 @@ test('Defend stance with Block keeps the 1 Poise floor in the forecast', () => {
 });
 
 test('Ward against magic: a spell meets the Ward lane in the forecast as live', () => {
-  for (const ward of [0, 2]) expectMatch(forecastAndPlay(fight([['lanternMoth', 'wingSparks']], { ward })), `wingSparks, Ward ${ward}`);
+  for (const ward of [0, 2]) expectMatch(forecastAndPlay(fight([['lanternMoth', 'wingSparks']], { ward, poise: 16 })), `wingSparks, Ward ${ward}`, { someLoss: ward === 0 });
 });
 
 test('multi-hit moves: every hit Poise is counted, hit after hit', () => {
