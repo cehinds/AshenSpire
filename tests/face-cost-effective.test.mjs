@@ -1,6 +1,6 @@
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 // Owner, 2026-11-15 (batch 4): card faces outside a fight (deck, rewards, shop, upgrade picker) show the price the player would pay under the shipped
-// spell cost rule, not the authored one: +1 Mana, +1 Stamina unless a cantrip, -1 Mana with a Focus item equipped, no Prepared discount (no stance).
+// spell cost rule, not the authored one: +1 Mana, -1 Mana with a Focus item equipped, no Prepared discount (no stance). The +1 Stamina on non-cantrip spells was dropped by the owner on 2026-11-23.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { reg as currentReg } from './elementFixture.mjs';
@@ -24,13 +24,13 @@ const printed = def => reg.framework.costProfile(def);
 const hasTag = (def, id) => (def.cardTags ?? def.tags ?? []).some(tag => (tag.id ?? tag) === id);
 const cantrip = def => hasTag(def, 'rank.cantrip') || hasTag(def, 'cost.manaOnly'); // neither pays the Stamina surcharge
 
-test('a spell face shows +1 Mana and +1 Stamina (cantrips +1 Mana only); a non-spell is unchanged', () => {
+test('a spell face shows +1 Mana and its printed Stamina (no Stamina surcharge since 2026-11-23); a non-spell is unchanged', () => {
   const run = newRun('greatsword');
   assert.ok(spells.length > 20);
   for (const def of spells) {
     const before = printed(def), after = FaceCostProfile(reg, def, run);
     assert.equal(after.mana, before.mana + 1, def.id);
-    if (def.cost !== 'X') assert.equal(after.stamina, before.stamina + (cantrip(def) ? 0 : 1), def.id);
+    if (def.cost !== 'X') assert.equal(after.stamina, before.stamina, def.id);
   }
   const smash = reg.cards.get('base.smash');
   assert.deepEqual(FaceCostProfile(reg, smash, run), printed(smash));
@@ -40,7 +40,10 @@ test('a Focus item takes 1 Mana off the face price; Prepared is never applied ou
   const plain = newRun('greatsword');
   const def = spells.find(d => !cantrip(d) && d.cost !== 'X' && printed(d).mana > 0);
   for (const hand of ['boneSceptre', 'duskChime']) assert.equal(FaceCostProfile(reg, def, newRun(hand)).mana, FaceCostProfile(reg, def, plain).mana - 1, `${hand}: absent-version saved pricing is unchanged`);
-  assert.equal(FaceCostProfile(reg, def, plain).stamina, printed(def).stamina + 1, 'no Prepared -1 on a face');
+  assert.equal(FaceCostProfile(reg, def, plain).stamina, printed(def).stamina, 'no Prepared -1 on a face');
+  const saved = newRun('greatsword');
+  saved.fixCoreRules = { ...shipped, spellCosts: { ...shipped.spellCosts, staminaSurcharge: 1 } }; // a run saved before the owner ruling of 2026-11-23
+  assert.equal(FaceCostProfile(reg, def, saved).stamina, printed(def).stamina + 1, 'a run saved before 2026-11-23 keeps the +1 Stamina face');
 });
 
 test('a run made before the ruling keeps printed costs; the registered run is the one read', () => {
@@ -63,9 +66,11 @@ test('in a fight the pile faces are priced by the fight: Prepared takes 1 Stamin
   try {
     SetFaceCostCombat(combat);
     const plain = FaceCostProfile(reg, def);
-    assert.equal(plain.stamina, printed(def).stamina + 1);
+    assert.equal(plain.stamina, printed(def).stamina);
     combat.player.combatStance = { maneuver: 'casting', camp: 'spell' };
-    assert.equal(FaceCostProfile(reg, def).stamina, printed(def).stamina, 'Prepared: the surcharge and the discount cancel');
+    assert.equal(FaceCostProfile(reg, def).stamina, printed(def).stamina - 1, 'Prepared: 1 Stamina off, as the hand pays it');
+    combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // a fight saved before the owner ruling of 2026-11-23 keeps its surcharge
+    assert.equal(FaceCostProfile(reg, def).stamina, printed(def).stamina, 'a saved fight: the surcharge and the Prepared discount cancel');
     combat.result = 'victory';
     assert.equal(FaceCostProfile(reg, def, null).stamina, printed(def).stamina, 'a finished fight no longer prices faces');
   } finally { SetFaceCostCombat(null); }
