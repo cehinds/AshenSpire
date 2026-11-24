@@ -232,11 +232,16 @@ test('picker updates remove an exhausted upgrade and clear its selection', async
 test('rows carry a plain chip: rank and upgrade count', () => {
   const run = newRun();
   const card = strike(run);
-  delete card.rank; // an unranked card
+  delete card.rank; // an unranked card reads Basic, as the deck editor names it (owner 2026-11-23)
   const row = () => cardUpgradeModel(registries, run).rows.find(r => r.instanceId === card.instanceId);
-  assert.equal(row().chipLabel, 'Rank 1 · 0 upgrades');
+  assert.equal(row().chipLabel, 'Basic · 0 upgrades');
   card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
+  assert.equal(row().chipLabel, 'Basic · 1 upgrade');
+  card.rank = 1;
   assert.equal(row().chipLabel, 'Rank 1 · 1 upgrade');
+  const spell = { instanceId: 'chip-spell', cardId: 'core.cantrip', upgraded: false };
+  run.deck.push(spell);
+  assert.equal(cardUpgradeModel(registries, run).rows.find(r => r.instanceId === spell.instanceId).chipLabel, 'Cantrip · 0 upgrades', 'an unranked spell reads Cantrip');
   card.rank = 3;
   assert.equal(row().chipLabel, 'Rank 3 · 1 upgrade');
 });

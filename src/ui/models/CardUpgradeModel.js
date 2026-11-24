@@ -253,7 +253,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     // The next step is rolled per instance id and does not split a row: the row shows the step of its first copy
     // (the one an upgrade is applied to) and flags `nextDiffers` when another copy would roll something else.
     const nextKey = JSON.stringify(plan.options ? plan.options.map((o) => o.step) : plan.step);
-    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), inDeck]);
+    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), VisibleCardRank(instance), inDeck]); // unranked and Rank 1 differ in slots
     if (groups.has(key)) {
       const group = groups.get(key);
       group.instanceIds.push(instance.instanceId); group.copies += 1;
@@ -274,7 +274,8 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       shortStones: priced ? priced.cost > stones : plan.code === 'stones', disabled: !ok || !!blockedReason, cost: priced ? priced.cost : plan.cost,
       costLabel: priced?.cinders > 0 ? t('cardUpgrade.cinders', { n: priced.cinders }) : costLabel(priced ? { cost: priced.cost } : plan),
       blockedReason: weaponBound ? t('cardUpgrade.row.weaponBound') : (priced ? priced.reason : plan.reason) || blockedReason,
-      chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
+      // The rank the face shows: Rank N, or Basic / Cantrip for an unranked card (owner, 2026-11-23).
+      chipLabel: t(row_upgrades(instance), { rank: RankLabel(base, VisibleCardRank(instance)), n: upgradeCount(instance) }),
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
       levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
       changes: cardUpgradeChanges(registries, plan.before, plan.after, playsEverOf(instance), run.rangePolicy?.maxRange),
