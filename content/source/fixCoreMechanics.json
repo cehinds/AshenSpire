@@ -104,7 +104,7 @@
   "spellCosts": {
     "version": 1,
     "manaSurcharge": 1,
-    "staminaSurcharge": 1,
+    "staminaSurcharge": 0,
     "cantripTag": "rank.cantrip",
     "manaOnlyTag": "cost.manaOnly",
     "preparedStaminaDiscount": 1,
