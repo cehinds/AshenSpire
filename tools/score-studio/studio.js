@@ -17,6 +17,7 @@ import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } from './weightsStaging.js';
+import { weightSentence, weightExample } from './weightExamples.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -1741,11 +1742,37 @@ function renderWeights({ shifts = true } = {}) {
         ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
         : `<span>${esc(r.label)}</span>`;
       const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
-      row.innerHTML = `${labelHtml}${perControlHtml(r)}${multControlHtml(r)}<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} weight`)}" /><button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button>`;
+      // The row reads as a sentence: "[1] pts per [3] damage", with a worked example under it.
+      const shownScoring = () => stagedScoring() || state.scoring;
+      const words = weightSentence(g.key, r.id, shownScoring(), r.label);
+      const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
+      row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}</span><button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button><div class="weight-example"></div>`;
       const input = row.querySelector('.weight-input');
       const perInput = row.querySelector('.weight-per');
       const multInput = row.querySelector('.weight-mult');
       const resetBtn = row.querySelector('.weight-reset-btn');
+      const exampleEl = row.querySelector('.weight-example');
+      // The example follows the boxes as they are typed in: a copy of the shown config with the boxes' values set.
+      const typedScoring = () => {
+        const typed = clone(shownScoring());
+        withScoring(typed, () => {
+          const value = Number(input.value);
+          if (input.value !== '' && Number.isFinite(value)) r.set(value);
+          if (r.per && perInput && !r.per.options) {
+            const per = Math.round(Number(perInput.value));
+            if (Number.isFinite(per) && per >= 1) r.per.set(per);
+          }
+        });
+        return typed;
+      };
+      const showExample = (scoring = shownScoring()) => {
+        const now = weightSentence(g.key, r.id, scoring, r.label);
+        for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
+        exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label);
+      };
+      showExample();
+      input.addEventListener('input', () => showExample(typedScoring()));
+      if (perInput && !r.per.options) perInput.addEventListener('input', () => showExample(typedScoring()));
       // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
       const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
       const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
@@ -1766,6 +1793,7 @@ function renderWeights({ shifts = true } = {}) {
         if (stored?.per && perInput) perInput.value = String(stored.per.value);
         if (stored?.mult && multInput) multInput.checked = stored.mult.value;
         markRow();
+        showExample();
       };
       markRow();
       input.addEventListener('change', () => {
@@ -1821,21 +1849,21 @@ function categoryWeight(scoring, key) {
 // "× mult" switch for a category weight: off adds the weight flat, on multiplies the positive score.
 function multControlHtml(entry) {
   if (!entry.mult) return '';
-  return `<label class="weight-per-label" title="Off: add the weight. On: multiply the card's positive score by it."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiplier</label>`;
+  return `<label class="weight-per-label weight-mult-label" title="Off: add the weight. On: multiply the card's positive score by it."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiply instead</label>`;
 }
 
 // The values a tag's per can take: score once per action, or once per hit.
 const TAG_PER_OPTIONS = Object.freeze(['action', 'hit']);
 
-// "per [n]" for effects (a whole number of at least 1) and a per select for damage-type tags.
+// The per box for effects (a whole number of at least 1) and the per select for damage-type tags; the row's words say "per".
 function perControlHtml(entry) {
   if (!entry.per) return '';
   const label = `${entry.label} per`;
   if (entry.per.options) {
     const options = [...new Set([...entry.per.options, entry.per.value])];
-    return `<label class="weight-per-label">per <select class="weight-per" aria-label="${esc(label)}">${options.map((option) => `<option value="${esc(option)}" ${option === entry.per.value ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></label>`;
+    return `<label class="weight-per-label"><select class="weight-per" aria-label="${esc(label)}">${options.map((option) => `<option value="${esc(option)}" ${option === entry.per.value ? 'selected' : ''}>${esc(option)}</option>`).join('')}</select></label>`;
   }
-  return `<label class="weight-per-label">per <input type="number" class="weight-per" min="1" step="1" value="${esc(safeNum(entry.per.value, 1))}" aria-label="${esc(label)}" /></label>`;
+  return `<label class="weight-per-label"><input type="number" class="weight-per" min="1" step="1" value="${esc(safeNum(entry.per.value, 1))}" aria-label="${esc(label)}" /></label>`;
 }
 
 // Weight edits are staged (owner, 2026-11-23): they change only the pending copy, so nothing rescores or
