@@ -892,6 +892,8 @@ The 35 runtime strips use `assets/recipient-effects/v5/*.png` in both art tiers.
 PNGs, exact generation prompts, extraction scripts and SHA-256 catalog under
 `provenance/recipient-effects/v5/`. The [recipient-effect guide](docs/RECIPIENT-EFFECTS.md)
 documents local export and preview. No third-party artwork or license is claimed;
-art publication and release pinning are separate. Debug SVG marks are authored
+art publication and release pinning are separate. The current pin uses the
+[published v29 art release](https://github.com/cehinds/AI-Art/releases/tag/ashenspire-hd-assets-v29),
+which retains these reviewed strips and their provenance. Debug SVG marks are authored
 game code. Ward and Evade reuse each affected actor's existing artwork and
 attribution rather than the demonstration silhouette sprite.

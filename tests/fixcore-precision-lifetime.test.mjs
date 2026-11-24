@@ -118,7 +118,7 @@ test('Core Precision stacks and the Precision technique tag bypass neither Block
   // Base 24 is halved by the Core 0.5 base-damage scale to 12, so the hit gets past Block 6 and reaches Poise.
   const resolve = (stacks, tagged) => {
     const ctx = live(), target = ctx.enemies[0];
-    Object.assign(target, { block: 6, persistentPoise: { value: 8, max: 8 } });
+    Object.assign(target, { block: 6, persistentPoise: { value: 8, max: 8 }, combatStance: { maneuver: 'prepared', camp: 'physical', range: 'melee' } });
     target.ratings.poise = 8;
     if (stacks) applyStatus(ctx, ctx.player, 'precision', stacks, ctx.player);
     const card = { ...attack, ...(tagged ? { tags: ['precision'], authoredTags: ['precision'] } : {}) };

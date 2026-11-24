@@ -5584,7 +5584,8 @@ button[data-button-size] {
    keeps encountered names readable at the phone rung. Shared kit controls,
    typography and workspace scrolling still own the presentation. */
 .bestiary-list.cp-grid, :root[data-layout='narrow'] .bestiary .bestiary-list.cp-grid { grid-template-columns: minmax(0, 1fr); }
-:root[data-layout='narrow'] .bestiary .w1-split { grid-template-rows: minmax(0, 7fr) minmax(0, 13fr); }
+/* A knowledge door's compact list/detail shares come from content/config/ui/screens/knowledgeDoor.json. */
+:root[data-layout='narrow'] .knowledge-door .w1-split { grid-template-rows: var(--knowledge-compact-rows, minmax(0, 1fr) minmax(0, 1fr)); }
 .enemy-intent-prediction.as-pane { flex: 0 0 auto; gap: .6rem; padding: 0; overflow: visible; }
 .enemy-intent-prediction .as-row.setting { flex-direction: column; align-items: stretch; padding: 0; }
 .enemy-intent-prediction .as-row.setting > .r-trail { width: 100%; max-width: 100%; margin-left: 0; }

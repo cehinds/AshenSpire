@@ -17,7 +17,7 @@
       "min": 4,
       "max": 4
     },
-    "poiseMax": 15,
+    "poiseMax": 9,
     "spFloor": 3
   },
   "derived": {

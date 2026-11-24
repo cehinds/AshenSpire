@@ -91,7 +91,7 @@ test('authored attribute gear reaches HP MP SP pools with one contribution on re
     for (const attribute of ['dexterity','dexterity','wisdom','wisdom']) applyLevelUp(registries,run,attribute);
   });
   const unworn=[run.maxHp,run.maxMana,run.maxStamina];
-  assert.deepEqual(unworn.slice(1),[1,3]);
+  assert.deepEqual(unworn.slice(1),[4,6]);
   const unwornPoints=gameProfileEquipmentReceipt(registries,run).totals;
   run.loadout.sets.armor[0]='vigil'; // Medium: its type adds Poise only (Heavy would take 1 DEX, ruling 18), so the 3 authored points are the whole stat change
   rederivePools(registries,run,'test');

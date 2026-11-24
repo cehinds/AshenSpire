@@ -56,7 +56,10 @@ function stripSection20() {
   ward.enabled = false;
   ward.poisePerStack = 5;
   ward.routing = 'blockFirst';
-  delete poise.breakStatusStacks; poise.brokenDamageMultiplier = 1.5;
+  for (const key of Object.keys(poise)) delete poise[key];
+  poise.drain = 'prevented';
+  poise.breakRule = 'broken';
+  poise.brokenDamageMultiplier = 1.5;
   fixCoreMechanics.pierce = { blockBypassFraction: 0.2 };
   if (force) fixCoreMechanics.elements.force = { poiseMultiplier: 1.5 };
   return () => {

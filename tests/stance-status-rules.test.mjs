@@ -467,3 +467,20 @@ test('review #2822: Ward damage drained into Poise (Ward off) follows its card, 
   assert.equal(row.breaks, true, 'a spell is magic: no Defend floor without Ward stacks');
   assert.equal(enemy.persistentPoise.value, 0, 'live agrees: Poise breaks');
 });
+
+test('review #2822 follow-up: a physical card Ward damage (Ward off) keeps the Defend floor in the preview, as live (base.multi-hit, 100 Block, 12 Poise)', () => {
+  const { combat, enemy } = live({ classId: 'starseer' });
+  // base.multi-hit deals 3 physical hits (9 weapon Poise total) before its 3 Ward damage,
+  // so 12 Poise leaves 3 Poise when wardDamage resolves and hits the Defend floor (3 -> 1).
+  Object.assign(enemy, { block: 100, persistentPoise: { value: 12, max: 20 } });
+  enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  combat.piles.hand.push({ instanceId: 'w', cardId: 'base.multi-hit' });
+  const values = previewCard(combat, 'w', enemy.id).values;
+  const ward = values.find(value => value.op === 'wardDamage')?.perTargetPoise?.[enemy.id];
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'w', targetId: enemy.id });
+  assert.ok(ward, 'the preview quotes the Poise the Ward damage drains');
+  assert.equal(ward.breaks, false, 'physical Ward damage keeps the floor while Block remains');
+  assert.equal(ward.removed, 2, '3 Poise -> 1, as live');
+  assert.ok(!values.some(value => value.perTargetPoise?.[enemy.id]?.breaks), 'no row of the preview says BREAK');
+  assert.equal(enemy.persistentPoise.value, 1, 'live keeps 1 Poise');
+});
