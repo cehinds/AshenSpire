@@ -172,7 +172,8 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
       const tile = el('div', { class: 'class-pick shop-offer' });
       const visual = copyService ? RenderCardCopyOfferCard(registries, CardCopyUsesLeft(option), { interactive: false, level: 'glance', surface: 'shop' }).card : service ? RenderRankUpOfferCard(registries, { interactive: false, level: 'glance', surface: 'shop' }).card : card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, shopCardOptions) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
       const action = { kind: 'buy', label: t('shop.action.buy', { cost: price }), enabled: quote.ok };
-      const control = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc, visual, price: t('shop.price', { cost: price }), avail: { available: quote.ok, reason: quote.reason || null, because: 'cinders' }, action });
+      // A copy shelf's price is a "from" price: a ranked card costs more (owner, 2026-11-23), named in the card pick.
+      const control = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc, visual, price: copyService ? t('cardCopy.price.from', { cost: price }) : t('shop.price', { cost: price }), avail: { available: quote.ok, reason: quote.reason || null, because: 'cinders' }, action });
       // Every purchase asks first (owner, 2026-11-19): the review names the offer, its price and the purse left.
       // The row's Buy and the inspector's Buy press the same armed control, so both routes reach this review.
       const review = () => purchaseReview({ kind: ShopPurchaseKind(option.kind), name: def?.name || option.id, cost: price, cinders: run.cinders });

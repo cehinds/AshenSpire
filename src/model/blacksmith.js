@@ -25,7 +25,7 @@ import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
 import { mulberry32 } from './rng.js';
 import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
 import { OwnCardRank } from './cardRank.js';
-import { CardCopyCandidates, CopyOwnedCard, CardCopyUsesLeft } from './cardCopyService.js';
+import { CardCopyCandidates, CopyOwnedCard, CardCopyUsesLeft, CardCopyPrice } from './cardCopyService.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
 import { upgradeCount } from './cardUpgrade.js';
 import { PlanCategoryChange, ApplyCategoryChange, CategoryChoices } from './smithCategory.js';
@@ -352,7 +352,8 @@ export function serviceCandidates(registries, run, id) {
 export function CardCopyPlan(registries, run, instanceId) {
   const shelf = run.shopStock?.cardCopy || null;
   const card = CardCopyCandidates(registries, run).find((row) => row.instanceId === instanceId) || null;
-  const cost = Number.isSafeInteger(shelf?.cost) ? shelf.cost : 0;
+  // The shelf's cost is an unranked card's; a ranked card costs +rankPricePct% per visible rank (owner, 2026-11-23).
+  const cost = Number.isSafeInteger(shelf?.cost) ? CardCopyPrice(run, shelf.cost, card) : 0;
   const usesLeft = CardCopyUsesLeft(shelf);
   const name = card ? cardName(registries, card.cardId) : '';
   let reason = '';

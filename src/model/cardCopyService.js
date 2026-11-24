@@ -14,6 +14,7 @@ import { mulberry32 } from './rng.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
 import { EquipmentBound } from './rankUpService.js';
 import { OwnCardRank } from './cardRank.js';
+import { RankedCardPrice } from './rankedCardPrice.js';
 
 /** The option a reward door or a trader shelf carries for this service. */
 export const CARD_COPY_OPTION = Object.freeze({ kind: 'cardCopies', id: 'cardCopy' });
@@ -132,4 +133,9 @@ export function CardCopyShelf(run, door, { priceMult = 1 } = {}) {
 }
 
 /** The uses a saved shelf has left (an absent count reads 1, so a shelf saved without one still sells once). */
+/**
+ * CardCopyPrice(run, shelfPrice, card) -> what copying `card` costs (owner, 2026-11-23): the shelf's price raised
+ * `rankPricePct` percent per rank the card shows (rankedCardPrice.js). The shelf price is the "from" price, an unranked card's.
+ */
+export const CardCopyPrice = (run, shelfPrice, card) => RankedCardPrice(run, shelfPrice, card);
 export const CardCopyUsesLeft = (shelf) => (Number.isSafeInteger(shelf?.usesLeft) ? Math.max(0, shelf.usesLeft) : 1);

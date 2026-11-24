@@ -22,7 +22,7 @@ import { GEAR_TYPES } from '../content/gearTypes.js';
 const GEAR_THEME_PERCENT = GEAR_TYPES.themedPercent;
 import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
 import { SpellRewardEligible, BalanceSpellRewardWeights } from './spellPoolPolicy.js';
-import { CARD_COPY_OPTION, CARD_COPY_SOURCE, CopyOwnedCard, GrantRelicCardCopies, VendorStocksCardCopy, CardCopyShelf, CardCopyUsesLeft, CardCopyCandidates } from './cardCopyService.js';
+import { CARD_COPY_OPTION, CARD_COPY_SOURCE, CopyOwnedCard, GrantRelicCardCopies, VendorStocksCardCopy, CardCopyShelf, CardCopyUsesLeft, CardCopyCandidates, CardCopyPrice } from './cardCopyService.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -565,9 +565,16 @@ function rollOfferPrice(registries,run,rng,table,option) {
   return option.kind==='combatCards'||option.kind==='weaponArts'?RankedCardPrice(run,price,option):price;
 }
 export { shopOfferPrice };
-export function gameProfileShopPurchasePlan(registries,run,shopId,index) {
+/**
+ * gameProfileShopPurchasePlan(registries, run, shopId, index[, { instanceId }]) -> the quote for buying offer `index`. A copy
+ * shelf's price is its "from" price (an unranked card's) until `instanceId` names the card to copy; then it is that card's
+ * rank-raised price (CardCopyPrice, owner 2026-11-23), and the commit charges it.
+ */
+export function gameProfileShopPurchasePlan(registries,run,shopId,index,{instanceId=null}={}) {
   const offerId=`shop:${shopId}`,stock=run.gameProfileRewardOffers?.[offerId];
-  const price=shopOfferPrice(stock,index);
+  const copyCard=stock?.options?.[index]?.kind===CARD_COPY_OPTION.kind&&typeof instanceId==='string'?CardCopyCandidates(registries,run).find(card=>card.instanceId===instanceId):null;
+  const shelfPrice=shopOfferPrice(stock,index);
+  const price=copyCard?CardCopyPrice(run,shelfPrice,copyCard):shelfPrice;
   let reason='';
   if(!stock||stock.source!=='shop')reason='Missing configured shop';
   else if(!Number.isInteger(index)||!stock.options[index]||stock.taken.includes(index)||stock.claimed!==null)reason='This offer is sold out.';
@@ -580,7 +587,7 @@ export function gameProfileShopPurchasePlan(registries,run,shopId,index) {
   return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};
 }
 export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=null,quote=null) {
-  const plan=gameProfileShopPurchasePlan(registries,run,shopId,index);
+  const plan=gameProfileShopPurchasePlan(registries,run,shopId,index,{instanceId:quote?.instanceId??null});
   if(quote&&(quote.revision!==plan.revision||quote.signature!==plan.signature||quote.price!==plan.price||quote.shopId!==shopId||quote.index!==index))throw new Error('This offer changed. Inspect it again.');
   if(!plan.ok)throw new Error(plan.reason);
   const offerId=`shop:${shopId}`,price=plan.price;

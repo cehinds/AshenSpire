@@ -2,7 +2,7 @@ import { InstallLegacyBrowserSafely } from './ui/legacyBrowser.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { OpenCardCopyModal } from './ui/components/cardCopyModal.js';
@@ -2646,10 +2646,10 @@ function leaveRewardDoor(pending) {
 // W25-R: the card pick of a "Rank up a card" service (a reward option or a shop shelf): option rows of the cards that can rise.
 // Resolves with the chosen instance id; Cancel rejects with an empty message, so the door that asked stays as it was.
 // The card pick of a vendor's copy service: option rows of every card the player owns. Cancel rejects with an empty message.
-function chooseCardToCopy({ price = '' } = {}) {
+function chooseCardToCopy({ price = '', shelfPrice = null } = {}) {
   return new Promise((resolve, reject) => {
     let picked = null;
-    OpenCardCopyModal({ registries, run, price, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
+    OpenCardCopyModal({ registries, run, price, shelfPrice, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
   });
 }
 
@@ -2775,8 +2775,10 @@ function showShop() {
       // Owner 2026-11-20: a copy service asks which owned card to copy; the copy lands in the library like a bought card.
       // Like every trade it runs inside the shop's one-trade guard (shop.js transact), which refreshes once it settles.
       if (run.gameProfileRewardOffers?.[`shop:${shopId}`]?.options[index]?.kind === CARD_COPY_OPTION.kind) {
-        return chooseCardToCopy({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
-          const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist();
+        // Owner 2026-11-23: the shelf names a "from" price; each card's row names its own (rank-raised), and that is charged.
+        return chooseCardToCopy({ price: t('cardCopy.pick.priceFrom', { cinders: quote.price }), shelfPrice: quote.price }).then(instanceId => {
+          const priced = gameProfileShopPurchasePlan(registries, run, shopId, index, { instanceId });
+          const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId, price: priced.price }); persist();
           offerShopCardDestination({ kind: 'combatCards', id: receipt.cardId, instanceId: receipt.instanceId }, refresh);
         }, () => {});
       }
