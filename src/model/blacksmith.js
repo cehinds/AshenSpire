@@ -24,6 +24,7 @@ import { coreSmithingActive } from './smithingCore.js';
 import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
 import { mulberry32 } from './rng.js';
 import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { OwnCardRank } from './cardRank.js';
 import { CardCopyCandidates, CopyOwnedCard, CardCopyUsesLeft } from './cardCopyService.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
 import { upgradeCount } from './cardUpgrade.js';
@@ -281,7 +282,7 @@ export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {})
   // The work may also raise the card's rank (rolled before the step was added: the count it had when quoted).
   const card = owned(run).find((row) => row.instanceId === receipt.instanceId);
   const ranked = !!card && InstanceRank(card) < RANK_CEILING && upgradeGrantsRankAt(run, card, receipt.n - 1);
-  if (ranked) card.rank = InstanceRank(card) + 1;
+  if (ranked) card.rank = OwnCardRank(card) + 1;
   return { instanceId: receipt.instanceId, spentStones: receipt.spentStones - lent, step: receipt.step, n: receipt.n, ...(ranked ? { rankedUp: card.rank } : {}) };
 }
 
@@ -309,7 +310,7 @@ export function rankUpPlan(registries, run, instanceId, { priceMult = 1 } = {}) 
   else if (InstanceRank(card) >= RANK_CEILING) reason = say('blacksmith.refuse.rankMax', { name });
   else if (stones(run) < need) reason = say('blacksmith.refuse.stones', { cost: need, have: stones(run), plural: plural(need) });
   else if (!affordable(run, price)) reason = say('shop.refuse.cinders');
-  const from = InstanceRank(card);
+  const from = OwnCardRank(card); // an unranked card reads 0 and rises to Rank 1
   return { ok: !reason, reason, instanceId, name, from, to: from + 1, stones: need, cost: price, revision: blacksmithRevision(run) };
 }
 

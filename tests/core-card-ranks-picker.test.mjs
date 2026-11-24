@@ -45,7 +45,7 @@ test('the reward door shows the Core card at its next rank and raises it', async
     // under it in the same option design the Blacksmith uses, and Rank up commits the picked one.
     const mine = () => document.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`);
     assert.ok(mine(), 'a Core Strike is offered');
-    assert.match(mine().querySelector('.co-chip').textContent, /Rank 1 → 2/);
+    assert.match(mine().querySelector('.co-chip').textContent, /Basic → Rank 1/); // an unranked Strike reads Basic and rises to Rank 1 (owner 2026-11-23)
     const expected = rankUpBonusOptions(registries, run, strike)[1].step;
     mine().click();
     const bonuses = [...document.querySelectorAll('.card-upgrade-option')];
@@ -54,7 +54,7 @@ test('the reward door shows the Core card at its next rank and raises it', async
     assert.equal(document.querySelector('.card-upgrade-confirm').disabled, false);
     assert.equal(strike.rank, undefined, 'picking a bonus spends nothing');
     document.querySelector('.card-upgrade-confirm').click();
-    assert.equal(strike.rank, 2);
+    assert.equal(strike.rank, 1);
     assert.equal(strike.upgradeSteps.length, 1, 'exactly the one picked bonus landed');
     assert.equal(strike.upgradeSteps[0].bonus, true);
     assert.deepEqual(strike.upgradeSteps[0], expected, 'the second option, the one picked');
@@ -112,7 +112,7 @@ test('a reload after a rank-up claim resumes the same door and offers no second 
     document.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`).click();
     document.querySelector('.card-upgrade-option').click();
     document.querySelector('.card-upgrade-confirm').click();
-    assert.equal(strike.rank, 2);
+    assert.equal(strike.rank, 1);
     assert.equal(run.skills['item:blade'].pendingRankUps, queued - 1);
     // Reload: rebuild from the saved run.
     run = JSON.parse(saveJson);

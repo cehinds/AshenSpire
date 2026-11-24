@@ -8,6 +8,7 @@
 // run with no `rankUp` data (or one made before this service) offers nothing and loads unchanged.
 import { gameContent } from './gameProfile.js';
 import { mulberry32 } from './rng.js';
+import { OwnCardRank } from './cardRank.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
 import { blacksmithPrices } from './blacksmithConfig.js';
 
@@ -38,7 +39,7 @@ export function RankUpCandidates(registries, run) {
 export function RaiseCardRank(registries, run, instanceId) {
   const card = RankUpCandidates(registries, run).find((row) => row.instanceId === instanceId);
   if (!card) throw new Error('That card cannot be ranked up.');
-  card.rank = InstanceRank(card) + 1;
+  card.rank = OwnCardRank(card) + 1; // owner 2026-11-23: an unranked card becomes Rank 1, so each rank-up opens one slot
   return { instanceId: card.instanceId, rank: card.rank };
 }
 

@@ -1,6 +1,8 @@
 import { t as translate } from '../strings.js';
 import { UpgradeSlots } from '../../model/cardUpgradeLimits.js';
-import { InstanceRank, RankUpCandidates } from '../../model/rankUpService.js';
+import { RankUpCandidates } from '../../model/rankUpService.js';
+import { OwnCardRank } from '../../model/cardRank.js';
+import { RankLabel } from '../rankLabel.js';
 import { OpenChoiceModal } from './choiceModal.js';
 import { PlayingCardArtworkOrNull } from './choiceRowSources.js';
 import { RenderSmithPriceLine } from './smithOptionsModal.js';
@@ -21,7 +23,7 @@ function findCardArt(card, definition, registries)
 function buildRankUpRow(card, registries, run)
 {
     const definition = registries.cards.get(card.cardId);
-    const rank = InstanceRank(card);
+    const rank = OwnCardRank(card);
     const rankedUpCard = {
         ...card,
         rank: rank + 1,
@@ -36,8 +38,8 @@ function buildRankUpRow(card, registries, run)
         className: ROW_CLASS,
         name: definition?.name || card.cardId,
         text: translate('blacksmith.rankUp.desc', {
-            from: rank,
-            to: rank + 1,
+            from: RankLabel(definition, rank),
+            to: RankLabel(definition, rank + 1),
         }),
         chip: translate('rankUp.pick.slots', { slots: UpgradeSlots(run, rankedUpCard) }),
         artAsset: cardArt?.path || null,

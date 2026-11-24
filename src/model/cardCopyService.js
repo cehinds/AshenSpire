@@ -12,7 +12,8 @@
 import { gameContent } from './gameProfile.js';
 import { mulberry32 } from './rng.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
-import { EquipmentBound, InstanceRank } from './rankUpService.js';
+import { EquipmentBound } from './rankUpService.js';
+import { OwnCardRank } from './cardRank.js';
 
 /** The option a reward door or a trader shelf carries for this service. */
 export const CARD_COPY_OPTION = Object.freeze({ kind: 'cardCopies', id: 'cardCopy' });
@@ -20,7 +21,7 @@ export const CARD_COPY_OPTION = Object.freeze({ kind: 'cardCopies', id: 'cardCop
 export const CARD_COPY_SOURCE = 'copy';
 
 const ownedCards = (run) => [...(run?.deck || []), ...(run?.sideboard || [])].filter(Boolean);
-const variantKey = (card) => JSON.stringify([card.cardId, !!card.upgraded, InstanceRank(card), card.upgradeSteps || null]);
+const variantKey = (card) => JSON.stringify([card.cardId, !!card.upgraded, OwnCardRank(card), card.upgradeSteps || null]);
 
 /**
  * CardCopyCandidates(registries, run) -> one owned instance per distinct card variant (deck first, then library), each a
@@ -90,7 +91,7 @@ export function StartCardCopyOffer(registries, run) {
   while (run.gameProfileRewardOffers[`copy:${ordinal}`]) ordinal++;
   const offerId = `copy:${ordinal}`;
   const options = candidates.map((card) => ({ kind: 'combatCards', id: card.cardId, copyOf: card.instanceId,
-    ...(card.upgraded ? { upgraded: true } : {}), ...(InstanceRank(card) > 1 ? { rank: InstanceRank(card) } : {}) }));
+    ...(card.upgraded ? { upgraded: true } : {}), ...(OwnCardRank(card) ? { rank: OwnCardRank(card) } : {}) }));
   run.gameProfileRewardOffers[offerId] = { id: offerId, source: CARD_COPY_SOURCE, options, takeCount: 1, taken: [], claimed: null };
   return offerId;
 }

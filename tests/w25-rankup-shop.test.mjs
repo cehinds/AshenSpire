@@ -1,4 +1,5 @@
 // W25-R: some shops stock "Rank up a card" at the Blacksmith's price (15% of shops); buying asks for the card.
+import { OwnCardRank } from '../src/model/cardRank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -66,7 +67,7 @@ test('buying raises the chosen card, takes the cinders once, and stocks no repla
   const at = shelf(stock);
   run.cinders = 500;
   const card = RankUpCandidates(registries, run)[0];
-  const rank = InstanceRank(card), options = stock.options.length;
+  const rank = OwnCardRank(card), options = stock.options.length;
   const quote = gameProfileShopPurchasePlan(registries, run, shopId, at);
   assert.equal(quote.ok, true, quote.reason);
   assert.throws(() => purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), quote), /Choose a card/);
@@ -74,7 +75,7 @@ test('buying raises the chosen card, takes the cinders once, and stocks no repla
   const receipt = purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), { ...quote, instanceId: card.instanceId });
   assert.deepEqual([receipt.kind, receipt.price, receipt.rank], ['rankUps', 240, rank + 1]);
   assert.equal(run.cinders, 260);
-  assert.equal(InstanceRank(RankUpCandidates(registries, run).find((row) => row.instanceId === card.instanceId)), rank + 1);
+  assert.equal(OwnCardRank(RankUpCandidates(registries, run).find((row) => row.instanceId === card.instanceId)), rank + 1);
   const after = run.gameProfileRewardOffers[`shop:${shopId}`];
   assert.equal(after.options.length, options, 'nothing restocked');
   assert.ok(after.taken.includes(at));

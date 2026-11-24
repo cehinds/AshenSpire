@@ -24,6 +24,7 @@ import { t } from '../strings.js';
 import { MarkSelected } from '../selection.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
+import { RankLabel } from '../rankLabel.js';
 import { runHudHtml, wireRunHud, RefreshRunHud, RunHudRefreshSignature } from '../components/runHud.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
@@ -255,7 +256,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     rankUp(shelf) {
       for (const card of rankUpCards(registries, run)) {
         const plan = rankUpPlan(registries, run, card.instanceId, { priceMult });
-        const host = tile(GLYPH.rankUp, plan.name, t('blacksmith.rankUp.desc', { from: plan.from, to: plan.to }), '', { visual: cardVisual(card) });
+        const host = tile(GLYPH.rankUp, plan.name, t('blacksmith.rankUp.desc', { from: RankLabel(registries.cards.get(card.cardId), plan.from), to: RankLabel(registries.cards.get(card.cardId), plan.to) }), '', { visual: cardVisual(card) });
         host.dataset.smithKey = `rankUp:${card.instanceId}`;
         const price = priceLine({ stones: plan.stones, cinders: plan.cost });
         actionButton(host, { label: t('blacksmith.action.rankUp'), price, plan, commit: () => commitRankUp(registries, run, plan, { priceMult }),

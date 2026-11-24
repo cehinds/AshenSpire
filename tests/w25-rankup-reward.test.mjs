@@ -1,4 +1,5 @@
 // W25-R step 1: a won fight can offer "Rank up a card" as one option of its reward door (5% normal, 25% elite/boss).
+import { OwnCardRank } from '../src/model/cardRank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -111,12 +112,12 @@ test('the bonus offer lets you claim a card AND a rank-up, in either order', () 
   for (const cardFirst of [true, false]) {
     const { run, offer } = runWithOffer(true);
     const rankAt = bonusOf(offer), card = cardIndex(offer);
-    const target = RankUpCandidates(registries, run)[0].instanceId, before = InstanceRank(RankUpCandidates(registries, run)[0]);
+    const target = RankUpCandidates(registries, run)[0].instanceId, before = OwnCardRank(RankUpCandidates(registries, run)[0]);
     const claimRank = () => claimGameProfileReward(registries, run, offer.id, rankAt, { instanceId: target });
     const claimCard = () => claimGameProfileReward(registries, run, offer.id, card);
     if (cardFirst) { claimCard(); assert.equal(run.gameProfileRewardOffers[offer.id].claimed, null, 'the bonus is still open'); claimRank(); } else { claimRank(); assert.equal(run.gameProfileRewardOffers[offer.id].claimed, null); claimCard(); }
     assert.notEqual(run.gameProfileRewardOffers[offer.id].claimed, null);
-    assert.equal(InstanceRank(run.deck.concat(run.sideboard).find((c) => c.instanceId === target)), before + 1);
+    assert.equal(OwnCardRank(run.deck.concat(run.sideboard).find((c) => c.instanceId === target)), before + 1);
     assert.ok(run.sideboard.some((c) => c.instanceId === `reward:${offer.id}:${card}`));
     const second = offer.options.findIndex((o, i) => i !== card && i !== rankAt && o.kind === 'combatCards');
     if (second >= 0) assert.throws(() => claimGameProfileReward(registries, run, offer.id, second));

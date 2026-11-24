@@ -44,7 +44,7 @@ test('a rank-up offers 2 to 3 distinct options from the blacksmith pool, with bi
   assert.ok(compared > 0, 'some seed offers a number step that the rank-up makes bigger');
   for (const { step, after } of options) {
     assert.equal(step.bonus, true);
-    assert.equal(after.rank, 2, 'the preview is the card at its new rank');
+    assert.equal(after.rank, 1, 'the preview is the card at its new rank (an unranked card rises to Rank 1)');
     assert.deepEqual(upgradeStepsProblems({ upgraded: true, upgradeSteps: [step] }, 'x'), []);
   }
 });
@@ -59,7 +59,7 @@ test('picking applies exactly that option, the rank and nothing else', () => {
   assert.equal(run.skills['item:blade'].pendingRankUps, 2);
   assert.equal(strike.rank, undefined);
   const raised = raiseCardRank(registries, run, 'item:blade', strike.instanceId, pick);
-  assert.equal(raised.rank, 2);
+  assert.equal(raised.rank, 1);
   assert.deepEqual(upgradeStepsOf(raised), [pick]);
   assert.equal(raised.upgraded, true);
   assert.equal(run.skills['item:blade'].pendingRankUps, 1);

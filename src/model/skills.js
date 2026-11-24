@@ -1,4 +1,5 @@
 import { rankUpBonusOptions } from './rankUpBonus.js';
+import { OwnCardRank } from './cardRank.js';
 import { upgradeStepsOf } from './cardUpgrade.js';
 import {spendAbilityDraft} from './abilityDraftReceipts.js';
 import { activateAbilitySkill } from './abilitySkillActivation.js';
@@ -317,7 +318,7 @@ export function raiseCardRank(registries, run, skillId, instanceId, bonus = null
     if (!picked) return null;
   }
   row.pendingRankUps -= 1;
-  inst.rank = (Number.isInteger(inst.rank) && inst.rank >= 1 ? inst.rank : 1) + 1;
+  inst.rank = OwnCardRank(inst) + 1; // owner 2026-11-23: an unranked card becomes Rank 1
   if (picked) { inst.upgradeSteps = [...upgradeStepsOf(inst), picked.step]; inst.upgraded = true; }
   return inst;
 }

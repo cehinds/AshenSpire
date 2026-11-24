@@ -4,13 +4,14 @@
 import { planCardUpgrade } from '../../model/cardUpgradeService.js';
 import { upgradeCount, upgradeStepsOf, FlatSteps } from '../../model/cardUpgrade.js';
 import { RarityOfStep } from '../../model/cardUpgradeSteps.js';
-import { cardRank } from '../../model/cardRank.js';
+import { cardRank, OwnCardRank, VisibleCardRank } from '../../model/cardRank.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { upgradeChoiceCount, RestUpgradeRule } from '../../model/cardUpgradeLimits.js';
 import { rampParts, playsEverOf } from '../../model/cardRamp.js';
 import { staticTokens } from '../components/card.js';
 import { playingCardArtwork } from '../cardArtwork.js';
 import { t, has as hasString } from '../strings.js';
+import { RankLabel } from '../rankLabel.js';
 import { rankUpCandidates } from '../../model/skills.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
 
@@ -314,7 +315,7 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
   const rows = rankUpCandidates(registries, run, skillId).map((instance) => {
     const inDeck = (run.deck || []).includes(instance);
     const base = registries.cards.get(instance.cardId);
-    const rank = cardRank(instance);
+    const rank = OwnCardRank(instance); // an unranked card reads 0 and rises to Rank 1 (owner, 2026-11-23)
     const before = faceOf(instance);
     const raised = faceOf({ ...instance, rank: rank + 1 });
     const bonus = rankUpBonusOptions(registries, run, instance);
@@ -326,7 +327,7 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
       // A lone bonus is no choice, so the picker commits the plan itself: it carries that option's step and face.
       plan: freeze({ before, after: options[0].after, step: options[0].step }), ok: true, disabled: false, weaponBound: false, cost: 0, cinders: 0, shortStones: false,
       costLabel: t('cardUpgrade.free'), blockedReason: '', levelFrom: rank, levelTo: rank + 1,
-      status: t('cardUpgrade.row.rankStatus', { from: rank, to: rank + 1 }),
+      status: t('cardUpgrade.row.rankStatus', { from: RankLabel(base, rank), to: RankLabel(base, rank + 1) }),
       changes: options[0].changes, options: freeze(options), nextDiffers: false,
       tags: cardTags(registries, before || base, base?.rarity || 'common'),
       artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (before || base)?.icon || 'skill',

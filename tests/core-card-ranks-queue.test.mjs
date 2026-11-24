@@ -54,10 +54,11 @@ test('Core cards (camp:/maneuver: tags) are rank-up candidates of the matching t
   // A Core rank-up also takes the one bonus the player picked (model/rankUpBonus.js).
   assert.equal(raiseCardRank(registries, run, 'item:blade', strike.instanceId), null, 'a Core rank-up with bonus options needs a pick');
   const raised = raiseCardRank(registries, run, 'item:blade', strike.instanceId, rankUpBonusOptions(registries, run, strike)[0].step);
-  assert.equal(raised.rank, 2);
+  assert.equal(raised.rank, 1, 'an unranked card rises to Rank 1 (owner 2026-11-23)');
   assert.equal(run.skills['item:blade'].pendingRankUps, 1);
   // The ceiling is the track level: at level 3 a rank-3 card is done.
   raiseCardRank(registries, run, 'item:blade', strike.instanceId, rankUpBonusOptions(registries, run, strike)[0].step);
-  assert.equal(strike.rank, 3);
+  assert.equal(strike.rank, 2);
+  strike.rank = 3;
   assert.equal(rankUpCandidates(registries, run, 'item:blade').some((c) => c.instanceId === strike.instanceId), false);
 });

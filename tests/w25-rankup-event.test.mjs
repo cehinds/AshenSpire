@@ -1,4 +1,5 @@
 // W25-R: an event can raise a card's rank. The Sleeping Smith's new choice pays 80 cinders only when a card rises.
+import { OwnCardRank } from '../src/model/cardRank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
@@ -70,9 +71,9 @@ test('with a candidate and the cinders the choice is open and commits: rank rise
   const run = newRun(); run.cinders = 100;
   const choice = smithChoice();
   assert.equal(choiceAffordable(choice, run, registries), true);
-  const ranks = run.deck.map(card => InstanceRank(card));
+  const ranks = run.deck.map(card => OwnCardRank(card));
   commitEventChoice({ run, registries, rng: { float: () => 0.5, pick: (_s, l) => l[0] } }, { eventId: 'sleepingSmith', choiceId: choice.id });
   assert.equal(run.cinders, 20);
-  assert.equal(run.deck.reduce((n, card, i) => n + InstanceRank(card) - ranks[i], 0), 1);
+  assert.equal(run.deck.reduce((n, card, i) => n + OwnCardRank(card) - ranks[i], 0), 1);
   assert.equal(ChoiceUnmetRequirement(choice, { ...run, cinders: 10 }, registries), 'cinders');
 });

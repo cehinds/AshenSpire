@@ -302,9 +302,9 @@ test('a rank-up reaches a sideboarded card, and it comes back ranked (SPEC §13.
   const slash = run.deck.find((c) => c.cardId === 'gorefireSlash');
   awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1));
   moveToSideboard(REG, run, slash.instanceId);
-  assert.equal(raiseCardRank(REG, run, 'item:blade', slash.instanceId)?.rank, 2);
+  assert.equal(raiseCardRank(REG, run, 'item:blade', slash.instanceId)?.rank, 1); // unranked rises to Rank 1 (owner 2026-11-23)
   moveFromSideboard(REG, run, slash.instanceId);
-  assert.equal(run.deck.find((c) => c.instanceId === slash.instanceId).rank, 2);
+  assert.equal(run.deck.find((c) => c.instanceId === slash.instanceId).rank, 1);
 });
 
 test('a sideboarded art is installable, and installing takes it from the sideboard', async () => {

@@ -44,12 +44,12 @@ test('rank-up: plan names 240 cinders and 1 stone (owner 2026-11-23: doubled); c
   const card = strike(run);
   const plan = rankUpPlan(coreOut, run, card.instanceId);
   assert.equal(plan.ok, true, plan.reason);
-  assert.deepEqual([plan.cost, plan.stones, plan.from, plan.to], [240, 1, 1, 2]);
+  assert.deepEqual([plan.cost, plan.stones, plan.from, plan.to], [240, 1, 0, 1]);
   const receipt = commitRankUp(coreOut, run, plan);
-  assert.deepEqual([receipt.rank, run.smithingStones, run.cinders, card.rank], [2, 2, 1760, 2]);
+  assert.deepEqual([receipt.rank, run.smithingStones, run.cinders, card.rank], [1, 2, 1760, 1]);
   assert.equal(rankUpPlan(coreOut, run, card.instanceId).revision, plan.revision + 1);
   commitRankUp(coreOut, run, rankUpPlan(coreOut, run, card.instanceId));
-  assert.equal(card.rank, 3, 'ranks stack');
+  assert.equal(card.rank, 2, 'ranks stack (an unranked card rose to Rank 1, then 2)');
 });
 
 test('rank-up: a stale quote is refused and spends nothing', () => {

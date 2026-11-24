@@ -2,7 +2,7 @@
 // variant (model/cardCopyService.js CardCopyCandidates). Presentation only; the purchase is the host's.
 import { t as translate } from '../strings.js';
 import { CardCopyCandidates } from '../../model/cardCopyService.js';
-import { InstanceRank } from '../../model/rankUpService.js';
+import { OwnCardRank } from '../../model/cardRank.js';
 import { OpenChoiceModal } from './choiceModal.js';
 import { PlayingCardArtworkOrNull } from './choiceRowSources.js';
 import { RenderSmithPriceLine } from './smithOptionsModal.js';
@@ -19,13 +19,13 @@ function buildCardCopyRow(card, registries)
         definition,
         registries,
     );
-    const rank = InstanceRank(card);
+    const rank = OwnCardRank(card);
     return {
         id: card.instanceId,
         className: ROW_CLASS,
         name: `${definition?.name || card.cardId}${card.upgraded ? '+' : ''}`,
         text: translate('cardCopy.pick.row'),
-        chip: rank > 1 ? translate('deckEditor.rank', { rank }) : '',
+        chip: rank > 0 ? translate('deckEditor.rank', { rank }) : '',
         artAsset: cardArt?.path || null,
         artGlyph: cardArt?.path
             ? null

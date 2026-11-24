@@ -39,11 +39,13 @@ test('raising a card adds one rank and its upgrade slots follow', () => {
   assert.equal(UpgradeSlots(run, card), slots + 1);
 });
 
-test('raising an unranked card (no badge, 1 slot) makes it Rank 2 with 3 slots', () => {
+test('raising an unranked card (no badge, 1 slot) makes it Rank 1 with 2 slots: one slot per rank-up (owner 2026-11-23)', () => {
   const run = newRun();
   const card = RankUpCandidates(registries, run)[0];
   assert.equal(card.rank, undefined);
   assert.equal(UpgradeSlots(run, card), 1);
+  RaiseCardRank(registries, run, card.instanceId);
+  assert.deepEqual([card.rank, UpgradeSlots(run, card)], [1, 2]);
   RaiseCardRank(registries, run, card.instanceId);
   assert.deepEqual([card.rank, UpgradeSlots(run, card)], [2, 3]);
 });

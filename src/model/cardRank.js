@@ -11,13 +11,23 @@ export function cardRank(instance) {
 }
 
 /**
+ * OwnCardRank(instance) → the instance's stored rank, 0 when it has none (an unranked card). A rank-up raises this by one,
+ * so an unranked card becomes "Rank 1" (owner, 2026-11-23). A stored rank 1 resolves to the same numbers as no rank
+ * (rank steps are rank - 1).
+ */
+export function OwnCardRank(instance) {
+  const rank = instance && instance.rank;
+  return Number.isInteger(rank) && rank >= 1 ? rank : 0;
+}
+
+/**
  * VisibleCardRank(instance) → the rank the card face shows (playingCard.js rankBadge): the instance's own rank, else its
  * authored ability rank, else 0 for an unranked card (no badge, "Basic" or "Cantrip"). Unlike cardRank it does not floor
  * at 1, so an unranked card and a "Rank 1" card read differently.
  */
 export function VisibleCardRank(instance) {
-  const rank = instance && instance.rank;
-  if (Number.isInteger(rank) && rank >= 1) return rank;
+  const rank = OwnCardRank(instance);
+  if (rank) return rank;
   const abilityRank = instance && instance.abilityRank;
   return Number.isInteger(abilityRank) && abilityRank >= 1 ? abilityRank : 0;
 }
