@@ -1,3 +1,4 @@
+import { OwnCardRank } from '../../model/cardRank.js';
 import { uiIconText } from '../../content/uiIcons.js';
 import { LevelUpPointsButton } from '../components/progressionCards.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
@@ -107,13 +108,10 @@ function isProgressionReward(row)
     return row.kind === SKILL_RANK_UP;
 }
 
+// The card's own rank, 0 when unranked, so a rank-up preview shows what skills.raiseCardRank commits (owner, 2026-11-23).
 function readCardRank(instance)
 {
-    const hasRank = Number.isInteger(instance?.rank)
-        && instance.rank > 1;
-    return hasRank
-        ? instance.rank
-        : 1;
+    return OwnCardRank(instance);
 }
 
 function isReducedMotion()

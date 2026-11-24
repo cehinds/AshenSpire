@@ -1,4 +1,5 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
+import { OwnCardRank } from './cardRank.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { ConfiguredTraderCategories, ConfiguredTraderOffersSmith } from './gameProfileShopKind.js';
 import { ShelfStockCounts } from './vendorStockRange.js';
@@ -434,11 +435,11 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
     if(option.kind!=='combatCards'||!registries.cards.has(option.id))throw new Error('Invalid reward option');
     const at=rewardInstanceId(offerId,index),source=[...draft.deck,...draft.sideboard].find(card=>card?.instanceId===option.copyOf&&card.cardId===option.id);
     if(source){const copy=CopyOwnedCard(registries,draft,source.instanceId);copy.instanceId=at;}
-    else draft.sideboard.push({instanceId:at,cardId:option.id,upgraded:!!option.upgraded,...(option.rank>1?{rank:option.rank}:{})});
+    else draft.sideboard.push({instanceId:at,cardId:option.id,upgraded:!!option.upgraded,...(OwnCardRank(option)>0?{rank:option.rank}:{})});
   } else if(['combatCards','weaponArts'].includes(option.kind)) {
     registries.cards.get(option.id);
     const instanceId=`reward:${offerId}:${index}${offer.source==='shop'?`:${offer.tradeRevision||0}`:''}`;
-    draft.sideboard.push({instanceId,cardId:option.id,upgraded:false,...(option.rank>1?{rank:option.rank}:{})});
+    draft.sideboard.push({instanceId,cardId:option.id,upgraded:false,...(OwnCardRank(option)>0?{rank:option.rank}:{})});
   } else if(option.kind==='weapons') {
     if(!(registries.equipment.armaments||[]).some(row=>row.id===option.id))throw new Error('Unknown reward weapon');
     if(draft.loadout.storage.includes(option.id))throw new Error('Reward weapon already owned');

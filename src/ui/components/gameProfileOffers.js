@@ -1,3 +1,4 @@
+import { OwnCardRank } from '../../model/cardRank.js';
 import { renderCard } from './card.js';
 import { renderEquipmentCard } from './equipmentCard.js';
 import { renderCollectibleCard } from './collectibleCard.js';
@@ -102,7 +103,7 @@ function findOptionDefinition(registries, activeRun, option)
 
 function buildCardOptionFace(registries, activeRun, option, optionIndex, inspectionOptions = {})
 {
-    const rankFields = option.rank > 1
+    const rankFields = OwnCardRank(option) > 0
         ? {
             rank: option.rank,
         }
