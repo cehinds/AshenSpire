@@ -1946,13 +1946,14 @@ function renderNamingLimitGroup(container, query) {
     const pending = JSON.stringify(limit) !== JSON.stringify(appliedLimit());
     group.classList.toggle('is-pending', pending);
     group.innerHTML = `<summary class="section-head"><h3>Naming</h3></summary>
-      <div class="weight-row naming-limit-row${pending ? ' is-pending' : ''}"><span>Name length</span><span class="weight-sentence"><input type="number" class="weight-input naming-max-chars" min="1" step="1" value="${limit ? esc(limit.maxChars) : ''}" placeholder="none" aria-label="Most characters in a card name" /><span class="weight-words">characters max</span></span>
+      <div class="weight-row naming-limit-row${pending ? ' is-pending' : ''}"><span>Name length</span><span class="weight-sentence"><input type="number" class="weight-input naming-max-chars" min="1" step="1" value="${Number.isFinite(limit?.maxChars) ? esc(limit.maxChars) : ''}" placeholder="none" aria-label="Most characters in a card name" /><span class="weight-words">characters max</span></span>
       <div class="weight-example">Too long: drop parts from the bottom of this list until the name fits. Base, rank and upgrade always stay. Empty: no limit.</div></div>
       <ol class="naming-keep-list">${keep.map((part, i) => `<li class="naming-keep-item" data-part="${esc(part)}"><span>${esc(NAME_PART_LABELS[part] || part)}</span><button type="button" class="naming-keep-move" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="${esc(`Move ${part} up`)}">↑</button><button type="button" class="naming-keep-move" data-dir="1" ${i === keep.length - 1 ? 'disabled' : ''} aria-label="${esc(`Move ${part} down`)}">↓</button></li>`).join('')}</ol>`;
     group.querySelector('.naming-max-chars').addEventListener('change', (e) => {
       const raw = e.target.value.trim();
       const n = Math.round(Number(raw));
-      if (raw === '') stage((card) => { delete card.limit; });
+      // Empty: no limit. A keep order already set stays, with no maxChars.
+      if (raw === '') stage((card) => { if (card.limit?.keep) card.limit = { keep: [...card.limit.keep] }; else delete card.limit; });
       else if (Number.isFinite(n) && n >= 1) stage((card) => { card.limit = { maxChars: n, keep: [...(card.limit?.keep || NAME_LIMIT_PARTS)] }; });
     });
     for (const btn of group.querySelectorAll('.naming-keep-move')) {
@@ -1960,7 +1961,8 @@ function renderNamingLimitGroup(container, query) {
         const part = btn.closest('.naming-keep-item').dataset.part;
         const dir = Number(btn.dataset.dir);
         stage((card) => {
-          const next = { maxChars: card.limit?.maxChars ?? shippedScoring.naming.card.limit.maxChars, keep: [...(card.limit?.keep || NAME_LIMIT_PARTS)] };
+          // Reordering never sets a length: with the box empty the limit stays off.
+          const next = { ...(Number.isFinite(card.limit?.maxChars) ? { maxChars: card.limit.maxChars } : {}), keep: [...(card.limit?.keep || NAME_LIMIT_PARTS)] };
           const i = next.keep.indexOf(part), j = i + dir;
           if (i < 0 || j < 0 || j >= next.keep.length) return;
           [next.keep[i], next.keep[j]] = [next.keep[j], next.keep[i]];

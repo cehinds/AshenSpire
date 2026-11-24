@@ -181,6 +181,7 @@ test('activeScoring: naming.card.limit is optional, and checked when present', (
   const noLimit = structuredClone(shippedScoring); delete noLimit.naming.card.limit;
   assert.deepEqual(ValidateScoringConfig(noLimit), []);
   assert.deepEqual(ValidateScoringConfig(withLimit({ maxChars: 12, keep: ['base', 'rarity'] })), []);
+  assert.deepEqual(ValidateScoringConfig(withLimit({ keep: ['base', 'rarity'] })), [], 'a keep order with no maxChars is no limit');
   assert.ok(ValidateScoringConfig(withLimit({ maxChars: 0, keep: [] })).some((m) => m.includes('maxChars')));
   assert.ok(ValidateScoringConfig(withLimit({ maxChars: 20, keep: ['base', 'title'] })).some((m) => m.includes('keep')));
   assert.ok(ValidateScoringConfig(withLimit([20])).some((m) => m.includes('limit')));

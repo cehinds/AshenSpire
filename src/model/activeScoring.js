@@ -51,12 +51,12 @@ export function ValidateScoringConfig(obj) {
       }
     }
   }
-  // naming.card.limit is optional (no block = no limit): {maxChars: whole number >= 1, keep: name parts, most important first}.
+  // naming.card.limit is optional (no block, or no maxChars, = no limit): {maxChars: whole number >= 1, keep: name parts, most important first}.
   const limit = obj.naming?.card?.limit;
   if (limit !== undefined) {
     if (!limit || typeof limit !== 'object' || Array.isArray(limit)) errors.push('naming.card.limit must be an object.');
     else {
-      if (!Number.isInteger(limit.maxChars) || limit.maxChars < 1) errors.push('naming.card.limit.maxChars must be a whole number of at least 1.');
+      if (limit.maxChars !== undefined && (!Number.isInteger(limit.maxChars) || limit.maxChars < 1)) errors.push('naming.card.limit.maxChars must be a whole number of at least 1.');
       if (!Array.isArray(limit.keep) || limit.keep.some((part) => !NAME_LIMIT_PARTS.includes(part))) errors.push(`naming.card.limit.keep must list name parts (${NAME_LIMIT_PARTS.join(', ')}).`);
     }
   }
