@@ -141,3 +141,18 @@ test('weights staging: Apply replays only staged differences onto the applied co
   assert.ok(!STUDIO_SAVE_PATH.startsWith('content/'));
   assert.ok(STUDIO_SAVE_PATH.endsWith('.json'));
 });
+
+test('weights tab: each row reads as a sentence and its example uses the scorer math', async () => {
+  const { weightSentence, weightExample } = await import('../tools/score-studio/weightExamples.js');
+  const scoring = structuredClone(shippedScoring);
+  scoring.effects.damage = { ...scoring.effects.damage, weight: 1, per: 4 };
+  assert.deepEqual(weightSentence('effects', 'damage', scoring, 'damage'), { before: '', mid: 'pts per', after: 'damage' });
+  assert.equal(weightExample('effects', 'damage', scoring, 'damage'), '8 damage = 2 pts');
+  scoring.costs.sp.weight = -4;
+  assert.equal(weightExample('costs', 'sp', scoring), '2 SP = -8 pts');
+  // A status the scorer values by formula shows the scorer's own number, not weight x stacks.
+  const burnValue = ScoreCard({ ...BaseFace(), statuses: [['burn', 3, 'enemy']] }, scoring).parts.burn;
+  assert.match(weightExample('statuses', 'burn', scoring), new RegExp(`^3 stacks = ${Math.round(burnValue * 10) / 10} pts`));
+  scoring.rank = { ...scoring.rank, unrankedMax: 0, width: 4, maxRank: 10 };
+  assert.equal(weightExample('rank', 'width', scoring), 'CP 9 = Rank 3');
+});
