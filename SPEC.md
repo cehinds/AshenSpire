@@ -362,6 +362,19 @@ Algorithms are code; knobs are data. Every generator is a pure function of `(con
 | Rewards | rarity odds `model/rewardOdds.js`; flask decay `encounters.js` | `balance.js`: odds tables, cinder ranges (`rewards.cinders`), flask-drop decay |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
+#### Card convention names (owner, 2026-11-24)
+
+A card's convention name is built from its score (`CardNameParts` / `CardName`, `src/model/combatPower.js`); every word is data in `content/source/scoring.json` `naming.card`. Generated cards (`model/cardGenerator.js`) and Score Studio's Auto-name use it.
+- **Order:** rarity word, second-effect word, element word (magic only), base word, rank numeral, upgrade mark. Example: `Greater Searing Frost Bolt II+`.
+- **Rarity word** (`rarity`): uncommon `Improved`, rare `Greater`; other rarities none.
+- **Base word** (`base`): a maneuver keeps its word (Smash, Sweep, Riposte, Guard, Step). Otherwise an attack takes its camp and range: martial melee `Strike`, martial reach `Shot`, magic melee `Touch`, magic reach `Bolt`. Area attacks are `Cleave` / `Wave`; skills are `Technique` / `Rite`.
+  - Range comes from the card's tags (`range`: `range:melee`/`delivery:melee` melee, `range:reach`/`delivery:area` reach, ranged tags count as reach); with none, martial is melee and magic is reach (`defaultRange`).
+  - A hybrid (martial with a magic share, or both camps) takes the magic words.
+- **Element word** (`element`, magic only, always present): the `school:` or `damage:` tag's word (fire `Flame`, divine and sacred `Divine`). With none, the tradition (`tradition`): `tradition:arcane` `Arcane`, `tradition:divine` `Divine`; both or neither `Arcane` (`defaultTradition`).
+- **Second-effect word** (`effect`): the adjective of the highest-scoring part the base word does not already name. An attack base names damage and its range tag; Guard names Block; Riposte names Counter; maneuvers follow the same rule for their own parts. A skill's top effect is the word. No such part, no word. The word is dropped when it shares its first 4 letters with the element or base word (`Warding Rite`, not `Warded Warding Rite`).
+- **Rank and upgrades:** the Roman numeral of the card's rank (`naming.roman`), none when Unranked; then `+` for one upgrade, `+2` for two and so on, with no space (`Strike+`, `Strike II+2`). Item names use the same upgrade mark.
+- **Length limit** (`limit`, optional): `{maxChars: 24, keep: [base, rank, upgrade, element, effect, rarity]}`, most important first. While the name is longer than `maxChars` (spaces and the mark counted), parts drop from the end of `keep`; base, rank and upgrade never drop, even when still too long. No `limit` block means no limit. `CardNameParts` reports the dropped parts; the validator (`ValidateScoringConfig`) checks the block. Score Studio's Weights tab edits it (Naming group).
+
 #### Swap cost and equipment changes
 
 Closed vocabularies in `balance.equipment`:
