@@ -7,7 +7,6 @@ export const levelLists = {
   "act1": [
    "blightTouch",
    "core.advance",
-   "core.arcaneSiphon",
    "core.arcaneWard",
    "core.ashenShell",
    "core.astralBolt",
@@ -16,7 +15,6 @@ export const levelLists = {
    "core.cantrip",
    "core.censure",
    "core.cinderWard",
-   "core.cleansingEmbers",
    "core.closingDodge",
    "core.dawnBulwark",
    "core.defend",
@@ -48,7 +46,6 @@ export const levelLists = {
    "core.smash",
    "core.smokeVeil",
    "core.spark",
-   "core.starfall",
    "core.starseerSpecial",
    "core.stoneSigil",
    "core.stormBlessing",
