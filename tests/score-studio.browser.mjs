@@ -318,6 +318,37 @@ try {
   assert.ok(duplicateName.autoName, 'a duplicate starts with Auto-name on');
   assert.doesNotMatch(duplicateName.name, /\(Copy\)/, `the duplicate's auto name has no "(Copy)" (${duplicateName.name})`);
 
+  // 9. Keyword and multiplier-tag rows have the multiply-instead switch; unchecking stages the flat form.
+  const flatSwitch = await page.evaluate(async (settle) => {
+    document.querySelector('.studio-tab[data-tab="weights"]').click();
+    const box = document.querySelector('input.weight-mult[aria-label="retain is a multiplier"]');
+    const tagBox = document.querySelector('input.weight-mult[aria-label="Counterstrike (trait:counterstrike) is a multiplier"]');
+    const before = { keyword: box?.checked, tag: tagBox?.checked };
+    box.checked = false;
+    box.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, settle));
+    const row = box.closest('.weight-row');
+    const result = {
+      before,
+      words: [...row.querySelectorAll('.weight-sentence > .weight-words')].map((el) => el.textContent).join('|'),
+      value: row.querySelector('input.weight-input').value,
+      pending: row.classList.contains('is-pending'),
+      example: row.querySelector('.weight-example').textContent,
+      naming: Boolean(document.querySelector('.naming-limit-group input.naming-max-chars')),
+      keep: [...document.querySelectorAll('.naming-keep-item')].map((el) => el.dataset.part),
+    };
+    document.getElementById('btn-weights-discard').click();
+    document.querySelector('.studio-tab[data-tab="cards"]').click();
+    return result;
+  }, DRAFT_SETTLE_MS);
+  assert.deepEqual(flatSwitch.before, { keyword: true, tag: true }, 'retain and Counterstrike start as multipliers');
+  assert.equal(flatSwitch.value, '0', 'switching to flat resets to the no-change value');
+  assert.ok(flatSwitch.pending, 'the switch is staged');
+  assert.match(flatSwitch.words, /^adds\|pts/, `the flat row reads "adds [n] pts" (${flatSwitch.words})`);
+  assert.match(flatSwitch.example, /^Any card with it:/, `the flat example (${flatSwitch.example})`);
+  assert.ok(flatSwitch.naming, 'the Naming group has a characters box');
+  assert.deepEqual(flatSwitch.keep, ['base', 'rank', 'upgrade', 'element', 'effect', 'rarity'], 'the keep order lists every name part');
+
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
   await page.close();
