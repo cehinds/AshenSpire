@@ -1236,8 +1236,8 @@ function selftestPlants() {
       // different control the first visible row while the table stays intact.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: '      const rowHtml = custom ? [] : topicRows.map(row => settingsRowHtml(settings, row));',
-      replace: '      const rowHtml = custom ? [] : [...topicRows].reverse().map(row => settingsRowHtml(settings, row));',
+      find: '      const rowHtml = custom ? [] : topicRows.filter(row => !row.more).map(row => settingsRowHtml(settings, row));',
+      replace: '      const rowHtml = custom ? [] : [...topicRows].reverse().filter(row => !row.more).map(row => settingsRowHtml(settings, row));',
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
@@ -1274,8 +1274,8 @@ function selftestPlants() {
       // blank screen.
       name: 'Display renders no rows at all (the empty edge)',
       file: 'src/ui/screens/settings.js',
-      find: '  const rows = SETTINGS_ROWS.filter((r) => r.cat === cat && !r.retired);',
-      replace: '  const rows = SETTINGS_ROWS.filter((r) => r.cat === cat && !r.retired && cat !== \'Display\');',
+      find: '  const rows = SETTINGS_ROWS.filter((r) => r.cat === cat && !r.retired && !r.modal);',
+      replace: '  const rows = SETTINGS_ROWS.filter((r) => r.cat === cat && !r.retired && !r.modal && cat !== \'Display\');',
       expectRed: /FINDING D0\/population/,
     },
     // -----------------------------------------------------------------------

@@ -8,18 +8,22 @@ import { cardClassification } from '../src/model/cardClassification.js';
 import { GrantRetreatCard } from '../src/engine/bandRows.js';
 
 const gear = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/gear.json', import.meta.url), 'utf8'));
-const RETREAT_WEAPONS = ['shortbow', 'halberd', 'boneSceptre', 'emberlightSceptre', 'gorefireBrand'];
+const LEGACY_RETREAT_WEAPONS = ['shortbow', 'halberd', 'boneSceptre', 'emberlightSceptre', 'gorefireBrand'];
+// SPEC §17: bows, the halberd and sceptres grant Retreat; Reach or a borrowed halberd sprite alone does not.
+const CODEX_RETREAT_WEAPONS = ['longbow', 'huntersRecurve', 'handCrossbow', 'arbalest', 'stormSceptre'];
+const OTHER_REACH_WEAPONS = ['pike', 'scythe', 'reapersCrescent', 'leatherWhip', 'thornWhip'];
 
-test('every bow, the halberd and the sceptres carry the retreat tag, and no other weapon does', () => {
+test('the original five Retreat weapons and new bows and sceptre carry the tag, and no other weapon does', () => {
   const tagged = gear.filter(g => (g.tags || []).includes('retreat')).map(g => g.id).sort();
-  assert.deepEqual(tagged, [...RETREAT_WEAPONS].sort());
+  assert.deepEqual(tagged, [...LEGACY_RETREAT_WEAPONS, ...CODEX_RETREAT_WEAPONS].sort());
   for (const g of gear.filter(g => (g.tags || []).includes('bow') || (g.tags || []).includes('sceptre'))) assert.ok((g.tags || []).includes('retreat'), g.id);
 });
 
-test('the Retreat card costs 1 Stamina, is a Defense card, Ethereal and Exhaust, and moves nothing but the Advance', () => {
+test('the Retreat card costs 0 Stamina the first time (owner 2026-11-19; it rises 1 per use in a fight), is a Defense card, Ethereal and Exhaust, and moves nothing but the Advance', () => {
   const card = registries.cards.get('core.retreat');
-  assert.equal(card.cost, 1);
-  assert.equal(card.staminaCost, 1);
+  assert.equal(card.cost, 0);
+  assert.equal(card.staminaCost, 0);
+  assert.equal(card.costGrowth.stamina, 1);
   assert.equal(cardClassification(card).stanceType, 'defense', 'resolves as Defense');
   assert.ok(card.keywords.includes('exhaust'));
   assert.ok(card.keywords.includes('ethereal'));
@@ -46,16 +50,30 @@ test('a weapon without the tag grants none', () => {
   assert.equal(GrantRetreatCard(combat), false);
 });
 
-test('playing Retreat ends the Advance and costs 1 Stamina (shown = paid); an unplayed one exhausts at end of turn', () => {
+test('each new bow grants one Retreat, while other Reach weapons grant none', () => {
+  for (const id of ['longbow', 'huntersRecurve', 'handCrossbow', 'arbalest']) {
+    const combat = withWeapon(id);
+    assert.equal(GrantRetreatCard(combat), true, `${id}: grants Retreat`);
+    assert.equal(combat.piles.hand.filter(card => card.cardId === 'core.retreat').length, 1, id);
+    assert.equal(GrantRetreatCard(combat), false, `${id}: never stacks`);
+  }
+  for (const id of OTHER_REACH_WEAPONS) {
+    const combat = withWeapon(id);
+    assert.equal(GrantRetreatCard(combat), false, `${id}: Reach alone grants no Retreat`);
+    assert.equal(combat.piles.hand.filter(card => card.cardId === 'core.retreat').length, 0, id);
+  }
+});
+
+test('playing Retreat ends the Advance and costs 0 Stamina the first time (shown = paid); an unplayed one exhausts at end of turn', () => {
   const combat = withWeapon('shortbow', ['core.advance']);
   dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: 'e2' }); // the Advance card at the back row: Advanced
   assert.ok(combat.player.advanced > 0);
   GrantRetreatCard(combat);
   const retreat = combat.piles.hand.find(c => c.cardId === 'core.retreat');
   const stamina = combat.player.stamina;
-  assert.equal(previewCard(combat, retreat.instanceId).cost, 1, 'the quote shows 1');
+  assert.equal(previewCard(combat, retreat.instanceId).cost, 0, 'the quote shows 0');
   dispatch(combat, { type: 'playCard', cardInstanceId: retreat.instanceId });
-  assert.equal(combat.player.stamina, stamina - 1, 'paid 1');
+  assert.equal(combat.player.stamina, stamina, 'paid 0');
   assert.equal(combat.player.advanced, 0);
   assert.equal(combat.rangeState.engagements[pairOf('e2')], 1, 'the back row is out of reach again');
   const again = withWeapon('shortbow'); GrantRetreatCard(again);

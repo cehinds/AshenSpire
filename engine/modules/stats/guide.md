@@ -34,13 +34,13 @@ That object is only meaningful when the module is supported by the selected bund
 Settings live in `engine/modules/stats/settings.schema.json`; shipped defaults are in `defaults.json`. Every listed setting is required after resolution unless the schema marks it otherwise.
 - `/mode` (type enum; default `"configured"`; allowed "legacy", "configured"): Validated setting; no configured gameplay behavior is promised unless listed in Runtime scope above.
 - `/attributePointTotal` (type integer; default `6`; range 0..1000000): Total starting points for fixed class allocations.
-- `/secondaryPolicy` (type enum; default `"legacyAdapter"`; allowed "legacyAdapter"): Unspecified derived terms continue through the host adapter.
+- `/secondaryPolicy` (type enum; default `"legacyAdapter"`; allowed "legacyAdapter", "primaryOnly"): `legacyAdapter` keeps the unspecified derived terms of a row `levelGains` names through the host adapter. `primaryOnly` (Core, owner 2026-11-17) zeroes them: each such row reads only the attributes `levelGains` gives it (Stamina from DEX, HP from CON, Mana from WIS).
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 
 ## Content changes
 
-games/ashenspire/packs/core/stats.json and classes.json Edit class allocations and loadouts in `classes.json`; edit point total, hand base and declared primary gains in `stats.json`. The adapter preserves secondary derived-stat contributions through the host adapter.
+games/ashenspire/packs/core/stats.json and classes.json Edit class allocations and loadouts in `classes.json`; edit point total, hand base and declared primary gains in `stats.json`. Under `legacyAdapter` the adapter preserves secondary derived-stat contributions; under `primaryOnly` it drops them. `pointsPerIncrease` (`sp`, `mp`, `hp`) sets how many attribute points one +1 of that pool costs (Core: 3 for SP and MP).
 
 The referenced pack JSON is gameplay authoring data; it is not executable module code. Keep stable IDs and update every reference when renaming an item.
 

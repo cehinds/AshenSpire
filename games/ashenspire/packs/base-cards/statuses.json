@@ -33,7 +33,7 @@
       "icon": "mana",
       "stackMode": "add",
       "decay": "none",
-      "tooltip": "Melee/Reach accuracy -20. At turn start 25% chance to become Prone. Fire cannot miss: triple damage, Burn 3, and splash 1.5 times the original incoming fire damage to other same-side actors."
+      "tooltip": "Fire hits deal triple damage, apply Burn 3, and splash 1.5 times the original incoming fire damage to other same-side actors. Lose one stack per fire hit."
     },
     {
       "id": "base.poison",
@@ -65,7 +65,8 @@
       "icon": "health",
       "stackMode": "add",
       "decay": "none",
-      "tooltip": "Direct attack accuracy -25 while active. Lose one stack at turn end."
+      "tooltip": "Direct attack accuracy -25 while active. Lose one stack at turn end.",
+      "retired": true
     },
     {
       "id": "base.bind",
@@ -89,7 +90,8 @@
       "icon": "target",
       "stackMode": "add",
       "decay": "none",
-      "tooltip": "Each stack grants +2 Perception for detecting Veil. Lose one stack at the next turn start."
+      "tooltip": "Each stack grants +2 Perception for detecting Veil. Lose one stack at the next turn start.",
+      "retired": true
     },
     {
       "id": "base.evade",
@@ -193,7 +195,8 @@
       "icon": "target",
       "stackMode": "add",
       "decay": "none",
-      "tooltip": "Single-target actions must detect the bearer. Chance is 50% plus 5% per Perception advantage, minus 10% per Veil stack, clamped to 5\u201395%. Area actions bypass Veil."
+      "tooltip": "Single-target actions must detect the bearer. Chance is 50% plus 5% per Perception advantage, minus 10% per Veil stack, clamped between 5% and 95%. Area actions bypass Veil.",
+      "retired": true
     },
     {
       "id": "base.retain-block",
@@ -312,21 +315,6 @@
         "stacks": 1
       },
       "behaviors": [
-        {
-          "kind": "accuracy",
-          "delta": -20,
-          "ranges": [
-            "melee",
-            "reach"
-          ]
-        },
-        {
-          "kind": "turnChance",
-          "phase": "start",
-          "chance": 25,
-          "status": "prone",
-          "stacks": 1
-        },
         {
           "kind": "greaseFire",
           "damageTypes": [

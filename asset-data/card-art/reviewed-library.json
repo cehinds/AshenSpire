@@ -16684,7 +16684,7 @@
     },
     {
       "id": "progression-breaker-s-toll",
-      "name": "Breaker\u2019s Toll",
+      "name": "Breaker’s Toll",
       "type": "attack",
       "class": "reaver",
       "code": "C120",
@@ -21510,7 +21510,7 @@
     },
     {
       "id": "progression-pallbearer-s-ward",
-      "name": "Pallbearer\u2019s Ward",
+      "name": "Pallbearer’s Ward",
       "type": "skill",
       "class": "herald",
       "code": "C150",
@@ -22053,7 +22053,7 @@
     },
     {
       "id": "progression-pilgrim-s-shelter",
-      "name": "Pilgrim\u2019s Shelter",
+      "name": "Pilgrim’s Shelter",
       "type": "skill",
       "class": "herald",
       "code": "C154",
@@ -22544,12 +22544,2730 @@
         }
       ],
       "source": "content/source/progressionCardFamilies.json"
+    },
+    {
+      "id": "steelResolve",
+      "name": "Steel Resolve",
+      "type": "skill",
+      "class": "reaver",
+      "code": "C157",
+      "tags": [
+        "fx:utility",
+        "classification.skill",
+        "camp:physical"
+      ],
+      "visualCues": [
+        "action:casting",
+        "status:strength"
+      ],
+      "cost": 2,
+      "mana": 0,
+      "keywords": [
+        "exhaust"
+      ],
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "strength",
+          "stacks": 2
+        }
+      ],
+      "currentRecipe": null,
+      "currentRoute": "outline",
+      "rule": "status-symbol",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.stat-buff recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.6",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 0
+        },
+        {
+          "assetId": "symbol.fist",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 430,
+          "height": 430,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 1
+        },
+        {
+          "assetId": "cue.strength.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        },
+        {
+          "assetId": "cue.strength.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/reaverCards.json"
+    },
+    {
+      "id": "ironHide",
+      "name": "Iron Hide",
+      "type": "skill",
+      "class": "reaver",
+      "code": "C158",
+      "tags": [
+        "fx:guard",
+        "classification.skill",
+        "camp:physical"
+      ],
+      "visualCues": [
+        "action:casting",
+        "status:strength"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "dexterity",
+          "stacks": 2
+        }
+      ],
+      "currentRecipe": null,
+      "currentRoute": "outline",
+      "rule": "status-symbol",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.stat-buff recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.6",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 0
+        },
+        {
+          "assetId": "symbol.fist",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 430,
+          "height": 430,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 1
+        },
+        {
+          "assetId": "cue.strength.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        },
+        {
+          "assetId": "cue.strength.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/reaverCards.json"
+    },
+    {
+      "id": "zealousFervor",
+      "name": "Zealous Fervor",
+      "type": "skill",
+      "class": "herald",
+      "code": "C159",
+      "tags": [
+        "fx:oath",
+        "classification.skill",
+        "camp:physical"
+      ],
+      "visualCues": [
+        "action:casting",
+        "status:strength"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [
+        "ethereal"
+      ],
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "strength",
+          "stacks": 2
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "dexterity",
+          "stacks": 1
+        }
+      ],
+      "currentRecipe": null,
+      "currentRoute": "outline",
+      "rule": "status-symbol",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.stat-buff recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.6",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 0
+        },
+        {
+          "assetId": "symbol.fist",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 430,
+          "height": 430,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 1
+        },
+        {
+          "assetId": "cue.strength.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        },
+        {
+          "assetId": "cue.strength.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/heraldCards.json"
+    },
+    {
+      "id": "innerOrbit",
+      "name": "Inner Orbit",
+      "type": "skill",
+      "class": "starseer",
+      "code": "C160",
+      "tags": [
+        "fx:starstone",
+        "classification.skill",
+        "source:spell",
+        "camp:spell",
+        "school:force"
+      ],
+      "visualCues": [
+        "action:casting",
+        "status:strength"
+      ],
+      "cost": 1,
+      "mana": 2,
+      "keywords": [
+        "exhaust"
+      ],
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "dexterity",
+          "stacks": 2
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ],
+      "currentRecipe": null,
+      "currentRoute": "outline",
+      "rule": "status-symbol",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.stat-buff recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.6",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 0
+        },
+        {
+          "assetId": "symbol.fist",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 430,
+          "height": 430,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 1
+        },
+        {
+          "assetId": "cue.strength.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        },
+        {
+          "assetId": "cue.strength.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/starseerCards.json"
+    },
+    {
+      "id": "keenEdge",
+      "name": "Keen Edge",
+      "type": "skill",
+      "class": "rogue",
+      "code": "C161",
+      "tags": [
+        "fx:guile",
+        "classification.skill",
+        "camp:physical"
+      ],
+      "visualCues": [
+        "action:casting",
+        "status:strength"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [
+        "ethereal"
+      ],
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "strength",
+          "stacks": 1
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "dexterity",
+          "stacks": 1
+        }
+      ],
+      "currentRecipe": null,
+      "currentRoute": "outline",
+      "rule": "status-symbol",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.stat-buff recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.6",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 0
+        },
+        {
+          "assetId": "symbol.fist",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 430,
+          "height": 430,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "z": 1
+        },
+        {
+          "assetId": "cue.strength.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        },
+        {
+          "assetId": "cue.strength.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/rogueCards.json"
+    },
+    {
+      "id": "hearthVigil",
+      "name": "Hearth Vigil",
+      "type": "skill",
+      "class": "herald",
+      "code": "C162",
+      "tags": [
+        "fx:ritual",
+        "classification.skill",
+        "source:spell",
+        "camp:spell",
+        "school:divine"
+      ],
+      "visualCues": [
+        "action:skill",
+        "effect:heal"
+      ],
+      "cost": 1,
+      "mana": 2,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 4
+        }
+      ],
+      "currentRecipe": "G00",
+      "currentRoute": "layered",
+      "rule": "restore-leaf",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.exhaust recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.6",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "G.effect.0",
+          "role": "backEffect",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.28,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "95.703125%",
+            "height": "76.5625%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.5",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "10",
+            "display": "block"
+          },
+          "z": 1
+        },
+        {
+          "assetId": "G.object.0",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 460,
+          "height": 460,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "89.84375%",
+            "height": "71.875%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "20",
+            "display": "block"
+          },
+          "z": 2
+        },
+        {
+          "assetId": "G.effect.0",
+          "role": "foreground",
+          "x": 256,
+          "y": 320,
+          "width": 460,
+          "height": 460,
+          "rotation": 0,
+          "opacity": 0.28,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "89.84375%",
+            "height": "71.875%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.65",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "30",
+            "display": "block"
+          },
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/heraldCards.json"
+    },
+    {
+      "id": "starlitSkin",
+      "name": "Starlit Skin",
+      "type": "skill",
+      "class": "starseer",
+      "code": "C163",
+      "tags": [
+        "fx:barrier",
+        "classification.skill",
+        "source:spell",
+        "camp:spell",
+        "school:earth"
+      ],
+      "visualCues": [
+        "action:defend",
+        "status:stoneskin"
+      ],
+      "cost": 1,
+      "mana": 1,
+      "keywords": [
+        "exhaust"
+      ],
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 5
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "stoneskin",
+          "stacks": 1
+        }
+      ],
+      "currentRecipe": "O44",
+      "currentRoute": "layered",
+      "rule": "existing:O44",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved stoneskin recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "O.background.4",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "O.effect.4",
+          "role": "backEffect",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.28,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.28",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "10",
+            "display": "block"
+          },
+          "z": 1
+        },
+        {
+          "assetId": "O.object.4",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 432,
+          "height": 540,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "84.375%",
+            "height": "84.375%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "20",
+            "display": "block"
+          },
+          "z": 2
+        },
+        {
+          "assetId": "O.effect.4",
+          "role": "foreground",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.24,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.24",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "30",
+            "display": "block"
+          },
+          "z": 3
+        },
+        {
+          "assetId": "cue.stoneskin.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 4
+        },
+        {
+          "assetId": "cue.stoneskin.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 5
+        }
+      ],
+      "source": "content/source/cards/starseerCards.json"
+    },
+    {
+      "id": "sanctifiedGuard",
+      "name": "Sanctified Guard",
+      "type": "skill",
+      "class": "herald",
+      "code": "C164",
+      "tags": [
+        "fx:ward",
+        "classification.skill",
+        "source:spell",
+        "camp:spell",
+        "school:divine",
+        "maneuver:defend"
+      ],
+      "visualCues": [
+        "action:defend",
+        "element:divine",
+        "effect:gainBarrier"
+      ],
+      "cost": 1,
+      "mana": 1,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 4
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 4,
+          "if": {
+            "p": "inStance",
+            "of": "self",
+            "stance": "defend",
+            "snapshot": "beforePlay"
+          }
+        }
+      ],
+      "currentRecipe": "Y04",
+      "currentRoute": "layered",
+      "rule": "existing:Y04",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved progression-ash-benediction recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.5",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "V.object.0",
+          "role": "object",
+          "x": 254.91811509678558,
+          "y": 404.91225147574846,
+          "width": 152.95,
+          "height": 152.95,
+          "rotation": -45,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            0.7071067811865476,
+            -0.7071067811865475,
+            0.7071067811865475,
+            0.7071067811865476
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "49.788694354840935%",
+            "top": "63.2675392930857%",
+            "width": "29.873046874999996%",
+            "height": "23.898437499999996%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(-45deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "20",
+            "display": "block"
+          },
+          "z": 1
+        },
+        {
+          "assetId": "Y.effect.4",
+          "role": "foreground",
+          "x": 255.9996349186104,
+          "y": 316.100158825311,
+          "width": 460,
+          "height": 460,
+          "rotation": 45,
+          "opacity": 0.4,
+          "blendMode": "screen",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "49.9999286950411%",
+            "top": "49.39064981645484%",
+            "width": "89.84375%",
+            "height": "71.875%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) matrix(1,0,0,1,0,0)",
+            "opacity": "0.4",
+            "mixBlendMode": "screen",
+            "pointerEvents": "none",
+            "zIndex": "30",
+            "display": "block"
+          },
+          "z": 2
+        }
+      ],
+      "source": "content/source/cards/heraldCards.json"
+    },
+    {
+      "id": "openingCut",
+      "name": "Opening Cut",
+      "type": "attack",
+      "class": "reaver",
+      "code": "C165",
+      "tags": [
+        "fx:blade",
+        "source:weapon",
+        "damage:slashing",
+        "delivery:melee",
+        "classification.attack",
+        "camp:physical",
+        "maneuver:attack"
+      ],
+      "visualCues": [
+        "action:attack",
+        "effect:damage"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "loseHp",
+          "target": "enemy",
+          "amount": 3,
+          "if": {
+            "p": "inStance",
+            "of": "target",
+            "stance": "idle",
+            "snapshot": "beforePlay"
+          }
+        }
+      ],
+      "currentRecipe": "O00",
+      "currentRoute": "layered",
+      "rule": "existing:O00",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.strike recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "O.background.0",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "backEffect",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.28,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.28",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "10",
+            "display": "block"
+          },
+          "z": 1
+        },
+        {
+          "assetId": "O.object.0",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 432,
+          "height": 540,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "84.375%",
+            "height": "84.375%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "20",
+            "display": "block"
+          },
+          "z": 2
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "foreground",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.24,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.24",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "30",
+            "display": "block"
+          },
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/reaverCards.json"
+    },
+    {
+      "id": "breakFocus",
+      "name": "Break Focus",
+      "type": "attack",
+      "class": "rogue",
+      "code": "C166",
+      "tags": [
+        "fx:pierce",
+        "source:weapon",
+        "damage:piercing",
+        "delivery:melee",
+        "classification.attack",
+        "camp:physical",
+        "maneuver:attack"
+      ],
+      "visualCues": [
+        "action:attack",
+        "effect:damage"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "loseHp",
+          "target": "enemy",
+          "amount": 2,
+          "if": {
+            "p": "inStance",
+            "of": "target",
+            "stance": "prepared",
+            "snapshot": "beforePlay"
+          }
+        }
+      ],
+      "currentRecipe": "O00",
+      "currentRoute": "layered",
+      "rule": "existing:O00",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.strike recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "O.background.0",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "backEffect",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.28,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.28",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "10",
+            "display": "block"
+          },
+          "z": 1
+        },
+        {
+          "assetId": "O.object.0",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 432,
+          "height": 540,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "84.375%",
+            "height": "84.375%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "20",
+            "display": "block"
+          },
+          "z": 2
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "foreground",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.24,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.24",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "30",
+            "display": "block"
+          },
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/rogueCards.json"
+    },
+    {
+      "id": "holdTheLine",
+      "name": "Hold the Line",
+      "type": "attack",
+      "class": "reaver",
+      "code": "C167",
+      "tags": [
+        "fx:guard",
+        "source:weapon",
+        "damage:blunt",
+        "delivery:melee",
+        "classification.attack",
+        "camp:physical",
+        "maneuver:attack"
+      ],
+      "visualCues": [
+        "action:attack",
+        "effect:damage"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 5,
+          "if": {
+            "p": "inStance",
+            "of": "self",
+            "stance": "defend",
+            "snapshot": "beforePlay"
+          }
+        }
+      ],
+      "currentRecipe": "O00",
+      "currentRoute": "layered",
+      "rule": "existing:O00",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.strike recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "O.background.0",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "backEffect",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.28,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.28",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "10",
+            "display": "block"
+          },
+          "z": 1
+        },
+        {
+          "assetId": "O.object.0",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 432,
+          "height": 540,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "84.375%",
+            "height": "84.375%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "20",
+            "display": "block"
+          },
+          "z": 2
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "foreground",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.24,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.24",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "30",
+            "display": "block"
+          },
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/reaverCards.json"
+    },
+    {
+      "id": "dirtyStrike",
+      "name": "Dirty Strike",
+      "type": "attack",
+      "class": "rogue",
+      "code": "C168",
+      "tags": [
+        "fx:guile",
+        "source:weapon",
+        "damage:piercing",
+        "delivery:melee",
+        "classification.attack",
+        "camp:physical",
+        "maneuver:attack"
+      ],
+      "visualCues": [
+        "action:attack",
+        "effect:damage"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3,
+          "if": {
+            "p": "hasStatus",
+            "of": "target",
+            "status": "weak",
+            "snapshot": "beforePlay"
+          }
+        }
+      ],
+      "currentRecipe": "O00",
+      "currentRoute": "layered",
+      "rule": "existing:O00",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.strike recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "O.background.0",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "backEffect",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.28,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.28",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "10",
+            "display": "block"
+          },
+          "z": 1
+        },
+        {
+          "assetId": "O.object.0",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 432,
+          "height": 540,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "84.375%",
+            "height": "84.375%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "20",
+            "display": "block"
+          },
+          "z": 2
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "foreground",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.24,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.24",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "30",
+            "display": "block"
+          },
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/rogueCards.json"
+    },
+    {
+      "id": "lungingThrust",
+      "name": "Lunging Thrust",
+      "type": "attack",
+      "class": "reaver",
+      "code": "C169",
+      "tags": [
+        "fx:pierce",
+        "source:weapon",
+        "damage:piercing",
+        "delivery:melee",
+        "range:reach",
+        "classification.attack",
+        "camp:physical",
+        "maneuver:attack"
+      ],
+      "visualCues": [
+        "action:attack",
+        "effect:damage"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
+        }
+      ],
+      "currentRecipe": "O00",
+      "currentRoute": "layered",
+      "rule": "existing:O00",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.strike recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "O.background.0",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "backEffect",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.28,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.28",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "10",
+            "display": "block"
+          },
+          "z": 1
+        },
+        {
+          "assetId": "O.object.0",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 432,
+          "height": 540,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "84.375%",
+            "height": "84.375%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "20",
+            "display": "block"
+          },
+          "z": 2
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "foreground",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.24,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.24",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "30",
+            "display": "block"
+          },
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/reaverCards.json"
+    },
+    {
+      "id": "closeQuarters",
+      "name": "Close Quarters",
+      "type": "attack",
+      "class": "rogue",
+      "code": "C170",
+      "tags": [
+        "fx:blade",
+        "source:weapon",
+        "damage:slashing",
+        "delivery:melee",
+        "range:reach",
+        "classification.attack",
+        "camp:physical",
+        "maneuver:attack"
+      ],
+      "visualCues": [
+        "action:attack",
+        "effect:damage"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3,
+          "if": {
+            "p": "atRange",
+            "range": "melee"
+          }
+        }
+      ],
+      "currentRecipe": "O00",
+      "currentRoute": "layered",
+      "rule": "existing:O00",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved base.strike recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "O.background.0",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "backEffect",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.28,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.28",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "10",
+            "display": "block"
+          },
+          "z": 1
+        },
+        {
+          "assetId": "O.object.0",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 432,
+          "height": 540,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "84.375%",
+            "height": "84.375%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "20",
+            "display": "block"
+          },
+          "z": 2
+        },
+        {
+          "assetId": "O.effect.0",
+          "role": "foreground",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 0.24,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "0.24",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "30",
+            "display": "block"
+          },
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/rogueCards.json"
+    },
+    {
+      "id": "unguardedBolt",
+      "name": "Unguarded Bolt",
+      "type": "attack",
+      "class": "starseer",
+      "code": "C171",
+      "tags": [
+        "fx:arcane",
+        "fx:ranged",
+        "damage:arcane",
+        "delivery:projectile",
+        "classification.attack",
+        "source:spell",
+        "camp:spell",
+        "school:force",
+        "maneuver:casting"
+      ],
+      "visualCues": [
+        "action:attack",
+        "element:force",
+        "effect:damage"
+      ],
+      "cost": 1,
+      "mana": 1,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "loseHp",
+          "target": "enemy",
+          "amount": 2,
+          "if": {
+            "p": "inStance",
+            "of": "target",
+            "stance": "idle",
+            "snapshot": "beforePlay"
+          }
+        }
+      ],
+      "currentRecipe": "Y00",
+      "currentRoute": "layered",
+      "rule": "cast-projectile",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved forceNudge recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.5",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "Z.effect.2",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 480,
+          "height": 480,
+          "rotation": 0,
+          "opacity": 0.56,
+          "blendMode": "screen",
+          "z": 1
+        },
+        {
+          "assetId": "Z.effect.2",
+          "role": "element-effect",
+          "x": 256,
+          "y": 320,
+          "width": 400,
+          "height": 400,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        }
+      ],
+      "source": "content/source/cards/starseerCards.json"
+    },
+    {
+      "id": "focusedStar",
+      "name": "Focused Star",
+      "type": "attack",
+      "class": "starseer",
+      "code": "C172",
+      "tags": [
+        "fx:starstone",
+        "fx:ranged",
+        "damage:arcane",
+        "delivery:projectile",
+        "classification.attack",
+        "source:spell",
+        "camp:spell",
+        "school:force",
+        "maneuver:casting"
+      ],
+      "visualCues": [
+        "action:attack",
+        "element:force",
+        "effect:damage"
+      ],
+      "cost": 1,
+      "mana": 1,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3,
+          "if": {
+            "p": "inStance",
+            "of": "self",
+            "stance": "prepared",
+            "snapshot": "beforePlay"
+          }
+        }
+      ],
+      "currentRecipe": "Y00",
+      "currentRoute": "layered",
+      "rule": "cast-projectile",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved forceNudge recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.5",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "Z.effect.2",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 480,
+          "height": 480,
+          "rotation": 0,
+          "opacity": 0.56,
+          "blendMode": "screen",
+          "z": 1
+        },
+        {
+          "assetId": "Z.effect.2",
+          "role": "element-effect",
+          "x": 256,
+          "y": 320,
+          "width": 400,
+          "height": 400,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        }
+      ],
+      "source": "content/source/cards/starseerCards.json"
+    },
+    {
+      "id": "distantStar",
+      "name": "Distant Star",
+      "type": "attack",
+      "class": "starseer",
+      "code": "C173",
+      "tags": [
+        "fx:starstone",
+        "fx:ranged",
+        "damage:arcane",
+        "delivery:projectile",
+        "range:reach",
+        "classification.attack",
+        "source:spell",
+        "camp:spell",
+        "school:force",
+        "maneuver:casting"
+      ],
+      "visualCues": [
+        "action:attack",
+        "element:force",
+        "effect:damage"
+      ],
+      "cost": 1,
+      "mana": 1,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 5
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 1
+        }
+      ],
+      "currentRecipe": "Y00",
+      "currentRoute": "layered",
+      "rule": "cast-projectile",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved forceNudge recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.5",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "Z.effect.2",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 480,
+          "height": 480,
+          "rotation": 0,
+          "opacity": 0.56,
+          "blendMode": "screen",
+          "z": 1
+        },
+        {
+          "assetId": "Z.effect.2",
+          "role": "element-effect",
+          "x": 256,
+          "y": 320,
+          "width": 400,
+          "height": 400,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        }
+      ],
+      "source": "content/source/cards/starseerCards.json"
+    },
+    {
+      "id": "pyreBrand",
+      "name": "Pyre Brand",
+      "type": "attack",
+      "class": "herald",
+      "code": "C174",
+      "tags": [
+        "fx:gorefire",
+        "damage:fire",
+        "delivery:projectile",
+        "classification.attack",
+        "source:spell",
+        "camp:spell",
+        "school:fire",
+        "maneuver:casting"
+      ],
+      "visualCues": [
+        "action:attack",
+        "element:fire",
+        "status:burn"
+      ],
+      "cost": 1,
+      "mana": 1,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 3
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4,
+          "if": {
+            "p": "hasStatus",
+            "of": "target",
+            "status": "burn",
+            "snapshot": "beforePlay"
+          }
+        }
+      ],
+      "currentRecipe": "Y00",
+      "currentRoute": "layered",
+      "rule": "cast-projectile",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved emberDart recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.5",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "Z.effect.5",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 480,
+          "height": 480,
+          "rotation": 0,
+          "opacity": 0.56,
+          "blendMode": "screen",
+          "z": 1
+        },
+        {
+          "assetId": "cue.burn.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        },
+        {
+          "assetId": "cue.burn.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/heraldCards.json"
+    },
+    {
+      "id": "rimeLance",
+      "name": "Rime Lance",
+      "type": "attack",
+      "class": "starseer",
+      "code": "C175",
+      "tags": [
+        "fx:frost",
+        "fx:ranged",
+        "damage:frost",
+        "delivery:projectile",
+        "classification.attack",
+        "source:spell",
+        "camp:spell",
+        "school:frost",
+        "maneuver:casting"
+      ],
+      "visualCues": [
+        "action:attack",
+        "element:frost",
+        "status:frost"
+      ],
+      "cost": 1,
+      "mana": 1,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 1,
+          "if": {
+            "p": "hasStatus",
+            "of": "target",
+            "status": "frost",
+            "snapshot": "beforePlay"
+          }
+        }
+      ],
+      "currentRecipe": "Y00",
+      "currentRoute": "layered",
+      "rule": "cast-projectile",
+      "reason": "Theme G (playtest 2026-11-17): reuses the approved rimeNeedle recipe unchanged.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.5",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "Z.effect.4",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 480,
+          "height": 480,
+          "rotation": 0,
+          "opacity": 0.56,
+          "blendMode": "screen",
+          "z": 1
+        },
+        {
+          "assetId": "cue.frost.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        },
+        {
+          "assetId": "cue.frost.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/starseerCards.json"
+    },
+    {
+      "id": "gravebinderLament",
+      "name": "Gravebinder's Lament",
+      "type": "attack",
+      "class": "herald",
+      "code": "C176",
+      "tags": [
+        "fx:ritual",
+        "fx:blight",
+        "source:spell",
+        "delivery:melee",
+        "theme:blight",
+        "classification.attack",
+        "ritual",
+        "camp:spell",
+        "range:melee",
+        "school:decay",
+        "damage:decay",
+        "maneuver:casting",
+        "tradition:divine"
+      ],
+      "visualCues": [
+        "action:attack",
+        "element:necrotic",
+        "status:crimsonBlight"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 24
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "crimsonBlight",
+          "stacks": 3
+        }
+      ],
+      "currentRecipe": "Y05",
+      "currentRoute": "layered",
+      "rule": "cast-projectile",
+      "reason": "Proposed visual rule: non-melee Casting uses a floating elemental projectile; earth adds the shared pebble. No combat range is changed.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.5",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "Z.effect.1",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 480,
+          "height": 480,
+          "rotation": 0,
+          "opacity": 0.56,
+          "blendMode": "screen",
+          "z": 1
+        },
+        {
+          "assetId": "cue.crimsonBlight.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        },
+        {
+          "assetId": "cue.crimsonBlight.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/heraldCards.json"
     }
   ],
   "assets": {
     "O.background.0": {
       "id": "O.background.0",
-      "label": "Existing attack \u00b7 silver-blue \u00b7 background",
+      "label": "Existing attack · silver-blue · background",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.background.0.png",
       "width": 512,
       "height": 640,
@@ -22560,7 +25278,7 @@
     },
     "O.effect.0": {
       "id": "O.effect.0",
-      "label": "Existing attack \u00b7 silver-blue \u00b7 effect",
+      "label": "Existing attack · silver-blue · effect",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.effect.0.png",
       "width": 512,
       "height": 640,
@@ -22571,7 +25289,7 @@
     },
     "O.object.0": {
       "id": "O.object.0",
-      "label": "Existing attack \u00b7 silver-blue \u00b7 object",
+      "label": "Existing attack · silver-blue · object",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.object.0.png",
       "width": 512,
       "height": 640,
@@ -22582,7 +25300,7 @@
     },
     "O.background.1": {
       "id": "O.background.1",
-      "label": "Existing smash \u00b7 silver-blue \u00b7 background",
+      "label": "Existing smash · silver-blue · background",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.background.1.png",
       "width": 512,
       "height": 640,
@@ -22593,7 +25311,7 @@
     },
     "O.effect.1": {
       "id": "O.effect.1",
-      "label": "Existing smash \u00b7 silver-blue \u00b7 effect",
+      "label": "Existing smash · silver-blue · effect",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.effect.1.png",
       "width": 512,
       "height": 640,
@@ -22604,7 +25322,7 @@
     },
     "O.object.1": {
       "id": "O.object.1",
-      "label": "Existing smash \u00b7 silver-blue \u00b7 object",
+      "label": "Existing smash · silver-blue · object",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.object.1.png",
       "width": 512,
       "height": 640,
@@ -22648,7 +25366,7 @@
     },
     "O.background.4": {
       "id": "O.background.4",
-      "label": "Existing counter \u00b7 silver-blue \u00b7 background",
+      "label": "Existing counter · silver-blue · background",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.background.4.png",
       "width": 512,
       "height": 640,
@@ -22659,7 +25377,7 @@
     },
     "O.effect.4": {
       "id": "O.effect.4",
-      "label": "Existing counter \u00b7 silver-blue \u00b7 effect",
+      "label": "Existing counter · silver-blue · effect",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.effect.4.png",
       "width": 512,
       "height": 640,
@@ -22670,7 +25388,7 @@
     },
     "O.object.4": {
       "id": "O.object.4",
-      "label": "Existing counter \u00b7 silver-blue \u00b7 object",
+      "label": "Existing counter · silver-blue · object",
       "url": "https://raw.githubusercontent.com/cehinds/AI-Art/ashenspire-hd-assets-v24/common/assets-display/card-cutouts/O.object.4.png",
       "width": 512,
       "height": 640,
@@ -23747,6 +26465,16 @@
       "sha256": "f61cffa1310c3b6ba68c62712da2c97c21fd7ace564c4e79154ccf717ab079d2",
       "bytes": 82061
     },
+    "skill.object": {
+      "id": "skill.object",
+      "label": "Physical Skill object",
+      "source": "User-approved generated Skill card art",
+      "width": 1254,
+      "height": 1254,
+      "path": "assets-display/card-cutouts/skill.object.png",
+      "sha256": "cce1278d928f21ec232c41077a8f10e16340dd8c9b1c4bbdd5ad7c23e2bd3aed",
+      "bytes": 1017570
+    },
     "symbol.feather": {
       "id": "symbol.feather",
       "label": "feather object",
@@ -23806,6 +26534,626 @@
       "path": "assets-display/card-cutouts/cue.regen.mark.png",
       "sha256": "1a867e2443667622a9bf1fc152f9d1a96a73a837667929395e381d0bfc5b7d08",
       "bytes": 173755
+    },
+    "stat.str": {
+      "path": "assets-display/card-cutouts/stat.str.png",
+      "label": "Strength gauntlet",
+      "sha256": "0e93a4d8ecbaf9cff486b26886d7d9f4751bcebc74553b8f2440c7aac2ae1007",
+      "bytes": 1369738,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.dex": {
+      "path": "assets-display/card-cutouts/stat.dex.png",
+      "label": "Dexterity steel-gray leather boot",
+      "sha256": "a8fb22cd038889920ac7eb568816ee6d0c42004ceefead2435b12d403c70b121",
+      "bytes": 1282091,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.con": {
+      "path": "assets-display/card-cutouts/stat.con.png",
+      "label": "Constitution silver chestplate",
+      "sha256": "ff7f3b82d30cbfcb3921527c5df3123e3835ade9eb56be15dee682f770d896df",
+      "bytes": 1523716,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.int": {
+      "path": "assets-display/card-cutouts/stat.int.png",
+      "label": "Intelligence silver open book",
+      "sha256": "b1bbad496055679f3a9b7d22b30da08eb75e7a8e72e006bc4eb745d0e186dde5",
+      "bytes": 1438370,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.wis": {
+      "path": "assets-display/card-cutouts/stat.wis.png",
+      "label": "Wisdom silver eye",
+      "sha256": "893df25974ca1e9a90ddf773debe1a5b71b39125f0960562be775ae25000b7ee",
+      "bytes": 1008660,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.chevrons": {
+      "path": "assets-display/card-cutouts/stat.chevrons.png",
+      "label": "Three descending chevrons",
+      "sha256": "0c061e88dd10a5994de8f01c5accc5105cfeac9c0bee8e7ddbcd06618be15bfe",
+      "bytes": 1590743,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.hp": {
+      "path": "assets-display/card-cutouts/stat.hp.png",
+      "label": "Silver heart",
+      "sha256": "27be99b3593f6032b788085d78be0abe742710b073b437bc51e998c208d607c7",
+      "bytes": 1433291,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.mp": {
+      "path": "assets-display/card-cutouts/stat.mp.png",
+      "label": "Round vial with etched MP",
+      "sha256": "4e8e3e07f3a47ca9d9d713433bbef20a2f836f500b18f138d727f733bbdae16e",
+      "bytes": 1024827,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.sp": {
+      "path": "assets-display/card-cutouts/stat.sp.png",
+      "label": "Angular vial with etched SP",
+      "sha256": "c0781d29c7f3b140c7fd0c702b81c9f969f80e84547c8758d02c772a68970b91",
+      "bytes": 1310124,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.poise": {
+      "path": "assets-display/card-cutouts/stat.poise.png",
+      "label": "Poise stone tower",
+      "sha256": "d2dbc22ed771767ab17e815d0287bdc14f3495adf24c59362de87e171a816757",
+      "bytes": 1273084,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.handsize": {
+      "path": "assets-display/card-cutouts/stat.handsize.png",
+      "label": "Two steel cards",
+      "sha256": "9437636fcac9826b7141a3aa70e02df48d2565a60791fe31cbaf571794553b24",
+      "bytes": 1536971,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.gold": {
+      "path": "assets-display/card-cutouts/stat.gold.png",
+      "label": "Silver coin pile",
+      "sha256": "32990a5d9d71ab6e3aa16c60beb39364b26fcee1f324efaa203566c6e8ab976c",
+      "bytes": 1185510,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.xp": {
+      "path": "assets-display/card-cutouts/stat.xp.png",
+      "label": "Silver XP letters",
+      "sha256": "d6ac75f3c17224e1f9ea5b37f0e1abfe3d97c8bf4adfdf6bd28e6971a541b25f",
+      "bytes": 1084563,
+      "width": 1254,
+      "height": 1254
+    },
+    "stat.damage": {
+      "path": "assets-display/card-cutouts/stat.damage.png",
+      "label": "Round-plate steel dumbbell",
+      "sha256": "859aaff48b723803c902482e4723f53b007bc27eed656826e8c901d5ff072c1b",
+      "bytes": 787432,
+      "width": 1254,
+      "height": 1254
     }
+  },
+  "proceduralObjects": {
+    "skill": {
+      "assetId": "skill.object",
+      "role": "object",
+      "x": 256,
+      "y": 320,
+      "width": 490,
+      "height": 490,
+      "rotation": 0,
+      "opacity": 0.9,
+      "blendMode": "normal"
+    }
+  },
+  "effectLayers": {
+    "fx:blade": {
+      "assetId": "C.effect.0",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:guard": {
+      "assetId": "symbol.shield",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:blood": {
+      "assetId": "cue.bleed.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:gorefire": {
+      "assetId": "cue.burn.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:starstone": {
+      "assetId": "symbol.orb",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:ritual": {
+      "assetId": "cue.communion.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:blight": {
+      "assetId": "cue.necroticBlight.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:oath": {
+      "assetId": "symbol.ring",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:flourish": {
+      "assetId": "cue.stanceShifted.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:ash": {
+      "assetId": "H.effect.0",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:heavy": {
+      "assetId": "symbol.hammer",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:pierce": {
+      "assetId": "cue.precision.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:ranged": {
+      "assetId": "symbol.bolt",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:precision": {
+      "assetId": "symbol.eye",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:guile": {
+      "assetId": "symbol.mask",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:venom": {
+      "assetId": "cue.venom.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:shield": {
+      "assetId": "cue.unbreakable.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:barrier": {
+      "assetId": "cue.stoneskin.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:ward": {
+      "assetId": "cue.astralArmor.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:magic": {
+      "assetId": "I.effect.0",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:arcane": {
+      "assetId": "symbol.spiral",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:dodge": {
+      "assetId": "cue.evade.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:riposte": {
+      "assetId": "symbol.fang",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:bind": {
+      "assetId": "symbol.chain",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:frost": {
+      "assetId": "cue.frost.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:bulwark": {
+      "assetId": "cue.invulnerability.mark",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    },
+    "fx:utility": {
+      "assetId": "symbol.vial",
+      "role": "effect",
+      "x": 410,
+      "y": 118,
+      "width": 150,
+      "height": 150,
+      "rotation": 0,
+      "opacity": 0.42,
+      "blendMode": "screen"
+    }
+  },
+  "proceduralModifiers": {
+    "stats": {
+      "strength": {
+        "assetId": "stat.str",
+        "statuses": [
+          "strength"
+        ]
+      },
+      "dexterity": {
+        "assetId": "stat.dex",
+        "statuses": [
+          "dexterity"
+        ]
+      },
+      "constitution": {
+        "assetId": "stat.con",
+        "statuses": [
+          "constitution"
+        ]
+      },
+      "intelligence": {
+        "assetId": "stat.int",
+        "statuses": [
+          "intelligence"
+        ]
+      },
+      "wisdom": {
+        "assetId": "stat.wis",
+        "statuses": [
+          "wisdom"
+        ]
+      },
+      "hp": {
+        "assetId": "stat.hp",
+        "statuses": []
+      },
+      "mp": {
+        "assetId": "stat.mp",
+        "statuses": [],
+        "centerObjectScale": 1.26
+      },
+      "poise": {
+        "assetId": "stat.poise",
+        "statuses": [
+          "barrier",
+          "goreblood"
+        ]
+      },
+      "damage": {
+        "assetId": "stat.damage",
+        "statuses": [
+          "weak",
+          "base.weak",
+          "silenced",
+          "confused",
+          "slowed"
+        ]
+      },
+      "sp": {
+        "assetId": "stat.sp",
+        "statuses": [],
+        "centerObjectScale": 1.22
+      },
+      "handsize": {
+        "assetId": "stat.handsize",
+        "statuses": []
+      },
+      "gold": {
+        "assetId": "stat.gold",
+        "statuses": []
+      },
+      "xp": {
+        "assetId": "stat.xp",
+        "statuses": []
+      }
+    },
+    "center": {
+      "x": 8,
+      "y": 8,
+      "width": 496,
+      "height": 624,
+      "maxSize": 500,
+      "objectScale": 1.15,
+      "chevronsOffsetY": -0.07,
+      "objectOffsetY": -0.015
+    },
+    "object": {
+      "x": 0,
+      "y": 0,
+      "width": 0.86,
+      "height": 0.86,
+      "rotation": 0,
+      "opacity": 0.9,
+      "blendMode": "normal",
+      "tintStrength": 0.03,
+      "edgeTintStrength": 0.52,
+      "edgeWidth": 0.02,
+      "edgeSoftness": 0.004
+    },
+    "aura": {
+      "x": 0,
+      "y": 0,
+      "width": 0.89,
+      "height": 0.89,
+      "rotation": 0,
+      "opacity": 0.25,
+      "blendMode": "normal",
+      "mixedFilter": "grayscale(1) blur(5px) drop-shadow(0 0 8px #d5dbe1)",
+      "stanceOpacity": 0.15
+    },
+    "chevrons": {
+      "assetId": "stat.chevrons",
+      "x": 0,
+      "y": -0.15,
+      "width": 0.96,
+      "height": 0.96,
+      "opacity": 0.73,
+      "blendMode": "normal",
+      "opposingX": 0.215,
+      "opposingScale": 0.55,
+      "glowRadius": 5
+    },
+    "polarities": {
+      "buff": {
+        "rotation": 180,
+        "rgb": [
+          0.32,
+          1,
+          0.42
+        ],
+        "scale": 1.14,
+        "glow": "#75ff90",
+        "tint": "brightness(0) saturate(100%) invert(84%) sepia(46%) saturate(808%) hue-rotate(62deg) brightness(105%)",
+        "aura": "blur(5px) drop-shadow(0 0 8px #75ff90)"
+      },
+      "debuff": {
+        "rotation": 0,
+        "rgb": [
+          1,
+          0.25,
+          0.28
+        ],
+        "scale": 1.14,
+        "glow": "#ff555b",
+        "tint": "brightness(0) saturate(100%) invert(51%) sepia(87%) saturate(2664%) hue-rotate(326deg) brightness(110%)",
+        "aura": "blur(5px) drop-shadow(0 0 8px #ff555b)"
+      }
+    },
+    "priority": [
+      "hp",
+      "mp",
+      "sp",
+      "damage",
+      "poise",
+      "handsize",
+      "strength",
+      "dexterity",
+      "constitution",
+      "intelligence",
+      "wisdom",
+      "gold",
+      "xp"
+    ],
+    "statAliases": {
+      "str": "strength",
+      "dex": "dexterity",
+      "con": "constitution",
+      "int": "intelligence",
+      "wis": "wisdom"
+    },
+    "stanceActions": [
+      "attack",
+      "smash",
+      "sweep",
+      "defend",
+      "counter",
+      "evade"
+    ],
+    "layerOrder": [
+      "background",
+      "chevrons",
+      "aura",
+      "object",
+      "effect",
+      "projectile"
+    ],
+    "effectGroupOrder": [
+      "secondary",
+      "main"
+    ],
+    "effectObjectOrder": [
+      "stat",
+      "utility",
+      "status"
+    ]
   }
 }

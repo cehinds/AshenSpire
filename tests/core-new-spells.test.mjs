@@ -9,8 +9,6 @@ import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
-import { balanceMana } from '../src/content/generated/balanceMana.js';
-import { balanceExposure } from '../src/content/generated/balanceExposure.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -23,26 +21,34 @@ const BY_CLASS = {
 const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
 
-// Owner 2026-11-14 (playableOnly): a Reaver has no mana pool, so it is never offered a card that costs mana; its own mana cards cannot be seen.
-const payable = (classId, id) => classId !== 'reaver' || !(def(id).manaCost > 0);
+// The reward pool's playableOnly rule uses the run's maximum Mana. Stock Core runs start with 1 MP.
+const matchesTradition = (classId, id) => !def(id).tags.includes('camp:spell')
+  || def(id).tags.includes(`tradition:${classId === 'herald' ? 'divine' : 'arcane'}`);
+const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
+// Level lists (owner 2026-11-21): offers draw from the act's rank band, so the seeds are spread over the three acts (act 1 + seed % 3).
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
+  run.actNumber = 1 + (seed % 3);
   return run;
 };
-const offered = (classId, seed, floor) => gameProfileRewardOffers(registries, live(classId, seed, floor), createRng(seed + 50000), { offerId: 'b3' })
-  .options.filter(option => option.kind === 'combatCards').map(option => option.id);
+const offered = (classId, seed, floor, withoutCardId) => {
+  const run = live(classId, seed, floor);
+  if (withoutCardId) run.deck = run.deck.filter(card => card.cardId !== withoutCardId);
+  return gameProfileRewardOffers(registries, run, createRng(seed + 50000), { offerId: 'b3' })
+    .options.filter(option => option.kind === 'combatCards').map(option => option.id);
+};
 
 test('every new spell is authored in its class, costs mana, is not a cantrip, and has a rarity of uncommon or rare', () => {
   for (const [cls, list] of Object.entries(BY_CLASS)) for (const id of list) {
     const card = def(id);
     assert.equal(card.class, cls, id);
     assert.ok(card.manaCost >= 1, `${id} costs mana`);
-    assert.ok(card.staminaCost >= balanceMana.minActionCost, `${id}: a mana card costs at least ${balanceMana.minActionCost} SP (balance.mana.minActionCost)`);
+    assert.ok(card.staminaCost >= 0, `${id}: no cost minimum (owner ruling 2026-11-22), so SP is only non-negative`);
     assert.ok(['uncommon', 'rare'].includes(card.rarity), id);
     assert.ok(!card.tags.includes('rank.cantrip'), `${id} is not a cantrip`);
     assert.ok(card.tags.includes('camp:spell'), id);
-    if (card.effects.some(e => e.op === 'damage')) assert.ok(card.exposureBuildupPerHit >= balanceExposure.buildupPerManaSpell, `${id}: a mana attack builds at least ${balanceExposure.buildupPerManaSpell} Arcane Exposure per hit`);
+    // No Exposure floor on a Mana spell (owner ruling 2026-11-22): per-hit Exposure is authored per card.
   }
   assert.equal(ALL.length, 10);
   assert.equal(new Set(ALL.map(id => def(id).name)).size, 10);
@@ -118,19 +124,27 @@ test('Magic classes see their new spells more often at depth 4+ than at depth 1-
   console.log(`new-spell share of card offers: ${report.join('; ')}`);
 });
 
-test('offers never cross classes: Magic spells only reach their own class, colorless reach everyone, Martial never sees a Magic card', () => {
+test('each class sees only payable spells matching its class and spell tradition', () => {
   const magic = { starseer: BY_CLASS.starseer, herald: BY_CLASS.herald };
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
     const seen = new Set(), counts = new Map();
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) { seen.add(id); counts.set(id, (counts.get(id) || 0) + 1); }
     const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(magic)) for (const id of list) {
-      // The Core 2 starter decks own one of these (Herald: Sanctified Ward); a basic the class already owns is never offered again.
-      // An owned copy is not forbidden, only weighed at rewards.json ownedCopyWeight (0.05): it stays far rarer than an unowned class card.
-      if (owner === classId && starter.has(id)) assert.ok((counts.get(id) || 0) * 3 < Math.min(...list.filter(other => !starter.has(other)).map(other => counts.get(other) || 0)), `${classId} was offered ${id} as often as a card it does not own`);
-      else if (owner === classId) assert.ok(seen.has(id), `${classId} never offered its own ${id}`);
-      else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
+      // Compare Sanctified Ward against itself on the same seeds so rarity, card type and pool changes cannot distort the ownership check.
+      if (owner !== classId) assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
+      else if (!payable(classId, id)) assert.ok(!seen.has(id), `${classId} was offered unpayable ${id}`);
+      else if (starter.has(id)) {
+        let unownedCount = 0;
+        for (let seed = 1; seed <= 600; seed++) if (offered(classId, seed, 1 + (seed % 6), id).includes(id)) unownedCount++;
+        const ownedCount = counts.get(id) || 0;
+        assert.ok(ownedCount * 3 < unownedCount, `${classId} was offered ${id} ${ownedCount} times when owned and ${unownedCount} when unowned`);
+      }
+      else assert.ok(seen.has(id), `${classId} never offered its own payable ${id}`);
     }
-    for (const id of BY_CLASS.colorless) assert.ok(payable(classId, id) ? seen.has(id) : !seen.has(id), `${classId} colorless ${id}: offered only when payable`);
+    for (const id of BY_CLASS.colorless) {
+      const eligible = payable(classId, id) && matchesTradition(classId, id);
+      assert.equal(seen.has(id), eligible, `${classId} colorless ${id}: offered only when payable and matching its spell tradition`);
+    }
   }
 });

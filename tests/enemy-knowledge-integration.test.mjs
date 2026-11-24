@@ -33,6 +33,7 @@ function skipReactions(combat) {
 test('knowledge opted-in predictions and reaction pauses stay unsaved, resolved XP banks without moving the checkpoint', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ registries, seed: 11, classId: 'reaver' });
+  run.enemyKnowledgeRules.perception.enabled = true; run.skills.perception = { xp: 0, level: 0, pendingDrafts: 0 }; // these tests exercise Perception (off by default, owner 2026-11-18)
   Object.assign(run.enemyKnowledgeRules.reads, { minimumExact: 0, maximumExact: 0, minimumClue: 0, maximumClue: 0 });
   openRunEnemyKnowledge(run, { bankable: true, receiptId: 'knowledge-checkpoint-owned-run' });
   const nodeId = 'n1_4', encounterId = 'patrol';
@@ -84,6 +85,7 @@ test('knowledge opted-in predictions and reaction pauses stay unsaved, resolved 
 
 function fixture({ registries = createRegistries(contentBundle), enemyId = 'wanderingSoldier', counter = false, responseCard = 'shieldBash', exact = false } = {}) {
   const run = createRunState({ registries, seed: 11, classId: 'reaver' });
+  run.enemyKnowledgeRules.perception.enabled = true; run.skills.perception = { xp: 0, level: 0, pendingDrafts: 0 }; // these tests exercise Perception (off by default, owner 2026-11-18)
   Object.assign(run.enemyKnowledgeRules.reads, { minimumExact: 0, maximumExact: 0, minimumClue: 0, maximumClue: 0 });
   if (exact) Object.assign(run.enemyKnowledgeRules.reads, { minimumExact: 1, maximumExact: 1 });
   if (counter) {

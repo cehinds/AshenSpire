@@ -49,10 +49,21 @@ export function swapRunClass(registries, run, classId, { preserveProgress = fals
   const armour = ((registries.equipment || {}).armour) || [];
   const sets = run.loadout && run.loadout.sets;
   if (sets && Array.isArray(sets.armor)) {
-    const free = armour.find((o) => o.classId === classId && o.unlock === '') || null;
+    // A class swap must not make an acquired outfit depend on still wearing
+    // it. Save the outgoing class-qualified pieces before replacing its slots.
+    const retainArmour = (ownerClass, id) => {
+      if (!id || !armour.some(piece => piece.classId === ownerClass && piece.id === id)) return;
+      const grant = run.loadout.creationArmourGrant;
+      if (grant && grant.classId === ownerClass && grant.id === id) return;
+      const bought = run.loadout.boughtArmour || (run.loadout.boughtArmour = []);
+      if (!bought.some(piece => piece.classId === ownerClass && piece.id === id)) bought.push({ classId: ownerClass, id });
+    };
+    for (const id of sets.armor) retainArmour(from, id);
+    const free = armour.find((o) => o.classId === classId && o.unlock === '' && !o.sharedSet) || null;
     for (const id of sets.armor) if (id && !armour.some((o) => o.classId === classId && o.id === id)) droppedArmour.push(`armor/${from}/${id}`);
     sets.armor = sets.armor.map((id) => (id && armour.some((o) => o.classId === classId && o.id === id) ? id : null));
     if (free && !sets.armor.includes(free.id)) sets.armor[0] = free.id;
+    if (free && sets.armor.includes(free.id)) retainArmour(classId, free.id);
     if (run.loadout.active) run.loadout.active.armor = Math.max(0, sets.armor.findIndex((id) => !!id));
   }
   run.class = classId;

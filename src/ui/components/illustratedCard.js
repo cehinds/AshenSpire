@@ -13,9 +13,9 @@ import {FACE_EFFECT_LINES} from '../../model/cardFaceProjection.js';
 import {uiConfig} from '../../config/generated/ui.js';
 import {cardArtStyle,CARD_ART_LEGACY,CARD_ART_REVIEWED} from '../cardArtStyle.js';
 
-export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,extended,definition,registries,style}={}) {
+export function illustratedArtwork(ref, id, {large=false,equipmentArt=null,extended,definition,preview,registries,style}={}) {
   const override=CARD_COMPONENTS.cards[id]?.layers.find(l=>l.bind==='artwork')?.href;
-  const existing=playingCardArt(ref,{large,extended,definition,registries,style});
+  const existing=playingCardArt(ref,{large,extended,definition,preview,registries,style});
   const mode=style??cardArtStyle();
   if(!existing&&definition&&Object.hasOwn(definition,'cardTags')&&mode!==CARD_ART_LEGACY&&mode!==CARD_ART_REVIEWED)return null;
   // The shipped layout's older painting is part of Legacy. User component
@@ -101,7 +101,10 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
       const idle=html=>html.replace(/<span class="face-line"/g,'<span data-reading-line'),
         roomyPair=l.bind==='rules'&&faceRules&&!completeRules&&roomyRules?`<template data-face-roomy>${idle(roomyRules)}</template><template data-face-compact>${idle(renderedRules)}</template>`:'';
       const text=l.bind==='rules'?renderedRules+roomyPair:values[l.bind]??esc(l.text||'');
-      const font=`font-family:${esc(l.font||'Georgia')};font-size:${(l.fontSize||20)/doc.width*100}cqw;font-weight:${esc(l.fontWeight||'normal')};text-align:${esc(l.align||'center')};color:${esc(l.color||'#eee')};`;
+      // A rules row also carries a second size that a phone shrinks by --ic-rules-shrink (playtest 2026-11-17 item 39);
+      // a browser without calc() keeps the first.
+      const authoredSize=`${(l.fontSize||20)/doc.width*100}cqw`;
+      const font=`font-family:${esc(l.font||'Georgia')};font-size:${authoredSize};${l.bind==='rules'?`font-size:calc(${authoredSize} - var(--ic-rules-shrink, 0px));`:''}font-weight:${esc(l.fontWeight||'normal')};text-align:${esc(l.align||'center')};color:${esc(l.color||'#eee')};`;
       body=`<div class="ic-text" data-card-binding="${esc(l.bind||l.id)}" data-min-font="${l.minFontSize||l.fontSize||20}" data-max-font="${l.maxFontSize||l.fontSize||20}" data-auto-fit="${l.autoFit===true}" data-max-lines="${l.maxLines||1}"${faceRules&&l.bind==='rules'?' data-face-lines="true"':''} style="${font}${l.maxLines?`display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:${Math.max(1,Math.floor(l.maxLines))};height:auto;`: ''}${l.outline?`text-shadow:1px 1px 0 ${esc(l.outline)},-1px -1px 0 ${esc(l.outline)};`:''}">${text}</div>`;
     }
     if(footer)return `<div class="ic-plane"><div class="ic-layer" data-component="${esc(l.id)}" style="${position}">${body}</div></div>`;

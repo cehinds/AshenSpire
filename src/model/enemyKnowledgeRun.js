@@ -2,7 +2,7 @@
 // it here. Seeds are reproducible gameplay inputs, never learning identities.
 import { knowledgeKey, emptyEnemyKnowledge, mergeEnemyKnowledge, enemyKnowledgeProblems, knowledgePoints } from './enemyKnowledgeProfile.js';
 import { enemyMasteryTarget, enemyKnowledgeRuleProblems } from './enemyKnowledgeRules.js';
-import { advancePerception, perceptionProblems, PERCEPTION_SKILL } from './perception.js';
+import { advancePerception, perceptionProblems, PerceptionEnabled, PERCEPTION_SKILL } from './perception.js';
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const count = value => Number.isSafeInteger(value) && value >= 0;
 export const knowledgeEncounterId = (receiptId, visit, nodeId, encounterId) => `ek1:${JSON.stringify([receiptId || 'sandbox', visit, nodeId, encounterId])}`;
@@ -12,8 +12,10 @@ export function openRunEnemyKnowledge(run, { receiptId = null, bankable = false 
   if (bankable && (!knowledgeKey(receiptId) || receiptId.length > 128)) throw new Error('Enemy learning requires a caller-owned unique run receipt');
   run.enemyKnowledgeState = { version: 1, receiptId, bankable, visitOrdinal: 0, currentEncounter: null,
     pending: emptyEnemyKnowledge(), recoveryTargets: {}, appliedXp: {} };
-  run.skills ||= {};
-  run.skills[PERCEPTION_SKILL] = { xp: 0, level: 0, pendingDrafts: 0 };
+  if (PerceptionEnabled(run.enemyKnowledgeRules)) {
+    run.skills ||= {};
+    run.skills[PERCEPTION_SKILL] = { xp: 0, level: 0, pendingDrafts: 0 };
+  }
   return true;
 }
 export function openKnowledgeEncounter(run, nodeId, encounterId, enemyIds, current = emptyEnemyKnowledge()) {
@@ -56,6 +58,7 @@ export function addKnowledgeCounterBonus(pending, encounter, enemyId, target, cu
 export function reconcilePerception(run, encounterId, earnedXp) {
   const state = run.enemyKnowledgeState;
   if (!state || !knowledgeKey(encounterId) || !count(earnedXp)) throw new Error('Perception reconciliation requires saved encounter identity and whole earned XP');
+  if (!PerceptionEnabled(run.enemyKnowledgeRules)) return null; // Perception off: no XP is applied (an old track is ignored)
   const paid = Object.hasOwn(state.appliedXp, encounterId) ? state.appliedXp[encounterId] : 0;
   const delta = Math.max(0, earnedXp - paid);
   const award = advancePerception(run.skills[PERCEPTION_SKILL], run.enemyKnowledgeRules.perception, delta);
@@ -99,6 +102,6 @@ export function enemyKnowledgeRunProblems(run, enemyIds = null) {
     || !Array.isArray(encounter.enemyIds) || !encounter.enemyIds.length || new Set(encounter.enemyIds).size !== encounter.enemyIds.length
     || encounter.enemyIds.some(id => !knowledgeKey(id) || (enemyIds && !enemyIds.has(id)))
     || encounter.id !== knowledgeEncounterId(state.receiptId, encounter.visit, encounter.nodeId, encounter.encounterId))) problems.push('run current enemy learning encounter is invalid');
-  if (!problems.length) problems.push(...perceptionProblems(run.skills?.[PERCEPTION_SKILL], run.enemyKnowledgeRules.perception));
+  if (!problems.length && PerceptionEnabled(run.enemyKnowledgeRules)) problems.push(...perceptionProblems(run.skills?.[PERCEPTION_SKILL], run.enemyKnowledgeRules.perception));
   return problems;
 }

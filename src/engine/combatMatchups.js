@@ -1,8 +1,8 @@
 import * as Engagement from './combatEngagement.js';
-import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, CounterArmedWhileStacks, EnemyCounterBadgeStacks, CounterDecayClock } from '../model/fixCoreMechanics.js';
 import { CounterStackRule, counterRuleActive, counterReturnForReceipt, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { mechanics } from '../framework/data/mechanics.js';
-import { decayCounterStacks, SpendCounterStacks } from './guardStacks.js';
+import { decayCounterStacks, SpendCounterStacks, counterStackCount, gainCounterStacks } from './guardStacks.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
@@ -26,6 +26,7 @@ import * as Ratings from './combatRatings.js';
 /** Caps a Counter Block grant at the amount the defender can still hold. */
 export function CounterBlockGrant(ctx, entity, amount)
 {
+    // A Counter's Block is a share of an already side-scaled incoming hit, so blockGainMultiplier does not scale it again (owner, 2026-11-18).
     const cap = getCap(ctx, entity, 'blockCap');
     return cap == null ? amount : Math.max(0, Math.min(amount, cap - (entity.block || 0)));
 }
@@ -95,6 +96,10 @@ export function armCombatCounter(ctx, entity, carrier, options = {}) {
 export function clearCombatCounter(entity, ctx = null) {
   if (!entity) return;
   delete entity.combatCounter;
+  // An enemy's Counter badge (theme B, 2026-11-17) goes with its Counter (stagger, a re-planned or re-shown intent): only the badge gives an enemy stacks.
+  if (entity.kind === 'enemy' && entity.counterStacks > 0) {
+    if (ctx) SpendCounterStacks(ctx, entity, entity.counterStacks); else delete entity.counterStacks;
+  }
   // A triggered reply has spent its charge, but may still be waiting behind
   // the root action's remaining effects. Interruption cancels only that reply.
   for (const action of ctx?.queue || []) {
@@ -365,7 +370,7 @@ export function setCombatStance(ctx, entity, carrier) {
   if (changed) {
     if(stanceCapacity(ctx,entity)<=1) clearCombatCounter(entity, ctx);
     syncWardMaximum(ctx, entity);
-    const grants = stanceEntryBonuses({ combatProfile: profile }, ctx);
+    const grants = carrier?.registryStanceEntry ? { block: 0, barrier: 0, precision: 0, evade: 0 } : stanceEntryBonuses({ combatProfile: profile }, ctx);
     if (grants.evade > 0 && (profile.evade?.advantage || profile.evade?.disadvantage)) {
       entity.nextEvadeMode = { advantage: !!profile.evade.advantage, disadvantage: !!profile.evade.disadvantage,
         ...(profile.evade.whileStatus ? { whileStatus: profile.evade.whileStatus } : {}) };
@@ -379,8 +384,9 @@ export function setCombatStance(ctx, entity, carrier) {
         owner: entity, target: entity, card: carrier, meta: { ...provenance, stanceEntry: true } });
     }
   }
-  // Defense restores on every accepted card, including an unchanged stance.
-  if (next.maneuver === 'defend') {
+  // Defense restores on every accepted card, including an unchanged stance. A registry stance entry (an enterStance effect,
+  // e.g. Warrior's Vow picking Bulwark) only syncs the stance: it restores nothing the card does not show (Codex on #2843).
+  if (next.maneuver === 'defend' && !carrier?.registryStanceEntry) {
     const amount = stanceRulesFor(ctx).defenseRestore;
     for (const [poolName, overflowOp] of [['persistentPoise', 'block'], ['persistentWard', 'gainBarrier']]) {
       const pool = entity[poolName];
@@ -402,17 +408,56 @@ export function setCombatStance(ctx, entity, carrier) {
     entity.combatTraitGuard = { poise: Math.max(armed.poise, trait.impact || 0), ward: Math.max(armed.ward, trait.flux || 0) };
   }
   if (changed) ctx.emit?.('combatStanceChanged', { sourceId: entity.id,
-    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), ...entity.combatStance });
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), ...entity.combatStance,
+    // An enterStance effect names the play that caused the change, so a reader can tell it from the card's own maneuver.
+    ...(carrier?.stanceFromEffect ? { cardInstanceId: carrier.instanceId } : {}) });
   return entity.combatStance;
 }
+
+/**
+ * The owner's turn start ends an armed Counter, except (owner 2026-11-17, theme B: "Counter follows the normal decay rule") under
+ * `counter.armedWhileStacks`, where a Counter whose owner still holds Counter stacks stays armed: the stacks fade by decayPerTurn at each
+ * turn start and a covered hit spends them, and the Counter ends with the last one.
+ */
+export function ExpireCombatCounterAtTurnStart(ctx, entity) {
+  if (!entity) return;
+  const counter = entity.combatCounter;
+  if (counter?.charges > 0 && combatExpansionEnabled(ctx) && CounterArmedWhileStacks(ctx) && counterStackCount(entity) > 0) {
+    counter.expiresOnOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
+    return;
+  }
+  clearCombatCounter(entity, ctx);
+}
+
+/** True when `entity` is an enemy whose Counter shows a Counter badge (theme B, owner 2026-11-17; `counter.enemyBadgeStacks`). */
+const EnemyCounterBadgeRule = (ctx, entity) => entity?.kind === 'enemy' && EnemyCounterBadgeStacks(ctx) > 0;
+
+/**
+ * An enemy Counter move shows a Counter badge (theme B, owner 2026-11-17): arming it sets enemyBadgeStacks Counter stacks, which fade by
+ * decayPerTurn at the enemy's turn start (startTacticalTurn) and lose 1 each time the Counter is used (SpendEnemyCounterBadge). The badge
+ * never scales the enemy's return (CounterReturnStacks) and goes when the Counter is cleared (clearCombatCounter). A fight saved without the key shows no badge.
+ */
+export function GrantEnemyCounterBadge(ctx, enemy) {
+  // Set, never added: showing the same Counter intent again (a re-shown or re-primed move) leaves the badge at enemyBadgeStacks.
+  if (EnemyCounterBadgeRule(ctx, enemy) && enemy.combatCounter?.charges > 0) gainCounterStacks(ctx, enemy, Math.max(0, EnemyCounterBadgeStacks(ctx) - counterStackCount(enemy)));
+}
+
+/** One use of an enemy's charged Counter takes 1 from its Counter badge. */
+function SpendEnemyCounterBadge(ctx, target) {
+  if (EnemyCounterBadgeRule(ctx, target)) SpendCounterStacks(ctx, target, 1);
+}
+
+/** The Counter stacks that scale a return: an enemy's Counter badge only counts its uses, so it adds nothing to the return. */
+const CounterReturnStacks = (ctx, target) => EnemyCounterBadgeRule(ctx, target) ? 0 : target?.counterStacks || 0;
 
 /** The turn owner calls this once; grants are returned for normal DSL gain. */
 export function startTacticalTurn(ctx, entity) {
   if (!combatExpansionEnabled(ctx) || !entity) return { block: 0, barrier: 0 };
   entity.combatOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
-  clearCombatCounter(entity, ctx);
-  // Counter stacks fade by mechanics.counter.decayPerTurn at the owner's turn start, after the charge clears (owner 2026-10-31).
-  if (entity.kind === 'player' && fixCoreEnabled(ctx)) decayCounterStacks(ctx, entity);
+  // Counter stacks fade by mechanics.counter.decayPerTurn at the owner's turn start (owner 2026-10-31); the Counter then lasts only while stacks remain.
+  // The clock is data (counter.decayClock, owner 2026-11-18): Counter stacks fade at the start of the holder's own turn and at no other time.
+  if (CounterDecayClock(ctx) === 'ownerTurnStart' && ((entity.kind === 'player' && fixCoreEnabled(ctx)) || EnemyCounterBadgeRule(ctx, entity))) decayCounterStacks(ctx, entity);
+  ExpireCombatCounterAtTurnStart(ctx, entity);
   delete entity.combatEvade;
   delete entity.combatTraitGuard;
   if (entity.combatStance?.expiresOnOwnerCycle != null
@@ -547,6 +592,8 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
       counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
       counterDisabledAtStart: Boolean(control.counterDisabled), avoidance: { chance: 0 },
       hpLoss: 0, blocked: 0, wardResisted: 0, statusAccepted: 0, statusResisted: 0,
+      // The Block the target held when the action arrived: its Poise riders keep the Defend floor of that Block (theme B, 2026-11-17).
+      blockBefore: number(target?.block),
       avoided: false, connected: true, completed: false };
   }
   const counterAttack = Hit.attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
@@ -602,6 +649,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
       ...seats(ctx, source, target), contest, contestKind: contest.kind, roll: contest.roll, total: contest.total, dc: contest.dc, passed: contest.passed });
     if (receipt.counterEligible && !receipt.avoided && !CounterStackRule(ctx, target)) {
       target.combatCounter.charges = 0;
+    SpendEnemyCounterBadge(ctx, target);
       ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier), ...seats(ctx, target, source),
         sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
     }
@@ -626,6 +674,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
     }
     if (receipt.counterEligible && !receipt.avoided && !CounterStackRule(ctx, target)) {
       target.combatCounter.charges = 0;
+    SpendEnemyCounterBadge(ctx, target);
       ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier),
         sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
     }
@@ -642,6 +691,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   receipt.avoided = receipt.avoidance.avoided;
   if (receipt.counterEligible && !receipt.avoided && !CounterStackRule(ctx, target)) {
     target.combatCounter.charges = 0;
+    SpendEnemyCounterBadge(ctx, target);
     ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier), ...seats(ctx, target, source),
       sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
   }
@@ -794,10 +844,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   // the incoming hit (stacks persist across turns; a card-less auto-Counter has base 0), not a fraction of that hit alone.
   let counterBreakdown = null, cardHits = null;
   if (counterRuleActive(ctx)) {
-    const core = counterReturnForReceipt(ctx, receipt, { stacks: target.counterStacks || 0, base: number(counter.payload.hp), owner: target });
+    const core = counterReturnForReceipt(ctx, receipt, { stacks: CounterReturnStacks(ctx, target), base: number(counter.payload.hp), owner: target });
     // The authored Ward return and Flux are not part of the Core rule (owner 2026-10-19): a spell Counter returns HP and Poise only.
     payload.hp = core.hp; payload.poise = core.poise;
-    counterBreakdown = { counterBase: number(counter.payload.hp) * (core.hits ? core.hits.length : 1), counterStacks: target.counterStacks || 0, counterIncoming: core.incoming, counterStackShare: core.stackShare,
+    counterBreakdown = { counterBase: number(counter.payload.hp) * (core.hits ? core.hits.length : 1), counterStacks: CounterReturnStacks(ctx, target), counterIncoming: core.incoming, counterStackShare: core.stackShare,
       ...(core.hits ? { counterHits: core.hits.map(row => ({ incoming: row.incoming, stacksBefore: row.stacksBefore, amount: row.hp, poiseDamage: row.poise })) } : {}) };
     cardHits = core.hits || null;
     // Card-stack rule (owner 2026-11-15): every answered hit spends consumePerHit stacks; the charge ends with the last stack.

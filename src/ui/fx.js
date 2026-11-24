@@ -2,7 +2,9 @@ import { uiIconText } from '../content/uiIcons.js';
 import { viewScale, viewViewportBox } from './viewViewport.js';
 import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
-import { effectsOff } from './performance.js';
+import { PlayRecipientEffectLayers, ClearRecipientEffects } from './recipientEffectSprites.js';
+import { RecipientEffectForEvent } from '../model/recipientEffects.js';
+import { effectsOff, FxOff } from './performance.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
 // Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
@@ -818,7 +820,7 @@ export function dmgClass(amount, targetMaxHp = 0) {
 
 /** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
 function spawnFx(layer, anchor, cls, ms, text) {
-  if (!layer || !anchor || effectsOff()) return; // Effects off: no sparks, slashes or glyphs (numbers and callouts stay)
+  if (!layer || !anchor || FxOff('sparks')) return; // Effects or Hit sparks off: no sparks, slashes or glyphs (numbers and callouts stay)
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = cls;
@@ -848,7 +850,7 @@ export function banner(layer, text, cls = '', lifeMs = null) {
 let hitStop = 0;
 const heldFigures = new Map();
 function hold(el, ms, combatEl) {
-  if (!el || !(ms > 0) || effectsOff()) return;
+  if (!el || !(ms > 0) || FxOff('hitstop')) return;
   const swing = flashTimers.get(el)?.get('act-attack');
   if (swing) {
     clearTimeout(swing.id); swing.due += ms;
@@ -913,7 +915,7 @@ const flashTimers = new WeakMap();
 const MOTION_FLASH = new Set(['act-attack', 'act-move', 'hitflash', 'hit-heavy', 'wobble']);
 function flash(el, cls, ms = 300, pauseMs = 0) {
   if (!el) return;
-  if (effectsOff() && !MOTION_FLASH.has(cls)) return; // relic proc / orb pulse flashes
+  if (FxOff('flash') && !MOTION_FLASH.has(cls)) return; // relic proc / orb pulse flashes
   // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
   // numbers and HUD updates (which carry the actual info) are unaffected.
   if (document.body.classList.contains('reduce-flashes')) return;
@@ -938,7 +940,7 @@ function flash(el, cls, ms = 300, pauseMs = 0) {
 
 // Radial flare over an anchor (stance entries, big procs).
 function flare(layer, anchor, color) {
-  if (!layer || !anchor || effectsOff()) return;
+  if (!layer || !anchor || FxOff('sparks')) return;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = 'stance-flare';
@@ -1266,7 +1268,7 @@ export function playTimeline(events, ctx, done) {
     handle?.pauseForSkip();
     // Keep the screen busy through pointer release, so the same click cannot
     // activate a newly rendered card after it skipped this action.
-    clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
+    clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer); ClearRecipientEffects(ctx.layer);
   };
   const release = () => {
     if (!isCurrent()) { handle?.cancel(); return; }
@@ -1346,7 +1348,7 @@ export function playTimeline(events, ctx, done) {
       runParts(beat, 'contact');
       const hits = beat.events.filter(event => event.type === 'damageDealt');
       const holdMs = timing.scale === 0 ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
-      if (holdMs && !effectsOff()) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs, ctx.combatEl); }
+      if (holdMs && !FxOff('hitstop')) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs, ctx.combatEl); }
       if (beat.actorId && ctx.layer?.dataset) ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + Math.max(1, hits.length));
       return holdMs;
     },
@@ -1434,7 +1436,7 @@ export function playTimeline(events, ctx, done) {
       const current = isCurrent();
       if (current) for (const beat of beats) cue(beat, false);
       const mount = ctx.combatEl ?? globalThis.document;
-      clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
+      clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer); ClearRecipientEffects(ctx.layer);
       for (const sprite of mount?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
       if (current) ctx.onFlush?.();
     },
@@ -1575,11 +1577,20 @@ function visualPartsFor(e, beatKind, opts) {
     const original = base?.reaction;
     base = { ...base, reaction: ctx => { original?.(ctx); receiptReaction(ctx); } };
   }
-  const effect = combatEffectForEvent(e);
+  const recipient = e.recipientEffect || RecipientEffectForEvent({}, e);
+  const recipes = e.recipientEffects || (recipient ? [recipient] : []);
+  const effect = recipes.length ? { targetId: e.recipientTargetId || e.targetId }
+    : Array.isArray(e.recipientEffects) ? null : combatEffectForEvent(e);
   if (!effect) return base;
-  const playEffect = (ctx) => {
-    const anchor = ctx.anchorFor(effect.targetId);
-    if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), effect.kind, { size: 190 });
+  const playEffect = ctx => {
+    if (recipes.length) {
+      PlayRecipientEffectLayers(ctx.layer, recipes, { anchorFor: ctx.anchorFor,
+        sourceId: e.recipientSourceId || e.sourcePlayerId || e.sourceId,
+        targetId: e.recipientTargetId || e.targetId });
+    } else {
+      const anchor = ctx.anchorFor(effect.targetId);
+      if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), effect.kind, { size: 190 });
+    }
   };
   // SPEC §7.4 (sequential): the Stagger wobble is the defender's reaction, not
   // the impact frame, so its break sprite plays with that reaction and takes no
@@ -1611,6 +1622,8 @@ export function outcomeKindForEvent(e = {}) {
   // Nothing reached Block or Health: Barrier or Ward took the whole hit. A Barrier that broke
   // keeps its BREAK callout and its number, as it did before.
   if (parts.amount === 0 && Math.max(0, Number(e.barrierAbsorbed) || 0) > 0) return e.barrierRemaining === 0 ? null : 'resisted';
+  // Ward HP buffer absorbed the hit whole (alone or with Poise) and cost no HP: read as BLOCKED so the floater policy shows a word instead of silence.
+  if (e.wardHpBuffer && parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'blocked';
   if (parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'wardResisted';
   // A hit that Poise alone absorbed whole cost no HP: it reads as the same fully-absorbed word, not as silence.
   if (parts.amount === 0 && (parts.poise || parts.magicPoise)) return 'blocked';
@@ -1764,7 +1777,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, floaterGlyphShown('Block') ? 'Block' : undefined); // the spark stays; its word follows the floater policy
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
-          if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
+          if (beatKind === 'attack' && !e.recipientEffect && !Array.isArray(e.recipientEffects)) spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         },
         reaction: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
@@ -1855,8 +1868,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         ? {
             reaction: (ctx) => {
               if (!sequential) sfx.play('heal');
-              const anchor = ctx.anchorFor(e.targetId);
-              if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), 'heal');
+              // The receipt-local sprite is played by visualPartsFor at contact.
             },
             numbers: (ctx) => {
               floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal', undefined, sequential ? { onSpawn: () => sfx.play('heal') } : undefined);

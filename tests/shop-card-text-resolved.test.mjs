@@ -75,7 +75,7 @@ test('sell rows for cards print resolved text, no braces', () => withGlobalDom((
     r.sideboard = registries.cards.all().filter(def => /\{[\w.-]+\}/.test(def.textTemplate || '')).slice(0, 6)
       .map((def, i) => ({ cardId: def.id, instanceId: `sb:${i}`, upgraded: false }));
   });
-  const rows = [...app.querySelectorAll('[data-shop-shelf="sell"] .merchant-offer')].filter(row => row.querySelector('.card-info-button'));
+  const rows = [...app.querySelectorAll('[data-shop-shelf="sell"] .merchant-offer')].filter(row => row.querySelector('.playing-card-art'));
   const sales = gameProfileShopSalePlans(registries, run, 'market').filter(q => ['combatCards', 'weaponArts'].includes(q.kind));
   assert.ok(rows.length > 0 && rows.length === sales.length, `sell shelf has card rows (${rows.length}/${sales.length})`);
   for (const row of rows) assert.doesNotMatch(rowText(row), /[{}]/, rowText(row));

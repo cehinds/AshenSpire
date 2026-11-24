@@ -1,17 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { motionFlags, effectsOff, motionOff, resolveMotionIdle, resolvePerformanceMode, resolveCombatPacing, migrateEffectsSetting, effectsEnabled } from '../src/ui/performance.js';
+import { motionFlags, effectsOff, motionOff, resolveMotionIdle, resolveCombatPacing, migrateEffectsSetting, effectsEnabled, FxFlags, FxOff } from '../src/ui/performance.js';
 import { preloadPoses, clearPosePreloads } from '../src/ui/services/posePreloads.js';
 import { runtimeAsset } from '../tools/assetmime.mjs';
 
 test('Effects decides quality (off is lite everywhere, on is full); pacing is independent of it', () => {
-  assert.equal(resolvePerformanceMode({}, true), 'lite');
-  assert.equal(resolvePerformanceMode({}, false), 'lite', 'default is off on every device');
-  assert.equal(resolvePerformanceMode({ effects: true }, true), 'full');
-  assert.equal(resolvePerformanceMode({ effects: false }, false), 'lite');
-  assert.equal(resolvePerformanceMode({ performanceMode: 'full' }, true), 'full', 'a saved explicit Full still reads as on');
-  assert.equal(resolvePerformanceMode({ performanceMode: 'lite', effects: true }, false), 'full', 'an explicit Effects wins');
+  assert.equal(effectsEnabled({}, true), false);
+  assert.equal(effectsEnabled({}, false), false, 'default is off on every device');
+  assert.equal(effectsEnabled({ effects: true }, true), true);
+  assert.equal(effectsEnabled({ effects: false }, false), false);
+  assert.equal(effectsEnabled({ performanceMode: 'full' }, true), true, 'a saved explicit Full still reads as on');
+  assert.equal(effectsEnabled({ performanceMode: 'lite', effects: true }, false), true, 'an explicit Effects wins');
   // Pacing follows the touch screen, never Effects: auto is fast on a phone and normal elsewhere.
   assert.equal(resolveCombatPacing({}, true), 'fast');
   assert.equal(resolveCombatPacing({ animSpeed: 'auto' }, false), 'normal');
@@ -58,10 +58,10 @@ test('pose preloads deduplicate images and reuse a bounded recent working set', 
 
 test('lite and reduced-motion sessions allocate no pose preloads', () => {
   globalThis.Image = class { constructor() { throw Error('unexpected image allocation'); } };
-  globalThis.document = { documentElement: { dataset: { performance: 'lite' } }, body: { classList: { contains: () => false } } };
+  globalThis.document = { documentElement: { dataset: { effects: 'off' } }, body: { classList: { contains: () => false } } };
   try {
     assert.deepEqual(preloadPoses('lite', ['unused.webp']), []);
-    document.documentElement.dataset.performance = 'full';
+    document.documentElement.dataset.effects = 'on';
     document.body.classList.contains = () => true;
     assert.deepEqual(preloadPoses('reduced', ['unused.webp']), []);
   } finally { delete globalThis.Image; delete globalThis.document; clearPosePreloads(); }
@@ -118,6 +118,27 @@ test('the motion body classes and the Effects root attribute are what the helper
     assert.equal(motionOff('attack'), false);
     document.documentElement.dataset.effects = 'on';
     assert.equal(effectsOff(), false, 'toggling on at runtime flips the reading with no reload');
+  } finally { delete globalThis.document; }
+});
+
+test('each Effects sub-switch plays only while the master is on (FxFlags, default on)', () => {
+  assert.deepEqual(FxFlags({}), { glow: false, sparks: false, flash: false, hitstop: false }, 'master off by default');
+  assert.deepEqual(FxFlags({ effects: true }), { glow: true, sparks: true, flash: true, hitstop: true });
+  assert.deepEqual(FxFlags({ effects: true, fxSparks: false }), { glow: true, sparks: false, flash: true, hitstop: true });
+  assert.deepEqual(FxFlags({ effects: false, fxSparks: true }).sparks, false);
+});
+
+test('FxOff(kind) reads the Effects master and the data-fx-<kind> root flag', () => {
+  globalThis.document = { documentElement: { dataset: { effects: 'off', fxSparks: 'on' } }, body: { classList: { contains: () => false } } };
+  try {
+    assert.equal(FxOff('sparks'), true, 'Effects off turns every sub-effect off');
+    document.documentElement.dataset.effects = 'on';
+    assert.equal(FxOff('sparks'), false, 'Effects on and fxSparks on');
+    document.documentElement.dataset.fxSparks = 'off';
+    assert.equal(FxOff('sparks'), true, 'fxSparks off');
+    assert.equal(FxOff('hitstop'), false, 'other kinds are independent');
+    document.documentElement.dataset.fxHitstop = 'off';
+    assert.equal(FxOff('hitstop'), true);
   } finally { delete globalThis.document; }
 });
 

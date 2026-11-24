@@ -14,7 +14,13 @@ test('the battlefield grid switch is no longer a setting, and nothing promotes i
     assert.ok(!display.some(r=>r.key===key||r.key==='gameConfig.presentation.movementEnabled'));
   }
   assert.ok(!(key in SETTINGS_DEFAULTS.values));
-  assert.equal(presentationConfig().showFormationGrid,true);
+  assert.equal(presentationConfig().showFormationGrid,false, "the battlefield grid defaults off (owner, 2026-11-19)");
+});
+
+test('the battlefield grid defaults off and preserves an explicit saved preference',()=>{
+  assert.equal(presentationConfig({}).showFormationGrid,false);
+  assert.equal(presentationConfig({[key]:true}).showFormationGrid,true);
+  assert.equal(presentationConfig({[key]:false}).showFormationGrid,false);
 });
 // 2026-11-05: the bottom edge closes the last strip of each team (the gap between them has no tiles), flagged closeBottom.
 test('perspective grid paints each shared edge once and closes only outer boundaries',()=>{

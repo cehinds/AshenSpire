@@ -192,8 +192,8 @@ for (const [act, exported] of Object.entries(ENEMY_ACTS)) {
   });
 }
 
-test('enemies: the three acts still compose the 33-enemy roster', () => {
-  assert.equal(contentBundle.enemies.length, 33);
+test('enemies: the three acts still compose the 65-enemy roster', () => {
+  assert.equal(contentBundle.enemies.length, 65);
 });
 
 test('classes: the export deep-equals content/source/classes.json', () => {

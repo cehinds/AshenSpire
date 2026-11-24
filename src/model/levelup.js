@@ -82,7 +82,22 @@ export function xpToNext(registries, level) {
  * + sum(kill base × killLevelMultiplier × defeated level)). The combat-power
  * portion needs victory; a loss still pays its defeated-enemy level portion.
  */
-export function combatXpReceipt(registries, { victory = false, pool = 'normal', kills = 0, enemies = null, characterMultiplier = 1 } = {}) {
+/**
+ * FightCurveFactor(registries, { floor, floors, act }) → the polynomial the owner asked for
+ * (2026-11-18): a fight's XP grows with its floor inside the act and again with the act.
+ * `scale × (floor / floors)^floorExponent × act^actExponent` from balance.xp.fightCurve;
+ * 1 when the fight's place is unknown (tools, tests) or the table is absent.
+ */
+export function FightCurveFactor(registries, position) {
+  const c = awardTable(registries).fightCurve;
+  const floor = position?.floor, floors = position?.floors, act = position?.act;
+  if (!c || !(floor >= 1) || !(floors >= 1) || !(act >= 1)) return 1;
+  const share = Math.min(1, floor / floors);
+  const factor = (Number.isFinite(c.scale) ? c.scale : 1) * share ** (Number.isFinite(c.floorExponent) ? c.floorExponent : 1) * act ** (Number.isFinite(c.actExponent) ? c.actExponent : 0);
+  return Math.max(0, factor);
+}
+
+export function combatXpReceipt(registries, { victory = false, pool = 'normal', kills = 0, enemies = null, characterMultiplier = 1, position = null } = {}) {
   const t = awardTable(registries);
   const kill = t.kill || {};
   const perKill = Number.isFinite(kill[pool]) ? kill[pool] : (Number.isFinite(kill.normal) ? kill.normal : 0);
@@ -110,6 +125,14 @@ export function combatXpReceipt(registries, { victory = false, pool = 'normal', 
     rows.push({ kind: 'enemy', enemyId: enemy.enemyId || null, name: definition?.name || `Enemy ${index + 1}`, level, amount: next - subtotal });
     subtotal = next;
   });
+  // Owner 2026-11-18: the fight's place (floor in the act, act) scales the whole fight's XP, before the tier.
+  const curve = FightCurveFactor(registries, position);
+  const curved = Math.floor(subtotal * curve + 1e-9);
+  if (curved !== subtotal) { rows.push({ kind: 'curve', multiplier: curve, amount: curved - subtotal }); subtotal = curved; }
+  // Owner 2026-11-18: the door's tier (balance.xp.tierMultiplier) scales the whole fight's XP: elite x1.5, boss x2.
+  const tier = Number.isFinite(t.tierMultiplier?.[pool]) && t.tierMultiplier[pool] >= 0 ? t.tierMultiplier[pool] : 1;
+  const tiered = Math.floor(subtotal * tier + 1e-9);
+  if (tiered !== subtotal) { rows.push({ kind: 'tier', pool, multiplier: tier, amount: tiered - subtotal }); subtotal = tiered; }
   const multiplier = Number.isFinite(characterMultiplier) && characterMultiplier >= 0 ? characterMultiplier : 1;
   const total = Math.floor(subtotal * multiplier);
   if (total !== subtotal) rows.push({ kind: 'bonus', amount: total - subtotal });

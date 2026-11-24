@@ -132,9 +132,9 @@ test('mixed weapon coverage never prints a false single chance or whole-attack z
   const mixed = { ...target, currentInRange: false, currentHitChance: null, currentHitChances: [0, 82.5], hitChance: null, hitChances: [68, 82.5],
     contacts: [{ currentInRange: false, inRange: true }, { currentInRange: true, inRange: true }] };
   q.range.targets = [mixed]; q.range.routes[0].targets = [mixed];
-  assert.equal(rangeHitLabel(q), '0–82.5% (varies by hit)');
-  assert.equal(rangeHitLabel(q, { current: false }), '68–82.5% (varies by hit)');
-  assert.match(combatRangeActionPlan(q).routes[0].odds[0].text, /After Advance 68–82.5% \(varies by hit\)/);
+  assert.equal(rangeHitLabel(q), '0-82.5% (varies by hit)');
+  assert.equal(rangeHitLabel(q, { current: false }), '68-82.5% (varies by hit)');
+  assert.match(combatRangeActionPlan(q).routes[0].odds[0].text, /After Advance 68-82.5% \(varies by hit\)/);
 });
 
 test('configured free Advance still appears for a partially uncovered mixed action', () => {

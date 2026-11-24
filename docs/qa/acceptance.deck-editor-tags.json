@@ -1,0 +1,221 @@
+{
+  "request": "Deck editor / equip page: remove the (reward) tag from the card image and show a REWARD tag next to the EQUIPPED tag; EQUIPPED is green; only cards collected during runs get REWARD, never starters; weapon arts granted by equipment get a red ART tag; the tag group is right-justified above the number; press-and-drag reorders cards without redrawing the list; the default order is cards in the deck first, weapon arts first, then total cost, then name, and a Sort control restores it.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "tags",
+      "url": "?shot=map&shotDeckEditor=1",
+      "ready": ".deck-editor-tile",
+      "settleMs": 1200,
+      "actions": [],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "An EQUIPPED tag shows",
+          "selector": ".deck-editor-tag.equipped"
+        },
+        {
+          "kind": "style",
+          "label": "EQUIPPED is green",
+          "selector": ".deck-editor-tag.equipped",
+          "prop": "border-top-color",
+          "equals": "rgb(127, 217, 127)"
+        },
+        {
+          "kind": "visible",
+          "label": "A weapon art wears an ART tag",
+          "selector": ".deck-editor-tag.art"
+        },
+        {
+          "kind": "style",
+          "label": "ART is red",
+          "selector": ".deck-editor-tag.art",
+          "prop": "border-top-color",
+          "equals": "rgb(138, 26, 26)"
+        },
+        {
+          "kind": "within",
+          "label": "The tag group sits inside its card row",
+          "selector": ".deck-editor-tags",
+          "container": ".deck-editor-main"
+        },
+        {
+          "kind": "style",
+          "label": "The tag group is pinned to the right of the row",
+          "selector": ".deck-editor-tags",
+          "prop": "justify-content",
+          "equals": "flex-end"
+        },
+        {
+          "kind": "count",
+          "label": "Starting cards carry no REWARD tag",
+          "selector": ".deck-editor-tag.reward",
+          "eq": 0
+        },
+        {
+          "kind": "text",
+          "label": "Default order: the weapon art leads the cards in the deck",
+          "selector": ".deck-editor-tile:first-child .deck-editor-name",
+          "includes": "Sundering Hew"
+        },
+        {
+          "kind": "visible",
+          "label": "The Sort control is offered",
+          "selector": "[data-focus-key=\"sort:default\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate",
+            "AudioContext"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "The old 'In deck' badge is still drawn",
+          "selector": ".deck-editor-tile > .in-deck-badge"
+        },
+        {
+          "kind": "visible",
+          "label": "A reward card still wears the old Reward rank badge",
+          "selector": ".deck-editor-main:has(.deck-editor-tag.reward) .deck-editor-rank:not([hidden])"
+        }
+      ]
+    },
+    {
+      "name": "drag-reorder",
+      "url": "?shot=map&shotDeckEditor=1",
+      "ready": ".deck-editor-tile",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "stamp": ".deck-editor-list"
+        },
+        {
+          "stamp": ".deck-editor-tile"
+        },
+        {
+          "drag": {
+            "from": ".deck-editor-tile:nth-child(1) .deck-editor-main",
+            "to": ".deck-editor-tile:nth-child(3) .deck-editor-main"
+          }
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "The dragged weapon art now sits third",
+          "selector": ".deck-editor-tile:nth-child(3) .deck-editor-name",
+          "includes": "Sundering Hew"
+        },
+        {
+          "kind": "stamped",
+          "label": "The list was not rebuilt by the drag",
+          "selector": ".deck-editor-list",
+          "eq": 2
+        },
+        {
+          "kind": "stamped",
+          "label": "Every card tile is still the same node",
+          "selector": ".deck-editor-tile",
+          "min": 7
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate",
+            "AudioContext"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "stamped",
+          "label": "The tiles were rebuilt",
+          "selector": ".deck-editor-tile",
+          "eq": 0
+        }
+      ]
+    },
+    {
+      "name": "sort-restores-default",
+      "url": "?shot=map&shotDeckEditor=1",
+      "ready": ".deck-editor-tile",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "drag": {
+            "from": ".deck-editor-tile:nth-child(1) .deck-editor-main",
+            "to": ".deck-editor-tile:nth-child(3) .deck-editor-main"
+          }
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "click": ".deck-editor-filter-toggle"
+        },
+        {
+          "click": "[data-focus-key=\"sort:default\"]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "Sort puts the weapon art first again",
+          "selector": ".deck-editor-tile:first-child .deck-editor-name",
+          "includes": "Sundering Hew"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate",
+            "AudioContext"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "The manual order is still in force",
+          "selector": ".deck-editor-tile:nth-child(3) .deck-editor-name",
+          "includes": "Sundering Hew"
+        }
+      ]
+    }
+  ]
+}

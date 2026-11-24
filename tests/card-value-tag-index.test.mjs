@@ -10,6 +10,14 @@ import * as model from '../src/model/attackCardDamage.js';
 // The fixture records the exact model and content SHA256 used for provenance.
 // Regenerate after content changes with node tools/card-value-index-oracle.mjs (re-pinned for the authored card `contest` field, SPEC §17 Contests).
 // Each hash covers the serialized card definitions/damage configuration/problem list.
+// Recaptured 2026-11-18 for Unguarded Bolt's 2/3 Idle HP rider with the same pinned independent oracle.
+// Only the content digest and 14 projected-card hashes move; the other methods and error cases are unchanged.
+// Recaptured 2026-11-19 with the same pinned independent oracle after the gear vocabulary and Diamond Skin label pass.
+// Content/configuration and projected-card hashes move; validation/error rows and the oracle model identities are unchanged.
+// Recaptured 2026-11-21 with the same pinned independent oracle after the score-engine card retunes and starter decks (owner rulings A-F):
+// only the content digest and 28 materialize/project hashes (cases embedding real content) move; validation/error rows and the oracle identities are unchanged.
+// Recaptured 2026-11-22 with the same oracle after Gravebinder's Lament's identity line was cut to twelve words (card-lore test): only the content digest and 14 projected-card hashes move, and no combat number changed.
+// Recaptured 2026-11-22 with the same oracle after the flat Exhaust/Ethereal rate retuned Meteor, Stormcall, Ember Wave, Radiant Verdict, Conflagration and Twin Fang (owner rulings 3-5): only the content digest and the cases embedding real content move (verified: the preceding commit passes this test unchanged).
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/card-value-tag-index-baseline.json', import.meta.url)));
 for (const [name, bundle] of cardValueIndexCases()) {
   for (const method of ['materializeCardValueBonuses', 'projectAttackCardDamageBundle', 'attackCardDamageConfigProblems']) {

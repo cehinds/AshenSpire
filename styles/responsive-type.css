@@ -42,12 +42,12 @@
     font-size: clamp(var(--type-label-min), calc(.8rem + 1.2cqi), max(var(--type-label-min), 1.23rem));
   }
 }
-/* Allocation summaries are useful instructions, not disposable labels. At
-   the minimum size they may grow vertically beside the unchanged stepper. */
+/* Allocation summaries wrap below the name, within the text column that
+   ends before the stepper. */
 .modal .as-row.setting.se-row .disc-summary {
   font-size: clamp(var(--type-label-min), calc(.8rem + 1.2cqi), max(var(--type-label-min), 1.35rem));
   white-space: normal; overflow: visible; text-overflow: clip;
-  overflow-wrap: anywhere; line-height: 1.3;
+  overflow-wrap: normal; line-height: 1.3;
 }
 /* Equipment cards render on a 350px canvas. Budget the 284px title strip by
    label length, compensating the minimum for the card's own transform too. */

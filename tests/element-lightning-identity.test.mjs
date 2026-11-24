@@ -10,7 +10,8 @@ import { ElementTurnStart, ElementSecondaryPlan, ElementPreviewBreak } from '../
 import { StatusCapsLifted } from '../src/model/fixCoreMechanics.js';
 
 const SPARK = { combatProfile: { camp: 'spell', school: 'lightning', damageType: 'arcane', magicShare: 1 }, tags: ['school:lightning'], magicShare: 1 };
-const hit = (combat, target, carrier = SPARK, base = 10) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+// Base doubled: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the hit meets the element rules at the old 10.
+const hit = (combat, target, carrier = SPARK, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row => row.id === id);
 
 test('the chain goes to the next living enemy in order, for 50% of the hit, and only from a single-target lightning hit', () => {
@@ -105,4 +106,16 @@ test('Shock caps at 10 and the Shocked contest does not run for a fight with ele
   play(combat, 'core.spark', enemies[0].id);
   assert.equal(combat.rng.getCounters().combatContest || 0, before, 'no contest dice');
   assert.equal(getStacks(enemies[0], 'shocked'), 0);
+});
+
+test('review #2822: the chained hit has its own contact, so its Block record never overwrites the first target\'s', () => {
+  const { combat, enemies, player } = fight({ enemies: 2 });
+  const receipt = { blockBefore: 7 };
+  const carrier = { ...SPARK, expansionContact: { index: 0, receipt } };
+  const [row] = ElementSecondaryPlan(combat, player, enemies[0], carrier);
+  assert.notEqual(row.carrier.expansionContact, carrier.expansionContact);
+  assert.notEqual(row.carrier.expansionContact.receipt, receipt);
+  row.carrier.expansionContact.receipt.blockBefore = 0; // what the chained hit's applyProfileDamage records
+  assert.equal(receipt.blockBefore, 7, 'the first target keeps the Block its hit met');
+  assert.equal(row.carrier.expansionContact.index, 0, 'the planned contact flags carry over');
 });

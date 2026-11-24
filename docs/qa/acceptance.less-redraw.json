@@ -1,0 +1,183 @@
+{
+  "request": "limit the redrawing that happens when upgrading a card, editing a deck, or anything else that influences small changes.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "deck-editor-remove-card",
+      "url": "?shot=map&shotDeckEditor=1",
+      "ready": ".deck-editor-tile",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "stamp": ".deck-editor-panes"
+        },
+        {
+          "stamp": ".deck-editor-list"
+        },
+        {
+          "stamp": ".deck-editor-tile"
+        },
+        {
+          "click": ".deck-editor-tile .deck-editor-step[data-action=\"remove\"]:not([disabled])"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "stamped",
+          "label": "The panes element is the same node after removing a card",
+          "selector": ".deck-editor-panes",
+          "eq": 1
+        },
+        {
+          "kind": "stamped",
+          "label": "Both card lists are the same nodes",
+          "selector": ".deck-editor-list",
+          "eq": 2
+        },
+        {
+          "kind": "stamped",
+          "label": "The cards that were not touched are the same nodes",
+          "selector": ".deck-editor-tile",
+          "min": 5
+        },
+        {
+          "kind": "visible",
+          "label": "The editor is still open",
+          "selector": ".deck-editor"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate",
+            "AudioContext"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "stamped",
+          "label": "Every card tile was rebuilt (none kept its mark)",
+          "selector": ".deck-editor-tile",
+          "eq": 0
+        },
+        {
+          "kind": "stamped",
+          "label": "The panes element was rebuilt",
+          "selector": ".deck-editor-panes",
+          "eq": 0
+        }
+      ]
+    },
+    {
+      "name": "upgrade-picker-select-card",
+      "url": "?shot=blacksmith",
+      "ready": ".blacksmith-workspace",
+      "settleMs": 1200,
+      "actions": [
+        {
+          "click": "[data-shop-category=\"upgradeArt\"]"
+        },
+        {
+          "click": "#blacksmith-upgrade-card"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "stamp": ".card-upgrade-list"
+        },
+        {
+          "stamp": ".card-upgrade-row"
+        },
+        {
+          "click": ".card-upgrade-row:nth-of-type(2)"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        },
+        {
+          "click": ".card-upgrade-detail-back"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".card-upgrade-row:nth-of-type(3)"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "stamped",
+          "label": "The picker list is the same node after choosing cards",
+          "selector": ".card-upgrade-list",
+          "eq": 1
+        },
+        {
+          "kind": "stamped",
+          "label": "Every card row is the same node",
+          "selector": ".card-upgrade-row",
+          "min": 3
+        },
+        {
+          "kind": "visible",
+          "label": "The chosen card's modal is open",
+          "selector": ".card-upgrade-detail-modal"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate",
+            "AudioContext"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "stamped",
+          "label": "The picker list was rebuilt",
+          "selector": ".card-upgrade-list",
+          "eq": 0
+        },
+        {
+          "kind": "stamped",
+          "label": "The card rows were rebuilt",
+          "selector": ".card-upgrade-row",
+          "eq": 0
+        }
+      ]
+    }
+  ]
+}

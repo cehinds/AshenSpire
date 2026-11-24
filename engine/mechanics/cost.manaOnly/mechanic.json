@@ -18,9 +18,5 @@
   "presentation": {
     "icon": "cost.manaOnly"
   },
-  "portability": "legacy",
-  "legacy": {
-    "file": "src/model/validate/cardCosts.js",
-    "symbol": "cardCostProblems"
-  }
+  "portability": "data"
 }

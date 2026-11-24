@@ -65,7 +65,9 @@ try {
     // Owner, 2026-10-27: the Core receipt shows the Character bar alone and offers the earned attribute point.
     assert.equal(await page.locator('.reward-progress-row').count(), 1);
     assert.equal(await page.locator('[role="progressbar"][data-track="character"]').count(), 1);
-    assert.equal(await page.locator('.reward-stat-allocation .reward-stat-add').count() > 0, true);
+    // Owner, 2026-11-17: the point opens the level-up modal; nothing is drawn inline.
+    assert.equal(await page.locator('#reward-stat-points').count(), 1);
+    assert.equal(await page.locator('.reward-stat-allocation').count(), 0);
     await page.screenshot({ path: `${output}/${width}-victory.png`, fullPage: true });
     await continueButton.click();
     await page.locator('.confirmation-confirm').waitFor();

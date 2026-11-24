@@ -5,6 +5,7 @@ import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard, clearSelection } from './cardSelection.js';
 import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel.js';
 import { setAttr } from '../domWrite.js';
+import { t } from '../strings.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
 // ./cardSelection.js. They were two module-level `let`s here — shared by every
@@ -297,7 +298,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   const rows = read();
   // The refusal sentence stands in the body, where a reader is already
   // looking, and only when there is one. An enabled act needs no caption:
-  // the button says what it does.
+  // the button says what it does. It leads the body so long card details never push it out of view.
   const blocked = rows.filter((row) => !row.enabled && row.reason);
   let note = null;
   if (blocked.length) {
@@ -305,7 +306,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     note.className = 'card-action-reason';
     note.setAttribute('role', 'status');
     note.textContent = blocked.map((row) => row.reason).join(' ');
-    details.append(note);
+    details.prepend(note);
   }
   const buttons = rows.map((row) => {
     const button = document.createElement('button');
@@ -317,16 +318,22 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     if (row.reason) button.title = row.reason;
     return button;
   });
-  // W1o: the header close is the way out. The footer holds only applicable
-  // actions — one fills it — and a read-only door has no footer at all, not a
-  // redundant Back beside the close it duplicates.
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.className = 'card-inspection-back';
+  back.textContent = t('common.back');
+  back.dataset.role = 'exit';
+  // Reading and acting share one door; Back always leaves without acting.
   const shell = OpenModal({ title, size: 'lg',
     className: 'card-inspection-modal', opener, deferFocus: true, deferLift,
     primary: buttons[0] || null,
-    secondary: buttons.slice(1),
+    secondary: [back, ...buttons.slice(1)],
     body: cardInspectionLayout(card, details, { chipsWithDetails: true }) });
+  back.addEventListener('click', shell.close);
+  let committed = false;
   for (const button of buttons) {
     button.addEventListener('click', () => {
+      if (committed || !shell.panel.isConnected) return;
       // Re-read rather than trusting the row this button was drawn from: the
       // door can stand open while the run moves underneath it.
       const current = read().find((row) => row.id === button.dataset.act);
@@ -340,6 +347,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
         return;
       }
       button.disabled = true;
+      committed = true;
       // The command may move focus (targeting): lift the page lock now, not a frame later, so its target is focusable.
       shell.close({ liftNow: true });
       commit();
@@ -351,10 +359,24 @@ export function openCardInspection({ title, card, details, opener, actions = nul
 // Hosts can expose a visible Inspect action (a footer button) without the face
 // printing anything. The renderer owns the reading; opening it owns no choice.
 const boundInspections = new WeakMap();
-export function openBoundCardInspection(card, opener = card) {
+// The reading hold. Where the card carries its own hold (armHold publishes its duration as `data-hold-ms`: the
+// combat hand's selecting hold follows the player's Hold to confirm setting, 600 ms by default and 1000 ms at
+// Long), the read waits that long plus a margin, so the card's hold always completes first and its release is
+// never an early-release tap that selects or plays. The slop is the drag's own 12 px start boundary.
+const HOLD_INSPECT_MS = 700;
+const HOLD_INSPECT_MARGIN_MS = 300;
+const HOLD_INSPECT_SLOP_PX = 12;
+const HOLD_INSPECT_RETRY_MS = 50;
+// A card hold that never reports its end (a host that stopped painting) does not hold the read off for ever.
+const HOLD_INSPECT_MAX_WAIT_MS = 2000;
+export function HoldInspectDelay(card) {
+  const ownHold = Number(card?.dataset?.holdMs) || 0;
+  return Math.max(HOLD_INSPECT_MS, ownHold > 0 ? ownHold + HOLD_INSPECT_MARGIN_MS : 0);
+}
+export function openBoundCardInspection(card, opener = card, { allowDetached = false, ...overrides } = {}) {
   const open = boundInspections.get(card);
-  if (!card?.isConnected || !open) return false;
-  return open(opener);
+  if ((!card?.isConnected && !allowDetached) || !open) return false;
+  return open(opener, overrides);
 }
 
 /** The card face is the door (right-click, I, a read-only tap); action/hold/drag handlers stay on hosts. */
@@ -469,7 +491,8 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     // A touch long-press raises this event too. Where armInspect owns the press its hold is the
     // reading; a card with the (i) badge (the combat hand) is read through the badge alone, so a
     // long press there selects and never inspects by accident.
-    if ((event.pointerType === 'touch' || (info && touch)) && (card.dataset.inspect || info)) { if (info) event.stopPropagation(); return; }
+    // The press-and-hold below is the reading there, so the browser's own long-press menu is refused too.
+    if ((event.pointerType === 'touch' || (info && touch)) && (card.dataset.inspect || info)) { event.preventDefault(); if (info) event.stopPropagation(); return; }
     event.stopPropagation(); read();
   });
   card.addEventListener('keydown', event => {
@@ -510,6 +533,43 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   }
   if (info) card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
+  // PRESS AND HOLD READS THE CARD (owner, 2026-11-20: "inspect should work after pressing and holding the
+  // target"). A still press past HOLD_INSPECT_MS opens the same door as the (i), right-click and I; moving past
+  // the 12 px drag slop, a drag starting, or letting go first abandons it, so taps and drags are untouched. The
+  // combat hand's own hold selects first (its Hold to confirm duration) and this one reads after it. Where armInspect owns
+  // the press (a hand with the zoom hold) its zoomed copy is the reading and this stands aside. The click that
+  // follows a completed read is swallowed once, so a read never becomes a select or a play.
+  let hold = null;
+  let swallowClick = false;
+  const endHold = () => { if (hold) { clearTimeout(hold.timer); hold = null; } };
+  const fireHold = () => {
+    if (!hold) return;
+    // The card's own hold is still filling (a settle, or a slow dial): read once it has completed.
+    if (card.dataset.hold === 'holding' && performance.now() - hold.at < HOLD_INSPECT_MAX_WAIT_MS) { hold.timer = setTimeout(fireHold, HOLD_INSPECT_RETRY_MS); return; }
+    hold = null;
+    if (!card.isConnected || ['pending', 'open'].includes(card.dataset.inspect)) return;
+    swallowClick = true;
+    read();
+  };
+  card.addEventListener('pointerdown', event => {
+    endHold();
+    swallowClick = false;
+    if (event.button !== 0 || event.target?.closest?.('.card-info-button, input, textarea, select')) return;
+    const { clientX: x, clientY: y } = event;
+    hold = { x, y, at: performance.now(), timer: setTimeout(fireHold, HoldInspectDelay(card)) };
+  });
+  card.addEventListener('pointermove', event => {
+    if (hold && Math.hypot(event.clientX - hold.x, event.clientY - hold.y) > HOLD_INSPECT_SLOP_PX) endHold();
+  });
+  for (const type of ['pointerup', 'pointercancel', 'carddragstart', 'pointerleave', 'lostpointercapture']) card.addEventListener(type, endHold);
+  // Only the pointer's own trailing click is swallowed. The press that read usually ends on the modal, so no click
+  // may follow at all; the flag then waits for this card's next pointerdown (which clears it), and a controller's
+  // synthetic click (detail 0) is never the one eaten.
+  card.addEventListener('click', event => {
+    if (!swallowClick || !(event.detail > 0)) return;
+    swallowClick = false;
+    event.preventDefault(); event.stopImmediatePropagation();
+  }, true);
   card.addEventListener('click', event => {
     if (event.target === info) return;
     select();

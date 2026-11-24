@@ -418,7 +418,7 @@ test('phone field extension keeps every ground at or above the resting cards', (
 test('desktop and phone profiles stand the back rank lower and keep the player strips above the hand', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
   assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.44, 0.066]);  // owner 2026-11-13: triple the team gap (4.364 rows) and lower the field slightly
-  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.5, 0.052]);  // owner 2026-11-13: the phone's gap tripled to 5.48 rows
+  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight, grid.profiles.mobile.teamGapRows], [0.4, 0.052, 7.5]);  // owner 2026-11-17: the enemy ranks stand further back on a phone (gap 5.48 to 7.5 rows, grid top 0.5 to 0.4)
   for (const key of ['desktop', 'mobile']) {
     const p = grid.profiles[key];
     assert.ok(p.top >= 0.4, `${key}: the back rank starts at or below 40% of the field`);

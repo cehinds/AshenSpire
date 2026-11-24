@@ -67,12 +67,15 @@ const BRANCHES = flag('--branches', ['dev', 'test', 'release', 'main', ...altern
 // Clamped: each listed build that is no longer committed costs a rebuild, so a
 // dispatch typo must not turn one run into hundreds of them.
 const KEEP_MAX = 25;
-// PER-CHANNEL RETENTION (owner, 2026-11-06): how many builds each channel lists. main,
-// dev and test keep 3, release keeps 5 (owner changed release from 10 to 5 on
-// 2026-11-07); every other channel (alternative/*) keeps DEFAULT_KEEP. Only the
+// PER-CHANNEL RETENTION (owner, 2026-11-06): how many builds each channel lists. dev
+// and test keep 2, main 1, release 1 (release went 10 -> 5 on 2026-11-07; main 3 -> 2
+// and release 5 -> 3 on 2026-11-20, then main 2 -> 1, release 3 -> 1, dev and test 3 -> 2 the same
+// day to pay for a third branch preview (collect-feature-previews.mjs); see pages-builds.yml; when the site reached 2945 MB against the 2500 MB
+// guard, run 44813657232: main's third build was a ~100 MB legacy single file); every
+// other channel (alternative/*) keeps DEFAULT_KEEP. Only the
 // newest build of a primary channel carries the offline file (downloadKept), so release's older builds are Play-only. `--keep N` (the workflow's
 // optional `keep` input) overrides every channel for one run; absent, this table rules.
-export const RETENTION = { main: 3, release: 5, dev: 3, test: 3 };
+export const RETENTION = { main: 1, release: 1, dev: 2, test: 2 };
 export const DEFAULT_KEEP = 3;
 export const keepFor = (branch, override = null) => Math.min(KEEP_MAX, Math.max(1, override ?? RETENTION[branch] ?? DEFAULT_KEEP));
 // A run's rebuild budget (run 42186410401 ran out of disk). Applies only to builds
@@ -1191,6 +1194,42 @@ function sourceAssetPlan(outDir, mainRef) {
   }
   return plan;
 }
+/** Publish Score Studio from dev's tip at /score-studio/ so it can be used directly on GitHub Pages (Download JSON mode). */
+const SCORE_STUDIO_TREES = ['engine', 'src', 'styles', 'tools/score-studio'];
+const SCORE_STUDIO_ASSET_PREFIXES = [
+  'assets-display/card-cutouts/',
+  'assets/cards/',
+  'assets/card-components/',
+  'assets/player-polish/',
+  'assets/ui/',
+  'assets/fonts/',
+];
+function publishScoreStudio(outDir) {
+  const devRef = refFor('dev');
+  if (!devRef || !inTree(devRef, 'tools/score-studio/index.html')) return false;
+  const studioDir = join(outDir, 'score-studio');
+  mkdirSync(studioDir, { recursive: true });
+  extractTree(devRef, SCORE_STUDIO_TREES, studioDir);
+  let hydrated = 0;
+  try {
+    const manifest = JSON.parse(git(['show', `${devRef}:art-manifest.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).assets || {};
+    for (const [id, row] of Object.entries(manifest)) {
+      if (!SCORE_STUDIO_ASSET_PREFIXES.some((p) => id.startsWith(p))) continue;
+      const rec = row.light || row.common;
+      if (!rec || !/^[0-9a-f]{64}$/.test(rec.sha256 || '')) continue;
+      const from = join(outDir, objectPath(rec.sha256, id));
+      if (!existsSync(from)) continue;
+      mkdirSync(dirname(join(studioDir, id)), { recursive: true });
+      cpSync(from, join(studioDir, id));
+      hydrated++;
+    }
+  } catch { /* best-effort art hydration when object store is present */ }
+  console.log(`  /score-studio/: ${hydrated} assets hydrated`);
+  writeFileSync(join(studioDir, 'index.html'),
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=tools/score-studio/"><title>AshenSpire — Score Studio</title></head><body><p>Opening <a href="tools/score-studio/">Score Studio</a>…</p><script>location.replace("tools/score-studio/");</script></body></html>\n');
+  return true;
+}
+
 function writeSourceAssets(outDir, mainRef) {
   const plan = sourceAssetPlan(outDir, mainRef);
   if (!plan) return;
@@ -1541,6 +1580,7 @@ function assemble(outDir, keepOverride) {
   // discovery below, so they are named by this tool and not listed as other pages.
   const previews = previewsDir ? publishBranchPreviews(outDir, readBranchPreviews(previewsDir, previewSkips)) : [];
   for (const s of previewSkips) console.log(`  SKIPPED preview ${s.branch}: ${s.reason}`);
+  publishScoreStudio(outDir);
   const generatedNames = new Set([...BRANCHES.map((branch) => branch.split('/')[0]), 'index.html', 'builds.json', 'objects', 'packs', 'branches', SW_FILE]);
   const otherPages = discoverPages(outDir, generatedNames);
   const root = rootIndex(branchData, generatedAt, otherPages, previews);

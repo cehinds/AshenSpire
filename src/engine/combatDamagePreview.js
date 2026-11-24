@@ -1,4 +1,7 @@
+import { BREAK_STATUS_IDS } from './brokenRule.js';
 import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { fixCorePierceRules } from '../model/fixCoreMechanics.js';
+import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import * as ProfileCombat from './gameProfileCombat.js';
 import * as Actions from './actions.js';
 // Receipt capture enters this shared module from multiple bundled engine
@@ -10,7 +13,8 @@ import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
 import { ElementPreviewBreak } from './elementIdentity.js';
-import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { fixCoreWardDisabled, FixCoreWardHpPerStack, EffectiveWardHp } from '../model/fixCoreMechanics.js';
+import { DefendPoiseFloor, HeldStance } from './stanceBenefits.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
 /**
@@ -56,11 +60,17 @@ export function PreviewStateRestore(state, snapshot) {
  * only the previewed defender changes, so later hits of the same card see the stance and the Vulnerable multiplier.
  */
 function previewPoiseBreak(ctx, defender) {
-  // Broken (owner, 2026-11-14): the previewed owner is Broken for its later hits (x1.5, no Vulnerable grant).
+  // Broken (owner, 2026-11-14): the previewed owner is Broken for its later hits (the multiplier, 1 since 2026-11-18, and the break's statuses).
   const broken = FixCoreBrokenRules(ctx);
   if (broken) {
     defender.broken = { since: ctx.turn || 0, endTurn: (ctx.turn || 0) + 1, preview: true };
     defender.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: broken.damageMultiplier };
+    // The break's statuses (owner, 2026-11-18, `poise.breakStatusStacks`) land before the card's later hits, as BreakCombatant applies them live.
+    if (broken.statusStacks > 0) {
+      const statuses = { ...defender.statuses };
+      for (const id of BREAK_STATUS_IDS) statuses[id] = { ...statuses[id], stacks: (statuses[id]?.stacks || 0) + broken.statusStacks };
+      defender.statuses = statuses;
+    }
     return;
   }
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
@@ -87,7 +97,10 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
     amount = authored * pressure
       * (!card?.combatWardEdgeApplied && card?.combatProfile?.camp === 'spell' && card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1);
   } else return 0;
-  const spent = Math.min(poise.value, Math.max(0, Math.floor(amount)));
+  // Live poiseDamage and Ward-off wardDamage carry their card into drainFixCorePoise, so the card's Defend floor applies here too, and no card reads as physical
+  // (theme B, 2026-11-17).
+  const keep = Math.min(poise.value, DefendPoiseFloor(ctx, defender, card, HeldStance(defender), Math.max(defender.block || 0, defender.previewBlockAtHit || 0)));
+  const spent = Math.min(poise.value - keep, Math.max(0, Math.floor(amount * ProfileCombat.SpellPoiseMultiplier(ProfileCombat.configuredModule(ctx, 'effects'), source, defender, card))));
   if (!(spent > 0)) return 0;
   poise.value -= spent;
   if (poise.value === 0) previewPoiseBreak(ctx, defender);
@@ -99,20 +112,43 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
  * Poise damage) and, when that empties Poise, the Staggered stance and Vulnerable. Shared by the card preview and the intent projection.
  */
 export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = null) {
+  const hpBefore = defender.previewHpRemaining ?? defender.hp;
+  // The Block held when this hit arrived, for a Poise rider that follows it (live: the tactical receipt's blockBefore). Preview copy only.
+  defender.previewBlockAtHit = defender.block || 0;
   defender.block = receipt.blockRemaining;
-  // A reflected hit spends one Reflect stack, as live does (SPEC §17).
-  if (receipt.reflect) { const left = Math.max(0, (defender.reflectStacks || 0) - 1); if (left) defender.reflectStacks = left; else delete defender.reflectStacks; }
+  if (defender.earthBlock) defender.earthBlock = Math.min(defender.earthBlock, defender.block);
+  // Stone Skin spent against this hit's Pierce reaches the next hit of the same card, as live does (actions.js applyProfileDamage).
+  if (receipt.skinSpent > 0) {
+    const skin = fixCorePierceRules(fixCoreRules(ctx, defender)).skinStatus, held = skin && defender.statuses?.[skin];
+    // The detached copy shares its statuses with the real target, so the change is made on a copy.
+    if (held) { const left = held.stacks - receipt.skinSpent, next = { ...defender.statuses }; if (left > 0) next[skin] = { ...held, stacks: left }; else delete next[skin]; defender.statuses = next; }
+  }
   if (!fixCoreEnabled(ctx)) return;
+  if (receipt.wardHpAbsorbed > 0) {
+    const wardAfter = Math.max(0, EffectiveWardHp(ctx, defender) - receipt.wardHpAbsorbed);
+    defender.wardHp = wardAfter;
+    const nextStatuses = { ...(defender.statuses || {}) };
+    if (wardAfter > 0) {
+      const per = FixCoreWardHpPerStack(ctx);
+      if (per > 0 && nextStatuses.ward) nextStatuses.ward = { ...nextStatuses.ward, stacks: Math.ceil(wardAfter / per) };
+    } else {
+      delete nextStatuses.ward;
+    }
+    defender.statuses = nextStatuses;
+  }
   if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
   if (defender.persistentPoise) {
     const poiseBefore = defender.persistentPoise.value;
     defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
-    if (poiseBefore > 0 && defender.persistentPoise.value === 0) {
+    // Live play breaks Poise only when the direct hit leaves the target alive.
+    // Keep a detached HP timeline too: a lethal Divine contact cannot add Smite.
+    if (poiseBefore > 0 && defender.persistentPoise.value === 0 && (!Number.isFinite(hpBefore) || hpBefore > receipt.hpLoss)) {
       previewPoiseBreak(ctx, defender);
       // Shown = dealt: a divine hit that breaks Poise also Smites (live: elementIdentity OnPoiseBreak), so the quoted HP carries it.
       if (!receipt.evaded) receipt.hpLoss += ElementPreviewBreak(ctx, attacker, defender, receipt.element?.id, receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount) || 0;
     }
   }
+  if (Number.isFinite(hpBefore)) defender.previewHpRemaining = Math.max(0, hpBefore - receipt.hpLoss);
 }
 
 /** A detached copy of an attacker whose HP and defenses a previewed reflected return may spend. */
@@ -129,12 +165,19 @@ export function cloneDetachedAttacker(entity) {
 export function previewReflectReturn(ctx, attacker, holder, receipt, carrier) {
   if (!receipt?.reflect || !attacker || attacker === holder || !(attacker.hp > 0)) return false;
   const amount = reflectReturned(receipt.reflect.original, receipt.reflect.stacks);
+  // Live spends Reflect only after Thorns has left a living attacker, including a zero-damage return.
+  const left = Math.max(0, (holder.reflectStacks || 0) - 1);
+  if (left) holder.reflectStacks = left; else delete holder.reflectStacks;
   if (!(amount > 0)) return false;
   const back = ProfileCombat.profileDamageReceipt(ctx, holder, attacker, amount,
     { ...carrier, combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
       combatProfile: { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true }, combatRiderTargets: [] });
   applyReceiptToPreviewTarget(ctx, attacker, { ...back, reflect: null });
-  attacker.hp -= fixCoreEnabled(ctx) ? back.hpLoss : back.amount;
+  return previewAttackerHpLoss(ctx, attacker, fixCoreEnabled(ctx) ? back.hpLoss : back.amount);
+}
+
+function previewAttackerHpLoss(ctx, attacker, amount) {
+  attacker.hp -= amount;
   if (attacker.hp > 0) return false;
   // Death prevention, as live afterHpChange (SPEC §14.3): a solo player spends one revive token and rises at its hpPct. Only the
   // detached attacker's own copy of the counts is spent; the live entity and the fight's counts are never touched.
@@ -144,11 +187,20 @@ export function previewReflectReturn(ctx, attacker, holder, receipt, carrier) {
     if (token) {
       adjustCount(attacker.previewConsumables, token.id, -1);
       attacker.hp = reviveHp(attacker.maxHp, token.hpPct);
+      attacker.previewHpRemaining = attacker.hp;
       return false;
     }
   }
   attacker.hp = 0;
   return true;
+}
+
+/** Landed-hit returns follow the live order: Thorns, then Reflect, then a possible Counter. */
+export function PreviewHitReturns(ctx, attacker, holder, receipt, carrier) {
+  if (!attacker || !(attacker.hp > 0)) return false;
+  const thorns = Actions.ThornsDamage(ctx, attacker, holder, carrier, receipt);
+  if (thorns > 0 && previewAttackerHpLoss(ctx, attacker, thorns)) return true;
+  return previewReflectReturn(ctx, attacker, holder, receipt, carrier);
 }
 
 /**
@@ -217,7 +269,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       // No damage-type rider here: a configured (Core) hit resolves in actions.js applyProfileDamage, which applies no matchup rider, so the
       // only Poise a hit takes is its receipt's (absorbed and drained). Pricing a blunt rider took Poise live never took (fellWarden caneStrike).
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
-      if (defender && previewReflectReturn(previewCtx, attacker, defender, receipt, carrier)) break;
+      if (defender && PreviewHitReturns(previewCtx, attacker, defender, receipt, carrier)) break;
     }
     // Owner, 2026-11-14: the quoted hit is the HP the target will lose from it (receipt.hpLoss): after its defensive stance, Reflect, Block,
     // Poise and Evade, carried hit to hit through the detached defender. Supersedes the 2026-11-02 and 2026-11-03 rulings.

@@ -2,10 +2,9 @@
 //
 // Hybrid design (per product decision): every sound and music bed has a
 // synthesized fallback (zero required assets, zero licensing). SFX ids with
-// exact recipe rows try assets/sfx/<id>.ogg; SFX_MANIFEST can name an explicit
-// sample for an asset-only cue. An id answered only by a family recipe uses
-// that synth immediately unless it has an explicit manifest sample, avoiding
-// a guaranteed 404 for each composed variant.
+// SFX_MANIFEST names the samples that are actually shipped. A synth recipe
+// alone does not imply a corresponding audio file; without a manifest sample
+// the cue uses its synth immediately and makes no speculative request.
 //
 // Wiring: `initAudio()` returns an engine; main.js sets `sfx.sink = engine.sfx`
 // and calls `engine.music(context)` as screens mount. The AudioContext starts
@@ -13,7 +12,7 @@
 
 import { balance } from '../content/balance.js';
 import { MUSIC_MANIFEST, SCALES, BEDS, MUSIC_TRACK_FALLBACK } from '../content/music.js';
-import { SFX_MANIFEST, SFX_RECIPES, resolveRecipe } from '../content/sfx.js';
+import { SFX_MANIFEST, resolveRecipe } from '../content/sfx.js';
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
 import { assetUrl } from './assetmap.js';
 
@@ -183,15 +182,9 @@ export function initAudio(settings = {}) {
     // falls back to the synth, one voice per recipe layer, so a 4-layer burst
     // on 6 live voices is refused, not let through to 10.
     const sampleOverride = own(SFX_MANIFEST, id);
-    const hasRecipe = Object.prototype.hasOwnProperty.call(SFX_RECIPES, id);
-    // A composed id such as `holdTick_shopSell` can be answered by its family
-    // recipe without having an action-specific sample. Do not request a file
-    // for that missing variant: synthSfx() already plays the family recipe,
-    // and a guaranteed 404 only adds noise to the console. An asset-only cue
-    // still opts in through SFX_MANIFEST.
-    const sample = sampleOverride || hasRecipe
-      ? assetUrl(sampleOverride || `assets/sfx/${encodeURIComponent(id)}.ogg`)
-      : null;
+    // The recipe describes a synth, not the existence of a sample file.
+    // Explicit manifest samples retain their normal warm/cache/fallback path.
+    const sample = sampleOverride ? assetUrl(sampleOverride) : null;
     const cached = sample && state.sampleCache.get(sample)?.status === 'ready';
     const layers = cached ? 1 : Math.max(1, resolveRecipe(id).recipe.length);
     if (gate.voices + layers > gate.max) return;
@@ -695,7 +688,7 @@ export function initAudio(settings = {}) {
     }
   }
 
-  // ---- samples (filename convention + manifest overrides) -----------------
+  // ---- authored samples ---------------------------------------------------
   function warmSample(url) {
     if (state.sampleCache.has(url)) return;
     // A cache entry exists before fetch begins, so repeated cues share the warm

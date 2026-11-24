@@ -57,7 +57,7 @@ test('Poise broken by a mid-card Poise payload: later hits preview with the Stag
 });
 // Magic spends Poise 1:1 before Block (owner, 2026-10-31), so the pool that survives Astral Cleave's spell hits is larger than under the old 25% absorb.
 test('Poise that survives the payload: preview unchanged and equal to live', () => {
-  const r = previewAndPlay(60);
+  const r = previewAndPlay(120); // 60 survived the spell hits before Core's x2 spell Poise (owner, 2026-11-18)
   assert.notEqual(r.enemy.combatStance?.maneuver, 'staggered');
   assert.deepEqual(r.shown.flat(), r.dealt);
   assert.deepEqual(r.shownRaw.flat(), r.dealt);

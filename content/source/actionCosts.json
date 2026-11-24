@@ -242,6 +242,10 @@
       "weight": 0,
       "side": "sp"
     },
+    "pullRetreat": {
+      "weight": 0,
+      "side": "sp"
+    },
     "bow": {
       "weight": 0,
       "side": "sp"

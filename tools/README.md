@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (245 tool files, plus the 9 subfolders)
+## Tools something references (246 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -26,6 +26,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `hud-component-studio/` (1295 files) | From this directory, run 'python -m http.server 8360 --bind 127.0.0.1' and open http://localhost:8360/. On Windows,… | docs CREDITS.md, docs/ai/CHARACTER-CREATION-HANDOFF.md, docs/design/character-creation/README.md +1; other docs/component-catalog.html, workbench/tools.json |
 | `lib/` (7 files) | tools/lib/build-lock — one writer of the generated trees across processes. | tests build-lock, build-steps, class-smash-qa-notices +4; tools config-build, content-build, engine-export +2; other .gitignore, editor/server.mjs +12 |
 | `score/` (4 files) | tools/score/alt — the "alt" cut of a score (owner, 2026-09-26: "alt | tests music-score; docs CREDITS.md, DEVELOPER.md, SPEC.md +5; other music/score/_motifs.mjs, music/score/boss.mjs +13 |
+| `score-studio/` (4 files) | Interactive Score Studio: procedural card art grid, weights editor, Art & Layers stack, and live combat sandbox (`npm run studio`). | npm studio; tools serve, score-studio-save |
 | `about-changelog.mjs` | Focused contract for #189. CHANGELOG.md is authored; the generated browser | wf sync-dev-to-alternative-dev, build-stamp, ci +2; tests build-stamp, check-order-pending; tools build-stamp, plantsites-baseline.json, pr-restamp +1; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, docs/FINISH.md +11; other src/content/changelog.generated.js, src/content/changelog.js +1 |
 | `actionreach.mjs` | actionreach — is the way OUT of a screen on screen when the screen | tools flaskbox, mapreach, menufit +2 |
 | `advanced-config-preview.mjs` | Browser witness for Settings > Advanced configuration. | tests advanced-settings-groups |
@@ -72,6 +73,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `bundle-cycles.mjs` | tools/bundle-cycles.mjs — find named imports that the bundler turns into a load-time destructure of a module that is still loading. | tests jev, run-node; tools jev; docs docs/ai/tasks/CARD-UPGRADES-2026-10-28.md |
 | `bundle.mjs` | bundle — produce the built game: the pack-shaped HTML at | wf ci, dev-preview; tests alternative-art, build-identity, combat-audit-runtime +8; tools ai-disclosure, art-manifest, art-source +26; docs DEVELOPER.md, SPEC.md, desktop/windows/README.md +8; other buildordinal.json, desktop/windows/build-installer.mjs +20 |
 | `bundle.test.mjs` | bundle.test — the parse gate's own fixtures (#77 property 4). | wf ci, worker-check; tests run-node-lanes, run-node; tools art-source, hud-component-studio/README.md, linkcheck; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md +2 |
+| `card-budget-report.mjs` | Card budget survey (2026-11-18): previews and plays every Core card per starting class in a neutral fight and prints the authored and final values with where each number comes from. | npm balance:card-budget; docs docs/balance/card-budget-2026-11-18.md |
 | `card-art-contact-sheets.py` | QA montage of existing artwork, never an artwork-generation step. | docs docs/EXTENDED-CARD-ART.md |
 | `card-cutout-assets.mjs` | Branch-owned PNGs use the same verified common-pack path as alternative art | tests layered-card-art; tools asset-pack, buildversion, bundle; docs docs/card-art-composition.md |
 | `card-components.mjs`, `card-layout-save.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
@@ -97,6 +99,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `combat-layer-contract.mjs` | Shared by the rendered-layer probe and its source-side known-bad regression. | tests combat-fade-order; tools combat-layer-qa |
 | `combat-log-touch-qa.mjs` | Exercise the log with browser-native taps/drags. No app state injection. | tests combat-log-modal |
 | `combat-mobile-touch-qa.mjs` | Real touch gestures against the authored starting hand. No combat state is | tests combat-inspect-visibility |
+| `combat-power-report.mjs` | Combat-power table (2026-11-21): measures every Core card and item in a neutral fight, scores it with src/model/combatPower.js and writes src/content/generated/combatPower.js. | npm combat-power, combat-power:check; tests combat-power, core-starting-decks |
 | `concept-cutout.mjs` | concept-cutout — turn the four class concept paintings into the | tools component-refs, painted-poses, pose-cutout +2; docs CREDITS.md, asset-data/classes/SUCCESSOR-CONTRACT.md, docs/ART-REPO-PLAN.md +4; other asset-data/classes/rejected-inputs.json, asset-data/sprites/class-sprites.manifest.json +2 |
 | `config-build.mjs` | config-build — compile content/config/**.json into | wf sync-dev-to-alternative-dev; tests build-lock, deck-editor-costs, engine-export +3; tools content-build, engine-export, launch +1; docs DEVELOPER.md, content/config/README.md, docs/COMPONENT-MODEL-ARCHITECTURE.md +8; other package.json, src/config/generated/ui.js +14 |
 | `confirmation-modal.mjs` | Focused acceptance for QA remediation #4: Load and Quit Without Saving use | tools escape-back, plantsites-baseline.json; docs DEVELOPER.md, docs/COMPONENT-CATALOG.md |
@@ -110,6 +113,8 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `creationbrief.mjs` | creationbrief — D26's short form, observed on glass. | tools browser, foldsurvivors, release-shots; docs CHANGELOG.md, DEVELOPER.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +3 |
 | `credits-check.mjs` | credits-check — does every asset directory have a CREDITS row, and | wf ci; tests run-node; docs CREDITS.md, SPEC.md, docs/ART-REPO-PLAN.md +4 |
 | `css-strip.mjs` | tools/css-strip.mjs — drop /* … */ comments from CSS the bundle inlines. | tests boot-splash, historical-ui-icons; tools buildversion, bundle |
+| `generate-cards.mjs` | Card generator CLI (2026-11-21): prints generated card definitions of a target combat power as JSON; writes nothing. | npm cards:generate; tests card-generator |
+| `js-preamble.mjs` | Omit ordinary leading module comments from emitted JavaScript, stopping at the first code token and preserving licenses and directives. | tests js-preamble; tools buildversion, bundle |
 | `derived-tables.mjs` | Derived, read-only tables of the resolved Core profile (owner 2026-10-17): every character's attributes | tests derived-tables |
 | `desktop_scene_export.py` | Re-encode only reviewed desktop scene layers; phone exports stay byte-identical. | tools alternative-art-build.py (Python import) |
 | `dirorder.mjs` | dirorder — the one home for "what order do we read a directory in?" | wf ci; tools art-manifest, asset-pack, buildversion +7; docs SPEC.md, docs/EXTERNAL-ASSETS-PLAN.md |
@@ -123,6 +128,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `enemy-back-normalize.py` | Mechanical proposal export: fixed cells, one scale, no inferred pixels. | (none) |
 | `enemy-decks-convert.mjs` | Re-runnable conversion: legacy weighted 'moves' enemies (src/content/enemies/act1-3.js) -> enemies-module | docs docs/plans/enemy-decks.md, engine/modules/characters/guide.md, engine/modules/enemies/guide.md |
 | `enemy-level-content.mjs` | Focused inert-content gate for issue #238. | tests content-validators; docs docs/FINISH.md |
+| `enemy-roster-table.mjs` | tools/enemy-roster-table.mjs - read-only markdown roster of Core enemies (default: the 32 Codex enemies). | tests alternative-art, gear-module; docs docs/content/codex-art-buildout-2026-11-18.md |
 | `enemy-sheets.mjs` | tools/enemy-sheets.mjs - one editable character sheet per Core enemy (owner request 2026-11-01). | tests enemy-sheets; tools jev; docs CONTRIBUTING.md, DEVELOPER.md, games/ashenspire/packs/core/enemies/_reference.md; other games/ashenspire/packs/core/enemies/_reference.json, games/ashenspire/packs/core/enemies/ashRevenant.json, games/ashenspire/packs/core/enemies/ashheartDragon.json +31 |
 | `enemy-turn-probe.mjs` | enemy-turn-probe — how long the enemies' turn takes, in a real browser | (none) |
 | `engine-export.mjs` | engine-export — the game's data as engine-ready JSON. | tests build-lock, engine-export; docs docs/ENGINE-EXPORT.md, docs/ai/json-game-modules/IMPLEMENTATION.md, docs/ai/json-game-modules/PSEUDOCODE.md +3; other .gitignore, docs/engine-export/unity/AshenSpireExportImporter.cs +4 |
@@ -164,6 +170,10 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `jev.mjs` | tools/jev.mjs — the deterministic-first gate: triage logs against tools/jev.rules.json, run the fast checks, regen, restamp, devmerge. | tests jev; docs .claude/skills/jev/SKILL.md, DEVELOPER.md, docs/ai/AI-ROUTING.md |
 | `launch.mjs` | launch — the one-click launcher. | wf sync-dev-to-alternative-dev, ci, dev-preview +3; tests build-lock; tools actionreach, asset-pack, axisfit +29; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, content/config/README.md +24; other .gitignore, docs/architecture-handoff/source-map.json +10 |
 | `layered-art.mjs` | (no header comment) | tests display-art-cache, layered-art-pack; tools asset-pack, buildversion, bundle +1 |
+| `level-lists.mjs` | Level lists (2026-11-21): writes src/content/generated/levelLists.js, the cards and items per level from the combat-power ranks. | npm level-lists, level-lists:check |
+| `level-pace-sim.mjs` | Character level reached at the end of each act, walked over the real act maps (owner 2026-11-18 pace targets). | docs docs/balance/level-pace-2026-11-18.md |
+| `literal-asset-references.mjs` | Checks missing literal assets; only exact, explicitly optional generated recipient atlas properties may use the static fallback. | tools bundle; tests literal-asset-references; docs RECIPIENT-EFFECTS |
+| `recipient-effects-export.py` | Validates and stages approved three-frame PNG strips, tier copies, source hashes and provenance for art intake. | docs RECIPIENT-EFFECTS |
 | `layered-environment-build.mjs` | Publish native-size reviewed components; never read authoring PNGs at runtime. | tests layered-environment-build; docs CREDITS.md; other src/content/layeredEnvironments.js |
 | `linkcheck.mjs` | linkcheck — every named import in the tree resolves to a real | wf dev-preview; tests linkcheck-batch-sharing, run-node-lanes, run-node +1; tools gatelist; docs DEVELOPER.md; other src/ui/screens/rest.js |
 | `local-checks.mjs` | Shared finite local QA payload. Run in an owned background worker when needed. | tests local-checks-snapshot; docs docs/local-background-checks.md |
@@ -215,6 +225,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `rear-qa-runtime.mjs` | Browser-test instrumentation only. The on-disk package stays unchanged; | tools combat-attached-details-qa, combat-card-stability-qa, combat-layer-qa +2 |
 | `rebuild-matches.mjs` | rebuild-matches — does a build from THIS source reproduce what is | tools buildversion, bundle; docs docs/EXTERNAL-ASSETS-PLAN.md, docs/versioning.md; other src/buildversion.js |
 | `receipts.mjs` | receipts — EVERY MERGED PULL REQUEST HAS A RECEIPT BEFORE IT IS PROMOTED. | wf receipts, worker-check; tests receipts-pr, receipts-root, receipts-window; tools about-changelog, build-stamp, equipment-surface-receipts +3; docs CHANGELOG.md, DEVELOPER.md, docs/FINISH.md +4; other package.json, src/model/equipmentPresentation.js +1 |
+| `redraw-probe.mjs` | Measures how much DOM one small action rebuilds (owner, 2026-11-18): nodes added and removed, scroll position and focus kept. | npm qa:redraw-probe |
 | `release-series.mjs` | Gate current CI/CD builds; archived downloads retain their original versions. | wf ci, dev-preview, pages-builds; docs docs/RELEASE-CHECKLIST.md |
 | `release-shots-selftest.mjs` | release-shots-selftest — the known-bad corpus for release-shots. | tools release-shots |
 | `release-shots.mjs` | release-shots — photograph the RELEASE BUILD, screen by screen, | wf ci; tests engine.test.js, run-node; tools axisfit, buildstamp-shot, contrast-audit +5; docs SPEC.md, docs/SPEC-RECONCILE.md, docs/preview/issue-185-5198e8a/README.md +3; other src/buildversion.js, src/main.js +2 |
@@ -225,6 +236,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `runsim-selftest-policy.mjs` | One budget owner for the simulator and its outer test-suite wrapper. | tests run-node, runsim-selftest-completion; tools runsim |
 | `runsim.mjs` | (no header comment) | tests a3-lean-retune, release-checklist, run-node-lanes +5; tools balance, contentreach, full-run-probe +10; docs DEVELOPER.md, SPEC.md, docs/BALANCE.md +9; other content/framework/mechanics.json, src/content/attributes.js +12 |
 | `saveroundtrip.mjs` | saveroundtrip — IS A SAVE A FIXED POINT OF THE SAVE DOOR? | tests fixtures/run-save-vigour-window.json; tools buildversion, plantsites-baseline.json; other src/model/healLedger.js |
+| `score-studio-save.mjs` | Local repo read/write helpers for Score Studio (`scoring.json` and `cardArtLayers.json`), localhost-only. | tests score-studio; tools serve |
 | `screen-census.mjs` | screen-census — every player-facing screen in the tree, and what | tests run-node; tools refusal-audit |
 | `screenreach.mjs` | (no header comment) | wf ci; tests combat-frame-reach, combat-target-layers, screenreach-overlap-fixture +1; tools actionreach, flaskbox, mapreach +4; docs CHANGELOG.md, DEVELOPER.md, SPEC.md +2; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +2 |
 | `screenshot.mjs` | screenshot — capture real screenshots of the game into docs/preview/. | wf ci; tests shot-match, shot-ready, write-atomic; tools armoury-picked-up, browser, lib/shot-match +4; docs DEVELOPER.md, SPEC.md, docs/ART-REPO-PLAN.md +4; other src/main.js, workbench/core/jobs.mjs +5 |

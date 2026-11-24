@@ -11,6 +11,21 @@ const COUNTER = new Set(['melee', 'ranged', 'spell']);
 const RANGE = new Set(RANGES);
 const TARGETING = new Set(['single', 'area']);
 
+export function ScaleCardBaseDamage(base, multiplier) {
+  return Number.isFinite(multiplier) && multiplier !== 1 ? Math.max(0, Math.ceil(base * multiplier)) : base;
+}
+
+/**
+ * The physical-damage cut (`effects.physicalDamageMultiplier`, owner 2026-11-18): scales only the physical share of `amount` (a fraction 0..1),
+ * leaving the magical share untouched. A positive physical part never rounds below 1 while the multiplier is above 0. Full precision; the caller floors.
+ */
+export function ScalePhysicalDamage(amount, physicalFraction, multiplier) {
+  if (!(amount > 0) || !Number.isFinite(multiplier) || multiplier < 0 || multiplier === 1 || !(physicalFraction > 0)) return amount;
+  const physical = amount * Math.min(1, physicalFraction);
+  const scaled = multiplier > 0 ? Math.max(Math.min(1, physical), physical * multiplier) : 0;
+  return amount - physical + scaled;
+}
+
 function identity(tags, prefix, allowed, name) {
   const values = [...new Set(tags.filter(tag => tag.startsWith(prefix)).map(tag => tag.slice(prefix.length)))];
   if (values.length > 1) throw new Error(`${name} carries conflicting ${prefix} tags`);

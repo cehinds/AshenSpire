@@ -49,15 +49,14 @@ test('owned cards are offered far less often than unowned ones, per card', () =>
   assert.ok(avg(owned) * 5 < avg(unowned), `owned ${avg(owned)} vs unowned ${avg(unowned)} per card`);
 });
 
-test('offers are deterministic, and an exhausted unowned pool falls back to owned cards', () => {
+test('offers are deterministic, and an owned card is never offered, even when nothing unowned is left (owner 2026-11-20)', () => {
   const run = fresh(3); run.floor = 2;
   const again = structuredClone(run);
   assert.deepEqual(gameProfileRewardOffers(reg, run, createRng(9), { offerId: 'f' }).options, gameProfileRewardOffers(reg, again, createRng(9), { offerId: 'f' }).options);
   const full = fresh(4); full.floor = 2;
   full.deck = cardsOf(full).filter(c => c.class === 'colorless' || c.class === full.class).map((c, k) => ({ instanceId: `a${k}`, cardId: c.id, upgraded: false }));
-  const kinds = new Set();
-  for (let i = 0; i < 60; i++) { const run2 = structuredClone(full); for (const o of gameProfileRewardOffers(reg, run2, createRng(i), { offerId: 'f' }).options) kinds.add(o.kind); }
-  assert.ok(kinds.has('combatCards'), 'owned cards are still offered when nothing unowned is left');
+  const owned = new Set(full.deck.map(card => card.cardId));
+  for (let i = 0; i < 60; i++) { const run2 = structuredClone(full); for (const o of gameProfileRewardOffers(reg, run2, createRng(i), { offerId: 'f' }).options) assert.ok(!(o.kind === 'combatCards' && owned.has(o.id)), `owned ${o.id} offered`); }
 });
 
 test('a card shown on a recent reward screen is offered less often than a fresh one', () => {

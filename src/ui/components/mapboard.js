@@ -154,6 +154,10 @@ export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, aut
       const tag = route ? 'polyline' : 'line';
       const coords = route ? `points="${route.points.map(point => point.join(',')).join(' ')}"` : `x1="${px(node)}" y1="${py(node)}" x2="${px(to)}" y2="${py(to)}"`;
       if (!travelled) {
+        // A plain untraveled road (all routes drawn) is a light stroke over painted terrain, which measured
+        // 1.2:1 against snow (tools/contrast-audit.mjs, #45 floor 3.0). It takes the traveled road's dark
+        // outline so it reads on any ground. A shrine lane keeps its own glow treatment.
+        if (!isLane) html += `<${tag} class="map-route-outline" vector-effect="non-scaling-stroke" ${coords}/>`;
         html += `<${tag} vector-effect="non-scaling-stroke" class="map-edge${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
         continue;
       }
@@ -1142,7 +1146,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       const hClipped = Math.max(hOverL, hOverR) > 0.5;
       clipNote.hidden = !hClipped;
       clipNote.textContent = !hClipped ? ''
-        : `A path runs off screen to the ${hOverR >= hOverL ? 'right' : 'left'} — zoom out (−) or press ⊙ to bring it back.`;
+        : `A path runs off screen to the ${hOverR >= hOverL ? 'right' : 'left'}. Zoom out (−) or press ⊙ to bring it back.`;
     }
     if (over > 0.5 && !warnedClipped) {
       warnedClipped = true;
@@ -1179,7 +1183,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     const meets = px + 0.5 >= target;
     tapNote.hidden = meets;
     tapNote.textContent = meets ? ''
-      : `Map nodes are ${Math.round(px)} px here — under your ${target} px minimum tap size. Zoom in (+) to grow them.`;
+      : `Map nodes are ${Math.round(px)} px here, under your ${target} px minimum tap size. Zoom in (+) to grow them.`;
   }
 
   function setZoom(next, keepCenter = true) {

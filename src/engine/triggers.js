@@ -1,5 +1,7 @@
 import * as RangeLineage from './combatRangeLineage.js';
 import { activeCombatStances, statusStacksWithStance } from './concurrentStances.js';
+import { actorRangeKey, rangePairKey } from '../model/combatEngagement.js';
+import { RANGES } from '../model/combatRanges.js';
 // src/engine/triggers.js — event bus + declarative trigger wiring + predicates
 // (SPEC §3.6, §3.9, §3.10)
 //
@@ -419,8 +421,13 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     }
     case 'resourcePaid':
       return (pctx.meta?.[pred.resource === 'mana' ? 'manaSpent' : 'staminaSpent'] || 0) >= (pred.amount ?? 1);
-    case 'inStance':
-      return ctx.player.stanceId === pred.stance || activeCombatStances(ctx,ctx.player).some(row=>row.maneuver===pred.stance || row.maneuver==='prepared' && pred.stance==='casting');
+    case 'inStance': {
+      const current = pred.of ? resolveOf(ctx, pctx, pred.of) : ctx.player;
+      const ent = pred.snapshot ? priorAbilityEntity(ctx, current, pctx.meta || pctx.event) : current;
+      return entityInStance(ctx, ent, pred.stance);
+    }
+    case 'atRange':
+      return engagedBand(ctx, pctx.owner || pctx.source || ctx.player, resolveOf(ctx, pctx, pred.of || 'target')) === RANGES.indexOf(pred.range);
     case 'hasStatus': {
       if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && statusStacksWithStance(ctx, entity, pred.status) >= (pred.atLeast ?? 1));
       const current = resolveOf(ctx, pctx, pred.of);
@@ -522,6 +529,33 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     default:
       throw new Error(`Unknown predicate '${pred.p}'`);
   }
+}
+
+const COMBAT_STANCE_ALIASES = Object.freeze({ prepared: 'casting', defense: 'defend' });
+
+/**
+ * Whether `entity` holds `stance`: a class stance id, or a combat stance (attack, smash, sweep, counter, defend,
+ * casting/prepared, staggered). `idle` is no combat stance at all; the `neutral` placeholder counts as none.
+ */
+function entityInStance(ctx, entity, stance) {
+  if (!entity) return false;
+  // A card preview's view of an enemy whose intent is not read hides its stance (combat.js previewCard): unknown is no stance at all, Idle included.
+  if (entity.combatStanceUnknown) return entity.stanceId === stance;
+  const combatStances = activeCombatStances(ctx, entity).filter(row => row?.maneuver && row.maneuver !== 'neutral');
+  if (stance === 'idle') return combatStances.length === 0;
+  const wanted = COMBAT_STANCE_ALIASES[stance] || stance;
+  return entity.stanceId === stance || combatStances.some(row => row.maneuver === wanted || row.maneuver === 'prepared' && wanted === 'casting');
+}
+
+/**
+ * The engagement band (0 melee, 1 reach, 2 ranged) between two opposing combatants, or -1 without both.
+ * A fight without range mechanics (no range state, or range turned off) has no distance: every pair is melee.
+ */
+function engagedBand(ctx, from, to) {
+  if (!from || !to) return -1;
+  if (!ctx.rangeState?.policy?.enabled) return 0;
+  const band = ctx.rangeState.engagements?.[rangePairKey(actorRangeKey(ctx, from), actorRangeKey(ctx, to))];
+  return Number.isInteger(band) ? band : 0;
 }
 
 function resolveOf(ctx, pctx, of) {

@@ -164,17 +164,17 @@ test('the W4 parent and combat scene carry the contract values', () => {
 test('the W4c dialogue scene resolves to exactly the authored contract', () => {
   assert.deepEqual(uiConfig.scenes.w4c, {
     sizing: {
-      bands: { hud: 10, scene: 40, context: 35, footer: 15 },
-      bandsCompact: { hud: 12, scene: 40, context: 33, footer: 15 },
-      bandsDesktop: { hud: 9, scene: 59, context: 24, footer: 8 },
+      bands: { hud: 10, scene: 47, context: 28, footer: 15 },
+      bandsCompact: { hud: 12, scene: 46, context: 27, footer: 15 },
+      bandsDesktop: { hud: 9, scene: 63, context: 20, footer: 8 },
       floorPercent: 75,
       portraitSlot: { widthVw: 20, compactWidthVw: 30 },
       context: {
         widthVw: 95, captionLines: 3, captionLineHeight: 1.45,
-        titleRem: 0.95, titleLineHeight: 1.45, textRem: 0.9, paddingRem: 0.5, gapRem: 0.25,
+        titleRem: 0.85, titleLineHeight: 1.45, textRem: 0.8, paddingRem: 0.5, gapRem: 0.25,
       },
       responses: {
-        fontRem: 0.85, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2,
+        fontRem: 0.78, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2,
         minHeightRem: 2.75, maxHeightRem: 5.5,
       },
       hud: { compactBelowHeightPx: 500 },
@@ -229,6 +229,8 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
 // #1117 ADDS to it and changes nothing in it: the lane rule, the listener's
 // floor, the HUD's compact threshold and the response-hint switch are new
 // keys; every value #1106 shipped is still here, in the same order.
+// Playtest 2026-11-17 item 40 changed seven numbers (the w4c bands and the context, title and reply type) on the
+// owner's ask: the event panel is smaller so the art shows. Keys and their order are unchanged.
 test('the W4 scenes equal what #1106 shipped, plus the keys #1117 added, key order included', () => {
   const shipped = JSON.parse(readFileSync(new URL('./fixtures/w4-scene-config-1106.json', import.meta.url), 'utf8'));
   const ours = { w4: uiConfig.scenes.w4, w4c: uiConfig.scenes.w4c };

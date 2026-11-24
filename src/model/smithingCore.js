@@ -25,12 +25,12 @@ const resolveCombatCard = (...args) => need().resolveCombatCard(...args);
 const STAT_ORDER = ['ar', 'dr', 'pr', 'poise', 'ward', 'hp', 'mp', 'sp', 'evasion', 'precision',
   'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const STAT_LABELS = {
-  ar: 'AR', dr: 'DR', pr: 'PR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'Mana', sp: 'Stamina', evasion: 'Evasion', precision: 'Precision',
+  ar: 'STR', dr: 'DEX', pr: 'INT', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'Mana', sp: 'Stamina', evasion: 'Evasion', precision: 'Precision',
   strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT',
 };
 const CARD_VALUES = [
-  { op: 'damage', label: 'Damage', rating: 'AR' },
-  { op: 'block', label: 'Block', rating: 'DR' },
+  { op: 'damage', label: 'Damage', rating: 'STR' },
+  { op: 'block', label: 'Block', rating: 'DEX' },
 ];
 
 /** True when this run's Smith upgrades follow the Core 2 gear pipeline. */
@@ -53,8 +53,9 @@ function itemAtTier(run, item, level, itemRef) {
   const bonus = upgradeTierBonus(gameModule(run, 'equipment'), level);
   const resolved = resolveGearItem(item, settings, { rank: (item.rank ?? 1) + bonus });
   const values = { ...resolved.values };
-  // A weapon (or staff) keeps its pool and adds weaponARPerTier AR per tier, as the rating receipt does.
-  if (item.kind !== 'armor' && item.kind !== 'shield') {
+  // A weapon (or staff) keeps its pool and adds weaponARPerTier AR per tier, as the rating receipt does; under `statPoints`
+  // (owner, 2026-11-17) the tier is attribute points the resolver already counted.
+  if (item.kind !== 'armor' && item.kind !== 'shield' && !settings.statPoints) {
     const gain = bonus * (gameModule(run, 'equipment')?.upgradeBonuses?.weaponARPerTier || 0);
     values.ar += gain;
     // A magic weapon's tier also raises its spells (gameProfileRatingReceipt): PR rises with AR.

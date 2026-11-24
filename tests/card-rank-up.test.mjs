@@ -50,10 +50,11 @@ test('a rank-up raises an ordinary owned card of the schools, never past the tra
   assert.ok(!ids.includes('own-top'), 'a card at the track level cannot rise');
   assert.equal(raiseCardRank(registries, run, BLADE, 'own-top'), null);
   assert.equal(run.skills[BLADE].pendingRankUps, 2, 'a refused raise spends nothing');
-  assert.equal(raiseCardRank(registries, run, BLADE, 'own-rend').rank, 2);
+  // Owner 2026-11-23: an unranked card rises to Rank 1, then Rank 2.
+  assert.equal(raiseCardRank(registries, run, BLADE, 'own-rend').rank, 1);
   assert.equal(run.skills[BLADE].pendingRankUps, 1);
   raiseCardRank(registries, run, BLADE, 'own-rend');
-  assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 3);
+  assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 2);
   assert.equal(raiseCardRank(registries, run, BLADE, 'own-rend'), null, 'an empty ledger raises nothing');
   assert.deepEqual(validateRunShape(run).filter((p) => /rank/i.test(p)), []);
 });
@@ -74,11 +75,9 @@ test('a pending rank-up offer and its pick are checked on load', () => {
 
 test('the reward door raises the chosen card and spends the rank-up', async () => {
   const { MountRewards } = await import('../src/ui/screens/reward.js');
-  const { rewardDom } = await import('./helpers/dom.mjs');
-  const dom = rewardDom();
-  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
-  try {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  // The kit DOM: the rank-up opens the shared card-upgrade modal (playtest 2026-11-17 item 45a).
+  await withKitDom(async () => {
     const app = document.createElement('main'); document.body.append(app);
     const run = bladeRun(2);
     let persisted = 0;
@@ -89,20 +88,19 @@ test('the reward door raises the chosen card and spends the rank-up', async () =
     const row = app.querySelector('.reward-kind[data-kind="skillRankUp"]');
     assert.ok(row, 'the rank-up stands in the list');
     row.click();
-    const faces = [...app.querySelectorAll('.reward-row .card')];
-    const mine = faces.find((face) => face.dataset.pickId === 'own-rend');
-    assert.ok(mine, 'the owned card is offered');
-    assert.match(mine.getAttribute('aria-label'), /rank 2$/, 'shown at the rank it would rise to');
-    mine.click();
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(run.deck.find(c => c.instanceId === 'own-rend').rank, undefined, 'Confirm reviews the rank without spending it');
-    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 2);
+    // The rank-up opens the Blacksmith's card-upgrade picker (playtest 2026-11-17 item 45a).
+    const mine = () => document.querySelector('.card-upgrade-row[data-instance-id="own-rend"]');
+    assert.ok(mine(), 'the owned card is offered');
+    assert.match(mine().querySelector('.co-chip').textContent, /Basic → Rank 1/, 'shown with the rank it would rise to (an unranked card reads Basic)');
+    mine().click();
+    assert.equal(run.deck.find(c => c.instanceId === 'own-rend').rank, undefined, 'choosing the card spends nothing');
+    assert.ok(document.querySelector('.card-upgrade-faces'), 'the before and after faces open under it');
+    document.querySelector('.card-upgrade-confirm').click();
+    assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 1);
     assert.equal(run.skills[BLADE].pendingRankUps, 0);
     assert.ok(persisted > 0);
     assert.equal(app.querySelector('.reward-kind[data-kind="skillRankUp"]').dataset.state, 'taken');
-  } finally { Object.assign(globalThis, saved); }
+  });
 });
 
 test('a taken rank-up must name its card, and its track must be a card-school track', async () => {

@@ -1,4 +1,4 @@
-import { ACTION_SIGILS, SCHOOL_SIGILS } from '../../content/combatSigils.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS, TRADITION_SIGILS } from '../../content/combatSigils.js';
 import { constantFormulaValue } from '../../model/formulas.js';
 import { cardArtElement } from '../cardArtComposition.js';
 import { t, tFull } from '../strings.js';
@@ -53,6 +53,7 @@ const SHAPES = Object.freeze({
 const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'force', psychic:'illusion', alternation:'alteration', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'fire', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
 
 function shapeFor(tag) {
+  if (tag.id.startsWith('tradition:')) return TRADITION_SIGILS[tag.id.slice(10)]?.shape || SHAPES.skill;
   // The defense badge's reticle; card-rail precision tags (status:precision) keep the ranged alias below.
   if (tag.id === 'effect:precision') return SHAPES.precision;
   if (tag.id === 'effect:block') return SHAPES.guard;
@@ -99,6 +100,14 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   const effects = damage.length ? damage : evasion ? [{ id: 'effect:evade', label: t('card.tags.evade'), blurb: tFull('card.tags.evade') }]
     : [element || school].filter(Boolean);
   for (const tag of effects) if (!selected.some(row => row.id === tag.id) && selected.length < 5) selected.push(tag);
+  // Owner, 2026-11-18 section 22: Gale Pull carries the Pull tag; the rail says it removes a Retreat stack.
+  const pull = tags.find(tag => tag.id === 'pullRetreat');
+  if (pull && def.effects?.some(effect => effect?.op === 'pullEnemy') && !selected.some(row => row.id === 'pullRetreat') && selected.length < 5) selected.push(pull);
+  // Owner, 2026-11-18: a card whose moveEngagement sends a foe back carries the Retreat tag, and the rail says it inflicts Retreat (not the weapon's free Retreat card).
+  const retreat = tags.find(tag => tag.id === 'retreat');
+  if (retreat && def.effects?.some(effect => effect?.op === 'moveEngagement' && effect.target === 'enemy' && effect.bands > 0) && selected.length < 5) {
+    selected.push({ ...retreat, blurb: tFull('card.tag.retreatInflicts') });
+  }
   const statuses = new Map();
   const add = (id, occurrence = null) => {
     if (!registries?.statuses?.has(id)) return;
@@ -124,7 +133,7 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   // Quantified benefits must remain visible when their duplicate body line is
   // removed. Their conditions/formulas live on the same tag on every surface.
   const benefits = cardBonusTags(def, preview, registries, rules);
-  const smashHelp = coreSmashHelp(def, { ...registries, ...rules });
+  const smashHelp = coreSmashHelp(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashHelp) benefits.push({ id: 'maneuver:smash', label: t('stance.name.smash'), blurb: smashHelp, representedRules: ['smash'] });
   for (const benefit of benefits) {
     const existing = selected.findIndex(tag => tag.id === 'effect:evade' && benefit.id === 'status:evade');

@@ -4672,8 +4672,6 @@
   "src/ui/models/CombatCompositionModel.js": [
     "alternativeCombatComposition",
     "combatArtworkKey",
-    "combatSceneryGround",
-    "combatStandingGround",
     "insetPerspectiveFootprint",
     "stableCombatArtwork",
     "stableHandAnchor"
@@ -4965,9 +4963,7 @@
     "quickMenuPanelModel"
   ],
   "src/ui/models/MobileFloorModel.js": [
-    "holdFloorShadowTop",
-    "mobileFloorLayer",
-    "mobileFloorShadowTop"
+    "mobileFloorLayer"
   ],
   "src/ui/models/MountServiceModel.js": [
     "mountServiceModel"
@@ -5210,8 +5206,7 @@
     "motionFlags",
     "motionOff",
     "resolveCombatPacing",
-    "resolveMotionIdle",
-    "resolvePerformanceMode"
+    "resolveMotionIdle"
   ],
   "src/ui/poiseHelp.js": [
     "poiseHelpText"
@@ -5378,7 +5373,6 @@
     "resolveArmamentsPhonePlacement",
     "resolveArmamentsPresentation",
     "resolveGraceRefill",
-    "resolveLevelUpValue",
     "resolveNumberRow",
     "resolveTapSize",
     "restoreView",

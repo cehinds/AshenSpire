@@ -71,14 +71,21 @@ test('cssProperties carries the unit and drops it from the name', () =>
 
 test('defaults match the CSS literals they replace', () =>
 {
+    const choice = ModalModelFor('compare').cssProperties();
+    assert.equal(choice['--modal-panel-inset'], '1.4rem');
+    assert.equal(choice['--modal-panel-inset-phone'], '1rem');
+    assert.equal(choice['--modal-grid-gap'], '12px');
+    assert.equal(choice['--modal-grid-gap-phone'], '8px');
+    assert.equal(choice['--modal-option-gap'], '0.6rem');
+    assert.equal(choice['--modal-option-gap-phone'], '0.4rem');
+    assert.equal(choice['--modal-name-button-basis'], '3.5rem');
+    // The reward door halves the gap between cards and trims the room between rows (playtest 2026-11-17 item 45); the
+    // room above keeps the choice grid's 64 px lane, where the chosen card's (i) stands (owner, 2026-11-20).
     const reward = ModalModelFor('reward').cssProperties();
-    assert.equal(reward['--modal-panel-inset'], '1.4rem');
-    assert.equal(reward['--modal-panel-inset-phone'], '1rem');
-    assert.equal(reward['--modal-grid-gap'], '12px');
-    assert.equal(reward['--modal-grid-gap-phone'], '8px');
-    assert.equal(reward['--modal-option-gap'], '0.6rem');
-    assert.equal(reward['--modal-option-gap-phone'], '0.4rem');
-    assert.equal(reward['--modal-name-button-basis'], '3.5rem');
+    assert.equal(reward['--modal-grid-gap'], '6px');
+    assert.equal(reward['--modal-grid-gap-phone'], '4px');
+    assert.equal(reward['--modal-grid-pad-top'], '64px');
+    assert.equal(reward['--modal-grid-row-gap'], '24px');
 });
 
 test('the class follows the nearest ancestor with one', () =>
@@ -95,8 +102,8 @@ test('apply tags the panel and sets the properties', () =>
     const panel = fakePanel();
     ModalModelFor('reward').apply(panel);
     assert.equal(panel.dataset.modalKind, 'reward');
-    assert.equal(panel.dataset.nameButton, 'shown');
-    assert.equal(panel.props['--modal-grid-gap'], '12px');
+    assert.equal(panel.dataset.nameButton, 'hidden', 'the reward door has no name button (playtest 2026-11-17 item 43)');
+    assert.equal(panel.props['--modal-grid-gap'], '6px', 'the gap between reward cards is halved (playtest 2026-11-17 item 45)');
     const confirm = fakePanel();
     ModalModelFor('confirm').apply(confirm);
     assert.equal(confirm.dataset.nameButton, undefined);

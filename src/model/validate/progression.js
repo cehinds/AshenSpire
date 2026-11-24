@@ -32,10 +32,24 @@ export function progressionProblems(b, err, ctx) {
     const xp = b.balance.xp;
     if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.xp', 'must be an object { combatWin, combatPowerMultiplier, kill, killLevelMultiplier, quest }');
     else {
-      for (const key of Object.keys(xp)) if (!['combatWin', 'combatPowerMultiplier', 'kill', 'killLevelMultiplier', 'quest'].includes(key)) err(`balance.xp.${key}`, 'Unknown field');
+      for (const key of Object.keys(xp)) if (!['combatWin', 'combatPowerMultiplier', 'kill', 'killLevelMultiplier', 'tierMultiplier', 'fightCurve', 'quest'].includes(key)) err(`balance.xp.${key}`, 'Unknown field');
       for (const key of ['combatWin', 'quest']) if (!(Number.isInteger(xp[key]) && xp[key] >= 0)) err(`balance.xp.${key}`, `must be a non-negative integer, got ${JSON.stringify(xp[key])}`);
       if (!(Number.isFinite(xp.killLevelMultiplier) && xp.killLevelMultiplier >= 0)) err('balance.xp.killLevelMultiplier', `must be a non-negative number, got ${JSON.stringify(xp.killLevelMultiplier)}`);
       if (!(Number.isFinite(xp.combatPowerMultiplier) && xp.combatPowerMultiplier >= 0)) err('balance.xp.combatPowerMultiplier', `must be a non-negative number, got ${JSON.stringify(xp.combatPowerMultiplier)}`);
+      if (xp.tierMultiplier !== undefined) {
+        if (!xp.tierMultiplier || typeof xp.tierMultiplier !== 'object' || Array.isArray(xp.tierMultiplier)) err('balance.xp.tierMultiplier', 'must be an object { normal, elite, boss }');
+        else for (const key of Object.keys(xp.tierMultiplier)) {
+          if (!['normal', 'elite', 'boss'].includes(key)) err(`balance.xp.tierMultiplier.${key}`, 'Unknown field');
+          else if (!(Number.isFinite(xp.tierMultiplier[key]) && xp.tierMultiplier[key] >= 0)) err(`balance.xp.tierMultiplier.${key}`, `must be a non-negative number, got ${JSON.stringify(xp.tierMultiplier[key])}`);
+        }
+      }
+      if (xp.fightCurve !== undefined) {
+        if (!xp.fightCurve || typeof xp.fightCurve !== 'object' || Array.isArray(xp.fightCurve)) err('balance.xp.fightCurve', 'must be an object { scale, floorExponent, actExponent }');
+        else for (const key of Object.keys(xp.fightCurve)) {
+          if (!['scale', 'floorExponent', 'actExponent'].includes(key)) err(`balance.xp.fightCurve.${key}`, 'Unknown field');
+          else if (!(Number.isFinite(xp.fightCurve[key]) && xp.fightCurve[key] >= 0)) err(`balance.xp.fightCurve.${key}`, `must be a non-negative number, got ${JSON.stringify(xp.fightCurve[key])}`);
+        }
+      }
       if (!xp.kill || typeof xp.kill !== 'object' || Array.isArray(xp.kill)) err('balance.xp.kill', 'must be an object { normal, elite, boss }');
       else {
         for (const key of Object.keys(xp.kill)) if (!['normal', 'elite', 'boss'].includes(key)) err(`balance.xp.kill.${key}`, 'Unknown field');
@@ -47,7 +61,8 @@ export function progressionProblems(b, err, ctx) {
     const lu = b.balance.levelUp;
     if (!lu || typeof lu !== 'object' || Array.isArray(lu)) err('balance.levelUp', 'must be an object');
     else {
-      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
+      for (const key of ['offerStatPoints', 'offerBonusCard']) if (lu[key] !== undefined && typeof lu[key] !== 'boolean') err(`balance.levelUp.${key}`, `must be true or false, got ${JSON.stringify(lu[key])}`);
+      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax', 'offerStatPoints', 'offerBonusCard'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
       if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
       if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
     }

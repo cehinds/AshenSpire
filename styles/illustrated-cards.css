@@ -2,6 +2,17 @@
 :root .card.illustrated-card { display:block; padding:0; border:0; border-radius:0; background:none; box-shadow:none; aspect-ratio:var(--card-ratio,2/3); height:auto; min-height:0; overflow:visible; }
 :root .card.illustrated-card::before,:root .card.illustrated-card::after { display:none; }
 :root .card.illustrated-card > .illustrated-card-face { position:relative; width:100%; height:100%; aspect-ratio:var(--illustrated-ratio,2/3); container-type:inline-size; isolation:isolate; pointer-events:none; }
+/* The pennant's metal edge is a separate cut of its painting. Tint only that
+   cut so the original highlights and dark seams remain legible. */
+.illustrated-card.rarity-common [data-component="flag-trim"] img {
+  filter:grayscale(1) brightness(2.7);
+}
+.illustrated-card.rarity-uncommon [data-component="flag-trim"] img {
+  filter:grayscale(1) sepia(1) saturate(2.8) hue-rotate(82deg) brightness(2.3);
+}
+.illustrated-card.rarity-rare [data-component="flag-trim"] img {
+  filter:grayscale(1) sepia(1) saturate(3.8) hue-rotate(177deg) brightness(2.6);
+}
 :root .illustrated-card-face .ic-plane { position:absolute; inset:0; pointer-events:none; }
 :root .illustrated-card-face .ic-layer { display:flex; flex-direction:column; justify-content:center; position:absolute; transform-origin:center; }
 :root .illustrated-card-face .ic-image { position:relative; display:block; width:100%; height:100%; overflow:hidden; }
@@ -36,9 +47,9 @@
 :root .card-inspection-modal .modal-body { overflow:auto; }
 
 /* Preserve live preview direction and the combat status tint on parchment. */
-:root .illustrated-card-face .ic-text .val.up { color:#205e2b; font-weight:bold; }
-:root .illustrated-card-face .ic-text .val.down { color:#8d2424; font-weight:bold; }
-:root .card.illustrated-card.tag-boost .ic-text .val.up { color:var(--boost-tint,#205e2b); text-shadow:0 1px #efe1ba; }
+:root .illustrated-card-face .ic-text .val.up { color:var(--face-up); font-weight:bold; }
+:root .illustrated-card-face .ic-text .val.down { color:var(--face-down); font-weight:bold; }
+:root .card.illustrated-card.tag-boost .ic-text .val.up { color:var(--boost-tint,var(--face-up)); text-shadow:0 1px #efe1ba; }
 
 /* The card footer pairs the shared intent symbol with its authored card type.
    Information keeps schools, damage types and the full tag vocabulary. */
@@ -60,6 +71,12 @@
 /* Approved B + B: solid warm-gold identity, in the existing frame. */
 :root .card-sigil-band .combat-sigil-action {width:11.5cqw;height:11.5cqw;max-height:100%;pointer-events:none;}
 :root .card-sigil-band .card-type-name {font:700 7.8cqw/1 Georgia,serif;letter-spacing:.085em;text-transform:uppercase;white-space:nowrap;}
+:root .card-sigil-band[data-traditions] { gap: 2.5cqw; }
+:root .card-sigil-band[data-traditions] .combat-sigil-tradition { width: 9cqw; height: 9cqw; }
+:root .card-sigil-band[data-traditions] .card-type-name { font-size: 7cqw; letter-spacing: .05em; }
+:root .card-sigil-band[data-traditions][data-mirror] .combat-sigil { width: 8cqw; height: 8cqw; }
+:root .card-sigil-band[data-traditions] .card-tradition-icon[data-tradition='arcane'] { color: var(--grace); }
+:root .card-sigil-band[data-traditions] .card-tradition-icon[data-tradition='divine'] { color: var(--combat-symbol-gold); }
 :root .illustrated-card-face .card-tag-rail {
   /* No stacking context of its own: the symbols sit above the hand's hit lane (z 20), so a tap explains a symbol and never plays the card. */
   position:absolute;z-index:auto;right:9%;top:16%;display:flex;flex-direction:column;align-items:flex-end;gap:2cqw;
@@ -106,23 +123,23 @@
 /* Lite: keep the face opaque so overlapping hand text cannot show through.
    The inset shade covers the body; cost image/text children also dim outside
    its box, preserving each layer's authored opacity and painted shape. */
-:root[data-performance='lite'] .card.illustrated-card.unaffordable,
-:root[data-performance='lite'] .card.illustrated-card.unaffordable .illustrated-card-face,
-:root[data-performance='lite'] .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face { filter: none; }
-:root[data-performance='lite'] .card.illustrated-card.unaffordable .illustrated-card-face::after {
+:root[data-effects='off'] .card.illustrated-card.unaffordable,
+:root[data-effects='off'] .card.illustrated-card.unaffordable .illustrated-card-face,
+:root[data-effects='off'] .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face { filter: none; }
+:root[data-effects='off'] .card.illustrated-card.unaffordable .illustrated-card-face::after {
   content: ''; position: absolute; inset: 0; z-index: 50; border-radius: inherit; background: rgba(0, 0, 0, 0.4); pointer-events: none;
 }
-:root[data-performance='lite'] .card.illustrated-card.unaffordable .ic-layer:is([data-component='flag'],[data-component='flag-trim'],[data-component='stamina-icon'],[data-component='mana-icon'],[data-component='energy-icon']) > .ic-image,
-:root[data-performance='lite'] .card.illustrated-card.unaffordable .ic-text:is([data-card-binding='action'],[data-card-binding='mana'],[data-card-binding='stamina']) {
+:root[data-effects='off'] .card.illustrated-card.unaffordable .ic-layer:is([data-component='flag'],[data-component='flag-trim'],[data-component='stamina-icon'],[data-component='mana-icon'],[data-component='energy-icon']) > .ic-image,
+:root[data-effects='off'] .card.illustrated-card.unaffordable .ic-text:is([data-card-binding='action'],[data-card-binding='mana'],[data-card-binding='stamina']) {
   opacity: 0.65;
 }
-:root[data-performance='lite'] .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face {
+:root[data-effects='off'] .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face {
   filter: none; box-shadow: 0 0 0 2px var(--gold), 0 0 8px color-mix(in srgb, var(--gold) 55%, transparent);
 }
-:root[data-performance='lite'] .hand .card.illustrated-card:is(.selected,.inspection-selected) .illustrated-card-face {
+:root[data-effects='off'] .hand .card.illustrated-card:is(.selected,.inspection-selected) .illustrated-card-face {
   filter: none; box-shadow: 0 0 0 2px var(--selection-color,var(--green)), 0 0 8px color-mix(in srgb, var(--selection-color,var(--green)) 55%, transparent);
 }
-:root[data-performance='lite'] .hand .card.illustrated-card:is(:hover,:focus-visible):not(.selected,.inspection-selected) .illustrated-card-face {
+:root[data-effects='off'] .hand .card.illustrated-card:is(:hover,:focus-visible):not(.selected,.inspection-selected) .illustrated-card-face {
   filter: none; box-shadow: 0 0 0 2px rgba(255,255,255,.6);
 }
 
@@ -130,3 +147,6 @@
    beside the rules); they show while the card is hovered, focused, selected or in the inspector. */
 :root .illustrated-card-face :is(.card-tag-count, .card-range-chip) {display:none;}
 :root :is(.card:hover, .card:focus-visible, .card:focus-within, .card.selected, .card[data-selected="true"], .card-inspection-modal, .card-inspection-layout) .illustrated-card-face :is(.card-tag-count, .card-range-chip) {display:block;}
+/* Playtest 2026-11-17 item 39: on a phone the rules text runs 2pt smaller and shows in full (no line clamp). */
+:root[data-form-factor="mobile"] { --ic-rules-shrink:2pt; }
+:root[data-form-factor="mobile"] .illustrated-card .ic-text[data-card-binding="rules"] { display:block !important; -webkit-line-clamp:unset !important; overflow:visible; }

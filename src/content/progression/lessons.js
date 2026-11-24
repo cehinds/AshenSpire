@@ -17,6 +17,12 @@ import { progressionLessonRecipes as recipes } from '../generated/progressionLes
 
 const originals = new Map([...reaverCards, ...starseerCards, ...rogueCards, ...heraldCards].map(c => [c.id, c]));
 const legacyCarriers = new Map(cardExposure.map(({ cardId, ...carrier }) => [cardId, carrier]));
+// A grade's text is built from its effects, so the card's drawback keywords would never show: name them after the effects
+// (review of #2819: Quickstep's Exhaust lived only in its keywords). Exhaust and Ethereal are the drawbacks a card carries.
+const DRAWBACK_SENTENCES = Object.freeze({ exhaust: 'Exhaust.', ethereal: 'Ethereal.' });
+// A card with versioned Retreat faces names only its legacy drawbacks here: the current face's Exhaust comes from its keywords once the rules are on.
+const drawbackWords = id => originals.get(id)?.retreatRuleFaces?.legacy?.keywords ?? originals.get(id)?.keywords ?? [];
+const withDrawbacks = (text, id) => [text, ...drawbackWords(id).filter(word => DRAWBACK_SENTENCES[word]).map(word => DRAWBACK_SENTENCES[word])].join(' ');
 const budget = progressionGradeRules.gradeBudget;
 
 function lessonGrade(recipe, rank) {
@@ -27,7 +33,7 @@ function lessonGrade(recipe, rank) {
   // letting a stronger effect silently buy another resource tax.
   if (options.grades) {
     const grade = structuredClone(options.grades[rank]);
-    return { rank, ...grade, textTemplate: recipeText(grade.effects, combatProfileFor(id)), faceTemplate: recipeFace(grade.effects, combatProfileFor(id)),
+    return { rank, ...grade, textTemplate: withDrawbacks(recipeText(grade.effects, combatProfileFor(id)), id), faceTemplate: recipeFace(grade.effects, combatProfileFor(id)),
       traits: { costRule: 'fixed',
         ...(original.effects.some(e => e.op === 'damage') ? { damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } : {}),
       },
@@ -58,7 +64,7 @@ function lessonGrade(recipe, rank) {
   if (rank >= 4) effects.push({ op: 'block', target: 'self', amount: 2, oncePerTurn: 'grade-block' });
   if (rank >= 5) effects.push({ op: 'draw', amount: 1, oncePerTurn: 'grade-draw' });
   const fixedCost=options.fixedGradeCosts?.[rank];
-  return { rank, actionCost: fixedCost?.actionCost ?? (rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0))), manaCost: fixedCost?.manaCost ?? rank, effects, textTemplate: recipeText(effects, combatProfileFor(id)), faceTemplate: options.face ?? recipeFace(effects, combatProfileFor(id)),
+  return { rank, actionCost: fixedCost?.actionCost ?? (rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0))), manaCost: fixedCost?.manaCost ?? rank, effects, textTemplate: withDrawbacks(recipeText(effects, combatProfileFor(id)), id), faceTemplate: options.face ?? recipeFace(effects, combatProfileFor(id)),
     ...(original.effects.some(e => e.op === 'damage') ? { traits: { ...(fixedCost ? {costRule:'fixed'} : {}),damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } } : {}),
   };
 }

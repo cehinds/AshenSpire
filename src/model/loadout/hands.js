@@ -15,8 +15,6 @@ import { cardManaPolicy } from '../../content/generated/cardManaPolicy.js';
 export const HANDS = Object.freeze(['left', 'right']);
 export const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
 export const ARMAMENT_INTRINSIC_STAT_FIELDS = Object.freeze([
-  'attackRating',
-  'defenseRating',
   'weight',
   'weaponArtManaCost',
   'uniqueSkillStaminaCost',

@@ -26,7 +26,7 @@ test('outside a picker only usable non-equippable items are listed (none here)',
   const model = armouryInventoryModel({ registries, run: fresh(), meta, eq, picking: null, inCombat: false });
   assert.equal(model.selectedSlot, null);
   assert.equal(model.booksOnly, true);
-  assert.equal(model.allRows.length, 11);
+  assert.equal(model.allRows.length, 7);
   assert.deepEqual(model.rows, []);
   assert.equal(model.itemCount, 0);
 });
@@ -55,8 +55,8 @@ test('a row is presented as an armament with its equip words; without a target i
 });
 
 test('context line, role labels and usability', () => {
-  assert.equal(inventorySelectionContextText({ slotLabel: 'Off Hand', index: 0, activeIndex: 0, currentName: 'Empty' }), 'Off Hand · 1 — Active · Empty');
-  assert.equal(inventorySelectionContextText({ slotLabel: 'Off Hand', index: 1, activeIndex: 0, currentName: 'Empty' }), 'Off Hand · 2 — Reserve · Empty');
+  assert.equal(inventorySelectionContextText({ slotLabel: 'Off Hand', index: 0, activeIndex: 0, currentName: 'Empty' }), 'Off Hand · 1: Active · Empty');
+  assert.equal(inventorySelectionContextText({ slotLabel: 'Off Hand', index: 1, activeIndex: 0, currentName: 'Empty' }), 'Off Hand · 2: Reserve · Empty');
   assert.deepEqual(combatPowerRoleLabels(layout), { attack: 'Strike', technique: 'Magic', guard: 'Defense' });
   const run = fresh();
   assert.equal(inventoryRowUsable({ read: true }, { inCombat: true, run }), true);

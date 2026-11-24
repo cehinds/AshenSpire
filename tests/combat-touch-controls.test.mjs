@@ -78,7 +78,7 @@ test('a tap on a playable card plays it only when its target is unambiguous (own
   assert.match(wire, /const tap = \(\) => \{[\s\S]*?if \(!affordable\) \{[\s\S]*?return;\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(oneTapPlays\(\)\) \{ play\(\); return; \}\s*if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/, 'after the unaffordable branch, a tap plays when unambiguous (selected by a hold or not) or selects');
   assert.doesNotMatch(wire, /lastConfirmTap|performance\.now\(\)/, 'no timing window: the tap after the selecting tap carries no timestamp');
   assert.match(wire, /if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}\s*(?:\/\/[^\n]*\n\s*)*play\(\);\s*\};/, 'with one-tap off the first tap selects and the NEXT tap on the selected card plays, however long after (owner 14:15)');
-  assert.match(read('../src/ui/models/SettingsRowsModel.js'), /key: 'oneTapPlay', def: false/, 'the setting is offered, default off');
+  assert.match(read('../src/ui/models/SettingsRowsModel.js'), /key: 'oneTapPlay', topic: 'readability', def: false/, 'the setting is offered, default off');
 });
 
 test('One-tap play reads the setting live, so a mid-combat toggle changes the next tap', () => {
@@ -95,8 +95,12 @@ test('the hand info portal keeps its centring transform in combat', () => {
   assert.match(read('../styles/kit.css'), /\.hand-overlay > \.hand-info-portal\s*\{[^}]*transform:\s*translateX\(-50%\)/);
 });
 
-test('the combat hand asks for the (i) badge and no other card surface does', () => {
+// Owner 2026-11-20: the (i) appears on every card that can be SELECTED (the hand, reward cards and armaments, the
+// Smith's upgrade list). The deck editor keeps its own first-click inspector (owner's choice) and asks for none.
+test('the selectable card surfaces ask for the (i) badge; the deck editor does not', () => {
   assert.equal(hand.match(/actionOwnsTouch: true, infoBadge: true/g)?.length, 2);
-  assert.doesNotMatch(read('../src/ui/components/equipmentCard.js'), /infoBadge/);
+  assert.match(read('../src/ui/components/equipmentCard.js'), /infoBadge = false,/, 'equipment faces have the badge only when asked');
+  assert.match(read('../src/ui/components/gameProfileOffers.js'), /infoBadge: true,/);
+  assert.match(read('../src/ui/components/smithUpgradeModal.js'), /infoBadge: true/);
   assert.doesNotMatch(read('../src/ui/screens/deckEditor.js'), /infoBadge/);
 });

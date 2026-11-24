@@ -17,12 +17,15 @@ import { beginLightningHit, finishLightningHit, wearsMetal, lightningPrecisionBo
 import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { equipmentCardModel } from '../src/model/equipmentCard.js';
 import { isLightning, affinityTags, withAffinity, ownElementAmount, dampBurnStacks, shockedPenalty, carrierElement, scaleOwnElementActions } from '../src/engine/elementRules.js';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function fight({ classId = 'starseer', enemyId = 'wanderingSoldier' } = {}) {
-  const run = createRunState({ registries: reg, classId, seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(5), enemyIds: [enemyId] });
+const preGearRegistries = legacyGearRegistries(reg);
+function fight({ classId = 'starseer', enemyId = 'wanderingSoldier', legacyGear = false } = {}) {
+  const registries = legacyGear ? preGearRegistries : reg;
+  const run = createRunState({ registries, classId, seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(5), enemyIds: [enemyId] });
   // The Shocked contest is the pre-W25 lightning rule, kept for fights saved without `elements` rules; the Shock status is tests/element-lightning-identity.test.mjs.
   delete combat.fixCoreRules.elements;
   const enemy = combat.enemies[0];
@@ -59,7 +62,8 @@ test('Spark is a Core cantrip: 3 Lightning magic damage (4 upgraded; cantrip dam
 
 test('Spark deals 3 base damage (a cantrip: not doubled; plus the caster\'s attributes, like every Core spell) and its face reads the same as Frost Nip', () => {
   const play = id => {
-    const { combat, enemy } = fight();
+    // Printed 3-damage arithmetic predates the Sceptre type's +1 magic damage; other lightning/material tests keep current gear.
+    const { combat, enemy } = fight({ legacyGear: true });
     const hand = combat.piles.hand[0];
     hand.cardId = id; hand.upgraded = false;
     primeAccuracyRolls(combat);
@@ -246,7 +250,8 @@ test('Precision: a lightning spell gains +1 against a metal target, and each Sho
   player.statuses.shocked = { stacks: 2 };
   assert.equal(accuracy(combat, enemy, CARD), base - 2, 'two Shocked stacks');
   const parts = attackHitPreview(combat, player, enemy, CARD).precisionParts;
-  assert.equal(parts.reduce((sum, p) => sum + p.value, 0), accuracy(combat, enemy, CARD), 'the receipt parts add up');
+  // The parts are tenths (0.5 DEX, 0.1 STR, -0.6 rounding...), so their float sum is rounded to a millionth before the exact compare.
+  assert.equal(Math.round(parts.reduce((sum, p) => sum + p.value, 0) * 1e6) / 1e6, accuracy(combat, enemy, CARD), 'the receipt parts add up');
 });
 
 test('Damp halves Burn applied to its holder through applyStatus; a dry target takes it all', () => {

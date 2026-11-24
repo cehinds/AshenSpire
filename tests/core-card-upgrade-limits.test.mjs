@@ -7,7 +7,12 @@ import { freeAllowance, upgradeCost, canUpgrade, upgradeBasic } from '../src/mod
 import { rollUpgradeStep, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
 import { basicCardKind } from '../src/model/basicCardRule.js';
 
-const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+// Every deck card is raised to rank 9 so it has all ten upgrade slots (rank + 1); slot limits are tested in w25-upgrade-slots.test.mjs.
+const newRun = () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  for (const card of run.deck) card.rank = 9;
+  return run;
+};
 const def = (id) => registries.cards.get(id);
 // A card rich enough to take ten rolled upgrades, and a helper that grows real steps on it.
 const rich = { id: 't.rich', name: 'Rich', type: 'attack', rarity: 'common', cost: 3, staminaCost: 3, manaCost: 4, keywords: [], tags: ['camp:physical'],
@@ -55,7 +60,7 @@ test('upgrade number n is free while n <= F (the rank), then 1 stone', () => {
 
 test('a card with no eligible step left is maxed (a power takes only a cost cut; a Strike now has a whole menu): null cost, refused as maxed', () => {
   const run = newRun(); run.smithingStones = 9;
-  const maxed = { instanceId: 'm', cardId: 'core.heraldSpecial', upgraded: true, upgradeSteps: [] };
+  const maxed = { instanceId: 'm', cardId: 'core.heraldSpecial', rank: 9, upgraded: true, upgradeSteps: [] }; // rank 9: ten slots
   const power = registries.cards.get('core.heraldSpecial');
   while (true) { const s = rollUpgradeStep(power, maxed.upgradeSteps, maxed.upgradeSteps.length, upgradeStepRng(run.seed, 'm', maxed.upgradeSteps.length)); if (!s) break; maxed.upgradeSteps.push(s); }
   assert.ok(maxed.upgradeSteps.length < 10);
@@ -74,10 +79,11 @@ test('canUpgrade: free, paid, short of stones, armament-owned, capped and missin
   run.smithingStones = 0;
   const free = canUpgrade(registries, run, inst('core.strike', 0));
   assert.deepEqual([free.ok, free.cost, free.free, free.n], [true, 0, true, 1]);
-  const short = canUpgrade(registries, run, inst('core.strike', 1));
+  // A Rank 1 Strike has 2 slots (rank + 1), so its second upgrade is the paid one.
+  const short = canUpgrade(registries, run, { ...inst('core.strike', 1), rank: 1 });
   assert.deepEqual([short.ok, short.code, short.cost], [false, 'stones', 1]);
   run.smithingStones = 1;
-  const paid = canUpgrade(registries, run, inst('core.strike', 1));
+  const paid = canUpgrade(registries, run, { ...inst('core.strike', 1), rank: 1 });
   assert.deepEqual([paid.ok, paid.cost, paid.free, paid.n], [true, 1, false, 2]);
   assert.equal(canUpgrade(registries, run, inst('core.strike', 10)).code, 'cap');
   assert.equal(canUpgrade(registries, run, { ...inst('core.strike', 0), sourceArmamentId: 'x' }).code, 'armament');

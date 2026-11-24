@@ -148,7 +148,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]`, then dispatch `dev-preview` for that commit | — | yes (push to `dev` only; not on a pull request) | — | — |
 | `pr-restamp.yml` → re-stamp: after a successful `build-stamp` on `dev`, merge `dev` into each conflicting open PR into `dev` with `tools/pr-restamp.mjs`, push that merge, dispatch its checks; or comment once when a person must merge | — | yes (after a stamp on `dev`; also dispatch) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
-| `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
+| `tests.yml` → discovered tests, six shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
 | `quick-start.yml` → Quick start input budget; ordered Core2 stages retain four 500 ms waits and half-rate sprites. `tools/click-impact-probe.mjs` reports raw latency and gates median contact/first-number overhead at 400/750 ms after declared waits, the active authored clip and receipt-derived hit-stop. Requires a real hostile contact and at least three numeric readouts; optional reactions use the real Back control. | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
@@ -585,7 +585,7 @@ The configured Core build reports an explicit skip before spawning its
 300-seed report. Manual `node tools/balance.mjs` remains available; shared
 runsim checks, report/parser contracts and simulation unit tests stay active.
 `.github/workflows/tests.yml` runs the core suite and the
-four discovered shards as Linux jobs on a pull request into `dev` and on a push
+six discovered shards as Linux jobs on a pull request into `dev` and on a push
 to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate
 fixtures (`node tools/bundle.test.mjs`, several minutes) run in `ci.yml` on a
 push to `test` (see *Which checks gate a pull request* above).
@@ -1139,6 +1139,10 @@ should appear in rewards. Notes:
   `"stacks": { "f": "add", "args": [1] }` — see Rallying Standard.
 - `upgrade` is a partial override: present fields replace base ones;
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
+- `playIf` (optional predicate) gates the play itself, read against the aimed
+  enemy (Lunging Thrust: `{ "p": "atRange", "range": "reach" }`). Conditions on
+  stance or status read `"snapshot": "beforePlay"` so the card's own stance change
+  or first hit cannot decide them (SPEC §3.6, §4.8b).
 - `onTurnEndInHand` (optional effect list) fires at the player's turn end for
   each copy still in hand, before the hand is discarded — Guilt's
   `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in
@@ -1282,7 +1286,7 @@ validation refusals and the dialogue model.
 | Targets | `TARGETS` | self, enemy, allEnemies, randomEnemy, player, owner, ally, otherEnemies |
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, missingMana, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
-| Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
+| Predicates | `PREDICATES` | inStance (`of`, `snapshot`, `idle`), atRange, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
 | Relic passives | `PASSIVE_KEYS` | arBonus, drBonus, prBonus, poiseBonus, wardBonus, runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
@@ -1429,6 +1433,10 @@ one-layer Escape behavior over Settings, explicit commit, viewport fit, and
 Add `--selftest` for its seven-plant copied-tree known-bad corpus; add
 `--artifact --screenshots` only after the serialized standalone build has been
 regenerated from frozen source.
+
+## Release checklist: saves across builds
+
+- [ ] Set `behavior.discardOnNewBuild` to `false` in `content/config/ui/presentation/saves.json` (then `node tools/config-build.mjs`) before any public release. On (the dev default, owner 2026-11-18) a new build deletes old run saves at boot (run slots only; settings and the profile are kept) so players lose their runs on every update. `tests/save-wipe.test.mjs` fails on a `release` or `main` ref (`GITHUB_REF_NAME` / `GITHUB_BASE_REF`) while it is `true`; ci.yml runs on pushes to `release`.
 
 ## The build (`build/AshenSpire.html` and `build/download/AshenSpire.html`)
 
@@ -1657,7 +1665,7 @@ Shared enemy IDs, HP ranges, legacy move payloads and AI weights live in
 `games/ashenspire/packs/core/enemyCards.json` owns the referenced cards’ effects and prices.
 At registry creation, the Core profile overlays the authored closing and retreat cards and their range data.
 Each `ai` hint can reference a shared or declared range move with `legacyMove`.
-`coreOffense: "card"` takes damage and hit count from one integer damage effect on an owned card.
+`coreOffense: "card"` takes damage and hit count from one integer damage effect on an owned card. `coreBlock: "card"` (owner, 2026-11-20) takes the move's Block from one integer block effect on an owned card; a profile saved without it keeps the shared move's Block.
 `coreSp: "card"` takes its nonnegative integer stamina cost. Either opt-in works without a closing move.
 `aiWeight` is a finite nonnegative weight and `maxConsecutive` is a positive integer when supplied.
 The sheet checker names invalid hint fields and the runtime adapter checks the resolved card payload.

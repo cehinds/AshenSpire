@@ -42,10 +42,8 @@ export function attributeRatingReceipt(config, attributes, id, level = undefined
 
 export function equipmentRatingBase(piece, id, profile = null) {
   if (!piece) return 0;
-  if (id === 'ar' || id === 'pr') return piece.attackRating || 0;
-  if (id === 'dr') return piece.defenseRating || 0;
+  // An armament authors no AR, DR or PR (owner, 2026-11-18): only an armour's Poise is an item number.
   if (id === 'poise' && piece.kind === 'armor') return piece.poiseThreshold || 0;
-  if (id === 'ward' && profile?.ratingId === 'ward') return piece.defenseRating || 0;
   return 0;
 }
 

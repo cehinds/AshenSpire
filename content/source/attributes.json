@@ -5,7 +5,7 @@
     "shortLabel": "STR",
     "order": 1,
     "disclosure": "face",
-    "sense": "Raw force. Heavy armaments ask for it before they will let you hold them."
+    "sense": "Physical force and the strength to wield armaments."
   },
   {
     "id": "dexterity",
@@ -13,7 +13,7 @@
     "shortLabel": "DEX",
     "order": 2,
     "disclosure": "face",
-    "sense": "Speed of hand — the quick armaments answer to it."
+    "sense": "Agility, coordination and speed of hand."
   },
   {
     "id": "constitution",
@@ -21,7 +21,7 @@
     "shortLabel": "CON",
     "order": 3,
     "disclosure": "face",
-    "sense": "What your body takes before the climb ends."
+    "sense": "Your body's endurance through the climb."
   },
   {
     "id": "wisdom",
@@ -29,7 +29,7 @@
     "shortLabel": "WIS",
     "order": 4,
     "disclosure": "face",
-    "sense": "What you hold in mind, and can pour back out."
+    "sense": "Spiritual resolve and practiced awareness."
   },
   {
     "id": "intelligence",
@@ -37,6 +37,6 @@
     "shortLabel": "INT",
     "order": 5,
     "disclosure": "face",
-    "sense": "How much of the Spire you read at once."
+    "sense": "Understanding, study and spellcraft."
   }
 ]

@@ -1,6 +1,6 @@
 /* Lite rendering budget (iPhone SE 1st gen: A9, 2 GB, 320x568@2).
    Loaded just before the generated HUD sheet, which index.html keeps last (tests/hud-layout-css.test.mjs). Everything here sits under
-   :root[data-performance='lite'] AND a phone layout (data-layout='narrow' or
+   :root[data-effects='off'] AND a phone layout (data-layout='narrow' or
    data-form-factor='mobile', both written by displaySettings), so Full (Effects on)
    and desktop Lite are untouched (owner, phones only).
 
@@ -16,7 +16,20 @@
    other sheets, their `!important` ones included, and the inline filters that
    scripts set (friendlyTargets, enemyPoseStage); `!important` beats keyframe
    `filter` animations too. Rules 2 and after give back the cues that carried
-   meaning (target relationship colours, selection, danger, unaffordable). */
+   meaning (target relationship colours, selection, danger, unaffordable).
+
+   Blur and shadows (owner, 2026-11-20): two device-local choices in the Effects
+   modal, Auto / On / Off (ui/performance.js SurfaceFlags). Each phone rule above
+   belongs to one of them: the backdrop-filter reset is BLUR; the filter reset (on
+   a phone it is almost all drop-shadow silhouettes), the cue replacements that
+   stand in for those filters and the shortened text shadows are SHADOWS. Blends
+   belong to neither and stay phone Lite only.
+   - Auto writes no root flag: the phone rules apply exactly as before.
+   - On (`data-fx-<kind>='on'`): each phone rule of that kind carries
+     `:not([data-fx-<kind>='on'])`, so the phone keeps them with Effects off.
+   - Off (`data-fx-<kind>='off'`): each rule of that kind is repeated under
+     `:root:root[data-fx-<kind>='off']`, with no Lite or phone scope, so any
+     device drops them (the doubled :root keeps the phone rule's specificity). */
 
 /* 1. No filters, no backdrop filters, no blends. The prologue's art-directed
    scene filter and tint wash (--prologue-filter, .prologue-wash) are the one
@@ -24,25 +37,36 @@
    else moving. The painted combat backdrop's SVG blurs (.alternative-scene-fill
    and the mask's .alternative-scene-edge, SVG filter attributes) are
    the same: static art blurred once per fit. Without them the sharp scene ends in
-   a hard rectangle against its stretched fill. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-background):not(.alternative-scene-fill):not(.alternative-scene-edge):not(.sprite .facing[style*='drop-shadow']),
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
+   a hard rectangle against its stretched fill. The cost pennant trim keeps its
+   small painted filter to convey card rarity. Static stat-modifier artwork
+   keeps its filters so buffs and debuffs retain their authored colors. */
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) *:not(#lite-nofilter):not(.prologue-background):not(.alternative-scene-fill):not(.alternative-scene-edge):not(.sprite .facing[style*='drop-shadow']):not(:where([data-component='flag-trim'] img, img[data-art-layer^='modifier-'])),
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) *:not(#lite-nofilter)::before,
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) *:not(#lite-nofilter)::after,
+:root:root[data-fx-shadows='off'] *:not(#lite-nofilter):not(.prologue-background):not(.alternative-scene-fill):not(.alternative-scene-edge):not(.sprite .facing[style*='drop-shadow']):not(:where([data-component='flag-trim'] img, img[data-art-layer^='modifier-'])),
+:root:root[data-fx-shadows='off'] *:not(#lite-nofilter)::before,
+:root:root[data-fx-shadows='off'] *:not(#lite-nofilter)::after {
   filter: none !important;
 }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter),
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-blur='on']) *:not(#lite-nofilter),
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-blur='on']) *:not(#lite-nofilter)::before,
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-blur='on']) *:not(#lite-nofilter)::after,
+:root:root[data-fx-blur='off'] *:not(#lite-nofilter),
+:root:root[data-fx-blur='off'] *:not(#lite-nofilter)::before,
+:root:root[data-fx-blur='off'] *:not(#lite-nofilter)::after {
   backdrop-filter: none !important;
 }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-wash),
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
+/* Blur off also drops the likely-target silhouette's blur, the one `filter: blur`
+   left in play (combat.css; Effects off already drops it on every device). */
+:root:root[data-fx-blur='off'] .aim-silho:not(#lite-nofilter) { filter: none !important; }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter):not(.prologue-wash),
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::before,
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']) *:not(#lite-nofilter)::after {
   mix-blend-mode: normal !important;
 }
 /* The card art's colour treatment was a `color` blend over the art; a flat
    low-alpha tint is the nearest paint without a blend. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) [data-art-background-color] { opacity: .16; }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']) [data-art-background-color] { opacity: .16; }
 
 /* 1b. Filters that HIDE or CARRY a state, kept on purpose.
    - Compendium pieces the player has not found are drawn as a black silhouette
@@ -51,69 +75,71 @@
    - The enemy buff aura (enemyStates.js sets one drop-shadow per theme on the
      one `.facing` element, only while a buff is active; Effects off keeps it on
      purpose, combat.css) is exempt in rule 1 above, not restored here. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .is-ghost > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2),
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .cp-detail:not([data-state='held']) > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2) {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .is-ghost > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2),
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .cp-detail:not([data-state='held']) > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2),
+:root:root[data-fx-shadows='off'] .is-ghost > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2),
+:root:root[data-fx-shadows='off'] .cp-detail:not([data-state='held']) > .as-artwell img:not(#lite-nofilter):not(#lite-nofilter-2) {
   filter: brightness(0) invert(1) !important;
 }
 
 /* 2. Target relationship colours (green friend / yellow neutral / red foe).
    The 1px coloured drop-shadow silhouette becomes a 1px solid outline in the
    same colour. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat [data-target-outline='green'] { outline: calc(1.5px / var(--ui-zoom, 1)) solid var(--green); }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat [data-target-outline='yellow'] { outline: calc(1.5px / var(--ui-zoom, 1)) solid var(--gold); }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat [data-target-outline='red'] { outline: calc(1.5px / var(--ui-zoom, 1)) solid var(--ember); }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat [data-target-outline='green'], :root:root[data-fx-shadows='off'] .combat [data-target-outline='green'] { outline: calc(1.5px / var(--ui-zoom, 1)) solid var(--green); }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat [data-target-outline='yellow'], :root:root[data-fx-shadows='off'] .combat [data-target-outline='yellow'] { outline: calc(1.5px / var(--ui-zoom, 1)) solid var(--gold); }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat [data-target-outline='red'], :root:root[data-fx-shadows='off'] .combat [data-target-outline='red'] { outline: calc(1.5px / var(--ui-zoom, 1)) solid var(--ember); }
 /* The target HUD draws its own host outline instead (combat.css); keep that. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant .sprite [data-target-outline] { outline: none; }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat[data-target-hud='true'] .combatant .sprite [data-target-outline], :root:root[data-fx-shadows='off'] .combat[data-target-hud='true'] .combatant .sprite [data-target-outline] { outline: none; }
 
 /* 2b. Target HUD: candidate / selected / focused / matchup sprites. Same
    colours as the Full silhouettes, as an outline on the sprite box. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant.enemy:is(.targetable, .target-hud-candidate) .sprite {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat[data-target-hud='true'] .combatant.enemy:is(.targetable, .target-hud-candidate) .sprite, :root:root[data-fx-shadows='off'] .combat[data-target-hud='true'] .combatant.enemy:is(.targetable, .target-hud-candidate) .sprite {
   outline: calc(1px / var(--ui-zoom, 1)) solid rgb(222 108 91 / .6); outline-offset: calc(2px / var(--ui-zoom, 1));
 }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant.enemy:is(.target-hud-selected, .target-hud-focused) .sprite {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat[data-target-hud='true'] .combatant.enemy:is(.target-hud-selected, .target-hud-focused) .sprite, :root:root[data-fx-shadows='off'] .combat[data-target-hud='true'] .combatant.enemy:is(.target-hud-selected, .target-hud-focused) .sprite {
   outline: calc(2px / var(--ui-zoom, 1)) solid var(--combat-matchup-color, var(--ember)); outline-offset: calc(2px / var(--ui-zoom, 1));
 }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite, :root:root[data-fx-shadows='off'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
   outline: calc(2px / var(--ui-zoom, 1)) solid var(--combat-matchup-color, var(--ember)); outline-offset: calc(2px / var(--ui-zoom, 1));
 }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-target-hud='true'] .combatant.player:is(.target-hud-selected, .target-hud-focused) .sprite {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat[data-target-hud='true'] .combatant.player:is(.target-hud-selected, .target-hud-focused) .sprite, :root:root[data-fx-shadows='off'] .combat[data-target-hud='true'] .combatant.player:is(.target-hud-selected, .target-hud-focused) .sprite {
   outline: calc(2px / var(--ui-zoom, 1)) solid rgb(135 202 255); outline-offset: calc(2px / var(--ui-zoom, 1));
 }
 
 /* 3. Selection and state on combatants: the actor's own colour (red foe, blue
    hero, gold for a chosen skill), danger when broken. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat[data-layout='formation'] .combatant.context-selected .sprite {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat[data-layout='formation'] .combatant.context-selected .sprite, :root:root[data-fx-shadows='off'] .combat[data-layout='formation'] .combatant.context-selected .sprite {
   outline: calc(2px / var(--ui-zoom, 1)) solid var(--combatant-highlight); outline-offset: calc(2px / var(--ui-zoom, 1));
 }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat .combatant.player.skill-selected .sprite { outline: calc(2px / var(--ui-zoom, 1)) solid var(--gold); outline-offset: calc(2px / var(--ui-zoom, 1)); }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat .combatant.broken > .sprite { outline: calc(2px / var(--ui-zoom, 1)) dashed var(--danger); outline-offset: calc(2px / var(--ui-zoom, 1)); }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat .combatant:focus-visible .sprite { outline: calc(2px / var(--ui-zoom, 1)) solid var(--gold); }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat .combatant.player.skill-selected .sprite, :root:root[data-fx-shadows='off'] .combat .combatant.player.skill-selected .sprite { outline: calc(2px / var(--ui-zoom, 1)) solid var(--gold); outline-offset: calc(2px / var(--ui-zoom, 1)); }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat .combatant.broken > .sprite, :root:root[data-fx-shadows='off'] .combat .combatant.broken > .sprite { outline: calc(2px / var(--ui-zoom, 1)) dashed var(--danger); outline-offset: calc(2px / var(--ui-zoom, 1)); }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat .combatant:focus-visible .sprite, :root:root[data-fx-shadows='off'] .combat .combatant:focus-visible .sprite { outline: calc(2px / var(--ui-zoom, 1)) solid var(--gold); }
 
 /* 4. Cards: the selected / inspected glow becomes a solid ring; an unaffordable
    card dims by opacity instead of grey + brightness. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) :is(.card.selected, .card[data-selected='true'], .as-card[data-selected='true'], .inspection-selected, .hand-info-portal) {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) :is(.card.selected, .card[data-selected='true'], .as-card[data-selected='true'], .inspection-selected, .hand-info-portal), :root:root[data-fx-shadows='off'] :is(.card.selected, .card[data-selected='true'], .as-card[data-selected='true'], .inspection-selected, .hand-info-portal) {
   outline: calc(2px / var(--ui-zoom, 1)) solid var(--selection-color, var(--gold)); outline-offset: 0;
 }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .hand .card.illustrated-card:is(.selected, .inspection-selected) .illustrated-card-face {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .hand .card.illustrated-card:is(.selected, .inspection-selected) .illustrated-card-face, :root:root[data-fx-shadows='off'] .hand .card.illustrated-card:is(.selected, .inspection-selected) .illustrated-card-face {
   box-shadow: 0 0 0 calc(2px / var(--ui-zoom, 1)) var(--selection-color, var(--green));
 }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .card.unaffordable:not(.illustrated-card) { opacity: .6; }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .card-drag-ghost[data-drop-state='illegal'] { opacity: .6; }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .card.unaffordable:not(.illustrated-card), :root:root[data-fx-shadows='off'] .card.unaffordable:not(.illustrated-card) { opacity: .6; }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .card-drag-ghost[data-drop-state='illegal'], :root:root[data-fx-shadows='off'] .card-drag-ghost[data-drop-state='illegal'] { opacity: .6; }
 
 /* 5. Map: the selected node's glow becomes a parchment stroke. */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .map-node.selected > circle:not(.node-halo), :root:root[data-fx-shadows='off'] .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); }
 
 /* 6. Title and startup: the dimmed city was `brightness(.28) saturate(.82)`;
    the same darkening as a flat overlay (no second url(), which would add an ASSET_CSS slot). */
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .tower-interior-city::after {
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .tower-interior-city::after, :root:root[data-fx-shadows='off'] .tower-interior-city::after {
   content: ''; position: absolute; inset: 0; background: rgba(8, 7, 5, .72);
 }
 
 /* 7. Text shadows: the multi-layer blurred HUD shadow (--hud-text-shadow, set
    per form factor in hud-layout.generated.css) becomes one tight shadow; the
    title's 43px glow and 12px menu shadow shrink to a few pixels. */
-:root:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) { --hud-text-shadow: 0 1px 1px black; }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .title-glow { text-shadow: 0 0 8px color-mix(in srgb, var(--gold) 42%, transparent); }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .title-screen .as-titlemenu { text-shadow: 0 1px 2px black; }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat :is(.combat-health-badge, .combat-health-badge-value, .combat-health-counter-icon, .combat-health-evade-icon, .combat-health-precision-icon, .combat-health-reflect-icon) { text-shadow: 0 1px 0 black; }
-:root[data-performance='lite']:is([data-layout='narrow'], [data-form-factor='mobile']) .combat .combat-grid-toggle { text-shadow: 0 1px 1px black; }
+:root:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']), :root:root:root[data-fx-shadows='off'] { --hud-text-shadow: 0 1px 1px black; }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .title-glow, :root:root[data-fx-shadows='off'] .title-glow { text-shadow: 0 0 8px color-mix(in srgb, var(--gold) 42%, transparent); }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .title-screen .as-titlemenu, :root:root[data-fx-shadows='off'] .title-screen .as-titlemenu { text-shadow: 0 1px 2px black; }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat :is(.combat-health-badge, .combat-health-badge-value, .combat-health-counter-icon, .combat-health-evade-icon, .combat-health-precision-icon, .combat-health-reflect-icon), :root:root[data-fx-shadows='off'] .combat :is(.combat-health-badge, .combat-health-badge-value, .combat-health-counter-icon, .combat-health-evade-icon, .combat-health-precision-icon, .combat-health-reflect-icon) { text-shadow: 0 1px 0 black; }
+:root[data-effects='off']:is([data-layout='narrow'], [data-form-factor='mobile']):not([data-fx-shadows='on']) .combat .combat-grid-toggle, :root:root[data-fx-shadows='off'] .combat .combat-grid-toggle { text-shadow: 0 1px 1px black; }

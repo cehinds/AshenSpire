@@ -224,4 +224,154 @@ const sizes = {
     "idleHeight": 409
   }
 };
-export const enemyExpansion = Object.freeze(Object.fromEntries(Object.entries(sizes).map(([id, size]) => [id, Object.freeze({ ...size, actions, poses })])));
+// Codex concept enemies (2026-11-18, asset-data/enemy-concepts): committed frames are idle, attack-01/02, react-01/02,
+// defend-01/02 and downed; the six held stances (stance-*) are additive and live in enemyStanceSprites.js. The art has one
+// attack clip, so every attacking action plays it; hit, wounded and defeated name their frames through actions.
+const conceptPoses = ["idle", "attack-01", "attack-02", "react-01", "react-02", "defend-01", "defend-02", "downed"];
+const clip = (...frames) => frames.map(pose => ({ pose, duration: 260 / frames.length }));
+const conceptActions = {
+  "attack": clip("attack-01", "attack-02"),
+  "counterattack": clip("attack-02", "attack-01"),
+  "magicAttack": clip("attack-01", "attack-02"),
+  "rangedWeaponAttack": clip("attack-01", "attack-02"),
+  "sweep": clip("attack-01", "attack-02"),
+  "block": clip("defend-01", "defend-02"),
+  "hit": clip("react-01", "react-02"),
+  "wounded": clip("react-02"),
+  "defeated": clip("downed")
+};
+const conceptSizes = {
+  "brackenTusker": {
+    "idleWidth": 444,
+    "idleHeight": 334
+  },
+  "fenwickToad": {
+    "idleWidth": 462,
+    "idleHeight": 340
+  },
+  "reedpipePoacher": {
+    "idleWidth": 320,
+    "idleHeight": 382
+  },
+  "wickerTitheman": {
+    "idleWidth": 186,
+    "idleHeight": 382
+  },
+  "quarryRam": {
+    "idleWidth": 422,
+    "idleHeight": 342
+  },
+  "tollgateHookman": {
+    "idleWidth": 220,
+    "idleHeight": 364
+  },
+  "waxsealBailiff": {
+    "idleWidth": 332,
+    "idleHeight": 342
+  },
+  "kilnshellTortoise": {
+    "idleWidth": 462,
+    "idleHeight": 358
+  },
+  "slagtongImp": {
+    "idleWidth": 346,
+    "idleHeight": 338
+  },
+  "sootwingBat": {
+    "idleWidth": 462,
+    "idleHeight": 292
+  },
+  "siltCrownNewt": {
+    "idleWidth": 378,
+    "idleHeight": 278
+  },
+  "wickerHind": {
+    "idleWidth": 230,
+    "idleHeight": 302
+  },
+  "blackrushStork": {
+    "idleWidth": 218,
+    "idleHeight": 276
+  },
+  "pearlbackSnail": {
+    "idleWidth": 346,
+    "idleHeight": 314
+  },
+  "alderMaskHarvester": {
+    "idleWidth": 154,
+    "idleHeight": 266
+  },
+  "pallidOathCamel": {
+    "idleWidth": 250,
+    "idleHeight": 270
+  },
+  "inkveilNautilus": {
+    "idleWidth": 316,
+    "idleHeight": 310
+  },
+  "mirrorFanAbbess": {
+    "idleWidth": 206,
+    "idleHeight": 362
+  },
+  "saltChoirWalrus": {
+    "idleWidth": 318,
+    "idleHeight": 250
+  },
+  "rimewheelPenitent": {
+    "idleWidth": 344,
+    "idleHeight": 396
+  },
+  "brassThroatIbex": {
+    "idleWidth": 292,
+    "idleHeight": 364
+  },
+  "kilnbackTerrapin": {
+    "idleWidth": 382,
+    "idleHeight": 308
+  },
+  "slagwingHeron": {
+    "idleWidth": 198,
+    "idleHeight": 298
+  },
+  "ashSilkWeaver": {
+    "idleWidth": 276,
+    "idleHeight": 238
+  },
+  "ferrumVotary": {
+    "idleWidth": 274,
+    "idleHeight": 264
+  },
+  "woundwoodTusker": {
+    "idleWidth": 426,
+    "idleHeight": 398
+  },
+  "mireProcessional": {
+    "idleWidth": 412,
+    "idleHeight": 414
+  },
+  "veiledJusticiar": {
+    "idleWidth": 376,
+    "idleHeight": 402
+  },
+  "sixleggedHearse": {
+    "idleWidth": 376,
+    "idleHeight": 346
+  },
+  "crucibleNewt": {
+    "idleWidth": 464,
+    "idleHeight": 212
+  },
+  "carrionHeadsman": {
+    "idleWidth": 408,
+    "idleHeight": 320
+  },
+  "knellcapSentinel": {
+    "idleWidth": 460,
+    "idleHeight": 294
+  }
+};
+export const conceptEnemyIds = Object.freeze(Object.keys(conceptSizes));
+export const enemyExpansion = Object.freeze({
+  ...Object.fromEntries(Object.entries(sizes).map(([id, size]) => [id, Object.freeze({ ...size, actions, poses })])),
+  ...Object.fromEntries(Object.entries(conceptSizes).map(([id, size]) => [id, Object.freeze({ ...size, actions: conceptActions, poses: conceptPoses })])),
+});

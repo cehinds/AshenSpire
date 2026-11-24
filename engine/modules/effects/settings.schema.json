@@ -22,15 +22,55 @@
         false
       ]
     },
-    "attackRatingWeight": {
+    "strengthDamageWeight": {
       "type": "number",
       "minimum": 0,
       "maximum": 100
     },
-    "defenseRatingWeight": {
+    "dexterityBlockWeight": {
       "type": "number",
       "minimum": 0,
       "maximum": 100
+    },
+    "magicStatWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "baseDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "playerDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "enemyDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "physicalDamageMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "blockGainMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "statusBlockWeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "spellPoiseDamageMultiplier": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
     },
     "fixCoreVersion": {
       "type": "integer",
@@ -45,6 +85,21 @@
         1,
         2
       ]
+    },
+    "retreatRulesVersion": {
+      "type": "integer",
+      "enum": [0, 1]
+    },
+    "spellRewardPolicyVersion": {
+      "type": "integer",
+      "enum": [0, 1]
+    },
+    "spellTraditionsVersion": {
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ]
     }
   },
   "required": [
@@ -52,8 +107,9 @@
     "damageModel",
     "elements",
     "spellRanks",
-    "attackRatingWeight",
-    "defenseRatingWeight"
+    "strengthDamageWeight",
+    "dexterityBlockWeight",
+    "magicStatWeight"
   ],
   "additionalProperties": false
 }

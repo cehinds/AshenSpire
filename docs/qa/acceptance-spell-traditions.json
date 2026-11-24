@@ -1,0 +1,389 @@
+{
+  "request": "natural elements such as fire, earth, lighting, and frost shoudl also be shared and shoudl have both the divine and arcane tags and icons. Also, cards that apply to just Arcane will have the Arcane for the card type, cards that apply to just divine with have the divine card name, and cards that pply to both will have the spell card type name. it should also show the icon for it too; make suggestions",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "tablet",
+      "width": 1024,
+      "height": 768
+    }
+  ],
+  "scenes": [
+    {
+      "name": "mindLance tradition inspection",
+      "url": "?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers,core.rootedShelter,core.stormBlessing,core.rimeVeil&shotDeckEditor=1",
+      "ready": ".deck-editor",
+      "settleMs": 900,
+      "actions": [
+        {
+          "rightClick": ".deck-editor-tile[data-key^=\"card:core.mindLance~\"] .deck-editor-main"
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Production Reading Desk inspection is open",
+          "selector": ".deck-editor-inspector"
+        },
+        {
+          "kind": "text",
+          "label": "core.mindLance shows Arcane card type",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-type-name",
+          "includes": "Arcane"
+        },
+        {
+          "kind": "count",
+          "label": "Exact casting tradition icon count",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band .combat-sigil-tradition",
+          "eq": 1
+        },
+        {
+          "kind": "visible",
+          "label": "Original school identity is retained",
+          "selector": ".deck-editor-inspector .playing-poker-card[data-combat-school=\"illusion\"]"
+        },
+        {
+          "kind": "within",
+          "label": "Card footer stays inside the card",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band",
+          "container": ".deck-editor-inspector .playing-poker-card"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        },
+        {
+          "kind": "visible",
+          "label": "Arcane casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"arcane\"]"
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "purifyingLight tradition inspection",
+      "url": "?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers,core.rootedShelter,core.stormBlessing,core.rimeVeil&shotDeckEditor=1",
+      "ready": ".deck-editor",
+      "settleMs": 900,
+      "actions": [
+        {
+          "rightClick": ".deck-editor-tile[data-key^=\"card:core.purifyingLight~\"] .deck-editor-main"
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Production Reading Desk inspection is open",
+          "selector": ".deck-editor-inspector"
+        },
+        {
+          "kind": "text",
+          "label": "core.purifyingLight shows Divine card type",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-type-name",
+          "includes": "Divine"
+        },
+        {
+          "kind": "count",
+          "label": "Exact casting tradition icon count",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band .combat-sigil-tradition",
+          "eq": 1
+        },
+        {
+          "kind": "visible",
+          "label": "Original school identity is retained",
+          "selector": ".deck-editor-inspector .playing-poker-card[data-combat-school=\"divine\"]"
+        },
+        {
+          "kind": "within",
+          "label": "Card footer stays inside the card",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band",
+          "container": ".deck-editor-inspector .playing-poker-card"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        },
+        {
+          "kind": "visible",
+          "label": "Divine casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"divine\"]"
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "cleansingEmbers tradition inspection",
+      "url": "?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers,core.rootedShelter,core.stormBlessing,core.rimeVeil&shotDeckEditor=1",
+      "ready": ".deck-editor",
+      "settleMs": 900,
+      "actions": [
+        {
+          "rightClick": ".deck-editor-tile[data-key^=\"card:core.cleansingEmbers~\"] .deck-editor-main"
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Production Reading Desk inspection is open",
+          "selector": ".deck-editor-inspector"
+        },
+        {
+          "kind": "text",
+          "label": "core.cleansingEmbers shows Spell card type",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-type-name",
+          "includes": "Spell"
+        },
+        {
+          "kind": "count",
+          "label": "Exact casting tradition icon count",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band .combat-sigil-tradition",
+          "eq": 2
+        },
+        {
+          "kind": "visible",
+          "label": "Original school identity is retained",
+          "selector": ".deck-editor-inspector .playing-poker-card[data-combat-school=\"fire\"]"
+        },
+        {
+          "kind": "within",
+          "label": "Card footer stays inside the card",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band",
+          "container": ".deck-editor-inspector .playing-poker-card"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        },
+        {
+          "kind": "visible",
+          "label": "Arcane casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"arcane\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Divine casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"divine\"]"
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "rootedShelter tradition inspection",
+      "url": "?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers,core.rootedShelter,core.stormBlessing,core.rimeVeil&shotDeckEditor=1",
+      "ready": ".deck-editor",
+      "settleMs": 900,
+      "actions": [
+        {
+          "rightClick": ".deck-editor-tile[data-key^=\"card:core.rootedShelter~\"] .deck-editor-main"
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Production Reading Desk inspection is open",
+          "selector": ".deck-editor-inspector"
+        },
+        {
+          "kind": "text",
+          "label": "core.rootedShelter shows Spell card type",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-type-name",
+          "includes": "Spell"
+        },
+        {
+          "kind": "count",
+          "label": "Exact casting tradition icon count",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band .combat-sigil-tradition",
+          "eq": 2
+        },
+        {
+          "kind": "visible",
+          "label": "Original school identity is retained",
+          "selector": ".deck-editor-inspector .playing-poker-card[data-combat-school=\"earth\"]"
+        },
+        {
+          "kind": "within",
+          "label": "Card footer stays inside the card",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band",
+          "container": ".deck-editor-inspector .playing-poker-card"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        },
+        {
+          "kind": "visible",
+          "label": "Arcane casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"arcane\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Divine casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"divine\"]"
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "stormBlessing tradition inspection",
+      "url": "?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers,core.rootedShelter,core.stormBlessing,core.rimeVeil&shotDeckEditor=1",
+      "ready": ".deck-editor",
+      "settleMs": 900,
+      "actions": [
+        {
+          "rightClick": ".deck-editor-tile[data-key^=\"card:core.stormBlessing~\"] .deck-editor-main"
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Production Reading Desk inspection is open",
+          "selector": ".deck-editor-inspector"
+        },
+        {
+          "kind": "text",
+          "label": "core.stormBlessing shows Spell card type",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-type-name",
+          "includes": "Spell"
+        },
+        {
+          "kind": "count",
+          "label": "Exact casting tradition icon count",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band .combat-sigil-tradition",
+          "eq": 2
+        },
+        {
+          "kind": "visible",
+          "label": "Original school identity is retained",
+          "selector": ".deck-editor-inspector .playing-poker-card[data-combat-school=\"lightning\"]"
+        },
+        {
+          "kind": "within",
+          "label": "Card footer stays inside the card",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band",
+          "container": ".deck-editor-inspector .playing-poker-card"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        },
+        {
+          "kind": "visible",
+          "label": "Arcane casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"arcane\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Divine casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"divine\"]"
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "rimeVeil tradition inspection",
+      "url": "?shot=map&shotDeckAdd=core.mindLance,core.purifyingLight,core.cleansingEmbers,core.rootedShelter,core.stormBlessing,core.rimeVeil&shotDeckEditor=1",
+      "ready": ".deck-editor",
+      "settleMs": 900,
+      "actions": [
+        {
+          "rightClick": ".deck-editor-tile[data-key^=\"card:core.rimeVeil~\"] .deck-editor-main"
+        },
+        {
+          "wait": {
+            "ms": 200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Production Reading Desk inspection is open",
+          "selector": ".deck-editor-inspector"
+        },
+        {
+          "kind": "text",
+          "label": "core.rimeVeil shows Spell card type",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-type-name",
+          "includes": "Spell"
+        },
+        {
+          "kind": "count",
+          "label": "Exact casting tradition icon count",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band .combat-sigil-tradition",
+          "eq": 2
+        },
+        {
+          "kind": "visible",
+          "label": "Original school identity is retained",
+          "selector": ".deck-editor-inspector .playing-poker-card[data-combat-school=\"frost\"]"
+        },
+        {
+          "kind": "within",
+          "label": "Card footer stays inside the card",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band",
+          "container": ".deck-editor-inspector .playing-poker-card"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        },
+        {
+          "kind": "visible",
+          "label": "Arcane casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"arcane\"]"
+        },
+        {
+          "kind": "visible",
+          "label": "Divine casting icon is present",
+          "selector": ".deck-editor-inspector .playing-poker-card .card-sigil-band [data-sigil=\"divine\"]"
+        }
+      ],
+      "failure": []
+    }
+  ]
+}

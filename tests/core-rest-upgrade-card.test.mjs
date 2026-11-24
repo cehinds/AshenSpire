@@ -17,7 +17,7 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 function fixture(stones = 0) {
   const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-upgrade-card' });
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id;
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id;
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   run.smithingStones = stones;
   return { run, visit };
@@ -48,6 +48,7 @@ test('a second upgrade of the card in a later visit costs a stone; none with 0 s
   const next = fixture(0).run;
   const c2 = strike(next);
   c2.upgraded = true; c2.upgradeSteps = [{ k: 'authored' }];
+  c2.rank = 1; // a Rank 1 Strike has 2 slots (rank + 1)
   assert.throws(() => commitGameProfileRest(registries, next, 'upgradeCard', { instanceId: c2.instanceId }), /Smithing Stone/);
   assert.equal(upgradeCount(c2), 1);
   next.smithingStones = 1;

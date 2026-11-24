@@ -24,7 +24,7 @@ function fixture({ legacy = false } = {}) {
   const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-one-pick' });
   if (legacy) run.gameProfile.content.rests = structuredClone(LEGACY_RESTS);
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id;
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id;
   run.hp = 10; run.mana = 0; run.stamina = 0; run.smithingStones = 0;
   run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
@@ -60,8 +60,11 @@ test('rest heals ceil(30% max HP), refills mana, stamina and both flasks, and cl
 test('smith restores nothing and closes the visit', () => {
   const { run } = fixture();
   const candidate = smithingPlan(registries, run, undefined, { free: true, maxTier: restSmithMaxTier(run) }).candidates[0];
+  const deficit = run.maxHp - run.hp;
   commitGameProfileRest(registries, run, 'smith', { itemRef: candidate.itemRef });
-  assert.equal(run.hp, 10);
+  // Owner, 2026-11-17 (gear `statPoints`): the greatsword's tier adds CON, so max HP grows; the pool keeps its deficit
+  // (reconcileRunLoadoutHp), which is no heal.
+  assert.equal(run.maxHp - run.hp, deficit);
   assert.deepEqual(pools(run).slice(3), [0, 0]);
   assert.throws(() => commitGameProfileRest(registries, run, 'rest', {}), /unavailable or spent/);
 });

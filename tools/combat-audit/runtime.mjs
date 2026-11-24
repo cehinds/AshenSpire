@@ -27,7 +27,7 @@ function sourceIdentity() {
     auditFiles: Object.fromEntries(auditFiles.map(path => [path, digest(readFileSync(resolve(root, path)))])) };
 }
 const moduleIds = [
-  'src/content/index.js', 'src/model/registries.js', 'src/model/state.js',
+  'src/content/index.js', 'src/model/registries.js', 'src/model/state.js', 'src/model/gameProfile.js',
   'src/engine/combat.js', 'src/engine/runCombat.js', 'src/engine/rng.js',
   'src/engine/combatExpansion.js', 'src/engine/combatReactions.js',
   'src/engine/abilityRiders.js', 'src/model/cardTargets.js', 'src/model/upcasting.js',
@@ -38,6 +38,7 @@ const moduleIds = [
   'src/model/map/mapknowledge.js', 'src/model/statProjection.js',
   'src/model/advancedConfig.js',
   'src/engine/cardBehavior.js',
+  'src/model/cardCopyService.js',
 ];
 export async function loadAuditRuntime(mode = 'native', { configuration = 'raw-authored' } = {}) {
   if (!['native', 'bundled'].includes(mode)) throw new Error(`Unknown audit loader '${mode}'`);

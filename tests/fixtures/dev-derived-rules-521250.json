@@ -1,0 +1,235 @@
+{
+  "sourceCommit": "66e473a77c74da54bd8701fd5a2614a0e7484985",
+  "profileHash": "sha256:1bc6a676e5072cf568335492113cbd56553d98aea28021ae62087fcd41943465",
+  "snapshot": {
+    "snapshotVersion": 3,
+    "rulesetVersion": 8,
+    "rules": {
+      "rulesetVersion": 8,
+      "defaults": {
+        "perLevel": 0
+      },
+      "rules": {
+        "energy": {
+          "base": 3,
+          "strength": 0.1,
+          "dexterity": 0.25,
+          "wisdom": 0.01,
+          "intelligence": 0.01,
+          "perLevel": 0.1
+        },
+        "draw": {
+          "base": 5,
+          "intelligence": 1,
+          "min": 2,
+          "max": 10,
+          "perLevel": 0,
+          "attributeBaseline": 0,
+          "pointsPerIncrease": 4
+        },
+        "hp": {
+          "base": 45,
+          "constitution": 5,
+          "perLevel": 5,
+          "strength": 0,
+          "dexterity": 0,
+          "wisdom": 0,
+          "intelligence": 0
+        },
+        "stamina": {
+          "base": 3,
+          "dexterity": 1,
+          "perLevel": 0,
+          "strength": 0,
+          "constitution": 0,
+          "wisdom": 0,
+          "intelligence": 0,
+          "pointsPerIncrease": 4,
+          "attributeBaseline": 0
+        },
+        "mana": {
+          "base": 1,
+          "wisdom": 1,
+          "perLevel": 0,
+          "strength": 0,
+          "dexterity": 0,
+          "constitution": 0,
+          "intelligence": 0,
+          "pointsPerIncrease": 4,
+          "attributeBaseline": 0
+        },
+        "poise": {
+          "base": 1,
+          "constitution": 1,
+          "perLevel": 0
+        },
+        "openingHand": {
+          "base": 5,
+          "intelligence": 1,
+          "min": 2,
+          "max": 10,
+          "perLevel": 0,
+          "attributeBaseline": 0,
+          "pointsPerIncrease": 4
+        },
+        "handSize": {
+          "base": 7,
+          "intelligence": 0.2,
+          "attributeBaseline": 4,
+          "min": 1,
+          "max": 20,
+          "perLevel": 0
+        },
+        "ward": {
+          "base": 1,
+          "wisdom": 1,
+          "perLevel": 0
+        }
+      }
+    },
+    "baseRules": {
+      "rulesetVersion": 8,
+      "defaults": {
+        "perLevel": 0
+      },
+      "rules": {
+        "energy": {
+          "base": 3,
+          "strength": 0.1,
+          "dexterity": 0.25,
+          "wisdom": 0.01,
+          "intelligence": 0.01,
+          "perLevel": 0.1
+        },
+        "draw": {
+          "base": 5,
+          "intelligence": 1,
+          "min": 2,
+          "max": 10,
+          "perLevel": 0,
+          "attributeBaseline": 0,
+          "pointsPerIncrease": 4
+        },
+        "hp": {
+          "base": 35,
+          "constitution": 5,
+          "perLevel": 5,
+          "strength": 0,
+          "dexterity": 0,
+          "wisdom": 0,
+          "intelligence": 0
+        },
+        "stamina": {
+          "base": 3,
+          "dexterity": 1,
+          "perLevel": 0,
+          "strength": 0,
+          "constitution": 0,
+          "wisdom": 0,
+          "intelligence": 0,
+          "pointsPerIncrease": 4,
+          "attributeBaseline": 0
+        },
+        "mana": {
+          "base": 1,
+          "wisdom": 1,
+          "perLevel": 0,
+          "strength": 0,
+          "dexterity": 0,
+          "constitution": 0,
+          "intelligence": 0,
+          "pointsPerIncrease": 4,
+          "attributeBaseline": 0
+        },
+        "poise": {
+          "base": 1,
+          "constitution": 1,
+          "perLevel": 0
+        },
+        "openingHand": {
+          "base": 5,
+          "intelligence": 1,
+          "min": 2,
+          "max": 10,
+          "perLevel": 0,
+          "attributeBaseline": 0,
+          "pointsPerIncrease": 4
+        },
+        "handSize": {
+          "base": 7,
+          "intelligence": 0.2,
+          "attributeBaseline": 4,
+          "min": 1,
+          "max": 20,
+          "perLevel": 0
+        },
+        "ward": {
+          "base": 1,
+          "wisdom": 1,
+          "perLevel": 0
+        }
+      }
+    },
+    "modifierOverride": {
+      "rules": {
+        "stamina": {
+          "dexterity": 1,
+          "strength": 0,
+          "constitution": 0,
+          "wisdom": 0,
+          "intelligence": 0,
+          "pointsPerIncrease": 4,
+          "attributeBaseline": 0
+        },
+        "hp": {
+          "constitution": 5,
+          "strength": 0,
+          "dexterity": 0,
+          "wisdom": 0,
+          "intelligence": 0
+        },
+        "mana": {
+          "wisdom": 1,
+          "strength": 0,
+          "dexterity": 0,
+          "constitution": 0,
+          "intelligence": 0,
+          "pointsPerIncrease": 4,
+          "attributeBaseline": 0
+        },
+        "openingHand": {
+          "base": 5,
+          "intelligence": 1,
+          "attributeBaseline": 0,
+          "pointsPerIncrease": 4,
+          "byClass": {}
+        },
+        "draw": {
+          "base": 5,
+          "intelligence": 1,
+          "attributeBaseline": 0,
+          "pointsPerIncrease": 4,
+          "byClass": {}
+        }
+      }
+    },
+    "relicModifiers": {
+      "damageBySchoolAdd": {
+        "physical": 0,
+        "magic": 0,
+        "arcane": 0,
+        "holy": 0,
+        "fire": 0
+      },
+      "sources": [
+        {
+          "relicId": "forsakenMedallion",
+          "index": 0,
+          "tag": "resource.flat",
+          "resource": "hp",
+          "value": 10
+        }
+      ]
+    }
+  }
+}

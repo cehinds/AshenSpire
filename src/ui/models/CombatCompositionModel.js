@@ -3,6 +3,16 @@ import { separateRow } from './CombatViewportSizeModel.js';
 
 // Presentation transforms after the shared fit. The foreground player and
 // distant enemy group do not change gameplay formation addresses or stature.
+// The key a hand anchor is kept under: the field's size, the page zoom, the hand's geometry key (its subpixel
+// noise rounded) and the resting cards' top (--hand-rest-top), so an anchor read before the cards settled is
+// never reused once they have.
+export function HandAnchorLayoutKey({ fieldWidth, fieldHeight, pageZoom, handKey, restTop }) {
+  const round = value => Math.round(value * 1000) / 1000;
+  const stableHandKey = handKey?.split(':').map(value => Number.isFinite(Number(value)) ? round(Number(value)) : value).join(':');
+  return [fieldWidth, fieldHeight, pageZoom].map(round).join(':') + ':' + stableHandKey
+    + ':' + (Number.isFinite(restTop) ? round(restTop) : '');
+}
+
 export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
   if (previous?.key === layoutKey) return previous;
   if (!Number.isFinite(top)) return null;
@@ -18,26 +28,12 @@ export function combatArtworkKey({ width, height, zoom, wide = false, presentati
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
     actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.edgeWidth, actor.footOffset, actor.artLeading,
+    actor.backRow === true,
   ])], (_key, value) => typeof value === 'number' ? Math.round(value * 1000) / 1000 : value);
 }
 
 export function stableCombatArtwork(previous, key, sizes) {
   return previous?.key === key ? previous : { key, sizes: sizes.map(size => ({ ...size })) };
-}
-
-function nearestEnemyGround(sizes, actors, fallback, groundField) {
-  const enemyIds = new Set(actors.filter(actor => actor.side === 'enemy').map(actor => actor.slot.id));
-  const grounds = sizes.filter(size => enemyIds.has(size.id) && Number.isFinite(size[groundField] ?? size.ground))
-    .map(size => size[groundField] ?? size.ground);
-  return grounds.length ? Math.min(...grounds) : fallback;
-}
-
-export function combatSceneryGround(sizes, actors, fallback) {
-  return nearestEnemyGround(sizes, actors, fallback, 'sceneryGround');
-}
-
-export function combatStandingGround(sizes, actors, fallback) {
-  return nearestEnemyGround(sizes, actors, fallback, 'standingGround');
 }
 
 // Attach the foreground player's feet to the battlefield edge, above the
@@ -89,10 +85,10 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
     const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
     const box = actor.slot.box;
     const wanted = box ? { ...actor.slot, ground: box.top + box.height * (1 - grid.footInCellFraction) } : actor.slot;
-    const inner = box ? insetPerspectiveFootprint(wanted, { width: halfWidth * 2, height: shadowHeight, inset: grid.footprintInsetPx * unit }) : null;
-    const stripFits = inner && box.height >= shadowHeight + 2 * grid.footprintInsetPx * unit;
-    // A strip too short for the shadow plus both insets (a landscape phone's 9px strip) stands the foot at its middle, so it stays inside.
-    const ground = inner ? (stripFits ? inner.ground : box.top + box.height / 2) : actor.slot.ground;
+    const insetY = box ? PerspectiveFootInsetY({ cellHeight: box.height, shadowHeight, inset: grid.footprintInsetPx * unit }) : 0;
+    const inner = box ? insetPerspectiveFootprint(wanted, { width: halfWidth * 2, height: shadowHeight, inset: grid.footprintInsetPx * unit, insetY }) : null;
+    // A strip shorter than the shadow itself (a landscape phone's 9px strip) stands the foot at its middle, so it stays inside.
+    const ground = inner ? (box.height >= shadowHeight ? inner.ground : box.top + box.height / 2) : actor.slot.ground;
     const foot = inner ? (actor.side === 'enemy' ? { x: inner.x, ground } : { x, ground }) : { x, ground };
     // A lone player's feet never stand inside the hand area: the ground line
     // moves up to the hand's top edge (the fit already sized the body for it).
@@ -115,18 +111,41 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
   return placed;
 }
 
+// A back-row enemy (its engine row, actor.backRow) is drawn backRowEnemyScale of its fitted size. Owner 2026-11-20:
+// the layout shrinks it, not CSS, so composition stands its smaller body's feet in its drawn cell like any other
+// figure's. Scales the sizes in place (the fit's lastResort stays on the array) and returns them.
+export function BackRowEnemySizes(sizes, actors,
+  scale = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.backRowEnemyScale ?? 1) {
+  for (const size of sizes) {
+    if (!actors.some(actor => actor.slot.id === size.id && actor.backRow === true)) continue;
+    size.scale *= scale;
+    size.visibleHeight *= scale;
+  }
+  return sizes;
+}
+
+// Owner 2026-11-20: the feet stay footInCellFraction above the cell's bottom line. A cell too short to hold the
+// shadow plus footprintInsetPx above and below the foot there shrinks the vertical inset (down to 0) instead of
+// moving the foot; a cell tall enough keeps the full inset.
+export function PerspectiveFootInsetY({ cellHeight, shadowHeight, inset,
+  fraction = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footInCellFraction }) {
+  const room = cellHeight * Math.min(fraction, 1 - fraction) - shadowHeight / 2;
+  return Math.max(0, Math.min(inset, room));
+}
+
 // Constrain the shadow's complete bounding envelope inside its skewed cell.
 // The active kit draws an 8%-high ellipse centred on the sprite's foot.
 // Its full bounding envelope, rather than only its centre, owns this cell.
 // Configured clearance is in physical field pixels, independent of CSS zoom.
+// `insetY` (default `inset`) is the clearance above and below the shadow; `inset` alone keeps it from the side lines.
 // Moving the anchor never refits artwork.
 export function insetPerspectiveFootprint(slot, { width, height = 12,
-  inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx }) {
+  inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx, insetY = inset }) {
   const box = slot.box;
   if (!box) return { x: slot.x, ground: slot.ground };
   const above = height / 2, below = height / 2;
-  const ground = Math.max(box.top + above + inset,
-    Math.min(box.top + box.height - below - inset, slot.ground));
+  const ground = Math.max(box.top + above + insetY,
+    Math.min(box.top + box.height - below - insetY, slot.ground));
   const skew = box.skew || 0;
   const centreAt = y => box.left + box.width / 2 + skew * (box.top + box.height / 2 - y);
   const half = width / 2 + inset;

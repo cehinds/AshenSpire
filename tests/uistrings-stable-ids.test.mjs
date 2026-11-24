@@ -31,7 +31,7 @@ reword('lore.face.inter', 'Display capitals');
 
 const { WIREFRAME_CHOICE_GROUPS } = await import('../src/ui/models/WireframeChoiceModel.js');
 const { advancedSubgroups } = await import('../src/ui/models/AdvancedSettingsGroups.js');
-const { categoryHandler, storedAdvancedTopic, rowModified } = await import('../src/ui/screens/settings.js');
+const { categoryHandler, storedAdvancedTopic, rowModified, SettingsGroupModalHtml } = await import('../src/ui/screens/settings.js');
 const { LORE_FACES, LORE_TYPE_DEFAULTS, resolveLoreType } = await import('../src/ui/models/LoreTypeModel.js');
 
 test('the rewording took: the models read the edited rows', () => {
@@ -45,18 +45,20 @@ test('Wireframes topics are filed and persisted by group id, labelled by the row
     const group = WIREFRAME_CHOICE_GROUPS.find((entry) => entry.choices.some((choice) => choice.key === row.key));
     assert.equal(row.wireframeTopic, group.id, `${row.key} is filed under the label, not the id`);
   }
-  const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Wireframes');
-  const families = groups.slice(0, WIREFRAME_CHOICE_GROUPS.length);
-  // The ids a profile stores are the ones dev always stored: Modals, Menus, Scenes.
-  assert.deepEqual(families.map((group) => group.id), ['Modals', 'Menus', 'Scenes']);
-  assert.deepEqual(families.map((group) => group.label), ['Windows & menus', 'Windows & menus', 'Scenes']);
-  // Two identical labels are still two topics, each with its own rows.
-  assert.deepEqual(families.map((group) => group.rows.map((row) => row.key)),
+  // Since the regroup (owner, 2026-11-20) the families are sections of the Wireframes modal:
+  // keyed by the ids dev always stored (Modals, Menus, Scenes), headed by the reworded labels.
+  const body = SettingsGroupModalHtml({}, 'wireframes');
+  const sections = [...body.matchAll(/data-group-section="([^"]+)">(?:<h4 class="set-subsection-heading">([^<]*)<\/h4>)?([\s\S]*?)<\/section>/g)];
+  assert.deepEqual(sections.map((m) => m[1]), ['Modals', 'Menus', 'Scenes']);
+  assert.deepEqual(sections.map((m) => m[2]), ['Windows &amp; menus', 'Windows &amp; menus', 'Scenes']);
+  // Two identical labels are still two sections, each with its own rows.
+  assert.deepEqual(sections.map((m) => [...m[3].matchAll(/data-row-key="([^"]+)"/g)].map((k) => k[1])),
     WIREFRAME_CHOICE_GROUPS.map((group) => group.choices.map((choice) => choice.key)));
-  assert.equal(groups.filter((group) => group.label === 'Windows & menus').length, 2);
-  // A profile left on Menus before the rewording reopens on Menus.
-  const stored = storedAdvancedTopic({ 'settingsAdvancedSubgroup.Wireframes': 'Menus' }, 'Wireframes');
-  assert.ok(groups.some((group) => group.id === stored), 'the stored topic no longer names a topic');
+  // A profile left on an old Wireframes topic reopens Developer on its first topic.
+  const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Developer');
+  const stored = storedAdvancedTopic({ 'settingsAdvancedSubgroup.Developer': 'Menus' }, 'Developer');
+  assert.equal(stored, 'Menus');
+  assert.ok(!groups.some((group) => group.id === stored), 'an old family topic falls back to the first topic');
 });
 
 test('lore faces are stored and defaulted by id, so a reworded label moves nothing', () => {

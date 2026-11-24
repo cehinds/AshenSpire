@@ -12,15 +12,18 @@ import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { applyReceiptToPreviewTarget } from '../src/engine/combatDamagePreview.js';
 import { guardHitFloatParts, outcomeKindForEvent } from '../src/ui/fx.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function liveCore() {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   delete combat.player.combatStance;
+  // The targets here hold no stance (Idle); this suite isolates the Poise/Block order from the Idle stance weakness (theme B, 2026-11-17).
+  delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   return combat;
 }
-function hit(carrier, { block = 0, poise = 0, barrier = 0, amount = 10 } = {}) {
+// Amount 20: Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so every hit below meets the layers as 10.
+function hit(carrier, { block = 0, poise = 0, barrier = 0, amount = 20 } = {}) {
   const combat = liveCore(), target = combat.enemies[0];
   Object.assign(target, { block, barrier, persistentWard: null, persistentPoise: { value: poise, max: Math.max(20, poise) }, gameProfilePoise: 0, statuses: {} });
   delete target.combatStance;
