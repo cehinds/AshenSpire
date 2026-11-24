@@ -251,3 +251,31 @@ test('weights tab: the multiply-instead switch stores flat or multiplier, and th
   assert.equal(scoring.tags.ash.pMultiplier, 0);
   assert.deepEqual(ValidateScoringConfig(scoring), []);
 });
+
+test('studio restore: a draft with the old naming tables takes the repo naming and drops prefix / suffix', async () => {
+  const { RefreshRestoredNaming, NamingIsStale } = await import('../tools/score-studio/weightsStaging.js');
+  const { CardName } = await import('../src/model/combatPower.js');
+  // dev's naming.card before convention names: physical/spell base keys, a camp fallback, Ember, and the studio's word tables.
+  const draft = structuredClone(shippedScoring);
+  const card = draft.naming.card;
+  card.base = { 'maneuver:smash': 'Smash', 'maneuver:sweep': 'Sweep', 'maneuver:counter': 'Riposte', 'maneuver:defend': 'Guard', 'maneuver:evade': 'Step', 'attack:physical': 'Strike', 'attack:spell': 'Bolt', 'attack:area:physical': 'Cleave', 'attack:area:spell': 'Wave', 'skill:physical': 'Technique', 'skill:spell': 'Rite' };
+  card.fallback = { physical: 'Keen', spell: 'Astral' };
+  card.element['school:fire'] = 'Ember';
+  for (const key of ['rarity', 'range', 'defaultRange', 'tradition', 'defaultTradition', 'limit']) delete card[key];
+  card.prefix = { burn: 'Searing' };
+  card.suffix = { burn: 'Embers' };
+  assert.ok(NamingIsStale(draft));
+  assert.equal(NamingIsStale(shippedScoring), false);
+  const hit = { ...BaseFace(), sp: 1, dmg: 3, tags: ['camp:physical', 'range:melee'] };
+  RefreshRestoredNaming(draft, shippedScoring);
+  assert.equal(NamingIsStale(draft), false);
+  assert.deepEqual(draft.naming.card, shippedScoring.naming.card);
+  assert.equal(CardName(hit, 0, draft), 'Strike');
+  // A current config keeps its own edits; only the retired word tables go.
+  const current = structuredClone(shippedScoring);
+  current.naming.card.rarity.rare = 'Grand';
+  current.naming.card.prefix = { burn: 'Searing' };
+  RefreshRestoredNaming(current, shippedScoring);
+  assert.equal(current.naming.card.rarity.rare, 'Grand');
+  assert.equal('prefix' in current.naming.card, false);
+});

@@ -16,7 +16,7 @@ import { BaseFace, CardKind, CardCategories, ScoreCard, CombatPower, RankOf, Ran
 import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
-import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } from './weightsStaging.js';
+import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
 import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
@@ -650,7 +650,13 @@ function namingScoring(scoringRef) {
   const own = scoringRef?.naming;
   if (!own) return { ...scoringRef, naming: shippedScoring.naming };
   const { limit, ...shippedCard } = shippedScoring.naming.card;
-  return { ...scoringRef, naming: { ...shippedScoring.naming, ...own, card: { ...shippedCard, ...(own.card || {}) } } };
+  // Table by table and key by key, so a table missing a newer key still finds the shipped word.
+  const card = { ...shippedCard };
+  for (const [table, words] of Object.entries(own.card || {})) {
+    const shippedWords = shippedCard[table];
+    card[table] = shippedWords && typeof shippedWords === 'object' && !Array.isArray(shippedWords) && words && typeof words === 'object' && !Array.isArray(words) ? { ...shippedWords, ...words } : words;
+  }
+  return { ...scoringRef, naming: { ...shippedScoring.naming, ...own, card } };
 }
 
 function nameParts(def, sc = scoreCardEntry(def)) {
@@ -1880,7 +1886,8 @@ function discardPendingWeights() {
 function stageWholeScoring(scoring, sourceName) {
   const errors = ValidateScoringConfig(scoring);
   if (errors.length) throw new Error(errors.join(' '));
-  state.pendingScoring = clone(scoring);
+  // A config saved before convention names gets the repo's naming tables and loses the retired word tables.
+  state.pendingScoring = RefreshRestoredNaming(clone(scoring), state.repoScoring);
   state.pendingBase = clone(state.scoring);
   document.querySelector('.studio-tab[data-tab="weights"]')?.click();
   renderWeights({ shifts: false });
@@ -3098,7 +3105,7 @@ function wireEvents() {
   const loadAB = (slot) => {
     if (!state.abSlots[slot]) { toast(`Slot ${slot} is empty`); return; }
     pushHistory();
-    state.scoring = clone(state.abSlots[slot]);
+    state.scoring = RefreshRestoredNaming(clone(state.abSlots[slot]), state.repoScoring);
     state.abSlots.activeLabel = `Slot ${slot}`;
     document.getElementById('ab-active-label').textContent = `Slot ${slot}`;
     syncAllViews();
@@ -3243,15 +3250,16 @@ async function boot() {
       const draftArtLayers = Array.isArray(draft.artLayers?.layers) ? draft.artLayers : null;
       const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
         .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
-      state.scoring = draft.scoring;
+      // A draft saved before convention names takes the repo's naming tables and drops the retired word tables.
+      state.scoring = RefreshRestoredNaming(draft.scoring, state.repoScoring);
       // A draft saved before a category existed takes the repo's weight for it (Hybrid +10 reaches old drafts).
       for (const [key, weight] of Object.entries(state.repoScoring.categories || {})) {
         if (key === 'rule' || state.scoring.categories?.[key]) continue;
         (state.scoring.categories ||= {})[key] = clone(weight);
       }
       if (draft.pendingScoring && draft.pendingBase && ValidateScoringConfig(draft.pendingScoring).length === 0) {
-        state.pendingScoring = draft.pendingScoring;
-        state.pendingBase = draft.pendingBase;
+        state.pendingScoring = RefreshRestoredNaming(draft.pendingScoring, state.repoScoring);
+        state.pendingBase = RefreshRestoredNaming(draft.pendingBase, state.repoScoring);
       }
       if (draftArtLayers) state.artLayers = draftArtLayers;
       for (const draftCard of draftCards) {

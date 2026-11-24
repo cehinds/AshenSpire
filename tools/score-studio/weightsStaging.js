@@ -82,3 +82,35 @@ export function WithoutRankPin(override)
   for (const field of RANK_PIN_FIELDS) delete rest[field];
   return Object.keys(rest).length ? rest : null;
 }
+
+// Keys only the current naming tables have (owner, 2026-11-24): a config without them predates convention names.
+const CURRENT_NAMING_PROBES = Object.freeze([['base', 'attack:martial:melee'], ['range'], ['tradition'], ['rarity']]);
+// Auto-name word tables the studio used to seed; nothing reads them now.
+const RETIRED_NAMING_TABLES = Object.freeze(['prefix', 'suffix']);
+
+/** True when a config's naming.card lacks the current convention-name tables. */
+export function NamingIsStale(config)
+{
+  const card = config?.naming?.card;
+  if (!isPlainObject(card)) return true;
+  return CURRENT_NAMING_PROBES.some(([table, key]) => !isPlainObject(card[table]) || (key !== undefined && !Object.hasOwn(card[table], key)));
+}
+
+/**
+ * Brings a restored config's naming up to date, in place: a stale naming.card is replaced by the repo's copy (its limit
+ * kept when it had one), and the retired prefix / suffix tables are dropped. Returns the config.
+ */
+export function RefreshRestoredNaming(config, repoScoring)
+{
+  if (!isPlainObject(config)) return config;
+  const repoNaming = repoScoring?.naming;
+  if (NamingIsStale(config) && isPlainObject(repoNaming))
+  {
+    const ownLimit = config.naming?.card?.limit;
+    config.naming = { ...structuredClone(repoNaming), ...(isPlainObject(config.naming) ? { roman: config.naming.roman ?? repoNaming.roman } : {}) };
+    if (ownLimit !== undefined) config.naming.card.limit = structuredClone(ownLimit);
+  }
+  const card = config.naming?.card;
+  if (isPlainObject(card)) for (const table of RETIRED_NAMING_TABLES) delete card[table];
+  return config;
+}
