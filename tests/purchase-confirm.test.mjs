@@ -2,6 +2,7 @@
 // buys appeared to ask. Each trader shelf and each Blacksmith buy or rank-up now opens the shared confirmation modal
 // (components/confirmationModal.js, modal kind 'confirm'), names the item and the price, and spends only on its
 // confirm; Back spends nothing.
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -114,6 +115,7 @@ function mountSmith() {
   run.smithingStones = 12;
   run.cinders = 5000;
   run.seenEvents = [];
+  FillUpgradeSlots(run); // rank-up needs a fully upgraded card (owner 2026-11-23)
   run.shopStock = buildBlacksmithStock(registries, createRng(41), run);
   const app = document.createElement('main'); app.id = 'app'; document.body.append(app);
   const bought = [];

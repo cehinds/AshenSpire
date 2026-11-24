@@ -30,7 +30,9 @@ test('every Core shop offer rolls its own price inside the authored range for it
     for (const option of stock.options) {
       // The copy service (owner 2026-11-20) charges its own authored price (shops.json cardCopy.price), not a table range.
       if (option.kind === 'cardCopies') { assert.ok(Number.isSafeInteger(option.price) && option.price > 0); continue; }
-      const [min, max] = rangeOf(option, run);
+      // A ranked card offer (owner 2026-11-23, shopOfferRank.js) costs +25% per rank, rounded.
+      const factor = 1 + 0.25 * (option.rank || 0);
+      const [min, max] = rangeOf(option, run).map((end) => Math.round(end * factor));
       assert.ok(Number.isSafeInteger(option.price) && option.price >= min && option.price <= max, `${option.kind} ${option.id} ${option.price} in ${min}-${max}`);
       prices.add(option.price); kinds.add(option.kind);
     }

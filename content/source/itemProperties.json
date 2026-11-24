@@ -1,13 +1,13 @@
 {
   "smith": {
     "cinders": [
-      50,
-      85,
-      120,
-      155
+      150,
+      255,
+      360,
+      465
     ],
-    "cinderStep": 35,
-    "cinderPerRank": 25,
+    "cinderStep": 105,
+    "cinderPerRank": 75,
     "stonesPerBand": 3,
     "optionCounts": [
       2,
@@ -16,7 +16,7 @@
     "baseSlots": 6,
     "maxSlots": 12,
     "$note": {
-      "cinders": "Cinder price of the 1st, 2nd, 3rd and 4th upgrade of one item (owner 2026-11-17: about 50 at the least); every later upgrade adds cinderStep to the one before, and every rank the item was raised adds cinderPerRank to each.",
+      "cinders": "Cinder price of the 1st, 2nd, 3rd and 4th upgrade of one item (owner 2026-11-23: tripled, about 150 at the least); every later upgrade adds cinderStep to the one before, and every rank the item was raised adds cinderPerRank to each.",
       "stonesPerBand": "Smithing Stones rise by one every this many upgrades of one item: 1 for upgrades 1-3, 2 for 4-6, 3 for 7-9.",
       "optionCounts": "The Blacksmith offers one of these many options per upgrade, picked at random (never fewer than two).",
       "baseSlots": "How many upgrades an unranked item takes; each item rank adds one, up to maxSlots."
@@ -859,7 +859,7 @@
   },
   "categoryChange": {
     "stones": 1,
-    "cinders": 75,
+    "cinders": 150,
     "$note": {
       "stones": "Smithing Stones a category change costs.",
       "cinders": "Cinders a category change costs. The player keeps up to (the weapon's upgrade count, at least 1) of its old properties; 1 to 1 + upgrade count new ones are rolled from the new category's pool, lower counts likelier."

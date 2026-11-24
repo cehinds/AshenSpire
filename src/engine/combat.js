@@ -1,3 +1,4 @@
+import { OwnCardRank } from '../model/cardRank.js';
 import { GearManaCost, GearTypeEffectsEnabled, GearRuleTriggered } from '../model/gearEffects.js';
 import { QueueGearTurnGrants, QueueGearCardPlayed, GearFirstTurnSp, RefreshGearItemProps } from './gearHooks.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
@@ -401,7 +402,7 @@ export function createCombat({
     ...(c.legacyAbility === true ? { legacyAbility: true } : {}),
     ...(c.abilityOfferId ? { abilityOfferId: c.abilityOfferId } : {}),
     ...(c.rewardReceiptId ? { rewardReceiptId: c.rewardReceiptId } : {}),
-    ...(Number.isInteger(c.rank) && c.rank > 1 ? { rank: c.rank } : {}),
+    ...(OwnCardRank(c) > 0 ? { rank: c.rank } : {}), // a stored Rank 1 keeps its badge and slots
     ...(Number.isInteger(c.skillBonus) && c.skillBonus > 0 ? { skillBonus: c.skillBonus } : {}),
     ...(c.acquiredAt !== undefined ? { acquiredAt: structuredClone(c.acquiredAt) } : {}),
     // Equipment numbers ride on the instance (model/loadout.js) — copy them in
@@ -1725,7 +1726,7 @@ function actionCardCarrier(combat, source, def, inst, kind, committed = false)
         cardId: inst.cardId,
         upgraded: inst.upgraded,
         ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}),
-        ...(inst.rank > 1 ? { rank: inst.rank } : {}),
+        ...(OwnCardRank(inst) > 0 ? { rank: inst.rank } : {}),
         ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
         type: kind,
         tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined),

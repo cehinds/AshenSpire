@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-24
+
+- **Upgrades scale with rank, cost more, and rank-ups need a full card** ([#2963](https://github.com/cehinds/AshenSpire/pull/2963), `0.7.5.74`). A card takes rank + 1 upgrades (unranked 1, Rank 1 two, Rank 4 five) and the weapon's Smith level no longer adds any. Upgrades cost three times as much and other services twice as much; a rank-up costs more the higher the rank it reaches. Cards sell for twice as much, never above what they cost, and ranked cards cost 25% more per rank. Shops sometimes stock a Rank 1 or Rank 2 card. A new rule, on by default, lets a card rank up only once all its upgrade slots are used, and the upgrade picker shows each card's rank.
+
 ## 2026-11-23
 
 - **Spells no longer cost 1 extra Stamina** ([#2964](https://github.com/cehinds/AshenSpire/pull/2964), `0.7.5.74`). A spell costs the SP printed on it, so a 0 SP spell is free to cast and scores 0 SP in Score Studio. Spells still cost 1 extra Mana, and Prepared still takes 1 SP off. Fights saved before this keep the old price.

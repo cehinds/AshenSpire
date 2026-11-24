@@ -12,6 +12,8 @@ import {
   RankUpCandidates, RaiseCardRank, RollRankUp, CombatRankUpChance, ShopRankUpChance, ShopRankUpPrice,
   CombatRewardRanksUp, ShopStocksRankUp, InstanceRank, RANK_CEILING,
 } from '../src/model/rankUpService.js';
+import { RankUpBlock, RankUpReady, RankUpNeedsFullUpgrades } from '../src/model/rankUpService.js';
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
@@ -24,18 +26,62 @@ test('the data holds the owner numbers: 5% normal, 25% elite and boss, 15% per s
   assert.equal(CombatRankUpChance(run, 'elite'), 25);
   assert.equal(CombatRankUpChance(run, 'boss'), 25);
   assert.equal(ShopRankUpChance(run), 15);
-  assert.equal(ShopRankUpPrice(run), 120);
+  assert.equal(ShopRankUpPrice(run), 240);
 });
 
 test('raising a card adds one rank and its upgrade slots follow', () => {
   const run = newRun();
   const card = RankUpCandidates(registries, run)[0];
   assert.ok(card, 'a fresh run holds a rankable card');
+  card.rank = 1; // a "Rank 1" card: slots are rank + 1, so each raise opens one
+  FillUpgradeSlots(run, [card]); // the full-upgrade rule (on by default)
   const before = InstanceRank(card), slots = UpgradeSlots(run, card);
   const receipt = RaiseCardRank(registries, run, card.instanceId);
   assert.deepEqual([receipt.instanceId, receipt.rank], [card.instanceId, before + 1]);
   assert.equal(InstanceRank(card), before + 1);
   assert.equal(UpgradeSlots(run, card), slots + 1);
+});
+
+test('raising an unranked card (no badge, 1 slot) makes it Rank 1 with 2 slots: one slot per rank-up (owner 2026-11-23)', () => {
+  const run = newRun();
+  const card = RankUpCandidates(registries, run)[0];
+  assert.equal(card.rank, undefined);
+  assert.equal(UpgradeSlots(run, card), 1);
+  FillUpgradeSlots(run, [card]);
+  RaiseCardRank(registries, run, card.instanceId);
+  assert.deepEqual([card.rank, UpgradeSlots(run, card)], [1, 2]);
+  FillUpgradeSlots(run, [card]);
+  RaiseCardRank(registries, run, card.instanceId);
+  assert.deepEqual([card.rank, UpgradeSlots(run, card)], [2, 3]);
+});
+
+test('the full-upgrade rule (on by default): a card ranks up only once its slots are used, and keeps one free slot after', () => {
+  const run = newRun();
+  assert.equal(RankUpNeedsFullUpgrades(run), true, 'on unless the profile sets it false');
+  const card = RankUpCandidates(registries, run)[0];
+  assert.equal(RankUpBlock(run, card), 'Upgrade this card to its limit first.');
+  assert.ok(!RankUpReady(registries, run).some((row) => row.instanceId === card.instanceId), 'shown as a candidate, not ready');
+  assert.throws(() => RaiseCardRank(registries, run, card.instanceId), /limit first/);
+  assert.equal(card.rank, undefined, 'a refused raise changes nothing');
+  FillUpgradeSlots(run, [card]);
+  assert.equal(RankUpBlock(run, card), '');
+  RaiseCardRank(registries, run, card.instanceId);
+  assert.equal(card.rank, 1);
+  assert.equal(UpgradeSlots(run, card) - 1, 1, 'its upgrades stay and one slot is free');
+  assert.ok(RankUpBlock(run, card), 'Rank 1 needs its second upgrade before the next rank-up');
+  // A rank-up bonus step is a gift and uses no slot.
+  card.upgradeSteps = [...card.upgradeSteps, { k: 'dmg', n: 1, bonus: true }];
+  assert.ok(RankUpBlock(run, card), 'the bonus step does not fill the free slot');
+});
+
+test('turned off in the profile, any candidate may rank up', () => {
+  const run = newRun();
+  run.gameProfile = { ...run.gameProfile, modules: { ...run.gameProfile.modules, progression: { ...run.gameProfile.modules.progression, rankUpNeedsFullUpgrades: false } } };
+  assert.equal(RankUpNeedsFullUpgrades(run), false);
+  const card = RankUpCandidates(registries, run)[0];
+  assert.equal(RankUpBlock(run, card), '');
+  RaiseCardRank(registries, run, card.instanceId);
+  assert.equal(card.rank, 1);
 });
 
 test('only rankable cards are offered: unknown ids, equipment-bound cards and cards at the ceiling are refused', () => {
@@ -92,4 +138,55 @@ test('a profile with no rankUp data, or a run that cannot rank cards, offers not
   noRanks.gameProfile.modules.progression.cardRanks = false;
   assert.deepEqual(RankUpCandidates(registries, noRanks), []);
   assert.equal(CombatRankUpChance(noRanks, 'elite'), 0);
+});
+
+// Review fix (2026-11-23): rank-up bonus steps use no slot, so they do not count toward the 10-upgrade cap either.
+// Five skill rank-ups leave a Rank 5 card with 5 bonus steps; it can still fill its 6 slots and rank up again.
+test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (bonus steps skip the 10 cap)', async () => {
+  const { awardSkillXp, xpToNext, coreCardRanks, raiseCardRank } = await import('../src/model/skills.js');
+  const { rankUpBonusOptions } = await import('../src/model/rankUpBonus.js');
+  const { planCardUpgrade, commitCardUpgrade } = await import('../src/model/cardUpgradeService.js');
+  const { canUpgrade } = await import('../src/model/cardUpgradeLimits.js');
+  const { paidUpgradeCount, upgradeCount, upgradeStepsProblems } = await import('../src/model/cardUpgrade.js');
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'w25-cap', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  run.smithingStones = 99;
+  const xp = Array.from({ length: 8 }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0);
+  awardSkillXp(registries, run, 'item:blade', xp, { queueRewards: false, queueRankUps: coreCardRanks(run) });
+  const strike = run.deck.find((c) => c.cardId === 'core.strike');
+  const fill = () => {
+    while (paidUpgradeCount(strike) < UpgradeSlots(run, strike)) {
+      const quote = planCardUpgrade(run, registries, strike.instanceId);
+      assert.equal(quote.ok, true, quote.reason);
+      commitCardUpgrade(run, registries, quote);
+    }
+  };
+  const rankUp = () => {
+    const options = rankUpBonusOptions(registries, run, strike);
+    assert.ok(raiseCardRank(registries, run, 'item:blade', strike.instanceId, options[0]?.step ?? null), 'the rank-up lands');
+  };
+  for (let i = 0; i < 5; i += 1) { fill(); rankUp(); }
+  assert.equal(strike.rank, 5);
+  assert.equal(UpgradeSlots(run, strike), 6);
+  assert.equal(paidUpgradeCount(strike), 5);
+  assert.equal(upgradeCount(strike), 10, 'five paid steps and five bonus steps');
+  assert.equal(canUpgrade(registries, run, strike).ok, true, 'the sixth slot can still be bought');
+  fill();
+  assert.equal(paidUpgradeCount(strike), 6);
+  assert.equal(RankUpBlock(run, strike), '');
+  rankUp();
+  assert.equal(strike.rank, 6);
+  assert.deepEqual(upgradeStepsProblems(strike, 'card'), [], 'a save holding the card stays valid');
+});
+
+// Review fix (2026-11-23): a missing setting counts as on, so saved runs get the rule too; the help text says so.
+test('the full-upgrade rule help text says it is on by default, not that it waits for new runs', async () => {
+  const { uiStrings } = await import('../src/content/generated/uiStrings.js');
+  const row = uiStrings.find((r) => r.id === 'gameProfile.settings.rankUpNeedsFull');
+  assert.ok(row);
+  const text = JSON.stringify(row);
+  assert.doesNotMatch(text, /Applies to new runs/);
+  assert.match(text, /On by default\./);
+  const saved = newRun();
+  delete saved.gameProfile.modules.progression.rankUpNeedsFullUpgrades;
+  assert.equal(RankUpNeedsFullUpgrades(saved), true, 'a saved run without the setting gets the rule');
 });

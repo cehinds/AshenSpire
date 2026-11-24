@@ -1,7 +1,7 @@
 // How many Core card upgrades are free, what the next one costs, and whether it
 // can be bought (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md, owner rulings of
 // 2026-10-28). Pure reads of the run: nothing here mutates.
-import { cardRank } from './cardRank.js';
+import { cardRank, VisibleCardRank } from './cardRank.js';
 import { mulberry32 } from './rng.js';
 import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 
@@ -37,7 +37,7 @@ export function freeAllowance(instance, def) {
 }
 
 /**
- * The weapon a card's upgrade slots count (W25, owner 2026-11-14): the card's own source weapon (an equipment-bound card
+ * The weapon a card belongs to for upgrades (W25, owner 2026-11-14; since 2026-11-23 it no longer adds upgrade slots): the card's own source weapon (an equipment-bound card
  * carries `sourceArmamentId` / `weaponId`), else the main weapon the run has equipped (the active right-hand slot).
  * Returns its armament id, or '' when there is none.
  */
@@ -59,12 +59,12 @@ export function WeaponSmithLevel(run, instance) {
 }
 
 /**
- * UpgradeSlots(run, instance) → how many upgrades the card may carry: its rank (an unranked card counts as rank 1) plus
- * its weapon's Smith level plus 1, never past MAX_CARD_UPGRADES. Owner's examples: unranked + a +0 weapon = 2; unranked
- * + a +1 weapon = 3; rank 3 + a +2 weapon = 6.
+ * UpgradeSlots(run, instance) → how many upgrades the card may carry: the rank its face shows plus 1, never past
+ * MAX_CARD_UPGRADES (owner, 2026-11-23; the weapon's Smith level no longer adds). An unranked card (no badge) has 1,
+ * a "Rank 1" card 2, a "Rank 4" card 5. `run` is kept for callers; the rule no longer reads it.
  */
 export function UpgradeSlots(run, instance) {
-  return Math.min(MAX_CARD_UPGRADES, cardRank(instance) + WeaponSmithLevel(run, instance) + 1);
+  return Math.min(MAX_CARD_UPGRADES, VisibleCardRank(instance) + 1);
 }
 
 /** Rest-site odds (owner, 2026-11-14): upgrades 1-3 offer one option of one effect; the 4th and later offer two options, each 80% one effect, 20% two. */
@@ -194,7 +194,8 @@ export function nextUpgradeStep(run, instance, base, registries) {
  * the card is at the 10-upgrade cap or maxed (no step is eligible any more).
  */
 export function upgradeCost(run, instance, def, registries) {
-  if (upgradeCount(instance) + 1 > MAX_CARD_UPGRADES) return null;
+  // The cap counts slot-using upgrades only, like the slots check: a rank-up bonus step is a gift (paidUpgradeCount).
+  if (paidUpgradeCount(instance) + 1 > MAX_CARD_UPGRADES) return null;
   if (def && instance && nextUpgradeStep(run, instance, def, registries) === null) return null;
   // A rank-up bonus step does not use a free upgrade (paidUpgradeCount).
   return paidUpgradeCount(instance) + 1 <= freeAllowance(instance, def) ? 0 : 1;
@@ -214,12 +215,15 @@ export function canUpgrade(registries, run, instance) {
   if (!def) return refuse('missing', 'That card is not in the deck.');
   if (instance.sourceArmamentId || instance.grantedBy) return refuse('armament', `${def.name} is upgraded with its armament.`);
   const slots = UpgradeSlots(run, instance);
-  if (n > slots && n <= MAX_CARD_UPGRADES) {
-    return refuse('slots', `${def.name} has ${slots} upgrade slots (rank + weapon level + 1); raise its rank or smith its weapon.`);
+  // A rank-up bonus step is a gift and uses no slot, so a rank-up leaves one slot free (owner, 2026-11-23).
+  // The 10 cap counts the same slot-using upgrades, so bonus steps never hold a card short of its slots.
+  const paid = paidUpgradeCount(instance) + 1;
+  if (paid > slots && paid <= MAX_CARD_UPGRADES) {
+    return refuse('slots', `${def.name} has ${slots} upgrade ${slots === 1 ? 'slot' : 'slots'} (rank + 1); raise its rank for more.`);
   }
   const cost = upgradeCost(run, instance, def, registries);
   if (cost === null) {
-    return n > MAX_CARD_UPGRADES ? refuse('cap', `${def.name} is already at ${MAX_CARD_UPGRADES} upgrades.`)
+    return paid > MAX_CARD_UPGRADES ? refuse('cap', `${def.name} is already at ${MAX_CARD_UPGRADES} upgrades.`)
       : refuse('maxed', `${def.name} is fully upgraded.`);
   }
   if (cost > stonesOf(run)) return refuse('stones', `Needs ${cost} Smithing Stone; you have ${stonesOf(run)}.`, cost);

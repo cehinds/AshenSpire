@@ -1,4 +1,6 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
+import { OwnCardRank } from './cardRank.js';
+import { RankShopCardOffers } from './shopOfferRank.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { ConfiguredTraderCategories, ConfiguredTraderOffersSmith } from './gameProfileShopKind.js';
 import { ShelfStockCounts } from './vendorStockRange.js';
@@ -7,11 +9,12 @@ import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
-import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RankUpReady, RankUpReadyReason, RaiseCardRank, RankUpPrice, RankUpBlock } from './rankUpService.js';
 import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
+import { RankedCardPrice } from './rankedCardPrice.js';
 import { createRng } from './rng.js';
 import { TierFor, FilterToBand } from './levelLists.js';
 import { carriedIds } from './loadout/ownership.js';
@@ -21,7 +24,7 @@ import { GEAR_TYPES } from '../content/gearTypes.js';
 const GEAR_THEME_PERCENT = GEAR_TYPES.themedPercent;
 import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
 import { SpellRewardEligible, BalanceSpellRewardWeights } from './spellPoolPolicy.js';
-import { CARD_COPY_OPTION, CARD_COPY_SOURCE, CopyOwnedCard, GrantRelicCardCopies, VendorStocksCardCopy, CardCopyShelf, CardCopyUsesLeft, CardCopyCandidates } from './cardCopyService.js';
+import { CARD_COPY_OPTION, CARD_COPY_SOURCE, CopyOwnedCard, GrantRelicCardCopies, VendorStocksCardCopy, CardCopyShelf, CardCopyUsesLeft, CardCopyCandidates, CardCopyPrice } from './cardCopyService.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -433,11 +436,11 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
     if(option.kind!=='combatCards'||!registries.cards.has(option.id))throw new Error('Invalid reward option');
     const at=rewardInstanceId(offerId,index),source=[...draft.deck,...draft.sideboard].find(card=>card?.instanceId===option.copyOf&&card.cardId===option.id);
     if(source){const copy=CopyOwnedCard(registries,draft,source.instanceId);copy.instanceId=at;}
-    else draft.sideboard.push({instanceId:at,cardId:option.id,upgraded:!!option.upgraded,...(option.rank>1?{rank:option.rank}:{})});
+    else draft.sideboard.push({instanceId:at,cardId:option.id,upgraded:!!option.upgraded,...(OwnCardRank(option)>0?{rank:option.rank}:{})});
   } else if(['combatCards','weaponArts'].includes(option.kind)) {
     registries.cards.get(option.id);
     const instanceId=`reward:${offerId}:${index}${offer.source==='shop'?`:${offer.tradeRevision||0}`:''}`;
-    draft.sideboard.push({instanceId,cardId:option.id,upgraded:false,...(option.rank>1?{rank:option.rank}:{})});
+    draft.sideboard.push({instanceId,cardId:option.id,upgraded:false,...(OwnCardRank(option)>0?{rank:option.rank}:{})});
   } else if(option.kind==='weapons') {
     if(!(registries.equipment.armaments||[]).some(row=>row.id===option.id))throw new Error('Unknown reward weapon');
     if(draft.loadout.storage.includes(option.id))throw new Error('Reward weapon already owned');
@@ -537,6 +540,8 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   // with a rank-up shelf; without one it needs a tab of its own, so it is stocked only while the dock stays within maxCategories.
   if(fresh&&VendorStocksCardCopy(registries,run,'trader',shopId)&&!stock.options.some(option=>option.kind===CARD_COPY_OPTION.kind)&&CopyShelfFits(run,shopId,stock)){stock.options.push(CardCopyShelf(run,'trader'));stock.takeCount+=1;}
   // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
+  // Owner 2026-11-23: some card offers arrive ranked (shops.json rankedOfferChancePct), rolled before the price so it reads the rank.
+  if(fresh)RankShopCardOffers(run,`shop:${shopId}`,stock.options);
   const table=module.priceTable??rules.priceTable;
   if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
   return stock;
@@ -559,25 +564,36 @@ function rollOfferPrice(registries,run,rng,table,option) {
     :(registries.equipment.armour||[]).find(item=>item.id===option.id&&item.classId===run.class);
   const range=Array.isArray(row)?row:row[def?.rarity]??row.common;
   if(!Array.isArray(range)||range.length!==2||!range.every(Number.isSafeInteger)||range[0]<0||range[1]<range[0])throw new Error(`Invalid shop price range for ${option.kind}`);
-  return rng.int('shop',range[0],range[1]);
+  const price=rng.int('shop',range[0],range[1]);
+  // Owner 2026-11-23: a ranked card offer costs +rankPricePct% per visible rank (rankedCardPrice.js); shop offers roll no rank today.
+  return option.kind==='combatCards'||option.kind==='weaponArts'?RankedCardPrice(run,price,option):price;
 }
 export { shopOfferPrice };
-export function gameProfileShopPurchasePlan(registries,run,shopId,index) {
+/**
+ * gameProfileShopPurchasePlan(registries, run, shopId, index[, { instanceId }]) -> the quote for buying offer `index`. A copy
+ * shelf's price is its "from" price (an unranked card's) until `instanceId` names the card to copy; then it is that card's
+ * rank-raised price (CardCopyPrice, owner 2026-11-23), and the commit charges it.
+ */
+export function gameProfileShopPurchasePlan(registries,run,shopId,index,{instanceId=null}={}) {
   const offerId=`shop:${shopId}`,stock=run.gameProfileRewardOffers?.[offerId];
-  const price=shopOfferPrice(stock,index);
+  const copyCard=stock?.options?.[index]?.kind===CARD_COPY_OPTION.kind&&typeof instanceId==='string'?CardCopyCandidates(registries,run).find(card=>card.instanceId===instanceId):null;
+  // A rank-up shelf's price is its Rank 1 price; the chosen card pays it times the rank it reaches (owner, 2026-11-23).
+  const rankCard=stock?.options?.[index]?.kind===RANK_UP_OPTION.kind&&typeof instanceId==='string'?RankUpCandidates(registries,run).find(card=>card.instanceId===instanceId):null;
+  const shelfPrice=shopOfferPrice(stock,index);
+  const price=copyCard?CardCopyPrice(run,shelfPrice,copyCard):rankCard?RankUpPrice(shelfPrice,OwnCardRank(rankCard)+1):shelfPrice;
   let reason='';
   if(!stock||stock.source!=='shop')reason='Missing configured shop';
   else if(!Number.isInteger(index)||!stock.options[index]||stock.taken.includes(index)||stock.claimed!==null)reason='This offer is sold out.';
   else if(!Number.isSafeInteger(price)||price<0)reason='Invalid configured shop price';
   else if(stock.options[index].kind==='weapons'&&(run.loadout?.storage||[]).length>=(registries.balance.equipment.storageSlots??8))reason='Inventory is full. Sell or make room first.';
   else if(!Number.isSafeInteger(run.cinders)||run.cinders<price)reason='Insufficient cinders';
-  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';}
+  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';else if(!RankUpReady(registries,run).length)reason=RankUpReadyReason();else if(rankCard&&RankUpBlock(run,rankCard))reason=RankUpBlock(run,rankCard);}
   else if(stock.options[index].kind===CARD_COPY_OPTION.kind){if(CardCopyUsesLeft(stock.options[index])<1)reason='This offer is sold out.';else if(!CardCopyCandidates(registries,run).length)reason='You have no card to copy.';}
   else try {claimGameProfileReward(registries,structuredClone(run),offerId,index);}catch(error){reason=error.message;}
   return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};
 }
 export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=null,quote=null) {
-  const plan=gameProfileShopPurchasePlan(registries,run,shopId,index);
+  const plan=gameProfileShopPurchasePlan(registries,run,shopId,index,{instanceId:quote?.instanceId??null});
   if(quote&&(quote.revision!==plan.revision||quote.signature!==plan.signature||quote.price!==plan.price||quote.shopId!==shopId||quote.index!==index))throw new Error('This offer changed. Inspect it again.');
   if(!plan.ok)throw new Error(plan.reason);
   const offerId=`shop:${shopId}`,price=plan.price;
@@ -609,6 +625,7 @@ export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=nul
     const replacement=makeOffer(registries,draft,random,{offerId:temporaryId,source:'shop',count:1,takeCount:1,categories:[receipt.kind],itemsPerCategory:1,excludedIds}).options[0];
     delete draft.gameProfileRewardOffers[temporaryId];
     if(replacement){
+      RankShopCardOffers(draft,`${offerId}:restock:${plan.revision}`,[replacement]);
       const table=gameModule(run,'shops').priceTable??gameContent(run,'shops').priceTable;
       if(table)replacement.price=rollOfferPrice(registries,draft,random,table,replacement);
       stock.options[index]=replacement;

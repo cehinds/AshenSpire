@@ -17,8 +17,12 @@ import { CloseConfirmationModal } from '../src/ui/components/confirmationModal.j
 const modalOf = dom => dom.document.querySelector('.confirmation-modal');
 
 // Seed 504: every copy of a card rolls the same next step, so the identical-copies row tests do not depend on luck (re-recorded 2026-10-31 when the pool grew; was 511).
-// The Reaver's greatsword is smithed to +9 so a card has all ten upgrade slots (rank + weapon level + 1, SPEC card upgrades); slot limits are tested in w25-upgrade-slots.test.mjs.
-const newRun = () => Object.assign(createRunState({ registries, classId: 'reaver', seed: 504, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } }), { itemUpgradeLevels: { 'armament/greatsword': 9 } });
+// Every deck card is raised to rank 9 so it has all ten upgrade slots (rank + 1, SPEC card upgrades); slot limits are tested in w25-upgrade-slots.test.mjs.
+const newRun = () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 504, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  for (const card of run.deck) card.rank = 9;
+  return run;
+};
 const strike = run => run.deck.find(c => c.cardId === 'core.strike');
 
 test('rows: a fresh Strike costs nothing, its second upgrade is 1 Smithing Stone', () => {
@@ -228,10 +232,16 @@ test('picker updates remove an exhausted upgrade and clear its selection', async
 test('rows carry a plain chip: rank and upgrade count', () => {
   const run = newRun();
   const card = strike(run);
+  delete card.rank; // an unranked card reads Basic, as the deck editor names it (owner 2026-11-23)
   const row = () => cardUpgradeModel(registries, run).rows.find(r => r.instanceId === card.instanceId);
-  assert.equal(row().chipLabel, 'Rank 1 · 0 upgrades');
+  assert.equal(row().chipLabel, 'Basic · 0 upgrades');
   card.upgraded = true; card.upgradeSteps = [{ k: 'authored' }];
+  assert.equal(row().chipLabel, 'Basic · 1 upgrade');
+  card.rank = 1;
   assert.equal(row().chipLabel, 'Rank 1 · 1 upgrade');
+  const spell = { instanceId: 'chip-spell', cardId: 'core.cantrip', upgraded: false };
+  run.deck.push(spell);
+  assert.equal(cardUpgradeModel(registries, run).rows.find(r => r.instanceId === spell.instanceId).chipLabel, 'Cantrip · 0 upgrades', 'an unranked spell reads Cantrip');
   card.rank = 3;
   assert.equal(row().chipLabel, 'Rank 3 · 1 upgrade');
 });
@@ -634,11 +644,18 @@ test('a row\'s step and price are separate chips that may wrap, so a phone row i
   const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
     const run = newRun(); run.smithingStones = 3;
+    delete strike(run).rank; // an unranked Strike reads Basic
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     const chips = [...host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"]`).querySelectorAll('.co-chip')].map(chip => chip.textContent);
-    assert.deepEqual(chips, ['0 → 1 upgrade', 'No charge']);
+    // QA 2026-11-23: the row leads with the card's rank and upgrades (Basic when unranked, Rank N when ranked).
+    assert.deepEqual(chips, ['Basic · 0 upgrades', '0 → 1 upgrade', 'No charge']);
     door.close();
+    strike(run).rank = 2;
+    const ranked = MountCardUpgradeModal(host, cardUpgradeModel(registries, run), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const first = host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"] .co-chip`).textContent;
+    assert.equal(first, 'Rank 2 · 0 upgrades');
+    ranked.close();
   });
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
   const chipRule = css.match(/\.card-upgrade-modal \.option-row \.co-chip \{([^}]*)\}/)?.[1] || '';
