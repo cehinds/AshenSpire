@@ -29,7 +29,7 @@ const OP_FIELD = { draw: 'draw', heal: 'heal', loseHp: 'loseHp', discard: 'disca
 /** The scorer's card face for a measured Core card. */
 export function faceOf(def, row) {
   const f = BaseFace();
-  Object.assign(f, { name: def.name, cls: def.class, rarity: def.rarity, type: def.type, camp: (def.tags || []).includes('camp:spell') ? 'spell' : 'physical' });
+  Object.assign(f, { name: def.name, cls: def.class, rarity: def.rarity, type: def.type, camp: (def.tags || []).includes('camp:spell') ? 'spell' : 'physical', magicShare: def.magicShare ?? 0 });
   f.sp = row.costs.sp; f.mp = row.costs.mp;
   f.dmg = row.final.damage || 0; f.hits = Math.max(1, row.final.hits || 1);
   f.blk = (row.final.block || 0) + (row.final.ward || 0); f.poise = row.final.poise || 0;

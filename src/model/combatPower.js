@@ -24,6 +24,25 @@ export const BaseFace = () => ({
   draw: 0, heal: 0, loseHp: 0, discard: 0, restoreSp: 0, restoreMp: 0, cleanse: 0, counter: 0, reflect: 0, pull: 0, move: 0, holdOne: 0, boost: 0, cull: 0, shuffle: 0, copy: 0, attr: 0,
 });
 
+const PLAIN_CARD_KINDS = ['power', 'curse', 'status'];
+
+/** A card's play style from its type and tags: attack, skill, spell, sweep, counter, defend, power, curse or status. */
+export function CardKind(face) {
+  const tags = face.tags || [];
+  if (PLAIN_CARD_KINDS.includes(face.type)) return face.type;
+  if (face.camp === 'spell' || tags.includes('camp:spell') || tags.includes('maneuver:casting')) return 'spell';
+  for (const kind of ['sweep', 'counter', 'defend']) if (tags.includes(`maneuver:${kind}`)) return kind;
+  return face.type === 'attack' || tags.some((t) => ['maneuver:attack', 'maneuver:smash', 'maneuver:ranged'].includes(t)) ? 'attack' : 'skill';
+}
+
+/** The scoring categories a face belongs to: Martial and/or Magic (and Hybrid when both), then its play style. A face may list its own (`categories`). */
+export function CardCategories(face) {
+  if (Array.isArray(face.categories)) return face.categories;
+  // A physical hit with a magic share (the game's packet hit) is both.
+  const hybrid = face.camp !== 'spell' && face.magicShare > 0;
+  return [face.camp === 'spell' ? 'magic' : 'martial', ...(hybrid ? ['magic', 'hybrid'] : []), CardKind(face)];
+}
+
 // The slim view of a scoring table: just what the scorer reads. Not cached: the simulator edits weights in place.
 function slimOf(full) {
   const tags = {};
@@ -108,6 +127,15 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
     const riders = new Set(EC.riders || []);
     const n = Object.entries(fx).filter(([k, v]) => v > 0 && !notEffect.has(k) && !(riders.has(k) && fx.damage > 0)).length;
     add('effect count', EC.weight * Math.max(0, n - (EC.skipFirst ? 1 : 0)));
+  }
+  // Owner 2026-11-23 (scoring.categories): each category the card belongs to adds its weight, or with `multiplier` on
+  // scales the positive score by it (1 = no change).
+  const CAT = scoring.categories;
+  if (CAT) for (const k of CardCategories(c)) {
+    const w = CAT[k];
+    if (!w || !Number.isFinite(w.weight)) continue;
+    if (w.multiplier) add(`category:${k}`, P * (w.weight - 1));
+    else add(`category:${k}`, w.weight);
   }
   const raw = Rnd(Object.values(parts).reduce((s, v) => s + v, 0));
   return { raw, parts, positive: P };

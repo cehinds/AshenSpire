@@ -375,6 +375,57 @@
     "rule": "Owner 2026-11-21: + weight for each distinct real effect type on a card that scores > 0, beyond the first. Real effects: damage, Block, each status, draw, heal, restores, cleanse, counter, reflect, pull, move, utility. Not counted: SP/MP costs, tag bonuses, keywords, multipliers, and riders (Poise counts only on a card that deals no damage).",
     "why": "A card that does several different things is worth more than its parts: it fits more turns and more decks."
   },
+  "categories": {
+    "rule": "Owner 2026-11-23: each category a card belongs to (Martial, Magic, Hybrid when it is both, and its card type) adds weight to the raw score; with multiplier on, the positive score is scaled by weight instead (1 = no change).",
+    "martial": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "magic": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "hybrid": {
+      "weight": 10,
+      "multiplier": false
+    },
+    "attack": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "skill": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "spell": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "sweep": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "counter": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "defend": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "power": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "curse": {
+      "weight": 0,
+      "multiplier": false
+    },
+    "status": {
+      "weight": 0,
+      "multiplier": false
+    }
+  },
   "tags": {
     "maneuver:smash": {
       "weight": 1,

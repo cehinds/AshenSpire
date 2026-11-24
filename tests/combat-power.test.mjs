@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ScoreCard, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
+import { ScoreCard, CardCategories, CardKind, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
 import { scoring } from '../src/content/generated/scoring.js';
 import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
 
@@ -105,4 +105,21 @@ test('ApplyScoringOverride leaves rows untouched when absent and overrides rank,
   assert.deepEqual(ApplyScoringOverride(base, { rank: 99 }), { ...base, rank: scoring.rank.maxRank, overridden: true });
   assert.deepEqual(ApplyScoringOverride(base, { cp: 14 }), { raw: 64, cp: 14, rank: RankOf(14), rarity: 'rare', overridden: true });
   assert.deepEqual(ApplyScoringOverride(base, { rarity: 'common' }), { raw: 64, cp: 64, rank: 10, rarity: 'common', overridden: true });
+});
+
+test('combat power: category weights add flat or scale the positive score, and default to no change', () => {
+  const face = { ...fixture('combat-power-core-faces.json')[0] };
+  const base = ScoreCard(face, scoring);
+  assert.deepEqual(CardCategories({ camp: 'spell', type: 'skill' }), ['magic', 'spell']);
+  assert.deepEqual(CardCategories({ camp: 'physical', type: 'attack', tags: ['maneuver:sweep'], magicShare: 0.5 }), ['martial', 'magic', 'hybrid', 'sweep']);
+  assert.equal(CardKind({ type: 'attack', tags: ['maneuver:smash'] }), 'attack');
+  assert.equal(CardKind({ type: 'power', tags: ['camp:spell'] }), 'power');
+  assert.deepEqual(CardCategories({ camp: 'physical', type: 'attack', categories: ['martial', 'magic', 'sweep'] }), ['martial', 'magic', 'sweep']);
+  const [school, type] = CardCategories(face);
+  const withWeights = (categories) => ({ ...scoring, categories: { ...scoring.categories, ...categories } });
+  const flat = ScoreCard(face, withWeights({ [school]: { weight: 3, multiplier: false } }));
+  assert.equal(flat.parts[`category:${school}`], 3);
+  const scaled = ScoreCard(face, withWeights({ [type]: { weight: 2, multiplier: true } }));
+  assert.equal(scaled.parts[`category:${type}`], base.positive);
+  assert.equal(ScoreCard(face, withWeights({ [type]: { weight: 1, multiplier: true } })).raw, base.raw);
 });

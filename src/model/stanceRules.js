@@ -106,7 +106,9 @@ export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0)
       }
       if (!(base > 0) || carrier?.cost === 'X' || isSpellCard(carrier) || !hasAdept(ctx, entity, 'training.basic')) return base;
       const cfg = fixCoreRules(ctx, entity, carrier).stance;
-      return Math.max(adeptMinimum(ctx, carrier, cfg.playerMinimumCost ?? cfg.minimumCost), base - cfg.discount);
+      // Owner 2026-11-23: the Martial Adept SP cut is max(SP - 1, 1) on the player's turn and max(SP - 1, 0) only for a
+      // reaction played on the enemy's turn. stance.playerMinimumCost (0) is the Mana lane's floor, not this one.
+      return Math.max(adeptMinimum(ctx, carrier, cfg.minimumCost), base - cfg.discount);
     }
     if (!same) return base;
     const tags = carrier?.cardTags || carrier?.tags || [];

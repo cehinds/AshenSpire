@@ -1195,24 +1195,36 @@ function sourceAssetPlan(outDir, mainRef) {
   return plan;
 }
 /** Publish Score Studio from dev's tip at /score-studio/ so it can be used directly on GitHub Pages (Download JSON mode). */
+const SCORE_STUDIO_TREES = ['engine', 'src', 'styles', 'tools/score-studio'];
+const SCORE_STUDIO_ASSET_PREFIXES = [
+  'assets-display/card-cutouts/',
+  'assets/cards/',
+  'assets/card-components/',
+  'assets/player-polish/',
+  'assets/ui/',
+  'assets/fonts/',
+];
 function publishScoreStudio(outDir) {
   const devRef = refFor('dev');
   if (!devRef || !inTree(devRef, 'tools/score-studio/index.html')) return false;
   const studioDir = join(outDir, 'score-studio');
   mkdirSync(studioDir, { recursive: true });
-  extractTree(devRef, ['src', 'styles', 'tools/score-studio'], studioDir);
+  extractTree(devRef, SCORE_STUDIO_TREES, studioDir);
+  let hydrated = 0;
   try {
     const manifest = JSON.parse(git(['show', `${devRef}:art-manifest.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).assets || {};
     for (const [id, row] of Object.entries(manifest)) {
-      if (!id.startsWith('assets-display/card-cutouts/') && !id.startsWith('assets/cards/') && !id.startsWith('assets/card-components/')) continue;
+      if (!SCORE_STUDIO_ASSET_PREFIXES.some((p) => id.startsWith(p))) continue;
       const rec = row.light || row.common;
       if (!rec || !/^[0-9a-f]{64}$/.test(rec.sha256 || '')) continue;
       const from = join(outDir, objectPath(rec.sha256, id));
       if (!existsSync(from)) continue;
       mkdirSync(dirname(join(studioDir, id)), { recursive: true });
       cpSync(from, join(studioDir, id));
+      hydrated++;
     }
   } catch { /* best-effort art hydration when object store is present */ }
+  console.log(`  /score-studio/: ${hydrated} assets hydrated`);
   writeFileSync(join(studioDir, 'index.html'),
     '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=tools/score-studio/"><title>AshenSpire — Score Studio</title></head><body><p>Opening <a href="tools/score-studio/">Score Studio</a>…</p><script>location.replace("tools/score-studio/");</script></body></html>\n');
   return true;
