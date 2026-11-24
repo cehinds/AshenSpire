@@ -1,4 +1,4 @@
-// Owner, 2026-11-24 (Ward health buffer): Ward adds a purple health-buffer segment on the HP bar (`+N` in purple),
+// Owner, 2026-11-24 (Ward health buffer): Ward adds a blue health-buffer segment on the HP bar (`+N` in blue),
 // and CombatPlaybackModel updates `wardHp` from `wardHpChanged`, `damageDealt`, and `wardBroken`.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,7 +22,7 @@ test('HealthWardView scales HP and Ward segments cleanly for full and injured HP
 });
 
 for (const who of ['player', 'enemy']) {
-  test(`the ${who} HP meter renders "+10" in purple and a purple .m-ward-seg segment`, () => withKitDom(() => {
+  test(`the ${who} HP meter renders "+10" in blue and a blue .m-ward-seg segment`, () => withKitDom(() => {
     const el = meter({ id: 'hp', value: '50/50', cur: 50, max: 50, pct: 100 });
     el.dataset.who = who;
     ApplyHealthWard(el, HealthWardView(50, 50, 10));

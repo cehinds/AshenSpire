@@ -57,7 +57,7 @@ status.ward.tooltipBlockFirst,,,"Ward gives Poise: each stack adds {poise} maxim
 status.ward.tooltipPoiseFirst,,,"Ward gives Poise: each stack adds {poise} maximum and current Poise. While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose {decay} Ward at the start of your turn, and its +{poise} maximum Poise with it.",
 status.ward.breaks,,,"When your Poise reaches 0, all Ward is lost.",
 combat.protection.hpWardAria,,"HP {hp} of {maxHp}, plus {ward} Ward","{ward} Ward health buffer on your HP bar. Absorbed after Block and before Poise and HP.",HP {hp}/{maxHp} +{ward}
-combat.protection.barrier,,Bonus Poise,"Bonus Poise is Poise above the maximum, shown in blue. Cards that Gain Poise add it. It can exceed the maximum and fades 5 per turn.",Bonus Poise
+combat.protection.barrier,,Bonus Poise,"Bonus Poise is Poise above the maximum, shown in purple. Cards that Gain Poise add it. It can exceed the maximum and fades 5 per turn.",Bonus Poise
 combat.protection.poiseGuard,,Poise guard,Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.,Poise guard
 combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.,Ward guard
 combat.protection.wardBlock,,Warded Block,"The part of this turn's Block raised by magic. It counts in the Ward badge, is spent after ordinary Block, and is gone at the start of your next turn.",Warded Block

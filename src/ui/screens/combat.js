@@ -2123,7 +2123,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Broken: the empty bar says so in words until Broken ends and it refills (the bar's own number would read 0).
           const poiseValue = poiseEl.querySelector('.m-value');
           if (v.broken && poiseValue) { poiseValue.textContent = t('combat.broken.label'); poiseValue.setAttribute('aria-label', t('combat.broken.label')); }
-          // Bonus Poise (owner, 2026-11-15): "8/8" in yellow then "+5" in blue, and a blue segment on the bar, while Poise is above its base maximum.
+          // Bonus Poise (owner, 2026-11-15; purple 2026-11-24): "8/8" in yellow then "+5" in purple, and a purple segment on the bar, while Poise is above its base maximum.
           if (!v.broken) ApplyPoiseBonus(poiseEl, PoiseBonusView(v.persistentPoise));
         }
       }

@@ -1,5 +1,5 @@
-// Owner, 2026-11-15 (W25-W): while bonus Poise (Barrier stacks) is above the base maximum the Poise bar's bonus part is blue and the number
-// reads "8/8" in yellow followed by "+5" in blue; player and enemy HUDs share the mini HUD, so the one renderer covers both.
+// Owner, 2026-11-15 (W25-W; swapped to purple 2026-11-24): while bonus Poise (Barrier stacks) is above the base maximum the Poise bar's bonus part is purple and the number
+// reads "8/8" in yellow followed by "+5" in purple; player and enemy HUDs share the mini HUD, so the one renderer covers both.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PoiseBonusView } from '../src/ui/models/CombatHealthModel.js';

@@ -100,8 +100,8 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
 }
 
 /**
- * Draws Bonus Poise on a Poise meter (owner, 2026-11-15): the number reads "8/8" in yellow followed by "+5" in blue, and the bonus part of the
- * bar is a blue segment past the base maximum. `view` is PoiseBonusView(pool); the meter was drawn from the pool's full max, so the segment
+ * Draws Bonus Poise on a Poise meter (owner, 2026-11-15; swapped to purple 2026-11-24): the number reads "8/8" in yellow followed by "+5" in purple, and the bonus part of the
+ * bar is a purple segment past the base maximum. `view` is PoiseBonusView(pool); the meter was drawn from the pool's full max, so the segment
  * sits at base/max of the track. Idempotent.
  */
 export function ApplyPoiseBonus(meter, view) {
@@ -132,8 +132,8 @@ export function ApplyPoiseBonus(meter, view) {
 }
 
 /**
- * Draws the Ward health buffer on an HP meter (owner, 2026-11-24): the number reads "hp/maxHp" followed by "+N" in purple,
- * and the Ward part of the bar is a purple segment immediately after current HP. Idempotent.
+ * Draws the Ward health buffer on an HP meter (owner, 2026-11-24): the number reads "hp/maxHp" followed by "+N" in blue,
+ * and the Ward part of the bar is a blue segment immediately after current HP. Idempotent.
  */
 export function ApplyHealthWard(meter, view) {
   if (!meter || !view) return;
