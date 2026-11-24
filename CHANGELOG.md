@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-24
 
+- **Chained lightning keeps each step's own record** ([#2975](https://github.com/cehinds/AshenSpire/pull/2975), `0.7.5.87`). Each step of a lightning chain now keeps its own record of what it hit, so a later step can no longer change an earlier one. A new test checks that the damage preview keeps the Defend Poise floor on Ward damage.
 - **The desktop render check script is tidied** ([#2976](https://github.com/cehinds/AshenSpire/pull/2976), `0.7.5.87`). The packaged-app render check script is reformatted and typed, with no change in what it does.
 - **The component catalog lists the combat log Copy button** ([#2977](https://github.com/cehinds/AshenSpire/pull/2977), `0.7.5.87`). The developer component catalog now shows the combat log's Copy button and a greyed card that gives its reason first.
 - **The Bestiary and the Compendium share one screen** ([#2978](https://github.com/cehinds/AshenSpire/pull/2978), `0.7.5.87`). Both now open on the same knowledge door: pick an entry to see its detail, and Back or Escape returns to the title.

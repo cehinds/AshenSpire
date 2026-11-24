@@ -292,7 +292,11 @@ export function ElementSecondaryPlan(ctx, source, target, carrier, { single = tr
   const other = ElementChainTarget(ctx, source, target);
   // The chained hit gets its own contact: the copy keeps the planned contact's flags (no roll of its own) but has its own receipt, so what the
   // chained hit records there (blockBefore, read by the first target's Poise riders) never overwrites the first target's.
-  const contact = carrier?.expansionContact && { ...carrier.expansionContact, receipt: carrier.expansionContact.receipt && { ...carrier.expansionContact.receipt } };
+  const receipt = carrier?.expansionContact?.receipt;
+  // Its own arrays too (amounts, incomings, ...): the chained hit writes its contact's numbers there (applyProfileDamage), and a shared array would
+  // price the first target's Counter return from the chained hit (review #2822).
+  const own = receipt && Object.fromEntries(Object.entries(receipt).map(([key, value]) => [key, Array.isArray(value) ? [...value] : value]));
+  const contact = carrier?.expansionContact && { ...carrier.expansionContact, receipt: own || receipt };
   return other ? [{ kind: 'chain', target: other, carrier: { ...carrier, elementChain: true, ...(contact ? { expansionContact: contact } : {}) } }] : [];
 }
 
