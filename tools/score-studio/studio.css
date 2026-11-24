@@ -50,6 +50,8 @@ body.studio-body .studio-modal h3 {
 
 body.studio-body .hidden { display: none !important; }
 body.studio-body [hidden] { display: none !important; }
+body.studio-body .sandbox-ward-hp { color: #6fa8ff; font-weight: 700; }
+body.studio-body .sandbox-poise-bonus { color: #c49bff; font-weight: 700; }
 
 /* TOP BAR: title and status, tabs, then undo, redo, Export and the More menu. */
 body.studio-body .studio-topbar {
