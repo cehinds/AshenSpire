@@ -4,7 +4,7 @@
 //
 // One cost rule, applied to a card's final price (so the face, the affordability checks, the bot and the payment all read the same number):
 //   every spell                    +manaSurcharge Mana           (cantrips 0 -> 1, a 1 Mana spell -> 2)
-//   every spell but a cantrip      +staminaSurcharge Stamina     (a cantrip stays at its own Stamina; an X-cost spell already spends all it has)
+//   every spell but a cantrip      +staminaSurcharge Stamina     (0 since owner 2026-11-23; a cantrip stays at its own Stamina; an X-cost spell already spends all it has)
 //   a spell with the `manaOnlyTag`  pays 0 Stamina               (owner, 2026-11-15: "spells that cost 0 sp but 2 to 3 mp"; its printed Stamina is 0 and it takes no surcharge; Prepared has nothing to cut)
 //   the player is in Prepared      -preparedStaminaDiscount Stamina on every spell (cantrips included), never below 0
 //   a Focus item is equipped       old saved profiles: -focusManaDiscount Mana in any stance; current gear: its data rule applies only in Prepared

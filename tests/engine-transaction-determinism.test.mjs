@@ -54,6 +54,8 @@ function withoutGearPierce(combat) {
   for (const key of ['builtInElements', 'skinStatus', 'earthSource']) delete combat.fixCoreRules.pierce[key];
   // ...and the Magic Adept zero Mana floor key (owner ruling 2026-11-22): a fight saved before it keeps floor 1 and its original state.
   delete combat.fixCoreRules.stance?.playerMinimumCost;
+  // ...and they predate the dropped spell Stamina surcharge (owner ruling 2026-11-23): a fight saved before it keeps staminaSurcharge 1 in its snapshot.
+  if (combat.fixCoreRules.spellCosts) combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
   return combat;
 }
 function preGearFight(setup, profile = legacyGearProfile(preRetreatProfile)) {
