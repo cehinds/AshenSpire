@@ -149,6 +149,49 @@ try {
   });
   assert.equal(cost.shown, cost.next, 'the inspector card shows the edited SP cost');
 
+  // 5b. SP scores the cost typed, like MP. The reference fight reprices an edited card: Feint's multi-hit
+  //     SP floor turned 0 SP into 3, and Brace stayed at 0 SP whatever was typed.
+  const typedSp = await page.evaluate(() => {
+    const spPill = () => [...document.querySelectorAll('.part-pill')].map((p) => p.textContent).find((t) => t.startsWith('SP:')) || 'none';
+    const setSp = (cardId, value) => {
+      document.querySelector(`.studio-card-tile[data-card-id="${cardId}"]`).click();
+      const input = document.getElementById('edit-sp');
+      input.value = String(value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      const chip = document.getElementById('cost-score-sp');
+      return {
+        count: chip.querySelector('.feature-count').textContent,
+        total: chip.querySelector('.feature-total').textContent,
+        weight: Number(chip.title.match(/^(-?[\d.]+) per 1/)?.[1]),
+        pill: spPill(),
+      };
+    };
+    return { feintZero: setSp('core.feint', 0), braceTwo: setSp('core.brace', 2) };
+  });
+  assert.deepEqual([typedSp.feintZero.count, typedSp.feintZero.total, typedSp.feintZero.pill], ['×0', '0', 'none'], '0 SP scores 0 on a multi-hit card');
+  const brace = typedSp.braceTwo;
+  assert.ok(brace.weight < 0, `the SP chip names its weight (${brace.weight})`);
+  assert.deepEqual([brace.count, Number(brace.total), brace.pill], ['×2', 2 * brace.weight, `SP: ${brace.total}`], '2 SP scores 2 x the SP weight on Brace');
+
+  // 5c. The damage box is the card's own number, before the hero's bonus, so every number down to 0 sticks.
+  //     The Starseer's INT and focus made Arcane Spark print 3 at any amount up to 1, so 1 snapped back to 3.
+  const sparkAmounts = await page.evaluate(() => {
+    const select = (cardId) => document.querySelector(`.studio-card-tile[data-card-id="${cardId}"]`).click();
+    const kept = {};
+    for (const typed of [0, 1, 2, 5]) {
+      select('core.spark');
+      const input = document.querySelector('#active-features-list [data-eff-amt]');
+      input.value = String(typed);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      select('core.strike');
+      select('core.spark');
+      kept[typed] = document.querySelector('#active-features-list [data-eff-amt]').value;
+    }
+    return kept;
+  });
+  assert.deepEqual(sparkAmounts, { 0: '0', 1: '1', 2: '2', 5: '5' }, 'Arcane Spark keeps the damage typed, 0 included');
+
   // 6. Removing the effects a card's text names drops those sentences from the text, so the face stops
   //    listing them. Acid Splash's text is "Apply {frail} Frail and {vulnerable} Vulnerable."
   const removed = await page.evaluate(() => {
