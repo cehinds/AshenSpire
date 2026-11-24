@@ -292,6 +292,29 @@ try {
   assert.equal(statusInfo.hidden, false, 'the ⓘ opens the status description');
   assert.ok(statusInfo.does.length > 0 && !/No description yet/.test(statusInfo.does), `a status row says what it does (${statusInfo.does})`);
 
+  // 6b. Add Feature search: typing narrows the list and picks the best name match; a rebuild keeps the owner's pick.
+  const featureSearch = await page.evaluate(async () => {
+    const search = document.getElementById('add-feature-search');
+    const select = document.getElementById('add-feature-select');
+    const all = [...select.options].filter((o) => o.value).length;
+    search.value = 'poise dam';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    const picked = select.value;
+    const narrowed = [...select.options].filter((o) => o.value).length;
+    const second = [...select.options].filter((o) => o.value)[1]?.value;
+    select.value = second;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    document.getElementById('btn-undo')?.click();
+    document.getElementById('btn-redo')?.click();
+    const kept = select.value;
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    return { all, picked, narrowed, second, kept, cleared: [...select.options].filter((o) => o.value).length };
+  });
+  assert.equal(featureSearch.picked, 'effect:poiseDamage', 'the search picks Poise Damage for "poise dam"');
+  assert.ok(featureSearch.narrowed > 0 && featureSearch.narrowed < featureSearch.all, `the list narrows (${featureSearch.narrowed} of ${featureSearch.all})`);
+  assert.equal(featureSearch.kept, featureSearch.second, 'a rebuild keeps the picked feature');
+  assert.equal(featureSearch.cleared, featureSearch.all, 'Escape restores the whole list');
+
   // 7. Auto-name: a new card starts with it on; adding a status renames it, and the name fits its title box.
   const autoName = await page.evaluate(async () => {
     document.getElementById('btn-new-card').click();

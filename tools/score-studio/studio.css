@@ -238,6 +238,7 @@ body.studio-body .filter-bar select,
 body.studio-body .form-grid input,
 body.studio-body .form-grid select,
 body.studio-body .add-feature-bar select,
+body.studio-body .add-feature-bar input,
 body.studio-body .weights-toolbar input,
 body.studio-body .weights-toolbar select,
 body.studio-body .sandbox-toolbar select,
@@ -422,6 +423,8 @@ body.studio-body .form-grid .studio-check input { width: auto; margin: 0; accent
 
 body.studio-body .add-feature-bar { display: flex; gap: var(--studio-gap-1); width: 100%; margin-bottom: var(--studio-gap-2); }
 body.studio-body .add-feature-bar select { flex: 1 1 auto; min-width: 0; }
+body.studio-body .add-feature-bar input { flex: 1 1 9em; min-width: 0; }
+@media (max-width: 480px) { body.studio-body .add-feature-bar { flex-wrap: wrap; } body.studio-body .add-feature-bar input { flex-basis: 100%; } }
 body.studio-body .add-feature-bar button { flex: none; }
 body.studio-body .quick-add-chips { display: flex; flex-wrap: wrap; gap: var(--studio-gap-1); margin-bottom: var(--studio-gap-2); }
 body.studio-body .q-chip {
