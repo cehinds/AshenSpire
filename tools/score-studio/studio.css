@@ -596,6 +596,7 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
     position: sticky;
     top: 0;
     z-index: 20;
+    flex-shrink: 0;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "brand actions"

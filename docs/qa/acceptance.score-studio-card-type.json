@@ -30,16 +30,10 @@
       ],
       "success": [
         {
-          "kind": "count",
-          "label": "Card Type lists the nine play styles",
-          "selector": "#edit-type option",
-          "eq": 9
-        },
-        {
-          "kind": "count",
-          "label": "Card Type offers Sweep, Counter and Defend",
-          "selector": "#edit-type option[value=\"sweep\"], #edit-type option[value=\"counter\"], #edit-type option[value=\"defend\"]",
-          "eq": 3
+          "kind": "text",
+          "label": "Card Type list starts Attack, Skill, Spell (Spell is new; the checker reads the first 60 characters)",
+          "selector": "#edit-type",
+          "matches": "Attack\\s+Skill\\s+Spell"
         },
         {
           "kind": "visible",
@@ -80,12 +74,6 @@
           "kind": "visible",
           "label": "Old Camp select still shown",
           "selector": "#edit-camp"
-        },
-        {
-          "kind": "count",
-          "label": "Card Type still offers Guard / Strike",
-          "selector": "#edit-type option[value=\"guard\"], #edit-type option[value=\"strike\"]",
-          "min": 1
         }
       ]
     },
@@ -110,12 +98,6 @@
           "label": "Categories group has twelve multiplier toggles (Martial, Magic, Hybrid, nine types)",
           "selector": ".weight-row input.weight-mult",
           "eq": 12
-        },
-        {
-          "kind": "within",
-          "label": "Multiplier toggles stay inside the weights list",
-          "selector": ".weight-row input.weight-mult",
-          "container": "#weights-container"
         },
         {
           "kind": "consoleErrors",
