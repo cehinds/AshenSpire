@@ -1,4 +1,5 @@
 import { OwnCardRank } from '../../model/cardRank.js';
+import { RankUpBlock } from '../../model/rankUpService.js';
 import { uiIconText } from '../../content/uiIcons.js';
 import { LevelUpPointsButton } from '../components/progressionCards.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
@@ -1505,6 +1506,11 @@ export function MountRewards(appRoot, {
     {
         const isTaken = () => states[row.key];
         const rankUpCards = rankUpCandidates(registries, run, row.skillId);
+        // The full-upgrade rule (rankUpService.js): a held-back card can be looked at but not confirmed.
+        const selectedBlocked = () => {
+            const chosen = rankUpCards.find((instance) => instance.instanceId === selectedCardId);
+            return chosen ? RankUpBlock(run, chosen) : '';
+        };
         let selectedCardId = pendingCardIdByKey[row.key] || null;
         let confirming = false;
         let reviewing = false;
@@ -1523,7 +1529,8 @@ export function MountRewards(appRoot, {
 
         fillCandidateStrip();
         confirmButton.disabled = !selectedCardId
-            || needsBonus();
+            || needsBonus()
+            || !!selectedBlocked();
         syncActionButtons();
 
         confirmButton.addEventListener('click', pressConfirm);
@@ -1566,7 +1573,7 @@ export function MountRewards(appRoot, {
             {
                 return translate('reward.confirm.reason');
             }
-            return needsBonus() ? translate('reward.rankBonus.reason') : null;
+            return selectedBlocked() || (needsBonus() ? translate('reward.rankBonus.reason') : null);
         }
 
         function fillCandidateStrip()
@@ -1710,7 +1717,7 @@ export function MountRewards(appRoot, {
                 selectedFace.replaceWith(buildRankUpFace(instance));
             }
             renderBonusPanel();
-            confirmButton.disabled = false;
+            confirmButton.disabled = !!selectedBlocked();
             syncActionButtons();
         }
 
@@ -1765,7 +1772,7 @@ export function MountRewards(appRoot, {
             markPicks(cardId);
             restoreDeselectedFace(previousCardId, cardId);
             renderBonusPanel();
-            confirmButton.disabled = needsBonus();
+            confirmButton.disabled = needsBonus() || !!selectedBlocked();
             syncActionButtons();
             message.hidden = true;
         }

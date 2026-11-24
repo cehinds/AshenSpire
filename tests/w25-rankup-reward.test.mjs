@@ -1,4 +1,5 @@
 // W25-R step 1: a won fight can offer "Rank up a card" as one option of its reward door (5% normal, 25% elite/boss).
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import { OwnCardRank } from '../src/model/cardRank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,7 +17,12 @@ import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const registries = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), {})), profile);
-const newRun = (seed = 9) => createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup-reward' });
+// Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
+const newRun = (seed = 9) => {
+  const run = createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup-reward' });
+  FillUpgradeSlots(run);
+  return run;
+};
 const hasRankUp = (offer) => offer.options.some((option) => option.kind === 'rankUps');
 
 function offerFor(run, n, pool) {
@@ -61,6 +67,7 @@ test('claiming a rank-up raises the chosen card by one rank, its slots follow, a
   assert.deepEqual(offer.options[index], { kind: 'rankUps', id: 'cardRank', bonus: true });
   const card = RankUpCandidates(registries, run)[0];
   card.rank = 1; // a "Rank 1" card: slots are rank + 1, so each raise opens one
+  FillUpgradeSlots(run, [card]);
   const rank = InstanceRank(card), slots = UpgradeSlots(run, card);
   assert.throws(() => claimGameProfileReward(registries, run, offer.id, index), /Choose a card/);
   assert.throws(() => claimGameProfileReward(registries, run, offer.id, index, { instanceId: 'nobody' }), /cannot be ranked up/);

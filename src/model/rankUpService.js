@@ -6,7 +6,10 @@
 // no document, no timers. Every chance reads the profile's data (rewards.json `rankUp`, shops.json `rankUp`) and rolls on
 // a hash of the run's seed and the door's own key, never on a shared stream, so asking twice answers the same and a saved
 // run with no `rankUp` data (or one made before this service) offers nothing and loads unchanged.
-import { gameContent } from './gameProfile.js';
+import { gameContent, gameModule } from './gameProfile.js';
+import { uiStrings } from '../content/generated/uiStrings.js';
+import { paidUpgradeCount } from './cardUpgrade.js';
+import { UpgradeSlots } from './cardUpgradeLimits.js';
 import { mulberry32 } from './rng.js';
 import { OwnCardRank } from './cardRank.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
@@ -21,6 +24,21 @@ export const RANK_UP_OPTION = Object.freeze({ kind: 'rankUps', id: 'cardRank' })
 export const CardRanksOn = (run) => run?.gameProfile?.modules?.progression?.cardRanks === true;
 /** A card's rank (an absent rank reads 1). */
 export const InstanceRank = (card) => (Number.isInteger(card?.rank) && card.rank >= 1 ? card.rank : 1);
+/**
+ * The "Rank-up needs a fully upgraded card" rule (owner, 2026-11-23; progression module `rankUpNeedsFullUpgrades`, on unless
+ * set false): with card ranks on, a card ranks up only once every upgrade slot it has is used (unranked 1, Rank 2 3, ...).
+ * A rank-up bonus step uses no slot (paidUpgradeCount).
+ */
+export const RankUpNeedsFullUpgrades = (run) => CardRanksOn(run) && gameModule(run, 'progression')?.rankUpNeedsFullUpgrades !== false;
+const sentence = (id) => uiStrings.find((row) => row.id === id)?.short || id;
+/** RankUpBlock(run, card) -> '' when the card may rank up now, else the short reason it may not (the rule above). */
+export function RankUpBlock(run, card) {
+  return RankUpNeedsFullUpgrades(run) && paidUpgradeCount(card) < UpgradeSlots(run, card) ? sentence('rankUp.needsFull') : '';
+}
+/** The candidates that may rank up now: RankUpCandidates less those the full-upgrade rule holds back (shown, but disabled). */
+/** The reason a door's rank-up waits when every candidate is held back by the full-upgrade rule. */
+export const RankUpReadyReason = () => sentence('rankUp.noneReady');
+export const RankUpReady = (registries, run) => RankUpCandidates(registries, run).filter((card) => !RankUpBlock(run, card));
 /** Cards bound to equipment are raised through their item, never directly. */
 export const EquipmentBound = (card) => !!card && (!!card.sourceArmamentId || !!card.grantedBy || card.equipmentRole === 'granted' || card.equipmentRole === 'weaponArt');
 const ownedCards = (run) => [...(run?.deck || []), ...(run?.sideboard || [])].filter(Boolean);
@@ -39,6 +57,8 @@ export function RankUpCandidates(registries, run) {
 export function RaiseCardRank(registries, run, instanceId) {
   const card = RankUpCandidates(registries, run).find((row) => row.instanceId === instanceId);
   if (!card) throw new Error('That card cannot be ranked up.');
+  const blocked = RankUpBlock(run, card);
+  if (blocked) throw new Error(blocked);
   card.rank = OwnCardRank(card) + 1; // owner 2026-11-23: an unranked card becomes Rank 1, so each rank-up opens one slot
   return { instanceId: card.instanceId, rank: card.rank };
 }

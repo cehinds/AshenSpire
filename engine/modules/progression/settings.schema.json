@@ -17,6 +17,10 @@
       "type": "boolean",
       "description": "Card ranks (SPEC 13.4o): card-school track levels queue rank-ups, drafted cards arrive ranked, and rank scales the card. Absent or false keeps cards unranked."
     },
+    "rankUpNeedsFullUpgrades": {
+      "type": "boolean",
+      "description": "With card ranks on, a card ranks up only once every upgrade slot it has is used (owner, 2026-11-23). Absent or true is on; false lets any card rank up."
+    },
     "attributePointsPerLevel": {
       "type": "integer",
       "minimum": 0,

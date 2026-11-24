@@ -23,7 +23,7 @@ import { smithingPlan, commitItemUpgrade, withSmithService, ownedSmithingItems }
 import { coreSmithingActive } from './smithingCore.js';
 import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
 import { mulberry32 } from './rng.js';
-import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank, RankUpBlock } from './rankUpService.js';
 import { OwnCardRank } from './cardRank.js';
 import { CardCopyCandidates, CopyOwnedCard, CardCopyUsesLeft, CardCopyPrice } from './cardCopyService.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
@@ -308,6 +308,7 @@ export function rankUpPlan(registries, run, instanceId, { priceMult = 1 } = {}) 
   else if (!card) reason = say('shop.refuse.gone');
   else if (EquipmentBound(card) || !registries.cards.has(card.cardId)) reason = say('blacksmith.refuse.rankNone', { name });
   else if (InstanceRank(card) >= RANK_CEILING) reason = say('blacksmith.refuse.rankMax', { name });
+  else if (RankUpBlock(run, card)) reason = RankUpBlock(run, card);
   else if (stones(run) < need) reason = say('blacksmith.refuse.stones', { cost: need, have: stones(run), plural: plural(need) });
   else if (!affordable(run, price)) reason = say('shop.refuse.cinders');
   const from = OwnCardRank(card); // an unranked card reads 0 and rises to Rank 1

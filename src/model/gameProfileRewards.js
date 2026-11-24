@@ -8,7 +8,7 @@ import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
-import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RankUpReady, RankUpReadyReason, RaiseCardRank } from './rankUpService.js';
 import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
@@ -582,7 +582,7 @@ export function gameProfileShopPurchasePlan(registries,run,shopId,index,{instanc
   else if(!Number.isSafeInteger(price)||price<0)reason='Invalid configured shop price';
   else if(stock.options[index].kind==='weapons'&&(run.loadout?.storage||[]).length>=(registries.balance.equipment.storageSlots??8))reason='Inventory is full. Sell or make room first.';
   else if(!Number.isSafeInteger(run.cinders)||run.cinders<price)reason='Insufficient cinders';
-  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';}
+  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';else if(!RankUpReady(registries,run).length)reason=RankUpReadyReason();}
   else if(stock.options[index].kind===CARD_COPY_OPTION.kind){if(CardCopyUsesLeft(stock.options[index])<1)reason='This offer is sold out.';else if(!CardCopyCandidates(registries,run).length)reason='You have no card to copy.';}
   else try {claimGameProfileReward(registries,structuredClone(run),offerId,index);}catch(error){reason=error.message;}
   return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};

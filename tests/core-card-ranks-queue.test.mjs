@@ -1,4 +1,5 @@
 // Card ranks 11a: Core turns SPEC 13.4o card ranks on through progression.cardRanks; Legacy stays off.
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries, profile } from './helpers/fixcore-combat-rules.mjs';
@@ -9,7 +10,12 @@ import { settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 
-const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+// Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
+const newRun = () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  FillUpgradeSlots(run);
+  return run;
+};
 const toLevel = (run, id, level) => awardSkillXp(registries, run, id, Array.from({ length: level }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0), { queueRewards: false, queueRankUps: coreCardRanks(run) });
 
 test('the Core profile turns card ranks on; a Legacy run does not', () => {
@@ -57,6 +63,7 @@ test('Core cards (camp:/maneuver: tags) are rank-up candidates of the matching t
   assert.equal(raised.rank, 1, 'an unranked card rises to Rank 1 (owner 2026-11-23)');
   assert.equal(run.skills['item:blade'].pendingRankUps, 1);
   // The ceiling is the track level: at level 3 a rank-3 card is done.
+  FillUpgradeSlots(run, [strike]);
   raiseCardRank(registries, run, 'item:blade', strike.instanceId, rankUpBonusOptions(registries, run, strike)[0].step);
   assert.equal(strike.rank, 2);
   strike.rank = 3;

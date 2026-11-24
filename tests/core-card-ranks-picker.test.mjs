@@ -1,4 +1,5 @@
 // Card ranks 11d: a Core track level queues a rank-up and the existing reward-door picker raises a Core card.
+import { FillUpgradeSlots, RankUpRuleOff } from './helpers/rank-up-ready.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -7,7 +8,12 @@ import { createRunState } from '../src/model/state.js';
 import { rankUpBonusOptions } from '../src/model/rankUpBonus.js';
 import { awardSkillXp, xpToNext, pendingRankUpRows, coreCardRanks } from '../src/model/skills.js';
 
-const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+// Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
+const newRun = () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  FillUpgradeSlots(run);
+  return run;
+};
 const level = (run, id, n) => awardSkillXp(registries, run, id, Array.from({ length: n }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0), { queueRewards: false, queueRankUps: coreCardRanks(run) });
 
 test('pendingRankUpRows lists queued rank-ups that have a card to raise, and nothing at level 1', () => {
@@ -31,7 +37,7 @@ test('the reward door shows the Core card at its next rank and raises it', async
   // The kit DOM: the rank-up opens the shared card-upgrade modal (playtest 2026-11-17 item 45a).
   await withKitDom(async () => {
     const app = document.createElement('main'); document.body.append(app);
-    const run = newRun();
+    const run = RankUpRuleOff(newRun()); // the bonus alone, on a card with no other steps
     level(run, 'item:blade', 3);
     const strike = run.deck.find((c) => c.cardId === 'core.strike');
     let persisted = 0;

@@ -1,4 +1,5 @@
 // W25-R: an event can raise a card's rank. The Sleeping Smith's new choice pays 80 cinders only when a card rises.
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import { OwnCardRank } from '../src/model/cardRank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,7 +11,12 @@ import { choiceAffordable, ChoiceUnmetRequirement, commitEventChoice } from '../
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import { UpgradeSlots } from '../src/model/cardUpgradeLimits.js';
 
-const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+// Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
+const newRun = () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  FillUpgradeSlots(run);
+  return run;
+};
 const effect = { op: 'rankUpCard', random: true, cost: 40 };
 const play = (run, picked = null, seen = []) => executeAction({ registries, run, emit: () => {},
   rng: { float: () => 0.5, pick: (_stream, list) => { seen.push(...list); return picked ? list.find(card => card.instanceId === picked.instanceId) : list[0]; } } }, { effect });
@@ -27,6 +33,7 @@ test('the event raises the picked card one rank, opens a slot, and takes its cin
   const run = newRun(); run.cinders = 100;
   const card = RankUpCandidates(registries, run)[0];
   card.rank = 1; // a "Rank 1" card: slots are rank + 1, so each raise opens one
+  FillUpgradeSlots(run, [card]);
   const rank = InstanceRank(card), slots = UpgradeSlots(run, card);
   play(run, card);
   assert.equal(InstanceRank(card), rank + 1);

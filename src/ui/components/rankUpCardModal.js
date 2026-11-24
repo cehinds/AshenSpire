@@ -1,6 +1,6 @@
 import { t as translate } from '../strings.js';
 import { UpgradeSlots } from '../../model/cardUpgradeLimits.js';
-import { RankUpCandidates } from '../../model/rankUpService.js';
+import { RankUpCandidates, RankUpBlock } from '../../model/rankUpService.js';
 import { OwnCardRank } from '../../model/cardRank.js';
 import { RankLabel } from '../rankLabel.js';
 import { OpenChoiceModal } from './choiceModal.js';
@@ -37,10 +37,12 @@ function buildRankUpRow(card, registries, run)
         id: card.instanceId,
         className: ROW_CLASS,
         name: definition?.name || card.cardId,
-        text: translate('blacksmith.rankUp.desc', {
+        // A card the full-upgrade rule holds back is shown, disabled, with its reason (owner, 2026-11-23).
+        text: RankUpBlock(run, card) || translate('blacksmith.rankUp.desc', {
             from: RankLabel(definition, rank),
             to: RankLabel(definition, rank + 1),
         }),
+        disabled: !!RankUpBlock(run, card),
         chip: translate('rankUp.pick.slots', { slots: UpgradeSlots(run, rankedUpCard) }),
         artAsset: cardArt?.path || null,
         artGlyph: cardArt?.path

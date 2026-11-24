@@ -214,7 +214,8 @@ export function canUpgrade(registries, run, instance) {
   if (!def) return refuse('missing', 'That card is not in the deck.');
   if (instance.sourceArmamentId || instance.grantedBy) return refuse('armament', `${def.name} is upgraded with its armament.`);
   const slots = UpgradeSlots(run, instance);
-  if (n > slots && n <= MAX_CARD_UPGRADES) {
+  // A rank-up bonus step is a gift and uses no slot, so a rank-up leaves one slot free (owner, 2026-11-23).
+  if (paidUpgradeCount(instance) + 1 > slots && n <= MAX_CARD_UPGRADES) {
     return refuse('slots', `${def.name} has ${slots} upgrade ${slots === 1 ? 'slot' : 'slots'} (rank + 1); raise its rank for more.`);
   }
   const cost = upgradeCost(run, instance, def, registries);

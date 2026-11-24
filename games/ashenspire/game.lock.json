@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:28913a8ccb71a30cedd50c3047ecd4b9148f10cc2d227c5e4ad1438f83838c64",
+      "hash": "sha256:1868d12c023596f93edeb25faf6c129e0d3fd136405d9b8366966e6b68794f32",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -376,7 +376,7 @@
           "path": "engine/modules/progression/settings.schema.json",
           "id": "progression",
           "version": "1.0.0",
-          "hash": "sha256:7ba9f0c360cc887dcf6d2f4ba4d9d18480dfb2362d3d020889c008a16e9d6487"
+          "hash": "sha256:5d4e45bb490f5eaae2192109327da777fbc46d704d0067986dc9f1165e2e36f3"
         },
         {
           "path": "engine/modules/reactions/defaults.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f"
     },
     "core": {
-      "hash": "sha256:28913a8ccb71a30cedd50c3047ecd4b9148f10cc2d227c5e4ad1438f83838c64",
+      "hash": "sha256:1868d12c023596f93edeb25faf6c129e0d3fd136405d9b8366966e6b68794f32",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1100,7 +1100,7 @@
           "path": "engine/modules/progression/settings.schema.json",
           "id": "progression",
           "version": "1.0.0",
-          "hash": "sha256:7ba9f0c360cc887dcf6d2f4ba4d9d18480dfb2362d3d020889c008a16e9d6487"
+          "hash": "sha256:5d4e45bb490f5eaae2192109327da777fbc46d704d0067986dc9f1165e2e36f3"
         },
         {
           "path": "engine/modules/reactions/defaults.json",

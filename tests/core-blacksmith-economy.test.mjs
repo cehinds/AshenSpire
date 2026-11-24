@@ -1,4 +1,5 @@
 // Owner ask 2026-10-31: the Core Blacksmith economy — rank-up, cinder prices, tiered armament stock, tier reach.
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -42,12 +43,14 @@ const strike = (run) => run.deck.find((c) => c.cardId === 'core.strike');
 test('rank-up: plan names 240 cinders and 1 stone (owner 2026-11-23: doubled); commit raises the rank by one and bumps the revision', () => {
   const run = smithRun(coreOut);
   const card = strike(run);
+  FillUpgradeSlots(run, [card]); // rank-up needs a fully upgraded card (owner 2026-11-23)
   const plan = rankUpPlan(coreOut, run, card.instanceId);
   assert.equal(plan.ok, true, plan.reason);
   assert.deepEqual([plan.cost, plan.stones, plan.from, plan.to], [240, 1, 0, 1]);
   const receipt = commitRankUp(coreOut, run, plan);
   assert.deepEqual([receipt.rank, run.smithingStones, run.cinders, card.rank], [1, 2, 1760, 1]);
   assert.equal(rankUpPlan(coreOut, run, card.instanceId).revision, plan.revision + 1);
+  FillUpgradeSlots(run, [card]);
   commitRankUp(coreOut, run, rankUpPlan(coreOut, run, card.instanceId));
   assert.equal(card.rank, 2, 'ranks stack (an unranked card rose to Rank 1, then 2)');
 });
@@ -55,8 +58,10 @@ test('rank-up: plan names 240 cinders and 1 stone (owner 2026-11-23: doubled); c
 test('rank-up: a stale quote is refused and spends nothing', () => {
   const run = smithRun(coreOut);
   const card = strike(run);
+  FillUpgradeSlots(run, [card]);
   const plan = rankUpPlan(coreOut, run, card.instanceId);
   commitRankUp(coreOut, run, plan);
+  FillUpgradeSlots(run, [card]); // so the quote is refused for being stale, not for the full-upgrade rule
   const before = [run.smithingStones, run.cinders, card.rank];
   assert.throws(() => commitRankUp(coreOut, run, plan), /changed|stale|again/i);
   assert.deepEqual([run.smithingStones, run.cinders, card.rank], before);
@@ -64,12 +69,14 @@ test('rank-up: a stale quote is refused and spends nothing', () => {
 
 test('rank-up: refuses without cinders or or without a stone', () => {
   const poor = smithRun(coreOut, { cinders: 119 });
+  FillUpgradeSlots(poor, [strike(poor)]);
   const refused = rankUpPlan(coreOut, poor, strike(poor).instanceId);
   assert.equal(refused.ok, false);
   assert.match(refused.reason, /cinders/i);
   assert.throws(() => commitRankUp(coreOut, poor, refused));
   assert.equal(poor.cinders, 119);
   const dry = smithRun(coreOut, { stones: 0 });
+  FillUpgradeSlots(dry, [strike(dry)]);
   assert.match(rankUpPlan(coreOut, dry, strike(dry).instanceId).reason, /Smithing Stone/);
 });
 

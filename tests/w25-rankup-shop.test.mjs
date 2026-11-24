@@ -1,4 +1,5 @@
 // W25-R: some shops stock "Rank up a card" at the Blacksmith's price (15% of shops); buying asks for the card.
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import { OwnCardRank } from '../src/model/cardRank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +19,12 @@ import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const registries = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), {})), profile);
-const newRun = (seed = 9) => createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup-shop' });
+// Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
+const newRun = (seed = 9) => {
+  const run = createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup-shop' });
+  FillUpgradeSlots(run);
+  return run;
+};
 const shelf = (stock) => stock.options.findIndex((option) => option.kind === 'rankUps');
 
 function shopWithRankUp(run) {
