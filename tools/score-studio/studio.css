@@ -809,3 +809,11 @@ body.studio-body .weight-per-label input,
 body.studio-body .weight-per-label select { width: 58px; box-sizing: border-box; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 4px; text-align: right; }
 body.studio-body .weight-per-label select { width: 72px; text-align: left; }
 body.studio-body .weight-per-label input.weight-mult { width: auto; margin: 0; accent-color: var(--st-accent, #6aa0ff); cursor: pointer; }
+
+/* Naming group: the card name length limit and its keep order (most important first). */
+body.studio-body .naming-keep-list { margin: 4px 0 6px; padding-left: 22px; }
+body.studio-body .naming-keep-item { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+body.studio-body .naming-keep-item > span { flex: 1 1 auto; min-width: 0; }
+body.studio-body .naming-keep-move { min-width: 28px; min-height: 28px; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; cursor: pointer; }
+body.studio-body .naming-keep-move:disabled { opacity: 0.35; cursor: default; }
+body.studio-body .naming-limit-group.is-pending .naming-keep-list { outline: 1px dashed var(--st-border); outline-offset: 2px; }

@@ -13,7 +13,7 @@ import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
 import { BaseFace, CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
-import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
+import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } from './weightsStaging.js';
@@ -83,8 +83,7 @@ const offenseAmount = (hit) => {
   return rows.length ? rows[rows.length - 1].effective : (hit?.incoming ?? 0);
 };
 function safeCardName(face, scoringRef) {
-  const withNaming = scoringRef?.naming ? scoringRef : { ...scoringRef, naming: shippedScoring.naming };
-  return CardName(face, 0, withNaming);
+  return CardName(face, 0, namingScoring(scoringRef));
 }
 
 // ---------------------------------------------------------------------------
@@ -675,11 +674,20 @@ function nameWords(name) {
   return String(name || '').trim().split(/\s+/).map((word) => word.replace(/\+\d*$/, '')).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word) && !/^\(Copy\)$/i.test(word));
 }
 
+// A config's naming with the shipped word tables under it, so an older config (no range or tradition words) still names
+// cards. The length limit is not filled in: a config without one has no limit.
+function namingScoring(scoringRef) {
+  const own = scoringRef?.naming;
+  if (!own) return { ...scoringRef, naming: shippedScoring.naming };
+  const { limit, ...shippedCard } = shippedScoring.naming.card;
+  return { ...scoringRef, naming: { ...shippedScoring.naming, ...own, card: { ...shippedCard, ...(own.card || {}) } } };
+}
+
 function nameParts(def, sc = scoreCardEntry(def)) {
   try {
-    return CardNameParts(sc.face, 0, state.scoring.naming ? state.scoring : { ...state.scoring, naming: shippedScoring.naming });
+    return CardNameParts(sc.face, 0, namingScoring(state.scoring));
   } catch {
-    return { name: def.name, effect: null, base: null, rank: sc.rank, source: null };
+    return { name: def.name, effect: null, base: null, rank: sc.rank, source: null, dropped: [] };
   }
 }
 
@@ -776,7 +784,8 @@ function renderNameHint(def, sc = scoreCardEntry(def)) {
   if (!hint) return;
   const parts = nameParts(def, sc);
   const source = parts.source || 'no second effect';
-  hint.textContent = `Convention: ${parts.name} · from ${source} · ${def._autoNameCore || parts.base || 'Card'} · ${RankName(sc.rank)}`;
+  const trimmed = parts.dropped?.length ? ` · Trimmed: ${parts.dropped.join(', ')}` : '';
+  hint.textContent = `Convention: ${parts.name}${trimmed} · from ${source} · ${def._autoNameCore || parts.base || 'Card'} · ${RankName(sc.rank)}`;
 }
 
 // The game draws core cards from the profile's own card list (projectGameCard in src/model/gameProfile.js),
@@ -1851,7 +1860,7 @@ function renderWeights({ shifts = true } = {}) {
     }
     container.appendChild(card);
   }
-  if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
+  if (groupF === 'all' || groupF === 'naming') { renderNamingLimitGroup(container, q); renderNamingWordsGroup(container, q); }
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
@@ -1978,6 +1987,61 @@ function renderDescriptionGaps() {
   if (!gaps) return;
   const missing = Object.keys(state.scoring.tags || {}).filter((k) => k[0] !== '$' && describeFeature('tag', k).missing).length;
   gaps.textContent = missing ? `${missing} tag${missing === 1 ? ' has' : 's have'} no description` : 'Every tag has a description';
+}
+
+// What each part of a convention name is, for the keep-order list.
+const NAME_PART_LABELS = Object.freeze({ base: 'Base word (Strike)', rank: 'Rank numeral (II)', upgrade: 'Upgrade mark (+)', element: 'Element word (Frost)', effect: 'Second-effect word (Searing)', rarity: 'Rarity word (Greater)' });
+
+// The card name length limit (scoring.naming.card.limit): a characters box and the keep order, most important first.
+// Edits are staged like other weight edits; Apply renames. An empty box means no limit.
+function renderNamingLimitGroup(container, query) {
+  if (query && !'naming name length limit characters keep order'.includes(query)) return;
+  const shown = () => (stagedScoring() || state.scoring).naming?.card?.limit || null;
+  const appliedLimit = () => state.scoring.naming?.card?.limit || null;
+  const group = document.createElement('details');
+  group.className = 'weight-group-card studio-section naming-limit-group';
+  group.dataset.section = 'weights-naming-limit';
+  group.open = true;
+  rememberSection(group);
+  const stage = (fn) => {
+    applyWeightEdit(() => {
+      const card = ((state.scoring.naming ||= clone(shippedScoring.naming)).card ||= {});
+      fn(card);
+    });
+    draw();
+  };
+  const draw = () => {
+    const limit = shown();
+    const keep = limit?.keep || [...NAME_LIMIT_PARTS];
+    const pending = JSON.stringify(limit) !== JSON.stringify(appliedLimit());
+    group.classList.toggle('is-pending', pending);
+    group.innerHTML = `<summary class="section-head"><h3>Naming</h3></summary>
+      <div class="weight-row naming-limit-row${pending ? ' is-pending' : ''}"><span>Name length</span><span class="weight-sentence"><input type="number" class="weight-input naming-max-chars" min="1" step="1" value="${limit ? esc(limit.maxChars) : ''}" placeholder="none" aria-label="Most characters in a card name" /><span class="weight-words">characters max</span></span>
+      <div class="weight-example">Too long: drop parts from the bottom of this list until the name fits. Base, rank and upgrade always stay. Empty: no limit.</div></div>
+      <ol class="naming-keep-list">${keep.map((part, i) => `<li class="naming-keep-item" data-part="${esc(part)}"><span>${esc(NAME_PART_LABELS[part] || part)}</span><button type="button" class="naming-keep-move" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="${esc(`Move ${part} up`)}">↑</button><button type="button" class="naming-keep-move" data-dir="1" ${i === keep.length - 1 ? 'disabled' : ''} aria-label="${esc(`Move ${part} down`)}">↓</button></li>`).join('')}</ol>`;
+    group.querySelector('.naming-max-chars').addEventListener('change', (e) => {
+      const raw = e.target.value.trim();
+      const n = Math.round(Number(raw));
+      if (raw === '') stage((card) => { delete card.limit; });
+      else if (Number.isFinite(n) && n >= 1) stage((card) => { card.limit = { maxChars: n, keep: [...(card.limit?.keep || NAME_LIMIT_PARTS)] }; });
+    });
+    for (const btn of group.querySelectorAll('.naming-keep-move')) {
+      btn.addEventListener('click', () => {
+        const part = btn.closest('.naming-keep-item').dataset.part;
+        const dir = Number(btn.dataset.dir);
+        stage((card) => {
+          const next = { maxChars: card.limit?.maxChars ?? shippedScoring.naming.card.limit.maxChars, keep: [...(card.limit?.keep || NAME_LIMIT_PARTS)] };
+          const i = next.keep.indexOf(part), j = i + dir;
+          if (i < 0 || j < 0 || j >= next.keep.length) return;
+          [next.keep[i], next.keep[j]] = [next.keep[j], next.keep[i]];
+          card.limit = next;
+        });
+        group.querySelector(`.naming-keep-item[data-part="${part}"] .naming-keep-move[data-dir="${dir}"]`)?.focus();
+      });
+    }
+  };
+  draw();
+  container.appendChild(group);
 }
 
 // The Auto-name word tables: per scoring part, the adjective ("Brittle") and the "of" noun ("Frailty").
