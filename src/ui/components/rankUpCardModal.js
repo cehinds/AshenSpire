@@ -64,7 +64,7 @@ function buildRankUpRow(card, registries, run, shelfPrice)
 
 export function RankUpCardRows(registries, run, shelfPrice = null)
 {
-    return RankUpCandidates(registries, run).map((card) =>
+    const rows = RankUpCandidates(registries, run).map((card) =>
         buildRankUpRow(
             card,
             registries,
@@ -72,6 +72,7 @@ export function RankUpCardRows(registries, run, shelfPrice = null)
             shelfPrice,
         )
     );
+    return rows.sort((a, b) => Number(a.disabled) - Number(b.disabled));
 }
 
 export function OpenRankUpCardModal({

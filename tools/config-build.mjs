@@ -293,6 +293,7 @@ export function compileEntries(entries, { requireInteractionConfigs = false } = 
     if (f.group === 'scenes') errors.push(...sceneProblems(f.rel, out));
     if (f.group === 'presentation' && f.key === 'deckEditorCosts') errors.push(...deckEditorCostProblems(f.rel, out));
     if (f.group === 'presentation' && f.key === 'combatEffectPlayback') errors.push(...effectPlaneProblems(f.rel, out));
+    if (f.group === 'screens' && f.key === 'knowledgeDoor') errors.push(...knowledgeDoorProblems(f.rel, out));
     errors.push(...interactionConfigProblems(f.rel, out));
   }
 
@@ -496,6 +497,86 @@ export function effectPlaneProblems(rel, presentation) {
     }
     if (Number.isSafeInteger(look.behindZIndex) && Number.isSafeInteger(look.frontZIndex) && look.behindZIndex >= look.frontZIndex) {
       out.push(`${at}.${owner}.behindZIndex must be below frontZIndex`);
+    }
+  }
+  return out;
+}
+
+/** The knowledge doors (screens/knowledgeDoor.json): one `base` entry and variants that extend it. */
+const KNOWLEDGE_DOOR_ROOT = 'base';
+const KNOWLEDGE_DOOR_TEXT_KEYS = [
+  'surface', 'screenClassName', 'titleSize', 'footSize', 'bodyClassName', 'backId',
+  'listClassName', 'detailClassName', 'detailId',
+];
+const KNOWLEDGE_DOOR_STRING_KEYS = [
+  'eyebrowKey', 'titleKey', 'closeLabelKey', 'listLabelKey', 'listEmptyKey', 'detailLabelKey', 'detailEmptyKey',
+];
+const KNOWLEDGE_DOOR_SHARE_KEYS = ['compactListShare', 'compactDetailShare'];
+const KNOWLEDGE_DOOR_LIVE = ['polite', 'off'];
+const KNOWLEDGE_DOOR_REQUIRED = [
+  'surface', 'screenClassName', 'titleSize', 'footSize', 'bodyClassName', 'backId', 'listClassName',
+  'detailClassName', 'detailId', 'detailLive', 'eyebrowKey', 'titleKey', 'closeLabelKey',
+  ...KNOWLEDGE_DOOR_SHARE_KEYS,
+];
+const KNOWLEDGE_DOOR_KEYS = [
+  'extends', 'detailLive', ...KNOWLEDGE_DOOR_TEXT_KEYS, ...KNOWLEDGE_DOOR_STRING_KEYS, ...KNOWLEDGE_DOOR_SHARE_KEYS,
+];
+const STRING_ID = /^[a-z][A-Za-z0-9]*(?:\.[a-z][A-Za-z0-9]*)+$/;
+
+function knowledgeDoorEntryProblems(at, name, entry) {
+  const out = [];
+  for (const key of Object.keys(entry)) {
+    if (!KNOWLEDGE_DOOR_KEYS.includes(key)) out.push(`${at}.${name}.${key} is unknown — allowed keys are ${KNOWLEDGE_DOOR_KEYS.join(', ')}`);
+  }
+  for (const key of KNOWLEDGE_DOOR_TEXT_KEYS) {
+    if (key in entry && (typeof entry[key] !== 'string' || !entry[key].trim())) out.push(`${at}.${name}.${key} must be a non-empty string`);
+  }
+  for (const key of KNOWLEDGE_DOOR_STRING_KEYS) {
+    if (key in entry && (typeof entry[key] !== 'string' || !STRING_ID.test(entry[key]))) out.push(`${at}.${name}.${key} must be a dotted uiStrings id`);
+  }
+  for (const key of KNOWLEDGE_DOOR_SHARE_KEYS) {
+    if (key in entry && !(isNum(entry[key]) && entry[key] > 0)) out.push(`${at}.${name}.${key} must be a positive number`);
+  }
+  if ('detailLive' in entry && !KNOWLEDGE_DOOR_LIVE.includes(entry.detailLive)) out.push(`${at}.${name}.detailLive must be one of ${KNOWLEDGE_DOOR_LIVE.join(', ')}`);
+  return out;
+}
+
+function knowledgeDoorLineage(at, table, name) {
+  const lineage = [];
+  for (let current = name; current !== undefined; current = table[current].extends) {
+    if (lineage.includes(current)) return { problem: `${at}.${name}: extends cycle at "${current}"` };
+    if (!isObject(table[current])) return { problem: `${at}.${name}: unknown parent "${current}"` };
+    lineage.push(current);
+  }
+  if (lineage.at(-1) !== KNOWLEDGE_DOOR_ROOT) return { problem: `${at}.${name}: does not extend "${KNOWLEDGE_DOOR_ROOT}"` };
+  return { lineage };
+}
+
+export function knowledgeDoorProblems(rel, screen) {
+  const at = `${CONFIG_DIR}/${rel}: components`;
+  const out = [];
+  for (const section of Object.keys(screen)) {
+    if (section !== 'components') out.push(`${CONFIG_DIR}/${rel}: section "${section}" is unknown — a knowledge door holds only components`);
+  }
+  const table = screen.components;
+  if (!isObject(table)) return [...out, `${at} must be an object`];
+  if (!isObject(table[KNOWLEDGE_DOOR_ROOT])) return [...out, `${at}.${KNOWLEDGE_DOOR_ROOT} is required`];
+  if ('extends' in table[KNOWLEDGE_DOOR_ROOT]) out.push(`${at}.${KNOWLEDGE_DOOR_ROOT} extends nothing`);
+  for (const [name, entry] of Object.entries(table)) {
+    if (!isObject(entry)) {
+      out.push(`${at}.${name} must be an object`);
+      continue;
+    }
+    out.push(...knowledgeDoorEntryProblems(at, name, entry));
+    if (name === KNOWLEDGE_DOOR_ROOT) continue;
+    const { problem, lineage } = knowledgeDoorLineage(at, table, name);
+    if (problem) {
+      out.push(problem);
+      continue;
+    }
+    const merged = Object.assign({}, ...lineage.reverse().map((parent) => table[parent]));
+    for (const key of KNOWLEDGE_DOOR_REQUIRED) {
+      if (!(key in merged)) out.push(`${at}.${name}.${key} is required (on the entry or a parent)`);
     }
   }
   return out;

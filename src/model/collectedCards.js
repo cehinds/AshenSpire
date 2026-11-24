@@ -1,5 +1,5 @@
 import { gameContent, isCoreProfile } from './gameProfile.js';
-import { isItemOwned } from './loadout.js';
+import * as Loadout from './loadout.js';
 
 const definitionsByProfile = new WeakMap();
 function definitionIds(run) {
@@ -16,7 +16,7 @@ export function hasCollectedCardPolicy(run) {
 }
 
 export function looseCollectedCard(card) {
-  return !!card && !card.grantedBy && !isItemOwned(card) && !card.equipmentRole;
+  return !!card && !card.grantedBy && !Loadout.isItemOwned(card) && !card.equipmentRole;
 }
 
 /** Old-save/draft fallback: only presently owned loose definitions are known. */

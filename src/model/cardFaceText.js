@@ -160,6 +160,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   };
 
   const chances = [];
+  const hasExplicitPoiseDamage = (def.effects || []).some(e => e.op === 'poiseDamage');
+  const previewWeaponPoiseTotal = (preview?.values || []).reduce((sum, row) => sum + (row.op === 'damage' && row.weaponPoiseTotal > 0 ? row.weaponPoiseTotal : 0), 0);
+  const previewWeaponPoiseBaseTotal = (preview?.values || []).reduce((sum, row) => sum + (row.op === 'damage' && row.weaponPoiseBase > 0 ? row.weaponPoiseBase * Math.max(1, Math.floor(row.hits || 1)) : 0), 0);
+  let weaponPoiseFolded = false;
   // Each effect becomes fragments: `{ cat, text }`, cat in damage | status | remove | gain | bonus.
   const phraseEffect = (effect, index) => {
     const n = value(effect, index), base = baseOf(effect, index, 'amount');
@@ -197,20 +201,32 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         } else {
           text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
         }
-        return frag('damage', conciseCounter && hits === 1 ? num(n, base) + area : text + area);
+        const damageFrags = frag('damage', conciseCounter && hits === 1 ? num(n, base) + area : text + area);
+        if (!counter && !hasExplicitPoiseDamage && live?.weaponPoise > 0) {
+          const wp = live.weaponPoise;
+          const wpBase = live.weaponPoiseBase ?? wp;
+          const poiseText = `${num(wp, wpBase)} Poise${concise ? '' : ' damage'}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
+          damageFrags.push({ cat: 'damage', text: poiseText + area });
+        }
+        return damageFrags;
       }
       case 'poiseDamage': case 'wardDamage': {
         // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
         if (counter && preview?.counterReturn && !(n > 0)) return [];
+        const extraWp = effect.op === 'poiseDamage' && !counter && !weaponPoiseFolded && previewWeaponPoiseTotal > 0 ? previewWeaponPoiseTotal : 0;
+        const extraWpBase = extraWp > 0 ? previewWeaponPoiseBaseTotal : 0;
+        if (extraWp > 0) weaponPoiseFolded = true;
         // Ward off (Core 2): Ward damage drains Poise, so the face reads one combined Poise figure.
         const merged = poiseMerge?.get(index);
         if (merged) {
           if (!merged.leader) return [];
           const live = merged.indices.map(i => value(def.effects[i], i)), authored = merged.indices.map(i => baseOf(def.effects[i], i, 'amount'));
           const sum = list => list.reduce((total, amount) => total + amount, 0);
-          return frag('damage', `${num(sum(live), authored.every(amount => typeof amount === 'number') ? sum(authored) : undefined)} Poise${concise ? '' : ' damage'}${area}`);
+          return frag('damage', `${num(sum(live) + extraWp, authored.every(amount => typeof amount === 'number') ? sum(authored) + extraWpBase : undefined)} Poise${concise ? '' : ' damage'}${area}`);
         }
-        return frag('damage', `${num(n, base)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'}${concise ? '' : ' damage'}${area}`);
+        const shownPoise = typeof n === 'number' ? n + extraWp : n;
+        const basePoise = typeof base === 'number' ? base + extraWpBase : base;
+        return frag('damage', `${num(shownPoise, basePoise)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'}${concise ? '' : ' damage'}${area}`);
       }
       case 'block': {
         const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2

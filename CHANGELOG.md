@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-24
 
-- **The component catalog lists the combat log Copy button** ([#2977](https://github.com/cehinds/AshenSpire/pull/2977), `0.7.5.84`). The developer component catalog now shows the combat log's Copy button and a greyed card that gives its reason first.
+- **The component catalog lists the combat log Copy button** ([#2977](https://github.com/cehinds/AshenSpire/pull/2977), `0.7.5.85`). The developer component catalog now shows the combat log's Copy button and a greyed card that gives its reason first.
+- **The Bestiary and the Compendium share one screen** ([#2978](https://github.com/cehinds/AshenSpire/pull/2978), `0.7.5.84`). Both now open on the same knowledge door: pick an entry to see its detail, and Back or Escape returns to the title.
 - **Ward is now a health buffer on the health bar** ([#2971](https://github.com/cehinds/AshenSpire/pull/2971), `0.7.5.84`). Ward no longer adds to Poise: each Ward stack adds 5 Ward HP in blue on the health bar, and hits resolve Block first, then Ward, then Poise and Health. Bonus Poise (`Gain N Poise`) is now shown in purple on the Poise bar. Fights saved before this keep their existing rules.
 - **Score Studio: search the Add Feature list** ([#2970](https://github.com/cehinds/AshenSpire/pull/2970), `0.7.5.82`). A search box narrows the list as you type, by name or description, and picks the best match so Enter adds it. Escape clears it.
 - **Score Studio weights say what each number does** ([#2965](https://github.com/cehinds/AshenSpire/pull/2965), `0.7.5.80`). Each row reads as a sentence, like "1 pts per 3 damage", with a live example under it, like "6 damage = 2 pts". Rows whose box the score does not use say so.

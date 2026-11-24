@@ -47,6 +47,32 @@
     "tooltip": "Cards grant +1 Block per stack."
   },
   {
+    "id": "wisdom",
+    "tint": "#f0d99a",
+    "name": "Wisdom",
+    "icon": "wisdom",
+    "stackMode": "add",
+    "decay": "none",
+    "modifiers": {
+      "poiseAdd": 1,
+      "divineDamageAdd": 1
+    },
+    "tooltip": "Grants +1 Poise and +1 Divine damage per stack."
+  },
+  {
+    "id": "intelligence",
+    "tint": "#9fc3e8",
+    "name": "Intelligence",
+    "icon": "intelligence",
+    "stackMode": "add",
+    "decay": "none",
+    "modifiers": {
+      "magicDamageAdd": 1,
+      "arcaneDamageAdd": 1
+    },
+    "tooltip": "Magic-tagged attacks deal +1 damage per stack (+2 for Arcane)."
+  },
+  {
     "id": "weak",
     "tint": "var(--muted)",
     "name": "Weak",
@@ -1330,7 +1356,7 @@
     "tint": "#6fa8ff",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Ward adds a health buffer on your HP bar: each stack adds 5 Ward HP. Hits meet Block first, then Ward absorbs the rest 1:1 before Poise and HP. Lose 1 stack (5 Ward HP) at the start of your turn.",
+    "tooltip": "Ward adds a health buffer on your HP bar: each stack adds 5 Ward HP. Hits meet Block and Poise first, then Ward absorbs the rest 1:1 before HP. Lose 1 stack (5 Ward HP) at the start of your turn.",
     "sharedWord": true
   },
   {

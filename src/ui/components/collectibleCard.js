@@ -4,6 +4,7 @@ import { assetUrl } from '../assetmap.js';
 import { relicArtUrl } from '../assets.js';
 import { OpenModal } from './modalShell.js';
 import { possessionVariant } from '../models/PossessionVariantModel.js';
+import { ItemRankOf, ItemRankBadge } from '../../model/itemRank.js';
 
 // The same poker canvas, populated with the collectible's authored effects.
 // No equipment statistics or invented combat values are attached to collectibles.
@@ -32,6 +33,7 @@ function presentation(registries, item, kind, { charges = null } = {}) {
     requirement: potion ? 'Potion slot' : 'Active while owned',
     requirementExplanation: potion ? 'An available potion slot is required to collect it.' : 'This relic applies its authored effects while it is owned.',
     rarity: item.rarity || 'common',
+    ...(potion ? {} : { rank: ItemRankOf('relic', item), rankBadge: ItemRankBadge('relic', item) }),
   };
 }
 

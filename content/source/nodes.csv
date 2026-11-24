@@ -54,7 +54,8 @@ ritual,card,Ritual,C9A227,◈,,,,,"Rites, offerings, and faith work."
 blight,card,Blight,B5541C,☣,,,,,Creeping decay.
 oath,card,Oath,C9A227,✚,,,,,"Binding, lasting commitments."
 flourish,card,Flourish,9FC3E8,✧,,,,,Finesse: footwork and multi-hit.
-finesse,card,Finesse,9FC3E8,✧,,,,,"Multi-hit without the per-hit SP price: the move costs its ordinary price."
+finesse,card,Finesse,9FC3E8,✧,,,,,"Scales with Dexterity instead of Strength (on a weapon: all martial offensive cards except Smash; on a card: that card only). Also avoids the per-hit SP price."
+dexDamage,card,Deft,9FC3E8,✧,,,,,"Adds Dexterity to damage in addition to existing damage scaling."
 ash,card,Ash,7A6F5A,•,,,,,"Spent once, then gone to ash."
 heavy,card,Heavy,C9A227,◆,,,,,"Slow, committed, and hard to stop."
 basic,card,Basic,7A6F5A,○,,,,,Everybody's: on the shelf without being found.
@@ -497,6 +498,7 @@ trait:mental,trait,Mental,9FC3E8,◇,,,,,Mental combat interaction.
 trait:projectile,trait,Projectile,9FC3E8,◇,,,,,Projectile combat interaction.
 trait:persistent,trait,Persistent,9FC3E8,◇,,,,,Granted Precision survives the end of its owner's turn.
 trait:reaction,trait,Reaction,9FC3E8,◇,,,,,"Can be played on the enemy's turn, before its action lands."
+trait:recurring,trait,Recurring,C9A227,♻,,,,,"Buff effects on this card recur at the start of each of your turns for the rest of combat. Usually paired with Exhaust."
 trait:reveal,trait,Reveal,9FC3E8,◇,,,,,Reveal combat interaction.
 trait:shattering,trait,Shattering,9FC3E8,◇,,,,,Shattering combat interaction.
 trait:unavoidable,trait,Unavoidable,9FC3E8,◇,,,,,Unavoidable combat interaction.

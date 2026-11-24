@@ -230,7 +230,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
       ${region('tags', `<span class="epc-tags ec-tags">${model.tags.map(t => `<span class="epc-tag" ${tip(t.label, t.explanation)}>${esc(t.label)}</span>`).join('')}</span>`)}
       ${region('effects', `<span class="epc-effects ec-mods"${effectsAttrs}><span class="epc-heading">${esc(variant?.heading || model.effectsLabel || 'Equipment bonuses')}</span>${effects}</span>`)}
       ${region('flavor', `<span class="epc-flavor" ${tip(model.flavor, model.flavor, 'flavor')}>${esc(model.flavor)}</span>`)}
-      ${region('footer', `<span class="epc-footer" data-identity-part="metadata">${metaSlot('start', band.start)}${metaSlot('end', band.end)}</span>`)}
+      ${region('footer', `<span class="epc-footer" data-identity-part="metadata">${metaSlot('start', band.start)}${model.rankBadge ? `<span class="epc-rank-badge" data-meta-kind="rank" ${tip(model.rankBadge, `Combat power rank: ${model.rankBadge}.`)}>${esc(model.rankBadge)}</span>` : ''}${metaSlot('end', band.end)}</span>`)}
     </span>`;
     const existing = card.querySelector(':scope > .epc-frame');
     if (existing) existing.outerHTML = frameHtml;
