@@ -672,7 +672,7 @@ function romanFor(rank) {
 
 // A name's words without its rank numeral, upgrade mark or "(Copy)", so a duplicate keeps its source's noun.
 function nameWords(name) {
-  return String(name || '').trim().split(/\s+/).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word) && !/^\(Copy\)$/i.test(word));
+  return String(name || '').trim().split(/\s+/).map((word) => word.replace(/\+\d*$/, '')).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word) && !/^\(Copy\)$/i.test(word));
 }
 
 function nameParts(def, sc = scoreCardEntry(def)) {
@@ -730,8 +730,8 @@ function autoNameFor(def, sc = scoreCardEntry(def)) {
     .filter(([key, value]) => value > 0 && !NON_NAME_PARTS.has(key))
     .sort((a, b) => b[1] - a[1])
     .map(([key]) => key);
-  const adjectiveKey = parts.source && parts.source !== 'fallback' ? parts.source : ranked[0];
-  const adjective = (adjectiveKey && wordFor('prefix', adjectiveKey)) || parts.effect || null;
+  const adjectiveKey = parts.source || ranked[0];
+  const adjective = (adjectiveKey && wordFor('prefix', adjectiveKey)) || parts.effect || parts.element || null;
   const suffixKey = ranked.find((key) => key !== adjectiveKey && wordFor('suffix', key));
   const suffix = suffixKey ? wordFor('suffix', suffixKey) : null;
   const core = def._autoNameCore || parts.base || 'Card';
@@ -775,8 +775,8 @@ function renderNameHint(def, sc = scoreCardEntry(def)) {
   const hint = document.getElementById('name-hint');
   if (!hint) return;
   const parts = nameParts(def, sc);
-  const source = parts.source && parts.source !== 'fallback' ? parts.source : 'no main effect';
-  hint.textContent = `From ${source} · ${def._autoNameCore || parts.base || 'Card'} · ${RankName(sc.rank)}`;
+  const source = parts.source || 'no second effect';
+  hint.textContent = `Convention: ${parts.name} · from ${source} · ${def._autoNameCore || parts.base || 'Card'} · ${RankName(sc.rank)}`;
 }
 
 // The game draws core cards from the profile's own card list (projectGameCard in src/model/gameProfile.js),
