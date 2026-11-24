@@ -126,6 +126,30 @@ try {
   assert.equal(draftPer.saved, draftPer.next, 'after Apply the draft holds the per just typed');
   assert.ok(draftPer.modified, 'the applied per marks its weight row changed');
 
+  // 3c. An effect row reads as a sentence, "[1] pts per [3] damage", and its example follows the boxes as typed.
+  const sentence = await page.evaluate(() => {
+    document.querySelector('.studio-tab[data-tab="weights"]').click();
+    const row = document.querySelector('.weight-row input.weight-per[aria-label="damage per"]').closest('.weight-row');
+    const order = [...row.querySelectorAll('.weight-sentence input')].map((el) => el.className);
+    const words = [...row.querySelectorAll('.weight-sentence > *')].map((el) => (el.matches('.weight-words') ? el.textContent : `[${el.querySelector('input')?.className || el.className}]`)).filter(Boolean).join(' ');
+    const weight = row.querySelector('input.weight-input');
+    const per = row.querySelector('input.weight-per');
+    const weightLabel = weight.getAttribute('aria-label');
+    weight.value = '3';
+    weight.dispatchEvent(new Event('input', { bubbles: true }));
+    per.value = '5';
+    per.dispatchEvent(new Event('input', { bubbles: true }));
+    const example = row.querySelector('.weight-example').textContent;
+    const intro = document.getElementById('weights-intro').textContent;
+    document.querySelector('.studio-tab[data-tab="cards"]').click();
+    return { order, words, weightLabel, example, intro };
+  });
+  assert.deepEqual(sentence.order, ['weight-input', 'weight-per'], 'the weight box comes before the per box');
+  assert.equal(sentence.words, '[weight-input] pts per [weight-per] damage', 'the effect row reads "[n] pts per [n] damage"');
+  assert.equal(sentence.weightLabel, 'damage points', 'the weight box is labelled as points');
+  assert.equal(sentence.example, '10 damage = 6 pts', 'the example updates live from the typed boxes (3 pts per 5 damage)');
+  assert.match(sentence.intro, /rarity discount is its CP/, 'the Weights tab explains how the parts add up');
+
   // 4. Renaming the selected card changes the name on its tile.
   const renamed = await page.evaluate(() => {
     const name = 'Studio Smoke Name';
