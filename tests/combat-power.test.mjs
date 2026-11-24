@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ScoreCard, CardCategories, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
+import { ScoreCard, CardCategories, CardKind, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
 import { scoring } from '../src/content/generated/scoring.js';
 import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
 
@@ -110,7 +110,10 @@ test('ApplyScoringOverride leaves rows untouched when absent and overrides rank,
 test('combat power: category weights add flat or scale the positive score, and default to no change', () => {
   const face = { ...fixture('combat-power-core-faces.json')[0] };
   const base = ScoreCard(face, scoring);
-  assert.deepEqual(CardCategories({ camp: 'spell', type: 'skill' }), ['magic', 'skill']);
+  assert.deepEqual(CardCategories({ camp: 'spell', type: 'skill' }), ['magic', 'spell']);
+  assert.deepEqual(CardCategories({ camp: 'physical', type: 'attack', tags: ['maneuver:sweep'], magicShare: 0.5 }), ['martial', 'magic', 'hybrid', 'sweep']);
+  assert.equal(CardKind({ type: 'attack', tags: ['maneuver:smash'] }), 'attack');
+  assert.equal(CardKind({ type: 'power', tags: ['camp:spell'] }), 'power');
   assert.deepEqual(CardCategories({ camp: 'physical', type: 'attack', categories: ['martial', 'magic', 'sweep'] }), ['martial', 'magic', 'sweep']);
   const [school, type] = CardCategories(face);
   const withWeights = (categories) => ({ ...scoring, categories: { ...scoring.categories, ...categories } });

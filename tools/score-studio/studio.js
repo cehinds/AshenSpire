@@ -12,7 +12,7 @@ import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { BaseFace, CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
@@ -255,7 +255,7 @@ function cardDefToFace(def, scoringRef) {
   f.kw = Array.isArray(def.keywords) ? [...def.keywords] : [];
   f.tags = tags;
   f._meta = m;
-  f.categories = cardCategoriesOf(def);
+  f.magicShare = safeNum(def.magicShare, 0);
   if (m.evade > 0) f.statuses.push(['evade', m.evade, 'self']);
   const statusIds = new Set(Object.keys(scoringRef.statuses || {}));
   for (const e of def.effects || []) {
@@ -293,24 +293,23 @@ const SCHOOL_CATEGORIES = Object.freeze(['martial', 'magic', 'hybrid']);
 
 const hasDamageEffect = (def) => (def.effects || []).some((e) => e.op === 'damage');
 
-function cardKindOf(def) {
-  const tags = def.tags || [];
-  if (PLAIN_KINDS.includes(def.type)) return def.type;
-  if (tags.includes('maneuver:casting') || tags.includes('camp:spell')) return 'spell';
-  for (const kind of ['sweep', 'counter', 'defend', 'attack']) if (tags.includes(`maneuver:${kind}`)) return kind;
-  return def.type === 'attack' ? 'attack' : 'skill';
-}
+// The same play style ScoreCard scores (CardKind), so the studio and the shipped table agree.
+const cardKindOf = (def) => CardKind(def);
+// Maneuvers outside the Card Type list; an Attack pick keeps them.
+const KEPT_ATTACK_MANEUVERS = Object.freeze(['maneuver:smash', 'maneuver:ranged']);
 
 function setCardKind(def, kind) {
+  const keptManeuver = kind === 'attack' ? (def.tags || []).find((t) => KEPT_ATTACK_MANEUVERS.includes(t)) : null;
   const keep = (def.tags || []).filter((t) => !t.startsWith('maneuver:') && t !== 'source:spell' && !t.startsWith('classification.'));
-  const maneuver = KIND_MANEUVERS[kind];
+  const maneuver = keptManeuver ? keptManeuver.slice('maneuver:'.length) : KIND_MANEUVERS[kind];
   if (PLAIN_KINDS.includes(kind)) def.type = kind;
   else if (kind === 'attack' || kind === 'sweep') def.type = 'attack';
   else if (kind === 'skill' || kind === 'defend') def.type = 'skill';
   else def.type = hasDamageEffect(def) ? 'attack' : 'skill';
   def.tags = [...keep, ...(maneuver ? [`maneuver:${maneuver}`] : []), `classification.${def.type}`];
   if (kind === 'spell') setCardSchools(def, { martial: false, magic: true });
-  else if (cardSchoolsOf(def).magic && !cardSchoolsOf(def).martial) setCardSchools(def, { martial: true, magic: false });
+  // Leaving Spell for a martial play style makes the card Martial; Power, Curse and Status keep their school.
+  else if (!PLAIN_KINDS.includes(kind) && cardSchoolsOf(def).magic && !cardSchoolsOf(def).martial) setCardSchools(def, { martial: true, magic: false });
 }
 
 function cardSchoolsOf(def) {
@@ -325,20 +324,19 @@ function setCardSchools(def, { martial, magic }) {
   if (spellOnly) {
     tags.push('source:spell');
     def.damageSchool = def.damageSchool && def.damageSchool !== 'physical' ? def.damageSchool : 'magic';
-  } else if (def.damageSchool && def.damageSchool !== 'physical') def.damageSchool = 'physical';
+  } else if (!magic && def.damageSchool && def.damageSchool !== 'physical') def.damageSchool = 'physical';
   if (magic && martial) def.magicShare = safeNum(def.magicShare, 0) > 0 && def.magicShare < 1 ? def.magicShare : HYBRID_MAGIC_SHARE;
   else delete def.magicShare;
   def.tags = tags;
   // A spell plays by casting; leaving Magic drops casting back to a plain attack or skill.
-  if (spellOnly && cardKindOf(def) !== 'spell' && !PLAIN_KINDS.includes(def.type)) setCardKind(def, 'spell');
+  if (spellOnly && !def.tags.includes('maneuver:casting') && !PLAIN_KINDS.includes(def.type)) setCardKind(def, 'spell');
   else if (!spellOnly && def.tags.includes('maneuver:casting')) setCardKind(def, hasDamageEffect(def) ? 'attack' : 'skill');
 }
 
 // The scoring categories the studio card belongs to (ScoreCard's scoring.categories).
 function cardCategoriesOf(def) {
-  const schools = cardSchoolsOf(def);
-  const hybrid = schools.martial && schools.magic;
-  return [...(schools.martial ? ['martial'] : []), ...(schools.magic ? ['magic'] : []), ...(hybrid ? ['hybrid'] : []), cardKindOf(def)];
+  const camp = (def.tags || []).includes('camp:spell') ? 'spell' : 'physical';
+  return CardCategories({ type: def.type, tags: def.tags, camp, magicShare: safeNum(def.magicShare, 0) });
 }
 
 function getCardTarget(def) {
@@ -1436,12 +1434,14 @@ function cardPropertyScores(def, sc) {
     title: targetDelta ? 'Change against the same card hitting a single enemy' : 'Scores the same as hitting a single enemy',
   });
 
+  const categories = CardCategories(face);
   const neutralProperties = [
     ['class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
-    ['type', capitalise(face.categories.at(-1)), (neutral) => { neutral.type = 'skill'; neutral.categories = [...neutral.categories.slice(0, -1), 'skill']; }],
-    ['camp', face.categories.filter((c) => c === 'martial' || c === 'magic').map(capitalise).join(' + '), (neutral) => {
+    ['type', capitalise(categories.at(-1)), (neutral) => { neutral.type = 'skill'; neutral.categories = [...categories.slice(0, -1), 'skill']; }],
+    ['camp', categories.filter((c) => c === 'martial' || c === 'magic').map(capitalise).join(' + '), (neutral) => {
       neutral.camp = 'physical';
-      neutral.categories = ['martial', ...neutral.categories.filter((c) => !SCHOOL_CATEGORIES.includes(c))];
+      neutral.magicShare = 0;
+      neutral.categories = ['martial', ...categories.filter((c) => !SCHOOL_CATEGORIES.includes(c))];
     }],
   ];
   for (const [field, label, neutralize] of neutralProperties) {
@@ -1766,7 +1766,8 @@ const CATEGORY_KEYS = Object.freeze([...SCHOOL_CATEGORIES, ...CARD_KINDS]);
 
 function categoryWeight(scoring, key) {
   scoring.categories ||= {};
-  scoring.categories[key] ||= { weight: 0, multiplier: false };
+  // A category the table lacks starts at the repo's weight (Hybrid +10), not at 0.
+  scoring.categories[key] ||= clone(state.repoScoring?.categories?.[key] || { weight: 0, multiplier: false });
   return scoring.categories[key];
 }
 
@@ -3049,6 +3050,11 @@ async function boot() {
       const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
         .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
       state.scoring = draft.scoring;
+      // A draft saved before a category existed takes the repo's weight for it (Hybrid +10 reaches old drafts).
+      for (const [key, weight] of Object.entries(state.repoScoring.categories || {})) {
+        if (key === 'rule' || state.scoring.categories?.[key]) continue;
+        (state.scoring.categories ||= {})[key] = clone(weight);
+      }
       if (draftArtLayers) state.artLayers = draftArtLayers;
       for (const draftCard of draftCards) {
         const i = state.cards.findIndex((c) => c.id === draftCard.id);
