@@ -1143,10 +1143,12 @@ function renderAddFeatureOptions() {
   sel.appendChild(placeholder);
   for (const [label, opts] of Object.entries(addFeatureGroups)) {
     total += opts.length;
+    // Name or id matches list first, then matches found only in the description.
+    const named = ([val, text]) => words.every((word) => `${text} ${val}`.toLowerCase().includes(word));
     const hits = words.length ? opts.filter(([val, text]) => {
       const haystack = addFeatureSearchText(val, text);
       return words.every((word) => haystack.includes(word));
-    }) : opts;
+    }).sort((a, b) => Number(named(b)) - Number(named(a))) : opts;
     if (!hits.length) continue;
     matched += hits.length;
     const og = document.createElement('optgroup');
@@ -1161,8 +1163,11 @@ function renderAddFeatureOptions() {
   }
   placeholder.textContent = !words.length ? '+ Add Feature...' : matched ? `${matched} match${matched === 1 ? '' : 'es'}` : 'No match';
   if (search) search.placeholder = `Search ${total} features`;
-  const keep = [...sel.options].some((o) => o.value && o.value === previous);
-  sel.value = keep ? previous : words.length && matched ? sel.querySelector('optgroup option').value : '';
+  if (!words.length) { sel.value = [...sel.options].some((o) => o.value && o.value === previous) ? previous : ''; return; }
+  // A search picks its best match: the first name match in any group, else the first description match.
+  const options = [...sel.querySelectorAll('optgroup option')];
+  const best = options.find((o) => words.every((word) => `${o.textContent} ${o.value}`.toLowerCase().includes(word))) || options[0];
+  sel.value = best ? best.value : '';
 }
 
 function renderInspector() {
