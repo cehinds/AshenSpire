@@ -3,6 +3,37 @@
 Status: designed, not started. Starts after `feature/ProceduralCardNames` lands (same files:
 `tools/score-studio/studio.js`, `src/model/cardGenerator.js`). Branch: `feature/CardPoolGenerator`.
 
+## Checklist
+
+Naming (feature/ProceduralCardNames, in progress)
+- [ ] Name structure: rarity, 2nd effect, element (magic), base, rank, +
+- [ ] Base words by range: Strike/Shot, Touch/Bolt; Cleave/Wave; maneuver words kept
+- [ ] Name length limit (20) with editable keep order
+- [ ] Flat option on every multiplier in the Weights tab
+
+Card pool generator
+- [ ] Generator makes 1-3 effects, statuses, schools, SP/MP costs at exact CP
+- [ ] Regenerate modal: mode (replace generated / replace all / add)
+- [ ] Totals: card count, cards per school, per camp
+- [ ] Odds: rarity, rank, cost, card type, range, effects per card
+- [ ] Allowed effects/statuses, keyword, drawback and area odds
+- [ ] Seed with dice, class, live totals, preview before Apply
+- [ ] Tooltips on every control
+
+Class decks
+- [ ] Starting deck per class with copy steppers
+- [ ] Regenerate starting deck from rules
+- [ ] Reward odds per school and card type
+- [ ] Allowed cards, schools and card types per class
+
+Acts, shops and rewards
+- [ ] Ranks and cards per act
+- [ ] Rank and rarity odds per source (rewards, shops, events, elites/bosses) per act
+- [ ] Odds table per act and a sample roll
+
+Finish
+- [ ] Review, browser check, screenshots, PRs merged and promoted
+
 ## Owner request
 
 - A button that regenerates cards from the weights and a set of priorities, opening a modal with
