@@ -8,7 +8,7 @@ import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
-import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RankUpReady, RankUpReadyReason, RaiseCardRank } from './rankUpService.js';
+import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RankUpReady, RankUpReadyReason, RaiseCardRank, RankUpPrice, RankUpBlock } from './rankUpService.js';
 import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
@@ -574,15 +574,17 @@ export { shopOfferPrice };
 export function gameProfileShopPurchasePlan(registries,run,shopId,index,{instanceId=null}={}) {
   const offerId=`shop:${shopId}`,stock=run.gameProfileRewardOffers?.[offerId];
   const copyCard=stock?.options?.[index]?.kind===CARD_COPY_OPTION.kind&&typeof instanceId==='string'?CardCopyCandidates(registries,run).find(card=>card.instanceId===instanceId):null;
+  // A rank-up shelf's price is its Rank 1 price; the chosen card pays it times the rank it reaches (owner, 2026-11-23).
+  const rankCard=stock?.options?.[index]?.kind===RANK_UP_OPTION.kind&&typeof instanceId==='string'?RankUpCandidates(registries,run).find(card=>card.instanceId===instanceId):null;
   const shelfPrice=shopOfferPrice(stock,index);
-  const price=copyCard?CardCopyPrice(run,shelfPrice,copyCard):shelfPrice;
+  const price=copyCard?CardCopyPrice(run,shelfPrice,copyCard):rankCard?RankUpPrice(shelfPrice,OwnCardRank(rankCard)+1):shelfPrice;
   let reason='';
   if(!stock||stock.source!=='shop')reason='Missing configured shop';
   else if(!Number.isInteger(index)||!stock.options[index]||stock.taken.includes(index)||stock.claimed!==null)reason='This offer is sold out.';
   else if(!Number.isSafeInteger(price)||price<0)reason='Invalid configured shop price';
   else if(stock.options[index].kind==='weapons'&&(run.loadout?.storage||[]).length>=(registries.balance.equipment.storageSlots??8))reason='Inventory is full. Sell or make room first.';
   else if(!Number.isSafeInteger(run.cinders)||run.cinders<price)reason='Insufficient cinders';
-  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';else if(!RankUpReady(registries,run).length)reason=RankUpReadyReason();}
+  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';else if(!RankUpReady(registries,run).length)reason=RankUpReadyReason();else if(rankCard&&RankUpBlock(run,rankCard))reason=RankUpBlock(run,rankCard);}
   else if(stock.options[index].kind===CARD_COPY_OPTION.kind){if(CardCopyUsesLeft(stock.options[index])<1)reason='This offer is sold out.';else if(!CardCopyCandidates(registries,run).length)reason='You have no card to copy.';}
   else try {claimGameProfileReward(registries,structuredClone(run),offerId,index);}catch(error){reason=error.message;}
   return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};

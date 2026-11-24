@@ -3049,7 +3049,7 @@ It is a screen of its own, reusing `SmithSelectionModel` and the smith modals. I
 |---|---|---|
 | Tier upgrade (tier 1 / 2 / 3) | `prices.tierUpgrade` | 180 / 300 / 450 (owner 2026-11-23: upgrade prices x3; was 60 / 100 / 150) |
 | Card upgrade | `prices.cardUpgrade` + `cardUpgradePerUpgrade` × the card's earlier upgrades + `cardUpgradePerRank` × (its rank − 1) | 150 + 105 per earlier upgrade + 75 per rank above 1 (owner, 2026-11-23: x3; was 50 + 35 + 25, before that a flat 40) |
-| Rank-up | `prices.rankUp` | 240 (owner 2026-11-23: service prices x2; was 120) |
+| Rank-up | `prices.rankUp` × the rank reached | 240 per rank: Rank 1 240, Rank 2 480, ... Rank 5 1200 (owner 2026-11-23; was a flat 120). An item rank-up is priced the same by the item's next rank. A trader's rank-up shelf reads "From" its Rank 1 price; the card pick names each card's price, and the plan and commit charge it. The Sleeping Smith's random rank-up stays a flat 80. |
 
 - **Rank-up.** Raises one run-owned card's `rank` by 1 (not an equipment-bound or granted card; never past rank 99).
 - **Armaments.** The rack is `armamentStock` (4 to 6, §14.2) distinct pieces drawn on `shopOffers` from the Core weapon pool the run does not carry.

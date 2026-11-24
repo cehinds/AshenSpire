@@ -2653,10 +2653,10 @@ function chooseCardToCopy({ price = '', shelfPrice = null } = {}) {
   });
 }
 
-function chooseRankUpCard({ price = '' } = {}) {
+function chooseRankUpCard({ price = '', shelfPrice = null } = {}) {
   return new Promise((resolve, reject) => {
     let picked = null;
-    OpenRankUpCardModal({ registries, run, price, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
+    OpenRankUpCardModal({ registries, run, price, shelfPrice, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
   });
 }
 
@@ -2768,8 +2768,10 @@ function showShop() {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
       // A trade replaces the saved stock, so the slot's kind is read from the current one.
       if (run.gameProfileRewardOffers?.[`shop:${shopId}`]?.options[index]?.kind === 'rankUps') {
-        return chooseRankUpCard({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
-          purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist();
+        // Owner 2026-11-23: the shelf names its Rank 1 price; each card's row names the price of the rank it reaches.
+        return chooseRankUpCard({ price: t('rankUp.pick.priceFrom', { cinders: quote.price }), shelfPrice: quote.price }).then(instanceId => {
+          const priced = gameProfileShopPurchasePlan(registries, run, shopId, index, { instanceId });
+          purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId, price: priced.price }); persist();
         }, () => {});
       }
       // Owner 2026-11-20: a copy service asks which owned card to copy; the copy lands in the library like a bought card.

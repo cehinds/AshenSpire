@@ -53,6 +53,8 @@ test('rank-up: plan names 240 cinders and 1 stone (owner 2026-11-23: doubled); c
   FillUpgradeSlots(run, [card]);
   commitRankUp(coreOut, run, rankUpPlan(coreOut, run, card.instanceId));
   assert.equal(card.rank, 2, 'ranks stack (an unranked card rose to Rank 1, then 2)');
+  FillUpgradeSlots(run, [card]);
+  assert.equal(rankUpPlan(coreOut, run, card.instanceId).cost, 720, 'Rank 3 costs the rank-up price three times (owner 2026-11-23)');
 });
 
 test('rank-up: a stale quote is refused and spends nothing', () => {

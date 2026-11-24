@@ -80,8 +80,13 @@ export const CombatRankUpBonusChance = (run) => (CardRanksOn(run) ? wholePct(gam
 export const CombatRankUpIsBonus = (run, offerId) => RollRankUp(run, `bonus:${offerId}`, CombatRankUpBonusChance(run));
 /** The percent chance a shop's stock carries a rank-up (shops.json `rankUp.stockChancePct`; missing = 0). */
 export const ShopRankUpChance = (run) => (CardRanksOn(run) ? wholePct(gameContent(run, 'shops')?.rankUp?.stockChancePct) : 0);
-/** The cinders a shop asks for a rank-up: the Blacksmith's own price (shops.json `blacksmith.prices.rankUp`). */
+/** The cinders a shop asks for a rank-up to Rank 1: the Blacksmith's own price (shops.json `blacksmith.prices.rankUp`), its "from" price. */
 export const ShopRankUpPrice = (run) => blacksmithPrices(run).rankUp;
+/**
+ * RankUpPrice(base, toRank) -> what reaching `toRank` costs (owner, 2026-11-23): the rank-up price times the target rank, so
+ * Rank 1 costs it once and Rank 5 five times. A card's next rank is OwnCardRank + 1; an item's is its rank + 1.
+ */
+export const RankUpPrice = (base, toRank) => (Number.isSafeInteger(base) ? base * Math.max(1, toRank) : base);
 
 /** Whether this won fight's reward carries a rank-up (key: the offer's id). */
 export const CombatRewardRanksUp = (registries, run, offerId, pool) => RankUpCandidates(registries, run).length > 0 && RollRankUp(run, offerId, CombatRankUpChance(run, pool));

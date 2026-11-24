@@ -118,3 +118,36 @@ test('a fresh stock with the rank-up shelf takes one more than a plain stock, so
   const again = gameProfileShopStock(registries, run, createRng(run.seed), { shopId });
   assert.equal(again.takeCount, plainHere + 1, 'a reload does not raise it again');
 });
+
+test('the shelf price is the Rank 1 price; a chosen card pays the rank-up price times the rank it reaches (owner 2026-11-23)', async () => {
+  const { RankUpPrice } = await import('../src/model/rankUpService.js');
+  assert.deepEqual([1, 2, 5].map((rank) => RankUpPrice(240, rank)), [240, 480, 1200]);
+  const run = newRun(21);
+  const { shopId, stock } = shopWithRankUp(run);
+  const at = shelf(stock);
+  run.cinders = 5000;
+  const card = RankUpCandidates(registries, run)[0];
+  card.rank = 2;
+  FillUpgradeSlots(run, [card]);
+  const shelfQuote = gameProfileShopPurchasePlan(registries, run, shopId, at);
+  assert.equal(shelfQuote.price, 240);
+  const picked = gameProfileShopPurchasePlan(registries, run, shopId, at, { instanceId: card.instanceId });
+  assert.equal(picked.price, 720, 'Rank 2 to Rank 3: three times');
+  assert.throws(() => purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), { ...shelfQuote, instanceId: card.instanceId }), /changed/);
+  const receipt = purchaseGameProfileShopOffer(registries, run, shopId, at, createRng(run.seed), { ...shelfQuote, instanceId: card.instanceId, price: picked.price });
+  assert.deepEqual([receipt.price, run.cinders], [720, 5000 - 720]);
+});
+
+test('the rank-up pick names each card its own price', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  await withKitDom(async () => {
+    const { RankUpCardRows } = await import('../src/ui/components/rankUpCardModal.js');
+    const run = newRun(21);
+    const [plain, ranked] = RankUpCandidates(registries, run);
+    ranked.rank = 1;
+    FillUpgradeSlots(run, [ranked]);
+    const rows = RankUpCardRows(registries, run, 240);
+    assert.match(rows.find((r) => r.id === plain.instanceId).text, /240 cinders/);
+    assert.match(rows.find((r) => r.id === ranked.instanceId).text, /480 cinders/);
+  });
+});

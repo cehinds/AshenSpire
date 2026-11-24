@@ -23,7 +23,7 @@ import { smithingPlan, commitItemUpgrade, withSmithService, ownedSmithingItems }
 import { coreSmithingActive } from './smithingCore.js';
 import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
 import { mulberry32 } from './rng.js';
-import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank, RankUpBlock } from './rankUpService.js';
+import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank, RankUpBlock, RankUpPrice } from './rankUpService.js';
 import { OwnCardRank } from './cardRank.js';
 import { CardCopyCandidates, CopyOwnedCard, CardCopyUsesLeft, CardCopyPrice } from './cardCopyService.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
@@ -206,7 +206,8 @@ export function CommitCategoryChange(registries, run, quote, { priceMult = 1 } =
 export function ItemRankUpPlan(registries, run, itemRef, { priceMult = 1 } = {}) {
   const rules = blacksmithRules(run);
   const name = ownedSmithingItems(registries, run).find((row) => row.itemRef === itemRef)?.item?.name || armamentName(registries, itemRef);
-  const price = cinders(blacksmithPrices(run).rankUp, priceMult);
+  // Owner 2026-11-23: the price is the rank-up price times the rank reached.
+  const price = cinders(RankUpPrice(blacksmithPrices(run).rankUp, ItemRank(run, itemRef) + 1), priceMult);
   const need = Number.isSafeInteger(rules?.rankUpStones) && rules.rankUpStones > 0 ? rules.rankUpStones : 0;
   const slots = SmithUpgradeSlots(run, itemRef);
   let reason = '';
@@ -300,7 +301,8 @@ export function rankUpCards(registries, run) {
 export function rankUpPlan(registries, run, instanceId, { priceMult = 1 } = {}) {
   const card = owned(run).find((row) => row.instanceId === instanceId) || null;
   const rules = blacksmithRules(run);
-  const price = cinders(blacksmithPrices(run).rankUp, priceMult);
+  // Owner 2026-11-23: the price is the rank-up price times the rank the card reaches (Rank 1 once, Rank 5 five times).
+  const price = cinders(RankUpPrice(blacksmithPrices(run).rankUp, OwnCardRank(card) + 1), priceMult);
   const need = Number.isSafeInteger(rules?.rankUpStones) && rules.rankUpStones > 0 ? rules.rankUpStones : 0;
   const name = card ? cardName(registries, card.cardId) : '';
   let reason = '';

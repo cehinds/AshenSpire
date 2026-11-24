@@ -125,6 +125,7 @@ test('item rank-up: +1 upgrade slot for the rank-up price; slots never pass the 
   CommitItemRankUp(registries, run, quote);
   assert.equal(SmithUpgradeSlots(run, GS), 7);
   assert.deepEqual([run.smithingStones, run.cinders], [stonesBefore - 1, cindersBefore - 240]);
+  assert.equal(ItemRankUpPlan(registries, run, GS).cost, 480, 'the next rank costs the rank-up price twice (owner 2026-11-23)');
   assert.throws(() => CommitItemRankUp(registries, run, quote), /changed|Inspect/);
   run.itemRanks[GS] = 99;
   assert.equal(SmithUpgradeSlots(run, GS), 12);
