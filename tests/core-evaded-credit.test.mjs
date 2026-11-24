@@ -20,6 +20,7 @@ test('a Core fight (knowledge opted in): an enemy attack into one Evade stack cr
   const run = createRunState({ registries, classId: 'reaver', seed: 11, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   // The shipped Core profile turns enemy knowledge off; opt this run in so the credit path is exercised under the shipped hit rules.
   run.enemyKnowledgeRules = snapshotEnemyKnowledgeRules(registries);
+  run.enemyKnowledgeRules.perception.enabled = true; // these tests exercise Perception (off by default, owner 2026-11-18)
   Object.assign(run.enemyKnowledgeRules.reads, { minimumExact: 0, maximumExact: 0, minimumClue: 0, maximumClue: 0 });
   openRunEnemyKnowledge(run, { bankable: true, receiptId: 'evaded-credit-run' });
   const combat = createRunCombat({ registries, run, rng: createRng(11), enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });

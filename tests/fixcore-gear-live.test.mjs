@@ -11,19 +11,32 @@ import { createRunState, initializeRunDerivedStats } from '../src/model/state.js
 import { gameProfileEquipmentReceipt, gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
 import { reconcileRunLoadoutHp } from '../src/model/loadout.js';
 import { withGameProfileService } from '../src/model/gameProfileRun.js';
-import { applyLevelUp } from '../src/model/levelup.js';
+import { applyLevelUp, rederivePools } from '../src/model/levelup.js';
 const profile = resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),loadGameProfileCatalog());
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh = () => createRunState({registries:reg,classId:'reaver',seed:429});
-test('Core armor budget is 3 at rank 1 plus 1 point per tier, any rarity (D14); rarity bonus defaults to 0', () => {
+// Owner, 2026-11-17: Core gear resolves through the gear module's `statPoints` (attribute points and Poise, no AR or DR), which takes
+// precedence over the armor budget. The armor-budget (D14) tests below run on Core's gear settings without `statPoints`, as a
+// profile without it still resolves armor.
+const budgetGear = {...profile.modules.gear,statPoints:undefined};
+const attributePoints = points=>['strength','dexterity','constitution','wisdom','intelligence'].reduce((sum,key)=>sum+(points[key]||0),0);
+test('Core armor grants statPoints attribute points by rarity plus one per tier and a Poise value, never AR or DR', () => {
+  const armor = profile.content.gear.find(item=>item.kind==='armor'), rule = profile.modules.gear.statPoints;
+  const points = (item,rank)=>resolveGearItem(item,profile.modules.gear,{rank}).points;
+  assert.equal(attributePoints(points(armor,1)),rule.attributes[armor.rarity]);
+  assert.equal(attributePoints(points({...armor,rarity:'epic'},1)),rule.attributes.epic);
+  assert.equal(attributePoints(points(armor,4)),rule.attributes[armor.rarity]+3*rule.perRank);
+  for (const rank of [1,4]) { assert.equal(points(armor,rank).ar,0); assert.equal(points(armor,rank).dr,0); assert.ok(points(armor,rank).poise>=rule.poiseMin); }
+});
+test('armor budget (D14, a profile without statPoints) is 3 at rank 1 plus 1 point per tier, any rarity; rarity bonus defaults to 0', () => {
   const armor = profile.content.gear.find(item=>item.kind==='armor');
   const sum = receipt=>Object.values(receipt.points).reduce((a,b)=>a+b,0)+receipt.tagCost;
-  assert.equal(sum(resolveGearItem(armor,profile.modules.gear)),3);
-  assert.equal(sum(resolveGearItem({...armor,rarity:'epic'},profile.modules.gear)),3);
-  assert.equal(sum(resolveGearItem(armor,profile.modules.gear,{rank:4})),6);
+  assert.equal(sum(resolveGearItem(armor,budgetGear)),3);
+  assert.equal(sum(resolveGearItem({...armor,rarity:'epic'},budgetGear)),3);
+  assert.equal(sum(resolveGearItem(armor,budgetGear,{rank:4})),6);
   assert.equal(profile.modules.gear.armorBudget.perRank,1);
   assert.deepEqual(profile.modules.gear.armorBudget.rarityBonus,{});
-  const bonus={...profile.modules.gear,armorBudget:{...profile.modules.gear.armorBudget,rarityBonus:{epic:2}}};
+  const bonus={...budgetGear,armorBudget:{...profile.modules.gear.armorBudget,rarityBonus:{epic:2}}};
   assert.equal(resolveGearItem({...armor,rarity:'epic'},bonus).budget,5);
   assert.equal(resolveGearItem({...armor,rarity:'common'},bonus).budget,3);
 });
@@ -37,7 +50,12 @@ test('equipped resolved values reach live pools/ratings once and survive restore
   initializeRunDerivedStats(run,reg);
   assert.equal(run.maxHp,before.maxHp);
   const ratings=gameProfileRatingReceipt(reg,run);
-  assert.equal(ratings.sources.filter(source=>source.resolved).length,gear.sources.length);
+  // Owner, 2026-11-18 (gear vocabulary, ruling 18): an armour group's stat rows (Heavy: Poise +2, DEX -1) are gear sources of their own, `type/<stat>`, with no resolved
+  // item behind them; each still reaches the ratings once, through its stat.
+  const itemSources=gear.sources.filter(source=>source.itemId!=='type'), typeSources=gear.sources.filter(source=>source.itemId==='type');
+  assert.ok(typeSources.length,'the worn armour group contributes stat sources');
+  assert.equal(ratings.sources.filter(source=>source.resolved).length,itemSources.length);
+  for (const source of typeSources) assert.ok(ratings.sources.some(row=>row.sourceId===source.sourceId),`${source.sourceId} reaches the ratings`);
   const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);
   const restored=save.loadRun(reg);assert.ok(restored,JSON.stringify(save.runStatus()));
   initializeRunDerivedStats(restored,reg);
@@ -59,26 +77,38 @@ test('previously earned Core attribute entitlement remains claimable and changes
   assert.equal(restored.attributes.strength,run.attributes.strength);
 });
 
-test('authored HP MP SP and attribute gear reaches pools with one contribution on reload', () => {
+test('authored attribute gear reaches HP MP SP pools with one contribution on reload', () => {
+  // +1 CON gives 5 HP, while +1 DEX and +1 WIS bring each effective attribute to 4 for the first SP and MP increases.
   const catalog=loadGameProfileCatalog();
-  const armor=catalog.packs['ashen.core-content@2.0.0'].content.gear.find(item=>item.kind==='armor' && item.source.id==='wayfarerPlate');
-  armor.points={hp:1,mp:1,sp:1};
+  const armor=catalog.packs['ashen.core-content@2.0.0'].content.gear.find(item=>item.kind==='armor' && item.source.id==='vigil');
+  armor.points={constitution:1,dexterity:1,wisdom:1};
   const selected=resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),catalog);
   const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,selected)),selected);
   const run=createRunState({registries,classId:'reaver',seed:10});
-  run.loadout.sets.armor[0]='wayfarerPlate';
-  reconcileRunLoadoutHp(registries,run);
+  run.loadout.sets.armor[0]=null;
+  run.level.level=5; run.level.unspentPoints=4;
+  withGameProfileService(run,'levelUp',()=>{
+    for (const attribute of ['dexterity','dexterity','wisdom','wisdom']) applyLevelUp(registries,run,attribute);
+  });
+  const unworn=[run.maxHp,run.maxMana,run.maxStamina];
+  assert.deepEqual(unworn.slice(1),[1,3]);
+  const unwornPoints=gameProfileEquipmentReceipt(registries,run).totals;
+  run.loadout.sets.armor[0]='vigil'; // Medium: its type adds Poise only (Heavy would take 1 DEX, ruling 18), so the 3 authored points are the whole stat change
+  rederivePools(registries,run,'test');
   const receipt=gameProfileEquipmentReceipt(registries,run);
-  assert.ok(receipt.totals.hp>=10 && receipt.totals.mp>=1 && receipt.totals.sp>=1);
+  for (const attribute of ['constitution','dexterity','wisdom']) assert.equal(receipt.totals[attribute]-unwornPoints[attribute],1);
   const before=[run.maxHp,run.maxMana,run.maxStamina];
+  assert.deepEqual(before,unworn.map((n,i)=>n+[5,1,1][i]));
   const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);
   const restored=save.loadRun(registries);assert.ok(restored,JSON.stringify(save.runStatus()));
   assert.deepEqual([restored.maxHp,restored.maxMana,restored.maxStamina],before);
   reconcileRunLoadoutHp(registries,restored);
   assert.deepEqual([restored.maxHp,restored.maxMana,restored.maxStamina],before);
+  rederivePools(registries,restored,'test');
+  assert.deepEqual([restored.maxHp,restored.maxMana,restored.maxStamina],before);
   run.loadout.sets.armor[0]=null;
-  reconcileRunLoadoutHp(registries,run);
-  assert.deepEqual([run.maxHp,run.maxMana,run.maxStamina],before.map((n,i)=>n-[10,1,1][i]));
+  rederivePools(registries,run,'test');
+  assert.deepEqual([run.maxHp,run.maxMana,run.maxStamina],unworn);
 });
 
 test('equipment inspection exposes converted values and armor budget', async () => {
@@ -87,7 +117,7 @@ test('equipment inspection exposes converted values and armor budget', async () 
   const armor=reg.equipment.armour.find(piece=>piece.classId==='reaver' && piece.id==='wayfarerPlate');
   assert.ok(armor);
   const model=equipmentCardModel(reg,resolveUpgradedEquipment(reg,`armor/reaver/${armor.id}`,1));
-  assert.ok(model.bonuses.some(row=>row.label==='Rank 2 · 4 points'));
+  assert.ok(model.bonuses.every(row=>!/points|Rank \d/.test(row.label)));assert.ok(model.bonuses.some(row=>/Poise/.test(row.label)));
   assert.ok(model.facts.every(row=>row.explanation.includes('stat-budget point(s)')));
 });
 test('resolved gear suppresses duplicate legacy pool stats and retains independent effects', async () => {
@@ -95,18 +125,23 @@ test('resolved gear suppresses duplicate legacy pool stats and retains independe
   const run=fresh();
   const registry={...reg,equipment:{...reg.equipment,armaments:reg.equipment.armaments.map(piece=>piece.id==='greatsword' ? {...piece,mods:[...(piece.mods || []),'self.maxHp=+999','self.regen=+2','self.swapCost=+1']} : piece)}};
   const baseline=runMods(reg,run.loadout,run.class,run), actual=runMods(registry,run.loadout,run.class,run);
-  assert.equal(actual.maxHp,baseline.maxHp);
+  // Owner, 2026-11-18 ("no hidden caps; balance through cost and consequence", a845a23): resolved gear replaces a legacy pool mod only where its own points supply that
+  // pool; the Greatsword's resolved hp is 0, so its authored +999 max HP is a real, uncapped bonus on top, counted once.
+  assert.equal(actual.maxHp,baseline.maxHp+999);
   assert.equal(actual.swapCostDelta,baseline.swapCostDelta+1);
   assert.equal(actual.startStatuses.find(row=>row.status==='regen')?.stacks,(baseline.startStatuses.find(row=>row.status==='regen')?.stacks || 0)+2);
 });
+// Owner, 2026-11-17 (gear statPoints): a weapon Smith tier adds attribute points to its own item, not AR, so each source keeps its own gain.
 test('Core 2 weapon upgrades retain each equipped source identity', () => {
   const run=fresh();run.loadout.sets.leftHand[0]='dagger';
-  const before=gameProfileRatingReceipt(reg,run);
+  const before=gameProfileRatingReceipt(reg,run), gearBefore=gameProfileEquipmentReceipt(reg,run);
   run.itemUpgradeLevels={'armament/greatsword':2,'armament/dagger':1};
-  const after=gameProfileRatingReceipt(reg,run);
-  assert.equal(after.totals.ar,before.totals.ar+3);
-  assert.equal(after.sources.find(row=>row.sourceId==='armament/greatsword' && row.weaponTier)?.ar,2);
-  assert.equal(after.sources.find(row=>row.sourceId==='armament/dagger' && row.weaponTier)?.ar,1);
+  const after=gameProfileRatingReceipt(reg,run), gearAfter=gameProfileEquipmentReceipt(reg,run);
+  const gained=id=>attributePoints(gearAfter.sources.find(row=>row.sourceId===id))-attributePoints(gearBefore.sources.find(row=>row.sourceId===id));
+  assert.equal(gained('armament/greatsword'),2);
+  assert.equal(gained('armament/dagger'),1);
+  assert.equal(after.sources.some(row=>row.weaponTier),false,'no flat AR per tier');
+  assert.equal(after.totals.ar-before.totals.ar,gearAfter.totals.strength-gearBefore.totals.strength,'AR moves only with the STR the tiers bought');
 });
 test('combat refresh derives from allocated attributes without counting gear twice', async () => {
   const {gameProfileEffectiveAttributes}=await import('../src/model/gameProfileGear.js');
@@ -122,7 +157,7 @@ test('armor rarity bonus ignores inherited keys such as constructor', () => {
   assert.equal(armorBudgetFor({ rarity: 'epic' }, settings, 1), 5);
 });
 test('tier DR point comes only from unspent budget: authored DR that spends the allowance is not topped up', () => {
-  const armor = profile.content.gear.find(item=>item.kind==='armor'), s = profile.modules.gear;
+  const armor = profile.content.gear.find(item=>item.kind==='armor'), s = budgetGear;
   const authored = {...armor,tags:[],points:{dr:4}};
   const r2 = resolveGearItem(authored,s,{rank:2});
   assert.equal(r2.budget,4);
@@ -133,11 +168,12 @@ test('tier DR point comes only from unspent budget: authored DR that spends the 
   assert.ok(resolveGearItem(bare,s,{rank:2}).points.dr >= resolveGearItem(bare,s,{rank:1}).points.dr + 1);
   assert.equal(Object.values(resolveGearItem(bare,s,{rank:2}).points).reduce((a,b)=>a+b,0),4);
 });
-test('tier DR point is a Core policy flag: Core raises DR, a perRank profile without perRankStat keeps the weighted split', () => {
-  const armor = profile.content.gear.find(item=>item.kind==='armor'), s = profile.modules.gear;
+test('tier DR point is an armor-budget policy flag: perRankStat raises DR, a perRank profile without it keeps the weighted split', () => {
+  const armor = profile.content.gear.find(item=>item.kind==='armor'), s = budgetGear;
   assert.equal(s.armorBudget.perRankStat,'dr');
   const bare = {...armor,tags:[],points:{}, weights:{ratings:{poise:1}}};
   const dr = (settings,rank)=>resolveGearItem(bare,settings,{rank}).points.dr;
+  assert.equal(dr(profile.modules.gear,2),0,'Core statPoints: a tier is attribute points, never DR');
   assert.equal(dr(s,2),dr(s,1)+1);
   const generic = {...s,armorBudget:{...s.armorBudget,perRankStat:undefined}};
   assert.equal(dr(generic,2),dr(generic,1));

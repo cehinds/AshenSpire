@@ -1,6 +1,6 @@
 import { presentationConfig } from '../../model/advancedConfig.js';
 import { armHold, holdMs } from './holdconfirm.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
 import { veilIsOpen } from './veil.js';
 import { t } from '../strings.js';
 
@@ -37,7 +37,7 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
     if (!usable(cell)) return;
     selected = cell;
     refresh();
-    openConfirmationModal({ title: `Move to ${cell}?`,
+    OpenConfirmationModal({ title: `Move to ${cell}?`,
       message: plan(cell).cost ? 'Move to this position for 1 action.' : 'Move to this position for free.',
       confirmLabel: t('formation.move.confirm'), cancelLabel: t('common.cancel'), returnFocusElement: control,
       onConfirm: () => commit(cell, true), onCancel: () => { selected = null; refresh(); },

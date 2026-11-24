@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 200,
-  "distinct": 173,
+  "sites": 198,
+  "distinct": 172,
   "files": {
     "src/ui/screens/customize.js": 39,
     "src/ui/components/offlinePlay.js": 20,
@@ -18,8 +18,8 @@
     "src/ui/screens/combat.js": 8,
     "src/ui/components/saveSlotSelector.js": 6,
     "src/ui/components/tutorial.js": 6,
-    "src/ui/screens/controls.js": 6,
     "src/ui/models/MenuModels.js": 5,
+    "src/ui/screens/controls.js": 5,
     "src/ui/components/mapboard.js": 4,
     "src/ui/components/upright.js": 4,
     "src/ui/models/MountServiceModel.js": 4,
@@ -54,7 +54,6 @@
     "src/ui/models/TooltipPlacementModel.js": 1,
     "src/ui/models/VitalsPanelModel.js": 1,
     "src/ui/screens/about.js": 1,
-    "src/ui/screens/event.js": 1,
     "src/ui/screens/map.js": 1
   }
 }

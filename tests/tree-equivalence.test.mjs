@@ -83,6 +83,8 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     // Wave 2 (wording): British spelling for what the player reads; the ids stay item:armor, from:armor, twinnedArmor.
     'item:armor': { label: 'Armour', blurb: 'What this piece IS: the Armoury and the smith name it Armour.' },
     'from:armor': { label: 'Armour' },
+    // Owner 2026-11-18 (ruling §18 supersedes §9 timing): one shared Focus discount applies only in Prepared.
+    'item:magic-focus': { blurb: 'What this piece IS: the Armoury and the smith name it Magic Focus. While in Prepared stance, an equipped Focus lowers the final Mana cost of each spell by 1 (never below 0). Only one Focus discount applies.' },
     'twinnedArmor': { label: 'Twinned Armour', blurb: 'What Twinned Armour does when the fight gives it its moment.' },
     'rank.cantrip': { blurb: 'Basic spell eligible for Magic Adept deck copies.' },
     'source:spell': { glyph: '✧' },
@@ -95,9 +97,19 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     'damage:fire': { blurb: 'Applies 1 Burn on a Health hit unless the card already prints a Burn effect.' },
     'damage:frost': { label: 'Cold', blurb: 'Applies 1 Frost on a Health hit unless the card already prints a Frost effect.' },
     'damage:lightning': { blurb: 'Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect.' },
-    'damage:arcane': { label: 'Force', blurb: 'Strips 2 Ward once per action; bypasses melee Counter.' },
+    // Owner 2026-11-18 (ruling §20): Force is green, the Alteration family, not the old blue-lilac; the tag keeps its id, glyph and blurb.
+    'damage:arcane': { label: 'Force', color: '9BC8BE', blurb: 'Strips 2 Ward once per action; bypasses melee Counter.' },
+    'school:force': { color: '9BC8BE' },
     'damage:sacred': { label: 'Holy', blurb: 'Removes 1 hostile debuff from the attacker after a Health hit.' },
     'damage:decay': { label: 'Necrotic', blurb: 'Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.' },
+    // No dashes in player text (2026-11-17, chore/EventCopy): the em dash in these blurbs became a colon or full stop.
+    'blade': { blurb: 'Steel and edge: direct weapon work.' },
+    'starstone': { blurb: 'Astral sorcery: charges and combos.' },
+    'flourish': { blurb: 'Finesse: footwork and multi-hit.' },
+    'basic': { blurb: "Everybody's: on the shelf without being found." },
+    'extractable': { blurb: "A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it today." },
+    'bound': { blurb: 'Carries its own cards. They arrive with the piece and are named in equipmentGrants.csv.' },
+    'construct': { blurb: 'Built, not born. No blood to let.' },
   };
   // Also check approved metadata for named tactical tags added after the fixture.
   for (const [id, fields] of Object.entries(tacticalMetadata)) {
@@ -110,19 +122,26 @@ test('registered tags retain identity, approved tactical metadata changes are ex
       assert.equal(t[field], tacticalMetadata[old.id]?.[field] ?? old[field], `tag '${old.id}'.${field}`);
     }
   }
+  // No dashes in player text (2026-11-17, chore/EventCopy): these root blurbs lost their em dash; nothing else moved.
+  const approvedDomainBlurbs = {
+    card: 'What a card IS: its school, form and feel. Carried by cards, by the classes that lean on them, and by the equipment that rewrites them.',
+    run: 'Run structure: what an event, an encounter or an unlock is about.',
+    grantSource: "Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these. The `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry.",
+    property: "What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one. What the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS.",
+  };
   const domains = new Map(TAG_DOMAINS.map((d) => [d.id, d]));
   for (const old of pre.tagDomains) {
     const d = domains.get(old.id);
     assert.ok(d, `domain '${old.id}' is still a root`);
     assert.equal(d.label, old.label, `domain '${old.id}'.label`);
-    assert.equal(d.blurb, old.blurb, `domain '${old.id}'.blurb`);
+    assert.equal(d.blurb, approvedDomainBlurbs[old.id] ?? old.blurb, `domain '${old.id}'.blurb`);
   }
   const pairs = new Set(TAG_FAMILY_DOMAINS.map((r) => `${r.family}|${r.domain}`));
   for (const old of pre.tagFamilyDomains) assert.ok(pairs.has(`${old.family}|${old.domain}`), `pairing ${old.family}×${old.domain} is derived`);
   // The additions, by name, so a stray one cannot hide among them.
   const addedDomains = TAG_DOMAINS.map((d) => d.id).filter((id) => !pre.tagDomains.some((d) => d.id === id)).sort();
-  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'range', 'scaling', 'school', 'targeting', 'trait', 'utility'],
-    'the roots that joined are the framework\'s nine plus four named tactical domains');
+  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'range', 'scaling', 'school', 'targeting', 'tradition', 'trait', 'utility'],
+    'the roots that joined are exactly the named framework, tactical and spell tradition domains');
   const addedTags = TAGS.filter((t) => !pre.tags.some((o) => o.id === t.id));
   // Plan phase 5a's property nodes: the class card's leaning and the four
   // kit relics' rules. Named, so a stray chip cannot hide among them.
@@ -155,6 +174,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     camp: ['camp:physical', 'camp:spell'],
     maneuver: ['maneuver:attack', 'maneuver:defend', 'maneuver:counter', 'maneuver:sweep', 'maneuver:ranged', 'maneuver:smash', 'maneuver:casting'],
     school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay', 'school:earth'], // Earth: owner decision 5, 2026-10-12
+    tradition: ['tradition:arcane', 'tradition:divine'],
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     range: ['range:melee', 'range:reach', 'range:ranged'],
     trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:persistent', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
@@ -177,9 +197,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     assert.equal(tag.domain, 'technique');
     assert.ok(tag.label && tag.blurb && tag.glyph && tag.color, `${id} has visible presentation and an authored description`);
   }
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse', 'retreat'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse', 'retreat', 'pullRetreat'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
     'every tag that joined is a framework node, named property, Bow, approved ability, named tactical identity or exact FixCore identity');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', 'retreat', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', 'retreat', 'pullRetreat', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 
@@ -200,9 +220,9 @@ test('every object states exactly one kind, the one its collection and type name
   }
   // The original 513, forty cards, ten relics, fifty new class feats, and the
   // twenty existing mastery feats now participating in the kind registry.
-  assert.equal(contentBundle.classSkillFeats.length, 70);
+  assert.equal(contentBundle.classSkillFeats.length, 58, "12 crit feats removed (owner, 2026-11-20: crits and Precision are gone from Core)");
   // Plus the two enemy reaction moves (gildedGuard, bindingRiposte; docs/combat-card-traits-contract.md).
-  assert.equal(contentBundle.enemyMoves.length, 105, 'the scoped enemy move collection contains all 105 authored actions');
+  assert.equal(contentBundle.enemyMoves.length, 237, 'the scoped enemy move collection contains all 237 authored actions');
   // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).
   const canonicalCollections = [contentBundle.cards, contentBundle.classes, contentBundle.relics,
     contentBundle.flasks, contentBundle.events,

@@ -41,8 +41,14 @@ const ok = (cond, what) => { checks++; assert.ok(cond, what); };
 
 // ---- the surface builds the triple ------------------------------------------
 ok(/surface:\s*'combat'/.test(combat), "combat.js names its surface on the hand entry");
-ok(/availability:\s*\{\s*play:/.test(combat), 'combat.js supplies the play availability');
+ok(/availability:\s*\{\s*(?:get\s+play\(\)|play:)/.test(combat), 'combat.js supplies the play availability (a live getter, so a kept card reads it now)');
 ok(/commands:\s*\{\s*play:/.test(combat), 'combat.js supplies the play command');
+ok(/return\s*\{\s*inst,\s*preview:\s*pv,\s*rules:\s*combat/.test(combat), 'the combat hand entry supplies the saved combat context');
+const stateKey = combat.match(/const stateKey = JSON\.stringify\(\[handList,[\s\S]*?readSettings\(\)\]\);/);
+ok(!!stateKey && /fixCoreRules:\s*combat\.fixCoreRules/.test(stateKey[0]) && /profileHash:\s*combat\.gameProfile\?\.hash/.test(stateKey[0]),
+  'rule-only restores invalidate the combat screen hand cache');
+const ghost = combat.match(/const face = renderCard\(registries,\s*inst,\s*\{\s*preview:\s*quote\.preview,[\s\S]*?\}\);/);
+ok(!!ghost && /rules:\s*combat/.test(ghost[0]), 'the aimed drag ghost receives the same saved combat context');
 
 // ---- the hand forwards it, which is the link that was missing ---------------
 // Read the ONE renderCard call in mountHand rather than the file at large: the
@@ -50,7 +56,7 @@ ok(/commands:\s*\{\s*play:/.test(combat), 'combat.js supplies the play command')
 // names appeared elsewhere in the file on the entry it was given.
 const call = hand.match(/renderCard\(registries,\s*entry\.inst,[\s\S]*?\}\);/);
 ok(!!call, 'mountHand still renders its cards through renderCard');
-for (const field of ['surface', 'availability', 'commands']) {
+for (const field of ['surface', 'availability', 'commands', 'rules']) {
   ok(new RegExp(`${field}:\\s*entry\\.${field}`).test(call[0]),
     `mountHand forwards entry.${field} to renderCard`);
 }

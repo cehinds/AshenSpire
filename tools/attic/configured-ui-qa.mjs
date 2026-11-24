@@ -8,7 +8,7 @@ const browser=await chromium.launch({headless:true,...(process.env.CHROME ? {exe
 try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}}); await page.route('**/ui-probe.html', route => route.fulfill({contentType:'text/html',body:'<!doctype html><main></main>'})); await page.goto(`http://127.0.0.1:${port}/ui-probe.html`);
  const result=await page.evaluate(async()=>{
- const [{contentBundle},{createRegistries},{resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries,gameContent},{mountCustomize},{gameProfileClassAvailable},{createRunState},{mountConfiguredShop},{createRng},{gameProfileShopStock,gameProfileRewardOffers,claimGameProfileReward},{mountGameProfileOffers}]=await Promise.all([import('/src/content/index.js'),import('/src/model/registries.js'),import('/src/model/gameProfile.js'),import('/src/ui/screens/customize.js'),import('/src/model/gameProfileRun.js'),import('/src/model/state.js'),import('/src/ui/screens/shop.js'),import('/src/engine/rng.js'),import('/src/model/gameProfileRewards.js'),import('/src/ui/components/gameProfileOffers.js')]);
+ const [{contentBundle},{createRegistries},{resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries,gameContent},{mountCustomize},{gameProfileClassAvailable},{createRunState},{mountConfiguredShop},{createRng},{gameProfileShopStock,gameProfileRewardOffers,claimGameProfileReward},{MountGameProfileOffers}]=await Promise.all([import('/src/content/index.js'),import('/src/model/registries.js'),import('/src/model/gameProfile.js'),import('/src/ui/screens/customize.js'),import('/src/model/gameProfileRun.js'),import('/src/model/state.js'),import('/src/ui/screens/shop.js'),import('/src/engine/rng.js'),import('/src/model/gameProfileRewards.js'),import('/src/ui/components/gameProfileOffers.js')]);
  const profile=resolveGameProfile('core'),reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
  document.body.replaceChildren();const app=document.createElement('main');document.body.append(app);
  const classChoicesByCompletedRuns=[];
@@ -38,9 +38,9 @@ try {
  const before=JSON.stringify(run.deck); let claims=0;
  const underlying=app.firstElementChild;
  const rewardOptions={registries:reg,run,offer:rewards,title:'Victory rewards',onTake(index){claims++;claimGameProfileReward(reg,run,'qa-reward',index);},onContinue(){}};
- mountGameProfileOffers(app,rewardOptions);
+ MountGameProfileOffers(app,rewardOptions);
  const firstDoor=app.querySelector('.reward-door');
- mountGameProfileOffers(app,{...rewardOptions,offer:structuredClone(rewards)});
+ MountGameProfileOffers(app,{...rewardOptions,offer:structuredClone(rewards)});
  const sameDoor=firstDoor===app.querySelector('.reward-door');
  const disabledBefore=app.querySelector('#reward-card-confirm').disabled;
  app.querySelector('.reward-choice-button').click();
@@ -48,7 +48,7 @@ try {
  app.querySelector('#reward-card-confirm').click();
  const preservesUnderlying=app.contains(underlying);
  const rewardDoor=!!app.querySelector('.reward-door'), deckUnchanged=before===JSON.stringify(run.deck), claimed=run.gameProfileRewardOffers['qa-reward'].taken.length;
- mountGameProfileOffers(app,{...rewardOptions,offer:{...rewards,id:'another-reward'}});
+ MountGameProfileOffers(app,{...rewardOptions,offer:{...rewards,id:'another-reward'}});
  const differentDoor=firstDoor!==app.querySelector('.reward-door');
  const serializable=JSON.stringify(run).includes('rewardDoorOwner')===false;
  return {classChoicesByCompletedRuns,classText,legacyClassCopy,sameDoor,differentDoor,serializable,preservesUnderlying,rewardDoor,disabledBefore,selected,claims,claimed,deckUnchanged,classStage,count,review,deckCount,strengths,locked,startedKeys:Object.keys(started).sort(),shop,offers};

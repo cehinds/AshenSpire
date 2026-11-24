@@ -162,7 +162,7 @@ function stockedShelves(stock) {
 }
 
 /** Offerings only the Core Blacksmith lays out (model/blacksmith.js CORE_BLACKSMITH_OFFERINGS minus the shipped rows). */
-const CORE_ONLY_BLACKSMITH_OFFERINGS = Object.freeze(['rankUp', 'weaponArts']);
+const CORE_ONLY_BLACKSMITH_OFFERINGS = Object.freeze(['rankUp', 'weaponArts', 'cardCopy']);
 
 /** The kind a persisted stock is. A stock saved before kinds existed is a market. */
 export function shopStockKind(stock) {

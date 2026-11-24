@@ -35,7 +35,43 @@
 // the batch-2 merge of w25-stats (PR from max(INT, WIS): ratings.prAttributes; live attribute changes in a fight) moves the runtime hash; a fight saved without the key keeps INT-only PR. w25-stats' own 4d6cf7... and the earlier f47819... are kept.
 // Batch 3 (Broken wording on cards, relics and the Prepared status; the rank-up bonus pick) moves the runtime hash; the batch-2 hash a4c872... is kept.
 // W25-W (2026-11-15): Ward's Block-first routing (`ward.routing` in fixCoreMechanics.json) and the Barrier -> "Gain N Poise" wording move the runtime hash; batch 3's 753eed... is kept.
+// Theme C of the 2026-11-17 playtest (tooltip wording on the Melee, Reach, Ranged, Reaction and Ethereal mechanic manifests), merged on theme B, moves the runtime hash again; wording only, no rule. Theme B's 73fdb0... and theme C's own cb5271... are kept.
+// The Ethereal manifest's reader is the engine again (review of #2819: it pointed at the upgrade step); wording only, edad64... is kept.
+// Owner ruling 2026-11-18 sections 20 and 21 (Force physical with a half-Poise share, no built-in push or Knockback; Ward decay and break; Pierce 1 Block per stack; break statuses) move the runtime hash again. They are data in the fight's rules (elements.force, ward, pierce, poise): a fight saved before them keeps its snapshotted rules, and an old `elements.force.poiseMultiplier` keeps the old Force (ForceRules); 8be512... and 0bf081... are in PREVIOUS_RUNTIMES.
+// Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
+// The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3',
+  'sha256:0805e9ad9ee6882390661bd96cc146d4645da893d78d3bec82c2563640b5323f',
+  'sha256:a5c68d23829dca78e12749ab6d743b6e9c27e0915d952afe870f6355169e4474',
+  'sha256:d5db9a0655276f175cdbeb8299a6e91853c22408b4410fb80ee3674db79a90fa',
+  'sha256:fbf370e6b803b5dde87934ba7bb0e0789209ea33dc1ce45c2642f4eee9fd8f1d',
+  'sha256:7d13f17231bc92b54d21befc738383d6df1824d2083cb9037c22790e7d2b6cf7',
+  'sha256:e5b5d5b558969077b703152b30648fd7e49830b8caa2cb0b94d7ad788f820573',
+  'sha256:edf0d924c49e924157a7c4250168a0e470ad3cf282f63d7439ab66eca9f8d8b0',
+  'sha256:ac60781b09e46ca4816ac4148f4ff4269760f5d43872ad1db9a507a439274586',
+  'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92',
+  'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9',
+  'sha256:04de9306278ad81f89b62fa2a2fbde640f6d7ba258fe74e63b9f46cb23d9b0b8',
+  'sha256:de42dafc4ec394c607c7c52a5772bdd940728ff863ccfb21508e8a2a05f1d0bc',
+  'sha256:72ec668dbba9685fd6fe6ab7f95b33c98410450e412336982b5a9dc005281649',
+  'sha256:59cc12805591c6c2441d3b34360fd2562376fad622f136e591680a05d56af10a',
+  'sha256:2a83899f7a10b415a18fb43d150034bcbf4e3ef92cc4ea4c19dfc9bd85fdecd3',
+  'sha256:ca7639619f5a9ff7adceb0622043ea676fb18bace9ef14166ca4724fafb619f8',
+  'sha256:50362dd44639557361f67ebe789bf6109bb8459242b0d48d48535a00aabf95e9',
+  'sha256:8f1b1cf21f5758b4e1b1b916c9227df0747b56490217395410b94e6cffa259cc',
+  'sha256:a00f7a769672150f37d74824575c7d6cfd35e32f939d292dab1d1ee609ed9f7c',
+  'sha256:6ef2ef789d2e9ce07bf5c0ece58314d1500a242d79cbbcd4d23d825dd6a9fd16',
+  'sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772',
+  'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085',
+  'sha256:404f187342bcbb67ba7095a6d573a998a931a67a75d22323461d60767ff52a3c',
+  'sha256:0bf0815362566977311de28e6a67c2826858afcb9bf92f3555a149110cc522e5',
+  'sha256:8be512681975999205549239c452a0051c7a79aabda91308c7db562950357c4c',
+  'sha256:0a9ca339e4e8b0c57969966057718b6eb946e30387099430d5b8868643c0aeb8',
+  'sha256:edad64eb5d0992e6eee07b451ea4b95fc51302018437017d6697c7cd1cecf6c5',
+  'sha256:73fdb07daecf40ce03f3d066a795fb5519b3eb0048c21447511d23c33ee9ff53',
+  'sha256:cb5271059640a11d4d4b87795a6e553464d721ca14c05e327b2fe0396f5497f9',
+  'sha256:b9c05567d296fc4a2dcf8342d541e54cbc257f4dae6dc3d08533082b48342db7',
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
   'sha256:df30b7dac0b52f363d4875c083955c3efeaf9cebe235ef3e523a2e8d58c0f2e5',
@@ -68,7 +104,6 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:f2b79eabc865dd5e317c63a86bbff25afe81675a7fc2f2c491a4d4b5f24766b5',
   'sha256:211930bddff697aa6894291370d65bfa6ebc2a9e5c673a840ce68f37c4d4b891',
   'sha256:28288b331e757629f7240e110a45698817150d9c1001c8e43fcfe4a723f311c0',
-  'sha256:28288b331e757629f7240e110a45698817150d9c1001c8e43fcfe4a723f311c0',
   'sha256:093f5541161859e8ed91a74baa580c44f24058e377cd0b930d33c9da7aa6b372',
   'sha256:33931a536301d048ab52e76fb6a2df49e92b7ff5aac774da88167cab19b30701',
   'sha256:cc8babb17366b93494ea58ce367ed435052f603b593beeee598698a6251ab1cf',
@@ -91,10 +126,49 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:6c2ff725ad1e7091e9bbe845b117677ea795c77bba0cc2927b6ab133f3570ebf',
   'sha256:1d8ae1110ad291fb2e6c06344e804837f3969b1a2156b35abf1b73d5d602b5cb',
   'sha256:8c57f365f79a7d77421f5d50188c8c96f993bd17f68e55cfadbb4bb2f35e25d8',
+  'sha256:fa12ec96cbd300f3f77ac7a0ed1faffe4dc2a780d6f57d38fb74ee53c14a18bd',
+  'sha256:c569dee21009eb36ba8a7cc8b2437f843aae9c2c784d5ae4fcab36ebcffeed4f',
+  'sha256:a81550e92799eaf09bb092dc21b1c310d0e2a80e0a2dd1708547952693e1ad4f',
+  'sha256:11f0682ec2b9f37d14ec0ed489d95a54d2ce7167cc50f4cfbaa296280e0a9655',
+  'sha256:8be512681975999205549239c452a0051c7a79aabda91308c7db562950357c4c',
+  'sha256:f959055404a8638a465770e8f3a5572e04bdb2ba259e4e13441482a673b63b05',
+  'sha256:c7c295d2af270f815e8de01086a31718390a5eb3d3253474d90ab97cd95f15c7',
+  'sha256:80a96c9211d1596d5c28a9d061184d5d0dbf0ab52623b6fd244a13f62cd61ae7',
+  'sha256:0bf0815362566977311de28e6a67c2826858afcb9bf92f3555a149110cc522e5',
+  'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085',
+  'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb',
+  'sha256:edb03b160d360fcbd7ac312134fc535bc1e2b90ad45d6bcbfcff780c6dc8ec06',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
 // the statusCaps rule key (W25-NC); the Counter stack rule (batch 5); the bands rules (W25-BANDS) with the swapRows op, Upset the Ranks, formation Block and spell lanes (rules 6-9). Then W25-EvadeCards (Evade card data, card modes, the self Advance). Then the Evade card faces, the Quickstep Counter stack and the Evade-grant face phrase (src/model/fixCoreMechanics.js, playingCard.js). Pinned once at the batch-5 + bands + Evade cards merge; 8c57f3... is now in PREVIOUS_RUNTIMES.
-const FIXED_EVASION_RUNTIME = 'sha256:b9c05567d296fc4a2dcf8342d541e54cbc257f4dae6dc3d08533082b48342db7';
+// Theme B (2026-11-17: Counter decay keeps it armed, the Defend Poise floor, the enemy Counter badge, the Prepared/Idle stance weaknesses) moves it again; b9c055... is now in PREVIOUS_RUNTIMES.
+// Theme A (2026-11-17: base damage halved, single-stat AR/DR/PR, SP and MP at 3 points, stat-point gear, act levels for elites and bosses,
+// Blacksmith prices) moves it again; 73fdb0... is now in PREVIOUS_RUNTIMES.
+// The #2820 review (tier HP scale in combat creation, reactive returns kept out of the base scale) moves it again; fa12ec... is now in PREVIOUS_RUNTIMES.
+// The 2026-11-18 rulings (ratings removed, 0.7 cuts, hand, SP and MP per four points) move it again; 0a9ca3... is now in PREVIOUS_RUNTIMES.
+// The physical cut (2026-11-18: physicalDamageMultiplier 0.7, blockGainMultiplier 0.49) moves it again; 11f068... is now in PREVIOUS_RUNTIMES.
+// The Retreat status mechanic folder and the Magic Focus text (2026-11-18 green-discovered pass: engine/mechanics/status.retreat, item_magic-focus) move it again; 8be512... is now in PREVIOUS_RUNTIMES.
+// The equipment.mainHand and offHand mechanic text (feature merge, 2026-11-18) moves it again; f95905... is now in PREVIOUS_RUNTIMES.
+// Combining the drawback text and balance rules keeps both branches' exact runtime pins compatible.
+// The route spread (2026-11-18: 11 depths, start rest, V spread, re-entry keys) moves it again; 0a9ca3... is now in PREVIOUS_RUNTIMES.
+// Registry stance rows name their combat maneuver (stances.json, 2026-11-18, #2843) and the Prepared mechanic text follows; 0a9ca3... is now in PREVIOUS_RUNTIMES.
+// Merging the route spread (#2847) with the stance-card fix (#2843): c7c295... and 80a96c... are now in PREVIOUS_RUNTIMES.
+// Merging dev (route spread #2847, stance fix #2843) into the rules pass (#2835): 0bf081... and 6ef5d3... are now in PREVIOUS_RUNTIMES.
+// The gear pass mechanics (2026-11-18/19: gear vocabulary, armour type bonuses, Poise bases) merged with dev's 58cd1d... moves it again; 58cd1d... and this branch's 0bf081... are now in PREVIOUS_RUNTIMES.
+// Merging dev (#2835 and the route spread) into the Force, Ward and Pierce rules pass (chore/ForceWardRules): dev's 58cd1d... and this branch's 404f18... are now in PREVIOUS_RUNTIMES.
+// Arcane/Divine (2026-11-18): prior profiles retain their absent version flag
+// and their original Poise snapshot; no saved profile is re-authored.
+// The Defend-only Smash override approves the existing edges again; old combats retain their absent override and shared tuning.
+// Canonical Stone Skin and Fire Thorns mechanic manifests regenerated after Dev integration.
+// Diamond Skin display rename keeps stoneskin and stoneHide identities stable.
+// Combined Gear, stat traditions and Smash rules retain every parent runtime above.
+// Card tradition labels move to uiStrings.csv (card.tradition.*, #2892 review): wording only, no rule; edf0d9... is now in PREVIOUS_RUNTIMES.
+// Merging dev (card tradition labels, spell traditions) into the Retreat reach rules and drawbacks (chore/RetreatReachRules): dev's 7d13f1... and this branch's e5b5d5... are now in PREVIOUS_RUNTIMES.
+// The Magic Adept zero Mana floor (2026-11-22, owner ruling: stance.playerMinimumCost in fixCoreMechanics.json and the combat.stance parameter schema) moves it again; fbf370... is now in PREVIOUS_RUNTIMES, and a fight saved without the key keeps floor 1.
+// No card has a cost minimum (owner ruling 2026-11-22: stance.playerMinimumCost, the retired balance.mana floors, the upgrade cost steps) moves it once more; d5db9a... is now in PREVIOUS_RUNTIMES.
+// The cost.manaOnly mechanic is data now (its cardCosts.js validator rule went with the cost minimums) and Exhaust/Ethereal are flat in scoring: the runtime artifact moves once more; a5c68d... is now in PREVIOUS_RUNTIMES.
+// Ward health buffer (owner ruling 2026-11-24: ward.routing "hpBuffer", ward.hpPerStack 5 in fixCoreMechanics.json) moves the runtime artifact; e31663... joins PREVIOUS_RUNTIMES, and fights saved with blockFirst keep their snapshotted rules.
+const FIXED_EVASION_RUNTIME = 'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

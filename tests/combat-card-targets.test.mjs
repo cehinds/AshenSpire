@@ -23,8 +23,9 @@ test('hostile targets stay on living enemies, including mixed source-side effect
   for (const target of ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies']) {
     const plan = cardTargetPlan(def(target, 'self'), 'p1', enemies, players);
     assert.equal(plan.mode, 'enemy');
-    assert.deepEqual(plan.legalIds, ['e1', 'e3']);
-    assert.throws(() => assertCardTarget(plan, 'p1'), /Invalid enemy target/);
+    // Self-and-all (owner 2026-11-18 section 22): a card that affects the player and EVERY enemy also accepts the player as its target.
+    if (target === 'allEnemies') { assert.deepEqual(plan.legalIds, ['e1', 'e3', 'p1']); assert.equal(assertCardTarget(plan, 'p1'), 'p1'); }
+    else { assert.deepEqual(plan.legalIds, ['e1', 'e3']); assert.throws(() => assertCardTarget(plan, 'p1'), /Invalid enemy target/); }
     assert.throws(() => assertCardTarget(plan, 'p2'), /Invalid enemy target/);
     assert.throws(() => assertCardTarget(plan, 'e2'), /Invalid enemy target/);
     assert.equal(assertCardTarget(plan, 'e3'), 'e3');
@@ -84,10 +85,11 @@ test('solo wrong-side, unknown and defeated targets reject without spending or c
 });
 
 test('solo explicit self and legacy omitted self/ally targets still play', () => {
-  for (const [cardId, targetId] of [['defend', 'player'], ['defend', undefined], ['rallyingBanner', undefined]]) {
+  // Owner 2026-11-17: with no ally mechanics, a solo ally card still plays, but its ally Block reaches no one.
+  for (const [cardId, targetId, block] of [['defend', 'player', true], ['defend', undefined, true], ['rallyingBanner', undefined, false]]) {
     const combat = makeCombat();
     dispatch(combat, { type: 'playCard', cardInstanceId: instance(combat.piles.hand, cardId), targetId });
-    assert.ok(combat.player.block > 0);
+    assert.equal(combat.player.block > 0, block, cardId);
   }
 });
 

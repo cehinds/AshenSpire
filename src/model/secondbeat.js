@@ -253,8 +253,8 @@ export const ACTIONS = Object.freeze({
   },
   shopSell: {
     of: 'selling a possession back to the merchant',
-    // COMMITS ON A TAP (owner, 2026-11-14): one tap sells; the row names the item and the cinders it returns.
-    tap: true,
+    // REVIEWED AGAIN (playtest 2026-11-17 item 37, superseding the 2026-11-14 one-tap sale): a sale asks for
+    // confirmation, naming the item and the cinders it returns, because the merchant never sells it back.
     lives: 'src/ui/screens/shop.js',
     surface: 'shop',
     // THE REMOVE'S MIRROR (E2 / #247): a relic or flask gone for good, one tap
@@ -406,14 +406,26 @@ export const ACTIONS = Object.freeze({
   },
   shopBuy: {
     of: 'buying from the merchant',
-    // COMMITS ON A TAP (owner, 2026-11-14): the price is on the face and the cinders come back.
-    tap: true,
+    // REVIEWED AGAIN (owner, 2026-11-19, superseding the 2026-11-14 one-tap buy): every purchase asks for
+    // confirmation, naming the item, its price and the purse left, because a relic bought by a stray tap is
+    // not sold back for what it cost. The review's words are ConfirmationReviewModel.purchaseReview.
     lives: 'src/ui/screens/shop.js',
     surface: 'shop',
-    stakes: 'tempo',
-    undo: 'faucet',
+    stakes: 'run',
+    undo: 'none',
     hazard: 'choosing',
-    note: 'cinders come back — combat pays, treasure pays, events pay (consequence.js, the one cost with a faucet)',
+    note: 'the price is on the face, and the review repeats it with the purse that is left',
+  },
+  smithBuy: {
+    of: 'paying the blacksmith for an armament, a weapon art or a rank',
+    // The Blacksmith's direct buys (owner, 2026-11-19: every purchase confirms). Its upgrade, reforge and card
+    // upgrade already end in their own modal's Confirm; the rows that spent on one click take this review.
+    lives: 'src/ui/screens/blacksmith.js',
+    surface: 'blacksmith',
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'one Buy or Rank up button per row in a scrolling shelf; the review names the item and the price',
   },
 });
 

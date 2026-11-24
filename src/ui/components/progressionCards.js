@@ -2,7 +2,7 @@ import { t } from '../strings.js';
 import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { el, button, openModal, prose, titleS } from '../kit/index.js';
 import { primaryStatCards, classResourceGrid } from './creationCards.js';
-import { renderStatAllocationCard } from './statAllocationCard.js';
+import { RenderStatAllocationCard } from './statAllocationCard.js';
 import { attachTooltip, esc, hideTooltip, showTooltipFor } from './tooltip.js';
 import { progressionStats } from '../models/ProgressionInspectionModel.js';
 import { levelUpPlan, allocateAttributePoint } from '../../model/levelup.js';
@@ -72,7 +72,10 @@ export function characterStatsButton({ registries, run, settings = {} }) {
   return node;
 }
 
-export function openProgressionAllocation({ registries, run, settings = {}, onChange }) {
+// The level-up modal: the one door that spends earned attribute points (the Armoury sheet,
+// the Victory door and the Victory receipt). `onAllocateStat` is the host's spend, one point
+// at a time; omitted, the model's own allocateAttributePoint is used.
+export function openProgressionAllocation({ registries, run, settings = {}, onChange, onAllocateStat = null }) {
   const plan = levelUpPlan(registries, run);
   if (!plan.offerable) return null;
   const pending = Object.fromEntries(plan.attributes.map(attr => [attr.id, 0]));
@@ -86,7 +89,7 @@ export function openProgressionAllocation({ registries, run, settings = {}, onCh
       canDecrease: pending[attr.id] > 0, canIncrease: count() < plan.points,
     })) };
   };
-  allocation = renderStatAllocationCard(document.body, { ...spec(), modal: true, title: t('reward.level.button'),
+  allocation = RenderStatAllocationCard(document.body, { ...spec(), modal: true, title: t('reward.level.button'),
     note: t('progression.allocate.note'),
     onIncrease: id => { if (count() < plan.points) { pending[id]++; allocation.update(spec()); } },
     onDecrease: id => { if (pending[id]) { pending[id]--; allocation.update(spec()); } },
@@ -94,12 +97,27 @@ export function openProgressionAllocation({ registries, run, settings = {}, onCh
     onClose: hideTooltip,
     onDone: () => {
       if (!count() || count() > levelUpPlan(registries, run).points) return;
-      for (const attr of plan.attributes) for (let n = 0; n < pending[attr.id]; n++) allocateAttributePoint(registries, run, attr.id);
+      const spend = onAllocateStat || (id => allocateAttributePoint(registries, run, id));
+      for (const attr of plan.attributes) for (let n = 0; n < pending[attr.id]; n++) spend(attr.id);
       allocation.close();
       onChange?.();
     },
   });
   return allocation;
+}
+
+/**
+ * LevelUpPointsButton(registries, run, { settings, onAllocateStat, onChange }) → the compact
+ * "n points to spend" control that opens the level-up modal, or null when the run holds no
+ * unspent points or the host gives no way to spend them. Ignoring it banks the points.
+ */
+export function LevelUpPointsButton(registries, run, { settings = {}, onAllocateStat = null, onChange = null, id = 'spoils-points' } = {}) {
+  const count = run.level?.unspentPoints || 0;
+  if (!onAllocateStat || count < 1) return null;
+  const node = button({ label: t('reward.spoils.points', { count, plural: count === 1 ? '' : 's' }), id, className: 'spoils-points-button' });
+  node.setAttribute('aria-haspopup', 'dialog');
+  node.addEventListener('click', () => openProgressionAllocation({ registries, run, settings, onAllocateStat, onChange }));
+  return node;
 }
 
 export function attributesCard({ registries, run, settings = {}, onChange = null }) {

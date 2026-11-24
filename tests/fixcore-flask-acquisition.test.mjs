@@ -8,7 +8,7 @@ import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 import { acquireFlask, chargeFlaskId, flaskAcquisitionPlan, reallocateFlaskCharges, utilityFlaskIds } from '../src/model/gracerefill.js';
 import { claimGameProfileReward, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
 import { rewardPlan } from '../src/model/rewardplan.js';
-import { mountRewards } from '../src/ui/screens/reward.js';
+import { MountRewards } from '../src/ui/screens/reward.js';
 import { rewardDom } from './helpers/dom.mjs';
 
 const profile=resolveGameProfile('core');

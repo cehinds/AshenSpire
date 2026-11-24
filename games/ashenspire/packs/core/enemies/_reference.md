@@ -8,37 +8,69 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 
 | ref | name | tier |
 | --- | --- | --- |
+| enemy:alderMaskHarvester | Alder Mask Harvester | elite |
 | enemy:ashRevenant | Ash Revenant | minion |
+| enemy:ashSilkWeaver | Ash-Silk Weaver | elite |
 | enemy:ashheartDragon | The Ashheart Dragon | boss |
 | enemy:bellKeeper | The Bell Keeper | boss |
+| enemy:blackrushStork | Blackrush Stork | elite |
 | enemy:blightHound | Blight Hound | minion |
 | enemy:blightedValkyrie | The Blighted Valkyrie | boss |
+| enemy:brackenTusker | Bracken Tusker | minion |
+| enemy:brassThroatIbex | Brass-Throat Ibex | elite |
 | enemy:briarHermit | Briar Hermit | minion |
+| enemy:carrionHeadsman | Carrion Headsman | minion |
 | enemy:chainScavenger | Chain Scavenger | minion |
 | enemy:charredColossus | Charred Colossus | minion |
 | enemy:cinderMantis | Cinder Mantis | minion |
 | enemy:courtDuelist | Duelist of the Court | elite |
 | enemy:courtMarionette | Court Marionette | minion |
 | enemy:courtSurgeon | Court Surgeon | minion |
+| enemy:crucibleNewt | The Crucible Newt | boss |
 | enemy:eclipseCantor | Eclipse Cantor | minion |
 | enemy:emberStarvedPilgrim | Ember-Starved Pilgrim | minion |
 | enemy:fellWarden | The Fell Warden | boss |
+| enemy:fenwickToad | Fenwick Toad | minion |
+| enemy:ferrumVotary | Ferrum Votary | elite |
 | enemy:furnaceSaint | The Furnace Saint | boss |
 | enemy:gildedKnight | Gilded Knight | minion |
 | enemy:glassRegent | The Glass Regent | boss |
 | enemy:graveWisp | Grave Wisp | minion |
 | enemy:hollowAstronomer | The Hollow Astronomer | boss |
 | enemy:huskBrute | Husk Brute | minion |
+| enemy:inkveilNautilus | Inkveil Nautilus | elite |
+| enemy:kilnbackTerrapin | Kilnback Terrapin | elite |
+| enemy:kilnshellTortoise | Kilnshell Tortoise | minion |
+| enemy:knellcapSentinel | Knellcap Sentinel | minion |
 | enemy:lanternMoth | Lantern Moth | minion |
 | enemy:livingArmor | Living Armour | minion |
 | enemy:marrowOrganist | The Marrow Organist | boss |
+| enemy:mireProcessional | The Mire Processional | boss |
+| enemy:mirrorFanAbbess | Mirror-Fan Abbess | elite |
 | enemy:mirrorScribe | Mirror Scribe | minion |
+| enemy:pallidOathCamel | Pallid Oath Camel | elite |
+| enemy:pearlbackSnail | Pearlback Snail | elite |
+| enemy:quarryRam | Quarry Ram | minion |
+| enemy:reedpipePoacher | Reedpipe Poacher | minion |
+| enemy:rimewheelPenitent | Rimewheel Penitent | elite |
+| enemy:saltChoirWalrus | Salt Choir Walrus | elite |
+| enemy:siltCrownNewt | Silt-Crown Newt | elite |
+| enemy:sixleggedHearse | The Sixlegged Hearse | boss |
+| enemy:slagtongImp | Slagtong Imp | minion |
+| enemy:slagwingHeron | Slagwing Heron | elite |
+| enemy:sootwingBat | Sootwing Bat | minion |
 | enemy:stitchCrab | Stitch Crab | minion |
 | enemy:stitchedHound | Stitched Hound | minion |
 | enemy:stitchedKing | The Stitched King | boss |
 | enemy:thornMatriarch | The Thorn Matriarch | boss |
+| enemy:tollgateHookman | Tollgate Hookman | minion |
 | enemy:valkyrieShade | Valkyrie Shade | minion |
+| enemy:veiledJusticiar | The Veiled Justiciar | boss |
 | enemy:wanderingSoldier | Wandering Soldier | minion |
+| enemy:waxsealBailiff | Waxseal Bailiff | minion |
+| enemy:wickerHind | Wicker Hind | elite |
+| enemy:wickerTitheman | Wicker Titheman | minion |
+| enemy:woundwoodTusker | Woundwood Tusker | boss |
 | enemy:wyrmAspirant | Wyrm Aspirant | elite |
 | enemy:wyrmLord | Wyrm Lord | elite |
 
@@ -192,6 +224,183 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | card:hollowAstronomer.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:ashheartDragon.advance | Advance | skill | 1 | 0 | Close one band. |
 | card:ashheartDragon.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:brackenTusker.gore | Gore | attack | 1 | 0 | Deal {damage} damage. |
+| card:brackenTusker.bristle | Bristle | skill | 1 | 0 | Gain {block} Block. |
+| card:brackenTusker.trample | Trample | attack | 2 | 0 | Deal {damage} damage. |
+| card:brackenTusker.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:fenwickToad.tongueLash | Tongue Lash | attack | 1 | 0 | Deal {damage} damage. |
+| card:fenwickToad.bileSpit | Bile Spit | attack | 1 | 0 | Deal {damage} damage. Apply {crimsonBlight} Crimson Blight to the enemy. |
+| card:fenwickToad.puffUp | Puff Up | skill | 1 | 0 | Gain {block} Block. |
+| card:fenwickToad.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:fenwickToad.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:reedpipePoacher.dart | Dart | attack | 1 | 0 | Deal {damage} damage. |
+| card:reedpipePoacher.snare | Snare | power | 1 | 1 | Apply {frost} Frost to the enemy. |
+| card:reedpipePoacher.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:reedpipePoacher.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:wickerTitheman.tithe | Tithe | attack | 1 | 0 | Deal {damage} damage. |
+| card:wickerTitheman.bindingStraw | Binding Straw | power | 1 | 1 | Apply {weak} Weak to the enemy. |
+| card:wickerTitheman.kindleWard | Kindle Ward | skill | 1 | 0 | Gain {block} Block. |
+| card:wickerTitheman.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:siltCrownNewt.mireSpit | Mire Spit | attack | 1 | 1 | Deal {damage} damage. |
+| card:siltCrownNewt.tailCrush | Tail Crush | attack | 3 | 0 | Deal {damage} damage. |
+| card:siltCrownNewt.drowningCoil | Drowning Coil | attack | 3 | 0 | Deal {damage} damage. Apply {frail} Frail to the enemy. |
+| card:siltCrownNewt.siltShroud | Silt Shroud | skill | 1 | 0 | Gain {block} Block. |
+| card:siltCrownNewt.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:wickerHind.antlerRake | Antler Rake | attack | 1 | 0 | Deal {damage} damage. |
+| card:wickerHind.hallowSpark | Hallow Spark | attack | 1 | 1 | Deal {damage} damage. |
+| card:wickerHind.hoofStamp | Hoof Stamp | attack | 3 | 0 | Deal {damage} damage. |
+| card:wickerHind.wickerMend | Wicker Mend | power | 3 | 2 | Heal {heal} HP. |
+| card:wickerHind.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:wickerHind.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:blackrushStork.beakJab | Beak Jab | attack | 1 | 0 | Deal {damage} damage. |
+| card:blackrushStork.spearDive | Spear Dive | attack | 3 | 0 | Deal {damage} damage. |
+| card:blackrushStork.blackrushSkewer | Blackrush Skewer | attack | 3 | 0 | Deal {damage} damage. |
+| card:blackrushStork.wadeGuard | Wade Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:blackrushStork.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:blackrushStork.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:pearlbackSnail.slimeBash | Slime Bash | attack | 1 | 0 | Deal {damage} damage. |
+| card:pearlbackSnail.shellSlam | Shell Slam | attack | 3 | 0 | Deal {damage} damage. |
+| card:pearlbackSnail.pearlGuard | Pearl Guard | skill | 2 | 0 | Gain {block} Block. |
+| card:pearlbackSnail.nacreWall | Nacre Wall | skill | 3 | 0 | Gain {block} Block. |
+| card:pearlbackSnail.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:alderMaskHarvester.scytheCut | Scythe Cut | attack | 1 | 0 | Deal {damage} damage. |
+| card:alderMaskHarvester.reapingSweep | Reaping Sweep | attack | 1 | 0 | Deal {damage} damage. |
+| card:alderMaskHarvester.harvestArc | Harvest Arc | attack | 2 | 0 | Deal {damage} damage. |
+| card:alderMaskHarvester.soulReap | Soul Reap | attack | 3 | 1 | Deal {damage} damage. |
+| card:alderMaskHarvester.alderVeil | Alder Veil | skill | 1 | 0 | Gain {block} Block. |
+| card:alderMaskHarvester.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:woundwoodTusker.woundGore | Wound Gore | attack | 1 | 0 | Deal {damage} damage. |
+| card:woundwoodTusker.timberCharge | Timber Charge | attack | 3 | 0 | Deal {damage} damage. |
+| card:woundwoodTusker.rootPlow | Root Plow | attack | 2 | 0 | Deal {damage} damage. |
+| card:woundwoodTusker.barkHide | Bark Hide | skill | 1 | 0 | Gain {block} Block. |
+| card:woundwoodTusker.scarSnort | Scar Snort | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
+| card:woundwoodTusker.woundwoodRampage | Woundwood Rampage | attack | 3 | 0 | Deal {damage} damage. |
+| card:woundwoodTusker.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:mireProcessional.pallLash | Pall Lash | attack | 1 | 0 | Deal {damage} damage. |
+| card:mireProcessional.bogCandle | Bog Candle | attack | 1 | 1 | Deal {damage} damage. |
+| card:mireProcessional.graveMurk | Grave Murk | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy. |
+| card:mireProcessional.pallBearers | Pall Bearers | attack | 3 | 0 | Deal {damage} damage. |
+| card:mireProcessional.mournersChorus | Mourners' Chorus | attack | 2 | 0 | Deal {damage} damage. |
+| card:mireProcessional.wakeVeil | Wake Veil | skill | 1 | 0 | Gain {block} Block. |
+| card:mireProcessional.finalRequiem | Final Requiem | attack | 3 | 2 | Deal {damage} damage. |
+| card:mireProcessional.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:mireProcessional.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:quarryRam.headbutt | Headbutt | attack | 1 | 0 | Deal {damage} damage. |
+| card:quarryRam.quarryCharge | Quarry Charge | attack | 2 | 0 | Deal {damage} damage. |
+| card:quarryRam.stonyStand | Stony Stand | skill | 1 | 0 | Gain {block} Block. |
+| card:quarryRam.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:tollgateHookman.tollJab | Toll Jab | attack | 1 | 0 | Deal {damage} damage. |
+| card:tollgateHookman.hookHaul | Hook Haul | attack | 1 | 0 | Deal {damage} damage. Apply {weak} Weak to the enemy. |
+| card:tollgateHookman.gateBar | Gate Bar | skill | 1 | 0 | Gain {block} Block. |
+| card:tollgateHookman.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:tollgateHookman.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:waxsealBailiff.waxBrand | Wax Brand | attack | 1 | 0 | Deal {damage} damage. |
+| card:waxsealBailiff.writOfDebt | Writ of Debt | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
+| card:waxsealBailiff.sealPress | Seal Press | attack | 2 | 0 | Deal {damage} damage. |
+| card:waxsealBailiff.ledgerGuard | Ledger Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:waxsealBailiff.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:carrionHeadsman.cleaveStroke | Cleave Stroke | attack | 1 | 0 | Deal {damage} damage. |
+| card:carrionHeadsman.rendingCut | Rending Cut | attack | 1 | 0 | Deal {damage} damage. Apply {bleed} Bleed to the enemy. |
+| card:carrionHeadsman.executionDrop | Execution Drop | attack | 2 | 0 | Deal {damage} damage. |
+| card:carrionHeadsman.hoodGuard | Hood Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:carrionHeadsman.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:knellcapSentinel.knellStrike | Knell Strike | attack | 1 | 0 | Deal {damage} damage. |
+| card:knellcapSentinel.bellRing | Bell Ring | attack | 2 | 0 | Deal {damage} damage. |
+| card:knellcapSentinel.capGuard | Cap Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:knellcapSentinel.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:pallidOathCamel.oathKick | Oath Kick | attack | 1 | 0 | Deal {damage} damage. |
+| card:pallidOathCamel.hallowSpit | Hallow Spit | attack | 1 | 1 | Deal {damage} damage. |
+| card:pallidOathCamel.packCrush | Pack Crush | attack | 3 | 0 | Deal {damage} damage. |
+| card:pallidOathCamel.oathWater | Oath Water | skill | 2 | 0 | Gain {block} Block. |
+| card:pallidOathCamel.pilgrimBurden | Pilgrim Burden | attack | 3 | 0 | Deal {damage} damage. |
+| card:pallidOathCamel.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:inkveilNautilus.inkJet | Ink Jet | attack | 1 | 1 | Deal {damage} damage. |
+| card:inkveilNautilus.veilCloud | Veil Cloud | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {insanity} Insanity to the enemy. |
+| card:inkveilNautilus.inkstorm | Inkstorm | attack | 3 | 2 | Deal {damage} damage. |
+| card:inkveilNautilus.shellGuard | Shell Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:inkveilNautilus.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:inkveilNautilus.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:mirrorFanAbbess.fanSlash | Fan Slash | attack | 1 | 0 | Deal {damage} damage. |
+| card:mirrorFanAbbess.mirrorRiposte | Mirror Riposte | attack | 2 | 0 | Gain {block} Block. Prepare Counter: return {damage} damage. |
+| card:mirrorFanAbbess.glassGlare | Glass Glare | attack | 2 | 1 | Deal {damage} damage. |
+| card:mirrorFanAbbess.wardingFan | Warding Fan | skill | 1 | 0 | Gain {block} Block. |
+| card:mirrorFanAbbess.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:saltChoirWalrus.saltDirge | Salt Dirge | attack | 1 | 1 | Deal {damage} damage. |
+| card:saltChoirWalrus.blubberSlam | Blubber Slam | attack | 3 | 0 | Deal {damage} damage. |
+| card:saltChoirWalrus.choirChorus | Choir Chorus | power | 2 | 1 | Apply {frost} Frost to the enemy. Apply {weak} Weak to the enemy. |
+| card:saltChoirWalrus.frozenBulwark | Frozen Bulwark | skill | 2 | 0 | Gain {block} Block. |
+| card:saltChoirWalrus.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:saltChoirWalrus.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:rimewheelPenitent.penanceLash | Penance Lash | attack | 1 | 0 | Deal {damage} damage. |
+| card:rimewheelPenitent.wheelScourge | Wheel Scourge | attack | 2 | 0 | Deal {damage} damage. |
+| card:rimewheelPenitent.rimeOffering | Rime Offering | power | 1 | 1 | Apply {strength} Strength to yourself. |
+| card:rimewheelPenitent.frostGuard | Frost Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:rimewheelPenitent.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:veiledJusticiar.verdictStrike | Verdict Strike | attack | 1 | 0 | Deal {damage} damage. |
+| card:veiledJusticiar.gavelFall | Gavel Fall | attack | 3 | 0 | Deal {damage} damage. |
+| card:veiledJusticiar.righteousLight | Righteous Light | attack | 2 | 1 | Deal {damage} damage. |
+| card:veiledJusticiar.sentenceRead | Sentence Read | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {frail} Frail to the enemy. |
+| card:veiledJusticiar.veilGuard | Veil Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:veiledJusticiar.finalJudgement | Final Judgement | attack | 3 | 2 | Deal {damage} damage. |
+| card:veiledJusticiar.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:sixleggedHearse.legStomp | Leg Stomp | attack | 1 | 0 | Deal {damage} damage. |
+| card:sixleggedHearse.hearseCharge | Hearse Charge | attack | 3 | 0 | Deal {damage} damage. |
+| card:sixleggedHearse.pallTrample | Pall Trample | attack | 2 | 0 | Deal {damage} damage. |
+| card:sixleggedHearse.coffinShield | Coffin Shield | skill | 1 | 0 | Gain {block} Block. |
+| card:sixleggedHearse.graveReek | Grave Reek | power | 1 | 1 | Apply {weak} Weak to the enemy. Apply {crimsonBlight} Crimson Blight to the enemy. |
+| card:sixleggedHearse.lastRites | Last Rites | attack | 3 | 1 | Deal {damage} damage. |
+| card:sixleggedHearse.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:kilnshellTortoise.shellBash | Shell Bash | attack | 1 | 0 | Deal {damage} damage. |
+| card:kilnshellTortoise.kilnBreath | Kiln Breath | attack | 1 | 1 | Deal {damage} damage. |
+| card:kilnshellTortoise.shellTuck | Shell Tuck | skill | 1 | 0 | Gain {block} Block. |
+| card:kilnshellTortoise.kilnPlate | Kiln Plate | skill | 2 | 0 | Gain {block} Block. |
+| card:kilnshellTortoise.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:slagtongImp.slagSpit | Slag Spit | attack | 1 | 1 | Deal {damage} damage. |
+| card:slagtongImp.tongueBrand | Tongue Brand | attack | 1 | 0 | Deal {damage} damage. |
+| card:slagtongImp.cinderCackle | Cinder Cackle | power | 1 | 1 | Apply {weak} Weak to the enemy. |
+| card:slagtongImp.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:slagtongImp.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:sootwingBat.sootFlurry | Soot Flurry | attack | 1 | 0 | Deal {damage} damage {hits} times. |
+| card:sootwingBat.ashWingBeat | Ash Wing Beat | attack | 1 | 0 | Deal {damage} damage. Apply {weak} Weak to the enemy. |
+| card:sootwingBat.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:sootwingBat.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:brassThroatIbex.hornRam | Horn Ram | attack | 1 | 0 | Deal {damage} damage. |
+| card:brassThroatIbex.brassCall | Brass Call | attack | 1 | 1 | Deal {damage} damage. |
+| card:brassThroatIbex.thunderLeap | Thunder Leap | attack | 3 | 0 | Deal {damage} damage. |
+| card:brassThroatIbex.stormPeal | Storm Peal | attack | 3 | 2 | Deal {damage} damage. Apply {weak} Weak to the enemy. |
+| card:brassThroatIbex.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:brassThroatIbex.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:kilnbackTerrapin.shellRam | Shell Ram | attack | 3 | 0 | Deal {damage} damage. |
+| card:kilnbackTerrapin.siegeLob | Siege Lob | attack | 2 | 1 | Deal {damage} damage. |
+| card:kilnbackTerrapin.emberVolley | Ember Volley | attack | 3 | 1 | Deal {damage} damage. |
+| card:kilnbackTerrapin.siegePlate | Siege Plate | skill | 2 | 0 | Gain {block} Block. |
+| card:kilnbackTerrapin.bunkerGuard | Bunker Guard | skill | 1 | 0 | Gain {block} Block. |
+| card:kilnbackTerrapin.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:slagwingHeron.slagJab | Slag Jab | attack | 1 | 0 | Deal {damage} damage. |
+| card:slagwingHeron.emberDive | Ember Dive | attack | 3 | 0 | Deal {damage} damage. |
+| card:slagwingHeron.moltenBeak | Molten Beak | attack | 3 | 0 | Deal {damage} damage. |
+| card:slagwingHeron.heronWard | Heron Ward | skill | 1 | 0 | Gain {block} Block. |
+| card:slagwingHeron.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:slagwingHeron.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:ashSilkWeaver.venomFang | Venom Fang | attack | 1 | 0 | Deal {damage} damage. |
+| card:ashSilkWeaver.silkSnare | Silk Snare | power | 1 | 1 | Apply {frost} Frost to the enemy. Apply {weak} Weak to the enemy. |
+| card:ashSilkWeaver.cocoonCrush | Cocoon Crush | attack | 3 | 0 | Deal {damage} damage. |
+| card:ashSilkWeaver.ashSilkVolley | Ash-Silk Volley | attack | 3 | 1 | Deal {damage} damage. |
+| card:ashSilkWeaver.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:ashSilkWeaver.retreat | Retreat | skill | 2 | 0 | Fall back one band. |
+| card:ferrumVotary.ironCensure | Iron Censure | attack | 1 | 0 | Deal {damage} damage. |
+| card:ferrumVotary.voltaicPrayer | Voltaic Prayer | attack | 1 | 1 | Deal {damage} damage. |
+| card:ferrumVotary.anvilBrand | Anvil Brand | attack | 3 | 0 | Deal {damage} damage. |
+| card:ferrumVotary.ironLitany | Iron Litany | skill | 2 | 0 | Gain {block} Block. |
+| card:ferrumVotary.thunderOath | Thunder Oath | power | 1 | 1 | Apply {strength} Strength to yourself. |
+| card:ferrumVotary.advance | Advance | skill | 1 | 0 | Close one band. |
+| card:crucibleNewt.moltenBite | Molten Bite | attack | 1 | 0 | Deal {damage} damage. |
+| card:crucibleNewt.crucibleTail | Crucible Tail | attack | 3 | 0 | Deal {damage} damage. |
+| card:crucibleNewt.slagBreath | Slag Breath | attack | 2 | 0 | Deal {damage} damage. |
+| card:crucibleNewt.emberSpit | Ember Spit | attack | 1 | 1 | Deal {damage} damage. |
+| card:crucibleNewt.moltenHide | Molten Hide | skill | 1 | 0 | Gain {block} Block. |
+| card:crucibleNewt.meltdown | Meltdown | attack | 3 | 1 | Deal {damage} damage. |
+| card:crucibleNewt.advance | Advance | skill | 1 | 0 | Close one band. |
 
 ## Gear (gear:)
 
@@ -244,6 +453,44 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | gear:armor.bastionHarness | Bastion Harness | armor | armor | uncommon | plate, encumbered |
 | gear:armor.rimeweaveRobes | Rimeweave Robes | armor | armor | uncommon | robes, frost, thin |
 | gear:armor.waywatcherCoat | Waywatcher Coat | armor | armor | uncommon | leathers, light, unwieldy |
+| gear:kris | Kris | rightHand | weapon | uncommon | dagger, flurry, bleed |
+| gear:stiletto | Stiletto | rightHand | weapon | rare | dagger, flurry |
+| gear:broadsword | Broadsword | rightHand | weapon | uncommon | sword |
+| gear:flamberge | Flamberge | rightHand | weapon | rare | sword, burn |
+| gear:rapier | Rapier | rightHand | weapon | common | sword |
+| gear:estoc | Estoc | rightHand | weapon | uncommon | sword |
+| gear:duelistsFoil | Duelists Foil | rightHand | weapon | rare | sword |
+| gear:ashenClaymore | Ashen Claymore | rightHand | weapon | uncommon | greatsword, heavy, stagger |
+| gear:zweihander | Zweihander | rightHand | weapon | rare | greatsword, heavy, stagger |
+| gear:pike | Pike | rightHand | weapon | common | spear |
+| gear:scythe | Scythe | rightHand | weapon | uncommon | polearm |
+| gear:reapersCrescent | Reapers Crescent | rightHand | weapon | rare | polearm |
+| gear:mace | Mace | rightHand | weapon | common | hammer, stagger |
+| gear:morningStar | Morning Star | rightHand | weapon | uncommon | hammer, stagger, bleed |
+| gear:flail | Flail | rightHand | weapon | rare | hammer, stagger |
+| gear:maul | Maul | rightHand | weapon | uncommon | hammer, stagger |
+| gear:thunderMallet | Thunder Mallet | rightHand | weapon | rare | hammer, stagger |
+| gear:beardedAxe | Bearded Axe | rightHand | weapon | common | axe, heavy |
+| gear:moonlitKatana | Moonlit Katana | rightHand | weapon | rare | katana, bleed |
+| gear:moonGlaives | Moon Glaives | rightHand | weapon | rare | twinblade, flurry, light, frost |
+| gear:longbow | Longbow | rightHand | weapon | uncommon | bow, retreat |
+| gear:huntersRecurve | Hunters Recurve | rightHand | weapon | rare | bow, retreat |
+| gear:handCrossbow | Hand Crossbow | rightHand | weapon | common | bow, retreat |
+| gear:arbalest | Arbalest | rightHand | weapon | rare | bow, retreat |
+| gear:leatherWhip | Leather Whip | rightHand | weapon | common | flurry |
+| gear:thornWhip | Thorn Whip | rightHand | weapon | uncommon | flurry, bleed |
+| gear:ironKnuckles | Iron Knuckles | rightHand | weapon | common | flurry |
+| gear:beastClaws | Beast Claws | rightHand | weapon | uncommon | flurry, bleed |
+| gear:stormSceptre | Storm Sceptre | rightHand | staff | uncommon | sceptre, retreat |
+| gear:grimoire | Grimoire | leftHand | shield | uncommon |  |
+| gear:prayerBook | Prayer Book | leftHand | shield | common |  |
+| gear:sunTalisman | Sun Talisman | leftHand | shield | uncommon | regen |
+| gear:boneTalisman | Bone Talisman | leftHand | shield | uncommon |  |
+| gear:armor.cinderforgedPlate | Cinderforged Plate | armor | armor | rare | plate |
+| gear:armor.wyrmscaleMail | Wyrmscale Mail | armor | armor | rare | mail |
+| gear:armor.ringmailHauberk | Ringmail Hauberk | armor | armor | common | mail |
+| gear:armor.huntersHide | Hunters Hide | armor | armor | common | leathers |
+| gear:armor.sagesRobe | Sages Robe | armor | armor | uncommon | robes |
 
 ## Relics (relic:)
 
@@ -256,3 +503,19 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | relic:enemy.relic.ashenCore | Ashen Core | CON +2, STR +2, WIS +1, SP -2 |
 | relic:enemy.relic.emberBrand | Ember Brand | SP -1 |
 | relic:enemy.relic.abyssalCrown | Abyssal Crown | CON +2, WIS +2, INT +1 |
+| relic:enemy.relic.titheBand | Tithe Band | WIS +1, CON +1 |
+| relic:enemy.relic.siltCrown | Silt Crown | CON +2, STR +1 |
+| relic:enemy.relic.wickerAntlers | Wicker Antlers | WIS +2, CON +1 |
+| relic:enemy.relic.pearlShell | Pearl Shell | CON +3, SP -1 |
+| relic:enemy.relic.woundwoodHeart | Woundwood Heart | CON +3, STR +1 |
+| relic:enemy.relic.knellcapHelm | Knellcap Helm | CON +2, SP -1 |
+| relic:enemy.relic.oathPack | Oath Pack | CON +2, WIS +1 |
+| relic:enemy.relic.inkVeil | Ink Veil | WIS +2, INT +1 |
+| relic:enemy.relic.saltBlubber | Salt Blubber | CON +3, SP -1 |
+| relic:enemy.relic.judgeSeal | Judge Seal | STR +2, WIS +1 |
+| relic:enemy.relic.hearseFrame | Hearse Frame | CON +3, STR +1, SP -1 |
+| relic:enemy.relic.brassThroat | Brass Throat | WIS +2, CON +1 |
+| relic:enemy.relic.kilnbackFurnace | Kilnback Furnace | CON +2, STR +1 |
+| relic:enemy.relic.ironVow | Iron Vow | CON +2, STR +1 |
+| relic:enemy.relic.crucibleHeart | Crucible Heart | CON +3, STR +1 |
+| relic:enemy.relic.funeralPall | Funeral Pall | CON +3, WIS +1, SP -2 |

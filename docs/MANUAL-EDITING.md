@@ -17,7 +17,7 @@ then run `node tools/game-config.mjs build` and `node tools/game-config.mjs chec
 | A class's starting attributes, deck, equipment, special card and description | `characters.json` (and `starterDeck.json`) |
 | How attributes turn into HP, draw and the rest in Core | `stats.json` |
 | Enemy attributes, decks, behavior, boss phases and starting Poise | `enemies/<id>.json` (authored sheet; enemy rows in `characters.json` are generated) |
-| Core enemy card data and overlays | `enemyCards.json`; an enemy sheet's `ai["card:<id>"].legacyMove` maps a card to a shared move. `coreOffense: "card"` opts damage/hits into Core; `coreSp: "card"` separately opts stamina cost. Otherwise the shared move values stay authoritative. |
+| Core enemy card data and overlays | `enemyCards.json`; an enemy sheet's `ai["card:<id>"].legacyMove` maps a card to a shared move. `coreOffense: "card"` opts damage/hits into Core; `coreSp: "card"` separately opts stamina cost, and `coreBlock: "card"` opts Block. Otherwise the shared move values stay authoritative. |
 | Base reward cards and their statuses | `games/ashenspire/packs/base-cards/cards.json`, `statuses.json` |
 | Map routes, rest services, shop offers, victory reward offers, class unlocks | `routes.json`, `rests.json`, `shops.json`, `rewards.json`, `classUnlocks.json` |
 | Minimum stats to equip gear | none: Core switches equipment requirements off |
@@ -374,7 +374,7 @@ Edit these source files for the Core player flow:
 | Basic player card costs, effects, text and named icons | `games/ashenspire/packs/core/cards.json` |
 | Base reward cards and statuses | `games/ashenspire/packs/base-cards/cards.json` (`definition`), `statuses.json`; preserve each frozen `provenance.sourceProposal` |
 | Equipment and its modifiers | `games/ashenspire/packs/core/gear.json` |
-| Core enemy card data and overlays | `games/ashenspire/packs/core/enemyCards.json`; each enemy sheet maps `ai["card:<id>"].legacyMove` to the shared move, `coreOffense: "card"` opts damage/hits into Core, and `coreSp: "card"` separately opts stamina cost |
+| Core enemy card data and overlays | `games/ashenspire/packs/core/enemyCards.json`; each enemy sheet maps `ai["card:<id>"].legacyMove` to the shared move, `coreOffense: "card"` opts damage/hits into Core, `coreSp: "card"` separately opts stamina cost, and `coreBlock: "card"` opts Block |
 | Player attributes, decks and behavior | `games/ashenspire/packs/core/characters.json` |
 | Enemy attributes, decks, behavior and boss phase hooks | `games/ashenspire/packs/core/enemies/<id>.json` (authored source); enemy rows in `characters.json` are generated |
 | Card pools, starting hands, routes, rewards, shops and rests | Matching JSON in `games/ashenspire/packs/core/` |

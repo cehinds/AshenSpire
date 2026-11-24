@@ -3505,10 +3505,6 @@
     "renderInventoryDetailCard",
     "renderInventoryItemCard"
   ],
-  "src/ui/components/armouryEquipModals.js": [
-    "openEquipConfirmModal",
-    "openSlotChoiceModal"
-  ],
   "src/ui/components/armouryInventory.js": [
     "armouryInventoryBlock",
     "inventoryFace",
@@ -3627,9 +3623,6 @@
     "hasTagSymbol",
     "tagSymbolSvg"
   ],
-  "src/ui/components/cardUpgradeModal.js": [
-    "mountCardUpgradeModal"
-  ],
   "src/ui/components/choiceBody.js": [
     "mountChoiceBody",
     "setChoiceStatus"
@@ -3728,10 +3721,6 @@
   "src/ui/components/compactEquipmentDetails.js": [
     "compactEquipmentDetails"
   ],
-  "src/ui/components/confirmationModal.js": [
-    "closeConfirmationModal",
-    "openConfirmationModal"
-  ],
   "src/ui/components/creationCards.js": [
     "booleanSettingToggle",
     "characterSigilPreview",
@@ -3809,10 +3798,6 @@
     "mapTerrainHtml",
     "syncBackdropFlag"
   ],
-  "src/ui/components/equipCompareModal.js": [
-    "compareRowNode",
-    "mountEquipCompareModal"
-  ],
   "src/ui/components/equipmentCard.js": [
     "equipmentDetails",
     "renderEquipmentCard",
@@ -3860,9 +3845,6 @@
   ],
   "src/ui/components/gameProfileLevelUp.js": [
     "mountGameProfileLevelUp"
-  ],
-  "src/ui/components/gameProfileOffers.js": [
-    "mountGameProfileOffers"
   ],
   "src/ui/components/gameProfileRest.js": [
     "mountGameProfileRest"
@@ -3999,17 +3981,6 @@
     "arrangeMerchantOffer",
     "merchantThumbnail"
   ],
-  "src/ui/components/modalShell.js": [
-    "bindModalDismiss",
-    "buttonRow",
-    "modalCloseButton",
-    "modalCloseButtonHtml",
-    "modalFooter",
-    "modalHead",
-    "openModal",
-    "restampModalWireframes",
-    "stampModalSize"
-  ],
   "src/ui/components/mountServiceModal.js": [
     "mountMountServiceModal"
   ],
@@ -4086,10 +4057,6 @@
   "src/ui/components/restFrame.js": [
     "mountRestFrame",
     "restPresentation"
-  ],
-  "src/ui/components/rewardDoor.js": [
-    "mountRewardDoor",
-    "replaceRewardFoot"
   ],
   "src/ui/components/rollReceipt.js": [
     "rollReceiptLines"
@@ -4172,9 +4139,6 @@
   ],
   "src/ui/components/startupGate.js": [
     "mountStartupGate"
-  ],
-  "src/ui/components/statAllocationCard.js": [
-    "renderStatAllocationCard"
   ],
   "src/ui/components/stature.js": [
     "statureFor"
@@ -4708,8 +4672,6 @@
   "src/ui/models/CombatCompositionModel.js": [
     "alternativeCombatComposition",
     "combatArtworkKey",
-    "combatSceneryGround",
-    "combatStandingGround",
     "insetPerspectiveFootprint",
     "stableCombatArtwork",
     "stableHandAnchor"
@@ -5001,9 +4963,7 @@
     "quickMenuPanelModel"
   ],
   "src/ui/models/MobileFloorModel.js": [
-    "holdFloorShadowTop",
-    "mobileFloorLayer",
-    "mobileFloorShadowTop"
+    "mobileFloorLayer"
   ],
   "src/ui/models/MountServiceModel.js": [
     "mountServiceModel"
@@ -5246,8 +5206,7 @@
     "motionFlags",
     "motionOff",
     "resolveCombatPacing",
-    "resolveMotionIdle",
-    "resolvePerformanceMode"
+    "resolveMotionIdle"
   ],
   "src/ui/poiseHelp.js": [
     "poiseHelpText"
@@ -5377,9 +5336,6 @@
   "src/ui/screens/rest.js": [
     "mountRest"
   ],
-  "src/ui/screens/reward.js": [
-    "mountRewards"
-  ],
   "src/ui/screens/settings.js": [
     "activeAdvancedGroup",
     "allResettableKeys",
@@ -5417,7 +5373,6 @@
     "resolveArmamentsPhonePlacement",
     "resolveArmamentsPresentation",
     "resolveGraceRefill",
-    "resolveLevelUpValue",
     "resolveNumberRow",
     "resolveTapSize",
     "restoreView",

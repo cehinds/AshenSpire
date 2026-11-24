@@ -63,5 +63,5 @@ export function inventoryRowPresentation(row, { target, selectedSlot, layout }) 
 
 /** The picked position's context line: slot, set, active or reserve, and what it holds now. */
 export function inventorySelectionContextText({ slotLabel, index, activeIndex, currentName }) {
-  return `${slotLabel} · ${index + 1} — ${t(index === activeIndex ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${currentName}`;
+  return `${slotLabel} · ${index + 1}: ${t(index === activeIndex ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${currentName}`;
 }

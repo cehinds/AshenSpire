@@ -62,7 +62,7 @@
       "aegisOfEmbers",
       "shieldCrash"
     ],
-    "description": "Fights up close and switches footing mid-battle — one stance hits harder, the other holds the line. Wounds you land keep bleeding, and heavy blows stagger."
+    "description": "Fights up close and switches footing mid-battle. One stance hits harder, the other holds the line. Wounds you land keep bleeding, and heavy blows stagger."
   },
   {
     "id": "starseer",
@@ -133,7 +133,7 @@
       "pyreLight",
       "riteOfCinders"
     ],
-    "description": "Casts in sequence — the second spell each turn strikes harder than the first. Fragile early on, so the order you play cards matters more than their power."
+    "description": "Casts in sequence: the second spell each turn strikes harder than the first. Fragile early on, so the order you play cards matters more than their power."
   },
   {
     "id": "rogue",
@@ -236,6 +236,7 @@
       "blightward",
       "painOffering",
       "witheringTouch",
+      "gravebinderLament",
       "blightwardLash",
       "emberCommunion",
       "martyrBlood",

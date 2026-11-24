@@ -20,7 +20,7 @@ function fixture(profileId,cardId,{abilityRank,upgraded=false,expanded=false}={}
  const player={classId:'reaver',hp:200,maxHp:200,mana:100,maxMana:100,stamina:100,maxStamina:100,energyMax:100,drawPerTurn:1,deck:[instance]};
  const args={registries,rng:createRng(17),gameProfile,enemyIds:Array(3).fill('wanderingSoldier'),...(expanded ? {combatExpansionVersion:2,reactionRulesVersion:1} : {})};
  const combat=createCombat({...args,player});
- for(const foe of combat.enemies){foe.hp=foe.maxHp=1000;foe.block=0;foe.statuses={};foe.combatStance={maneuver:'attack',camp:'physical',range:'melee'};}
+ for(const foe of combat.enemies){foe.hp=foe.maxHp=1000;foe.block=0;foe.statuses={};foe.combatStance={maneuver:'attack',camp:'physical',range:'melee'};foe.persistentPoise={value:0,max:0};}
  combat.enemies[2].hp=0;combat.enemies[2].alive=false;
  const int=combat.rng.int;combat.rng.int=(stream,min,max)=>stream==='combatAvoidance' ? max : int(stream,min,max);
  return {combat,registries,instance};

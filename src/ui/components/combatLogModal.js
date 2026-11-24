@@ -9,7 +9,7 @@
 import { damageReceiptLines } from './damageReceipt.js';
 import { rollReceiptLines } from './rollReceipt.js';
 import { el, button } from '../kit/index.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { t, tFull } from '../strings.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { openConsoleLog } from '../debuglog.js';
@@ -66,6 +66,24 @@ export function renderCombatLogEntries(container, entries, { detailed = false, p
   container.replaceChildren(...nodes);
 }
 
+/** The log as plain text, round by round, with the receipts when `detailed` is on. Copy reads this. */
+function combatLogText(entries, detailed = false) {
+  const lines = [];
+  let round;
+  for (const entry of entries) {
+    if (entry.round !== round) {
+      round = entry.round;
+      if (lines.length) lines.push('');
+      lines.push(t('combat.log.round', { round }));
+    }
+    lines.push(Array.isArray(entry.segments) && entry.segments.length
+      ? entry.segments.map(segment => typeof segment?.text === 'string' ? segment.text : '').join('')
+      : entry.text);
+    if (detailed) lines.push(...damageReceiptLines(entry.damageReceipt), ...rollReceiptLines(entry.rollReceipt));
+  }
+  return lines.length ? lines.join('\n') : tFull('combat.log.empty');
+}
+
 /**
  * openCombatLogModal({ entries, opener, onClose }) → { panel, setEntries, close }.
  * Opens scrolled to the newest entry. Closing returns focus to `opener`.
@@ -83,6 +101,35 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
     detailButton.setAttribute('aria-pressed', String(detailed));
     renderCombatLogEntries(list, currentEntries, { detailed, palette, legend: true });
   });
+  const copyButton = button({ label: t('common.copy'), attrs: { 'data-combat-log-copy': '', 'aria-live': 'polite' } });
+  let closed = false, copyReset = null;
+  copyButton.addEventListener('click', async () => {
+    if (copyButton.disabled) return;
+    const text = combatLogText(currentEntries, detailed);
+    copyButton.disabled = true;
+    clearTimeout(copyReset);
+    try {
+      await navigator.clipboard.writeText(text);
+      if (closed) return;
+      copyButton.textContent = t('common.copied');
+    } catch {
+      if (closed) return;
+      // Keep the log selected for a manual copy when clipboard access is blocked.
+      const range = document.createRange();
+      range.selectNodeContents(list);
+      const selection = getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      copyButton.textContent = t('debugChrome.consoleManualCopy');
+    } finally {
+      if (!closed) {
+        copyButton.disabled = false;
+        copyReset = setTimeout(() => {
+          if (!closed) copyButton.textContent = t('common.copy');
+        }, 1500);
+      }
+    }
+  });
   const consoleButton = button({ label: t('debugChrome.console'), attrs: { 'aria-haspopup': 'dialog', 'data-console-shortcut': '' } });
   let consoleModal = null;
   consoleButton.addEventListener('click', () => {
@@ -96,16 +143,16 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
     get isConnected() { return !!currentOpener?.isConnected; },
     focus(options) { currentOpener?.focus?.(options); },
   };
-  const modal = openModal({
+  const modal = OpenModal({
     name: 'combat-log', size: 'xl', className: 'combat-log-modal', title: t('combat.log.title'),
-    titleId: 'combat-log-modal-title', body: list, secondary: [closeButton, detailButton, consoleButton], opener: openerRef, onClose: () => { consoleModal?.close(); onClose?.(); },
+    titleId: 'combat-log-modal-title', body: list, secondary: [closeButton, detailButton, copyButton, consoleButton], opener: openerRef, onClose: () => { closed = true; clearTimeout(copyReset); consoleModal?.close(); onClose?.(); },
   });
   let consoleEnabled = null;
   const setConsoleEnabled = enabled => {
     if (consoleEnabled === !!enabled) return;
     consoleEnabled = !!enabled;
     consoleButton.hidden = !enabled;
-    modal.foot.querySelector('.modal-foot-actions').dataset.actionCount = enabled ? '3' : '2';
+    modal.foot.querySelector('.modal-foot-actions').dataset.actionCount = enabled ? '4' : '3';
   };
   setConsoleEnabled(showConsole);
   markUiComponent(modal.panel, UI.combatLogModal);

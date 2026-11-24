@@ -3,20 +3,34 @@ import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { mergeUnarmedAnimationFragment as merge, validateUnarmedFragmentCoverage } from '../tools/unarmed-animation-import.mjs';
+import { withDeclaredOutfitAliases } from './helpers/animation-fixture-aliases.mjs';
+import { contentBundle } from '../src/content/index.js';
 import { EQUIPMENT_ANIMATIONS, validateEquipmentAnimations, selectEquipmentAnimation, animationClip, animationTiming } from '../src/model/equipmentAnimation.js';
 
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url)));
 // The art studio's runtime fragments, kept as fixtures when art/ left for
 // cehinds/AshenSpire-art (docs/EXTERNAL-ASSETS-PLAN.md step 13).
-const magic = read('./fixtures/art-exports/unarmed-magic-2026-09-19/runtime-fragment.json');
-const physical = read('./fixtures/art-exports/unarmed-reference-2026-09-19/runtime-fragment.json');
+const magicExport = read('./fixtures/art-exports/unarmed-magic-2026-09-19/runtime-fragment.json');
+const physicalExport = read('./fixtures/art-exports/unarmed-reference-2026-09-19/runtime-fragment.json');
+for (const fragment of [magicExport, physicalExport]) {
+  assert.equal(fragment.bindings.length,35,'historical exports retain 35 outfit bindings');
+  assert.equal(Object.keys(fragment.sets).length,32,'historical exports retain 32 painted appearances');
+}
+const magic = withDeclaredOutfitAliases(magicExport);
+const physical = withDeclaredOutfitAliases(physicalExport);
 const base = structuredClone(EQUIPMENT_ANIMATIONS);
 delete base.motionProfiles.unarmed;
 base.bindings = base.bindings.filter(b => !(b.rightGroup === 'empty' && b.leftGroup === 'empty'));
 for (const [id, set] of Object.entries(base.sets)) if (set.motionProfile === 'unarmed') delete base.sets[id];
 
 test('actual complete magic and physical packs compose in both orders and preserve other profiles', () => {
-  validateUnarmedFragmentCoverage(magic, fileURLToPath(new URL('../', import.meta.url)));
+  const historical=merge(merge(base,physicalExport),magicExport);
+  assert.deepEqual(historical,merge(merge(base,magicExport),physicalExport),'unchanged 35-binding exports still compose in either order');
+  assert.equal(historical.bindings.filter(b=>b.rightGroup==='empty'&&b.leftGroup==='empty').length,35);
+  const root=fileURLToPath(new URL('../', import.meta.url));
+  for (const fragment of [magicExport,physicalExport]) assert.throws(()=>validateUnarmedFragmentCoverage(fragment,root),/incomplete or duplicate catalog coverage/,'an unchanged historical export alone cannot cover the expanded catalog');
+  validateUnarmedFragmentCoverage(magic,root);
+  validateUnarmedFragmentCoverage(physical,root);
   const both = merge(merge(base, physical), magic);
   assert.deepEqual(both, merge(merge(base, magic), physical));
   assert.deepEqual(both, merge(merge(both, physical), magic));
@@ -28,7 +42,9 @@ test('actual complete magic and physical packs compose in both orders and preser
 });
 
 test('shipped defaults select magic cast and buff for every armor while physical owns ordinary actions', () => {
-  assert.equal(magic.bindings.length, 35);
+  assert.equal(magicExport.bindings.length,35,'composing aliases leaves the original magic export unchanged');
+  assert.equal(physicalExport.bindings.length,35,'composing aliases leaves the original physical export unchanged');
+  assert.equal(magic.bindings.length,contentBundle.equipment.armour.length);
   assert.equal(Object.keys(magic.sets).length, 32);
   for (const binding of magic.bindings) {
     const animation = selectEquipmentAnimation({ classId: binding.classId, armourId: binding.armourId });

@@ -6,11 +6,13 @@ import assert from 'node:assert/strict';
 import { fight, profile, reg } from './elementFixture.mjs';
 import { cardPlayCosts, dispatch } from '../src/engine/combat.js';
 import { resolveCard } from '../src/model/registries.js';
-import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardOffers, gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardManaCategory } from '../src/model/cardManaPolicy.js';
 import { ElementOfHit } from '../src/model/elementIdentityRules.js';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+const printedCostRegistries = legacyGearRegistries(reg);
 
 const NEW = {
   'core.pyreLash': { cls: 'starseer', rarity: 'uncommon', mana: 1, element: 'fire' },
@@ -48,7 +50,8 @@ const fights = new Map();
 function costsOf(id, { hand, stance, legacy = false }) {
   const key = `${hand}|${!!stance}|${legacy}`;
   if (!fights.has(key)) {
-    const { combat } = fight();
+    // Intrinsic W25-MS prices predate robe discounts; current gear/payment is retained in the play tests below.
+    const { combat } = fight({ registries: printedCostRegistries });
     if (legacy) { delete combat.fixCoreRules.spellCosts; delete combat.fixCoreRules.elementFlux; }
     combat.loadout.sets.rightHand[0] = hand;
     if (stance) combat.player.combatStance = { ...stance };
@@ -73,15 +76,22 @@ test('effective cost table: 0 SP and 2 or 3 MP plain and Prepared; a Focus item 
   }
 });
 
-test('a card without the mark still pays the +1 Stamina surcharge (Comet Lance stays 2 SP / 2 MP)', () => {
+test('a card without the mark pays its printed Stamina (no surcharge since 2026-11-23: Comet Lance is 1 SP / 2 MP); a fight saved before that keeps 2 SP / 2 MP', () => {
   const costs = costsOf('core.cometLance', { hand: 'greatsword', stance: null });
-  assert.deepEqual([costs.stamina, costs.mana], [2, 2]);
+  assert.deepEqual([costs.stamina, costs.mana], [1, 2]);
+  const { combat } = fight({ registries: printedCostRegistries });
+  combat.loadout.sets.rightHand[0] = 'greatsword';
+  combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // the rules snapshot of a fight saved before the owner ruling of 2026-11-23
+  const card = combat.piles.hand[0]; card.cardId = 'core.cometLance';
+  const saved = cardPlayCosts(combat, card.instanceId);
+  assert.deepEqual([saved.stamina, saved.mana], [2, 2], 'a saved fight keeps the +1 Stamina surcharge on an unmarked spell');
 });
 
 test('a fight created before the mark (no manaOnlyTag key) has no exemption: the +1 Stamina surcharge lands on a mana-only card', () => {
-  const { combat } = fight();
+  const { combat } = fight({ registries: printedCostRegistries });
   combat.loadout.sets.rightHand[0] = 'greatsword';
   delete combat.fixCoreRules.spellCosts.manaOnlyTag;
+  combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // a fight that old predates the 2026-11-23 drop of the surcharge too
   const card = combat.piles.hand[0]; card.cardId = 'core.pyreLash';
   const costs = cardPlayCosts(combat, card.instanceId);
   assert.deepEqual([costs.stamina, costs.mana], [1, 2], 'without the key the +1 Stamina surcharge applies again (the card has no exemption in an older fight)');
@@ -134,9 +144,17 @@ test(`every mana-only spell has at least ${MARGIN}x the power per Mana of the me
 // ---- Pools: each card reaches its own class ----
 const live = (classId, seed) => createRunState({ registries: reg, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 test('each new card is offered to its own class (colorless to every caster) and never to another class', () => {
+  const stockHerald = live('herald', 1);
+  assert.equal(stockHerald.maxMana, 1 + 1 + 1, 'base 1 + Rite Vestments 1 + robe type 1');
+  assert.ok(gameProfileRewardPools(reg, stockHerald).combatCards.includes('core.radiantVerdict'), 'the geared Herald can pay its printed 2 MP');
+  const oneManaHerald = { ...stockHerald, maxMana: 1 };
+  assert.ok(!gameProfileRewardPools(reg, oneManaHerald).combatCards.includes('core.radiantVerdict'), 'the same class still cannot receive a card above its Mana capacity');
   const seen = { starseer: new Set(), herald: new Set(), rogue: new Set() };
   for (const classId of Object.keys(seen)) for (let seed = 1; seed <= 400; seed++) {
     const run = live(classId, seed); run.floor = 1 + (seed % 6);
+    run.actNumber = 1 + (seed % 3); // owner 2026-11-21: rewards come from the act's rank band, so class eligibility is checked across acts 1-3
+    // Give each class enough Mana for every printed price to isolate class eligibility.
+    run.maxMana = 2;
     for (const option of gameProfileRewardOffers(reg, run, createRng(seed + 50000), { offerId: 'ms' }).options) if (option.kind === 'combatCards') seen[classId].add(option.id);
   }
   for (const [id, want] of Object.entries(NEW)) {
@@ -155,11 +173,13 @@ test('the element spells play for 0 SP, set their element as the flux and the ne
   const energy = combat.player.energy, mana = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: a.instanceId, targetId: enemy.id });
   assert.equal(combat.player.energy, energy, 'Pyre Lash cost no Stamina');
-  assert.equal(mana - combat.player.mana, 1, 'with a Focus: printed 1 Mana + 1 surcharge - 1 Focus');
+  assert.equal(mana - combat.player.mana, 1, 'printed 1 + surcharge 1 - robe 1; Focus gives no discount before Prepared');
   assert.equal(combat.player.elementFlux, 'fire');
-  const before = enemy.hp;
+  const before = enemy.hp, preparedMana = combat.player.mana;
+  assert.equal(cardPlayCosts(combat, b.instanceId).mana, 0, 'Prepared Adept reduces printed 2 to 1, then surcharge +1, robe -1 and Focus -1');
   dispatch(combat, { type: 'playCard', cardInstanceId: b.instanceId, targetId: enemy.id });
   assert.equal(combat.player.energy, energy, 'Conflagration cost no Stamina either');
+  assert.equal(combat.player.mana, preparedMana, 'the Prepared Focus quote matches the second spell payment');
   assert.ok(before - enemy.hp >= Math.floor(22 * 1.25) - 2, `the fluxed Fire card dealt ${before - enemy.hp}`);
 });
 
@@ -168,10 +188,11 @@ test('Open the Archive draws, restores Mana and exhausts (non-element: it clears
   combat.loadout.sets.rightHand[0] = 'greatsword';
   const card = combat.piles.hand[0]; card.cardId = 'core.openArchive';
   combat.player.elementFlux = 'fire';
+  combat.player.maxMana = Math.max(combat.player.maxMana, 10); // ruling 2026-11-18 §9: max MP is 1 + floor(WIS / 4), so give the restore room
   combat.player.mana = 4;
   const mana = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
-  assert.equal(combat.player.mana - mana, 2 - 3, 'costs 3 Mana, restores 2');
+  assert.equal(combat.player.mana - mana, 2 - Math.max(0, def('core.openArchive').manaCost + 1 - 1), 'printed Mana + spell surcharge - current robe discount, then restores 2');
   assert.equal(combat.player.elementFlux ?? null, null);
   assert.ok(combat.piles.exhaust.some(c => c.instanceId === card.instanceId));
 });

@@ -30,6 +30,7 @@ import { speakerPortraitAsset } from '../../content/speakerArt.js';
 import { availableEventChoices } from '../../model/quests.js';
 import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
 import { showRunReceipt } from '../components/whatChangedModal.js';
+import { ReceivedItems } from '../../model/receivedItems.js';
 import { figureSpec } from '../../model/loadout.js';
 import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -40,7 +41,8 @@ import { w4Parent, w4cLayout } from '../sceneConfig.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { el, modalFooter, button, prose } from '../kit/index.js';
 import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
-import { combatBackdropHtml } from '../components/environmentArt.js';
+import { layeredEnvironmentHtml } from '../components/layeredEnvironment.js';
+import { LayeredDialogueScene } from '../../model/layeredEnvironments.js';
 import { wireDialogueStage } from '../components/dialogueStage.js';
 import { enemySprite, playerSprite } from '../assets.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -106,12 +108,14 @@ export function mountDialogue(app, options) {
   const hudShown = !!hud && layers.hud;
   if (hudShown) root.insertAdjacentHTML('afterbegin', runHudHtml({ registries, run, meta, place: 'event', headerClass: '' }));
 
-  // L2 skybox and L3 floor: the combat environment plate, twice, cut at the
-  // floor line (dialogueStage fits both to the scene window).
+  // L2 skybox and L3 floor: the layered environment plate, twice, cut at the
+  // floor line (dialogueStage fits both to the scene window). Always the
+  // layered generator, themed by the node: an atlas painting fitted to the
+  // window left a black band below it on tall frames (owner, 2026-11-20).
+  const plateScene = LayeredDialogueScene(run);
   const plateLayer = (layer, wireframe) => {
     const wrap = el('div', { class: `dialogue-plate-layer dialogue-${layer}`, 'aria-hidden': 'true', dataset: { layer, wireframe } });
-    wrap.innerHTML = combatBackdropHtml(run);
-    wrap.querySelector('.alternative-card-fade')?.remove();
+    wrap.innerHTML = layeredEnvironmentHtml(plateScene);
     wrap.hidden = !layers[layer];
     return wrap;
   };
@@ -221,7 +225,12 @@ export function mountDialogue(app, options) {
       // The header shows the cinders and HP the choice just paid or took, on this same screen.
       if (hudShown) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: '', hud, remount: () => mountDialogue(app, { ...options, dialogueState: state, entrancePlayed: true }) });
       // The what-changed receipt, over the resolved line the dialogue now shows (an empty diff opens nothing).
-      showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '' });
+      // An item the choice handed over opens the shop's receive modal first (playtest 2026-11-17 item 41).
+      // `release` is the dialogue's own exit cleanup, for a host that leaves it (Equip opens the Armoury).
+      const showReceipt = (onClose = null) => showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '', onClose });
+      const release = () => { teardown(); clearTimeout(entranceTimer); stage.release(); };
+      const items = options.onItemsReceived ? ReceivedItems(registries, before, run) : [];
+      if (items.length) options.onItemsReceived(items, { receipt: showReceipt, release }); else showReceipt();
       return;
     }
     render();
@@ -244,7 +253,7 @@ export function mountDialogue(app, options) {
     if (response.binding) btn.dataset.binding = '1';
     if (!response.affordable) {
       btn.dataset.requires = '1';
-      const reason = response.unmet === 'rankableCard' ? t('event.noRankableCard') : t('dialogue.cannotAfford');
+      const reason = response.unmet === 'rankableCard' ? t('event.noRankableCard') : response.unmet === 'relicHeld' ? t('event.relicHeld') : t('dialogue.cannotAfford');
       if (tooltipHints) {
         btn.title = `${response.label} — ${reason}`;
         btn.setAttribute('aria-description', reason);

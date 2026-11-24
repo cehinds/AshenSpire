@@ -7,7 +7,12 @@ import { planCardUpgrade, commitCardUpgrade } from '../src/model/cardUpgradeServ
 import { upgradeCount, upgradeStepsOf } from '../src/model/cardUpgrade.js';
 import { projectGameCard } from '../src/model/gameProfile.js';
 
-const newRun = (seed = 511) => createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+// Every deck card is raised to rank 9 so it has all ten upgrade slots (rank + 1); slot limits are tested in w25-upgrade-slots.test.mjs.
+const newRun = (seed = 511) => {
+  const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  for (const card of run.deck) card.rank = 9;
+  return run;
+};
 const strikeOf = (run) => run.deck.find((c) => c.cardId === 'core.strike');
 const damage = (def) => def.effects.find((e) => e.op === 'damage').amount;
 

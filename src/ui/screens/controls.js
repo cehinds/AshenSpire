@@ -34,7 +34,7 @@ export function renderControls(container, { settings, onChange }) {
   const pane = el('div', { class: 'as-pane controls-pane' }, [
     eyebrow('Controls'),
     titleM('Bindings', { tag: 'h3' }),
-    el('p', { class: 'as-subtitle', html: 'Move the focus cursor with the <b>arrow keys</b>, <b>D-pad</b>, or <b>left stick</b>; activate with <b>Enter</b> / <b>A</b>. In combat, number keys <b>1–9</b> select cards and targets.' }),
+    el('p', { class: 'as-subtitle', html: 'Move the focus cursor with the <b>arrow keys</b>, <b>D-pad</b>, or <b>left stick</b>; activate with <b>Enter</b> / <b>A</b>. In combat, number keys <b>1</b> to <b>9</b> select cards and targets.' }),
     el('p', { class: 'as-subtitle' }, [
       padConnected
         ? el('span', { class: 'pad-live', text: '● pad connected' })
@@ -78,41 +78,41 @@ export function renderControls(container, { settings, onChange }) {
     btn.classList.remove('listening');
   };
 
-  // Gamepad rebinds.
-  list.querySelectorAll('.rebind-pad').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (capturing) {
-        cancelCapture();
-        cancelKeyCapture();
-        reset(capturing, capturing.classList.contains('rebind-key') ? 'Key' : 'Pad');
-        if (capturing === btn) {
-          capturing = null;
-          return;
-        }
-      }
-      capturing = btn;
-      btn.textContent = 'Press…';
-      btn.classList.add('listening');
-      captureNextButton((buttonIndex) => {
-        const id = btn.dataset.action;
-        const next = { ...getBindings(), [id]: buttonIndex };
-        settings.bindings = next;
-        onChange({ bindings: next });
-        const badge = container.querySelector(`.pad-btn[data-for="${id}"]`);
-        if (badge) badge.textContent = btnName(buttonIndex);
-        reset(btn, 'Pad');
-        capturing = null;
-      });
-    });
-  });
+  const REBIND_KINDS = [
+    {
+      selector: '.rebind-pad',
+      settingKey: 'bindings',
+      readBindings: getBindings,
+      badgeSelector: (id) => `.pad-btn[data-for="${id}"]`,
+      badgeText: (id, binding) => btnName(binding),
+      startCapture: (onCaptured) => captureNextButton(onCaptured),
+      shouldRestoreFocus: false,
+    },
+    {
+      selector: '.rebind-key',
+      settingKey: 'keyBindings',
+      readBindings: getKeyBindings,
+      badgeSelector: (id) => `.key-btn[data-keyfor="${id}"]`,
+      badgeText: (id) => keyLabel(id),
+      startCapture: (onCaptured, onCancel) => captureNextKey(onCaptured, { onCancel }),
+      shouldRestoreFocus: true,
+    },
+  ];
 
-  // Keyboard rebinds.
-  list.querySelectorAll('.rebind-key').forEach((btn) => {
+  const idleLabelOf = (btn) => (btn.classList.contains('rebind-key') ? 'Key' : 'Pad');
+
+  const finishCapture = (btn, rebindKind) => {
+    reset(btn, idleLabelOf(btn));
+    capturing = null;
+    if (rebindKind.shouldRestoreFocus) btn.focus({ preventScroll: true });
+  };
+
+  const armRebindButton = (btn, rebindKind) => {
     btn.addEventListener('click', () => {
       if (capturing) {
         cancelCapture();
         cancelKeyCapture();
-        reset(capturing, capturing.classList.contains('rebind-key') ? 'Key' : 'Pad');
+        reset(capturing, idleLabelOf(capturing));
         if (capturing === btn) {
           capturing = null;
           return;
@@ -121,21 +121,19 @@ export function renderControls(container, { settings, onChange }) {
       capturing = btn;
       btn.textContent = 'Press…';
       btn.classList.add('listening');
-      captureNextKey((key) => {
+      rebindKind.startCapture((binding) => {
         const id = btn.dataset.action;
-        const next = { ...getKeyBindings(), [id]: key };
-        settings.keyBindings = next;
-        onChange({ keyBindings: next });
-        const badge = container.querySelector(`.key-btn[data-keyfor="${id}"]`);
-        if (badge) badge.textContent = keyLabel(id);
-        reset(btn, 'Key');
-        capturing = null;
-        btn.focus({ preventScroll: true });
-      }, { onCancel: () => {
-        reset(btn, 'Key');
-        btn.focus({ preventScroll: true });
-        capturing = null;
-      } });
+        const next = { ...rebindKind.readBindings(), [id]: binding };
+        settings[rebindKind.settingKey] = next;
+        onChange({ [rebindKind.settingKey]: next });
+        const badge = container.querySelector(rebindKind.badgeSelector(id));
+        if (badge) badge.textContent = rebindKind.badgeText(id, binding);
+        finishCapture(btn, rebindKind);
+      }, () => finishCapture(btn, rebindKind));
     });
-  });
+  };
+
+  for (const rebindKind of REBIND_KINDS) {
+    list.querySelectorAll(rebindKind.selector).forEach((btn) => armRebindButton(btn, rebindKind));
+  }
 }

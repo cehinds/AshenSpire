@@ -36,6 +36,7 @@
       },
       "statureCap": 1.15,
       "combatantScale": 0.5866,
+      "playerBodyScale": 1.6,
       "overlapAllowance": 0.4,
       "edgeMarginPx": 6,
       "minCommonFactor": 0.35
@@ -88,6 +89,12 @@
       "footprintInsetPx": 6,
       "footInCellFraction": 0.35,
       "handLiftMaxFraction": 0.12,
+      "backRowEnemyScale": 0.9,
+      "stageExtent": {
+        "mode": "handTop",
+        "handGapPx": 8,
+        "fixedExtraFraction": 0.2
+      },
       "playerBelowFootPx": 32,
       "shortBelowPx": 280,
       "short": {
@@ -183,7 +190,6 @@
         "widthScale": 1,
         "heightPerWidth": 0.6666666666666666,
         "mobileFloor": {
-          "shadowClearancePx": 10,
           "paintAlphaThreshold": 128,
           "paintStarts": {
             "ashen-crown-ground": 0.49122807017543857,
@@ -212,9 +218,9 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.28,
           "skew": 0.15,
-          "top": 0.5,
+          "top": 0.4,
           "rowHeight": 0.052,
-          "teamGapRows": 5.48
+          "teamGapRows": 7.5
         },
         "tablet": {
           "left": 0.06,
@@ -264,6 +270,15 @@
       "desktopMiniHudBandOverlapPx": 30,
       "miniHudSpriteGapPx": 5,
       "playerMiniHudSpriteGapPx": 10,
+      "playerMiniHudDropFraction": 0.5,
+      "playerHud": {
+        "placement": "beside",
+        "gapPx": 10,
+        "topFraction": 0.15,
+        "maxWidthPx": 320,
+        "minWidthPx": 150,
+        "edgeMarginPx": 8
+      },
       "miniHud": {
         "designWidthPx": 140,
         "baseFontPx": 13,

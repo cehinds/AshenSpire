@@ -4,14 +4,23 @@ import { withKitDom } from './helpers/dom.mjs';
 import { rewardDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+import { MountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { runHeaderStripHtml } from '../src/ui/components/hudmeta.js';
 import { runHeaderModel } from '../src/ui/models/RunHeaderModel.js';
 
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 const core = resolveGameProfile('core');
 const registriesFor = id => id.startsWith('core.') ? bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, core)), core) : createRegistries(contentBundle);
-test('configured choices stage review, return to selection, commit once, and preserve Cinders on Skip', async () => {
+// The fake DOM's textContent is a node's own text only.
+const textOf = node => (node.textContent || '') + (node.children || []).map(textOf).join(' ');
+globalThis.HTMLElement ??= class HTMLElement {}; // the confirmation's Back restores focus only to a real element
+const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+const modalConfirm = () => document.querySelector('.confirmation-confirm');
+const modalBack = () => document.querySelector('.confirmation-cancel');
+const picked = app => [...app.querySelectorAll('.reward-pick')].map(node => node.getAttribute('aria-checked') === 'true');
+
+// Owner 2026-11-18: cards are chosen on the strip, Continue opens a confirmation, and Confirm claims them.
+test('configured choices are confirmed in a modal, Back keeps the selection, commit once, and preserve Cinders on Skip', async () => {
   const dom = rewardDom();
   const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
@@ -20,17 +29,19 @@ test('configured choices stage review, return to selection, commit once, and pre
       const app = document.createElement('main'); document.body.append(app);
       const offer = { id: 'exit-retry', options: [{ kind: 'combatCards', id: 'frostNova' }], taken: [], claimed: null, takeCount: 1 };
       let grants = 0, exits = 0;
-      mountGameProfileOffers(app, { registries: registriesFor('frostNova'), run: { class: 'reaver' }, offer, title: 'Reward',
+      MountGameProfileOffers(app, { registries: registriesFor('frostNova'), run: { class: 'reaver' }, offer, title: 'Reward',
         onTake(index) { grants++; offer.taken.push(index); offer.claimed = index; },
         onContinue() { exits++; if (exits === 1) throw new Error('exit save refused'); },
       });
       app.querySelector('.reward-pick').click();
       const confirm = app.querySelector('#reward-card-confirm');
-      confirm.click(); confirm.click(); await Promise.resolve();
+      confirm.click(); modalConfirm().click(); await tick();
       assert.equal(grants, 1); assert.equal(exits, 1); assert.equal(confirm.disabled, false);
-      confirm.click(); await Promise.resolve();
+      confirm.click(); await tick();
+      assert.equal(document.querySelector('.confirmation-modal'), null, 'the retry goes straight to the exit, no second confirmation');
       assert.equal(grants, 1, 'exit retry must not grant twice'); assert.equal(exits, 2);
       app.remove();
+      await new Promise(resolve => setTimeout(resolve, 800));
     }
     for (const cardId of ['core.strike', 'frostNova']) {
       const registries = registriesFor(cardId);
@@ -38,27 +49,32 @@ test('configured choices stage review, return to selection, commit once, and pre
       const run = { class: 'reaver', cinders: 37, deck: [] };
       const offer = { id: cardId, options: [{ kind: 'combatCards', id: cardId }, { kind: 'combatCards', id: cardId.startsWith('core.') ? 'core.defend' : 'scholarsInsight' }], taken: [], claimed: null, takeCount: 1 };
       let writes = 0, exits = 0, refuse = true;
-      const mount = () => mountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards',
+      MountGameProfileOffers(app, { registries, run, offer, title: 'Victory rewards',
         onTake: index => { if (refuse) throw new Error('save refused'); writes++; run.deck.push(offer.options[index].id); offer.taken.push(index); offer.claimed = index; },
         onContinue: () => { exits++; },
       });
-      mount();
       const confirm = app.querySelector('#reward-card-confirm');
       const left = app.querySelector('#reward-continue');
-      assert.equal(left.textContent, 'Skip'); assert.ok(left.classList.contains('danger')); assert.ok(confirm.disabled);
-      app.querySelectorAll('.reward-pick')[0].click(); assert.equal(confirm.disabled, false);
-      confirm.click(); assert.equal(confirm.textContent, 'Continue'); assert.equal(left.textContent, 'Back');
+      assert.equal(left.textContent, 'Skip'); assert.ok(left.classList.contains('danger'));
+      assert.equal(confirm.disabled, false, 'Continue is always enabled'); assert.ok(!confirm.classList.contains('primary'), 'neutral until the pick is made');
+      app.querySelectorAll('.reward-pick')[0].click(); assert.ok(confirm.classList.contains('primary'), 'green once every pick is made');
+      confirm.click();
+      assert.ok(document.querySelector('.confirmation-modal'), 'Continue opens the confirmation');
+      assert.match(textOf(document.querySelector('.confirmation-modal')), new RegExp(registries.cards.get(cardId).name));
       assert.deepEqual(run.deck, []); assert.equal(writes, 0);
-      assert.deepEqual([...app.querySelector('.reward-row').children].map(node => node.hidden), [false, true]);
-      left.click(); assert.equal(confirm.textContent, 'Confirm'); assert.equal(left.textContent, 'Skip');
-      app.querySelectorAll('.reward-pick')[1].click(); confirm.click(); confirm.click();
-      await Promise.resolve();
-      assert.equal(app.querySelector('.reward-confirm-status').textContent, 'save refused'); assert.equal(exits, 0); assert.equal(confirm.disabled, false);
-      refuse = false; confirm.click(); confirm.click(); await Promise.resolve();
+      modalBack().click();
+      assert.equal(document.querySelector('.confirmation-modal'), null, 'Back closes the confirmation');
+      assert.deepEqual(picked(app), [true, false], 'and keeps the selection editable');
+      app.querySelectorAll('.reward-pick')[1].click(); assert.deepEqual(picked(app), [false, true], 'with one pick the choice moves');
+      confirm.click(); modalConfirm().click(); await tick();
+      assert.equal(app.querySelector('.reward-confirm-status').textContent, 'save refused'); assert.equal(exits, 0); assert.equal(app.querySelector('#reward-card-confirm').disabled, false, 'the door is redrawn live after a refusal');
+      refuse = false;
+      app.querySelectorAll('.reward-pick')[1].click();
+      app.querySelector('#reward-card-confirm').click(); modalConfirm().click(); await tick();
       assert.deepEqual(run.deck, [offer.options[1].id]); assert.equal(writes, 1); assert.equal(exits, 1);
       app.remove();
       const skipApp = document.createElement('main'); document.body.append(skipApp);
-      mountGameProfileOffers(skipApp, { registries, run, offer: { ...offer, id: `${cardId}:skip`, taken: [], claimed: null }, title: 'Reward', onTake() { throw new Error('Skip must never take'); }, onContinue() { exits++; } });
+      MountGameProfileOffers(skipApp, { registries, run, offer: { ...offer, id: `${cardId}:skip`, taken: [], claimed: null }, title: 'Reward', onTake() { throw new Error('Skip must never take'); }, onContinue() { exits++; } });
       // Skip with a choice still open and nothing taken asks once (owner, 2026-11-14): the modal's default answer goes back.
       skipApp.querySelector('#reward-continue').click(); assert.equal(exits, 1, 'Skip asks before leaving');
       assert.equal(document.querySelector('.confirmation-modal h2, .confirmation-modal [id=confirmation-modal-title]')?.textContent, 'Leave without taking a reward?');
@@ -106,18 +122,27 @@ test('configured save transaction restores claim and pending state, and returns 
   assert.deepEqual(run, claimed);
 });
 
-test('cloned configured offers support partial and final claims without replaying an old offer', async () => {
+test('cloned configured offers claim every chosen card, and name the picks left unused', async () => {
   const dom = rewardDom(); const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]])); Object.assign(globalThis, dom);
   try {
     const app = document.createElement('main'); document.body.append(app);
-    let offer = { id: 'two', options: [{ kind: 'combatCards', id: 'frostNova' }, { kind: 'combatCards', id: 'scholarsInsight' }], taken: [], claimed: null, takeCount: 2 };
+    let offer = { id: 'two', options: [{ kind: 'combatCards', id: 'frostNova' }, { kind: 'combatCards', id: 'scholarsInsight' }, { kind: 'combatCards', id: 'guardCounter' }], taken: [], claimed: null, takeCount: 2 };
     let grants = 0, exits = 0;
-    mountGameProfileOffers(app, { registries: registriesFor('frostNova'), run: { class: 'reaver' }, offer, title: 'Reward', onTake(index) {
+    MountGameProfileOffers(app, { registries: registriesFor('frostNova'), run: { class: 'reaver' }, offer, title: 'Reward', onTake(index) {
       offer = structuredClone(offer); offer.taken.push(index); if (offer.taken.length === 2) offer.claimed = index; grants++; return offer;
     }, onContinue() { exits++; } });
-    app.querySelectorAll('.reward-pick')[0].click(); app.querySelector('#reward-card-confirm').click(); app.querySelector('#reward-card-confirm').click(); await Promise.resolve();
-    assert.equal(grants, 1); assert.equal(exits, 0); assert.ok(app.querySelectorAll('.reward-pick')[0].disabled);
-    app.querySelectorAll('.reward-pick')[1].click(); app.querySelector('#reward-card-confirm').click(); app.querySelector('#reward-card-confirm').click(); await Promise.resolve();
+    const prompt = () => app.querySelector('.reward-pick-prompt').textContent;
+    const picks = app.querySelectorAll('.reward-pick'), confirm = app.querySelector('#reward-card-confirm');
+    assert.equal(prompt(), 'Select 2 card rewards');
+    picks[0].click(); assert.equal(prompt(), 'Select 1 card reward'); assert.ok(!confirm.classList.contains('primary'));
+    // One of two picks: the confirmation says one is unused; Back keeps the selection.
+    confirm.click(); assert.match(textOf(document.querySelector('.confirmation-modal')), /1 pick unused\./); modalBack().click();
+    picks[2].click(); assert.equal(prompt(), 'Select 0 card rewards'); assert.ok(confirm.classList.contains('primary'));
+    picks[1].click(); assert.deepEqual(picked(app), [true, false, true], 'a third card cannot be chosen past the two picks');
+    picks[0].click(); assert.equal(prompt(), 'Select 1 card reward', 'tapping a chosen card puts it back');
+    picks[0].click();
+    confirm.click(); modalConfirm().click(); await tick();
     assert.equal(grants, 2); assert.equal(exits, 1);
+    await new Promise(resolve => setTimeout(resolve, 800));
   } finally { for (const [key,value] of Object.entries(before)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } }
 });

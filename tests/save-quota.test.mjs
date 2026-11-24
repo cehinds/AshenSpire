@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState, RUN_SCHEMA_VERSION } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_VERSION, serializeRun } from '../src/model/state.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { runCombatEnd } from '../src/engine/runCombat.js';
 import { createBrowserSaveManager } from '../src/engine/browserSave.js';
@@ -241,7 +241,8 @@ test('size budget: a 60-fight Core run stays under 1 MB at rest and mid-fight, a
   assert.ok(Math.max(...sizes) < 100000, `a Core run at rest is at most ${Math.max(...sizes)} chars`);
   assert.ok(peak < 1000000, `a Core run mid-fight peaked at ${peak} chars`);
   assert.ok(sizes[59] - sizes[0] < 2000, `the run does not grow with the fights it has won (${sizes[0]} -> ${sizes[59]})`);
-  assert.ok(store.used() < 1000000, 'the whole origin (run + profile + backup) stays far from a 5 MB quota');
+  // 1.5 MB since the Codex roster (2026-11-18): 32 more enemies grew the profile snapshot the run, profile and backup each carry (1.10 MB measured).
+  assert.ok(store.used() < 1500000, 'the whole origin (run + profile + backup) stays far from a 5 MB quota');
 });
 
 // A Core run in the PRE-reference stored form: the profile inline (schema 25), as every older build wrote it.
@@ -313,11 +314,13 @@ test('if the shared copy cannot be written, a converted entry is rolled back byt
   const store = limitedStorage();
   const old2 = inlineSave(42);
   store.map.set(runKey(2), old2);
-  store.budget = store.used() + 800000;
+  const { run, rng } = coreRun(42);
+  const save = createSaveManager(store);
+  save.ensureProfile();
+  const inlineRun = { ...run, streamCounters: rng.getCounters(), savedAt: new Date(0).toISOString() };
+  store.budget = store.used() + runKey(1).length + serializeRun(inlineRun, { inline: true }).length;
   const realSet = store.setItem;
   store.setItem = (k, v) => { if (k.startsWith(PROFILE_COPY_PREFIX)) throw quotaError(); return realSet(k, v); };
-  const save = createSaveManager(store);
-  const { run, rng } = coreRun(42);
   save.saveRun(run, rng, 1);
   assert.equal(store.map.get(runKey(2)), old2, 'the other slot is back to its exact original bytes');
   assert.ok(JSON.parse(store.map.get(runKey(1))).gameProfile, 'slot 1 was stored inline, as before this change');

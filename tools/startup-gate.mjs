@@ -15,6 +15,8 @@ import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { padOrdinal, readOrdinal, release, sourceDigest } from './buildversion.mjs';
 import { serve } from './serve.mjs';
+import { EPOCH_STAMP_KEY } from '../src/engine/epochWipe.js';
+import { uiConfig } from '../src/config/generated/ui.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -254,7 +256,7 @@ if (args.includes('--selftest')) {
         // FOR THIS DOOR rather than in modalShell.js — a mutation there would
         // take Escape off all four modals at once, which is a wider defect than
         // the one A8 is asserting about.
-        // Settings opens through the shell now (openModal binds dismissal for
+        // Settings opens through the shell now (OpenModal binds dismissal for
         // every door, and Escape closes the TOPMOST aria-modal element), so the
         // plant parks a bare aria-modal element above this one door: Settings
         // is no longer topmost, and Escape leaves it up over the title. Still
@@ -362,7 +364,7 @@ async function page({
     }, { capture: true, once: true });
     ` : ''}
 
-    ${corruptProfile ? "localStorage.setItem('sote_meta_v1', '{torn'); localStorage.removeItem('sote_meta_backup_v1');" : ''}
+    ${corruptProfile ? `localStorage.setItem(${JSON.stringify(EPOCH_STAMP_KEY)}, ${JSON.stringify(String(uiConfig.presentation.saves.behavior.epoch))}); localStorage.setItem('sote_meta_v1', '{torn'); localStorage.removeItem('sote_meta_backup_v1');` : ''}
     const state = { connected: ${pad}, buttons: Array.from({length: 16}, () => ({pressed:false,value:0})) };
     ${Number.isInteger(heldButton) ? `state.buttons[${heldButton}]={pressed:true,value:1};` : ''}
     const gamepad = { id:'startup-gate-test-pad', index:0, connected:true, mapping:'standard',

@@ -1,0 +1,116 @@
+{
+  "components": {
+    "base": {
+      "panelInsetRem": 1.4,
+      "panelInsetPhoneRem": 1,
+      "headGapRem": 1.2,
+      "footGapRem": 1.2
+    },
+    "confirm": {
+      "extends": "base"
+    },
+    "choice": {
+      "extends": "base",
+      "gridGapPx": 12,
+      "gridGapPhonePx": 8,
+      "gridRowGapPx": 64,
+      "gridPadTopPx": 64,
+      "optionGapRem": 0.6,
+      "optionGapPhoneRem": 0.4,
+      "nameButtonBasisRem": 3.5,
+      "nameButtonPadBlockRem": 0.7,
+      "nameButtonPadInlineRem": 0.8,
+      "nameButtonPadBlockPhoneRem": 0.45,
+      "nameButtonPadInlinePhoneRem": 0.4,
+      "showNameButton": true
+    },
+    "reward": {
+      "extends": "choice",
+      "showNameButton": false,
+      "gridGapPx": 6,
+      "gridGapPhonePx": 4,
+      "gridRowGapPx": 24
+    },
+    "cardUpgrade": {
+      "extends": "choice"
+    },
+    "compare": {
+      "extends": "choice"
+    },
+    "statUpgrade": {
+      "extends": "choice"
+    },
+    "optionChoice": {
+      "extends": "choice",
+      "size": "md",
+      "footSize": "short",
+      "className": "option-choice",
+      "bodyClassName": "as-pane card-choice-body",
+      "selection": "single",
+      "idAttribute": "data-option",
+      "commitLabelKey": "common.choose",
+      "cancelLabelKey": "common.cancel",
+      "hasCancelButton": true
+    },
+    "smithOptions": {
+      "extends": "optionChoice",
+      "className": "option-choice smith-options",
+      "idAttribute": "data-smith-option",
+      "rowClassName": "smith-option"
+    },
+    "smithKeep": {
+      "extends": "optionChoice",
+      "className": "option-choice smith-options smith-keep",
+      "idAttribute": "data-smith-keep",
+      "rowClassName": "smith-option",
+      "selection": "multi",
+      "commitLabelKey": "blacksmith.category.confirm"
+    },
+    "rankUpCard": {
+      "extends": "optionChoice",
+      "className": "option-choice rank-up-pick",
+      "idAttribute": "data-rank-up-card",
+      "commitLabelKey": "rankUp.pick.confirm",
+      "emptyTextKey": "rankUp.pick.none",
+      "columns": 1
+    },
+    "cardChoice": {
+      "extends": "optionChoice",
+      "className": "option-choice card-choice",
+      "idAttribute": "data-choice"
+    },
+    "discardChoice": {
+      "extends": "optionChoice",
+      "className": "option-choice discard-choice",
+      "idAttribute": "data-discard-id",
+      "selection": "multi",
+      "atLimit": "swapOldest",
+      "hasCancelButton": false,
+      "closeLabelKey": "combat.discard.later"
+    },
+    "reactionChoice": {
+      "extends": "optionChoice",
+      "className": "option-choice reaction-choice",
+      "idAttribute": "data-reaction-option",
+      "commitLabelKey": "combat.reaction.play",
+      "cancelLabelKey": "common.skip"
+    },
+    "slotChoice": {
+      "extends": "optionChoice",
+      "className": "option-choice equip-slot-choice",
+      "idAttribute": "data-slot-option",
+      "rowClassName": "equip-slot-option",
+      "cancelLabelKey": "common.back"
+    },
+    "itemChoice": {
+      "extends": "optionChoice",
+      "className": "option-choice equip-item-choice",
+      "idAttribute": "data-item-option",
+      "rowClassName": "equip-item-option",
+      "commitLabelKey": "armoury.picker.act.equip",
+      "cancelLabelKey": "common.back",
+      "emptyTextKey": "armoury.picker.none",
+      "columns": 1
+    }
+  }
+}

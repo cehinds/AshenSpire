@@ -34,7 +34,27 @@ const BUY = Object.freeze({
   book: Object.freeze({ question: 'shop.review.buy.book', message: 'shop.review.buy.book.message' }),
   token: Object.freeze({ question: 'shop.review.buy.token', message: 'shop.review.buy.token.message' }),
   companion: Object.freeze({ question: 'shop.review.buy.companion', message: 'shop.review.buy.companion.message' }),
+  // Every purchase confirms (owner, 2026-11-19): a weapon or shield, and the trader's rank-up service.
+  armament: Object.freeze({ question: 'shop.review.buy.armament', message: 'shop.review.buy.armament.message' }),
+  rankUp: Object.freeze({ question: 'shop.review.buy.rankUp', message: 'shop.review.buy.rankUp.message' }),
+  // The copy-a-card service (owner 2026-11-20), at a trader or a Blacksmith.
+  cardCopy: Object.freeze({ question: 'shop.review.buy.cardCopy', message: 'shop.review.buy.cardCopy.message' }),
+  // The Blacksmith's copy row names its card already, so its review says what happens to that card.
+  cardCopyChosen: Object.freeze({ question: 'shop.review.buy.cardCopyChosen', message: 'shop.review.buy.cardCopyChosen.message' }),
 });
+const SMITH_RANK = Object.freeze({ card: 'smith.review.rank.card', item: 'smith.review.rank.item' });
+
+/** The trader's shelf kind (gameProfile stock and the Blacksmith's racks) → the purchase review's kind. */
+const SHELF_KIND = Object.freeze({
+  combatCards: 'card', weaponArts: 'card', relics: 'relic', potions: 'flask',
+  weapons: 'armament', armaments: 'armament', armor: 'armour', rankUps: 'rankUp', cardCopies: 'cardCopy',
+});
+
+/** ShopPurchaseKind(shelfKind) → the purchaseReview kind for a merchant or Blacksmith shelf. Throws on an unknown shelf. */
+export function ShopPurchaseKind(shelfKind) {
+  if (!Object.hasOwn(SHELF_KIND, shelfKind)) throw new Error(`ShopPurchaseKind: unknown shelf '${shelfKind}'`);
+  return SHELF_KIND[shelfKind];
+}
 const SELL = Object.freeze({ relic: 'shop.review.sell.relic', flask: 'shop.review.sell.flask', consumable: 'shop.review.sell.consumable' });
 
 function row(table, kind, what) {
@@ -77,6 +97,21 @@ export function purchaseReview({ kind, name, cost, cinders }) {
     target: String(name),
     message: t(ids.message, { cost: price, cinders: purse, left: purse - price }),
     confirmLabel: t('shop.buy.confirm'),
+    policyAction: 'action.purchase',
+  });
+}
+
+/**
+ * SmithRankReview({ kind: 'card'|'item', name, price, stones, cinders }) — the Blacksmith's rank-ups, paid in
+ * stones and cinders. `price` is the row's own price line, so the review and the row say the same cost.
+ */
+export function SmithRankReview({ kind, name, price, stones, cinders }) {
+  const held = amount(stones, 'SmithRankReview stones');
+  return Object.freeze({
+    question: t(row(SMITH_RANK, kind, 'SmithRankReview')),
+    target: String(name),
+    message: t('smith.review.pay.message', { price: String(price), stones: held, plural: held === 1 ? '' : 's', cinders: amount(cinders, 'SmithRankReview cinders') }),
+    confirmLabel: t('smith.review.rank.confirm'),
     policyAction: 'action.purchase',
   });
 }

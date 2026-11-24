@@ -21,7 +21,7 @@ const sampleRequests = [];
 globalThis.fetch = async (url) => { sampleRequests.push(String(url)); return { ok: false, status: 404 }; };
 
 const { initAudio, sfxVariance } = await import('../src/ui/audio.js');
-const { SFX_RECIPES } = await import('../src/content/sfx.js');
+const { SFX_MANIFEST, SFX_RECIPES } = await import('../src/content/sfx.js');
 
 const isVoice = (n) => n.kind === 'osc' || n.kind === 'buffersource';
 const voiceCount = () => graph.nodes.filter(isVoice).length;
@@ -183,4 +183,39 @@ test('an action-specific hold with only a family recipe synthesizes without requ
   const tick = SFX_RECIPES.holdTick.find((layer) => layer.kind === 'tone');
   assert.equal(oscs()[0].frequency.value, tick.freq, 'the holdTick family recipe answers shopSell');
   assert.equal(sampleRequests.length, before, 'no holdTick_shopSell.ogg request is made without an exact sample or manifest entry');
+});
+
+test('authored synth cues do not probe unshipped filename-convention samples', () => {
+  for (const id of ['cardDraw', 'cardPlay', 'holdTick', 'hit_heavy']) {
+    assert.ok(Object.hasOwn(SFX_RECIPES, id), `${id} has a shipped synth recipe`);
+    assert.ok(!Object.hasOwn(SFX_MANIFEST, id), `${id} has no authored sample`);
+    const engine = fresh();
+    const before = sampleRequests.length;
+    ctx.currentTime = 70;
+    engine.sfx(id);
+    assert.ok(voiceCount() > 0, `${id} still sounds immediately`);
+    assert.equal(sampleRequests.length, before, `${id} does not cause a known-missing sample request`);
+  }
+});
+
+test('an explicit sample warms once while its synth fallback remains immediate', () => {
+  const id = 'cardDraw';
+  const previous = Object.getOwnPropertyDescriptor(SFX_MANIFEST, id);
+  SFX_MANIFEST[id] = 'assets/sfx/verified-draw.ogg';
+  try {
+    const engine = fresh();
+    const before = sampleRequests.length;
+    ctx.currentTime = 80;
+    engine.sfx(id);
+    assert.ok(voiceCount() > 0, 'the cue does not wait for sample fetch or decode');
+    assert.deepEqual(sampleRequests.slice(before), ['assets/sfx/verified-draw.ogg']);
+    endAll();
+    ctx.currentTime += 0.1;
+    engine.sfx(id);
+    assert.ok(voiceCount() > 0, 'failed or warming samples retain the synth fallback');
+    assert.equal(sampleRequests.length, before + 1, 'repeated cues share the same sample cache entry');
+  } finally {
+    if (previous) Object.defineProperty(SFX_MANIFEST, id, previous);
+    else delete SFX_MANIFEST[id];
+  }
 });

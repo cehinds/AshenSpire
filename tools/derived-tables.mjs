@@ -42,7 +42,7 @@ export function buildDerivedTables() {
       kind: source.tags.includes('character.player') ? 'player' : 'enemy', tier: row.tier || null, level,
       attributePoints: Object.values(own).reduce((a, b) => a + b, 0), attributes,
       hp: { terms: hpTerms, total: pools.hp, formula: Object.values(hpTerms).join('+') + ` = ${pools.hp}` },
-      pools: { hp: pools.hp, sp: pools.sp, mp: pools.mp, ar: pools.ar, dr: pools.dr, hand: pools.hand },
+      pools: { hp: pools.hp, sp: pools.sp, mp: pools.mp, hand: pools.hand },
       gear: (source.defaultGear || []).map(e => ({ ...e, name: gear.get(e.id)?.name })),
       relics: (source.defaultRelics || []).map(e => ({ ...e, name: relics.get(e.id)?.name })),
       deck: { size: deck.length, cards: Object.entries(deck.reduce((m, id) => ((m[id] = (m[id] || 0) + 1), m), {})).map(([id, copies]) => ({ id, name: cards.get(id)?.name, copies })) },

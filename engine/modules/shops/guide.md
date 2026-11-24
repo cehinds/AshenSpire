@@ -61,8 +61,10 @@ For runtime changes, use the focused tests in `tests/game-profile-run.test.mjs` 
 
 ## Per-category shelves
 
-`itemsPerCategory` takes precedence over the older total `options` count. The core
-pack requests three distinct eligible items in each category; a depleted or
+`itemsPerCategory` takes precedence over the older total `options` count. It is a
+whole number, or a `[min, max]` range (owner, 2026-11-20): each shelf then rolls its
+own count once per visit on a hash of the run seed, the node and the shelf. The core
+pack requests two to four distinct eligible items in each category; a depleted or
 one-item catalog offers only what exists. The stock is saved once per visit and
 uses the `shop` RNG stream, independently of combat reward weights. Purchase
 claims and their cinder debit remain one atomic transaction. Profiles without

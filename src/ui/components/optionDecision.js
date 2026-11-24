@@ -7,7 +7,7 @@ import { t } from '../strings.js';
 // Navigation and disclosure controls do not use this component.
 
 import { armHold } from './holdconfirm.js';
-import { openConfirmationModal } from './confirmationModal.js';
+import { OpenConfirmationModal } from './confirmationModal.js';
 import { ACTIONS, beatFor } from '../../model/secondbeat.js';
 
 export function armOptionDecision(control, {
@@ -50,7 +50,7 @@ export function armOptionDecision(control, {
   }
 
   const commit = () => { if (allowed()) onCommit(); };
-  const review = () => openConfirmationModal({
+  const review = () => OpenConfirmationModal({
     title: allowed() ? title : blockedTitle,
     message: allowed() ? message : blockedMessage,
     consequence,

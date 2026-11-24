@@ -333,7 +333,15 @@ function auditRelicPassives(registries) {
           result = authored && observed.baseline === expected.baseline && observed.withRelic === expected.withRelic ? 'covered' : 'missing';
         } else { expected = authored; observed = null; }
       } else if (typeof authored === 'number') {
-        if (key === 'runeGainMult') {
+        if (key === 'cardCopyOnPickup') {
+          // Owner 2026-11-20: pickup queues N copies; each opens one copy door listing the owned cards.
+          const run = newRun([]);
+          api.GrantRelicCardCopies(registries, run, relic.id);
+          const queued = run.pendingCardCopies || 0, offerId = api.StartCardCopyOffer(registries, run);
+          expected = { queued: authored, doorOptions: '>0' };
+          observed = { queued, doorOptions: run.gameProfileRewardOffers?.[offerId]?.options?.length || 0, left: run.pendingCardCopies || 0 };
+          result = queued === authored && observed.doorOptions > 0 && observed.left === authored - 1 ? 'covered' : 'missing';
+        } else if (key === 'runeGainMult') {
           const base = api.rollRuneReward(registries, api.createRng(7320), 'elite', []);
           const actual = api.rollRuneReward(registries, api.createRng(7320), 'elite', [relic.id]);
           expected = Math.floor(base * authored); observed = actual; result = observed === expected ? 'covered' : 'missing';
@@ -420,7 +428,9 @@ function auditRelicPassives(registries) {
 export function auditStatuses(registries) {
   const rows = [];
   for (const def of registries.statuses.all()) {
-    const combat = api.createCombat({ registries, rng: api.createRng(7302), enemyIds: ['wanderingSoldier'], player: playerFor('reaver') });
+    // An owner-turn-start status needs the real Core rules that own that clock; the raw-authored fixture has no Core clock.
+    const combat = api.createCombat({ registries, rng: api.createRng(7302), enemyIds: ['wanderingSoldier'], player: playerFor('reaver'),
+      ...(def.decay === 'ownerTurnStart' ? { gameProfile: api.resolveGameProfile('core') } : {}) });
     const player = combat.player;
     const before = combat.eventLog.length;
     api.applyStatus(combat, player, def.id, 2);
@@ -429,10 +439,21 @@ export function auditStatuses(registries) {
     const stacksBeforeDecay = api.getStacks(player, def.id);
     const durationBeforeDecay = instance?.duration;
     const decay = def.decay;
+    let ownerTurnEndRetained = null, decayReceipt = null;
+    if (decay === 'ownerTurnStart') {
+      api.decayAtTurnEnd(combat, player);
+      ownerTurnEndRetained = api.getStacks(player, def.id) === stacksBeforeDecay;
+      const receiptStart = combat.eventLog.length;
+      combat.turn += 1;
+      api.decayAtTurnStart(combat, player);
+      decayReceipt = combat.eventLog.slice(receiptStart).find(event => event.type === 'statusRemoved' && event.status === def.id) || null;
+    }
     if (decay === 'perTurnEnd') api.decayAtTurnEnd(combat, player);
     else if (decay && typeof decay === 'object') api.decayAtTurnEnd(combat, player);
     const afterOneDecay = api.getStatusInstance(player, def.id);
-    const decayVerified = decay === 'none' || decay === 'onConsume'
+    const decayVerified = decay === 'ownerTurnStart'
+      ? ownerTurnEndRetained && api.getStacks(player, def.id) === 0 && decayReceipt?.amount === stacksBeforeDecay
+      : decay === 'none' || decay === 'onConsume'
       ? api.getStacks(player, def.id) === stacksBeforeDecay
       : decay === 'perTurnEnd'
         ? api.getStacks(player, def.id) === stacksBeforeDecay - 1
@@ -537,6 +558,7 @@ export function auditStatuses(registries) {
     rows.push({ id: def.id, decay: decay === undefined ? 'missing' : decay, hook: def.hooks?.map(x => x.on) || [],
       hasModifier: Object.keys(def.modifiers || {}).length > 0, hasProc: !!def.proc, hasMeter: !!def.meter, hasResist: !!def.resists,
       hasTaggedVulnerability: !!def.taggedVulnerability, applied, appliedReceipt, decayVerified, hookResult: hook,
+      ...(decay === 'ownerTurnStart' ? { stacksBeforeDecay, stacksAfterDecay: api.getStacks(player, def.id), ownerTurnEndRetained, decayReceipt } : {}),
       hookEffectRows, modifierOutcomes, modifierOutcomesCovered: modifierOutcomes.every(row => row.outcome), proc, resistance,
       result: applied && appliedReceipt && decayVerified && hook !== 'no-receipt' ? 'covered' : 'missing' });
     // Keep this local reference to ensure zero-stack/absent rows don't pass just

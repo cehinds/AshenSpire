@@ -9,6 +9,8 @@
 import { gameContent } from './gameProfile.js';
 import { itemRefIdentity } from './itemUpgrades.js';
 import { ITEM_WEAPON_CATEGORIES, ITEM_PROPERTIES } from '../content/itemProperties.js';
+import { ChannelAttribute } from './damageChannels.js';
+import { relics as RELICS } from '../content/relics.js';
 
 const own = (map, itemRef) => (map && typeof map === 'object' && Array.isArray(map[itemRef]) ? map[itemRef] : []);
 
@@ -67,9 +69,16 @@ export function ItemFamily(run, itemRef) {
 /** Every ref the run keeps picks for that is worn or held now is the caller's filter; this lists the stored ones. */
 export const PickedItemRefs = (run) => Object.keys(run?.itemUpgradePicks || {}).filter((ref) => ItemPicks(run, ref).length);
 
-/** The property ids an item holds: those its picks chose, then those a category change rolled onto it. */
+/** The property ids a relic is authored with (its `properties` row field); [] for any other ref. */
+export function AuthoredPropertyIds(itemRef) {
+  const identity = itemRefIdentity(itemRef);
+  if (!identity || identity.itemKind !== 'relic') return [];
+  return RELICS.find((row) => row.id === identity.itemId)?.properties || [];
+}
+
+/** The property ids an item holds: a relic's authored ones, those its picks chose, then those a category change rolled onto it. */
 export function ItemPropertyIds(run, itemRef) {
-  const ids = ItemPicks(run, itemRef).filter((pick) => pick.k === 'prop').map((pick) => pick.prop);
+  const ids = [...AuthoredPropertyIds(itemRef), ...ItemPicks(run, itemRef).filter((pick) => pick.k === 'prop').map((pick) => pick.prop)];
   for (const id of own(run?.itemProps, itemRef)) if (typeof id === 'string') ids.push(id);
   return ids.filter((id, index) => ids.indexOf(id) === index && ITEM_PROPERTIES.some((row) => row.id === id));
 }
@@ -77,7 +86,8 @@ export function ItemPropertyIds(run, itemRef) {
 /** The stat points an item's picks and properties add ({ ar, dr, pr, poise, ward, mp, strength... }), whoever wears it. */
 export function ItemStatBonus(run, itemRef) {
   const out = {};
-  const add = (stat, n) => { if (stat && Number.isFinite(n) && n) out[stat] = (out[stat] || 0) + n; };
+  // A pick or property from before the 2026-11-18 ruling may still name `ar`, `dr` or `pr`: it is the attribute now (ChannelAttribute).
+  const add = (stat, n) => { if (stat && Number.isFinite(n) && n) { const key = ChannelAttribute(stat); out[key] = (out[key] || 0) + n; } };
   for (const pick of ItemPicks(run, itemRef)) if (pick.k === 'stat') add(pick.stat, pick.n);
   for (const id of ItemPropertyIds(run, itemRef)) {
     const row = ITEM_PROPERTIES.find((entry) => entry.id === id);

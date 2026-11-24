@@ -19,7 +19,7 @@ const rows = dir => JSON.parse(readFileSync(join(dir, 'characters.json'), 'utf8'
 
 test('committed sheets agree with characters.json and every ref resolves', () => {
   assert.deepEqual(check(), []);
-  assert.equal(readdirSync(join(DEFAULT_PACK, 'enemies')).filter(f => !f.startsWith('_')).length, 33);
+  assert.equal(readdirSync(join(DEFAULT_PACK, 'enemies')).filter(f => !f.startsWith('_')).length, 65);
 });
 
 test('extract then write is byte-identical', () => {
@@ -27,7 +27,7 @@ test('extract then write is byte-identical', () => {
   try {
     const before = readFileSync(join(dir, 'characters.json'), 'utf8');
     rmSync(join(dir, 'enemies'), { recursive: true });
-    assert.equal(extract(dir).length, 33);
+    assert.equal(extract(dir).length, 65);
     assert.deepEqual(write(dir).problems, []);
     assert.equal(readFileSync(join(dir, 'characters.json'), 'utf8'), before);
     assert.deepEqual(check(dir), []);

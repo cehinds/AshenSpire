@@ -53,5 +53,5 @@
   "whetstonePouch": { "bleed": 2 },
   "hollowSquire": { "block": 5 },
   "emberHound": { "damage": 3 },
-  "$note": { "{relic}.{variable}": "{relicName} — {effect}." }
+  "$note": { "{relic}.{variable}": "{relicName}: {effect}." }
 }

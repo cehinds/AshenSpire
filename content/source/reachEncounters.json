@@ -205,5 +205,214 @@
       "min": 5,
       "max": 5
     }
+  },
+  {
+    "id": "a3_headsmanBlock",
+    "enemies": [
+      "carrionHeadsman",
+      "emberStarvedPilgrim"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "reach",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
+  },
+  {
+    "id": "a3_kilnShell",
+    "enemies": [
+      "kilnshellTortoise",
+      "ashRevenant"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "reach",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
+  },
+  {
+    "id": "a3_slagImps",
+    "enemies": [
+      "slagtongImp",
+      "cinderMantis"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "reach",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
+  },
+  {
+    "id": "a3_sootRoost",
+    "enemies": [
+      "sootwingBat",
+      "valkyrieShade"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "reach",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
+  },
+  {
+    "id": "a3_impRoost",
+    "enemies": [
+      "slagtongImp",
+      "sootwingBat"
+    ],
+    "weight": 15,
+    "pool": "normal",
+    "seat": "reach",
+    "floorBand": {
+      "min": 1,
+      "max": 4
+    },
+    "targetBand": {
+      "min": 3,
+      "max": 4
+    }
+  },
+  {
+    "id": "a3_eliteOathCamel",
+    "enemies": [
+      "pallidOathCamel"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "reach",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 4,
+      "max": 5
+    }
+  },
+  {
+    "id": "a3_eliteBrassIbex",
+    "enemies": [
+      "brassThroatIbex"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "reach",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 4,
+      "max": 5
+    }
+  },
+  {
+    "id": "a3_eliteKilnback",
+    "enemies": [
+      "kilnbackTerrapin"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "reach",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 4,
+      "max": 5
+    }
+  },
+  {
+    "id": "a3_eliteSlagHeron",
+    "enemies": [
+      "slagwingHeron"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "reach",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 4,
+      "max": 5
+    }
+  },
+  {
+    "id": "a3_eliteAshSilk",
+    "enemies": [
+      "ashSilkWeaver"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "reach",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 4,
+      "max": 5
+    }
+  },
+  {
+    "id": "a3_eliteFerrumVotary",
+    "enemies": [
+      "ferrumVotary"
+    ],
+    "weight": 1,
+    "pool": "elite",
+    "seat": "reach",
+    "floorBand": {
+      "min": 5,
+      "max": 5
+    },
+    "targetBand": {
+      "min": 4,
+      "max": 5
+    }
+  },
+  {
+    "id": "a3_bossCrucibleNewt",
+    "enemies": [
+      "crucibleNewt"
+    ],
+    "weight": 1,
+    "pool": "boss",
+    "seat": "reach",
+    "floorBand": {
+      "min": 6,
+      "max": 6
+    },
+    "targetBand": {
+      "min": 5,
+      "max": 5
+    }
   }
 ]

@@ -43,7 +43,7 @@
     "id": "greatswordSunderingHew",
     "name": "Sundering Hew",
     "class": "colorless",
-    "rarity": "uncommon",
+    "rarity": "rare",
     "cost": 2,
     "manaCost": 1,
     "costRule": "fixed",
@@ -60,33 +60,21 @@
       {
         "op": "poiseDamage",
         "target": "enemy",
-        "amount": 5
-      },
-      {
-        "op": "applyStatus",
-        "target": "enemy",
-        "status": "vulnerable",
-        "stacks": 1
+        "amount": 2
       }
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 48
+          "amount": 60
         },
         {
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 7
-        },
-        {
-          "op": "applyStatus",
-          "target": "enemy",
-          "status": "vulnerable",
-          "stacks": 1
         }
       ]
     }
@@ -267,28 +255,42 @@
     "id": "twinFang",
     "name": "Twin Fang",
     "class": "colorless",
-    "rarity": "common",
+    "rarity": "rare",
     "cost": 1,
     "type": "attack",
     "flavor": "Two knives, worn crosswise.\n\nOne for the hound, one for its handler. The weald's blight-hounds were the Wardens' before the Burning, and run yet with Bastion kennelmen who turned with the pack.\n\nA handler may be reasoned with, briefly. Never twice.",
-    "keywords": [],
+    "keywords": [
+      "ethereal"
+    ],
     "icon": "sword",
     "effects": [
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 4,
+        "amount": 20,
         "hits": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 2
       }
     ],
-    "textTemplate": "Deal {damage} damage {hits} times.",
+    "textTemplate": "Deal {damage} damage {hits} times. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 6,
+          "amount": 56,
           "hits": 2
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 3
         }
       ]
     }
@@ -539,6 +541,12 @@
     "icon": "attack",
     "effects": [
       {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 3,
+        "nonlethal": true
+      },
+      {
         "op": "damage",
         "target": "enemy",
         "amount": 18
@@ -550,8 +558,9 @@
         "stacks": 2
       }
     ],
-    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable. Lose {loseHp} HP.",
     "upgrade": {
+      "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
       "effects": [
         {
           "op": "damage",
@@ -848,7 +857,7 @@
   },
   {
     "id": "stoneskin",
-    "name": "Stoneskin",
+    "name": "Diamond Skin",
     "class": "colorless",
     "rarity": "uncommon",
     "cost": 1,
@@ -871,7 +880,7 @@
         "stacks": 1
       }
     ],
-    "textTemplate": "Gain {block} Block and {stoneskin} Stoneskin: your Block is not removed at the start of your next turn.",
+    "textTemplate": "Gain {block} Block and {stoneskin} Diamond Skin: your Block is not removed at the start of your next turn.",
     "upgrade": {
       "effects": [
         {

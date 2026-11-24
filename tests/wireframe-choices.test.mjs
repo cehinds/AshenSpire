@@ -21,13 +21,13 @@ import {
   wireframeChoice, wireframeChoices, wireframeChoiceSpec,
   resolveModalRung, resolveFooterSize, resolveCategoryNavMode, resolveWorkspaceSpec, resolveSceneConfig,
 } from '../src/ui/models/WireframeChoiceModel.js';
-import { MODAL_SIZES, BUTTON_ROW_SIZES, restampModalWireframes } from '../src/ui/components/modalShell.js';
+import { MODAL_SIZES, BUTTON_ROW_SIZES, RestampModalWireframes } from '../src/ui/components/modalShell.js';
 import { CATEGORY_NAV_MODES } from '../src/ui/models/CategoryNavModel.js';
 import { workspaceFrameVars } from '../src/ui/models/WorkspaceModel.js';
 import { sceneLayers } from '../src/ui/models/SceneLayerModel.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 import { applyWireframeChoices, activeWireframeChoice, activeWireframeChoices } from '../src/ui/wireframeChoices.js';
-import { categoryHandler } from '../src/ui/screens/settings.js';
+import { categoryHandler, AdvancedTopicRowsHtml, SettingsGroupModalHtml } from '../src/ui/screens/settings.js';
 import { advancedSection, advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { workspaceFrame, restampWorkspaceFrames } from '../src/ui/components/w1Workspace.js';
 import { smithWorkspaceVars } from '../src/ui/models/SmithWorkspaceModel.js';
@@ -128,7 +128,7 @@ test('the Wireframes tab: one drop-down row per choice, filed under its family',
   assert.deepEqual(rows.map((row) => row.key), [...WIREFRAME_CHOICE_KEYS], 'derived from the catalogue, in its order');
   for (const row of rows) {
     const spec = wireframeChoiceSpec(row.key);
-    assert.equal(advancedSection(row), 'Wireframes');
+    assert.equal(advancedSection(row), 'Developer');
     assert.equal(row.type, 'choice');
     assert.equal(row.dropdown, true, 'the owner asked for drop downs, including under four options');
     assert.equal(row.def, spec.def);
@@ -136,12 +136,17 @@ test('the Wireframes tab: one drop-down row per choice, filed under its family',
     assert.deepEqual(Object.values(row.choiceLabels), spec.options.map((entry) => entry.label));
     assert.equal(row.label, spec.label);
   }
-  // The Layout tab (id Wireframes) opens on the three families, in catalogue
-  // order; card sizes and the window follow them (2026-09-23).
-  const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Wireframes').slice(0, WIREFRAME_CHOICE_GROUPS.length);
-  assert.deepEqual(groups.map((group) => group.id), WIREFRAME_CHOICE_GROUPS.map((group) => group.id));
-  assert.deepEqual(groups.map((group) => group.label), WIREFRAME_CHOICE_GROUPS.map((group) => group.label));
-  assert.deepEqual(groups.map((group) => group.rows.map((row) => row.key)),
+  // Developer › Layout draws one Wireframes button for them (owner, 2026-11-20); its modal has
+  // one section per family, in catalogue order, each holding that family's rows.
+  const layout = advancedSubgroups(categoryHandler('Advanced').rows, 'Developer').find((group) => group.id === 'Layout');
+  for (const row of rows) assert.ok(layout.rows.includes(row), `${row.key} sits in Developer › Layout`);
+  const html = AdvancedTopicRowsHtml({}, layout.rows, 'Developer', 'Layout');
+  assert.equal((html.match(/data-btn="groupModal\.wireframes"/g) || []).length, 1, 'one button stands for the six rows');
+  for (const row of rows) assert.ok(!html.includes(`data-row-key="${row.key}"`), `${row.key} is drawn only inside the modal`);
+  const body = SettingsGroupModalHtml({}, 'wireframes');
+  const sections = [...body.matchAll(/data-group-section="([^"]+)">([\s\S]*?)<\/section>/g)];
+  assert.deepEqual(sections.map((m) => m[1]), WIREFRAME_CHOICE_GROUPS.map((group) => group.id));
+  assert.deepEqual(sections.map((m) => [...m[2].matchAll(/data-row-key="([^"]+)"/g)].map((k) => k[1])),
     WIREFRAME_CHOICE_GROUPS.map((group) => group.choices.map((choice) => choice.key)));
 });
 
@@ -174,27 +179,27 @@ test('doors already open take the new answer, from what they asked for, however 
   const doc = stubDocument([panel, foot]);
 
   applyWireframeChoices({ wireframeModalWidth: 'wide', wireframeModalFooter: 'fill' }, doc.documentElement);
-  assert.equal(restampModalWireframes(doc), 2);
+  assert.equal(RestampModalWireframes(doc), 2);
   assert.deepEqual([panel.dataset.size, foot.dataset.size], ['xl', 'fill']);
 
   // Twice in a row is the same answer, not a second step: the AUTHORED rung is
   // what is re-resolved, so the door cannot walk off the end of the ladder.
-  restampModalWireframes(doc);
+  RestampModalWireframes(doc);
   assert.equal(panel.dataset.size, 'xl');
 
   applyWireframeChoices({ wireframeModalWidth: 'narrow' }, doc.documentElement);
-  restampModalWireframes(doc);
+  RestampModalWireframes(doc);
   assert.deepEqual([panel.dataset.size, foot.dataset.size], ['md', 'short'], 'and back down from lg, not from xl');
 
   applyWireframeChoices({}, doc.documentElement);
-  restampModalWireframes(doc);
+  RestampModalWireframes(doc);
   assert.deepEqual([panel.dataset.size, foot.dataset.size], ['lg', 'short'], 'as designed restores exactly what the door asked for');
 });
 
 // ---- the findings a review found, kept from coming back ---------------------
 
 test('no door writes its own rung: every modal goes through the one stamp', () => {
-  // Review, 2026-09-20: the width choice moved only the doors openModal built,
+  // Review, 2026-09-20: the width choice moved only the doors OpenModal built,
   // so the Armoury, the Smith, the confirmation and every page door disagreed
   // with the rest of the game. The stamp is now the only writer, and this is
   // the falsifier for that — a new door that types `data-size` on its panel
@@ -217,7 +222,7 @@ test('no door writes its own rung: every modal goes through the one stamp', () =
   // list on 2026-11-02: they stand in the deck editor's full-bleed desk, which is not a `.modal`.)
   for (const rel of ['src/ui/components/armouryComponents.js',
     'src/ui/components/confirmationModal.js', 'src/ui/kit/index.js']) {
-    assert.match(read(rel), /stampModalSize\(/, `${rel} stamps its rung`);
+    assert.match(read(rel), /\b[sS]tampModalSize\(/, `${rel} stamps its rung`);
   }
 });
 

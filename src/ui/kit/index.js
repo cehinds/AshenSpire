@@ -21,10 +21,10 @@ import { resolveControlRole, assertControlException } from '../models/ControlApp
 import { engravedIcon, engravedGlyphId } from '../components/engravedIcon.js';
 import { resolveButtonSize, planButtonGroup, buttonSizeTokens } from '../models/ButtonSizeModel.js';
 import {
-  buttonRow as shellButtonRow, BUTTON_ROW_SIZES as SHELL_BUTTON_ROW_SIZES, modalHead as shellModalHead,
-  modalFooter as shellModalFooter, modalCloseButton as shellModalCloseButton, modalCloseButtonHtml as shellModalCloseButtonHtml,
-  openModal as shellOpenModal, MODAL_SIZES as SHELL_MODAL_SIZES, bindModalDismiss as shellBindModalDismiss,
-  stampModalSize as shellStampModalSize,
+  ButtonRow as shellButtonRow, BUTTON_ROW_SIZES as SHELL_BUTTON_ROW_SIZES, ModalHead as shellModalHead,
+  ModalFooter as shellModalFooter, ModalCloseButton as shellModalCloseButton, ModalCloseButtonHtml as shellModalCloseButtonHtml,
+  OpenModal as shellOpenModal, MODAL_SIZES as SHELL_MODAL_SIZES, BindModalDismiss as shellBindModalDismiss,
+  StampModalSize as shellStampModalSize,
 } from '../components/modalShell.js';
 
 // Re-exported one name per line: tools/bundle.mjs reads `export const NAME`
@@ -58,6 +58,7 @@ export function MODAL_SIZES() { return SHELL_MODAL_SIZES; }
  * `text`, `html` (trusted, caller-escaped), `dataset` {k:v}, `aria` {k:v},
  * anything else is setAttribute. `children` is a node, a string (text), an
  * array of either, or null.
+ * @param {Node | string | Array<Node | string | null> | null} [children]
  */
 export function el(tag, attrs = {}, children = null) {
   const node = document.createElement(tag);

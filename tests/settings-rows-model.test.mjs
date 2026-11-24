@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { settingsRows, settingsRowHtml, settingsRow } from '../src/ui/screens/settings.js';
+import { settingsRows, settingsRowHtml, settingsRow, SettingsTopicIds, GENERAL_GROUPS, CUSTOM_GENERAL_GROUPS } from '../src/ui/screens/settings.js';
 import { esc } from '../src/ui/kit/index.js';
 
 const SNAPSHOT = JSON.parse(readFileSync(new URL('./fixtures/settings-rows-html.sha256.json', import.meta.url), 'utf8'));
@@ -42,4 +42,11 @@ test('a label is escaped wherever a row prints it', () => {
     assert.ok(markup.includes('&lt;b&gt;&amp;&quot;'), `${key}: the label is printed escaped`);
     assert.ok(!markup.includes(nasty), `${key}: the raw label never reaches the markup`);
   }
+});
+
+test('every listed General and Accessibility row names a known topic (the grouping is data, not a key pattern)', () => {
+  const listed = new Set([...GENERAL_GROUPS.filter((group) => !Object.hasOwn(CUSTOM_GENERAL_GROUPS, group)), 'Accessibility']);
+  const known = new Set(SettingsTopicIds());
+  const missing = settingsRows().filter((row) => listed.has(row.cat) && !row.retired && !row.modal && !known.has(row.topic)).map((row) => `${row.cat}/${row.key}`);
+  assert.deepEqual(missing, [], 'rows with no topic or an unknown one');
 });

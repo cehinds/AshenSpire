@@ -35,6 +35,13 @@
       "endArtHeightPx": 52.2,
       "bottomInsetPx": 26
     },
+    "handToolRowReservePx": 66,
+    "responsiveHand": {
+      "mobile": { "angle": 4, "arc": 0.045, "dock": 0.96, "widthFraction": 0.3, "minPx": 116, "maxPx": 119 },
+      "tablet": { "spread": 0.8, "angle": 4, "arc": 0.045, "dock": 0.96, "widthFraction": 0.2, "minPx": 150, "maxPx": 160 },
+      "desktop": { "spread": 0.86, "angle": 4, "arc": 0.045, "dock": 0.96 },
+      "widescreen": { "spread": 0.86, "angle": 4, "arc": 0.045, "dock": 0.96 }
+    },
     "compactCombat": {
       "maxWidthPx": 600,
       "hudMinimumPx": 48,

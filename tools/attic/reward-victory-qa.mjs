@@ -19,7 +19,7 @@ try {
     await page.goto(`http://127.0.0.1:${serving.port}/index.html?shot=reward&shotReward=configured`);
     await page.locator('.reward-choice-option').first().waitFor({ timeout: 90000 });
     await page.evaluate(async () => {
-      const [{ mountGameProfileOffers }, { contentBundle }, { createRegistries }, profileModel, { createRunState }] = await Promise.all([
+      const [{ MountGameProfileOffers }, { contentBundle }, { createRegistries }, profileModel, { createRunState }] = await Promise.all([
         import('/src/ui/components/gameProfileOffers.js'), import('/src/content/index.js'), import('/src/model/registries.js'),
         import('/src/model/gameProfile.js'), import('/src/model/state.js'),
       ]);
@@ -27,7 +27,7 @@ try {
       const registries = profileModel.bindGameProfileRegistries(createRegistries(profileModel.applyGameProfileToContent(contentBundle, profile)), profile);
       const run = createRunState({ registries, classId: 'reaver', seed: 3 });
       window.rewardFixture = { registries, run, continued: 0 };
-      mountGameProfileOffers(document.querySelector('#app'), { registries, run,
+      MountGameProfileOffers(document.querySelector('#app'), { registries, run,
         offer: { id: 'mixed', options: [{ kind: 'combatCards', id: 'core.evade' }, { kind: 'combatCards', id: 'core.sweep' }, { kind: 'potions', id: 'crimsonFlask' }], taken: [], claimed: null, takeCount: 1 },
         title: 'Victory rewards', onTake() {}, onContinue() {},
       });
@@ -47,12 +47,12 @@ try {
     }
     await page.screenshot({ path: `${output}/${width}-offers.png`, fullPage: true });
     await page.evaluate(async () => {
-      const { mountRewards } = await import('/src/ui/screens/reward.js');
+      const { MountRewards } = await import('/src/ui/screens/reward.js');
       const { allocateAttributePoint } = await import('/src/model/levelup.js');
       const { registries, run } = window.rewardFixture;
       run.skills = { 'class:reaver': { level: 0, xp: 3 }, 'item:blade': { level: 0, xp: 2 } };
       run.level = { xp: 40, level: 2, unspentPoints: 1 };
-      mountRewards(document.querySelector('#app'), { registries, run, receiptOnly: true,
+      MountRewards(document.querySelector('#app'), { registries, run, receiptOnly: true,
         rewards: { title: 'Victory', xpGains: { level: 40, tracks: { 'class:reaver': 3, 'item:blade': 2 } }, xpBefore: { character: { xp: 0, level: 2, unspentPoints: 1 }, tracks: { 'class:reaver': { level: 0, xp: 0 }, 'item:blade': { level: 0, xp: 0 } } } },
         onAllocateStat: id => allocateAttributePoint(registries, run, id), onPersist() {},
         onDone() { window.rewardFixture.continued++; },
@@ -65,7 +65,9 @@ try {
     // Owner, 2026-10-27: the Core receipt shows the Character bar alone and offers the earned attribute point.
     assert.equal(await page.locator('.reward-progress-row').count(), 1);
     assert.equal(await page.locator('[role="progressbar"][data-track="character"]').count(), 1);
-    assert.equal(await page.locator('.reward-stat-allocation .reward-stat-add').count() > 0, true);
+    // Owner, 2026-11-17: the point opens the level-up modal; nothing is drawn inline.
+    assert.equal(await page.locator('#reward-stat-points').count(), 1);
+    assert.equal(await page.locator('.reward-stat-allocation').count(), 0);
     await page.screenshot({ path: `${output}/${width}-victory.png`, fullPage: true });
     await continueButton.click();
     await page.locator('.confirmation-confirm').waitFor();

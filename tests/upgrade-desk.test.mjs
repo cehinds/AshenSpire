@@ -15,7 +15,7 @@ import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
 import { equipmentCardModel } from '../src/model/equipmentCard.js';
 import { mountSmithUpgradeModal, itemAtTier } from '../src/ui/components/smithUpgradeModal.js';
 import { upgradeFacesNode, upgradeConfirmNodes } from '../src/ui/components/upgradeConfirm.js';
-import { openConfirmationModal, closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
+import { OpenConfirmationModal, CloseConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
@@ -25,7 +25,7 @@ import '../src/engine/combat.js';
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const css = readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
-const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; return beginGameProfileRest(run, '1:' + run.mapNodeId); };
+const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; return beginGameProfileRest(run, '1:' + run.mapNodeId); };
 const fresh = () => { const run = createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'unique-run' }); run.smithingStones = 3; run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil'; visit(run); return run; };
 const mount = (dom, run, itemRef, handlers = {}) => {
   const host = dom.document.createElement('main'); dom.document.body.append(host);
@@ -50,7 +50,7 @@ test('the Smith picker wears the deck editor\'s frame: veil, panel, panes, list 
   assert.ok(panel.querySelector('.deck-editor-footer .deck-editor-foot .deck-editor-cancel.smith-back'), 'Back where Cancel stands');
   assert.equal(panel.querySelector('.smith-confirm'), null, 'the list holds no Upgrade button: a tapped row opens its own modal');
   assert.equal(panel.querySelector('.deck-editor-inspect-back'), null, 'no standalone Back chip in the picker');
-  closeConfirmationModal();
+  CloseConfirmationModal();
   door.close();
 }));
 
@@ -101,7 +101,7 @@ test('a tap opens that item\'s upgrade modal at once; Back, the close box and Es
   assert.ok(host.querySelector('.upgrade-desk'), 'the list is still up');
   row.click();
   assert.ok(dom.document.querySelector('.confirmation-modal'), 'the same row opens it again');
-  closeConfirmationModal();
+  CloseConfirmationModal();
   door.close();
 }));
 
@@ -138,7 +138,7 @@ test('the confirm path: Upgrade in the item\'s modal commits the chosen item onc
   confirm.click();
   assert.deepEqual(commits, ['armament/greatsword']);
   assert.equal(host.querySelector('.upgrade-desk'), null, 'the picker closes; the host redraws its list');
-  closeConfirmationModal();
+  CloseConfirmationModal();
   } finally { globalThis.setTimeout = priorTimeout; }
 }));
 
@@ -147,7 +147,7 @@ test('the modal body is the shared one: cost, the card faces before and after, t
   const body = dom.document.querySelector('.confirmation-modal .confirmation-details');
   const order = [...body.querySelectorAll('.confirmation-cost, .upgrade-confirm-faces, .confirmation-change-list')].map(node => node.className.split(' ').find(name => ['confirmation-cost', 'upgrade-confirm-faces', 'confirmation-change-list'].includes(name)));
   assert.deepEqual(order, ['confirmation-cost', 'upgrade-confirm-faces', 'confirmation-change-list']);
-  closeConfirmationModal();
+  CloseConfirmationModal();
   door.close();
 }));
 
@@ -185,7 +185,7 @@ test('a host\'s cinder charge shows in the modal for the item selected NOW, afte
   dom.document.querySelector('.confirmation-modal .confirmation-cancel').click();
   byRef(refs[1]).click();
   assert.ok(cinders().classList.contains('unaffordable'), 'the second item\'s 40 exceeds the 25 held: red');
-  closeConfirmationModal();
+  CloseConfirmationModal();
   door.close();
 }));
 
@@ -200,7 +200,7 @@ test('the confirmation modal\'s focus trap runs through a live detailsNode\'s ta
     const radio = (on) => { const b = dom.document.createElement('button'); b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(on)); b.setAttribute('tabindex', on ? '0' : '-1'); b.className = 'opt'; return b; };
     const a = radio(true), b = radio(false);
     group.append(a, b);
-    openConfirmationModal({ title: 'Upgrade?', message: 'm', detailsNode: group, confirmLabel: 'Go', returnFocusElement: null });
+    OpenConfirmationModal({ title: 'Upgrade?', message: 'm', detailsNode: group, confirmLabel: 'Go', returnFocusElement: null });
     timers.splice(0).forEach(fn => fn());
     assert.equal(dom.document.activeElement, a, 'initial focus is the picked option');
     const cancel = dom.document.querySelector('.confirmation-cancel');
@@ -213,7 +213,7 @@ test('the confirmation modal\'s focus trap runs through a live detailsNode\'s ta
     // A re-render moves the tab stop; the trap reads it live.
     a.setAttribute('tabindex', '-1'); b.setAttribute('tabindex', '0'); a.setAttribute('aria-checked', 'false'); b.setAttribute('aria-checked', 'true');
     confirm.focus(); press(false); assert.equal(dom.document.activeElement, b, 'the re-picked option is the live first stop');
-    closeConfirmationModal();
+    CloseConfirmationModal();
   } finally { globalThis.setTimeout = priorTimeout; globalThis.HTMLElement = priorHTMLElement; }
 }));
 
@@ -228,7 +228,7 @@ test('the modal\'s before and after faces are live nodes: a click on a face open
     let reached = false;
     try { faces[0].querySelector('.upgrade-confirm-face-holder').firstElementChild.click(); reached = Boolean(dom.document.querySelector('.card-inspection-modal')); } catch (error) { reached = /getSelection|inspect/i.test(String(error.stack)) && /cardInspection\.js/.test(String(error.stack)); }
     assert.ok(reached, 'the face opened its inspector (its handlers survived the modal)');
-    closeConfirmationModal();
+    CloseConfirmationModal();
     door.close();
   } finally { globalThis.setTimeout = priorTimeout; }
 }));
@@ -265,7 +265,7 @@ test('an armament upgrade\'s faces are the weapon\'s own equipment card at its c
     assert.match(face.querySelector('.equipment-poker-card').getAttribute('aria-label'), /^Greatsword\b/, 'titled with the weapon name');
   }
   assert.equal(nextLevel, currentLevel + 1);
-  closeConfirmationModal();
+  CloseConfirmationModal();
   door.close();
 }));
 

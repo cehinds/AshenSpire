@@ -1,0 +1,113 @@
+{
+  "request": "Owner 2026-11-18: a won boss always (and a won elite sometimes) opens its own armament reward modal after its other spoils: a choice of 2-4 (boss) or 1-3 (elite) weapons or armour the player does not own, taking one or skipping.",
+  "success": "The armament door opens as its own screen titled Armament reward, shows 2-4 armament choices that sit inside the door without overlapping, picking one and confirming offers to equip it, and the page logs no console errors, at 1280x800 and 390x844.",
+  "failure": "The door is missing, shows fewer than 2 or more than 4 boss choices, choices overlap or leave the door, or the page logs a console error.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "boss-armament-door",
+      "url": "?shot=reward&shotArmament=boss&shotSeed=1",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        {
+          "kind": "text",
+          "label": "The door is titled Armament reward",
+          "selector": ".reward-door",
+          "includes": "Armament reward"
+        },
+        {
+          "kind": "count",
+          "label": "A boss offers 2 to 4 armament choices",
+          "selector": ".reward-choice-face",
+          "min": 2,
+          "max": 4
+        },
+        {
+          "kind": "within",
+          "label": "The first choice sits inside the door",
+          "selector": ".reward-choice-option:nth-child(1) .reward-choice-face",
+          "container": ".reward-door"
+        },
+        {
+          "kind": "within",
+          "label": "The second choice sits inside the door",
+          "selector": ".reward-choice-option:nth-child(2) .reward-choice-face",
+          "container": ".reward-door"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Choice 1 and choice 2 do not overlap",
+          "a": ".reward-choice-option:nth-child(1) .reward-choice-face",
+          "b": ".reward-choice-option:nth-child(2) .reward-choice-face"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "A card inspection modal is open before any tap",
+          "selector": ".card-inspection-modal"
+        }
+      ]
+    },
+    {
+      "name": "boss-armament-picked",
+      "url": "?shot=reward&shotArmament=boss&shotSeed=1",
+      "ready": ".reward-choice-grid",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".reward-choice-option:nth-child(1) .reward-choice-face"
+        },
+        {
+          "click": ".reward-confirm"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "The equip-now button is offered for the chosen armament",
+          "selector": "#reward-equip-now"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0,
+          "ignore": [
+            "Failed to load resource",
+            "navigator\\.vibrate",
+            "status of 404"
+          ]
+        }
+      ],
+      "failure": []
+    }
+  ]
+}

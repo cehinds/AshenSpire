@@ -25,12 +25,6 @@
       "intelligence": 0.125,
       "perLevel": 0.2
     },
-    "ar": {
-      "strength": 1
-    },
-    "dr": {
-      "dexterity": 1
-    },
     "hand": {
       "intelligence": 1
     }

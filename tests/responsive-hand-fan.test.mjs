@@ -24,9 +24,9 @@ for (const [formFactor, width, height] of [['mobile',390,250],['tablet',820,300]
     assert.ok(plans[1].step > plans[2].step);
   });
 }
-// Wave 2 (sizes): the phone profile is 154 px (cap 158) and the tablet 150 to 160, so rules type reads at 13 px; a short hand band still bounds the face.
+// Owner 2026-11-16: the phone profile is 30% of the hand width, 116 to 119 px (25% under Wave 2's 154 to 158); the tablet stays 150 to 160, so its rules type reads at 13 px; a short hand band still bounds the face.
 test('phone and tablet use independent physical card profiles', () => {
-  for (const [formFactor,width,height,expected] of [['mobile',390,250,140],['tablet',820,300,160],['tablet',1024,210,113.333333]]) {
+  for (const [formFactor,width,height,expected] of [['mobile',390,250,117],['tablet',820,300,160],['tablet',1024,210,113.333333]]) {
     const input={formFactor,width,height,count:5};
     const plan=responsiveHandLayout(input,handLayout(input));
     assert.ok(Math.abs(plan.cardWidth-expected)<.1, `${formFactor} ${width}: ${plan.cardWidth}`);

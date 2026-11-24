@@ -15,7 +15,7 @@
 // a grid of card faces, display-shuffled where the pile is hidden.
 
 import { renderCard, cardDetailHtml } from './card.js';
-import { openModal } from './modalShell.js';
+import { OpenModal } from './modalShell.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { button, cardGrid, categoryNav, el, flavour, railed, railItem, statusText } from '../kit/index.js';
 import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
@@ -24,8 +24,9 @@ import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 // past its baseline when the spent-pile pair landed, which is exactly the
 // regression it exists to stop.
 import { t } from '../strings.js';
+import { MarkSelected } from '../selection.js';
 
-export function openPileModal(registries, title, cards, { shuffleForDisplay = false, rules = null } = {}) {
+export function openPileModal(registries, title, cards, { shuffleForDisplay = false, rules = null, deckView = false } = {}) {
   let list = [...cards];
   if (shuffleForDisplay) {
     for (let i = list.length - 1; i > 0; i--) {
@@ -42,10 +43,10 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
   // of the surface changed every time a card moved.
   const status = statusText(`${list.length} ${list.length === 1 ? 'card' : 'cards'}`, { class: 'modal-head-status' });
 
-  const shell = openModal({
+  const shell = OpenModal({
     size: 'xl',
-    className: 'pile-modal',
-    eyebrow: t('piles.eyebrow'),
+    className: deckView ? 'pile-modal deck-view-modal' : 'pile-modal',
+    eyebrow: deckView ? '' : t('piles.eyebrow'),
     title,
     headExtras: status,
     bodyClassName: 'pile-body',
@@ -90,9 +91,7 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
     items.forEach((item, i) => {
       const tab = view.tabs[i];
       item.textContent = tab.label;
-      item.classList.toggle('on', tab.selected);
-      item.setAttribute('aria-selected', String(tab.selected));
-      if (tab.selected) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
+      MarkSelected(item, tab.selected, { className: 'on', ariaAttribute: 'aria-selected', ariaCurrent: 'true' });
     });
     pane.setAttribute('aria-labelledby', 'spent-tab-' + active);
     const faces = view.cards.map((inst) => {
@@ -108,7 +107,7 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
   const choose = (id) => { if (!SPENT_PILES.includes(id)) return; active = id; selectedId = null; paint(); };
   const nav = categoryNav({ items, ariaLabel: t('piles.spent.nav'), choose });
   const done = button({ label: t('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
-  const shell = openModal({ title: t('piles.spent.title'), size: 'xl', className: 'pile-modal spent-pile-modal',
+  const shell = OpenModal({ title: t('piles.spent.title'), size: 'xl', className: 'pile-modal spent-pile-modal',
     showMenuButton: false, opener, bodyClassName: 'pile-body',
     body: (host) => host.append(railed(nav, pane)),
     primary: done, footSize: 'short',

@@ -274,30 +274,6 @@ button {
   cursor: pointer;
   transition: background 120ms, transform 120ms;
 }
-button:hover { background: #2e2517; }
-button:disabled { border-color: var(--line); color: var(--muted); cursor: default; }
-button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: var(--t-2); padding: 0.6rem 1.4rem; }
-
-/* THE THREE EMPHASES, AND THE ONE THAT WAS MISSING.
-   Measured with the corner census above: the tree had `button` (gold outline),
-   `.subtle` (quiet outline) and `.danger` (red outline) — three ways to say
-   "not the main thing" and NO way to say "this one". So a modal footer said it
-   by accident instead: Load Game leaves BACK and CONTINUE the same size and
-   weight and asks the border colour to carry the difference, and the in-run
-   Settings footer paints Save and Quit in DANGER RED for an act that saves.
-   `.primary` is the missing word. Red is now spent only on loss.
-
-   ONE PER SURFACE is the rule this enables and does not enforce: nothing here
-   can count the buttons in a footer. What it can do is make the emphasis a
-   NAME a reviewer can see in the markup rather than a set of overrides they
-   have to compare pixel by pixel. */
-button.primary {
-  background: color-mix(in srgb, var(--gold) 22%, var(--panel));
-  border-color: var(--gold);
-  color: var(--parchment);
-}
-button.primary:hover { background: color-mix(in srgb, var(--gold) 32%, var(--panel)); }
-button.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--muted); }
 
 /* THE FOCUS RING, ONCE, IN THE HOUSE COLOUR.
    There was no app-wide rule, so anything without its own `:focus-visible`
@@ -340,7 +316,7 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 }
 /* Lite: fade only; a transform animation on a whole screen promotes it to a layer. */
 @keyframes screenInLite { from { opacity: 0; } to { opacity: 1; } }
-:root[data-performance='lite'] #app > * { animation-name: screenInLite; }
+:root[data-effects='off'] #app > * { animation-name: screenInLite; }
 
 /* Accessibility: honor reduced-motion for ALL animation (GDD §6).
    TRANSITIONS ARE OFF, NOT SHORT. The usual snippet sets

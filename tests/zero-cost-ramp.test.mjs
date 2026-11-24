@@ -41,7 +41,8 @@ function play(cardId, { upgraded = false, playsEver = 0, plays = 2 } = {}) {
 }
 
 test('every zero-cost Core card is fixed-price, uncommon or rare, and neither a cantrip nor a Basic', () => {
-  const zero = cards.filter(card => card.staminaCost === 0 && card.manaCost === 0 && card.cost === 0 && card.rarity !== 'starter');
+  // core.retreat (owner 2026-11-19) is the weapon-granted, special-rarity Retreat card: it prints 0 SP and rises by 1 SP per use per fight (`costGrowth`), so it is not a reward-pool zero-cost card.
+  const zero = cards.filter(card => card.staminaCost === 0 && card.manaCost === 0 && card.cost === 0 && card.rarity !== 'starter' && card.id !== 'core.retreat');
   assert.deepEqual(zero.map(card => card.id).sort(), [...NEW].sort());
   for (const card of cards.filter(row => row.ramp || row.upgrade?.ramp || row.cost === 0 && row.rarity !== 'starter')) assert.equal(card.costRule, 'fixed', card.id);
   for (const card of zero) {

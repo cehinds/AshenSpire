@@ -41,6 +41,8 @@ function startSlot(profile, slot)
     {
         combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
         const strike = combat.piles.hand.find(card => card.cardId === 'core.strike');
+        // The knight reacts to a hit of 8 or more (minIncoming); Core's x0.7 player side scale (owner, 2026-11-18) leaves a bare Strike below it.
+        combat.player.ratings = { ...combat.player.ratings, ar: (combat.player.ratings?.ar || 0) + 8 };
         dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: combat.enemies[0].id });
         assert.ok(combat.pendingReaction, 'save at a real paid reaction prompt');
     }

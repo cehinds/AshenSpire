@@ -1,7 +1,8 @@
 // src/model/loadout/equipChange.js — swapping and equipping, and the equipment-changed event.
 // A part of src/model/loadout.js (split from one file; behaviour unchanged).
 
-import { gameContent } from '../gameProfile.js';
+import { gameContent, isCoreProfile } from '../gameProfile.js';
+import { CoreDeckMinimum } from '../deckMinimumRules.js';
 import { slotHand, fitsSlot } from './hands.js';
 import { equipmentRequirementReceipt } from './requirements.js';
 import { ownership } from './ownership.js';
@@ -75,7 +76,9 @@ export function trimExtraSets(registries, loadout) {
  * with (plan phase 3b, proposal §5). balance.deck is the one home of the
  * numbers; character level (phase 6) is read as 0 until it exists.
  */
-export function deckMinimum(registries, run) {
+export function deckMinimum(registries, run, settings = {}) {
+  // Core (owner, 2026-11-17): one minimum, the deck editor's (the player's setting), which levels and relics lower.
+  if (isCoreProfile(run)) return CoreDeckMinimum(run, settings);
   const cfg = (((registries || {}).balance || {}).deck) || {};
   // The character level is the ledger's (plan phase 6, `run.level.level`;
   // a fresh run is level 1); `characterLevel` is the field the floor read
@@ -100,9 +103,9 @@ export function deckMinimum(registries, run) {
  * there; nothing in this screen did) may leave, because a door that traps a
  * player over a state it did not create is a defect, not a rule.
  */
-export function loadoutLeaveRefusal(registries, run, { enteredWith } = {}) {
+export function loadoutLeaveRefusal(registries, run, { enteredWith, settings = {} } = {}) {
   const held = Array.isArray(run && run.deck) ? run.deck.length : 0;
-  const floor = deckMinimum(registries, run);
+  const floor = deckMinimum(registries, run, settings);
   if (held >= floor) return '';
   if (Number.isInteger(enteredWith) && enteredWith < floor) return '';
   const short = floor - held;

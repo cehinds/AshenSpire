@@ -9,7 +9,7 @@
 // For a representative set of the forward controls the game can render
 // refusing (not every one: the atlas, the Smith, mount service and the reward
 // menu's level hold are not mounted here) — character
-// creation's Next, the event's Continue, the reward chooser's Confirm, the
+// creation's Next, the reward chooser's Confirm, the
 // dialogue's Continue, the title's Continue, the slot door's Continue, the
 // hand-discard Confirm, the custom run's and character creation's Begin (bad
 // seed), the deck editor's Done — it mounts the production screen module on a
@@ -87,10 +87,7 @@ const SCENARIOS = [
     const seed = app.querySelector('#seed-input');
     seed.value = 'ASH!'; seed.dispatchEvent(new Event('input', { bubbles: true }));
     return '#cz-start';`],
-  ['event-continue', `
-    const { mountEvent } = await import('/src/ui/screens/event.js');
-    mountEvent(app, { registries, run, meta: { settings: {} }, rng: createRng(3), eventId: 'abandonedCart', onDone() {} });
-    return '#event-continue';`],
+  // The event's Continue is not here: it is absent until a response is taken (owner, 2026-11-17), so it never refuses.
   ['dialogue-continue', `
     const { mountDialogue } = await import('/src/ui/screens/dialogue.js');
     const { recordEventChoice } = await import('/src/model/quests.js');

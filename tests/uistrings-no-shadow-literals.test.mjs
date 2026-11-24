@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle', 'modal-return', 'wording'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'blur-shadows', 'card-art-builder-lifecycle', 'modal-return', 'wording', 'smash-stance-rule', 'settings-regroup'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -48,6 +48,7 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/screens/combat.js', 'Select', 'an aria-label that starts with the verb (`Select ${name}`), not the reward.picks.prompt rows ("Select {count} card rewards")'],
   ['src/ui/components/creationCards.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/components/creationCards.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/components/footerArt.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
@@ -61,7 +62,6 @@ const ALLOWED = [
   ['src/ui/models/ConfirmationReviewModel.js', 'Confirm', 'a list of banned generic words a review head must not use; not shown copy'],
   ['src/ui/models/ProgressionInspectionModel.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/models/ProgressionInspectionModel.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
-  ['src/ui/models/SettingsRowsModel.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/screens/combat.js', 'Confirm', 'a sentence that merely starts with the word ("Confirm <thing>"), not the common.confirm row'],
   ['src/ui/screens/customize.js', 'Mana', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
   ['src/ui/screens/customize.js', 'Stamina', 'a resource noun in a stat table or cost label; no canonical row owns the word, and no row text is repainted here'],
@@ -74,7 +74,6 @@ const ALLOWED = [
   ['src/ui/components/smithUpgradeModal.js', 'None', 'the Smith requirement row when an item has no stat requirement; not the builder optional art-cue choice'],
   ['src/ui/components/combatantInspector.js', 'None', 'absence of a combatant current action; not the builder optional art-cue choice'],
   ['src/ui/screens/customize.js', 'None', 'absence of a starting relic or slot selection; not the builder optional art-cue choice'],
-  ['src/ui/models/SettingsRowsModel.js', 'Utility', 'restoration resource kind beside HP and Mana; not the builder action-type choice'],
   ['src/ui/screens/rest.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
   // The status decay row starts with The {value}; these bounded matches share
   // only its article, not its lifecycle sentence or meaning.
@@ -88,8 +87,6 @@ const ALLOWED = [
   ['src/ui/screens/settings.js', 'Export', 'persisted advancedGroup and section id for diagnostics; the displayed heading reads settings.group.Export'],
   ['src/ui/models/SettingsRowsModel.js', 'Export', 'persisted advancedGroup and section id for diagnostics; the displayed heading reads settings.group.Export'],
   ['src/ui/highResArt.js', 'Auto', 'ART_AUTO is a persisted resolution choice sentinel; renderer labels are separate from the viewport preset face'],
-  ['src/ui/models/SettingsCapabilitiesModel.js', 'Deck', `legacy advanced-group capability key; ${ID}`],
-  ['src/ui/models/SettingsCapabilitiesModel.js', 'Progression', `legacy advanced-group capability key; ${ID}`],
   ['src/ui/models/SettingsRowsModel.js', 'Auto', 'persisted uiScale/textSize option ids and defaults; both displayed choices explicitly read settings.viewPreset.auto'],
   ['src/ui/screens/settings.js', 'Game rules', 'category key and selected-category comparison; CATEGORY_LABELS renders gameProfile.settings.title'],
 
@@ -110,9 +107,6 @@ const ALLOWED = [
   ['src/ui/screens/combat.js', 'Upcast', 'ordinary hand-card upcast control, separate from the reaction option tier sentence'],
   ['src/ui/screens/settings.js', 'enabled', 'stored prologue property key; not reaction switch copy'],
   ['src/ui/components/friendlyTargets.js', 'Target', 'friendly-target accessibility prefix; not the numbered enemy target label row'],
-  ['src/ui/screens/settings.js', 'Progression', `advanced-group id; ${ID}`],
-  ['src/ui/models/SettingsRowsModel.js', 'Progression', `advanced-group id; ${ID}`],
-  ['src/ui/models/AdvancedSettingsGroups.js', 'Progression', `advanced-group id; ${ID}`],
   ['src/ui/components/combatantInspector.js', 'Skills', 'combatant active abilities section, separate from the player progression tab'],
   ['src/ui/components/overlay.js', 'Class', 'combat HUD identity field, separate from the progression tab'],
   ['src/ui/screens/customize.js', 'Character', 'character creation fold, separate from the progression tab'],
@@ -123,9 +117,14 @@ const ALLOWED = [
   ['src/ui/models/SettingsRowsModel.js', 'Audio', `category id (cat: 'Audio', GENERAL_GROUPS) and General › Audio's own subgroup; ${ID}`],
   ['src/ui/screens/settings.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
   ['src/ui/models/SettingsRowsModel.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
-  ['src/ui/screens/settings.js', 'Rewards', 'settings advancedGroup id, not displayed copy (the face reads t(\'settings.group.*\'))'],
-  ['src/ui/models/SettingsRowsModel.js', 'Rewards', 'settings advancedGroup id, not displayed copy (the face reads t(\'settings.group.*\'))'],
-  ['src/ui/models/SettingsCapabilitiesModel.js', 'Rewards', 'settings advancedGroup id in HIDDEN_LEGACY_SETTING_GROUPS, not displayed copy'],
+  ['src/ui/screens/settings.js', 'Range', `advanced-group id and RELEASE_ADVANCED_GROUP_IDS; the heading reads settings.group.Range; ${ID}`],
+  ['src/ui/models/RangeSettingsModel.js', 'Range', `advancedGroup id; the heading reads settings.group.Range; ${ID}`],
+  ['src/ui/screens/settings.js', 'Map', `advanced-group id and RELEASE_ADVANCED_GROUP_IDS; the heading reads settings.group.Map; ${ID}`],
+  ['src/ui/models/SettingsRowsModel.js', 'Map', `advancedGroup id; the heading reads settings.group.Map; ${ID}`],
+  ['src/ui/models/AdvancedSettingsGroups.js', 'Map', `advanced-section id compared for topic routing; ${ID}`],
+  ['src/ui/models/AdvancedSettingsGroups.js', 'Developer', `advanced-section id compared for topic routing; ${ID}`],
+  ['src/ui/screens/settings.js', 'Developer', `advanced-group id; the heading reads settings.group.Developer; ${ID}`],
+  ['src/ui/models/SettingsRowsModel.js', 'Developer', `advancedGroup id; the heading reads settings.group.Developer; ${ID}`],
   ['src/ui/screens/settings.js', 'Interface', `advancedGroup id; and General › Display's own "Interface" subgroup, a different heading from Advanced › Interface`],
   ['src/ui/models/SettingsRowsModel.js', 'Interface', `advancedGroup id; and General › Display's own "Interface" subgroup, a different heading from Advanced › Interface`],
   ['src/ui/screens/settings.js', 'Changelog', `advanced-group id and a stored category value; ${ID}`],
@@ -153,6 +152,9 @@ const ALLOWED = [
   ['src/ui/components/formationMovement.js', 'Move to', 'formation cell movement confirmation and action cost, not the Armoury action that moves an item to an equipment slot'],
   ['src/ui/screens/equipment.js', 'Poise', '"Poise <n>" is an item\'s poise threshold, not the Stats preview line'],
   ['src/ui/input.js', 'Deck', 'control-bar short for Open Armoury (Deck); no migrated row names this action (the Armoury tab is "Cards")'],
+  ['src/ui/components/menuComponents.js', 'Off', 'a menu switch pill\'s own On/Off state, not the Blur and shadows Off choice'],
+  ['src/ui/models/HudQuickSettingsModel.js', 'Off', 'the quick-settings tile\'s own On/Off state, not the Blur and shadows Off choice'],
+  ['src/ui/screens/settings.js', 'Off', 'the scene toggle button\'s own On/Off state, not the Blur and shadows Off choice'],
   ['src/ui/models/SmithSelectionModel.js', 'Discard', 'a card upgrade\'s discard value ("Discard +1"), not the combat Discard pile'],
   ['src/ui/screens/combat.js', 'Poise', 'the stat meter and resistance sentence name the Poise stat; statsPreview.overview.poise labels one preview line'],
   ['src/ui/screens/customize.js', 'Poise', 'character creation\'s Poise stat card, not the Stats preview line'],
@@ -301,6 +303,21 @@ test('shared controls and hidden intent copy remain protected after promotion', 
   assert.ok(texts.get('Choose')?.includes('common.chooseNamed.short'));
 });
 
+
+test('Smash matchup copy and its semantic allowance survive an empty branch delta', () => {
+  const ids = frozenMigrationIds('smash-stance-rule');
+  assert.deepEqual(ids, ['card.smash.matchupClause']);
+  const permanent = permanentMigratedIds();
+  assert.ok(permanent.has(ids[0]));
+  assert.ok(uiStrings.some(row => row.id === ids[0]));
+  assert.ok(migratedTexts(permanent).get('Against')?.includes('card.smash.matchupClause.full'));
+  const file = 'src/ui/components/damageReceipt.js';
+  const hits = sweep(permanent);
+  assert.ok(hits.some(hit => hit.file === file && hit.text === 'Against'
+    && hit.rows.includes('card.smash.matchupClause.full')));
+  assert.ok(ALLOWED.some(([allowedFile, text, reason]) => allowedFile === file && text === 'Against'
+    && reason.includes('not the Core Smash stance-matchup sentence')));
+});
 
 test('all Core-default migration rows and semantic allowances survive an empty branch delta', () => {
   const frozen = frozenMigrationIds('core-profile');

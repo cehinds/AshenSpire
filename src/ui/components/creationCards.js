@@ -19,6 +19,7 @@ import { uiIconText } from '../../content/uiIcons.js';
 import { engravedIcon } from './engravedIcon.js';
 import { mountDisclosure } from './disclosure.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { MarkSelected } from '../selection.js';
 import {
   el, eyebrow, titleM, hairline, artWell, optionCard, statStrip, chip, segmented, toggle,
   row, labelStack, pill,
@@ -32,8 +33,7 @@ function visualNode(visual) {
 
 /** A pressable choice: aria-pressed says which one is chosen; `.chosen` rides along for the pad cursor. */
 function pressable(node, selected, onChoose) {
-  node.setAttribute('aria-pressed', selected ? 'true' : 'false');
-  node.classList.toggle('chosen', !!selected);
+  MarkSelected(node, selected, { className: 'chosen' });
   if (onChoose) node.addEventListener('click', onChoose);
   return node;
 }
@@ -62,7 +62,7 @@ function renderPrimaryStatCard(input, peers = null) {
   const face = row({
     tag: 'span', className: 'face-lite',
     labelNode: labelStack({ label: input.reveal?.title ? `${input.reveal.title} (${input.face.label})` : input.face.label,
-      hint: input.face.mainSummary || input.face.summary || '' }),
+      hint: input.face.mainSummary ?? input.face.summary ?? '' }),
     status: input.face.value === '' || input.face.value == null ? '' : String(input.face.value),
   });
   face.querySelector('.ls-hint')?.classList.add('disc-summary');
@@ -114,12 +114,13 @@ export function primaryStatCard(input) {
 export function resourceStrip(rows, poise, { compact = false } = {}) {
   const entries = new Map(rows.map((entry) => [entry.id, entry]));
   entries.set('poise', { id: 'poise', value: poise.value, formula: poise.note || '' });
-  if (poise.ratings) for (const id of ['ward', 'ar', 'dr', 'pr']) {
+  if (poise.ratings) for (const id of ['ward']) {
     entries.set(id, { ...entries.get(id), id, value: poise.ratings[id],
-      formula: `${id.toUpperCase()} ${poise.ratings[id]} · Includes attributes and equipment.` });
+      formula: `Ward ${poise.ratings[id]} · Includes attributes and equipment.` });
   }
-  const labels = { hp: 'HP', stamina: 'Stamina', mana: 'Mana', ar: 'AR', pr: 'PR', dr: 'DR', poise: 'Poise', ward: 'Ward', handSize: 'Hand Size', draw: 'Draw', openingHand: 'Opening Hand' };
-  const groups = [['hp', 'stamina', 'mana'], ['ar', 'pr'], ['dr', 'poise', 'ward'], ['handSize', 'draw'], ['openingHand']];
+  const labels = { hp: 'HP', stamina: 'Stamina', mana: 'Mana', poise: 'Poise', ward: 'Ward', handSize: 'Hand Size', draw: 'Draw', openingHand: 'Opening Hand' };
+  // AR, DR and PR are not stats (owner, 2026-11-18): STR, DEX and INT already stand on the attribute cards.
+  const groups = [['hp', 'stamina', 'mana'], ['poise', 'ward'], ['handSize', 'draw'], ['openingHand']];
   const known = new Set(groups.flat());
   if (compact) {
     groups.pop();
@@ -128,7 +129,7 @@ export function resourceStrip(rows, poise, { compact = false } = {}) {
     if (capacity) entries.set('handSize', { ...capacity,
       formula: [capacity.formula, entries.get('openingHand')?.formula].filter(Boolean).join(' · ') });
   }
-  const extra = [...entries.keys()].filter((id) => !known.has(id) && !['energy', 'attackRating', 'guardRating'].includes(id));
+  const extra = [...entries.keys()].filter((id) => !known.has(id) && !['energy', 'attackRating', 'guardRating', 'ar', 'dr', 'pr'].includes(id));
   if (extra.length) groups.push(extra);
   const lines = groups.map((ids) => {
     const chips = ids.filter((id) => entries.has(id)).map((id) => {

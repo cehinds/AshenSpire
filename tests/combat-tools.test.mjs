@@ -247,6 +247,19 @@ test('Full log reads as a text link in the log header, keeping its 44px tap targ
   assert.match(css, /\.combat-log-head > \.combat-log-full:focus-visible \{[^}]*outline:2px solid/);
 });
 
+test('Grid checkbox defaults off until the document records an enabled preference', () => {
+  for (const formationGrid of [undefined, 'false', 'true']) {
+    withToolsDom(dom => {
+      dom.document.documentElement = { dataset: formationGrid === undefined ? {} : { formationGrid } };
+      const combatEl = dom.document.createElement('section');
+      dom.document.body.appendChild(combatEl);
+      const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {} });
+      assert.equal(combatEl.querySelector('input[data-combat-tool="grid"]').checked, formationGrid === 'true');
+      tools.release();
+    });
+  }
+});
+
 test('live Grid checkbox waits for persistence and rolls back a refused preference', async () => {
   for (const accepted of [true,false]) {
     let checkbox, settle, root;

@@ -1,4 +1,5 @@
 import { artPath } from '../tools/art-source.mjs';
+import { CODEX_IDS } from '../tools/enemy-roster-table.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -46,9 +47,13 @@ test('every canonical armor maps exactly, including dedicated alias appearances 
   assert.equal(alternativePlayerId('reaver', 'unknown'), 'reaver-default');
 });
 
+// The Codex enemies are excluded on purpose, not for want of a release: the art v28 pin does ship their 32 concept frame sets, but the
+// alternative-art catalog is built by tools/alternative-art-build.py from reviewed alternative masters (sourceCommit 41ae95a), a separate
+// art family from the expansion frames the concept enemies use (enemyExpansion.js). No master exists for them, so the catalog cannot be
+// regenerated from the v28 release; it needs owner-made alternative art. Their frames are covered by enemy-expansion and enemy-stance-sprites.
 test('enemy, companion and speaker IDs match the canonical content roster', () => {
   for (const [family, rows] of [['enemy', contentBundle.enemies], ['companion', contentBundle.companions], ['speaker', contentBundle.speakers]]) {
-    assert.deepEqual(Object.keys(catalog.sprites).filter(id => catalog.sprites[id].family === family).sort(), rows.map(r => r.id).sort(), family);
+    assert.deepEqual(Object.keys(catalog.sprites).filter(id => catalog.sprites[id].family === family).sort(), rows.map(r => r.id).filter(id => !CODEX_IDS.includes(id)).sort(), family);
   }
 });
 
@@ -88,7 +93,7 @@ test('authored settings retain four layers while option C renders three without 
   assert.throws(() => combatBackdropHtml({}, 'not-a-scene'), /Unknown combat preview/);
 });
 
-test('phone first paint references only phone scene exports before fitting', () => {
+test('phone first paint uses the full scene art and the phone hand fade before fitting', () => {
   const previous = globalThis.document;
   globalThis.document = { documentElement: { dataset: { layout: 'narrow' } } };
   try {
@@ -96,7 +101,10 @@ test('phone first paint references only phone scene exports before fitting', () 
       const html = alternativeBackdropHtml(id);
       const paths = [...html.matchAll(/assets-display\/(?:alternative|shared)\/[A-Za-z0-9-]+\.webp/g)].map(m => m[0]);
       assert.equal(paths.length, 4); // Three scene layers and the hand fade.
-      assert(paths.every(p => p.endsWith('-mobile.webp')), id);
+      const scene = paths.filter(p => /assets-display\/alternative\/scene-/.test(p));
+      assert.equal(scene.length, 3, id);
+      assert(scene.every(p => !p.endsWith('-mobile.webp')), `${id}: phone scene layers use the full art`);
+      assert(paths.filter(p => !scene.includes(p)).every(p => p.endsWith('-mobile.webp')), `${id}: the hand fade stays the phone export`);
     }
   } finally {
     if (previous === undefined) delete globalThis.document;

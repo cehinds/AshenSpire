@@ -1,10 +1,35 @@
 import { gameModule, gameContent } from './gameProfile.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { parseMod } from './loadout.js';
+import { GearIdOf } from './gearIds.js';
+import { GearTypeEffectsEnabled, GearVocabularyEnabled, GearPieceMods, GearModText, GearTypeRow } from './gearEffects.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
 import { breakPropertyText } from './breakMeter.js';
 import { affinityTags } from '../engine/elementRules.js';
+
+const GEAR_ATTRIBUTE_IDS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+/**
+ * What a resolved armour or shield piece provides, as a short sentence: its rating values first ("3 Poise."), then
+ * its attribute grants spelled out ("Gain 1 Dexterity and 1 Constitution."). A piece with nothing concrete to state
+ * shows its authored flavour line instead; the rank / points receipt is never the body (owner, 2026-11-18).
+ * One formatter for every face that draws this card (reward door, shop, Armoury, inspection).
+ */
+export function GearEffectText(registries, values, labels, flavor) {
+  const entries = Object.entries(values || {}).filter(([, n]) => Number.isFinite(n) && n !== 0);
+  const ratings = entries.filter(([id]) => !GEAR_ATTRIBUTE_IDS.includes(id)).map(([id, n]) => `${n} ${labels[id] || id}`);
+  const grants = entries.filter(([id]) => GEAR_ATTRIBUTE_IDS.includes(id) && values[id] > 0)
+    .map(([id, n]) => `${n} ${registries.attributes?.get?.(id)?.label || id[0].toUpperCase() + id.slice(1)}`);
+  const sentences = [];
+  if (ratings.length) sentences.push(`${ratings.join(', ')}.`);
+  if (grants.length) sentences.push(`Gain ${grants.length > 1 ? `${grants.slice(0, -1).join(', ')} and ${grants[grants.length - 1]}` : grants[0]}.`);
+  if (!sentences.length) {
+    const text = flavor || 'No flavor text authored.';
+    return { text, explanation: text };
+  }
+  const text = sentences.join(' ');
+  return { text, explanation: `Granted while equipped. ${text}` };
+}
 
 /** Authored facts only; live comparison and smithing receipts stay beside this card. */
 export function equipmentCardModel(registries, piece) {
@@ -18,9 +43,9 @@ export function equipmentCardModel(registries, piece) {
   const type = armor ? `Armour · ${className}` : piece.kind === 'weapon' ? `Weapon · ${types}` : piece.kind === 'staff' ? `Staff · ${types}` : types || piece.kind;
   const field = (label, value, explanation) => ({ label, value, explanation });
   let facts = armor
-    ? [field('DR', (piece.mods || []).map(parseMod).filter(m => m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set').reduce((n, m) => n + m.value, 0), 'Armour bonus to Defense cards: adds this much Block. This is not damage reduction or the full equipped Defense Rating.'), field('Poise', piece.poiseThreshold, 'Authored player Poise threshold contribution. Currently displayed only: players do not receive Poise damage. This is separate from enemy Stagger.')]
-    : [field('Attack', piece.attackRating, 'Base intrinsic Attack Rating, before attributes and smithing. This is not the final damage of a played card.'), field('Defense', piece.defenseRating, 'Base intrinsic Defense Rating. See the live comparison and resulting cards for actual Block and combat bonuses.'), field('Weight', pieceWeight(piece), 'Weight contributed by this equipped item to equip load. Total load and capacity determine your Weight Class.')];
-  let bonuses = (piece.mods || []).filter(raw => { const m = parseMod(raw); return !(armor && m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set'); }).map(raw => {
+    ? [field('Block', (piece.mods || []).map(parseMod).filter(m => m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set').reduce((n, m) => n + m.value, 0), 'Armour bonus to Defense cards: adds this much Block. This is not damage reduction.'), field('Poise', piece.poiseThreshold, 'Authored player Poise threshold contribution. Currently displayed only: players do not receive Poise damage. This is separate from enemy Stagger.')]
+    : [field('Weight', pieceWeight(piece), 'Weight contributed by this equipped item to equip load. Total load and capacity determine your Weight Class.')];
+  let bonuses = (piece.mods || []).filter(raw => { const m = parseMod(raw); return GearVocabularyEnabled(registries, registries.equipment.modFields[m.field]) && !(armor && m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set'); }).map(raw => {
     const mod = parseMod(raw);
     const spec = registries.equipment.modFields[mod.field];
     const target = mod.prefix === 'self' ? '' : mod.prefix === 'power' ? 'Class power: ' : `${mod.prefix[0].toUpperCase()}${mod.prefix.slice(1)}: `;
@@ -29,26 +54,42 @@ export function equipmentCardModel(registries, piece) {
     return field(`${target}${value} ${label}`, raw, `${mod.mode === 'set' ? 'Replaces the value' : 'Adjusts the value'} ${mod.prefix === 'self' ? 'on the wearer' : `on ${mod.prefix === 'power' ? 'the class power card' : mod.prefix}`}. ${spec.blurb}`);
   });
   const configuredGear = gameModule(registries,'gear');
+  let resolvedValues = null;
   const item = configuredGear?.armorBudget && (gameContent(registries,'gear') || []).find(row =>
-    (row.source?.id || row.id) === piece.id && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
+    (row.source?.id || row.id) === (GearTypeEffectsEnabled(registries) ? GearIdOf(piece) : piece.id) && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
   if (item) {
     const receipt = resolveGearItem(item,configuredGear,{rank:(item.rank ?? 1)+upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0)});
-    const labels = {hp:'HP',mp:'Mana',sp:'Stamina',ar:'AR',dr:'DR',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
-    // A weapon's tier adds weaponARPerTier AR on top of its pool (the rating receipt's rule).
-    const tierAR = !armor && piece.kind !== 'shield' ? upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0) * (gameModule(registries,'equipment')?.upgradeBonuses?.weaponARPerTier || 0) : 0;
+    resolvedValues = receipt.values;
+    const labels = {hp:'HP',mp:'Mana',sp:'Stamina',ar:'STR',dr:'DEX',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
+    // A weapon's tier adds weaponARPerTier AR on top of its pool (the rating receipt's rule), except under `statPoints`,
+    // where the tier is attribute points already in the receipt (owner, 2026-11-17).
+    const tierAR = !armor && piece.kind !== 'shield' && !configuredGear.statPoints ? upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0) * (gameModule(registries,'equipment')?.upgradeBonuses?.weaponARPerTier || 0) : 0;
     facts = Object.entries(receipt.values).map(([id,value])=>[id,id === 'ar' ? value + tierAR : value]).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,
-      id === 'ar' && tierAR ? `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} + ${tierAR} from Smith tier ${piece.upgradeLevel} = ${value} equipped AR.`
+      id === 'ar' && tierAR ? `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} + ${tierAR} from Smith tier ${piece.upgradeLevel} = ${value} equipped STR.`
         : `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} = ${value} equipped ${labels[id] || id}.`));
-    const points = receipt.budget ?? Object.values(receipt.points).reduce((sum,n)=>sum+n,0) + receipt.tagCost;
-    const perRank = configuredGear.armorBudget.perRank ?? 0;
-    bonuses = armor || piece.kind === 'shield' ? [field(`Rank ${receipt.rank} · ${points} points`,points,
-      armor ? `Armour budget: ${receipt.budget} points (${configuredGear.armorBudget.baseline} baseline + ${receipt.budget-configuredGear.armorBudget.baseline} rarity/rank bonus).`
-        : `Stat points: ${points} (${perRank} more per Smith tier).`)] : [];
+    const effect = GearEffectText(registries, receipt.values, labels, piece.blurb);
+    bonuses = armor || piece.kind === 'shield' ? [field(effect.text, effect.text, effect.explanation)] : [];
+  }
+  const typeEffects = GearTypeEffectsEnabled(registries), typeRow = typeEffects ? GearTypeRow(piece) : null;
+  if (typeEffects) {
+    // Keep resolved item stats, then show the same type/group and signature rules the runtime reads.
+    // A pool mod replaced by a nonzero configured pool is already represented by that receipt.
+    const rules = GearPieceMods(piece).flatMap((raw, index) => {
+      const mod = parseMod(raw), spec = mod && registries.equipment.modFields[mod.field];
+      if (!spec) return [];
+      const pool = {maxHp:'hp',maxMana:'mp',maxStamina:'sp'}[spec.apply];
+      if (pool && (resolvedValues?.[pool] || 0) > 0) return [];
+      const text = GearModText(registries, raw);
+      const source = index < (typeRow?.mods.length || 0) ? `${typeRow.label} ${typeRow.group ? 'group' : 'type'}` : 'Item signature';
+      return [field(text, text, `${source}. ${spec.blurb}`)];
+    });
+    bonuses = [...(item ? bonuses : []), ...rules];
   }
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
   return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
     tags: tags.map(id => field(tag(id)?.label || id, id, registries.breakMeterVersion === 1 ? breakPropertyText(registries, id) || tag(id)?.blurb || 'Authored equipment classification.' : tag(id)?.blurb || 'Authored equipment classification.')),
-    typeExplanation: (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
+    typeExplanation: typeEffects ? `${typeRow?.label || type}. Compatibility is determined by the equipment position.`
+      : (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
     flavor: piece.blurb || 'No flavor text authored.',
     requirement: requirements ? `Requires ${requirements}` : armor ? `${className} outfit` : 'Either hand',
     requirementExplanation: requirements ? `Minimum attributes to use this item: ${requirements}. The live equip action checks current requirements.` : armor ? `An armour set for ${className}.` : 'No minimum attributes authored. Hand placement still follows slot compatibility and two-handed restrictions.',

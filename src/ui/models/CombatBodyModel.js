@@ -8,25 +8,20 @@ export function bodyScaleFactor(referenceHeight, landmarks) {
   return referenceHeight > 0 && body > 0 ? referenceHeight / body : 1;
 }
 
-// Like bodyPlacement but only resizes about the frame's own feet, keeping the
-// authored travel (a jump's lift, a lunge's reach).
+function hasBodyLandmarks(landmarks) {
+  return Boolean(landmarks)
+    && landmarks.feetY > landmarks.headY
+    && landmarks.height > 0;
+}
+
 export function bodyResize(placement, landmarks, referenceHeight) {
-  if (!landmarks || !(landmarks.feetY > landmarks.headY) || !(landmarks.height > 0)) return { ...placement };
-  const sourceScale = placement.height / landmarks.height;
-  const feet = placement.top + landmarks.feetY * sourceScale;
-  const head = placement.top + landmarks.headY * sourceScale;
-  const factor = referenceHeight / (feet - head);
-  const anchorX = placement.anchorX ?? placement.left + placement.width / 2;
-  return { ...placement,
-    left: anchorX + (placement.left - anchorX) * factor,
-    top: feet + (placement.top - feet) * factor,
-    width: placement.width * factor, height: placement.height * factor,
-    body: { headY: feet - referenceHeight, feetY: feet, source: 'authored' },
-  };
+  if (!hasBodyLandmarks(landmarks)) return { ...placement };
+  const sourceFeet = placement.top + landmarks.feetY * (placement.height / landmarks.height);
+  return bodyPlacement(placement, landmarks, referenceHeight, sourceFeet);
 }
 
 export function bodyPlacement(placement, landmarks, referenceHeight, targetFeet) {
-  if (!landmarks || !(landmarks.feetY > landmarks.headY) || !(landmarks.height > 0)) return { ...placement };
+  if (!hasBodyLandmarks(landmarks)) return { ...placement };
   const sourceScale = placement.height / landmarks.height;
   const head = placement.top + landmarks.headY * sourceScale;
   const feet = placement.top + landmarks.feetY * sourceScale;

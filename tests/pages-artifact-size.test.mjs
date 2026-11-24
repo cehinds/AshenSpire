@@ -15,9 +15,9 @@ test('only a primary channel keeps the offline file, and only for its newest bui
   }
 });
 
-test('retention is per channel: main 3, release 5, dev 3, test 3, others 3', () => {
-  assert.deepEqual(RETENTION, { main: 3, release: 5, dev: 3, test: 3 });
-  for (const [branch, n] of [['main', 3], ['release', 5], ['dev', 3], ['test', 3], ['alternative/dev', 3], ['alternative/art/test', 3]]) {
+test('retention is per channel: main 1, release 1, dev 2, test 2, others 3', () => {
+  assert.deepEqual(RETENTION, { main: 1, release: 1, dev: 2, test: 2 });
+  for (const [branch, n] of [['main', 1], ['release', 1], ['dev', 2], ['test', 2], ['alternative/dev', 3], ['alternative/art/test', 3]]) {
     assert.equal(keepFor(branch), n, branch);
   }
 });
@@ -138,4 +138,10 @@ test('artifactsOf applies the pointer cap before the fetch and not under the sim
   assert.match(body, /if \(!SIMULATE_PURGE\) try \{ pointerText = git\(/);
   assert.ok(body.indexOf('pointerOversize(pointerText)') < body.indexOf("committedArtifact(b.sha, 'AshenSpire.html')"));
   assert.match(body, /if \(tooBig\) return \{ error: tooBig \}/);
+});
+
+test('the PR comment takes the preview cap from the collector, not a literal', () => {
+  assert.doesNotMatch(workflow, /only the \d+ newest/);
+  assert.match(workflow, /MAX_PREVIEWS: \$\{\{ needs\.assemble\.outputs\.max_previews \}\}/);
+  assert.match(workflow, /only the \$\{MAX_PREVIEWS\} newest/);
 });

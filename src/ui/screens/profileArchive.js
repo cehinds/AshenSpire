@@ -114,11 +114,11 @@ export function renderProfileSection(container, { saves, onRestored }) {
   // and it must say what will actually happen to them.
   const stateLine = {
     ok: 'Your profile is fine.',
-    empty: 'No profile yet — one is created the moment you begin your first climb.',
+    empty: 'No profile yet. One is created the moment you begin your first climb.',
     migrated: 'Your profile was saved by an older version and has been brought forward.',
     recovered: 'Your profile was restored from the backup copy after a bad read.',
-    corrupt: 'Your profile could not be read. It has been set aside — it is listed below.',
-    older: 'Your profile is from an older version we cannot open. It has been set aside — it is listed below.',
+    corrupt: 'Your profile could not be read. It has been set aside and is listed below.',
+    older: 'Your profile is from an older version we cannot open. It has been set aside and is listed below.',
     newer: 'Your profile is from a newer version. It has been left exactly as it is; update the game to open it.',
   }[status.state] || 'Your profile is fine.';
 
@@ -170,7 +170,7 @@ export function renderProfileSection(container, { saves, onRestored }) {
       const go = button({ label: 'Restore it', weight: 'primary', className: 'prof-go' });
       const box = el('div', { class: 'as-detailcard prof-confirm' }, [
         el('span', { class: 'dc-eyebrow', text: 'Restore this profile?' }),
-        prose('The profile you’re using now is set aside here in its place — not deleted.'),
+        prose('The profile you’re using now is set aside here in its place, not deleted.'),
         unreadable ? prose('This copy couldn’t be read when we set it aside, so restoring it may not work. Nothing is lost by trying.') : null,
         buttonRow({ size: 'medium', buttons: [cancel, go], className: 'prof-entry-actions' }),
       ]);
@@ -186,14 +186,14 @@ export function renderProfileSection(container, { saves, onRestored }) {
           // D12 open that ate a second profile (Sunna D13).
           renderProfileSection(container, { saves, onRestored });
           const node = container.querySelector('.prof-result');
-          if (node) node.textContent = 'Restored. This is your profile now — the one you were using is set aside below.';
+          if (node) node.textContent = 'Restored. This is your profile now. The one you were using is set aside below.';
           if (onRestored) onRestored();
           return;
         }
         // A failed restore NEVER consumes the archive, and says so — Sunna's
         // must, and the same sentence the crisis screen uses.
         box.remove();
-        say('That didn’t work — those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.');
+        say('That didn’t work. Those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.');
       });
     });
     return card;
@@ -256,7 +256,7 @@ export function renderProfileSection(container, { saves, onRestored }) {
     // curious rather than someone hurt. A category that is empty while the
     // other is not says only that.
     records.replaceChildren(...(view.empty === 'drawer'
-      ? [flavour('Nothing has been set aside. That’s the good news — this fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.', { class: 'prof-empty' })]
+      ? [flavour('Nothing has been set aside. That’s the good news. This fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.', { class: 'prof-empty' })]
       : view.empty === 'category'
         ? [flavour(t(`profile.empty.${view.current}`), { class: 'prof-empty' })]
         : view.entries.map(entryCard)));
@@ -287,25 +287,6 @@ export function openProfileArchive({ saves, onRestored = null } = {}) {
   back.addEventListener('click', door.close);
   door.head.querySelector('.modal-close').setAttribute('data-profile-close', '');
   renderProfileSection(door.body, { saves, onRestored });
-  // The focus cursor cannot leave the door (the same trap the notice keeps).
-  const focusStops = () => [...door.panel.querySelectorAll(
-    'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-  )].filter((element) => element.getClientRects().length > 0);
-  door.veil.addEventListener('keydown', (event) => {
-    if (event.key !== 'Tab') return;
-    const stops = focusStops();
-    if (!stops.length) return;
-    const first = stops[0];
-    const last = stops[stops.length - 1];
-    const active = document.activeElement;
-    if (event.shiftKey && (active === first || !door.panel.contains(active))) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && (active === last || !door.panel.contains(active))) {
-      event.preventDefault();
-      first.focus();
-    }
-  });
   // Opens on Close, with the pad's cursor on the same control.
   land(door.head.querySelector('.modal-close'));
   return door.veil;

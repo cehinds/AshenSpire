@@ -1,6 +1,11 @@
+import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
+import { t } from './strings.js';
 import { projectGameCard } from './gameProfile.js';
+import { configuredModule } from './profileModule.js';
+import { CardSpellTraditions, SpellTraditionLabel } from './spellTraditions.js';
 import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
+import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -38,18 +43,47 @@ import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
 import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
+
+/** A stance as it reads in a condition: "Idle", "in Defense", "in Prepared". */
+const STANCE_WORDS = Object.freeze({ idle: 'Idle', casting: 'in Prepared', prepared: 'in Prepared', defend: 'in Defense', defense: 'in Defense' });
+const stanceWords = stance => STANCE_WORDS[stance] || `in ${stance}`;
+
+/** A card's `playIf` as a short face line ("Only at Reach"), or null when the face has no words for it. */
+export function PlayConditionPhrase(pred) {
+  if (pred?.p === 'atRange') return `Only at ${pred.range[0].toUpperCase()}${pred.range.slice(1)}`;
+  if (pred?.p === 'inStance') return `Only ${['target', 'enemy'].includes(pred.of) ? 'while the target is' : 'while'} ${stanceWords(pred.stance)}`;
+  return null;
+}
 import { wardReadsAsPoise, poiseMergeGroups } from './wardOffCardText.js';
 import { balance } from '../content/balance.js';
-import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
+import { combatProfileFor, isSpellCard, ScaleCardBaseDamage, ScalePhysicalDamage } from './combatCardProfile.js';
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from './d20Chance.js';
-import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
+import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, PacketSplit, PacketWeights, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
+import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
+import { cardIsMagical } from './attackCardDamage.js';
+import { ChannelWeight } from './damageChannels.js';
+import { ResolveCarrierDamageType } from './carrierDamageType.js';
 
 const freeze = (value) => Object.freeze(value);
+const HOSTILE_HP_LOSS = Object.freeze({
+  enemy: 'Target loses', allEnemies: 'All enemies lose', randomEnemy: 'A random enemy loses',
+  otherEnemy: 'Another enemy loses', otherEnemies: 'Other enemies lose',
+});
+
+/** Shared wording and polarity for HP loss on a card face or in its summary. */
+export function CardHpLossWording(effect, amount) {
+  const hostile = HOSTILE_HP_LOSS[effect.target];
+  if (hostile) return { hostile: true, text: `${hostile} ${amount} HP (ignores Block)` };
+  const prefix = effect.target === 'allAllies' ? 'All allies lose'
+    : effect.target === 'ally' ? 'Ally loses' : effect.offering ? 'Offer' : 'Pay';
+  const suffix = effect.nonlethal && effect.offering ? ' (leave at least 1 HP)' : '';
+  return { hostile: false, text: `${prefix} ${amount} HP${suffix}` };
+}
 
 /** Actual damage labels; a spell's school never substitutes for its damage. */
 // A uiStrings row with its {tokens} filled in. The row is the only copy of the sentence.
@@ -108,6 +142,35 @@ export function combatCardType(def) {
   return type[0].toUpperCase() + type.slice(1);
 }
 
+/** The same profile-aware type identity for a card face and compact list rows. */
+export function CardPresentationSigils(def, { registries = null, rules = null, preview = null } = {}) {
+  // Saved profiles retain their historical shared scaling and generic label.
+  // A catalog without a selected profile describes the current rules.
+  const context = CardPresentationContext(def, preview, rules);
+  const presentationRules = context?.gameProfile || context?.fixCoreRules ? context
+    : registries?.gameProfile ? { gameProfile: registries.gameProfile } : null;
+  const profile = combatProfileFor(def);
+  const identity = cardSigilIdentity(combatCardType(def), profile);
+  if (presentationRules && !SpellTraditionsActive(presentationRules)
+    || identity.action !== 'spell' && profile.camp !== 'spell') return identity;
+  const card = { ...def, combatProfile: profile };
+  return freeze({ ...identity, traditions: freeze(CardSpellTraditions(card)), displayLabel: SpellTraditionLabel(card) });
+}
+
+/** Live saved policy plus the matching quote's detached baseline metadata. */
+export function CardPresentationContext(def, preview = null, rules = null) {
+  const face = preview?.faceRules;
+  if (!rules) return face ?? null;
+  if (!face?.faceDefinition || face.faceDefinition.id !== def.id) return rules;
+  // The live host owns saved policy. The matching quote owns its detached,
+  // pre-Gear baseline, including the selected branch, rank and always-on stats.
+  const context = { ...rules };
+  for (const key of ['faceDefinition', 'faceAttributes', 'gearRules', 'gearState']) {
+    if (Object.hasOwn(face, key)) context[key] = face[key];
+  }
+  return context;
+}
+
 /**
  * The shared read of one card for its text: the numbers a preview or the authored
  * definition gives each effect (`value`), the status display name (`title`), the
@@ -115,7 +178,7 @@ export function combatCardType(def) {
  * static tokens. Every card-face text model reads through this one context.
  */
 export function cardSummaryContext(def, preview = null, registries = null, rules = null) {
-  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, rules);
+  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, CardPresentationContext(def, preview, rules));
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
@@ -138,7 +201,8 @@ export function cardSummaryContext(def, preview = null, registries = null, rules
     if (pred.p === 'hasBlock') return `${pred.of === 'self' ? 'you' : 'the target'} ${pred.of === 'self' ? 'have' : 'has'} Block${pred.snapshot === 'beforePlay' ? ' before this card' : ''}`;
     if (pred.p === 'hpBelowPct') return `${pred.of === 'self' ? 'your' : 'target'} HP is at most ${pred.pct}%`;
     if (pred.p === 'firstCardThisTurn') return 'this is your first card this turn';
-    if (pred.p === 'inStance') return `you are in ${pred.stance}`;
+    if (pred.p === 'inStance') return `${['target', 'enemy'].includes(pred.of) ? 'the target is' : 'you are'} ${stanceWords(pred.stance)}`;
+    if (pred.p === 'atRange') return `the target is at ${title(pred.range)}`;
     if (pred.p === 'turnMetric') {
       const names = { cardsPlayed: 'cards played', attacksPlayed: 'attacks played', manaSpent: 'Mana spent', hpLostSinceTurnStart: 'HP lost', discarded: 'cards discarded', offeringsPaid: 'offerings paid', previousSpell: 'previous Spell', sameCardPlays: 'plays of this card', cardPlaysCombat: 'cards played this combat' };
       const threshold = [pred.atLeast !== undefined ? `at least ${pred.atLeast}` : '', pred.atMost !== undefined ? `at most ${pred.atMost}` : ''].filter(Boolean).join(' and ');
@@ -176,8 +240,8 @@ export function AllEnemySpread(live) {
 }
 
 /** Plain complete effect text. Numeric values come from the resolved preview. */
-export function combatCardSummary(def, preview = null, registries = null) {
-  const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries);
+export function combatCardSummary(def, preview = null, registries = null, rules = null) {
+  const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries, rules);
   const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
     // A card with named modes (model/cardChoices.js) says its modes once, where its first moded effect stands.
@@ -239,10 +303,11 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'draw': text = `Draw ${n}`; break;
       case 'discard': text = `${effect.choose ? 'Choose and discard' : 'Discard'} ${n}${effect.random ? ' at random' : ''}`; break;
       case 'heal': text = `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${n} HP`; break;
-      case 'loseHp': text = `${effect.offering ? 'Offer' : 'Pay'} ${n} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`; break;
+      case 'loseHp': text = CardHpLossWording(effect, n).text; break;
       case 'gainEnergy': text = `Gain ${n} Stamina`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} Stamina`; break;
+      case 'restorePoise': text = `Restore ${n} Poise`; break;
       case 'applyReflect': text = `Gain ${n} Reflect`; break;
       case 'poiseDamage': case 'wardDamage': {
         const merged = poiseMerge?.get(index);
@@ -255,10 +320,11 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
       case 'swapRows': text = 'Swap its row with the nearest enemy in the other row'; break;
+      case 'pullEnemy': text = 'Remove a Retreat stack from it; with none left it comes forward to the front row'; break;
       case 'moveEngagement': {
         if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker', 'self'].includes(effect.target)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) return null;
-        if (effect.target === 'self') { text = effect.bands < 0 ? 'Advance' : 'Retreat'; break; }
+        if (effect.target === 'self') { text = effect.bands < 0 ? 'Advance' : 'Retreat foes'; break; }
         const target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
         text = effect.bands < 0 ? `Close 1 band toward ${target}` : `Retreat 1 band from ${target}`;
         break;
@@ -295,27 +361,101 @@ export function combatCardSummary(def, preview = null, registries = null) {
     if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
   }
   if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
-  const smashClause = coreSmashClause(def, registries);
+  const smashClause = coreSmashClause(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashClause) parts.push(smashClause.replace(/\.$/, ''));
   if (def.comboHook) return null;
   if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
+  if (PlayConditionPhrase(def.playIf)) parts.unshift(PlayConditionPhrase(def.playIf));
   for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
   return parts.length ? `${parts.join('. ')}.` : null;
 }
 
 /**
  * The numbers a card's own template substitutes, before any live preview.
- * The body is the renderer's `staticTokens` verbatim — it reads the definition
- * through the shared token binder and nothing else, which is what makes it a
- * projection rather than a step of drawing.
+ * The shared token binder reads the definition. A supplied run profile
+ * supplies the applicable base-damage scale.
  *
  * `card.js` keeps exporting `staticTokens` as a re-export of this, because
  * five files import that name and a rename would be churn that proves nothing.
  */
 // `rules` is the run's snapshotted rules (run.gameProfile) for faces outside combat; it wins over the current registries' profile.
+/** The always-on attributes for a static face: `rules` is the run (deck + profile pin), a combat (its player's base live stats), or a preview's faceRules; none otherwise. */
+function faceAttributes(registries, rules) {
+  if (rules?.faceAttributes) return rules.faceAttributes;
+  // A combat (e.g. the draw or spent pile viewer) carries the player's always-on attributes on its live stats, as previewCard's faceRules do.
+  if (rules?.gameProfile && rules.player && !Array.isArray(rules.deck)) return rules.player.liveStats?.base?.attributes ?? rules.player.attributes ?? null;
+  if (!rules?.gameProfile || !Array.isArray(rules.deck) || !registries) return null;
+  try { return gameProfileEffectiveAttributes(registries, rules); } catch { return null; }
+}
+/** The card's combat profile with an untyped damage type resolved from the face holder's wielded armament (run or combat loadout). */
+function faceDamageProfile(def, registries, rules) {
+  const profile = { ...(combatProfileFor(def) || {}), ...(def?.combatProfile || {}) };
+  const loadout = rules?.loadout;
+  if (!loadout || !registries) return profile;
+  const classId = rules.classId ?? (Array.isArray(rules.deck) ? rules.class : rules.player?.classId);
+  const carrier = { tags: def.cardTags ?? def.tags, attack: def.attack, damageSchool: def.damageSchool, sourceArmamentId: def.sourceArmamentId,
+    sourceHand: def.sourceHand, combatProfile: profile };
+  try { return ResolveCarrierDamageType(carrier, registries, loadout, classId).combatProfile; } catch { return profile; }
+}
 export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
+  // A live definition already contains combat Gear and charged effects. Compare it with
+  // the same selected card before that projection, retaining its rank and upgrades.
+  if (rules?.faceDefinition && rules.faceDefinition.id === def.id) def = rules.faceDefinition;
+  // Owner, 2026-11-18: always-on gear (a Sword's +1, a Heavy set's Block) is in the baseline face; triggered gear is not (it colours in the fight).
+  const gear = rules?.gearRules ? { rules: rules.gearRules, state: rules.gearState || {} } : rules?.loadout ? GearAlwaysOn(registries, rules) : null;
+  if (gear?.rules.length) def = ApplyGearCardRules(gear.rules, def, gear.state);
+  // Keep any saved combat policy with the always-on attributes; an explicit profile pin wins over the registries' own.
+  const holder = rules?.gameProfile ? rules : rules?.faceAttributes && registries?.gameProfile ? { ...rules, gameProfile: registries.gameProfile } : null;
   const effects = cardTokenEffects(def);
+  const baseDamageMultiplier = holder ? configuredModule(holder, 'effects')?.baseDamageMultiplier : undefined;
+  // Owner, 2026-11-18: the player's side scale (`effects.playerDamageMultiplier`) shows on the face too: floored, never 0 for a positive hit (the receipt's side-damage-scale stage).
+  const playerMultiplier = holder ? configuredModule(holder, 'effects')?.playerDamageMultiplier : undefined;
+  // A Counter's damage is its armed base: its return is final damage and takes no side scale (the receipt's flat-return rule).
+  const counterCard = combatProfileFor(def)?.maneuver === 'counter';
+  // Owner, 2026-11-18: `effects.physicalDamageMultiplier` cuts the physical share of the figure first (the receipt's physical-damage-scale stage), then the side scale.
+  const faceEffects = holder ? configuredModule(holder, 'effects') : null;
+  const physicalMultiplier = faceEffects?.physicalDamageMultiplier;
+  // Codex review on PR #2835: an untyped card takes its wielded armament's type before the split, as tacticalCarrier resolves it in combat
+  // (a Herald's Arcane Spark is Arcane, half magic), so the face and the receipt cut the same physical share.
+  const faceProfile = holder ? faceDamageProfile(def, registries, rules) : (combatProfileFor(def) || {});
+  const physicalFraction = 1 - Math.min(1, Math.max(0, magicShareOf(faceProfile) || 0));
+  // Owner, 2026-11-18: a face outside combat carries the run character's always-on attribute bonus, as a normal neutral-stance hit does:
+  // physical damage adds STR, a finesse hit DEX, and magic its saved tradition's attribute (legacy: max(INT, WIS)), each at its effects weight; Block adds DEX. No stance, status or enemy defence.
+  // A profile that predates the balance rules (no `baseDamageMultiplier`) keeps its authored faces.
+  const attributes = Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
+  const faceShare = magicShareOf(faceProfile) || 0;
+  const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
+  const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
+  const finesseSource = Array.isArray(def?.tags) && def.tags.includes('finesse');
+  const magicStat = attributes && SpellTraditionsActive(holder) ? SpellScalingValue(attributes, { ...def, combatProfile: faceProfile })
+    : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);
+  const damageStat = attributes ? (magicHit ? magicStat : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
+  // A finesse hit reads DEX but stays on the physical-damage channel (its weight), as profileDamageReceiptCore resolves it.
+  const damageBonus = damageStat * ChannelWeight(faceEffects, magicHit ? 'pr' : 'ar');
+  const blockBonus = attributes ? (attributes.dexterity || 0) * ChannelWeight(faceEffects, 'dr') : 0;
+  const blockMultiplier = faceEffects?.blockGainMultiplier;
+  const sideScale = (value, scaled) => {
+    if (!scaled || counterCard || !(value > 0)) return value;
+    const hasSide = Number.isFinite(playerMultiplier) && playerMultiplier !== 1;
+    if (damageBonus > 0) {
+      const raw = value + damageBonus;
+      const split = splitContactParts({ amount: raw, base: value, ratingBonus: damageBonus, share: faceShare, ratingPart: magicHit ? 'magic' : 'physical', primary: faceShare >= 1 ? 'magic' : 'physical' });
+      const fraction = split.physical + split.magic > 0 ? split.physical / (split.physical + split.magic) : 0;
+      let boosted = ScalePhysicalDamage(raw, fraction, physicalMultiplier);
+      if (hasSide) boosted = Math.max(boosted >= 1 && playerMultiplier > 0 ? 1 : 0, boosted * playerMultiplier);
+      return Math.max(0, Math.floor(boosted));
+    }
+    let chain = ScalePhysicalDamage(value, physicalFraction, physicalMultiplier);
+    if (hasSide) chain = Math.max(chain >= 1 && playerMultiplier > 0 ? 1 : 0, chain * playerMultiplier);
+    return chain === value ? value : Math.max(0, Math.floor(chain));
+  };
+  // Block: (authored + DEX) x blockGainMultiplier, floored, as the configured Block gain computes it. A face with no run keeps the authored number.
+  const blockScale = (value, isBlock) => {
+    if (!isBlock || !(value > 0) || !faceEffects || !attributes) return value;
+    const scale = Number.isFinite(blockMultiplier) && blockMultiplier >= 0 ? blockMultiplier : 1;
+    return scale === 1 && !blockBonus ? value : Math.max(0, Math.floor((value + blockBonus) * scale));
+  };
   // Rank composition wraps constant stacks in add formulas. Resolve only
   // constant sums here; state-dependent values still belong to live preview.
   const constant = value => {
@@ -330,7 +470,8 @@ export function staticCardTokens(def, registries = null, rules = null) {
     const value = constant(raw);
     // Owner, 2026-11-15: Barrier stacks are printed as the Poise they give.
     const barrierScale = effect.op === 'gainBarrier' || (effect.op === 'applyStatus' && effect.status === 'barrier') ? BarrierPoisePerStack(registries) : 1;
-    if (typeof value === 'number') tokens[binding.token] = value * barrierScale;
+    const damageScale = effect.op === 'damage' && binding.field === 'amount' ? baseDamageMultiplier : undefined;
+    if (typeof value === 'number') tokens[binding.token] = blockScale(sideScale(ScaleCardBaseDamage(value * barrierScale, damageScale), effect.op === 'damage' && binding.field === 'amount'), effect.op === 'block' && binding.field === 'amount');
     else {
       // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
       // A combat's snapshotted fixCoreRules win over the profile's, so a resumed fight's face matches what the card grants.
@@ -338,7 +479,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
         && Object.keys(raw).every(key => ['f', 'metric', 'of', 'per'].includes(key))
         ? evadeStackGainPhrase({ combatExpansionVersion: 2, fixCoreRules: rules?.fixCoreRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def, raw.per ?? 1) : undefined;
       const authored = configured ?? constantFormulaValue(raw) ?? describeFormula(raw);
-      if (authored !== undefined) tokens[binding.token] = authored;
+      if (authored !== undefined) tokens[binding.token] = typeof authored === 'number' ? blockScale(sideScale(ScaleCardBaseDamage(authored, damageScale), effect.op === 'damage' && binding.field === 'amount'), effect.op === 'block' && binding.field === 'amount') : authored;
       // Weapon-scaled attacks have a static authored multiplier even though
       // their resolved damage depends on the equipped weapon. Keep that
       // multiplier visible on non-combat faces without guessing a damage
@@ -352,6 +493,27 @@ export function staticCardTokens(def, registries = null, rules = null) {
       }
     }
   }
+  // An element packet hit (owner, 2026-11-19; a physical card with a magic share and no rating of its own) prints its physical part in {damage} and
+  // its magic part in {packet}: STR on the first, INT / Power on the second, the same two stages the receipt reads.
+  const packetIndex = effects.findIndex(effect => effect.op === 'damage' && typeof constant(effect.amount) === 'number');
+  if (packetIndex >= 0 && def.ratingId === undefined && faceProfile.camp === 'physical' && Number.isFinite(def.magicShare) && faceShare > 0 && faceShare < 1) {
+    const token = computeTokenBindings(effects).find(binding => binding.index === packetIndex && binding.field === 'amount')?.token;
+    if (token && typeof tokens[token] === 'number') {
+      const base = ScaleCardBaseDamage(constant(effects[packetIndex].amount), baseDamageMultiplier);
+      const physicalBonus = attributes ? (attributes[finesseSource ? 'dexterity' : 'strength'] || 0) * ChannelWeight(faceEffects, 'ar') : 0;
+      const magicBonus = attributes ? magicStat * ChannelWeight(faceEffects, 'pr') : 0;
+      // The receipt's order: the physical-damage scale cuts the physical part alone, the side scale takes the whole hit, the amount is floored ONCE,
+      // then the same PacketSplit (same weights) divides that amount. Flooring parts separately would drift a point from the hit.
+      const cut = Number.isFinite(physicalMultiplier) && physicalMultiplier >= 0 ? physicalMultiplier : 1;
+      // The card's own share (`magicShare`) rules a packet, as the receipt reads it; the face profile alone would give the configured Technique share.
+      const weights = PacketWeights({ base, share: def.magicShare, physicalBonus, magicBonus });
+      const whole = weights.physical * cut + weights.magic;
+      const sided = Number.isFinite(playerMultiplier) && playerMultiplier !== 1 ? Math.max(whole >= 1 && playerMultiplier > 0 ? 1 : 0, whole * playerMultiplier) : whole;
+      const parts = PacketSplit({ base, share: def.magicShare, physicalBonus, magicBonus, physicalMultiplier: cut, total: sided });
+      tokens[token] = parts.physical;
+      tokens.packet = parts.magic;
+    }
+  }
   return tokens;
 }
 
@@ -362,7 +524,7 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
   const configured = projectGameCard(rules?.gameProfile ? rules : registries, ref);
   if (configured) return configured;
   const def = rules?.breakMeterVersion == null
-    ? resolveCard(registries, ref) : resolveCard(registries, ref, rules.breakMeterVersion);
+    ? resolveCard(registries, ref, undefined, rules || registries) : resolveCard(registries, ref, rules.breakMeterVersion, rules || registries);
   if (rules?.combatExpansionVersion !== 2) return def;
   const expanded = applyCombatExpansionCard(def);
   return rules.reactionRulesVersion === 2 ? applyCardTraits(expanded, rules.reactionRules) : expanded;
@@ -404,7 +566,9 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
 
 export function playingCardModel(registries, ref, { preview = null, definition = null, rules = null } = {}) {
   const def = playingCardDefinition(registries, ref, { preview, definition, rules });
-  const base = staticCardTokens(def, registries, rules);
+  // Owner, 2026-11-18: the colour baseline is the same card's face outside combat (always-on attributes and gear included), so a live number is
+  // green or red only when something in the fight raised or lowered it.
+  const base = staticCardTokens(def, registries, CardPresentationContext(def, preview, rules));
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
   // carry the type (attack squarest → power roundest) and each type owns its
@@ -489,6 +653,8 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   const rankBadge = visibleRank > 0 ? `Rank ${visibleRank}` : null;
   const rankHelp = abilityRank !== null ? `Rank ${abilityRank}: authored ${abilityLabel.toLowerCase()} profile. Actions and Mana are charged separately.`
     : rankBadge || '';
+  const sigils = CardPresentationSigils(def, { registries, rules, preview });
+  const traditionType = sigils.displayLabel || null;
 
   return freeze({
     id: def.id,
@@ -505,9 +671,10 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     rankHelp,
     type: freeze({
       id: classification.cardCategory,
-      label: classification.cardCategory.toUpperCase(),
-      subtype: classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
-      abilityLabel,
+      label: traditionType ? traditionType.toUpperCase() : classification.cardCategory.toUpperCase(),
+      subtype: traditionType ? classification.cardCategory === 'power' ? t('deckEditor.stance.power') : null
+        : classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
+      abilityLabel: traditionType ? abilityRank === 0 ? t('deckEditor.rank.cantrip') : null : abilityLabel,
       weaponArt: weaponArt ? 'Weapon Art' : null,
       glyph: abilityLabel ? def.abilityKind === 'spell' ? 'skill' : weaponArt ? 'attack' : 'actions' : null,
       help: abilityLabel ? `${abilityLabel}${weaponArt ? ' · Weapon Art' : ''}. ${rankHelp}` : '',
@@ -516,7 +683,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     legacyType: def.type,
     costs,
     tags,
-    sigils: cardSigilIdentity(combatCardType(def), combatProfileFor(def)),
+    sigils,
     paint: freeze({
       typeColor: typeRow ? typeRow.color : null,
       radiusPx: typeRow ? typeRow.radius : null,

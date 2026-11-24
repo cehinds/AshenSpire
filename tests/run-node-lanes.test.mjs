@@ -211,7 +211,7 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     if (file === 'ci.yml') {
       assert.match(discovery, /--discovered-only --shard \$\{\{ matrix\.shard \}\}/);
       assert.match(discovery, /if: runner\.os != 'Windows'\n        run: node tools\/verdict\.mjs -- node tests\/run-node\.mjs --discovered-only --shard/);
-      assert.match(discovery, /if: runner\.os == 'Windows'\n        run: node tools\/verdict\.mjs -- node tests\/run-node\.mjs --discovered-only --no-slow --shard/);
+      assert.match(discovery, /if: runner\.os == 'Windows'\n        run: node tools\/verdict\.mjs -- node tests\/run-node\.mjs --discovered-only --no-slow --shard \$\{\{ matrix\.shard \}\}/);
       assert.doesNotMatch(discovery, /--slow-only/);
     } else {
       assert.match(discovery, /--discovered-only --no-slow --shard \$\{\{ matrix\.shard \}\}/);
@@ -219,11 +219,12 @@ test('both workflow matrices execute all discovery shards and both selftest grou
         assert.doesNotMatch(workflow, new RegExp(`^  ${gone}:\\r?$`, 'm'), `${gone} is in ci.yml's test stage, not tests.yml`);
       }
     }
-    const shards = [...discovery.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]);
-    assert.deepEqual(shards, ['0/4', '1/4', '2/4', '3/4']);
+    if (file === 'tests.yml') {
+      const shards = [...discovery.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]);
+      assert.deepEqual(shards, ['0/6', '1/6', '2/6', '3/6', '4/6', '5/6']);
+    }
     assert.match(discovery, /fetch-art/);
     assert.match(discovery, /Pillow==11\.1\.0/);
-    if (file === 'ci.yml') assert.match(discovery, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
     if (file === 'ci.yml') {
       const corpus = job(workflow, selftests);
       assert.match(corpus, /timeout-minutes: 20/);
@@ -237,8 +238,20 @@ test('both workflow matrices execute all discovery shards and both selftest grou
 });
 
 
-test('Windows fast shards and isolated slow jobs cover the real discovered corpus exactly once', () => {
+test('the configured discovery shards and isolated jobs cover the real corpus once per platform', () => {
   const workflow = readSourceTextSync(join(ROOT, '.github/workflows/ci.yml'));
+  const discovery = job(workflow, 'test-discovered');
+  const matrix = discovery.split('      matrix:\n')[1].split('\n    steps:')[0];
+  const [axis, ...rows] = matrix.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('#'));
+  assert.equal(axis, 'include:');
+  const configured = new Map();
+  for (const row of rows) {
+    const match = /^- \{ os: ([\w-]+), shard: '(\d+\/\d+)' \}$/.exec(row);
+    assert.ok(match, `unexpected discovery matrix row: ${row}`);
+    const [, os, shard] = match;
+    if (!configured.has(os)) configured.set(os, []);
+    configured.get(os).push(shard);
+  }
   const isolated = job(workflow, 'test-discovered-slow-windows');
   assert.match(isolated, /runs-on: windows-latest/);
   assert.match(isolated, /timeout-minutes: 20/);
@@ -268,9 +281,17 @@ test('Windows fast shards and isolated slow jobs cover the real discovered corpu
   walk(ROOT); files.sort();
   const eligible = files;
   const fast = discoverySpeedFiles(eligible, 'exclude');
-  const windows = [...Array.from({ length: 4 }, (_, index) => discoveryShardFiles(fast, { index, count: 4 })).flat(), ...slow];
-  assert.deepEqual(windows.slice().sort(), eligible, 'Windows runs the complete corpus');
-  assert.equal(new Set(windows).size, windows.length, 'no file runs twice');
+  const counts = { 'ubuntu-latest': 4, 'macos-latest': 4, 'windows-latest': 8 };
+  assert.deepEqual([...configured.keys()].sort(), Object.keys(counts).sort());
+  for (const [os, count] of Object.entries(counts)) {
+    const windows = os === 'windows-latest';
+    const shards = configured.get(os);
+    assert.deepEqual([...shards].sort(), Array.from({ length: count }, (_, i) => `${i}/${count}`), os);
+    const assigned = shards.flatMap(shard => discoveryShardFiles(windows ? fast : eligible,
+      parseRunNodeOptions(['--discovered-only', '--shard', shard]).shard));
+    if (windows) assigned.push(...slow);
+    assert.deepEqual(assigned.sort(), eligible, `${os} runs every eligible file exactly once`);
+  }
 });
 
 test('browser layout and startup matrices retain every shard with an independent twenty-minute bound', () => {

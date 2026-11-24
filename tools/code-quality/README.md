@@ -33,7 +33,18 @@ as short individual bindings because the production bundler has a line-oriented 
 Hash-sensitive runtime inputs and generated files stay outside formatter enrollment.
 
 The TypeScript project checks the enrolled save boundaries and their deliberate negative type
-fixtures without emitting output. The separate tool self-tests require the isolated package;
+fixtures without emitting output. `tsconfig.contracts.json` checks the UI contracts in
+`src/ui/contracts.js` with `noImplicitAny` off, so a file only has to match its contract.
+
+To add a contract, declare it as a `@typedef` or `@callback` in `src/ui/contracts.js` and add its
+name to `CONTRACT_NAMES`. Annotate the implementation with `@type`, `@returns` or `@implements` (after an `@import`),
+add `// @ts-check` to that file and list it in `tsconfig.contracts.json`. Where a file has too many
+unrelated type errors, assign its export to the contract in `type-tests/ui-contracts.js` instead.
+Add an `@ts-expect-error` fixture there that proves a non-conforming implementation fails.
+A contract with no implementation checked yet goes in `PLANNED_CONTRACT_NAMES` instead; the check
+reports it as declared, not yet checked, and moves it to `CONTRACT_NAMES` once a check covers it.
+
+The separate tool self-tests require the isolated package;
 the game and its regular test lane do not depend on this package.
 
 The isolated package declares the exports it uses from each development dependency in its

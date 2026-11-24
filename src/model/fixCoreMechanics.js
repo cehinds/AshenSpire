@@ -4,6 +4,7 @@ import { rangePolicyProblems } from './combatEngagement.js';
 import { fixCoreMechanics as defaults } from '../content/generated/fixCoreMechanics.js';
 import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { compileBindings, evaluateModifiers, queryBinding, parameterDefaults } from './mechanicsKernel.js';
+import { tFull } from './strings.js';
 const mechanics = new Map(fixCoreProtection);
 const behaviorTags = new Set(fixCoreProtection.map(([, row]) => row.manifest.tag));
 
@@ -28,9 +29,18 @@ export const FIXCORE_REACTION_DEFAULTS = Object.freeze({ handCostDiscount: 1 });
 // floor(incoming x returnPerStack x stacks held) + the card's base damage (+ floor(advantageShare x incoming)) and consumes consumePerHit stacks;
 // decayPerTurn stacks fade at the owner's turn start. Stacks held have no cap. A rules object without `stackSource` (a fight saved earlier) keeps
 // the Block-as-stacks rule, mechanics.counter.stackFraction and decayPerTurn. Logic: src/engine/counterRule.js, guardStacks.js.
-const COUNTER_STACK_KEYS = Object.freeze(['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']);
+// Owner, 2026-11-17 (theme B): `armedWhileStacks: true` keeps an armed Counter through its owner's turn start while Counter stacks remain (the stacks
+// follow the normal decay rule, so the Counter lasts as long as they do); `enemyBadgeStacks` is the Counter badge an enemy Counter move shows, which
+// fades by decayPerTurn at the enemy's turn start and loses 1 each time the Counter is used. A fight saved without a key keeps the earlier rule.
+const COUNTER_STACK_KEYS = Object.freeze(['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard', 'armedWhileStacks', 'enemyBadgeStacks']);
 /** The Counter-stack rules a fight plays under (the `counter` block with `stackSource: "card"`), or null for the Block-as-stacks rule of an earlier fight. */
 export const FixCoreCounterStacks = ctx => fixCoreEnabled(ctx) && rawRules(ctx).counter?.stackSource === 'card' ? rawRules(ctx).counter : null;
+/** When Counter stacks fade (owner 2026-11-18): "ownerTurnStart", the start of the holder's own turn, never the end of it. A fight saved without the key fades them at the same clock. */
+export const CounterDecayClock = ctx => FixCoreCounterStacks(ctx)?.decayClock ?? 'ownerTurnStart';
+/** True when an armed Counter survives its owner's turn start while Counter stacks remain (theme B, 2026-11-17). */
+export const CounterArmedWhileStacks = ctx => FixCoreCounterStacks(ctx)?.armedWhileStacks === true;
+/** The Counter badge stacks an enemy Counter move grants (theme B, 2026-11-17); 0 for a fight saved without the key. */
+export const EnemyCounterBadgeStacks = ctx => Math.max(0, FixCoreCounterStacks(ctx)?.enemyBadgeStacks | 0);
 /** The Counter stacks one play of `cardId` grants under `rules` (a `counter` block with stackSource "card"): its table entry or stacksPerCard, +upgrade bonus, clamped to 1..stacksMax; 0 for another rule. */
 export function CounterStacksForCard(rules, cardId, upgraded = false) {
   if (rules?.stackSource !== 'card') return 0;
@@ -44,8 +54,11 @@ function validateCounterStacks(row) {
     || !(Number.isFinite(row.advantageShare) && row.advantageShare >= 0) || !Number.isInteger(row.stacksMax) || row.stacksMax < 1 || !whole(row.stacksUpgradeBonus)
     || !Number.isInteger(row.stacksPerCard) || row.stacksPerCard < 1 || row.stacksPerCard > row.stacksMax
     || (row.stacksByCard !== undefined && (typeof row.stacksByCard !== 'object' || row.stacksByCard === null
-      || Object.values(row.stacksByCard).some(value => !Number.isInteger(value) || value < 1 || value > row.stacksMax)))) {
-    throw new Error('FixCore counter stacks require stackSource "card", returnPerStack, advantageShare, whole consumePerHit, decayPerTurn, stacksUpgradeBonus, stacksMax >= 1, stacksPerCard and stacksByCard values within 1..stacksMax');
+      || Object.values(row.stacksByCard).some(value => !Number.isInteger(value) || value < 1 || value > row.stacksMax)))
+    || (row.decayClock !== undefined && row.decayClock !== 'ownerTurnStart')
+    || (row.armedWhileStacks !== undefined && typeof row.armedWhileStacks !== 'boolean')
+    || (row.enemyBadgeStacks !== undefined && !whole(row.enemyBadgeStacks))) {
+    throw new Error('FixCore counter stacks require stackSource "card", returnPerStack, advantageShare, whole consumePerHit, decayPerTurn, stacksUpgradeBonus, stacksMax >= 1, stacksPerCard and stacksByCard values within 1..stacksMax, decayClock "ownerTurnStart", boolean armedWhileStacks, whole enemyBadgeStacks');
   }
 }
 export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(rules?.counter || {}) });
@@ -61,14 +74,18 @@ export const FIXCORE_BROKEN_DAMAGE_MULTIPLIER = 1.5;
 export function FixCoreBrokenRules(ctx) {
   if (!fixCoreEnabled(ctx)) return null;
   const poise = rawRules(ctx).poise;
-  return poise?.breakRule === 'broken' ? { damageMultiplier: poise.brokenDamageMultiplier ?? FIXCORE_BROKEN_DAMAGE_MULTIPLIER } : null;
+  // Owner, 2026-11-18: a break also applies `breakStatusStacks` stacks each of Staggered, Vulnerable, Weak and Frail until the owner's next turn starts (0 or absent: none).
+  return poise?.breakRule === 'broken' ? { damageMultiplier: poise.brokenDamageMultiplier ?? FIXCORE_BROKEN_DAMAGE_MULTIPLIER, statusStacks: poise.breakStatusStacks ?? 0 } : null;
 }
 // Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
 // and costs the target's Poise poiseFraction of that total (instead of the 25% Poise absorption). Missing blocks keep these defaults.
 export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 });
 export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS, ...(rules?.smashVsDefensive || {}) });
 // Owner, 2026-10-26: a pierce hit lets floor(blockBypassFraction x its damage) past Block. Missing blocks keep this default.
-export const FIXCORE_PIERCE_DEFAULTS = Object.freeze({ blockBypassFraction: 0.2 });
+// Owner, 2026-11-18: `builtInElements` carry Pierce without a tag (Lightning); `skinStatus` is the status whose stacks each cut a Pierce hit's bypass by 1 (Stone Skin);
+// `earthSource` marks Block laid by a card of that school, which a built-in Pierce does not bypass.
+// Owner, 2026-11-18 (section 21): each Pierce stack ignores `blockIgnoredPerStack` Block. The default 0 keeps the 2026-10-26 fraction for a fight saved without the key.
+export const FIXCORE_PIERCE_DEFAULTS = Object.freeze({ blockBypassFraction: 0.2, blockIgnoredPerStack: 0, builtInElements: [], skinStatus: null, earthSource: null });
 export const fixCorePierceRules = rules => ({ ...FIXCORE_PIERCE_DEFAULTS, ...(rules?.pierce || {}) });
 // Owner, 2026-11-14: attacks always connect and intents are always read. `accuracy.hitRoll: false` draws no d20 and makes Evade a
 // stack that cancels the next attack; `perception.roll: false` makes every intent read exact. A rules object without the key
@@ -78,7 +95,31 @@ export const FixCorePerceptionRollOff = rules => rules?.perception?.roll === fal
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
 // Owner, 2026-11-15 (W25-W): every hit meets Block first; a target holding Ward stacks then has its Poise absorb the whole remainder 1:1 before HP.
 // `ward.routing: "blockFirst"` turns it on; a fight saved without the key keeps the Poise-first Ward routing (the whole hit to Poise, the rest to Block).
+// Owner, 2026-11-18 (section 20): Ward loses `ward.decayPerTurn` stacks (1) at the start of its holder's turn, and its +poisePerStack maximum Poise leaves
+// with each stack; when the holder's Poise reaches 0 (`ward.breaksAtZeroPoise`) every Ward stack is removed. A fight saved without the keys keeps the old decay and no break.
+/** FixCoreWardDecay(ctx, entity) -> the Ward stacks lost at the start of the holder's turn (`ward.decayPerTurn`), else the generic status decay. */
+export function FixCoreWardDecay(ctx, entity, fallback) {
+  const rules = fixCoreEnabled(ctx) ? fixCoreRules(ctx, entity).ward : null;
+  return Number.isInteger(rules?.decayPerTurn) ? rules.decayPerTurn : fallback;
+}
+/** FixCoreWardBreaksAtZeroPoise(ctx) -> true when a Poise break strips every Ward stack. */
+export const FixCoreWardBreaksAtZeroPoise = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.breaksAtZeroPoise === true;
 export const FixCoreWardBlockFirst = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.routing === 'blockFirst';
+/** FixCoreWardHpBuffer(ctx) -> true when Ward adds a health buffer (Block > Ward > Poise + Health). */
+export const FixCoreWardHpBuffer = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.routing === 'hpBuffer';
+/** FixCoreWardHpPerStack(ctx) -> Ward HP per stack when hpBuffer routing is active, else 0. */
+export function FixCoreWardHpPerStack(ctx) {
+  if (!FixCoreWardHpBuffer(ctx)) return 0;
+  const per = rawRules(ctx).ward?.hpPerStack;
+  return Number.isInteger(per) && per > 0 ? per : 0;
+}
+/** EffectiveWardHp(ctx, entity) -> current Ward health buffer points on entity under hpBuffer routing, else 0. */
+export function EffectiveWardHp(ctx, entity) {
+  if (!FixCoreWardHpBuffer(ctx) || !entity) return 0;
+  if (!(entity.statuses?.ward?.stacks > 0)) return 0;
+  if (Number.isFinite(entity.wardHp)) return Math.max(0, Math.floor(entity.wardHp));
+  return Math.max(0, Math.floor(entity.statuses.ward.stacks * FixCoreWardHpPerStack(ctx)));
+}
 // Owner, 2026-11-14 (W25): PR (spell damage) is priced from max(INT, WIS). `ratings.prAttributes` lists the attributes PR reads the highest
 // of; rules without the key (a run or fight made before this ruling) keep PR on Intelligence alone.
 export const FIXCORE_PR_ATTRIBUTE_IDS = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
@@ -132,9 +173,11 @@ export function normalizeFixCoreRules(rules) {
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 // Owner, 2026-11-14 (Wave 2.5): each stance has a natural benefit, in data. A missing block (a fight saved before this ruling) means no benefits.
 // Fields per stance: attack/prepared damageMultiplier; smash poiseDamageBonus; sweep splashFraction; counter blockMultiplier + hpReturnFraction;
-// defend blockMultiplier + poiseDamageTakenMultiplier; neutral extraDrawNextTurn. Logic: src/engine/stanceBenefits.js.
-const STANCE_BENEFIT_FIELDS = Object.freeze({ attack: ['damageMultiplier'], prepared: ['damageMultiplier'], smash: ['poiseDamageBonus'], sweep: ['splashFraction'],
-  counter: ['blockMultiplier', 'hpReturnFraction'], defend: ['blockMultiplier', 'poiseDamageTakenMultiplier'], neutral: ['extraDrawNextTurn'] });
+// defend blockMultiplier + poiseDamageTakenMultiplier + poiseFloorWhileBlock (the Poise a Defend-stance target holding Block keeps against a
+// physical hit or Sweep) + poiseFloorWardMagic (1: also against magic while it holds Ward stacks; owner 2026-11-17); neutral extraDrawNextTurn. Stance weaknesses (owner 2026-11-17): prepared meleeDamageTakenMultiplier (melee hits on a Prepared target),
+// neutral damageTakenMultiplier (every hit on an Idle target). Logic: src/engine/stanceBenefits.js.
+const STANCE_BENEFIT_FIELDS = Object.freeze({ attack: ['damageMultiplier'], prepared: ['damageMultiplier', 'meleeDamageTakenMultiplier'], smash: ['poiseDamageBonus'], sweep: ['splashFraction'],
+  counter: ['blockMultiplier', 'hpReturnFraction'], defend: ['blockMultiplier', 'poiseDamageTakenMultiplier', 'poiseFloorWhileBlock', 'poiseFloorWardMagic'], neutral: ['extraDrawNextTurn', 'damageTakenMultiplier'] });
 function validateStanceBenefits(rows) {
   if (rows === undefined) return;
   if (typeof rows !== 'object' || rows === null || rows.version !== 1) throw new Error('FixCore stanceBenefits requires version 1');
@@ -171,21 +214,32 @@ export function FixCoreBands(ctx) {
   const row = rawRules(ctx).bands;
   return row?.rows === true ? row : null;
 }
+/** Saved Retreat policy: an existing rules snapshot owns absence and zero. */
+export function RetreatRulesActive(ctx) {
+  return ctx?.fixCoreRules ? ctx.fixCoreRules.retreatRulesVersion === 1
+    : ctx?.gameProfile?.modules?.effects?.retreatRulesVersion === 1;
+}
 function validateElementFlux(row) {
   if (row === undefined) return;
   if (typeof row !== 'object' || row === null || row.version !== 1 || Object.keys(row).some(key => !['version', 'multiplier'].includes(key)) || !(Number.isFinite(row.multiplier) && row.multiplier >= 1)) throw new Error('FixCore elementFlux requires {version:1, multiplier:number >= 1}');
 }
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','bands','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
-  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing'].includes(key))
+  if (rules.spellTraditionsVersion !== undefined && ![0, 1].includes(rules.spellTraditionsVersion)) throw new Error('FixCore spellTraditionsVersion must be 0 or 1');
+  if (rules.retreatRulesVersion !== undefined && ![0, 1].includes(rules.retreatRulesVersion)) throw new Error('FixCore retreatRulesVersion must be 0 or 1');
+  const known = new Set(['retreatRulesVersion','spellTraditionsVersion','version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','bands','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'hpPerStack', 'routing', 'decayPerTurn', 'breaksAtZeroPoise'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0))
-    || (rules.ward.routing !== undefined && rules.ward.routing !== 'blockFirst'))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number, routing?:"blockFirst"}');
+    || (rules.ward.hpPerStack !== undefined && !(Number.isInteger(rules.ward.hpPerStack) && rules.ward.hpPerStack >= 0))
+    || (rules.ward.decayPerTurn !== undefined && !(Number.isInteger(rules.ward.decayPerTurn) && rules.ward.decayPerTurn >= 0))
+    || (rules.ward.breaksAtZeroPoise !== undefined && typeof rules.ward.breaksAtZeroPoise !== 'boolean')
+    || (rules.ward.routing !== undefined && !['blockFirst', 'hpBuffer'].includes(rules.ward.routing)))) throw new Error('FixCore ward requires {enabled:boolean, hpPerStack?:whole number, poisePerStack?:whole number, routing?:"blockFirst"|"hpBuffer", decayPerTurn?:whole number, breaksAtZeroPoise?:boolean}');
   if (rules.statusCaps !== undefined && rules.statusCaps !== 'none') throw new Error('FixCore statusCaps requires "none" (or no key: the old caps)');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
-  if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => !['drain','breakRule','brokenDamageMultiplier'].includes(key))
-    || (poise.breakRule !== undefined && poise.breakRule !== 'broken') || (poise.brokenDamageMultiplier !== undefined && !(Number.isFinite(poise.brokenDamageMultiplier) && poise.brokenDamageMultiplier >= 1)))) throw new Error('FixCore poise requires {drain:"prevented", breakRule?:"broken", brokenDamageMultiplier?:number >= 1}');
+  if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => !['drain','breakRule','brokenDamageMultiplier','breakStatusStacks'].includes(key))
+    || (poise.breakRule !== undefined && poise.breakRule !== 'broken') || (poise.brokenDamageMultiplier !== undefined && !(Number.isFinite(poise.brokenDamageMultiplier) && poise.brokenDamageMultiplier >= 1))
+    || (poise.breakStatusStacks !== undefined && !(Number.isInteger(poise.breakStatusStacks) && poise.breakStatusStacks >= 0)))) throw new Error('FixCore poise requires {drain:"prevented", breakRule?:"broken", brokenDamageMultiplier?:number >= 1, breakStatusStacks?:whole number}');
   if (stag !== undefined && (typeof stag !== 'object' || stag === null || typeof stag.stance !== 'boolean' || typeof stag.extendOnly !== 'boolean' || !Number.isInteger(stag.staminaLoss) || stag.staminaLoss < 0 || !Number.isInteger(stag.vulnerableStacks) || stag.vulnerableStacks < 0 || Object.keys(stag).some(key => !['stance','staminaLoss','vulnerableStacks','extendOnly'].includes(key)))) throw new Error('FixCore staggered requires {stance:boolean, staminaLoss:int, vulnerableStacks:int, extendOnly:boolean}');
   const fractions = (name, row, keys) => { if (row !== undefined && (typeof row !== 'object' || row === null || Object.keys(row).some(key => !keys.includes(key) || !Number.isFinite(row[key]) || row[key] < 0))) throw new Error(`FixCore ${name} requires non-negative numbers for ${keys.join(', ')}`); };
   fractions('counter', rules.counter && Object.fromEntries(Object.entries(rules.counter).filter(([key]) => !COUNTER_STACK_KEYS.includes(key))), Object.keys(FIXCORE_COUNTER_DEFAULTS));
@@ -194,14 +248,21 @@ export function validateFixCoreRules(rules) {
   const pr = rules.ratings;
   if (pr !== undefined && (typeof pr !== 'object' || pr === null || Object.keys(pr).some(key => key !== 'prAttributes')
     || (pr.prAttributes !== undefined && !(Array.isArray(pr.prAttributes) && pr.prAttributes.every(id => FIXCORE_PR_ATTRIBUTE_IDS.includes(id)))))) throw new Error('FixCore ratings requires {prAttributes?:attribute ids}');
-  fractions('pierce', rules.pierce, Object.keys(FIXCORE_PIERCE_DEFAULTS));
+  const pierce = rules.pierce;
+  if (pierce !== undefined && (typeof pierce !== 'object' || pierce === null || Array.isArray(pierce)
+    || Object.keys(pierce).some(key => !Object.hasOwn(FIXCORE_PIERCE_DEFAULTS, key))
+    || (pierce.blockBypassFraction !== undefined && !(Number.isFinite(pierce.blockBypassFraction) && pierce.blockBypassFraction >= 0 && pierce.blockBypassFraction <= 1))
+    || (pierce.blockIgnoredPerStack !== undefined && !(Number.isInteger(pierce.blockIgnoredPerStack) && pierce.blockIgnoredPerStack >= 0))
+    || (pierce.builtInElements !== undefined && !(Array.isArray(pierce.builtInElements) && pierce.builtInElements.every(id => typeof id === 'string' && id.length > 0)))
+    || ['skinStatus', 'earthSource'].some(key => pierce[key] !== undefined && pierce[key] !== null && !(typeof pierce[key] === 'string' && pierce[key].length > 0)))) throw new Error('FixCore pierce requires optional fraction, non-negative integer Block per stack, element strings and nullable status/source strings');
   validateStanceBenefits(rules.stanceBenefits);
   validateSpellCosts(rules.spellCosts);
   validateElementFlux(rules.elementFlux);
   validateBands(rules.bands);
   const smash = rules.smashVsDefensive;
-  if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
-    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
+  if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','defendDamageMultiplier','blockFraction','poiseFraction'].includes(key))
+    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0
+    || (smash.defendDamageMultiplier !== undefined && (typeof smash.defendDamageMultiplier !== 'number' || !Number.isFinite(smash.defendDamageMultiplier) || smash.defendDamageMultiplier < 1)))) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, optional defendDamageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
   if (rules.elements !== undefined && (typeof rules.elements !== 'object' || rules.elements === null || rules.elements.version !== 1)) throw new Error('FixCore elements requires {version:1}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);
@@ -311,7 +372,15 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
   };
   if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
   else if (id === 'staggered') row.tooltip = row.description = facts[id];
-  else if (id === 'ward' && rules.ward?.poisePerStack > 0) row.tooltip = row.description = `Ward gives Poise: each stack adds ${rules.ward.poisePerStack} maximum and current Poise. ${rules.ward.routing === 'blockFirst' ? 'While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest with no leak, then HP.' : 'While Ward is above 0, all damage goes to Poise first, then Block, then HP.'} Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${rules.ward.poisePerStack} maximum Poise with it.`;
+  else if (id === 'ward' && rules.ward?.routing === 'hpBuffer' && rules.ward?.hpPerStack > 0) {
+    const decay = rules.ward.decayPerTurn ?? rules.statuses.decayAmount;
+    row.tooltip = row.description = tFull('status.ward.tooltipHpBuffer', { hp: rules.ward.hpPerStack, decay, decayHp: decay * rules.ward.hpPerStack });
+  }
+  else if (id === 'ward' && rules.ward?.poisePerStack > 0) {
+    const tokens = { poise: rules.ward.poisePerStack, decay: rules.ward.decayPerTurn ?? rules.statuses.decayAmount };
+    row.tooltip = row.description = [tFull(rules.ward.routing === 'blockFirst' ? 'status.ward.tooltipBlockFirst' : 'status.ward.tooltipPoiseFirst', tokens),
+      ...(rules.ward.breaksAtZeroPoise ? [tFull('status.ward.breaks')] : [])].join(' ');
+  }
   else if (id === 'barrier') { const per = ctx?.ratingsRules?.barrier?.poisePerStack ?? ctx?.registries?.balance?.combatRatings?.barrier?.poisePerStack ?? 5; row.tooltip = row.description = `Poise gained above your maximum. Each stack is +${per} maximum and current Poise. Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${per} maximum Poise with it.`; }
   else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
   return row;
@@ -326,7 +395,9 @@ export function fixCoreProtectionDescription(ctx,entity,kind) {
   const restores = fixCoreWardDisabled(ctx) ? 'Poise' : 'both Poise and Ward';
   // Owner, 2026-10-18 20:09: Poise absorbs a share of each hit and loses exactly what it absorbed.
   const broken = FixCoreBrokenRules(ctx);
-  const spends = broken ? `The damage it absorbs is taken off the pool, and when the pool is empty the owner is Broken: it loses its next action and takes ×${broken.damageMultiplier} damage until then, and its Poise refills to full.`
+  // Owner, 2026-11-18 (3a): a break no longer multiplies damage; it applies Staggered, Vulnerable, Weak and Frail stacks instead.
+  const brokenByStatuses = broken && broken.damageMultiplier === 1 && broken.statusStacks > 0;
+  const spends = brokenByStatuses ? tFull('poise.broken.statuses', { stacks: broken.statusStacks }) : broken ? `The damage it absorbs is taken off the pool, and when the pool is empty the owner is Broken: it loses its next action and takes ×${broken.damageMultiplier} damage until then, and its Poise refills to full.`
     : 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
   if (fixCoreWardDisabled(ctx)) {
     const poise = protectionReceipt(ctx,shadow,'physical',100);

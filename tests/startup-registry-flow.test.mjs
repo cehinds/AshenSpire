@@ -92,7 +92,8 @@ function boot(options = {}) {
         },
       };
     },
-    BUILD_VERSION: 'fixture', SETTINGS_DEFAULTS: { values: f.promoted },
+    BUILD_VERSION: 'fixture', BUILD_SOURCE: 'fixture', uiConfig: { presentation: { saves: { behavior: { discardOnNewBuild: false, epoch: 0 } } } }, BuildSaveId: () => 'fixture', ApplyEpochWipe: () => ({ cleared: false, slots: 0 }), ApplyBuildWipe: () => ({ cleared: false, slots: 0, previous: null }), // the save-wipe toggle (2026-11-18) reads the build id at boot
+    SETTINGS_DEFAULTS: { values: f.promoted },
     promotionDebug: () => false, promotionFor: value => value,
     settingsRows: () => record('settings-rows', []),
     needsSettingsChoice: () => !!f.settingsChoicePending,

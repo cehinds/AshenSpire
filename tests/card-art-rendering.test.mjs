@@ -7,30 +7,41 @@ import { renderCard } from '../src/ui/components/card.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { withModalDom } from './helpers/dom.mjs';
-import { ACTION_SIGILS } from '../src/content/combatSigils.js';
+import { ACTION_SIGILS, TRADITION_SIGILS } from '../src/content/combatSigils.js';
 import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
 
 const registries=createRegistries(contentBundle);
 const ref={cardId:'strike',profileId:'bladeAttack'};
 const definition=resolveCard(registries,ref);
 
-test('authored layout and actual mounted Spell footers retain the outlined sparkle',()=>{
+test('authored and legacy Spell sparkle remains intact while current mounted cards use tradition sigils',()=>{
   for (const layout of [CARD_COMPONENTS.template, ...Object.values(CARD_COMPONENTS.cards)]) {
     assert.equal(layout.symbols.actions.spell.svg.body, ACTION_SIGILS.spell.shape);
     assert.equal(layout.symbols.tags.spell.svg.body, ACTION_SIGILS.spell.shape);
     assert.notEqual(layout.symbols.tags.fire.svg.body, ACTION_SIGILS.spell.shape);
   }
   withModalDom(()=>{
-    for (const cardId of ['starstonePebble', 'starSpark']) {
+    for (const [cardId, traditions] of [['starstonePebble', ['arcane']], ['starSpark', ['arcane', 'divine']]]) {
       const card = renderCard(registries, { cardId }, { inspection: false });
       document.body.append(card);
       const primary = card.querySelector('[data-primary-sigil]');
-      const action = primary?.dataset.primarySigil;
-      const svg = primary?.querySelector('.combat-sigil-action svg');
-      assert.ok(svg, cardId);
+      assert.equal(primary?.dataset.primarySigil, 'spell');
+      const marks = [...primary.querySelectorAll('.combat-sigil-tradition')];
+      assert.deepEqual(marks.map(mark => mark.dataset.sigil), traditions);
+      for (const mark of marks) {
+        const svg = mark.querySelector('svg');
+        assert.equal(svg.getAttribute('fill-rule'), 'evenodd');
+        assert.equal(svg.querySelectorAll('path').length, 1);
+        assert.equal(svg.querySelector('path').getAttribute('d'), TRADITION_SIGILS[mark.dataset.sigil].shape.match(/d="([^"]+)"/)[1]);
+      }
+      const rules = { gameProfile: { modules: { effects: { mode: 'legacy' } } } };
+      const legacy = renderCard(registries, { cardId }, { inspection: false, rules });
+      const svg = legacy.querySelector('.combat-sigil-action svg');
+      assert.ok(svg, `${cardId}: saved legacy Spell sparkle`);
       assert.equal(svg.getAttribute('fill-rule'), 'evenodd');
       assert.equal(svg.querySelectorAll('path').length, 1);
-      assert.equal(svg.querySelector('path').getAttribute('d'), ACTION_SIGILS[action].shape.match(/d="([^"]+)"/)[1]);
+      assert.equal(svg.querySelector('path').getAttribute('d'), ACTION_SIGILS.spell.shape.match(/d="([^"]+)"/)[1]);
+      assert.equal(legacy.querySelectorAll('.combat-sigil-tradition').length, 0);
     }
   });
 });

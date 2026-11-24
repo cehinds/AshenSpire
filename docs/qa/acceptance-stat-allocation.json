@@ -1,0 +1,538 @@
+{
+  "request": "update the stat descriptions and allocation screen to match the latest rules, and continue the work from the current branch",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "tablet",
+      "width": 1024,
+      "height": 768
+    }
+  ],
+  "scenes": [
+    {
+      "url": "?shot=rest&shotRestPoints=1&shotClass=reaver",
+      "ready": "#open-armoury",
+      "settleMs": 1500,
+      "name": "allocation compact",
+      "actions": [
+        {
+          "tap": "#open-armoury"
+        },
+        {
+          "tap": ".armoury-head [data-modal-tab=\"character\"]"
+        },
+        {
+          "tap": ".character-level-action"
+        },
+        {
+          "tap": ".progression-points"
+        },
+        {
+          "wait": {
+            "ms": 150
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Production allocation modal opens",
+          "selector": ".cc-stat-modal"
+        },
+        {
+          "kind": "count",
+          "label": "All five allocation rows are present",
+          "selector": ".cc-stat-modal .se-row",
+          "eq": 5
+        },
+        {
+          "kind": "within",
+          "label": "Allocation modal stays within the viewport",
+          "selector": ".cc-stat-modal",
+          "container": "body"
+        },
+        {
+          "kind": "text",
+          "label": "Strength (STR) uses its full name",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"strength\"]) .ls-label",
+          "includes": "Strength (STR)"
+        },
+        {
+          "kind": "text",
+          "label": "Strength (STR) states current per-point benefit",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"strength\"]) .disc-summary",
+          "includes": "Physical damage"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Strength (STR) name avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"strength\"]) .ls-label",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"strength\"]) .se-controls"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Strength (STR) summary avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"strength\"]) .disc-summary",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"strength\"]) .se-controls"
+        },
+        {
+          "kind": "text",
+          "label": "Dexterity (DEX) uses its full name",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .ls-label",
+          "includes": "Dexterity (DEX)"
+        },
+        {
+          "kind": "text",
+          "label": "Dexterity (DEX) states current per-point benefit",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .disc-summary",
+          "includes": "Defense"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Dexterity (DEX) name avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .ls-label",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .se-controls"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Dexterity (DEX) summary avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .disc-summary",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .se-controls"
+        },
+        {
+          "kind": "text",
+          "label": "Constitution (CON) uses its full name",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .ls-label",
+          "includes": "Constitution (CON)"
+        },
+        {
+          "kind": "text",
+          "label": "Constitution (CON) states current per-point benefit",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .disc-summary",
+          "includes": "Health"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Constitution (CON) name avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .ls-label",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .se-controls"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Constitution (CON) summary avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .disc-summary",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .se-controls"
+        },
+        {
+          "kind": "text",
+          "label": "Wisdom (WIS) uses its full name",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"]) .ls-label",
+          "includes": "Wisdom (WIS)"
+        },
+        {
+          "kind": "text",
+          "label": "Wisdom (WIS) states current per-point benefit",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"]) .disc-summary",
+          "includes": "Poise · Divine magic"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Wisdom (WIS) name avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"]) .ls-label",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"]) .se-controls"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Wisdom (WIS) summary avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"]) .disc-summary",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"]) .se-controls"
+        },
+        {
+          "kind": "text",
+          "label": "Intelligence (INT) uses its full name",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"]) .ls-label",
+          "includes": "Intelligence (INT)"
+        },
+        {
+          "kind": "text",
+          "label": "Intelligence (INT) states current per-point benefit",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"]) .disc-summary",
+          "includes": "Arcane magic"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Intelligence (INT) name avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"]) .ls-label",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"]) .se-controls"
+        },
+        {
+          "kind": "noOverlap",
+          "label": "Intelligence (INT) summary avoids controls",
+          "a": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"]) .disc-summary",
+          "b": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"]) .se-controls"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Old numeric gain badge remains",
+          "selector": ".cc-stat-modal .se-gain"
+        }
+      ]
+    },
+    {
+      "url": "?shot=rest&shotRestPoints=1&shotClass=reaver",
+      "ready": "#open-armoury",
+      "settleMs": 1500,
+      "name": "constitution HP only",
+      "actions": [
+        {
+          "tap": "#open-armoury"
+        },
+        {
+          "tap": ".armoury-head [data-modal-tab=\"character\"]"
+        },
+        {
+          "tap": ".character-level-action"
+        },
+        {
+          "tap": ".progression-points"
+        },
+        {
+          "wait": {
+            "ms": 150
+          }
+        },
+        {
+          "tap": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .disc-face"
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Constitution detail opens",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .disc-face[aria-expanded=\"true\"]"
+        },
+        {
+          "kind": "text",
+          "label": "CON gives five HP per point",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"])",
+          "includes": "HP +5 every 1 point"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "CON incorrectly claims Poise Mana or Stamina",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"])",
+          "matches": "Poise|Mana|Stamina"
+        }
+      ]
+    },
+    {
+      "url": "?shot=rest&shotRestPoints=1&shotClass=reaver",
+      "ready": "#open-armoury",
+      "settleMs": 1500,
+      "name": "dexterity Block and SP",
+      "actions": [
+        {
+          "tap": "#open-armoury"
+        },
+        {
+          "tap": ".armoury-head [data-modal-tab=\"character\"]"
+        },
+        {
+          "tap": ".character-level-action"
+        },
+        {
+          "tap": ".progression-points"
+        },
+        {
+          "wait": {
+            "ms": 150
+          }
+        },
+        {
+          "tap": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .disc-face"
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "DEX adds Block",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"])",
+          "includes": "Block"
+        },
+        {
+          "kind": "text",
+          "label": "DEX gives one SP each four points",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"])",
+          "includes": "Stamina / turn +1 every 4 points"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        }
+      ],
+      "failure": []
+    },
+    {
+      "url": "?shot=rest&shotRestPoints=1&shotClass=reaver",
+      "ready": "#open-armoury",
+      "settleMs": 1500,
+      "name": "wisdom Divine MP and Poise",
+      "actions": [
+        {
+          "tap": "#open-armoury"
+        },
+        {
+          "tap": ".armoury-head [data-modal-tab=\"character\"]"
+        },
+        {
+          "tap": ".character-level-action"
+        },
+        {
+          "tap": ".progression-points"
+        },
+        {
+          "wait": {
+            "ms": 150
+          }
+        },
+        {
+          "tap": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"]) .disc-face"
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "WIS gives one Poise per point",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"])",
+          "includes": "Poise +1 every 1 point"
+        },
+        {
+          "kind": "text",
+          "label": "WIS gives one MP each four points",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"])",
+          "includes": "Mana +1 every 4 points"
+        },
+        {
+          "kind": "text",
+          "label": "Divine magic scales with WIS",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"])",
+          "includes": "Divine magic scales with Wisdom."
+        },
+        {
+          "kind": "text",
+          "label": "Shared spells use higher stat, not sum",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"])",
+          "includes": "higher of Intelligence and Wisdom, never their sum"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        }
+      ],
+      "failure": []
+    },
+    {
+      "url": "?shot=rest&shotRestPoints=1&shotClass=reaver",
+      "ready": "#open-armoury",
+      "settleMs": 1500,
+      "name": "intelligence Arcane and hand",
+      "actions": [
+        {
+          "tap": "#open-armoury"
+        },
+        {
+          "tap": ".armoury-head [data-modal-tab=\"character\"]"
+        },
+        {
+          "tap": ".character-level-action"
+        },
+        {
+          "tap": ".progression-points"
+        },
+        {
+          "wait": {
+            "ms": 150
+          }
+        },
+        {
+          "tap": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"]) .disc-face"
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "Arcane magic scales with INT",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"])",
+          "includes": "Arcane magic scales with Intelligence."
+        },
+        {
+          "kind": "text",
+          "label": "Opening hand grows every four INT",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"])",
+          "includes": "Opening hand +1 every 4 points"
+        },
+        {
+          "kind": "text",
+          "label": "Turn draw grows every four INT",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"])",
+          "includes": "Draw / turn +1 every 4 points"
+        },
+        {
+          "kind": "text",
+          "label": "Hand capacity grows every four INT",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"])",
+          "includes": "Hand size +1 every 4 points"
+        },
+        {
+          "kind": "text",
+          "label": "Shared spells use higher stat, not sum",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"intelligence\"])",
+          "includes": "higher of Intelligence and Wisdom, never their sum"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        }
+      ],
+      "failure": []
+    },
+    {
+      "url": "?shot=rest&shotRestPoints=1&shotClass=reaver",
+      "ready": "#open-armoury",
+      "settleMs": 1500,
+      "name": "native disclosures do not block adjacent row",
+      "actions": [
+        {
+          "tap": "#open-armoury"
+        },
+        {
+          "tap": ".armoury-head [data-modal-tab=\"character\"]"
+        },
+        {
+          "tap": ".character-level-action"
+        },
+        {
+          "tap": ".progression-points"
+        },
+        {
+          "wait": {
+            "ms": 150
+          }
+        },
+        {
+          "tap": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .disc-face"
+        },
+        {
+          "tap": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .disc-face"
+        },
+        {
+          "tap": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .disc-face"
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "DEX opens after CON expand and collapse",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"dexterity\"]) .disc-face[aria-expanded=\"true\"]"
+        },
+        {
+          "kind": "hidden",
+          "label": "CON is collapsed",
+          "selector": ".cc-stat-modal .se-row:has([data-stat-id=\"constitution\"]) .disc-face[aria-expanded=\"true\"]"
+        },
+        {
+          "kind": "hidden",
+          "label": "No tooltip covers adjacent controls",
+          "selector": "#tooltip[data-open=\"true\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        }
+      ],
+      "failure": []
+    },
+    {
+      "url": "?shot=rest&shotRestPoints=1&shotClass=reaver",
+      "ready": "#open-armoury",
+      "settleMs": 1500,
+      "name": "commit one earned Wisdom point",
+      "actions": [
+        {
+          "tap": "#open-armoury"
+        },
+        {
+          "tap": ".armoury-head [data-modal-tab=\"character\"]"
+        },
+        {
+          "tap": ".character-level-action"
+        },
+        {
+          "tap": ".progression-points"
+        },
+        {
+          "wait": {
+            "ms": 150
+          }
+        },
+        {
+          "tap": ".cc-stat-modal .se-row:has([data-stat-id=\"wisdom\"]) [data-stat-action=\"increase\"]"
+        },
+        {
+          "tap": ".cc-stat-modal [data-stat-done]"
+        }
+      ],
+      "success": [
+        {
+          "kind": "hidden",
+          "label": "Allocation closes after Done",
+          "selector": ".cc-stat-modal"
+        },
+        {
+          "kind": "text",
+          "label": "One earned point was spent",
+          "selector": ".progression-points",
+          "includes": "0 points available"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console or page errors",
+          "max": 0
+        }
+      ],
+      "failure": []
+    }
+  ]
+}

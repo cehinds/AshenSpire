@@ -12,9 +12,9 @@
 //   boosts      net attribute change, by attribute, for the rest of the fight (turn boosts included)
 //   turnBoosts  the part of `boosts` that leaves again at the end of the owner's turn
 // The run's own attributes are never written: combat holds its own copies.
-import { statRow } from '../model/statRows.js';
-import { statRowValue } from '../model/derivedStats.js';
-import { PrAttributeView } from '../model/fixCoreMechanics.js';
+import { persistentPoiseMaximum } from '../model/combatRatings.js';
+import { ChannelRowValue } from '../model/channelRowValue.js';
+import { SpellScalingValue, SpellTraditionsActive } from '../model/spellTraditions.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { configuredCombat, profileHandSize } from './gameProfileCombat.js';
 
@@ -45,20 +45,16 @@ export function StatScaledNumber(entity, ids, mode = 'sum') {
 }
 
 /** ElementStatScale(entity, element) -> the attacker's live stat number an element's rule scales by (0 for an element with no stat scale). */
-export function ElementStatScale(entity, element) {
+export function ElementStatScale(entity, element, ctx = null) {
   const rule = ELEMENT_STAT_SCALING[element];
-  return rule ? StatScaledNumber(entity, rule.ids, rule.mode) : 0;
+  if (!rule) return 0;
+  return SpellTraditionsActive(ctx) ? SpellScalingValue(entity?.attributes || {}, { school: element })
+    : StatScaledNumber(entity, rule.ids, rule.mode);
 }
 
 const whole = value => Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
 
-function rowValue(ctx, entity, id, attributes) {
-  const run = { derivedStatRuleSnapshot: entity.kind === 'enemy' ? null : ctx.derivedStatRuleSnapshot, class: entity.kind === 'enemy' ? null : entity.classId };
-  const row = statRow(ctx.registries, run, id);
-  if (!row) return 0;
-  const read = id === 'pr' ? PrAttributeView(ctx, attributes) : attributes;
-  return statRowValue(row, { attributes: read, level: 1, statId: id, lenientAttributes: true }).value;
-}
+const rowValue = ChannelRowValue;
 
 function attributeRow(entity) {
   return (entity.ratingSources || []).find(row => row.kind === 'attribute') || null;
@@ -72,7 +68,7 @@ function snapshot(ctx, entity) {
     attributeRow: attributeRow(entity) ? Object.fromEntries(RATING_IDS.map(id => [id, Number(attributeRow(entity)[id]) || 0])) : null,
     maxHp: entity.maxHp, maxStamina: entity.maxStamina, maxMana: entity.maxMana, energyMax: entity.energyMax,
     drawPerTurn: entity.drawPerTurn,
-    persistentPoiseMax: entity.persistentPoise?.max, persistentWardMax: entity.persistentWard?.max, poiseMeterMax: entity.poiseMeter?.max,
+    persistentPoiseMax: Number.isFinite(entity.persistentPoise?.max) ? Math.max(0, entity.persistentPoise.max - (entity.persistentPoise.barrierBonus || 0)) : entity.persistentPoise?.max, persistentWardMax: entity.persistentWard?.max, poiseMeterMax: entity.poiseMeter?.max,
     ...(isPlayer ? { handMax: ctx.handMax, combatDrawPerTurn: ctx.drawPerTurn } : {}),
   };
 }
@@ -126,7 +122,11 @@ export function RecomputeLiveStats(ctx, entity) {
   if (Number.isFinite(base.maxMana)) resize(entity, 'maxMana', whole(base.maxMana + delta('mana')), ['mana']);
   // Poise and Ward pools move by the same rating delta their maxima were priced from at the fight start.
   if (entity.persistentPoise && Number.isFinite(base.persistentPoiseMax)) {
-    const max = whole(base.persistentPoiseMax + delta('poise'));
+    // Barrier and Ward stacks add their Poise on top (persistentPoise.barrierBonus, SPEC 4.1a). With a rating table the maximum comes from the
+    // same source syncPoiseMaximum uses (rating maximum + bonus), so the stored base format (a fight saved by 0.7.4.216 holds the bonus in it)
+    // no longer matters; otherwise the fight-start base plus the rating delta, plus the bonus.
+    const bonus = entity.persistentPoise.barrierBonus || 0;
+    const max = (entity.ratings && ctx.combatExpansionVersion === 2 ? persistentPoiseMaximum(ctx, entity) : whole(base.persistentPoiseMax + delta('poise'))) + bonus;
     entity.persistentPoise.value = clamp(entity.persistentPoise.value + Math.max(0, max - entity.persistentPoise.max), max);
     entity.persistentPoise.max = max;
   }

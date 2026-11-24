@@ -1,3 +1,5 @@
+import { ChannelLabel } from './damageChannels.js';
+import { TraditionSpellPower } from './spellTraditions.js';
 import { DEFAULT_BARRIER_POISE_PER_STACK } from '../content/barrierPoise.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
@@ -57,7 +59,7 @@ const words = s => s.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.to
  * hundred rows. One reader now, so the tab and its rows cannot disagree
  * (owner, 2026-09-21: "make them consistent with what I see with each other").
  */
-const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : id.toUpperCase());
+const ratingLabel = (id) => (id === 'poise' || id === 'ward' ? words(id) : ChannelLabel(id));
 
 /**
  * phrase(id) → a key-derived label that reads like the ones beside it.
@@ -98,11 +100,6 @@ function itemByRatingSource(bundle) {
 // validator and the legacy migration cannot drift.
 const ITEM_RATING_MAX = 999;
 
-function isMagicalPiece(equipment, piece) {
-  const profile = (equipment?.basicCardProfiles || []).find(row => row.id === piece.attackProfile);
-  return Boolean(profile && profile.damageSchool !== 'physical');
-}
-
 /**
  * THE ITEM'S RATINGS ARE THE ITEM'S OWN NUMBERS (owner, 2026-09-21: "if I edit
  * the AR in the settings for straight sword to 2 then it should show 2 on the
@@ -119,12 +116,11 @@ function isMagicalPiece(equipment, piece) {
  * row, the item column and the combat receipt cannot drift apart.
  */
 export function authoredItemRatings(equipment, piece) {
-  const magical = isMagicalPiece(equipment, piece);
-  const attack = piece.attackRating || 0;
+  // An armament carries no AR, DR or PR any more (owner, 2026-11-18): damage reads STR, Block DEX, magic max(INT, WIS).
   return {
-    ar: magical ? 0 : attack,
-    dr: piece.defenseRating || 0,
-    pr: magical ? attack : 0,
+    ar: 0,
+    dr: 0,
+    pr: 0,
     poise: piece.kind === 'armor' ? piece.poiseThreshold || 0 : 0,
     ward: 0,
   };
@@ -143,16 +139,12 @@ export function authoredItemRatings(equipment, piece) {
  * combat, it just has nowhere on the card to print.
  */
 export function itemRatingColumn(equipment, piece, id) {
-  const magical = isMagicalPiece(equipment, piece);
   // ARMOUR AUTHORS NO ATTACK RATING AT ALL. It carries `poiseThreshold` and
   // nothing else, so treating "no attack profile" as "physical, therefore the
   // attackRating column" stamped a field onto an outfit that content never
   // gives one — and the row's note then promised a card that prints only DR
   // and Poise would show it.
   if (piece.kind === 'armor') return id === 'poise' ? 'poiseThreshold' : null;
-  if (id === 'ar') return magical ? null : 'attackRating';
-  if (id === 'pr') return magical ? 'attackRating' : null;
-  if (id === 'dr') return piece.kind === 'armor' ? null : 'defenseRating';
   if (id === 'poise') return piece.kind === 'armor' ? 'poiseThreshold' : null;
   return null;
 }
@@ -215,7 +207,7 @@ export function combatRatingRows(bundle) {
     note: 'Applies to new runs. Existing runs and combat saves keep their rules.', ...extra,
   });
   add('enabled', true, 'Enable ratings, Poise & Ward', 'General', {
-    note: 'On: AR, DR, PR, Poise and Ward come from their stat rows under each topic. Off: Poise uses its older conversion and meter, shown under Poise. Applies to new runs.',
+    note: 'On: Poise and Ward come from their stat rows under each topic. Off: Poise uses its older conversion and meter, shown under Poise. Applies to new runs.',
   });
   // (The per-rating formulas and the global multiplier moved to the stat rows
   // — Advanced → Stats → AR, DR, PR, Poise, Ward — in ruleset 7. Their old
@@ -251,7 +243,7 @@ export function combatRatingRows(bundle) {
         max: 1, step: 0.05,
         note: 'Reduces hostile buildup or incoming stacks, never duration or proc severity. Both weights zero means unresisted. Weights are added without normalization.',
       });
-    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${statusLabel(status)} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
+    for (const id of ['poise', 'ward']) add(`bonuses.status:${status.id}.${id}`, 0, `${statusLabel(status)} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
   }
   // WHO WEARS IT, AND WHICH ONE IT IS. Every class owns a free starting
   // armour that shares its name with an "All classes" set piece — the Reaver
@@ -270,17 +262,16 @@ export function combatRatingRows(bundle) {
   };
   for (const piece of [...bundle.equipment.armaments, ...bundle.equipment.armour]) {
     const authored = authoredItemRatings(bundle.equipment, piece);
-    for (const id of ratingIds) add(`itemRatings.${ratingSourceKey(piece)}.${id}`, authored[id],
+    for (const id of ['poise', 'ward']) add(`itemRatings.${ratingSourceKey(piece)}.${id}`, authored[id],
       `${piece.name}${ownerOf(piece)} — ${ratingLabel(id)}`, piece.kind === 'armor' ? 'Armour ratings' : 'Weapon ratings', {
         integer: true, step: 1, min: 0, max: ITEM_RATING_MAX,
         note: `The item’s own ${ratingLabel(id)}, not a bonus: the row opens on the authored number and whatever you leave here IS the item’s ${ratingLabel(id)}. `
           + `Attributes, relics and status bonuses are added to it.${itemRatingColumn(bundle.equipment, piece, id) ? ' The item card shows this number.' : ` ${piece.name} has no authored ${ratingLabel(id)} column, so this one is carried as a rating only and the item card does not print it.`}`
-          + (id === 'dr' && piece.kind === 'armor' ? ' The DR the armour card prints is the Block its own effects add, which is a different number and is not set here.' : '')
           + (id === 'poise' && piece.kind === 'armor' ? ' Armour Poise is also its weight (SPEC §13.4): raising it raises what the set costs to wear.' : '')
           + ' Applies to a new run.',
       });
   }
-  for (const relic of bundle.relics) for (const id of ratingIds) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${ratingLabel(id)}`, 'Relic bonuses');
+  for (const relic of bundle.relics) for (const id of ['poise', 'ward']) add(`bonuses.relic:${relic.id}.${id}`, 0, `${relic.name} — additional ${ratingLabel(id)}`, 'Relic bonuses');
   for (const enemy of bundle.enemies) {
     for (const id of ['poise', 'ward']) add(`enemyRatings.${enemy.id}.${id}`, enemy.poiseMax || 1, `${enemy.name} — ${ratingLabel(id)}`, 'Enemy defences', { integer: true, step: 1, note: 'Sets this enemy’s resistance rating and initial break threshold. Zero removes passive resistance; the break threshold stays at least 1.' });
     add(`enemyImpact.${enemy.id}`, -1, `${enemy.name} — physical impact`, 'Enemy impact', {
@@ -490,11 +481,11 @@ export function ratingReceipt(registries, run, config) {
   return { totals, sources, attributeReceipts };
 }
 
-export function ratingValue(ctx, entity, id) {
-  let value = (entity?.ratings?.[id] || 0) + stanceRatingBonus(ctx, entity, id);
+export function ratingValue(ctx, entity, id, carrier = null) {
+  let value = (entity?.ratings?.[id] || 0) + stanceRatingBonus(ctx, entity, id, carrier);
   for (const [status, instance] of Object.entries(entity?.statuses || {})) value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
-  return Math.max(0, value);
+  return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);
 }
 
 /**
@@ -506,7 +497,7 @@ export function finesseRatingView(entity) {
   const rows = Array.isArray(entity?.ratingSources) ? entity.ratingSources : [];
   const shift = rows.filter(row => row.kind === 'attribute').reduce((sum, row) => sum + (Number(row.dr) || 0) - (Number(row.ar) || 0), 0);
   if (!shift) return entity;
-  return { ...entity,
+  return { ...entity, finesseView: true, // stance attribute grants price the DEX row for AR (stanceRules.stanceAttributeBonus)
     ratings: { ...entity.ratings, ar: (Number(entity.ratings?.ar) || 0) + shift },
     ratingSources: rows.map(row => row.kind === 'attribute' ? { ...row, ar: Number(row.dr) || 0 } : row) };
 }
@@ -517,9 +508,9 @@ export function carrierHasTag(ctx, carrier, tag) {
   return [...(carrier?.tags || def?.tags || []), ...(carrier?.cardTags || [])].includes(tag);
 }
 
-export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false) {
-  if ((!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id);
-  let value = stanceRatingBonus(ctx, entity, id);
+export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false, carrier = null) {
+  if ((!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id, carrier);
+  let value = stanceRatingBonus(ctx, entity, id, carrier);
   for (const source of entity.ratingSources) {
     if (source.kind !== 'equipment') value += Number(source[id]) || 0;
     else if (sourceArmamentId && (source.sourceId === sourceArmamentId || source.sourceId === `armament/${sourceArmamentId}`)
@@ -529,7 +520,7 @@ export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentSc
     value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
   }
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
-  return Math.max(0, value);
+  return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);
 }
 
 export function isMagicalAttack(ctx, carrier) {
@@ -739,12 +730,15 @@ export function techniqueMagicShare(config) {
  * also joins the primary part. Parts never go negative: a shortfall moves to the
  * other part, so the two always sum to the amount.
  */
-export function splitContactParts({ amount, base = amount, ratingBonus = 0, ratingPart = null, share = 0, primary = 'physical' }) {
+export function splitContactParts({ amount, base = amount, ratingBonus = 0, ratingPart: typedPart = null, share = 0, primary = 'physical' }) {
+  let ratingPart = typedPart;
   const total = Math.max(0, Math.floor(Number(amount) || 0));
   const card = Math.max(0, Math.floor(Number(base) || 0));
   const rating = Math.max(0, Math.floor(Number(ratingBonus) || 0));
   const cardMagic = share >= 1 ? card : share > 0 ? Math.floor(card * share + 1e-9) : 0;
   let magic = cardMagic, physical = card - cardMagic;
+  // A hit with magic share 0 deals no magic (Force and Alteration, owner 2026-11-18): its Power joins the physical part too.
+  if (ratingPart === 'magic' && share <= 0) ratingPart = 'physical';
   if (ratingPart === 'magic') magic += rating;
   else if (ratingPart === 'physical') physical += rating;
   // The rest of the hit: everything beyond the card and its typed rating, and an untyped rating too.
@@ -753,6 +747,31 @@ export function splitContactParts({ amount, base = amount, ratingBonus = 0, rati
   if (magic < 0) { physical += magic; magic = 0; }
   if (physical < 0) { magic += physical; physical = 0; }
   return { magic, physical };
+}
+
+/**
+ * PacketSplit({ base, share, physicalBonus, magicBonus, magicMultiplier, total }) -> { physical, magic } of the figure `total` of an element packet
+ * hit (a physical hit with a magic share and its own INT / Power stage, owner 2026-11-19). The ONE split the receipt, the live preview and the
+ * face all read. Each part starts as its own share of the hit (the card's magic share of its base plus the Power bonus; the rest of the base plus
+ * STR / AR); every multiplier of the chain (Vulnerable, stance, weakness, Burn and the other element stages) then scales both parts in proportion, and
+ * `physicalMultiplier` (the effects' physical-damage scale) cuts the physical part alone, and `magicMultiplier` (elemental flux, owner ruling 2026-11-20) weighs the magic part alone: the chain carries it as a factor on the magic share of the hit only.
+ */
+export function PacketSplit({ base, share, physicalBonus = 0, magicBonus = 0, magicMultiplier = 1, physicalMultiplier = 1, total }) {
+  const value = Math.max(0, Math.floor(Number(total) || 0));
+  const weights = PacketWeights({ base, share, physicalBonus, magicBonus });
+  const magicWeight = weights.magic * Math.max(0, Number.isFinite(magicMultiplier) ? magicMultiplier : 1);
+  const physicalWeight = weights.physical * Math.max(0, Number.isFinite(physicalMultiplier) ? physicalMultiplier : 1);
+  const sum = magicWeight + physicalWeight;
+  let magic = sum > 0 ? Math.min(value, Math.floor(value * magicWeight / sum + 1e-9)) : 0;
+  // Owner ruling: a packet's magic part always deals at least 1 of its element. The 1 comes off the physical part (never below 0); a hit of 0 stays 0.
+  if (value > 0 && magic < 1 && share > 0) magic = 1;
+  return { physical: value - magic, magic };
+}
+/** PacketWeights({ base, share, physicalBonus, magicBonus }) -> { magic, physical }: the two parts of a packet hit before any multiplier. */
+export function PacketWeights({ base, share, physicalBonus = 0, magicBonus = 0 }) {
+  const card = Math.max(0, Math.floor(Number(base) || 0));
+  const magicCard = Math.floor(card * Math.min(1, Math.max(0, share)) + 1e-9);
+  return { magic: magicCard + Math.max(0, magicBonus), physical: card - magicCard + Math.max(0, physicalBonus) };
 }
 
 /** magicDamageTypeOf(profile) → the Ward type a hit's magic part deals: its school's, else its damage type when that is magic. */
@@ -824,6 +843,7 @@ export function BarrierPoiseFactor(effect, source) {
  * fight's FixCore rules, the same Poise effect Barrier is (no separate Ward pool). A fight whose rules carry no `poisePerStack`
  * (saved before this ruling) gives none. It rides on the Poise `barrierBonus` field with Barrier's, so it is clamped the same way. */
 function wardPoiseBonus(ctx, entity) {
+  if (ctx?.fixCoreRules?.ward?.routing === 'hpBuffer') return 0;
   const per = ctx?.fixCoreRules?.ward?.poisePerStack;
   return Number.isInteger(per) && per > 0 ? Math.floor((entity?.statuses?.ward?.stacks || 0) * per) : 0;
 }

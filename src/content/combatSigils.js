@@ -1,4 +1,14 @@
 import { CARD_COMPONENTS } from './cardComponents.generated.js';
+import { uiStrings } from './generated/uiStrings.js';
+// Content may not import model/strings.js (tests/layering.test.mjs ranks), so the
+// tradition words are read straight from the generated uiStrings table, loudly.
+const uiRow = (id) => {
+  const row = uiStrings.find(entry => entry.id === id);
+  if (!row?.short || !row.full) throw new Error(`combatSigils: uiStrings row ${id} needs short and full text`);
+  return row;
+};
+const t = (id) => uiRow(id).short;
+const tFull = (id) => uiRow(id).full;
 // Original monochrome marks. Identity comes from authored combat tags, never
 // a card name, damage element, class colour, or inferred effect.
 const mark = (label, shape, help, solid = false) => Object.freeze({ label, shape, help, solid });
@@ -12,7 +22,8 @@ export const ACTION_SIGILS = Object.freeze({
   counter: mark('Counter', '<path d="M15 2 26 6v3L7 28c-3-3-4-6-4-11V7Zm11 14v2c0 6-11 12-11 12l-4-2ZM28 2l2 1-1 6L12 26l-3-3ZM6 21l7 7-2 2-7-7ZM2 29l2 2 4-4-2-2Z"/>', 'Prepare a reply to a qualifying incoming action. Inspect for its conditions.', true),
   sweep: mark('Sweep', '<path d="M4 23q12-24 24 0M4 23h24M24 18l4 5-4 5"/>', 'An attack across several targets.'),
   ranged: mark('Ranged', '<path d="m30 2-5 14-4-5L10 22v6l-5 3v-6H0l4-6h6L20 9l-5-3Z"/>', 'An attack made at range.', true),
-  smash: mark('Smash', '<path d="M3 9q0-4 4-4h3q1-3 4-3h3q3 0 4 3h3q4 0 4 4v5l3 2v6l-7 6v4H10v-5l-7-7Zm6-1v8h2V8Zm7-3v11h2V5Zm7 3v8h2V8ZM8 19v3h11l6-5-2-2-5 4Z"/>', 'A heavy, forceful attack.', true),
+  // Smash wears the hammer the blunt, heavy and Poise marks already use (playtest 2026-11-17: "the smash icon becomes a hammer").
+  smash: mark('Smash', '<path d="M5 2h22v12H5Zm8 14h6v15h-6Z"/>', 'A heavy, forceful attack.', true),
   spell: mark('Spell', '<path d="m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"/>', 'A spell. Information identifies its school.', true),
   power: mark('Power', '<path d="M13 28V13H8L16 3l8 10h-5v15ZM4 16v6m-3-3h6m19 1v8m-4-4h8"/>', 'Cast once; its buff lasts for this combat. The paid card leaves play.'),
   skill: mark('Skill', '<path d="M5 17v-5l4-4 4 4v3l5-8 5 3-4 7h7v5l-9 6H9Z"/>', 'Reusable utility or a buff. Inspect for its effects.'),
@@ -28,6 +39,15 @@ export const SCHOOL_SIGILS = Object.freeze({
   illusion: mark('Illusion', '<path d="M2 16Q16 1 30 16 16 31 2 16Z"/><circle cx="16" cy="16" r="5"/><path d="m6 28 20-24"/>', 'Illusion magic.'),
   divine: mark('Divine', '<circle cx="16" cy="16" r="8"/><path d="M16 4v24M4 16h24M7 7l3 3m12 12 3 3M7 25l3-3M22 10l3-3"/>', 'Divine magic.'),
   decay: mark('Decay', '<path d="M26 5C9 2 3 10 7 22c12 4 20-2 19-17ZM7 25l14-14M12 20l-1-7m6 2 6 1M4 28h.01M27 25h.01"/>', 'Decay magic.'),
+});
+
+// Original scalable silhouettes: a geometric casting seal and a radiant sun.
+// Kept separate from action identities so costs, stances and spell triggers
+// retain the canonical spell camp.
+export const TRADITION_SIGILS = Object.freeze({
+  // Tradition words live in uiStrings.csv (card.tradition.*).
+  arcane: mark(t('card.tradition.arcane'), '<path d="M16 1 30 9v14L16 31 2 23V9Zm0 5L6 12v8l10 6 10-6v-8Zm0 3 7 12H9Zm0 5-3 5h6Z"/>', tFull('card.tradition.arcane'), true),
+  divine: mark(t('card.tradition.divine'), '<path d="M14 1h4v6h-4Zm0 24h4v6h-4ZM1 14h6v4H1Zm24 0h6v4h-6ZM4 6l2-2 5 5-2 2Zm17 17 2-2 5 5-2 2ZM4 26l5-5 2 2-5 5ZM21 9l5-5 2 2-5 5ZM16 8a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm0 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>', tFull('card.tradition.divine'), true),
 });
 
 // A mirror's mark and word. Technique has no mark of its own: it wears the Skill mark under its own word.

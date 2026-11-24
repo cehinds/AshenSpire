@@ -1,0 +1,165 @@
+{
+  "request": "fix a bug where the effect damage doesn't actually match on the card. for example the damage is set to 12, but the card doesn't actually say 5. also the card type should be card type such as attack, skill, spell, sweep, counter, defend. It should also have a check box for magic and martial with weights and a weight config (flat bonus and a multiplier toggle for each category, in the weights section). adjust the value for the school so that having both martial and magic will have a higher cp. set both to 0, and having both 10. can't scroll in narrow screens.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "inspector-type-school-and-amount",
+      "url": "/tools/score-studio/",
+      "ready": ".studio-card-tile[data-card-id=\"core.cantrip\"]",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".studio-card-tile[data-card-id=\"core.cantrip\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "text",
+          "label": "Card Type list starts Attack, Skill, Spell (Spell is new; the checker reads the first 60 characters)",
+          "selector": "#edit-type",
+          "matches": "Attack\\s+Skill\\s+Spell"
+        },
+        {
+          "kind": "visible",
+          "label": "Martial checkbox shown",
+          "selector": "#edit-martial"
+        },
+        {
+          "kind": "visible",
+          "label": "Magic checkbox shown",
+          "selector": "#edit-magic"
+        },
+        {
+          "kind": "text",
+          "label": "Card face prints 4 damage",
+          "selector": "#inspector-card-preview .card",
+          "includes": "4 damage"
+        },
+        {
+          "kind": "text",
+          "label": "Damage row counts the printed 4",
+          "selector": "#active-features-list .feature-row .feature-count",
+          "includes": "×4"
+        },
+        {
+          "kind": "within",
+          "label": "School checkboxes stay inside Card Basics",
+          "selector": ".school-checks",
+          "container": ".form-grid"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "Old Camp select still shown",
+          "selector": "#edit-camp"
+        }
+      ]
+    },
+    {
+      "name": "weights-categories",
+      "url": "/tools/score-studio/",
+      "ready": ".studio-card-tile",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".studio-tab[data-tab=\"weights\"]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "Categories group has twelve multiplier toggles (Martial, Magic, Hybrid, nine types)",
+          "selector": ".weight-row input.weight-mult",
+          "eq": 12
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0
+        },
+        {
+          "kind": "text",
+          "label": "Hybrid row is listed",
+          "selector": "#weights-container",
+          "includes": "Hybrid (Martial + Magic)"
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "Categories print undefined or NaN",
+          "selector": "#weights-container",
+          "matches": "undefined|NaN"
+        }
+      ]
+    },
+    {
+      "name": "weights-scroll",
+      "url": "/tools/score-studio/",
+      "ready": ".studio-card-tile",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".studio-tab[data-tab=\"weights\"]"
+        },
+        {
+          "wait": {
+            "ms": 400
+          }
+        },
+        {
+          "scrollTo": {
+            "selector": "body",
+            "top": 1500
+          }
+        },
+        {
+          "wait": {
+            "ms": 300
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "scrollTop",
+          "label": "Weights page scrolls on narrow screens (body is the scroller there)",
+          "selector": "body",
+          "min": 0
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No console errors",
+          "max": 0
+        }
+      ],
+      "failure": []
+    }
+  ]
+}

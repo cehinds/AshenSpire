@@ -10,6 +10,24 @@
   },
   "killLevelMultiplier": 0.2,
   "combatPowerMultiplier": 0.2,
+  "tierMultiplier": {
+    "normal": 1,
+    "elite": 3,
+    "boss": 1.5,
+    "$note": {
+      "{kind}": "Multiplier on the whole fight's character XP (win plus kills) when {pool} is fought. Owner 2026-11-18: an elite pays triple, a boss one and a half times, on top of the fightCurve (pace tuned with tools/level-pace-sim.mjs)."
+    }
+  },
+  "fightCurve": {
+    "scale": 2.7,
+    "floorExponent": 1.8,
+    "actExponent": 1.5,
+    "$note": {
+      "scale": "Overall size of the curve: a fight pays scale × (floor / the act's boss floor)^floorExponent × act^actExponent (owner 2026-11-18; measure with tools/level-pace-sim.mjs). Multiplies the whole fight's XP (win plus kills) before the tier multiplier.",
+      "floorExponent": "Polynomial power on (floor / the act's boss floor). Floor 1 pays almost nothing; the boss floor pays the full share.",
+      "actExponent": "Polynomial power on the act number: act 2 pays 2^1.5 and act 3 pays 3^1.5 times act 1 at the same floor share."
+    }
+  },
   "quest": 125,
   "$note": {
     "combatWin": "Base XP multiplied by the total combat power of defeated enemies and the combat-power multiplier after a win.",

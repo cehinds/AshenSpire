@@ -44,8 +44,8 @@ test('§15.2 falsify: with maxLevelsPerFight 1, a large boss award gains exactly
   assert.equal(award.levelUps, 1);
   assert.equal(run.level.level, 2);
   assert.ok(run.level.xp < xpToNext(reg, 2), `xp ${run.level.xp} must stay under the step ${xpToNext(reg, 2)}`);
-  // With 0 — the shipped cap — a large award can cross two levels.
-  assert.equal(playAward({ ...settings, [CAP]: 0 }, 'boss', 1).award.levelUps, 2);
+  // With 0 — the shipped cap — a large award can cross several levels (three since the boss tier doubled XP, owner 2026-11-18).
+  assert.equal(playAward({ ...settings, [CAP]: 0 }, 'boss', 1).award.levelUps, 3);
   assert.equal(playAward({}, 'boss', 1).award.levelUps, 0);
 });
 
@@ -126,7 +126,7 @@ test('§15.2: the cap is a generated Progression row with a note', () => {
 // the door says how much the cap threw away.
 test('§15.2: the spoils receipt says how much XP the level cap discarded', async () => {
   const { combatXpGains, rewardProgress } = await import('../src/model/rewardprogress.js');
-  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const { MountRewards } = await import('../src/ui/screens/reward.js');
   const { rewardDom } = await import('./helpers/dom.mjs');
   const reg = withCap(1);
   const run = { class: 'reaver', cinders: 0, deck: [], flasks: [], relics: [], coreTags: [], loadout: { storage: [] }, level: emptyLevel(), skills: {} };
@@ -147,7 +147,7 @@ test('§15.2: the spoils receipt says how much XP the level cap discarded', asyn
   try {
     const app = document.createElement('main');
     document.body.append(app);
-    mountRewards(app, { registries: reg, run, onDone() {}, rewards: { cinders: 10, xpGains: gains } });
+    MountRewards(app, { registries: reg, run, onDone() {}, rewards: { cinders: 10, xpGains: gains } });
     const row = app.querySelector('.reward-progress-row');
     const text = (cls) => row.children.find((child) => child.className.includes(cls))?.textContent;
     assert.equal(text('rp-gain'), 'Gained: 345 xp', 'Character uses the same gained-XP receipt row as other tracks');

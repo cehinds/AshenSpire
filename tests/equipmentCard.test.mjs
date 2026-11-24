@@ -1,3 +1,5 @@
+import { GearVocabularyEnabled } from '../src/model/gearEffects.js';
+import { parseMod } from '../src/model/loadout.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -7,12 +9,64 @@ import { createRegistries } from '../src/model/registries.js';
 import { equipmentCardModel, equipmentCardTokens } from '../src/model/equipmentCard.js';
 import { armourMenuAsset } from '../src/model/paintedOutfitArt.js';
 import { armamentIconAsset } from '../src/model/equipmentArt.js';
+import { core2Registries } from './helpers/core2.mjs';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 const r = createRegistries(contentBundle);
+
+test('current Staff inspector shows Ward, Prepared Focus and its signature beside configured stats', () => {
+  const current = core2Registries(), piece = current.equipment.armaments.find(p => p.id === 'ashStaff');
+  const m = equipmentCardModel(current, piece), labels = m.bonuses.map(b => b.label);
+  assert.ok(labels.includes('Start of turn: +1 Ward'));
+  assert.ok(labels.includes('Spells in Prepared stance: -1 MP cost'));
+  assert.ok(labels.includes('Power: +2 Potency'));
+  assert.ok(m.facts.some(f => f.label === 'intelligence' && f.value === 1), 'configured attribute receipt remains');
+  assert.ok(!m.typeExplanation.includes('every spell'), 'classification copy must not claim unconditional Focus');
+  assert.ok(m.bonuses.every(b => !b.value.includes('=') && !b.label.includes('@')), 'no raw modifier strings');
+});
+
+test('current Hammer inspector shows on-hit Vulnerable and Poise-break Retreat with its signature', () => {
+  const current = core2Registries(), piece = current.equipment.armaments.find(p => p.id === 'warhammer');
+  const labels = equipmentCardModel(current, piece).bonuses.map(b => b.label);
+  assert.ok(labels.includes('Physical attacks: +1 Poise damage'));
+  assert.ok(labels.includes('Smashes: apply 1 Vulnerable'));
+  assert.ok(labels.includes('Smashes that break Poise: +1 Retreat on hit'));
+  assert.ok(labels.includes('Strike: +6 Poise'));
+});
+
+test('current Heavy inspector keeps configured stats and adds group Poise, Thorns and signature rules once', () => {
+  const current = core2Registries(), piece = current.equipment.armour.find(p => p.id === 'wayfarerPlate' && p.classId === 'reaver');
+  const m = equipmentCardModel(current, piece), labels = m.bonuses.map(b => b.label);
+  assert.ok(labels.includes('6 Poise. Gain 1 Constitution.'));
+  assert.equal(labels.filter(label => label === '+2 Poise').length, 1);
+  assert.equal(labels.filter(label => label === '+1 Thorns').length, 1);
+  assert.ok(labels.includes('Defend cards: +2 Block'));
+  assert.ok(labels.includes('+4 Max HP'), 'signature pool remains when configured item supplies none');
+  assert.equal(m.facts.find(f => f.label === 'Poise').value, 6, 'group bonus is additional to the configured item receipt');
+});
+
+test('Light and Medium inspector conditions name the held status', () => {
+  const current = core2Registries();
+  for (const [id, stance, status] of [['gutterLeathers', 'Defend', 'Evade'], ['vigil', 'Counter', 'Counter']]) {
+    const piece = current.equipment.armour.find(p => p.id === id);
+    assert.ok(equipmentCardModel(current, piece).bonuses.some(b => b.label === `End of turn in ${stance} stance, while holding ${status}: +1 ${status}`));
+  }
+});
+
+test('an absent-version inspector preserves its legacy configured output without type or signature leakage', () => {
+  const old = legacyGearRegistries(core2Registries());
+  const staffPiece = old.equipment.armaments.find(p => p.id === 'ashStaff');
+  const staff = equipmentCardModel(old, staffPiece);
+  assert.deepEqual(staff.bonuses, []);
+  assert.equal(staff.typeExplanation, staffPiece.itemTypes.map(type => old.tags.find(tag => tag.id === type.tag)?.blurb).filter(Boolean).join(' '), 'legacy classification still reads its authored tag blurbs');
+  const plate = equipmentCardModel(old, old.equipment.armour.find(p => p.id === 'wayfarerPlate' && p.classId === 'reaver'));
+  assert.deepEqual(plate.bonuses.map(b => b.label), ['6 Poise. Gain 1 Constitution.']);
+  assert.ok(!JSON.stringify(plate.bonuses).includes('Thorns'));
+});
 test('every canonical equipment item has complete card facts, bonuses and available painted identity', () => {
   for (const p of [...r.equipment.armaments, ...r.equipment.armour]) {
     const m = equipmentCardModel(r, p);
     assert.equal(m.name, p.name);
-    assert.equal(m.bonuses.length, p.mods.filter(raw => !(p.kind === 'armor' && /^defend\.block=[+-]/.test(raw))).length);
+    assert.equal(m.bonuses.length, p.mods.filter(raw => GearVocabularyEnabled(r, r.equipment.modFields[parseMod(raw).field]) && !(p.kind === 'armor' && /^defend\.block=[+-]/.test(raw))).length);
     assert.equal(m.tags.length, p.tags.length);
     assert.ok(m.facts.every(f => Number.isFinite(f.value) && f.explanation));
     assert.ok(m.bonuses.every(b => b.explanation && !b.label.includes('undefined')));
@@ -72,9 +126,10 @@ test('the inspect door pins its own level, whatever a caller forwards through op
     "level: 'inspect' must come AFTER ...options so a forwarded level cannot override the reading door");
 });
 
-test('armor DR shows additive defense bonuses once and preserves other effects', () => {
+test('armor defend.block shows additive defense bonuses once and preserves other effects', () => {
  const m = equipmentCardModel(r, {...r.equipment.armour[0], mods:['defend.block=+2','self.maxHp=+4']});
- assert.equal(m.facts[0].label, 'DR');
+ // Owner 2026-11-18 (§8): DR is gone, so the additive defend.block bonus reads as Block.
+ assert.equal(m.facts[0].label, 'Block');
  assert.equal(m.facts[0].value, 2);
  assert.equal(m.bonuses.length, 1);
  assert.match(m.bonuses[0].label, /4/);

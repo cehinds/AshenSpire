@@ -1,70 +1,239 @@
-// The Armoury's equip flow for an Inventory item is two small modals, not an
-// inline section (owner, 2026-11-05): "Choose a slot" when the item fits more
-// than one open position, then the compare modal (an occupied position,
-// components/equipCompareModal.js) or this file's confirm modal (an empty one).
-// Both are kit modals, so Escape / the header close / the veil answer Back and
-// focus returns to `opener`. The host owns the equip and every refusal.
-import { openModal, button, el } from '../kit/index.js';
+import { openModal, button, el as buildElement } from '../kit/index.js';
 import { renderEquipmentCard } from './equipmentCard.js';
-import { optionRowList, markOptionRows } from './optionRowList.js';
-import { t } from '../strings.js';
+import { OpenChoiceModal } from './choiceModal.js';
+import { optionRowList } from './optionRowList.js';
+import { ModalModelFor } from '../models/ModalModel.js';
+import { t as translate } from '../strings.js';
 
-/**
- * openSlotChoiceModal({ options, onChoose, opener })
- *   options  [{ id, label, sub, disabled?, hint? }] — one per position; a locked
- *            position is disabled and shows its unlock hint as the sub-line.
- *   onChoose(id) runs after the modal has closed.
- */
-export function openSlotChoiceModal({ options, onChoose, opener }) {
-  const back = button({ label: t('common.back'), role: 'exit' });
-  const choose = button({ label: t('common.choose'), weight: 'primary', disabled: true });
-  let list = null;
-  let selected = null;
-  const shell = openModal({
-    title: t('armoury.slot.title'), size: 'md', className: 'option-choice equip-slot-choice', deferFocus: true,
-    opener, closeLabel: t('common.back'), secondary: [back], primary: choose,
-    initialFocus: () => [...(list?.querySelectorAll('[data-slot-option]') || [])].find((row) => !row.disabled) || null,
-    body(host) {
-      list = optionRowList(options.map((option) => ({
-        id: option.id, name: option.label, text: option.disabled && option.hint ? option.hint : option.sub,
-        disabled: !!option.disabled, className: 'equip-slot-option',
-      })), {
-        idAttr: 'data-slot-option',
-        onSelect: (id, row) => {
-          selected = id;
-          row?.focus?.({ preventScroll: true });
-          markOptionRows(list, 'data-slot-option', [id]);
-          choose.disabled = false;
-        },
-      });
-      host.append(list);
-    },
-  });
-  back.addEventListener('click', () => shell.close());
-  choose.addEventListener('click', () => { if (selected == null) return; shell.close(); onChoose?.(selected); });
-  return shell;
+const CLICK_EVENT = 'click';
+const SLOT_CHOICE_KIND = 'slotChoice';
+const ITEM_CHOICE_KIND = 'itemChoice';
+const BACK_LABEL_KEY = 'common.back';
+const EQUIP_LABEL_KEY = 'armoury.picker.act.equip';
+const CONFIRM_LABEL_KEY = 'common.confirm';
+const CARD_OPTIONS = Object.freeze({
+    inspection: false,
+    interactive: false,
+    level: 'inspect',
+    surface: 'armoury',
+});
+
+function buildBackButton()
+{
+    return button({
+        label: translate(BACK_LABEL_KEY),
+        role: 'exit',
+    });
+}
+
+function openBackableModal({
+    backButton,
+    primaryButton,
+    opener,
+    ...modalOptions
+})
+{
+    const modal = openModal({
+        size: 'md',
+        deferFocus: true,
+        opener,
+        closeLabel: translate(BACK_LABEL_KEY),
+        secondary: [backButton],
+        primary: primaryButton,
+        ...modalOptions,
+    });
+    backButton.addEventListener(CLICK_EVENT, () => modal.close());
+    return modal;
+}
+
+function buildSlotRowModels(slotOptions)
+{
+    return slotOptions.map((slotOption) =>
+    {
+        const showsHint = slotOption.disabled && slotOption.hint;
+        return {
+            id: slotOption.id,
+            name: slotOption.label,
+            text: showsHint
+                ? slotOption.hint
+                : slotOption.sub,
+            disabled: !!slotOption.disabled,
+        };
+    });
+}
+
+function buildEquipButton()
+{
+    return button({
+        label: translate(CONFIRM_LABEL_KEY),
+        weight: 'primary',
+        className: 'equip-confirm-equip',
+    });
+}
+
+function buildConfirmTitle(name, slotLabel)
+{
+    return translate('armoury.confirm.title', {
+        verb: translate(EQUIP_LABEL_KEY),
+        name,
+        slot: slotLabel,
+    });
+}
+
+function renderEquipCard(host, registries, item)
+{
+    const renderedCard = renderEquipmentCard(
+        registries,
+        item,
+        CARD_OPTIONS,
+    );
+    const cardWrap = buildElement(
+        'div',
+        { class: 'equip-confirm-card' },
+        [renderedCard.card],
+    );
+    host.append(cardWrap);
 }
 
 /**
- * openEquipConfirmModal({ registries, item, name, slotLabel, onEquip, onBack, opener })
- *   The empty-position confirm: the item's card, Back / Equip.
+ * OpenSlotChoiceModal({ options, selectedId, onChoose, onBack, opener }) — Equip's "Choose a slot" list
+ * (docs/ARMOURY-LAYOUT-BRIEF.md, Armaments List). A slot press closes the list and hands its id to `onChoose`
+ * at once: the equip confirmation that follows is the only commit, so there is no separate Choose button.
+ * `selectedId` is the remembered destination, highlighted and focused while it is still enabled; it never
+ * commits by itself. Dismissing the list without a press runs `onBack`.
  */
-export function openEquipConfirmModal({ registries, item, name, slotLabel, onEquip, onBack, opener }) {
-  const back = button({ label: t('common.back'), role: 'exit' });
-  const equip = button({ label: t('armoury.picker.act.equip'), weight: 'primary', className: 'equip-confirm-equip' });
-  // Every way out but Equip (Back, Escape, browser Back, the X, the backdrop) lands on the list it came from (modalReturn.js).
-  let equipped = false;
-  const shell = openModal({
-    onClose: () => { if (!equipped) queueMicrotask(() => onBack?.()); },
-    title: t('armoury.confirm.title', { verb: t('armoury.picker.act.equip'), name, slot: slotLabel }), size: 'md', className: 'equip-confirm-modal',
-    deferFocus: true, opener, closeLabel: t('common.back'), secondary: [back], primary: equip,
-    initialFocus: () => equip,
-    body(host) {
-      const rendered = renderEquipmentCard(registries, item, { inspection: false, interactive: false, level: 'inspect', surface: 'armoury' });
-      host.append(el('div', { class: 'equip-confirm-card' }, [rendered.card]));
-    },
-  });
-  back.addEventListener('click', () => shell.close());
-  equip.addEventListener('click', () => { equipped = true; shell.close(); onEquip?.(); });
-  return shell;
+export function OpenSlotChoiceModal({ options, selectedId = null, onChoose, onBack, opener })
+{
+    const model = ModalModelFor(SLOT_CHOICE_KIND);
+    const backButton = buildBackButton();
+    const rememberedId = options.some((option) => option.id === selectedId && !option.disabled)
+        ? selectedId
+        : null;
+    let slotList = null;
+    let hasChosen = false;
+
+    function findInitialRow()
+    {
+        const rows = [...(slotList?.querySelectorAll(`[${model.idAttribute}]`) || [])];
+        const enabledRows = rows.filter((row) => !row.disabled);
+        return enabledRows.find((row) => row.getAttribute(model.idAttribute) === rememberedId)
+            || enabledRows[0]
+            || null;
+    }
+
+    function chooseSlot(slotId)
+    {
+        if (hasChosen)
+        {
+            return;
+        }
+        hasChosen = true;
+        modal.close();
+        onChoose?.(slotId);
+    }
+
+    function renderSlotList(host)
+    {
+        const rows = buildSlotRowModels(options).map((row) => ({ ...row, className: model.rowClassName }));
+        slotList = optionRowList(rows, {
+            idAttr: model.idAttribute,
+            columns: model.columns,
+            selectedId: rememberedId,
+            onSelect: chooseSlot,
+        });
+        host.append(slotList);
+    }
+
+    function backUnlessChosen()
+    {
+        if (!hasChosen)
+        {
+            onBack?.();
+        }
+    }
+
+    const modal = openBackableModal({
+        backButton,
+        opener,
+        kind: SLOT_CHOICE_KIND,
+        size: model.size,
+        footSize: model.footSize,
+        className: model.className,
+        bodyClassName: model.bodyClassName,
+        title: translate('armoury.slot.title'),
+        initialFocus: findInitialRow,
+        body: renderSlotList,
+        onClose: backUnlessChosen,
+    });
+    return modal;
+}
+
+/**
+ * OpenItemChoiceModal({ slotLabel, options, onChoose, opener }) — Replace / Choose item on a slot (owner, 2026-11-19):
+ * the items that fit that slot as option rows in a modal, instead of a picker drawn under the slot rows.
+ * `options`: { id, name, sub, status, disabled, hint }. Choosing one hands its id to `onChoose`.
+ */
+export function OpenItemChoiceModal({ slotLabel, options, onChoose, opener })
+{
+    return OpenChoiceModal({
+        kind: ITEM_CHOICE_KIND,
+        rows: options.map((option) => ({
+            id: option.id,
+            name: option.name,
+            text: option.disabled && option.hint ? option.hint : option.sub,
+            chip: option.status || '',
+            disabled: !!option.disabled,
+        })),
+        title: translate('armoury.picker.title', { slot: slotLabel }),
+        opener,
+        onCommit: onChoose,
+    });
+}
+
+export function OpenEquipConfirmModal({
+    registries,
+    item,
+    name,
+    slotLabel,
+    onEquip,
+    onBack,
+    opener,
+})
+{
+    const backButton = buildBackButton();
+    const equipButton = buildEquipButton();
+    let hasEquipped = false;
+
+    function returnToListUnlessEquipped()
+    {
+        if (!hasEquipped)
+        {
+            queueMicrotask(() => onBack?.());
+        }
+    }
+
+    function equipAndClose()
+    {
+        if (hasEquipped)
+        {
+            return;
+        }
+        hasEquipped = true;
+        modal.close();
+        onEquip?.();
+    }
+
+    const modal = openBackableModal({
+        backButton,
+        primaryButton: equipButton,
+        opener,
+        onClose: returnToListUnlessEquipped,
+        title: buildConfirmTitle(name, slotLabel),
+        className: 'equip-confirm-modal',
+        kind: 'compare',
+        initialFocus: () => equipButton,
+        body: (host) => renderEquipCard(host, registries, item),
+    });
+    equipButton.addEventListener(CLICK_EVENT, equipAndClose);
+    return modal;
 }

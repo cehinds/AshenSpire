@@ -312,7 +312,7 @@ it (4b). SPEC §13.4d; engine test 85.
 |---|---|
 | `rollSkillDraftIds(registries, rng, {skillId, level})` beside `rollCardRewardIds` (`src/engine/encounters.js:62`): filters the reward pool by group tag, unlocks rarity by `balance.skill.rarityUnlock`, weights by existing odds | |
 | Reward literal in `src/main.js:1936` gains one `skillDraft` row per skill with `pendingDrafts > 0`, capped by `draftsPerCombat`; `REWARD_KIND_ORDER` (`src/model/rewardplan.js:31`) places it where the class-card row sits and the class-card row is omitted when a skill draft is present | |
-| `mountRewards` (`src/ui/screens/reward.js:67`) renders the skill draft with the same pick-1-of-N component | |
+| `MountRewards` (`src/ui/screens/reward.js:67`) renders the skill draft with the same pick-1-of-N component | |
 | Auto-upgrade: on a skill reaching a `balance.skill.upgradeAt` level, every collection card tagged with the group gets `upgraded: true` | `skills.js` |
 | Smithing: `armamentLevels` tier is derived from skill level; `smithingStones` become a `skipToNextMilestone` purchase; `balance.smithing` rows re-pointed | `src/model/armamentSmithing` and the rest screen's smith panel |
 

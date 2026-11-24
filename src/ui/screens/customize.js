@@ -1,4 +1,5 @@
 import { uiIconText } from '../../content/uiIcons.js';
+import { CreateStepArrivalGuard } from '../stepArrivalGuard.js';
 import { groupCardVariants } from '../../model/cardGroups.js';
 import { uiZoom } from '../fx.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
@@ -39,7 +40,7 @@ import { settingOn } from './settings.js';
 import { statProjection, playerPoiseThresholdReceipt, handResourceRows, withHandResources, startingResourceRows } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
-import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
+import { previewCompatibleHands, startingHandsRequirementFailure } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
   selectStartingHand, quickStartRunConfig,
@@ -47,7 +48,7 @@ import {
 import { pieceChip, setPieceChipChosen } from './equipment.js';
 import { relicText, renderCard as renderCardFace, scheduleCardFits } from '../components/card.js';
 import { bindCardInspection, openCardInspection } from '../components/cardInspection.js';
-import { renderStatAllocationCard } from '../components/statAllocationCard.js';
+import { RenderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
@@ -77,9 +78,12 @@ import { mountDeckEditor } from './deckEditor.js';
 import { armouryOpensDeckEditor } from '../../model/armouryRules.js';
 import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
 import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
+import { ApplyStartingDeckChoice, StartingPoolCounts, StartingPoolIds } from '../../model/startingDeckChoice.js';
+import { OpenStartingCardsChooser } from '../components/startingCardsChooser.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 import { IsPopoverOpen } from '../popoverPolyfill.js';
 import { ColorMix } from '../colorMixCompat.js';
+import { ActivateOnKey, MarkSelected } from '../selection.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
   hp: 'HP',
@@ -92,11 +96,16 @@ const CREATION_INSPECTION_LABELS = Object.freeze({
   mana: 'Mana',
   stamina: 'Stamina',
   energy: 'Action Points (AP)',
-  ar: 'Attack Rating (AR)',
-  dr: 'Defense Rating (DR)',
-  pr: 'Potency Rating (PR)',
   openingHand: t('statsPreview.overview.openingHand'),
   draw: 'Cards drawn each turn',
+});
+const CHOICE_BY_INSPECTION = Object.freeze({
+  shouldFocusChoice: true,
+  shouldAdvanceSection: false,
+});
+const CHOICE_BY_BUTTON = Object.freeze({
+  shouldFocusChoice: false,
+  shouldAdvanceSection: true,
 });
 
 function creationDerivedLabel(entry) {
@@ -393,6 +402,7 @@ export function mountCustomize(app, {
   const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back', attrs: { 'data-back': '' } });
   const next = button({ label: t('creation.next'), id: 'cz-next', weight: 'primary', className: 'cz-next-stage' });
   const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
+  const stepArrival = CreateStepArrivalGuard();
   const foot = modalFooter({ note: catalog ? 'Choose your path. The spire remembers.' : '', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
   if (!catalog) foot.querySelector('.modal-foot-actions').insertBefore(next, start);
   const body = el('div', { class: 'modal-body cz-scroll' }, [
@@ -600,11 +610,14 @@ export function mountCustomize(app, {
 
   // Core 2's review step opens the deck editor on the starting deck; the edit is kept per class and sent with Begin.
   let deckEdit = null;
+  // Core's starting-card choice (owner, 2026-11-17): { classId, counts }, kept per class and sent with Begin.
+  let startingCards = null;
   function previewRun() {
     if (fixedCreation) {
       const base = createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
       // A deck edited from the review step rides on top of the class's starting deck (owner, 2026-11-06).
       if (deckEdit?.classId === state.classId) cancelDeckEdit(base, deckEdit.snapshot);
+      if (startingCards?.classId === state.classId) ApplyStartingDeckChoice(base, startingCards.counts, meta.settings || {});
       return base;
     }
     // Validate the live allocation independently of weapon requirements.
@@ -675,14 +688,13 @@ export function mountCustomize(app, {
     $('#cz-primary-stats').replaceChildren(...primaryStatCards(attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+      gainContext: { run },
     })));
     const poise = playerPoiseThresholdReceipt(registries, run);
     // Legacy ratings-off configurations still expose their equipment kit
     // attack and guard receipts. Modern totals come from the Poise receipt.
-    const legacyRatings = poise.ratings ? [] : equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run)
-      .filter((entry) => ['attack', 'guard'].includes(entry.role))
-      .map((entry) => ({ id: entry.role === 'attack' ? 'ar' : 'dr', value: entry.receipt.value,
-        formula: `${entry.profile.displayName} · before card-specific modifiers.` }));
+    // AR and DR are gone (owner, 2026-11-18): a ratings-off kit shows no attack or guard rating chip either.
+    const legacyRatings = [];
     // resourceStrip drops the derived `poise` row itself and appends the whole
     // threshold as one chip; this call only renames three faces.
     const resources = creationResources(run, projection)
@@ -857,6 +869,7 @@ export function mountCustomize(app, {
       const cards = new Map(attributeCardModels(registries, state.attributes, {
         projection: statProjection(registries, preview),
         equipmentProfiles: rules,
+        gainContext: { run: preview },
       }).map((card) => [card.id, card]));
       return orderedAttributes(registries).map((def) => ({
         id: def.id,
@@ -917,7 +930,7 @@ export function mountCustomize(app, {
       }
       renderCharacterPreview(); updateStartRefusal();
     };
-    const allocation = renderStatAllocationCard(app, {
+    const allocation = RenderStatAllocationCard(app, {
       title: 'Assign points',
       remaining: remainingPoints(),
       modal: true,
@@ -1205,7 +1218,7 @@ export function mountCustomize(app, {
           // Hew — is the named card behind the fold.
           const kinds = new Set(preview.cards.map(({ ref }) => ref.cardId).filter(Boolean));
           const summary = preview.cards.length
-            ? `Adds ${preview.total} ${preview.total === 1 ? 'card' : 'cards'}`
+            ? t('creation.startingCards.adds', { count: preview.total, plural: preview.total === 1 ? '' : 's' })
               + (kinds.size ? ` · ${kinds.size} ${kinds.size === 1 ? 'kind' : 'kinds'}` : '')
             : 'Adds no combat cards with the other hand as it stands';
           const fold = el('details', { class: 'cc-starting-fold' });
@@ -1281,6 +1294,26 @@ export function mountCustomize(app, {
         }
         showDetails(piece);
       };
+      const STARTING_CHOICE_WRITERS = {
+        relic: (piece) => { state.startingRelicId = piece.id; },
+        armour: (piece) => { state.startingArmourId = piece.id; },
+        hand: (piece) => { state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id); },
+      };
+      const writeStartingChoice = (piece) => {
+        const writeChoice = STARTING_CHOICE_WRITERS[section.kind];
+        if (writeChoice) writeChoice(piece);
+        else state.startingSlotChoices[section.id] = piece.id;
+      };
+      const selectStartingPiece = (piece, { shouldFocusChoice, shouldAdvanceSection }) => {
+        writeStartingChoice(piece);
+        for (const refresh of refreshers) refresh();
+        if (shouldFocusChoice) focusChoice(piece);
+        renderEquipmentSummary();
+        renderCharacterPreview();
+        refreshFaces();
+        updateStartRefusal();
+        if (shouldAdvanceSection) advanceEquipment(section.id);
+      };
       for (const piece of section.choices) {
         // THE VIEW SELECTS A LEVEL; it does not own a field set. Grid is a
         // wall of candidates to tell apart, so it asks for `glance`; list is
@@ -1291,31 +1324,15 @@ export function mountCustomize(app, {
         const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null, level: 'glance' });
         const face = chipButton.querySelector('.equipment-poker-card');
         choiceRows.push({ piece, node: chipButton, face });
-        face.addEventListener('cardinspectionselect', () => {
-          if (section.kind === 'relic') state.startingRelicId = piece.id;
-          else if (section.kind === 'armour') state.startingArmourId = piece.id;
-          else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
-          else state.startingSlotChoices[section.id] = piece.id;
-          for (const refresh of refreshers) refresh();
-          focusChoice(piece); renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-        });
-        face.addEventListener('keydown', event => {
-          if (event.target.classList.contains('equipment-poker-card') && ['Enter', ' '].includes(event.key)) {
-            event.preventDefault(); face.dispatchEvent(new CustomEvent('cardinspectionselect'));
-          }
+        face.addEventListener('cardinspectionselect', () => selectStartingPiece(piece, CHOICE_BY_INSPECTION));
+        ActivateOnKey(face, () => face.dispatchEvent(new CustomEvent('cardinspectionselect')), {
+          canActivate: event => event.target.classList.contains('equipment-poker-card'),
         });
         markUiComponent(chipButton, UI.equipmentChoiceCard, section.id);
         if (section.kind === 'armour') chipButton.dataset.startingArmourId = piece.id;
         else if (section.kind === 'hand') { chipButton.dataset.hand = section.slot; chipButton.dataset.armamentId = piece.id || 'empty-hand'; }
         else chipButton.dataset.startingSlotItemId = piece.id;
-        chipButton.querySelector('.equipment-choose').addEventListener('click', () => {
-          if (section.kind === 'relic') state.startingRelicId = piece.id;
-          else if (section.kind === 'armour') state.startingArmourId = piece.id;
-          else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
-          else state.startingSlotChoices[section.id] = piece.id;
-          for (const refresh of refreshers) refresh();
-          renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
-        });
+        chipButton.querySelector('.equipment-choose').addEventListener('click', () => selectStartingPiece(piece, CHOICE_BY_BUTTON));
         box.appendChild(chipButton);
       }
       const refresh = () => {
@@ -1404,10 +1421,10 @@ export function mountCustomize(app, {
       explanation: poise.note,
     });
     if (poise.ratings) {
-      for (const id of ['ward', 'ar', 'dr', 'pr']) {
+      for (const id of ['ward']) {
         resources.push({
           id,
-          label: id === 'ward' ? 'Ward' : id.toUpperCase(),
+          label: t('combat.protection.ward'),
           inspectionLabel: CREATION_INSPECTION_LABELS[id] || 'Ward',
           value: poise.ratings[id],
           explanation: null,
@@ -1466,7 +1483,7 @@ export function mountCustomize(app, {
     ]);
     if (!inspection) {
       bindCardInspection(card, {
-        title: `${name} — ${cls.name}`,
+        title: `${name} (${cls.name})`,
         identity: 'creation-character-summary',
         open: opener => {
           const explained = resources.filter((entry) => entry.explanation);
@@ -1478,7 +1495,7 @@ export function mountCustomize(app, {
             ])),
           ]);
           return openCardInspection({
-            title: `${name} — ${cls.name}`,
+            title: `${name} (${cls.name})`,
             card: characterSummaryCard(run, projection, true),
             details,
             opener,
@@ -1692,6 +1709,7 @@ export function mountCustomize(app, {
     const specimenAttributes = attributeCardModels(registries, specimenRun.attributes, {
       projection: specimenProjection,
       equipmentProfiles: specimenRun.equipmentProfileRuleSnapshot?.profiles,
+      gainContext: { run: specimenRun },
     });
     const disclosureHost = el('div', { class: 'cc-character-fold cc-catalog-specimen cz-disc' });
     const disclosureStat = el('div', { class: 'cc-character-picker' }, primaryStatCard(specimenAttributes[0]));
@@ -1854,12 +1872,29 @@ export function mountCustomize(app, {
     applyColumns();
   }
 
+  function openStartingCards() {
+    const draft = createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
+    const counts = startingCards?.classId === state.classId ? startingCards.counts : StartingPoolCounts(draft);
+    OpenStartingCardsChooser({ registries, run: draft, counts, settings: meta.settings || {},
+      opener: $('#cz-review-edit [data-creation-edit="startingCards"]'),
+      onDone: (chosen) => {
+        startingCards = { classId: state.classId, counts: chosen };
+        // The deck editor's snapshot was taken on the old starting cards; the new choice replaces it.
+        deckEdit = null;
+        fillSummary($('#cz-review-summary'));
+        focusElement($('#cz-review-edit [data-creation-edit="startingCards"]'));
+      },
+    });
+  }
+
   function openCreationDeckEditor() {
     const draft = previewRun();
     mountDeckEditor(document.body, {
       registries, run: draft, settings: meta.settings || {},
       onDone: () => {
         deckEdit = { classId: state.classId, snapshot: beginDeckEdit(draft) };
+        // The editor's snapshot already holds the chosen starting cards; it replaces the choice.
+        startingCards = null;
         fillSummary($('#cz-review-summary'));
         focusElement($('#cz-review-edit [data-creation-edit="deck"]'));
       },
@@ -1898,12 +1933,7 @@ export function mountCustomize(app, {
   function selectRailItem(member) {
     currentStepIndicator.textContent = t('creation.step.progress', { index: categories.indexOf(member) + 1, count: categories.length, category: categoryLabel(member) });
     paneHost.setAttribute('aria-labelledby', `cz-tab-${member}`);
-    for (const item of railItems) {
-      const on = item.dataset.member === member;
-      item.classList.toggle('on', on);
-      item.setAttribute('aria-selected', String(on));
-      if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
-    }
+    MarkSelected(railItems, item => item.dataset.member === member, { className: 'on', ariaAttribute: 'aria-selected', ariaCurrent: 'true' });
   }
   function activate(id) {
     if (id === 'character') id = 'attributes';
@@ -1938,17 +1968,28 @@ export function mountCustomize(app, {
         if (fixedCreation && category === 'class') {
           // Core 2: the review's class button is the deck door; the class itself is changed on the Class step, not from here.
           // It follows the same gate as the Armory's deck door: the profile's editor and the deck-editing setting.
-          if (!armouryOpensDeckEditor(previewRun(), meta.settings || {})) return null;
-          const editDeck = button({ label: t('creation.review.editDeck'), weight: 'secondary' });
-          editDeck.dataset.creationEdit = 'deck';
-          editDeck.addEventListener('click', openCreationDeckEditor);
-          return editDeck;
+          // Core's starting-card chooser (owner, 2026-11-17) sits beside it whenever the profile has a pool.
+          const preview = previewRun();
+          const doors = [];
+          if (StartingPoolIds(preview).length) {
+            const choose = button({ label: t('creation.startingCards.button'), weight: 'secondary' });
+            choose.dataset.creationEdit = 'startingCards';
+            choose.addEventListener('click', openStartingCards);
+            doors.push(choose);
+          }
+          if (armouryOpensDeckEditor(preview, meta.settings || {})) {
+            const editDeck = button({ label: t('creation.review.editDeck'), weight: 'secondary' });
+            editDeck.dataset.creationEdit = 'deck';
+            editDeck.addEventListener('click', openCreationDeckEditor);
+            doors.push(editDeck);
+          }
+          return doors.length ? doors : null;
         }
         const edit = button({ label: t('creation.review.edit', { category: categoryLabel(category) }), weight: 'secondary' });
         edit.dataset.creationEdit = category;
         edit.addEventListener('click', () => { activate(category); const target = openInside[category]?.() || paneHost.querySelector('button:not([disabled]), input, select'); if (target) queueMicrotask(() => focusElement(target)); });
         return edit;
-      }).filter(Boolean));
+      }).flat().filter(Boolean));
     }
     // Begin's refresh too: its visible reason follows it in and out of view.
     updateStartRefusal();
@@ -1990,8 +2031,9 @@ export function mountCustomize(app, {
       const to = creationStep(categories, current, 1);
       return t('creation.next.tip', { category: to ? categoryLabel(to) : '' });
     }));
-    next.addEventListener('click', () => {
+    next.addEventListener('click', (event) => {
       if (current === 'equipment') { equipmentNodes.get(equipmentFold?.openKey)?.querySelector('.cc-equipment-continue')?.click(); return; }
+      stepArrival.arrived(event.timeStamp);
       advanceFrom(current);
     });
     refreshCreationNavigation();
@@ -2022,9 +2064,10 @@ export function mountCustomize(app, {
     const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
     return plan.back === 'leave' ? t('creation.leave.tip') : t('creation.previous.tip', { category: categoryLabel(plan.previous) });
   });
-  back.addEventListener('click', () => {
+  back.addEventListener('click', (event) => {
     const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
     if (plan.back === 'leave') return onBack();
+    stepArrival.arrived(event.timeStamp);
     activate(plan.previous);
     queueMicrotask(() => focusElement(paneHost.querySelector('button:not([disabled]), input, select')));
   });
@@ -2033,10 +2076,13 @@ export function mountCustomize(app, {
     close.addEventListener('click', onBack);
   }
   let startPending = false;
-  start.addEventListener('click', async () => {
+  start.addEventListener('click', async (event) => {
+    // Review rendering can delay delivery of the second press. Compare when the presses happened.
+    if (!stepArrival.allows(event.timeStamp)) return;
     if (startPending || beginProblem()) return;
     startPending = true; start.disabled = true;
-    try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}) } : {
+    try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}),
+      ...(startingCards?.classId === state.classId ? { startingCards: { ...startingCards.counts } } : {}) } : {
       classId: state.classId,
       seedString: seedInput.value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
