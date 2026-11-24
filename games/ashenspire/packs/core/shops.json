@@ -3,6 +3,10 @@
   "price": 10,
   "blacksmithChance": 25,
   "rankPricePct": 25,
+  "rankedOfferChancePct": {
+    "1": 20,
+    "2": 5
+  },
   "itemsPerCategory": [
     2,
     4

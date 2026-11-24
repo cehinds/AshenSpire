@@ -16,6 +16,7 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-23 for shops.json rankedOfferChancePct (owner: shops sometimes stock ranked cards): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
 // Recaptured 2026-11-23 for the progression schema's rankUpNeedsFullUpgrades row (module schema joins the profile): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
 // Recaptured 2026-11-23 again for shops.json rankPricePct (owner: +25% buy price per visible card rank): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
 // Recaptured 2026-11-23 for the upgrade economy rebalance (owner: upgrade prices x3, service prices x2 in Core's shops.json): exactly 24 profile, snapshot and save hash leaves moved; events, RNG, receipts, continuations and runtime hashes are unchanged.

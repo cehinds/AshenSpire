@@ -1,5 +1,6 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
 import { OwnCardRank } from './cardRank.js';
+import { RankShopCardOffers } from './shopOfferRank.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { ConfiguredTraderCategories, ConfiguredTraderOffersSmith } from './gameProfileShopKind.js';
 import { ShelfStockCounts } from './vendorStockRange.js';
@@ -539,6 +540,8 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   // with a rank-up shelf; without one it needs a tab of its own, so it is stocked only while the dock stays within maxCategories.
   if(fresh&&VendorStocksCardCopy(registries,run,'trader',shopId)&&!stock.options.some(option=>option.kind===CARD_COPY_OPTION.kind)&&CopyShelfFits(run,shopId,stock)){stock.options.push(CardCopyShelf(run,'trader'));stock.takeCount+=1;}
   // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
+  // Owner 2026-11-23: some card offers arrive ranked (shops.json rankedOfferChancePct), rolled before the price so it reads the rank.
+  if(fresh)RankShopCardOffers(run,`shop:${shopId}`,stock.options);
   const table=module.priceTable??rules.priceTable;
   if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
   return stock;
@@ -622,6 +625,7 @@ export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=nul
     const replacement=makeOffer(registries,draft,random,{offerId:temporaryId,source:'shop',count:1,takeCount:1,categories:[receipt.kind],itemsPerCategory:1,excludedIds}).options[0];
     delete draft.gameProfileRewardOffers[temporaryId];
     if(replacement){
+      RankShopCardOffers(draft,`${offerId}:restock:${plan.revision}`,[replacement]);
       const table=gameModule(run,'shops').priceTable??gameContent(run,'shops').priceTable;
       if(table)replacement.price=rollOfferPrice(registries,draft,random,table,replacement);
       stock.options[index]=replacement;
