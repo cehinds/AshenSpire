@@ -32,9 +32,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
-## 2026-11-23
+## 2026-11-24
 
 - **Score Studio weights say what each number does** ([#2965](https://github.com/cehinds/AshenSpire/pull/2965), `0.7.5.74`). Each row reads as a sentence, like "1 pts per 3 damage", with a live example under it, like "6 damage = 2 pts". Rows whose box the score does not use say so.
+
+## 2026-11-23
+
 - **Spells no longer cost 1 extra Stamina** ([#2964](https://github.com/cehinds/AshenSpire/pull/2964), `0.7.5.74`). A spell costs the SP printed on it, so a 0 SP spell is free to cast and scores 0 SP in Score Studio. Spells still cost 1 extra Mana, and Prepared still takes 1 SP off. Fights saved before this keep the old price.
 - **Score Studio: the number you type is the number on the card, plus play styles, Martial / Magic and category weights** ([#2961](https://github.com/cehinds/AshenSpire/pull/2961), `0.7.5.72`). An effect's amount box now shows what the card prints (12 used to print as 5), and CP follows it. Card Type picks Attack, Skill, Spell, Sweep, Counter, Defend, Power, Curse or Status; Martial and Magic checkboxes replace Camp, and a card with both is a hybrid hit. The Weights tab has a Categories group: each category adds a flat bonus or, with its multiplier switch on, scales the score; a hybrid card gets +10. The studio now scrolls on narrow screens.
 - **Score Studio weights wait for Apply** ([#2960](https://github.com/cehinds/AshenSpire/pull/2960), `0.7.5.70`). Changing a weight marks the row instead of rescoring every card; Apply rescores once and Discard drops the edits. The Weights tab gets Save and Open saved for the studio's own copy, Import JSON, Export to the game or as a download, and Accept new ranks, which writes the weights to the game so each card takes its new rank and Act.
