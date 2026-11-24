@@ -32,6 +32,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+
+## 2026-11-24
+
+- **Chained lightning keeps each step's own record** ([#2975](https://github.com/cehinds/AshenSpire/pull/2975), `0.7.5.84`). Each step of a lightning chain now keeps its own record of what it hit, so a later step can no longer change an earlier one. A new test checks that the damage preview keeps the Defend Poise floor on Ward damage.
+
 ## 2026-11-24
 
 - **Ward is now a health buffer on the health bar** ([#2971](https://github.com/cehinds/AshenSpire/pull/2971), `0.7.5.84`). Ward no longer adds to Poise: each Ward stack adds 5 Ward HP in blue on the health bar, and hits resolve Block first, then Ward, then Poise and Health. Bonus Poise (`Gain N Poise`) is now shown in purple on the Poise bar. Fights saved before this keep their existing rules.
