@@ -280,3 +280,36 @@ test('studio restore: a draft with the old naming tables takes the repo naming a
   assert.equal(current.naming.card.rarity.rare, 'Grand');
   assert.equal('prefix' in current.naming.card, false);
 });
+
+test('name sets: Default names, save, Rename all and restore', async () => {
+  const NS = await import('../tools/score-studio/nameSets.js');
+  const repo = [{ id: 'core.a', name: 'Acid Splash' }, { id: 'core.b', name: 'Backstep' }];
+  const cards = structuredClone(repo);
+  const defaults = NS.DefaultNameSet(repo);
+  assert.equal(defaults.label, 'Default names');
+  assert.deepEqual(defaults.names['core.a'], { name: 'Acid Splash', autoName: false });
+  // Rename all turns Auto-name on for every card (the studio then renames them).
+  assert.equal(NS.TurnOnAutoNames(cards), 2);
+  cards[0].name = 'Brittle Blight Rite IV'; cards[1].name = 'Evasive Guard II';
+  const when = new Date(2026, 10, 24, 14, 5);
+  assert.equal(NS.DefaultNameSetLabel(when), 'Names 2026-11-24 14:05');
+  const saved = NS.CaptureNameSet(cards, '', when);
+  assert.equal(saved.label, 'Names 2026-11-24 14:05');
+  assert.deepEqual(saved.names['core.a'], { name: 'Brittle Blight Rite IV', autoName: true });
+  // Restoring Default names gives back the authored names with Auto-name off; the default set is not changed.
+  assert.equal(NS.ApplyNameSet(cards, defaults), 2);
+  assert.deepEqual(cards.map((c) => [c.name, c._autoName]), [['Acid Splash', false], ['Backstep', false]]);
+  assert.equal(defaults.names['core.a'].name, 'Acid Splash');
+  assert.equal(NS.ApplyNameSet(cards, defaults), 0, 'nothing left to change');
+  // A saved set restores its own names, also with Auto-name off.
+  assert.equal(NS.ApplyNameSet(cards, saved), 2);
+  assert.deepEqual(cards.map((c) => [c.name, c._autoName]), [['Brittle Blight Rite IV', false], ['Evasive Guard II', false]]);
+  // Saved configs carry the sets apart from the weights; the default set and bad rows are never stored.
+  const older = { ...NS.CaptureNameSet(cards, 'Old', new Date(2026, 0, 1)) };
+  const joined = NS.JoinSavedConfig({ rank: {} }, [older, saved, defaults, { id: 'x' }]);
+  const split = NS.SplitSavedConfig(joined);
+  assert.deepEqual(split.scoring, { rank: {} });
+  assert.deepEqual(split.nameSets.map((s) => s.id), [older.id, saved.id]);
+  assert.deepEqual(NS.MergeNameSets([older], [saved]).map((s) => s.label), ['Names 2026-11-24 14:05', 'Old'], 'newest first');
+  assert.deepEqual(ValidateScoringConfig(NS.JoinSavedConfig(shippedScoring, [saved])), [], 'a saved config with sets still validates');
+});
