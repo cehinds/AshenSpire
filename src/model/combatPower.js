@@ -296,6 +296,10 @@ function fitCardName(words, mark, limit) {
   return { name: joinName(kept, mark), dropped };
 }
 
+// Two words share a stem when their first STEM_LETTERS letters match, ignoring case.
+const STEM_LETTERS = 4;
+const sharesStem = (a, b) => Boolean(a && b) && a.slice(0, STEM_LETTERS).toLowerCase() === b.slice(0, STEM_LETTERS).toLowerCase();
+
 // A card is magic when it is a spell, carries camp:spell, or is a hybrid hit with a magic share (magic words win).
 const isMagicFace = (c) => c.camp === 'spell' || (c.tags || []).includes('camp:spell') || c.magicShare > 0;
 
@@ -343,7 +347,8 @@ export function CardNameParts(c, ups = 0, scoring = GetActiveScoring()) {
     } else effect = w;
     source = k; break;
   }
-  if (effect && (effect === element || effect === base)) effect = null;
+  // No repeated stem: the effect word goes when it starts like the element or base word (Warded Warding Rite -> Warding Rite).
+  if (effect && [element, base].some((word) => sharesStem(effect, word))) effect = null;
   const rk = RankOf(CombatPower(s.raw, c.rarity, scoring), scoring);
   const rarityWord = (G.rarity && G.rarity[c.rarity]) || null;
   const words = { rarity: rarityWord, effect, element, base, rank: numeral(N, rk) };

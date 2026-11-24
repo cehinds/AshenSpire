@@ -214,3 +214,13 @@ test('card names: the divine words are "Divine"', () => {
   assert.equal(FullName(magicHit(['damage:sacred'])), 'Divine Bolt');
   assert.equal(FullName(magicHit(['tradition:divine'])), 'Divine Bolt');
 });
+
+test('card names: an effect word that shares its first 4 letters with the element or base word is dropped', () => {
+  // Ward (Warded) on an alteration (Warding) rite, and Block (Guarding) on a Guard.
+  const rite = nameFace({ camp: 'spell', type: 'skill', sp: 0, mp: 1, statuses: [['ward', 2, 'self']], tags: ['camp:spell', 'school:alteration'] });
+  assert.match(FullName(rite), /^Warding Rite( [IVX]+)?$/);
+  const parts = CardNameParts(rite, 0, noLimit);
+  assert.equal(parts.effect, null);
+  // Words that only share fewer letters stay: Searing Strike.
+  assert.equal(FullName(martialHit({ rarity: 'uncommon', sp: 2, statuses: [['burn', 1, 'enemy']] })), 'Improved Searing Strike');
+});
