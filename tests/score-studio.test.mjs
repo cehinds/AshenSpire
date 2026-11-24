@@ -213,3 +213,41 @@ test('scorer and validator: a multiplier tag or keyword may be set flat instead'
   assert.ok(errors.some((m) => m.includes('keywords.retain')));
   assert.ok(errors.some((m) => m.includes('tags.ash.pMultiplier')));
 });
+
+test('weights tab: the multiply-instead switch stores flat or multiplier, and the example follows the scorer', async () => {
+  const { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } = await import('../tools/score-studio/weightExamples.js');
+  const scoring = structuredClone(shippedScoring);
+  // Keywords: unchecked stores flat 0 (multiplier gone), checked stores multiplier 0 (flat gone).
+  SetKeywordForm(scoring.keywords.innate, false);
+  assert.equal(scoring.keywords.innate.flat, 0);
+  assert.equal('multiplier' in scoring.keywords.innate, false);
+  scoring.keywords.innate.flat = 4;
+  assert.deepEqual(weightSentence('keywords', 'innate', scoring), { before: 'adds', mid: 'pts', after: '' });
+  const innate = ScoreCard({ ...BaseFace(), dmg: 6, kw: ['innate'] }, scoring).parts.innate;
+  assert.equal(innate, 4);
+  assert.equal(weightExample('keywords', 'innate', scoring), `Any card with it: +${innate} pts`);
+  // The keyword's min still holds a flat value, as ScoreCard does.
+  scoring.keywords.innate.flat = 0;
+  assert.equal(weightExample('keywords', 'innate', scoring), `Any card with it: +${ScoreCard({ ...BaseFace(), dmg: 6, kw: ['innate'] }, scoring).parts.innate} pt`);
+  SetKeywordForm(scoring.keywords.innate, true);
+  assert.equal(scoring.keywords.innate.multiplier, 0);
+  assert.equal('flat' in scoring.keywords.innate, false);
+  // Tags: the switch keeps the tag's own multiplier kind; 'times' starts at 1, pMultiplier at 0, flat at weight 0.
+  assert.equal(TagMultiplierKey(scoring.tags['trait:counterstrike']), 'multiplier');
+  assert.equal(TagMultiplierKey(scoring.tags.ash), 'pMultiplier');
+  assert.equal(TagMultiplierKey({ weight: 0 }, shippedScoring.tags.ash), 'pMultiplier');
+  assert.equal(TagMultiplierKey({ weight: 2 }, { weight: 2 }), null);
+  const cs = scoring.tags['trait:counterstrike'];
+  const hit = { ...BaseFace(), dmg: 6, tags: ['trait:counterstrike'] };
+  SetTagForm(cs, 'multiplier', false);
+  assert.equal(cs.weight, 0);
+  assert.equal('multiplier' in cs, false);
+  cs.weight = 3;
+  assert.equal(weightExample('tags', 'trait:counterstrike', scoring), `Any card with it: +${ScoreCard(hit, scoring).parts['trait:counterstrike']} pts`);
+  SetTagForm(cs, 'multiplier', true);
+  assert.deepEqual([cs.weight, cs.multiplier], [0, 1]);
+  assert.equal(ScoreCard(hit, scoring).raw, ScoreCard({ ...BaseFace(), dmg: 6 }, scoring).raw, 'x1 is no change');
+  SetTagForm(scoring.tags.ash, 'pMultiplier', true);
+  assert.equal(scoring.tags.ash.pMultiplier, 0);
+  assert.deepEqual(ValidateScoringConfig(scoring), []);
+});

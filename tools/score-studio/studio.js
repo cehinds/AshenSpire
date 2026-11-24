@@ -17,7 +17,7 @@ import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeS
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } from './weightsStaging.js';
-import { weightSentence, weightExample } from './weightExamples.js';
+import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -1702,7 +1702,16 @@ function renderWeights({ shifts = true } = {}) {
       per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
     })) },
     { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
-    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => ({ id: k, label: k + (v.flat !== undefined ? ' (flat)' : ' (mult)'), val: v.flat ?? v.multiplier, base: R.keywords?.[k]?.flat ?? R.keywords?.[k]?.multiplier, step: v.flat !== undefined ? 1 : 0.05, set: (n) => { if (v.flat !== undefined) state.scoring.keywords[k].flat = n; else state.scoring.keywords[k].multiplier = n; } })) },
+    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => {
+      const bv = R.keywords?.[k];
+      return {
+        id: k, label: k, val: v.flat ?? v.multiplier, base: bv?.flat ?? bv?.multiplier, step: v.flat !== undefined ? 1 : 0.05,
+        // Reads the stored form, not the one this row was drawn with: the switch may have changed it since.
+        set: (n) => { const kw = state.scoring.keywords[k]; if (kw.flat !== undefined) kw.flat = n; else kw.multiplier = n; },
+        // Flat adds `flat`; multiplier adds the positive score times it. Switching resets to the no-change value (0).
+        mult: { value: v.flat === undefined, base: bv ? bv.flat === undefined : undefined, set: (on) => { SetKeywordForm(state.scoring.keywords[k], on); } },
+      };
+    }) },
     { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, base: R.rarity?.discount?.[k], set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
     { key: 'rank', title: 'Rank Bands', entries: [
       { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, base: R.rank?.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
@@ -1731,15 +1740,19 @@ function renderWeights({ shifts = true } = {}) {
     }).map(([k, v]) => {
       const bv = R.tags?.[k];
       const isMult = v.multiplier !== undefined || v.pMultiplier !== undefined;
+      // Which multiplier this tag uses when switched on: its own, else the repo's.
+      const multKey = TagMultiplierKey(v, bv);
       return {
         id: k,
         label: `${v.label || k} (${k})`,
         val: v.multiplier ?? v.pMultiplier ?? v.weight ?? 0,
         base: bv ? (bv.multiplier ?? bv.pMultiplier ?? bv.weight ?? 0) : undefined,
         step: isMult ? 0.05 : 1,
-        set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; },
+        set: (n) => { const tag = state.scoring.tags[k]; if (tag.multiplier !== undefined) tag.multiplier = n; else if (tag.pMultiplier !== undefined) tag.pMultiplier = n; else tag.weight = n; },
         // Damage-type tags score once per action or once per hit (ScoreCard reads per === 'hit').
         per: v.per !== undefined ? { value: v.per, base: bv?.per, options: TAG_PER_OPTIONS, set: (n) => { state.scoring.tags[k].per = n; } } : null,
+        // A multiplier tag may be set flat (adds its weight). Switching resets to the no-change value.
+        mult: multKey ? { value: isMult, base: bv ? (bv.multiplier !== undefined || bv.pMultiplier !== undefined) : undefined, set: (on) => { SetTagForm(state.scoring.tags[k], multKey, on); } } : null,
       };
     }) },
   ];
@@ -1819,7 +1832,7 @@ function renderWeights({ shifts = true } = {}) {
       // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
       const showStored = () => {
         const stored = entryIn(withScoring(stagedScoring() || state.scoring, buildGroups), g.key, r.id);
-        if (stored) input.value = String(safeNum(stored.val, 0));
+        if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
         if (stored?.per && perInput) perInput.value = String(stored.per.value);
         if (stored?.mult && multInput) multInput.checked = stored.mult.value;
         markRow();
@@ -1876,10 +1889,10 @@ function categoryWeight(scoring, key) {
   return scoring.categories[key];
 }
 
-// "× mult" switch for a category weight: off adds the weight flat, on multiplies the positive score.
+// "multiply instead" switch for category, keyword and multiplier-tag rows: off adds the number flat, on multiplies.
 function multControlHtml(entry) {
   if (!entry.mult) return '';
-  return `<label class="weight-per-label weight-mult-label" title="Off: add the weight. On: multiply the card's positive score by it."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiply instead</label>`;
+  return `<label class="weight-per-label weight-mult-label" title="Off: add the number as flat points. On: use it as a multiplier of the card's positive score."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiply instead</label>`;
 }
 
 // The values a tag's per can take: score once per action, or once per hit.
