@@ -9,12 +9,12 @@
 // Pure model: no document. Every chance rolls on a hash of the run's seed and the door's key (like rankUpService.js), so
 // asking twice answers the same, no shared stream moves, and a save made before this service (no `cardCopy` data, no
 // `pendingCardCopies`) offers nothing and loads unchanged.
-import { gameContent } from './gameProfile.js';
 import { mulberry32 } from './rng.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
 import { EquipmentBound } from './rankUpService.js';
 import { OwnCardRank } from './cardRank.js';
 import { RankedCardPrice } from './rankedCardPrice.js';
+import { PricedShops } from './liveShopPrices.js';
 
 /** The option a reward door or a trader shelf carries for this service. */
 export const CARD_COPY_OPTION = Object.freeze({ kind: 'cardCopies', id: 'cardCopy' });
@@ -111,7 +111,7 @@ export function RollCardCopy(run, key, chancePct) {
  * (shops.json `blacksmith.cardCopy`), or null when the profile authors none (the service is off).
  */
 export function CardCopyRule(run, door) {
-  const shops = gameContent(run, 'shops');
+  const shops = PricedShops(run); // the current Core copy price, even for a saved run (owner, 2026-11-23)
   const row = door === 'blacksmith' ? shops?.blacksmith?.cardCopy : shops?.cardCopy;
   if (!row || typeof row !== 'object') return null;
   const chancePct = Number.isFinite(row.stockChancePct) ? Math.max(0, Math.min(100, row.stockChancePct)) : 0;

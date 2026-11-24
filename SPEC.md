@@ -3051,6 +3051,8 @@ It is a screen of its own, reusing `SmithSelectionModel` and the smith modals. I
 | Card upgrade | `prices.cardUpgrade` + `cardUpgradePerUpgrade` × the card's earlier upgrades + `cardUpgradePerRank` × (its rank − 1) | 150 + 105 per earlier upgrade + 75 per rank above 1 (owner, 2026-11-23: x3; was 50 + 35 + 25, before that a flat 40) |
 | Rank-up | `prices.rankUp` × the rank reached | 240 per rank: Rank 1 240, Rank 2 480, ... Rank 5 1200 (owner 2026-11-23; was a flat 120). An item rank-up is priced the same by the item's next rank. A trader's rank-up shelf reads "From" its Rank 1 price; the card pick names each card's price, and the plan and commit charge it. The Sleeping Smith's random rank-up stays a flat 80. |
 
+- **Prices reach saved runs** (owner, 2026-11-23; `liveShopPrices.js`). A run pins its profile's shops content, but the price keys (`blacksmith.prices`, both `cardCopy.price` rows, `rankPricePct`) read the current shipped Core values, so a run saved before a price change pays today's prices. Every other pinned shops key, and every offer already rolled into a saved stock (a shelf's price, a Blacksmith copy shelf's cost), stays as saved.
+
 - **Rank-up.** Raises one run-owned card's `rank` by 1 (not an equipment-bound or granted card; never past rank 99).
 - **Armaments.** The rack is `armamentStock` (4 to 6, §14.2) distinct pieces drawn on `shopOffers` from the Core weapon pool the run does not carry.
   - Each is rolled at a tier from `tierWeights` (`{0: 20, 1: 40, 2: 30, 3: 10}`, capped at the piece's ladder top) and priced over the `priceTable.armament` row of its rarity × `tierPriceMult` (`[1, 1.4, 1.8, 2.3]`), rounded.
