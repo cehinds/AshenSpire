@@ -358,6 +358,45 @@ try {
   assert.ok(flatSwitch.naming, 'the Naming group has a characters box');
   assert.deepEqual(flatSwitch.keep, ['base', 'rank', 'upgrade', 'element', 'effect', 'rarity'], 'the keep order lists every name part');
 
+  // 10. Rename all: the dialog saves the current names, every card takes its convention name (one undo step),
+  //     and Restore names > Default names puts the authored names back with Auto-name off.
+  const renameAll = await page.evaluate(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const tileName = (id) => document.querySelector(`.studio-card-tile[data-card-id="${id}"]`)?.textContent || '';
+    document.querySelector('.studio-tab[data-tab="cards"]').click();
+    const authored = tileName('core.backstep').includes('Backstep');
+    document.getElementById('btn-rename-all').click();
+    const dialogOpen = document.getElementById('rename-all-modal').open;
+    document.getElementById('rename-all-set-name').value = 'Before rename';
+    document.getElementById('btn-rename-all-save').click();
+    await wait(400);
+    const renamed = !tileName('core.backstep').includes('Backstep');
+    const setRows = [...document.querySelectorAll('#restore-names-list .name-set-row span')].map((el) => el.textContent);
+    document.getElementById('btn-undo').click();
+    await wait(400);
+    const undone = tileName('core.backstep').includes('Backstep');
+    document.getElementById('btn-redo').click();
+    await wait(400);
+    document.getElementById('btn-restore-names').click();
+    document.querySelector('#restore-names-list input[value="default"]').click();
+    document.getElementById('btn-restore-names-apply').click();
+    await wait(400);
+    document.querySelector('.studio-card-tile[data-card-id="core.backstep"]').click();
+    await wait(200);
+    return {
+      authored, dialogOpen, renamed, setRows, undone,
+      restored: tileName('core.backstep').includes('Backstep'),
+      autoNameOff: !document.getElementById('toggle-auto-name').checked,
+    };
+  });
+  assert.ok(renameAll.authored, 'Backstep starts with its authored name');
+  assert.ok(renameAll.dialogOpen, 'Rename all asks to save the current names first');
+  assert.ok(renameAll.renamed, 'Rename all gives every card its convention name');
+  assert.deepEqual(renameAll.setRows, ['Default names', 'Before rename'], 'the saved set joins Default names in Restore names');
+  assert.ok(renameAll.undone, 'one undo puts every name back');
+  assert.ok(renameAll.restored, 'Restore Default names gives back the authored name');
+  assert.ok(renameAll.autoNameOff, 'restored cards have Auto-name off');
+
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
   await page.close();
