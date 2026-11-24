@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-24
 
+- **Ward and Bonus Poise are separate in scoring and Score Studio** ([#2973](https://github.com/cehinds/AshenSpire/pull/2973), `0.7.5.84`). Ward is now scored and described as temporary HP stacks only (no Poise), and adding Poise has its own `bonusPoise` tag plus first-class Bonus Poise (`barrier` / `gainBarrier`) scoring, quick-add chips, Weights tab entries, and Combat Sandbox readouts in Score Studio.
 - **Ward is now a health buffer on the health bar** ([#2971](https://github.com/cehinds/AshenSpire/pull/2971), `0.7.5.84`). Ward no longer adds to Poise: each Ward stack adds 5 Ward HP in blue on the health bar, and hits resolve Block first, then Ward, then Poise and Health. Bonus Poise (`Gain N Poise`) is now shown in purple on the Poise bar. Fights saved before this keep their existing rules.
 - **Score Studio: search the Add Feature list** ([#2970](https://github.com/cehinds/AshenSpire/pull/2970), `0.7.5.82`). A search box narrows the list as you type, by name or description, and picks the best match so Enter adds it. Escape clears it.
 - **Score Studio weights say what each number does** ([#2965](https://github.com/cehinds/AshenSpire/pull/2965), `0.7.5.80`). Each row reads as a sentence, like "1 pts per 3 damage", with a live example under it, like "6 damage = 2 pts". Rows whose box the score does not use say so.
