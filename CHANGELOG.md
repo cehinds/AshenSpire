@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-24
+
+- **Score Studio: SP scores the SP you type, and the amount box takes 0 and 1** ([#2966](https://github.com/cehinds/AshenSpire/pull/2966), `0.7.5.74`). An edited card's SP used to score at the price a test fight charged it, so a 0 SP card could still lose points. SP now scores like MP, from the number you type. The amount box is now the card's own number before the hero's bonus, so damage can be set to 0 or 1; the card face still shows the hero's total.
+
 ## 2026-11-23
 
 - **Spells no longer cost 1 extra Stamina** ([#2964](https://github.com/cehinds/AshenSpire/pull/2964), `0.7.5.74`). A spell costs the SP printed on it, so a 0 SP spell is free to cast and scores 0 SP in Score Studio. Spells still cost 1 extra Mana, and Prepared still takes 1 SP off. Fights saved before this keep the old price.
