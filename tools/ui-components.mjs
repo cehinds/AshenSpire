@@ -592,10 +592,17 @@ export function findings(r) {
   const composes = (text) => /import \{ hudShellHtml \}/.test(text)
     && /import \{ RunHudViewModel \}/.test(text)
     && /hudShellHtml\(RunHudViewModel\(\{/.test(text);
-  const viaRunHud = (text) => /import \{ runHudHtml, wireRunHud \} from '(?:\.\.\/components\/|\.\/)runHud\.js'/.test(text)
+  // The required bindings keep their local names because the call checks
+  // below consume those names. Other helpers and import ordering are free.
+  const importsRunHud = (text) => [...text.matchAll(/import\s*\{([^}]+)\}\s*from\s*(['"])(?:\.\.\/components\/|\.\/)runHud\.js\2/g)]
+    .some((match) => {
+      const names = new Set(match[1].split(',').map(name => name.trim()));
+      return names.has('runHudHtml') && names.has('wireRunHud');
+    });
+  const viaRunHud = (text) => importsRunHud(text)
     && /\$\{[^`]*runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
   // The configured shop builds its band from a detached node (`band.innerHTML = runHudHtml({…})`), not a template string.
-  const viaRunHudCall = (text) => /import \{ runHudHtml, wireRunHud \} from '(?:\.\.\/components\/|\.\/)runHud\.js'/.test(text)
+  const viaRunHudCall = (text) => importsRunHud(text)
     && /runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
   // Both Rest service policies compose through the same room frame; require
   // the complete chain so a new bare profile screen cannot pass by importing it.

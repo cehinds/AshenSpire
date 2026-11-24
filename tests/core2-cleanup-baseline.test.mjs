@@ -16,8 +16,25 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
-// Recaptured 2026-11-20 for spell categories (SpellCategory, Arcane/Divine gear selectors in spellTraditions.js and gearEffects.js): exactly 27
-// profile/runtime/snapshot/save hash leaves of the three current-profile scenarios moved; every event, RNG, receipt and continuation and the historical scenario are unchanged.
+// Recaptured 2026-11-24 (Ward as a health buffer: fixCoreMechanics.ward hpPerStack 5, routing "hpBuffer"): 34 profile, runtime, snapshot and save hash leaves moved (27 current + 7 historical snapshot/save); every event, RNG, receipt, continuation and historical profile is unchanged.
+// Recaptured 2026-11-24 on merging dev (#2964 spell Stamina surcharge) into the upgrade economy rebalance (#2963): exactly 24 profile, snapshot and save hash leaves moved from dev's capture; events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-23 for shops.json rankedOfferChancePct (owner: shops sometimes stock ranked cards): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
+// Recaptured 2026-11-23 for the progression schema's rankUpNeedsFullUpgrades row (module schema joins the profile): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
+// Recaptured 2026-11-23 again for shops.json rankPricePct (owner: +25% buy price per visible card rank): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
+// Recaptured 2026-11-23 for the upgrade economy rebalance (owner: upgrade prices x3, service prices x2 in Core's shops.json): exactly 24 profile, snapshot and save hash leaves moved; events, RNG, receipts, continuations and runtime hashes are unchanged.
+// Recaptured 2026-11-23 (spell Stamina surcharge dropped, owner ruling: spellCosts.staminaSurcharge 0 moves the runtime artifact): 27 profile, runtime, snapshot and save hash leaves moved (15 snapshots, 3 each of profile hash, runtimeHash, stored and loaded); every event, RNG, receipt and continuation value is unchanged (these fights drop spellCosts, as before).
+// Recaptured 2026-11-22 (no cost minimums, owner ruling: the cost.manaOnly validator rule is retired, so the runtime artifact moves again): 27 profile, runtime, snapshot and save hash leaves moved (15 snapshots, 3 each of profile hash, runtimeHash, stored and loaded); every event, RNG, receipt and continuation value is unchanged.
+// Recaptured 2026-11-22 for the Magic Adept zero Mana floor (owner ruling; stance.playerMinimumCost): 27 profile, runtime, snapshot and save hash leaves moved; every event, RNG, receipt and continuation value is unchanged.
+// Recaptured 2026-11-21 for the score-engine starter decks and card retunes (owner rulings A-F): the Reaver starter deck changed, so the three current-profile scenarios' shuffle counters, events, RNG hashes and continuations moved with it (the preceding 521250 capture's behaviour fields were moved the same way); every profile, snapshot and save hash moved with the card data; the historical scenario moved only in snapshot, stored and loaded.
+// Recaptured 2026-11-21 for reward uniqueness and card copy (#2928: reward-ranks.skipOwned, shops cardCopy, Scribe's Mirror): exactly 24 leaves moved,
+// all profile, snapshot and save hashes of the three current-profile scenarios; events, RNG, receipts and continuations unchanged.
+// Recaptured 2026-11-20 on merging dev again (card changes, #2902): the runtime hash is unchanged (fbf370e6...); only the profile, snapshot and save hash leaves moved (card data joins the profile); every events, RNG, receipt and continuation hash is unchanged.
+// Recaptured 2026-11-20 on merging dev (0.7.4.242, spell traditions) into the Retreat reach rules and drawbacks: only profile, runtime, snapshot and save hash leaves moved
+// (the new retreatRulesVersion and spellRewardPolicyVersion module defaults and the Retreat card faces join the profile); every events, RNG, receipt and continuation hash is unchanged (the tradition-policy test below proves it).
+// Recaptured 2026-11-19 for saved Retreat opt-in after Dev 213: exactly 27 current profile/runtime/snapshot/save hashes moved.
+// Native and production agree; the complete historical scenario, events, receipts, continuations and RNG values are unchanged.
+// Recaptured 2026-11-20 for effects.statusBlockWeight (the Dexterity status adds Block): 24 leaves moved against dev (after #2915), all of them profile, snapshot
+// and save hashes of the three current-profile scenarios; every event, RNG, receipt and continuation hash is unchanged.
 // Recaptured 2026-11-20 once for the version-free save hash: contentVersion is normalised before hashing, so only the 8 stored/loaded leaves moved; release cuts no longer move them.
 // Recaptured 2026-11-20 again for the card.tradition.* uiStrings rows (#2892 review): runtime and
 // current-profile hash leaves only (27).
@@ -32,6 +49,8 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // current-profile scenarios. Every event, RNG, receipt and continuation hash, the runtime hash and the whole historical scenario are unchanged.
 // Recaptured again 2026-11-19 after the bare content Poise row returned to CON (default profile
 // still overrides to WIS): 27 profile/runtime/snapshot/stored hash leaves moved; nothing else.
+// Recaptured 2026-11-20 for varied vendor shelf sizes: exactly 24 current profile/snapshot/save hashes moved; events, RNG,
+// receipts, continuations, runtime hashes and the historical scenario are unchanged.
 // Recaptured 2026-11-19 for versioned Arcane/Divine casting and Wisdom Poise.
 // Only profile/runtime pins and snapshot/save digests move; events, RNG,
 // receipts and continuations match the preserved preceding 521250 capture.
@@ -39,6 +58,7 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // Recaptured 2026-11-19 after merging Defend-only Smash from Dev 4fc475a249: exactly 27 current profile/runtime/snapshot/save hashes differ from each parent.
 // Native and production agree; full historical scenarios and every event, RNG, receipt and continuation remain unchanged. Historical fights omit the new Smash override.
 // Both concurrent Smash integrations independently measured 27 changed current hash leaves with unchanged historical behavior.
+// Recaptured 2026-11-20 (chore/RemoveDeadEffectTags: Precision tags become Pierce, Foresight/Veil/Charm/Grease reworked, crit feats removed): only the profile, snapshot, stored and loaded hashes moved; events, RNG, receipts, continuations and the runtime hash are unchanged.
 // Incoming Dev previously revalidated the same historical capture at runtime 04de9306 before combining stat traditions.
 // Recaptured 2026-11-19 for stat allocation on incoming Dev 6232329243: exactly 27 current profile/runtime/snapshot/save hashes moved.
 // The entire historical scenario and every event, RNG, receipt and continuation match incoming Dev; native and production agree, and the JS01 no-Gear guard stays intact.
@@ -126,7 +146,7 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   let combat;
   try { combat = api.createRunCombat({ registries, run, rng: api.createRng(seed), encounter, enemyIds: encounter.enemies }); } finally { if (shippedBands !== undefined) api.fixCoreMechanics.bands = shippedBands; }
   // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
-  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
+  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux; delete combat.fixCoreRules?.stance?.playerMinimumCost; // the Magic Adept zero Mana floor key (owner ruling 2026-11-22) is newer than this fight
   // Wave 2 batch 5 legacy fixture: the Counter-stack keys are newer than this baseline and the Counter stance still returns 25% of the HP lost, as in a fight saved before the ruling.
   if (combat.fixCoreRules?.counter) for (const key of ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard']) delete combat.fixCoreRules.counter[key];
   if (combat.fixCoreRules?.stanceBenefits?.counter) combat.fixCoreRules.stanceBenefits.counter = { ...combat.fixCoreRules.stanceBenefits.counter, hpReturnFraction: 0.25 };

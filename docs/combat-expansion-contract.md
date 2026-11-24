@@ -46,8 +46,9 @@ Owner authorization: implement the revised combat notes in one delivery and land
 
 - **Rank and card sequence**
   - Upcasting uses a per-play `upcastTier`, distinct from the owned card's persisted `rank` (1–10) and authored `abilityRank` (0–5). Each Upcastable card authors its base tier, unlocked tiers, maximum tier, and tier effects; never infer them from either existing rank field unless that card explicitly authors a mapping. Normal play uses the base tier while retaining all permanent card-rank and ability-grade effects.
-  - Upcasting is opt-in per card and charges both +1 Mana and +1 Stamina per `upcastTier` above its authored base. Cards author incremental effects or fixed tier breakpoints.
-  - The optional post-target rank modal defaults off. Eligible selected cards expose an Upcast control; cancellation is inert.
+  - **Upcasting is off** (owner, 2026-11-20): no Upcast control, no rank prompt and no upcast reaction option appears, in Core or in legacy version-2 runs. The engine still accepts stored `upcastTier` / `upcastRanks` so old saves and logs resolve. The rules below describe how stored upcasts resolve.
+  - Upcasting was opt-in per card and charges both +1 Mana and +1 Stamina per `upcastTier` above its authored base. Cards author incremental effects or fixed tier breakpoints.
+  - The post-target rank modal setting and the Upcast control are no longer shown; no card exposes them.
   - Generated recovery cards cannot be copied or upcast unless explicitly authored. Replica plays pay their own costs and Blight; effect echoes do not recursively count as new plays.
   - Tag/status-triggered feats, relics, and cards use explicit once-per-owner-cycle budgets and expose the qualifying trigger in their text.
 

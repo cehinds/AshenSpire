@@ -14,9 +14,10 @@ const legacyReg = reg.legacyProgressionSource;
 const rewardIds = new Set(contentBundle.legacyProgression.classes.flatMap(c => c.cardPool));
 
 test('preserved legacy reward cards retain their pinned Mana rarity shares and one turn cost', () => {
-  for (const [rarity, count, manaShare, exceptions] of [['common',64,0.15,4], ['uncommon',64,0.3,0], ['rare',50,0.5,0]]) {
+  for (const [rarity, count, manaShare, exceptions] of [['common',63,0.15,3], ['uncommon',64,0.3,0], ['rare',52,0.5,1]]) {
     // The modular base pack adds rewards; this fixture pins the original class roster.
     // Two restoration cards now pay upfront MP, reducing common rarity exceptions to four.
+    // Owner ruling 2026-11-21 (starter weapon arts): a legacy common reward card is now a rare Rank 1 weapon art, so common is 63 (3 exceptions) and rare 51 (1 exception); 52 with Gravebinder's Lament (owner 2026-11-21, a new Herald rare).
     const cards = legacyReg.cards.all().filter(c => rewardIds.has(c.id) && !c.id.startsWith('base.') && c.rarity === rarity);
     assert.equal(cards.length, count);
     assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * manaShare) - exceptions);

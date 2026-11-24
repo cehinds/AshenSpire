@@ -28,6 +28,9 @@
     "skipOwnedBasics": {
       "type": "boolean"
     },
+    "skipOwned": {
+      "type": "boolean"
+    },
     "stanceCoverage": {
       "type": "object",
       "properties": {

@@ -55,11 +55,21 @@ test('settings import leaves out the removed legacy reward and shop rows instead
   assert.deepEqual(warnings, ['Settings for the removed legacy reward and shop menus were left out. Everything else was kept.']);
 });
 
+test('settings import reads the removed Rendering quality as Effects, never refusing the file', () => {
+  const rows = [{ cat: 'Combat', key: 'effects', def: false, label: 'Effects' }];
+  const read = (overrides) => parseAdvancedConfigFile(v1File(overrides), contentBundle, {}, rows, []);
+  assert.deepEqual(read({ 'settings.performanceMode': 'full' }), { effects: true }, 'an explicit Full is Effects on');
+  assert.deepEqual(read({ 'settings.performanceMode': 'lite' }), {}, 'anything else is dropped');
+  assert.deepEqual(read({ 'settings.performanceMode': 'auto' }), {});
+  assert.deepEqual(read({ 'settings.performanceMode': 'full', 'settings.effects': false }), { effects: false }, 'a named Effects wins');
+});
+
 test('settings import accepts exported legacy advanced settings using their row definitions', () => {
-  const rows = [{ cat: 'Advanced', key: 'levelUpValue', type: 'number', integer: true, min: 1, max: 20, def: 1 },
-    { cat: 'Advanced', key: 'cardMotif', type: 'choice', choices: ['band', 'plain'], def: 'plain' }];
+  const rows = [{ cat: 'Advanced', key: 'cardMotif', type: 'choice', choices: ['band', 'plain'], def: 'plain' }];
+  // A stray retired `levelUpValue` (owner, 2026-11-20) is no longer exported under its old gameConfig alias.
   const text = advancedConfigExport({ levelUpValue: 3, cardMotif: 'band' }, {}, ['cardMotif']);
-  assert.deepEqual(parseAdvancedConfigFile(text, contentBundle, {}, rows), { levelUpValue: 3, cardMotif: 'band' });
+  assert.ok(!text.includes('levelUp'), 'the retired level-up value is not exported');
+  assert.deepEqual(parseAdvancedConfigFile(text, contentBundle, {}, rows), { cardMotif: 'band' });
 });
 
 test('advanced configuration inventory is complete, grouped, and uniquely keyed', () => {

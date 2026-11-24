@@ -44,13 +44,14 @@ test('core Reaver starts with one MP and an earned fourth WIS adds exactly one m
   assert.equal(run.maxMana, 2); assert.equal(run.mana, 2);
 });
 
-test('core Smash is twice its same-rank Strike for one extra SP; Sundering Art is three times that Smash plus one MP', () => {
+// Owner ruling 2026-11-21 (starter budget): Sundering Art is Unranked, so it prints 32 (was 3x Smash = 36).
+test('core Smash is twice its same-rank Strike for one extra SP; Sundering Art is a 2 SP + 1 MP Smash printing 32', () => {
   const strike = resolveCard(registries, { cardId: 'core.strike' });
   const smash = resolveCard(registries, { cardId: 'core.smash' });
   const art = resolveCard(registries, { cardId: 'core.reaverSpecial' });
   assert.deepEqual([strike.effects[0].amount, strike.staminaCost, strike.manaCost], [6, 1, 0]);
   assert.deepEqual([smash.effects[0].amount, smash.staminaCost, smash.manaCost], [12, 2, 0]);
-  assert.deepEqual([art.effects[0].amount, art.staminaCost, art.manaCost], [36, 2, 1]);
+  assert.deepEqual([art.effects[0].amount, art.staminaCost, art.manaCost], [32, 2, 1]);
   assert.ok(smash.tags.includes('maneuver:smash') && art.tags.includes('maneuver:smash'));
 });
 
@@ -69,7 +70,8 @@ test('Sundering Art preview, affordability and actual combat payment use the sam
 });
 
 // Owner, 2026-11-15 (W25-F): every spell costs 1 more Mana, so Star Spark's printed 1 MP is paid as 2 (no Focus armament here; the Focus discount has its own test).
-test('Star Spark pays two MP (one printed, one spell surcharge) and actually applies two decaying Vulnerable stacks', () => {
+// Owner ruling 2026-11-21 (starter budget): Star Spark is Unranked, so it no longer applies Vulnerable (a second effect costs 5 and the stacks 8).
+test('Star Spark pays two MP (one printed, one spell surcharge) and applies no Vulnerable', () => {
   // This intrinsic surcharge fixture predates armour-type discounts; current robe/Focus integration is exercised below.
   const { combat, card } = fight('core.starseerSpecial', 'starseer', legacyGearRegistries(registries));
   combat.player.maxMana = Math.max(combat.player.maxMana, 2); combat.player.mana = 2;
@@ -79,23 +81,27 @@ test('Star Spark pays two MP (one printed, one spell surcharge) and actually app
   const before = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
   assert.equal(combat.player.mana, before - 2);
-  assert.equal(getStacks(combat.enemies[0], 'vulnerable'), 2);
+  assert.equal(getStacks(combat.enemies[0], 'vulnerable'), 0);
   assert.equal(registries.statuses.get('vulnerable').modifiers.damageTakenMult, 1.25);
   assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');
 });
 
 test('current robes, Focus and Prepared keep spell quotes, payment and restored snapshots in agreement', () => {
-  // Independent worked prices: spells add 1 MP and (except Cantrip) 1 SP;
-  // Prepared cuts SP by 1 and positive printed MP by 1 (Adept's floor is 1).
+  // Independent worked prices: spells add 1 MP and no SP (the +1 SP on non-cantrip spells was dropped by the owner on 2026-11-23);
+  // Prepared cuts SP by 1 (floor 0) and positive printed MP by 1 (the Graduate's floor is 0, owner 2026-11-22).
   // Robes then cut final MP by 1; a Focus cuts it by exactly 1 only in Prepared.
   // In particular, robes cancel Cantrip's surcharge even though it prints 0 MP.
   const prices = [
-    ['core.cometLance', [2, 1], [1, 1], [1, 0]],
-    ['core.meteor', [2, 3], [1, 2], [1, 1]],
-    ['core.cantrip', [1, 0], [0, 0], [0, 0]],
+    ['core.cometLance', [1, 1], [0, 0], [0, 0]], // Prepared: Graduate cut 1 -> 0 (owner 2026-11-22), then +1 surcharge, -1 robe
+    ['core.meteor', [1, 3], [0, 2], [0, 1]],
+    ['core.cantrip', [1, 1], [0, 0], [0, 0]], // Arcane Spark prints 1 MP (owner 2026-11-22): plain 1 + 1 surcharge - 1 robe
     // A current gear profile without spellCosts has neither surcharge nor its SP cut.
     // Meteor stays 3 MP plain / 2 MP with Adept, before robe -1 and Prepared Focus -1.
     ['core.meteor', [1, 2], [1, 1], [1, 0], false],
+    // A fight saved before 2026-11-23 keeps staminaSurcharge 1 in its rules snapshot, so its spells still pay +1 SP.
+    ['core.cometLance', [2, 1], [1, 0], [1, 0], 'saved'],
+    ['core.meteor', [2, 3], [1, 2], [1, 1], 'saved'],
+    ['core.cantrip', [1, 1], [0, 0], [0, 0], 'saved'],
   ];
   for (const [cardId, plain, prepared, focused, spellCosts = true] of prices) for (const [hand, stance, expected] of [
     ['greatsword', null, plain], ['ashStaff', null, plain], ['boneSceptre', null, plain],
@@ -106,6 +112,7 @@ test('current robes, Focus and Prepared keep spell quotes, payment and restored 
     run.loadout.sets.rightHand[0] = hand; run.loadout.sets.leftHand[0] = null;
     const combat = createRunCombat({ registries, run, rng: createRng(3), enemyIds: ['wanderingSoldier'] });
     if (!spellCosts) delete combat.fixCoreRules.spellCosts;
+    if (spellCosts === 'saved') combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
     assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'this is current gear integration');
     assert.equal(combat.player.maxMana, 3, 'base 1 + Nightweave 1 + robe type 1');
     assert.equal(getStacks(combat.player, 'ward'), hand === 'greatsword' ? 0 : 1, 'staff and sceptre types grant Ward at turn start');

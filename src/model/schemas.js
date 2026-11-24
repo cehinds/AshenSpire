@@ -62,6 +62,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'dodgeRoll',
   'moveEngagement',
   'swapRows',
+  'pullEnemy',
   'applyStatus',
   'changeAttribute',
   'removeStatus',
@@ -130,7 +131,7 @@ export const TARGETS = Object.freeze([
 
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
-  'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
+  'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'wardHpChanged', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
   'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRowChanged', 'combatAdvancedChanged', 'combatRetreatGranted', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
@@ -385,6 +386,9 @@ export const PASSIVE_TYPES = Object.freeze({
   // it scoped to the mounts whose tags include the track — never unscoped.
   skillXpMult: 'num',
   retainBlockUpTo: 'num', // highest allowance wins at owner turn start
+  // Owner 2026-11-20: picking the relic up queues N one-time card copies (cardCopyOnPickup), each a
+  // reward door listing every card the player owns (model/cardCopyService.js).
+  cardCopyOnPickup: 'num',
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
@@ -581,6 +585,7 @@ export const EFFECT_SPECS = Object.freeze({
   dodgeRoll: { allowed: [], required: [], refs: {} },
   moveEngagement: { allowed: ['bands'], required: ['target', 'bands'], refs: {} },
   swapRows: { allowed: [], required: ['target'], refs: {} },
+  pullEnemy: { allowed: [], required: ['target'], refs: {} },
   changeAttribute: { allowed: ['attribute', 'amount', 'thisTurn'], required: ['attribute', 'amount'], refs: {} },
   applyStatus: { allowed: ['status', 'stacks', 'tags', 'thisTurn'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
@@ -786,6 +791,9 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 // Optional authored behavior attachments. The shared compiler validates tag
 // registration, attachment eligibility and parameter schemas at the boot door.
 const rampNode = obj({ scope: en('combat', 'run'), stat: en('damage', 'block'), per: int });
+const costGrowthSchema = obj({ stamina: opt(num), mana: opt(num), perUse: opt(num), max: opt(num), perCard: opt(bool), uncapped: opt(bool) });
+const choiceModeSchema = obj({ id: str, name: str, tooltip: opt(str), icon: opt(str), costGrowth: opt(costGrowthSchema) });
+const retreatRuleFaceSchema = obj({ keywords: opt(arr(str)), textTemplate: opt(str), choiceModes: opt(arr(choiceModeSchema)) });
 const mechanicAttachmentFields = {
   mechanicTags: opt(arr(str)),
   mechanicBindings: opt(arr(obj({tag: str, enabled: opt(bool), parameters: opt(mapOf(any)), upgradeParameters: opt(mapOf(any))}))),
@@ -902,7 +910,8 @@ export const SCHEMAS = Object.freeze({
     requirements: opt(any),
     playLimit:opt(int),
     burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
-    costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
+    costGrowth: opt(costGrowthSchema),
+    retreatRuleFaces: opt(obj({ legacy: retreatRuleFaceSchema, current: retreatRuleFaceSchema })),
     // The only rolled upgrade options this card is offered, by kind (`blk`, `fx:reaction`, ...; cardUpgradeSteps.js UPGRADE_OPTION_KINDS).
     upgradeMenu: opt(arr(str)),
     effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
@@ -912,7 +921,7 @@ export const SCHEMAS = Object.freeze({
     gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), faceTemplate: opt(arr(str)), traits: opt(any) }))),
     weightClassPriced: opt(bool),
     // Named modes the player picks when playing (model/cardChoices.js); an effect with `mode` plays only when its mode was picked.
-    choiceModes: opt(arr(obj({ id: str, name: str, tooltip: opt(str), icon: opt(str) }))),
+    choiceModes: opt(arr(choiceModeSchema)),
     type: en(...CARD_TYPES),
     attack: opt(any),
     damageSchool: opt(en(...DAMAGE_SCHOOLS)),
@@ -941,7 +950,7 @@ export const SCHEMAS = Object.freeze({
         ramp: opt(rampNode),
         contest: opt(str),
         // An upgrade may ease a rising cost (playtest 2026-11-17, theme C): `{ stamina: 0, mana: 0 }` stops the growth.
-        costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
+        costGrowth: opt(costGrowthSchema),
       })
     ),
     icon: opt(str),
@@ -1010,6 +1019,7 @@ export const SCHEMAS = Object.freeze({
     icon: opt(str),
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
     sharedWord: opt(bool), // the status name doubles as a card-text word (e.g. Ward pool, Barrier grant): face projection must not read the word as this status (SPEC 4.1a)
+    retired: opt(bool), // kept only so saves that pinned older card content still load; no card applies it (owner, 2026-11-20; tools/statusreach.mjs lists it apart)
     fluxPerTurn: opt(int), // reaction rules v2: Ward damage at the owner's turn start (wired in src/engine/triggers.js)
     stackMode: en(...STACK_MODES),
     stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
@@ -1203,7 +1213,7 @@ export const SCHEMAS = Object.freeze({
         // `requires: { hp: 50 }` type-checked, was silently ignored, and the
         // choice was always affordable. The vocabulary is closed to what the
         // evaluator can actually read; widening it is an engine change.
-        requires: opt(obj({ cinders: opt(int), rankableCard: opt(bool) })),
+        requires: opt(obj({ cinders: opt(int), rankableCard: opt(bool), relicNotHeld: opt(str) })),
         effects,
         resultText: str,
       })

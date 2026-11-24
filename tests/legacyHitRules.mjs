@@ -29,7 +29,9 @@ function stripCounterStacks() {
 // Owner, 2026-11-17 (theme B, status and stance rules): these keys are newer than every fight the wrappers below rebuild. Each owning object is
 // snapshotted whole before the keys go, and rebuilt from that snapshot after, so the key order of the shared defaults (part of a fight's state hash) never moves.
 const THEME_B_KEYS = [['counter', 'armedWhileStacks'], ['counter', 'enemyBadgeStacks'], ['stanceBenefits', 'defend', 'poiseFloorWhileBlock'],
-  ['stanceBenefits', 'defend', 'poiseFloorWardMagic'], ['stanceBenefits', 'prepared', 'meleeDamageTakenMultiplier'], ['stanceBenefits', 'neutral', 'damageTakenMultiplier']];
+  ['stanceBenefits', 'defend', 'poiseFloorWardMagic'], ['stanceBenefits', 'prepared', 'meleeDamageTakenMultiplier'], ['stanceBenefits', 'neutral', 'damageTakenMultiplier'],
+  // Owner ruling 2026-11-22: the Magic Adept zero Mana floor key is newer than every fight these wrappers rebuild; such a fight keeps floor 1.
+  ['stance', 'playerMinimumCost']];
 function stripThemeB() {
   const saved = new Map();
   for (const path of THEME_B_KEYS) {
@@ -50,7 +52,11 @@ function stripThemeB() {
 function stripSection20() {
   const ward = fixCoreMechanics.ward, wardRows = Object.entries(ward), pierce = fixCoreMechanics.pierce, force = fixCoreMechanics.elements?.force;
   const poise = fixCoreMechanics.poise, poiseRows = Object.entries(poise);
-  delete ward.decayPerTurn; delete ward.breaksAtZeroPoise; delete poise.breakStatusStacks; poise.brokenDamageMultiplier = 1.5;
+  for (const key of Object.keys(ward)) delete ward[key];
+  ward.enabled = false;
+  ward.poisePerStack = 5;
+  ward.routing = 'blockFirst';
+  delete poise.breakStatusStacks; poise.brokenDamageMultiplier = 1.5;
   fixCoreMechanics.pierce = { blockBypassFraction: 0.2 };
   if (force) fixCoreMechanics.elements.force = { poiseMultiplier: 1.5 };
   return () => {

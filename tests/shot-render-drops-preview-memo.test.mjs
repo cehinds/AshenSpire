@@ -27,6 +27,6 @@ test('a card the engine cannot resolve is unavailable, not a throw out of the ha
   const end = source.indexOf('return { enabled: true, needsTarget: pv.needsTarget', begin);
   assert.ok(begin >= 0 && end > begin, 'inspectionPlayAction still resolves the preview before the resource check');
   const body = source.slice(begin, end);
-  assert.match(body, /try \{ pv = previewCard\(combat, instanceId, undefined, upcastRanksByCard\.get\(instanceId\)\); \}/);
+  assert.match(body, /try \{[\s\S]*pv = previewCard\(combat, instanceId, targetId, upcastRanksByCard\.get\(instanceId\)\);/);
   assert.match(body, /catch \(e\) \{[^}]*return unavailable\(/, 'the catch answers with an unavailability sentence');
 });

@@ -1622,6 +1622,8 @@ export function outcomeKindForEvent(e = {}) {
   // Nothing reached Block or Health: Barrier or Ward took the whole hit. A Barrier that broke
   // keeps its BREAK callout and its number, as it did before.
   if (parts.amount === 0 && Math.max(0, Number(e.barrierAbsorbed) || 0) > 0) return e.barrierRemaining === 0 ? null : 'resisted';
+  // Ward HP buffer absorbed the hit whole (alone or with Poise) and cost no HP: read as BLOCKED so the floater policy shows a word instead of silence.
+  if (e.wardHpBuffer && parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'blocked';
   if (parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'wardResisted';
   // A hit that Poise alone absorbed whole cost no HP: it reads as the same fully-absorbed word, not as silence.
   if (parts.amount === 0 && (parts.poise || parts.magicPoise)) return 'blocked';

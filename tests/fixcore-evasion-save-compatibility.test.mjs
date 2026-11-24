@@ -35,6 +35,8 @@ function priorRuntimeEnvelope() {
 const restoreStripped = (...args) => withoutWeaknesses(restoreCombatSnapshot(...args)); // a restore refills enemy weaknesses; the fixture drops them again
 // Genuine resolved profiles from the two exact merge parents, rather than current profiles with edited runtime hashes.
 for (const [name, file, runtime, rulesFile] of [
+  ['Dev 213 parent 0b11a358', 'dev-0b11a358-profile.json.gz', 'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92', 'dev-0b11a358-rules.json'],
+  ['Retreat WIP parent 54d43945', 'retreat-54d43945-profile.json.gz', 'sha256:edb03b160d360fcbd7ac312134fc535bc1e2b90ad45d6bcbfcff780c6dc8ec06', 'retreat-54d43945-rules.json'],
   ['stat parent 6e2cb1b8', 'stat-profile-6e2cb1b8.json.gz', 'sha256:de42dafc4ec394c607c7c52a5772bdd940728ff863ccfb21508e8a2a05f1d0bc'],
   ['Gear parent 62323292', 'gear-profile-62323292.json.gz', 'sha256:72ec668dbba9685fd6fe6ab7f95b33c98410450e412336982b5a9dc005281649'],
   ['stat parent 05ce3864', 'stat-profile-05ce3864.json.gz', 'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9', 'stat-rules-05ce3864.json'],
@@ -55,7 +57,7 @@ for (const [name, file, runtime, rulesFile] of [
   const rulesBefore = structuredClone(snapshot.fixCoreRules);
   if (rulesFile) {
     assert.equal(snapshot.fixCoreRules.spellTraditionsVersion, profile.modules.effects.spellTraditionsVersion);
-    assert.equal(snapshot.fixCoreRules.smashVsDefensive.defendDamageMultiplier, name.startsWith('Smash') ? 1.5 : undefined);
+    assert.equal(snapshot.fixCoreRules.smashVsDefensive.defendDamageMultiplier, name.startsWith('Smash') || name.startsWith('Dev 213') ? 1.5 : undefined);
     const entries = new Map();
     const save = createSaveManager({ getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value), removeItem: key => entries.delete(key) });
     restoredRun.combatEntered = { nodeId: 'n1_4', encounterId: 'patrol', snapshot };
@@ -213,8 +215,13 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-19: the deferred Axe Strength reader's generated call-map now names finishAbilityPlay; 2a83899... remains readable.
   // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
   // Re-pinned 2026-11-20 (#2892 review): card tradition labels move to uiStrings.csv (card.tradition.*); wording only, edf0d9... is now in PREVIOUS_RUNTIMES.
-  // Re-pinned 2026-11-20 (spell categories): SpellCategory and the Arcane/Divine gear selectors move spellTraditions.js and gearEffects.js; 7d13f1... is now in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:15d16a1fa5b77c324f001cd684b9deb0ac68376f8aa61165c2b0e09df08708a6');
+  // Re-pinned 2026-11-20 on the Retreat reach merge: 7d13f1... (dev) and e5b5d5... (this branch before dev) are now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-22: the Magic Adept zero Mana floor (stance.playerMinimumCost, owner ruling) moves the runtime hash; fbf370... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-22: no card has a cost minimum (owner ruling); d5db9a... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-22: cost.manaOnly is a data mechanic now (the cost-minimum validator rule is gone) and Exhaust/Ethereal score flat (owner rulings); a5c68d... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-23: the spell Stamina surcharge is dropped (spellCosts.staminaSurcharge 0, owner ruling); 0805e9... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-24: Ward health buffer (ward.routing "hpBuffer", owner ruling); e31663... is now in PREVIOUS_RUNTIMES.
+  assert.equal(profile.lock.runtimeHash, 'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

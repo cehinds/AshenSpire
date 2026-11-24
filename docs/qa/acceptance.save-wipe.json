@@ -12,7 +12,8 @@
       "settleMs": 2500,
       "seedStorage": {
         "sote_run_v1": "{\"schemaVersion\":1,\"class\":\"warrior\",\"actNumber\":1,\"floor\":3,\"seedString\":\"old\"}",
-        "sote_build_stamp_v1": "0.0.0.0+oldbuild"
+        "sote_build_stamp_v1": "0.0.0.0+oldbuild",
+        "sote_epoch_v1": "2"
       },
       "success": [
         { "kind": "visible", "label": "Notice is on the title", "selector": ".save-wipe-notice" },

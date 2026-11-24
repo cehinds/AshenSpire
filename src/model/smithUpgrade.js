@@ -1,6 +1,6 @@
 // The Blacksmith's item upgrades (W25 step 4, owner 2026-11-14): every upgrade is a CHOICE of two or three rolled
 // options, priced by how many upgrades the item already has. Pure and stateless like the card-upgrade generator:
-// the roll is mulberry32(hash(run.seed, itemRef, upgrade number)), so the options a quote shows are the options a
+// the roll is mulberry32(hash(run.seed, itemRef + the visit's offer key, upgrade number)), so the options a quote shows are the options a
 // commit applies and a re-quote never changes them. Nothing here touches the combat engine; the chosen option is
 // stored in `run.itemUpgradePicks[itemRef]` and read by the gear receipt (gameProfileGear.js) and the item-property
 // summary (itemProperties.js).
@@ -14,6 +14,7 @@ import { itemRefIdentity } from './itemUpgrades.js';
 import { ItemCategory, ItemFamily, ItemPicks, ItemUpgradeCount, ItemRank, ItemPropertyIds } from './itemPicks.js';
 import { ITEM_SMITH, ITEM_STAT_OPTIONS, ITEM_SMITH_BEFORE_STAT_POINTS, ITEM_STAT_OPTIONS_BEFORE_STAT_POINTS, ITEM_PROPERTIES } from '../content/itemProperties.js';
 import { gameModule } from './gameProfile.js';
+import { OfferSalted } from './upgradeOffer.js';
 
 const STAT_LABELS = {
   ar: 'STR', dr: 'DEX', pr: 'INT', poise: 'Poise', ward: 'Ward', mp: 'Mana',
@@ -42,8 +43,39 @@ export function PickText(pick) {
   if (!pick) return '';
   if (pick.k === 'spent') return '(reworked)';
   if (pick.k === 'prop') return ITEM_PROPERTIES.find((row) => row.id === pick.prop)?.text || pick.prop;
-  if (pick.k === 'effect') return pick.effect === 'poiseDamagePct' ? `+${pick.n}% Poise damage` : `${pick.effect} ${pick.n}`;
+  if (pick.k === 'effect') return `+${pick.n}${EFFECT_UNITS[pick.effect] || ''} ${EffectLabel(pick.effect)}`;
   return `+${pick.n} ${STAT_LABELS[pick.stat] || pick.stat}`;
+}
+
+// An item effect's player words: a known one by name, any other split from its id ("poiseDamagePct" -> "Poise damage pct").
+const EFFECT_LABELS = { poiseDamagePct: 'Poise damage' };
+const EFFECT_UNITS = { poiseDamagePct: '%' };
+function EffectLabel(effect) {
+  if (EFFECT_LABELS[effect]) return EFFECT_LABELS[effect];
+  const words = String(effect || '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/**
+ * What an option changes on the item, as { label, before, after } (owner, 2026-11-20: every change is on the modal).
+ * A stat or effect reads its total from this item's upgrades before and after ("STR +1 -> +2"); a property reads as
+ * added ("before" empty).
+ */
+export function SmithPickChange(run, itemRef, pick) {
+  if (!pick) return null;
+  if (pick.k === 'prop') return { label: PickText(pick), before: '', after: '', adds: true };
+  const same = (row) => row.k === pick.k && (pick.k === 'effect' ? row.effect === pick.effect : (STAT_LABELS[row.stat] || row.stat) === (STAT_LABELS[pick.stat] || pick.stat));
+  const held = ItemPicks(run, itemRef).filter(same).reduce((sum, row) => sum + (Number(row.n) || 0), 0);
+  const unit = pick.k === 'effect' ? EFFECT_UNITS[pick.effect] || '' : '';
+  const label = pick.k === 'effect' ? EffectLabel(pick.effect) : STAT_LABELS[pick.stat] || pick.stat;
+  return { label, before: `+${held}${unit}`, after: `+${held + (Number(pick.n) || 0)}${unit}` };
+}
+
+/** The option's change in one line for the options modal ("STR +1 -> +2"); a property option shows its name only, which already says what it adds. */
+export function SmithPickChangeText(run, itemRef, pick) {
+  const change = SmithPickChange(run, itemRef, pick);
+  if (!change) return '';
+  return change.adds ? '' : `${change.label} ${change.before} → ${change.after}`;
 }
 
 function statCandidates(run, itemRef, family) {
@@ -80,21 +112,46 @@ export function SmithOptionPool(run, itemRef) {
   return [...statCandidates(run, itemRef, family), ...propertyCandidates(run, itemRef, family)];
 }
 
-/** Upgrade number `n` of an item: two or three distinct options, the same every time it is asked. */
+// Item option families (owner, 2026-11-20): one roll never offers two of a family. Attribute picks are one family
+// (STR, DEX, CON, INT, WIS, Mana, and the +1 attribute properties); the edges that add an element or a status on a hit
+// are one; so are Poise, resistances, start-of-turn Block, stances, hand flow and deck building.
+const PROPERTY_FAMILIES = Object.freeze({
+  edge: ['edgeFire', 'edgeFrost', 'edgeLightning', 'bleedingEdge', 'searingEdge', 'chillingEdge'],
+  attribute: ['plusSTR', 'plusDEX', 'plusCON', 'plusWIS', 'plusINT', 'maxMana1'],
+  poise: ['maxPoise5', 'poiseGuard2'],
+  resist: ['resistFire', 'resistFrost', 'resistLightning', 'resistDecay', 'resistSacred', 'resistPsychic', 'immuneFire', 'immuneFrost', 'immuneLightning', 'statusWard'],
+  block: ['startBlock2', 'startBlock4'],
+  stance: ['attackStance', 'smashStance', 'castingStance', 'defendStance', 'stanceDraw', 'stanceStamina'],
+  hand: ['handSize1', 'retain1', 'firstSkillDraw'],
+  deck: ['smallerDeck', 'deckSlot1', 'unlimitedBasics', 'unlimitedCantrips'],
+});
+const PROPERTY_FAMILY_OF = Object.freeze(Object.fromEntries(Object.entries(PROPERTY_FAMILIES).flatMap(([family, ids]) => ids.map((id) => [id, family]))));
+const STAT_FAMILY = Object.freeze({ poise: 'poise', ward: 'resist', poiseDamagePct: 'poise' });
+/** The family of an item pick: a property's group, else the stat's ('attribute' for any attribute or Mana). */
+export function SmithPickFamily(pick) {
+  if (!pick) return '';
+  if (pick.k === 'prop') return PROPERTY_FAMILY_OF[pick.prop] || `prop:${pick.prop}`;
+  if (pick.k === 'effect') return STAT_FAMILY[pick.effect] || `effect:${pick.effect}`;
+  return STAT_FAMILY[pick.stat] || 'attribute';
+}
+
+/** Upgrade number `n` of an item: two or three options of distinct families, the same every time it is asked during a visit. */
 export function RollSmithOptions(run, itemRef, n = ItemUpgradeCount(run, itemRef) + 1) {
   const pool = SmithOptionPool(run, itemRef);
   if (!pool.length) return [];
-  const rng = mulberry32(upgradeSeed(run.seed, `smith:${itemRef}`, n));
+  const rng = mulberry32(upgradeSeed(run.seed, OfferSalted(run, `smith:${itemRef}`), n));
   const counts = ITEM_SMITH.optionCounts;
   const count = Math.min(pool.length, counts[Math.min(counts.length - 1, Math.floor(rng() * counts.length))]);
-  const left = [...pool];
+  let left = [...pool];
   const options = [];
   while (options.length < count && left.length) {
     const total = left.reduce((sum, row) => sum + row.weight, 0);
     let roll = rng() * total, index = 0;
     for (; index < left.length - 1; index += 1) { roll -= left[index].weight; if (roll < 0) break; }
-    options.push({ ...left[index].pick, text: PickText(left[index].pick) });
-    left.splice(index, 1);
+    const pick = left[index].pick;
+    options.push({ ...pick, text: PickText(pick) });
+    const family = SmithPickFamily(pick);
+    left = left.filter((row) => SmithPickFamily(row.pick) !== family);
   }
   return options;
 }

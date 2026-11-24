@@ -333,7 +333,15 @@ function auditRelicPassives(registries) {
           result = authored && observed.baseline === expected.baseline && observed.withRelic === expected.withRelic ? 'covered' : 'missing';
         } else { expected = authored; observed = null; }
       } else if (typeof authored === 'number') {
-        if (key === 'runeGainMult') {
+        if (key === 'cardCopyOnPickup') {
+          // Owner 2026-11-20: pickup queues N copies; each opens one copy door listing the owned cards.
+          const run = newRun([]);
+          api.GrantRelicCardCopies(registries, run, relic.id);
+          const queued = run.pendingCardCopies || 0, offerId = api.StartCardCopyOffer(registries, run);
+          expected = { queued: authored, doorOptions: '>0' };
+          observed = { queued, doorOptions: run.gameProfileRewardOffers?.[offerId]?.options?.length || 0, left: run.pendingCardCopies || 0 };
+          result = queued === authored && observed.doorOptions > 0 && observed.left === authored - 1 ? 'covered' : 'missing';
+        } else if (key === 'runeGainMult') {
           const base = api.rollRuneReward(registries, api.createRng(7320), 'elite', []);
           const actual = api.rollRuneReward(registries, api.createRng(7320), 'elite', [relic.id]);
           expected = Math.floor(base * authored); observed = actual; result = observed === expected ? 'covered' : 'missing';

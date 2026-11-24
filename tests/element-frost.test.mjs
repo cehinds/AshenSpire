@@ -97,8 +97,10 @@ test('current Frost uses the higher of explicit INT and WIS for Chill and never 
 
 test('Chill: -5% of the damage the chilled unit deals, per stack', () => {
   const { combat, enemy, player } = fight({ enemies: 1 });
-  // Empty the target's Poise so the hit lands 1:1 and only Chill moves it (Core gear now grants Poise, whose capped share is not linear).
+  // Empty the target's starter Poise and Ward so the hit lands 1:1 on HP and only Chill moves it.
   player.persistentPoise.value = 0;
+  player.wardHp = 0;
+  delete player.statuses.ward;
   const plain = hit(combat, enemy, player).hpLoss;
   enemy.statuses.chill = { stacks: 4 };
   const chilled = hit(combat, enemy, player);

@@ -62,7 +62,7 @@ test('every fx kind applies, validates, and an unknown one is refused', () => {
 
 test('a card is only offered what it lacks', () => {
   const run = { seed: 7, gameProfile: profile, rangePolicy: {} };
-  const fxOf = (cardId, steps = []) => nextUpgradeOptions(run, { instanceId: 'x', cardId, ...(steps.length ? withSteps(steps) : { upgraded: false }) }, registries.cards.get(cardId), registries, 40, { noAuthored: true })
+  const fxOf = (cardId, steps = []) => nextUpgradeOptions(run, { instanceId: 'x', cardId, ...(steps.length ? withSteps(steps) : { upgraded: false }) }, registries.cards.get(cardId), registries, 40, { noAuthored: true, everyFamily: true })
     .filter((s) => s.k === 'fx').map((s) => s.fx);
   assert.ok(fxOf('core.strike').includes('block'));
   assert.ok(!fxOf('core.defend').includes('block'), 'Defend already gives Block');
@@ -70,7 +70,7 @@ test('a card is only offered what it lacks', () => {
   assert.ok(fxOf('core.mendingTouch').includes('unexhaust'));
   assert.ok(!fxOf('core.strike', [{ k: 'fx', fx: 'retain' }]).includes('retain'), 'no second Retain');
   assert.ok(!fxOf('core.strike', [{ k: 'fx', fx: 'block', n: 4 }]).includes('block'));
-  const boostStats = (cardId) => nextUpgradeOptions(run, { instanceId: 'x', cardId, upgraded: false }, registries.cards.get(cardId), registries, 40, { noAuthored: true })
+  const boostStats = (cardId) => nextUpgradeOptions(run, { instanceId: 'x', cardId, upgraded: false }, registries.cards.get(cardId), registries, 40, { noAuthored: true, everyFamily: true })
     .filter((s) => s.k === 'fx' && s.fx === 'boost').map((s) => s.stat);
   assert.ok(boostStats('core.spark').includes('intelligence'), 'a damaging spell is offered an INT boost');
   assert.ok(!boostStats('core.spark').some((stat) => ['strength', 'dexterity'].includes(stat)), 'a spell is offered INT / WIS boosts, never STR / DEX');

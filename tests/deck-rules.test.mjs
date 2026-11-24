@@ -302,9 +302,9 @@ test('a rank-up reaches a sideboarded card, and it comes back ranked (SPEC §13.
   const slash = run.deck.find((c) => c.cardId === 'gorefireSlash');
   awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1));
   moveToSideboard(REG, run, slash.instanceId);
-  assert.equal(raiseCardRank(REG, run, 'item:blade', slash.instanceId)?.rank, 2);
+  assert.equal(raiseCardRank(REG, run, 'item:blade', slash.instanceId)?.rank, 1); // unranked rises to Rank 1 (owner 2026-11-23)
   moveFromSideboard(REG, run, slash.instanceId);
-  assert.equal(run.deck.find((c) => c.instanceId === slash.instanceId).rank, 2);
+  assert.equal(run.deck.find((c) => c.instanceId === slash.instanceId).rank, 1);
 });
 
 test('a sideboarded art is installable, and installing takes it from the sideboard', async () => {
@@ -331,12 +331,13 @@ test('a sideboarded art is installable, and installing takes it from the sideboa
   assert.ok(!run.deck.some((c) => c.instanceId === receipt.instanceId));
 });
 
-test('Settings → Advanced → Deck shows one row per rule, each defaulting from content', async () => {
+test('Settings → Advanced → Deck shows only Play in deck order; the editor\'s other rules are authored content', async () => {
+  // Owner, 2026-11-20: Core 2 drew none of the other Deck rows, so they were dropped and
+  // content/deckRules.js is their one home (a stored key is cleared at boot).
   const { settingsRows } = await import('../src/ui/screens/settings.js');
   const rows = settingsRows().filter((row) => row.advancedGroup === 'Deck');
-  assert.deepEqual(rows.map((row) => row.key).sort(), Object.keys(DECK_RULES.defaults).sort());
-  for (const row of rows) assert.equal(row.def, DECK_RULES.defaults[row.key], `${row.key} defaults from content/deckRules.js`);
-  assert.deepEqual(rows.find((row) => row.key === 'deckEditingWhere').choices, [...DECK_RULES.where]);
+  assert.deepEqual(rows.map((row) => row.key), ['playInDeckOrder']);
+  assert.equal(rows[0].def, DECK_RULES.defaults.playInDeckOrder, 'defaults from content/deckRules.js');
 });
 
 test('review fixes: a merchant-retired slot is reused, a malformed ordered snapshot is refused, a dangling sideboard id archives', async () => {

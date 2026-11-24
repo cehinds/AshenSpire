@@ -40,8 +40,10 @@
         "enemyDamageMultiplier": 0.7,
         "physicalDamageMultiplier": 0.7,
         "blockGainMultiplier": 0.49,
+        "statusBlockWeight": 1,
         "spellPoiseDamageMultiplier": 2,
         "spellTraditionsVersion": 1,
+        "retreatRulesVersion": 1,
         "spellRewardPolicyVersion": 1
       }
     },

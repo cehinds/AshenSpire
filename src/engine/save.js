@@ -39,7 +39,7 @@ import { migrateAbilityGrades } from '../model/abilityGrades.js';
 
 import { retiredProfileReason } from '../model/retiredProfile.js';
 import { storedGameProfile, expandStoredRun } from '../model/runStorage.js';
-import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
+import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION, RUN_SCHEMA_ACQUIRED_ARMOUR } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
@@ -123,7 +123,7 @@ function classTreeReferenceProblems(run, registries) {
   return problems;
 }
 
-function pendingRewardReferenceProblems(pending, registries) {
+export function PendingRewardReferenceProblems(pending, registries) {
   if (!pending) return [];
   const rewards = pending.rewards || {};
   const problems = [];
@@ -154,7 +154,7 @@ function pendingRewardReferenceProblems(pending, registries) {
   for (const row of rewards.classMilestoneRewards || []) {
     if (row.rewardKind === 'cards') for (const id of row.options || []) if (!registries.cards.has(id)) problems.push(`class milestone card '${id}' is unknown`);
     if (row.rewardKind === 'relic') for (const id of row.options || []) if (!registries.relics.has(id)) problems.push(`class milestone relic '${id}' is unknown`);
-    if (row.rewardKind === 'feat') for (const id of row.options || []) if (!registries.classSkillFeats.some(feat => feat.id === id)) problems.push(`class milestone feat '${id}' is unknown`);
+    if (row.rewardKind === 'feat') for (const id of row.options || []) if (!RETIRED_FEAT_IDS.includes(id) && !registries.classSkillFeats.some(feat => feat.id === id)) problems.push(`class milestone feat '${id}' is unknown`);
     if (row.rewardKind === 'attribute') for (const id of row.options || []) if (!registries.attributes.has(id)) problems.push(`class milestone attribute '${id}' is unknown`);
   }
   for (const draft of rewards.skillDrafts || []) {
@@ -190,6 +190,43 @@ function dropRetiredStatuses(run) {
       for (const id of RETIRED_STATUS_IDS) delete entity.statuses[id];
     }
   }
+}
+
+// Class-skill feats retired from the game (the crit feats, owner 2026-11-20: crits are gone from Core). A run
+// saved while a class milestone offered one still names it in that offer and in its pending reward row. Only an
+// offer that a pending row still references is healed: the retired option is dropped from the row and its offer
+// together (with the paired choiceIds/abilityRanks entries), BEFORE the pending reference check, so the save is
+// not archived. A row left with no option is removed and its offer kept as saved (no row reads it any more).
+// An offer whose grant was already taken is never touched: classMilestoneProblems requires its selection to stay
+// in offer.options. Only ids named here are dropped: any other unknown feat id is still refused.
+export const RETIRED_FEAT_IDS = Object.freeze(['reaverKeenBlade', 'reaverBloodDiscipline', 'reaverMasteryFocus',
+  'starseerClearSky', 'starseerRitualPrecision', 'starseerMasteryFocus', 'rogueMeasuredPoint', 'rogueKnifeWork',
+  'rogueMasteryFocus', 'heraldBlightPrecision', 'heraldOathEdge', 'heraldMasteryFocus', 'bladeCritical']);
+function withoutRetiredFeats(row) {
+  if (!row || row.rewardKind !== 'feat' || !Array.isArray(row.options)) return row;
+  const keep = row.options.map((id, index) => (RETIRED_FEAT_IDS.includes(id) ? -1 : index)).filter(index => index >= 0);
+  if (keep.length === row.options.length) return row;
+  const next = { ...row, options: keep.map(index => row.options[index]) };
+  for (const key of ['choiceIds', 'abilityRanks']) if (Array.isArray(row[key])) next[key] = keep.map(index => row[key][index]);
+  return next;
+}
+function grantTaken(run, receiptId) {
+  return Object.values(run?.classMilestones || {}).some(row => Object.values(row?.grants || {})
+    .some(grant => grant?.id === receiptId && grant.state !== 'pending'));
+}
+export function DropRetiredFeatOptions(run) {
+  const rows = run?.pendingReward?.rewards?.classMilestoneRewards;
+  if (!Array.isArray(rows)) return;
+  const offers = run.classMilestoneOffers && typeof run.classMilestoneOffers === 'object' ? run.classMilestoneOffers : null;
+  const kept = [];
+  for (const row of rows) {
+    const next = withoutRetiredFeats(row);
+    if (next === row || grantTaken(run, row.receiptId)) { kept.push(row); continue; }
+    if (!next.options.length) continue;
+    kept.push(next);
+    if (offers && offers[row.receiptId]) offers[row.receiptId] = withoutRetiredFeats(offers[row.receiptId]);
+  }
+  run.pendingReward.rewards.classMilestoneRewards = kept;
 }
 
 /**
@@ -515,6 +552,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // every fight an older build saved with its three cells. The ledger is
         // not open yet, so the note is written below, once it is.
         dropRetiredStatuses(run);
+        DropRetiredFeatOptions(run);
         trimmedLoadout = [
           ...trimExtraSets(registries, run.loadout),
           ...[run.combatEntered, run.combatPendingOutcome]
@@ -528,7 +566,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         if (snapshotReferenceProblems.length) {
           throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
         }
-        const pendingReferenceProblems = pendingRewardReferenceProblems(run.pendingReward, registries);
+        const pendingReferenceProblems = PendingRewardReferenceProblems(run.pendingReward, registries);
         if (pendingReferenceProblems.length) {
           throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
         }
@@ -606,15 +644,24 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // sets. Older saves may wear a set without recording that acquisition;
         // preserve it here before it can disappear after unequipping.
         // ownership() stays pure.
+        // A save from before v27 also owned every blank-unlock set of its class
+        // (shared sets and the baseline), worn or not; it keeps them. Those rows
+        // are marked `legacy`: the old rule never let them be sold.
         if (run.loadout && run.loadout.sets) {
           const worn = new Set((run.loadout.sets.armor || []).filter(Boolean));
           const grant = run.loadout.creationArmourGrant;
+          const predatesAcquiredArmour = run.migratedFromRunSchemaVersion !== undefined
+            && run.migratedFromRunSchemaVersion < RUN_SCHEMA_ACQUIRED_ARMOUR;
+          const ownedBeforeAcquiredArmour = (piece) => predatesAcquiredArmour && !piece.unlock;
           for (const piece of registries.equipment.armour || []) {
-            if (piece.classId !== run.class || !worn.has(piece.id)) continue;
+            if (piece.classId !== run.class) continue;
+            if (!worn.has(piece.id) && !ownedBeforeAcquiredArmour(piece)) continue;
             if (grant && grant.classId === piece.classId && grant.id === piece.id) continue;
             const bought = Array.isArray(run.loadout.boughtArmour) ? run.loadout.boughtArmour : (run.loadout.boughtArmour = []);
             if (!bought.some((row) => row && row.classId === piece.classId && row.id === piece.id)) {
-              bought.push({ classId: piece.classId, id: piece.id });
+              bought.push(ownedBeforeAcquiredArmour(piece)
+                ? { classId: piece.classId, id: piece.id, legacy: true }
+                : { classId: piece.classId, id: piece.id });
             }
           }
         }

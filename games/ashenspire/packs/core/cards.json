@@ -44,7 +44,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 8
+        "amount": 0
       }
     ],
     "tags": [
@@ -125,8 +125,8 @@
     "name": "Sweep",
     "class": "colorless",
     "rarity": "common",
-    "cost": 1,
-    "staminaCost": 1,
+    "cost": 2,
+    "staminaCost": 2,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
@@ -154,7 +154,7 @@
     "id": "core.reaverSpecial",
     "name": "Sundering Art",
     "class": "reaver",
-    "rarity": "starter",
+    "rarity": "uncommon",
     "cost": 2,
     "staminaCost": 2,
     "manaCost": 1,
@@ -166,7 +166,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 36
+        "amount": 32
       }
     ],
     "tags": [
@@ -184,7 +184,7 @@
     "id": "core.starseerSpecial",
     "name": "Star Spark",
     "class": "starseer",
-    "rarity": "starter",
+    "rarity": "uncommon",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 1,
@@ -197,12 +197,6 @@
         "op": "damage",
         "target": "enemy",
         "amount": 18
-      },
-      {
-        "op": "applyStatus",
-        "target": "enemy",
-        "status": "vulnerable",
-        "stacks": 2
       }
     ],
     "tags": [
@@ -212,7 +206,7 @@
       "school:force",
       "tradition:arcane"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
+    "textTemplate": "Deal {damage} damage.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
@@ -221,7 +215,7 @@
     "id": "core.rogueSpecial",
     "name": "Quick Guard",
     "class": "rogue",
-    "rarity": "starter",
+    "rarity": "uncommon",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
@@ -248,7 +242,7 @@
     "id": "core.heraldSpecial",
     "name": "Lasting Resolve",
     "class": "herald",
-    "rarity": "starter",
+    "rarity": "uncommon",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 0,
@@ -314,10 +308,10 @@
     "id": "core.cantrip",
     "name": "Arcane Spark",
     "class": "colorless",
-    "rarity": "starter",
+    "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 0,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
     "mirrors": "attack",
@@ -327,7 +321,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 6
+        "amount": 3
       }
     ],
     "tags": [
@@ -342,7 +336,149 @@
     "textTemplate": "Deal {damage} damage.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 0
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.arcaneWard",
+    "name": "Arcane Ward",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "ward",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "school:alteration",
+      "tradition:arcane",
+      "tradition:divine"
+    ],
+    "textTemplate": "Gain {block} Block. Gain {ward} Ward.",
+    "flavor": "A thin pane of cold light, raised by habit."
+  },
+  {
+    "id": "core.glimmerVeil",
+    "name": "Glimmer Veil",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 1
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "ward",
+        "stacks": 1
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "school:alteration",
+      "tradition:arcane",
+      "tradition:divine"
+    ],
+    "textTemplate": "Gain {block} Block. Gain {ward} Ward.",
+    "flavor": "It turns the first blow and tells no one how."
+  },
+  {
+    "id": "core.stoneSigil",
+    "name": "Stone Sigil",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 16
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "school:alteration",
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
+    ],
+    "textTemplate": "Gain {block} Block.",
+    "flavor": "Drawn once in chalk. The wall it makes does not stay."
+  },
+  {
+    "id": "core.ashenShell",
+    "name": "Ashen Shell",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 14
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "school:alteration",
+      "rank.cantrip",
+      "tradition:arcane",
+      "tradition:divine"
+    ],
+    "textTemplate": "Gain {block} Block.",
+    "flavor": "Burnt ash, held in the shape of a shield, for a moment."
   },
   {
     "id": "core.manaSurge",
@@ -404,8 +540,8 @@
     "name": "Retreat",
     "class": "colorless",
     "rarity": "special",
-    "cost": 1,
-    "staminaCost": 1,
+    "cost": 0,
+    "staminaCost": 0,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
@@ -426,7 +562,14 @@
       "maneuver:defend",
       "classification.skill"
     ],
-    "textTemplate": "Retreat foes."
+    "textTemplate": "Retreat foes. Costs 1 more each play.",
+    "faceTemplate": ["Retreat foes.", "Costs 1 more each play."],
+    "costGrowth": {
+      "stamina": 1,
+      "perUse": 1,
+      "perCard": true,
+      "uncapped": true
+    }
   },
   {
     "id": "core.upsetRanks",
@@ -538,6 +681,12 @@
             1
           ]
         }
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "frail",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -550,10 +699,10 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Exhaust.",
+    "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Gain {frail} Frail. Exhaust.",
     "upgrade": {
       "keywords": [],
-      "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared.",
+      "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Gain {frail} Frail.",
       "effects": [
         {
           "op": "applyStatus",
@@ -581,6 +730,12 @@
               1
             ]
           }
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "frail",
+          "stacks": 1
         }
       ]
     }
@@ -1071,7 +1226,7 @@
     "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 0,
+    "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
     "mirrors": "attack",
@@ -1111,6 +1266,57 @@
           "op": "moveEngagement",
           "target": "enemy",
           "bands": 1
+        }
+      ]
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "id": "core.galePull",
+    "name": "Gale Pull",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "mirrors": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 3
+      },
+      {
+        "op": "pullEnemy",
+        "target": "enemy"
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "rank.cantrip",
+      "school:force",
+      "pullRetreat"
+    ],
+    "textTemplate": "Deal {damage} damage. Pull Retreat.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 5
+        },
+        {
+          "op": "pullEnemy",
+          "target": "enemy"
         }
       ]
     },
@@ -1577,7 +1783,9 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "damage",
@@ -1597,9 +1805,10 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack"
+      "classification.attack",
+      "lifecycle.exhaust"
     ],
-    "textTemplate": "Deal {damage} damage. Retreat one band. Draw {draw} card.",
+    "textTemplate": "Deal {damage} damage. Retreat one band. Draw {draw} card. Exhaust.",
     "upgrade": {
       "effects": [
         {
@@ -1943,12 +2152,12 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "loseHp",
         "target": "self",
-        "amount": 4,
+        "amount": 8,
         "nonlethal": true
       },
       {
@@ -1960,7 +2169,7 @@
         "op": "applyStatus",
         "target": "enemy",
         "status": "burn",
-        "stacks": 3
+        "stacks": 1
       }
     ],
     "tags": [
@@ -1972,9 +2181,9 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
-      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
       "effects": [
         {
           "op": "damage",
@@ -2267,7 +2476,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "damage",
@@ -2278,7 +2487,7 @@
         "op": "applyStatus",
         "target": "allEnemies",
         "status": "burn",
-        "stacks": 3
+        "stacks": 1
       }
     ],
     "tags": [
@@ -2291,7 +2500,7 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies. Exhaust.",
     "upgrade": {
       "effects": [
         {
@@ -2303,7 +2512,7 @@
           "op": "applyStatus",
           "target": "allEnemies",
           "status": "burn",
-          "stacks": 3
+          "stacks": 2
         }
       ]
     },
@@ -4295,7 +4504,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "loseHp",
@@ -4312,7 +4521,7 @@
         "op": "applyStatus",
         "target": "enemy",
         "status": "burn",
-        "stacks": 3
+        "stacks": 2
       }
     ],
     "tags": [
@@ -4325,9 +4534,9 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
-      "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+      "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
       "effects": [
         {
           "op": "damage",
@@ -4357,18 +4566,21 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": [
+      "ethereal",
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 15
+        "amount": 17
       },
       {
         "op": "applyStatus",
         "target": "allEnemies",
         "status": "burn",
-        "stacks": 3
+        "stacks": 2
       }
     ],
     "tags": [
@@ -4382,13 +4594,13 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies. Ethereal. Exhaust.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 27
+          "amount": 25
         },
         {
           "op": "applyStatus",
@@ -4475,12 +4687,18 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
+      {
+        "op": "loseHp",
+        "target": "self",
+        "amount": 4,
+        "nonlethal": true
+      },
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 18
+        "amount": 17
       },
       {
         "op": "applyStatus",
@@ -4500,19 +4718,20 @@
       "tradition:arcane",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies.",
+    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
+      "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies. Exhaust.",
       "effects": [
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 27
+          "amount": 28
         },
         {
           "op": "applyStatus",
           "target": "allEnemies",
           "status": "shock",
-          "stacks": 3
+          "stacks": 2
         }
       ]
     },
@@ -4603,7 +4822,7 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": [],
+    "keywords": ["exhaust"],
     "effects": [
       {
         "op": "loseHp",
@@ -4614,7 +4833,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 30
+        "amount": 29
       },
       {
         "op": "block",
@@ -4637,25 +4856,25 @@
       "cost.manaOnly",
       "tradition:divine"
     ],
-    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Lose {loseHp} HP.",
+    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Lose {loseHp} HP. Exhaust.",
     "upgrade": {
-      "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
+      "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen. Exhaust.",
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 46
+          "amount": 42
         },
         {
           "op": "block",
           "target": "self",
-          "amount": 14
+          "amount": 20
         },
         {
           "op": "applyStatus",
           "target": "self",
           "status": "regen",
-          "stacks": 3
+          "stacks": 2
         }
       ]
     },

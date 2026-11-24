@@ -19,13 +19,15 @@ import { buildBlacksmithStock } from './../engine/shopKinds.js';
 import { mountGameOver } from './../ui/screens/gameover.js';
 import { mountCompendium } from './../ui/screens/compendium.js';
 import { gameModule } from './../model/gameProfile.js';
-import { GameProfileArmamentOffer } from './../model/gameProfileRewards.js';
+import { GameProfileArmamentOffer, gameProfileShopStock } from './../model/gameProfileRewards.js';
+import { StartCardCopyOffer, CardCopyShelf, CardCopyRule } from './../model/cardCopyService.js';
 import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
 import { configureArmamentKitPreview, ConfigureArmourPreview } from './armamentKitPreview.js';
 import { mountDeckEditor } from './../ui/screens/deckEditor.js';
 import { OpenSiteRecord, markRestLeft } from './../model/restRevisit.js';
+import { FillRankUpCandidateSlots } from './rankUpShotPose.js';
 
 export function createShotStates(ctx) {
   const {
@@ -427,6 +429,23 @@ export function createShotStates(ctx) {
         run.smithingStones = 12;
         run.loadout.storage.push('katana');
         run.shopStock = buildBlacksmithStock(ctx.getRegistries(), ctx.getRng(), run);
+        // `?shotSellNothing=1` — the run carries nothing a vendor would buy, so the empty Sell shelf can be photographed.
+        if (shotParams.get('shotSellNothing') === '1') {
+          Object.assign(run, { relics: [], flasks: [], consumables: {}, sideboard: [] });
+          run.loadout.storage = []; run.loadout.boughtArmour = [];
+        }
+      }
+      // `?shotCopy=1` — the visit stocks the copy-a-card service (owner 2026-11-20) whatever the seed rolled, so its shelf
+      // can be photographed: the Blacksmith's `cardCopy` offering, or a trader's copy shelf in its stock.
+      if (shotParams.get('shotCopy') === '1') {
+        if (name === 'blacksmith') {
+          const rule = CardCopyRule(run, 'blacksmith');
+          if (!run.shopStock.offerings.includes('cardCopy')) run.shopStock.offerings.push('cardCopy');
+          run.shopStock.cardCopy = { cost: rule.price, usesLeft: rule.uses };
+        } else {
+          const stock = gameProfileShopStock(ctx.getRegistries(), run, ctx.getRng(), { shopId: run.gameProfileOpenShop });
+          if (!stock.options.some(option => option.kind === 'cardCopies')) { stock.options.push(CardCopyShelf(run, 'trader')); stock.takeCount += 1; }
+        }
       }
       persist(); showShop(); return;
     } else if (name === 'reward') {
@@ -437,7 +456,11 @@ export function createShotStates(ctx) {
       // `?shotRankUp=taken` — the same door with that row already claimed, resumed through the door's own saved
       // claim state (rankUpCheckpoint), so the TAKEN row and its claim line can be measured (tools/contrast-audit.mjs).
       const rankUpPose = shotParams.get('shotRankUp');
-      if (rankUpPose === '1' || rankUpPose === 'taken') run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
+      if (rankUpPose === '1' || rankUpPose === 'taken') {
+        run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
+        // The door opens only when a queued card may rise now (full-upgrade rule), so the Blade's cards are filled first.
+        FillRankUpCandidateSlots(ctx.getRegistries(), run, 'item:blade');
+      }
       // `?shotTake=<n>` — the card picks the door allows (1..5; absent = the content's takeCount), so the multi-pick door can be photographed.
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
       // `?shotVictory=points` — the won fight's ONE door (spoils strip above the choice) with one earned
@@ -449,6 +472,13 @@ export function createShotStates(ctx) {
         const offerId = `${run.actNumber}:${run.mapNodeId}:combat:armament`;
         if (!GameProfileArmamentOffer(ctx.getRegistries(), run, ctx.getRng(), { offerId, pool: armamentPool })) throw new Error(`No armament reward for a ${armamentPool} on this seed.`);
         run.gameProfilePendingReward = { offerId, source: 'armament', after: 'map', levelOffers: 0 };
+        persist(); return showGameProfileReward();
+      }
+      // `?shotCopy=1` — the one-time copy door Scribe's Mirror opens (owner 2026-11-20), built by the production offer.
+      if (shotParams.get('shotCopy') === '1') {
+        run.pendingCardCopies = 1;
+        const offerId = StartCardCopyOffer(ctx.getRegistries(), run);
+        run.gameProfilePendingReward = { offerId, source: 'copy', after: 'map', levelOffers: 0, rankUpsOffered: true };
         persist(); return showGameProfileReward();
       }
       const shotTake = Math.floor(Number(shotParams.get('shotTake')));
@@ -637,7 +667,7 @@ export function createShotStates(ctx) {
         const posed = saves.loadMeta();
         saves.saveMeta({ ...posed, settings: {
           ...(posed.settings || {}), settingsCategory: 'Advanced',
-          settingsAdvancedCategory: posed.settings?.settingsAdvancedCategory || 'Progression',
+          settingsAdvancedCategory: posed.settings?.settingsAdvancedCategory || 'Interface',
         } });
         const adopted = saves.loadMeta();
         ctx.setActiveMeta(adopted);

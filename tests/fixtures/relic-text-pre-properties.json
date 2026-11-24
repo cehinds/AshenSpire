@@ -314,5 +314,9 @@
   "pruningHook": {
     "name": "Pruning Hook",
     "text": "Your deck may be 1 card smaller."
+  },
+  "scribesMirror": {
+    "name": "Scribe's Mirror",
+    "text": "When you pick this up, copy one card you own."
   }
 }

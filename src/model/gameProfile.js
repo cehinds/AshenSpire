@@ -1,3 +1,4 @@
+import { ProjectRetreatRuleFace } from './retreatRuleFaces.js';
 // Immutable per-run configuration snapshots. No mutable active-profile singleton.
 import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
@@ -50,6 +51,7 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
     if (!alternate) throw new GameConfigError(`$/content/cards/${id}`,'missing authored disabled-resource variant');
   }
   let chosen = alternate ? {...dataClone(def),...dataClone(alternate)} : dataClone(def);
+  chosen = ProjectRetreatRuleFace(chosen, subject?.gameProfile ? subject : { gameProfile: subjectProfile(subject) });
   if (SpellTraditionsActive({ gameProfile: subject.gameProfile || subject }) && chosen.tags?.includes('camp:spell')) {
     chosen.tags = [...new Set([...chosen.tags, ...CardTraditionTags(chosen)])];
   }
@@ -127,6 +129,7 @@ function projectGearSignatures(bundle,profile) {
 /** @param {string | object} [profileOrAuthor] */
 export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default') {
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
+  bundle.cards = (bundle.cards || []).map(def => ProjectRetreatRuleFace(def, { gameProfile: profile }));
   if(profile.foundation.mode === 'legacy') return bundle;
   if(gameModule(profile,'cards')?.mode === 'configured') {
     const additions=gameContent(profile,'cards').map(def=>projectGameCard(profile,def.id,{rampless:true}));
