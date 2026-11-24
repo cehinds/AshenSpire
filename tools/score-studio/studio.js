@@ -2033,7 +2033,11 @@ function discardPendingWeights() {
 }
 
 // Stages a whole scoring config (an imported file or the saved config) for review; Apply makes it live.
-function stageWholeScoring(scoring, sourceName) {
+function stageWholeScoring(incoming, sourceName) {
+  // A studio config (Save, or an imported copy of it) carries name sets beside the weights: they join the list and
+  // never reach the weights, so Apply and Export cannot write them into the game's scoring.json.
+  const { scoring, nameSets } = SplitSavedConfig(incoming);
+  if (nameSets.length) { state.nameSets = MergeNameSets(state.nameSets, nameSets); storeNameSets(); renderNameSetsList(); }
   const errors = ValidateScoringConfig(scoring);
   if (errors.length) throw new Error(errors.join(' '));
   // A config saved before convention names gets the repo's naming tables and loses the retired word tables.
@@ -2459,7 +2463,7 @@ function openExportDialog() {
 // Writes the applied scoring to a repo file and rebuilds the game's scoring, combat-power and Act tables.
 async function writeScoringToGame(path, doneNote = 'Exported') {
   try {
-    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: state.scoring, rebuild: true }) });
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: SplitSavedConfig(state.scoring).scoring, rebuild: true }) });
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
     state.repoScoring = clone(state.scoring);
@@ -2475,7 +2479,7 @@ async function writeScoringToGame(path, doneNote = 'Exported') {
 }
 
 function downloadScoringJson() {
-  const blob = new Blob([JSON.stringify(state.scoring, null, 2) + '\n'], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(SplitSavedConfig(state.scoring).scoring, null, 2) + '\n'], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), { href: url, download: 'scoring.json' });
   a.click();
