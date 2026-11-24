@@ -1,7 +1,7 @@
 {
-  "handBase": 5,
+  "handBase": 3,
   "handAttribute": "intelligence",
-  "handPointsPerIncrease": 4,
+  "handPointsPerIncrease": 1,
   "attributePointTotal": 6,
   "levelGains": {
     "dexterity": {
@@ -27,8 +27,8 @@
     "stamina": 0
   },
   "pointsPerIncrease": {
-    "sp": 4,
-    "mp": 4
+    "sp": 1,
+    "mp": 1
   },
   "attributeBaseline": {
     "sp": 0,

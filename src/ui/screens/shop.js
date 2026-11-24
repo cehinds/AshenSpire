@@ -22,7 +22,7 @@ import { RenderCardCopyOfferCard } from '../components/cardCopyOfferCard.js';
 import { CardCopyUsesLeft } from '../../model/cardCopyService.js';
 import { shopOfferPrice } from '../../model/shopOfferPrice.js';
 import { gameProfileShopPurchasePlan } from '../../model/gameProfileRewards.js';
-import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
+import { gameProfileShopSalePlans, StackCardSalePlans } from '../../model/gameProfileShopSales.js';
 import { runHudHtml, wireRunHud, RefreshRunHud, RunHudRefreshSignature } from '../components/runHud.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { shopWorkspaceLayout } from '../models/ShopWorkspaceModel.js';
@@ -43,7 +43,7 @@ export function ConfiguredOfferText(registries, run, kind, def, ref) {
   return '';
 }
 
-export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, onSmith = null, shelfKinds = null, meta, hud = null }) {
+export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, onSmith = null, onEditDeck = null, shelfKinds = null, meta, hud = null }) {
   const previousCategory = app.querySelector('.merchant-workspace')?.dataset.shopContent;
   clearSelection();
   app.replaceChildren();
@@ -98,6 +98,10 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   if (onSmith) {
     const smith = railItem({ label: t('shop.bar.smith'), member: 'smith', current: false, className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: 'smith' } } });
     smith.removeAttribute('role'); smith.addEventListener('click', onSmith); dock.append(smith);
+  }
+  if (onEditDeck) {
+    const deckBtn = railItem({ label: t('armoury.hub.deck'), member: 'deck', current: false, className: 'with-status shop-railitem', attrs: { dataset: { shopCategory: 'deck' } } });
+    deckBtn.removeAttribute('role'); deckBtn.addEventListener('click', onEditDeck); dock.append(deckBtn);
   }
   const arm = beatArmer(meta, registries);
   // Rows are keyed (`buy:<index>`, `sell:<kind>:<identity>`) and kept between refreshes while what they show is
@@ -194,16 +198,18 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
 
   function putSaleRow(quote) {
     const { def, kind, price } = quote;
-    const key = `sell:${kind}:${quote.identity}`;
+    const count = quote.count || 1;
+    const key = quote.stackKey ? `sell:${kind}:stack:${quote.stackKey}` : `sell:${kind}:${quote.identity}`;
     const saleRef = ['combatCards', 'weaponArts'].includes(kind) ? run.sideboard.find(card => card.instanceId === quote.identity) : null;
     const desc = ConfiguredOfferText(registries, run, kind, def, saleRef) || def.blurb || '';
-    const signature = JSON.stringify([def, quote.signature, price, quote.ok, quote.reason, desc]);
+    const displayName = count > 1 ? `${def.name} ×${count}` : def.name;
+    const signature = JSON.stringify([def, quote.signature, price, quote.ok, quote.reason, desc, count]);
     put(key, 'sell', signature, entry => {
-      const tile = el('div', { class: 'class-pick shop-offer', dataset: { saleKind: kind } });
+      const tile = el('div', { class: 'class-pick shop-offer', dataset: { saleKind: kind, saleCount: String(count) } });
       const visual = saleRef ? renderCard(registries, saleRef, shopCardOptions)
         : ['weapons', 'armor'].includes(kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card
         : kind === 'consumables' ? null : renderCollectibleCard(registries, def, kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
-      const control = arrangeMerchantOffer({ tile, name: def.name, desc, visual,
+      const control = arrangeMerchantOffer({ tile, name: displayName, desc, visual,
         price: t('shop.price.back', { price }), avail: { available: quote.ok, reason: quote.reason || null },
         action: { kind: 'sell', label: t('shop.action.sell', { price }), enabled: quote.ok } });
       // A sale asks for confirmation (playtest 2026-11-17 item 37): the review names the item and the cinders it returns.
@@ -247,7 +253,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
       if (shelves.has(shelfOf(option.kind))) seen.add(putBuyRow(index, option));
     }
     if (sellEnabled) {
-      const sales = gameProfileShopSalePlans(registries, run, shopId);
+      const sales = StackCardSalePlans(gameProfileShopSalePlans(registries, run, shopId), run);
       for (const quote of sales) seen.add(putSaleRow(quote));
       if (sales.length) emptySales.remove();
       else if (!emptySales.parentNode) shelves.get('sell').append(emptySales);

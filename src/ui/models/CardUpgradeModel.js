@@ -133,13 +133,14 @@ export function UpgradeStepLook(registries, step, before, after) {
         return one.side || one.op ? t('cardUpgrade.size.eases', { n: Math.abs(one.n), what: one.status ? statusName(registries, one.status) : one.op }) : t('cardUpgrade.size.stacks', { n: now - was, status: statusName(registries, one.status) });
       }
       case 'cost': return t(one.pool === 'mp' ? 'cardUpgrade.size.costMp' : 'cardUpgrade.size.costSp', { n: one.n || 1 });
+      case 'costSwap': return one.dir === 'mpToSp' ? '-1 MP, +2 SP' : '-2 SP, +1 MP';
       case 'tag': {
         if (Number.isFinite(one.packet)) return t('cardUpgrade.size.packet', { n: plainAmount(after, 'damage') - plainAmount(before, 'damage'), element: ELEMENT_WORD[one.damage] || cap(one.damage) });
         // An identity step has one size: the value it sets ("Blunt damage", "Reach", "Cantrip").
         if (one.damage) return t('cardUpgrade.size.damageType', { type: cap(one.damage) });
         return one.tag ? t('cardUpgrade.size.tag', { value: cap(String(one.tag).split(':').pop().replace(/^rank\./, '')) }) : '';
       }
-      case 'fx': return one.fx === 'block' ? t('cardUpgrade.size.block', { n: one.n }) : ['draw', 'cycle'].includes(one.fx) ? t(`cardUpgrade.size.${one.fx}`, { n: one.n }) : '';
+      case 'fx': return one.fx === 'block' ? t('cardUpgrade.size.block', { n: one.n }) : ['draw', 'cycle'].includes(one.fx) ? t(`cardUpgrade.size.${one.fx}`, { n: one.n }) : one.fx === 'recurring' ? 'Recurring + Exhaust' : '';
       default: return '';
     }
   })).filter(Boolean);
@@ -335,7 +336,7 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
       tags: cardTags(registries, before || base, base?.rarity || 'common'),
       artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (before || base)?.icon || 'skill',
     });
-  });
+  }).sort((a, b) => Number(a.disabled) - Number(b.disabled));
   rows.sort((a, b) => Number(b.inDeck) - Number(a.inDeck));
   const selected = rows.find((row) => row.instanceId === selectedInstanceId) || null;
   return freeze({

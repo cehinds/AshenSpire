@@ -109,6 +109,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let pane = 'collection';
   let held = null; // instanceId of the deck row picked up for reordering
   let focusKey = null;
+  let pendingRemovalFocus = null;
   let notice = '';
   let model = null;
   let releaseGate = null;
@@ -875,7 +876,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const rows = selected?.source === 'deck' ? model.deck : model.collection;
     const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
     if (current) selected = { ...selected, row: current };
-    else {
+    else if (selected?.source === 'deck' && pendingRemovalFocus?.pane === 'deck' && model.deck.length) {
+      const idx = Math.max(0, Math.min(pendingRemovalFocus.index, model.deck.length - 1));
+      const row = model.deck[idx];
+      selected = row ? { row, source: 'deck', key: selectionKey(row, 'deck') } : null;
+    } else {
       const row = (focusKeyOnce && model.collection.find(r => r.key === focusKeyOnce)) || model.collection[0] || model.deck[0];
       focusKeyOnce = null;
       const source = model.collection.length ? 'collection' : 'deck';
@@ -928,7 +933,18 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function restoreFocus() {
     if (!focusKey) return;
-    const previous = panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`);
+    let previous = panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`);
+    if (!previous && pendingRemovalFocus?.pane === 'deck' && model.deck.length) {
+      const idx = Math.max(0, Math.min(pendingRemovalFocus.index, model.deck.length - 1));
+      const targetRow = model.deck[idx];
+      if (targetRow) {
+        const prefix = pendingRemovalFocus.prefix || 'row-remove:';
+        previous = panel.querySelector(`[data-focus-key="${cssEscape(`${prefix}${targetRow.groupKey}`)}"]`)
+          || panel.querySelector(`[data-focus-key="${cssEscape(`row:${targetRow.groupKey}`)}"]`);
+        if (previous) focusKey = previous.dataset.focusKey;
+      }
+    }
+    pendingRemovalFocus = null;
     let node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous : paneFocusable(pane);
     if (node?.closest?.('[inert], [data-page-locked]')) node = panel.querySelector('[data-focus-key="inspect-back"]') || paneFocusable(pane);
     // A pressed ＋ or － whose copy ran out is disabled now: focus moves to its
@@ -967,9 +983,18 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function remove(instanceId) {
-    const name = model.deck.find(row => row.instanceId === instanceId)?.name || '';
+    const deckIndex = model.deck.findIndex((row) => row.instanceId === instanceId || row.instanceIds?.includes(instanceId));
+    const name = (deckIndex >= 0 ? model.deck[deckIndex]?.name : '') || '';
+    const isDeckFocus = pane === 'deck' || /^(row|row-remove|row-pick|row-up|row-down):/.test(focusKey || '');
+    if (isDeckFocus && deckIndex >= 0) {
+      const prefixMatch = (focusKey || '').match(/^(row(?:-remove|-pick|-up|-down)?:)/);
+      pendingRemovalFocus = { pane: 'deck', index: deckIndex, prefix: prefixMatch ? prefixMatch[1] : 'row-remove:' };
+    } else {
+      pendingRemovalFocus = null;
+    }
     if (held === instanceId) drop();
     const result = session.remove(instanceId);
+    if (!result.ok) pendingRemovalFocus = null;
     notice = result.ok ? '' : result.refusal;
     success = result.ok ? t('deckEditor.removed', { name }) : '';
     draw();

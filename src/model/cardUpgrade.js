@@ -44,7 +44,7 @@ export function upgradedDefinition(base) {
 //   (every step may carry `r`: 'uncommon' or 'rare', its rarity; none means common)
 //   fx { fx, ... }                 an effect-menu step (W25, owner 2026-11-14), see FX_KINDS below
 //   combo { steps }                two effects in one upgrade slot (a later upgrade's 20% roll): every inner step is an fx or a basic step
-export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag', 'fx', 'combo', 'attr']);
+export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'costSwap', 'hits', 'poise', 'tag', 'fx', 'combo', 'attr']);
 // The tag vocabulary a `tag` step may write: ranges from combatRanges.js, the rest mirrors combatCardProfile.js
 // (tests/core-card-upgrade-choices-tags.test.mjs pins the mirror to the exported sets).
 // The words are split from one string on purpose: tools/mechanics-generate.mjs takes a file that quotes a bare
@@ -81,7 +81,7 @@ export const UPGRADE_RARITIES = Object.freeze(words('common uncommon rare'));
 // for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait), counter (+1 Counter stack a play; a Counter
 // card only, offered while its whole grant stays within the 1..3 a card may give: Wave 2 batch 5).
 // unethereal (drop Ethereal) and steady (stop a rising cost) ease a drawback (playtest 2026-11-17, theme C).
-export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter unethereal steady'));
+export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter unethereal steady recurring'));
 export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
 // A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
 // fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
@@ -204,6 +204,17 @@ function applyStep(card, step) {
         const cut = isCount(step.n, 9) ? step.n : 1;
         if (step.pool === 'mp') out.manaCost = (card.manaCost || 0) - cut;
         else { out.staminaCost = (card.staminaCost || 0) - cut; out.cost = (card.cost ?? 0) - cut; }
+      }
+      break;
+    case 'costSwap':
+      if (step.dir === 'mpToSp') {
+        out.manaCost = Math.max(0, (card.manaCost || 0) - 1);
+        out.staminaCost = (card.staminaCost ?? card.cost ?? 0) + 2;
+        if (typeof card.cost === 'number') out.cost = card.cost + 2;
+      } else if (step.dir === 'spToMp') {
+        out.staminaCost = Math.max(0, (card.staminaCost ?? card.cost ?? 0) - 2);
+        if (typeof card.cost === 'number') out.cost = Math.max(0, card.cost - 2);
+        out.manaCost = (card.manaCost || 0) + 1;
       }
       break;
     case 'hits': {
@@ -370,6 +381,10 @@ function applyFx(card, step) {
     }
     case 'reaction': addTag(reactionTag); break;
     case 'counter': effects.push({ op: 'gainCounterStacks', target: 'self', amount: step.n }); break;
+    case 'recurring':
+      addTag('trait:recurring');
+      out.keywords = [...new Set([...(out.keywords || card.keywords || []), 'exhaust'])];
+      break;
     default: throw new Error(`Unknown card upgrade effect '${step.fx}'`);
   }
   return out;
@@ -415,6 +430,10 @@ export function applyUpgradeSteps(base, steps) {
     }
   }
   if (steps.length >= 2) card.name = `${base.name}+${steps.length}`;
+  const lastRarity = [...steps].reverse().find((s) => s && typeof s.nextRarity === 'string')?.nextRarity;
+  if (lastRarity) card.rarity = lastRarity;
+  const lastRank = [...steps].reverse().find((s) => s && Number.isInteger(s.nextRank))?.nextRank;
+  if (lastRank !== undefined) card.rank = lastRank;
   return card;
 }
 
@@ -438,6 +457,8 @@ export function upgradeStepsProblems(instance, path) {
     if (step.k === 'authored' && i !== 0) problems.push(`${at}: an authored step may only be the first step`);
     const bad = (field) => problems.push(`${at}.${field} is not valid for a '${step.k}' step`);
     if (step.r !== undefined && !UPGRADE_RARITIES.includes(step.r)) bad('r');
+    if (step.nextRarity !== undefined && !UPGRADE_RARITIES.includes(step.nextRarity)) bad('nextRarity');
+    if (step.nextRank !== undefined && !(Number.isInteger(step.nextRank) && step.nextRank >= 0 && step.nextRank <= 10)) bad('nextRank');
     const easing = step.k === 'stk' && (step.op !== undefined || step.side !== undefined);
     if (easing) {
       // A signed drawback step: n is negative; `op` names a discard or addCard effect, `side` and `status` a status effect.
@@ -449,6 +470,7 @@ export function upgradeStepsProblems(instance, path) {
     if (step.k === 'addStatus' && !isCount(step.stacks)) bad('stacks');
     if (step.k === 'cost' && step.pool !== 'sp' && step.pool !== 'mp') bad('pool');
     if (step.k === 'cost' && step.n !== undefined && !isCount(step.n, 9)) bad('n');
+    if (step.k === 'costSwap' && step.dir !== 'mpToSp' && step.dir !== 'spToMp') bad('dir');
     if (step.k === 'hits' && !(isCount(step.hits, 3) && step.hits >= 2)) bad('hits');
     if (step.k === 'hits' && !isCount(step.per)) bad('per');
     if (step.k === 'fx') {

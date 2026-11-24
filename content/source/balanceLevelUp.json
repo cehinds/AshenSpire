@@ -1,5 +1,7 @@
 {
   "pointsPerLevel": 1,
+  "attributePointEveryLevels": 4,
+  "rankUpPerLevel": 1,
   "maxLevels": 20,
   "pointsPerLevelMin": 1,
   "pointsPerLevelMax": 20,

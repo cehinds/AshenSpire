@@ -112,7 +112,8 @@ import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft, deckEditBounds, deckEditingOn } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
-import { armouryHasNew, armouryOpensDeckEditor, RestOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
+import { armouryHasNew, armouryOpensDeckEditor, RestOpensDeckEditor, ShopOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
+import { RaiseCardRank, RankUpReady } from './model/rankUpService.js';
 import { armouryRoute } from './model/armouryPages.js';
 import { mountConfiguredShop } from './ui/screens/shop.js';
 import { RunHudRefreshSignature } from './ui/components/runHud.js';
@@ -2610,6 +2611,30 @@ function showGameProfileReward() {
       // Rows and claims are saved at once; Continue marks the door done.
       onDone: () => { pending.rankUpsOffered = true; persistOrWarn(); showGameProfileReward(); } });
   }
+  if ((run.level?.pendingRankUps || 0) > 0 && !pending.levelRankUpsOffered && coreCardRanks(run)) {
+    if (!RankUpReady(registries, run).length) {
+      pending.levelRankUpsOffered = true;
+      persistOrWarn();
+    } else {
+      let chosenId = null;
+      return OpenRankUpCardModal({
+        registries,
+        run,
+        price: t('cardUpgrade.free'),
+        onChoose: (instanceId) => {
+          chosenId = instanceId;
+          RaiseCardRank(registries, run, instanceId);
+          run.level.pendingRankUps = Math.max(0, (run.level.pendingRankUps || 1) - 1);
+          persistOrWarn();
+        },
+        onClosed: () => queueMicrotask(() => {
+          if (!chosenId) pending.levelRankUpsOffered = true;
+          persistOrWarn();
+          showGameProfileReward();
+        }),
+      });
+    }
+  }
   // The combined door already took its choice (offerDone): what is left of it is the exit chain, with no second door.
   if (pending.offerDone) return leaveRewardDoor(pending);
   return mountGameProfileOfferDoor(pending, { combined: false });
@@ -2765,6 +2790,13 @@ function showShop() {
   const refresh = () => shop?.refresh();
   shop = mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(refresh), shelfKinds,
     onSmith: dock.smith ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
+    onEditDeck: ShopOpensDeckEditor(run) ? () => mountDeckEditor(document.body, {
+      registries,
+      run,
+      settings: saves.loadMeta().settings || {},
+      onDone: () => { persist(); refresh(); },
+      onCancel: () => {},
+    }) : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
       // A trade replaces the saved stock, so the slot's kind is read from the current one.
