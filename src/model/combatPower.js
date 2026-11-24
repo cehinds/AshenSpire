@@ -355,7 +355,7 @@ export function CardNameParts(c, ups = 0, scoring = GetActiveScoring()) {
   const { name, dropped } = fitCardName(words, UpgradeMark(ups), G.limit);
   return { name, rarityWord, effect, element, base, rank: rk, upgrades: ups, source, baseSource: baseKey, dropped };
 }
-/** A card's convention name, e.g. "Greater Searing Strike II+". */
+/** A card's convention name after the length limit: "Greater Searing Frost Bolt II+" in full (30 characters) is "Searing Frost Bolt II+" at 24. */
 export const CardName = (c, ups = 0, scoring = GetActiveScoring()) => CardNameParts(c, ups, scoring).name;
 
 function propWord(tag, rules, scoring) {

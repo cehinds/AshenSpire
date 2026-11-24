@@ -172,7 +172,7 @@ test('card names: a skill names its top effect; a heal-only divine rite is "Mend
 // Owner 2026-11-24: naming.card.limit {maxChars, keep}. Over maxChars, parts drop from the end of keep; base, rank and upgrade never drop.
 const limitScoring = (limit) => { const s = JSON.parse(JSON.stringify(scoring)); s.naming.card.limit = limit; return s; };
 const KEEP = ['base', 'rank', 'upgrade', 'element', 'effect', 'rarity'];
-// A rare Rank 2 frost bolt that burns: 'Greater Searing Frost Bolt II+' in full (31 characters).
+// A rare Rank 2 frost bolt that burns: 'Greater Searing Frost Bolt II+' in full (30 characters).
 const frostBolt = magicHit(['school:frost'], { rarity: 'rare', mp: 0, dmg: 6, statuses: [['burn', 2, 'enemy']] });
 
 test('card names: the shipped limit is 24 characters, keeping base, rank, upgrade, element, effect, rarity', () => {
@@ -223,4 +223,10 @@ test('card names: an effect word that shares its first 4 letters with the elemen
   assert.equal(parts.effect, null);
   // Words that only share fewer letters stay: Searing Strike.
   assert.equal(FullName(martialHit({ rarity: 'uncommon', sp: 2, statuses: [['burn', 1, 'enemy']] })), 'Improved Searing Strike');
+});
+
+test('card names: a limit with a keep order but no maxChars is no limit', () => {
+  const p = CardNameParts(frostBolt, 1, limitScoring({ keep: ['base', 'rank', 'upgrade', 'rarity', 'effect', 'element'] }));
+  assert.deepEqual(p.dropped, []);
+  assert.equal(p.name, 'Greater Searing Frost Bolt II+');
 });
