@@ -1130,7 +1130,7 @@ function addFeatureSearchText(value, label) {
 
 // Rebuild the select from the search box: each search word must appear in the option's text. A search with
 // matches picks the first, so its description shows and Add (or Enter) adds it.
-function renderAddFeatureOptions() {
+function renderAddFeatureOptions({ pickBest = false } = {}) {
   const sel = document.getElementById('add-feature-select');
   const search = document.getElementById('add-feature-search');
   const words = (search?.value || '').toLowerCase().split(/\s+/).filter(Boolean);
@@ -1163,9 +1163,13 @@ function renderAddFeatureOptions() {
   }
   placeholder.textContent = !words.length ? '+ Add Feature...' : matched ? `${matched} match${matched === 1 ? '' : 'es'}` : 'No match';
   if (search) search.placeholder = `Search ${total} features`;
-  if (!words.length) { sel.value = [...sel.options].some((o) => o.value && o.value === previous) ? previous : ''; return; }
-  // A search picks its best match: the first name match in any group, else the first description match.
   const options = [...sel.querySelectorAll('optgroup option')];
+  // A rebuild that is not a new search (a rescore, undo, import) keeps the owner's pick while it is still listed.
+  if (!pickBest || !words.length) {
+    sel.value = options.some((o) => o.value === previous) ? previous : '';
+    if (sel.value || !words.length || !options.length) return;
+  }
+  // A new search picks its best match: the first name match in any group, else the first description match.
   const best = options.find((o) => words.every((word) => `${o.textContent} ${o.value}`.toLowerCase().includes(word))) || options[0];
   sel.value = best ? best.value : '';
 }
@@ -3057,7 +3061,7 @@ function wireEvents() {
   addSelect.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addFeatureValue(addSelect.value); renderAddFeatureDescription(); } });
   // Typing in the search narrows the list; Enter adds the picked match, Down moves into the list, Escape clears.
   const addSearch = document.getElementById('add-feature-search');
-  addSearch.addEventListener('input', () => { renderAddFeatureOptions(); renderAddFeatureDescription(); });
+  addSearch.addEventListener('input', () => { renderAddFeatureOptions({ pickBest: true }); renderAddFeatureDescription(); });
   addSearch.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); addFeatureValue(addSelect.value); renderAddFeatureDescription(); }
     else if (e.key === 'ArrowDown') { e.preventDefault(); addSelect.focus(); }
