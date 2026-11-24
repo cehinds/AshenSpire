@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-24
 
+- **Score Studio: SP scores the SP you type, and the amount box takes 0 and 1** ([#2966](https://github.com/cehinds/AshenSpire/pull/2966), `0.7.5.78`). An edited card's SP used to score at the price a test fight charged it, so a 0 SP card could still lose points. SP now scores like MP, from the number you type. The amount box is now the card's own number before the hero's bonus, so damage can be set to 0 or 1; the card face still shows the hero's total.
 - **Upgrades scale with rank, cost more, and rank-ups need a full card** ([#2963](https://github.com/cehinds/AshenSpire/pull/2963), `0.7.5.76`). A card takes rank + 1 upgrades (unranked 1, Rank 1 two, Rank 4 five) and the weapon's Smith level no longer adds any. Upgrades cost three times as much and other services twice as much; a rank-up costs more the higher the rank it reaches. Cards sell for twice as much, never above what they cost, and ranked cards cost 25% more per rank. Shops sometimes stock a Rank 1 or Rank 2 card. A new rule, on by default, lets a card rank up only once all its upgrade slots are used, and the upgrade picker shows each card's rank.
 
 ## 2026-11-23
