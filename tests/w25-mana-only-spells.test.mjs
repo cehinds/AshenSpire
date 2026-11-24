@@ -76,15 +76,22 @@ test('effective cost table: 0 SP and 2 or 3 MP plain and Prepared; a Focus item 
   }
 });
 
-test('a card without the mark still pays the +1 Stamina surcharge (Comet Lance stays 2 SP / 2 MP)', () => {
+test('a card without the mark pays its printed Stamina (no surcharge since 2026-11-23: Comet Lance is 1 SP / 2 MP); a fight saved before that keeps 2 SP / 2 MP', () => {
   const costs = costsOf('core.cometLance', { hand: 'greatsword', stance: null });
-  assert.deepEqual([costs.stamina, costs.mana], [2, 2]);
+  assert.deepEqual([costs.stamina, costs.mana], [1, 2]);
+  const { combat } = fight({ registries: printedCostRegistries });
+  combat.loadout.sets.rightHand[0] = 'greatsword';
+  combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // the rules snapshot of a fight saved before the owner ruling of 2026-11-23
+  const card = combat.piles.hand[0]; card.cardId = 'core.cometLance';
+  const saved = cardPlayCosts(combat, card.instanceId);
+  assert.deepEqual([saved.stamina, saved.mana], [2, 2], 'a saved fight keeps the +1 Stamina surcharge on an unmarked spell');
 });
 
 test('a fight created before the mark (no manaOnlyTag key) has no exemption: the +1 Stamina surcharge lands on a mana-only card', () => {
   const { combat } = fight({ registries: printedCostRegistries });
   combat.loadout.sets.rightHand[0] = 'greatsword';
   delete combat.fixCoreRules.spellCosts.manaOnlyTag;
+  combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // a fight that old predates the 2026-11-23 drop of the surcharge too
   const card = combat.piles.hand[0]; card.cardId = 'core.pyreLash';
   const costs = cardPlayCosts(combat, card.instanceId);
   assert.deepEqual([costs.stamina, costs.mana], [1, 2], 'without the key the +1 Stamina surcharge applies again (the card has no exemption in an older fight)');
