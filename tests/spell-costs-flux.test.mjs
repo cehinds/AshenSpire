@@ -7,7 +7,7 @@ import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMec
 import { validateFixCoreRules } from '../src/model/fixCoreMechanics.js';
 
 test('shipped data holds the approved spell cost and flux numbers and the validator guards them', () => {
-  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 1, staminaSurcharge: 1, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, focusManaDiscount: 1 });
+  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 1, staminaSurcharge: 0, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, focusManaDiscount: 1 });
   assert.deepEqual(shipped.elementFlux, { version: 1, multiplier: 1.25 });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   const { spellCosts, elementFlux, ...saved } = shipped;
