@@ -343,7 +343,8 @@ export function serviceCandidates(registries, run, id) {
   switch (id) {
     case 'upgrade': return coreSmithingActive(run) ? SmithUpgradeItems(registries, run) : smithingPlan(registries, run).candidates;
     case 'upgradeArt': return upgradeableArts(registries, run);
-    case 'rankUp': return rankUpCards(registries, run);
+    // Only the cards that may rank up now: one the full-upgrade rule holds back is listed, disabled, but not counted.
+    case 'rankUp': return rankUpCards(registries, run).filter((card) => !RankUpBlock(run, card));
     case 'cardCopy': return CardCopyUsesLeft(run.shopStock?.cardCopy) > 0 ? CardCopyCandidates(registries, run) : [];
     default: return [];
   }

@@ -45,6 +45,7 @@ import { blacksmithStoneDiscount } from '../../model/blacksmithConfig.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt } from '../../model/blacksmithStock.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { purchaseReview, ShopPurchaseKind, SmithRankReview } from '../models/ConfirmationReviewModel.js';
+import { RankUpReadyReason } from '../../model/rankUpService.js';
 import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, CardCopyPlan, CommitCardCopy, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade, CanChangeCategory, CategoryChangePlan, CommitCategoryChange, ItemRankUpPlan, CommitItemRankUp } from '../../model/blacksmith.js';
 import { SmithPickChangeText } from '../../model/smithUpgrade.js';
 
@@ -497,7 +498,9 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     // Sell with nothing the smith would buy reads as the merchant's empty Sell shelf does (shop.js emptySales).
     const idleReason = key === 'sell'
       ? (gameProfileShopSalePlans(registries, run, shopId).length ? '' : t('shop.status.nothingWanted'))
-      : (BLACKSMITH_SERVICES.includes(key) || key === 'rankUp' || key === 'cardCopy') && !readyCount(key) ? serviceIdleReason(key, run) : '';
+      : (BLACKSMITH_SERVICES.includes(key) || key === 'rankUp' || key === 'cardCopy') && !readyCount(key)
+        // Rank cards listed but all held back by the full-upgrade rule: say what to do, not that none exist.
+        ? (key === 'rankUp' && rankUpCards(registries, run).length ? RankUpReadyReason() : serviceIdleReason(key, run)) : '';
     let idle = [...shelf.children].find(node => node.classList.contains('bs-idle')) || null;
     if (!idleReason) { idle?.remove(); idle = null; }
     else if (idle) { if (idle.textContent !== idleReason) idle.textContent = idleReason; }

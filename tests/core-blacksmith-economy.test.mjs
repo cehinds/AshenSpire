@@ -93,7 +93,9 @@ test('rank-up: the rank ceiling refuses; the card list excludes equipment-bound 
   if (bound) assert.ok(!rankUpCards(coreOut, run).some((c) => c.instanceId === bound.instanceId));
   run.shopStock.offerings = run.shopStock.offerings.filter((id) => id !== 'rankUp');
   assert.equal(rankUpPlan(coreOut, run, strike(run).instanceId).ok, false, 'a visit that did not lay it out refuses');
-  assert.ok(serviceCandidates(coreOut, smithRun(coreOut), 'rankUp').length > 0);
+  // A fresh card is held back by the full-upgrade rule until its slots are used (owner 2026-11-23).
+  const ready = smithRun(coreOut); FillUpgradeSlots(ready, [strike(ready)]);
+  assert.ok(serviceCandidates(coreOut, ready, 'rankUp').length > 0);
 });
 
 const coreReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -388,4 +390,18 @@ test('a malformed Core Blacksmith stock is refused by name; an unknown unsold ar
   assert.ok(back, 'the save loads');
   assert.equal(back.shopStock.armaments.some((item) => item.id === 'retiredBlade'), false, 'pruned, not rerolled');
   assert.equal(back.shopStock.kind, 'blacksmith');
+});
+
+// QA 2026-11-23: the Rank shelf said "9 ready" when one card could rank up. Only cards past the full-upgrade rule count.
+test('rank-up: the shelf counts only cards that may rank up now; held-back cards stay listed', async () => {
+  const { RankUpBlock } = await import('../src/model/rankUpService.js');
+  const run = smithRun(coreOut);
+  for (const card of rankUpCards(coreOut, run)) { delete card.upgradeSteps; card.upgraded = false; }
+  const listed = rankUpCards(coreOut, run);
+  assert.ok(listed.length > 1);
+  assert.equal(serviceCandidates(coreOut, run, 'rankUp').length, 0, 'none full: none ready');
+  FillUpgradeSlots(run, [strike(run)]);
+  assert.equal(RankUpBlock(run, strike(run)), '');
+  assert.deepEqual(serviceCandidates(coreOut, run, 'rankUp').map((c) => c.instanceId), [strike(run).instanceId], 'one full card: 1 ready');
+  assert.equal(rankUpCards(coreOut, run).length, listed.length, 'the others are still listed');
 });
