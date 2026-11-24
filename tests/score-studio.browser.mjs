@@ -315,9 +315,11 @@ try {
   assert.equal(featureSearch.kept, featureSearch.second, 'a rebuild keeps the picked feature');
   assert.equal(featureSearch.cleared, featureSearch.all, 'Escape restores the whole list');
 
-  // 7. Auto-name: a new card starts with it on; adding a status renames it, and the name fits its title box.
+  // 7. Auto-name gives the convention name (CardName, trimmed to naming.card.limit): a new card starts with it on, adding
+  //    a status renames it, the name matches the hint's convention name, stays within the limit and fits its title box.
   const autoName = await page.evaluate(async () => {
     document.getElementById('btn-new-card').click();
+    await new Promise((resolve) => setTimeout(resolve, 300));
     const before = document.getElementById('edit-name').value;
     const toggleOn = document.getElementById('toggle-auto-name').checked;
     const select = document.getElementById('add-feature-select');
@@ -326,20 +328,97 @@ try {
     document.getElementById('btn-add-feature').click();
     await new Promise((resolve) => setTimeout(resolve, 300));
     const title = document.querySelector('#inspector-card-preview [data-card-binding="name"]');
-    return { before, after: document.getElementById('edit-name').value, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
+    const hint = document.getElementById('name-hint').textContent;
+    return { before, after: document.getElementById('edit-name').value, hint, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
   });
+  const NAME_LIMIT = 24;
   assert.ok(autoName.toggleOn, 'a new card starts with Auto-name on');
+  assert.match(autoName.before, /Strike/, `a new martial melee card is a Strike (${autoName.before})`);
   assert.notEqual(autoName.after, autoName.before, `adding a status renames an auto-named card (${autoName.before} -> ${autoName.after})`);
+  assert.ok(autoName.hint.startsWith(`Convention: ${autoName.after} `), `the auto name is the convention name (${autoName.hint})`);
+  assert.ok(autoName.after.length <= NAME_LIMIT, `the auto name keeps to the limit (${autoName.after})`);
   assert.ok(autoName.scrollWidth <= autoName.clientWidth, `the generated title fits its box (${autoName.scrollWidth} <= ${autoName.clientWidth})`);
 
-  // 8. A duplicate is auto-named from its source's noun, never "(Copy)".
-  const duplicateName = await page.evaluate(() => {
+  // 8. A duplicate starts auto-named with its convention name, never "(Copy)".
+  const duplicateName = await page.evaluate(async () => {
     document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"]').click();
     document.getElementById('btn-duplicate-card').click();
-    return { name: document.getElementById('edit-name').value, autoName: document.getElementById('toggle-auto-name').checked };
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return { name: document.getElementById('edit-name').value, hint: document.getElementById('name-hint').textContent, autoName: document.getElementById('toggle-auto-name').checked };
   });
   assert.ok(duplicateName.autoName, 'a duplicate starts with Auto-name on');
   assert.doesNotMatch(duplicateName.name, /\(Copy\)/, `the duplicate's auto name has no "(Copy)" (${duplicateName.name})`);
+  assert.ok(duplicateName.hint.startsWith(`Convention: ${duplicateName.name} `), `the duplicate takes its convention name (${duplicateName.hint})`);
+
+  // 9. Keyword and multiplier-tag rows have the multiply-instead switch; unchecking stages the flat form.
+  const flatSwitch = await page.evaluate(async (settle) => {
+    document.querySelector('.studio-tab[data-tab="weights"]').click();
+    const box = document.querySelector('input.weight-mult[aria-label="retain is a multiplier"]');
+    const tagBox = document.querySelector('input.weight-mult[aria-label="Counterstrike (trait:counterstrike) is a multiplier"]');
+    const before = { keyword: box?.checked, tag: tagBox?.checked };
+    box.checked = false;
+    box.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, settle));
+    const row = box.closest('.weight-row');
+    const result = {
+      before,
+      words: [...row.querySelectorAll('.weight-sentence > .weight-words')].map((el) => el.textContent).join('|'),
+      value: row.querySelector('input.weight-input').value,
+      pending: row.classList.contains('is-pending'),
+      example: row.querySelector('.weight-example').textContent,
+      naming: Boolean(document.querySelector('.naming-limit-group input.naming-max-chars')),
+      keep: [...document.querySelectorAll('.naming-keep-item')].map((el) => el.dataset.part),
+    };
+    document.getElementById('btn-weights-discard').click();
+    document.querySelector('.studio-tab[data-tab="cards"]').click();
+    return result;
+  }, DRAFT_SETTLE_MS);
+  assert.deepEqual(flatSwitch.before, { keyword: true, tag: true }, 'retain and Counterstrike start as multipliers');
+  assert.equal(flatSwitch.value, '0', 'switching to flat resets to the no-change value');
+  assert.ok(flatSwitch.pending, 'the switch is staged');
+  assert.match(flatSwitch.words, /^adds\|pts/, `the flat row reads "adds [n] pts" (${flatSwitch.words})`);
+  assert.match(flatSwitch.example, /^Any card with it:/, `the flat example (${flatSwitch.example})`);
+  assert.ok(flatSwitch.naming, 'the Naming group has a characters box');
+  assert.deepEqual(flatSwitch.keep, ['base', 'rank', 'upgrade', 'element', 'effect', 'rarity'], 'the keep order lists every name part');
+
+  // 10. Rename all: the dialog saves the current names, every card takes its convention name (one undo step),
+  //     and Restore names > Default names puts the authored names back with Auto-name off.
+  const renameAll = await page.evaluate(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const tileName = (id) => document.querySelector(`.studio-card-tile[data-card-id="${id}"]`)?.textContent || '';
+    document.querySelector('.studio-tab[data-tab="cards"]').click();
+    const authored = tileName('core.backstep').includes('Backstep');
+    document.getElementById('btn-rename-all').click();
+    const dialogOpen = document.getElementById('rename-all-modal').open;
+    document.getElementById('rename-all-set-name').value = 'Before rename';
+    document.getElementById('btn-rename-all-save').click();
+    await wait(400);
+    const renamed = !tileName('core.backstep').includes('Backstep');
+    const setRows = [...document.querySelectorAll('#restore-names-list .name-set-row span')].map((el) => el.textContent);
+    document.getElementById('btn-undo').click();
+    await wait(400);
+    const undone = tileName('core.backstep').includes('Backstep');
+    document.getElementById('btn-redo').click();
+    await wait(400);
+    document.getElementById('btn-restore-names').click();
+    document.querySelector('#restore-names-list input[value="default"]').click();
+    document.getElementById('btn-restore-names-apply').click();
+    await wait(400);
+    document.querySelector('.studio-card-tile[data-card-id="core.backstep"]').click();
+    await wait(200);
+    return {
+      authored, dialogOpen, renamed, setRows, undone,
+      restored: tileName('core.backstep').includes('Backstep'),
+      autoNameOff: !document.getElementById('toggle-auto-name').checked,
+    };
+  });
+  assert.ok(renameAll.authored, 'Backstep starts with its authored name');
+  assert.ok(renameAll.dialogOpen, 'Rename all asks to save the current names first');
+  assert.ok(renameAll.renamed, 'Rename all gives every card its convention name');
+  assert.deepEqual(renameAll.setRows, ['Default names', 'Before rename'], 'the saved set joins Default names in Restore names');
+  assert.ok(renameAll.undone, 'one undo puts every name back');
+  assert.ok(renameAll.restored, 'Restore Default names gives back the authored name');
+  assert.ok(renameAll.autoNameOff, 'restored cards have Auto-name off');
 
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);

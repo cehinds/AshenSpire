@@ -194,15 +194,16 @@ function statusExample(id, scoring)
   return `${EXAMPLE_STACKS} stacks = ${pts(value)}${note}`;
 }
 
-// ScoreCard's keyword value: flat, or the positive score times the multiplier, held to `min`.
+// ScoreCard's keyword value: flat, or the positive score times the multiplier, either held to `min`.
 function keywordExample(id, scoring)
 {
   const keyword = scoring.keywords?.[id];
   if (!keyword) return '';
-  if (keyword.flat !== undefined) return `Any card with it: ${signedPts(keyword.flat)}`;
-  let value = EXAMPLE_POSITIVE_SCORE * (Number(keyword.multiplier) || 0);
+  const flat = keyword.flat !== undefined;
+  let value = flat ? Number(keyword.flat) || 0 : EXAMPLE_POSITIVE_SCORE * (Number(keyword.multiplier) || 0);
+  // ScoreCard holds either form to `min` (at least min, or at most a negative min).
   if (keyword.min !== undefined) value = keyword.min < 0 ? Math.min(value, keyword.min) : Math.max(value, keyword.min);
-  return `Positive score ${EXAMPLE_POSITIVE_SCORE}: ${signedPts(value)}`;
+  return flat ? `Any card with it: ${signedPts(value)}` : `Positive score ${EXAMPLE_POSITIVE_SCORE}: ${signedPts(value)}`;
 }
 
 function rarityExample(id, scoring)
@@ -271,4 +272,44 @@ function tagExample(id, scoring)
       if (tag.perN !== undefined && id === scoring.cardModel?.honedTag) return `Any card with it: ${signedPts((Number(tag.weight) || 0) + (Number(tag.perN) || 0))}`;
       return `Any card with it: ${signedPts(tag.weight)}`;
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Flat or multiplier: the "multiply instead" switch on keyword and multiplier-tag rows (owner, 2026-11-24). Unchecked stores the
+// flat form, checked the multiplier form; switching resets the number to the no-change value, as the category switch does.
+// ---------------------------------------------------------------------------------------------------------------------------------
+
+/** The multiplier field a tag row switches to: 'multiplier' or 'pMultiplier' (the tag's own, else the repo's), or null for a flat-only tag. */
+export function TagMultiplierKey(tag, repoTag)
+{
+  for (const source of [tag, repoTag])
+  {
+    if (source?.pMultiplier !== undefined) return 'pMultiplier';
+    if (source?.multiplier !== undefined) return 'multiplier';
+  }
+  return null;
+}
+
+/** Switch a keyword between flat (adds `flat`) and multiplier (adds positive score x `multiplier`); both start at 0. */
+export function SetKeywordForm(keyword, multiply)
+{
+  if (multiply)
+  {
+    delete keyword.flat;
+    keyword.multiplier = 0;
+  }
+  else
+  {
+    delete keyword.multiplier;
+    keyword.flat = 0;
+  }
+}
+
+/** Switch a tag between flat (adds `weight`) and its multiplier: 'multiplier' starts at 1 (x1), 'pMultiplier' at 0. */
+export function SetTagForm(tag, multKey, multiply)
+{
+  delete tag.multiplier;
+  delete tag.pMultiplier;
+  tag.weight = 0;
+  if (multiply) tag[multKey] = multKey === 'multiplier' ? 1 : 0;
 }

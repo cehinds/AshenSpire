@@ -14,6 +14,7 @@
 // An item is {kind, id, name, rarity, base, mods: [[key, n]], props: [tag], tags, poise, range, attackBase, magicShare, guardBase, art}; the
 // property rules its `props` name are passed as `rules` ({tag: {triggers, passives}}).
 import { GetActiveScoring } from './activeScoring.js';
+import { scoring as shippedScoring } from '../content/generated/scoring.js';
 
 /** Round half away from zero (the simulator's `rnd`). */
 export const Rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
@@ -111,7 +112,9 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
   if (c.tags.includes(CM.honedTag)) add(CM.honedTag, S.tags[CM.honedTag].perN);
   const P = Object.entries(parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).reduce((s, [, v]) => s + v, 0);
   for (const t of c.tags) { const w = S.tags[t]; if (w && w.pMultiplier) add(t, P * w.pMultiplier); }
-  if (c.tags.includes(CM.counterstrikeTag)) add('counterstrike', P * (S.tags[CM.counterstrikeTag].multiplier - 1));
+  // Counterstrike as a multiplier scales P; set flat (weight, no multiplier) it scored in the tag loop above.
+  const cs = S.tags[CM.counterstrikeTag];
+  if (c.tags.includes(CM.counterstrikeTag) && cs && Number.isFinite(cs.multiplier)) add('counterstrike', P * (cs.multiplier - 1));
   if (c.copy) add('copy', P / CM.copyDivisor * c.copy);
   for (const k of c.kw) {
     const d = S.keywords[k]; if (!d) continue;
@@ -265,38 +268,104 @@ export function ScoreItem(it, scoring = GetActiveScoring(), rules = {}) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Naming: effect word + base word + rank numeral (+N upgrades)
+// Naming: rarity word + second-effect word + element word (magic) + base word + rank numeral + upgrade mark
 // ---------------------------------------------------------------------------------------------------------------------------------
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
 const numeral = (N, rk) => N.roman[rk] || '';
 
-/** Parts of a card's convention name: {name, effect, base, rank, source, baseSource}. */
+/** Upgrade mark: '' for none, '+' for one, '+N' for N, written straight after the last word. */
+export const UpgradeMark = (ups) => (ups > 0 ? (ups === 1 ? '+' : `+${ups}`) : '');
+
+// Words in name order; the upgrade mark is attached to the last word. These parts are never dropped by the length limit.
+const NAME_ORDER = ['rarity', 'effect', 'element', 'base', 'rank'];
+const NEVER_DROPPED = new Set(['base', 'rank', 'upgrade']);
+const joinName = (words, mark) => NAME_ORDER.map((k) => words[k]).filter(Boolean).join(' ') + mark;
+
+/**
+ * Apply naming.card.limit ({maxChars, keep}, keep = most important first): while the name is longer than maxChars, drop the
+ * least important droppable part (from the end of keep). Base, rank and upgrade stay even when still too long. No limit = no trim.
+ */
+function fitCardName(words, mark, limit) {
+  const kept = { ...words }, dropped = [];
+  if (!limit || !Number.isFinite(limit.maxChars)) return { name: joinName(kept, mark), dropped };
+  const order = (Array.isArray(limit.keep) ? limit.keep : []).filter((k) => !NEVER_DROPPED.has(k) && k in kept).reverse();
+  for (const k of order) {
+    if (joinName(kept, mark).length <= limit.maxChars) break;
+    if (!kept[k]) continue;
+    kept[k] = null; dropped.push(k);
+  }
+  return { name: joinName(kept, mark), dropped };
+}
+
+// Two words share a stem when their first STEM_LETTERS letters match, ignoring case.
+const STEM_LETTERS = 4;
+const sharesStem = (a, b) => Boolean(a && b) && a.slice(0, STEM_LETTERS).toLowerCase() === b.slice(0, STEM_LETTERS).toLowerCase();
+
+// A card is magic when it is a spell, carries camp:spell, or is a hybrid hit with a magic share (magic words win).
+const isMagicFace = (c) => c.camp === 'spell' || (c.tags || []).includes('camp:spell') || c.magicShare > 0;
+
+// A scoring table's naming words over the shipped ones, so a custom table saved before a naming table existed still names cards.
+function NamingOf(scoring)
+{
+  const own = scoring.naming || {};
+  // limit is optional (absent = no limit), so it never falls back.
+  const { limit, ...shippedWords } = shippedScoring.naming.card;
+  return { ...shippedScoring.naming, ...own, card: { ...shippedWords, ...(own.card || {}) } };
+}
+
+/**
+ * Parts of a card's convention name (owner, 2026-11-24):
+ *   <rarity word> <second-effect word> <element word (magic only)> <base word> <rank numeral><upgrade mark>
+ * Returns {name, rarityWord, effect, element, base, rank, upgrades, source, baseSource}. Every word is data in scoring.naming.card.
+ */
 export function CardNameParts(c, ups = 0, scoring = GetActiveScoring()) {
-  const G = scoring.naming.card, N = scoring.naming;
+  const N = NamingOf(scoring), G = N.card;
   const s = ScoreCard(c, scoring);
-  const top = Object.entries(s.parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).sort((a, b) => b[1] - a[1]);
-  const elementTag = c.tags.find((t) => t.startsWith('school:') && G.element[t]) || c.tags.find((t) => t.startsWith('damage:') && G.element[t]);
-  let effect = null, source = null;
-  const man0 = c.tags.find((t) => t.startsWith('maneuver:'));
+  const tags = c.tags || [];
+  const magic = isMagicFace(c), campKey = magic ? 'magic' : 'martial';
+  // Base word: a maneuver word, else attacks by camp and range (area keeps Cleave / Wave), else the camp's skill word.
+  const man = tags.find((t) => t.startsWith('maneuver:') && G.base[t]);
+  const area = tags.includes(scoring.cardModel.areaTag);
+  const isAttack = c.type === 'attack' || c.dmg > 0;
+  const rangeTag = tags.find((t) => G.range[t]);
+  const range = rangeTag ? G.range[rangeTag] : G.defaultRange[campKey];
+  const baseKey = man || (isAttack ? (area ? `attack:area:${campKey}` : `attack:${campKey}:${range}`) : `skill:${campKey}`);
+  const base = G.base[baseKey];
+  // Element word, magic only: the school or damage element, else the tradition (one of them alone), else the default tradition.
+  let element = null;
+  if (magic) {
+    const elementTag = tags.find((t) => t.startsWith('school:') && G.element[t]) || tags.find((t) => t.startsWith('damage:') && G.element[t]);
+    const traditions = tags.filter((t) => G.tradition[t]);
+    element = elementTag ? G.element[elementTag] : traditions.length === 1 ? G.tradition[traditions[0]] : G.defaultTradition;
+  }
+  // Second-effect word: the highest-scoring part the base word does not already name. Attack bases name damage; a skill base
+  // names nothing, so its top effect is the word; maneuvers follow the DUP table.
+  // A range-built base (Strike, Shot, Touch, Bolt) also names its range tag.
+  const named = new Set(!man && isAttack ? ['damage', ...(area ? [] : Object.keys(G.range))] : []);
   const DUP = { block: ['maneuver:defend', 'maneuver:counter'], counter: ['maneuver:counter'], evade: ['maneuver:evade'], 'maneuver:smash': ['maneuver:smash'], 'maneuver:sweep': ['maneuver:sweep'] };
+  const top = Object.entries(s.parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).sort((x, y) => y[1] - x[1]);
   const dmgV = s.parts.damage || 0;
+  let effect = null, source = null;
   for (const [k, v] of top) {
-    if (DUP[k] && DUP[k].includes(man0)) continue;
+    if (named.has(k) || (DUP[k] && DUP[k].includes(man))) continue;
     if (k === 'poise' && dmgV > 0 && v <= dmgV * 1.5) continue;
     const w = G.effect[k] ?? G.element[k];
     if (!w) continue;
-    effect = w === '@element' ? (elementTag ? G.element[elementTag] : G.fallback[c.camp]) : w; source = k; break;
+    if (w === '@element') {
+      const dmgTag = tags.find((t) => t.startsWith('damage:') && G.element[t]);
+      effect = magic ? element : (dmgTag ? G.element[dmgTag] : G.fallback.damage);
+    } else effect = w;
+    source = k; break;
   }
-  if (!effect) { effect = G.fallback[c.camp]; source = 'fallback'; }
-  const man = c.tags.find((t) => t.startsWith('maneuver:') && G.base[t]);
-  const area = c.tags.includes(scoring.cardModel.areaTag);
-  const base = man ? G.base[man] : c.type === 'attack' || c.dmg > 0 ? G.base[`attack:${area ? 'area:' : ''}${c.camp}`] : G.base[`skill:${c.camp}`];
+  // No repeated stem: the effect word goes when it starts like the element or base word (Warded Warding Rite -> Warding Rite).
+  if (effect && [element, base].some((word) => sharesStem(effect, word))) effect = null;
   const rk = RankOf(CombatPower(s.raw, c.rarity, scoring), scoring);
-  if (effect === base || (effect === 'Guarding' && base === 'Guard')) effect = G.fallback[c.camp];
-  const name = [effect, base, numeral(N, rk)].filter(Boolean).join(' ') + (ups ? ` +${ups}` : '');
-  return { name, effect, base, rank: rk, source, baseSource: man || (c.type === 'attack' ? 'attack' : 'skill') + ':' + c.camp + (area ? ' (area)' : '') };
+  const rarityWord = (G.rarity && G.rarity[c.rarity]) || null;
+  const words = { rarity: rarityWord, effect, element, base, rank: numeral(N, rk) };
+  const { name, dropped } = fitCardName(words, UpgradeMark(ups), G.limit);
+  return { name, rarityWord, effect, element, base, rank: rk, upgrades: ups, source, baseSource: baseKey, dropped };
 }
-/** A card's convention name, e.g. "Searing Strike III". */
+/** A card's convention name after the length limit: "Greater Searing Frost Bolt II+" in full (30 characters) is "Searing Frost Bolt II+" at 24. */
 export const CardName = (c, ups = 0, scoring = GetActiveScoring()) => CardNameParts(c, ups, scoring).name;
 
 function propWord(tag, rules, scoring) {
@@ -309,6 +378,12 @@ function propWord(tag, rules, scoring) {
   return W.item.op[best.op] || 'Fabled';
 }
 
+// A weapon art names its item by the art card's effect word, or its element, or the plain damage word.
+function weaponArtWord(art, scoring) {
+  const p = CardNameParts(Object.assign(BaseFace(), JSON.parse(JSON.stringify(art))), 0, scoring);
+  return p.effect || p.element || NamingOf(scoring).card.fallback.damage;
+}
+
 /** Parts of an item's convention name: {name, effect, base, rank, source}. */
 export function ItemNameParts(it, ups = 0, scoring = GetActiveScoring(), rules = {}) {
   const W = scoring.naming, s = ScoreItem(it, scoring, rules);
@@ -317,7 +392,7 @@ export function ItemNameParts(it, ups = 0, scoring = GetActiveScoring(), rules =
   if (top) {
     source = top[0];
     effect = top[0].startsWith('prop:') ? propWord(top[0].slice(5), rules, scoring)
-      : top[0].startsWith('Weapon art: ') ? CardNameParts(Object.assign(BaseFace(), JSON.parse(JSON.stringify(it.art))), 0, scoring).effect
+      : top[0].startsWith('Weapon art: ') ? weaponArtWord(it.art, scoring)
         : W.item.mod[top[0]] || W.card.effect[top[0]] || W.card.element[top[0]] || 'Fabled';
   }
   const lastWord = String(it.name || '').split(' ').pop();
@@ -325,7 +400,7 @@ export function ItemNameParts(it, ups = 0, scoring = GetActiveScoring(), rules =
   const base = it.kind === 'armour' && W.itemArmourSuffixes.includes(lastWord) ? lastWord
     : W.item.base[b] || (b.startsWith('staff') ? 'Staff' : it.kind === 'armour' ? 'Robes' : it.kind === 'relic' ? 'Relic' : cap(b || it.kind));
   const rk = RankOf(s.cp, scoring);
-  return { name: [effect, base, numeral(W, rk)].filter(Boolean).join(' ') + (ups ? ` +${ups}` : ''), effect, base, rank: rk, source };
+  return { name: [effect, base, numeral(W, rk)].filter(Boolean).join(' ') + UpgradeMark(ups), effect, base, rank: rk, source };
 }
 /** An item's convention name. */
 export const ItemName = (it, ups = 0, scoring = GetActiveScoring(), rules = {}) => ItemNameParts(it, ups, scoring, rules).name;
