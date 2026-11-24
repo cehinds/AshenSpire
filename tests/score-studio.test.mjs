@@ -315,3 +315,21 @@ test('name sets: Default names, save, Rename all and restore', async () => {
   assert.deepEqual(NS.MergeNameSets([older], [saved]).map((s) => s.label), ['Names 2026-11-24 14:05', 'Old'], 'newest first');
   assert.deepEqual(ValidateScoringConfig(NS.JoinSavedConfig(shippedScoring, [saved])), [], 'a saved config with sets still validates');
 });
+
+test('name sets: Save names writes one set as a names file, and Load names reads it back as a new set', async () => {
+  const NS = await import('../tools/score-studio/nameSets.js');
+  const cards = [{ id: 'core.a', name: 'Flame Bolt VII', _autoName: true }, { id: 'core.b', name: 'Strike', _autoName: false }];
+  const set = NS.CaptureNameSet(cards, 'My Names', new Date(2026, 10, 24, 14, 5));
+  const file = NS.NameSetFile(set);
+  assert.equal(file.kind, NS.NAME_SET_FILE_KIND);
+  assert.equal(NS.NameSetFileName('Names 2026-11-24 14:05'), 'names-2026-11-24-14-05.json');
+  assert.equal(NS.NameSetFileName('  '), 'card-names.json');
+  const [loaded] = NS.ParseNameSetFile(JSON.parse(JSON.stringify(file)), new Date(2026, 10, 25));
+  assert.notEqual(loaded.id, set.id, 'a loaded set never replaces a saved one');
+  assert.equal(loaded.label, 'My Names');
+  assert.deepEqual(loaded.names, set.names);
+  // A list of sets and a studio config carrying $nameSets load too; a scoring file without names is refused.
+  assert.equal(NS.ParseNameSetFile([file, file]).length, 2);
+  assert.equal(NS.ParseNameSetFile(NS.JoinSavedConfig({ rank: {} }, [set])).length, 1);
+  assert.throws(() => NS.ParseNameSetFile({ rank: {} }), /no card names/);
+});

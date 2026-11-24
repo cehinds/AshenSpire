@@ -17,7 +17,7 @@ import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeS
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
-import { DEFAULT_NAME_SET_ID, DefaultNameSet, CaptureNameSet, TurnOnAutoNames, ApplyNameSet, SortedNameSets, ValidNameSets, MergeNameSets, SplitSavedConfig, JoinSavedConfig, DefaultNameSetLabel } from './nameSets.js';
+import { DEFAULT_NAME_SET_ID, DefaultNameSet, CaptureNameSet, TurnOnAutoNames, ApplyNameSet, SortedNameSets, ValidNameSets, MergeNameSets, SplitSavedConfig, JoinSavedConfig, DefaultNameSetLabel, NameSetFile, NameSetFileName, ParseNameSetFile } from './nameSets.js';
 import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
@@ -791,7 +791,79 @@ function deleteNameSet(id) {
   renderNameSetsList();
 }
 
+// Save names / Save as / Load names (owner, 2026-11-24): card names as a JSON file. Save reuses the last file name;
+// Save as asks for a name. Both also add the names to Restore names. Load adds the file's names there and gives them
+// to the cards as one undo step.
+let lastNamesFileLabel = '';
+
+function downloadNameSet(set) {
+  const blob = new Blob([JSON.stringify(NameSetFile(set), null, 2) + '\n'], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const fileName = NameSetFileName(set.label);
+  Object.assign(document.createElement('a'), { href: url, download: fileName }).click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return fileName;
+}
+
+function saveNamesAs(label) {
+  const set = CaptureNameSet(state.cards, label);
+  lastNamesFileLabel = set.label;
+  state.nameSets = SortedNameSets([set, ...state.nameSets]);
+  storeNameSets();
+  renderNameSetsList();
+  toast(`Saved ${set.label} to ${downloadNameSet(set)}`);
+}
+
+function saveNames() {
+  if (!lastNamesFileLabel) { openSaveNamesAsDialog(); return; }
+  saveNamesAs(lastNamesFileLabel);
+}
+
+function openSaveNamesAsDialog() {
+  const dialog = document.getElementById('save-names-modal');
+  document.getElementById('save-names-label').value = lastNamesFileLabel || DefaultNameSetLabel();
+  dialog.returnValue = '';
+  dialog.showModal();
+}
+
+async function loadNamesFile(e) {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  let sets;
+  try {
+    sets = ParseNameSetFile(JSON.parse(await file.text()));
+  } catch (err) {
+    toast(`Could not load names: ${err.message}`);
+    return;
+  }
+  state.nameSets = MergeNameSets(state.nameSets, sets);
+  storeNameSets();
+  const set = sets[0];
+  selectedNameSetId = set.id;
+  lastNamesFileLabel = set.label;
+  renderNameSetsList();
+  pushHistory();
+  const count = ApplyNameSet(state.cards, set);
+  renderCardsGrid();
+  renderInspector();
+  saveDraft({ autoName: false });
+  const more = sets.length > 1 ? ` (${sets.length - 1} more set(s) added to Restore names)` : '';
+  toast(`Loaded ${set.label}: ${count} card(s) renamed${more}. Undo puts the names back.`);
+}
+
 function wireNameSets() {
+  document.getElementById('btn-save-names').addEventListener('click', saveNames);
+  document.getElementById('btn-save-names-as').addEventListener('click', openSaveNamesAsDialog);
+  document.getElementById('save-names-modal').addEventListener('close', () => {
+    if (document.getElementById('save-names-modal').returnValue === 'save') saveNamesAs(document.getElementById('save-names-label').value);
+  });
+  document.getElementById('save-names-label').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    document.getElementById('save-names-modal').close('save');
+  });
+  document.getElementById('input-load-names').addEventListener('change', loadNamesFile);
   document.getElementById('btn-rename-all').addEventListener('click', openRenameAllDialog);
   document.getElementById('rename-all-modal').addEventListener('close', finishRenameAllDialog);
   // Enter in the name field saves (the form's first button is Cancel).

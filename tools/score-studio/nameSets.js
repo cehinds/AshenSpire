@@ -105,3 +105,39 @@ export function JoinSavedConfig(scoring, nameSets)
 {
   return { ...scoring, [SAVED_CONFIG_NAME_SETS_KEY]: ValidNameSets(nameSets) };
 }
+
+// A names file (Save names / Save as / Load names): one set as JSON, marked so a scoring file is not mistaken for it.
+export const NAME_SET_FILE_KIND = 'ashenspire.cardNames';
+
+/** The JSON a Save names download holds for one set. */
+export function NameSetFile(set)
+{
+  return { kind: NAME_SET_FILE_KIND, version: 1, label: set.label, savedAt: set.savedAt, names: set.names };
+}
+
+/** A safe download name from a set's label: "Names 2026-11-24 14:05" -> "names-2026-11-24-14-05.json". */
+export function NameSetFileName(label)
+{
+  const slug = String(label || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  return `${slug || 'card-names'}.json`;
+}
+
+/**
+ * The sets in a loaded names file: a single names file, a list of them, or a studio config carrying $nameSets.
+ * Each gets a fresh id so loading never replaces a saved set; anything malformed is dropped. Throws when none is usable.
+ */
+export function ParseNameSetFile(data, date = new Date())
+{
+  const raw = Array.isArray(data) ? data
+    : isPlainObject(data) && Array.isArray(data[SAVED_CONFIG_NAME_SETS_KEY]) ? data[SAVED_CONFIG_NAME_SETS_KEY]
+      : [data];
+  const sets = raw.map((entry, i) => isPlainObject(entry) ? {
+    id: `names-${date.getTime()}-${i}`,
+    label: typeof entry.label === 'string' && entry.label.trim() ? entry.label.trim() : DefaultNameSetLabel(date),
+    savedAt: typeof entry.savedAt === 'string' && entry.savedAt ? entry.savedAt : date.toISOString(),
+    names: entry.names,
+  } : null).filter(Boolean);
+  const valid = ValidNameSets(sets);
+  if (!valid.length) throw new Error('no card names in this file');
+  return valid;
+}
