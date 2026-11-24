@@ -273,6 +273,27 @@ const numeral = (N, rk) => N.roman[rk] || '';
 /** Upgrade mark: '' for none, '+' for one, '+N' for N, written straight after the last word. */
 export const UpgradeMark = (ups) => (ups > 0 ? (ups === 1 ? '+' : `+${ups}`) : '');
 
+// Words in name order; the upgrade mark is attached to the last word. These parts are never dropped by the length limit.
+const NAME_ORDER = ['rarity', 'effect', 'element', 'base', 'rank'];
+const NEVER_DROPPED = new Set(['base', 'rank', 'upgrade']);
+const joinName = (words, mark) => NAME_ORDER.map((k) => words[k]).filter(Boolean).join(' ') + mark;
+
+/**
+ * Apply naming.card.limit ({maxChars, keep}, keep = most important first): while the name is longer than maxChars, drop the
+ * least important droppable part (from the end of keep). Base, rank and upgrade stay even when still too long. No limit = no trim.
+ */
+function fitCardName(words, mark, limit) {
+  const kept = { ...words }, dropped = [];
+  if (!limit || !Number.isFinite(limit.maxChars)) return { name: joinName(kept, mark), dropped };
+  const order = (Array.isArray(limit.keep) ? limit.keep : []).filter((k) => !NEVER_DROPPED.has(k) && k in kept).reverse();
+  for (const k of order) {
+    if (joinName(kept, mark).length <= limit.maxChars) break;
+    if (!kept[k]) continue;
+    kept[k] = null; dropped.push(k);
+  }
+  return { name: joinName(kept, mark), dropped };
+}
+
 // A card is magic when it is a spell, carries camp:spell, or is a hybrid hit with a magic share (magic words win).
 const isMagicFace = (c) => c.camp === 'spell' || (c.tags || []).includes('camp:spell') || c.magicShare > 0;
 
@@ -323,8 +344,9 @@ export function CardNameParts(c, ups = 0, scoring = GetActiveScoring()) {
   if (effect && (effect === element || effect === base)) effect = null;
   const rk = RankOf(CombatPower(s.raw, c.rarity, scoring), scoring);
   const rarityWord = (G.rarity && G.rarity[c.rarity]) || null;
-  const name = [rarityWord, effect, element, base, numeral(N, rk)].filter(Boolean).join(' ') + UpgradeMark(ups);
-  return { name, rarityWord, effect, element, base, rank: rk, upgrades: ups, source, baseSource: baseKey };
+  const words = { rarity: rarityWord, effect, element, base, rank: numeral(N, rk) };
+  const { name, dropped } = fitCardName(words, UpgradeMark(ups), G.limit);
+  return { name, rarityWord, effect, element, base, rank: rk, upgrades: ups, source, baseSource: baseKey, dropped };
 }
 /** A card's convention name, e.g. "Greater Searing Strike II+". */
 export const CardName = (c, ups = 0, scoring = GetActiveScoring()) => CardNameParts(c, ups, scoring).name;

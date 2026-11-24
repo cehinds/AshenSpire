@@ -175,3 +175,13 @@ test('weights tab: rows the scorer reads through another weight, or not at all, 
   const counter = ScoreCard({ ...BaseFace(), dmg: 6, tags: ['trait:counterstrike'] }, scoring);
   assert.ok(counter.parts.counterstrike > 0 && strike.parts.counterstrike === undefined, 'the Counterstrike multiplier is scored');
 });
+
+test('activeScoring: naming.card.limit is optional, and checked when present', () => {
+  const withLimit = (limit) => { const s = structuredClone(shippedScoring); s.naming.card.limit = limit; return s; };
+  const noLimit = structuredClone(shippedScoring); delete noLimit.naming.card.limit;
+  assert.deepEqual(ValidateScoringConfig(noLimit), []);
+  assert.deepEqual(ValidateScoringConfig(withLimit({ maxChars: 12, keep: ['base', 'rarity'] })), []);
+  assert.ok(ValidateScoringConfig(withLimit({ maxChars: 0, keep: [] })).some((m) => m.includes('maxChars')));
+  assert.ok(ValidateScoringConfig(withLimit({ maxChars: 20, keep: ['base', 'title'] })).some((m) => m.includes('keep')));
+  assert.ok(ValidateScoringConfig(withLimit([20])).some((m) => m.includes('limit')));
+});
