@@ -808,7 +808,8 @@ function downloadNameSet(set) {
 function saveNamesAs(label) {
   const set = CaptureNameSet(state.cards, label);
   lastNamesFileLabel = set.label;
-  state.nameSets = SortedNameSets([set, ...state.nameSets]);
+  // Saving under a name already in the list replaces that set, so repeated Saves keep one entry.
+  state.nameSets = SortedNameSets([set, ...state.nameSets.filter((other) => other.label !== set.label)]);
   storeNameSets();
   renderNameSetsList();
   toast(`Saved ${set.label} to ${downloadNameSet(set)}`);
