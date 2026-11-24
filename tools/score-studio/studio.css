@@ -757,9 +757,6 @@ body.studio-body .studio-switch input:checked { background: var(--st-accent-2); 
 body.studio-body .studio-switch input:checked::after { transform: translateX(14px); }
 body.studio-body .studio-switch input:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; }
 body.studio-body .name-hint { font-size: 11px; }
-body.studio-body .naming-word-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 6px; align-items: center; padding: 3px 0; }
-body.studio-body .naming-word-head { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--st-muted); }
-body.studio-body .naming-word-row input { width: 100%; box-sizing: border-box; min-width: 0; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 6px; }
 
 /* FEATURE DESCRIPTIONS: an ⓘ beside each feature opens what it does in play and how it scores. */
 body.studio-body .feature-row { flex-wrap: wrap; }

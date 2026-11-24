@@ -637,41 +637,11 @@ function renderAddFeatureDescription() {
 }
 
 // ---------------------------------------------------------------------------
-// Auto-name: "<Adjective> <core noun> [of <Noun>] <Rank numeral>"
+// Auto-name: the card's convention name (CardName, trimmed to naming.card.limit), e.g. "Flame Bolt VII"
 // ---------------------------------------------------------------------------
-// The adjective and the "of" noun are data (scoring.naming.card.prefix / .suffix, part key -> word),
-// editable in the Weights tab and written into scoring.json on export. Seeded with these defaults.
-const DEFAULT_NAME_PREFIX = Object.freeze({
-  frail: 'Brittle', vulnerable: 'Exposing', weak: 'Sapping', burn: 'Searing', bleed: 'Serrated', venom: 'Venomous',
-  frost: 'Rime', chill: 'Rime', shock: 'Crackling', damage: 'Keen', block: 'Warding', draw: 'Keen-eyed',
-  heal: 'Mending', poise: 'Crushing', 'SP restore': 'Second-wind', 'MP restore': 'Draining',
-});
-const DEFAULT_NAME_SUFFIX = Object.freeze({
-  frail: 'Frailty', vulnerable: 'Ruin', weak: 'Weakness', burn: 'Embers', bleed: 'Bleeding', venom: 'Venom',
-  frost: 'Winter', chill: 'Winter', shock: 'Storms', damage: 'Might', block: 'the Wall', draw: 'Insight',
-  heal: 'Mercy', poise: 'Ruin', 'SP restore': 'Vigor', 'MP restore': 'Mana',
-});
-const AUTO_NAME_MIN_WORDS = 2;
-const AUTO_NAME_SUFFIX_MIN_WORDS = 4;
-const NON_NAME_PARTS = new Set(['SP', 'MP', 'effect count', 'HP cost', 'discard']);
-
-// Adds the word tables when a scoring table has none, to both the working and the repo copy so the
-// seed itself is not an edit.
-function ensureNamingWords(scoringRef) {
-  if (!scoringRef) return;
-  const card = ((scoringRef.naming ||= clone(shippedScoring.naming || {})).card ||= {});
-  card.prefix ||= { ...DEFAULT_NAME_PREFIX };
-  card.suffix ||= { ...DEFAULT_NAME_SUFFIX };
-}
-
 function romanFor(rank) {
   const roman = state.scoring.naming?.roman || shippedScoring.naming?.roman || [];
   return roman[rank] || '';
-}
-
-// A name's words without its rank numeral, upgrade mark or "(Copy)", so a duplicate keeps its source's noun.
-function nameWords(name) {
-  return String(name || '').trim().split(/\s+/).map((word) => word.replace(/\+\d*$/, '')).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word) && !/^\(Copy\)$/i.test(word));
 }
 
 // A config's naming with the shipped word tables under it, so an older config (no range or tradition words) still names
@@ -691,67 +661,9 @@ function nameParts(def, sc = scoreCardEntry(def)) {
   }
 }
 
-// Turning Auto-name on keeps the card's own noun and length: Acid Splash stays a "... Splash".
-function startAutoName(def) {
-  const words = nameWords(def.name);
-  def._autoNameCore = def._custom && /^New Custom Card$/.test(def.name) ? '' : (words[words.length - 1] || '');
-  def._autoNameBudget = Math.max(AUTO_NAME_MIN_WORDS, words.length);
-}
-
-// The title box of a card face and the smallest font its fitter will use, measured once from a rendered
-// card (every illustrated card shares the frame). A candidate fits when it fits at that smallest font.
-let titleMetric = null;
-function measureTitleMetric() {
-  if (titleMetric) return titleMetric;
-  const node = document.querySelector('.studio-card-stage [data-card-binding="name"], #inspector-card-preview [data-card-binding="name"]');
-  const face = node?.closest('.illustrated-card-face');
-  if (!node || !face || !node.clientWidth) return null;
-  const scale = face.clientWidth / Number(face.dataset.designWidth || face.clientWidth);
-  const style = getComputedStyle(node);
-  titleMetric = {
-    fontFamily: style.fontFamily,
-    fontWeight: style.fontWeight,
-    minFontPx: Number(node.dataset.minFont || parseFloat(style.fontSize) / scale) * scale,
-    boxPx: node.clientWidth,
-  };
-  return titleMetric;
-}
-
-let measureCanvas = null;
-function titleFits(text) {
-  const metric = measureTitleMetric();
-  if (!metric) return true;
-  measureCanvas ||= document.createElement('canvas');
-  const ctx = measureCanvas.getContext('2d');
-  ctx.font = `${metric.fontWeight} ${metric.minFontPx}px ${metric.fontFamily}`;
-  return ctx.measureText(text).width <= metric.boxPx;
-}
-
-function wordFor(table, key) {
-  return state.scoring.naming?.card?.[table]?.[key] || null;
-}
-
-// The name Auto-name gives a card now.
+// The name Auto-name gives a card now: its convention name.
 function autoNameFor(def, sc = scoreCardEntry(def)) {
-  const parts = nameParts(def, sc);
-  const ranked = Object.entries(sc.parts || {})
-    .filter(([key, value]) => value > 0 && !NON_NAME_PARTS.has(key))
-    .sort((a, b) => b[1] - a[1])
-    .map(([key]) => key);
-  const adjectiveKey = parts.source || ranked[0];
-  const adjective = (adjectiveKey && wordFor('prefix', adjectiveKey)) || parts.effect || parts.element || null;
-  const suffixKey = ranked.find((key) => key !== adjectiveKey && wordFor('suffix', key));
-  const suffix = suffixKey ? wordFor('suffix', suffixKey) : null;
-  const core = def._autoNameCore || parts.base || 'Card';
-  const numeral = romanFor(sc.rank);
-  const withNumeral = (words) => [...words, numeral].filter(Boolean).join(' ');
-  const budget = Math.max(AUTO_NAME_MIN_WORDS, def._autoNameBudget || AUTO_NAME_MIN_WORDS);
-  const candidates = [];
-  if (adjective && suffix && budget >= AUTO_NAME_SUFFIX_MIN_WORDS) candidates.push(withNumeral([adjective, core, 'of', suffix]));
-  if (adjective) candidates.push(withNumeral([adjective, core]));
-  candidates.push(withNumeral([core]));
-  // Measure, don't count: drop the suffix, then the adjective, until the title fits. The numeral stays.
-  return candidates.find((candidate) => titleFits(candidate)) || candidates[candidates.length - 1];
+  return nameParts(def, sc).name;
 }
 
 // Renames every auto-named card whose name has moved. Runs after every mutation (from saveDraft and
@@ -785,7 +697,7 @@ function renderNameHint(def, sc = scoreCardEntry(def)) {
   const parts = nameParts(def, sc);
   const source = parts.source || 'no second effect';
   const trimmed = parts.dropped?.length ? ` · Trimmed: ${parts.dropped.join(', ')}` : '';
-  hint.textContent = `Convention: ${parts.name}${trimmed} · from ${source} · ${def._autoNameCore || parts.base || 'Card'} · ${RankName(sc.rank)}`;
+  hint.textContent = `Convention: ${parts.name}${trimmed} · from ${source} · ${RankName(sc.rank)}`;
 }
 
 // The game draws core cards from the profile's own card list (projectGameCard in src/model/gameProfile.js),
@@ -1873,7 +1785,7 @@ function renderWeights({ shifts = true } = {}) {
     }
     container.appendChild(card);
   }
-  if (groupF === 'all' || groupF === 'naming') { renderNamingLimitGroup(container, q); renderNamingWordsGroup(container, q); }
+  if (groupF === 'all' || groupF === 'naming') renderNamingLimitGroup(container, q);
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
@@ -1969,8 +1881,6 @@ function stageWholeScoring(scoring, sourceName) {
   const errors = ValidateScoringConfig(scoring);
   if (errors.length) throw new Error(errors.join(' '));
   state.pendingScoring = clone(scoring);
-  // Seed naming words as the applied copy is seeded, so they do not count as staged changes.
-  ensureNamingWords(state.pendingScoring);
   state.pendingBase = clone(state.scoring);
   document.querySelector('.studio-tab[data-tab="weights"]')?.click();
   renderWeights({ shifts: false });
@@ -2054,42 +1964,6 @@ function renderNamingLimitGroup(container, query) {
     }
   };
   draw();
-  container.appendChild(group);
-}
-
-// The Auto-name word tables: per scoring part, the adjective ("Brittle") and the "of" noun ("Frailty").
-function renderNamingWordsGroup(container, query) {
-  ensureNamingWords(state.scoring);
-  const words = state.scoring.naming.card;
-  const keys = [...new Set([...Object.keys(words.prefix || {}), ...Object.keys(words.suffix || {})])].sort();
-  const rows = keys.filter((key) => !query || `naming words ${key} ${words.prefix[key] || ''} ${words.suffix[key] || ''}`.toLowerCase().includes(query));
-  if (!rows.length) return;
-  const group = document.createElement('details');
-  group.className = 'weight-group-card studio-section naming-words-group';
-  group.dataset.section = 'weights-naming';
-  group.open = true;
-  group.innerHTML = '<summary class="section-head"><h3>Naming words</h3></summary><div class="naming-word-row naming-word-head"><span>Part</span><span>Adjective</span><span>"of" noun</span></div>';
-  rememberSection(group);
-  for (const key of rows) {
-    const row = document.createElement('div');
-    row.className = 'naming-word-row';
-    row.innerHTML = `<span>${esc(key)}</span>
-      <input type="text" data-naming-table="prefix" data-naming-key="${esc(key)}" value="${esc(words.prefix[key] || '')}" aria-label="${esc(`Adjective for ${key}`)}" />
-      <input type="text" data-naming-table="suffix" data-naming-key="${esc(key)}" value="${esc(words.suffix[key] || '')}" aria-label="${esc(`"of" noun for ${key}`)}" />`;
-    group.appendChild(row);
-  }
-  group.addEventListener('change', (e) => {
-    const { namingTable, namingKey } = e.target.dataset;
-    if (!namingTable) return;
-    const value = e.target.value.trim();
-    const table = state.scoring.naming.card[namingTable];
-    if ((table[namingKey] || '') === value) return;
-    pushHistory();
-    // An emptied word keeps its row, so it can be filled in again.
-    table[namingKey] = value;
-    saveDraft();
-    renderInspector();
-  });
   container.appendChild(group);
 }
 
@@ -2337,32 +2211,7 @@ function buildScoringDiff() {
     }
   };
   walk(state.repoScoring, state.scoring);
-  // Naming words the studio only seeded (the repo has none and nobody edited them) are not an edit;
-  // the export dialog still says it will add them.
-  if (namingWordsSeedOnly()) return lines.filter((line) => !NAMING_WORD_PATHS.some((path) => line.startsWith(path)));
   return lines;
-}
-
-const NAMING_WORD_PATHS = ['naming.card.prefix', 'naming.card.suffix'];
-
-function repoHasNamingWords() {
-  const card = state.repoScoring?.naming?.card;
-  return Boolean(card?.prefix && card?.suffix);
-}
-
-function namingWordsSeedOnly() {
-  if (repoHasNamingWords()) return false;
-  const card = state.scoring?.naming?.card;
-  return JSON.stringify(card?.prefix) === JSON.stringify(DEFAULT_NAME_PREFIX)
-    && JSON.stringify(card?.suffix) === JSON.stringify(DEFAULT_NAME_SUFFIX);
-}
-
-// The export dialog's note when export will add the naming word tables to a scoring.json without them.
-function namingWordsExportNote() {
-  if (repoHasNamingWords()) return '';
-  const card = state.scoring?.naming?.card;
-  const count = (table) => Object.values(table || {}).filter(Boolean).length;
-  return `Adds naming words (${count(card?.prefix)} prefixes, ${count(card?.suffix)} suffixes) to naming.card.`;
 }
 
 async function loadFromRepo(customPath = state.repoPath) {
@@ -2443,7 +2292,7 @@ function openExportDialog() {
   const diff = buildScoringDiff();
   document.getElementById('export-modal-path').textContent = `Target: ${exportPath()} (${diff.length} change(s))`;
   document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
-  document.getElementById('export-modal-naming').textContent = namingWordsExportNote() + stagedNotIncludedNote();
+  document.getElementById('export-modal-naming').textContent = stagedNotIncludedNote();
   renderRankShiftList();
   document.getElementById('export-modal').showModal();
 }
@@ -2649,7 +2498,6 @@ function populateCardOptions() {
 }
 
 function syncAllViews() {
-  ensureNamingWords(state.scoring);
   populateRankFilter();
   populateCardOptions();
   populateAddFeatureDropdown();
@@ -2886,7 +2734,6 @@ function wireEvents() {
       keywords: [], tags: ['camp:physical', 'maneuver:attack', 'source:weapon', 'classification.attack', 'targeting:single'],
       textTemplate: 'Deal {damage} damage.', _custom: true, _autoName: true,
     });
-    startAutoName(card);
     state.cards.unshift(card);
     state.selectedCardId = id;
     renderCardsGrid();
@@ -2900,7 +2747,6 @@ function wireEvents() {
     if (!src) return;
     pushHistory();
     const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true, _autoName: true });
-    startAutoName(copy);
     state.cards.unshift(copy);
     state.selectedCardId = copy.id;
     renderCardsGrid();
@@ -2956,14 +2802,11 @@ function wireEvents() {
     }
     mutateSelectedCard((d) => { d.name = e.target.value; }, { recordHistory: false, autoName: false });
   });
-  // Auto-name is per card. Turning it on records where the name starts from (its last word and its
-  // length), then renames at once; the toggle and the rename are one undo step.
+  // Auto-name is per card. Turning it on renames the card to its convention name at once; the toggle and
+  // the rename are one undo step.
   document.getElementById('toggle-auto-name').addEventListener('change', (e) => {
     const on = e.target.checked;
-    mutateSelectedCard((d) => {
-      d._autoName = on;
-      if (on) startAutoName(d);
-    });
+    mutateSelectedCard((d) => { d._autoName = on; });
   });
   const textBurst = createEditBurst();
   const textInput = document.getElementById('edit-text');

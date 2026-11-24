@@ -292,9 +292,11 @@ try {
   assert.equal(statusInfo.hidden, false, 'the ⓘ opens the status description');
   assert.ok(statusInfo.does.length > 0 && !/No description yet/.test(statusInfo.does), `a status row says what it does (${statusInfo.does})`);
 
-  // 7. Auto-name: a new card starts with it on; adding a status renames it, and the name fits its title box.
+  // 7. Auto-name gives the convention name (CardName, trimmed to naming.card.limit): a new card starts with it on, adding
+  //    a status renames it, the name matches the hint's convention name, stays within the limit and fits its title box.
   const autoName = await page.evaluate(async () => {
     document.getElementById('btn-new-card').click();
+    await new Promise((resolve) => setTimeout(resolve, 300));
     const before = document.getElementById('edit-name').value;
     const toggleOn = document.getElementById('toggle-auto-name').checked;
     const select = document.getElementById('add-feature-select');
@@ -303,20 +305,27 @@ try {
     document.getElementById('btn-add-feature').click();
     await new Promise((resolve) => setTimeout(resolve, 300));
     const title = document.querySelector('#inspector-card-preview [data-card-binding="name"]');
-    return { before, after: document.getElementById('edit-name').value, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
+    const hint = document.getElementById('name-hint').textContent;
+    return { before, after: document.getElementById('edit-name').value, hint, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
   });
+  const NAME_LIMIT = 24;
   assert.ok(autoName.toggleOn, 'a new card starts with Auto-name on');
+  assert.match(autoName.before, /Strike/, `a new martial melee card is a Strike (${autoName.before})`);
   assert.notEqual(autoName.after, autoName.before, `adding a status renames an auto-named card (${autoName.before} -> ${autoName.after})`);
+  assert.ok(autoName.hint.startsWith(`Convention: ${autoName.after} `), `the auto name is the convention name (${autoName.hint})`);
+  assert.ok(autoName.after.length <= NAME_LIMIT, `the auto name keeps to the limit (${autoName.after})`);
   assert.ok(autoName.scrollWidth <= autoName.clientWidth, `the generated title fits its box (${autoName.scrollWidth} <= ${autoName.clientWidth})`);
 
-  // 8. A duplicate is auto-named from its source's noun, never "(Copy)".
-  const duplicateName = await page.evaluate(() => {
+  // 8. A duplicate starts auto-named with its convention name, never "(Copy)".
+  const duplicateName = await page.evaluate(async () => {
     document.querySelector('.studio-card-tile[data-card-id="core.acidSplash"]').click();
     document.getElementById('btn-duplicate-card').click();
-    return { name: document.getElementById('edit-name').value, autoName: document.getElementById('toggle-auto-name').checked };
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return { name: document.getElementById('edit-name').value, hint: document.getElementById('name-hint').textContent, autoName: document.getElementById('toggle-auto-name').checked };
   });
   assert.ok(duplicateName.autoName, 'a duplicate starts with Auto-name on');
   assert.doesNotMatch(duplicateName.name, /\(Copy\)/, `the duplicate's auto name has no "(Copy)" (${duplicateName.name})`);
+  assert.ok(duplicateName.hint.startsWith(`Convention: ${duplicateName.name} `), `the duplicate takes its convention name (${duplicateName.hint})`);
 
   // 9. Keyword and multiplier-tag rows have the multiply-instead switch; unchecking stages the flat form.
   const flatSwitch = await page.evaluate(async (settle) => {
