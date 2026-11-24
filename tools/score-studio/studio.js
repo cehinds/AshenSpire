@@ -815,19 +815,26 @@ function staleTextTokens(def) {
 }
 
 // ---------------------------------------------------------------------------
-// Face numbers: the amount box holds what the card prints
+// Face numbers: the amount box holds the card's own number
 // ---------------------------------------------------------------------------
-// The profile's balance settings (effects.baseDamageMultiplier, physical and player scales, STR, Block
-// gain) turn an authored amount into a smaller printed one: Core prints 12 authored damage as 5. The
-// studio edits the printed number and stores the authored amount that prints it, so the card, the fight
-// and the CP all follow what was typed.
+// The profile's balance settings (effects.baseDamageMultiplier, physical and player scales, Block gain)
+// turn an authored amount into a smaller printed one: Core prints 12 authored damage as 5. The studio
+// edits that printed number and stores the authored amount that prints it.
+// Owner 2026-11-24: the box is the card's own number, before the hero's bonus. The reference hero's
+// attributes and always-on gear (a Starseer's INT and focus) made Arcane Spark print 3 at any amount up
+// to 1, so 0, 1 and 2 could not be typed. The card face still shows the hero's total.
 const FACE_AMOUNT_SEARCH_MAX = 999;
+
+// The reference run with no hero bonus: no attributes, no always-on gear.
+function cardOwnFaceRules(def) {
+  return { ...refContextFor(def).run, faceAttributes: {}, gearRules: [] };
+}
 
 function faceAmountFor(def, effectIndex) {
   const binding = computeTokenBindings(def.effects || []).find((b) => b.index === effectIndex && b.field === 'amount');
   if (!binding) return null;
   try {
-    const value = staticCardTokens(projectEditedCard(def), studioRegistries, refContextFor(def).run)[binding.token];
+    const value = staticCardTokens(projectEditedCard(def), studioRegistries, cardOwnFaceRules(def))[binding.token];
     return Number.isFinite(value) ? value : null;
   } catch {
     return null;
@@ -1192,7 +1199,7 @@ function renderInspector() {
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
       const amtCtrl = amtIsNum
-        ? `<input type="number" min="1" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The number the card shows" />`
+        ? `<input type="number" min="0" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The card's own number, before the hero's bonus" />`
         : '<span class="studio-muted" title="Formula-computed value">formula</span>';
       row.innerHTML = `
         <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(eff.op)}</strong> ${infoButtonHtml()}</span>

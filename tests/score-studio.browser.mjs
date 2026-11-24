@@ -173,6 +173,25 @@ try {
   assert.ok(brace.weight < 0, `the SP chip names its weight (${brace.weight})`);
   assert.deepEqual([brace.count, Number(brace.total), brace.pill], ['×2', 2 * brace.weight, `SP: ${brace.total}`], '2 SP scores 2 x the SP weight on Brace');
 
+  // 5c. The damage box is the card's own number, before the hero's bonus, so every number down to 0 sticks.
+  //     The Starseer's INT and focus made Arcane Spark print 3 at any amount up to 1, so 1 snapped back to 3.
+  const sparkAmounts = await page.evaluate(() => {
+    const select = (cardId) => document.querySelector(`.studio-card-tile[data-card-id="${cardId}"]`).click();
+    const kept = {};
+    for (const typed of [0, 1, 2, 5]) {
+      select('core.spark');
+      const input = document.querySelector('#active-features-list [data-eff-amt]');
+      input.value = String(typed);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      select('core.strike');
+      select('core.spark');
+      kept[typed] = document.querySelector('#active-features-list [data-eff-amt]').value;
+    }
+    return kept;
+  });
+  assert.deepEqual(sparkAmounts, { 0: '0', 1: '1', 2: '2', 5: '5' }, 'Arcane Spark keeps the damage typed, 0 included');
+
   // 6. Removing the effects a card's text names drops those sentences from the text, so the face stops
   //    listing them. Acid Splash's text is "Apply {frail} Frail and {vulnerable} Vulnerable."
   const removed = await page.evaluate(() => {
