@@ -175,3 +175,161 @@ test('weights tab: rows the scorer reads through another weight, or not at all, 
   const counter = ScoreCard({ ...BaseFace(), dmg: 6, tags: ['trait:counterstrike'] }, scoring);
   assert.ok(counter.parts.counterstrike > 0 && strike.parts.counterstrike === undefined, 'the Counterstrike multiplier is scored');
 });
+
+test('activeScoring: naming.card.limit is optional, and checked when present', () => {
+  const withLimit = (limit) => { const s = structuredClone(shippedScoring); s.naming.card.limit = limit; return s; };
+  const noLimit = structuredClone(shippedScoring); delete noLimit.naming.card.limit;
+  assert.deepEqual(ValidateScoringConfig(noLimit), []);
+  assert.deepEqual(ValidateScoringConfig(withLimit({ maxChars: 12, keep: ['base', 'rarity'] })), []);
+  assert.deepEqual(ValidateScoringConfig(withLimit({ keep: ['base', 'rarity'] })), [], 'a keep order with no maxChars is no limit');
+  assert.ok(ValidateScoringConfig(withLimit({ maxChars: 0, keep: [] })).some((m) => m.includes('maxChars')));
+  assert.ok(ValidateScoringConfig(withLimit({ maxChars: 20, keep: ['base', 'title'] })).some((m) => m.includes('keep')));
+  assert.ok(ValidateScoringConfig(withLimit([20])).some((m) => m.includes('limit')));
+  assert.ok(ValidateScoringConfig(withLimit({ maxChars: 20, keep: [] })).some((m) => m.includes('at least one part')), 'an empty keep order is refused');
+  assert.ok(ValidateScoringConfig(withLimit({ maxChars: 20, keep: ['base', 'rarity', 'rarity'] })).some((m) => m.includes('each once')), 'a repeated part is refused');
+});
+
+test('scorer and validator: a multiplier tag or keyword may be set flat instead', () => {
+  const flat = structuredClone(shippedScoring);
+  // Counterstrike flat: its weight once, no multiplier part (it used to read only .multiplier).
+  flat.tags['trait:counterstrike'] = { ...flat.tags['trait:counterstrike'], weight: 4 };
+  delete flat.tags['trait:counterstrike'].multiplier;
+  const hit = { ...BaseFace(), dmg: 6, tags: ['trait:counterstrike'] };
+  const plain = ScoreCard({ ...BaseFace(), dmg: 6 }, flat);
+  const flatHit = ScoreCard(hit, flat);
+  assert.equal(flatHit.parts['trait:counterstrike'], 4);
+  assert.equal(flatHit.parts.counterstrike, undefined);
+  assert.equal(flatHit.raw, plain.raw + 4);
+  // Flat 0 is no change, and the tag drops out of the scorer entirely.
+  flat.tags['trait:counterstrike'].weight = 0;
+  assert.equal(ScoreCard(hit, flat).raw, plain.raw);
+  // A keyword set flat adds its flat value; a pMultiplier tag set flat adds its weight.
+  flat.keywords.retain = { flat: 3 };
+  assert.equal(ScoreCard({ ...BaseFace(), dmg: 6, kw: ['retain'] }, flat).parts.retain, 3);
+  flat.tags.ash = { ...flat.tags.ash, weight: -2 }; delete flat.tags.ash.pMultiplier;
+  assert.equal(ScoreCard({ ...BaseFace(), dmg: 6, tags: ['ash'] }, flat).parts.ash, -2);
+  assert.deepEqual(ValidateScoringConfig(flat), []);
+  const broken = structuredClone(shippedScoring);
+  broken.keywords.retain = { why: 'neither form' };
+  broken.tags.ash.pMultiplier = 'half';
+  const errors = ValidateScoringConfig(broken);
+  assert.ok(errors.some((m) => m.includes('keywords.retain')));
+  assert.ok(errors.some((m) => m.includes('tags.ash.pMultiplier')));
+});
+
+test('weights tab: the multiply-instead switch stores flat or multiplier, and the example follows the scorer', async () => {
+  const { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } = await import('../tools/score-studio/weightExamples.js');
+  const scoring = structuredClone(shippedScoring);
+  // Keywords: unchecked stores flat 0 (multiplier gone), checked stores multiplier 0 (flat gone).
+  SetKeywordForm(scoring.keywords.innate, false);
+  assert.equal(scoring.keywords.innate.flat, 0);
+  assert.equal('multiplier' in scoring.keywords.innate, false);
+  scoring.keywords.innate.flat = 4;
+  assert.deepEqual(weightSentence('keywords', 'innate', scoring), { before: 'adds', mid: 'pts', after: '' });
+  const innate = ScoreCard({ ...BaseFace(), dmg: 6, kw: ['innate'] }, scoring).parts.innate;
+  assert.equal(innate, 4);
+  assert.equal(weightExample('keywords', 'innate', scoring), `Any card with it: +${innate} pts`);
+  // The keyword's min still holds a flat value, as ScoreCard does.
+  scoring.keywords.innate.flat = 0;
+  assert.equal(weightExample('keywords', 'innate', scoring), `Any card with it: +${ScoreCard({ ...BaseFace(), dmg: 6, kw: ['innate'] }, scoring).parts.innate} pt`);
+  SetKeywordForm(scoring.keywords.innate, true);
+  assert.equal(scoring.keywords.innate.multiplier, 0);
+  assert.equal('flat' in scoring.keywords.innate, false);
+  // Tags: the switch keeps the tag's own multiplier kind; 'times' starts at 1, pMultiplier at 0, flat at weight 0.
+  assert.equal(TagMultiplierKey(scoring.tags['trait:counterstrike']), 'multiplier');
+  assert.equal(TagMultiplierKey(scoring.tags.ash), 'pMultiplier');
+  assert.equal(TagMultiplierKey({ weight: 0 }, shippedScoring.tags.ash), 'pMultiplier');
+  assert.equal(TagMultiplierKey({ weight: 2 }, { weight: 2 }), null);
+  const cs = scoring.tags['trait:counterstrike'];
+  const hit = { ...BaseFace(), dmg: 6, tags: ['trait:counterstrike'] };
+  SetTagForm(cs, 'multiplier', false);
+  assert.equal(cs.weight, 0);
+  assert.equal('multiplier' in cs, false);
+  cs.weight = 3;
+  assert.equal(weightExample('tags', 'trait:counterstrike', scoring), `Any card with it: +${ScoreCard(hit, scoring).parts['trait:counterstrike']} pts`);
+  SetTagForm(cs, 'multiplier', true);
+  assert.deepEqual([cs.weight, cs.multiplier], [0, 1]);
+  assert.equal(ScoreCard(hit, scoring).raw, ScoreCard({ ...BaseFace(), dmg: 6 }, scoring).raw, 'x1 is no change');
+  SetTagForm(scoring.tags.ash, 'pMultiplier', true);
+  assert.equal(scoring.tags.ash.pMultiplier, 0);
+  assert.deepEqual(ValidateScoringConfig(scoring), []);
+});
+
+test('studio restore: a draft with the old naming tables takes the repo naming and drops prefix / suffix', async () => {
+  const { RefreshRestoredNaming, NamingIsStale } = await import('../tools/score-studio/weightsStaging.js');
+  const { CardName } = await import('../src/model/combatPower.js');
+  // dev's naming.card before convention names: physical/spell base keys, a camp fallback, Ember, and the studio's word tables.
+  const draft = structuredClone(shippedScoring);
+  const card = draft.naming.card;
+  card.base = { 'maneuver:smash': 'Smash', 'maneuver:sweep': 'Sweep', 'maneuver:counter': 'Riposte', 'maneuver:defend': 'Guard', 'maneuver:evade': 'Step', 'attack:physical': 'Strike', 'attack:spell': 'Bolt', 'attack:area:physical': 'Cleave', 'attack:area:spell': 'Wave', 'skill:physical': 'Technique', 'skill:spell': 'Rite' };
+  card.fallback = { physical: 'Keen', spell: 'Astral' };
+  card.element['school:fire'] = 'Ember';
+  for (const key of ['rarity', 'range', 'defaultRange', 'tradition', 'defaultTradition', 'limit']) delete card[key];
+  card.prefix = { burn: 'Searing' };
+  card.suffix = { burn: 'Embers' };
+  assert.ok(NamingIsStale(draft));
+  assert.equal(NamingIsStale(shippedScoring), false);
+  const hit = { ...BaseFace(), sp: 1, dmg: 3, tags: ['camp:physical', 'range:melee'] };
+  RefreshRestoredNaming(draft, shippedScoring);
+  assert.equal(NamingIsStale(draft), false);
+  assert.deepEqual(draft.naming.card, shippedScoring.naming.card);
+  assert.equal(CardName(hit, 0, draft), 'Strike');
+  // A current config keeps its own edits; only the retired word tables go.
+  const current = structuredClone(shippedScoring);
+  current.naming.card.rarity.rare = 'Grand';
+  current.naming.card.prefix = { burn: 'Searing' };
+  RefreshRestoredNaming(current, shippedScoring);
+  assert.equal(current.naming.card.rarity.rare, 'Grand');
+  assert.equal('prefix' in current.naming.card, false);
+});
+
+test('name sets: Default names, save, Rename all and restore', async () => {
+  const NS = await import('../tools/score-studio/nameSets.js');
+  const repo = [{ id: 'core.a', name: 'Acid Splash' }, { id: 'core.b', name: 'Backstep' }];
+  const cards = structuredClone(repo);
+  const defaults = NS.DefaultNameSet(repo);
+  assert.equal(defaults.label, 'Default names');
+  assert.deepEqual(defaults.names['core.a'], { name: 'Acid Splash', autoName: false });
+  // Rename all turns Auto-name on for every card (the studio then renames them).
+  assert.equal(NS.TurnOnAutoNames(cards), 2);
+  cards[0].name = 'Brittle Blight Rite IV'; cards[1].name = 'Evasive Guard II';
+  const when = new Date(2026, 10, 24, 14, 5);
+  assert.equal(NS.DefaultNameSetLabel(when), 'Names 2026-11-24 14:05');
+  const saved = NS.CaptureNameSet(cards, '', when);
+  assert.equal(saved.label, 'Names 2026-11-24 14:05');
+  assert.deepEqual(saved.names['core.a'], { name: 'Brittle Blight Rite IV', autoName: true });
+  // Restoring Default names gives back the authored names with Auto-name off; the default set is not changed.
+  assert.equal(NS.ApplyNameSet(cards, defaults), 2);
+  assert.deepEqual(cards.map((c) => [c.name, c._autoName]), [['Acid Splash', false], ['Backstep', false]]);
+  assert.equal(defaults.names['core.a'].name, 'Acid Splash');
+  assert.equal(NS.ApplyNameSet(cards, defaults), 0, 'nothing left to change');
+  // A saved set restores its own names, also with Auto-name off.
+  assert.equal(NS.ApplyNameSet(cards, saved), 2);
+  assert.deepEqual(cards.map((c) => [c.name, c._autoName]), [['Brittle Blight Rite IV', false], ['Evasive Guard II', false]]);
+  // Saved configs carry the sets apart from the weights; the default set and bad rows are never stored.
+  const older = { ...NS.CaptureNameSet(cards, 'Old', new Date(2026, 0, 1)) };
+  const joined = NS.JoinSavedConfig({ rank: {} }, [older, saved, defaults, { id: 'x' }]);
+  const split = NS.SplitSavedConfig(joined);
+  assert.deepEqual(split.scoring, { rank: {} });
+  assert.deepEqual(split.nameSets.map((s) => s.id), [older.id, saved.id]);
+  assert.deepEqual(NS.MergeNameSets([older], [saved]).map((s) => s.label), ['Names 2026-11-24 14:05', 'Old'], 'newest first');
+  assert.deepEqual(ValidateScoringConfig(NS.JoinSavedConfig(shippedScoring, [saved])), [], 'a saved config with sets still validates');
+});
+
+test('name sets: Save names writes one set as a names file, and Load names reads it back as a new set', async () => {
+  const NS = await import('../tools/score-studio/nameSets.js');
+  const cards = [{ id: 'core.a', name: 'Flame Bolt VII', _autoName: true }, { id: 'core.b', name: 'Strike', _autoName: false }];
+  const set = NS.CaptureNameSet(cards, 'My Names', new Date(2026, 10, 24, 14, 5));
+  const file = NS.NameSetFile(set);
+  assert.equal(file.kind, NS.NAME_SET_FILE_KIND);
+  assert.equal(NS.NameSetFileName('Names 2026-11-24 14:05'), 'names-2026-11-24-14-05.json');
+  assert.equal(NS.NameSetFileName('  '), 'card-names.json');
+  const [loaded] = NS.ParseNameSetFile(JSON.parse(JSON.stringify(file)), new Date(2026, 10, 25));
+  assert.notEqual(loaded.id, set.id, 'a loaded set never replaces a saved one');
+  assert.equal(loaded.label, 'My Names');
+  assert.deepEqual(loaded.names, set.names);
+  // A list of sets and a studio config carrying $nameSets load too; a scoring file without names is refused.
+  assert.equal(NS.ParseNameSetFile([file, file]).length, 2);
+  assert.equal(NS.ParseNameSetFile(NS.JoinSavedConfig({ rank: {} }, [set])).length, 1);
+  assert.throws(() => NS.ParseNameSetFile({ rank: {} }), /no card names/);
+});

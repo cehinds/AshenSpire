@@ -13,14 +13,17 @@ import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
 import { BaseFace, CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
-import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
+import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
-import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } from './weightsStaging.js';
-import { weightSentence, weightExample } from './weightExamples.js';
+import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
+import { DEFAULT_NAME_SET_ID, DefaultNameSet, CaptureNameSet, TurnOnAutoNames, ApplyNameSet, SortedNameSets, ValidNameSets, MergeNameSets, SplitSavedConfig, JoinSavedConfig, DefaultNameSetLabel, NameSetFile, NameSetFileName, ParseNameSetFile } from './nameSets.js';
+import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
+// Saved name sets (Rename all), kept apart from the draft so they survive a clean or exported draft.
+const NAME_SETS_STORAGE_KEY = 'ashenspire:scoreStudioNameSets:v1';
 const PATH_STORAGE_KEY = 'ashenspire:scoreStudioPath:v1';
 const DRAFT_SAVE_DELAY_MS = 300;
 const TEXT_EDIT_BURST_MS = 1000;
@@ -83,8 +86,7 @@ const offenseAmount = (hit) => {
   return rows.length ? rows[rows.length - 1].effective : (hit?.incoming ?? 0);
 };
 function safeCardName(face, scoringRef) {
-  const withNaming = scoringRef?.naming ? scoringRef : { ...scoringRef, naming: shippedScoring.naming };
-  return CardName(face, 0, withNaming);
+  return CardName(face, 0, namingScoring(scoringRef));
 }
 
 // ---------------------------------------------------------------------------
@@ -113,6 +115,9 @@ const state = {
   },
   repoArtLayers: null,  // art layers as loaded from the repo (or the built-in default); set in boot
   abSlots: { A: null, B: null, activeLabel: 'Draft' },
+  // Rename all: the repo's authored names (never overwritten) and the saved name sets, newest first.
+  defaultNameSet: null,
+  nameSets: [],
   sandbox: { combat: null, classId: 'reaver', enemyId: 'wanderingSoldier', appliedScoring: null, customCardId: null, log: [] },
 };
 
@@ -638,112 +643,39 @@ function renderAddFeatureDescription() {
 }
 
 // ---------------------------------------------------------------------------
-// Auto-name: "<Adjective> <core noun> [of <Noun>] <Rank numeral>"
+// Auto-name: the card's convention name (CardName, trimmed to naming.card.limit), e.g. "Flame Bolt VII"
 // ---------------------------------------------------------------------------
-// The adjective and the "of" noun are data (scoring.naming.card.prefix / .suffix, part key -> word),
-// editable in the Weights tab and written into scoring.json on export. Seeded with these defaults.
-const DEFAULT_NAME_PREFIX = Object.freeze({
-  frail: 'Brittle', vulnerable: 'Exposing', weak: 'Sapping', burn: 'Searing', bleed: 'Serrated', venom: 'Venomous',
-  frost: 'Rime', chill: 'Rime', shock: 'Crackling', damage: 'Keen', block: 'Warding', draw: 'Keen-eyed',
-  heal: 'Mending', poise: 'Crushing', 'SP restore': 'Second-wind', 'MP restore': 'Draining',
-});
-const DEFAULT_NAME_SUFFIX = Object.freeze({
-  frail: 'Frailty', vulnerable: 'Ruin', weak: 'Weakness', burn: 'Embers', bleed: 'Bleeding', venom: 'Venom',
-  frost: 'Winter', chill: 'Winter', shock: 'Storms', damage: 'Might', block: 'the Wall', draw: 'Insight',
-  heal: 'Mercy', poise: 'Ruin', 'SP restore': 'Vigor', 'MP restore': 'Mana',
-});
-const AUTO_NAME_MIN_WORDS = 2;
-const AUTO_NAME_SUFFIX_MIN_WORDS = 4;
-const NON_NAME_PARTS = new Set(['SP', 'MP', 'effect count', 'HP cost', 'discard']);
-
-// Adds the word tables when a scoring table has none, to both the working and the repo copy so the
-// seed itself is not an edit.
-function ensureNamingWords(scoringRef) {
-  if (!scoringRef) return;
-  const card = ((scoringRef.naming ||= clone(shippedScoring.naming || {})).card ||= {});
-  card.prefix ||= { ...DEFAULT_NAME_PREFIX };
-  card.suffix ||= { ...DEFAULT_NAME_SUFFIX };
-}
-
 function romanFor(rank) {
   const roman = state.scoring.naming?.roman || shippedScoring.naming?.roman || [];
   return roman[rank] || '';
 }
 
-// A name's words without its rank numeral, upgrade mark or "(Copy)", so a duplicate keeps its source's noun.
-function nameWords(name) {
-  return String(name || '').trim().split(/\s+/).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word) && !/^\(Copy\)$/i.test(word));
+// A config's naming with the shipped word tables under it, so an older config (no range or tradition words) still names
+// cards. The length limit is not filled in: a config without one has no limit.
+function namingScoring(scoringRef) {
+  const own = scoringRef?.naming;
+  if (!own) return { ...scoringRef, naming: shippedScoring.naming };
+  const { limit, ...shippedCard } = shippedScoring.naming.card;
+  // Table by table and key by key, so a table missing a newer key still finds the shipped word.
+  const card = { ...shippedCard };
+  for (const [table, words] of Object.entries(own.card || {})) {
+    const shippedWords = shippedCard[table];
+    card[table] = shippedWords && typeof shippedWords === 'object' && !Array.isArray(shippedWords) && words && typeof words === 'object' && !Array.isArray(words) ? { ...shippedWords, ...words } : words;
+  }
+  return { ...scoringRef, naming: { ...shippedScoring.naming, ...own, card } };
 }
 
 function nameParts(def, sc = scoreCardEntry(def)) {
   try {
-    return CardNameParts(sc.face, 0, state.scoring.naming ? state.scoring : { ...state.scoring, naming: shippedScoring.naming });
+    return CardNameParts(sc.face, 0, namingScoring(state.scoring));
   } catch {
-    return { name: def.name, effect: null, base: null, rank: sc.rank, source: null };
+    return { name: def.name, effect: null, base: null, rank: sc.rank, source: null, dropped: [] };
   }
 }
 
-// Turning Auto-name on keeps the card's own noun and length: Acid Splash stays a "... Splash".
-function startAutoName(def) {
-  const words = nameWords(def.name);
-  def._autoNameCore = def._custom && /^New Custom Card$/.test(def.name) ? '' : (words[words.length - 1] || '');
-  def._autoNameBudget = Math.max(AUTO_NAME_MIN_WORDS, words.length);
-}
-
-// The title box of a card face and the smallest font its fitter will use, measured once from a rendered
-// card (every illustrated card shares the frame). A candidate fits when it fits at that smallest font.
-let titleMetric = null;
-function measureTitleMetric() {
-  if (titleMetric) return titleMetric;
-  const node = document.querySelector('.studio-card-stage [data-card-binding="name"], #inspector-card-preview [data-card-binding="name"]');
-  const face = node?.closest('.illustrated-card-face');
-  if (!node || !face || !node.clientWidth) return null;
-  const scale = face.clientWidth / Number(face.dataset.designWidth || face.clientWidth);
-  const style = getComputedStyle(node);
-  titleMetric = {
-    fontFamily: style.fontFamily,
-    fontWeight: style.fontWeight,
-    minFontPx: Number(node.dataset.minFont || parseFloat(style.fontSize) / scale) * scale,
-    boxPx: node.clientWidth,
-  };
-  return titleMetric;
-}
-
-let measureCanvas = null;
-function titleFits(text) {
-  const metric = measureTitleMetric();
-  if (!metric) return true;
-  measureCanvas ||= document.createElement('canvas');
-  const ctx = measureCanvas.getContext('2d');
-  ctx.font = `${metric.fontWeight} ${metric.minFontPx}px ${metric.fontFamily}`;
-  return ctx.measureText(text).width <= metric.boxPx;
-}
-
-function wordFor(table, key) {
-  return state.scoring.naming?.card?.[table]?.[key] || null;
-}
-
-// The name Auto-name gives a card now.
+// The name Auto-name gives a card now: its convention name.
 function autoNameFor(def, sc = scoreCardEntry(def)) {
-  const parts = nameParts(def, sc);
-  const ranked = Object.entries(sc.parts || {})
-    .filter(([key, value]) => value > 0 && !NON_NAME_PARTS.has(key))
-    .sort((a, b) => b[1] - a[1])
-    .map(([key]) => key);
-  const adjectiveKey = parts.source && parts.source !== 'fallback' ? parts.source : ranked[0];
-  const adjective = (adjectiveKey && wordFor('prefix', adjectiveKey)) || parts.effect || null;
-  const suffixKey = ranked.find((key) => key !== adjectiveKey && wordFor('suffix', key));
-  const suffix = suffixKey ? wordFor('suffix', suffixKey) : null;
-  const core = def._autoNameCore || parts.base || 'Card';
-  const numeral = romanFor(sc.rank);
-  const withNumeral = (words) => [...words, numeral].filter(Boolean).join(' ');
-  const budget = Math.max(AUTO_NAME_MIN_WORDS, def._autoNameBudget || AUTO_NAME_MIN_WORDS);
-  const candidates = [];
-  if (adjective && suffix && budget >= AUTO_NAME_SUFFIX_MIN_WORDS) candidates.push(withNumeral([adjective, core, 'of', suffix]));
-  if (adjective) candidates.push(withNumeral([adjective, core]));
-  candidates.push(withNumeral([core]));
-  // Measure, don't count: drop the suffix, then the adjective, until the title fits. The numeral stays.
-  return candidates.find((candidate) => titleFits(candidate)) || candidates[candidates.length - 1];
+  return nameParts(def, sc).name;
 }
 
 // Renames every auto-named card whose name has moved. Runs after every mutation (from saveDraft and
@@ -775,8 +707,182 @@ function renderNameHint(def, sc = scoreCardEntry(def)) {
   const hint = document.getElementById('name-hint');
   if (!hint) return;
   const parts = nameParts(def, sc);
-  const source = parts.source && parts.source !== 'fallback' ? parts.source : 'no main effect';
-  hint.textContent = `From ${source} · ${def._autoNameCore || parts.base || 'Card'} · ${RankName(sc.rank)}`;
+  const source = parts.source || 'no second effect';
+  const trimmed = parts.dropped?.length ? ` · Trimmed: ${parts.dropped.join(', ')}` : '';
+  hint.textContent = `Convention: ${parts.name}${trimmed} · from ${source} · ${RankName(sc.rank)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Rename all and name sets (owner, 2026-11-24)
+// ---------------------------------------------------------------------------
+// Rename all turns Auto-name on for every card. Before it, the owner may save the current names as a set;
+// Restore names puts back Default names (the repo's authored names) or a saved set, with Auto-name off.
+// Sets stay in the studio (local storage and the saved JSON config); Export never writes them.
+let selectedNameSetId = DEFAULT_NAME_SET_ID;
+
+function loadStoredNameSets() {
+  try { state.nameSets = SortedNameSets(ValidNameSets(JSON.parse(localStorage.getItem(NAME_SETS_STORAGE_KEY) || '[]'))); } catch { state.nameSets = []; }
+}
+
+function storeNameSets() {
+  try { localStorage.setItem(NAME_SETS_STORAGE_KEY, JSON.stringify(state.nameSets)); } catch { toast('Could not keep the name sets: browser storage is full'); }
+}
+
+function nameSetById(id) {
+  return id === DEFAULT_NAME_SET_ID ? state.defaultNameSet : state.nameSets.find((set) => set.id === id) || null;
+}
+
+function renderNameSetsList() {
+  const list = document.getElementById('restore-names-list');
+  if (!list) return;
+  if (!nameSetById(selectedNameSetId)) selectedNameSetId = DEFAULT_NAME_SET_ID;
+  const sets = [state.defaultNameSet, ...state.nameSets].filter(Boolean);
+  list.innerHTML = sets.map((set) => {
+    const id = esc(set.id);
+    const remove = set.id === DEFAULT_NAME_SET_ID ? '' : `<button type="button" class="name-set-delete" data-name-set-delete="${id}" title="Delete this saved set" aria-label="${esc(`Delete ${set.label}`)}">×</button>`;
+    return `<label class="name-set-row"><input type="radio" name="name-set" value="${id}" ${set.id === selectedNameSetId ? 'checked' : ''} /><span>${esc(set.label)}</span>${remove}</label>`;
+  }).join('');
+}
+
+function renameAll() {
+  pushHistory();
+  const count = TurnOnAutoNames(state.cards);
+  syncAutoNames({ render: false });
+  renderCardsGrid();
+  renderInspector();
+  saveDraft();
+  toast(count ? `Auto-name is on for ${count} more card(s). Undo puts the names back.` : 'Every card already uses Auto-name');
+}
+
+function openRenameAllDialog() {
+  const dialog = document.getElementById('rename-all-modal');
+  document.getElementById('rename-all-set-name').value = DefaultNameSetLabel();
+  dialog.returnValue = '';
+  dialog.showModal();
+}
+
+function finishRenameAllDialog() {
+  const choice = document.getElementById('rename-all-modal').returnValue;
+  if (choice !== 'save' && choice !== 'skip') return;
+  if (choice === 'save') {
+    const set = CaptureNameSet(state.cards, document.getElementById('rename-all-set-name').value);
+    state.nameSets = SortedNameSets([set, ...state.nameSets]);
+    storeNameSets();
+    renderNameSetsList();
+  }
+  renameAll();
+}
+
+function restoreSelectedNameSet() {
+  const set = nameSetById(selectedNameSetId);
+  if (!set) return;
+  pushHistory();
+  const count = ApplyNameSet(state.cards, set);
+  renderCardsGrid();
+  renderInspector();
+  saveDraft({ autoName: false });
+  closeMenus();
+  toast(count ? `Restored ${set.label} on ${count} card(s); Auto-name is off for them` : `Every card already has ${set.label}`);
+}
+
+function deleteNameSet(id) {
+  state.nameSets = state.nameSets.filter((set) => set.id !== id);
+  storeNameSets();
+  renderNameSetsList();
+}
+
+// Save names / Save as / Load names (owner, 2026-11-24): card names as a JSON file. Save reuses the last file name;
+// Save as asks for a name. Both also add the names to Restore names. Load adds the file's names there and gives them
+// to the cards as one undo step.
+let lastNamesFileLabel = '';
+
+function downloadNameSet(set) {
+  const blob = new Blob([JSON.stringify(NameSetFile(set), null, 2) + '\n'], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const fileName = NameSetFileName(set.label);
+  Object.assign(document.createElement('a'), { href: url, download: fileName }).click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return fileName;
+}
+
+function saveNamesAs(label) {
+  const set = CaptureNameSet(state.cards, label);
+  lastNamesFileLabel = set.label;
+  // Saving under a name already in the list replaces that set, so repeated Saves keep one entry.
+  state.nameSets = SortedNameSets([set, ...state.nameSets.filter((other) => other.label !== set.label)]);
+  storeNameSets();
+  renderNameSetsList();
+  toast(`Saved ${set.label} to ${downloadNameSet(set)}`);
+}
+
+function saveNames() {
+  if (!lastNamesFileLabel) { openSaveNamesAsDialog(); return; }
+  saveNamesAs(lastNamesFileLabel);
+}
+
+function openSaveNamesAsDialog() {
+  const dialog = document.getElementById('save-names-modal');
+  document.getElementById('save-names-label').value = lastNamesFileLabel || DefaultNameSetLabel();
+  dialog.returnValue = '';
+  dialog.showModal();
+}
+
+async function loadNamesFile(e) {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  let sets;
+  try {
+    sets = ParseNameSetFile(JSON.parse(await file.text()));
+  } catch (err) {
+    toast(`Could not load names: ${err.message}`);
+    return;
+  }
+  state.nameSets = MergeNameSets(state.nameSets, sets);
+  storeNameSets();
+  const set = sets[0];
+  selectedNameSetId = set.id;
+  lastNamesFileLabel = set.label;
+  renderNameSetsList();
+  pushHistory();
+  const count = ApplyNameSet(state.cards, set);
+  renderCardsGrid();
+  renderInspector();
+  saveDraft({ autoName: false });
+  const more = sets.length > 1 ? ` (${sets.length - 1} more set(s) added to Restore names)` : '';
+  toast(`Loaded ${set.label}: ${count} card(s) renamed${more}. Undo puts the names back.`);
+}
+
+function wireNameSets() {
+  document.getElementById('btn-save-names').addEventListener('click', saveNames);
+  document.getElementById('btn-save-names-as').addEventListener('click', openSaveNamesAsDialog);
+  document.getElementById('save-names-modal').addEventListener('close', () => {
+    if (document.getElementById('save-names-modal').returnValue === 'save') saveNamesAs(document.getElementById('save-names-label').value);
+  });
+  document.getElementById('save-names-label').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    document.getElementById('save-names-modal').close('save');
+  });
+  document.getElementById('input-load-names').addEventListener('change', loadNamesFile);
+  document.getElementById('btn-rename-all').addEventListener('click', openRenameAllDialog);
+  document.getElementById('rename-all-modal').addEventListener('close', finishRenameAllDialog);
+  // Enter in the name field saves (the form's first button is Cancel).
+  document.getElementById('rename-all-set-name').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    document.getElementById('rename-all-modal').close('save');
+  });
+  const list = document.getElementById('restore-names-list');
+  list.addEventListener('change', (e) => { if (e.target.name === 'name-set') selectedNameSetId = e.target.value; });
+  list.addEventListener('click', (e) => {
+    const remove = e.target.closest('[data-name-set-delete]');
+    if (!remove) return;
+    e.preventDefault();
+    deleteNameSet(remove.dataset.nameSetDelete);
+  });
+  document.getElementById('btn-restore-names-apply').addEventListener('click', restoreSelectedNameSet);
+  renderNameSetsList();
 }
 
 // The game draws core cards from the profile's own card list (projectGameCard in src/model/gameProfile.js),
@@ -1737,7 +1843,16 @@ function renderWeights({ shifts = true } = {}) {
       per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
     })) },
     { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
-    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => ({ id: k, label: k + (v.flat !== undefined ? ' (flat)' : ' (mult)'), val: v.flat ?? v.multiplier, base: R.keywords?.[k]?.flat ?? R.keywords?.[k]?.multiplier, step: v.flat !== undefined ? 1 : 0.05, set: (n) => { if (v.flat !== undefined) state.scoring.keywords[k].flat = n; else state.scoring.keywords[k].multiplier = n; } })) },
+    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => {
+      const bv = R.keywords?.[k];
+      return {
+        id: k, label: k, val: v.flat ?? v.multiplier, base: bv?.flat ?? bv?.multiplier, step: v.flat !== undefined ? 1 : 0.05,
+        // Reads the stored form, not the one this row was drawn with: the switch may have changed it since.
+        set: (n) => { const kw = state.scoring.keywords[k]; if (kw.flat !== undefined) kw.flat = n; else kw.multiplier = n; },
+        // Flat adds `flat`; multiplier adds the positive score times it. Switching resets to the no-change value (0).
+        mult: { value: v.flat === undefined, base: bv ? bv.flat === undefined : undefined, set: (on) => { SetKeywordForm(state.scoring.keywords[k], on); } },
+      };
+    }) },
     { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, base: R.rarity?.discount?.[k], set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
     { key: 'rank', title: 'Rank Bands', entries: [
       { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, base: R.rank?.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
@@ -1766,15 +1881,19 @@ function renderWeights({ shifts = true } = {}) {
     }).map(([k, v]) => {
       const bv = R.tags?.[k];
       const isMult = v.multiplier !== undefined || v.pMultiplier !== undefined;
+      // Which multiplier this tag uses when switched on: its own, else the repo's.
+      const multKey = TagMultiplierKey(v, bv);
       return {
         id: k,
         label: `${v.label || k} (${k})`,
         val: v.multiplier ?? v.pMultiplier ?? v.weight ?? 0,
         base: bv ? (bv.multiplier ?? bv.pMultiplier ?? bv.weight ?? 0) : undefined,
         step: isMult ? 0.05 : 1,
-        set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; },
+        set: (n) => { const tag = state.scoring.tags[k]; if (tag.multiplier !== undefined) tag.multiplier = n; else if (tag.pMultiplier !== undefined) tag.pMultiplier = n; else tag.weight = n; },
         // Damage-type tags score once per action or once per hit (ScoreCard reads per === 'hit').
         per: v.per !== undefined ? { value: v.per, base: bv?.per, options: TAG_PER_OPTIONS, set: (n) => { state.scoring.tags[k].per = n; } } : null,
+        // A multiplier tag may be set flat (adds its weight). Switching resets to the no-change value.
+        mult: multKey ? { value: isMult, base: bv ? (bv.multiplier !== undefined || bv.pMultiplier !== undefined) : undefined, set: (on) => { SetTagForm(state.scoring.tags[k], multKey, on); } } : null,
       };
     }) },
   ];
@@ -1854,7 +1973,7 @@ function renderWeights({ shifts = true } = {}) {
       // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
       const showStored = () => {
         const stored = entryIn(withScoring(stagedScoring() || state.scoring, buildGroups), g.key, r.id);
-        if (stored) input.value = String(safeNum(stored.val, 0));
+        if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
         if (stored?.per && perInput) perInput.value = String(stored.per.value);
         if (stored?.mult && multInput) multInput.checked = stored.mult.value;
         markRow();
@@ -1895,7 +2014,7 @@ function renderWeights({ shifts = true } = {}) {
     }
     container.appendChild(card);
   }
-  if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
+  if (groupF === 'all' || groupF === 'naming') renderNamingLimitGroup(container, q);
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
@@ -1911,10 +2030,10 @@ function categoryWeight(scoring, key) {
   return scoring.categories[key];
 }
 
-// "× mult" switch for a category weight: off adds the weight flat, on multiplies the positive score.
+// "multiply instead" switch for category, keyword and multiplier-tag rows: off adds the number flat, on multiplies.
 function multControlHtml(entry) {
   if (!entry.mult) return '';
-  return `<label class="weight-per-label weight-mult-label" title="Off: add the weight. On: multiply the card's positive score by it."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiply instead</label>`;
+  return `<label class="weight-per-label weight-mult-label" title="Off: add the number as flat points. On: use it as a multiplier of the card's positive score."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiply instead</label>`;
 }
 
 // The values a tag's per can take: score once per action, or once per hit.
@@ -1987,12 +2106,15 @@ function discardPendingWeights() {
 }
 
 // Stages a whole scoring config (an imported file or the saved config) for review; Apply makes it live.
-function stageWholeScoring(scoring, sourceName) {
+function stageWholeScoring(incoming, sourceName) {
+  // A studio config (Save, or an imported copy of it) carries name sets beside the weights: they join the list and
+  // never reach the weights, so Apply and Export cannot write them into the game's scoring.json.
+  const { scoring, nameSets } = SplitSavedConfig(incoming);
+  if (nameSets.length) { state.nameSets = MergeNameSets(state.nameSets, nameSets); storeNameSets(); renderNameSetsList(); }
   const errors = ValidateScoringConfig(scoring);
   if (errors.length) throw new Error(errors.join(' '));
-  state.pendingScoring = clone(scoring);
-  // Seed naming words as the applied copy is seeded, so they do not count as staged changes.
-  ensureNamingWords(state.pendingScoring);
+  // A config saved before convention names gets the repo's naming tables and loses the retired word tables.
+  state.pendingScoring = RefreshRestoredNaming(clone(scoring), state.repoScoring);
   state.pendingBase = clone(state.scoring);
   document.querySelector('.studio-tab[data-tab="weights"]')?.click();
   renderWeights({ shifts: false });
@@ -2024,39 +2146,66 @@ function renderDescriptionGaps() {
   gaps.textContent = missing ? `${missing} tag${missing === 1 ? ' has' : 's have'} no description` : 'Every tag has a description';
 }
 
-// The Auto-name word tables: per scoring part, the adjective ("Brittle") and the "of" noun ("Frailty").
-function renderNamingWordsGroup(container, query) {
-  ensureNamingWords(state.scoring);
-  const words = state.scoring.naming.card;
-  const keys = [...new Set([...Object.keys(words.prefix || {}), ...Object.keys(words.suffix || {})])].sort();
-  const rows = keys.filter((key) => !query || `naming words ${key} ${words.prefix[key] || ''} ${words.suffix[key] || ''}`.toLowerCase().includes(query));
-  if (!rows.length) return;
+// What each part of a convention name is, for the keep-order list.
+const NAME_PART_LABELS = Object.freeze({ base: 'Base word (Strike)', rank: 'Rank numeral (II)', upgrade: 'Upgrade mark (+)', element: 'Element word (Frost)', effect: 'Second-effect word (Searing)', rarity: 'Rarity word (Greater)' });
+
+// The card name length limit (scoring.naming.card.limit): a characters box and the keep order, most important first.
+// Edits are staged like other weight edits; Apply renames. An empty box means no limit.
+// The keep order a limit uses; an empty or missing list shows (and edits) the default order, so the owner can always reorder.
+function KeepOrderOf(limit)
+{
+  return limit?.keep?.length ? [...limit.keep] : [...NAME_LIMIT_PARTS];
+}
+
+function renderNamingLimitGroup(container, query) {
+  if (query && !'naming name length limit characters keep order'.includes(query)) return;
+  const shown = () => (stagedScoring() || state.scoring).naming?.card?.limit || null;
+  const appliedLimit = () => state.scoring.naming?.card?.limit || null;
   const group = document.createElement('details');
-  group.className = 'weight-group-card studio-section naming-words-group';
-  group.dataset.section = 'weights-naming';
+  group.className = 'weight-group-card studio-section naming-limit-group';
+  group.dataset.section = 'weights-naming-limit';
   group.open = true;
-  group.innerHTML = '<summary class="section-head"><h3>Naming words</h3></summary><div class="naming-word-row naming-word-head"><span>Part</span><span>Adjective</span><span>"of" noun</span></div>';
   rememberSection(group);
-  for (const key of rows) {
-    const row = document.createElement('div');
-    row.className = 'naming-word-row';
-    row.innerHTML = `<span>${esc(key)}</span>
-      <input type="text" data-naming-table="prefix" data-naming-key="${esc(key)}" value="${esc(words.prefix[key] || '')}" aria-label="${esc(`Adjective for ${key}`)}" />
-      <input type="text" data-naming-table="suffix" data-naming-key="${esc(key)}" value="${esc(words.suffix[key] || '')}" aria-label="${esc(`"of" noun for ${key}`)}" />`;
-    group.appendChild(row);
-  }
-  group.addEventListener('change', (e) => {
-    const { namingTable, namingKey } = e.target.dataset;
-    if (!namingTable) return;
-    const value = e.target.value.trim();
-    const table = state.scoring.naming.card[namingTable];
-    if ((table[namingKey] || '') === value) return;
-    pushHistory();
-    // An emptied word keeps its row, so it can be filled in again.
-    table[namingKey] = value;
-    saveDraft();
-    renderInspector();
-  });
+  const stage = (fn) => {
+    applyWeightEdit(() => {
+      const card = ((state.scoring.naming ||= clone(shippedScoring.naming)).card ||= {});
+      fn(card);
+    });
+    draw();
+  };
+  const draw = () => {
+    const limit = shown();
+    const keep = KeepOrderOf(limit);
+    const pending = JSON.stringify(limit) !== JSON.stringify(appliedLimit());
+    group.classList.toggle('is-pending', pending);
+    group.innerHTML = `<summary class="section-head"><h3>Naming</h3></summary>
+      <div class="weight-row naming-limit-row${pending ? ' is-pending' : ''}"><span>Name length</span><span class="weight-sentence"><input type="number" class="weight-input naming-max-chars" min="1" step="1" value="${Number.isFinite(limit?.maxChars) ? esc(limit.maxChars) : ''}" placeholder="none" aria-label="Most characters in a card name" /><span class="weight-words">characters max</span></span>
+      <div class="weight-example">Too long: drop parts from the bottom of this list until the name fits. Base, rank and upgrade always stay. Empty: no limit.</div></div>
+      <ol class="naming-keep-list">${keep.map((part, i) => `<li class="naming-keep-item" data-part="${esc(part)}"><span>${esc(NAME_PART_LABELS[part] || part)}</span><button type="button" class="naming-keep-move" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="${esc(`Move ${part} up`)}">↑</button><button type="button" class="naming-keep-move" data-dir="1" ${i === keep.length - 1 ? 'disabled' : ''} aria-label="${esc(`Move ${part} down`)}">↓</button></li>`).join('')}</ol>`;
+    group.querySelector('.naming-max-chars').addEventListener('change', (e) => {
+      const raw = e.target.value.trim();
+      const n = Math.round(Number(raw));
+      // Empty: no limit. A keep order already set stays, with no maxChars.
+      if (raw === '') stage((card) => { if (card.limit?.keep) card.limit = { keep: [...card.limit.keep] }; else delete card.limit; });
+      else if (Number.isFinite(n) && n >= 1) stage((card) => { card.limit = { maxChars: n, keep: KeepOrderOf(card.limit) }; });
+    });
+    for (const btn of group.querySelectorAll('.naming-keep-move')) {
+      btn.addEventListener('click', () => {
+        const part = btn.closest('.naming-keep-item').dataset.part;
+        const dir = Number(btn.dataset.dir);
+        stage((card) => {
+          // Reordering never sets a length: with the box empty the limit stays off.
+          const next = { ...(Number.isFinite(card.limit?.maxChars) ? { maxChars: card.limit.maxChars } : {}), keep: KeepOrderOf(card.limit) };
+          const i = next.keep.indexOf(part), j = i + dir;
+          if (i < 0 || j < 0 || j >= next.keep.length) return;
+          [next.keep[i], next.keep[j]] = [next.keep[j], next.keep[i]];
+          card.limit = next;
+        });
+        group.querySelector(`.naming-keep-item[data-part="${part}"] .naming-keep-move[data-dir="${dir}"]`)?.focus();
+      });
+    }
+  };
+  draw();
   container.appendChild(group);
 }
 
@@ -2304,32 +2453,7 @@ function buildScoringDiff() {
     }
   };
   walk(state.repoScoring, state.scoring);
-  // Naming words the studio only seeded (the repo has none and nobody edited them) are not an edit;
-  // the export dialog still says it will add them.
-  if (namingWordsSeedOnly()) return lines.filter((line) => !NAMING_WORD_PATHS.some((path) => line.startsWith(path)));
   return lines;
-}
-
-const NAMING_WORD_PATHS = ['naming.card.prefix', 'naming.card.suffix'];
-
-function repoHasNamingWords() {
-  const card = state.repoScoring?.naming?.card;
-  return Boolean(card?.prefix && card?.suffix);
-}
-
-function namingWordsSeedOnly() {
-  if (repoHasNamingWords()) return false;
-  const card = state.scoring?.naming?.card;
-  return JSON.stringify(card?.prefix) === JSON.stringify(DEFAULT_NAME_PREFIX)
-    && JSON.stringify(card?.suffix) === JSON.stringify(DEFAULT_NAME_SUFFIX);
-}
-
-// The export dialog's note when export will add the naming word tables to a scoring.json without them.
-function namingWordsExportNote() {
-  if (repoHasNamingWords()) return '';
-  const card = state.scoring?.naming?.card;
-  const count = (table) => Object.values(table || {}).filter(Boolean).length;
-  return `Adds naming words (${count(card?.prefix)} prefixes, ${count(card?.suffix)} suffixes) to naming.card.`;
 }
 
 async function loadFromRepo(customPath = state.repoPath) {
@@ -2410,7 +2534,7 @@ function openExportDialog() {
   const diff = buildScoringDiff();
   document.getElementById('export-modal-path').textContent = `Target: ${exportPath()} (${diff.length} change(s))`;
   document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
-  document.getElementById('export-modal-naming').textContent = namingWordsExportNote() + stagedNotIncludedNote();
+  document.getElementById('export-modal-naming').textContent = stagedNotIncludedNote();
   renderRankShiftList();
   document.getElementById('export-modal').showModal();
 }
@@ -2418,7 +2542,7 @@ function openExportDialog() {
 // Writes the applied scoring to a repo file and rebuilds the game's scoring, combat-power and Act tables.
 async function writeScoringToGame(path, doneNote = 'Exported') {
   try {
-    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: state.scoring, rebuild: true }) });
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: SplitSavedConfig(state.scoring).scoring, rebuild: true }) });
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
     state.repoScoring = clone(state.scoring);
@@ -2434,7 +2558,7 @@ async function writeScoringToGame(path, doneNote = 'Exported') {
 }
 
 function downloadScoringJson() {
-  const blob = new Blob([JSON.stringify(state.scoring, null, 2) + '\n'], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(SplitSavedConfig(state.scoring).scoring, null, 2) + '\n'], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), { href: url, download: 'scoring.json' });
   a.click();
@@ -2457,7 +2581,7 @@ async function importScoringFile(e) {
 // Save keeps the applied weights as the studio's own config, apart from the game's scoring.json.
 async function saveStudioConfig() {
   try {
-    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: STUDIO_SAVE_PATH, scoring: state.scoring, rebuild: false }) });
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: STUDIO_SAVE_PATH, scoring: JoinSavedConfig(state.scoring, state.nameSets), rebuild: false }) });
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
     toast(`Saved to ${data.path}.${stagedNotIncludedNote()}`);
@@ -2472,7 +2596,10 @@ async function openSavedConfig() {
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
     if (!data.scoringExists) { toast('Nothing saved yet: Save first'); return; }
-    stageWholeScoring(data.scoring, 'the saved config');
+    // The saved config carries the name sets beside the weights: the sets join the list, the weights are staged.
+    const saved = SplitSavedConfig(data.scoring);
+    if (saved.nameSets.length) { state.nameSets = MergeNameSets(state.nameSets, saved.nameSets); storeNameSets(); renderNameSetsList(); }
+    stageWholeScoring(saved.scoring, 'the saved config');
   } catch (err) {
     toast(`Open saved failed: ${err.message}`);
   }
@@ -2616,7 +2743,6 @@ function populateCardOptions() {
 }
 
 function syncAllViews() {
-  ensureNamingWords(state.scoring);
   populateRankFilter();
   populateCardOptions();
   populateAddFeatureDropdown();
@@ -2807,6 +2933,7 @@ function closeInspectorSheet() {
 // ---------------------------------------------------------------------------
 function wireEvents() {
   setupMenus();
+  wireNameSets();
   // Flush a pending draft save when the tab is hidden or closed.
   window.addEventListener('pagehide', flushDraft);
   document.addEventListener('visibilitychange', () => {
@@ -2853,7 +2980,6 @@ function wireEvents() {
       keywords: [], tags: ['camp:physical', 'maneuver:attack', 'source:weapon', 'classification.attack', 'targeting:single'],
       textTemplate: 'Deal {damage} damage.', _custom: true, _autoName: true,
     });
-    startAutoName(card);
     state.cards.unshift(card);
     state.selectedCardId = id;
     renderCardsGrid();
@@ -2867,7 +2993,6 @@ function wireEvents() {
     if (!src) return;
     pushHistory();
     const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true, _autoName: true });
-    startAutoName(copy);
     state.cards.unshift(copy);
     state.selectedCardId = copy.id;
     renderCardsGrid();
@@ -2923,14 +3048,11 @@ function wireEvents() {
     }
     mutateSelectedCard((d) => { d.name = e.target.value; }, { recordHistory: false, autoName: false });
   });
-  // Auto-name is per card. Turning it on records where the name starts from (its last word and its
-  // length), then renames at once; the toggle and the rename are one undo step.
+  // Auto-name is per card. Turning it on renames the card to its convention name at once; the toggle and
+  // the rename are one undo step.
   document.getElementById('toggle-auto-name').addEventListener('change', (e) => {
     const on = e.target.checked;
-    mutateSelectedCard((d) => {
-      d._autoName = on;
-      if (on) startAutoName(d);
-    });
+    mutateSelectedCard((d) => { d._autoName = on; });
   });
   const textBurst = createEditBurst();
   const textInput = document.getElementById('edit-text');
@@ -3230,7 +3352,7 @@ function wireEvents() {
   const loadAB = (slot) => {
     if (!state.abSlots[slot]) { toast(`Slot ${slot} is empty`); return; }
     pushHistory();
-    state.scoring = clone(state.abSlots[slot]);
+    state.scoring = RefreshRestoredNaming(clone(state.abSlots[slot]), state.repoScoring);
     state.abSlots.activeLabel = `Slot ${slot}`;
     document.getElementById('ab-active-label').textContent = `Slot ${slot}`;
     syncAllViews();
@@ -3347,6 +3469,9 @@ function buildCardList() {
 
 async function boot() {
   state.cards = buildCardList();
+  // Default names are the repo's authored names, taken before any draft is restored.
+  state.defaultNameSet = DefaultNameSet(state.cards);
+  loadStoredNameSets();
   state.selectedCardId = state.cards[0]?.id || null;
   state.repoArtLayers = clone(state.artLayers);
 
@@ -3375,15 +3500,16 @@ async function boot() {
       const draftArtLayers = Array.isArray(draft.artLayers?.layers) ? draft.artLayers : null;
       const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
         .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
-      state.scoring = draft.scoring;
+      // A draft saved before convention names takes the repo's naming tables and drops the retired word tables.
+      state.scoring = RefreshRestoredNaming(draft.scoring, state.repoScoring);
       // A draft saved before a category existed takes the repo's weight for it (Hybrid +10 reaches old drafts).
       for (const [key, weight] of Object.entries(state.repoScoring.categories || {})) {
         if (key === 'rule' || state.scoring.categories?.[key]) continue;
         (state.scoring.categories ||= {})[key] = clone(weight);
       }
       if (draft.pendingScoring && draft.pendingBase && ValidateScoringConfig(draft.pendingScoring).length === 0) {
-        state.pendingScoring = draft.pendingScoring;
-        state.pendingBase = draft.pendingBase;
+        state.pendingScoring = RefreshRestoredNaming(draft.pendingScoring, state.repoScoring);
+        state.pendingBase = RefreshRestoredNaming(draft.pendingBase, state.repoScoring);
       }
       if (draftArtLayers) state.artLayers = draftArtLayers;
       for (const draftCard of draftCards) {

@@ -4181,7 +4181,7 @@
     }
   },
   "naming": {
-    "rule": "Convention name = effect word + base word + rank numeral (+N upgrades). Effect words are chosen from the highest-scoring part; rank numerals come from combat power.",
+    "rule": "Convention name = rarity word + second-effect word + element word (magic only) + base word + rank numeral, with + or +N for upgrades (Greater Searing Strike II+). The base word comes from the maneuver, or from camp and range (melee or reach) for attacks; the second-effect word names the highest-scoring part the base word does not already name.",
     "roman": [
       "",
       "I",
@@ -4197,8 +4197,8 @@
     ],
     "card": {
       "element": {
-        "school:fire": "Ember",
-        "damage:fire": "Ember",
+        "school:fire": "Flame",
+        "damage:fire": "Flame",
         "school:frost": "Frost",
         "damage:frost": "Frost",
         "school:lightning": "Storm",
@@ -4207,8 +4207,8 @@
         "damage:arcane": "Arcane",
         "school:decay": "Blight",
         "damage:decay": "Blight",
-        "school:divine": "Holy",
-        "damage:sacred": "Holy",
+        "school:divine": "Divine",
+        "damage:sacred": "Divine",
         "school:illusion": "Mind",
         "damage:psychic": "Mind",
         "school:earth": "Stone",
@@ -4273,22 +4273,56 @@
         "trait:impact": "Impact",
         "dexDamage": "Deft"
       },
+      "rarity": {
+        "uncommon": "Improved",
+        "rare": "Greater"
+      },
       "base": {
         "maneuver:smash": "Smash",
         "maneuver:sweep": "Sweep",
         "maneuver:counter": "Riposte",
         "maneuver:defend": "Guard",
         "maneuver:evade": "Step",
-        "attack:physical": "Strike",
-        "attack:spell": "Bolt",
-        "attack:area:physical": "Cleave",
-        "attack:area:spell": "Wave",
-        "skill:physical": "Technique",
-        "skill:spell": "Rite"
+        "attack:martial:melee": "Strike",
+        "attack:martial:reach": "Shot",
+        "attack:magic:melee": "Touch",
+        "attack:magic:reach": "Bolt",
+        "attack:area:martial": "Cleave",
+        "attack:area:magic": "Wave",
+        "skill:martial": "Technique",
+        "skill:magic": "Rite"
       },
+      "range": {
+        "range:melee": "melee",
+        "delivery:melee": "melee",
+        "range:reach": "reach",
+        "delivery:area": "reach",
+        "range:ranged": "reach",
+        "delivery:projectile": "reach",
+        "maneuver:ranged": "reach"
+      },
+      "defaultRange": {
+        "martial": "melee",
+        "magic": "reach"
+      },
+      "tradition": {
+        "tradition:arcane": "Arcane",
+        "tradition:divine": "Divine"
+      },
+      "defaultTradition": "Arcane",
       "fallback": {
-        "physical": "Keen",
-        "spell": "Astral"
+        "damage": "Keen"
+      },
+      "limit": {
+        "maxChars": 24,
+        "keep": [
+          "base",
+          "rank",
+          "upgrade",
+          "element",
+          "effect",
+          "rarity"
+        ]
       }
     },
     "item": {
