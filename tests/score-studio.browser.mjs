@@ -73,20 +73,39 @@ try {
   const ROMAN = ['U', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
   assert.equal(fieldAndRank.badge, ROMAN[Number(fieldAndRank.rankNumber)], 'the inspector card\'s rank badge matches the breakdown rank');
 
-  // 3. A weight edit reaches the local draft. The draft used to be written before the edit was applied.
+  // 3. A weight edit is staged (owner, 2026-11-23): the draft's pending copy holds it at once, the applied
+  //    config only after Apply. The draft used to be written before the edit was applied.
   const draftWeight = await page.evaluate(async ({ key, settle }) => {
     document.querySelector('.studio-tab[data-tab="weights"]').click();
     const input = document.querySelector('#weights-container input');
-    const next = Number(input.value) + 3;
+    const before = Number(input.value);
+    const next = before + 3;
     input.value = String(next);
     input.dispatchEvent(new Event('change', { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, settle));
+    const staged = JSON.parse(localStorage.getItem(key));
+    const applyLabel = document.getElementById('btn-weights-apply').textContent;
+    document.getElementById('btn-weights-apply').click();
+    await new Promise((resolve) => setTimeout(resolve, settle));
+    const applied = JSON.parse(localStorage.getItem(key));
     document.querySelector('.studio-tab[data-tab="cards"]').click();
-    return { next, saved: JSON.parse(localStorage.getItem(key))?.scoring?.costs?.sp?.weight };
+    return {
+      before,
+      next,
+      applyLabel,
+      stagedPending: staged?.pendingScoring?.costs?.sp?.weight,
+      stagedApplied: staged?.scoring?.costs?.sp?.weight,
+      saved: applied?.scoring?.costs?.sp?.weight,
+      pendingAfterApply: applied?.pendingScoring ?? null,
+    };
   }, { key: DRAFT_KEY, settle: DRAFT_SETTLE_MS });
-  assert.equal(draftWeight.saved, draftWeight.next, 'the draft holds the weight just typed');
+  assert.equal(draftWeight.stagedPending, draftWeight.next, 'the draft pending copy holds the weight just typed');
+  assert.notEqual(draftWeight.stagedApplied, draftWeight.next, 'a staged weight is not applied before Apply');
+  assert.equal(draftWeight.applyLabel, 'Apply (1)', 'Apply counts the staged change');
+  assert.equal(draftWeight.saved, draftWeight.next, 'after Apply the draft holds the weight just typed');
+  assert.equal(draftWeight.pendingAfterApply, null, 'Apply empties the pending copy');
 
-  // 3b. An effect's "per" edit reaches the draft and marks its row changed.
+  // 3b. An effect's "per" edit is staged, marks its row pending, and after Apply marks it changed.
   const draftPer = await page.evaluate(async ({ key, settle }) => {
     document.querySelector('.studio-tab[data-tab="weights"]').click();
     const input = document.querySelector('.weight-row.has-per input.weight-per');
@@ -95,12 +114,17 @@ try {
     input.value = String(next);
     input.dispatchEvent(new Event('change', { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, settle));
-    const row = document.querySelector(`.weight-row.has-per input.weight-per[aria-label="${effect} per"]`).closest('.weight-row');
+    const rowOf = () => document.querySelector(`.weight-row.has-per input.weight-per[aria-label="${effect} per"]`).closest('.weight-row');
+    const pending = rowOf().classList.contains('is-pending');
+    document.getElementById('btn-weights-apply').click();
+    await new Promise((resolve) => setTimeout(resolve, settle));
+    const modified = rowOf().classList.contains('is-modified');
     document.querySelector('.studio-tab[data-tab="cards"]').click();
-    return { next, modified: row.classList.contains('is-modified'), saved: JSON.parse(localStorage.getItem(key))?.scoring?.effects?.[effect]?.per };
+    return { next, pending, modified, saved: JSON.parse(localStorage.getItem(key))?.scoring?.effects?.[effect]?.per };
   }, { key: DRAFT_KEY, settle: DRAFT_SETTLE_MS });
-  assert.equal(draftPer.saved, draftPer.next, 'the draft holds the per just typed');
-  assert.ok(draftPer.modified, 'the edited per marks its weight row changed');
+  assert.ok(draftPer.pending, 'the staged per marks its weight row pending');
+  assert.equal(draftPer.saved, draftPer.next, 'after Apply the draft holds the per just typed');
+  assert.ok(draftPer.modified, 'the applied per marks its weight row changed');
 
   // 4. Renaming the selected card changes the name on its tile.
   const renamed = await page.evaluate(() => {

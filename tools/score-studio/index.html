@@ -265,6 +265,21 @@
           <option value="tags">Weighted Tags</option>
           <option value="naming">Naming words</option>
         </select>
+        <div class="weights-actions" role="group" aria-label="Weight changes">
+          <button id="btn-weights-apply" class="s-btn s-btn-primary" disabled title="Rescore every card with the staged weights">Apply</button>
+          <button id="btn-weights-discard" class="s-btn" disabled title="Drop the staged weight edits">Discard</button>
+          <button id="btn-weights-save" class="s-btn" title="Keep the applied weights as the studio's saved config">Save</button>
+          <button id="btn-weights-load-saved" class="s-btn" title="Stage the studio's saved config for review">Open saved</button>
+          <label class="s-btn s-file-btn" title="Stage a scoring JSON file for review">Import JSON<input id="input-weights-import" type="file" accept=".json" hidden /></label>
+          <div class="studio-menu">
+            <button id="btn-weights-export" class="s-btn" aria-haspopup="true" aria-expanded="false" aria-controls="weights-export-menu">Export ▾</button>
+            <div id="weights-export-menu" class="studio-menu-panel" hidden>
+              <button id="btn-weights-export-game" class="menu-item">To game…</button>
+              <button id="btn-weights-export-download" class="menu-item">Download JSON</button>
+            </div>
+          </div>
+          <button id="btn-weights-accept-ranks" class="s-btn" title="Write the applied weights to the game so every card takes its new rank">Accept new ranks…</button>
+        </div>
         <div id="weights-impact-summary" class="studio-muted"></div>
         <div id="weights-desc-gaps" class="studio-muted desc-gaps"></div>
       </div>
@@ -373,6 +388,21 @@
       <div class="modal-actions">
         <button value="cancel" class="s-btn">Cancel</button>
         <button id="btn-confirm-export" value="confirm" class="s-btn s-btn-primary">Write &amp; Rebuild Tables</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ACCEPT NEW RANKS MODAL -->
+  <dialog id="ranks-modal" class="studio-modal">
+    <form method="dialog">
+      <h3>Accept the new ranks in the game?</h3>
+      <p class="studio-muted">Writes the applied weights to content/source/scoring.json and rebuilds the rank and Act tables.</p>
+      <p id="ranks-modal-pins" class="export-naming-note"></p>
+      <h4 id="ranks-modal-shift-count" class="export-shift-count"></h4>
+      <ul id="ranks-modal-shifts" class="export-shifts"></ul>
+      <div class="modal-actions">
+        <button value="cancel" class="s-btn">Cancel</button>
+        <button id="btn-confirm-accept-ranks" value="confirm" class="s-btn s-btn-primary">Accept ranks</button>
       </div>
     </form>
   </dialog>
