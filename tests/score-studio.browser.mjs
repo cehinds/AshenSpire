@@ -131,7 +131,7 @@ try {
     document.querySelector('.studio-tab[data-tab="weights"]').click();
     const row = document.querySelector('.weight-row input.weight-per[aria-label="damage per"]').closest('.weight-row');
     const order = [...row.querySelectorAll('.weight-sentence input')].map((el) => el.className);
-    const words = [...row.querySelectorAll('.weight-sentence > *')].map((el) => (el.matches('.weight-words') ? el.textContent : `[${el.querySelector('input')?.className || el.className}]`)).filter(Boolean).join(' ');
+    const words = [...row.querySelectorAll('.weight-sentence > :not(.weight-reset-btn)')].map((el) => (el.matches('.weight-words') ? el.textContent : `[${el.querySelector('input')?.className || el.className}]`)).filter(Boolean).join(' ');
     const weight = row.querySelector('input.weight-input');
     const per = row.querySelector('input.weight-per');
     const weightLabel = weight.getAttribute('aria-label');
