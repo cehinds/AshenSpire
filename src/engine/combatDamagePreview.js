@@ -13,7 +13,7 @@ import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
 import { ElementPreviewBreak } from './elementIdentity.js';
-import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { fixCoreWardDisabled, FixCoreWardHpPerStack, EffectiveWardHp } from '../model/fixCoreMechanics.js';
 import { DefendPoiseFloor, HeldStance } from './stanceBenefits.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
@@ -124,6 +124,18 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = n
     if (held) { const left = held.stacks - receipt.skinSpent, next = { ...defender.statuses }; if (left > 0) next[skin] = { ...held, stacks: left }; else delete next[skin]; defender.statuses = next; }
   }
   if (!fixCoreEnabled(ctx)) return;
+  if (receipt.wardHpAbsorbed > 0) {
+    const wardAfter = Math.max(0, EffectiveWardHp(ctx, defender) - receipt.wardHpAbsorbed);
+    defender.wardHp = wardAfter;
+    const nextStatuses = { ...(defender.statuses || {}) };
+    if (wardAfter > 0) {
+      const per = FixCoreWardHpPerStack(ctx);
+      if (per > 0 && nextStatuses.ward) nextStatuses.ward = { ...nextStatuses.ward, stacks: Math.ceil(wardAfter / per) };
+    } else {
+      delete nextStatuses.ward;
+    }
+    defender.statuses = nextStatuses;
+  }
   if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
   if (defender.persistentPoise) {
     const poiseBefore = defender.persistentPoise.value;

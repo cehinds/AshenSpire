@@ -127,50 +127,65 @@ const enemyHit = combat => {
   return { out, lost: hp - combat.player.hp, dealt: out.events.find(event => event.type === 'damageDealt' && event.targetId === 'player') };
 };
 
-test('the shipped rules give Ward 5 Poise a stack and keep the Ward pool off', () => {
+test('the shipped rules give Ward 5 HP buffer per stack and keep the legacy Ward pool off', () => {
   const { combat } = live('starseer');
   assert.equal(combat.fixCoreRules.ward.enabled, false);
-  assert.equal(combat.fixCoreRules.ward.poisePerStack, 5);
-  assert.equal(combat.player.persistentWard?.max || 0, 0, 'no Ward pool');
+  assert.equal(combat.fixCoreRules.ward.hpPerStack, 5);
+  assert.equal(combat.fixCoreRules.ward.routing, 'hpBuffer');
+  assert.equal(combat.player.persistentWard?.max || 0, 0, 'no legacy persistentWard pool');
 });
 
-test('Barrier raises current and maximum Poise by 5 a stack, and Ward does the same', () => {
-  for (const status of ['barrier', 'ward']) {
-    const { combat } = live('starseer');
-    const before = poiseOf(combat);
-    applyStatus(combat, combat.player, status, 2, null);
-    const after = poiseOf(combat);
-    assert.equal(after.max, before.max + 10, `${status} max`);
-    assert.equal(after.value, before.value + 10, `${status} current`);
-  }
+test('Barrier raises current and maximum Poise by 5 a stack, while Ward adds 5 Ward HP per stack without changing Poise', () => {
+  const { combat: barrierCombat } = live('starseer');
+  const beforeB = poiseOf(barrierCombat);
+  applyStatus(barrierCombat, barrierCombat.player, 'barrier', 2, null);
+  const afterB = poiseOf(barrierCombat);
+  assert.equal(afterB.max, beforeB.max + 10, 'barrier max');
+  assert.equal(afterB.value, beforeB.value + 10, 'barrier current');
+
+  const { combat: wardCombat } = live('starseer');
+  const beforeW = poiseOf(wardCombat);
+  const wardHpBefore = wardCombat.player.wardHp || 0;
+  applyStatus(wardCombat, wardCombat.player, 'ward', 2, null);
+  assert.deepEqual(poiseOf(wardCombat), beforeW, 'ward does not alter Poise');
+  assert.equal(wardCombat.player.wardHp, wardHpBefore + 10, 'ward adds +10 Ward HP');
 });
 
-test('Mote Shield (Ward 1 and Barrier 1) raises Poise by 10 and Hallowed Ward (1 Barrier) by 5', () => {
+test('Mote Shield (Ward 1 and Barrier 1) raises Poise by 5 and Ward HP by 5; Hallowed Ward (1 Barrier) raises Poise by 5', () => {
   const play = id => {
     const { combat } = live('starseer');
     const before = poiseOf(combat);
+    const wardBefore = combat.player.wardHp || 0;
     combat.piles.hand.push({ cardId: id, instanceId: 'g1', upgraded: false });
     dispatch(combat, { type: 'playCard', cardInstanceId: 'g1' });
-    return { before, after: poiseOf(combat) };
+    return { before, after: poiseOf(combat), wardDelta: (combat.player.wardHp || 0) - wardBefore };
   };
   const mote = play('core.moteShield'), hallowed = play('core.hallowedWard');
-  assert.equal(mote.after.max - mote.before.max, 10);
-  assert.equal(mote.after.value - mote.before.value, 10);
+  assert.equal(mote.after.max - mote.before.max, 5);
+  assert.equal(mote.after.value - mote.before.value, 5);
+  assert.equal(mote.wardDelta, 5);
   assert.equal(hallowed.after.max - hallowed.before.max, 5);
+  assert.equal(hallowed.wardDelta, 0);
 });
 
-test('while the holder has Ward or Barrier, a hit meets Poise before HP', () => {
-  for (const status of ['barrier', 'ward']) {
-    const { combat } = live('starseer');
-    combat.player.block = 0;
-    applyStatus(combat, combat.player, status, 3, null);
-    const poise = poiseOf(combat).value;
-    const { dealt, lost } = enemyHit(combat);
-    assert.ok(dealt.poiseAbsorbed > 0, `${status}: Poise took the first of the hit`);
-    assert.equal(dealt.hpLoss, lost);
-    assert.ok(dealt.damageReceipt.hits[0].poiseReduced <= poise);
-    assert.ok(lost < dealt.damageReceipt.hits[0].incoming, `${status}: HP lost less than the hit`);
-  }
+test('while the holder has Barrier, a hit meets Poise; while the holder has Ward, Ward absorbs before Poise + HP', () => {
+  const { combat: bCombat } = live('starseer');
+  bCombat.player.block = 0;
+  applyStatus(bCombat, bCombat.player, 'barrier', 3, null);
+  const poise = poiseOf(bCombat).value;
+  const bRes = enemyHit(bCombat);
+  assert.ok(bRes.dealt.poiseAbsorbed > 0, 'barrier: Poise took the first of the hit');
+  assert.equal(bRes.dealt.hpLoss, bRes.lost);
+  assert.ok(bRes.dealt.damageReceipt.hits[0].poiseReduced <= poise);
+  assert.ok(bRes.lost < bRes.dealt.damageReceipt.hits[0].incoming, 'barrier: HP lost less than the hit');
+
+  const { combat: wCombat } = live('starseer');
+  wCombat.player.block = 0;
+  applyStatus(wCombat, wCombat.player, 'ward', 3, null); // 15 Ward HP
+  const wRes = enemyHit(wCombat);
+  assert.ok(wRes.dealt.wardAbsorbed > 0, 'ward: Ward absorbed hit before Poise and HP');
+  assert.equal(wRes.dealt.wardHpBuffer, true);
+  assert.equal(wRes.lost, wRes.dealt.hpLoss);
 });
 
 test('a fight saved before the ruling (its rules lack ward.poisePerStack) gives Ward no Poise', () => {

@@ -16,6 +16,7 @@ const native = Object.assign({}, ...await Promise.all(moduleIds.map(id => import
 const require = productionBundle({ additionalModules: moduleIds });
 const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 
+// Recaptured 2026-11-24 (Ward as a health buffer: fixCoreMechanics.ward hpPerStack 5, routing "hpBuffer"): 34 profile, runtime, snapshot and save hash leaves moved (27 current + 7 historical snapshot/save); every event, RNG, receipt, continuation and historical profile is unchanged.
 // Recaptured 2026-11-24 on merging dev (#2964 spell Stamina surcharge) into the upgrade economy rebalance (#2963): exactly 24 profile, snapshot and save hash leaves moved from dev's capture; events, RNG, receipts and continuations unchanged.
 // Recaptured 2026-11-23 for shops.json rankedOfferChancePct (owner: shops sometimes stock ranked cards): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.
 // Recaptured 2026-11-23 for the progression schema's rankUpNeedsFullUpgrades row (module schema joins the profile): exactly 24 profile, snapshot and save hash leaves moved; behaviour unchanged.

@@ -10,7 +10,7 @@ import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness, stanceOf } from '../model/stanceRules.js';
 import { FightMagicShare, ForceRules } from '../model/elementIdentityRules.js';
-import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreWardBreaksAtZeroPoise, fixCorePierceRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreWardBreaksAtZeroPoise, FixCoreWardHpPerStack, EffectiveWardHp, fixCorePierceRules } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -446,10 +446,23 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   }
   const before = target.block || 0;
   let poiseBefore = 0;
+  let wardBefore = 0, wardAfter = 0;
   target.block = receipt.blockRemaining;
   if (target.earthBlock) target.earthBlock = Math.min(target.earthBlock, target.block);
   if (fixCoreEnabled(ctx)) {
-    if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
+    if (receipt.wardHpAbsorbed > 0) {
+      wardBefore = EffectiveWardHp(ctx, target);
+      wardAfter = Math.max(0, wardBefore - receipt.wardHpAbsorbed);
+      if (wardAfter > 0) {
+        target.wardHp = wardAfter;
+        const per = FixCoreWardHpPerStack(ctx);
+        if (per > 0 && target.statuses?.ward) target.statuses.ward.stacks = Math.ceil(wardAfter / per);
+      } else {
+        delete target.wardHp;
+        if (target.statuses?.ward) statuses.removeStatus(ctx, target, 'ward', { reason: 'depleted' });
+      }
+    }
+    if (!receipt.wardHpBuffer && target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
       poiseBefore = target.persistentPoise.value;
       target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
@@ -464,9 +477,10 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss, hpRemoved: Math.max(0, Math.min(receipt.hpLoss, hpBefore)),
-    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(target.broken ? { targetBroken: true } : {}), ...(receipt.wardRouted ? { wardRouted: true } : {}), ...(receipt.wardBlockFirst ? { wardBlockFirst: true } : {}), ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
+    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(target.broken ? { targetBroken: true } : {}), ...(receipt.wardHpAbsorbed ? { wardAbsorbed: receipt.wardHpAbsorbed, wardHpBuffer: true, wardHpRemaining: target.wardHp || 0 } : {}), ...(receipt.wardRouted ? { wardRouted: true } : {}), ...(receipt.wardBlockFirst ? { wardBlockFirst: true } : {}), ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, ...(receipt.weaknesses?.length ? { weaknesses: receipt.weaknesses } : {}), blockRemaining: target.block,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
+  if (wardBefore > 0 && wardAfter === 0) ctx.emit('wardBroken', { targetId: target.id, targetKind: target.kind, sourceId: source?.id, ...seatOf(ctx, target) });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
   ApplyElementReceipt(ctx, source, target, receipt, carrier); // element identity (W25): what a landed hit of its element does

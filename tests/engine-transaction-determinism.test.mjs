@@ -288,13 +288,14 @@ for (const [setup, expected] of PRE_THEME_B_PINNED) {
 // Recaptured 2026-11-19 after the bare content Poise row returned to CON (saved runs keep it; the
 // default profile overrides it with WIS): only the four current state digests moved. assertStatPolicyOnly
 // and PRE_STAT_PINNED still prove logs, RNG and every non-Poise field are unchanged.
+// Recaptured 2026-11-24 for Ward as a health buffer (fixCoreMechanics.ward: hpPerStack 5, routing "hpBuffer"): only the state hashes of the current/stat/Smash pins moved; every log, event count, turn, RNG counter, and all 16 legacy pins are unchanged.
 const PRE_STAT_PINNED = [
-  { log: '72f173c08a17d9ae', state: 'af87c61996e6dcc8', events: 205, turn: 6 },
-  { log: '32ede5df457c6309', state: '775ef9cd2d1fd3ae', events: 217, turn: 6 },
+  { log: '72f173c08a17d9ae', state: '44e71f51b274b675', events: 205, turn: 6 },
+  { log: '32ede5df457c6309', state: '2adf48d895f8f44d', events: 217, turn: 6 },
 ];
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: '1a37a174ccee9c0e', events: 205, turn: 6 }],
-  [[4242, 'reaver'], { log: '32ede5df457c6309', state: 'f1f29fa5a8b5cf8c', events: 217, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'ee31bf2123fb5bd7', events: 205, turn: 6 }],
+  [[4242, 'reaver'], { log: '32ede5df457c6309', state: 'c7d0124ab9e0713d', events: 217, turn: 6 }],
 ];
 function assertStatPolicyOnly(current, previous) {
   assert.deepEqual(current.eventLog, previous.eventLog, 'stat metadata changes no log payload');
@@ -325,8 +326,8 @@ for (const [index, [setup, expected]] of PINNED.entries()) {
 // PERF1 adds only the saved Defend multiplier. Seed4242 has one Smash into Defend: HP7 ->9 and Poise4 ->5.
 // That hit's HP/Poise receipts and subsequent HP snapshots change; event counts, turns and all RNG counters do not.
 const SMASH_PINNED = [
-  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'd9f82b63d09d61c2', events: 205, turn: 6 }, '554fca0e6d5c3323'],
-  [[4242, 'reaver'], { log: '0436771adacf8d08', state: 'fee0f47321e78966', events: 217, turn: 6 }, 'b0f406b9e348c776'],
+  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'a64d822b2582969a', events: 205, turn: 6 }, 'c67e6243ead534a4'],
+  [[4242, 'reaver'], { log: '0436771adacf8d08', state: 'eabca0bd44978f7c', events: 217, turn: 6 }, 'eac1bbe186ab2213'],
 ];
 for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) {
   test(`pre-Retreat pre-gear Smash fight ${setup[0]}/${setup[1]} matches genuine Dev and preserves pre-ruling controls`, () => {
@@ -355,8 +356,8 @@ for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) 
 // Incoming Dev's exact current-Smash goldens use its preceding Gear stat policy, before type effects.
 // This is a derived control from the genuine archived parent, never a rewrite of that archive.
 const SMASH_PARENT_PINNED = [
-  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: '554fca0e6d5c3323', events: 205, turn: 6 }],
-  [[4242, 'reaver'], { log: '0436771adacf8d08', state: 'b0f406b9e348c776', events: 217, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'c67e6243ead534a4', events: 205, turn: 6 }],
+  [[4242, 'reaver'], { log: '0436771adacf8d08', state: 'eac1bbe186ab2213', events: 217, turn: 6 }],
 ];
 for (const [setup, expected] of SMASH_PARENT_PINNED) {
   test(`derived Gear-parent pre-type fight ${setup[0]}/${setup[1]} preserves incoming Smash goldens`, () => {
