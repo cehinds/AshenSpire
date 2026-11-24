@@ -42,8 +42,8 @@ test('a Focus item takes 1 Mana off the face price; Prepared is never applied ou
   for (const hand of ['boneSceptre', 'duskChime']) assert.equal(FaceCostProfile(reg, def, newRun(hand)).mana, FaceCostProfile(reg, def, plain).mana - 1, `${hand}: absent-version saved pricing is unchanged`);
   assert.equal(FaceCostProfile(reg, def, plain).stamina, printed(def).stamina, 'no Prepared -1 on a face');
   const saved = newRun('greatsword');
-  saved.fixCoreRules = { ...shipped, spellCosts: { ...shipped.spellCosts, staminaSurcharge: 1 } }; // a run saved before the owner ruling of 2026-11-23
-  assert.equal(FaceCostProfile(reg, def, saved).stamina, printed(def).stamina + 1, 'a run saved before 2026-11-23 keeps the +1 Stamina face');
+  saved.fixCoreRules = { ...shipped, spellCosts: { ...shipped.spellCosts, staminaSurcharge: 1 } }; // rules carrying the pre-2026-11-23 surcharge (as a fight saved before the ruling does; runs do not pin rules)
+  assert.equal(FaceCostProfile(reg, def, saved).stamina, printed(def).stamina + 1, 'rules that carry the old surcharge still price the +1 Stamina face');
 });
 
 test('a run made before the ruling keeps printed costs; the registered run is the one read', () => {
