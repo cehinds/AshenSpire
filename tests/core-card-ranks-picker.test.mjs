@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { rankUpBonusOptions } from '../src/model/rankUpBonus.js';
-import { awardSkillXp, xpToNext, pendingRankUpRows, rankUpRowsReady, coreCardRanks } from '../src/model/skills.js';
+import { awardSkillXp, xpToNext, pendingRankUpRows, RankUpRowsReady, coreCardRanks } from '../src/model/skills.js';
 
 // Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
 const newRun = () => {
@@ -76,7 +76,7 @@ test('main.js offers the rank-up door once per victory for Core runs only', () =
   assert.match(block, /pendingRankUpRows\(registries, run\)/);
   assert.match(block, /rankUpsOffered/);
   // A new door opens only when a queued card may rise now (review fix 2026-11-23).
-  assert.match(block, /!pending\.rankUpRows && !rankUpRowsReady\(registries, run, rankUps\)/);
+  assert.match(block, /!pending\.rankUpRows && !RankUpRowsReady\(registries, run, rankUps\)/);
   // A claim is saved with the door's rows and claim state, so a reload resumes it rather than re-offering.
   assert.match(block, /pending\.rankUpRows/);
   assert.match(block, /checkpoint: \(pending\.rankUpCheckpoint \|\|= \{\}\)/);
@@ -177,11 +177,11 @@ test('the rank-up door needs a ready card: none ready skips it and keeps the que
   const queued = run.skills['item:blade'].pendingRankUps;
   const rows = pendingRankUpRows(registries, run);
   assert.equal(rows.length, 1, 'the rank-up is queued and its track has candidates');
-  assert.equal(rankUpRowsReady(registries, run, rows), false, 'no card has its slots filled: the door is skipped');
+  assert.equal(RankUpRowsReady(registries, run, rows), false, 'no card has its slots filled: the door is skipped');
   assert.equal(run.skills['item:blade'].pendingRankUps, queued, 'the rank-ups stay queued');
   const strike = run.deck.find((c) => c.cardId === 'core.strike');
   FillUpgradeSlots(run, [strike]);
-  assert.equal(rankUpRowsReady(registries, run, rows), true, 'one full card opens the door');
+  assert.equal(RankUpRowsReady(registries, run, rows), true, 'one full card opens the door');
   const faceOf = (instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
   const model = RankUpUpgradeModel(registries, run, 'item:blade', strike.instanceId, { faceOf });
   const mine = model.rows.find((row) => row.instanceId === strike.instanceId);
