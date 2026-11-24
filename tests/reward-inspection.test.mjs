@@ -280,7 +280,7 @@ test('a skill rank-up from the card-upgrade picker survives a refused save and l
     refuse = false;
     pickAndConfirm();
     assert.equal(writes, 2);
-    assert.equal(run.deck[0].rank, 2);
+    assert.equal(run.deck[0].rank, 1); // an unranked card rises to Rank 1 (owner 2026-11-23)
     assert.equal(Object.values(checkpoint.states).filter(state => state === 'taken').length, 1);
     assert.equal(document.querySelector('.card-upgrade-modal'), null, 'the picker closed on the commit');
   });

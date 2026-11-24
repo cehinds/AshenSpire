@@ -27,6 +27,7 @@ import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
 import { configureArmamentKitPreview, ConfigureArmourPreview } from './armamentKitPreview.js';
 import { mountDeckEditor } from './../ui/screens/deckEditor.js';
 import { OpenSiteRecord, markRestLeft } from './../model/restRevisit.js';
+import { FillRankUpCandidateSlots } from './rankUpShotPose.js';
 
 export function createShotStates(ctx) {
   const {
@@ -455,7 +456,11 @@ export function createShotStates(ctx) {
       // `?shotRankUp=taken` — the same door with that row already claimed, resumed through the door's own saved
       // claim state (rankUpCheckpoint), so the TAKEN row and its claim line can be measured (tools/contrast-audit.mjs).
       const rankUpPose = shotParams.get('shotRankUp');
-      if (rankUpPose === '1' || rankUpPose === 'taken') run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
+      if (rankUpPose === '1' || rankUpPose === 'taken') {
+        run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
+        // The door opens only when a queued card may rise now (full-upgrade rule), so the Blade's cards are filled first.
+        FillRankUpCandidateSlots(ctx.getRegistries(), run, 'item:blade');
+      }
       // `?shotTake=<n>` — the card picks the door allows (1..5; absent = the content's takeCount), so the multi-pick door can be photographed.
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
       // `?shotVictory=points` — the won fight's ONE door (spoils strip above the choice) with one earned

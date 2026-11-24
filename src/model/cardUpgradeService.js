@@ -2,7 +2,7 @@
 // planCardUpgrade reads the run and writes nothing, so a preview equals the
 // commit: the roll is the stateless mulberry32(hash(run.seed, instanceId, stepIndex)).
 import { canUpgrade, nextUpgradeStep, nextUpgradeOptions, RestUpgradeRule } from './cardUpgradeLimits.js';
-import { upgradeStepsOf, upgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { upgradeStepsOf, paidUpgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
 
@@ -75,7 +75,7 @@ export const cardUpgradeStepsOn = (run) => run?.gameProfile?.modules?.progressio
  */
 export function freeCardUpgradeStep(run, registries, instance) {
   if (!instance || instance.sourceArmamentId || instance.grantedBy || !registries.cards.has(instance.cardId)) return null;
-  if (upgradeCount(instance) >= MAX_CARD_UPGRADES) return null;
+  if (paidUpgradeCount(instance) >= MAX_CARD_UPGRADES) return null; // the cap counts slot-using steps (canUpgrade)
   return nextUpgradeStep(run, instance, registries.cards.get(instance.cardId), registries);
 }
 

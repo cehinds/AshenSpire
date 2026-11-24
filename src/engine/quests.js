@@ -25,7 +25,7 @@ import {
   questsCompletedBy,
 } from '../model/quests.js';
 import { eventChoicesWithHistory } from '../content/events.js';
-import { RankUpCandidates } from '../model/rankUpService.js';
+import { RankUpReady } from '../model/rankUpService.js';
 
 /**
  * Why a choice is closed to this run right now: 'cinders' (the price is not in the purse), 'rankableCard' (it ranks a card up and no card
@@ -36,7 +36,7 @@ export function ChoiceUnmetRequirement(choice, run, registries = null) {
   const requires = choice && choice.requires;
   if (!requires) return null;
   if (typeof requires.cinders === 'number' && !(run.cinders >= requires.cinders)) return 'cinders';
-  if (requires.rankableCard === true && registries && !RankUpCandidates(registries, run).length) return 'rankableCard';
+  if (requires.rankableCard === true && registries && !RankUpReady(registries, run).length) return 'rankableCard';
   if (typeof requires.relicNotHeld === 'string' && (run.relics || []).includes(requires.relicNotHeld)) return 'relicHeld';
   return null;
 }

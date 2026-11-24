@@ -9,10 +9,12 @@
 // Pure model: no document. Every chance rolls on a hash of the run's seed and the door's key (like rankUpService.js), so
 // asking twice answers the same, no shared stream moves, and a save made before this service (no `cardCopy` data, no
 // `pendingCardCopies`) offers nothing and loads unchanged.
-import { gameContent } from './gameProfile.js';
 import { mulberry32 } from './rng.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
-import { EquipmentBound, InstanceRank } from './rankUpService.js';
+import { EquipmentBound } from './rankUpService.js';
+import { OwnCardRank } from './cardRank.js';
+import { RankedCardPrice } from './rankedCardPrice.js';
+import { PricedShops } from './liveShopPrices.js';
 
 /** The option a reward door or a trader shelf carries for this service. */
 export const CARD_COPY_OPTION = Object.freeze({ kind: 'cardCopies', id: 'cardCopy' });
@@ -20,7 +22,7 @@ export const CARD_COPY_OPTION = Object.freeze({ kind: 'cardCopies', id: 'cardCop
 export const CARD_COPY_SOURCE = 'copy';
 
 const ownedCards = (run) => [...(run?.deck || []), ...(run?.sideboard || [])].filter(Boolean);
-const variantKey = (card) => JSON.stringify([card.cardId, !!card.upgraded, InstanceRank(card), card.upgradeSteps || null]);
+const variantKey = (card) => JSON.stringify([card.cardId, !!card.upgraded, OwnCardRank(card), card.upgradeSteps || null]);
 
 /**
  * CardCopyCandidates(registries, run) -> one owned instance per distinct card variant (deck first, then library), each a
@@ -90,7 +92,7 @@ export function StartCardCopyOffer(registries, run) {
   while (run.gameProfileRewardOffers[`copy:${ordinal}`]) ordinal++;
   const offerId = `copy:${ordinal}`;
   const options = candidates.map((card) => ({ kind: 'combatCards', id: card.cardId, copyOf: card.instanceId,
-    ...(card.upgraded ? { upgraded: true } : {}), ...(InstanceRank(card) > 1 ? { rank: InstanceRank(card) } : {}) }));
+    ...(card.upgraded ? { upgraded: true } : {}), ...(OwnCardRank(card) ? { rank: OwnCardRank(card) } : {}) }));
   run.gameProfileRewardOffers[offerId] = { id: offerId, source: CARD_COPY_SOURCE, options, takeCount: 1, taken: [], claimed: null };
   return offerId;
 }
@@ -109,7 +111,7 @@ export function RollCardCopy(run, key, chancePct) {
  * (shops.json `blacksmith.cardCopy`), or null when the profile authors none (the service is off).
  */
 export function CardCopyRule(run, door) {
-  const shops = gameContent(run, 'shops');
+  const shops = PricedShops(run); // the current Core copy price, even for a saved run (owner, 2026-11-23)
   const row = door === 'blacksmith' ? shops?.blacksmith?.cardCopy : shops?.cardCopy;
   if (!row || typeof row !== 'object') return null;
   const chancePct = Number.isFinite(row.stockChancePct) ? Math.max(0, Math.min(100, row.stockChancePct)) : 0;
@@ -131,4 +133,9 @@ export function CardCopyShelf(run, door, { priceMult = 1 } = {}) {
 }
 
 /** The uses a saved shelf has left (an absent count reads 1, so a shelf saved without one still sells once). */
+/**
+ * CardCopyPrice(run, shelfPrice, card) -> what copying `card` costs (owner, 2026-11-23): the shelf's price raised
+ * `rankPricePct` percent per rank the card shows (rankedCardPrice.js). The shelf price is the "from" price, an unranked card's.
+ */
+export const CardCopyPrice = (run, shelfPrice, card) => RankedCardPrice(run, shelfPrice, card);
 export const CardCopyUsesLeft = (shelf) => (Number.isSafeInteger(shelf?.usesLeft) ? Math.max(0, shelf.usesLeft) : 1);

@@ -425,7 +425,9 @@ export function upgradeStepsProblems(instance, path) {
   if (steps === undefined) return [];
   if (!Array.isArray(steps)) return [`${path}.upgradeSteps must be an array when present`];
   const problems = [];
-  if (steps.length > MAX_CARD_UPGRADES) problems.push(`${path}.upgradeSteps holds at most ${MAX_CARD_UPGRADES} steps`);
+  // The cap counts slot-using steps; rank-up bonus steps (bonus: true) are gifts on top, at most one per rank-up.
+  const paid = steps.filter((step) => !(step && step.bonus === true)).length;
+  if (paid > MAX_CARD_UPGRADES || steps.length > 2 * MAX_CARD_UPGRADES) problems.push(`${path}.upgradeSteps holds at most ${MAX_CARD_UPGRADES} upgrades`);
   if (steps.length && instance.upgraded !== true) problems.push(`${path}.upgradeSteps requires upgraded: true`);
   steps.forEach((step, i) => {
     const at = `${path}.upgradeSteps[${i}]`;

@@ -1,4 +1,5 @@
 // Owner ask 2026-10-31: every Blacksmith purchase shows the what-changed receipt (SPEC 14.4); a refusal does not.
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -83,6 +84,7 @@ test('a refused purchase opens no receipt and keeps the inline refusal', () => {
 test('ranking up a card opens a receipt with the card row', () => {
   withKitDom((dom) => {
     const run = smithRun(coreOut, { cinders: 5000, stones: 10 });
+    FillUpgradeSlots(run); // rank-up needs a fully upgraded card (owner 2026-11-23)
     if (!run.shopStock.offerings.includes('rankUp')) run.shopStock.offerings.push('rankUp'); // always run the rank-up case
     const app = mount(dom, run);
     const go = [...app.querySelectorAll('button')].find((b) => b.textContent === 'Rank up' && !b.disabled);

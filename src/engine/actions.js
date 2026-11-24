@@ -90,7 +90,7 @@ import { creditKnowledgeImpact } from './enemyKnowledge.js';
 import * as Expanded from './combatExpansionActions.js';
 import * as Control from './combatStatusControl.js';
 import { isSpellCard, silencedStacks, combatProfileFor } from '../model/combatCardProfile.js';
-import { RankUpCandidates, RaiseCardRank } from '../model/rankUpService.js';
+import { RankUpReady, RaiseCardRank } from '../model/rankUpService.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
@@ -2367,7 +2367,7 @@ export const RUN_OPCODE_HANDLERS = Object.freeze({
     // only when a card rises, so a run that cannot rank cards (Legacy, or every card capped) keeps its purse.
     rankUpCard: (ctx, action, eff) => {
       const run = ctx.run;
-      const candidates = RankUpCandidates(ctx.registries, run);
+      const candidates = RankUpReady(ctx.registries, run); // only a card the full-upgrade rule lets rise
       const cost = Number.isSafeInteger(eff.cost) && eff.cost > 0 ? eff.cost : 0;
       if (!candidates.length || run.cinders < cost) return;
       const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
