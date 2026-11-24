@@ -32,6 +32,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+
+## 2026-11-24
+
+- **The component catalog lists the combat log Copy button** ([#2977](https://github.com/cehinds/AshenSpire/pull/2977), `0.7.5.84`). The developer component catalog now shows the combat log's Copy button and a greyed card that gives its reason first.
+
 ## 2026-11-24
 
 - **Ward is now a health buffer on the health bar** ([#2971](https://github.com/cehinds/AshenSpire/pull/2971), `0.7.5.84`). Ward no longer adds to Poise: each Ward stack adds 5 Ward HP in blue on the health bar, and hits resolve Block first, then Ward, then Poise and Health. Bonus Poise (`Gain N Poise`) is now shown in purple on the Poise bar. Fights saved before this keep their existing rules.
