@@ -1746,7 +1746,7 @@ function renderWeights({ shifts = true } = {}) {
       const shownScoring = () => stagedScoring() || state.scoring;
       const words = weightSentence(g.key, r.id, shownScoring(), r.label);
       const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
-      row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}</span><button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button><div class="weight-example"></div>`;
+      row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button></span><div class="weight-example"></div>`;
       const input = row.querySelector('.weight-input');
       const perInput = row.querySelector('.weight-per');
       const multInput = row.querySelector('.weight-mult');
