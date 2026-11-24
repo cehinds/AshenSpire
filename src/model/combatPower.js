@@ -111,7 +111,9 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
   if (c.tags.includes(CM.honedTag)) add(CM.honedTag, S.tags[CM.honedTag].perN);
   const P = Object.entries(parts).filter(([k, v]) => k !== 'SP' && k !== 'MP' && v > 0).reduce((s, [, v]) => s + v, 0);
   for (const t of c.tags) { const w = S.tags[t]; if (w && w.pMultiplier) add(t, P * w.pMultiplier); }
-  if (c.tags.includes(CM.counterstrikeTag)) add('counterstrike', P * (S.tags[CM.counterstrikeTag].multiplier - 1));
+  // Counterstrike as a multiplier scales P; set flat (weight, no multiplier) it scored in the tag loop above.
+  const cs = S.tags[CM.counterstrikeTag];
+  if (c.tags.includes(CM.counterstrikeTag) && cs && Number.isFinite(cs.multiplier)) add('counterstrike', P * (cs.multiplier - 1));
   if (c.copy) add('copy', P / CM.copyDivisor * c.copy);
   for (const k of c.kw) {
     const d = S.keywords[k]; if (!d) continue;

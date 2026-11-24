@@ -185,3 +185,31 @@ test('activeScoring: naming.card.limit is optional, and checked when present', (
   assert.ok(ValidateScoringConfig(withLimit({ maxChars: 20, keep: ['base', 'title'] })).some((m) => m.includes('keep')));
   assert.ok(ValidateScoringConfig(withLimit([20])).some((m) => m.includes('limit')));
 });
+
+test('scorer and validator: a multiplier tag or keyword may be set flat instead', () => {
+  const flat = structuredClone(shippedScoring);
+  // Counterstrike flat: its weight once, no multiplier part (it used to read only .multiplier).
+  flat.tags['trait:counterstrike'] = { ...flat.tags['trait:counterstrike'], weight: 4 };
+  delete flat.tags['trait:counterstrike'].multiplier;
+  const hit = { ...BaseFace(), dmg: 6, tags: ['trait:counterstrike'] };
+  const plain = ScoreCard({ ...BaseFace(), dmg: 6 }, flat);
+  const flatHit = ScoreCard(hit, flat);
+  assert.equal(flatHit.parts['trait:counterstrike'], 4);
+  assert.equal(flatHit.parts.counterstrike, undefined);
+  assert.equal(flatHit.raw, plain.raw + 4);
+  // Flat 0 is no change, and the tag drops out of the scorer entirely.
+  flat.tags['trait:counterstrike'].weight = 0;
+  assert.equal(ScoreCard(hit, flat).raw, plain.raw);
+  // A keyword set flat adds its flat value; a pMultiplier tag set flat adds its weight.
+  flat.keywords.retain = { flat: 3 };
+  assert.equal(ScoreCard({ ...BaseFace(), dmg: 6, kw: ['retain'] }, flat).parts.retain, 3);
+  flat.tags.ash = { ...flat.tags.ash, weight: -2 }; delete flat.tags.ash.pMultiplier;
+  assert.equal(ScoreCard({ ...BaseFace(), dmg: 6, tags: ['ash'] }, flat).parts.ash, -2);
+  assert.deepEqual(ValidateScoringConfig(flat), []);
+  const broken = structuredClone(shippedScoring);
+  broken.keywords.retain = { why: 'neither form' };
+  broken.tags.ash.pMultiplier = 'half';
+  const errors = ValidateScoringConfig(broken);
+  assert.ok(errors.some((m) => m.includes('keywords.retain')));
+  assert.ok(errors.some((m) => m.includes('tags.ash.pMultiplier')));
+});

@@ -35,6 +35,22 @@ export function ValidateScoringConfig(obj) {
     if (!Number.isFinite(obj.costs.sp?.weight)) errors.push('costs.sp.weight must be a finite number.');
     if (!Number.isFinite(obj.costs.mp?.weight)) errors.push('costs.mp.weight must be a finite number.');
   }
+  // A keyword is flat (adds `flat`) or a multiplier (adds P x `multiplier`); a tag adds `weight` or carries
+  // `multiplier` / `pMultiplier`. Either form is valid; a number it has must be finite.
+  if (obj.keywords && typeof obj.keywords === 'object') {
+    for (const [id, kw] of Object.entries(obj.keywords)) {
+      if (id[0] === '$' || !kw || typeof kw !== 'object') continue;
+      if (!Number.isFinite(kw.flat) && !Number.isFinite(kw.multiplier)) errors.push(`keywords.${id} needs a finite flat or multiplier.`);
+    }
+  }
+  if (obj.tags && typeof obj.tags === 'object') {
+    for (const [id, tag] of Object.entries(obj.tags)) {
+      if (id[0] === '$' || !tag || typeof tag !== 'object') continue;
+      for (const field of ['weight', 'multiplier', 'pMultiplier']) {
+        if (field in tag && !Number.isFinite(tag[field])) errors.push(`tags.${id}.${field} must be a finite number.`);
+      }
+    }
+  }
   // naming.card.limit is optional (no block = no limit): {maxChars: whole number >= 1, keep: name parts, most important first}.
   const limit = obj.naming?.card?.limit;
   if (limit !== undefined) {
