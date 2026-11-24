@@ -2078,6 +2078,12 @@ const NAME_PART_LABELS = Object.freeze({ base: 'Base word (Strike)', rank: 'Rank
 
 // The card name length limit (scoring.naming.card.limit): a characters box and the keep order, most important first.
 // Edits are staged like other weight edits; Apply renames. An empty box means no limit.
+// The keep order a limit uses; an empty or missing list shows (and edits) the default order, so the owner can always reorder.
+function KeepOrderOf(limit)
+{
+  return limit?.keep?.length ? [...limit.keep] : [...NAME_LIMIT_PARTS];
+}
+
 function renderNamingLimitGroup(container, query) {
   if (query && !'naming name length limit characters keep order'.includes(query)) return;
   const shown = () => (stagedScoring() || state.scoring).naming?.card?.limit || null;
@@ -2096,7 +2102,7 @@ function renderNamingLimitGroup(container, query) {
   };
   const draw = () => {
     const limit = shown();
-    const keep = limit?.keep || [...NAME_LIMIT_PARTS];
+    const keep = KeepOrderOf(limit);
     const pending = JSON.stringify(limit) !== JSON.stringify(appliedLimit());
     group.classList.toggle('is-pending', pending);
     group.innerHTML = `<summary class="section-head"><h3>Naming</h3></summary>
@@ -2108,7 +2114,7 @@ function renderNamingLimitGroup(container, query) {
       const n = Math.round(Number(raw));
       // Empty: no limit. A keep order already set stays, with no maxChars.
       if (raw === '') stage((card) => { if (card.limit?.keep) card.limit = { keep: [...card.limit.keep] }; else delete card.limit; });
-      else if (Number.isFinite(n) && n >= 1) stage((card) => { card.limit = { maxChars: n, keep: [...(card.limit?.keep || NAME_LIMIT_PARTS)] }; });
+      else if (Number.isFinite(n) && n >= 1) stage((card) => { card.limit = { maxChars: n, keep: KeepOrderOf(card.limit) }; });
     });
     for (const btn of group.querySelectorAll('.naming-keep-move')) {
       btn.addEventListener('click', () => {
@@ -2116,7 +2122,7 @@ function renderNamingLimitGroup(container, query) {
         const dir = Number(btn.dataset.dir);
         stage((card) => {
           // Reordering never sets a length: with the box empty the limit stays off.
-          const next = { ...(Number.isFinite(card.limit?.maxChars) ? { maxChars: card.limit.maxChars } : {}), keep: [...(card.limit?.keep || NAME_LIMIT_PARTS)] };
+          const next = { ...(Number.isFinite(card.limit?.maxChars) ? { maxChars: card.limit.maxChars } : {}), keep: KeepOrderOf(card.limit) };
           const i = next.keep.indexOf(part), j = i + dir;
           if (i < 0 || j < 0 || j >= next.keep.length) return;
           [next.keep[i], next.keep[j]] = [next.keep[j], next.keep[i]];

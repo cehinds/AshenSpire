@@ -58,6 +58,7 @@ export function ValidateScoringConfig(obj) {
     else {
       if (limit.maxChars !== undefined && (!Number.isInteger(limit.maxChars) || limit.maxChars < 1)) errors.push('naming.card.limit.maxChars must be a whole number of at least 1.');
       if (!Array.isArray(limit.keep) || limit.keep.some((part) => !NAME_LIMIT_PARTS.includes(part))) errors.push(`naming.card.limit.keep must list name parts (${NAME_LIMIT_PARTS.join(', ')}).`);
+      else if (limit.keep.length === 0 || new Set(limit.keep).size !== limit.keep.length) errors.push('naming.card.limit.keep must list at least one part, each once.');
     }
   }
   return errors;

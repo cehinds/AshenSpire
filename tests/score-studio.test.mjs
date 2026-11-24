@@ -185,6 +185,8 @@ test('activeScoring: naming.card.limit is optional, and checked when present', (
   assert.ok(ValidateScoringConfig(withLimit({ maxChars: 0, keep: [] })).some((m) => m.includes('maxChars')));
   assert.ok(ValidateScoringConfig(withLimit({ maxChars: 20, keep: ['base', 'title'] })).some((m) => m.includes('keep')));
   assert.ok(ValidateScoringConfig(withLimit([20])).some((m) => m.includes('limit')));
+  assert.ok(ValidateScoringConfig(withLimit({ maxChars: 20, keep: [] })).some((m) => m.includes('at least one part')), 'an empty keep order is refused');
+  assert.ok(ValidateScoringConfig(withLimit({ maxChars: 20, keep: ['base', 'rarity', 'rarity'] })).some((m) => m.includes('each once')), 'a repeated part is refused');
 });
 
 test('scorer and validator: a multiplier tag or keyword may be set flat instead', () => {
