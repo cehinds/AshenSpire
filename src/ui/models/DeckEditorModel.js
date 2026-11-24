@@ -15,6 +15,7 @@
 // copies a card may have and what the bounds are all come from
 // model/deckRules.js; this file only says them in the editor's shape.
 
+import { OwnCardRank } from '../../model/cardRank.js';
 import {
   addBasicCard, beginDeckEdit, DeckMinDelta, cancelDeckEdit, deckCardEquipmentEligible, deckCopyLimit, deckEditBounds, deckEditRefusal,
   deckEditingOn, deckEditingWhere, isBasicCard, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder, unlimitedCardIds,
@@ -51,7 +52,7 @@ const TECHNIQUE_TAG_PREFIX = 'technique:';
  */
 export function deckVariantKey(card) {
   const mods = Array.isArray(card.mods) ? card.mods.join(',') : '';
-  const rank = Number.isInteger(card.rank) && card.rank > 1 ? `~r${card.rank}` : '';
+  const rank = OwnCardRank(card) > 0 ? `~r${card.rank}` : ''; // Rank 1 is a variant of its own (owner, 2026-11-23)
   const ability = card.abilityRank > 0 ? `~a${card.abilityRank}` : '';
   const smithing = card.smithingLevel > 0 ? `~s${card.smithingLevel}` : '';
   return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}${card.grantedBy ? `~${card.grantedBy}` : ''}${rank}${ability}${smithing}`;

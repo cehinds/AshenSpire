@@ -1,4 +1,5 @@
 // The rank-up bonus (owner, 2026-11-01): a Core rank-up also offers 2-3 rolled upgrade options at bigger amounts.
+import { FillUpgradeSlots, RankUpRuleOff } from './helpers/rank-up-ready.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
@@ -9,7 +10,12 @@ import { nextUpgradeOptions, upgradeCost } from '../src/model/cardUpgradeLimits.
 import { rollUpgradeOptions, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
 import { upgradeStepsOf, upgradeCount, paidUpgradeCount, applyUpgradeSteps, upgradeStepsProblems } from '../src/model/cardUpgrade.js';
 
-const newRun = (seed = 511) => createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+// Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
+const newRun = (seed = 511) => {
+  const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  FillUpgradeSlots(run);
+  return run;
+};
 const toLevel = (run, id, level) => awardSkillXp(registries, run, id, Array.from({ length: level }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0), { queueRewards: false, queueRankUps: true });
 const strikeOf = (run) => run.deck.find((c) => c.cardId === 'core.strike');
 const amount = (step) => step.n;
@@ -44,13 +50,13 @@ test('a rank-up offers 2 to 3 distinct options from the blacksmith pool, with bi
   assert.ok(compared > 0, 'some seed offers a number step that the rank-up makes bigger');
   for (const { step, after } of options) {
     assert.equal(step.bonus, true);
-    assert.equal(after.rank, 2, 'the preview is the card at its new rank');
+    assert.equal(after.rank, 1, 'the preview is the card at its new rank (an unranked card rises to Rank 1)');
     assert.deepEqual(upgradeStepsProblems({ upgraded: true, upgradeSteps: [step] }, 'x'), []);
   }
 });
 
 test('picking applies exactly that option, the rank and nothing else', () => {
-  const run = newRun();
+  const run = RankUpRuleOff(newRun()); // the bonus alone, on a card with no other steps
   toLevel(run, 'item:blade', 3);
   const strike = strikeOf(run);
   const options = rankUpBonusOptions(registries, run, strike);
@@ -59,7 +65,7 @@ test('picking applies exactly that option, the rank and nothing else', () => {
   assert.equal(run.skills['item:blade'].pendingRankUps, 2);
   assert.equal(strike.rank, undefined);
   const raised = raiseCardRank(registries, run, 'item:blade', strike.instanceId, pick);
-  assert.equal(raised.rank, 2);
+  assert.equal(raised.rank, 1);
   assert.deepEqual(upgradeStepsOf(raised), [pick]);
   assert.equal(raised.upgraded, true);
   assert.equal(run.skills['item:blade'].pendingRankUps, 1);

@@ -25,7 +25,7 @@ const WEAPON = 'armament/greatsword';
 function smithRun(registries, stones) {
   const run = createRunState({ seed: 31, classId: 'reaver', registries, runId: 'smith-svc' });
   run.smithingStones = stones;
-  run.cinders = 2000;
+  run.cinders = 3000; // six item upgrades cost 2475 (owner 2026-11-23: tripled)
   run.seenEvents = [];
   run.shopStock = buildBlacksmithStock(registries, createRng(31), run);
   return run;
@@ -36,7 +36,7 @@ const upgrade = (registries, run, ref = WEAPON) => {
   return commitBlacksmithUpgrade(registries, run, quote);
 };
 
-test('Core Blacksmith (W25): upgrades 1-6 cost 1,1,1,2,2,2 stones and 50,85,120,155,190,225 cinders; the seventh is refused and keeps both purses', () => {
+test('Core Blacksmith (W25): upgrades 1-6 cost 1,1,1,2,2,2 stones and 150,255,360,465,570,675 cinders (owner 2026-11-23: tripled); the seventh is refused and keeps both purses', () => {
   const run = smithRun(coreOut, 12);
   const spent = [];
   const paid = [];
@@ -48,7 +48,7 @@ test('Core Blacksmith (W25): upgrades 1-6 cost 1,1,1,2,2,2 stones and 50,85,120,
     paid.push(purse - run.cinders);
   }
   assert.deepEqual(spent, [1, 1, 1, 2, 2, 2]);
-  assert.deepEqual(paid, [50, 85, 120, 155, 190, 225]);
+  assert.deepEqual(paid, [150, 255, 360, 465, 570, 675]);
   assert.equal(run.itemUpgradePicks[WEAPON].length, 6);
   const left = run.smithingStones, cinders = run.cinders;
   const quote = blacksmithUpgradePlan(coreOut, run, WEAPON);

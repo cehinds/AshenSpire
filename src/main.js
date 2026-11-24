@@ -2,7 +2,7 @@ import { InstallLegacyBrowserSafely } from './ui/legacyBrowser.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { OpenCardCopyModal } from './ui/components/cardCopyModal.js';
@@ -64,7 +64,7 @@ import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { stampCombatPlaysEver, foldCombatPlaysEver } from './model/playsEver.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
-import { pendingRankUpRows, coreCardRanks, stampSkillBonuses } from './model/skills.js';
+import { pendingRankUpRows, RankUpRowsReady, coreCardRanks, stampSkillBonuses } from './model/skills.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
@@ -2600,8 +2600,9 @@ function showGameProfileReward() {
   if (!pending.rankUpsOffered && coreCardRanks(run)) {
     // The door's rows are fixed the first time it opens and saved with its claim state (rankUpCheckpoint), so a
     // reload after a claim resumes the same door instead of rebuilding rows from the remaining ledger.
+    // A new door opens only when some queued card may rise now; with none ready the rank-ups stay queued and it is skipped.
     const rankUps = pending.rankUpRows || pendingRankUpRows(registries, run);
-    if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
+    if (!rankUps.length || (!pending.rankUpRows && !RankUpRowsReady(registries, run, rankUps))) { pending.rankUpsOffered = true; persistOrWarn(); }
     else return MountRewards(app, { registries, run, saves, rng,
       rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rankUps) },
       checkpoint: (pending.rankUpCheckpoint ||= {}),
@@ -2646,17 +2647,17 @@ function leaveRewardDoor(pending) {
 // W25-R: the card pick of a "Rank up a card" service (a reward option or a shop shelf): option rows of the cards that can rise.
 // Resolves with the chosen instance id; Cancel rejects with an empty message, so the door that asked stays as it was.
 // The card pick of a vendor's copy service: option rows of every card the player owns. Cancel rejects with an empty message.
-function chooseCardToCopy({ price = '' } = {}) {
+function chooseCardToCopy({ price = '', shelfPrice = null } = {}) {
   return new Promise((resolve, reject) => {
     let picked = null;
-    OpenCardCopyModal({ registries, run, price, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
+    OpenCardCopyModal({ registries, run, price, shelfPrice, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
   });
 }
 
-function chooseRankUpCard({ price = '' } = {}) {
+function chooseRankUpCard({ price = '', shelfPrice = null } = {}) {
   return new Promise((resolve, reject) => {
     let picked = null;
-    OpenRankUpCardModal({ registries, run, price, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
+    OpenRankUpCardModal({ registries, run, price, shelfPrice, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
   });
 }
 
@@ -2768,15 +2769,19 @@ function showShop() {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
       // A trade replaces the saved stock, so the slot's kind is read from the current one.
       if (run.gameProfileRewardOffers?.[`shop:${shopId}`]?.options[index]?.kind === 'rankUps') {
-        return chooseRankUpCard({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
-          purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist();
+        // Owner 2026-11-23: the shelf names its Rank 1 price; each card's row names the price of the rank it reaches.
+        return chooseRankUpCard({ price: t('rankUp.pick.priceFrom', { cinders: quote.price }), shelfPrice: quote.price }).then(instanceId => {
+          const priced = gameProfileShopPurchasePlan(registries, run, shopId, index, { instanceId });
+          purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId, price: priced.price }); persist();
         }, () => {});
       }
       // Owner 2026-11-20: a copy service asks which owned card to copy; the copy lands in the library like a bought card.
       // Like every trade it runs inside the shop's one-trade guard (shop.js transact), which refreshes once it settles.
       if (run.gameProfileRewardOffers?.[`shop:${shopId}`]?.options[index]?.kind === CARD_COPY_OPTION.kind) {
-        return chooseCardToCopy({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
-          const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist();
+        // Owner 2026-11-23: the shelf names a "from" price; each card's row names its own (rank-raised), and that is charged.
+        return chooseCardToCopy({ price: t('cardCopy.pick.priceFrom', { cinders: quote.price }), shelfPrice: quote.price }).then(instanceId => {
+          const priced = gameProfileShopPurchasePlan(registries, run, shopId, index, { instanceId });
+          const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId, price: priced.price }); persist();
           offerShopCardDestination({ kind: 'combatCards', id: receipt.cardId, instanceId: receipt.instanceId }, refresh);
         }, () => {});
       }

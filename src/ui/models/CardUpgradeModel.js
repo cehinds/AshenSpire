@@ -4,15 +4,17 @@
 import { planCardUpgrade } from '../../model/cardUpgradeService.js';
 import { upgradeCount, upgradeStepsOf, FlatSteps } from '../../model/cardUpgrade.js';
 import { RarityOfStep } from '../../model/cardUpgradeSteps.js';
-import { cardRank } from '../../model/cardRank.js';
+import { cardRank, OwnCardRank, VisibleCardRank } from '../../model/cardRank.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { upgradeChoiceCount, RestUpgradeRule } from '../../model/cardUpgradeLimits.js';
 import { rampParts, playsEverOf } from '../../model/cardRamp.js';
 import { staticTokens } from '../components/card.js';
 import { playingCardArtwork } from '../cardArtwork.js';
 import { t, has as hasString } from '../strings.js';
+import { RankLabel } from '../rankLabel.js';
 import { rankUpCandidates } from '../../model/skills.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
+import { RankUpBlock } from '../../model/rankUpService.js';
 
 const freeze = (value) => Object.freeze(value);
 // Completed cards leave the picker. A card that upgrades with its weapon stays listed, disabled, with its reason.
@@ -252,7 +254,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     // The next step is rolled per instance id and does not split a row: the row shows the step of its first copy
     // (the one an upgrade is applied to) and flags `nextDiffers` when another copy would roll something else.
     const nextKey = JSON.stringify(plan.options ? plan.options.map((o) => o.step) : plan.step);
-    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), inDeck]);
+    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), VisibleCardRank(instance), inDeck]); // unranked and Rank 1 differ in slots
     if (groups.has(key)) {
       const group = groups.get(key);
       group.instanceIds.push(instance.instanceId); group.copies += 1;
@@ -273,7 +275,8 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       shortStones: priced ? priced.cost > stones : plan.code === 'stones', disabled: !ok || !!blockedReason, cost: priced ? priced.cost : plan.cost,
       costLabel: priced?.cinders > 0 ? t('cardUpgrade.cinders', { n: priced.cinders }) : costLabel(priced ? { cost: priced.cost } : plan),
       blockedReason: weaponBound ? t('cardUpgrade.row.weaponBound') : (priced ? priced.reason : plan.reason) || blockedReason,
-      chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
+      // The rank the face shows: Rank N, or Basic / Cantrip for an unranked card (owner, 2026-11-23).
+      chipLabel: t(row_upgrades(instance), { rank: RankLabel(base, VisibleCardRank(instance)), n: upgradeCount(instance) }),
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
       levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
       changes: cardUpgradeChanges(registries, plan.before, plan.after, playsEverOf(instance), run.rangePolicy?.maxRange),
@@ -314,7 +317,8 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
   const rows = rankUpCandidates(registries, run, skillId).map((instance) => {
     const inDeck = (run.deck || []).includes(instance);
     const base = registries.cards.get(instance.cardId);
-    const rank = cardRank(instance);
+    const rank = OwnCardRank(instance); // an unranked card reads 0 and rises to Rank 1 (owner, 2026-11-23)
+    const blocked = RankUpBlock(run, instance); // the full-upgrade rule: shown, disabled, with its reason
     const before = faceOf(instance);
     const raised = faceOf({ ...instance, rank: rank + 1 });
     const bonus = rankUpBonusOptions(registries, run, instance);
@@ -324,9 +328,9 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
       instanceId: instance.instanceId, instanceIds: freeze([instance.instanceId]), copies: 1, inDeck, cardId: instance.cardId,
       name: before?.name || base?.name || instance.cardId, rarity: base?.rarity || 'common', rank,
       // A lone bonus is no choice, so the picker commits the plan itself: it carries that option's step and face.
-      plan: freeze({ before, after: options[0].after, step: options[0].step }), ok: true, disabled: false, weaponBound: false, cost: 0, cinders: 0, shortStones: false,
-      costLabel: t('cardUpgrade.free'), blockedReason: '', levelFrom: rank, levelTo: rank + 1,
-      status: t('cardUpgrade.row.rankStatus', { from: rank, to: rank + 1 }),
+      plan: freeze({ before, after: options[0].after, step: options[0].step }), ok: !blocked, disabled: !!blocked, weaponBound: false, cost: 0, cinders: 0, shortStones: false,
+      costLabel: t('cardUpgrade.free'), blockedReason: blocked, levelFrom: rank, levelTo: rank + 1,
+      status: t('cardUpgrade.row.rankStatus', { from: RankLabel(base, rank), to: RankLabel(base, rank + 1) }),
       changes: options[0].changes, options: freeze(options), nextDiffers: false,
       tags: cardTags(registries, before || base, base?.rarity || 'common'),
       artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (before || base)?.icon || 'skill',
@@ -335,8 +339,8 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
   rows.sort((a, b) => Number(b.inDeck) - Number(a.inDeck));
   const selected = rows.find((row) => row.instanceId === selectedInstanceId) || null;
   return freeze({
-    rows: freeze(rows), selected, stones: 0, affordable: !!selected, canConfirm: !!selected, purse: false,
-    blockedReasons: freeze([]),
+    rows: freeze(rows), selected, stones: 0, affordable: !!selected, canConfirm: !!selected && selected.ok, purse: false,
+    blockedReasons: freeze(selected && !selected.ok ? [selected.blockedReason] : []),
     faces: selected ? freeze({ before: selected.plan.before, after: selected.options[0].after }) : null,
   });
 }
