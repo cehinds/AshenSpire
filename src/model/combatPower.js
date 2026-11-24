@@ -259,7 +259,7 @@ export function ScoreItem(it, scoring = GetActiveScoring(), rules = {}) {
     const grd = ((it.guardBase ?? I.kit.unarmedGuard) - I.kit.unarmedGuard) * M.AUTH_BLOCK / 2 * plays.defend; if (grd) parts['Guard profile'] = grd;
     if (it.art) { const a = ScoreCard(Object.assign(BaseFace(), JSON.parse(JSON.stringify(it.art))), scoring).raw * plays.weaponArt; if (a) parts['Weapon art: ' + it.art.name] = a; }
   }
-  if (typeof it.poise === 'number' && it.kind !== 'relic') { const pv = (it.poise - I.poiseThreshold.baseline) * I.poiseThreshold.perPoint; if (pv) parts['Poise threshold'] = pv; }
+  if (typeof it.poise === 'number' && it.poise > 0 && it.kind !== 'relic') { const pv = (it.poise - (I.poiseThreshold.baseline || 0)) * I.poiseThreshold.perPoint; if (pv > 0) parts['Poise threshold'] = pv; }
   const rg = it.range ? 'range:' + it.range : null;
   if (rg && S.tags[rg] && S.tags[rg].weight) parts[rg] = S.tags[rg].weight * plays.strike;
   const raw = Math.round(Object.values(parts).reduce((s, v) => s + v, 0)) + 0;

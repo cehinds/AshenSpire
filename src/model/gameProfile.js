@@ -63,6 +63,9 @@ export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
   if (typeof idOrInstance === 'object' && gameModule(subject,'progression')?.cardRanks === true && !Array.isArray(chosen.gradeProfiles) && cardRank(idOrInstance) > 1) {
     chosen = {...chosen, effects: rankedEffectsCapped(chosen, cardRank(idOrInstance) - 1), rank: cardRank(idOrInstance)};
   }
+  if (typeof idOrInstance === 'object' && idOrInstance?.rarityOverride) {
+    chosen = { ...chosen, rarity: idOrInstance.rarityOverride };
+  }
   // Ramp lands last, after upgrade and rank growth, so the amount it wraps is still a plain number (SPEC §4.3).
   if (chosen.ramp && !rampless) chosen = applyRamp(chosen, chosen.ramp.scope === 'run' ? playsEverOf(idOrInstance) : 0, (chosen.tags || []).filter(tag => !tag.startsWith('classification.')));
   chosen.kindIds = ['classification.' + chosen.type];

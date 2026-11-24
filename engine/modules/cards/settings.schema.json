@@ -49,7 +49,8 @@
       "enum": [
         "strategize",
         "noncombat",
-        "rest"
+        "rest",
+        "restAndShop"
       ]
     },
     "faceMaxEffects": {

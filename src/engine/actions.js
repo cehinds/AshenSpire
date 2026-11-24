@@ -10,7 +10,7 @@ import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness, stanceOf } from '../model/stanceRules.js';
 import { FightMagicShare, ForceRules } from '../model/elementIdentityRules.js';
-import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreWardBreaksAtZeroPoise, FixCoreWardHpPerStack, EffectiveWardHp, fixCorePierceRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreWardBreaksAtZeroPoise, FixCoreWardHpPerStack, EffectiveWardHp, fixCorePierceRules, FixCoreWeaponPoiseRules, ReceiptPoiseLoss } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -378,7 +378,8 @@ function GearBreakRiders(ctx, source, target, carrier) {
 export function drainFixCorePoise(ctx, source, target, amount, carrier = null, blockAtHit = 0) {
   const poise = target?.persistentPoise;
   // Owner, 2026-11-18: a player's spell takes `effects.spellPoiseDamageMultiplier` times the Poise damage it deals an enemy (combatDamagePreview.js reads the same factor).
-  const n = Math.max(0, Math.floor(amount * SpellPoiseMultiplier(configuredModule(ctx, 'effects'), source, target, carrier)));
+  const mult = FixCoreWeaponPoiseRules(ctx) ? 1 : SpellPoiseMultiplier(configuredModule(ctx, 'effects'), source, target, carrier);
+  const n = Math.max(0, Math.floor(amount * mult));
   if (!target?.alive || !(n > 0) || !(poise?.value > 0)) return 0;
   // Owner, 2026-11-17 (theme B): the Poise rider of a physical hit cannot take a Defend-stance target holding Block below the floor either.
   // Poise damage with no card of its own (a relic's or a trigger's, the Forsaken Medallion) is physical and keeps the floor too (owner decision, 2026-11-17).
@@ -465,7 +466,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     if (!receipt.wardHpBuffer && target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
       poiseBefore = target.persistentPoise.value;
-      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
+      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - ReceiptPoiseLoss(receipt));
     }
   }
   const hpBefore = target.hp;

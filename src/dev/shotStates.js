@@ -18,6 +18,7 @@ import { createDeck, createIdGen } from './../model/state.js';
 import { buildBlacksmithStock } from './../engine/shopKinds.js';
 import { mountGameOver } from './../ui/screens/gameover.js';
 import { mountCompendium } from './../ui/screens/compendium.js';
+import { mountBestiary } from './../ui/screens/bestiary.js';
 import { gameModule } from './../model/gameProfile.js';
 import { GameProfileArmamentOffer, gameProfileShopStock } from './../model/gameProfileRewards.js';
 import { StartCardCopyOffer, CardCopyShelf, CardCopyRule } from './../model/cardCopyService.js';
@@ -569,6 +570,25 @@ export function createShotStates(ctx) {
       const meta = saves.loadMeta();
       if (found != null) meta.found = found ? found.split(',') : [];
       mountCompendium(app, { registries: ctx.getRegistries(), meta, onBack: showTitle });
+    },
+    bestiary: () => {
+      // ?shot=bestiary&shotKnown=<enemyId>:<points>,… seeds the lifetime ledger the Bestiary reads;
+      // without shotKnown the first three enemies are known at rising depth, and an empty value
+      // shows the never-met state.
+      const registries = ctx.getRegistries();
+      const target = registries.balance?.enemyKnowledge?.bestiary?.encountersToMaster || 30;
+      const asked = shotParams.get('shotKnown');
+      const known = asked != null
+        ? asked.split(',').filter(Boolean)
+        : registries.enemies.all().slice(0, 3).map((enemy, index) => `${enemy.id}:${[target, 9, 1][index]}`);
+      const receiptsFor = (points) => Object.fromEntries(Array.from({ length: points }, (_, index) => [`shot${index}`, { bonus: false }]));
+      const enemies = Object.fromEntries(known.map((pair) => {
+        const [id, points] = pair.split(':');
+        return [id, { target, receipts: receiptsFor(Math.max(1, Number(points) || 1)) }];
+      }));
+      const meta = saves.loadMeta();
+      meta.enemyKnowledge = { version: 1, enemies };
+      mountBestiary(app, { registries, meta, onBack: showTitle });
     },
     startup: () => {
       showStartupGate({ forcedFamily: shotParams.get('shotInput') || '' });

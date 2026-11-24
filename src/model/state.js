@@ -1089,11 +1089,12 @@ const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key
 export function levelProblems(level) {
   if (!level || typeof level !== 'object' || Array.isArray(level)) return ['level must be { xp, level, unspentPoints }'];
   const problems = [];
-  for (const key of Object.keys(level)) if (!['xp', 'level', 'unspentPoints'].includes(key)) problems.push(`level.${key} is not a field of the level ledger`);
+  for (const key of Object.keys(level)) if (!['xp', 'level', 'unspentPoints', 'pendingRankUps'].includes(key)) problems.push(`level.${key} is not a field of the level ledger`);
   if (!Number.isInteger(level.level) || level.level < 1) problems.push('level.level must be an integer of at least 1');
   for (const key of ['xp', 'unspentPoints']) {
     if (!Number.isInteger(level[key]) || level[key] < 0) problems.push(`level.${key} must be a non-negative integer`);
   }
+  if (level.pendingRankUps !== undefined && (!Number.isInteger(level.pendingRankUps) || level.pendingRankUps < 0)) problems.push('level.pendingRankUps must be a non-negative integer');
   return problems;
 }
 

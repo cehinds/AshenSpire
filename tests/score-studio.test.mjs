@@ -164,7 +164,7 @@ test('weights tab: rows the scorer reads through another weight, or not at all, 
   scoring.effects.block = { ...scoring.effects.block, weight: 1, per: 3 };
   scoring.effects.ward = { ...scoring.effects.ward, weight: 9, per: 1 };
   const blockValue = ScoreCard({ ...BaseFace(), blk: 6 }, scoring).parts.block;
-  assert.equal(weightExample('effects', 'ward', scoring, 'ward'), `Not this box: scored with the block row (6 Ward = ${blockValue} pts)`);
+  assert.equal(weightExample('effects', 'ward', scoring, 'ward'), `Not this box: scored with the block row (6 Ward HP = ${blockValue} pts)`);
   assert.equal(weightExample('effects', 'addCard', scoring, 'addCard'), 'Not scored yet');
   // Only the Counterstrike tag's multiplier is read; the area tag scales by enemy count; other multiplier tags score nothing.
   const area = ScoreCard({ ...BaseFace(), dmg: 6, tags: ['targeting:area'] }, scoring);
@@ -332,4 +332,34 @@ test('name sets: Save names writes one set as a names file, and Load names reads
   assert.equal(NS.ParseNameSetFile([file, file]).length, 2);
   assert.equal(NS.ParseNameSetFile(NS.JoinSavedConfig({ rank: {} }, [set])).length, 1);
   assert.throws(() => NS.ParseNameSetFile({ rank: {} }), /no card names/);
+});
+
+test('Ward and Bonus Poise (barrier / gainBarrier / bonusPoise tag) are separated in scoring, combatPower, and weight examples', async () => {
+  const { weightExample } = await import('../tools/score-studio/weightExamples.js');
+  const { cardCombatPower } = await import('../src/content/generated/combatPower.js');
+  const { tags } = await import('../src/content/generated/tags.js');
+  const { COST_TAGS } = await import('../src/content/actionCosts.js');
+
+  assert.match(shippedScoring.statuses.ward.why, /no Poise/i);
+  assert.equal(shippedScoring.statuses.barrier.target, 'self');
+  assert.equal(shippedScoring.statuses.barrier.weight, 4);
+  assert.equal(shippedScoring.tags.bonusPoise.domain, 'card');
+  assert.ok(tags.some((t) => t.id === 'bonusPoise' && t.domain === 'card'), 'bonusPoise tag exists in generated tags');
+  assert.deepEqual(COST_TAGS.bonusPoise, { weight: 0, side: 'sp' });
+
+  const wardOnly = ScoreCard({ ...BaseFace(), sp: 1, statuses: [['ward', 1, 'self']] });
+  const poiseOnly = ScoreCard({ ...BaseFace(), sp: 1, statuses: [['barrier', 1, 'self']] });
+  assert.equal(wardOnly.parts.ward, shippedScoring.statuses.ward.weight);
+  assert.equal(wardOnly.parts.barrier, undefined);
+  assert.equal(poiseOnly.parts.barrier, shippedScoring.statuses.barrier.weight);
+  assert.equal(poiseOnly.parts.ward, undefined);
+
+  assert.match(weightExample('effects', 'gainBarrier', shippedScoring, 'gainBarrier'), /Bonus Poise uses the barrier status row/);
+  assert.match(weightExample('statuses', 'barrier', shippedScoring), /^3 stacks = /);
+  assert.ok(cardCombatPower['core.moteShield'].raw >= 23, 'Mote Shield scores both Ward and Bonus Poise');
+  assert.ok(cardCombatPower['core.hallowedWard'].raw >= 13, 'Hallowed Ward scores its gainBarrier Bonus Poise');
+
+  const studioSrc = readFileSync(new URL('../tools/score-studio/studio.js', import.meta.url), 'utf8');
+  assert.match(studioSrc, /restorePoise:\s*\{\s*part:\s*'block',\s*weight:\s*'block'\s*\}/, 'restorePoise is mapped in EFFECT_SCORE_KEYS');
+  assert.match(studioSrc, /eff\.op === 'gainBarrier'\s*\?\s*wanted\s*:\s*authoredAmountForFace/, 'gainBarrier edits stacks directly without x5 Poise scaling');
 });

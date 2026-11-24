@@ -40,7 +40,8 @@ export function faceOf(def, row) {
     const amount = typeof e.amount === 'number' ? e.amount : 1;
     if (e.op === 'applyStatus') {
       if (typeof e.status === 'string' && typeof e.stacks === 'number' && statusIds.has(e.status)) f.statuses.push([e.status, e.stacks, e.target === 'self' ? 'self' : 'enemy']);
-    } else if (e.op === 'restorePoise') f.blk += amount;
+    } else if (e.op === 'gainBarrier') f.statuses.push(['barrier', amount, 'self']);
+    else if (e.op === 'restorePoise') f.blk += amount;
     else if (OP_FIELD[e.op]) f[OP_FIELD[e.op]] += amount;
     else if (e.op === 'removeStatus') { if (e.target === 'self') f.cleanse += 1; }
     else if (e.op === 'moveEngagement') f.move += 1;

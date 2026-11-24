@@ -5,6 +5,7 @@ import { GearIdOf } from './gearIds.js';
 import { GearTypeEffectsEnabled, GearVocabularyEnabled, GearPieceMods, GearModText, GearTypeRow } from './gearEffects.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
+import { ItemRankOf, ItemRankBadge } from './itemRank.js';
 import { breakPropertyText } from './breakMeter.js';
 import { affinityTags } from '../engine/elementRules.js';
 
@@ -86,7 +87,10 @@ export function equipmentCardModel(registries, piece) {
     bonuses = [...(item ? bonuses : []), ...rules];
   }
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
-  return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
+  const itemKind = armor ? 'armour' : 'weapon';
+  const rank = ItemRankOf(itemKind, piece, piece.classId);
+  const rankBadge = ItemRankBadge(itemKind, piece, piece.classId);
+  return { id: piece.id, name: piece.name, armor, type, facts, bonuses, rank, rankBadge,
     tags: tags.map(id => field(tag(id)?.label || id, id, registries.breakMeterVersion === 1 ? breakPropertyText(registries, id) || tag(id)?.blurb || 'Authored equipment classification.' : tag(id)?.blurb || 'Authored equipment classification.')),
     typeExplanation: typeEffects ? `${typeRow?.label || type}. Compatibility is determined by the equipment position.`
       : (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
