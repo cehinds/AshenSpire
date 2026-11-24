@@ -644,11 +644,18 @@ test('a row\'s step and price are separate chips that may wrap, so a phone row i
   const { MountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(dom => {
     const run = newRun(); run.smithingStones = 3;
+    delete strike(run).rank; // an unranked Strike reads Basic
     const host = dom.document.createElement('main'); dom.document.body.append(host);
     const door = MountCardUpgradeModal(host, cardUpgradeModel(registries, run), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
     const chips = [...host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"]`).querySelectorAll('.co-chip')].map(chip => chip.textContent);
-    assert.deepEqual(chips, ['0 → 1 upgrade', 'No charge']);
+    // QA 2026-11-23: the row leads with the card's rank and upgrades (Basic when unranked, Rank N when ranked).
+    assert.deepEqual(chips, ['Basic · 0 upgrades', '0 → 1 upgrade', 'No charge']);
     door.close();
+    strike(run).rank = 2;
+    const ranked = MountCardUpgradeModal(host, cardUpgradeModel(registries, run), { registries, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const first = host.querySelector(`.card-upgrade-row[data-instance-id="${strike(run).instanceId}"] .co-chip`).textContent;
+    assert.equal(first, 'Rank 2 · 0 upgrades');
+    ranked.close();
   });
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
   const chipRule = css.match(/\.card-upgrade-modal \.option-row \.co-chip \{([^}]*)\}/)?.[1] || '';
