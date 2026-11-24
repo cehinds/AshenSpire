@@ -415,6 +415,10 @@ body.studio-body .section-head > .studio-toggle {
 body.studio-body .section-head > button { flex: none; }
 body.studio-body .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 body.studio-body .form-grid label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
+body.studio-body .form-grid .studio-field { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--st-muted); }
+body.studio-body .form-grid .school-checks { display: flex; align-items: center; gap: 12px; min-height: 30px; }
+body.studio-body .form-grid .studio-check { flex-direction: row; align-items: center; gap: 6px; font-size: 12px; color: var(--st-text); cursor: pointer; }
+body.studio-body .form-grid .studio-check input { width: auto; margin: 0; accent-color: var(--st-accent, #6aa0ff); }
 
 body.studio-body .add-feature-bar { display: flex; gap: var(--studio-gap-1); width: 100%; margin-bottom: var(--studio-gap-2); }
 body.studio-body .add-feature-bar select { flex: 1 1 auto; min-width: 0; }
@@ -585,16 +589,19 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
 /* NARROW SCREENS (900px and below): one column, the page scrolls instead of inner boxes,
    and the inspector opens as a full-screen sheet when a card is tapped. */
 @media (max-width: 900px) {
+  /* The game's sheets make html a fixed-size box with overflow hidden, so a page-height body could not be
+     scrolled by wheel or touch. The body is the scroller instead, one viewport tall. */
   body.studio-body {
-    height: auto;
-    min-height: 100vh;
+    height: 100dvh;
     overflow-x: hidden;
-    overflow-y: visible;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
   body.studio-body .studio-topbar {
     position: sticky;
     top: 0;
     z-index: 20;
+    flex-shrink: 0;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "brand actions"
@@ -632,7 +639,7 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
     height: auto;
     overflow: visible;
   }
-  body.studio-body .studio-main { display: block; }
+  body.studio-body .studio-main { display: block; flex: 0 0 auto; }
 
   /* Cards: tiles at least 160px wide (two per row on a phone), filters in a two-column grid. */
   body.studio-body .cards-layout { display: block; }
@@ -795,3 +802,4 @@ body.studio-body .weight-per-label { display: inline-flex; align-items: center; 
 body.studio-body .weight-per-label input,
 body.studio-body .weight-per-label select { width: 58px; box-sizing: border-box; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 4px; text-align: right; }
 body.studio-body .weight-per-label select { width: 72px; text-align: left; }
+body.studio-body .weight-per-label input.weight-mult { width: auto; margin: 0; accent-color: var(--st-accent, #6aa0ff); cursor: pointer; }

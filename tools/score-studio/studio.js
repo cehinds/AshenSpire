@@ -12,10 +12,10 @@ import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
-import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
+import { BaseFace, CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
-import { tokenRe } from '../../src/model/validate.js';
+import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } from './weightsStaging.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
@@ -258,6 +258,7 @@ function cardDefToFace(def, scoringRef) {
   f.kw = Array.isArray(def.keywords) ? [...def.keywords] : [];
   f.tags = tags;
   f._meta = m;
+  f.magicShare = safeNum(def.magicShare, 0);
   if (m.evade > 0) f.statuses.push(['evade', m.evade, 'self']);
   const statusIds = new Set(Object.keys(scoringRef.statuses || {}));
   for (const e of def.effects || []) {
@@ -279,6 +280,66 @@ function cardDefToFace(def, scoringRef) {
   }
   if (def.ramp && !f.tags.includes('ramp.honed')) f.tags.push('ramp.honed');
   return f;
+}
+
+// ---------------------------------------------------------------------------
+// Card Type and Martial / Magic
+// ---------------------------------------------------------------------------
+// The studio's Card Type is the card's play style: its authored type plus the maneuver tag the game reads
+// (combatProfileFor). Martial is the physical camp, Magic the spell camp; both is a physical hit with a magic
+// share (the game's packet hit).
+const CARD_KINDS = Object.freeze(['attack', 'skill', 'spell', 'sweep', 'counter', 'defend', 'power', 'curse', 'status']);
+const KIND_MANEUVERS = Object.freeze({ attack: 'attack', sweep: 'sweep', counter: 'counter', defend: 'defend', spell: 'casting' });
+const PLAIN_KINDS = Object.freeze(['power', 'curse', 'status']);
+const HYBRID_MAGIC_SHARE = 0.5;
+const SCHOOL_CATEGORIES = Object.freeze(['martial', 'magic', 'hybrid']);
+
+const hasDamageEffect = (def) => (def.effects || []).some((e) => e.op === 'damage');
+
+// The same play style ScoreCard scores (CardKind), so the studio and the shipped table agree.
+const cardKindOf = (def) => CardKind(def);
+// Maneuvers outside the Card Type list; an Attack pick keeps them.
+const KEPT_ATTACK_MANEUVERS = Object.freeze(['maneuver:smash', 'maneuver:ranged']);
+
+function setCardKind(def, kind) {
+  const keptManeuver = kind === 'attack' ? (def.tags || []).find((t) => KEPT_ATTACK_MANEUVERS.includes(t)) : null;
+  const keep = (def.tags || []).filter((t) => !t.startsWith('maneuver:') && t !== 'source:spell' && !t.startsWith('classification.'));
+  const maneuver = keptManeuver ? keptManeuver.slice('maneuver:'.length) : KIND_MANEUVERS[kind];
+  if (PLAIN_KINDS.includes(kind)) def.type = kind;
+  else if (kind === 'attack' || kind === 'sweep') def.type = 'attack';
+  else if (kind === 'skill' || kind === 'defend') def.type = 'skill';
+  else def.type = hasDamageEffect(def) ? 'attack' : 'skill';
+  def.tags = [...keep, ...(maneuver ? [`maneuver:${maneuver}`] : []), `classification.${def.type}`];
+  if (kind === 'spell') setCardSchools(def, { martial: false, magic: true });
+  // Leaving Spell for a martial play style makes the card Martial; Power, Curse and Status keep their school.
+  else if (!PLAIN_KINDS.includes(kind) && cardSchoolsOf(def).magic && !cardSchoolsOf(def).martial) setCardSchools(def, { martial: true, magic: false });
+}
+
+function cardSchoolsOf(def) {
+  const spell = (def.tags || []).includes('camp:spell');
+  return { martial: !spell, magic: spell || safeNum(def.magicShare, 0) > 0 };
+}
+
+function setCardSchools(def, { martial, magic }) {
+  const tags = (def.tags || []).filter((t) => !t.startsWith('camp:') && t !== 'source:spell');
+  const spellOnly = magic && !martial;
+  tags.push(spellOnly ? 'camp:spell' : 'camp:physical');
+  if (spellOnly) {
+    tags.push('source:spell');
+    def.damageSchool = def.damageSchool && def.damageSchool !== 'physical' ? def.damageSchool : 'magic';
+  } else if (!magic && def.damageSchool && def.damageSchool !== 'physical') def.damageSchool = 'physical';
+  if (magic && martial) def.magicShare = safeNum(def.magicShare, 0) > 0 && def.magicShare < 1 ? def.magicShare : HYBRID_MAGIC_SHARE;
+  else delete def.magicShare;
+  def.tags = tags;
+  // A spell plays by casting; leaving Magic drops casting back to a plain attack or skill.
+  if (spellOnly && !def.tags.includes('maneuver:casting') && !PLAIN_KINDS.includes(def.type)) setCardKind(def, 'spell');
+  else if (!spellOnly && def.tags.includes('maneuver:casting')) setCardKind(def, hasDamageEffect(def) ? 'attack' : 'skill');
+}
+
+// The scoring categories the studio card belongs to (ScoreCard's scoring.categories).
+function cardCategoriesOf(def) {
+  const camp = (def.tags || []).includes('camp:spell') ? 'spell' : 'physical';
+  return CardCategories({ type: def.type, tags: def.tags, camp, magicShare: safeNum(def.magicShare, 0) });
 }
 
 function getCardTarget(def) {
@@ -754,6 +815,50 @@ function staleTextTokens(def) {
   return mentioned.filter((token) => tokens[token] === undefined || tokens[token] === null);
 }
 
+// ---------------------------------------------------------------------------
+// Face numbers: the amount box holds what the card prints
+// ---------------------------------------------------------------------------
+// The profile's balance settings (effects.baseDamageMultiplier, physical and player scales, STR, Block
+// gain) turn an authored amount into a smaller printed one: Core prints 12 authored damage as 5. The
+// studio edits the printed number and stores the authored amount that prints it, so the card, the fight
+// and the CP all follow what was typed.
+const FACE_AMOUNT_SEARCH_MAX = 999;
+
+function faceAmountFor(def, effectIndex) {
+  const binding = computeTokenBindings(def.effects || []).find((b) => b.index === effectIndex && b.field === 'amount');
+  if (!binding) return null;
+  try {
+    const value = staticCardTokens(projectEditedCard(def), studioRegistries, refContextFor(def).run)[binding.token];
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function faceAmountAt(def, effectIndex, amount) {
+  const trial = clone(def);
+  trial.effects[effectIndex].amount = amount;
+  return faceAmountFor(trial, effectIndex);
+}
+
+// The smallest authored amount whose printed number reaches the typed one (the print only rises with the
+// amount). When rounding skips the typed number, the nearer of the two neighbours wins.
+function authoredAmountForFace(def, effectIndex, wanted) {
+  if (faceAmountAt(def, effectIndex, wanted) === null) return wanted;
+  let low = 0;
+  let high = FACE_AMOUNT_SEARCH_MAX;
+  if (faceAmountAt(def, effectIndex, high) < wanted) return high;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (faceAmountAt(def, effectIndex, middle) >= wanted) high = middle;
+    else low = middle + 1;
+  }
+  if (low === 0) return low;
+  const above = faceAmountAt(def, effectIndex, low);
+  const below = faceAmountAt(def, effectIndex, low - 1);
+  return wanted - below < above - wanted ? low - 1 : low;
+}
+
 function tokenLabel(token) {
   const root = token.split('.')[0];
   const status = registries.statuses?.has?.(root) ? registries.statuses.get(root) : null;
@@ -1036,10 +1141,12 @@ function renderInspector() {
   const textInput = document.getElementById('edit-text');
   if (textInput.value !== (def.textTemplate || '')) textInput.value = def.textTemplate || '';
   renderTextWarnings(def);
-  document.getElementById('edit-type').value = def.type || 'attack';
+  document.getElementById('edit-type').value = cardKindOf(def);
   document.getElementById('edit-class').value = def.class || 'colorless';
   document.getElementById('edit-rarity').value = def.rarity || 'common';
-  document.getElementById('edit-camp').value = (def.tags || []).includes('camp:spell') ? 'spell' : 'physical';
+  const schools = cardSchoolsOf(def);
+  document.getElementById('edit-martial').checked = schools.martial;
+  document.getElementById('edit-magic').checked = schools.magic;
   document.getElementById('edit-target').value = getCardTarget(def);
   document.getElementById('edit-sp').value = def.staminaCost ?? def.cost ?? 0;
   document.getElementById('edit-mp').value = def.manaCost ?? 0;
@@ -1086,7 +1193,7 @@ function renderInspector() {
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
       const amtCtrl = amtIsNum
-        ? `<input type="number" min="1" max="99" value="${esc(safeNum(eff.amount, 1))}" data-eff-amt="${idx}" />`
+        ? `<input type="number" min="1" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The number the card shows" />`
         : '<span class="studio-muted" title="Formula-computed value">formula</span>';
       row.innerHTML = `
         <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(eff.op)}</strong> ${infoButtonHtml()}</span>
@@ -1191,7 +1298,8 @@ function featureScoreRows(def) {
     }
     const keys = EFFECT_SCORE_KEYS[eff.op];
     const effectWeight = keys ? state.scoring.effects?.[keys.weight] : null;
-    const counted = eff.op === 'removeStatus' && eff.target !== 'self' ? 0 : COUNTED_ONCE_OPS.has(eff.op) ? 1 : (eff.amount ?? 1) * (eff.op === 'damage' ? (eff.hits || 1) : 1);
+    const amount = faceAmountFor(def, def.effects.indexOf(eff)) ?? eff.amount ?? 1;
+    const counted = eff.op === 'removeStatus' && eff.target !== 'self' ? 0 : COUNTED_ONCE_OPS.has(eff.op) ? 1 : amount * (eff.op === 'damage' ? (eff.hits || 1) : 1);
     rows.push({
       part: keys?.part ?? null,
       count: counted,
@@ -1331,10 +1439,15 @@ function cardPropertyScores(def, sc) {
     title: targetDelta ? 'Change against the same card hitting a single enemy' : 'Scores the same as hitting a single enemy',
   });
 
+  const categories = CardCategories(face);
   const neutralProperties = [
     ['class', capitalise(face.cls), (neutral) => { neutral.cls = 'colorless'; }],
-    ['type', capitalise(face.type), (neutral) => { neutral.type = 'skill'; }],
-    ['camp', capitalise(face.camp), (neutral) => { neutral.camp = 'physical'; }],
+    ['type', capitalise(categories.at(-1)), (neutral) => { neutral.type = 'skill'; neutral.categories = [...categories.slice(0, -1), 'skill']; }],
+    ['camp', categories.filter((c) => c === 'martial' || c === 'magic').map(capitalise).join(' + '), (neutral) => {
+      neutral.camp = 'physical';
+      neutral.magicShare = 0;
+      neutral.categories = ['martial', ...categories.filter((c) => !SCHOOL_CATEGORIES.includes(c))];
+    }],
   ];
   for (const [field, label, neutralize] of neutralProperties) {
     const delta = rawScoreDelta(face, neutralize);
@@ -1395,6 +1508,7 @@ function scoreMathTableHtml(sc) {
     if (k === 'damage') return `${sc.face.dmg} final (authored ${sc.face._meta?.authoredDmg ?? sc.face.dmg}) × ${S.effects.damage.weight}/${S.effects.damage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
     if (k === 'block') return `${sc.face.blk} final (authored ${sc.face._meta?.authoredBlk ?? sc.face.blk}) × ${S.effects.block.weight}/${S.effects.block.per}`;
     if (k === 'poise') return `${sc.face.poise} Poise × ${S.effects.poiseDamage.weight}/${S.effects.poiseDamage.per}${area > 1 ? ` × ${area} AoE` : ''}`;
+    if (k.startsWith('category:')) { const w = S.categories?.[k.slice(9)]; return w?.multiplier ? `×${w.weight} of positive score` : `${capitalise(k.slice(9))} flat`; }
     if (k === 'effect count') return `multi-effect bonus (+${S.effectCount?.weight ?? 5}/extra)`;
     if (S.keywords?.[k]) return S.keywords[k].flat !== undefined ? `flat ${S.keywords[k].flat}` : `×${S.keywords[k].multiplier}`;
     if (S.statuses?.[k]) return `status over ${S.model?.R || 3}R${area > 1 && S.statuses[k].target === 'enemy' ? ` × ${area} AoE` : ''}`;
@@ -1565,6 +1679,20 @@ function renderWeights({ shifts = true } = {}) {
       { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, base: R.rank?.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
       { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; } },
     ] },
+    { key: 'categories', title: 'Categories', entries: CATEGORY_KEYS.map((k) => {
+      const v = categoryWeight(state.scoring, k);
+      const bv = R.categories?.[k];
+      return {
+        id: k,
+        label: k === 'hybrid' ? 'Hybrid (Martial + Magic)' : capitalise(k),
+        val: v.weight,
+        base: bv?.weight,
+        step: v.multiplier ? 0.05 : 1,
+        set: (n) => { categoryWeight(state.scoring, k).weight = n; },
+        // Flat adds the weight; multiplier scales the positive score by it. Switching resets to the no-change value.
+        mult: { value: Boolean(v.multiplier), base: bv ? Boolean(bv.multiplier) : undefined, set: (on) => { Object.assign(categoryWeight(state.scoring, k), { multiplier: on, weight: on ? 1 : 0 }); } },
+      };
+    }) },
     { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => {
       if (k[0] === '$' || !v) return false;
       const bv = R.tags?.[k];
@@ -1606,24 +1734,26 @@ function renderWeights({ shifts = true } = {}) {
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
       const applied = entryIn(appliedGroups, g.key, r.id);
       const row = document.createElement('div');
-      row.className = 'weight-row' + (r.per ? ' has-per' : '');
+      row.className = 'weight-row' + (r.per || r.mult ? ' has-per' : '');
       const kind = WEIGHT_GROUP_KINDS[g.key];
       const info = kind ? describeFeature(kind, r.id) : null;
       const labelHtml = info
         ? `<span class="feature-label" title="${esc(featureTitleText(info))}">${esc(r.label)} ${infoButtonHtml()}</span>`
         : `<span>${esc(r.label)}</span>`;
       const resetTitle = `Reset to ${baseNum ?? numVal}${r.per ? ` per ${r.per.base ?? r.per.value}` : ''}`;
-      row.innerHTML = `${labelHtml}${perControlHtml(r)}<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} weight`)}" /><button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button>`;
+      row.innerHTML = `${labelHtml}${perControlHtml(r)}${multControlHtml(r)}<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} weight`)}" /><button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button>`;
       const input = row.querySelector('.weight-input');
       const perInput = row.querySelector('.weight-per');
+      const multInput = row.querySelector('.weight-mult');
       const resetBtn = row.querySelector('.weight-reset-btn');
       // Staged edits update this row's marks in place, so focus and scroll stay where the owner left them.
       const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
       const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
+      const multDiffers = (other) => Boolean(multInput) && other !== undefined && multInput.checked !== other;
       const markRow = () => {
         const value = Number(input.value);
-        const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base);
-        const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value);
+        const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base);
+        const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value);
         row.classList.toggle('is-modified', modified);
         row.classList.toggle('is-pending', pending);
         row.title = pending ? 'Staged: Apply to rescore the cards' : '';
@@ -1634,6 +1764,7 @@ function renderWeights({ shifts = true } = {}) {
         const stored = entryIn(withScoring(stagedScoring() || state.scoring, buildGroups), g.key, r.id);
         if (stored) input.value = String(safeNum(stored.val, 0));
         if (stored?.per && perInput) perInput.value = String(stored.per.value);
+        if (stored?.mult && multInput) multInput.checked = stored.mult.value;
         markRow();
       };
       markRow();
@@ -1649,12 +1780,20 @@ function renderWeights({ shifts = true } = {}) {
         applyWeightEdit(() => r.per.set(next));
         showStored();
       });
+      multInput?.addEventListener('change', () => {
+        applyWeightEdit(() => r.mult.set(multInput.checked));
+        showStored();
+      });
       resetBtn.addEventListener('click', () => {
-        const perChanged = perDiffers(r.per?.base);
+        const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base);
         if (baseNum === undefined && !perChanged) return;
+        // Read the row's live controls: staged edits do not redraw it, so r.per / r.mult values can be stale.
+        const resetMult = multDiffers(r.mult?.base);
+        const resetPer = perDiffers(r.per?.base);
         applyWeightEdit(() => {
+          if (resetMult) r.mult.set(r.mult.base);
           if (baseNum !== undefined) r.set(baseNum);
-          if (perChanged) r.per.set(r.per.base);
+          if (resetPer) r.per.set(r.per.base);
         });
         showStored();
       });
@@ -1667,6 +1806,22 @@ function renderWeights({ shifts = true } = {}) {
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
+}
+
+// Score categories (ScoreCard's scoring.categories): Martial, Magic and each Card Type.
+const CATEGORY_KEYS = Object.freeze([...SCHOOL_CATEGORIES, ...CARD_KINDS]);
+
+function categoryWeight(scoring, key) {
+  scoring.categories ||= {};
+  // A category the table lacks starts at the repo's weight (Hybrid +10), not at 0.
+  scoring.categories[key] ||= clone(state.repoScoring?.categories?.[key] || { weight: 0, multiplier: false });
+  return scoring.categories[key];
+}
+
+// "× mult" switch for a category weight: off adds the weight flat, on multiplies the positive score.
+function multControlHtml(entry) {
+  if (!entry.mult) return '';
+  return `<label class="weight-per-label" title="Off: add the weight. On: multiply the card's positive score by it."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiplier</label>`;
 }
 
 // The values a tag's per can take: score once per action, or once per hit.
@@ -2361,7 +2516,6 @@ function populateCardOptions() {
   const rarities = distinct('rarity', 'common');
   fillSelect(document.getElementById('filter-type'), types, 'All Types');
   fillSelect(document.getElementById('filter-class'), classes, 'All Classes');
-  fillSelect(document.getElementById('edit-type'), types);
   fillSelect(document.getElementById('edit-class'), classes);
   fillSelect(document.getElementById('edit-rarity'), rarities);
   const poolText = `Core pool · ${state.cards.length} cards`;
@@ -2747,13 +2901,17 @@ function wireEvents() {
   };
   resizer.addEventListener('pointerup', stopResizerDrag);
   resizer.addEventListener('pointercancel', stopResizerDrag);
-  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => { d.type = e.target.value; }));
+  document.getElementById('edit-type').addEventListener('change', (e) => mutateSelectedCard((d) => setCardKind(d, e.target.value)));
   document.getElementById('edit-class').addEventListener('change', (e) => mutateSelectedCard((d) => { d.class = e.target.value; }));
   document.getElementById('edit-rarity').addEventListener('change', (e) => mutateSelectedCard((d) => { d.rarity = e.target.value; }));
-  document.getElementById('edit-camp').addEventListener('change', (e) => mutateSelectedCard((d) => {
-    d.tags = (d.tags || []).filter((t) => !t.startsWith('camp:'));
-    d.tags.push(`camp:${e.target.value}`);
-  }));
+  // Martial and Magic: at least one stays ticked; both is a hybrid hit.
+  const schoolBoxes = ['edit-martial', 'edit-magic'].map((id) => document.getElementById(id));
+  for (const box of schoolBoxes) {
+    box.addEventListener('change', () => {
+      if (!schoolBoxes.some((b) => b.checked)) box.checked = true;
+      mutateSelectedCard((d) => setCardSchools(d, { martial: schoolBoxes[0].checked, magic: schoolBoxes[1].checked }));
+    });
+  }
   document.getElementById('edit-target').addEventListener('change', (e) => mutateSelectedCard((d) => setCardTarget(d, e.target.value)));
   // Cost inputs rescore live on every keystroke or spinner tick; the tile and preview refresh on change.
   const costBurst = createEditBurst();
@@ -2827,7 +2985,9 @@ function wireEvents() {
   const featureList = document.getElementById('active-features-list');
   const applyFeatureNumber = (target) => {
     if (target.dataset.effAmt !== undefined) {
-      applyLiveCardEdit(featureBurst, (d) => { d.effects[Number(target.dataset.effAmt)].amount = Number(target.value) || 0; });
+      const effectIndex = Number(target.dataset.effAmt);
+      const wanted = Number(target.value) || 0;
+      applyLiveCardEdit(featureBurst, (d) => { d.effects[effectIndex].amount = authoredAmountForFace(d, effectIndex, wanted); });
       return true;
     }
     if (target.dataset.effStacks !== undefined) {
@@ -3115,6 +3275,11 @@ async function boot() {
       const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
         .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
       state.scoring = draft.scoring;
+      // A draft saved before a category existed takes the repo's weight for it (Hybrid +10 reaches old drafts).
+      for (const [key, weight] of Object.entries(state.repoScoring.categories || {})) {
+        if (key === 'rule' || state.scoring.categories?.[key]) continue;
+        (state.scoring.categories ||= {})[key] = clone(weight);
+      }
       if (draft.pendingScoring && draft.pendingBase && ValidateScoringConfig(draft.pendingScoring).length === 0) {
         state.pendingScoring = draft.pendingScoring;
         state.pendingBase = draft.pendingBase;

@@ -146,9 +146,11 @@
                 <select id="edit-type">
                   <option value="attack">Attack</option>
                   <option value="skill">Skill</option>
+                  <option value="spell">Spell</option>
+                  <option value="sweep">Sweep</option>
+                  <option value="counter">Counter</option>
+                  <option value="defend">Defend</option>
                   <option value="power">Power</option>
-                  <option value="guard">Guard</option>
-                  <option value="strike">Strike</option>
                   <option value="curse">Curse</option>
                   <option value="status">Status</option>
                 </select>
@@ -171,12 +173,12 @@
                   <option value="boss">Boss</option>
                 </select>
               </label>
-              <label><span class="cost-label">Camp <span id="field-score-camp" class="feature-score"></span></span>
-                <select id="edit-camp">
-                  <option value="physical">Physical</option>
-                  <option value="spell">Spell</option>
-                </select>
-              </label>
+              <div class="studio-field"><span class="cost-label">School <span id="field-score-camp" class="feature-score"></span></span>
+                <div class="school-checks">
+                  <label class="studio-check"><input id="edit-martial" type="checkbox" /> Martial</label>
+                  <label class="studio-check"><input id="edit-magic" type="checkbox" /> Magic</label>
+                </div>
+              </div>
               <label><span class="cost-label">Target <span id="field-score-target" class="feature-score"></span></span>
                 <select id="edit-target">
                   <option value="enemy">Single Enemy</option>
@@ -259,6 +261,7 @@
           <option value="keywords">Keywords</option>
           <option value="rarity">Rarity Discounts</option>
           <option value="rank">Rank Bands</option>
+          <option value="categories">Categories</option>
           <option value="tags">Weighted Tags</option>
           <option value="naming">Naming words</option>
         </select>
