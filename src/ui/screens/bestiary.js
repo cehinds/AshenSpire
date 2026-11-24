@@ -1,58 +1,78 @@
 import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { renderEnemyKnowledge } from '../components/enemyKnowledge.js';
-import { el, button, pane, options, optionCard, pageDoor, statusText, titleS } from '../kit/index.js';
-import { workspaceFrame, land } from '../components/w1Workspace.js';
+import { MountKnowledgeDoor } from '../components/knowledgeDoor.js';
+import { optionCard, titleS } from '../kit/index.js';
 import { t } from '../strings.js';
-import { MarkSelected } from '../selection.js';
 
-export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemyId = null,
-  combatExpansionVersion = 2, stanceRules = null }) {
-  let closed = false;
-  function leave() {
-    if (closed) return;
-    closed = true;
-    app.removeEventListener('keydown', onKey);
-    onBack?.();
-  }
-  function onKey(event) {
-    if (event.key === 'Escape' && !event.defaultPrevented && !document.querySelector('[aria-modal="true"]')) {
-      event.preventDefault(); leave();
-    }
-  }
-  const learned = meta.enemyKnowledge?.enemies || {};
-  const definitions = registries.enemies.all().filter(def => Object.hasOwn(learned, def.id))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  // Unencountered definitions are not projected into DOM/accessible labels.
-  const views = definitions.map(def => projectEnemyKnowledge(def, learned[def.id], {
-    // Weaknesses are discovery-gated (SPEC 5.3) and the ledger lives on the run, which the title-screen bestiary has no
-    // access to: it lists none rather than spoil them.
-    registries, ratingsRules: registries.balance?.combatRatings || null, combatExpansionVersion, stanceRules, weaknesses: [] }));
-  let selectedId = views.find(view => view.id === initialEnemyId)?.id || views[0]?.id || null;
-  const detail = el('div', { class: 'cp-detail bestiary-detail', role: 'region', 'aria-label': t('knowledge.details') });
-  const list = options([], { class: 'cp-grid cp-scroll bestiary-list', 'aria-label': t('knowledge.encountered') });
-  const back = button({ label: t('common.back'), role: 'exit', attrs: { 'data-back': '' } });
-  const door = workspaceFrame(pageDoor({
-    eyebrow: t('knowledge.heading'), title: t('knowledge.bestiary'), size: 'xl',
-    body: pane({ children: el('div', { class: 'w1-split' }, [el('div', { class: 'cp-list' }, list), detail]) }),
-    bodyClassName: 'compendium-body', primary: back, footSize: 'short', onClose: leave, closeLabel: t('knowledge.close'),
-  }));
-  function paintDetail() {
-    const view = views.find(entry => entry.id === selectedId);
-    MarkSelected(list.children, control => control.dataset.member === selectedId);
-    detail.replaceChildren(...(view ? [titleS(view.name), renderEnemyKnowledge(view)] : [statusText(t('knowledge.empty.help'))]));
-  }
-  list.replaceChildren(...views.map(view => {
-    const control = optionCard({ name: view.name, meta: t('knowledge.progress', { label: view.progress.label, points: view.progress.points, target: view.progress.target }),
-      selected: view.id === selectedId, attrs: { dataset: { member: view.id }, 'aria-controls': 'bestiary-facts' } });
-    control.addEventListener('click', () => { selectedId = view.id; paintDetail(); });
-    return control;
-  }));
-  if (!views.length) list.append(statusText(t('knowledge.empty')));
-  detail.id = 'bestiary-facts';
-  paintDetail();
-  app.replaceChildren(el('div', { class: 'screen compendium bestiary', dataset: { surface: 'bestiary' } }, door));
-  back.addEventListener('click', leave);
-  app.addEventListener('keydown', onKey);
-  land(list.querySelector('button') || back);
-  return () => { closed = true; app.removeEventListener('keydown', onKey); };
+function readLearnedDefinitions(registries, learned)
+{
+    return registries.enemies.all()
+        .filter((definition) => Object.hasOwn(learned, definition.id))
+        .sort((first, second) => first.name.localeCompare(second.name));
+}
+
+// Weaknesses are discovery-gated (SPEC 5.3) and their ledger lives on the run, so the title-screen
+// Bestiary lists none rather than spoil them. Unencountered enemies are never projected.
+function projectLearnedEnemies(registries, learned, { combatExpansionVersion, stanceRules })
+{
+    return readLearnedDefinitions(registries, learned).map((definition) =>
+        projectEnemyKnowledge(
+            definition,
+            learned[definition.id],
+            {
+                registries,
+                ratingsRules: registries.balance?.combatRatings || null,
+                combatExpansionVersion,
+                stanceRules,
+                weaknesses: [],
+            },
+        )
+    );
+}
+
+function buildEnemyEntry(view)
+{
+    return optionCard({
+        name: view.name,
+        meta: t('knowledge.progress', {
+            label: view.progress.label,
+            points: view.progress.points,
+            target: view.progress.target,
+        }),
+        attrs: { dataset: { member: view.id } },
+    });
+}
+
+function renderEnemyDetail(view)
+{
+    return [
+        titleS(view.name),
+        renderEnemyKnowledge(view),
+    ];
+}
+
+export function mountBestiary(
+    app,
+    {
+        registries,
+        meta = {},
+        onBack,
+        initialEnemyId = null,
+        combatExpansionVersion = 2,
+        stanceRules = null,
+    },
+)
+{
+    const learned = meta.enemyKnowledge?.enemies || {};
+    return MountKnowledgeDoor(app, {
+        screen: 'bestiary',
+        entries: projectLearnedEnemies(registries, learned, {
+            combatExpansionVersion,
+            stanceRules,
+        }),
+        selectedId: initialEnemyId,
+        buildEntry: buildEnemyEntry,
+        renderDetail: renderEnemyDetail,
+        onBack,
+    });
 }
