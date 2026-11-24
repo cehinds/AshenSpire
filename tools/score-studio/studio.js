@@ -194,11 +194,10 @@ function measureFinalValues(def) {
     else if (e.op === 'block' || e.op === 'ward') measured.authoredBlk += amt;
   }
   try {
+    // SP and MP stay the costs typed in Card Basics. The reference fight reprices an edited card (the multi-hit
+    // SP floor turned Feint's 0 SP into 3; a stance cut kept Brace at 0 SP whatever was typed), so the score
+    // charged for a cost the chip did not show. Every shipped Core card measures its authored cost anyway.
     const prev = previewCard(combat, probeId, enemy.id);
-    if (prev?.costs) {
-      if (Number.isFinite(prev.costs.stamina)) measured.sp = prev.costs.stamina;
-      if (Number.isFinite(prev.costs.mana)) measured.mp = prev.costs.mana;
-    }
     if (prev && Array.isArray(prev.values) && prev.values.length) {
       measured.usedPreview = true;
       for (const v of prev.values) {
@@ -817,19 +816,26 @@ function staleTextTokens(def) {
 }
 
 // ---------------------------------------------------------------------------
-// Face numbers: the amount box holds what the card prints
+// Face numbers: the amount box holds the card's own number
 // ---------------------------------------------------------------------------
-// The profile's balance settings (effects.baseDamageMultiplier, physical and player scales, STR, Block
-// gain) turn an authored amount into a smaller printed one: Core prints 12 authored damage as 5. The
-// studio edits the printed number and stores the authored amount that prints it, so the card, the fight
-// and the CP all follow what was typed.
+// The profile's balance settings (effects.baseDamageMultiplier, physical and player scales, Block gain)
+// turn an authored amount into a smaller printed one: Core prints 12 authored damage as 5. The studio
+// edits that printed number and stores the authored amount that prints it.
+// Owner 2026-11-24: the box is the card's own number, before the hero's bonus. The reference hero's
+// attributes and always-on gear (a Starseer's INT and focus) made Arcane Spark print 3 at any amount up
+// to 1, so 0, 1 and 2 could not be typed. The card face still shows the hero's total.
 const FACE_AMOUNT_SEARCH_MAX = 999;
+
+// The reference run with no hero bonus: no attributes, no always-on gear.
+function cardOwnFaceRules(def) {
+  return { ...refContextFor(def).run, faceAttributes: {}, gearRules: [] };
+}
 
 function faceAmountFor(def, effectIndex) {
   const binding = computeTokenBindings(def.effects || []).find((b) => b.index === effectIndex && b.field === 'amount');
   if (!binding) return null;
   try {
-    const value = staticCardTokens(projectEditedCard(def), studioRegistries, refContextFor(def).run)[binding.token];
+    const value = staticCardTokens(projectEditedCard(def), studioRegistries, cardOwnFaceRules(def))[binding.token];
     return Number.isFinite(value) ? value : null;
   } catch {
     return null;
@@ -1165,7 +1171,7 @@ function renderInspector() {
   // Active features list (only what is on this card). Each row carries a score chip.
   const list = document.getElementById('active-features-list');
   list.innerHTML = '';
-  const chips = featureScoreChips(featureScoreRows(def), sc.parts || {});
+  const chips = featureScoreChips(featureScoreRows(def, sc.face), sc.parts || {});
   let rowIndex = 0;
   const chipFor = () => chipHtml(chips[rowIndex++]);
 
@@ -1194,7 +1200,7 @@ function renderInspector() {
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
       const amtCtrl = amtIsNum
-        ? `<input type="number" min="1" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The number the card shows" />`
+        ? `<input type="number" min="0" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The card's own number, before the hero's bonus" />`
         : '<span class="studio-muted" title="Formula-computed value">formula</span>';
       row.innerHTML = `
         <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(eff.op)}</strong> ${infoButtonHtml()}</span>
@@ -1277,8 +1283,12 @@ function scoreClass(value) {
   return rounded > 0 ? 'is-pos' : rounded < 0 ? 'is-neg' : 'is-zero';
 }
 
+// Score parts whose amount the reference fight measures with the hero's bonus, and the face field holding it.
+const HERO_SCORED_COUNTS = Object.freeze({ damage: 'dmg', block: 'blk' });
+
 // One entry per Active Features row, in render order: which part it feeds and how to explain it.
-function featureScoreRows(def) {
+// `face` (the scored face) lets the damage and Block chips explain the hero's total behind their score.
+function featureScoreRows(def, face = null) {
   const rows = [];
   for (const eff of def.effects || []) {
     if (eff.op === 'loseHp') continue;
@@ -1311,6 +1321,13 @@ function featureScoreRows(def) {
   }
   for (const kw of def.keywords || []) rows.push({ part: kw, count: null });
   for (const tag of shownTagsOf(def)) rows.push({ part: tag, count: null });
+  // The count is the card's own number; the score reads the fight's number, hero's bonus included.
+  if (face) {
+    for (const [part, scored] of Object.entries(HERO_SCORED_COUNTS)) {
+      const first = rows.find((r) => r.part === part);
+      if (first && Number.isFinite(face[scored])) first.scoredCount = face[scored];
+    }
+  }
   return rows;
 }
 
@@ -1332,12 +1349,16 @@ function scoreChipTitle(row, rows, total) {
   if (row.count === null || row.unitWeight === undefined) return `${totalText[0].toUpperCase()}${totalText.slice(1)}`;
   if (row.exact) return `${row.count} stacks = ${totalText} (grows faster per stack)`;
   const sameRows = rows.filter((r) => r.part === row.part);
-  const count = sameRows.reduce((sum, r) => sum + r.count, 0);
-  const expected = sameRows.reduce((sum, r) => sum + r.sign * r.unitWeight * r.count / r.per, 0);
+  const ownCount = sameRows.reduce((sum, r) => sum + r.count, 0);
+  const count = row.scoredCount ?? ownCount;
+  const expected = row.scoredCount !== undefined
+    ? row.sign * row.unitWeight * count / row.per
+    : sameRows.reduce((sum, r) => sum + r.sign * r.unitWeight * r.count / r.per, 0);
   const capped = row.capAt && count > row.capAt;
   const adjusted = Math.abs(expected - total) > SCORE_MATCH_TOLERANCE;
   const note = capped ? ' (capped)' : adjusted ? ' (adjusted by targeting)' : '';
-  return `${row.unitWeight} per ${row.per} × ${count} = ${totalText}${note}`;
+  const heroNote = count !== ownCount ? ` (${ownCount} on the card, ${count} with the hero's bonus)` : '';
+  return `${row.unitWeight} per ${row.per} × ${count} = ${totalText}${note}${heroNote}`;
 }
 
 function chipHtml(chip) {
@@ -1567,7 +1588,7 @@ function refreshInspectorScoreInPlace(def) {
   renderScoreSummary(def, sc);
   renderScoreParts(def, sc);
   renderCostChips(def, sc);
-  const chips = featureScoreChips(featureScoreRows(def), sc.parts || {});
+  const chips = featureScoreChips(featureScoreRows(def, sc.face), sc.parts || {});
   const rowsEls = [...document.querySelectorAll('#active-features-list .feature-row')];
   rowsEls.forEach((rowEl, index) => {
     const oldChip = rowEl.querySelector('.feature-score');
