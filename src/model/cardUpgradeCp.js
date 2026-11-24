@@ -1,0 +1,122 @@
+import { BaseFace, ScoreCard, CombatPower, RankOf } from './combatPower.js';
+import { GetActiveScoring } from './activeScoring.js';
+import { VisibleCardRank } from './cardRank.js';
+import { applyUpgradeSteps, upgradeStepsOf } from './cardUpgrade.js';
+
+const RARITY_LADDER = Object.freeze(['common', 'uncommon', 'rare']);
+const num = (v, fallback = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
+
+/**
+ * Convert a resolved card definition into a `ScoreCard` face for CP/rank evaluation.
+ */
+export function CardDefinitionToScoreFace(def) {
+  const face = BaseFace();
+  if (!def) return face;
+  const tags = [...(def.cardTags || def.tags || [])];
+  const camp = def.camp || (tags.includes('camp:spell') || tags.includes('source:spell') ? 'spell' : 'physical');
+  face.name = def.name || '';
+  face.cls = def.class || 'colorless';
+  face.rarity = RARITY_LADDER.includes(def.rarity) ? def.rarity : 'common';
+  face.camp = camp;
+  face.type = def.type || 'attack';
+  face.sp = num(def.staminaCost ?? def.cost, def.cost === 'X' ? 1 : 0);
+  face.mp = num(def.manaCost, 0);
+  face.kw = [...(def.keywords || [])];
+  face.tags = tags;
+  face.magicShare = num(def.magicShare, 0);
+
+  const statuses = [];
+  for (const eff of def.effects || []) {
+    if (!eff || typeof eff !== 'object') continue;
+    const amount = num(eff.amount, 0);
+    switch (eff.op) {
+      case 'damage':
+        face.dmg += amount * Math.max(1, num(eff.hits, 1));
+        face.hits = Math.max(face.hits, num(eff.hits, 1));
+        break;
+      case 'block':
+        face.blk += amount;
+        break;
+      case 'gainWard':
+        face.blk += amount * 5;
+        break;
+      case 'gainBarrier':
+        face.blk += amount * 5;
+        break;
+      case 'poiseDamage':
+        face.poise += amount;
+        break;
+      case 'applyStatus':
+        if (typeof eff.status === 'string') {
+          statuses.push([eff.status, num(eff.stacks, 1), eff.target === 'self' || eff.target === 'ally' ? 'self' : 'enemy']);
+        }
+        break;
+      case 'changeAttribute':
+        if (eff.target === 'self' && typeof eff.attribute === 'string') {
+          statuses.push([eff.attribute, num(eff.amount, 1), 'self']);
+        }
+        break;
+      case 'draw': face.draw += num(eff.amount, 1); break;
+      case 'heal': face.heal += amount; break;
+      case 'loseHp': face.loseHp += amount; break;
+      case 'discard': face.discard += num(eff.amount, 1); break;
+      case 'restoreStamina': face.restoreSp += num(eff.amount, 1); break;
+      case 'restoreMana': face.restoreMp += num(eff.amount, 1); break;
+      case 'removeStatus': face.cleanse += num(eff.amount, 1); break;
+      case 'gainCounterStacks': face.counter += num(eff.amount, 1); break;
+      case 'applyReflect': face.reflect += num(eff.amount, 1); break;
+      case 'pullEnemy': face.pull += 1; break;
+      case 'moveEngagement': face.move += 1; break;
+      case 'retain': face.holdOne += num(eff.amount, 1); break;
+      case 'exhaust': face.cull += num(eff.amount, 1); break;
+      case 'shuffleDiscardIntoDraw': face.shuffle += 1; break;
+      case 'addCard':
+        if (eff.card === def.id) face.copy += num(eff.count, 1);
+        break;
+      case 'restorePoise': face.blk += amount; break;
+    }
+  }
+  face.statuses = statuses;
+  if (def.runAttributeBonus) {
+    face.attr += Object.values(def.runAttributeBonus).reduce((sum, n) => sum + num(n, 0), 0);
+  }
+  return face;
+}
+
+/**
+ * Evaluate whether an upgrade step keeps the card within its rank (possibly by bumping rarity up to `rare`)
+ * or within a rank accessible to the player (`max(cardRank, playerLevel)`).
+ */
+export function EvaluateUpgradeStepCp({ baseDef, currentDef, instance = null, step, playerLevel = 1, scoring = GetActiveScoring() }) {
+  if (!baseDef || !step) return { allowed: true };
+  const applied = upgradeStepsOf(instance || {});
+  const afterDef = applyUpgradeSteps(baseDef, [...applied, step]);
+  const rawAfter = ScoreCard(CardDefinitionToScoreFace(afterDef), scoring).raw;
+  const currentRarity = instance?.rarityOverride || currentDef?.rarity || baseDef.rarity || 'common';
+  const startIdx = Math.max(0, RARITY_LADDER.indexOf(currentRarity));
+  const cardRank = VisibleCardRank(instance || baseDef);
+  const accessibleRank = Math.max(1, Math.min(scoring?.rank?.maxRank || 10, Math.trunc(Number(playerLevel) || 1)));
+  const maxAllowedRank = Math.max(cardRank, accessibleRank);
+
+  // Pass 1: Check if the upgraded card stays within its current rank at current or higher rarity (up to rare).
+  for (let i = startIdx; i < RARITY_LADDER.length; i++) {
+    const rarity = RARITY_LADDER[i];
+    const cp = CombatPower(rawAfter, rarity, scoring);
+    const rank = RankOf(cp, scoring);
+    if (rank <= cardRank) {
+      return { allowed: true, rarity, rank: cardRank, raw: rawAfter, cp };
+    }
+  }
+
+  // Pass 2: Check if the resulting rank is accessible to the player at current or higher rarity.
+  for (let i = startIdx; i < RARITY_LADDER.length; i++) {
+    const rarity = RARITY_LADDER[i];
+    const cp = CombatPower(rawAfter, rarity, scoring);
+    const rank = RankOf(cp, scoring);
+    if (rank <= maxAllowedRank) {
+      return { allowed: true, rarity, rank, raw: rawAfter, cp };
+    }
+  }
+
+  return { allowed: false, raw: rawAfter };
+}

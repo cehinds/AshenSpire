@@ -13,7 +13,7 @@
 //   neutral    the player draws 1 extra card at its next turn start   NeutralExtraDraw (startPlayerTurn)
 // Stance weaknesses (owner 2026-11-17, theme B): a target in Prepared takes x1.25 from melee hits, one in Idle (no stance) x1.25 from every hit.
 //              StanceWeaknessMultiplier (profileDamageReceipt, an offense stage)
-import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, ReceiptPoiseLoss } from '../model/fixCoreMechanics.js';
 import { FightMagicShare } from '../model/elementIdentityRules.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { stanceOf } from '../model/stanceRules.js';
@@ -124,7 +124,7 @@ export function ApplyDefendPoiseFloor(ctx, target, carrier, receipt) {
   const floor = DefendPoiseFloor(ctx, target, carrier, receipt.defenseStance);
   const pool = Math.max(0, Math.floor(target?.persistentPoise?.value || 0));
   const keep = Math.min(pool, floor);
-  const left = pool - (receipt.poiseMitigated || 0) - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0);
+  const left = pool - ReceiptPoiseLoss(receipt);
   if (!(keep > 0) || left >= keep) return receipt;
   receipt.poiseSpared = (receipt.poiseSpared || 0) + (keep - left);
   receipt.defendPoiseFloor = keep;

@@ -5,12 +5,14 @@
   "weaponTypes": {
     "dagger": {
       "label": "Dagger",
+      "poiseDamage": 1,
       "mods": [
         "zeroCost.cardMultiHit=+1"
       ]
     },
     "sword": {
       "label": "Sword",
+      "poiseDamage": 2,
       "mods": [
         "attack.cardDamage=+1",
         "sweep.cardDamage=+1"
@@ -18,6 +20,7 @@
     },
     "rapier": {
       "label": "Rapier",
+      "poiseDamage": 1,
       "mods": [
         "anyAttack.cardPierce=+1",
         "end@stance:defend.turnCounter=+1",
@@ -26,6 +29,7 @@
     },
     "greatsword": {
       "label": "Greatsword",
+      "poiseDamage": 3,
       "mods": [
         "self.twoHanded=+1",
         "smash.cardAddStr=+1"
@@ -33,6 +37,7 @@
     },
     "spear": {
       "label": "Spear, scythe or halberd",
+      "poiseDamage": 2,
       "mods": [
         "anyAttack.cardReach=+1",
         "sweep.cardDamage=+1",
@@ -41,6 +46,7 @@
     },
     "hammer": {
       "label": "Hammer",
+      "poiseDamage": 3,
       "mods": [
         "anyAttack.cardPoise=+1",
         "smash.hitVulnerable=+1",
@@ -49,6 +55,7 @@
     },
     "axe": {
       "label": "Axe",
+      "poiseDamage": 2,
       "mods": [
         "anyAttack.playStrength=+1",
         "sweep.cardDamage=+1"
@@ -56,6 +63,7 @@
     },
     "katana": {
       "label": "Katana",
+      "poiseDamage": 2,
       "mods": [
         "attack.cardAddDex=+1",
         "sweep.cardAddDex=+1",
@@ -65,12 +73,14 @@
     },
     "twinblade": {
       "label": "Twinblade",
+      "poiseDamage": 2,
       "mods": [
         "anyAttack.cardMultiHit=+1"
       ]
     },
     "bow": {
       "label": "Bow",
+      "poiseDamage": 2,
       "mods": [
         "anyAttack.cardReach=+1",
         "anyAttack@target:retreating.cardAddDex=+1",
@@ -82,6 +92,7 @@
     },
     "crossbow": {
       "label": "Crossbow",
+      "poiseDamage": 2,
       "mods": [
         "anyAttack.cardReach=+1",
         "anyAttack.cardPierce=+2",
@@ -90,6 +101,7 @@
     },
     "mace": {
       "label": "Mace or flail",
+      "poiseDamage": 3,
       "mods": [
         "anyAttack.cardIgnoreBlock=+1",
         "smash.cardPoise=+1"
@@ -97,6 +109,7 @@
     },
     "whip": {
       "label": "Whip",
+      "poiseDamage": 1,
       "mods": [
         "anyAttack.cardReach=+1",
         "anyAttack.hitRemoveRetreat=+1"
@@ -104,6 +117,7 @@
     },
     "claws": {
       "label": "Claws or fists",
+      "poiseDamage": 1,
       "mods": [
         "sweep.cardMultiHit=+1",
         "anyAttack.cardCost=-1",
@@ -112,6 +126,7 @@
     },
     "shield": {
       "label": "Shield",
+      "poiseDamage": 2,
       "mods": [
         "self.statPoise=+1",
         "end.turnBlock=+2"
@@ -119,6 +134,7 @@
     },
     "staff": {
       "label": "Staff",
+      "poiseDamage": 2,
       "mods": [
         "anyAttack.cardReach=+1",
         "spell@stance:prepared.cardMana=-1",
@@ -127,6 +143,7 @@
     },
     "sceptre": {
       "label": "Sceptre",
+      "poiseDamage": 2,
       "mods": [
         "spell.cardDamage=+1",
         "spell@stance:prepared.cardMana=-1",
@@ -135,6 +152,7 @@
     },
     "tome": {
       "label": "Tome",
+      "poiseDamage": 1,
       "mods": [
         "spell@first:turn.playDraw=+1",
         "start.turnWard=+2"
@@ -142,16 +160,19 @@
     },
     "talisman": {
       "label": "Talisman",
+      "poiseDamage": 1,
       "mods": [
         "start.turnWard=+1"
       ]
     },
     "lightSource": {
       "label": "Light source",
+      "poiseDamage": 1,
       "mods": []
     },
     "chime": {
       "label": "Chime",
+      "poiseDamage": 1,
       "mods": []
     }
   },

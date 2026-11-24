@@ -1,0 +1,43 @@
+{
+  "components": {
+    "base": {
+      "screenClassName": "screen compendium knowledge-door",
+      "titleSize": "xl",
+      "footSize": "short",
+      "bodyClassName": "compendium-body",
+      "listClassName": "cp-grid cp-scroll",
+      "detailClassName": "cp-detail",
+      "detailLive": "polite",
+      "compactListShare": 1,
+      "compactDetailShare": 1
+    },
+    "bestiary": {
+      "extends": "base",
+      "surface": "bestiary",
+      "screenClassName": "screen compendium knowledge-door bestiary",
+      "eyebrowKey": "knowledge.heading",
+      "titleKey": "knowledge.bestiary",
+      "closeLabelKey": "knowledge.close",
+      "backId": "bestiary-back",
+      "listClassName": "cp-grid cp-scroll bestiary-list",
+      "listLabelKey": "knowledge.encountered",
+      "listEmptyKey": "knowledge.empty",
+      "detailClassName": "cp-detail bestiary-detail",
+      "detailId": "bestiary-facts",
+      "detailLabelKey": "knowledge.details",
+      "detailEmptyKey": "knowledge.empty.help",
+      "compactListShare": 7,
+      "compactDetailShare": 13
+    },
+    "compendium": {
+      "extends": "base",
+      "surface": "compendium",
+      "eyebrowKey": "compendium.eyebrow",
+      "titleKey": "compendium.title",
+      "closeLabelKey": "compendium.close",
+      "backId": "cp-back",
+      "listClassName": "grid cp-grid cp-scroll",
+      "detailId": "cp-facts"
+    }
+  }
+}
