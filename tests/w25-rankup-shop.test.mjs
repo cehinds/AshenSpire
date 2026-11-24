@@ -146,8 +146,29 @@ test('the rank-up pick names each card its own price', async () => {
     const [plain, ranked] = RankUpCandidates(registries, run);
     ranked.rank = 1;
     FillUpgradeSlots(run, [ranked]);
+    run.cinders = 5000;
     const rows = RankUpCardRows(registries, run, 240);
     assert.match(rows.find((r) => r.id === plain.instanceId).text, /240 cinders/);
     assert.match(rows.find((r) => r.id === ranked.instanceId).text, /480 cinders/);
+  });
+});
+
+// Review fix (2026-11-23): a card whose rank-up price is past the purse is disabled before the pick, with the shop's line.
+test('the rank-up pick disables a card the player cannot afford, with "Not enough cinders."', async () => {
+  const { withKitDom } = await import('./helpers/dom.mjs');
+  await withKitDom(async () => {
+    const { RankUpCardRows } = await import('../src/ui/components/rankUpCardModal.js');
+    const run = newRun(21);
+    const [plain, ranked] = RankUpCandidates(registries, run);
+    ranked.rank = 1;
+    FillUpgradeSlots(run, [plain, ranked]);
+    run.cinders = 300; // Rank 1 costs 240, Rank 2 costs 480
+    const rows = RankUpCardRows(registries, run, 240);
+    const row = (card) => rows.find((r) => r.id === card.instanceId);
+    assert.deepEqual([row(plain).disabled, row(ranked).disabled], [false, true]);
+    assert.equal(row(ranked).text, 'Not enough cinders.');
+    assert.match(row(plain).text, /240 cinders/);
+    run.cinders = 480;
+    assert.equal(RankUpCardRows(registries, run, 240).find((r) => r.id === ranked.instanceId).disabled, false, 'exactly enough is enough');
   });
 });
