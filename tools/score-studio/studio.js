@@ -1170,7 +1170,7 @@ function renderInspector() {
   // Active features list (only what is on this card). Each row carries a score chip.
   const list = document.getElementById('active-features-list');
   list.innerHTML = '';
-  const chips = featureScoreChips(featureScoreRows(def), sc.parts || {});
+  const chips = featureScoreChips(featureScoreRows(def, sc.face), sc.parts || {});
   let rowIndex = 0;
   const chipFor = () => chipHtml(chips[rowIndex++]);
 
@@ -1282,8 +1282,12 @@ function scoreClass(value) {
   return rounded > 0 ? 'is-pos' : rounded < 0 ? 'is-neg' : 'is-zero';
 }
 
+// Score parts whose amount the reference fight measures with the hero's bonus, and the face field holding it.
+const HERO_SCORED_COUNTS = Object.freeze({ damage: 'dmg', block: 'blk' });
+
 // One entry per Active Features row, in render order: which part it feeds and how to explain it.
-function featureScoreRows(def) {
+// `face` (the scored face) lets the damage and Block chips explain the hero's total behind their score.
+function featureScoreRows(def, face = null) {
   const rows = [];
   for (const eff of def.effects || []) {
     if (eff.op === 'loseHp') continue;
@@ -1316,6 +1320,13 @@ function featureScoreRows(def) {
   }
   for (const kw of def.keywords || []) rows.push({ part: kw, count: null });
   for (const tag of shownTagsOf(def)) rows.push({ part: tag, count: null });
+  // The count is the card's own number; the score reads the fight's number, hero's bonus included.
+  if (face) {
+    for (const [part, scored] of Object.entries(HERO_SCORED_COUNTS)) {
+      const first = rows.find((r) => r.part === part);
+      if (first && Number.isFinite(face[scored])) first.scoredCount = face[scored];
+    }
+  }
   return rows;
 }
 
@@ -1337,12 +1348,16 @@ function scoreChipTitle(row, rows, total) {
   if (row.count === null || row.unitWeight === undefined) return `${totalText[0].toUpperCase()}${totalText.slice(1)}`;
   if (row.exact) return `${row.count} stacks = ${totalText} (grows faster per stack)`;
   const sameRows = rows.filter((r) => r.part === row.part);
-  const count = sameRows.reduce((sum, r) => sum + r.count, 0);
-  const expected = sameRows.reduce((sum, r) => sum + r.sign * r.unitWeight * r.count / r.per, 0);
+  const ownCount = sameRows.reduce((sum, r) => sum + r.count, 0);
+  const count = row.scoredCount ?? ownCount;
+  const expected = row.scoredCount !== undefined
+    ? row.sign * row.unitWeight * count / row.per
+    : sameRows.reduce((sum, r) => sum + r.sign * r.unitWeight * r.count / r.per, 0);
   const capped = row.capAt && count > row.capAt;
   const adjusted = Math.abs(expected - total) > SCORE_MATCH_TOLERANCE;
   const note = capped ? ' (capped)' : adjusted ? ' (adjusted by targeting)' : '';
-  return `${row.unitWeight} per ${row.per} × ${count} = ${totalText}${note}`;
+  const heroNote = count !== ownCount ? ` (${ownCount} on the card, ${count} with the hero's bonus)` : '';
+  return `${row.unitWeight} per ${row.per} × ${count} = ${totalText}${note}${heroNote}`;
 }
 
 function chipHtml(chip) {
@@ -1572,7 +1587,7 @@ function refreshInspectorScoreInPlace(def) {
   renderScoreSummary(def, sc);
   renderScoreParts(def, sc);
   renderCostChips(def, sc);
-  const chips = featureScoreChips(featureScoreRows(def), sc.parts || {});
+  const chips = featureScoreChips(featureScoreRows(def, sc.face), sc.parts || {});
   const rowsEls = [...document.querySelectorAll('#active-features-list .feature-row')];
   rowsEls.forEach((rowEl, index) => {
     const oldChip = rowEl.querySelector('.feature-score');
