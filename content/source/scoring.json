@@ -47,9 +47,16 @@
     "ward": {
       "weight": 2,
       "per": 1,
-      "basis": "final Ward",
-      "projection": "as Block",
-      "why": "Magical Block."
+      "basis": "Ward HP",
+      "projection": "temporary HP buffer (no Poise)",
+      "why": "Temporary HP buffer (no Poise)."
+    },
+    "gainBarrier": {
+      "weight": 4,
+      "per": 1,
+      "basis": "per Bonus Poise stack (+5 Poise)",
+      "projection": "as the barrier (Bonus Poise) status",
+      "why": "Adds Bonus Poise stacks, separate from Ward."
     },
     "poiseDamage": {
       "weight": 1,
@@ -314,8 +321,14 @@
     "ward": {
       "weight": 8,
       "target": "self",
-      "projection": "magical Block, decays per turn",
-      "why": "Shared ward word."
+      "projection": "+5 temporary Ward HP per stack on HP bar (no Poise); Block > Ward > Poise + HP; loses 1 stack/turn",
+      "why": "Temporary HP buffer stacks (no Poise)."
+    },
+    "barrier": {
+      "weight": 4,
+      "target": "self",
+      "projection": "+5 max & current Poise per stack (Bonus Poise, purple on Poise bar); decays at turn end",
+      "why": "Adds temporary Bonus Poise stacks, separate from Ward."
     },
     "stoneskin": {
       "weight": 8,
@@ -1114,6 +1127,13 @@
       "why": "Card family (pool and synergy key). Synergy value is scored on the card that tests it.",
       "domain": "card",
       "label": "Guard"
+    },
+    "bonusPoise": {
+      "weight": 0,
+      "projection": "identity",
+      "why": "Card grants Bonus Poise (+5 temporary Poise per stack), separate from Ward; stacks score under the barrier status.",
+      "domain": "card",
+      "label": "Bonus Poise"
     },
     "guile": {
       "weight": 0,
@@ -4258,6 +4278,7 @@
         "dexterity": "Nimble",
         "prepared": "Poised",
         "ward": "Warded",
+        "barrier": "Steadfast",
         "stoneskin": "Stoneskin",
         "evade": "Evasive",
         "invulnerability": "Invulnerable",

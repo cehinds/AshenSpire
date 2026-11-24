@@ -134,7 +134,6 @@ export const levelLists = {
    "core.meteor",
    "core.mindLance",
    "core.mirrorGuard",
-   "core.moteShield",
    "core.openArchive",
    "core.palmFlame",
    "core.pebbleThrow",

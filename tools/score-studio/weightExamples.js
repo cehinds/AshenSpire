@@ -7,7 +7,8 @@ import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, RankRange } from '.
 const EFFECT_UNITS = Object.freeze({
   damage: 'damage',
   block: 'Block',
-  ward: 'Ward',
+  ward: 'Ward HP',
+  gainBarrier: 'Bonus Poise stacks',
   poiseDamage: 'Poise',
   restorePoise: 'Poise',
   heal: 'HP healed',
@@ -32,8 +33,8 @@ const EFFECT_UNITS = Object.freeze({
 const COUNTED_ONCE_EFFECTS = new Set(['removeStatus', 'pullEnemy', 'swapRows', 'moveEngagement']);
 // Effects cardDefToFace (studio.js) scores with another row's weight (EFFECT_SCORE_KEYS there): their own box does nothing.
 const BORROWED_EFFECT_WEIGHTS = Object.freeze({ ward: 'block', restorePoise: 'block', gainEnergy: 'restoreStamina', swapRows: 'pullEnemy' });
-// Effects the scorer never reads; Evade stacks score through the evade status row.
-const UNREAD_EFFECTS = Object.freeze({ evadeStack: 'Not scored here: Evade uses the evade status row', addCard: 'Not scored yet', buildup: 'Not scored yet' });
+// Effects the scorer never reads; Evade stacks score through the evade status row, and gainBarrier through barrier.
+const UNREAD_EFFECTS = Object.freeze({ evadeStack: 'Not scored here: Evade uses the evade status row', gainBarrier: 'Not scored here: Bonus Poise uses the barrier status row', addCard: 'Not scored yet', buildup: 'Not scored yet' });
 // Statuses ScoreCard values with a fixed formula that ignores the weight (exactStatus in combatPower.js).
 const FORMULA_STATUSES = new Set(['burn', 'venom', 'shock', 'chill']);
 // A round positive score for the multiplier examples.

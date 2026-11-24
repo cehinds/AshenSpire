@@ -14,6 +14,7 @@ import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.genera
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
 import { BaseFace, CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
 import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeScoring.js';
+import { EffectiveWardHp } from '../../src/model/fixCoreMechanics.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
@@ -271,7 +272,8 @@ function cardDefToFace(def, scoringRef) {
     if (e.op === 'applyStatus' && statusIds.has(e.status) && typeof e.stacks === 'number' && Number.isFinite(e.stacks)) {
       if (e.status === 'evade' && m.evade > 0) continue;
       f.statuses.push([e.status, e.stacks, e.target === 'self' ? 'self' : 'enemy']);
-    } else if (e.op === 'restorePoise') f.blk += amt;
+    } else if (e.op === 'gainBarrier') f.statuses.push(['barrier', amt, 'self']);
+    else if (e.op === 'restorePoise') f.blk += amt;
     else if (e.op === 'draw') f.draw += amt;
     else if (e.op === 'heal') f.heal += amt;
     else if (e.op === 'loseHp') f.loseHp += amt;
@@ -567,9 +569,16 @@ function describeFeature(kind, id) {
     does = tag?.blurb || null;
     entry = S.tags?.[id];
   } else if (kind === 'effect') {
-    const keys = EFFECT_SCORE_KEYS[id];
-    title = capitalise(id);
-    entry = S.effects?.[keys?.weight || id];
+    if (id === 'gainBarrier') {
+      title = 'Gain Bonus Poise';
+      does = registryEntry(registries.statuses, 'barrier')?.tooltip || null;
+      entry = S.statuses?.barrier;
+      unit = ' per stack (self)';
+    } else {
+      const keys = EFFECT_SCORE_KEYS[id];
+      title = capitalise(id);
+      entry = S.effects?.[keys?.weight || id];
+    }
   } else if (kind === 'cost') {
     title = `${id.toUpperCase()} cost`;
     entry = S.costs?.[id];
@@ -992,9 +1001,17 @@ function renderTextWarnings(def) {
 
 // Plain clauses + Add Feature appends when the card text does not mention the new token yet.
 function clauseForNewFeature(kind, key) {
-  if (kind === 'status') return { token: key, clause: `Apply {${key}} ${tokenLabel(key)}.` };
+  if (kind === 'status') {
+    if (key === 'barrier') return { token: 'barrier', clause: 'Gain {barrier} Poise.' };
+    if (key === 'ward') return { token: 'ward', clause: 'Gain {ward} Ward.' };
+    const self = state.scoring.statuses?.[key]?.target === 'self';
+    return { token: key, clause: `${self ? 'Gain' : 'Apply'} {${key}} ${tokenLabel(key)}.` };
+  }
   if (kind === 'effect' && key === 'damage') return { token: 'damage', clause: 'Deal {damage} damage.' };
   if (kind === 'effect' && key === 'block') return { token: 'block', clause: 'Gain {block} Block.' };
+  if (kind === 'effect' && key === 'gainBarrier') return { token: 'gainBarrier', clause: 'Gain {gainBarrier} Poise.' };
+  if (kind === 'effect' && key === 'restorePoise') return { token: 'restorePoise', clause: 'Restore {restorePoise} Poise.' };
+  if (kind === 'effect' && key === 'poiseDamage') return { token: 'poiseDamage', clause: 'Deal {poiseDamage} Poise damage.' };
   if (kind === 'effect' && key === 'draw') return { token: 'draw', clause: 'Draw {draw}.' };
   return null;
 }
@@ -1205,6 +1222,8 @@ function populateAddFeatureDropdown() {
     'Effects': [
       ['effect:damage', 'Damage'],
       ['effect:block', 'Block'],
+      ['effect:gainBarrier', 'Gain Bonus Poise (+5 Poise/stack)'],
+      ['effect:restorePoise', 'Restore Poise'],
       ['effect:poiseDamage', 'Poise Damage'],
       ['effect:draw', 'Draw Cards'],
       ['effect:heal', 'Heal HP'],
@@ -1215,10 +1234,14 @@ function populateAddFeatureDropdown() {
       ['effect:moveEngagement', 'Move Engagement'],
       ['effect:pullEnemy', 'Pull Enemy'],
     ],
-    'Statuses': Object.keys(state.scoring.statuses || {}).sort().map((id) => [`status:${id}`, `Status: ${id}`]),
+    'Statuses': Object.keys(state.scoring.statuses || {}).sort().map((id) => {
+      if (id === 'barrier') return [`status:${id}`, 'Status: Bonus Poise (barrier)'];
+      if (id === 'ward') return [`status:${id}`, 'Status: Ward — Temp HP (ward)'];
+      return [`status:${id}`, `Status: ${id}`];
+    }),
     'Keywords': Object.keys(state.scoring.keywords || {}).sort().map((id) => [`kw:${id}`, `Keyword: ${id}`]),
     'Weighted Tags': Object.entries(state.scoring.tags || {})
-      .filter(([k, v]) => k[0] !== '$' && v && (v.weight || v.multiplier || v.pMultiplier || k.startsWith('school:') || k.startsWith('maneuver:')))
+      .filter(([k, v]) => k[0] !== '$' && v && (v.weight || v.multiplier || v.pMultiplier || k === 'bonusPoise' || k.startsWith('school:') || k.startsWith('maneuver:')))
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, v]) => [`tag:${k}`, `${v.label || k} (${k})`]),
   };
@@ -1335,8 +1358,9 @@ function renderInspector() {
       const stacksCtrl = stacksIsNum
         ? `<input type="number" min="1" max="30" value="${esc(safeNum(eff.stacks, 1))}" data-eff-stacks="${idx}" />`
         : '<span class="studio-muted" title="Formula-computed stack count">formula</span>';
+      const statusDisplay = eff.status === 'barrier' ? 'Bonus Poise (barrier)' : eff.status === 'ward' ? 'Ward (ward)' : eff.status;
       row.innerHTML = `
-        <span class="feature-label" title="${esc(featureTitleText(describeFeature('status', eff.status)))}">Status: <strong>${esc(eff.status)}</strong> ${infoButtonHtml()}</span>
+        <span class="feature-label" title="${esc(featureTitleText(describeFeature('status', eff.status)))}">Status: <strong>${esc(statusDisplay)}</strong> ${infoButtonHtml()}</span>
         <div class="feature-controls">
           ${chipFor()}
           ${stacksCtrl}
@@ -1352,8 +1376,9 @@ function renderInspector() {
       const amtCtrl = amtIsNum
         ? `<input type="number" min="0" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The card's own number, before the hero's bonus" />`
         : '<span class="studio-muted" title="Formula-computed value">formula</span>';
+      const opDisplay = eff.op === 'gainBarrier' ? 'Gain Bonus Poise (gainBarrier)' : eff.op;
       row.innerHTML = `
-        <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(eff.op)}</strong> ${infoButtonHtml()}</span>
+        <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(opDisplay)}</strong> ${infoButtonHtml()}</span>
         <div class="feature-controls">
           ${chipFor()}
           ${amtCtrl}
@@ -1454,6 +1479,19 @@ function featureScoreRows(def, face = null) {
         sign: helpsPlayer ? 1 : -1,
         exact: EXACT_SCORED_STATUSES.has(eff.status),
         capAt: state.scoring.cardModel?.decayOneStatuses?.includes(eff.status) ? state.scoring.model?.R : null,
+      });
+      continue;
+    }
+    if (eff.op === 'gainBarrier') {
+      const status = state.scoring.statuses?.barrier;
+      rows.push({
+        part: status ? 'barrier' : null,
+        count: eff.amount ?? 1,
+        unitWeight: status?.weight,
+        per: 1,
+        sign: 1,
+        exact: false,
+        capAt: null,
       });
       continue;
     }
@@ -1709,10 +1747,14 @@ function textFromEffects(def) {
     if (e.op === 'damage') parts.push(`Deal {damage} damage${e.hits > 1 ? ` ${e.hits} times` : ''}${area}.`);
     else if (e.op === 'block') parts.push('Gain {block} Block.');
     else if (e.op === 'ward') parts.push(`Gain ${amt} Ward.`);
-    else if (e.op === 'gainBarrier') parts.push(`Gain ${amt} Barrier.`);
+    else if (e.op === 'gainBarrier') parts.push('Gain {gainBarrier} Poise.');
     else if (e.op === 'poiseDamage') parts.push(`Deal {poiseDamage} Poise damage${area}.`);
-    else if (e.op === 'restorePoise') parts.push(`Restore ${amt} Poise.`);
-    else if (e.op === 'applyStatus') parts.push(`${e.target === 'self' ? 'Gain' : 'Apply'} {${e.status}} ${tokenLabel(e.status)}${e.target !== 'self' ? area : ''}.`);
+    else if (e.op === 'restorePoise') parts.push('Restore {restorePoise} Poise.');
+    else if (e.op === 'applyStatus') {
+      if (e.status === 'barrier') parts.push('Gain {barrier} Poise.');
+      else if (e.status === 'ward') parts.push('Gain {ward} Ward.');
+      else parts.push(`${e.target === 'self' ? 'Gain' : 'Apply'} {${e.status}} ${tokenLabel(e.status)}${e.target !== 'self' ? area : ''}.`);
+    }
     else if (e.op === 'draw') parts.push('Draw {draw}.');
     else if (e.op === 'discard') parts.push(`Discard ${amt} card${amt === 1 ? '' : 's'}.`);
     else if (e.op === 'heal') parts.push(`Heal ${amt} HP.`);
@@ -1842,7 +1884,7 @@ function renderWeights({ shifts = true } = {}) {
       id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; },
       per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
     })) },
-    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
+    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: k === 'barrier' ? `Bonus Poise / barrier (${v.target})` : k === 'ward' ? `Ward (Temp HP) / ward (${v.target})` : `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
     { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => {
       const bv = R.keywords?.[k];
       return {
@@ -1877,7 +1919,7 @@ function renderWeights({ shifts = true } = {}) {
     { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => {
       if (k[0] === '$' || !v) return false;
       const bv = R.tags?.[k];
-      return v.weight !== 0 || v.multiplier !== undefined || v.pMultiplier !== undefined || (bv && (bv.weight !== 0 || bv.multiplier !== undefined || bv.pMultiplier !== undefined));
+      return k === 'bonusPoise' || v.weight !== 0 || v.multiplier !== undefined || v.pMultiplier !== undefined || (bv && (bv.weight !== 0 || bv.multiplier !== undefined || bv.pMultiplier !== undefined));
     }).map(([k, v]) => {
       const bv = R.tags?.[k];
       const isMult = v.multiplier !== undefined || v.pMultiplier !== undefined;
@@ -2360,26 +2402,31 @@ function renderSandbox() {
   const fmtStatuses = (actor) => Object.entries(actor?.statuses || {})
     .map(([k, v]) => [k, typeof v === 'number' ? v : (v?.stacks ?? 0)])
     .filter(([, n]) => n > 0)
-    .map(([k, n]) => `${k} ${n}`)
+    .map(([k, n]) => `${k === 'barrier' ? 'Bonus Poise' : k === 'ward' ? 'Ward' : k} ${n}`)
     .join(', ') || 'None';
 
+  const pWardHp = EffectiveWardHp(combat, p);
+  const pPoise = p.persistentPoise;
+  const pBonus = pPoise?.barrierBonus || 0;
   document.getElementById('sandbox-player-panel').innerHTML = `
     <h4>Player (${esc(state.sandbox.classId)})</h4>
     <div class="stat-line">
-      <span>HP: <strong>${p.hp}/${p.maxHp}</strong></span>
+      <span>HP: <strong>${p.hp}/${p.maxHp}</strong>${pWardHp > 0 ? ` <span class="sandbox-ward-hp">+${pWardHp} Ward</span>` : ''}</span>
       <span>Block: <strong>${p.block || 0}</strong></span>
+      <span>Poise: <strong>${pPoise?.value ?? 0}/${pPoise?.max ?? 0}</strong>${pBonus > 0 ? ` <span class="sandbox-poise-bonus">(+${pBonus} Bonus)</span>` : ''}</span>
       <span>SP: <strong>${p.stamina ?? p.energy ?? 0}</strong></span>
       <span>MP: <strong>${p.mana ?? 0}</strong></span>
     </div>
     <div class="studio-muted">Statuses: ${esc(fmtStatuses(p))}</div>
   `;
 
+  const eWardHp = e ? EffectiveWardHp(combat, e) : 0;
   document.getElementById('sandbox-enemy-panel').innerHTML = e ? `
     <h4>${esc(e.name || e.enemyId)} ${e.hp <= 0 ? '(DEFEATED)' : ''}</h4>
     <div class="stat-line">
-      <span>HP: <strong>${e.hp}/${e.maxHp}</strong></span>
+      <span>HP: <strong>${e.hp}/${e.maxHp}</strong>${eWardHp > 0 ? ` <span class="sandbox-ward-hp">+${eWardHp} Ward</span>` : ''}</span>
       <span>Block: <strong>${e.block || 0}</strong></span>
-      <span>Poise: <strong>${e.poiseMeter?.current ?? 0}/${e.poiseMeter?.max ?? 0}</strong></span>
+      <span>Poise: <strong>${e.persistentPoise?.value ?? e.poiseMeter?.current ?? 0}/${e.persistentPoise?.max ?? e.poiseMeter?.max ?? 0}</strong></span>
     </div>
     <div class="studio-muted">Statuses: ${esc(fmtStatuses(e))}</div>
   ` : '<div class="studio-muted">No enemies remaining.</div>';
@@ -3167,8 +3214,11 @@ function wireEvents() {
       d.effects ||= [];
       d.keywords ||= [];
       d.tags ||= [];
-      if (kind === 'effect') d.effects.push({ op: key, target: getCardTarget(d), amount: key === 'damage' ? 6 : key === 'block' ? 5 : 2 });
-      else if (kind === 'status') d.effects.push({ op: 'applyStatus', status: key, stacks: 2, target: state.scoring.statuses?.[key]?.target || 'enemy' });
+      if (kind === 'effect') {
+        const selfOps = ['block', 'draw', 'heal', 'restoreStamina', 'restoreMana', 'applyReflect', 'gainBarrier', 'restorePoise'];
+        const amt = key === 'damage' ? 6 : key === 'block' ? 5 : key === 'gainBarrier' ? 1 : key === 'restorePoise' ? 5 : 2;
+        d.effects.push({ op: key, target: selfOps.includes(key) ? 'self' : getCardTarget(d), amount: amt });
+      } else if (kind === 'status') d.effects.push({ op: 'applyStatus', status: key, stacks: (key === 'ward' || key === 'barrier') ? 1 : 2, target: state.scoring.statuses?.[key]?.target || 'enemy' });
       else if (kind === 'kw' && !d.keywords.includes(key)) d.keywords.push(key);
       else if (kind === 'tag' && !d.tags.includes(key)) d.tags.push(key);
       appendClauseForFeature(d, kind, key);

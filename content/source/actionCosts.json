@@ -238,6 +238,10 @@
       "weight": 0,
       "side": "sp"
     },
+    "bonusPoise": {
+      "weight": 0,
+      "side": "sp"
+    },
     "retreat": {
       "weight": 0,
       "side": "sp"
