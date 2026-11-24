@@ -141,3 +141,37 @@ test('weights staging: Apply replays only staged differences onto the applied co
   assert.ok(!STUDIO_SAVE_PATH.startsWith('content/'));
   assert.ok(STUDIO_SAVE_PATH.endsWith('.json'));
 });
+
+test('weights tab: each row reads as a sentence and its example uses the scorer math', async () => {
+  const { weightSentence, weightExample } = await import('../tools/score-studio/weightExamples.js');
+  const scoring = structuredClone(shippedScoring);
+  scoring.effects.damage = { ...scoring.effects.damage, weight: 1, per: 4 };
+  assert.deepEqual(weightSentence('effects', 'damage', scoring, 'damage'), { before: '', mid: 'pts per', after: 'damage' });
+  assert.equal(weightExample('effects', 'damage', scoring, 'damage'), '8 damage = 2 pts');
+  scoring.costs.sp.weight = -4;
+  assert.equal(weightExample('costs', 'sp', scoring), '2 SP = -8 pts');
+  // A status the scorer values by formula shows the scorer's own number, not weight x stacks.
+  const burnValue = ScoreCard({ ...BaseFace(), statuses: [['burn', 3, 'enemy']] }, scoring).parts.burn;
+  assert.match(weightExample('statuses', 'burn', scoring), new RegExp(`^3 stacks = ${Math.round(burnValue * 10) / 10} pts`));
+  scoring.rank = { ...scoring.rank, unrankedMax: 0, width: 4, maxRank: 10 };
+  assert.equal(weightExample('rank', 'width', scoring), 'CP 9 = Rank 3');
+});
+
+test('weights tab: rows the scorer reads through another weight, or not at all, say so', async () => {
+  const { weightExample } = await import('../tools/score-studio/weightExamples.js');
+  const scoring = structuredClone(shippedScoring);
+  // Ward is scored as Block (cardDefToFace), so its example uses Block's weight, never its own box.
+  scoring.effects.block = { ...scoring.effects.block, weight: 1, per: 3 };
+  scoring.effects.ward = { ...scoring.effects.ward, weight: 9, per: 1 };
+  const blockValue = ScoreCard({ ...BaseFace(), blk: 6 }, scoring).parts.block;
+  assert.equal(weightExample('effects', 'ward', scoring, 'ward'), `Not this box: scored with the block row (6 Ward = ${blockValue} pts)`);
+  assert.equal(weightExample('effects', 'addCard', scoring, 'addCard'), 'Not scored yet');
+  // Only the Counterstrike tag's multiplier is read; the area tag scales by enemy count; other multiplier tags score nothing.
+  const area = ScoreCard({ ...BaseFace(), dmg: 6, tags: ['targeting:area'] }, scoring);
+  assert.equal(area.parts['targeting:area'], undefined, 'the area tag adds no part of its own');
+  assert.match(weightExample('tags', 'targeting:area', scoring), /^Not this box: area effects count once per enemy/);
+  assert.equal(weightExample('tags', 'ability:wide-cleave', scoring), 'Not scored yet');
+  const strike = ScoreCard({ ...BaseFace(), dmg: 6 }, scoring);
+  const counter = ScoreCard({ ...BaseFace(), dmg: 6, tags: ['trait:counterstrike'] }, scoring);
+  assert.ok(counter.parts.counterstrike > 0 && strike.parts.counterstrike === undefined, 'the Counterstrike multiplier is scored');
+});
