@@ -1167,7 +1167,7 @@ function renderAddFeatureOptions({ pickBest = false } = {}) {
   // A rebuild that is not a new search (a rescore, undo, import) keeps the owner's pick while it is still listed.
   if (!pickBest || !words.length) {
     sel.value = options.some((o) => o.value === previous) ? previous : '';
-    if (sel.value || !words.length || !options.length) return;
+    return;
   }
   // A new search picks its best match: the first name match in any group, else the first description match.
   const best = options.find((o) => words.every((word) => `${o.textContent} ${o.value}`.toLowerCase().includes(word))) || options[0];
