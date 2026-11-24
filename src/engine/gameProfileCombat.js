@@ -1,10 +1,14 @@
 import { applyStatus } from './statuses.js';
+import { GearReceiptAdd, GearMeleeHit } from './gearReceipt.js';
 import { ItemHandBonus, QueueItemStanceEntry, ItemIncomingPercent, ItemPoiseExtra } from './itemPropertyHooks.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
-import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
+import { ChannelLabel, ChannelWeight } from '../model/damageChannels.js';
+import { SpellTraditionsActive, SpellTraditionLabel, TraditionSpellPower } from '../model/spellTraditions.js';
+import { sourceRatingValue, magicShareOf, splitContactParts, PacketSplit, PacketWeights, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
+import { ScaleCardBaseDamage, ScalePhysicalDamage, isSpellCard } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreWardHpBuffer, EffectiveWardHp, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
@@ -14,12 +18,13 @@ import { hitWeaknessTriggers, matchingHitWeaknesses, weaknessLabel } from './wea
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
 import { gameContent } from '../model/gameProfile.js';
-import { configuredModule } from '../model/profileModule.js';
+import { ConfiguredCombat as configuredCombat, configuredModule } from '../model/profileModule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
-import { AttackDamageMultiplier, PoiseLossAdjust, ApplyDefendPoiseFloor, StanceWeaknessMultiplier } from './stanceBenefits.js';
+import { AttackDamageMultiplier, PoiseLossAdjust, ApplyDefendPoiseFloor, DefendPoiseFloor, StanceWeaknessMultiplier } from './stanceBenefits.js';
 import { FluxMultiplier } from './elementFlux.js';
-import { ElementReceiptStages, ElementProtectionView, ElementReceiptFinish } from './elementIdentity.js';
+import { FightMagicShare } from '../model/elementIdentityRules.js';
+import { ElementReceiptStages, ElementProtectionView, ElementReceiptFinish, ForcePoiseShare } from './elementIdentity.js';
 
 // A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
 // It lets floor(blockBypassFraction x that hit's damage) past Block (fixCoreMechanics.json pierce; owner, 2026-10-26: "pierce should be
@@ -29,12 +34,46 @@ export function isPierceHit(profile, carrier) {
   return tags.includes('pierce') || tags.includes('damage:piercing')
     || [profile?.damageType, profile?.physicalDamageType].some(type => canonicalDamageType(type) === 'piercing');
 }
-export function configuredCombat(subject) {
-  const profile = subject?.gameProfile;
-  return !!profile && (profile.foundation?.mode === 'configured'
-    || Object.values(profile.modules || {}).some(rule => rule?.mode === 'configured'));
+/** PierceStacks is the shared, pure Pierce count for live hits and forecasts. Stone Skin cancels one stack per stack. */
+export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProfile || {}, out = null, maxSpend = Infinity) {
+  if (carrier?.combatReaction) return 0;
+  const rules = fixCorePierceRules(fixCoreRules(ctx, target));
+  const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
+  const builtIn = (rules.builtInElements || []).some(element => tags.includes(`school:${element}`) || canonicalDamageType(profile?.damageType) === element || carrier?.damageType === element);
+  const tagged = isPierceHit(profile, carrier);
+  const intrinsic = tagged || builtIn ? (Number.isFinite(carrier?.pierceStacks) ? Math.max(0, Math.floor(carrier.pierceStacks)) : 1) : 0;
+  const stacks = intrinsic + Math.max(0, Math.floor(carrier?.gear?.pierce || 0));
+  const skin = rules.skinStatus ? Math.max(0, target?.statuses?.[rules.skinStatus]?.stacks || 0) : 0;
+  // Stone Skin is spent only against Pierce that Block actually soaked (`maxSpend`): Block 0 spends none.
+  const spent = Math.min(stacks, skin, Math.max(0, maxSpend));
+  if (out) out.spent = spent;
+  return stacks - spent;
 }
-export { configuredModule };
+/** Each current Pierce stack ignores configured Block. A saved fraction-based fight retains its original pricing and Poise split. */
+export function PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak = Infinity, out = null) {
+  if (carrier?.combatReaction || !(total > 0)) return 0;
+  const rules = fixCorePierceRules(fixCoreRules(ctx, target));
+  const ignored = Math.max(0, carrier?.gear?.ignoreBlock || 0);
+  let bypass;
+  if (rules.blockIgnoredPerStack > 0) {
+    bypass = Math.floor(PierceStacks(ctx, target, carrier, profile, out, Math.ceil(Math.max(0, blockSoak) / rules.blockIgnoredPerStack)) * rules.blockIgnoredPerStack);
+  } else {
+    // The old fraction belongs to the saved fight, and gear Pierce remains a flat grant.
+    const tags = [...(carrier?.authoredTags || []), ...(carrier?.tags || []), ...(carrier?.cardTags || []), ...(profile?.tags || [])];
+    const builtIn = (rules.builtInElements || []).some(element => tags.includes(`school:${element}`) || canonicalDamageType(profile?.damageType) === element || carrier?.damageType === element);
+    bypass = isPierceHit(profile, carrier) || builtIn ? Math.floor(rules.blockBypassFraction * total) : 0;
+    bypass += Math.max(0, carrier?.gear?.pierce || 0);
+    const skin = rules.skinStatus ? target?.statuses?.[rules.skinStatus]?.stacks || 0 : 0;
+    const spent = Math.min(bypass, skin, Math.max(0, blockSoak));
+    if (out) out.spent = spent;
+    bypass -= spent;
+  }
+  // Only built-in elemental Pierce is stopped by Earth-sourced Block; an explicit Pierce tag/gear grant still works.
+  if (!isPierceHit(profile, carrier) && !(carrier?.gear?.pierce > 0) && rules.earthSource) bypass = Math.min(bypass, Math.max(0, blockSoak - Math.min(target?.earthBlock || 0, target?.block || 0)));
+  return bypass + ignored;
+}
+
+export { configuredCombat, configuredModule };
 // configuredStance / mirroredStance / armsAsCoreCounter live in the model layer (profileStance.js) so the card inspector shares them.
 export { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter };
 export function setProfileStance(ctx, entity, carrier) {
@@ -43,7 +82,8 @@ export function setProfileStance(ctx, entity, carrier) {
   if (fixCoreEnabled(ctx)) entity.matchingStanceCardMultiplier = carrier?.fixCoreSameStance ? fixCoreRules(ctx, entity, carrier).stance.effectivenessMultiplier - 1 : 0;
   const previous=entity.combatStance;
   const entering = entity?.itemProps && !sameStance(entity,carrier);
-  const grants = fixCoreEnabled(ctx) && !sameStance(entity,carrier) ? stanceEntryBonuses(carrier,ctx) : null;
+  // A registry stance entry (enterStance) is a stance-only change: no maneuver entry grant, which the card face does not quote.
+  const grants = !carrier?.registryStanceEntry && fixCoreEnabled(ctx) && !sameStance(entity,carrier) ? stanceEntryBonuses(carrier,ctx) : null;
   const rule = configuredModule(ctx, 'stances');
   const stance = configuredStance(carrier);
   entity.combatStance = rule?.include?.includes(stance)
@@ -54,14 +94,14 @@ export function setProfileStance(ctx, entity, carrier) {
     { tags: carrier.cardTags || carrier.tags || [] });
   if (grants?.evade > 0 && !carrier?.appliedStatuses?.includes('evade')) applyStatus(ctx,entity,'evade',grants.evade,entity);
   rememberCombatStance(ctx,entity,previous);
-  ctx.emit?.('combatStanceChanged', { targetId: entity.id, maneuver: entity.combatStance.maneuver });
+  ctx.emit?.('combatStanceChanged', { targetId: entity.id, maneuver: entity.combatStance.maneuver,
+    ...(carrier?.stanceFromEffect ? { cardInstanceId: carrier.instanceId } : {}) });
   if (entering && entity.combatStance.maneuver !== 'neutral') QueueItemStanceEntry(ctx, entity); // W25 step 6
 
   return true;
 }
 function rating(entity, name) {
-  const aliases = { ar: 'attackRating', dr: 'defenseRating' };
-  const value = entity?.ratings?.[name] ?? entity?.[name] ?? entity?.[aliases[name]] ?? 0;
+  const value = entity?.ratings?.[name] ?? entity?.[name] ?? 0;
   return Number.isFinite(value) ? value : 0;
 }
 function hasPoise(target) {
@@ -78,19 +118,86 @@ function reflectApplies(target, source, carrier, profile) {
   return !(profile?.traits?.includes('unreflectable') || profile?.combatTraits?.unreflectable === true || (Array.isArray(profile?.combatTraits) && profile.combatTraits.includes('unreflectable')) || (carrier?.tags || []).includes(mechanics.reflect.unreflectableTag));
 }
 // `forecast`: a preview of an attack that will certainly be avoided (Evade, out of range, hit roll off) prices 0 HP, as the play will; the landed receipt never sets it.
+/** A Force hit's Poise share of what Block left (`poiseIn`): Poise absorbs that share (never more than it holds) and HP takes the rest, rounded down. Keeps the normal absorption if that is larger. */
+function ForcePoiseReceipt(target, poiseIn, share, normal) {
+  const held = Math.max(0, target?.persistentPoise?.value || 0);
+  const reduced = Math.min(held, poiseIn - Math.floor(poiseIn * (1 - share)));
+  if (reduced <= normal.reduced) return normal;
+  return { ...normal, amount: poiseIn - reduced, reduced,
+    sources: [{ id: 'force-poise-share', label: 'Force: a share of the hit goes to Poise', stage: 'mitigation', operation: 'multiply', multiplier: 1 - share, amount: -reduced, requested: poiseIn, effective: poiseIn - reduced }] };
+}
 export function profileDamageReceipt(ctx, source, target, base, carrier = {}, options = {}) {
   // Element identity (W25): Necrotic ignores Poise and Fire ignores some of it, so the hit meets a smaller pool (restored below, never kept);
   // Force and Fire then take extra Poise. Without `elements` rules the view is null and this is exactly the receipt below.
   // Owner, 2026-11-17 (theme B): a Defend-stance target holding Block keeps at least 1 Poise against what the hit costs it (ApplyDefendPoiseFloor).
   const view = ElementProtectionView(ctx, source, target, carrier);
-  if (!view) return ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, profileDamageReceiptCore(ctx, source, target, base, carrier, options), null, target?.persistentPoise));
+  if (!view) return SpellPoiseFinish(ctx, source, target, carrier, ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, profileDamageReceiptCore(ctx, source, target, base, carrier, options), null, target?.persistentPoise)));
   const real = target.persistentPoise.value;
   target.persistentPoise.value = view.value;
   let receipt;
   try { receipt = profileDamageReceiptCore(ctx, source, target, base, carrier, options); } finally { target.persistentPoise.value = real; }
-  return ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, receipt, view, { value: real }));
+  return SpellPoiseFinish(ctx, source, target, carrier, ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, receipt, view, { value: real })));
 }
+/**
+ * Owner, 2026-11-18: a player's spell takes `effects.spellPoiseDamageMultiplier` times the Poise it costs an enemy. Applied last, to the completed net loss
+ * (absorbed + Poise damage + the element's ignored or Force Poise, less what a Defend target spared), never past the pool the hit leaves; HP is unchanged.
+ * The one place for the live hit and the preview, so the quote equals the play. actions.js drainFixCorePoise and combatDamagePreview.js read the same factor for explicit Poise effects.
+ */
+function SpellPoiseFinish(ctx, source, target, carrier, receipt) {
+  if (!receipt || receipt.evaded || !fixCoreEnabled(ctx) || carrier?.counterReturnAttack) return receipt;
+  const m = SpellPoiseMultiplier(configuredModule(ctx, 'effects'), source, target, carrier);
+  if (!(m > 1)) return receipt;
+  const net = Math.max(0, (receipt.poiseMitigated || 0) + (receipt.poiseDrain || 0) - (receipt.poiseSpared || 0));
+  // A Defend target's Poise floor holds against the extra whether or not the base hit reached it: the same predicate ApplyDefendPoiseFloor reads.
+  const pool = Math.max(0, Math.floor(target?.persistentPoise?.value || 0));
+  const keep = Math.min(pool, DefendPoiseFloor(ctx, target, carrier, receipt.defenseStance));
+  const left = Math.max(0, pool - net - keep);
+  const extra = Math.max(0, Math.min(Math.floor((m - 1) * net), left));
+  if (extra > 0) {
+    receipt.poiseDrain = (receipt.poiseDrain || 0) + extra;
+    // The nested damage receipt (log, inspector breakdown) shows the doubled Poise damage too.
+    const hit = receipt.damageReceipt?.hits?.[0];
+    if (hit) hit.poiseDamage = (hit.poiseDamage || 0) + extra;
+  }
+  return receipt;
+}
+/** The factor a player's spell-camp card puts on the Poise it takes from an enemy (1 otherwise); `carrier` is the card or its hit carrier. */
+export function SpellPoiseMultiplier(effects, source, target, carrier) {
+  const m = effects?.spellPoiseDamageMultiplier;
+  return source?.kind === 'player' && target?.kind === 'enemy' && Number.isFinite(m) && m > 1 && (isSpellCard(carrier) || carrier?.combatProfile?.camp === 'spell') ? m : 1;
+}
+/** The effects module's physical-damage factor (1 when unset), applied to the physical share of a hit for both sides. */
+export function PhysicalDamageMultiplier(effects) {
+  const value = effects?.physicalDamageMultiplier;
+  return Number.isFinite(value) && value >= 0 ? value : 1;
+}
+/** The effects module's per-side damage factor (1 when unset): enemies read `enemyDamageMultiplier`, the player `playerDamageMultiplier`. */
+export function SideDamageMultiplier(effects, source) {
+  const value = source?.kind === 'enemy' ? effects?.enemyDamageMultiplier : source?.kind === 'player' ? effects?.playerDamageMultiplier : 1;
+  return Number.isFinite(value) && value >= 0 ? value : 1;
+}
+/** An element packet hit (owner, 2026-11-19): a player's physical-camp card with a magic share between 0 and 1 and no rating of its own. */
+export const IsPacketHit = (ctx, source, carrier, profile, share) => fixCoreEnabled(ctx) && source?.kind === 'player' && carrier?.ratingId === undefined
+  && profile?.camp === 'physical' && Number.isFinite(carrier?.magicShare) && share > 0 && share < 1;
+/**
+ * PacketFaceSplit(ctx, source, carrier, authoredBase, total) → { physical, magic } for the face number `total` of a packet hit, or null for any
+ * other hit: the same two channels the receipt reads (STR / AR for the physical part, INT / Power for the magic part).
+ */
+export function PacketFaceSplit(ctx, source, carrier, authoredBase, total) {
+  const profile = { ...(carrier?.combatProfile || {}), ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}) };
+  const share = FightMagicShare(ctx, profile);
+  if (!IsPacketHit(ctx, source, carrier, profile, share) || carrier.skipRatingBonus) return null;
+  const effects = configuredModule(ctx, 'effects');
+  const finesse = core2MultiHitRulesEnabled(ctx) && carrierHasTag(ctx, carrier, 'finesse');
+  const channel = (id, entity) => Math.max(0, Math.floor(sourceRatingValue(ctx, entity, id, carrier.sourceArmamentId, carrier.equipmentScoped, carrier) * ChannelWeight(effects, id)));
+  return PacketSplit({ base: ScaleCardBaseDamage(authoredBase, effects?.baseDamageMultiplier), share, physicalBonus: channel('ar', finesse ? finesseRatingView(source) : source), magicBonus: channel('pr', source),
+    magicMultiplier: PacketMagicMultiplier(FluxMultiplier(ctx, source, carrier)),
+    physicalMultiplier: carrier.counterReturnAttack || carrier.reflectedHit || carrier.proposalReactive ? 1 : PhysicalDamageMultiplier(effects), total });
+}
+/** The factor only a packet's magic part takes: elemental flux (owner ruling, 2026-11-20). Burn, element Vulnerable and the other element stages scale the whole hit. */
+export const PacketMagicMultiplier = (flux) => (Number.isFinite(flux) ? flux : 1);
 function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
+  const pierceOut = { spent: 0 };
   const effects = configuredModule(ctx, 'effects');
   const stances = configuredModule(ctx, 'stances');
   const defenses = configuredModule(ctx, 'defenses');
@@ -100,7 +207,13 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     && !!stances?.matchups?.[attacking]?.includes(defending);
   const modern = fixCoreEnabled(ctx);
   const flatReturn = modern && carrier.counterReturnAttack;
-  const sources = [{id:'base',label:'Card damage (including enhancements)',amount:base,stage:'offense',operation:'set'}];
+  // Owner, 2026-11-17: a profile's `effects.baseDamageMultiplier` scales every card's base damage (the Core bundle halves it), rounded up, before AR or
+  // PR adds. A return computed from damage already dealt (a Counter return, a reflected hit, a proposal's reactive return such as
+  // base.reflect's 50%) is final damage and is not scaled again (#2820 review).
+  const authoredBase = base, baseMultiplier = carrier.counterReturnAttack || carrier.reflectedHit || carrier.proposalReactive ? 1 : effects?.baseDamageMultiplier;
+  base = ScaleCardBaseDamage(base, baseMultiplier);
+  const sources = [{id:'base',label:'Card damage (including enhancements)',amount:authoredBase,stage:'offense',operation:'set'}];
+  if (base !== authoredBase) sources.push({id:'base-damage-scale',label:'Base damage scale',amount:base-authoredBase,requested:authoredBase,effective:base,stage:'offense',operation:'multiply',multiplier:baseMultiplier});
   // The chain keeps full precision and is floored once where it is applied (the quantity-rounding step);
   // receipt lines show the running floor so every shown number is whole (owner, 2026-10-18 16:05).
   const whole = value => modern ? Math.max(0, Math.floor(value)) : value;
@@ -109,27 +222,41 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     return after;
   };
   const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
-  const share = magicShareOf(profile);
+  const share = FightMagicShare(ctx, profile);
   // Owner, 2026-10-19: spell effectiveness uses PR; a spell (camp spell or magic school, whatever its Barrier split) reads PR where a physical attack reads AR.
   // A hit with any magic share (a school-only technique included, as magicShareOf reads it) reads PR.
   // Enemies keep AR for their spells: their PR is 0 in data, so reading it would zero their spell damage.
-  const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
+  // Owner, 2026-11-19 (an element upgrade's packet): a player's physical-camp card with a magic share between 0 and 1 and no rating of its own deals a
+  // physical part and a magic part on one hit. The physical part keeps its STR / AR channel and the magic part adds INT / Power (Arcane tradition) as its own
+  // stage, so neither is lost to the other. A lent staff or sceptre card names its `ratingId`, and an enemy move reads its own, so both keep their one channel.
+  const packetHit = IsPacketHit(ctx, source, carrier, profile, share);
+  const ratingId = !packetHit && modern && (source?.kind !== 'enemy' || SpellTraditionsActive(ctx)) && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar';
+  const ratingLabel = ratingId === 'pr' && SpellTraditionsActive(ctx) ? SpellTraditionLabel(carrier) : ChannelLabel(ratingId);
   // A finesse hit scales with Dexterity instead of Strength (owner, 2026-10-25; Core 2 rules version 2).
   const finesse = modern && ratingId === 'ar' && core2MultiHitRulesEnabled(ctx) && carrierHasTag(ctx, carrier, 'finesse');
   const rated = finesse ? finesseRatingView(source) : source;
-  const ar = modern ? sourceRatingValue(ctx, rated, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
-  const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
+  const ar = modern ? sourceRatingValue(ctx, rated, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped, carrier) : rating(source,'ar');
+  const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * ChannelWeight(effects,ratingId);
   let raw = base;
   const applicable = (rated?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
     || row.slot === 'armor' || row.sourceId?.startsWith('armor/') || row.sourceId === carrier.sourceArmamentId || row.sourceId === `armament/${carrier.sourceArmamentId}`);
-  const sourceAR = applicable.reduce((sum,row)=>sum+(row[ratingId] || 0),0);
+  const contributionValue = row => row.kind === 'attribute' && ratingId === 'pr' && SpellTraditionsActive(ctx)
+    ? TraditionSpellPower(ctx, rated, carrier, row[ratingId] || 0) : row[ratingId] || 0;
+  const sourceAR = applicable.reduce((sum,row)=>sum+contributionValue(row),0);
   if (modern && sourceAR > 0 && ratingBonus > 0) {
     for (const [index,row] of applicable.entries()) {
-      const contribution = (row[ratingId] || 0) * (effects?.attackRatingWeight || 0);
+      const contribution = contributionValue(row) * ChannelWeight(effects,ratingId);
       raw = transition(`${ratingId}:${row.sourceId || index}`,`${row.name || row.kind}: ${ratingLabel}`,raw,raw+contribution);
     }
     raw = transition('ar:adjustments',`${ratingLabel} stance/status modifiers (including Weak)`,raw,base+ratingBonus);
-  } else raw = transition('ar','Attack rating',raw,raw+ratingBonus);
+  } else raw = transition('ar',ratingLabel,raw,raw+ratingBonus);
+  // The packet's magic part reads Power on top: its own stage, counted into the magic part of the final split below.
+  const packetPower = packetHit && !carrier.skipRatingBonus ? Math.max(0, Math.floor(sourceRatingValue(ctx, source, 'pr', carrier.sourceArmamentId, carrier.equipmentScoped, carrier) * ChannelWeight(effects,'pr'))) : 0;
+  if (packetPower > 0) raw = transition('pr:packet',`${ChannelLabel('pr')} (magic part)`,raw,raw+packetPower);
+  // Owner, 2026-11-18: gear that adds DEX to a hit (Katana, a Bow against a Retreat-stacked target), STR a second time (Greatsword Smash) and damage
+  // against a target (a Pike against the front row) is one receipt stage, so the quote equals the hit. A triggered one is a fight effect for the face.
+  const gearAdd = modern && !carrier.skipRatingBonus && source?.kind === 'player' ? GearReceiptAdd(ctx, source, target, carrier, { ratingId, ar, effects }) : 0;
+  if (gearAdd) raw = transition('gear', 'Gear', raw, raw + gearAdd);
   // A Core 2 Counter return is final pre-protection damage (SPEC §17): no matching-stance or defensive-stance stage.
   const stanceMultiplier = flatReturn ? 1 : stanceEffectiveness(ctx,source,carrier);
   raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
@@ -141,13 +268,18 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   raw = transition('stance-benefit','Stance benefit',raw,raw*benefitMultiplier,'offense',benefitMultiplier);
   // Owner, 2026-11-15 (W25-F): the player's elemental flux lifts the next card of its element by x1.25 (engine/elementFlux.js), in the same chain as Prepared's bonus so the quote equals the hit.
   const fluxMultiplier = flatReturn ? 1 : FluxMultiplier(ctx,source,carrier);
-  raw = transition('element-flux','Elemental flux',raw,raw*fluxMultiplier,'offense',fluxMultiplier);
+  // Owner ruling, 2026-11-20: on a packet hit flux lifts the magic part only, so the chain carries it as a factor on the magic share of the hit.
+  const packetWeights = packetHit ? PacketWeights({base,share,physicalBonus:ratingBonus,magicBonus:packetPower}) : null;
+  const fluxFactor = packetWeights && fluxMultiplier !== 1 ? 1 + (fluxMultiplier - 1) * packetWeights.magic / Math.max(1, packetWeights.magic + packetWeights.physical) : fluxMultiplier;
+  raw = transition('element-flux','Elemental flux',raw,raw*fluxFactor,'offense',fluxFactor);
   const splashMultiplier = flatReturn ? 1 : carrier.stanceSplash > 0 && carrier.stanceSplash < 1 ? carrier.stanceSplash : 1;
   raw = transition('sweep-splash','Sweep splash',raw,raw*splashMultiplier,'offense',splashMultiplier);
   // Owner, 2026-11-17 (theme B): the target's stance weakness, Prepared x1.25 from melee and Idle x1.25 from everything.
   // An un-aimed face (no target) names no stance, so it takes no weakness.
-  const weaknessMultiplier = flatReturn || !target ? 1 : StanceWeaknessMultiplier(ctx,carrier,defending,profile);
+  const weaknessMultiplier = flatReturn || !target ? 1 : StanceWeaknessMultiplier(ctx,carrier,defending,profile,target);
   raw = transition('stance-weakness','Stance weakness',raw,raw*weaknessMultiplier,'offense',weaknessMultiplier);
+  // Owner, 2026-11-18: a wearer Vulnerable to melee (robes, a bow) takes the Vulnerable amount from melee physical attacks, Smashes and Sweeps.
+  if (modern && !flatReturn && target?.itemProps?.vulnMelee && GearMeleeHit(profile, carrier)) raw = transition('vulnerable-melee', 'Vulnerable to melee (gear)', raw, raw * fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier, 'offense', fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   if (modern && !flatReturn && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   // Owner, 2026-10-31 (SPEC 5.3): each enemy weakness the hit matches multiplies its damage, after Vulnerable.
   const weaknesses = modern && !flatReturn && target?.kind === 'enemy' ? matchingHitWeaknesses(target, hitWeaknessTriggers(ctx, source, carrier, profile, share)) : [];
@@ -155,6 +287,20 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Element identity (W25): the deterministic element multipliers (Burn, Shock, Brittle, Chill, spread, chain, undead) are receipt stages, so a quote equals the hit.
   const element = modern && !flatReturn ? ElementReceiptStages(ctx, source, target, carrier, raw) : null;
   for (const stage of element?.stages || []) raw = transition(stage.id, stage.label, raw, raw * stage.multiplier, 'offense', stage.multiplier);
+  const packetMagicMultiplier = packetHit ? PacketMagicMultiplier(fluxMultiplier) : 1;
+  // Owner, 2026-11-18: one stage scales every hit by its side (`effects.playerDamageMultiplier` / `enemyDamageMultiplier`), after the element stages and
+  // before Block and Poise absorb it, so the face, the intent and the hit read the same number. Final returns (a Counter return, a reflected hit, a
+  // proposal's reactive return) are not scaled again. A positive hit never rounds to 0.
+  // Owner, 2026-11-18: the physical share of the hit (the receipt's own physical/magical split) takes `effects.physicalDamageMultiplier` for both sides,
+  // on top of the side scale, with the same exemptions for final returns. A positive physical part never rounds to 0.
+  const physicalMultiplier = flatReturn || carrier.counterReturnAttack || carrier.reflectedHit || carrier.proposalReactive ? 1 : PhysicalDamageMultiplier(effects);
+  if (physicalMultiplier !== 1 && raw > 0) {
+    const split = packetHit ? PacketSplit({base,share,physicalBonus:ratingBonus,magicBonus:packetPower,magicMultiplier:packetMagicMultiplier,total:raw}) : splitContactParts({amount:raw,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
+    const physicalFraction = split.physical + split.magic > 0 ? split.physical / (split.physical + split.magic) : 0;
+    if (physicalFraction > 0) raw = transition('physical-damage-scale','Physical damage scale',raw,ScalePhysicalDamage(raw,physicalFraction,physicalMultiplier),'offense',physicalMultiplier);
+  }
+  const sideMultiplier = flatReturn || carrier.counterReturnAttack || carrier.reflectedHit || carrier.proposalReactive ? 1 : SideDamageMultiplier(effects, source);
+  if (sideMultiplier !== 1 && raw > 0) raw = transition('side-damage-scale',`${source?.kind === 'enemy' ? 'Enemy' : 'Player'} damage scale`,raw,Math.max(raw >= 1 && sideMultiplier > 0 ? 1 : 0,raw*sideMultiplier),'offense',sideMultiplier);
   if (!modern) raw=Math.max(0,Math.floor(raw));
   // An ally's Guard interception lowers `raw` here; kept so the displayed raw hit can add it back (Guard is a defense, owner 2026-11-04).
   let guardIntercepted = 0;
@@ -164,14 +310,19 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     raw=transition('status-rules','Other status modifiers',raw,statusPlan.amount);
   }
   // An item property's resistance or immunity to this damage type (W25 step 6) scales the hit like a status modifier does.
-  const itemPercent = target?.itemProps ? ItemIncomingPercent(target, canonicalDamageType(profile.damageType)) : 0;
+  const itemPercent = target?.itemProps ? ItemIncomingPercent(target, canonicalDamageType(profile.damageType), (carrier?.tags || []).find(tag => typeof tag === 'string' && tag.startsWith('school:'))?.slice(7)) : 0;
   if (itemPercent) raw = transition('item-resist', itemPercent <= -100 ? 'Immunity (item)' : 'Resistance (item)', raw, Math.max(0, raw * (100 + itemPercent) / 100), 'offense', Math.max(0, (100 + itemPercent) / 100));
   const defense = stanceMitigation(ctx, attacking, defending);
   // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals the configured multiplier of its normal damage in place of the
   // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
   const smashRule = modern && advantage && attacking === 'smash' ? fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)) : null;
   // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
-  const advantageMultiplier = smashRule ? smashRule.damageMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
+  const smashMultiplier = smashRule && defending === 'defend'
+    ? smashRule.defendDamageMultiplier ?? smashRule.damageMultiplier : smashRule?.damageMultiplier;
+  const matchupMultiplier = smashRule ? smashMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
+  // Owner, 2026-11-17 (stance decisions): a stance advantage and the target's stance weakness (Attack or Smash beating Prepared, and Prepared's melee
+  // weakness) never stack: the hit takes the larger of the two. The weakness already sits in `raw`, so the advantage stage adds only what it exceeds.
+  const advantageMultiplier = matchupMultiplier > 1 && weaknessMultiplier > 1 ? Math.max(matchupMultiplier, weaknessMultiplier) / weaknessMultiplier : matchupMultiplier;
   let amount=smashRule ? transition('smash-vs-defensive','Smash vs defensive stance',raw,raw*advantageMultiplier,'stance',advantageMultiplier)
     : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
   // Owner, 2026-11-03: the number shown ahead of a hit is the raw hit, changed only by stances and statuses (attacker Strength/Weak, defender
@@ -203,20 +354,55 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   }
   let blocked = 0, poiseMitigated = 0, wardMitigated = 0, poiseDrain = 0;
   const incoming = amount;
-  const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
+  const parts = packetHit ? PacketSplit({base,share,physicalBonus:ratingBonus,magicBonus:packetPower,magicMultiplier:packetMagicMultiplier,physicalMultiplier,total:incoming}) : splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
-  let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, magicPoise = 0, blockSpent = null;
-  // Ward (owner, 2026-11-01, SPEC 4.1a): while the target holds Ward stacks ALL damage, physical and magical, goes to Poise first (100%),
-  // the overflow spills to Block, and what is left reaches HP. A pierce hit still lets its fraction of what Block soaked through.
-  const wardRouted = modern && (target?.statuses?.ward?.stacks || 0) > 0;
-  // Owner, 2026-11-15 (W25-W): under `ward.routing: "blockFirst"` the hit meets Block FIRST; Poise then absorbs the whole remainder 1:1 (no leak) until it is empty, then HP.
+  let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, magicPoise = 0, blockSpent = null, wardHpAbsorbed = 0;
+  // Ward health buffer (owner, 2026-11-24): Block > Ward > Poise + Health.
+  const wardHpMode = modern && FixCoreWardHpBuffer(ctx);
+  const wardHpPool = wardHpMode ? EffectiveWardHp(ctx, target) : 0;
+  // Legacy Ward (owner, 2026-11-01 / 2026-11-15): saved fights without `routing: "hpBuffer"` route through Poise.
+  const wardRouted = modern && !wardHpMode && (target?.statuses?.ward?.stacks || 0) > 0;
   const wardBlockFirst = wardRouted && FixCoreWardBlockFirst(ctx);
-  if (wardBlockFirst) {
+  if (wardHpMode && wardHpPool > 0) {
+    const total = physical + magical;
+    const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
+    blockSpent = blockSoak;
+    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
+    pierceBypassed = Math.min(bypassAmount, blockSoak);
+    blocked = blockSoak - pierceBypassed;
+    const afterBlock = total - blocked;
+    transition('block', 'Block', total, afterBlock, 'mitigation');
+    wardHpAbsorbed = Math.min(afterBlock, wardHpPool);
+    wardMitigated = wardHpAbsorbed;
+    const afterWard = afterBlock - wardHpAbsorbed;
+    transition('ward-hp', 'Ward (health buffer)', afterBlock, afterWard, 'mitigation');
+    if (afterWard > 0) {
+      const absorbed = blocked + wardHpAbsorbed;
+      const remPhysical = Math.max(0, physical - absorbed);
+      const remMagical = Math.max(0, afterWard - remPhysical);
+      const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
+      const forceShare = smashRule ? null : ForcePoiseShare(ctx, carrier);
+      const normalPoise = smashRule ? { amount: remPhysical, reduced: 0, sources: [] } : protectionReceipt(ctx, target, 'physical', remPhysical);
+      const poise = forceShare === null ? normalPoise : ForcePoiseReceipt(target, remPhysical, forceShare, normalPoise);
+      const poiseMeetsMagic = fixCoreWardDisabled(ctx);
+      magicPoise = poiseMeetsMagic && !smashRule ? Math.min(remMagical, Math.max(0, poisePool - poise.reduced)) : 0;
+      const magicToHp = remMagical - magicPoise;
+      poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * afterWard)) : 0;
+      poiseMitigated = poise.reduced + magicPoise;
+      sources.push(...poise.sources);
+      if (magicPoise > 0) sources.push({ id: 'poise-magic', label: 'Poise meets the spell', amount: -magicPoise, requested: remMagical, effective: magicToHp, stage: 'mitigation', operation: 'add' });
+      amount = poise.amount + magicToHp;
+    } else {
+      poiseMitigated = 0;
+      poiseDrain = 0;
+      amount = 0;
+    }
+  } else if (wardBlockFirst) {
     const total = physical + magical;
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
     blockSpent = blockSoak;
-    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     const afterBlock = total - blocked;
@@ -234,7 +420,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const toPoise = smashRule ? 0 : Math.min(total, poisePool);
     const blockSoak = Math.min(Math.max(0, target?.block || 0), total - toPoise);
     blockSpent = blockSoak;
-    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
     poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * incoming)) : 0;
@@ -261,23 +447,27 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
       plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical-plainMagicPoise);
     } else plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
     blockSpent = plainPhysicalBlocked+plainMagicBlocked;
-    const bypassAmount = isPierceHit(profile,carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx,target)).blockBypassFraction*(physical+magical)) : 0;
+    const bypassAmount = PierceBlockIgnored(ctx,target,carrier,profile,physical+magical, blockSpent, pierceOut);
     pierceBypassed = Math.min(bypassAmount,blockSpent);
     const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
     const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
     const magicBypass = pierceBypassed-piercedPhysicalPart;
     let magicBlocked = plainMagicBlocked-magicBypass;
-    // The pierced physical amount meets Poise first, 1:1 (owner, 2026-10-26): Poise loses up to that much and only the rest reaches HP.
-    // The remainder Block left then meets the ordinary Poise rule against what the pierce left of the pool, so Poise never counts the pierce twice.
+    // Saved fraction-based Pierce keeps its 1:1 Poise absorption (owner, 2026-10-26). Stack-based Pierce adds no special Poise damage:
+    // everything Block leaves uses the ordinary split, including Force's half-Poise share (owner, 2026-11-18).
     const poisePool = Math.max(0,target?.persistentPoise?.value || 0);
     // A Smash against a defensive stance has no absorption, so its pierced part gets none either.
-    const piercePhysical = smashRule ? 0 : piercedPhysicalPart;
+    const stackPierce = fixCorePierceRules(fixCoreRules(ctx,target)).blockIgnoredPerStack > 0;
+    const piercePhysical = smashRule || stackPierce ? 0 : piercedPhysicalPart;
     piercePoise = Math.min(piercePhysical,poisePool);
     const pierceToHp = piercePhysical-piercePoise;
     const afterPierce = piercePoise > 0 ? {...target,persistentPoise:{...target.persistentPoise,value:poisePool-piercePoise}} : target;
     const poiseIn = physical-piercePhysical-physicalBlocked;
     // Smash vs a defensive stance: no 25% absorption; the pool instead loses a share of the whole hit (capped at what it holds).
-    const poise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,afterPierce,'physical',poiseIn);
+    // Owner, 2026-11-18: a Force hit sends `elements.force.poiseShare` (half) of what Block left to Poise, the rest to HP, in place of the usual 25%.
+    const forceShare = smashRule ? null : ForcePoiseShare(ctx,carrier);
+    const normalPoise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,afterPierce,'physical',poiseIn);
+    const poise = forceShare === null ? normalPoise : ForcePoiseReceipt(afterPierce,poiseIn,forceShare,normalPoise);
     // Magic after the physical part: Poise first (1:1, the pool the physical part left), then the Block the physical part left, then Barrier, then HP.
     magicPoise = poiseMeetsMagic && !smashRule ? Math.min(magical,Math.max(0,poisePool-piercePoise-poise.reduced)) : 0;
     const magicAfterPoise = magical-magicPoise;
@@ -326,9 +516,10 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poise = PoiseLossAdjust(ctx,source,carrier,defending,{taken:poiseMitigated+poiseDrain,pool:target?.persistentPoise?.value || 0});
     poiseDrain += poise.extra; poiseSpared = poise.spared;
   }
-  return { raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
+  return { ...(pierceOut.spent > 0 ? { skinSpent: pierceOut.spent } : {}), raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
+    ...(wardHpMode && wardHpAbsorbed > 0 ? { wardHpBuffer: true, wardHpAbsorbed } : {}),
     ...(wardRouted ? { wardRouted: true } : {}), ...(wardBlockFirst ? { wardBlockFirst: true } : {}),
     hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null && !evaded,
     hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain, ...(poiseSpared ? { poiseSpared } : {}),
@@ -345,7 +536,9 @@ export function profileCardCosts(ctx, def) {
   const authored = def.resourceCosts || def.costs || {};
   const baseSp = def.cost==='X' && include.includes('sp') ? Math.max(0,ctx.player?.stamina ?? ctx.player?.energy ?? 0) : authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
   const baseMp = authored.mp ?? def.manaCost ?? 0;
-  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp, ctx.player, def, ctx, baseMp) : baseSp;
+  // A per-fight rising cost (core.retreat, owner 2026-11-19) is added after the stance discount, so the Nth use costs N-1 whatever stance the player is in.
+  const grown = (def.costGrowth?.perCard ? (def.costGrowthApplied?.stamina || 0) : 0) + (def.modeCostGrowthApplied?.stamina || 0);
+  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp - grown, ctx.player, def, ctx, baseMp) + grown : baseSp;
   const mp = stanceManaCost(baseMp, ctx.player, def, ctx);
   if ((!include.includes('sp') && sp > 0) || (!include.includes('mp') && mp > 0)) {
     throw new Error(`Card ${def.id || 'unknown'} requires an authored disabled-resource variant`);
@@ -357,8 +550,9 @@ export function profileCardCosts(ctx, def) {
 export function profileHandSize(ctx) {
   const cards = configuredModule(ctx, 'cards');
   if (!cards) return 0;
+  const perIncrease = Math.max(1, cards.handPointsPerIncrease || 1);
   return Math.max(0, Math.floor((cards.handBase ?? 4)
-    + (ctx.attributes?.[cards.handAttribute || 'intelligence'] || 0)) + ItemHandBonus(ctx)); // + a hand-size item property (W25 step 6)
+    + Math.floor((ctx.attributes?.[cards.handAttribute || 'intelligence'] || 0) / perIncrease)) + ItemHandBonus(ctx)); // + a hand-size item property (W25 step 6)
 }
 export function profileFallbackDamage(ctx) {
   return gameContent(ctx, 'fallback')?.attackDamage ?? ctx.gameProfile?.foundation?.attackDamage ?? 5;

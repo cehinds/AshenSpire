@@ -1,11 +1,13 @@
 {
   "version": 1,
   "enabled": true,
+  "spellTraditionsVersion": 1,
   "statusCaps": "none",
   "ward": {
     "enabled": false,
-    "poisePerStack": 5,
-    "routing": "blockFirst"
+    "hpPerStack": 5,
+    "routing": "hpBuffer",
+    "decayPerTurn": 1
   },
   "ratings": {
     "prAttributes": ["intelligence", "wisdom"]
@@ -17,7 +19,8 @@
   "poise": {
     "drain": "prevented",
     "breakRule": "broken",
-    "brokenDamageMultiplier": 1.5
+    "brokenDamageMultiplier": 1,
+    "breakStatusStacks": 2
   },
   "staggered": {
     "stance": true,
@@ -35,6 +38,7 @@
     "returnPerStack": 0.1,
     "consumePerHit": 1,
     "decayPerTurn": 1,
+    "decayClock": "ownerTurnStart",
     "advantageShare": 0,
     "stacksPerCard": 1,
     "stacksUpgradeBonus": 1,
@@ -53,17 +57,22 @@
     "handCostDiscount": 1
   },
   "pierce": {
-    "blockBypassFraction": 0.2
+    "blockIgnoredPerStack": 1,
+    "builtInElements": ["lightning"],
+    "skinStatus": "stoneHide",
+    "earthSource": "earth"
   },
   "smashVsDefensive": {
     "damageMultiplier": 1.25,
+    "defendDamageMultiplier": 1.5,
     "blockFraction": 0.25,
     "poiseFraction": 0.5
   },
   "stance": {
     "effectivenessMultiplier": 1.25,
     "discount": 1,
-    "minimumCost": 1
+    "minimumCost": 1,
+    "playerMinimumCost": 0
   },
   "stanceBenefits": {
     "version": 1,
@@ -94,7 +103,7 @@
   "spellCosts": {
     "version": 1,
     "manaSurcharge": 1,
-    "staminaSurcharge": 1,
+    "staminaSurcharge": 0,
     "cantripTag": "rank.cantrip",
     "manaOnlyTag": "cost.manaOnly",
     "preparedStaminaDiscount": 1,
@@ -230,7 +239,10 @@
       "freezePlayerStaminaLoss": 2
     },
     "force": {
-      "poiseMultiplier": 1.5
+      "magicShare": 0,
+      "poiseShare": 0.5,
+      "push": false,
+      "knockback": false
     }
   }
 }

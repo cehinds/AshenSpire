@@ -12,7 +12,7 @@ const packages = () => (reg.equipment.armaments || []).filter(piece => piece.wea
 
 test('every Core weapon has one default art and two distinct learnable arts', () => {
   const rows = packages();
-  assert.equal(rows.length, 28);
+  assert.equal(rows.length, 61);
   for (const pkg of rows) {
     assert.equal(pkg.weaponArtDefaults.length, 1, `${pkg.weaponId} default`);
     assert.equal(pkg.learnableArts.length, 2, `${pkg.weaponId} learnable`);
@@ -189,6 +189,9 @@ test('a bought learnable art and a legacy reaverSpecial resell against their wea
   assert.equal(plans.length, 2);
   for (const plan of plans) {
     assert.equal(plan.kind, 'weaponArts', `${plan.def.id} is classified as a weapon art`);
-    assert.ok(plan.price > 0 && plan.price <= Math.floor(10 * reg.balance.shop.sellFraction), `${plan.def.id} resale ${plan.price} within the purchase ceiling`);
+    // Owner 2026-11-23: a card (weapon arts included) sells for cardSellMultiplier x the ordinary sale, capped at what was paid.
+    const { sellFraction, cardSellMultiplier } = reg.balance.shop;
+    assert.equal(plan.price, Math.min(Math.floor(10 * sellFraction) * cardSellMultiplier, 10), `${plan.def.id} resale ${plan.price}`);
+    assert.ok(plan.price > 0 && plan.price <= 10, `${plan.def.id} resale ${plan.price} within the purchase ceiling`);
   }
 });

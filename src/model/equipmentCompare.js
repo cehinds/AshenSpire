@@ -36,10 +36,8 @@ export function weaponArtName(registries, piece) {
   return registries.cards.has(id) ? registries.cards.get(id).name : id;
 }
 
-const NUMBER_ROWS = Object.freeze([
-  { id: 'attackRating', label: 'AR', field: 'attackRating', better: 'higher' },
-  { id: 'defenseRating', label: 'DR', field: 'defenseRating', better: 'higher' },
-]);
+// AR and DR are gone (owner, 2026-11-18): an armament authors no rating, so the only number rows are Poise and Weight below.
+const NUMBER_ROWS = Object.freeze([]);
 
 const verdict = (before, after, better) => {
   if (before === after) return 'same';

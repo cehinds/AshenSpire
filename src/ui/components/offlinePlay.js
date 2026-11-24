@@ -3,6 +3,7 @@ import { BUILD_VERSION } from '../../buildversion.js';
 import { releasedDownload, receiveDownload } from '../../model/offlineDownload.js';
 import { createZipFlow } from '../offlineZipFlow.js';
 import { t } from '../strings.js';
+import { STALE_EPOCH_CODE } from '../../engine/saveTransfer.js';
 import { makeAvailableOffline, offlineState, offlineSupport, removeOfflineCopy } from '../offlineInstall.js';
 import { button, el, openModal } from '../kit/index.js';
 import { OpenConfirmationModal } from './confirmationModal.js';
@@ -259,6 +260,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     try { assertImportAllowed(); file.value = ''; file.click(); }
     catch (error) { status.textContent = error.message; }
   });
+  const importMessage = error => error?.code === STALE_EPOCH_CODE ? t('offline.import.staleEpoch') : error.message;
   file.addEventListener('change', async () => {
     const selected = file.files?.[0]; if (!selected) return;
     try {
@@ -274,10 +276,10 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
             await transfer.Restore(text); status.textContent = 'Saves imported.';
             reload.hidden = false; importSave.disabled = true; reload.focus();
             imported();
-          } catch (error) { status.textContent = error.message; }
+          } catch (error) { status.textContent = importMessage(error); }
           recovery.hidden = !transfer.Previous();
         } });
-    } catch (error) { status.textContent = error.message; }
+    } catch (error) { status.textContent = importMessage(error); }
   });
   reload.addEventListener('click', imported);
   void refreshRelease();

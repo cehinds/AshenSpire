@@ -1,0 +1,26 @@
+{
+  "id": "status.thorns",
+  "tag": "status.thorns",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Thorns",
+  "description": "An attacker that lands a hit on the holder takes damage equal to its Thorns stacks. Constant: it does not decay; only a timed effect, printed on its card, changes it.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.thorns"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "ThornsReturn"
+  }
+}

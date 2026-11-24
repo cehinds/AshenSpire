@@ -79,11 +79,12 @@ test('defaults match the CSS literals they replace', () =>
     assert.equal(choice['--modal-option-gap'], '0.6rem');
     assert.equal(choice['--modal-option-gap-phone'], '0.4rem');
     assert.equal(choice['--modal-name-button-basis'], '3.5rem');
-    // The reward door halves the gap between cards and trims the room above and between rows (playtest 2026-11-17 item 45).
+    // The reward door halves the gap between cards and trims the room between rows (playtest 2026-11-17 item 45); the
+    // room above keeps the choice grid's 64 px lane, where the chosen card's (i) stands (owner, 2026-11-20).
     const reward = ModalModelFor('reward').cssProperties();
     assert.equal(reward['--modal-grid-gap'], '6px');
     assert.equal(reward['--modal-grid-gap-phone'], '4px');
-    assert.equal(reward['--modal-grid-pad-top'], '16px');
+    assert.equal(reward['--modal-grid-pad-top'], '64px');
     assert.equal(reward['--modal-grid-row-gap'], '24px');
 });
 

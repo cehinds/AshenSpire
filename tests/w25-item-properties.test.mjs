@@ -1,3 +1,4 @@
+import { GearItemProps, GearSummary } from '../src/model/gearEffects.js';
 // W25 step 6: every item property does what its sentence says (a fight, a stat, a deck rule).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -47,10 +48,11 @@ test('the pool: every row has weights for the four families, a sentence, and an 
   assert.ok(share('martial', ['weaponBonus', 'onHit', 'stanceRating']) > 0.6, 'weapons lean to elements and stances');
 });
 
-test('an item with no properties sets nothing: the summary is empty and a fight carries no itemProps', () => {
+test('an item with no rolled properties has an empty property summary and a fight carries only its authored gear effects', () => {
   const run = createRunState({ registries, classId: 'reaver', seed: 504, ...meta });
   assert.deepEqual(ItemPropertySummary(run), {});
-  assert.equal(fight(run).player.itemProps, undefined);
+  assert.deepEqual(fight(run).player.itemProps, GearItemProps(GearSummary(registries, run.loadout, run.class, run)));
+  assert.ok(fight(run).player.itemProps.cardRules.some(rule => rule.stat === 'addStr'), 'current Greatsword type effects remain enabled');
 });
 
 test('+1 hand size, Retain 1 and Block each turn', () => {
@@ -95,6 +97,7 @@ test('entering a stance draws 1 card and refunds 1 Stamina', () => {
 
 test('melee attacks add a separate typed packet, and attacks apply a status', () => {
   const c = fight(newRun({ [GS]: ['edgeFire', 'bleedingEdge'] }));
+  Object.assign(c.enemies[0], { hp: 500, maxHp: 500 }); // Core's 70% enemy HP tiers (owner, 2026-11-18) let the two packets kill a 12-HP soldier, and the dead take no Bleed
   play(c, 'core.strike');
   const types = c.eventLog.filter((e) => e.type === 'damageDealt').map((e) => e.damageType);
   assert.equal(c.eventLog.filter((e) => e.type === 'damageDealt').length, 2, 'the blow and the fire packet');
@@ -148,6 +151,8 @@ test('stat properties reach the receipts: +5 max Poise and +1 attribute', () => 
 test('deck rules: minimum deck size drops by 2; unlimited Basics and cantrips open the editor', () => {
   const settings = { deckMinSize: 12, deckMaxSize: 40 };
   const run = newRun({ [RELIC]: ['smallerDeck', 'unlimitedCantrips'] });
+  // Unlimited copies open only a collected definition (review of #2815, SPEC §14.1).
+  if (Array.isArray(run.collectedCardIds)) run.collectedCardIds = [...new Set([...run.collectedCardIds, 'core.cantrip'])];
   assert.equal(deckEditBounds(settings).min, 12);
   assert.equal(deckEditBounds(settings, 2).min, 10);
   assert.match(deckEditRefusal(11, settings), /at least 12/);

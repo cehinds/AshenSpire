@@ -80,7 +80,7 @@ function refillLineHtml(registries, refill) {
     const named = [...byId].map(([id, n]) => `${n} × ${flaskIdentityHtml(registries.flasks.get(id))}`);
     said.push(`Flasks refilled: ${named.join(', ')}.`);
   }
-  for (const s of refill.shortfalls) said.push(`Flask slots full — ${s.short} not given.`);
+  for (const s of refill.shortfalls) said.push(`Flask slots full. ${s.short} not given.`);
   if (!said.length) return '';
   return `<p class="rest-refill">${said.join(' ')}</p>`;
 }
@@ -214,7 +214,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
           <div class="glyph">${engravedIconHtml('rest')}</div>
           <div class="cp-body">
             <h3>${esc(t('rest.eyebrow'))}</h3>
-            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
+            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore. You stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
           </div>
         </div>
         <!-- THE OFFER PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
@@ -475,6 +475,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
       const cards = new Map(attributeCardModels(registries, values, {
         projection: statProjection(registries, run),
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+        gainContext: { run, settings: meta?.settings || {} },
         // The next fight's hand, resolved the way engine/runCombat.js resolves
         // it (`runHandRules`: the run's own rows), so a point here states what
         // it buys in the solo hand (Codex, #1294; #1318).

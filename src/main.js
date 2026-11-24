@@ -2,9 +2,11 @@ import { InstallLegacyBrowserSafely } from './ui/legacyBrowser.js';
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, GameProfileEliteRelicOffer, ArmamentRewardStep, ArmamentRewardRule, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { MountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
+import { OpenCardCopyModal } from './ui/components/cardCopyModal.js';
+import { StartCardCopyOffer, CARD_COPY_OPTION, CARD_COPY_SOURCE } from './model/cardCopyService.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
 import { snapshotRunForDiff } from './model/runChangeReceipt.js';
@@ -16,7 +18,8 @@ import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest
 import { retiredProfileReason } from './model/retiredProfile.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
-import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
+import { StampOfferKey } from './model/upgradeOffer.js';
+import { openRestRecord, OpenSiteRecord, VisitSiteStock, StashSiteStock, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { completedRunMeta, commitRunFinishAsync } from './model/runCompletion.js';
 import { configureDisplaySettings, installDisplaySettings, installCardSizeResize, projectHudPresentation, applyDisplaySettings, applyUiScale } from './ui/displaySettings.js';
 import { onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
@@ -61,7 +64,7 @@ import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { stampCombatPlaysEver, foldCombatPlaysEver } from './model/playsEver.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
-import { pendingRankUpRows, coreCardRanks, stampSkillBonuses } from './model/skills.js';
+import { pendingRankUpRows, RankUpRowsReady, coreCardRanks, stampSkillBonuses } from './model/skills.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
@@ -84,7 +87,7 @@ import { CreateRunPersistence } from './services/runPersistence.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import { rollEncounter, rollRuneReward } from './engine/encounters.js';
-import { configuredShopKind, ConfiguredTraderOffersSmith } from './model/gameProfileShopKind.js';
+import { configuredShopKind, ConfiguredTraderOffersSmith, ConfiguredTraderDock } from './model/gameProfileShopKind.js';
 import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { blacksmithVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
@@ -99,7 +102,7 @@ import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountDraft } from './ui/screens/draft.js';
 import { executeRunEffects, drawCards, discardFromHand, executeAction } from './engine/actions.js';
-import { mountMap } from './ui/screens/map.js';
+import { mountMap, RefreshMapHud } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { MountRewards } from './ui/screens/reward.js';
 // After reward.js on purpose: imported earlier, its model imports change the bundle's load order and expose cyclic named imports.
@@ -112,6 +115,7 @@ import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, RestOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { armouryRoute } from './model/armouryPages.js';
 import { mountConfiguredShop } from './ui/screens/shop.js';
+import { RunHudRefreshSignature } from './ui/components/runHud.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
@@ -120,12 +124,17 @@ import { mountCompendium } from './ui/screens/compendium.js';
 import { mountBestiary } from './ui/screens/bestiary.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
 import { seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoiceAsync } from './model/settingsDefaults.js';
-import { BUILD_VERSION } from './buildversion.js';
+import { BUILD_VERSION, SOURCE as BUILD_SOURCE } from './buildversion.js';
+import { ApplyBuildWipe, BuildSaveId } from './engine/buildWipe.js';
+import { ApplyEpochWipe } from './engine/epochWipe.js';
+import { CUSTOM_SCORING_STORAGE_KEY, SetCustomScoring } from './model/activeScoring.js';
+import { DrawSaveWipeNotice } from './ui/components/saveWipeNotice.js';
+import { uiConfig } from './config/generated/ui.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
 import { openCharacterSheet } from './ui/screens/characterSheet.js';
-import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, resetKeys, allResettableKeys, showSettingsNotice, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
+import { openSettings, dropUndoOffer, settingsRows, promotionFor, resetKeys, allResettableKeys, showSettingsNotice, resolveGraceRefill, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, runSupportsPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -374,6 +383,14 @@ if (shotState === 'crisis') {
 // asking would make every run start fail.
 let persistentStorage = false;
 try { persistentStorage = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
+// Dev toggle (content/config/ui/presentation/saves.json): a new build clears old run saves; settings are kept.
+// One-time HARD wipe (saves.json epoch): every game key, profile included; before the build wipe and before any save is read.
+const epochWipe = ApplyEpochWipe(bootStorage, { epoch: uiConfig.presentation.saves.behavior.epoch });
+try {
+  const savedScoringRaw = bootStorage.getItem(CUSTOM_SCORING_STORAGE_KEY);
+  if (savedScoringRaw) SetCustomScoring(JSON.parse(savedScoringRaw));
+} catch { /* ignore unreadable custom scoring */ }
+const saveWipe = ApplyBuildWipe(bootStorage, { enabled: uiConfig.presentation.saves.behavior.discardOnNewBuild === true, buildId: BuildSaveId({ version: BUILD_VERSION, source: BUILD_SOURCE }) });
 const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: persistentStorage ? navigator.locks : null });
 
 // `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
@@ -579,7 +596,7 @@ function applyRestoredSettings(restored) {
 // 2026-08-07; her tail now names the crisis screen's own route, so it is true
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
-  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
+  'This works right now, but it won\u2019t survive a restart. Your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -598,7 +615,7 @@ function reportAutosaveFailure(error, now = Date.now()) {
   if (now - lastSaveWarningAt < SAVE_WARNING_REPEAT_MS) return false;
   lastSaveWarningAt = now;
   const body = full
-    ? ' \u00b7 Couldn\u2019t save \u2014 browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
+    ? ' \u00b7 Couldn\u2019t save: browser storage is full. Your game continues, but closing or reloading now returns you to your last saved point; delete an old save slot from the title screen to free space.'
     : ` \u00b7 Couldn\u2019t save (${(error && error.message) || 'storage error'}). Your game continues.`;
   const key = full ? 'save:storage-full' : 'save:failed';
   const banner = failureBanner(key, 'COULDN\u2019T SAVE', body);
@@ -659,7 +676,7 @@ function newRun(config) {
   const asked = config.seedString || randomSeedString();
   const why = seedProblem(asked);
   if (why) {
-    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))} — ${why}`);
+    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))}: ${why}`);
     console.error('[seed] refused at newRun:', { seedString: config.seedString, why });
     return Promise.resolve({ ok: false, reason: why });
   }
@@ -686,14 +703,14 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null }) {
+function beginPreparedRun({ classId, seedString, customization, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null, startingCards = null }) {
   resetArmouryTraySession();
   // A caller that bypassed the seed field still gets a refusal without a reroll.
   const asked = seedString || randomSeedString();
   const why = seedProblem(asked);
   if (why) {
     failureBanner('run:seed', 'THIS SEED CANNOT START A RUN',
-      ` · ${JSON.stringify(String(seedString))} — ${why}\n`
+      ` · ${JSON.stringify(String(seedString))}: ${why}\n`
       + ' · No run was started, and nothing was rerolled: a different map under the same seed is the defect this refuses.');
     console.error('[seed] refused at newRun:', { seedString, why });
     return;
@@ -738,7 +755,7 @@ function beginPreparedRun({ classId, seedString, customization, custom, starting
     enemyKnowledgeVersion: configuredProfile ? undefined : enemyKnowledgeVersion,
     reactionRulesVersion: configuredProfile ? undefined : reactionRulesVersion,
     classId, customization, custom, startingKitId, startingHands, startingArmourId,
-    startingRelicId, startingAbilityIds, attributeMode, attributes, deckEdit, quickStart,
+    startingRelicId, startingAbilityIds, attributeMode, attributes, deckEdit, startingCards, settings: saves.loadMeta().settings || {}, quickStart,
   });
   run = prepared.run;
   rng = prepared.rng;
@@ -1095,6 +1112,7 @@ function afterBootArt(fn) {
 // null (no notice), 'failed', 'retrying' or 'again' (a Retry failed too).
 let artNoticeState = null;
 function drawArtNotice(root) {
+  DrawSaveWipeNotice(root, epochWipe.cleared || saveWipe.cleared, epochWipe.cleared ? t('title.saveWipe.epoch') : undefined);
   if (!artNoticeState) { root.querySelector('.art-load-notice')?.remove(); return; }
   mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: artNoticeState }), onRetry: retryArtFromTitle });
 }
@@ -1396,7 +1414,31 @@ function showOfflinePlay() {
 // default; a room (merchant, Shrine, event) passes itself, because the band
 // those rooms now carry opens the Armoury too and a close that went to the
 // map would abandon the room mid-visit.
+//
+// An overlay (the Armoury, the deck editor) that goes back to a map still mounted under it keeps that map, with its
+// selected route and camera: only the run HUD is redrawn, by the map's own builder (RefreshMapHud), and only when
+// what it shows changed. Any other return callback may finish a reward or a service, so it runs as given.
+function retainMapOrigin(returnTo) {
+  if (returnTo !== showMap) return returnTo;
+  const origin = app.querySelector('.mapscreen');
+  if (!origin) return returnTo;
+  const owner = run;
+  const hudOptions = { place: 'map', headerClass: 'map-header' };
+  let signature = RunHudRefreshSignature({ registries, run, meta: saves.loadMeta(), ...hudOptions });
+  return () => {
+    if (!origin.isConnected || run !== owner) return returnTo();
+    const meta = saves.loadMeta();
+    const next = RunHudRefreshSignature({ registries, run, meta, ...hudOptions });
+    if (next === signature) return undefined;
+    signature = next;
+    // The map's own builder redraws it, so its save doors and route-keeping remount stay wired.
+    if (!RefreshMapHud(meta)) return returnTo();
+    return undefined;
+  };
+}
+
 function showArmoury(request = '', returnTo = showMap) {
+  returnTo = retainMapOrigin(returnTo);
   // A glow cleared by looking must survive a reload even when nothing in the Armoury changes.
   if (armouryHasNew(run)) { markArmourySeen(run); persist(); } else markArmourySeen(run);
   const armouryMeta = saves.loadMeta();
@@ -1432,14 +1474,15 @@ function showArmoury(request = '', returnTo = showMap) {
       stampDeck(registries, run);
       persist();
     },
+    onRememberEquipSlot: () => persist(),
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
     onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards }),
   });
 }
 
-// The Progression hub opens over the current screen. Which character-level rewards it lists are the player's own
-// Settings → Advanced → Rewards answers, the ones the level door reads.
+// The Progression hub opens over the current screen. Which character-level rewards it lists is authored
+// (balance.levelUp offerStatPoints / offerBonusCard; owner, 2026-11-20: the Rewards rows were dropped).
 function showCharacterSheet(opener, options = {}) {
   if (!run) return null;
   const settings = saves.loadMeta().settings || {};
@@ -1447,9 +1490,9 @@ function showCharacterSheet(opener, options = {}) {
     registries, run, opener, settings, onChange: persist,
     ...options,
     offers: {
-      statPoints: settingOn(settings, 'rewardLevelStatPoints'),
-      levelCards: settingOn(settings, 'rewardLevelCards'),
-      pointsPerLevel: resolveLevelUpValue(settings),
+      statPoints: registries.balance.levelUp.offerStatPoints !== false,
+      levelCards: registries.balance.levelUp.offerBonusCard === true,
+      pointsPerLevel: registries.balance.levelUp.pointsPerLevel,
     },
   });
 }
@@ -1472,10 +1515,13 @@ function deckDoors(services = null) {
 // `place` names where Back leads (common.place.*): the exit reads "Back to {place}" instead of Cancel.
 function showDeckEditor(returnTo = showMap, hub = true, focusCard = null, place = '') {
   if (!run) return;
+  returnTo = retainMapOrigin(returnTo);
   mountDeckEditor(document.body, {
     registries,
     run,
     focusCard,
+    // The drag order rides the run and is written with the confirmed edit (onDone) or the next run save. Saving it on every drag
+    // would also write unconfirmed deck changes, which Cancel then restores only in memory (Codex review, PR #2835).
     backLabel: place ? t('common.backTo', { place: t(`common.place.${place}`) }) : '',
     settings: saves.loadMeta().settings || {},
     onNavigate: hub ? destination => {
@@ -1825,6 +1871,8 @@ function remountMapIfShowing(changed) {
 }
 
 function showMap(opts) {
+  // Owner 2026-11-20: a copy relic picked up anywhere opens its one-time copy door before the map (cardCopyService.js).
+  if (openPendingCardCopy('map')) return;
   if (run.mapGraph?.activityLauncher) {
     app.replaceChildren();
     const screen = document.createElement('section'); screen.className = 'screen game-profile-activities';
@@ -2287,6 +2335,7 @@ async function onCombatEnd(result, combat, enc) {
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
+    position: { floor: run.floor, floors: Math.max(0, ...Object.values(run.mapGraph?.nodes || {}).map((n) => n.floor || 0)), act: run.actNumber },
     characterMultiplier: configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1,
   });
   const levelXp = isConfiguredRun(run) && !configuredCharacterLevels(run) ? 0 : xpReceipt.total;
@@ -2337,7 +2386,7 @@ async function onCombatEnd(result, combat, enc) {
   const boss = enc.pool === 'boss';
   if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
   if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
-  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, pool: enc.pool, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic });
+  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, pool: enc.pool, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic, armamentReward: ArmamentRewardRule(run, enc.pool) ? enc.pool : '' });
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
@@ -2376,13 +2425,17 @@ function showRest(openPanel = null, locationId = null) {
     const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
     persist();
     const leave = () => { markRestLeft(run); persist(); showMap(); };
+    // The Shrine stays mounted: a commit, a closed deck editor or Armoury refreshes its cards in place.
+    let restView;
+    // A door's return callback may pass its own argument; only a focus request is read.
+    const refresh = options => restView?.refresh(options?.focusId ? options : {});
     const commit = (service, payload) => {
       const before = snapshotRunForDiff(run);
       commitGameProfileRest(registries, run, service, payload);
       if (record) recordRestConsumed(run, service);
-      persist(); showRest();
+      persist(); refresh({ focusId: service });
       // The what-changed receipt for the services that change gear or cards. Level-up already ends in its own
-      // reward door, so it is skipped. It opens after the screen re-mounts, so the page lock covers the new screen.
+      // reward door, so it is skipped. It opens after the affected choices refresh.
       if (service === 'smith' || service === 'upgradeCard') {
         showRunReceipt({ run, registries, before, title: t(service === 'smith' ? 'whatChanged.rest.smith' : 'whatChanged.rest.upgradeCard') });
       }
@@ -2392,14 +2445,15 @@ function showRest(openPanel = null, locationId = null) {
       const draft = createGameProfileRestDraft(run);
       mountDeckEditor(document.body, {
         registries, run: draft, settings: saves.loadMeta().settings || {},
-        onDone: () => commit('strategize', { draft }), onCancel: () => showRest(),
+        onDone: () => commit('strategize', { draft }), onCancel: refresh,
       });
     };
-    return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave, hud: roomHud(() => showRest()),
+    restView = mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave, hud: roomHud(refresh),
       gameProfileRest: { visit, onStrategize: strategize,
         // Core 2: the deck door is free and is not a service, so it never touches the visit's one pick.
-        deckEditor: deckDoors().rest ? { onOpen: () => showDeckEditor(() => showRest(), true, null, 'shrine') } : null,
+        deckEditor: deckDoors().rest ? { onOpen: () => showDeckEditor(refresh, true, null, 'shrine') } : null,
         onCommit: commit, onLeave: leave } });
+    return restView;
   }
   if (locationId) restLocationId = locationId;
   audio.music('rest');
@@ -2410,20 +2464,15 @@ function showRest(openPanel = null, locationId = null) {
   // tags. The refill is one of those rules (`restFlasks` on `arrived`) —
   // AUTOMATIC, AND BEFORE THE CHOICE. Constantine: "flasks should refill
   // automatically at graces". Arriving is the trigger, so a run that comes to
-  // smith is refilled exactly like a run that comes to rest. The counts come
-  // from balance.graceRefill through the Advanced debug rows; `bad` is a
-  // stored override that is not on the ladder, and it is named in the
-  // command log rather than swallowed.
-  const { counts, bad } = resolveGraceRefill(saves.loadMeta().settings || {});
-  for (const b of bad) {
-    dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
-  }
+  // smith is refilled exactly like a run that comes to rest. The counts are the
+  // authored balance.graceRefill table (the per-kind rows were retired, owner 2026-11-20).
+  const { counts } = resolveGraceRefill();
   // The classic map's rest site keeps its own record (restRevisit.js), which
   // stands in for the service state so a re-entry does not refill again.
   const classicRest = true;
   const priorRevisit = run.restRevisit;
-  // The Multi-use setting is read once; a record opened now keeps it for the visit.
-  const multiUseSetting = settingOn(saves.loadMeta().settings, 'shrineMultiUse');
+  // The authored multi-use rule (balance.rest.multiUseShrines) is read once; a record opened now keeps it for the visit.
+  const multiUseSetting = registries.balance.rest.multiUseShrines !== false;
   const record = classicRest ? openRestRecord(run, { multiUse: multiUseSetting }) : null;
   if (record !== priorRevisit) persist();
   const restState = record;
@@ -2493,12 +2542,25 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
-function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false, pool = 'normal' } = {}) {
+// A queued card copy (a copy relic's pickup) opens as an ordinary reward door; `after` is where its Continue goes.
+function openPendingCardCopy(after) {
+  if (!gameModule(run, 'rewards') || run.gameProfilePendingReward || !(run.pendingCardCopies > 0)) return false;
+  const offerId = StartCardCopyOffer(registries, run);
+  if (offerId) run.gameProfilePendingReward = { offerId, source: CARD_COPY_SOURCE, after, levelOffers: 0, rankUpsOffered: true };
+  persistOrWarn();
+  if (!offerId) return false;
+  showGameProfileReward();
+  return true;
+}
+
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false, armamentReward = '', pool = 'normal', takeCount = null } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
   if (noticeOnly && !progression.length && !victoryReceipt) { persistOrWarn(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
-  if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source, pool });
-  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}) };
+  if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source, pool, takeCount });
+  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}), ...(armamentReward ? { armamentReward } : {}) };
+  // The reward is an upgrade source of its own: its rank-up and upgrade options roll on a fresh offer key (upgradeOffer.js).
+  StampOfferKey(run, run.gameProfilePendingReward);
   persistOrWarn(); return showGameProfileReward();
 }
 
@@ -2538,8 +2600,9 @@ function showGameProfileReward() {
   if (!pending.rankUpsOffered && coreCardRanks(run)) {
     // The door's rows are fixed the first time it opens and saved with its claim state (rankUpCheckpoint), so a
     // reload after a claim resumes the same door instead of rebuilding rows from the remaining ledger.
+    // A new door opens only when some queued card may rise now; with none ready the rank-ups stay queued and it is skipped.
     const rankUps = pending.rankUpRows || pendingRankUpRows(registries, run);
-    if (!rankUps.length) { pending.rankUpsOffered = true; persistOrWarn(); }
+    if (!rankUps.length || (!pending.rankUpRows && !RankUpRowsReady(registries, run, rankUps))) { pending.rankUpsOffered = true; persistOrWarn(); }
     else return MountRewards(app, { registries, run, saves, rng,
       rewards: { title: 'Rank up', xpGains: { level: 0, tracks: {} }, skillRankUps: (pending.rankUpRows = rankUps) },
       checkpoint: (pending.rankUpCheckpoint ||= {}),
@@ -2564,23 +2627,37 @@ function leaveRewardDoor(pending) {
     const eliteId = rest.eliteRelic ? `${rest.offerId}:elite` : '';
     if (eliteId && GameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
       run.gameProfilePendingReward = { ...rest, offerId: eliteId, source: 'elite', eliteRelic: false };
-    } else if (rest.levelOffers > 0) {
-      const offerId = `${rest.offerId}:level:${rest.levelOffers}`;
-      gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
-      run.gameProfilePendingReward = { ...rest, offerId, source: 'level', levelOffers: rest.levelOffers - 1 };
+    } else {
+      // Armament reward (rewards.json armamentReward): an elite's chance, a boss's certainty, directly after the relic door, rolled once.
+      const step = ArmamentRewardStep(registries, run, rng, rest);
+      if (step.next) run.gameProfilePendingReward = step.next;
+      else if (step.rest.levelOffers > 0) {
+        const offerId = `${step.rest.offerId}:level:${step.rest.levelOffers}`;
+        gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
+        run.gameProfilePendingReward = { ...step.rest, offerId, source: 'level', levelOffers: step.rest.levelOffers - 1 };
+      }
     }
   });
   if (run.gameProfilePendingReward) return showGameProfileReward();
   if (pending.after === 'advanceAct') return advanceAct();
+  if (pending.after === 'shop' && run.gameProfileOpenShop) return showShop();
   showMap();
 }
 
 // W25-R: the card pick of a "Rank up a card" service (a reward option or a shop shelf): option rows of the cards that can rise.
 // Resolves with the chosen instance id; Cancel rejects with an empty message, so the door that asked stays as it was.
-function chooseRankUpCard({ price = '' } = {}) {
+// The card pick of a vendor's copy service: option rows of every card the player owns. Cancel rejects with an empty message.
+function chooseCardToCopy({ price = '', shelfPrice = null } = {}) {
   return new Promise((resolve, reject) => {
     let picked = null;
-    OpenRankUpCardModal({ registries, run, price, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
+    OpenCardCopyModal({ registries, run, price, shelfPrice, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
+  });
+}
+
+function chooseRankUpCard({ price = '', shelfPrice = null } = {}) {
+  return new Promise((resolve, reject) => {
+    let picked = null;
+    OpenRankUpCardModal({ registries, run, price, shelfPrice, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
   });
 }
 
@@ -2597,7 +2674,7 @@ function mountGameProfileOfferDoor(pending, { combined }) {
     onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
   }) : null;
   MountGameProfileOffers(app, { registries, run, settings, offer, spoils,
-    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : 'Victory rewards',
+    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : pending.source === 'armament' ? 'Armament reward' : pending.source === CARD_COPY_SOURCE ? t('cardCopy.door.title') : 'Victory rewards',
     // W25-R: a "Rank up a card" option asks which card first (option rows); the claim carries the pick, Cancel leaves the offer open.
     onTake: index => (offer.options[index]?.kind === 'rankUps'
       ? chooseRankUpCard().then(instanceId => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index, { instanceId })))
@@ -2626,21 +2703,22 @@ function mountGameProfileOfferDoor(pending, { combined }) {
 
 // Owner 2026-11-05: after a shop purchase a card may go to the deck (else it stays in the library, as before) and an
 // armament may be equipped through the Armoury's own equip flow (else it stays in the inventory, as before).
-function offerShopCardDestination(receipt) {
-  if (['weapons', 'armor'].includes(receipt?.kind)) return offerShopEquip(receipt.id);
+// `refresh` redraws the open shop in place; a caller without one remounts it.
+function offerShopCardDestination(receipt, refresh = showShop) {
+  if (['weapons', 'armor'].includes(receipt?.kind)) return offerShopEquip(receipt.id, refresh);
   if (!['combatCards', 'weaponArts'].includes(receipt?.kind) || !receipt.instanceId) return;
   const settings = saves.loadMeta().settings || {};
   openShopCardChoice({
     name: registries.cards.get(receipt.id)?.name || receipt.id,
     refusal: (code => !code ? '' : code === 'full' ? t('reward.configured.deckFull', { max: deckEditBounds(settings).max }) : t('reward.configured.deckLimit'))(shopCardDeckRefusal(registries, run, receipt.instanceId, settings)),
-    onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); showShop(); },
+    onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); queueMicrotask(refresh); },
   });
 }
-function shopArmamentBought(id) { recordCollectedArmament(id, 'shop'); offerShopEquip(id); }
-function offerShopEquip(id) {
+function shopArmamentBought(id, refresh = showShop) { recordCollectedArmament(id, 'shop'); offerShopEquip(id, refresh); }
+function offerShopEquip(id, refresh = showShop) {
   if (isConfiguredRun(run) && !gameModule(run, 'equipment')) return;
   const def = (registries.equipment.armaments || []).find(row => row.id === id) || (registries.equipment.armour || []).find(row => row.id === id);
-  openShopArmamentChoice({ name: def?.name || id, onEquip: () => showArmoury({ equipItemId: id }, showShop) });
+  openShopArmamentChoice({ name: def?.name || id, onEquip: () => showArmoury({ equipItemId: id }, refresh) });
 }
 
 function showShop() {
@@ -2653,30 +2731,68 @@ function showShop() {
   // routes there (run.gameProfileTraderSmith), and its Leave comes back to the trader with the workshop's stock kept.
   const traderSmith = run.gameProfileTraderSmith === shopId;
   if (traderSmith || (configuredShopKind(run, shopId) === 'blacksmith' && !run.gameProfileRewardOffers?.[`shop:${shopId}`])) {
-    if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
+    // A Blacksmith, or a trader's workshop, left and re-entered from the map keeps the stock it was left with (restRevisit.js).
+    OpenSiteRecord(run, traderSmith ? 'shop' : 'blacksmith');
+    const slot = traderSmith ? 'smithStock' : 'stock';
+    if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = VisitSiteStock(run, slot, () => blacksmithVisitStock(registries, rng, run, { }));
+    // One upgrade roll per visit (upgradeOffer.js): a fresh stock takes the next offer key, a kept one keeps its own.
+    StampOfferKey(run, run.shopStock);
     persist(); audio.music('shop');
-    return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
+    // The Blacksmith stays mounted: a purchase, the Armoury or a flask refreshes its rows in place.
+    let smith;
+    const refresh = () => smith?.refresh();
+    smith = mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(refresh),
       onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
+      // Every vendor buys (owner, 2026-11-20): the Blacksmith sells through the merchant's own sale transaction.
+      shopId, onSell: quote => commitGameProfileShopSale(registries, run, shopId, quote),
       onLeave: traderSmith
-        ? () => { delete run.gameProfileTraderSmith; persist(); showShop(); }
-        : () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
+        ? () => { StashSiteStock(run, slot, run.shopStock); delete run.gameProfileTraderSmith; persist(); showShop(); }
+        : () => { StashSiteStock(run, slot, run.shopStock); run.shopStock = null; delete run.gameProfileOpenShop; markRestLeft(run); persist(); showMap(); } });
+    return smith;
   }
-  const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
+  // A trader left from the map stays enterable until a new node is chosen (restRevisit.js).
+  OpenSiteRecord(run, 'shop');
+  const offer = gameProfileShopStock(registries, run, rng, { shopId });
+  StampOfferKey(run, run.gameProfileRewardOffers?.[`shop:${shopId}`]); persist();
   audio.music('shop');
-  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
-    onSmith: ConfiguredTraderOffersSmith(run, shopId) ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
+  // The dock holds to the 3-6 options rule, Sell counted, for a stock saved before traders varied too.
+  const dock = ConfiguredTraderDock(run, offer.options.map(option => option.kind).filter(kind => kind !== CARD_COPY_OPTION.kind), { smith: ConfiguredTraderOffersSmith(run, shopId) });
+  // The copy service (owner 2026-11-20) is an extra service shelf beside the trader's 3-6 stock shelves, never one of them.
+  // It shares the SERVICES tab with a rank-up shelf (screens/shop.js), and gets its own tab only when stocked without one.
+  const shelfKinds = offer.options.some(option => option.kind === CARD_COPY_OPTION.kind) && !dock.kinds.includes('rankUps') ? [...dock.kinds, CARD_COPY_OPTION.kind] : dock.kinds;
+  // The trader stays mounted: each trade refreshes its rows in place once the transaction settles (shop.js).
+  let shop;
+  const refresh = () => shop?.refresh();
+  shop = mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(refresh), shelfKinds,
+    onSmith: dock.smith ? () => { run.gameProfileTraderSmith = shopId; persist(); showShop(); } : null,
     onTake: (index, quote) => {
       // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
-      if (offer.options[index]?.kind === 'rankUps') {
-        return chooseRankUpCard({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
-          try { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist(); } finally { showShop(); }
+      // A trade replaces the saved stock, so the slot's kind is read from the current one.
+      if (run.gameProfileRewardOffers?.[`shop:${shopId}`]?.options[index]?.kind === 'rankUps') {
+        // Owner 2026-11-23: the shelf names its Rank 1 price; each card's row names the price of the rank it reaches.
+        return chooseRankUpCard({ price: t('rankUp.pick.priceFrom', { cinders: quote.price }), shelfPrice: quote.price }).then(instanceId => {
+          const priced = gameProfileShopPurchasePlan(registries, run, shopId, index, { instanceId });
+          purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId, price: priced.price }); persist();
         }, () => {});
       }
-      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
-      offerShopCardDestination(receipt);
+      // Owner 2026-11-20: a copy service asks which owned card to copy; the copy lands in the library like a bought card.
+      // Like every trade it runs inside the shop's one-trade guard (shop.js transact), which refreshes once it settles.
+      if (run.gameProfileRewardOffers?.[`shop:${shopId}`]?.options[index]?.kind === CARD_COPY_OPTION.kind) {
+        // Owner 2026-11-23: the shelf names a "from" price; each card's row names its own (rank-raised), and that is charged.
+        return chooseCardToCopy({ price: t('cardCopy.pick.priceFrom', { cinders: quote.price }), shelfPrice: quote.price }).then(instanceId => {
+          const priced = gameProfileShopPurchasePlan(registries, run, shopId, index, { instanceId });
+          const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId, price: priced.price }); persist();
+          offerShopCardDestination({ kind: 'combatCards', id: receipt.cardId, instanceId: receipt.instanceId }, refresh);
+        }, () => {});
+      }
+      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist();
+      // A copy relic bought here opens its copy door at once; its Continue comes back to this shop.
+      if (openPendingCardCopy('shop')) return;
+      offerShopCardDestination(receipt, refresh);
     },
-    onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
-    onLeave: () => { delete run.gameProfileOpenShop; delete run.gameProfileTraderSmith; if (shopStockKind(run.shopStock) === 'blacksmith') run.shopStock = null; persist(); showMap(); } });
+    onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); },
+    onLeave: () => { delete run.gameProfileOpenShop; delete run.gameProfileTraderSmith; if (shopStockKind(run.shopStock) === 'blacksmith') run.shopStock = null; markRestLeft(run); persist(); showMap(); } });
+  return shop;
 }
 
 function showEvent(eventId) {
@@ -2939,8 +3055,10 @@ function showFirstScreenNow(createShotStates) {
   const shotStates = shotState ? createShotStates({
     saves, shotParams, bootStorage, app,
     newRun, showMap, enterCombat, startFight, showEvent, persist, showRest, showShop,
-    beginGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
+    beginGameProfileReward, showGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
     showSettings, showStartupGate, showCustomize,
+    // `?shotAct=<n>`: the act's map, built as advanceAct builds it.
+    poseActNumber: (act) => { run.actNumber = act; run.mapGraph = buildActMap(registries, rng, currentSeat(), act, null, { history: run.history }); run.mapNodeId = null; run.path = []; run.floor = 0; },
     getRun: () => run, getRng: () => rng, getRegistries: () => registries,
     setActiveMeta: (value) => { activeMeta = value; },
     setActiveSettings: (value) => { activeSettings = value; },

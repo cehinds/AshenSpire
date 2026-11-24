@@ -665,7 +665,7 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Apply Weak {base.weak}.",
+        "textTemplate": "Apply {base.weak} Weak.",
         "icon": "skill",
         "flavor": "A loosening charm once laid upon dangerous beasts.\n\nWardens used these small workings to bring wounded animals home without further harm. After the Burning, the same gestures were taught at the gate. It was easier to carry a prisoner who could no longer struggle.\n\nThe hand remembers its gentler purpose."
       },
@@ -740,7 +740,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Apply Weak 1."
+          "Apply 1 Weak."
         ],
         "sourceFaceLines": [
           "Inflict Weak 1"
@@ -780,11 +780,17 @@
           {
             "op": "applyStatus",
             "target": "enemy",
-            "status": "base.charm",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
             "stacks": 1
           }
         ],
-        "textTemplate": "Apply Charm {base.charm}.",
+        "textTemplate": "Apply {weak} Weak and {vulnerable} Vulnerable.",
         "icon": "skill",
         "flavor": "A courtly working carried beyond the frozen bridges.\n\nPetitioners learned to soften the attention of armed doorwardens before presenting their claims. The words lost their courtesy as the queues grew hungry. Their cadence still causes a raised weapon to hesitate before its appointed stroke.\n\nAn audience can be won without consent."
       },
@@ -859,7 +865,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Apply Charm 1."
+          "Apply 1 Charm."
         ],
         "sourceFaceLines": [
           "Inflict Charm 1"
@@ -903,7 +909,7 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Apply Bind {base.bind}.",
+        "textTemplate": "Apply {base.bind} Bind.",
         "icon": "skill",
         "flavor": "Restraint of the Bastion's old holding rooms.\n\nThe Wardens preferred a knot that checked the striking arm and left its bearer able to eat. Several survived on the empty cells after the keys were lost. Their pattern needs no rope when traced in ash.\n\nMercy had a shape before a name."
       },
@@ -978,7 +984,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Apply Bind 1."
+          "Apply 1 Bind."
         ],
         "sourceFaceLines": [
           "Inflict Bind 1"
@@ -1029,7 +1035,7 @@
             "pile": "hand"
           }
         ],
-        "textTemplate": "Apply Restrained {base.restrained}. Add a Restrained burden to the enemy hand.",
+        "textTemplate": "Apply {base.restrained} Restrained. Add a Restrained burden to its hand.",
         "icon": "skill",
         "flavor": "A burdening seal of the Court's prisoners.\n\nThose brought over the bridges wore weighted cords beneath their sleeves. They could walk to judgment, but every movement reminded them of the escort. The cords rotted in the river vaults; the imposed weight remained in their knots.\n\nThe sentence travels lighter than its iron."
       },
@@ -1110,7 +1116,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Apply Restrained 1. Add a Restrained burden to the enemy hand."
+          "Apply 1 Restrained. Add a Restrained burden to its hand."
         ],
         "sourceFaceLines": [
           "Inflict Restrained 1"
@@ -1147,18 +1153,12 @@
         "keywords": [],
         "effects": [
           {
-            "op": "applyStatus",
-            "target": "self",
-            "status": "base.foresight",
-            "stacks": 3
-          },
-          {
             "op": "draw",
-            "amount": 2
+            "amount": 3
           }
         ],
-        "textTemplate": "Gain {base.foresight} Foresight and draw {draw} cards.",
-        "faceTemplate": ["Gain {base.foresight} Foresight.", "Draw {draw} cards."],
+        "textTemplate": "Draw {draw} cards.",
+        "faceTemplate": ["Draw {draw} cards."],
         "icon": "skill",
         "flavor": "An exercise of the Observatory's night students.\n\nApprentices watched a candle's reflection through a bowl of dark water before they were allowed near the lenses. The practice taught them to notice a movement before seeking its cause. Few saw farther than the next breath.\n\nThat breath was sometimes sufficient."
       },
@@ -1267,7 +1267,7 @@
         "staminaCost": 1,
         "manaCost": 0,
         "type": "skill",
-        "keywords": [],
+        "keywords": ["exhaust"],
         "effects": [
           {
             "op": "applyStatus",
@@ -1276,7 +1276,7 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain Evade {base.evade}.",
+        "textTemplate": "Gain {base.evade} Evade. Exhaust.",
         "icon": "shield",
         "flavor": "Footwork of the weald's narrow river crossings.\n\nBridge keepers taught travelers to turn sideways when a laden cart passed. During the fighting, the movement became a way to let steel pass just as closely. It requires little ground, and leaves little room for doubt.\n\nThe river took those who stepped twice."
       },
@@ -1350,7 +1350,7 @@
       "presentation": {
         "canonicalCardRef": "dodgeRoll",
         "faceLines": [
-          "Gain Evade 1."
+          "Gain 1 Evade. Exhaust."
         ],
         "sourceFaceLines": [
           "Gain Evade 1"
@@ -1368,7 +1368,7 @@
           "mana": 0,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Gain Evade 1.",
+        "chosenRules": "Gain 1 Evade. Exhaust.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }
@@ -1393,7 +1393,7 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain Intangible {base.intangible}.",
+        "textTemplate": "Gain {base.intangible} Intangible.",
         "icon": "skill",
         "flavor": "A thinning learned among the Observatory's cold rooms.\n\nStudents were told to stand where the lens cast no image and listen for their own footsteps. Those who mastered the lesson could cross a door without stirring its hanging cloth. They returned colder than the stone.\n\nThe cloth never marked their passage."
       },
@@ -1469,7 +1469,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Gain Intangible 1."
+          "Gain 1 Intangible."
         ],
         "sourceFaceLines": [
           "Gain Intangible 1"
@@ -1512,7 +1512,7 @@
             "stacks": 1
           }
         ],
-        "textTemplate": "Gain Mirrors {base.mirrors}.",
+        "textTemplate": "Gain {base.mirrors} Mirrors.",
         "icon": "skill",
         "flavor": "A fractured defense of the river city's salons.\n\nThe old houses hung polished plates beside their doors to multiply a guest's arrival. After the bridges froze, household magicians learned to give those reflections a brief weight. Intruders struck the nearest figure and heard glass break.\n\nThe remaining guest need not be real."
       },
@@ -1586,7 +1586,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Gain Mirrors 1."
+          "Gain 1 Mirrors."
         ],
         "sourceFaceLines": [
           "Gain Mirrors 1"
@@ -2395,7 +2395,7 @@
             "position": "random"
           }
         ],
-        "textTemplate": "Shuffle up to 100 random cards in your draw pile.",
+        "textTemplate": "Shuffle your draw pile.",
         "faceTemplate": ["Shuffle draw pile."],
         "icon": "shield",
         "flavor": "An ordering exercise of the Observatory's apprentices.\n\nThe students sorted loose charts until each could name their place by touch. Their teachers then scattered the stack and ordered them to begin again. The exercise continued after the charts ceased to describe the sky outside.\n\nNo arrangement was permitted to become certain."
@@ -2465,7 +2465,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Shuffle up to 100 random cards in your draw pile."
+          "Shuffle your draw pile."
         ],
         "sourceFaceLines": [
           "Shuffle the deck"
@@ -3803,6 +3803,7 @@
             "amount": 10
           }
         ],
+        "upgradeMenu": ["fx:reaction", "fx:unethereal", "blk"],
         "textTemplate": "Gain {block} Block. Ethereal.",
         "icon": "shield",
         "flavor": "A brief shelter drawn from the Observatory's fading glass.\n\nThe outer windows once softened the heat that gathered beneath the great lens. Shards carried away after the Burning could still hold a pale screen for an instant. In an unwatched hand, they crumbled before the next breath.\n\nThe shelter lasts only while it is needed."
@@ -3910,7 +3911,7 @@
         "staminaCost": 1,
         "manaCost": 0,
         "type": "skill",
-        "keywords": [],
+        "keywords": ["exhaust"],
         "effects": [
           {
             "op": "applyStatus",
@@ -3919,7 +3920,11 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Gain {strength} Strength for this combat.",
+        "textTemplate": "Gain {strength} Strength for this combat. Exhaust.",
+        "upgrade": {
+          "keywords": [],
+          "textTemplate": "Gain {strength} Strength for this combat."
+        },
         "faceTemplate": ["Gain {strength} Strength."],
         "icon": "shield",
         "flavor": "A strengthening rite of the Bastion's stone carriers.\n\nLaborers pressed both palms against the first block before beginning the morning's lift. The gesture steadied tired arms through a day on the ridge. Their descendants found the same borrowed resolve useful beneath a weapon's weight.\n\nStone taught the hand before steel did."
@@ -4040,7 +4045,7 @@
             "amount": 12
           }
         ],
-        "textTemplate": "All allies lose {loseHp} HP. Gain {block} Block.",
+        "textTemplate": "Gain {block} Block. No ally loses {loseHp} HP.",
         "icon": "shield",
         "flavor": "A shared defense of the ring road's last escorts.\n\nAn escort sometimes closed ranks around the weakest traveler and bore the blows together. A harsher working drew the price from every companion before any enemy struck. The traveler it saved was left to remember each willing face.\n\nShelter can leave wounds on either side."
       },
@@ -4051,7 +4056,8 @@
       ],
       "groups": [
         "base.current-rewards",
-        "base.core-rewards"
+        "base.core-rewards",
+        "base.needs-allies"
       ],
       "requirements": {
         "elements": [],
@@ -4112,7 +4118,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "All allies lose 3 HP. Gain 12 Block."
+          "Gain 12 Block. No ally loses 3 HP."
         ],
         "sourceFaceLines": [
           "Drain allies: ?",
@@ -4166,7 +4172,6 @@
                     "burn",
                     "venom",
                     "base.weak",
-                    "base.charm",
                     "base.bind",
                     "base.restrained",
                     "base.poison",
@@ -4179,7 +4184,7 @@
             }
           }
         ],
-        "textTemplate": "Deal {damage} damage, scaling with distinct negative statuses.",
+        "textTemplate": "Deal damage: {damage}.",
         "faceTemplate": ["Damage rises per affliction."],
         "icon": "attack",
         "flavor": "A cruel calculation of the river city's interrogators.\n\nThe interrogators kept separate marks for cold, hunger, and the smaller pains inflicted between questions. Each new mark narrowed a prisoner's remaining resistance. Their successors learned to strike where several afflictions had already begun their work.\n\nThe ledger counted injuries as opportunities.",
@@ -4307,7 +4312,7 @@
             }
           }
         ],
-        "textTemplate": "Deal {damage} damage, scaling with HP lost this turn.",
+        "textTemplate": "Deal damage: {damage}.",
         "faceTemplate": ["Damage rises with HP lost."],
         "icon": "attack",
         "flavor": "A reprisal taught among the Bastion's battered gate guards.\n\nRelief seldom came before the second assault. The guards learned to turn the force that drove them backward into the next blow forward. Those who survived could tell the cost of a watch by its last strike.\n\nThe gate remembered every attempt to break it.",
@@ -4435,7 +4440,7 @@
             }
           }
         ],
-        "textTemplate": "Gain {block} Block, scaling with distinct types played this turn.",
+        "textTemplate": "Gain Block: {block}.",
         "faceTemplate": ["Block rises per card type."],
         "icon": "shield",
         "flavor": "A defense assembled from the ring road's scattered schools.\n\nThe towers once demanded separate loyalties from their fighters. On the roads between them, survivors exchanged the movements that had kept them alive. A guard became stronger when it could answer more than one kind of danger.\n\nNo ruined school could afford its old pride."
@@ -4552,7 +4557,7 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Deal {damage} damage. Costs +1 SP per prior play this combat (maximum +3).",
+        "textTemplate": "Deal {damage} damage. Costs 1 more Stamina each play (up to +3).",
         "icon": "attack",
         "flavor": "An exacting stroke of the Citadel's formal duels.\n\nA duelist was expected to end the matter before fatigue spoiled the prescribed line. Those forced to repeat it found the weapon heavier on each return. The body paid for an elegance that the watching Court rarely questioned.\n\nA perfect motion does not become easier.",
         "damageSchool": "physical",
@@ -4631,7 +4636,7 @@
       "presentation": {
         "canonicalCardRef": "strike",
         "faceLines": [
-          "Deal 8 damage. Costs +1 SP per prior play this combat (maximum +3)."
+          "Deal 8 damage. +1 Stamina each play (up to +3)."
         ],
         "sourceFaceLines": [
           "Resolve effect ?",
@@ -4685,7 +4690,7 @@
             }
           }
         ],
-        "textTemplate": "Deal {damage} damage, increasing each time this card is played.",
+        "textTemplate": "Deal damage: {damage}.",
         "faceTemplate": ["Damage rises each play."],
         "icon": "attack",
         "flavor": "A relentless exercise of the Bastion's quarry fighters.\n\nStone breakers struck along one line until the hidden fault yielded. Their children brought the practice into the shield yard, refusing to change a stroke that had not yet found its depth. Each return carried the weight of the last.\n\nThe fracture arrives before the stone admits it.",
@@ -4805,7 +4810,7 @@
             }
           }
         ],
-        "textTemplate": "Spend all remaining SP. Deal {damage} damage.",
+        "textTemplate": "Spend all your Stamina. Deal damage: {damage}.",
         "icon": "skill",
         "flavor": "An undivided exertion of the road's solitary climbers.\n\nA locked stair offers no promise of another attempt. Some climbers learned to gather every remaining measure of effort into one committed motion. What followed depended on whether the obstruction or the climber gave way first.\n\nNothing was kept for the next landing.",
         "damageSchool": "physical",
@@ -4879,7 +4884,7 @@
       "presentation": {
         "canonicalCardRef": "strike",
         "faceLines": [
-          "Spend all remaining SP. Deal 6 damage per SP paid."
+          "Spend all your Stamina. Deal 6 damage per Stamina."
         ],
         "sourceFaceLines": [
           "Pay X: ? resource",
@@ -4923,7 +4928,7 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Spend all remaining SP. Deal {damage} damage to up to X enemies.",
+        "textTemplate": "Spend all your Stamina. Deal {damage} damage to that many enemies.",
         "icon": "skill",
         "flavor": "A widening assault of the Bastion's crowded breach drills.\n\nThe instructors packed the yard with wooden figures when recruits grew too certain of a single opponent. A fighter learned to carry one movement across as many openings as their strength allowed. The yard left no place to rest.\n\nA breach seldom admits only one enemy.",
         "damageSchool": "physical",
@@ -5001,7 +5006,7 @@
       "presentation": {
         "canonicalCardRef": "strike",
         "faceLines": [
-          "Spend all remaining SP. Deal 8 damage to up to X enemies."
+          "Spend all your Stamina. Deal 8 damage to that many enemies."
         ],
         "sourceFaceLines": [
           "Pay X: ? resource",
@@ -5063,7 +5068,7 @@
             }
           }
         ],
-        "textTemplate": "Gain {base.conceal} Conceal. Hide X hand cards for X turns, where X is your Conceal stacks.",
+        "textTemplate": "Gain {base.conceal} Conceal. Hide that many hand cards for that many turns.",
         "icon": "skill",
         "flavor": "A concealment practiced by the river city's couriers.\n\nMessages were sewn inside an empty fold rather than beneath a conspicuous seal. Some couriers learned to put the fold itself beyond a searcher's touch. What they hid returned later, sometimes after its appointed recipient was gone.\n\nAn absent thing can still keep its appointment."
       },
@@ -5141,7 +5146,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Gain Conceal 2. Hide X cards for X turns, equal to your stacks."
+          "Gain 2 Conceal. Hide 2 hand cards for 2 turns."
         ],
         "sourceFaceLines": [
           "Hide X cards",
@@ -5565,8 +5570,8 @@
             "amount": 12
           }
         ],
-        "textTemplate": "If MP was paid, deal {damage} damage; otherwise gain 8 Block.",
-        "faceTemplate": ["Paid MP: deal {damage} damage.", "Otherwise gain 8 Block."],
+        "textTemplate": "If Mana was paid, deal {damage} damage. Otherwise gain 8 Block.",
+        "faceTemplate": ["Mana paid: deal {damage} damage.", "Otherwise gain 8 Block."],
         "icon": "skill",
         "flavor": "A borrowed cadence of the Observatory's armed attendants.\n\nSome attendants could kindle a spell along the motion of a blade. Others repeated the same motion without its light and found it settled into a serviceable guard. Both remained in the drills after the teachers stopped distinguishing them.\n\nThe hand remembers whether it carried fire.",
         "damageSchool": "physical",
@@ -5670,7 +5675,7 @@
       "presentation": {
         "canonicalCardRef": "strike",
         "faceLines": [
-          "If MP was paid, deal 12 damage; otherwise gain 8 Block."
+          "If Mana was paid, deal 12 damage. Otherwise gain 8 Block."
         ],
         "sourceFaceLines": [
           "Active paid effect: ?"
@@ -6657,8 +6662,8 @@
             "amount": 8
           }
         ],
-        "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn.",
-        "faceTemplate": ["Gain {block} Block.", "Guard allies for {base.guard-allies} turn."],
+        "textTemplate": "Gain {block} Block and guard allies for {base.guard-allies} turn. With no allies, only the Block applies.",
+        "faceTemplate": ["Gain {block} Block.", "No allies: no guard."],
         "icon": "shield",
         "flavor": "A sheltering oath of the Bastion's road wardens.\n\nThe Wardens walked between the wagons and the tree line, keeping their shields toward the unseen ground. An escort was judged by who arrived behind them, rather than by wounds received. The oath endured after the wagons stopped coming.\n\nAn empty road can still be guarded."
       },
@@ -6669,7 +6674,8 @@
       ],
       "groups": [
         "base.current-rewards",
-        "base.core-rewards"
+        "base.core-rewards",
+        "base.needs-allies"
       ],
       "requirements": {
         "elements": [],
@@ -6731,7 +6737,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Gain 8 Block and guard allies for 1 turn."
+          "Gain 8 Block and guard allies for 1 turn. With no allies, only the Block applies."
         ],
         "sourceFaceLines": [
           "Guard ? allies",
@@ -7014,7 +7020,7 @@
             "amount": 3
           }
         ],
-        "textTemplate": "Restore {restoreStamina} SP.",
+        "textTemplate": "Restore {restoreStamina} Stamina.",
         "icon": "skill",
         "flavor": "A measured recovery of the weald's ridge workers.\n\nWorkers rested at marked stones on the climb to the Bastion, setting their loads down before their knees failed. The short interval was counted in steady breaths. Fighters learned to find the same recovery without leaving their place in the line.\n\nRest need not wait for a safe road."
       },
@@ -7084,7 +7090,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Restore 3 SP for a net gain of 2 SP."
+          "Restore 3 Stamina (a net gain of 2)."
         ],
         "sourceFaceLines": [
           "Gain ? resource"
@@ -7118,7 +7124,7 @@
         "staminaCost": 1,
         "manaCost": 0,
         "type": "skill",
-        "keywords": [],
+        "keywords": ["exhaust"],
         "effects": [
           {
             "op": "applyStatus",
@@ -7127,8 +7133,12 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Give an ally {strength} Strength for this combat.",
-        "faceTemplate": ["Ally gains {strength} Strength."],
+        "textTemplate": "No ally gains {strength} Strength. Exhaust.",
+        "upgrade": {
+          "keywords": [],
+          "textTemplate": "No ally gains {strength} Strength."
+        },
+        "faceTemplate": ["No ally gains {strength} Strength."],
         "icon": "shield",
         "flavor": "An encouragement kept by the Bastion's shared watches.\n\nThe guards touched a companion's shoulder before exchanging places at the gate. A small working grew around the gesture, lending tired arms some of the giver's resolve. It passed between survivors long after the gate ceased to stand.\n\nThe hand is withdrawn; the steadiness remains."
       },
@@ -7139,7 +7149,8 @@
       ],
       "groups": [
         "base.current-rewards",
-        "base.core-rewards"
+        "base.core-rewards",
+        "base.needs-allies"
       ],
       "requirements": {
         "elements": [],
@@ -7199,7 +7210,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Give an ally 2 Strength for this combat."
+          "No ally gains 2 Strength."
         ],
         "sourceFaceLines": [
           "Buff ally: ?"
@@ -7707,11 +7718,11 @@
           {
             "op": "applyStatus",
             "target": "self",
-            "status": "base.veil",
+            "status": "evade",
             "stacks": 2
           }
         ],
-        "textTemplate": "Gain Veil for {base.veil} turns. Single-target actions require a Perception check; area actions bypass it.",
+        "textTemplate": "Gain {evade} Evade.",
         "icon": "skill",
         "flavor": "A veiling art of the river city's hidden messengers.\n\nCouriers crossed occupied bridges by moving where a watcher's attention had just departed. A small working deepened that omission until a searching gaze passed over them. Those with a practiced eye could still find the disturbance in the crowd.\n\nA missing figure leaves an occupied space."
       },
@@ -7783,7 +7794,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Gain Veil for 2 turns. Single-target actions require a Perception check; area actions bypass it."
+          "Gain Veil for 2 turns. Single-target actions must pass a Perception check."
         ],
         "sourceFaceLines": [
           "Untargetable unless perceived"
@@ -7831,8 +7842,22 @@
             "amount": 6
           }
         ],
-        "textTemplate": "Gain {block} Block. Retain Block for {base.retain-block} turn.",
-        "faceTemplate": ["Gain {block} Block.", "Retain it {base.retain-block} turn."],
+        "costGrowth": {
+          "stamina": 1,
+          "mana": 0,
+          "perUse": 1,
+          "max": 2
+        },
+        "upgrade": {
+          "costGrowth": {
+            "stamina": 0,
+            "mana": 0
+          },
+          "textTemplate": "Gain {block} Block; keep it {base.retain-block} turn.",
+          "faceTemplate": ["Gain {block} Block.", "Keep it {base.retain-block} turn."]
+        },
+        "textTemplate": "Gain {block} Block; keep it {base.retain-block} turn. Costs 1 more Stamina each play (up to +2).",
+        "faceTemplate": ["Gain {block} lasting Block.", "+1 Stamina each play."],
         "icon": "shield",
         "flavor": "A settled guard of the Citadel's long watches.\n\nThe bridge guards learned to hold their shields through the quiet between assaults without letting the shoulders slacken. Their stance preserved work already done instead of demanding it anew. The practice remained useful when the bridges became a frozen road.\n\nThe pause does not belong to the attacker."
       },
@@ -7904,7 +7929,7 @@
       "presentation": {
         "canonicalCardRef": "ironSkin",
         "faceLines": [
-          "Gain 6 Block. Retain Block for 1 turn."
+          "Gain 6 Block; keep it 1 turn. +1 Stamina each play."
         ],
         "sourceFaceLines": [
           "Retain ? Block"
@@ -7922,7 +7947,7 @@
           "mana": 0,
           "rationale": "One-SP utility baseline; mana-priced spells and arts pay at least one base MP. Large defensive or multiplier spells pay two MP."
         },
-        "chosenRules": "Gain 6 Block. Retain Block for 1 turn.",
+        "chosenRules": "Gain 6 Block; keep it 1 turn. Costs 1 more Stamina each play (up to +2); the upgrade holds the cost.",
         "rationale": "Resolve unassigned source parameters into concrete executable values; original clauses and open questions remain unchanged in provenance. Status-specific triggers, coefficients, decay and polarity are independently authored in statuses.json.",
         "parameterSource": "definition.effects and optional definition.effectVariants/costGrowth/targetLimit; each numeric field there is an editable author default."
       }

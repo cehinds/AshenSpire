@@ -26,6 +26,8 @@ import { summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js'
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
 import { expandedEnemyMove, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { DragFaceQuote, DragFaceTargetId } from '../src/ui/models/DragFaceModel.js';
+import { BreakCombatant, BREAK_STATUS_IDS } from '../src/engine/brokenRule.js';
+import { FixCoreBrokenRules } from '../src/model/fixCoreMechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -98,8 +100,20 @@ function playChecked(combat, card, targetId, tally, label) {
     // A Counter's return can stagger the player in the middle of a multi-hit card, which changes the later hits (no matching-stance bonus,
     // Vulnerable): the hits from that point are another action's business, and the ones before it must match the face.
     const cut = events.findIndex(event => event.type === 'playerStaggered');
+    // Likewise a weakness stagger (enemyStaggered, cause 'weakness') lands after the hit that found the weakness: the face does not price
+    // weakness effects, so that target's later hits (Staggered, Vulnerable) are compared no further. Seen once the halved base damage
+    // (owner, 2026-11-17) moved which Poise a multi-hit spell breaks (starseer seed 154, Star Shower).
+    const weaknessStaggered = new Set();
     for (const event of cut >= 0 ? events.slice(0, cut) : events) {
+      if (event.type === 'enemyStaggered' && event.cause === 'weakness') weaknessStaggered.add(event.targetId);
+      // Divine's Poise-break Smite belongs to the preceding contact. The quote
+      // includes this direct HP rider, emitted separately from damageDealt.
+      if (event.type === 'elementSmite' && event.sourceId === 'player') {
+        const hits = dealt.get(event.targetId);
+        if (hits?.length) hits[hits.length - 1] += event.amount;
+      }
       if (event.type !== 'damageDealt' || event.sourceId !== 'player' || event.cardInstanceId !== card.instanceId || !event.isAttack) continue;
+      if (weaknessStaggered.has(event.targetId)) continue;
       (dealt.get(event.targetId) || dealt.set(event.targetId, []).get(event.targetId)).push(event.hpLoss);
     }
     // An Evade stack cancels a hit outright (an attackMissed event, no damage event): the face priced those leading hits at 0.
@@ -128,7 +142,7 @@ function playChecked(combat, card, targetId, tally, label) {
       assert.ok(explains(0, 0), `${label}: ${card.cardId} -> ${id} HP lost per hit [${got}] equals the face [${priced}]`);
       const sure = list.filter(row => !row.conditional).reduce((n, row) => n + row.hits.length, 0);
       // A fight the target's own Counter reply ended (the player fell mid-card) cuts the remaining hits off like a death does.
-      if (enemyAlive(combat, id) && cut < 0 && !combat.result) assert.ok(got.length >= sure, `${label}: ${card.cardId} -> ${id} hits are missing without a death`);
+      if (enemyAlive(combat, id) && cut < 0 && !weaknessStaggered.has(id) && !combat.result) assert.ok(got.length >= sure, `${label}: ${card.cardId} -> ${id} hits are missing without a death`);
       tally.hits += got.length;
     }
     void enemiesBefore;
@@ -201,21 +215,42 @@ function forecastBeforeTurn(combat) {
   if (combat.player.combatCounter?.charges > 0) return out;
   for (const enemy of livingEnemies(combat)) {
     if (enemy.intent?.kind !== 'attack' || enemy.intent.damage == null) continue;
-    const shown = projectCombatIntent(combat, enemy.id)?.projectedDamage;
-    if (shown && shown.basis === 'hp' && shown.min === shown.max) out.set(enemy.id, { moveId: enemy.intent.moveId, shown: shown.max });
+    const projection = projectCombatIntent(combat, enemy.id);
+    const shown = projection?.projectedDamage;
+    if (shown && shown.basis === 'hp' && shown.min === shown.max) out.set(enemy.id, {
+      moveId: enemy.intent.moveId, shown: shown.max, hits: projection.hitDamages, playerHp: combat.player.hp,
+    });
   }
   return out;
 }
 function checkForecast(forecast, events, tally, label) {
-  for (const [id, { moveId, shown }] of forecast) {
+  for (const [id, { moveId, shown, hits, playerHp }] of forecast) {
     const start = events.findIndex(event => event.type === 'enemyMoveStarted' && event.sourceId === id);
     if (start < 0 || events[start].moveId !== moveId) continue;
-    let lost = 0;
+    const contacts = [];
     for (const event of events.slice(start + 1)) {
       if (event.type === 'enemyMoveEnded' && event.sourceId === id) break;
-      if (event.type === 'damageDealt' && event.sourceId === id && event.targetId === 'player') lost += event.hpLoss;
+      if (event.type === 'damageDealt' && event.sourceId === id && event.targetId === 'player') contacts.push(event);
     }
-    assert.equal(lost, shown, `${label}: ${id} ${moveId} was shown at ${shown} and cost the player ${lost}`);
+    const lost = contacts.reduce((total, event) => total + event.hpLoss, 0);
+    if (lost !== shown && events.some(event => event.type === 'combatEnd' && event.victory === false)) {
+      // Like a player multi-hit killing its target, defeat cancels the remaining contacts.
+      // Require the exact promised prefix and prove its final contact took the player's remaining HP.
+      assert.ok(hits?.length > 1 && contacts.length > 0 && contacts.length < hits.length, `${label}: defeat cut a multi-hit action short`);
+      assert.equal(hits.reduce((total, hit) => total + hit, 0), shown, `${label}: per-hit forecast accounts for the full intent`);
+      assert.deepEqual(contacts.map(event => event.hpLoss), hits.slice(0, contacts.length), `${label}: every executed contact matches its forecast`);
+      const final = contacts.at(-1);
+      let remaining = playerHp;
+      for (const event of events.slice(0, events.indexOf(final))) {
+        if (event.targetId !== 'player') continue;
+        if (event.type === 'damageDealt') remaining -= event.hpRemoved;
+        else if (event.type === 'hpLost' && event.cause !== 'attack') remaining -= event.amount;
+        else if (event.type === 'healed') remaining += event.amount;
+      }
+      assert.ok(remaining > 0 && final.hpRemoved > 0 && final.hpLoss >= remaining, `${label}: the final contact is lethal`);
+      assert.equal(final.hpRemoved, remaining, `${label}: the final contact removes exactly the remaining HP`);
+      assert.equal(events.filter(event => event.type === 'damageDealt' && event.targetId === 'player').at(-1), final, `${label}: no contact follows defeat`);
+    } else assert.equal(lost, shown, `${label}: ${id} ${moveId} was shown at ${shown} and cost the player ${lost}`);
     tally.forecasts++;
   }
 }
@@ -226,6 +261,8 @@ function playFight(classId, seed, tally) {
   const takeReactions = seed % 2 === 1;
   for (let turn = 0; turn < 5 && !combat.result; turn++) {
     const refused = refusalsFor(combat);
+    // With no cost minimum (owner 2026-11-22) the bot can afford every reaction card on its own turn and spends them all, so no prompt would ever reach the enemy turn: keep them in hand.
+    for (const held of combat.piles.hand) if ((reg.cards.get(held.cardId)?.tags || []).includes('trait:reaction')) refused.add(held.instanceId);
     for (let plays = 0; plays < 12 && !combat.result && combat.phase === 'player'; plays++) {
       if (combat.pendingReaction || combat.pendingCardChoice || combat.pendingAbilityDiscard) break;
       const card = firstAffordableCard(reg, combat, refused);
@@ -280,6 +317,38 @@ test(`${FIGHTS} seeded fights across the four classes: face = dealt, intent = lo
   assert.ok(tally.forecasts > 60, `enough shown intents were compared with what they cost: ${tally.forecasts}`);
   assert.ok(tally.actions > 150, `enough enemy actions were checked: ${tally.actions}`);
   assert.ok(tally.floaters > 300, `enough floaters were checked: ${tally.floaters}`);
+});
+
+test('a lethal enemy multi-hit stops at the exact forecast prefix while a survivor takes the full intent', () => {
+  for (const hp of [1, 100]) {
+    const combat = fightFor('starseer', 162, ['cinderMantis']);
+    const enemy = combat.enemies[0];
+    enemy.plannedMoves = [];
+    enemy.planDue = true;
+    const move = expandedEnemyMove(enemy, reg.enemies.get(enemy.enemyId).moves.scythePair, 'scythePair', combat);
+    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'scythePair', damage: 5, hits: 2, combatProfile: enemyMoveCarrier(enemy, move, 'scythePair', combat).combatProfile };
+    combat.player.hp = hp; combat.player.maxHp = 100; combat.player.block = 0;
+    combat.player.statuses = {};
+    combat.player.persistentPoise = { value: 18, max: 18, barrierBonus: 15 };
+    combat.player.combatStance = { maneuver: 'sweep', camp: 'physical', range: 'melee' };
+    const forecast = forecastBeforeTurn(combat);
+    assert.deepEqual(forecast.get(enemy.id).hits, [3, 3]);
+    assert.equal(forecast.get(enemy.id).shown, 6);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    const events = combat.eventLog.slice(start);
+    const contacts = events.filter(event => event.type === 'damageDealt' && event.sourceId === enemy.id && event.targetId === 'player');
+    assert.deepEqual(contacts.map(event => event.hpLoss), hp === 1 ? [3] : [3, 3]);
+    assert.deepEqual(contacts.map(event => event.hpRemoved), hp === 1 ? [1] : [3, 3]);
+    assert.equal(combat.player.hp, hp === 1 ? 0 : 94);
+    assert.equal(combat.result, hp === 1 ? 'defeat' : null);
+    const tally = { forecasts: 0, actions: 0, floaters: 0 };
+    checkForecast(forecast, events, tally, `enemy two-hit HP ${hp}`);
+    checkEnemyActions(events, new Map(), tally, `enemy two-hit HP ${hp}`);
+    checkFloaters(events, tally, `enemy two-hit HP ${hp}`);
+    assert.equal(tally.forecasts, 1);
+  }
 });
 
 // ---- (d) the named cases, each on a fixture that sets exactly that state ----------------------------------------------------------
@@ -384,12 +453,14 @@ test('a target with an Evade stack is priced at 0 and spends one stack per hit',
 });
 
 test('a Broken target: the face already holds the x1.5 and the hit lands for it', () => {
+  // Preserve this historical contract for fights saved before the status-based break ruling.
   for (const hand of ['core.strike', 'supernova']) {
     const classId = hand === 'supernova' ? 'starseer' : 'reaver';
     const plain = fixture({ classId, hand }), broken = fixture({ classId, hand });
     for (const row of [plain, broken]) { row.combat.player.energy = 3; row.combat.player.stamina = 3; row.combat.player.mana = 9; }
-    broken.combat.enemies[0].broken = { since: 1, endTurn: 1 };
-    broken.combat.enemies[0].combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1.5 };
+    broken.combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+    assert.deepEqual(FixCoreBrokenRules(broken.combat), { damageMultiplier: 1.5, statusStacks: 0 });
+    BreakCombatant(broken.combat, broken.combat.enemies[0], FixCoreBrokenRules(broken.combat));
     const before = faceOf(plain.combat, plain.card.instanceId, 'e1').perEnemy.get('e1')[0];
     const shown = faceOf(broken.combat, broken.card.instanceId, 'e1').perEnemy.get('e1')[0];
     assert.ok(shown > before, `${hand}: Broken is in the number (${shown} > ${before})`);
@@ -398,6 +469,7 @@ test('a Broken target: the face already holds the x1.5 and the hit lands for it'
 });
 
 test('a Broken player: the intent number holds the x1.5 and the enemy then costs the player exactly that', () => {
+  // A saved fight retains its explicit multiplier and does not acquire the newer break statuses.
   const run = () => {
     const { combat } = fixture();
     const enemy = combat.enemies[0];
@@ -407,14 +479,44 @@ test('a Broken player: the intent number holds the x1.5 and the enemy then costs
   };
   const shownFor = combat => projectCombatIntent(combat, 'e1')?.projectedDamage?.max;
   const bare = run(), brokenFight = run();
-  brokenFight.player.broken = { since: 1, endTurn: 2 };
-  brokenFight.player.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1.5 };
+  brokenFight.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+  assert.deepEqual(FixCoreBrokenRules(brokenFight), { damageMultiplier: 1.5, statusStacks: 0 });
+  BreakCombatant(brokenFight, brokenFight.player, FixCoreBrokenRules(brokenFight));
   const [plainShown, brokenShown] = [shownFor(bare), shownFor(brokenFight)];
   assert.ok(brokenShown > plainShown, `the intent prices the Broken player: ${brokenShown} > ${plainShown}`);
   const hp = brokenFight.player.hp;
   dispatch(brokenFight, { type: 'endTurn' });
   while (brokenFight.pendingReaction) dispatch(brokenFight, { type: 'chooseReaction', offerId: brokenFight.pendingReaction.id, optionId: null });
   assert.equal(hp - brokenFight.player.hp, brokenShown, 'what the Broken player loses is the number the intent showed');
+});
+
+test('a current Broken target shows its two-stack break statuses and deals exactly the face number without x1.5', () => {
+  for (const hand of ['core.strike', 'supernova']) {
+    const { combat, card } = fixture({ classId: hand === 'supernova' ? 'starseer' : 'reaver', hand });
+    const target = combat.enemies[0], rules = FixCoreBrokenRules(combat);
+    assert.deepEqual(rules, { damageMultiplier: 1, statusStacks: 2 });
+    BreakCombatant(combat, target, rules);
+    for (const status of BREAK_STATUS_IDS) assert.equal(target.statuses[status]?.stacks, 2, status);
+    assert.equal(target.combatStance.damageMultiplier, 1);
+    const shown = faceOf(combat, card.instanceId, target.id).perEnemy.get(target.id), hp = target.hp;
+    check(combat, card, target.id, `current Broken target ${hand}`);
+    assert.equal(hp - target.hp, shown.reduce((total, hit) => total + hit, 0), `${hand}: the full face equals HP lost`);
+  }
+});
+
+test('a current Broken player shows the break statuses in its incoming intent and loses exactly that HP', () => {
+  const { combat } = fixture(), enemy = combat.enemies[0];
+  Object.assign(enemy, { intent: { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 }, planDue: true });
+  Object.assign(combat.player, { block: 0, hp: 100, persistentPoise: { value: 0, max: 8 }, statuses: {} });
+  const rules = FixCoreBrokenRules(combat);
+  assert.deepEqual(rules, { damageMultiplier: 1, statusStacks: 2 });
+  BreakCombatant(combat, combat.player, rules);
+  for (const status of BREAK_STATUS_IDS) assert.equal(combat.player.statuses[status]?.stacks, 2, status);
+  assert.equal(combat.player.combatStance.damageMultiplier, 1);
+  const shown = projectCombatIntent(combat, enemy.id)?.projectedDamage?.max, hp = combat.player.hp;
+  dispatch(combat, { type: 'endTurn' });
+  while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  assert.equal(hp - combat.player.hp, shown, 'the actual status-based incoming loss equals the intent');
 });
 
 test('a farther target that needs Advance: the face cost is the cost paid', () => {
@@ -680,7 +782,7 @@ test('a play an enemy reaction answers: the face is the pre-reaction hit, the HP
       combat.player.energy = combat.player.stamina = combat.player.mana = 9;
       let face;
       try { face = faceOf(combat, combat.piles.hand[0].instanceId, enemy.id); } catch { continue; }
-      const start = combat.eventLog.length, hp = enemy.hp;
+      const start = combat.eventLog.length, playedInstanceId = combat.piles.hand[0].instanceId;
       try { dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: enemy.id }); } catch { continue; }
       while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
       const events = combat.eventLog.slice(start);
@@ -690,7 +792,9 @@ test('a play an enemy reaction answers: the face is the pre-reaction hit, the HP
       const faceTotal = (face.perEnemy.get(enemy.id) || []).reduce((n, v) => n + v, 0);
       const firstHit = events.findIndex(event => event.type === 'damageDealt' && event.sourceId === 'player');
       assert.ok(firstHit < 0 || stacked < firstHit, `${card.id}: the reaction comes before the card's hit`);
-      assert.ok(hp - enemy.hp <= faceTotal || !enemy.alive, `${card.id}: the HP taken (${hp - enemy.hp}) is not more than the pre-reaction face (${faceTotal})`);
+      // Heavy armour's Thorns can answer the enemy reaction before this card hits; that passive return is not this card's face.
+      const primaryLoss = events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player' && event.targetId === enemy.id && event.cardInstanceId === playedInstanceId).reduce((sum, event) => sum + event.hpLoss, 0);
+      assert.ok(primaryLoss <= faceTotal || !enemy.alive, `${card.id}: the primary hit HP (${primaryLoss}) is not more than the pre-reaction face (${faceTotal})`);
     }
   }
   assert.ok(answered > 0, 'the Knight answered at least one play');

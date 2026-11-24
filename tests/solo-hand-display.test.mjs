@@ -27,7 +27,7 @@ function dealt(reg, run, settings = {}) {
 }
 
 test('the Hand chip follows a per-class Settings override the way the fight does', () => {
-  const settings = { 'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 5 };
+  const settings = { 'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 6 }; // the shipped base is 5 since 2026-11-18, so 6 moves the chip
   const tuned = createRegistries(configuredContentBundle(contentBundle, settings));
   const run = createRunState({ seed: 7, classId: 'reaver', registries: tuned });
   const stock = createRunState({ seed: 7, classId: 'reaver', registries });
@@ -52,8 +52,8 @@ test('the primary stat card states the opening-hand effect, and no other card do
     const row = statRow(registries, run, 'openingHand');
     const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
     const primary = cards.find((card) => card.id === PRIMARY[classId]);
-    assert.ok(primary.face.summary.includes(`+1 Opening hand per 5 pts (max ${row.max})`), `${classId}: ${primary.face.summary}`);
-    assert.ok(primary.reveal.lines.some((line) => line.startsWith('Opening hand +1 every 5 points')), `${classId}: the fold says it too`);
+    assert.ok(primary.face.summary.includes(`+1 Opening hand per 4 pts (max ${row.max})`), `${classId}: ${primary.face.summary}`);
+    assert.ok(primary.reveal.lines.some((line) => line.startsWith('Opening hand +1 every 4 points')), `${classId}: the fold says it too`);
     for (const card of cards) {
       if (card.id !== PRIMARY[classId]) assert.ok(!/Opening hand/.test(`${card.face.summary} ${card.reveal.lines.join(' ')}`), `${classId} ${card.id}`);
     }

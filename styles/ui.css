@@ -491,8 +491,8 @@
   100% { transform: translate(26px, -92vh); opacity: 0; }
 }
 /* Lite: no looping glow or rising embers; one still frame of the glow. */
-:root[data-performance='lite'] .title-glow { animation: none; text-shadow: 0 0 43px color-mix(in srgb, var(--gold) 42%, transparent); }
-:root[data-performance='lite'] .ember { animation: none; display: none; }
+:root[data-effects='off'] .title-glow { animation: none; text-shadow: 0 0 43px color-mix(in srgb, var(--gold) 42%, transparent); }
+:root[data-effects='off'] .ember { animation: none; display: none; }
 @container game-viewport (max-width: 480.0px) {
 
   .title-screen { padding: 1.2rem 0.8rem 1rem; }}
@@ -632,6 +632,7 @@ button.ev-choice {
 /* ---------- event screen ---------- */
 .event-art { display: inline-block; animation: artFloat 4s ease-in-out infinite; }
 @keyframes artFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+:root[data-effects='off'] .event-art { animation: none; }
 #choices button { animation: screenIn 260ms ease-out backwards; }
 
 /* multiple player seats sit side-by-side in the combat player-zone */
@@ -1327,7 +1328,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    place it would land is outlined, and nothing selects text meanwhile. */
 .deck-editor-dragging { user-select: none; -webkit-user-select: none; }
 .deck-editor-item.drag-source { opacity: 0.45; }
-.deck-editor-pane.drop-target, .deck-editor-row.drop-target { outline: 2px dashed var(--gold); outline-offset: -2px; }
+.deck-editor-pane.drop-target, .deck-editor-item.drop-target, .deck-editor-row.drop-target { outline: 2px dashed var(--gold); outline-offset: -2px; }
 .deck-editor-footer { display: grid; gap: 0.4rem; min-width: 0; }
 .deck-editor-refusal { margin: 0; color: var(--danger); font-weight: 700; }
 .deck-editor-refusal[hidden] { display: none; }
@@ -1499,7 +1500,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-reading .card .cost > span { display: none; }
 .deck-editor .deck-editor-reading .card .cost { justify-content: center; align-content: center; }
 .deck-editor .deck-editor-reading .card .card-cost-rail > :is(.stamina-cost, .mana-cost) { font-size: max(1.4rem, var(--deck-min-text)); line-height: 1.3; padding: .3rem .5rem; border: 1px solid #796741; background: #181b1e; border-radius: .5rem; }
-.deck-editor-inspect-back { display: none; }
+.deck-editor-inspect-back { display: block; align-self: start; flex: none; }
 .deck-editor-feedback { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: #d6bd8e; min-height: var(--deck-editor-target); }
 .deck-editor-feedback[hidden] { display: none; }
 .deck-editor-feedback .deck-editor-undo { min-height: var(--deck-editor-target); min-width: 8rem; }
@@ -1592,6 +1593,15 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-reading .card > .deck-editor-costs { position: absolute; top: .5rem; right: .5rem; z-index: 3; }
 .deck-editor .deck-editor-reading .card:has(.deck-editor-costs) > .cname { padding-inline: 1rem calc(var(--deck-row-costs) + 1rem); }
 .deck-editor .deck-editor-count { grid-column: -2; grid-row: 2; align-self: center; justify-self: end; font-size: max(1.2rem, var(--deck-min-text)); }
+/* The tag group (owner, 2026-11-18): EQUIPPED (green), REWARD and ART (red), right-justified above the cost numbers. */
+.deck-editor .deck-editor-main { position: relative; }
+.deck-editor .deck-editor-rank[hidden] { display: none !important; }
+.deck-editor .deck-editor-tags { position: absolute; top: 2px; right: .6rem; z-index: 2; display: flex; justify-content: flex-end; gap: .25rem; pointer-events: none; }
+.deck-editor .deck-editor-tag { padding: 0 .35rem; border: 1px solid; border-radius: var(--r-1, 3px); font-size: max(.62rem, calc(10px / var(--ui-zoom, 1))); font-weight: 700; letter-spacing: .06em; line-height: 1.3; text-transform: uppercase; white-space: nowrap; }
+.deck-editor .deck-editor-tag.equipped { background: color-mix(in srgb, var(--green) 28%, black); border-color: var(--green); color: color-mix(in srgb, var(--green) 35%, white); }
+.deck-editor .deck-editor-tag.reward { background: color-mix(in srgb, var(--gold) 22%, black); border-color: var(--gold); color: color-mix(in srgb, var(--gold) 35%, white); }
+.deck-editor .deck-editor-tag.art { background: color-mix(in srgb, var(--blood) 35%, black); border-color: var(--blood); color: color-mix(in srgb, var(--blood) 25%, white); }
+.deck-editor .deck-editor-main:has(> .deck-editor-tags) > .deck-editor-costs { align-self: end; margin-top: 1rem; }
 /* A library tile's count lives in its － count ＋ stepper, so the badge goes. */
 .deck-editor .deck-editor-tile .deck-editor-count { display: none; }
 .deck-editor .deck-editor-meta { grid-column: 3; grid-row: 2; align-self: end; font-size: max(1.1rem, var(--deck-min-text)); white-space: normal; line-height: 1.25; max-height: 2.5em; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
@@ -1719,6 +1729,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-costs .deck-editor-camp { display: inline-flex; align-items: center; justify-content: center; width: var(--deck-row-cost); height: var(--deck-row-cost); color: #efd09a; }
 .deck-editor .deck-editor-costs .deck-editor-camp[data-camp="physical"] { color: #efd09a; }
 .deck-editor .deck-editor-costs .deck-editor-camp .combat-sigil, .deck-editor .deck-editor-costs .deck-editor-camp svg { width: 80%; height: 80%; display: block; }
+.deck-editor .deck-editor-costs .deck-editor-camp[data-traditions="arcane divine"] .combat-sigil { width: 48%; flex: 0 0 48%; }
+.deck-editor .deck-editor-costs .deck-editor-camp[data-traditions="arcane divine"] svg { width: 100%; height: 100%; }
 /* Desktop: a library tile's name takes line 1 in full, and its type and stance
    wrap onto line 2 (the same shape as on phones), in the text column. */
 @container game-viewport (min-width: 1001px) {

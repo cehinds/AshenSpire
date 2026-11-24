@@ -31,7 +31,7 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   enemySpawnRow: 'F',
   playerSpawnColumn: '1',
   enemySpawnColumn: '6',
-  showFormationGrid: true,
+  showFormationGrid: false,
   movementEnabled: false, movementNeedsSelection: true, movementCostsAction: true,
   tileActivation: 'hold', moveActivation: 'hold', selectionColor: '#59bd75',
   rowAScale: 1, rowBScale: 1, rowCScale: 1, rowDScale: 1, rowEScale: 1, rowFScale: 1,
@@ -139,6 +139,9 @@ const BALANCE_DOMAINS = Object.freeze({
   'xp.combatWin': Object.freeze({ max: 1000 }),
   'xp.killLevelMultiplier': Object.freeze({ integer: false, step: 0.05, min: 0, max: 2 }),
   'xp.combatPowerMultiplier': Object.freeze({ integer: false, step: 0.05, min: 0, max: 2 }),
+  'xp.tierMultiplier.normal': Object.freeze({ integer: false, step: 0.05, min: 0, max: 5 }),
+  'xp.tierMultiplier.elite': Object.freeze({ integer: false, step: 0.05, min: 0, max: 5 }),
+  'xp.tierMultiplier.boss': Object.freeze({ integer: false, step: 0.05, min: 0, max: 5 }),
   'xp.kill.normal': Object.freeze({ max: 1000 }),
   'xp.kill.elite': Object.freeze({ max: 1000 }),
   'xp.kill.boss': Object.freeze({ max: 2000 }),
@@ -172,6 +175,24 @@ const LEGACY_CINDER_KEYS = Object.freeze([LEGACY_CINDER_KEY, `settings.${LEGACY_
 
 function withoutRetiredCinderKey(entries) {
   return entries.filter(([key]) => !LEGACY_CINDER_KEYS.includes(key));
+}
+
+// RENDERING QUALITY LEFT SETTINGS (Settings tidy, 2026-11-20). Its row folded into
+// Effects (2026-10-30) and is gone now, so a file exported before then would be
+// refused as an unknown key. Both spellings are read the way the boot migration
+// reads a stored one (ui/performance.js, migrateEffectsSetting): an explicit
+// 'full' becomes `settings.effects: true` unless the file also names Effects;
+// anything else is dropped. Silent: the player's choice lands, nothing is lost.
+const RETIRED_RENDERING_QUALITY_KEYS = Object.freeze(['performanceMode', 'settings.performanceMode']);
+const EFFECTS_SETTING_KEYS = Object.freeze(['effects', 'settings.effects']);
+
+/** withRenderingQualityAsEffects(entries) → the entries without `performanceMode`, with a saved 'full' read as Effects on. */
+function withRenderingQualityAsEffects(entries) {
+  const quality = entries.find(([key]) => RETIRED_RENDERING_QUALITY_KEYS.includes(key));
+  if (!quality) return entries;
+  const kept = entries.filter(([key]) => !RETIRED_RENDERING_QUALITY_KEYS.includes(key));
+  const effectsNamed = kept.some(([key]) => EFFECTS_SETTING_KEYS.includes(key));
+  return quality[1] === 'full' && !effectsNamed ? [...kept, ['settings.effects', true]] : kept;
 }
 
 const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was left out: Cinders pay the authored table. Use Rewards → Cinder gain multiplier to scale them.';
@@ -542,7 +563,7 @@ const RETIRED_BALANCE_PATHS = new Set([
 // base HP"). Without this, `hp` title-cases to "Hp" beside a hand-authored
 // "HP", which is the very mismatch this block exists to end.
 const LABEL_ACRONYMS = new Map(Object.entries({
-  hp: 'HP', xp: 'XP', ar: 'AR', dr: 'DR', pr: 'PR', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
+  hp: 'HP', xp: 'XP', mp: 'MP', ui: 'UI', id: 'ID', pct: '%',
 }));
 
 /**
@@ -581,14 +602,15 @@ const BALANCE_LABELS = Object.freeze({
   'xp.combatWin': 'Combat power XP base',
   'xp.combatPowerMultiplier': 'Combat power XP multiplier',
   'xp.killLevelMultiplier': 'Enemy level XP multiplier',
+  'xp.tierMultiplier.normal': 'Normal fight XP multiplier',
+  'xp.tierMultiplier.elite': 'Elite fight XP multiplier',
+  'xp.tierMultiplier.boss': 'Boss fight XP multiplier',
   'poise.growthMult': 'Poise meter growth after each fill',
   'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
   'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',
   'stagger.player.actionLoss': 'Stamina you lose when your meter fills',
   'stagger.player.statuses.vulnerable': 'Vulnerable stacks when your meter fills',
   'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
-  'mana.minActionCost': 'Least action cost of a mana card',
-  'mana.minStaminaCost': 'Least stamina cost of a mana card',
   'mana.focusManaDiscount': 'Mana off every magic card in prepared stance with a focus armament equipped',
   'level.maxLevelsPerFight': 'Most levels one award can give',
 });
@@ -820,7 +842,7 @@ function presentationModelRows() {
     {
       cat: 'Display',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
-      presentationKey: 'showFormationGrid', def: true,
+      presentationKey: 'showFormationGrid', def: PRESENTATION_DEFAULTS.showFormationGrid,
       label: 'Show battlefield grid',
       note: 'Show faint formation lines behind combatants.',
     },
@@ -859,7 +881,7 @@ function presentationModelRows() {
 
 // The one presentation row still a setting: how much of the viewport the Settings panel uses.
 const SETTINGS_PANEL_KEYS = ['settingsWidthPercent', 'settingsHeightPercent'];
-// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default on).
+// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default off).
 const LIVE_PRESENTATION_KEYS = [...SETTINGS_PANEL_KEYS, 'showFormationGrid'];
 function presentationRows() {
   return presentationModelRows().filter((row) => SETTINGS_PANEL_KEYS.includes(row.presentationKey));
@@ -909,8 +931,7 @@ const LEGACY_BALANCE_PATHS = new Set([
 
 // ---- PER-CLASS VALUES THAT WIN OVER A GLOBAL, BY A SWITCH (2026-09-23) -----
 //
-// A class's reward-rarity table replaces the global one outright, and a class's
-// strike bias replaces the default — but nothing on screen said which was in
+// A class's strike bias replaces the default — but nothing on screen said which was in
 // force, or let a class go back to following the global. Each now has a
 // "uses its own …" switch (model/settingOverrides.js). It starts ON because
 // these classes ship their own values; turning it off drops the class entry
@@ -919,15 +940,6 @@ const LEGACY_BALANCE_PATHS = new Set([
 function balanceOwnRows(bundle) {
   const rows = [];
   const className = (id) => bundle.classes?.find((row) => row.id === id)?.name || word(id);
-  for (const classId of Object.keys(bundle.balance?.rewards?.rarityWeightsByClass || {})) {
-    const member = `${ADVANCED_CONFIG_PREFIX}balance.rewards.rarityWeightsByClass.${classId}`;
-    rows.push({
-      cat: 'Advanced', advancedGroup: 'Rewards', key: ownKey(member), def: true,
-      own: { member, defaultOn: true, dropPath: ['balance', 'rewards', 'rarityWeightsByClass', classId] },
-      label: `${className(classId)} uses its own reward rarity`, searchPath: `rewards rarity ${classId} own override`,
-      note: `On: ${className(classId)}'s combat rewards use the table below. Off: they use Reward rarity, like every other class. Applies to a new run.`,
-    });
-  }
   for (const [classId, entry] of Object.entries(bundle.balance?.equipment?.startingDeck?.classes || {})) {
     if (!Number.isFinite(entry?.strikeBias)) continue;
     const member = `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.classes.${classId}.strikeBias`;
@@ -988,8 +1000,6 @@ function withGates(rows, bundle) {
   const swapRuleIds = (bundle.balance?.equipment?.swapCostRules || []).map((rule) => rule.id);
   const owns = rows.filter((row) => row.own);
   const inheritedKey = (key) => {
-    const rarity = key.match(/^gameConfig\.balance\.rewards\.rarityWeightsByClass\.[^.]+\.(.+)$/);
-    if (rarity) return `${ADVANCED_CONFIG_PREFIX}balance.rewards.rarityWeights.${rarity[1]}`;
     if (/startingDeck\.classes\.[^.]+\.strikeBias$/.test(key)) return `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.defaultStrikeBias`;
     return null;
   };
@@ -1039,10 +1049,9 @@ export function advancedConfigOwns(bundle) {
 
 export function advancedConfigSettings(settings = {}, additionalKeys = []) {
   const entries = withoutSupersededLegacy(Object.entries(settings).filter(([key]) => key.startsWith(ADVANCED_CONFIG_PREFIX)));
-  if (settings.levelUpValue !== undefined) entries.push([`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`, settings.levelUpValue]);
   for (const key of additionalKeys) {
     // `statTierSize` is the retired tier dial (ruleset 6); it is never exported.
-    if (key === 'levelUpValue' || key === 'statTierSize' || settings[key] === undefined) continue;
+    if (key === 'statTierSize' || settings[key] === undefined) continue;
     entries.push([`settings.${key}`, settings[key]]);
   }
   return Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
@@ -1198,7 +1207,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       for (let index = 0; index < range.length; index += 1) range[index] = Math.max(0, Math.round(range[index] * rewardMultiplier));
     }
   }
-  const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`] ?? settings.levelUpValue);
+  const pointsPerLevel = Number(settings[`${ADVANCED_CONFIG_PREFIX}balance.levelUp.pointsPerLevel`]);
   if (Number.isInteger(pointsPerLevel) && pointsPerLevel > 0) configured.balance.levelUp.pointsPerLevel = pointsPerLevel;
   const mode = configured.creationModes.find((row) => row.id === configured.attributeRules.defaultMode);
   if (mode) {
@@ -1509,16 +1518,27 @@ function tolerateRaisedFloors(entries, rows, warnings) {
 // them, so a file or sync profile exported while they existed still carries
 // their keys. They are dropped with one named warning, never refused as
 // unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
-// still settings. The plain-key settings game code still reads by key
-// (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
+// still settings.
 const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.(?:settings(?:Width|Height)Percent|showFormationGrid)$)|recovery\.(hp|stamina|mana)\.)/;
-// A live row exported under a gameConfig alias (see advancedConfigSettings and the additional-row
-// mapping in parseAdvancedConfigFile): the alias is not retired while its row is. levelUpValue is
-// the only one.
-const LIVE_ALIAS_KEYS = /^(settings\.)?gameConfig\.balance\.levelUp\.pointsPerLevel$/;
-export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
-/** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups left behind. */
-export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) && !LIVE_ALIAS_KEYS.test(key);
+// THE RETIRED PLAIN-KEY ROWS (owner, 2026-11-20). Core 2 drew none of these rows, so nobody could
+// change them; the value each one gave is now authored content (docs/SETTINGS-TIDY-PROPOSAL.md,
+// "Removed settings"). A stored or imported key is dropped the same way, so the authored value
+// applies. The readers that still take a settings bag (deck rules, victory pacing, swap cost) keep
+// their authored fallbacks.
+export const RetiredPlainSettingKeys = Object.freeze([
+  'askToUpcastAfterTarget', 'shrineMultiUse', 'shopSell', 'swapCostRule', 'levelUpValue',
+  'rewardLevelStatPoints', 'rewardLevelCards', 'victorySummaryMode', 'victoryXpSeconds',
+  'victoryReceiptSeconds', 'victoryReceiptPauseMs', 'victoryReceiptReadySeconds', 'victoryReceiptFormulaTerms', 'victoryReceiptVisibleRows',
+  'deckEditing', 'deckEditingWhere', 'deckMinUnlimited', 'deckMinSize', 'deckMaxUnlimited', 'deckMaxSize', 'classSpellPowerCopies',
+]);
+const RETIRED_PLAIN_KEYS = new Set(RetiredPlainSettingKeys);
+export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
+/** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups or rows left behind. */
+// The per-kind grace refill rows (`graceRefill.<kind>`, under the removed Rewards tab) went the same
+// way: the counts are the authored `balance.graceRefill` table.
+const RETIRED_GRACE_REFILL_KEY = /^(settings\.)?graceRefill\.[^.]+$/;
+export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) || RETIRED_GRACE_REFILL_KEY.test(String(key))
+  || RETIRED_PLAIN_KEYS.has(String(key).replace(/^settings\./, ''));
 /** retiredStoredSettingKeys(settings) → the stored keys the boot cleanup deletes (every retired legacy key). */
 export const retiredStoredSettingKeys = (settings = {}) => Object.keys(settings || {}).filter(isRetiredLegacySettingKey);
 export function withoutRetiredLegacyGroups(entries, warnings) {
@@ -1543,7 +1563,6 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   for (const row of presentationModelRows().filter((r) => r.presentationKey === 'showFormationGrid')) if (!rows.has(row.key)) { rows.set(row.key, row); rows.set(`settings.${row.key}`, row); }
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
-    if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
   }
   const changes = {};
   // A file exported before ruleset 7 carries retired stat keys and per-item
@@ -1556,7 +1575,7 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // opening-hand limits and shared opening base/attribute (which have no row)
   // are dropped by withoutRetiredOpeningHand, before the same check.
   if (Object.keys(overrides).some((key) => LEGACY_CINDER_KEYS.includes(key))) warnings.push(LEGACY_CINDER_WARNING);
-  const entries = withoutRetiredOpeningHand(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), warnings);
+  const entries = withoutRetiredOpeningHand(withoutRetired(withoutSupersededLegacy(withRenderingQualityAsEffects(Object.entries(overrides))), warnings), warnings);
   for (const [key, raw] of tolerateRaisedFloors(withoutRetiredRows(entries, rows, warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);

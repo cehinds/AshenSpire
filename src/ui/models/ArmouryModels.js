@@ -148,6 +148,7 @@ export function inventoryItemCardModel(row, { selected = false, draggable = fals
       category: row.category,
       count: row.count,
       equippedLabels: [...row.equippedLabels],
+      equippedPlain: row.equippedPlain === true,
       selected,
       draggable,
       holdAction: classModel?.holdAction === true,

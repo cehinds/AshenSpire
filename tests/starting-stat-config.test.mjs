@@ -255,11 +255,11 @@ test('a stock lean character is priced by the rows, with no scale in between', (
   assert.equal(run.drawPerTurn, pool('draw'));
   assert.equal(run.maxMana, pool('mana'));
   // The numbers those rows now state for a stock lean Reaver (STR 3, DEX 1,
-  // CON 2, WIS 1, INT 1): Actions sit at their base of 3, draw at its base of 4
-  // (INT 1 is below the row's baseline of 4), and Mana at its
+  // CON 2, WIS 1, INT 1): Actions sit at their base of 3, draw at its base of 5
+  // (INT 1 is below the 4 points that buy a card: 5 + floor(INT / 4), owner 2026-11-18), and Mana at its
   // base of 1 — WIS 1 at 0.5 a point floors to nothing, and no other term
   // reaches a whole point on the lean span.
-  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 4, 1]);
+  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 5, 1]);
 });
 
 test('the baseline is a dial, and it decides the total when it is set', () => {
@@ -723,7 +723,7 @@ test('the Assign points pool is its own dial, and typing it alone moves it', asy
     assert.equal(low.creationModes.find(row => row.id === 'assign').bonusPool, 3, `an Assign pool of ${pool} is refused`);
     const problem = startingStatPoolProblems(contentBundle, settings).find(row => row.keys.includes('gameConfig.startingStats.assign.bonusPool'));
     assert.ok(problem, 'and the refusal is said');
-    assert.match(problem.message, /is outside 2–\d+ and was refused\. 7 is the least a character can carry: the Starseer's .+ kit asks 3 Intelligence, and every other attribute needs at least 1\./);
+    assert.match(problem.message, /is outside 2 to \d+ and was refused\. 7 is the least a character can carry: the Starseer's .+ kit asks 3 Intelligence, and every other attribute needs at least 1\./);
   }
 });
 

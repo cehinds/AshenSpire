@@ -2,9 +2,22 @@ import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 // A fight created before the 2026-11-14 ruling (attacks always hit, intents always read) keeps rolling: its snapshotted rules lack
 // `accuracy.hitRoll` and `perception.roll`. Tests that assert the d20 or the perception check hand their fight through here.
 
+// An old combat has no Defend-specific Smash override. Restore the whole owning
+// object's entries so nested calls and exceptions preserve both tuning and key order.
+export function withoutDefendSmashOverride(build) {
+  const owner = fixCoreMechanics.smashVsDefensive;
+  if (!owner || !Object.hasOwn(owner, 'defendDamageMultiplier')) return build();
+  const rows = Object.entries(owner);
+  delete owner.defendDamageMultiplier;
+  try { return build(); } finally {
+    for (const key of Object.keys(owner)) delete owner[key];
+    for (const [key, value] of rows) owner[key] = value;
+  }
+}
+
 // Owner, 2026-11-15 (Wave 2 batch 5): the Counter-stack keys (`counter.stackSource`, `returnPerStack`, ...) are newer than every earlier fight.
 // Every wrapper below removes them from the shipped defaults while it builds, and puts them back after.
-const COUNTER_STACK_KEYS = ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard'];
+const COUNTER_STACK_KEYS = ['stackSource', 'returnPerStack', 'consumePerHit', 'decayPerTurn', 'decayClock', 'advantageShare', 'stacksPerCard', 'stacksUpgradeBonus', 'stacksMax', 'stacksByCard'];
 function stripCounterStacks() {
   const held = Object.fromEntries(COUNTER_STACK_KEYS.map(key => [key, fixCoreMechanics.counter[key]]));
   for (const key of COUNTER_STACK_KEYS) delete fixCoreMechanics.counter[key];
@@ -16,7 +29,9 @@ function stripCounterStacks() {
 // Owner, 2026-11-17 (theme B, status and stance rules): these keys are newer than every fight the wrappers below rebuild. Each owning object is
 // snapshotted whole before the keys go, and rebuilt from that snapshot after, so the key order of the shared defaults (part of a fight's state hash) never moves.
 const THEME_B_KEYS = [['counter', 'armedWhileStacks'], ['counter', 'enemyBadgeStacks'], ['stanceBenefits', 'defend', 'poiseFloorWhileBlock'],
-  ['stanceBenefits', 'defend', 'poiseFloorWardMagic'], ['stanceBenefits', 'prepared', 'meleeDamageTakenMultiplier'], ['stanceBenefits', 'neutral', 'damageTakenMultiplier']];
+  ['stanceBenefits', 'defend', 'poiseFloorWardMagic'], ['stanceBenefits', 'prepared', 'meleeDamageTakenMultiplier'], ['stanceBenefits', 'neutral', 'damageTakenMultiplier'],
+  // Owner ruling 2026-11-22: the Magic Adept zero Mana floor key is newer than every fight these wrappers rebuild; such a fight keeps floor 1.
+  ['stance', 'playerMinimumCost']];
 function stripThemeB() {
   const saved = new Map();
   for (const path of THEME_B_KEYS) {
@@ -32,28 +47,54 @@ function stripThemeB() {
     }
   };
 }
+// Owner, 2026-11-18 (section 20 and 21): Ward's decay and break keys, the Pierce Block-per-stack rule and Force's Poise share are newer than every fight these wrappers
+// rebuild. A fight made before them keeps Pierce's 20% Block bypass, Force's x1.5 Poise key, and no Ward decay or break keys. Owners are rebuilt whole on the way back so key order never moves.
+function stripSection20() {
+  const ward = fixCoreMechanics.ward, wardRows = Object.entries(ward), pierce = fixCoreMechanics.pierce, force = fixCoreMechanics.elements?.force;
+  const poise = fixCoreMechanics.poise, poiseRows = Object.entries(poise);
+  for (const key of Object.keys(ward)) delete ward[key];
+  ward.enabled = false;
+  ward.poisePerStack = 5;
+  ward.routing = 'blockFirst';
+  delete poise.breakStatusStacks; poise.brokenDamageMultiplier = 1.5;
+  fixCoreMechanics.pierce = { blockBypassFraction: 0.2 };
+  if (force) fixCoreMechanics.elements.force = { poiseMultiplier: 1.5 };
+  return () => {
+    for (const key of Object.keys(ward)) delete ward[key];
+    for (const [key, value] of wardRows) ward[key] = value;
+    for (const key of Object.keys(poise)) delete poise[key];
+    for (const [key, value] of poiseRows) poise[key] = value;
+    fixCoreMechanics.pierce = pierce;
+    if (force) fixCoreMechanics.elements.force = force;
+  };
+}
 /** Theme B goes first and comes back last, so its whole-object snapshot also puts back the Counter-stack keys in their original places. */
 function guarded(build) {
-  const restoreThemeB = stripThemeB(), restore = stripCounterStacks();
-  try { return build(); } finally { restore(); restoreThemeB(); }
+  return withoutDefendSmashOverride(() => {
+    const restoreSection20 = stripSection20(), restoreThemeB = stripThemeB(), restore = stripCounterStacks();
+    try { return build(); } finally { restore(); restoreThemeB(); restoreSection20(); }
+  });
 }
 /** Runs `build` while the shipped default rules lack only the theme B keys (2026-11-17): a fight created before the status and stance rules. */
-export function withoutThemeBRules(build) { const restore = stripThemeB(); try { return build(); } finally { restore(); } }
+export function withoutThemeBRules(build) { return withoutDefendSmashOverride(() => { const restoreSection20 = stripSection20(), restore = stripThemeB(); try { return build(); } finally { restore(); restoreSection20(); } }); }
 /** The rules of a fight saved before the 2026-11-14 ruling: the perception key is absent, so intents roll. */
 export function legacyPerceptionRules(rules = fixCoreMechanics) {
   const out = structuredClone(rules);
   delete out.perception.roll;
+  delete out.smashVsDefensive?.defendDamageMultiplier;
   return out;
 }
 export function legacyHitRoll(combat) {
   const rules = structuredClone(combat.fixCoreRules || combat.gameProfile?.fixCoreRules);
   delete rules.accuracy.hitRoll; delete rules.accuracy.evadeStacksPerCard;
+  delete rules.smashVsDefensive?.defendDamageMultiplier;
   combat.fixCoreRules = rules;
   return combat;
 }
 export function legacyPerceptionRoll(combat) {
   const rules = structuredClone(combat.fixCoreRules || combat.gameProfile?.fixCoreRules);
   delete rules.perception.roll;
+  delete rules.smashVsDefensive?.defendDamageMultiplier;
   combat.fixCoreRules = rules;
   return combat;
 }
@@ -62,6 +103,7 @@ export const legacyRolls = combat => legacyPerceptionRoll(legacyHitRoll(combat))
 export function legacyRules(rules) {
   const out = structuredClone(rules);
   delete out.accuracy.hitRoll; delete out.accuracy.evadeStacksPerCard; delete out.perception.roll;
+  delete out.smashVsDefensive?.defendDamageMultiplier;
   return out;
 }
 
@@ -132,8 +174,10 @@ function withoutSpellCostRulesInner(build) {
 
 /** Runs `build` while the shipped default rules lack only `statusCaps` (owner 2026-11-15, no max stack counts): a fight created before it keeps every old hold cap. */
 export function withoutStatusCapsRule(build) {
-  const restore = dropStatusCaps();
-  try { return build(); } finally { restore(); }
+  return withoutDefendSmashOverride(() => {
+    const restore = dropStatusCaps();
+    try { return build(); } finally { restore(); }
+  });
 }
 
 /** Runs `build` while the shipped default rules lack the Counter-stack keys (batch 5, 2026-11-15): a fight or card face from before the ruling. */

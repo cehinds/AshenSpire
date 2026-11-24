@@ -1,0 +1,552 @@
+{
+  "request": "Owner ruling section 22, amended November 19: reaching through Retreat costs 1 Advance (1 SP) per Retreat stack and each Advance spends one stack. Retreat sources must carry a real cost. The weapon Retreat starts at 0 SP and rises by 1 per fight use across fresh copies, core Backstep also inflicts self Frail 1, rogue Backstep and Hit and Run Exhaust, Dodge Roll Retreat rises by 1 SP per use of the same copy while Advance is unchanged, and Gale Push also costs 1 MP. Retain Gale Pull, status-only Reach and self-and-all targeting, with shown costs equal to paid costs.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "tablet",
+      "width": 1024,
+      "height": 768
+    }
+  ],
+  "scenes": [
+    {
+      "name": "melee-vs-retreated",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.retreat,core.strike,core.strike,core.strike,core.strike",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.strike\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "the enemy stands in the back row",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        },
+        {
+          "kind": "text",
+          "label": "the quote prices the Advance: total 2 Stamina",
+          "selector": ".combat-range-action",
+          "includes": "Total 2 Stamina"
+        },
+        {
+          "kind": "text",
+          "label": "the quote shows the Advance as +1 Stamina",
+          "selector": ".combat-range-action",
+          "matches": "\\+1 Stamina"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "a retreated enemy is hit at the plain 1 Stamina price",
+          "selector": ".combat-range-action",
+          "includes": "Total 1 Stamina"
+        }
+      ]
+    },
+    {
+      "name": "defend-weak-free",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.retreat,core.rallyingRoar,core.rallyingRoar,core.rallyingRoar,core.rallyingRoar",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 900
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.rallyingRoar\"]"
+        },
+        {
+          "wait": {
+            "ms": 600
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "the enemy stands in the back row",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        },
+        {
+          "kind": "text",
+          "label": "the Defend + Weak card's Advance is quoted at +0 Stamina",
+          "selector": ".combat-range-action",
+          "matches": "\\+0 Stamina"
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "the Defend card is charged an Advance surcharge",
+          "selector": ".combat-range-action",
+          "matches": "\\+[1-9] Stamina"
+        }
+      ]
+    },
+    {
+      "name": "gale-pull",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.retreat,core.galePull,core.galePull,core.galePull,core.galePull",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.retreat\"]"
+        },
+        {
+          "wait": {
+            "ms": 4000
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.galePull\"]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": ".combatant.enemy"
+        },
+        {
+          "wait": {
+            "ms": 4000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Gale Pull brings the enemy forward to the front row",
+          "selector": ".enemy-row .combatant[data-band-row=\"front\"]"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "visible",
+          "label": "the enemy is still in the back row after Gale Pull",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        }
+      ]
+    },
+    {
+      "name": "self-and-all-player-target",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.rallyingRoar,core.rallyingRoar,core.rallyingRoar,core.rallyingRoar,core.rallyingRoar",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "drag": {
+            "from": ".hand .card[data-card-id=\"core.rallyingRoar\"]",
+            "to": ".combatant.player"
+          }
+        },
+        {
+          "wait": {
+            "ms": 4000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "one Rallying Roar left the hand (played by dropping it on the player)",
+          "selector": ".hand .card[data-card-id=\"core.rallyingRoar\"]",
+          "eq": 4
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "count",
+          "label": "all five Rallying Roars are still in hand",
+          "selector": ".hand .card[data-card-id=\"core.rallyingRoar\"]",
+          "eq": 5
+        }
+      ]
+    },
+    {
+      "name": "dodge-mode-prices",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotMaxStamina=6&shotMaxMana=6&shotMana=6&shotDeck=dodgeRoll,dodgeRoll,dodgeRoll,dodgeRoll,dodgeRoll",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"dodgeRoll\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"dodgeRoll\"]"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "count",
+          "label": "both native mode choices are available",
+          "selector": "[data-modal-kind=\"cardChoice\"] [data-choice]",
+          "eq": 2
+        },
+        {
+          "kind": "text",
+          "label": "Advance shows its resolved one-SP base price",
+          "selector": "[data-modal-kind=\"cardChoice\"] [data-choice=\"advance\"] .co-costs",
+          "includes": "1 Stamina"
+        },
+        {
+          "kind": "text",
+          "label": "first Retreat shows its resolved one-SP base price",
+          "selector": "[data-modal-kind=\"cardChoice\"] [data-choice=\"retreat\"] .co-costs",
+          "includes": "1 Stamina"
+        },
+        {
+          "kind": "count",
+          "label": "both first-use modes are affordable",
+          "selector": "[data-modal-kind=\"cardChoice\"] [data-choice]:not(:disabled)",
+          "eq": 2
+        },
+        {
+          "kind": "visible",
+          "label": "Cancel remains available",
+          "selector": "[data-modal-kind=\"cardChoice\"] button[data-control-role=\"exit\"]"
+        },
+        {
+          "kind": "within",
+          "label": "mode choices fit the viewport",
+          "selector": "[data-modal-kind=\"cardChoice\"]",
+          "container": "body"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "backstep-frail-exhaust",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotMaxStamina=6&shotMaxMana=6&shotMana=6&shotDeck=core.backstep,core.backstep,core.backstep,core.backstep,core.backstep",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.backstep\"]"
+        },
+        {
+          "wait": {
+            "ms": 1600
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.backstep\"]"
+        },
+        {
+          "wait": {
+            "ms": 1200
+          }
+        },
+        {
+          "wait": {
+            "ms": 3000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Backstep applies self Frail through an actual play",
+          "selector": ".combatant.player [data-status-id=\"frail\"]"
+        },
+        {
+          "kind": "count",
+          "label": "exactly one base Backstep was played",
+          "selector": ".hand .card[data-card-id=\"core.backstep\"]",
+          "eq": 4
+        },
+        {
+          "kind": "text",
+          "label": "the one-SP play leaves five Stamina",
+          "selector": ".energy-orb .sp-v",
+          "matches": "^5$"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "gale-push-paid",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotMaxStamina=6&shotMaxMana=6&shotMana=6&shotDeck=core.galePush,core.galePush,core.galePush,core.galePush,core.galePush",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".combat-potions"
+        },
+        {
+          "wait": {
+            "ms": 500
+          }
+        },
+        {
+          "click": ".combat-potion-menu details[data-charge-kind=\"mana\"] summary"
+        },
+        {
+          "hold": {
+            "selector": ".combat-potion-menu details[data-charge-kind=\"mana\"] .potion-use",
+            "ms": 700
+          }
+        },
+        {
+          "wait": {
+            "ms": 3000
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.galePush\"]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": ".combatant.enemy"
+        },
+        {
+          "wait": {
+            "ms": 4000
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "the paid Gale Push sends its target back",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        },
+        {
+          "kind": "count",
+          "label": "exactly one Gale Push was played",
+          "selector": ".hand .card[data-card-id=\"core.galePush\"]",
+          "eq": 4
+        },
+        {
+          "kind": "text",
+          "label": "the one-SP push leaves five Stamina",
+          "selector": ".energy-orb .sp-v",
+          "matches": "^5$"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "two-stacks-melee",
+      "url": "?shot=combat&shotSeed=2&shotClass=starseer&shotEnemies=gildedKnight&shotDeck=core.galePush,core.galePush,core.strike,core.strike,core.strike",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        {
+          "click": ".hand .card[data-card-id=\"core.galePush\"]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": ".combatant.enemy"
+        },
+        {
+          "wait": {
+            "ms": 3500
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.galePush\"]"
+        },
+        {
+          "wait": {
+            "ms": 800
+          }
+        },
+        {
+          "click": ".combatant.enemy"
+        },
+        {
+          "wait": {
+            "ms": 3500
+          }
+        },
+        {
+          "click": ".hand .card[data-card-id=\"core.strike\"]"
+        },
+        {
+          "wait": {
+            "ms": 700
+          }
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "the enemy stands in the back row after two Gale Pushes (two Retreat stacks)",
+          "selector": ".enemy-row .combatant[data-band-row=\"back\"]"
+        },
+        {
+          "kind": "text",
+          "label": "two Retreat stacks price two Advances: Strike 1 + 2 = total 3 Stamina",
+          "selector": ".combat-range-action",
+          "includes": "Total 3 Stamina"
+        },
+        {
+          "kind": "text",
+          "label": "the quote shows the Advances as +2 Stamina",
+          "selector": ".combat-range-action",
+          "matches": "\\+2 Stamina"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "no console errors",
+          "max": 0,
+          "ignore": [
+            "404",
+            "navigator.vibrate"
+          ]
+        }
+      ],
+      "failure": [
+        {
+          "kind": "text",
+          "label": "two stacks are priced as one (a flat band): total 2 Stamina",
+          "selector": ".combat-range-action",
+          "includes": "Total 2 Stamina"
+        }
+      ]
+    }
+  ]
+}

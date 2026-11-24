@@ -85,6 +85,8 @@
      WORSE both render rgb(201,80,46) on every screen, one hue doing two jobs
      on one line. Colorblind-friendly already answers that question `yes`. */
   --danger: #d4622e; /* The kit's danger tint (the kit page's rgba(212, 98, 46)); nothing in base.css named it, so every `.danger` weight read an unset variable. */
+  --face-up: #205e2b;
+  --face-down: #8d2424;
 }
 /* colour theme: hiContrast */
 body.hi-contrast {

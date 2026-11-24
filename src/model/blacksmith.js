@@ -23,14 +23,18 @@ import { smithingPlan, commitItemUpgrade, withSmithService, ownedSmithingItems }
 import { coreSmithingActive } from './smithingCore.js';
 import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
 import { mulberry32 } from './rng.js';
-import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { RANK_CEILING, InstanceRank, EquipmentBound, RankUpCandidates, RaiseCardRank, RankUpBlock, RankUpPrice } from './rankUpService.js';
+import { OwnCardRank } from './cardRank.js';
+import { CardCopyCandidates, CopyOwnedCard, CardCopyUsesLeft, CardCopyPrice } from './cardCopyService.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
+import { upgradeCount } from './cardUpgrade.js';
 import { PlanCategoryChange, ApplyCategoryChange, CategoryChoices } from './smithCategory.js';
 import { SmithUpgradeSlots } from './smithUpgrade.js';
 import { ItemRank, ItemUpgradeCount } from './itemPicks.js';
 import { ITEM_SMITH } from '../content/itemProperties.js';
 import { planCardUpgrade, commitCardUpgrade } from './cardUpgradeService.js';
-import { blacksmithRules, blacksmithStoneDiscount, blacksmithPrices, tierUpgradePrice } from './blacksmithConfig.js';
+import { blacksmithRules, blacksmithStoneDiscount, blacksmithPrices, tierUpgradePrice, CardUpgradePrice } from './blacksmithConfig.js';
+import { OfferSalted } from './upgradeOffer.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
 /** The `{plural}` token of the uiStrings rows: '' for exactly one, 's' otherwise. */
@@ -45,7 +49,8 @@ export const blacksmithRevision = (run) => run.shopStock?.tradeRevision || 0;
  * What a Core (card ranks on) Blacksmith offers (owner ask 2026-10-31): the equipment upgrade, the card upgrade, a card rank-up,
  * and two shelves (armaments rolled at tiers, weapon arts). Nothing else.
  */
-export const CORE_BLACKSMITH_OFFERINGS = Object.freeze(['upgrade', 'upgradeArt', 'rankUp', 'armaments', 'weaponArts']);
+// `cardCopy` (owner 2026-11-20) is laid out only by some Blacksmiths (shops.json blacksmith.cardCopy, blacksmithStock.js).
+export const CORE_BLACKSMITH_OFFERINGS = Object.freeze(['upgrade', 'upgradeArt', 'rankUp', 'armaments', 'weaponArts', 'cardCopy']);
 
 /**
  * Core (card ranks on) is an allow-list, not a deny-list: Core has no sigils, no copy-stacking, no weapon-art mounts
@@ -201,7 +206,8 @@ export function CommitCategoryChange(registries, run, quote, { priceMult = 1 } =
 export function ItemRankUpPlan(registries, run, itemRef, { priceMult = 1 } = {}) {
   const rules = blacksmithRules(run);
   const name = ownedSmithingItems(registries, run).find((row) => row.itemRef === itemRef)?.item?.name || armamentName(registries, itemRef);
-  const price = cinders(blacksmithPrices(run).rankUp, priceMult);
+  // Owner 2026-11-23: the price is the rank-up price times the rank reached.
+  const price = cinders(RankUpPrice(blacksmithPrices(run).rankUp, ItemRank(run, itemRef) + 1), priceMult);
   const need = Number.isSafeInteger(rules?.rankUpStones) && rules.rankUpStones > 0 ? rules.rankUpStones : 0;
   const slots = SmithUpgradeSlots(run, itemRef);
   let reason = '';
@@ -232,11 +238,12 @@ export function CommitItemRankUp(registries, run, quote, { priceMult = 1 } = {})
 
 export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = {}) {
   const card = owned(run).find((row) => row.instanceId === instanceId) || null;
-  const verdict = card ? planCardUpgrade(run, registries, instanceId) : null;
+  const verdict = card ? planCardUpgrade(run, registries, instanceId, { vendor: 'blacksmith' }) : null;
   // The blacksmith takes its stone discount off the service's price (Free stays free; 1 stone becomes 0).
   const due = verdict ? Math.max(0, (verdict.cost ?? 0) - blacksmithStoneDiscount(run)) : 0;
   const payable = !!verdict && (verdict.ok || (verdict.code === 'stones' && stones(run) >= due));
-  const cost = blacksmithRules(run) ? cinders(blacksmithPrices(run).cardUpgrade, priceMult) : 0;
+  const cost = blacksmithRules(run) && card
+    ? cinders(CardUpgradePrice(run, { upgrades: upgradeCount(card), rank: InstanceRank(card) }), priceMult) : 0;
   let reason = '';
   if (!blacksmithOffers(run, 'upgradeArt')) reason = say('blacksmith.refuse.notOffered');
   else if (!card) reason = say('shop.refuse.gone');
@@ -248,7 +255,7 @@ export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = 
 
 /**
  * Whether Blacksmith work on this card also raises its rank (W25 step 3): `blacksmith.upgradeRankChance` percent,
- * rolled on the run's seed, the card and its upgrade number, so it is the same however often it is asked.
+ * rolled on the run's seed, the card, its upgrade number and the visit's offer key, so it is the same however often it is asked during the stay.
  */
 export function UpgradeGrantsRank(run, instance) {
   return upgradeGrantsRankAt(run, instance, Array.isArray(instance?.upgradeSteps) ? instance.upgradeSteps.length : 0);
@@ -256,7 +263,7 @@ export function UpgradeGrantsRank(run, instance) {
 function upgradeGrantsRankAt(run, instance, steps) {
   const chance = blacksmithRules(run)?.upgradeRankChance;
   if (!(chance > 0) || !instance || EquipmentBound(instance)) return false;
-  return mulberry32(upgradeSeed(run.seed, `${instance.instanceId}#rankChance`, steps))() * 100 < chance;
+  return mulberry32(upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#rankChance`), steps))() * 100 < chance;
 }
 
 export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {}) {
@@ -274,9 +281,11 @@ export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {})
   run.cinders -= plan.cost;
   bump(run, plan);
   // The work may also raise the card's rank (rolled before the step was added: the count it had when quoted).
+  // The roll is always made, but it lands only when the rank-up rule allows it with this step on (RankUpBlock).
   const card = owned(run).find((row) => row.instanceId === receipt.instanceId);
-  const ranked = !!card && InstanceRank(card) < RANK_CEILING && upgradeGrantsRankAt(run, card, receipt.n - 1);
-  if (ranked) card.rank = InstanceRank(card) + 1;
+  const rolled = !!card && InstanceRank(card) < RANK_CEILING && upgradeGrantsRankAt(run, card, receipt.n - 1);
+  const ranked = rolled && !RankUpBlock(run, card);
+  if (ranked) card.rank = OwnCardRank(card) + 1;
   return { instanceId: receipt.instanceId, spentStones: receipt.spentStones - lent, step: receipt.step, n: receipt.n, ...(ranked ? { rankedUp: card.rank } : {}) };
 }
 
@@ -294,7 +303,8 @@ export function rankUpCards(registries, run) {
 export function rankUpPlan(registries, run, instanceId, { priceMult = 1 } = {}) {
   const card = owned(run).find((row) => row.instanceId === instanceId) || null;
   const rules = blacksmithRules(run);
-  const price = cinders(blacksmithPrices(run).rankUp, priceMult);
+  // Owner 2026-11-23: the price is the rank-up price times the rank the card reaches (Rank 1 once, Rank 5 five times).
+  const price = cinders(RankUpPrice(blacksmithPrices(run).rankUp, OwnCardRank(card) + 1), priceMult);
   const need = Number.isSafeInteger(rules?.rankUpStones) && rules.rankUpStones > 0 ? rules.rankUpStones : 0;
   const name = card ? cardName(registries, card.cardId) : '';
   let reason = '';
@@ -302,9 +312,10 @@ export function rankUpPlan(registries, run, instanceId, { priceMult = 1 } = {}) 
   else if (!card) reason = say('shop.refuse.gone');
   else if (EquipmentBound(card) || !registries.cards.has(card.cardId)) reason = say('blacksmith.refuse.rankNone', { name });
   else if (InstanceRank(card) >= RANK_CEILING) reason = say('blacksmith.refuse.rankMax', { name });
+  else if (RankUpBlock(run, card)) reason = RankUpBlock(run, card);
   else if (stones(run) < need) reason = say('blacksmith.refuse.stones', { cost: need, have: stones(run), plural: plural(need) });
   else if (!affordable(run, price)) reason = say('shop.refuse.cinders');
-  const from = InstanceRank(card);
+  const from = OwnCardRank(card); // an unranked card reads 0 and rises to Rank 1
   return { ok: !reason, reason, instanceId, name, from, to: from + 1, stones: need, cost: price, revision: blacksmithRevision(run) };
 }
 
@@ -332,12 +343,45 @@ export function serviceCandidates(registries, run, id) {
   switch (id) {
     case 'upgrade': return coreSmithingActive(run) ? SmithUpgradeItems(registries, run) : smithingPlan(registries, run).candidates;
     case 'upgradeArt': return upgradeableArts(registries, run);
-    case 'rankUp': return rankUpCards(registries, run);
+    // Only the cards that may rank up now: one the full-upgrade rule holds back is listed, disabled, but not counted.
+    case 'rankUp': return rankUpCards(registries, run).filter((card) => !RankUpBlock(run, card));
+    case 'cardCopy': return CardCopyUsesLeft(run.shopStock?.cardCopy) > 0 ? CardCopyCandidates(registries, run) : [];
     default: return [];
   }
 }
 
 /** The sentence a service with nothing to act on shows (uiStrings `blacksmith.idle.<id>`). */
+/**
+ * CardCopyPlan(registries, run, instanceId) → the quote for copying owned card `instanceId` at this Blacksmith's copy shelf
+ * (owner 2026-11-20): `{ ok, reason, instanceId, name, cost, stones: 0, usesLeft, revision }`.
+ */
+export function CardCopyPlan(registries, run, instanceId) {
+  const shelf = run.shopStock?.cardCopy || null;
+  const card = CardCopyCandidates(registries, run).find((row) => row.instanceId === instanceId) || null;
+  // The shelf's cost is an unranked card's; a ranked card costs +rankPricePct% per visible rank (owner, 2026-11-23).
+  const cost = Number.isSafeInteger(shelf?.cost) ? CardCopyPrice(run, shelf.cost, card) : 0;
+  const usesLeft = CardCopyUsesLeft(shelf);
+  const name = card ? cardName(registries, card.cardId) : '';
+  let reason = '';
+  if (!blacksmithOffers(run, 'cardCopy') || !shelf) reason = say('blacksmith.refuse.notOffered');
+  else if (usesLeft < 1) reason = say('blacksmith.idle.cardCopy');
+  else if (!card) reason = say('shop.refuse.gone');
+  else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
+  return { ok: !reason, reason, instanceId, name, cost, stones: 0, usesLeft, revision: run.shopStock?.tradeRevision || 0 };
+}
+
+/** CommitCardCopy(registries, run, quote) → { instance, spent }. The copy lands in the library; the shelf loses one use. */
+export function CommitCardCopy(registries, run, quote) {
+  const plan = CardCopyPlan(registries, run, quote.instanceId);
+  if (!plan.ok) throw new Error(plan.reason);
+  stale(quote, plan);
+  const instance = CopyOwnedCard(registries, run, plan.instanceId);
+  run.cinders -= plan.cost;
+  run.shopStock.cardCopy = { ...run.shopStock.cardCopy, usesLeft: plan.usesLeft - 1 };
+  bump(run, plan);
+  return { instance, instanceId: instance.instanceId, id: instance.cardId, spent: plan.cost };
+}
+
 export function serviceIdleReason(id) {
   if (id === 'upgradeArt') return say('blacksmith.idle.upgradeCard');
   return say(`blacksmith.idle.${id}`);

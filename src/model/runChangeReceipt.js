@@ -3,7 +3,8 @@
 // draws the rows. Card upgrades carry the instance's before and after faces, resolved with the same
 // card-resolution the card-upgrade picker uses (projectGameCard, else resolveCard).
 import { upgradeStepsOf } from './cardUpgrade.js';
-import { cardRank } from './cardRank.js';
+import { OwnCardRank } from './cardRank.js';
+import { combatProfileFor } from './combatCardProfile.js';
 import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
 
@@ -31,7 +32,7 @@ export function snapshotRunForDiff(run) {
     relics: freeze([...(run?.relics || [])]),
     deck: freeze([...(run?.deck || []).map((c) => [c, 'deck']), ...(run?.sideboard || []).map((c) => [c, 'sideboard'])].map(([card, zone]) => freeze({
       instanceId: card.instanceId, cardId: card.cardId, zone,
-      steps: freeze(upgradeStepsOf(card).map((s) => ({ ...s }))), rank: cardRank(card),
+      steps: freeze(upgradeStepsOf(card).map((s) => ({ ...s }))), rank: OwnCardRank(card), // 0 for an unranked card, so a rise to Rank 1 shows (owner, 2026-11-23)
       // The instance state the resolver reads (steps, rank, playsEver ramp, carrier fields), copied at snapshot time.
       instance: freeze({ ...card, ...(Array.isArray(card.upgradeSteps) ? { upgradeSteps: card.upgradeSteps.map((st) => ({ ...st })) } : {}) }),
     }))),
@@ -103,7 +104,11 @@ export function diffRunSnapshots(before, after, registries) {
     const faces = base ? freeze({ before: faceOf(registries, after, prev.instance), after: faceOf(registries, after, card.instance) }) : undefined;
     const row = { kind: 'card', label: name, cardId: card.cardId, instanceId: card.instanceId, change: stepsChanged ? 'upgraded' : 'ranked' };
     if (stepsChanged) Object.assign(row, { before: `+${prev.steps.length}`, after: `+${card.steps.length}`, delta: card.steps.length - prev.steps.length });
-    else Object.assign(row, { before: `RANK ${prev.rank}`, after: `RANK ${card.rank}`, delta: card.rank - prev.rank });
+    else {
+      // An unranked card reads as the deck editor names it: BASIC, or CANTRIP for a spell.
+      const label = (rank) => (rank > 0 ? `RANK ${rank}` : combatProfileFor(base || {}).camp === 'spell' ? 'CANTRIP' : 'BASIC');
+      Object.assign(row, { before: label(prev.rank), after: label(card.rank), delta: card.rank - prev.rank });
+    }
     if (faces) row.faces = faces;
     rows.push(freeze(row));
   }

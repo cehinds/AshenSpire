@@ -17,6 +17,7 @@ import { classRewardBudget, expandedProgression } from '../../model/classMilesto
 // (ui/screens/characterSheet.js) words it through uiStrings rows, so the copy
 // stays a spreadsheet edit.
 
+import { PerceptionEnabled } from '../../model/perception.js';
 import { characterLevel, levelOf, xpToNext as levelXpToNext } from '../../model/levelup.js';
 import {
   classSkillId, levelQueuesAttributePick, levelQueuesRankUp, linkedAttributes,
@@ -26,6 +27,11 @@ import { classTreeRows } from '../../model/classTree.js';
 import { deriveStat } from '../../model/derivedStats.js';
 import { deckMinimum } from '../../model/loadout.js';
 import { orderedAttributes } from '../../model/attributes.js';
+import { gameModule } from '../../model/gameProfile.js';
+import { ClassBonusApplies, ClassBonusAttribute, ClassBonusCount, IsClassBonusLevel } from '../../model/classLevelBonus.js';
+import { classLevelBonuses } from '../../content/classLevelBonuses.js';
+import { CoreDeckMinimum } from '../../model/deckMinimumRules.js';
+import { deckRules } from '../../content/deckRules.js';
 
 /** The derived pools a character level can move, in the order the sheet lists them. */
 export const LEVEL_STATS = Object.freeze(['hp', 'stamina', 'mana', 'draw', 'handSize']);
@@ -57,9 +63,9 @@ export function rowState(rowLevel, held) {
   return 'locked';
 }
 
-function poolValue(rules, statId, run, classDef, level) {
+function poolValue(rules, statId, run, classDef, level, attributes = run.attributes) {
   try {
-    const out = deriveStat(rules, statId, { attributes: run.attributes, classDef, level });
+    const out = deriveStat(rules, statId, { attributes, classDef, level });
     return out && Number.isFinite(out.value) ? out.value : null;
   } catch {
     return null; // a snapshot without that row: the level does not move it
@@ -71,7 +77,7 @@ function poolValue(rules, statId, run, classDef, level) {
  * row per level 1..maxLevel: `{ level, stepXp, totalXp, state, grants }`.
  * Level 1 is where a run starts and grants nothing.
  */
-export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) {
+export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS, settings = {}) {
   const o = { ...DEFAULT_LEVEL_OFFERS, ...(offers || {}) };
   const authoredMax = (balanceOf(registries).levelUp || {}).maxLevels;
   const maxLevel = Number.isInteger(authoredMax) && authoredMax > 0 ? authoredMax : 20;
@@ -82,6 +88,17 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) 
   const rules = run && run.derivedStatRuleSnapshot && run.derivedStatRuleSnapshot.rules;
   const classDef = rules && registries.classes && typeof registries.classes.get === 'function' ? registries.classes.get(run.class) : null;
   const floorAt = (level) => deckMinimum(registries, { level: { level } });
+  const coreFloorAt = (level) => CoreDeckMinimum({ ...run, level: { ...run.level, level } }, settings);
+  // Core (owner, 2026-11-17): the sheet lists what a claimed level really pays — the authored points,
+  // the pools at that level (the odd-level class bonus included), the class bonus itself, the deck
+  // minimum dropping, and the level's card choice. No feat or class-tree pick is offered there.
+  const core = !!(run && gameModule(run, 'progression')?.characterLevels);
+  const corePoints = core ? (gameModule(run, 'progression').attributePointsPerLevel || 0) : 0;
+  const bonusAttribute = core && ClassBonusApplies(run) ? ClassBonusAttribute(run.class) : null;
+  const bonusLabel = bonusAttribute ? (orderedAttributes(registries).find((a) => a.id === bonusAttribute)?.label || bonusAttribute) : '';
+  const attributesAt = (level) => (bonusAttribute && run.attributes
+    ? { ...run.attributes, [bonusAttribute]: (run.attributes[bonusAttribute] || 0) + ClassBonusCount(level) * classLevelBonuses.amount }
+    : run && run.attributes);
   const rows = [];
   let total = 0;
   for (let level = 1; level <= maxLevel; level += 1) {
@@ -89,13 +106,23 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS) 
     total += stepXp;
     const grants = [];
     if (level > 1) {
-      if (o.statPoints) grants.push({ kind: 'points', amount: points });
+      if (core ? corePoints > 0 : o.statPoints) grants.push({ kind: 'points', amount: core ? corePoints : points });
+      if (bonusAttribute && IsClassBonusLevel(level)) grants.push({ kind: 'classBonus', attribute: bonusLabel, amount: classLevelBonuses.amount });
       if (rules) {
         for (const stat of LEVEL_STATS) {
-          const before = poolValue(rules, stat, run, classDef, level - 1);
-          const after = poolValue(rules, stat, run, classDef, level);
+          const before = poolValue(rules, stat, run, classDef, level - 1, attributesAt(level - 1));
+          const after = poolValue(rules, stat, run, classDef, level, attributesAt(level));
           if (before != null && after != null && after > before) grants.push({ kind: 'stat', stat, amount: after - before });
         }
+      }
+      if (core) {
+        if (deckRules.minimumReductionLevels.includes(level)) {
+          const minimum = coreFloorAt(level);
+          if (minimum < coreFloorAt(level - 1)) grants.push({ kind: 'deckMinimumDown', amount: minimum });
+        }
+        grants.push({ kind: 'levelCard' });
+        rows.push(Object.freeze({ level, stepXp, totalXp: total, state: rowState(level, held), grants: Object.freeze(grants) }));
+        continue;
       }
       const floor = floorAt(level);
       if (floor > floorAt(level - 1)) grants.push({ kind: 'deckMinimum', amount: floor });
@@ -210,16 +237,16 @@ export function trackLadder(registries, run, track) {
  * ladder is not this character's); the own class first, then the authored
  * order.
  */
-export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OFFERS } = {}) {
+export function characterSheetModel(registries, run, { offers = DEFAULT_LEVEL_OFFERS, settings = {} } = {}) {
   registries = characterSheetRegistries(registries, run);
   const classId = run && !run.classUnequipped && typeof run.class === 'string' ? run.class : '';
   const ownTrackId = classId ? classSkillId(classId) : null;
-  const tracks = skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules })
+  const tracks = skillTracks(registries, { includePerception: !!run.enemyKnowledgeRules && PerceptionEnabled(run.enemyKnowledgeRules) })
     .filter((t) => t.kind !== 'class' || t.id === ownTrackId)
     .sort((a, b) => (b.id === ownTrackId) - (a.id === ownTrackId))
     .map((t) => trackLadder(registries, run, t));
   return Object.freeze({
-    character: characterLadder(registries, run, offers),
+    character: characterLadder(registries, run, offers, settings),
     tracks: Object.freeze(tracks),
     ownTrackId,
   });

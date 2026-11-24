@@ -1,20 +1,44 @@
-import { WIREFRAME_CHOICE_GROUPS } from './WireframeChoiceModel.js';
 
 // Presentation only: every setting keeps its existing key and value semantics.
 //
-// Core 2 shows the Opening, Interface, Text, Wireframes and Export
-// sections plus Play in deck order under Deck (cleanup row 3e retired the
-// Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment and World
-// tabs with the rows behind them). The model files each row (`advancedGroup`);
-// the exceptions below are the presentation rows whose one model group,
-// Interface, spans three tabs.
+// Core 2 shows the Opening, Deck (Play in deck order), Range, Map, Interface, Text and
+// Export sections, plus Developer on dev and test builds (owner, 2026-11-20: Map split from
+// Interface; Wireframes, card size and the QA shortcut folded into Developer). The model
+// files each row (`advancedGroup`); the exceptions below are the settings-window rows.
 export function advancedSection(row) {
-  if (row.key === 'creationAutoAdvance') return 'Progression';
-  if (/^gameConfig\.presentation\.settings(Width|Height)Percent$/.test(row.key) || row.key === 'uprightGate') return 'Wireframes';
+  if (/^gameConfig\.presentation\.settings(Width|Height)Percent$/.test(row.key) || row.key === 'uprightGate') return 'Developer';
   return row.advancedGroup || 'Interface';
 }
 
+// Sections whose every row sits behind one button that opens their own window (owner, 2026-11-20).
+const WINDOWED_SECTIONS = Object.freeze({ Text: 'text', Interface: 'interface', Export: 'export' });
+
+/**
+ * AdvancedGroupModal(row) → the id of the settings-group window a row lives in, or null when it
+ * is drawn in the panel: a row's own `groupModal`, the card-size rows, or a windowed section.
+ */
+export function AdvancedGroupModal(row) {
+  // Ambient effects is an Interface row that the Effects modal also draws (owner: it stays in
+  // Interface), so it goes in the Interface window with its section; other modal rows do not.
+  if (!row || row.retired || (row.modal && row.cat !== 'Advanced')) return null;
+  if (row.groupModal) return row.groupModal;
+  if (row.cardSizeTopic) return 'cardSize';
+  return WINDOWED_SECTIONS[advancedSection(row)] || null;
+}
+
+/** AdvancedRowTopic(row) → the topic a row would have in the panel, ignoring any window it sits in. */
+export function AdvancedRowTopic(row) {
+  return inlineTopic(row, advancedSection(row));
+}
+
 function topic(row, section) {
+  // A row in a window sits where the window's button is drawn: Developer › Layout, or the
+  // windowed section's one topic.
+  if (AdvancedGroupModal(row)) return section === 'Developer' ? 'Layout' : section;
+  return inlineTopic(row, section);
+}
+
+function inlineTopic(row, section) {
   const key = row.key;
   // A row that names its own topic is filed under it. The Wireframes rows are
   // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
@@ -25,7 +49,8 @@ function topic(row, section) {
   if (row.debugTopic) return 'Diagnostics';
   if (row.textTopic) return row.textTopic;
   if (row.prologueTopic) return row.prologueTopic;
-  if (section === 'Wireframes') return 'Window';
+  if (section === 'Developer') return row.key === 'creationAutoAdvance' ? 'QA shortcuts' : 'Layout';
+  if (section === 'Map') return 'Map';
   if (section === 'Export') return 'Configuration file';
   if (section === 'Interface') {
     // useRestorativeFlasksOutsideCombat: the map's Potions control and the HUD read it.
@@ -46,7 +71,7 @@ export function advancedSubgroups(rows, section) {
     // A topic id is what a profile stores and what rows group by; a row whose
     // topic heading is rewordable copy carries that label separately, so a
     // reword never moves the id or merges two topics (Codex, #1489).
-    if (!labels.has(id) && row.wireframeTopic && row.wireframeTopicLabel) labels.set(id, row.wireframeTopicLabel);
+    if (!labels.has(id) && !AdvancedGroupModal(row) && row.wireframeTopic && row.wireframeTopicLabel) labels.set(id, row.wireframeTopicLabel);
   }
   const result = [...groups].map(([id, rows]) => ({ id, label: labels.get(id) ?? id, rows }));
   // A topic not named in an order keeps its discovered order, after the named
@@ -55,13 +80,8 @@ export function advancedSubgroups(rows, section) {
     const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
     result.sort((a, b) => rank(a.id) - rank(b.id));
   };
-  // Modals, then Menus, then Scenes: outermost surface first, and the order the
-  // catalogue itself is written in — discovered, not restated, so the two
-  // cannot disagree about which family comes first. Cards and the settings
-  // window follow.
-  if (section === 'Wireframes') byOrder([...WIREFRAME_CHOICE_GROUPS.map((group) => group.id), 'Card size', 'Window']);
-  if (section === 'Interface') byOrder(['Map & HUD', 'Appearance', 'Controls']);
-  if (section === 'Text') byOrder(['Flavor text', 'Lore window']);
-  if (section === 'Export') byOrder(['Configuration file', 'Diagnostics']);
+  // Developer: the Layout topic (the Wireframes and Card sizes buttons, the settings window)
+  // first, then the QA shortcuts.
+  if (section === 'Developer') byOrder(['Layout', 'QA shortcuts']);
   return result;
 }

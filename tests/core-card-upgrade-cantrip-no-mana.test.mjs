@@ -24,15 +24,16 @@ test('a saved instance with the step resolves to 0 Mana whatever the step order'
   assert.equal(applyUpgradeSteps(spell(), [{ k: 'cost', pool: 'mp' }]).manaCost, 1);
 });
 
-test('the generator never offers a Mana cut on a cantrip or a card that became one', () => {
+test('the generator offers a Mana cut on a cantrip while it has Mana, and none once rank down made it 0 (owner 2026-11-22, no card has a minimum)', () => {
   const pools = (card, applied = []) => {
     const seen = new Set();
     for (let i = 0; i < 300; i += 1) { const s = rollUpgradeStep(card, applied, applied.length, upgradeStepRng(i, 'x', i)); if (s?.k === 'cost') seen.add(s.pool); }
     return seen;
   };
   assert.ok(pools(spell()).has('mp'), 'a plain spell still gets the Mana cut');
-  assert.ok(!pools(spell({ tags: ['source:spell', 'camp:spell', RANK_DOWN_TAG] })).has('mp'));
-  assert.ok(!pools(spell({ rarity: 'common', tags: ['camp:physical'] })).has('mp'));
+  assert.ok(pools(spell({ tags: ['source:spell', 'camp:spell', RANK_DOWN_TAG] })).has('mp'), 'a cantrip with Mana can lose it');
+  assert.ok(pools(spell({ rarity: 'common', tags: ['camp:physical'] })).has('mp'), 'a Basic with Mana can lose it');
+  assert.ok(!pools(spell({ manaCost: 0 })).has('mp'), 'a card at 0 Mana has nothing to cut');
   const becameOne = applyUpgradeSteps(spell(), [tagStep]);
   assert.ok(!pools(becameOne, [tagStep]).has('mp'));
 });

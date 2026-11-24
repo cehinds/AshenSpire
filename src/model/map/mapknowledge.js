@@ -381,8 +381,16 @@ export function litNodes({ graph, run }) {
   };
 
   for (const id of (graph.startIds || [])) add(id);
-  for (const id of graph.bossIds || Object.values(graph.nodes).filter((node) => node.type === 'boss').map((node) => node.id)) add(id);
-  add(graph.bossId); // legacy singular graphs
+  // routes.fogCommittedBranch (owner, 2026-11-18, V spread): once the player has stepped off the start node into a branch, only that
+  // branch's boss stays lit; the bosses of the branches left behind are fogged, so the pre-boss rest shows no other boss.
+  let committed = null;
+  if (gameModule(run, 'routes')?.fogCommittedBranch === true) {
+    for (const id of (run && run.path) || []) { const branch = graph.nodes[id]?.branch; if (branch != null) committed = branch; }
+  }
+  for (const id of graph.bossIds || Object.values(graph.nodes).filter((node) => node.type === 'boss').map((node) => node.id)) {
+    if (committed === null || graph.nodes[id]?.branch == null || graph.nodes[id].branch === committed) add(id);
+  }
+  if (committed === null) add(graph.bossId); // legacy singular graphs
   // routes.fogRevealRests (owner, 2026-11-15: "only unfog rest locations and locations already
   // traveled"): every rest site of the act is lit from the start. A rule key, absent = plain fog.
   if (gameModule(run, 'routes')?.fogRevealRests === true) {

@@ -65,8 +65,8 @@ export function renderArcaneExposure(registries, enemySnapshot, recentEvents = [
     // Immune is a StatePill: a state, scannable, in the gold tone.
     el.className = 'arcane-exposure-immune';
     el.setAttribute('role', 'img');
-    el.setAttribute('aria-label', `${receipt.label} — ${receipt.badge}`);
-    const chip = pill({ label: `${receipt.label} — ${receipt.badge}`, attrs: { dataset: { tone: 'gold' } } });
+    el.setAttribute('aria-label', `${receipt.label}: ${receipt.badge}`);
+    const chip = pill({ label: `${receipt.label}: ${receipt.badge}`, attrs: { dataset: { tone: 'gold' } } });
     chip.prepend(glyph(receipt.glyph, { class: 'arcane-exposure-glyph' }));
     el.appendChild(chip);
     const immuneEvent = eventHtml(receipt.event, registries);

@@ -25,7 +25,7 @@ function warmEffectFrames(kind,frames){
  frames.forEach(src=>{const warm=new Image();warm.addEventListener('error',()=>{const fallback=builtInFor(src);if(fallback)warm.src=fallback;},{once:true});warm.src=src;});
 }
 // Shared solo/co-op sequence: one cast, then one release per actual recipient.
-export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets=[],duration=M.defaultDurationMs,size=SZ.planEffectSize,actor=null,localBox=null}={}){
+export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets=[],duration=M.defaultDurationMs,size=SZ.planEffectSize,actor=null,localBox=null,recipientEffects=true}={}){
  if(!plan||!layer||!from||effectsOff())return ()=>{};
  size*=plan.sizeScale??1;
  const set=active.get(layer)||new Set();active.set(layer,set);
@@ -48,10 +48,13 @@ export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets
  const recipients=targetLocal?targets:[from];
  const wrapped=anchor&&recipients.length&&attached(plan.kind,{anchor,delay,duration:Math.max(M.minimumWrappedMs,duration-delay),scale:plan.sizeScale??1});
  for(const target of recipients){
+  // Receipt-local sprites own delivery, impacts and gains. Keep the authored
+  // casting/weapon attachment, without the old duplicate projectile or flash.
+  if(!recipientEffects)continue;
   // Weapon trails belong to the caster; confirmed recipients keep a small hit
   // response. Debuffs and other target-local effects retain their own placement.
   if(wrapped){stops.push(playCombatEffect(layer,target,plan.impactKind||'impact',{delay:Math.round(duration*M.impactDelayFraction),duration:M.impactShortMs,size:size*SZ.impactSizeFraction}));continue;}
-  stops.push(playCombatEffect(layer,plan.projectile?emission:target,plan.kind,{to:plan.projectile?target:null,direction:targetLocal&&!plan.projectile?combatEffectAngle(from,target):'auto',delay,duration:Math.max(M.minimumWrappedMs,duration-delay),size,impactKind:plan.impactKind}));
+  stops.push(playCombatEffect(layer,plan.projectile?emission:target,plan.kind,{to:plan.projectile?target:null,direction:targetLocal&&!plan.projectile?combatEffectAngle(from,target):'auto',delay,duration:Math.max(M.minimumWrappedMs,duration-delay),size,impactKind:recipientEffects?plan.impactKind:null}));
  }
  return ()=>stops.forEach(stop=>stop());
 }
@@ -84,6 +87,6 @@ export function playCombatEffect(layer,from,kind,{to=null,direction='auto',durat
  const angle=direction==='auto'?combatEffectAngle(from,to):direction;
  const orientation=combatEffectOrientation(angle);el.dataset.direction=String(angle);
  animation=el.animate([{transform:`translate(0,0) scale(${presentation.startScale}) ${orientation}`,opacity:M.entryOpacityFraction*presentation.opacity},{transform:`translate(${dx*M.travelMidFraction}px,${dy*M.travelMidFraction}px) scale(1) ${orientation}`,opacity:presentation.opacity,offset:M.travelMidOffset},{transform:`translate(${dx}px,${dy}px) scale(${presentation.endScale}) ${orientation}`,opacity:0}],{duration:ms,easing:'ease-out',fill:'forwards'});
- tickets.push(setTimeout(()=>{el.remove();if(to){impactStop=playCombatEffect(layer,to,impactKind,{direction:angle,duration:M.impactDurationMs,size:M.impactSize});tickets.push(setTimeout(stop,M.impactLingerMs));}else stop();},ms));
+ tickets.push(setTimeout(()=>{el.remove();if(to&&impactKind){impactStop=playCombatEffect(layer,to,impactKind,{direction:angle,duration:M.impactDurationMs,size:M.impactSize});tickets.push(setTimeout(stop,M.impactLingerMs));}else stop();},ms));
  return stop;
 }

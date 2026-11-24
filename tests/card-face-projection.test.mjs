@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
+import { combatCardSummary, playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_CHARACTERS } from '../src/model/cardFaceProjection.js';
 import { cardDetailHtml, cardPlainText } from '../src/ui/components/card.js';
@@ -154,6 +154,14 @@ test('a face never hides a cost clause', () => {
   }
 });
 
+test('Shared Sacrifice shows what allies pay before its Block payoff', () => {
+  const def = defOf('base.drain-allies');
+  const clauses = project(def).clauses;
+  assert.equal(clauses[0].kind, 'cost');
+  assert.equal(plain(clauses[0].html), 'All allies lose 3 HP');
+  assert.match(combatCardSummary(def, null, reg), /^All allies lose 3 HP\. Gain 12 Block\.$/);
+});
+
 test('stance entry details do not spend the ordinary effect budget', () => {
   const projection = cardFaceProjection({}, { lines: [
     { kind: 'damage', html: 'Inflict 8 damage' },
@@ -179,7 +187,7 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
   assert.ok(cards.length >= 62, 'every Core card is checked');
   for (const card of cards) for (const upgraded of [false, true]) {
     const def = playingCardDefinition(coreReg, { cardId: card.id, upgraded }, { rules: coreRules });
-    const tokens = staticCardTokens(def);
+    const tokens = staticCardTokens(def, coreReg, coreRules);
     const authoredHtml = def.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match);
     const lines = cardFaceLines(def, null, coreReg, coreRules, { stanceEntry: false });
     const projection = cardFaceProjection(def, { lines, authoredHtml, registries: coreReg, effects: def.effects });
@@ -187,16 +195,16 @@ test('tag riders (Smash, Prone, Entry) and long lists stay off the face; Core fa
     assert.ok(projection.clauses.length >= 1 && projection.clauses.length <= 3, label);
     for (const clause of projection.clauses) {
       assert.doesNotMatch(plain(clause.html), /Inspect/, label);
-      assert.ok(clause.kind !== 'detail', label);
+      assert.ok(clause.kind !== 'detail' || card.id === 'core.hitAndRun', label); // Hit and Run's clause carries the Exhaust drawback (owner 2026-11-19)
       assert.doesNotMatch(plain(clause.html), /Smash|while Prone|Entry:|Usable through/, label);
     }
   }
   // Whirlwind's three area figures (damage, Poise, Bleed) are three short clauses; the long readings stay in Information.
   const whirl = playingCardDefinition(coreReg, { cardId: 'core.whirlwind' }, { rules: coreRules });
-  const tokens = staticCardTokens(whirl);
+  const tokens = staticCardTokens(whirl, coreReg, coreRules);
   const face = cardFaceProjection(whirl, { lines: cardFaceLines(whirl, null, coreReg, coreRules, { stanceEntry: false }),
     authoredHtml: whirl.textTemplate.replace(tokenRe(), (match, key) => tokens[key] ?? match), registries: coreReg, effects: whirl.effects });
-  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['8 damage to all', '3 Poise to all', 'Bleed 1 to all']);
+  assert.deepEqual(face.clauses.map(line => plain(line.html)), ['1 damage to all', '3 Poise to all', 'Bleed 1 to all']); // second 2026-11-18 cut: floor(ceil(authored x 0.5) x 0.7 x 0.7)
   const backstep = playingCardDefinition(coreReg, { cardId: 'core.backstep' }, { rules: coreRules });
   const backFace = cardFaceProjection(backstep, { lines: cardFaceLines(backstep, null, coreReg, coreRules, { stanceEntry: false }), registries: coreReg, effects: backstep.effects });
   // W25-EvadeCards (intended by the design): Backstep grants Evade stacks and a self Retreat, and its face says both ("Evade 1, Retreat.").
@@ -214,8 +222,12 @@ test('a line with a tag rider reads its faceHtml on the face and drops when that
 
 test('a split-type hit keeps its hit count and area: never split into unqualified fragments', () => {
   const faces = id => project(defOf(id)).clauses.map(line => plain(line.html));
-  // Both types belong to every one of the three hits.
-  assert.equal(faces('starShower')[0], '2 Blunt + 1 Force ×3');
+  // Both types belong to every one of the three hits. Star Shower is all Blunt now (Force is physical, owner 2026-11-18), so a Blunt + Poison card stands in for the split.
+  assert.equal(faces('starShower')[0], 'Deal 3 Blunt damage ×3');
+  const repeated = project({ ...defOf('viperStrike'), effects: defOf('viperStrike').effects.map(effect => (effect.op === 'damage' ? { ...effect, hits: 3 } : effect)) }).clauses.map(line => plain(line.html));
+  assert.match(repeated[0], /×3$/, repeated.join(' | '));
+  assert.match(repeated[0], /Blunt/, repeated.join(' | '));
+  assert.match(repeated[0], /Poison/, repeated.join(' | '));
   // The area qualifier cannot be said in five words: the cue names the effect instead of a lone fragment.
   assert.ok(!faces('meteorSwarm').some(clause => /^(?:Deal )?\d+ Blunt;|^\d+ Force damage/.test(clause)), faces('meteorSwarm').join(' | '));
   assert.ok(faces('meteorSwarm').every(clause => !/Inspect/.test(clause)), 'the real rules text, no Inspect cue');

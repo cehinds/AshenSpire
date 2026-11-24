@@ -1,4 +1,4 @@
-// W25 step 3: upgrade slots (rank + weapon smith level + 1) and the rest-site odds (1 option up to the 3rd upgrade, then 2 options of 1 or 2 effects at 80 / 20).
+// W25 step 3, owner 2026-11-23: upgrade slots (the rank the face shows + 1; the weapon's Smith level no longer adds) and the rest-site odds (1 option up to the 3rd upgrade, then 2 options of 1 or 2 effects at 80 / 20).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
@@ -7,34 +7,50 @@ import { UpgradeSlots, UpgradeWeaponId, WeaponSmithLevel, canUpgrade, RestUpgrad
 import { PlanRestCardUpgrade, planCardUpgrade, commitCardUpgrade } from '../src/model/cardUpgradeService.js';
 import { upgradeStepsProblems, applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
+import { playingCardModel } from '../src/model/playingCard.js';
 
 const newRun = (seed = 504) => createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 const strike = (run) => run.deck.find((c) => c.cardId === 'core.strike');
 
-test('slots = rank + weapon smith level + 1; an unranked card counts as rank 1 (the owner\'s three examples)', () => {
+test(`slots = the face rank + 1: no badge 1, "Rank 1" 2, "Rank 4" 5 (the owner's three examples)`, () => {
   const run = newRun();
   const card = strike(run);
-  assert.equal(UpgradeWeaponId(run, card), 'greatsword', 'a class card counts the equipped main weapon');
-  assert.equal(UpgradeSlots(run, card), 2, 'unranked card, +0 weapon');
-  run.itemUpgradeLevels = { 'armament/greatsword': 1 };
-  assert.equal(WeaponSmithLevel(run, card), 1);
-  assert.equal(UpgradeSlots(run, card), 3, 'unranked card, +1 weapon');
-  run.itemUpgradeLevels = { 'armament/greatsword': 2 };
-  card.rank = 3;
-  assert.equal(UpgradeSlots(run, card), 6, 'rank 3, +2 weapon');
-  assert.equal(UpgradeSlots(run, { ...card, sourceArmamentId: 'dagger' }), 4, 'a weapon card counts its own source weapon (a +0 dagger)');
-  run.itemUpgradeLevels = { 'armament/greatsword': 9 }; card.rank = 9;
+  const badge = (ref) => playingCardModel(registries, ref).rankBadge;
+  assert.equal(card.rank, undefined, 'a starter Strike is unranked');
+  assert.equal(badge(card), null, 'and its face shows no rank badge');
+  assert.equal(UpgradeSlots(run, card), 1, 'no badge: 1 upgrade');
+  card.rank = 1;
+  assert.equal(badge(card), 'Rank 1');
+  assert.equal(UpgradeSlots(run, card), 2, '"Rank 1": 2 upgrades');
+  card.rank = 4;
+  assert.equal(badge(card), 'Rank 4');
+  assert.equal(UpgradeSlots(run, card), 5, '"Rank 4": 5 upgrades');
+  card.rank = 99;
   assert.equal(UpgradeSlots(run, card), 10, 'never past the 10-upgrade cap');
 });
 
-test('a card with every slot used is refused with the slots code, and a higher rank or weapon level opens the next', () => {
+test(`the weapon's Smith level no longer adds card slots`, () => {
+  const run = newRun();
+  const card = strike(run);
+  assert.equal(UpgradeWeaponId(run, card), 'greatsword', 'a class card still belongs to the equipped main weapon');
+  run.itemUpgradeLevels = { 'armament/greatsword': 3 };
+  assert.equal(WeaponSmithLevel(run, card), 3);
+  assert.equal(UpgradeSlots(run, card), 1);
+  card.rank = 2;
+  assert.equal(UpgradeSlots(run, { ...card, sourceArmamentId: 'dagger' }), 3, `a weapon card's own weapon adds nothing either`);
+});
+
+test('a card with every slot used is refused with the slots code, and a higher rank opens the next', () => {
   const run = newRun(); run.smithingStones = 50;
   const card = strike(run);
+  card.rank = 1;
   for (let i = 0; i < 2; i += 1) commitCardUpgrade(run, registries, planCardUpgrade(run, registries, card.instanceId));
   const verdict = canUpgrade(registries, run, card);
   assert.deepEqual([verdict.ok, verdict.code], [false, 'slots']);
   assert.match(verdict.reason, /2 upgrade slots/);
   run.itemUpgradeLevels = { 'armament/greatsword': 1 };
+  assert.equal(canUpgrade(registries, run, card).ok, false, 'smithing the weapon opens nothing');
+  card.rank = 2;
   assert.equal(canUpgrade(registries, run, card).ok, true);
 });
 
@@ -45,8 +61,9 @@ test('the rest rule: one option up to the third upgrade, two from the fourth', (
 });
 
 test('rest quotes: 1 option for upgrades 1-3 and 2 for the 4th; the picker model and a commit agree', () => {
-  const run = newRun(); run.smithingStones = 50; run.itemUpgradeLevels = { 'armament/greatsword': 9 };
+  const run = newRun(); run.smithingStones = 50;
   const card = strike(run);
+  card.rank = 9; // ten slots (rank + 1)
   const optionsOf = () => cardUpgradeModel(registries, run, card.instanceId).rows.find((r) => r.instanceIds.includes(card.instanceId)).options;
   for (let n = 1; n <= 3; n += 1) {
     assert.equal(optionsOf().length, 1, `upgrade ${n}`);

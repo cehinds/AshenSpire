@@ -292,8 +292,6 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
     const id = key(piece.kind, piece.id); // weapon.x / shield.x / staff.x
     if (!RANGES.includes(piece.range)) throw new ImportError(`armament ${piece.id}: unknown range ${JSON.stringify(piece.range)}`);
     const weight = armamentInteger(piece, 'weight');
-    const attackRating = armamentInteger(piece, 'attackRating');
-    const defenseRating = armamentInteger(piece, 'defenseRating');
     // The legacy identity (armamentIntrinsicStatProblems): an armament's
     // weight IS its authored poise threshold. A row where they differ is a
     // typo in one column, not a new rule.
@@ -327,25 +325,15 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
           techniqueCardId: piece.techniqueProfile ? key('profile', piece.techniqueProfile) : undefined,
         },
         // Contract fields, from the authored armament table (cutover ruling 2):
-        // weapons.csv authors weight / attackRating / defenseRating for every
+        // weapons.csv authors weight for every
         // armament, and the legacy rule binds weight to the authored
         // poiseThreshold (armamentIntrinsicStatProblems). Nothing in the
         // running game reads these yet — the Weight Class service stays
         // dormant until it is wired — so this is data flow, not behavior.
         itemWeight: weight,
-        attackRatingBonus: attackRating,
-        defenseRating,
       },
     });
   }
-  const armourDefenseRating = (outfit) => {
-    const value = outfit.defenseRating ?? '';
-    if (value === '') return 0;
-    if (!Number.isInteger(value) || value < 0) {
-      throw new Error(`importer: armour '${outfit.classId}/${outfit.id}' defenseRating must be blank or a non-negative integer, got ${JSON.stringify(value)}`);
-    }
-    return value;
-  };
   for (const outfit of bundle.equipment.armour) {
     const id = key('armor', `${outfit.classId}.${outfit.id}`);
     // The outfit's poise threshold is its weight under the A-side rule, so it
@@ -371,11 +359,8 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         // Outfits author no weight column; the legacy identity `weight ==
         // poiseThreshold` (the armament rule) is adopted for armour as the
         // A-side of the Weight Class A/B (docs/framework-migration-checklist.md).
-        // The B-side — armour weightless — is `itemWeight: 0` here. The
-        // optional outfits.csv defenseRating column carries the piece's own DR
-        // rating; a blank cell is 0.
+        // The B-side — armour weightless — is `itemWeight: 0` here.
         itemWeight: outfit.poiseThreshold,
-        defenseRating: armourDefenseRating(outfit),
       },
     });
   }

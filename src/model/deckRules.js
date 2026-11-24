@@ -1,5 +1,6 @@
+import { OwnCardRank } from './cardRank.js';
 import { unusedInstanceId as unusedInstanceId_ } from './cardInstanceIdentity.js';
-import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
+import { configuredDeckCopyLimit, collectedAdeptCardIds, deckCopyLimit as deckCopyLimit_, ItemUnlimitedCardIds } from './deckCopyLimit.js';
 // src/model/deckRules.js — the deck editor's rules, without its screen (SPEC §14.1).
 //
 // Pure model: settings and a run in, answers and one-step edits out. The
@@ -21,8 +22,7 @@ import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { hasCollectedCardPolicy, knownCollectedCardIds, recordCollectedCards } from './collectedCards.js';
-import { ItemUnlimitedKinds, ItemMinDeckDelta } from './itemProperties.js';
-import { basicCardKind } from './basicCardRule.js';
+import { DeckMinDelta as DeckMinDelta_, LevelMinDeckDelta as LevelMinDeckDelta_, ReducedDeckMinimum } from './deckMinimumRules.js';
 
 const D = deckRules.defaults;
 
@@ -67,8 +67,12 @@ export function deckEditBounds(settings, minDelta = 0) {
   }
   const bounds = readBounds(settings);
   // A deck-size item property (W25 step 6) lowers the minimum, never below 0.
-  return { ...bounds, min: Math.max(0, bounds.min - minDelta), problem: '' };
+  return { ...bounds, min: ReducedDeckMinimum(bounds.min, minDelta), problem: '' };
 }
+
+/** What lowers the editor's minimum (model/deckMinimumRules.js), re-exported for the editor's callers. */
+export const LevelMinDeckDelta = LevelMinDeckDelta_;
+export const DeckMinDelta = DeckMinDelta_;
 
 /** deckEditRefusal(count, settings) → '' when the editor may confirm, else one sentence. */
 export function deckEditRefusal(count, settings, minDelta = 0) {
@@ -111,11 +115,9 @@ export function basicCardIds(run) {
  */
 export function unlimitedCardIds(run) {
   const base = policyUnlimitedCardIds(run);
-  // An item property can also open one more kind of card: every Basic card or every cantrip (W25 step 6).
-  const kinds = run ? ItemUnlimitedKinds(run) : [];
-  if (!kinds.length) return base;
-  const extra = (gameContent(run, 'cards') || []).filter((card) => kinds.includes(basicCardKind(run, card))).map((card) => card.id);
-  return [...new Set([...base, ...extra])];
+  // A held relic or item property opens the collected own-class Basic cards or cantrips (ItemUnlimitedCardIds).
+  const extra = ItemUnlimitedCardIds(run);
+  return extra.length ? [...new Set([...base, ...extra])] : base;
 }
 function policyUnlimitedCardIds(run) {
   if (hasCollectedCardPolicy(run)) return basicCardIds(run);
@@ -230,7 +232,7 @@ export function moveToSideboard(registries, run, instanceId) {
   run.deck.splice(index, 1);
   // A pristine plain basic has nothing to keep; an upgraded, modded or ranked
   // one is kept like any owned card and comes back before a fresh one is minted.
-  const pristine = !card.upgraded && !(Array.isArray(card.mods) && card.mods.length) && !(card.rank > 1) && !(card.abilityRank > 0) && !(card.smithingLevel > 0);
+  const pristine = !card.upgraded && !(Array.isArray(card.mods) && card.mods.length) && !(OwnCardRank(card) > 0) && !(card.abilityRank > 0) && !(card.smithingLevel > 0);
   if (!card.equipmentRole && !card.grantedBy && unlimitedCardIds(run).includes(card.cardId) && pristine) return true;
   sideboard(run).push(card);
   return true;
@@ -274,7 +276,7 @@ export function isEquippedRun(run) { return !!(run && run.loadout) && gameModule
  */
 export function isSetAsideBasic(card, run = null) {
   if (!card || card.equipmentRole || !isUnlimitedBasic(card, run)) return false;
-  return !!card.upgraded || (Array.isArray(card.mods) && card.mods.length > 0) || card.rank > 1 || card.abilityRank > 0 || card.smithingLevel > 0;
+  return !!card.upgraded || (Array.isArray(card.mods) && card.mods.length > 0) || OwnCardRank(card) > 0 || card.abilityRank > 0 || card.smithingLevel > 0;
 }
 
 /**
@@ -374,7 +376,7 @@ export function cancelDeckEdit(run, snapshot) {
 
 /** Commit a validated editor draft without touching current combat piles. */
 export function commitDeckEditDraft(registries, run, edited, settings = {}) {
-  const refusal = deckEditRefusal(edited.deck?.length || 0, settings, ItemMinDeckDelta(run));
+  const refusal = deckEditRefusal(edited.deck?.length || 0, settings, DeckMinDelta(run));
   if (refusal) throw new Error(refusal);
   if (hasCollectedCardPolicy(run) && edited.collectedCardIds !== undefined
     && (!Array.isArray(edited.collectedCardIds) || JSON.stringify([...edited.collectedCardIds].sort()) !== JSON.stringify(knownCollectedCardIds(run).sort()))) throw new Error('Deck editing cannot modify collection knowledge');
@@ -390,9 +392,9 @@ export function commitDeckEditDraft(registries, run, edited, settings = {}) {
   for (const card of after) {
     const owned = before.get(card.instanceId);
     if (owned && JSON.stringify(owned) !== JSON.stringify(card)) throw new Error('Deck editing cannot modify an owned card');
-    if (!owned && (!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.mods?.length || Object.keys(card).some(key => !['instanceId','cardId','upgraded'].includes(key)))) throw new Error('Deck editing cannot invent a limited or enhanced card');
+    if (!owned && (!isUnlimitedBasic(card, run) || card.upgraded || OwnCardRank(card) > 0 || card.mods?.length || Object.keys(card).some(key => !['instanceId','cardId','upgraded'].includes(key)))) throw new Error('Deck editing cannot invent a limited or enhanced card');
   }
-  for (const [id, card] of before) if ((!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.abilityRank > 0 || card.smithingLevel > 0 || card.mods?.length) && !after.some(row => row.instanceId === id)) throw new Error('Deck editing cannot delete an owned limited card');
+  for (const [id, card] of before) if ((!isUnlimitedBasic(card, run) || card.upgraded || OwnCardRank(card) > 0 || card.abilityRank > 0 || card.smithingLevel > 0 || card.mods?.length) && !after.some(row => row.instanceId === id)) throw new Error('Deck editing cannot delete an owned limited card');
   for (const id of new Set(edited.deck.map(card => card.cardId))) if (edited.deck.filter(card => card.cardId === id).length > deckCopyLimit(registries, id, settings, run)) throw new Error('Deck editing exceeds the card copy limit');
   recordCollectedCards(run);
   for (const key of EDIT_STATE_KEYS) {

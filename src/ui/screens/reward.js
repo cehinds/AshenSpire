@@ -1,5 +1,7 @@
+import { OwnCardRank } from '../../model/cardRank.js';
+import { RankUpBlock } from '../../model/rankUpService.js';
 import { uiIconText } from '../../content/uiIcons.js';
-import { StatAllocationSection } from '../components/statAllocation.js';
+import { LevelUpPointsButton } from '../components/progressionCards.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
 import { MountRewardDoor } from '../components/rewardDoor.js';
 import { renderCard } from '../components/card.js';
@@ -107,13 +109,10 @@ function isProgressionReward(row)
     return row.kind === SKILL_RANK_UP;
 }
 
+// The card's own rank, 0 when unranked, so a rank-up preview shows what skills.raiseCardRank commits (owner, 2026-11-23).
 function readCardRank(instance)
 {
-    const hasRank = Number.isInteger(instance?.rank)
-        && instance.rank > 1;
-    return hasRank
-        ? instance.rank
-        : 1;
+    return OwnCardRank(instance);
 }
 
 function isReducedMotion()
@@ -855,11 +854,28 @@ export function MountRewards(appRoot, {
         {
             return null;
         }
-        return StatAllocationSection(registries, run, {
-            settings,
-            onAllocateStat,
-            onChange: persistProgress,
-        });
+        // Earned attribute points open the level-up modal (owner, 2026-11-17), never an inline panel.
+        if (!onAllocateStat || !(run.level?.unspentPoints > 0))
+        {
+            return null;
+        }
+        const host = buildElement('div', { class: 'spoils-points reward-stat-points' });
+        const draw = () =>
+        {
+            const points = LevelUpPointsButton(registries, run, {
+                settings,
+                onAllocateStat,
+                id: 'reward-stat-points',
+                onChange: () =>
+                {
+                    persistProgress();
+                    draw();
+                },
+            });
+            host.replaceChildren(...(points ? [points] : []));
+        };
+        draw();
+        return host;
     }
 
     function bindMenuControls(continueButton, note)
@@ -1490,6 +1506,11 @@ export function MountRewards(appRoot, {
     {
         const isTaken = () => states[row.key];
         const rankUpCards = rankUpCandidates(registries, run, row.skillId);
+        // The full-upgrade rule (rankUpService.js): a held-back card can be looked at but not confirmed.
+        const selectedBlocked = () => {
+            const chosen = rankUpCards.find((instance) => instance.instanceId === selectedCardId);
+            return chosen ? RankUpBlock(run, chosen) : '';
+        };
         let selectedCardId = pendingCardIdByKey[row.key] || null;
         let confirming = false;
         let reviewing = false;
@@ -1508,7 +1529,8 @@ export function MountRewards(appRoot, {
 
         fillCandidateStrip();
         confirmButton.disabled = !selectedCardId
-            || needsBonus();
+            || needsBonus()
+            || !!selectedBlocked();
         syncActionButtons();
 
         confirmButton.addEventListener('click', pressConfirm);
@@ -1551,7 +1573,7 @@ export function MountRewards(appRoot, {
             {
                 return translate('reward.confirm.reason');
             }
-            return needsBonus() ? translate('reward.rankBonus.reason') : null;
+            return selectedBlocked() || (needsBonus() ? translate('reward.rankBonus.reason') : null);
         }
 
         function fillCandidateStrip()
@@ -1695,7 +1717,7 @@ export function MountRewards(appRoot, {
                 selectedFace.replaceWith(buildRankUpFace(instance));
             }
             renderBonusPanel();
-            confirmButton.disabled = false;
+            confirmButton.disabled = !!selectedBlocked();
             syncActionButtons();
         }
 
@@ -1750,7 +1772,7 @@ export function MountRewards(appRoot, {
             markPicks(cardId);
             restoreDeselectedFace(previousCardId, cardId);
             renderBonusPanel();
-            confirmButton.disabled = needsBonus();
+            confirmButton.disabled = needsBonus() || !!selectedBlocked();
             syncActionButtons();
             message.hidden = true;
         }

@@ -8,6 +8,9 @@
 // Owner, 2026-11-06: the Armory tab is the equipped-slot rows only. Items arrive through
 // a slot's picker (Choose item / Replace -> Equip) or through showArmoury({ equipItemId })
 // (a reward's or purchase's Equip: slot choice, then the item equips into that slot).
+// docs/ARMOURY-LAYOUT-BRIEF.md, Armaments List: a slot press goes straight to the
+// confirmation (no Choose button), and the pressed slot is remembered per item in
+// run.equipmentSlotChoices, so a retry opens that slot's confirmation directly.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
@@ -36,12 +39,14 @@ async function mount(page, emptyOffHand = true, combat = false, extra = {}) {
     if (emptyOffHand) { run.loadout.sets.leftHand = [null]; run.loadout.storage.push('roundShield'); }
     run.attributes = { ...run.attributes, intelligence: 6, strength: 6 };
     if (spare) run.loadout.boughtArmour = [{ classId: 'reaver', id: spare.id }];
+    if (extra.slotChoices) run.equipmentSlotChoices = { ...extra.slotChoices };
     // The Armoury is the screen under test; start from a clean page.
     document.querySelectorAll('.modal-veil').forEach((node) => node.remove());
     const meta = { settings: { holdConfirm: 'off', equipView: 'rack' }, found: registries.equipment.armaments.map((row) => row.id) };
     window.__armouryRun = run;
     window.__armouryRegistries = registries;
     window.__armouryEquipped = [];
+    window.__slotRemembered = 0;
     mountEquipment(document.body, {
       registries, run, meta, inCombat: combat, onClose() {},
       destination: extra.destination || '',
@@ -51,6 +56,7 @@ async function mount(page, emptyOffHand = true, combat = false, extra = {}) {
       onEquip: combat ? () => 'Not enough Poise to change gear.' : undefined,
       onChange: (loadout) => { run.loadout = loadout; },
       onEquipmentChanged: (event) => window.__armouryEquipped.push(event),
+      onRememberEquipSlot: () => { window.__slotRemembered += 1; },
     });
   }, { emptyOffHand, combat, extra });
   if (extra.deck) return; // the Deck door closes the Armoury onto the editor
@@ -63,10 +69,11 @@ const slotModal = (page) => page.locator('.equip-slot-choice');
 const confirmModal = (page) => page.locator('.equip-confirm-modal');
 const compareModal = (page) => page.locator('.equip-compare-modal');
 const sets = (page) => page.evaluate(() => structuredClone(window.__armouryRun.loadout.sets));
-/** A slot's picker: Choose item / Replace on the row, then the named item's Equip in the picker. */
+/** A slot's picker: Choose item / Replace on the row opens the item modal; choose the named item, then Equip. */
 const pickEquip = async (page, position, name) => {
   await page.locator(`.armoury-position-card[data-slot-position="${position}"] .armament-replace`).click();
-  await page.locator('.equip-picker-row', { hasText: name }).locator('.equip-picker-act').click();
+  await page.locator('.equip-item-choice .option-row', { hasText: name }).click();
+  await page.locator('.equip-item-choice .as-btn.primary').click();
 };
 
 try {
@@ -81,6 +88,23 @@ try {
   assert.equal(await page.evaluate(() => { const b = document.querySelector('.armoury-body'); return b.scrollHeight <= b.clientHeight + 1; }), true, 'the slot rows fit without a scrollbar');
   if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/armoury-rows-desktop.png` });
 
+  // Owner 2026-11-19: Replace opens the slot's items in a modal, listing only what fits that slot, never a picker
+  // drawn under the slot rows.
+  await page.locator('.armoury-position-card[data-slot-position="leftHand:0"] .armament-replace').click();
+  await page.locator('.equip-item-choice').waitFor();
+  assert.equal(await page.locator('.armoury .equip-picker').count(), 0, 'no inline picker under the slot rows');
+  const listed = await page.locator('.equip-item-choice [data-item-option]').evaluateAll(rows => rows.map(row => row.dataset.itemOption));
+  const fitting = await page.evaluate(async (ids) => {
+    const { fitsSlot } = await import('/src/model/loadout.js');
+    const reg = window.__armouryRegistries;
+    const slot = reg.equipment.slots.find(row => row.id === 'leftHand');
+    return ids.filter(id => fitsSlot(slot, reg.equipment.armaments.find(row => row.id === id)));
+  }, listed);
+  assert.ok(listed.length > 0, 'the Off Hand lists something');
+  assert.deepEqual(fitting, listed, `every listed item fits the Off Hand: ${listed}`);
+  await page.keyboard.press('Escape');
+  await page.locator('.equip-item-choice').waitFor({ state: 'detached' });
+
   // A slot's picker -> Equip on an occupied slot goes straight to the compare modal (the slot is already chosen).
   await pickEquip(page, 'rightHand:0', 'Ash Staff');
   await compareModal(page).waitFor();
@@ -89,7 +113,10 @@ try {
   await page.keyboard.press('Escape');
   await compareModal(page).waitFor({ state: 'detached' });
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'Back equips nothing');
-  await pickEquip(page, 'rightHand:0', 'Ash Staff');
+  // Back lands on the slot's item list again; choosing from it reaches the same compare.
+  await page.locator('.equip-item-choice').waitFor();
+  await page.locator('.equip-item-choice .option-row', { hasText: 'Ash Staff' }).click();
+  await page.locator('.equip-item-choice .as-btn.primary').click();
   await compareModal(page).waitFor();
   await page.locator('.equip-compare-equip').click();
   await compareModal(page).waitFor({ state: 'detached' });
@@ -115,15 +142,18 @@ try {
   await slotModal(page).locator('button', { hasText: 'Back' }).click();
   await slotModal(page).waitFor({ state: 'detached' });
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'Back equips nothing');
-  assert.equal(await page.locator('.equip-picker-row').count(), 0, 'the slot picker never opened');
-  // Choose Main Hand: the compare modal (occupied) then Equip puts the offered item in that slot.
+  assert.equal(await page.locator('.equip-item-choice').count(), 0, 'the item list never opened');
+  assert.equal(await slotModal(page).locator('button', { hasText: 'Choose' }).count(), 0, 'no separate Choose button');
+  // Press Main Hand: the compare modal (occupied) opens at once, then Confirm puts the offered item in that slot.
   await mount(page, true, false, { equipItemId: 'ashStaff' });
   await slotModal(page).waitFor();
   await slotModal(page).locator('.option-row', { hasText: 'Main Hand · 1' }).click();
-  await slotModal(page).locator('button', { hasText: 'Choose' }).click();
   await compareModal(page).waitFor();
+  assert.deepEqual(await page.evaluate(() => [window.__armouryRun.equipmentSlotChoices, window.__slotRemembered]),
+    [{ 'armament:ashStaff': 'rightHand:0' }, 1], 'the pressed slot is remembered at once and the host asked to save');
+  assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'a slot press equips nothing');
   assert.equal(await slotModal(page).count(), 0, 'the slot modal closed');
-  assert.equal(await page.locator('.equip-picker-row').count(), 0, 'no second item picker after the slot choice');
+  assert.equal(await page.locator('.equip-item-choice').count(), 0, 'no second item picker after the slot choice');
   await page.locator('.equip-compare-equip').click();
   await compareModal(page).waitFor({ state: 'detached' });
   assert.equal((await sets(page)).rightHand[0], 'ashStaff', 'the offered item equipped into the chosen slot');
@@ -133,9 +163,37 @@ try {
   await slotModal(page).waitFor();
   await slotModal(page).locator('.option-row', { hasText: 'Off Hand · 1' }).click();
   await confirmModal(page).waitFor();
+  assert.deepEqual(await confirmModal(page).locator('.modal-foot-actions button').allInnerTexts(), ['Back', 'Confirm']);
   await confirmModal(page).locator('.equip-confirm-equip').click();
   await confirmModal(page).waitFor({ state: 'detached' });
   assert.equal((await sets(page)).leftHand[0], 'roundShield', 'the offered shield equipped into the chosen Off Hand');
+
+  // A retry with a remembered slot opens that slot's confirmation directly; Back opens the slot list with the
+  // remembered slot highlighted and focused; pressing another slot saves the new choice.
+  await mount(page, true, false, { equipItemId: 'ashStaff', slotChoices: { 'armament:ashStaff': 'leftHand:0' } });
+  await confirmModal(page).waitFor();
+  assert.equal(await slotModal(page).count(), 0, 'the remembered slot skips the slot list');
+  await confirmModal(page).locator('button', { hasText: 'Back' }).click();
+  await slotModal(page).waitFor();
+  assert.equal(await slotModal(page).locator('.option-row', { hasText: 'Off Hand · 1' }).getAttribute('aria-pressed'), 'true');
+  assert.equal(await slotModal(page).locator('.option-row', { hasText: 'Main Hand · 1' }).getAttribute('aria-pressed'), 'false');
+  await page.waitForFunction(() => document.activeElement?.matches?.('.equip-slot-choice [data-slot-option="leftHand:0"]'));
+  assert.equal(await page.evaluate(() => window.__slotRemembered), 0, 'opening a remembered slot saves nothing new');
+  await slotModal(page).locator('.option-row', { hasText: 'Main Hand · 1' }).click();
+  await compareModal(page).waitFor();
+  assert.deepEqual(await page.evaluate(() => window.__armouryRun.equipmentSlotChoices), { 'armament:ashStaff': 'rightHand:0' });
+  await page.keyboard.press('Escape');
+  await slotModal(page).waitFor();
+  assert.equal(await slotModal(page).locator('.option-row', { hasText: 'Main Hand · 1' }).getAttribute('aria-pressed'), 'true', 'Back highlights the new choice');
+  await page.keyboard.press('Escape');
+  await slotModal(page).waitFor({ state: 'detached' });
+  assert.equal((await sets(page)).leftHand[0], null, 'cancelling equips nothing');
+  assert.deepEqual(await page.evaluate(() => window.__armouryRun.equipmentSlotChoices), { 'armament:ashStaff': 'rightHand:0' }, 'a cancelled equip keeps the choice');
+  // A remembered slot that is no longer valid falls back to the slot list.
+  await mount(page, true, false, { equipItemId: 'ashStaff', slotChoices: { 'armament:ashStaff': 'leftHand:9' } });
+  await slotModal(page).waitFor();
+  assert.equal(await slotModal(page).locator('[aria-pressed="true"]').count(), 0, 'nothing is highlighted for an unknown slot');
+  await page.keyboard.press('Escape');
 
   // The Deck door (key D) names the `cards` destination: it opens the Deck tab's editor.
   await mount(page, true, false, { destination: 'cards', deck: true });

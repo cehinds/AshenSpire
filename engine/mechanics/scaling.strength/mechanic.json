@@ -20,6 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/elementIdentity.js"
+    "file": "src/engine/combat.js",
+    "symbol": "finishAbilityPlay"
   }
 }

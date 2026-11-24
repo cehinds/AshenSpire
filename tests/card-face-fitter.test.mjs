@@ -95,3 +95,55 @@ test('resizing a face re-fits it and never swaps in the Inspect text', () => {
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''));
 });
+
+// Owner 2026-11-17: a face that cannot fit at the 13px floor goes under it to hold four lines, so this face settles
+// under 13px with every word; the scoped reduction still refits it and the normal fit comes back without it.
+test('a scoped rules font reduction refits the same face, then restores the normal fit', () => withKitDom(() => {
+  const f = faceFixture([20, 10]);
+  const readStyle = globalThis.getComputedStyle;
+  let reduction = '';
+  globalThis.getComputedStyle = node => node === f.face
+    ? { getPropertyValue: key => key === '--card-rules-font-reduction-px' ? reduction : '' }
+    : readStyle(node);
+  try {
+    invalidateLayoutMetrics();
+    fitCards([f.card]);
+    const normal = parseFloat(f.text.style.fontSize);
+    assert.ok(normal < 13 && normal > 11, `fits four lines just under the 13px floor: ${normal}`);
+    assert.equal(f.text.dataset.rulesComplete, 'true');
+    reduction = '2';
+    fitCards([f.card]);
+    assert.equal(parseFloat(f.text.style.fontSize), 11, 'the same face refits once the scoped reduction changes');
+    assert.equal(f.text.dataset.rulesComplete, 'true');
+    assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
+    reduction = '';
+    fitCards([f.card]);
+    assert.equal(parseFloat(f.text.style.fontSize), normal, 'non-reward styling keeps its original fit');
+    assert.equal(f.text.dataset.rulesComplete, 'true');
+  } finally {
+    globalThis.getComputedStyle = readStyle;
+  }
+}));
+
+test('phone rules retain their existing readable floor when a hand or reward surface also reduces type', () => withKitDom(() => {
+  const f = faceFixture([80, 10]);
+  document.documentElement = { dataset: { formFactor: 'mobile' } };
+  const readStyle = globalThis.getComputedStyle;
+  let reduction = '';
+  globalThis.getComputedStyle = node => node === f.face
+    ? { getPropertyValue: key => key === '--card-rules-font-reduction-px' ? reduction : '' }
+    : readStyle(node);
+  try {
+    invalidateLayoutMetrics();
+    fitCards([f.card]);
+    const phoneFloor = parseFloat(f.text.style.fontSize);
+    // Owner 2026-11-17: under the phone floor (13 - 8/3 px) only to hold four lines, never under the 6px hard floor.
+    assert.ok(phoneFloor <= 13 - 8 / 3 + 0.001 && phoneFloor >= 6, `phone fit: ${phoneFloor}`);
+    reduction = '2';
+    fitCards([f.card]);
+    assert.equal(parseFloat(f.text.style.fontSize), phoneFloor, 'the surface does not stack another reduction onto the phone floor');
+    assert.ok(f.clauses.every(clause => clause.style.display === ''), 'all authored clauses remain on the face');
+  } finally {
+    globalThis.getComputedStyle = readStyle;
+  }
+}));

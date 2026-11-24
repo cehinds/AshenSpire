@@ -1,9 +1,9 @@
 # `effects` module guide
 
-Set the unified damage model and the host adapter weights for attack and defense ratings.
+Set the unified damage model and the per-point weights of STR (physical damage), DEX (Block) and max(INT, WIS) (magic damage).
 
 **Status:** Listed in `ashen.core@1.0.0`.
-Runtime scope: Configured unified damage policy and AR/DR weights. Card operations remain host-interpreted; arbitrary JSON effect programs are not portable.
+Runtime scope: Configured unified damage policy and the STR / DEX / magic-stat weights. Card operations remain host-interpreted; arbitrary JSON effect programs are not portable.
 
 ## Authoring example
 
@@ -23,7 +23,7 @@ The object form below changes only one setting; bundle defaults and other module
 
 ```json
 {
-  "modules": { "effects": { "attackRatingWeight": 0 } }
+  "modules": { "effects": { "strengthDamageWeight": 0 } }
 }
 ```
 
@@ -36,8 +36,17 @@ Settings live in `engine/modules/effects/settings.schema.json`; shipped defaults
 - `/damageModel` (type enum; default `"unified"`; allowed "unified"): Core uses one unified damage channel.
 - `/elements` (type enum; default `false`; allowed false): Core disables elemental damage.
 - `/spellRanks` (type enum; default `false`; allowed false): Core disables spell ranks.
-- `/attackRatingWeight` (type number; default `1`; range 0..100): Host adapter AR contribution.
-- `/defenseRatingWeight` (type number; default `1`; range 0..100): Confirmed host-adapter contribution to Block gained: `baseBlock + DR × defenseRatingWeight`.
+- `/strengthDamageWeight` (type number; default `1`; range 0..100): Physical damage added per point of STR (AR is retired, owner 2026-11-18).
+- `/magicStatWeight` (type number; default `1`; range 0..100): Magic damage added per point of max(INT, WIS).
+- `/dexterityBlockWeight` (type number; default `1`; range 0..100): Block added per point of DEX: `baseBlock + DEX × dexterityBlockWeight`.
+- `/baseDamageMultiplier` (type number; default `1`; range 0..10): Scales every card's base damage (player and enemy), rounded up, before STR or the magic stat adds. The Core bundle sets 0.5 (owner, 2026-11-17: base damage halved). A Counter return is not scaled again.
+- `/playerDamageMultiplier` (type number; default `1`; range 0..10): Scales every hit a player source deals, as one `side-damage-scale` receipt stage after the element stages and before Block and Poise absorption, so the face, the intent and the hit agree. A Counter return, a reflected hit and a proposal's reactive return are final damage and are not scaled. A positive hit never rounds to 0. The Core bundle sets 0.7 (owner, 2026-11-18: damage, defense and enemy HP cut 30%).
+- `/enemyDamageMultiplier` (type number; default `1`; range 0..10): The same stage for hits an enemy source deals. Core sets 0.7 (owner, 2026-11-18).
+- `/physicalDamageMultiplier` (type number; default `1`; range 0..10): Scales only the physical share of a hit (the receipt's physical/magical split; a spell's magic share is untouched), both sides, as one `physical-damage-scale` receipt stage right before the side scale, so the face, the intent and the hit agree. The same final-damage exemptions as the side scale (a Counter return, a reflected hit, a reactive return). A positive physical part never rounds to 0. Core sets 0.7 (owner, 2026-11-18, on top of the side scale).
+- `/blockGainMultiplier` (type number; default `1`; range 0..10): A factor inside the configured Block gain floor (`computeBlockGain`), both sides. A Counter's Block grant is a share of an already scaled hit and is not scaled again. Core sets 0.49 (owner, 2026-11-18: 0.7, then another 0.7).
+- `/statusBlockWeight` (type number; default `0`; range 0..10): Block added per stack of a `blockAdd` status (Dexterity) to each Block card played after it (player card or enemy move card), after the scaling and the floor, so one stack is exactly +1 Block on every later Block card; protection that is not a played card (Defend-stance turn protection, the Dodge Roll guard, a power's or status's `block`) takes none; Block already held is unchanged. Core sets 1 (owner, 2026-11-20). 0 keeps the earlier rule, where the status added nothing, so profiles saved before it are unchanged.
+- `/spellPoiseDamageMultiplier` (type number; default `1`; range 1..10): Multiplies the Poise a player's spell-camp card takes from an enemy (what the hit absorbs plus its Poise damage), never past the pool; HP is unchanged. Core sets 2 (owner, 2026-11-18: spell Poise damage +100%).
+- Owner ruling, 2026-11-18: Core enemy `hpScaleByTier` (enemies module) is minion 0.385, elite 0.42, boss 0.455 (each 70% of the earlier 0.55 / 0.6 / 0.65).
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and the author object resolve next, then `policyBindings` copies resolved module fields onto selected content where declared. Arrays replace inherited arrays. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 

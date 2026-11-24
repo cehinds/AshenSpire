@@ -28,7 +28,7 @@ const pack = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cha
 
 test('every enemy (registry and Core pack) has valid weaknesses, and the two agree', () => {
   const all = contentBundle.enemies.map(def => registries.enemies.get(def.id));
-  assert.equal(all.length, 33);
+  assert.equal(all.length, 65);
   for (const def of all) {
     assert.deepEqual(weaknessProblems(def.weaknesses), [], def.id);
     const row = pack.find(r => r.id === def.id);
@@ -49,7 +49,8 @@ test('the validator refuses malformed weaknesses', () => {
 });
 
 // ---- the live Core profile ----
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Base scale pinned to 1: these tests pin the weakness multipliers on a 10 hit, not Core's halved base damage.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { baseDamageMultiplier: 1, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function liveCore(enemyId = 'wanderingSoldier') {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });

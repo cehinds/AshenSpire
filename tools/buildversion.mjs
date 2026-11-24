@@ -188,6 +188,7 @@ export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'asset-
 export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/bundle.mjs',
   'tools/card-cutout-assets.mjs',
+  'tools/literal-asset-references.mjs',
   'tools/card-components.mjs',
   'tools/assetmime.mjs',
   'tools/buildversion.mjs',
@@ -195,6 +196,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/mobileart-policy.mjs',
   'tools/head-meta.mjs',
   'tools/css-strip.mjs',
+  'tools/js-preamble.mjs',
   'tools/dynamic-imports.mjs',
   // THE REST OF THE BUNDLER'S IMPORT GRAPH (docs/EXTERNAL-ASSETS-PLAN.md step
   // 12): every tools/ module tools/bundle.mjs reaches decides which bytes a

@@ -57,7 +57,7 @@ test('legacy fixture (noncombat + the old unlimited rules): Armoury door, Strike
 test('the Core rest component offers the deck-opt door, which is not a service and leaves the visit unspent', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const component = readFileSync(new URL('../src/ui/components/gameProfileRest.js', import.meta.url), 'utf8');
-  assert.match(main, /deckEditor: deckDoors\(\)\.rest \? \{ onOpen: \(\) => showDeckEditor\(\(\) => showRest\(\), true, null, 'shrine'\) \} : null/);
+  assert.match(main, /deckEditor: deckDoors\(\)\.rest \? \{ onOpen: \(\) => showDeckEditor\(refresh, true, null, 'shrine'\) \} : null/);
   assert.match(main, /if \(RestOpensDeckEditor\(run\)\) return Object\.freeze\(\{ armoury: false, rest: deckEditingOn\(settings\) \}\)/);
   assert.match(component, /id: 'deck-opt'/);
   // The door calls only deckEditor.onOpen: no commit, no visit write.
@@ -66,7 +66,7 @@ test('the Core rest component offers the deck-opt door, which is not a service a
   assert.doesNotMatch(door.slice(0, door.indexOf('// The recovery ledger')), /onCommit|commit\(|visit\.service/);
   const run = make(core, coreRegistries);
   run.mapGraph = buildActMap(coreRegistries, createRng(7), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id;
+  run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id;
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
   assert.equal(visit.service, null);
 });

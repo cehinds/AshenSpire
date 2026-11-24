@@ -140,7 +140,7 @@ if (argv.includes('--selftest')) {
         name: "the hidden Rendered rest layer bobs",
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
-        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.rendered-stage .painted-stage { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.alternative-card-stage[data-still] canvas { visibility: hidden; animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
         expectRed: /RED IDLE-rendered-STATIC-NESTED(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
@@ -182,7 +182,7 @@ if (argv.includes('--selftest')) {
         name: "a resting figure rotates",
         file: 'styles/combat.css',
         find: "/* Fighters hold their authored resting pose in every rendering style. */",
-        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { rotate:5deg; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { rotate:5deg; } }\n.combatant .sprite .alternative-card-stage { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
         expectRed: /RED IDLE(?:-classic)?(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
@@ -202,7 +202,7 @@ if (argv.includes('--selftest')) {
       ...(ALTERNATIVE ? [{
         name: 'the class canvas paints no character pixels',
         file: 'src/ui/alternativeCardStage.js',
-        find: "    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!effectsOff(),still:effectsOff(),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();",
+        find: "    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize:materialize&&!FxOff('glow'),still:FxOff('glow'),immutable:true,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();",
         replace: '    ctx.restore();',
         expectRed: /RED IDLE player#\d+ — .*canvas has no painted pixels/,
       }, {

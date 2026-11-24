@@ -126,7 +126,9 @@ test('per-tag card counts at tier 0 across every card', () => {
   // Flux +6: the Psychic and Earth spells Mind Spike, Mind Fracture, Waking Nightmare,
   // Stone Sling, Rockfall and Entomb (owner decision 5, 2026-10-12).
   // W25-EvadeCards (2026-11-15): the Evade cards leave the martial `evades` table and drop its rewrite of Quickstep and Dodge Roll, so counterstrike 22 -> 20 and impact 60 -> 56.
-  assert.deepEqual(counts, { reaction: 80, counterstrike: 20, impact: 56, flux: 76 });
+  // Theme G (playtest 2026-11-17): the 19 conditional and self-buff cards add 1 reaction, 1 impact and 5 flux (their spell attacks).
+  // Gravebinder's Lament (a rare Herald spell attack) adds 1 flux.
+  assert.deepEqual(counts, { reaction: 81, counterstrike: 20, impact: 57, flux: 82 });
 });
 
 test('applyCardTraits reads Impact and Flux magnitudes from the fight rules', () => {

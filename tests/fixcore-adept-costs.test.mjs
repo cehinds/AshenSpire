@@ -9,6 +9,9 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { live, baseRegistries, profile } from './helpers/fixcore-combat-rules.mjs';
+import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+// The native Adept arithmetic below already pins pre-W25 spell rules; pin its pre-gear price as well.
+const adeptRegistries = legacyGearRegistries(baseRegistries);
 
 const physical = { cost: 3, staminaCost: 3, manaCost: 3, type: 'attack', combatProfile: { camp: 'physical', maneuver: 'counter' }, cardTags: ['trait:reaction'] };
 const magic = { ...physical, type: 'spell', combatProfile: { camp: 'spell', maneuver: 'casting', range: 'ranged' } };
@@ -17,11 +20,11 @@ function unit(classId, card = physical) {
   return { gameProfile: profile, combatExpansionVersion: 2, core2ActionRulesVersion: 1, phase: 'player', player };
 }
 function native(classId) {
-  const run = createRunState({ registries: baseRegistries, classId, seed: 511,
+  const run = createRunState({ registries: adeptRegistries, classId, seed: 511,
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   // A caster's staff is a Focus armament (-1 MP, tests/focus-mana-discount.test.mjs); these tests price the printed Mana.
   run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null;
-  const combat = createRunCombat({ registries: baseRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const combat = createRunCombat({ registries: adeptRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
   delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
   return combat;
@@ -40,16 +43,18 @@ test('Adept costs use the equipped class tag, authoritative Spell camp and only 
   assert.equal(stanceStaminaCost(3, ctx.player, { ...physical, manaCost: 9 }, ctx, 9), 2, 'MP cost alone does not make a Spell');
 });
 
-test('own-turn reduction stops at one, matching enemy reactions reach zero, and authored free lanes stay free', () => {
+// Owner rulings: the Magic Adept (Graduate) Mana cut may reach 0 on the player's turn (2026-11-22); the Martial (SP) cut stops at one
+// on the player's turn and reaches 0 only for a reaction on the enemy's turn (2026-11-23).
+test('the own-turn SP reduction stops at one, the Mana reduction and matching enemy reactions reach zero, and authored free lanes stay free', () => {
   for (const [classId, card, cost] of [['reaver', physical, stanceStaminaCost], ['starseer', magic, stanceManaCost]]) {
     const ctx = unit(classId, card);
-    assert.equal(cost(1, ctx.player, card, ctx), 1);
+    assert.equal(cost(1, ctx.player, card, ctx), cost === stanceManaCost ? 0 : 1);
     assert.equal(cost(0, ctx.player, card, ctx), 0);
     ctx.phase = 'enemy';
     assert.equal(cost(1, ctx.player, card, ctx), 0);
     assert.equal(cost(3, ctx.player, card, ctx), 2, 'the old generic reaction cut does not stack');
     assert.equal(cost(0, ctx.player, card, ctx), 0);
-    assert.equal(cost(1, ctx.player, { ...card, cardTags: [] }, ctx), 1, 'only a reaction earns the zero floor');
+    assert.equal(cost(1, ctx.player, { ...card, cardTags: [] }, ctx), cost === stanceManaCost ? 0 : 1, 'only a reaction earns the zero SP floor (owner 2026-11-23); the Graduate Mana cut floors at 0 anyway (2026-11-22)');
     delete ctx.player.combatStance;
     assert.equal(cost(3, ctx.player, card, ctx), 3, 'entering a stance cannot discount that play');
   }
@@ -101,18 +106,18 @@ test('native Smash entry, matching preview, affordability and actual payment agr
   assert.equal(out.events.find(row => row.type === 'cardPlayed').staminaSpent, 1);
 });
 
-test('native Frost Counter has a zero-MP matching reaction quote and identical snapshot-resumed payment', () => {
+test('native Frost Counter has a zero-MP matching quote (own turn and reaction) and identical snapshot-resumed payment', () => {
   const ctx = native('starseer');
   ctx.piles.hand = [{ instanceId: 'frost', cardId: 'frostCounter', upgraded: false }];
   ctx.player.combatStance = stanceOf(resolveCombatCard(ctx, ctx.piles.hand[0]));
   ctx.player.stamina = 2; ctx.player.mana = 0;
-  assert.deepEqual(cardPlayCosts(ctx, 'frost'), { energy: 1, stamina: 1, mana: 1 }, 'own-turn MP floor is one');
+  assert.deepEqual(cardPlayCosts(ctx, 'frost'), { energy: 1, stamina: 1, mana: 0 }, 'own-turn Graduate MP floor is zero (owner 2026-11-22)');
   dispatch(ctx, { type: 'endTurn' });
   const option = ctx.pendingReaction?.options.find(row => row.cardId === 'frostCounter' && row.play.upcastTier === undefined);
   assert.ok(option, 'zero Mana remains affordable during a matching reaction');
   assert.equal(option.staminaCost, 1); assert.equal(option.manaCost, 0);
   const snapshot = serializeCombatSnapshot(ctx);
-  const restored = restoreCombatSnapshot({ registries: baseRegistries, snapshot, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), expectedGameProfile: ctx.gameProfile });
+  const restored = restoreCombatSnapshot({ registries: adeptRegistries, snapshot, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), expectedGameProfile: ctx.gameProfile });
   const play = combat => dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: option.id });
   const a = play(ctx), b = play(restored);
   assert.deepEqual(a, b);
@@ -151,7 +156,7 @@ test('an older active reaction snapshot retains its accepted MP quote and old pa
   const option = ctx.pendingReaction.options.find(row => row.cardId === 'frostCounter');
   assert.equal(option.manaCost, 1);
   const snapshot = serializeCombatSnapshot(ctx);
-  const restored = restoreCombatSnapshot({ registries: baseRegistries, snapshot, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), expectedGameProfile: ctx.gameProfile });
+  const restored = restoreCombatSnapshot({ registries: adeptRegistries, snapshot, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), expectedGameProfile: ctx.gameProfile });
   assert.equal(restored.core2ActionRulesVersion, undefined);
   assert.deepEqual(restored.pendingReaction.options, ctx.pendingReaction.options);
   const result = dispatch(restored, { type: 'chooseReaction', offerId: restored.pendingReaction.id, optionId: option.id });
@@ -159,11 +164,17 @@ test('an older active reaction snapshot retains its accepted MP quote and old pa
 });
 
 test('Mana Surge keeps one SP cost, zero MP cost and its separate two-Mana restore', () => {
-  const ctx = native('herald');
-  ctx.piles.hand = [{ instanceId: 'surge', cardId: 'core.manaSurge', upgraded: false }];
-  ctx.player.combatStance = stanceOf(resolveCombatCard(ctx, ctx.piles.hand[0]));
-  ctx.player.stamina = 3; ctx.player.mana = 0;
-  assert.deepEqual(cardPlayCosts(ctx, 'surge'), { energy: 1, stamina: 1, mana: 0 });
-  dispatch(ctx, { type: 'playCard', cardInstanceId: 'surge' });
-  assert.equal(ctx.player.stamina, 2); assert.equal(ctx.player.mana, 2);
+  for (const maxMana of [1, 2]) {
+    const ctx = native('herald');
+    assert.equal(ctx.player.maxMana, 1, 'the fresh Herald has a one-Mana cap');
+    ctx.player.maxMana = maxMana;
+    ctx.piles.hand = [{ instanceId: 'surge', cardId: 'core.manaSurge', upgraded: false }];
+    ctx.player.combatStance = stanceOf(resolveCombatCard(ctx, ctx.piles.hand[0]));
+    ctx.player.stamina = 3; ctx.player.mana = 0;
+    assert.deepEqual(cardPlayCosts(ctx, 'surge'), { energy: 1, stamina: 1, mana: 0 });
+    const { events } = dispatch(ctx, { type: 'playCard', cardInstanceId: 'surge' });
+    assert.equal(ctx.player.stamina, 2);
+    assert.equal(events.find(event => event.type === 'manaRestored').amount, maxMana);
+    assert.equal(ctx.player.mana, maxMana);
+  }
 });

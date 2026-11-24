@@ -1,17 +1,30 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
+import { OwnCardRank } from './cardRank.js';
+import { RankShopCardOffers } from './shopOfferRank.js';
 import { gameModule, gameContent } from './gameProfile.js';
-import { ConfiguredTraderCategories } from './gameProfileShopKind.js';
+import { ConfiguredTraderCategories, ConfiguredTraderOffersSmith } from './gameProfileShopKind.js';
+import { ShelfStockCounts } from './vendorStockRange.js';
 import { syncZones } from './state.js';
 import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
-import { RANK_UP_OPTION, CombatRewardRanksUp, CombatRankUpIsBonus, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
+import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RankUpReady, RankUpReadyReason, RaiseCardRank, RankUpPrice, RankUpBlock } from './rankUpService.js';
 import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
 import { shopOfferPrice } from './shopOfferPrice.js';
+import { RankedCardPrice } from './rankedCardPrice.js';
 import { createRng } from './rng.js';
+import { TierFor, FilterToBand } from './levelLists.js';
+import { carriedIds } from './loadout/ownership.js';
+import { ThemedItemPick, ItemIsThemed } from './itemThemePick.js';
+import { GearTypeEffectsEnabled } from './gearEffects.js';
+import { GEAR_TYPES } from '../content/gearTypes.js';
+const GEAR_THEME_PERCENT = GEAR_TYPES.themedPercent;
+import { reconcileRunLoadoutHp } from './loadout/cardMods.js';
+import { SpellRewardEligible, BalanceSpellRewardWeights } from './spellPoolPolicy.js';
+import { CARD_COPY_OPTION, CARD_COPY_SOURCE, CopyOwnedCard, GrantRelicCardCopies, VendorStocksCardCopy, CardCopyShelf, CardCopyUsesLeft, CardCopyCandidates, CardCopyPrice } from './cardCopyService.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -51,7 +64,11 @@ function pools(registries, run, { claim = false } = {}) {
   // Owner 2026-11-14: eligibility.excludeCardIds keeps cards that do nothing without the hit roll (Guiding Whisper) or repeat another
   // (base.evade) out of every new offer and shop. Their definitions stay for saved decks, and a claim still accepts an earlier offer.
   const retired = claim ? null : new Set(rules?.eligibility?.excludeCardIds || []);
-  const cards = definitions.filter(card => rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+  // Owner 2026-11-20: eligibility.combatCards.skipOwned never offers a card the player already holds (deck or library), at any
+  // rank: one copy of a card, and the copy service (cardCopyService.js) is the only way to a second. A claim still accepts it.
+  const skipOwned = !claim && cardRule?.skipOwned === true;
+  const cards = definitions.filter(card => (claim || SpellRewardEligible(registries, run, card)) && rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+    && !(skipOwned && ownedIds.has(card.id))
     && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
@@ -89,7 +106,7 @@ function weaponArtPool(registries,run,rules,extras,carried,claim) {
     if(!claim&&!carried.has(piece.id))continue;
     ids.push(...(piece.weaponCardPackage?.weaponArtDefaults||[]),...(piece.weaponCardPackage?.learnableArts||[]));
   }
-  const owned=!claim&&rules?.eligibility?.weaponArts?.skipOwned?new Set([...(run.deck||[]),...(run.sideboard||[])].map(card=>card?.cardId??card?.id??card)):new Set();
+  const owned=!claim&&(rules?.eligibility?.weaponArts?.skipOwned||rules?.eligibility?.combatCards?.skipOwned===true)?new Set([...(run.deck||[]),...(run.sideboard||[])].map(card=>card?.cardId??card?.id??card)):new Set();
   return [...new Set(ids)].filter(id=>registries.cards.has(id)&&!owned.has(id)&&rangeCardAvailable(run,registries.cards.get(id)));
 }
 // Owner 2026-11-05: an art stocked in the shop the player is in, or shown on the open reward door, is not offered by the other.
@@ -150,8 +167,8 @@ function weightedCardPick(registries,run,rule,rng,stream,ids) {
   const isBasic=rule?.depthBias?basicOrCantripMatcher(registries,run):()=>false;
   // Owner 2026-10-31: a card already shown (taken or not) is drawn at rule.offeredCopyWeight per earlier showing; absent/1 is neutral.
   const offered=run.rewardOfferHistory?.cards||{},offeredWeight=Number.isFinite(rule?.offeredCopyWeight)?rule.offeredCopyWeight:1;
-  const weights=ids.map(id=>{const card=defs.get(id);
-    return cardPickWeight(rule,card,owned.get(id)||0)*typeWeight(rule,card)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));}),total=weights.reduce((sum,weight)=>sum+weight,0);
+  const weights=BalanceSpellRewardWeights(registries,run,ids.map(id=>defs.get(id)),ids.map(id=>{const card=defs.get(id);
+    return cardPickWeight(rule,card,owned.get(id)||0)*typeWeight(rule,card)*depthWeight(rule,card,card?cardRank(card,rules):1,isBasic(id),depth)*(recent.has(id)?recentWeight:1)*(offeredWeight===1?1:Math.pow(offeredWeight,offered[id]||0));})),total=weights.reduce((sum,weight)=>sum+weight,0);
   if(!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
   let roll=rng.float(stream)*total;
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
@@ -177,6 +194,13 @@ function weightedPotionPick(rule,run,rng,stream,ids) {
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
   return ids.at(-1);
 }
+const BAND_KIND={combatCards:'cards',weapons:'weapon',armor:'armour',relics:'relic'};
+/** BandedRewardIds(run, kind, ids) -> ids inside the run's act rank band (model/levelLists.js), or ids when the band holds none. */
+function BandedRewardIds(run,kind,ids) {
+  const band=BAND_KIND[kind];
+  if(!band)return ids;
+  return FilterToBand(band,TierFor(run),ids,band==='armour'?{keyOf:id=>`${run.class}.${id}`}:undefined);
+}
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[],pool='normal'}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
@@ -195,22 +219,28 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   const combatRelics=gameContent(run,'rewards')?.eligibility?.relics?.combatIds;
   if(source==='combat'&&Array.isArray(combatRelics))available.relics=available.relics.filter(id=>combatRelics.includes(id));
   const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
+  // A shop shelf's cap: one number for every shelf, or each shelf's own count ({kind: n}, rolled per visit; vendorStockRange.js).
+  const shelfCap=kind=>typeof itemsPerCategory==='number'?itemsPerCategory:(itemsPerCategory?.[kind]??0);
   if(groups.length) {
     const problems=rewardGroupProblems(groups,categories);
     if(problems.length)throw new Error(problems.join('; '));
   }
   const shelfCounts=new Map();
   // Owner 2026-10-19: reserve slot(s) for a basic/cantrip card of a stance the character lacks (never in a shop).
-  if(source!=='shop'&&categories.includes('combatCards')&&(!groups.length||groups.some(group=>group.weight>0&&group.categories.includes('combatCards'))))for(const id of reserveStanceCards(registries,run,rng,stream,available.combatCards,count-options.length)) {
+  if(source!=='shop'&&categories.includes('combatCards')&&(!groups.length||groups.some(group=>group.weight>0&&group.categories.includes('combatCards'))))for(const id of reserveStanceCards(registries,run,rng,stream,BandedRewardIds(run,'combatCards',available.combatCards),count-options.length)) {
     options.push({kind:'combatCards',id});available.combatCards=available.combatCards.filter(value=>value!==id);
   }
   // Ordinary combat draws weighted groups. Shops independently fill each shelf.
   while(options.length<count) {
-    const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<itemsPerCategory));
+    const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<shelfCap(kind)));
     if(!kinds.length)break;
     const kind=itemsPerCategory===null?pickRewardCategory(rng,stream,kinds,groups):kinds[0];
     if(!kind)break;
     let ids=available[kind];
+    // Owner 2026-11-21 / 2026-11-22: level lists. Rewards AND shop shelves narrow cards, weapons, armour and relics to the act's
+    // combat-power rank band (model/levelLists.js); an empty band keeps the whole pool. The filter draws nothing, so seeded
+    // streams only see a smaller list. The owned-card exclusion and the shown-card history weighting run on the banded list.
+    ids=BandedRewardIds(run,kind,ids);
     // Most card rewards are rank 1+; a small authored chance lets a lower-rank card through.
     const rule=gameContent(run,'rewards')?.eligibility?.combatCards;
     if(kind==='combatCards'&&rule){
@@ -220,7 +250,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=kind==='combatCards'||kind==='weaponArts'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'||kind==='weaponArts'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):kind==='weapons'||kind==='armor'?ThemedItemPick(rng,stream,ids,{classId:run.class,kind,enabled:GearTypeEffectsEnabled(run),rowOf:itemId=>kind==='weapons'?(registries.equipment.armaments||[]).find(row=>row.id===itemId):(registries.equipment.armour||[]).find(row=>row.id===itemId&&row.classId===run.class)}):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     // A card that is also a weapon art is one offer, never both a card and an art on the same screen.
     if(kind==='combatCards'||kind==='weaponArts')for(const other of ['combatCards','combatCardsLow','weaponArts'])available[other]=available[other].filter(value=>value!==id);
     options.push({kind,id});
@@ -241,11 +271,20 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   }
   // W25-R: a won fight may also offer to raise a card's rank (rewards.json rankUp.chancePct by fight tier). It rolls on a hash of
   // the run's seed and the offer's id, not on a stream, so it moves no counter and a reload answers the same.
-  if(source==='combat'&&CombatRewardRanksUp(registries,run,offerId,pool))options.push({...RANK_UP_OPTION,...(CombatRankUpIsBonus(run,offerId)?{bonus:true}:{})});
+  if(source==='combat'&&CombatRewardRanksUp(registries,run,offerId,pool))options.push({...RANK_UP_OPTION,bonus:true});
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
   run.gameProfileRewardOffers ||= {};
   run.gameProfileRewardOffers[offerId]=offer;
   return offer;
+}
+/** Owner 2026-11-18: a "Rank up a card" option is its own step after the card pick, never one of the card picks, so it counts
+ * as a bonus pick whether or not the saved offer flagged it (an older saved offer lists it without `bonus`). An older offer's
+ * rank-up that was already TAKEN was spent as its plain pick (before the ruling it used one), so once taken it is no bonus. */
+export const IsBonusOption = (option, taken = false) => !!option && (option.bonus === true || (option.kind === RANK_UP_OPTION.kind && !taken));
+const bonusAt = (offer, at) => IsBonusOption(offer.options[at], offer.taken.includes(at));
+/** BonusFreeOffer(offer) -> the offer as the plain card picks see it: bonus options and the picks taken on them removed. */
+export function BonusFreeOffer(offer) {
+  return { ...offer, options: offer.options.filter((_, at) => !bonusAt(offer, at)), taken: offer.taken.filter(at => !bonusAt(offer, at)) };
 }
 /**
  * OfferPicksLeft(offer) -> how many picks the player may still make. A bonus option (a rank-up that came beside the card pick,
@@ -253,11 +292,11 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
  * without a bonus option counts exactly as before.
  */
 export function OfferPicksLeft(offer) {
-  const bonus = offer.options.filter(option => option.bonus), plain = offer.options.length - bonus.length;
-  const plainTaken = offer.taken.filter(at => !offer.options[at]?.bonus).length, bonusTaken = offer.taken.length - plainTaken;
+  const bonus = offer.options.filter((_, at) => bonusAt(offer, at)), plain = offer.options.length - bonus.length;
+  const plainTaken = offer.taken.filter(at => !bonusAt(offer, at)).length, bonusTaken = offer.taken.length - plainTaken;
   return Math.max(0, Math.min(offer.takeCount, plain) - plainTaken) + (bonus.length - bonusTaken);
 }
-export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal' } = {}) {
+export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal', takeCount: takeOverride = null } = {}) {
   const module=gameModule(run,'rewards');
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
@@ -265,7 +304,7 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   // reward stream when the offer is first made. Chests, level cards and shops keep offerCount; a settings offerCount that differs from combatOfferCount.appliesAtOfferCount (the shipped 3) wins over the range.
   const range=rules.combatOfferCount,cached=!!run.gameProfileRewardOffers?.[offerId];
   const combatCount=source==='combat'&&!cached&&(module.offerCount??rules.offerCount)===(range?.appliesAtOfferCount??rules.offerCount)&&range&&Number.isInteger(range.min)&&Number.isInteger(range.max)&&range.max>=range.min?rng.int('cardRewards',range.min,range.max):null;
-  return makeOffer(registries,run,rng,{offerId,source,pool,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
+  return makeOffer(registries,run,rng,{offerId,source,pool,count:combatCount??module.offerCount??rules.offerCount,takeCount:takeOverride??module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
     groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 /** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics from the allowed relic pool (eligibility.relics.allow), built once per offerId
@@ -288,23 +327,120 @@ export function GameProfileEliteRelicOffer(registries, run, rng, { offerId } = {
   (run.gameProfileRewardOffers ||= {})[offerId] = offer;
   return offer;
 }
+/**
+ * ArmamentRewardRule(run, pool) -> the authored { chancePct, min, max } for a won fight of this pool (rewards.json
+ * `armamentReward.elite|boss`), or null when the profile has none for it (normal fights never drop one).
+ */
+export function ArmamentRewardRule(run, pool) {
+  const rule = gameContent(run, 'rewards')?.armamentReward?.[pool];
+  return rule && typeof rule === 'object' && pool !== 'normal' ? rule : null;
+}
+/**
+ * ArmamentRewardStep(registries, run, rng, rest) -> { next, rest }: the armament door that follows the relic step, rolled ONCE.
+ * `next` is the pending reward to show (an armament offer) or null; `rest` is the pending record to carry on with, its
+ * `armamentReward` flag spent either way, so a failed chance roll never re-rolls after a level door (offer ids differ).
+ */
+export function ArmamentRewardStep(registries, run, rng, rest) {
+  if (!rest.armamentReward) return { next: null, rest };
+  const offerId = `${rest.offerId}:armament`;
+  if (GameProfileArmamentOffer(registries, run, rng, { offerId, pool: rest.armamentReward })) {
+    return { next: { ...rest, offerId, source: 'armament', armamentReward: '' }, rest: { ...rest, armamentReward: '' } };
+  }
+  return { next: null, rest: { ...rest, armamentReward: '' } };
+}
+// Least-picked selection at each level (type, family, sub-kind): the candidates left are those whose group the offer has used
+// least, a random one of those groups wins ties, so weapons and armour, and different families, spread across the choices.
+function spreadPick(rng, candidates, chosen, levels) {
+  let rows = candidates;
+  for (const level of levels) {
+    const used = key => chosen.filter(row => level(row) === key).length;
+    const keys = [...new Set(rows.map(level))];
+    const fewest = Math.min(...keys.map(used));
+    const key = rng.pick('cardRewards', keys.filter(value => used(value) === fewest));
+    rows = rows.filter(row => level(row) === key);
+  }
+  return rng.pick('cardRewards', rows);
+}
+/**
+ * GameProfileArmamentOffer(registries, run, rng, { offerId, pool }) -> the armament choice a won elite (chancePct) or boss
+ * (guaranteed) lays out after its other spoils (owner 2026-11-18). A weapon or armour piece per choice, min..max of them,
+ * every one unowned (storage, equipped sets, bought armour) and from the same authored eligibility groups as the shop; the choices
+ * spread over weapon/armour and over weapon families and armour groups before repeating one. Rolled once per offerId on the reward
+ * stream and saved on the run like any offer, so a reload shows the same door. Returns null (nothing stored) when the profile has no
+ * rule for the pool, the chance roll fails, or nothing eligible is left. Claiming is the ordinary claimGameProfileReward.
+ */
+export function GameProfileArmamentOffer(registries, run, rng, { offerId, pool = 'elite' } = {}) {
+  if (!offerId || typeof offerId !== 'string') throw new Error('A stable reward offerId is required');
+  if (run.gameProfileRewardOffers?.[offerId]) return run.gameProfileRewardOffers[offerId];
+  const rule = ArmamentRewardRule(run, pool);
+  if (!rule || !gameModule(run, 'equipment')) return null;
+  const chance = Number.isFinite(rule.chancePct) ? rule.chancePct : 100;
+  if (chance <= 0 || (chance < 100 && rng.int('cardRewards', 1, 100) > chance)) return null;
+  const rules = gameContent(run, 'rewards'), available = pools(registries, run);
+  const owned = new Set([...carriedIds(run.loadout), ...(run.loadout?.boughtArmour || []).map(row => row?.id)]);
+  const armourGroupOf = new Map();
+  for (const groupId of rules.eligibility?.armor?.groups || []) for (const member of rules.equipmentGroups?.[groupId]?.members || []) armourGroupOf.set(member, groupId);
+  const storageFull = (run.loadout?.storage || []).length >= (registries.balance.equipment?.storageSlots ?? 8);
+  const candidates = [];
+  if (!storageFull) for (const id of available.weapons) {
+    const row = (registries.equipment.armaments || []).find(item => item.id === id);
+    if (row && !owned.has(id)) candidates.push({ kind: 'weapons', id, type: 'weapon', family: `weapon:${row.kind || ''}`, sub: row.geom || id });
+  }
+  for (const id of available.armor) {
+    if (owned.has(id)) continue;
+    candidates.push({ kind: 'armor', id, type: 'armour', family: `armour:${armourGroupOf.get(`${run.class}:${id}`) || ''}`, sub: id });
+  }
+  // Owner 2026-11-21: level lists: weapons and armour come from the act's rank band (an empty band keeps every candidate of the kind).
+  const tier = TierFor(run), weaponRows = candidates.filter(row => row.kind === 'weapons'), armourRows = candidates.filter(row => row.kind === 'armor');
+  candidates.splice(0, candidates.length, ...FilterToBand('weapon', tier, weaponRows, { keyOf: row => row.id }), ...FilterToBand('armour', tier, armourRows, { keyOf: row => `${run.class}.${row.id}` }));
+  const min = Number.isInteger(rule.min) && rule.min > 0 ? rule.min : 1, max = Number.isInteger(rule.max) && rule.max >= min ? rule.max : min;
+  const wanted = min === max ? min : rng.int('cardRewards', min, max);
+  const chosen = [];
+  let left = candidates;
+  while (chosen.length < wanted && left.length) {
+    // Owner, 2026-11-18: each pick draws from the class-themed items 75% of the time (the whole pool otherwise, or when none is left).
+    const themed = left.filter(row => ItemIsThemed(row.kind === 'weapons' ? (registries.equipment.armaments || []).find(item => item.id === row.id) : (registries.equipment.armour || []).find(item => item.id === row.id && item.classId === run.class), run.class, row.kind));
+    const pool = GearTypeEffectsEnabled(run) && rng.int('cardRewards', 1, 100) <= GEAR_THEME_PERCENT && themed.length ? themed : left;
+    const pick = spreadPick(rng, pool, chosen, [row => row.type, row => row.family, row => row.sub]);
+    chosen.push(pick);
+    left = left.filter(row => row !== pick);
+  }
+  if (!chosen.length) return null;
+  const offer = { id: offerId, source: 'armament', options: chosen.map(({ kind, id }) => ({ kind, id })), takeCount: 1, taken: [], claimed: null };
+  (run.gameProfileRewardOffers ||= {})[offerId] = offer;
+  return offer;
+}
 export function claimGameProfileReward(registries,run,offerId,index,{instanceId=null}={}) {
   const offer=run.gameProfileRewardOffers?.[offerId];
   if(!offer||offer.claimed!==null||offer.taken.includes(index)||offer.takeCount<1)throw new Error('Reward offer is missing or already claimed');
   const option=offer.options[index];
   if(!Number.isInteger(index)||!option)throw new Error('Invalid reward option');
-  if(!option.bonus&&OfferPicksLeft({...offer,options:offer.options.filter(row=>!row.bonus),taken:offer.taken.filter(at=>!offer.options[at]?.bonus)})<1)throw new Error('Reward offer is missing or already claimed');
-  if (option.kind!==RANK_UP_OPTION.kind&&!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
+  if(!IsBonusOption(option)&&OfferPicksLeft(BonusFreeOffer(offer))<1)throw new Error('Reward offer is missing or already claimed');
+  // A copy door (cardCopyService.js) lists owned cards, which no reward pool holds; its options are checked against the run instead.
+  const copyDoor=offer.source===CARD_COPY_SOURCE;
+  if (option.kind!==RANK_UP_OPTION.kind&&option.kind!==CARD_COPY_OPTION.kind&&!copyDoor&&!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
   const draft=structuredClone(run);
   let raised=null;
   if(option.kind===RANK_UP_OPTION.kind) {
     // W25-R: the service raises one chosen owned card by one rank; the pick rides the claim, so the offer stays one row.
     if(typeof instanceId!=='string'||!instanceId)throw new Error('Choose a card to rank up');
     raised=RaiseCardRank(registries,draft,instanceId);
+  } else if(option.kind===CARD_COPY_OPTION.kind) {
+    // Owner 2026-11-20: a vendor's copy service copies one chosen owned card into the library.
+    if(typeof instanceId!=='string'||!instanceId)throw new Error('Choose a card to copy');
+    const copy=CopyOwnedCard(registries,draft,instanceId);
+    raised={instanceId:copy.instanceId,cardId:copy.cardId};
+  } else if(copyDoor) {
+    // A copy relic's door: the chosen card is copied as the instance it names (`copyOf`), at the reward's own instance id,
+    // so "Add to deck" finds it. A source since removed still yields the card the door showed.
+    if(option.kind!=='combatCards'||!registries.cards.has(option.id))throw new Error('Invalid reward option');
+    const at=rewardInstanceId(offerId,index),source=[...draft.deck,...draft.sideboard].find(card=>card?.instanceId===option.copyOf&&card.cardId===option.id);
+    if(source){const copy=CopyOwnedCard(registries,draft,source.instanceId);copy.instanceId=at;}
+    else draft.sideboard.push({instanceId:at,cardId:option.id,upgraded:!!option.upgraded,...(OwnCardRank(option)>0?{rank:option.rank}:{})});
   } else if(['combatCards','weaponArts'].includes(option.kind)) {
     registries.cards.get(option.id);
     const instanceId=`reward:${offerId}:${index}${offer.source==='shop'?`:${offer.tradeRevision||0}`:''}`;
-    draft.sideboard.push({instanceId,cardId:option.id,upgraded:false,...(option.rank>1?{rank:option.rank}:{})});
+    draft.sideboard.push({instanceId,cardId:option.id,upgraded:false,...(OwnCardRank(option)>0?{rank:option.rank}:{})});
   } else if(option.kind==='weapons') {
     if(!(registries.equipment.armaments||[]).some(row=>row.id===option.id))throw new Error('Unknown reward weapon');
     if(draft.loadout.storage.includes(option.id))throw new Error('Reward weapon already owned');
@@ -313,8 +449,10 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
     registries.relics.get(option.id);
     if(draft.relics.includes(option.id))throw new Error('Reward relic already owned');
     draft.relics.push(option.id);
+    GrantRelicCardCopies(registries,draft,option.id); // a copy relic queues its one-time copy door (main.js opens it next)
     // Bind flask growth now (a Core pickup used to wait for a reload); a relic that grows a flask also refills them.
     syncFlaskGrowth(registries,draft);
+    reconcileRunLoadoutHp(registries,draft); // a relic property such as maxMana1 raises the pools now, not at the next load
     if(flaskGrowthTable(registries.balance).some(row=>row?.source==='relic'&&row.id===option.id))refillFlaskCharges(draft.flaskCharges);
   } else if(option.kind==='potions') {
     const acquisition=acquireFlask(registries,draft,option.id);
@@ -326,7 +464,7 @@ export function claimGameProfileReward(registries,run,offerId,index,{instanceId=
   } else throw new Error('Unknown reward category');
   const pending=draft.gameProfileRewardOffers[offerId];pending.taken.push(index);
   if(OfferPicksLeft(pending)<1)pending.claimed=index;
-  syncZones(draft);Object.assign(run,draft);return raised?{...option,instanceId:raised.instanceId,rank:raised.rank}:option;
+  syncZones(draft);Object.assign(run,draft);return raised?{...option,...raised}:option;
 }
 // Owner 2026-10-18: a won card may go straight into the deck. The claim is the ordinary one (the card lands in the
 // sideboard as `reward:<offer>:<index>`); the move into the deck then obeys the deck rules (size cap, copy limits,
@@ -387,17 +525,33 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const rankUpShelf=fresh&&ShopStocksRankUp(registries,run,shopId);
   // Each trader offers 3-6 options in all (playtest 2026-11-17 item 42; gameProfileShopKind.js).
   const categories=ConfiguredTraderCategories(run,shopId,gameContent(run,'rewards').categories,{rankUpShelf});
-  const itemsPerCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
-  const count=itemsPerCategory===null?(module.options??rules.offerCount):itemsPerCategory*categories.length;
+  // Owner 2026-11-20: `itemsPerCategory` may be a [min, max] range; each shelf rolls its own count per visit, seeded by the
+  // run seed, the node and the shelf (vendorStockRange.js), so a reload and a revisit agree.
+  const perCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
+  const itemsPerCategory=perCategory===null?null:ShelfStockCounts(run,shopId,categories,perCategory);
+  const count=itemsPerCategory===null?(module.options??rules.offerCount):Object.values(itemsPerCategory).reduce((sum,n)=>sum+n,0);
   const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count,takeCount:count,categories,itemsPerCategory});
   if(stock.price===undefined)stock.price=module.price??rules.price;
   // W25-R: some shops also stock a rank-up service (shops.json rankUp.stockChancePct), at the Blacksmith's own price. It rolls on a hash of the
   // run seed and the shop id, joins a fresh stock once, and rides the saved stock after that.
   if(rankUpShelf&&!stock.options.some(option=>option.kind===RANK_UP_OPTION.kind)){stock.options.push({...RANK_UP_OPTION,price:ShopRankUpPrice(run)});stock.takeCount+=1;}
+  // Owner 2026-11-20: some traders also sell a copy-a-card service with limited uses (shops.json cardCopy), rolled once on a
+  // hash of the run seed and the shop id, like the rank-up shelf. It rides the saved stock after that. It shares the SERVICES tab
+  // with a rank-up shelf; without one it needs a tab of its own, so it is stocked only while the dock stays within maxCategories.
+  if(fresh&&VendorStocksCardCopy(registries,run,'trader',shopId)&&!stock.options.some(option=>option.kind===CARD_COPY_OPTION.kind)&&CopyShelfFits(run,shopId,stock)){stock.options.push(CardCopyShelf(run,'trader'));stock.takeCount+=1;}
   // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
+  // Owner 2026-11-23: some card offers arrive ranked (shops.json rankedOfferChancePct), rolled before the price so it reads the rank.
+  if(fresh)RankShopCardOffers(run,`shop:${shopId}`,stock.options);
   const table=module.priceTable??rules.priceTable;
   if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
   return stock;
+}
+// The dock counts one tab per stocked kind, Sell, and the Blacksmith when the trader keeps one (gameProfileShopKind.js).
+function CopyShelfFits(run,shopId,stock) {
+  const kinds=new Set(stock.options.map(option=>option.kind));
+  if(kinds.has(RANK_UP_OPTION.kind))return true;
+  const max=gameContent(run,'shops')?.trader?.maxCategories;
+  return !Number.isInteger(max)||kinds.size+1+1+(ConfiguredTraderOffersSmith(run,shopId)?1:0)<=max;
 }
 const PRICE_KIND={combatCards:'card',weaponArts:'weaponArt',relics:'relic',weapons:'armament',armor:'armour',potions:'flask'};
 function rollOfferPrice(registries,run,rng,table,option) {
@@ -410,24 +564,36 @@ function rollOfferPrice(registries,run,rng,table,option) {
     :(registries.equipment.armour||[]).find(item=>item.id===option.id&&item.classId===run.class);
   const range=Array.isArray(row)?row:row[def?.rarity]??row.common;
   if(!Array.isArray(range)||range.length!==2||!range.every(Number.isSafeInteger)||range[0]<0||range[1]<range[0])throw new Error(`Invalid shop price range for ${option.kind}`);
-  return rng.int('shop',range[0],range[1]);
+  const price=rng.int('shop',range[0],range[1]);
+  // Owner 2026-11-23: a ranked card offer costs +rankPricePct% per visible rank (rankedCardPrice.js); shop offers roll no rank today.
+  return option.kind==='combatCards'||option.kind==='weaponArts'?RankedCardPrice(run,price,option):price;
 }
 export { shopOfferPrice };
-export function gameProfileShopPurchasePlan(registries,run,shopId,index) {
+/**
+ * gameProfileShopPurchasePlan(registries, run, shopId, index[, { instanceId }]) -> the quote for buying offer `index`. A copy
+ * shelf's price is its "from" price (an unranked card's) until `instanceId` names the card to copy; then it is that card's
+ * rank-raised price (CardCopyPrice, owner 2026-11-23), and the commit charges it.
+ */
+export function gameProfileShopPurchasePlan(registries,run,shopId,index,{instanceId=null}={}) {
   const offerId=`shop:${shopId}`,stock=run.gameProfileRewardOffers?.[offerId];
-  const price=shopOfferPrice(stock,index);
+  const copyCard=stock?.options?.[index]?.kind===CARD_COPY_OPTION.kind&&typeof instanceId==='string'?CardCopyCandidates(registries,run).find(card=>card.instanceId===instanceId):null;
+  // A rank-up shelf's price is its Rank 1 price; the chosen card pays it times the rank it reaches (owner, 2026-11-23).
+  const rankCard=stock?.options?.[index]?.kind===RANK_UP_OPTION.kind&&typeof instanceId==='string'?RankUpCandidates(registries,run).find(card=>card.instanceId===instanceId):null;
+  const shelfPrice=shopOfferPrice(stock,index);
+  const price=copyCard?CardCopyPrice(run,shelfPrice,copyCard):rankCard?RankUpPrice(shelfPrice,OwnCardRank(rankCard)+1):shelfPrice;
   let reason='';
   if(!stock||stock.source!=='shop')reason='Missing configured shop';
   else if(!Number.isInteger(index)||!stock.options[index]||stock.taken.includes(index)||stock.claimed!==null)reason='This offer is sold out.';
   else if(!Number.isSafeInteger(price)||price<0)reason='Invalid configured shop price';
   else if(stock.options[index].kind==='weapons'&&(run.loadout?.storage||[]).length>=(registries.balance.equipment.storageSlots??8))reason='Inventory is full. Sell or make room first.';
   else if(!Number.isSafeInteger(run.cinders)||run.cinders<price)reason='Insufficient cinders';
-  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';}
+  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';else if(!RankUpReady(registries,run).length)reason=RankUpReadyReason();else if(rankCard&&RankUpBlock(run,rankCard))reason=RankUpBlock(run,rankCard);}
+  else if(stock.options[index].kind===CARD_COPY_OPTION.kind){if(CardCopyUsesLeft(stock.options[index])<1)reason='This offer is sold out.';else if(!CardCopyCandidates(registries,run).length)reason='You have no card to copy.';}
   else try {claimGameProfileReward(registries,structuredClone(run),offerId,index);}catch(error){reason=error.message;}
   return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};
 }
 export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=null,quote=null) {
-  const plan=gameProfileShopPurchasePlan(registries,run,shopId,index);
+  const plan=gameProfileShopPurchasePlan(registries,run,shopId,index,{instanceId:quote?.instanceId??null});
   if(quote&&(quote.revision!==plan.revision||quote.signature!==plan.signature||quote.price!==plan.price||quote.shopId!==shopId||quote.index!==index))throw new Error('This offer changed. Inspect it again.');
   if(!plan.ok)throw new Error(plan.reason);
   const offerId=`shop:${shopId}`,price=plan.price;
@@ -436,6 +602,13 @@ export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=nul
   const receipt=claimGameProfileReward(registries,draft,offerId,index,{instanceId:quote?.instanceId??null});
   // A rank-up service is a one-off shelf: no replacement is stocked in its place, and what was paid is no resale ceiling.
   if(receipt.kind===RANK_UP_OPTION.kind){draft.gameProfileRewardOffers[offerId].tradeRevision=plan.revision+1;Object.assign(run,draft);return {...receipt,price,replacement:null};}
+  // A copy service sells until its uses run out: each use reopens the shelf with one use fewer; the last leaves it sold out.
+  if(receipt.kind===CARD_COPY_OPTION.kind){
+    const copyStock=draft.gameProfileRewardOffers[offerId],shelf=copyStock.options[index],left=CardCopyUsesLeft(shelf)-1;
+    shelf.usesLeft=Math.max(0,left);
+    if(left>0){copyStock.taken=copyStock.taken.filter(taken=>taken!==index);copyStock.claimed=null;}
+    copyStock.tradeRevision=plan.revision+1;Object.assign(run,draft);return {...receipt,price,replacement:null};
+  }
   // Old saves can offer a much lower flat price. Retain that paid-price
   // ceiling across reloads and later merchants so resale cannot profit.
   draft.gameProfileShopPurchasePrices ||= {};
@@ -452,6 +625,7 @@ export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=nul
     const replacement=makeOffer(registries,draft,random,{offerId:temporaryId,source:'shop',count:1,takeCount:1,categories:[receipt.kind],itemsPerCategory:1,excludedIds}).options[0];
     delete draft.gameProfileRewardOffers[temporaryId];
     if(replacement){
+      RankShopCardOffers(draft,`${offerId}:restock:${plan.revision}`,[replacement]);
       const table=gameModule(run,'shops').priceTable??gameContent(run,'shops').priceTable;
       if(table)replacement.price=rollOfferPrice(registries,draft,random,table,replacement);
       stock.options[index]=replacement;

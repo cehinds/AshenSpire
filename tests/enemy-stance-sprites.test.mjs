@@ -46,7 +46,7 @@ test('reaction and unknown move receipts preserve the current planned hold', () 
 test('all 33 enemies have six valid held stance frames without altering action clips', () => {
   const canonical = [...act1Enemies, ...act2Enemies, ...act3Enemies].map(enemy => enemy.id).sort();
   assert.deepEqual(Object.keys(enemyStanceSprites).sort(), canonical, 'new canonical enemies cannot silently lack held stances');
-  assert.equal(ENEMY_POSES.length, 33);
+  assert.equal(ENEMY_POSES.length, 65);
   assert.deepEqual(Object.keys(enemyStanceSprites).sort(), [...ENEMY_POSES].sort());
   for (const id of ENEMY_POSES) {
     assert.deepEqual(Object.keys(enemyStanceSprites[id]), ENEMY_STANCE_FAMILIES);

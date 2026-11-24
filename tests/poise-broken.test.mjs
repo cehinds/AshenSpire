@@ -20,7 +20,7 @@ import { validateFixCoreRules, FixCoreBrokenRules, fixCoreProtectionDescription 
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { withoutStanceBenefitDefaults } from './legacyHitRules.mjs';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
@@ -33,7 +33,8 @@ function fight(enemyIds = ['wanderingSoldier'], { legacy = false, seed = 511, no
   if (legacy) { combat.fixCoreRules = { ...combat.fixCoreRules, poise: { drain: 'prevented' } }; }
   return combat;
 }
-const hit = (combat, target, amount) => { primeAccuracyRolls(combat); const before = target.hp; applyAttackDamage(combat, combat.player, target, amount, [], carrier); return before - target.hp; };
+// `amount` is the hit after Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so it is dealt from twice that base.
+const hit = (combat, target, amount) => { primeAccuracyRolls(combat); const before = target.hp; applyAttackDamage(combat, combat.player, target, amount * 2, [], carrier); return before - target.hp; };
 const endTurn = combat => {
   dispatch(combat, { type: 'endTurn' });
   for (let safety = 0; combat.pendingReaction && safety < 20; safety++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
@@ -41,11 +42,11 @@ const endTurn = combat => {
 const sandbag = (target, poise = 5) => { Object.assign(target, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: poise } }); };
 
 test('shipped Core data names the Broken rule; validation accepts it; a rules object without it is the Staggered rule', () => {
-  assert.deepEqual(shipped.poise, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 });
+  assert.deepEqual(shipped.poise, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   assert.throws(() => validateFixCoreRules({ ...shipped, poise: { drain: 'prevented', breakRule: 'other' } }), /poise/);
   assert.throws(() => validateFixCoreRules({ ...shipped, poise: { drain: 'prevented', brokenDamageMultiplier: 0.5 } }), /poise/);
-  assert.equal(FixCoreBrokenRules(fight()).damageMultiplier, 1.5);
+  assert.equal(FixCoreBrokenRules(fight()).damageMultiplier, 1, 'a break no longer multiplies damage (owner 2026-11-18, 3a): its Vulnerable stacks do');
   assert.equal(FixCoreBrokenRules(fight(['wanderingSoldier'], { legacy: true })), null);
 });
 
@@ -97,32 +98,31 @@ test('a charging move is cancelled and its charge lost', () => {
   assert.ok(!combat.eventLog.some(row => row.type === 'combatContactPrepared' && /bronzeToll/.test(JSON.stringify(row))));
 });
 
-test('every hit on a Broken enemy takes x1.5, replacing Vulnerable, and only while Broken', () => {
-  const combat = fight(['wanderingSoldier'], { noStance: true }); const enemy = combat.enemies[0]; sandbag(enemy, 1); enemy.ratings = { ...(enemy.ratings || {}), dr: 0 };
-  const before = hit(combat, enemy, 10);
+test('a hit on a Broken enemy takes only the break\'s Vulnerable x1.25 (no x1.5), and only while Broken', () => {
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1); enemy.ratings = { ...(enemy.ratings || {}), dr: 0 };
+  const before = hit(combat, enemy, 10); // the Attack stance's x1.2 is in every figure here
   assert.equal(enemy.broken && true, true, 'the 1-Poise bar broke on that hit');
-  assert.equal(enemy.statuses.vulnerable, undefined, 'no Vulnerable grant');
+  assert.equal(enemy.statuses.vulnerable?.stacks, 2, 'the break grants 2 Vulnerable');
   const broken = hit(combat, enemy, 10), second = hit(combat, enemy, 10);
-  assert.equal(broken, 15, '10 x 1.5');
-  assert.equal(second, 15);
+  assert.equal(broken, Math.floor(10 * 1.2 * 1.25), 'x1.25 Vulnerable once, no x1.5');
+  assert.equal(second, broken);
   assert.ok(broken > before, 'bigger than the hit that broke it');
   endTurn(combat);
   assert.equal(enemy.broken, undefined);
-  enemy.persistentPoise.value = 0; // Poise is full after Broken; empty it to read the bare multiplier
-  assert.equal(hit(combat, enemy, 10), 10, 'not Broken any more: x1');
+  assert.equal(enemy.statuses.vulnerable, undefined, 'the break statuses leave with Broken');
 });
 
-test('with the shipped Attack stance benefit a hit on a Broken enemy is 10 x 1.5 x 1.2', () => {
+test('with the shipped Attack stance benefit a hit on a Broken enemy is 10 x 1.25 (the break\'s own Vulnerable) x 1.2', () => {
   const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1); enemy.ratings = { ...(enemy.ratings || {}), dr: 0 };
   hit(combat, enemy, 10);
-  assert.equal(hit(combat, enemy, 10), 18);
+  assert.equal(hit(combat, enemy, 10), 15, 'floor(10 x 1.25 x 1.2): the break grants Vulnerable (owner 2026-11-18, breakStatusStacks); no x1.5');
 });
 
-test('Broken multiplies with Vulnerable from other sources (x1.5 x1.25), the break grants none itself', () => {
-  const combat = fight(['wanderingSoldier'], { noStance: true }); const enemy = combat.enemies[0]; sandbag(enemy, 1);
+test('Vulnerable multiplies a Broken target once (x1.25), however many stacks', () => {
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1);
   hit(combat, enemy, 10);
-  enemy.statuses.vulnerable = { stacks: 2 };
-  assert.equal(hit(combat, enemy, 10), Math.floor(10 * 1.5 * 1.25), 'Vulnerable still multiplies; the break itself grants none');
+  enemy.statuses.vulnerable = { stacks: 7 };
+  assert.equal(hit(combat, enemy, 10), Math.floor(10 * 1.2 * 1.25), 'Vulnerable still multiplies once however many stacks (Attack stance x1.2 included); no x1.5');
 });
 
 test('a Broken enemy cannot be broken again and its Poise cannot be refilled until Broken ends', () => {
@@ -137,49 +137,59 @@ test('a Broken enemy cannot be broken again and its Poise cannot be refilled unt
   assert.equal(enemy.persistentPoise.value, 0, 'Block does not refill a Broken bar');
 });
 
-test('Ward or Barrier gained while Broken raises the maximum but does not refill the bar, so it cannot break twice', () => {
-  for (const status of ['ward', 'barrier']) {
-    const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 8);
-    drainFixCorePoise(combat, combat.player, enemy, 99);
-    assert.ok(enemy.broken); assert.equal(enemy.persistentPoise.value, 0);
-    enemy.statuses[status] = { stacks: 1 };
-    syncPoiseMaximum(combat, enemy);
-    assert.equal(enemy.persistentPoise.barrierBonus, 5, `${status}: +5 maximum, kept as the bonus`);
-    assert.ok(enemy.persistentPoise.max >= 5, `${status}: +5 maximum`);
-    assert.equal(enemy.persistentPoise.value, 0, `${status}: Broken Poise is not refilled`);
-    drainFixCorePoise(combat, combat.player, enemy, 99);
-    assert.equal(combat.eventLog.filter(row => row.type === 'poiseBroken').length, 1, `${status}: one break only`);
-  }
+test('Barrier gained while Broken raises the maximum without refilling Poise; Ward grants HP buffer independently', () => {
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 8);
+  drainFixCorePoise(combat, combat.player, enemy, 99);
+  assert.ok(enemy.broken); assert.equal(enemy.persistentPoise.value, 0);
+  enemy.statuses.barrier = { stacks: 1 };
+  syncPoiseMaximum(combat, enemy);
+  assert.equal(enemy.persistentPoise.barrierBonus, 5, 'barrier: +5 maximum, kept as the bonus');
+  assert.ok(enemy.persistentPoise.max >= 5, 'barrier: +5 maximum');
+  assert.equal(enemy.persistentPoise.value, 0, 'barrier: Broken Poise is not refilled');
+  drainFixCorePoise(combat, combat.player, enemy, 99);
+  assert.equal(combat.eventLog.filter(row => row.type === 'poiseBroken').length, 1, 'barrier: one break only');
+
+  const combat2 = fight(); const enemy2 = combat2.enemies[0]; sandbag(enemy2, 8);
+  drainFixCorePoise(combat2, combat2.player, enemy2, 99);
+  assert.ok(enemy2.broken); assert.equal(enemy2.persistentPoise.value, 0);
+  enemy2.statuses.ward = { stacks: 1 };
+  syncPoiseMaximum(combat2, enemy2);
+  assert.equal(enemy2.persistentPoise.value, 0, 'ward does not refill Broken Poise');
+  assert.equal(enemy2.persistentPoise.barrierBonus || 0, 0, 'ward adds no Poise bonus');
 });
 
 test('after Broken ends the full bar must be broken again for a second break', () => {
-  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 5);
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 3);
   drainFixCorePoise(combat, combat.player, enemy, 99); endTurn(combat);
+  // The refill is to the soldier's rated Poise, 5 (1 + CON 4: owner 2026-11-18 §13, gear Poise counts only while guarding), not the sandbagged 3 stand-in.
   assert.equal(enemy.persistentPoise.value, 5);
   hit(combat, enemy, 4); assert.equal(enemy.broken, undefined, 'a part of the bar is not a break');
   drainFixCorePoise(combat, combat.player, enemy, 99);
   assert.ok(enemy.broken, 'the second break');
 });
 
-test('the player Broken: next turn starts 1 Stamina short, hits x1.5 through that round, then Poise refills', () => {
+test('the player Broken: next turn starts 1 Stamina short, hits take the break\'s Vulnerable through that round, then Poise refills', () => {
   const plain = fight(); plain.player.persistentPoise.value = 0; primeAccuracyRolls(plain);
   // The plain player holds no stance, so it is Idle and takes the Idle stance weakness (theme B, 2026-11-17); a Broken player holds the
   // Staggered stance and does not. The baseline leaves the weakness out so the comparison is Broken against nothing.
   delete plain.fixCoreRules.stanceBenefits.neutral.damageTakenMultiplier;
-  const hpPlain = plain.player.hp; applyAttackDamage(plain, plain.enemies[0], plain.player, 10, [], carrier);
+  // Bases 20 and 16 halve to 10 and 8 (Core base-damage scale).
+  const hpPlain = plain.player.hp; applyAttackDamage(plain, plain.enemies[0], plain.player, 20, [], carrier);
   const bare = hpPlain - plain.player.hp;
   const combat = fight(); const player = combat.player, enemy = combat.enemies[0];
   const full = player.energyMax;
+  // Core Reaver HP is 50 now: give it room so these hits and the enemy's real turn do not end the fight before Broken does.
+  player.hp = player.maxHp = 100;
   player.persistentPoise.value = 1;
   primeAccuracyRolls(combat);
-  applyAttackDamage(combat, enemy, player, 8, [], carrier);
+  applyAttackDamage(combat, enemy, player, 16, [], carrier);
   assert.ok(player.broken, 'the player is Broken');
   assert.equal(player.persistentPoise.value, 0);
-  assert.equal(player.statuses.vulnerable, undefined, 'no Vulnerable grant');
+  assert.equal(player.statuses.vulnerable?.stacks, 2, 'the break grants 2 Vulnerable (owner 2026-11-18)');
   assert.equal(player.pendingActionLoss, 1, 'the next turn opens 1 short');
   const hpBefore = player.hp; primeAccuracyRolls(combat);
-  applyAttackDamage(combat, enemy, player, 10, [], carrier);
-  assert.equal(hpBefore - player.hp, Math.floor(bare * 1.5), 'x1.5 while Broken');
+  applyAttackDamage(combat, enemy, player, 20, [], carrier);
+  assert.equal(hpBefore - player.hp, Math.floor(bare * 1.25), 'the break\'s Vulnerable x1.25 while Broken, no x1.5');
   enemy.plannedMoves = []; enemy.planDue = false; enemy.intent = { kind: 'unknown', moveId: null };
   endTurn(combat);
   assert.equal(combat.phase, 'player');
@@ -210,12 +220,12 @@ test('the words say Broken: the Poise tooltip, the stance row, the intent word a
   const { combatStanceRow } = await import('../src/model/combatTacticsDisplay.js');
   const { t } = await import('../src/ui/strings.js');
   const combat = fight(); const enemy = combat.enemies[0];
-  assert.match(fixCoreProtectionDescription(combat, enemy, 'poise'), /Broken: it loses its next action and takes ×1\.5/);
+  assert.match(fixCoreProtectionDescription(combat, enemy, 'poise'), /Broken: it loses its next action and gains 2 each of Staggered, Vulnerable, Weak and Frail/);
   assert.match(fixCoreProtectionDescription(fight(['wanderingSoldier'], { legacy: true }), enemy, 'poise'), /Staggered/);
   drainFixCorePoise(combat, combat.player, enemy, 99);
   const row = combatStanceRow(enemy);
   assert.equal(row.name, 'Broken');
-  assert.match(row.detail, /Loses its next action\. Takes ×1\.5/);
+  assert.match(row.detail, /Loses its next action and is Vulnerable, Weak, Frail and Staggered/);
   assert.equal(t('combat.intent.staggered'), 'Broken');
   assert.equal(t('combat.callout.poiseBreak'), 'BREAK');
 });

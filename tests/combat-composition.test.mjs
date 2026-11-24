@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { alternativeCombatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../src/ui/models/CombatCompositionModel.js';
+import { alternativeCombatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork, HandAnchorLayoutKey } from '../src/ui/models/CombatCompositionModel.js';
 import { fitCombatSprites } from '../src/ui/models/CombatSpriteScaleModel.js';
 
 test('taller intent and Inspect controls cannot change settled artwork; explicit layout changes can', () => {
@@ -83,4 +83,16 @@ test('co-op does not push players beneath the hand and every painted figure stay
     assert.equal(r.ground,250); assert.equal(r.visibleHeight,100);
     assert(r.x-r.scale*40>=6); assert(r.x+r.scale*40<=width-6);
   }
+});
+
+test('the hand anchor key holds the resting cards\' top, so an anchor read before the cards settled is not reused', () => {
+  // Owner 2026-11-20: a lone player's feet stand at the resting cards' top. At 360x800 the hand published
+  // --hand-rest-top 58.3 then 68.3 under one geometry key; the stale anchor stood the feet 8 px above the cards.
+  const base = { fieldWidth: 360, fieldHeight: 426.5468, pageZoom: 0.8307, handKey: '433:319:0.83100004:10px:0' };
+  const early = HandAnchorLayoutKey({ ...base, restTop: 58.3244 }), settled = HandAnchorLayoutKey({ ...base, restTop: 68.2591 });
+  assert.notEqual(early, settled, 'a new rest top is a new key');
+  const anchor = stableHandAnchor(null, early, { left: 0, top: 418.4 });
+  assert.equal(stableHandAnchor(anchor, settled, { left: 0, top: 426.7 }).top, 426.7, 'the settled cards replace the stale anchor');
+  assert.equal(HandAnchorLayoutKey({ ...base, restTop: 68.25908 }), HandAnchorLayoutKey({ ...base, restTop: 68.25911 }), 'subpixel noise keeps the key');
+  assert.equal(HandAnchorLayoutKey({ ...base, handKey: '433:319:0.83100004:10px:0' }), HandAnchorLayoutKey({ ...base, handKey: '433:319:0.83099998:10px:0' }), 'the hand key is rounded too');
 });

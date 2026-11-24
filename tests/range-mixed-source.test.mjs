@@ -11,9 +11,10 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 import { serializeCombatSnapshot,restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { legacyGearProfile } from './helpers/legacy-gear.mjs';
 import { uncappedRun, withLegacyRangedBow } from './helpers/uncapped-range.mjs';
-function fixture(effects,left='dagger') {
-  const profile=structuredClone(resolveGameProfile('core'));
+function fixture(effects,left='dagger',currentGear=false) {
+  const profile=currentGear ? structuredClone(resolveGameProfile('core')) : legacyGearProfile(resolveGameProfile('core'));
   profile.content.cards.find(row=>row.id==='core.strike').effects=effects;
   delete profile.hash;profile.hash=gameDigest(profile);
   const registries=withLegacyRangedBow(bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile));
@@ -63,4 +64,19 @@ test('a weapon plus independent spell keeps each delivery range through a real s
   const restored=restoreCombatSnapshot({registries,rng:createRng(ctx.rng.seed,ctx.rng.getCounters()),snapshot:saved});
   assert.deepEqual(restored.rangeState,ctx.rangeState);
   }
+});
+
+test('current Bow Reach preserves an independently authored ranged spell contact and its saved receipt', () => {
+  const effects = [weapon('mainHand'), { op: 'damage', target: 'enemy', amount: 2, attack: { source: 'spell', hand: 'offHand' }, tags: ['camp:spell', 'range:ranged', 'maneuver:casting'] }];
+  const { ctx, card, registries } = fixture(effects, 'boneSceptre', true);
+  assert.equal(ctx.gameProfile.modules.gear.typeEffectsVersion, 1);
+  assert.ok(ctx.player.itemProps.cardRules.some(row => row.stat === 'reach'));
+  const read = previewCard(ctx, card.instanceId, 'e1');
+  assert.deepEqual(read.range.targets[0].contacts.map(row => row.coverage), [2, 2]);
+  assert.equal(read.range.routes[0].advanceSp, 0);
+  ctx.player.stamina = read.staminaCost;
+  primeAccuracyRolls(ctx, { count: 2 });
+  dispatch(ctx, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' });
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), snapshot: JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx))) });
+  assert.deepEqual(restored.rangeState, ctx.rangeState);
 });

@@ -17,11 +17,11 @@ test('damage words describe actual types rather than the spell school', () => {
   }
 });
 
-test('an all-magic lightning spell with a piercing tag reads both words; a split force hit keeps its split form', () => {
+test('an all-magic lightning spell with a piercing tag reads both words; a Force hit is all Blunt (owner 2026-11-18), so it reads one type', () => {
   assert.equal(combatCardDamageLabel(card('staticNeedle'), null, reg), 'Lightning · Piercing');
   assert.match(combatCardSummary(card('staticNeedle'), null, reg), /\d+ Lightning · Piercing damage/);
   assert.equal(combatCardDamageLabel(card('forceNudge'), null, reg), 'Blunt');
-  assert.match(combatCardSummary(card('forceNudge'), null, reg), /Deal \d+ damage \(\d+ blunt, \d+ arcane\)/);
+  assert.match(combatCardSummary(card('forceNudge'), null, reg), /Deal \d+ Blunt damage/, 'no split: Force is physical');
 });
 
 test('active renamed and absent metadata never fall back to shipped damage labels', () => {

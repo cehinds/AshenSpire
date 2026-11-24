@@ -21,7 +21,7 @@ import { armsAsCoreCounter } from './profileStance.js';
 // Returns null for a card with an effect it cannot phrase (the same cases as
 // combatCardSummary). The caller then keeps the authored text.
 
-import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread } from './playingCard.js';
+import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread, CardHpLossWording, PlayConditionPhrase } from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
 import { BarrierPoiseFactor, BarrierPoisePerStack } from './combatRatings.js';
 import { spellDefenseSplit } from './spellDefense.js';
@@ -239,7 +239,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       // Owner, 2026-11-15: Gain may exceed the maximum, Restore stops at it. restoreMana, restoreStamina and gainWard are capped; gainEnergy and gainPoise are not.
       case 'restoreMana': return frag('restore', `${num(n, base)} Mana`);
       case 'applyReflect': return frag('gain', `${num(n, base)} Reflect`);
-      case 'gainCounterStacks': return frag('gain', `${num(n, base)} Counter`);
+      // The quote's total (base grant, Mail, every stack step) is one line below, so an authored row does not repeat part of it.
+      case 'gainCounterStacks': if (counter && preview?.counterStackGrant > 0) return []; return frag('gain', `${num(n, base)} Counter`);
       case 'restoreStamina': return frag('restore', `${num(n, base)} Stamina`);
       case 'gainEnergy': return frag('gain', `${num(n, base)} Stamina`);
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
@@ -286,16 +287,22 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         return frag(cat, `${amount} ${esc(title(effect.status))}${suffix}`);
       }
       case 'swapRows': return frag('bonus', 'Swap rows with nearest foe');
+      case 'pullEnemy': return frag('bonus', 'Pull Retreat');
       case 'moveEngagement': {
         if (!['enemy', 'pendingAttacker', 'self'].includes(effect.target) || ![-1, 1].includes(effect.bands)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
-        if (effect.target === 'self') return frag('bonus', effect.bands < 0 ? 'Advance' : 'Retreat');
+        if (effect.target === 'self') return frag('bonus', effect.bands < 0 ? 'Advance' : 'Retreat foes');
         const close = effect.bands < 0, target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
+        // Owner, 2026-11-18: a push on a foe inflicts Retreat (the stack bandRows.addRetreat gives); the face says so.
+        if (!close && effect.target === 'enemy') return frag('bonus', 'Inflict Retreat');
         return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
       case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' random' : ''}`);
-      case 'loseHp': return frag(index === 0 && !effect.if ? 'cost' : 'bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
+      case 'loseHp': {
+        const loss = CardHpLossWording(effect, num(n, base));
+        return frag(!loss.hostile && index === 0 && !effect.if ? 'cost' : 'bonus', loss.text);
+      }
       case 'retain': return frag('bonus', `Retain ${num(n, base)}`);
       case 'grantRollMode': return frag('bonus', `Next ${esc(effect.roll)}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`);
       case 'enterStance': return frag('bonus', effect.choose ? 'Choose a stance'
@@ -421,9 +428,11 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     // Beating the revealed hit also adds Block before it lands.
     if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(preview.counterReturn.block)} Block against it` });
   }
+  // The Counter stacks the play grants (the base grant, Mail's gain bonus and any upgrade's stacks, summed: preview.counterStackGrant), shown with or without a revealed attack.
+  if (counter && preview?.counterStackGrant > 0) unconditional.push({ cat: 'gain', text: `${num(preview.counterStackGrant)} Counter stack${preview.counterStackGrant === 1 ? '' : 's'}` });
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', tag: true, text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
-  const smashClause = coreSmashClause(def, registries);
+  const smashClause = coreSmashClause(def, registries, rules ?? preview?.faceRules ?? null);
   if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', tag: true, text: esc(smashClause) });
   // A run-long attribute upgrade (W25-L) says what it gives while the card is in the deck.
   for (const [attribute, amount] of Object.entries(def.runAttributeBonus || {})) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(amount)} ${ATTRIBUTE_ABBREVIATION[attribute] || esc(title(attribute))} for the run while in your deck` });
@@ -488,6 +497,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   for (const { name, chance } of chances) byChance.set(chance, [...new Set([...(byChance.get(chance) || []), name])]);
   for (const [chance, names] of byChance) byKind.detail.push(`${names.map(esc).join(', ')}: ${esc(chance)}% chance`);
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
+  const playGate = PlayConditionPhrase(def.playIf);
+  if (playGate) byKind.condition.unshift(esc(playGate));
 
   const lines = [];
   for (const kind of (conciseCounter ? ['gain', ...LINE_ORDER.filter(kind => kind !== 'gain')] : LINE_ORDER)) for (const html of byKind[kind]) if (html) lines.push(faceText.has(html) ? { kind, html, faceHtml: faceText.get(html) } : { kind, html });

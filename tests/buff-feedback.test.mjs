@@ -171,11 +171,14 @@ test('buff callouts stay static under manual and operating-system reduced motion
 test('missing status context safely omits gains while hostile words, heal and Block each keep one channel', t => {
   playback(t, ({ run }) => {
     setAnimSpeed('instant');
+    // Recipient sprites are a separate, non-text channel; this contract counts
+    // the gain words and numbers, including when a status has no word context.
+    const words = result => result.shown.filter(({ node }) => !node.classList.contains('recipient-effect'));
     const missing = run([grant()], { statusInfo: undefined }); missing.finish();
-    assert.equal(missing.shown.length, 0);
+    assert.equal(words(missing).length, 0);
     const result = run([grant(), grant('sleep'), { type: 'healed', targetId: 'player', amount: 2 }, { type: 'blockGained', targetId: 'player', amount: 4 }]);
     result.finish();
-    assert.deepEqual(result.shown.map(({ node }) => node.textContent), ['ASLEEP', 'Focused ×3', '+2', '+4']);
+    assert.deepEqual(words(result).map(({ node }) => node.textContent), ['ASLEEP', 'Focused ×3', '+2', '+4']);
   });
 });
 

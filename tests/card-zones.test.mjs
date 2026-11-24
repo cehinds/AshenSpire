@@ -90,7 +90,10 @@ test('cost growth and paid-resource variants use the same actual prices and effe
  const combat=fixture([{op:'block',target:'self',amount:2}],{definition:{costGrowth:{stamina:1,perUse:1,max:3},effectVariants:[{if:{p:'resourcePaid',resource:'mana',amount:1},effects:[{op:'block',target:'self',amount:7}]}]}});
  const first=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,first).stamina,1);assert.equal(previewCard(combat,first).values[0].value,7);
  play(combat);assert.equal(combat.player.block,7);
- const second=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,second).stamina,2);const sp=combat.player.stamina;play(combat);assert.equal(sp-combat.player.stamina,2);
+ // A rising cost counts plays of each copy (review of #2819): the same copy, back in hand, costs 1 more; another copy does not.
+ const other=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,other).stamina,1);
+ const at=Object.values(combat.piles).find(p=>p!==combat.piles.hand&&p.some(c=>c.instanceId===first));combat.piles.hand.unshift(at.splice(at.findIndex(c=>c.instanceId===first),1)[0]);
+ assert.equal(cardPlayCosts(combat,first).stamina,2);const sp=combat.player.stamina;play(combat);assert.equal(sp-combat.player.stamina,2);
 });
 test('dynamic same-card scaling matches preview before recording the current play',()=>{
  const combat=fixture([{op:'block',target:'self',amount:{f:'add',args:[2,{f:'metric',metric:'sameCardPlays',of:'self',per:3}]}}]);
@@ -111,10 +114,10 @@ test('configured X spends remaining SP and scales actual damage and target count
  const combat=fixture([{op:'damage',target:'allEnemies',amount:{f:'energySpent',per:4}}],{cost:'X',manaCost:1,definition:{targetLimit:{f:'energySpent',per:1}}});
  combat.gameProfile=resolveGameProfile('core');combat.player.stamina=2;
  combat.enemies.push(...[1,2].map(i=>({...structuredClone(combat.enemies[0]),id:`extra-${i}`})));
- const id=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,id).stamina,2);const preview=previewCard(combat,id);assert.equal(preview.values[0].value,6); // configured Poise mitigates the authored 8 by 25%
+ const id=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,id).stamina,2);const preview=previewCard(combat,id);assert.equal(preview.values[0].value,1); // the authored 8 is halved to 4 by the Core base-damage scale, scaled by the player side x0.7 (2.8), then configured Poise mitigates it by 25%
 
  dispatch(combat,{type:'playCard',cardInstanceId:id});assert.equal(combat.player.stamina,0);
- assert.deepEqual(combat.enemies.map(e=>1000-e.hp),[6,6,0]);
+ assert.deepEqual(combat.enemies.map(e=>1000-e.hp),[1,1,0]);
 });
 test('Many Forms uses one best defensive receipt for each attack and expires back to the primary stance',()=>{
  const combat=fixture([{op:'block',amount:1,target:'self'}]);combat.gameProfile=resolveGameProfile('core');
@@ -130,9 +133,11 @@ test('Many Forms uses one best defensive receipt for each attack and expires bac
 });
 
 test('combat growth survives a turn and reload while one-use linked scrolls stay spent after recovery',()=>{
- const growth=fixture([{op:'block',target:'self',amount:2}],{definition:{costGrowth:{stamina:1,perUse:1,max:3}}});play(growth);dispatch(growth,{type:'endTurn'});
+ const growth=fixture([{op:'block',target:'self',amount:2}],{definition:{costGrowth:{stamina:1,perUse:1,max:3}}});const grown=growth.piles.hand[0].instanceId;play(growth);dispatch(growth,{type:'endTurn'});
+ // The played copy keeps its count across the turn and the reload (a rising cost counts plays of each copy).
+ const pile=Object.values(growth.piles).find(p=>p!==growth.piles.hand&&p.some(c=>c.instanceId===grown));if(pile)growth.piles.hand.unshift(pile.splice(pile.findIndex(c=>c.instanceId===grown),1)[0]);
  const restored=restoreCombatSnapshot({registries:growth.registries,rng:createRng(9),snapshot:serializeCombatSnapshot(growth)});
- assert.equal(cardPlayCosts(restored,restored.piles.hand[0].instanceId).stamina,2);
+ assert.equal(cardPlayCosts(restored,grown).stamina,2);
  const scroll=fixture([{op:'castLinkedSpell',card:'strike',target:'enemy'}],{definition:{playLimit:1,keywords:['exhaust']}});
  const id=scroll.piles.hand[0].instanceId;play(scroll);assert.ok(scroll.enemies[0].hp<1000);
  const index=scroll.piles.exhaust.findIndex(card=>card.instanceId===id);scroll.piles.hand.push(scroll.piles.exhaust.splice(index,1)[0]);

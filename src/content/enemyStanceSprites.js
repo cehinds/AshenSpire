@@ -269,6 +269,9 @@ const selections = {
     "preparing": "magic-01"
   }
 };
+// Codex concept enemies: the held frame of each category is the art's own stance-<category> frame.
+const conceptSelections = Object.fromEntries(["brackenTusker", "fenwickToad", "reedpipePoacher", "wickerTitheman", "quarryRam", "tollgateHookman", "waxsealBailiff", "kilnshellTortoise", "slagtongImp", "sootwingBat", "siltCrownNewt", "wickerHind", "blackrushStork", "pearlbackSnail", "alderMaskHarvester", "pallidOathCamel", "inkveilNautilus", "mirrorFanAbbess", "saltChoirWalrus", "rimewheelPenitent", "brassThroatIbex", "kilnbackTerrapin", "slagwingHeron", "ashSilkWeaver", "ferrumVotary", "woundwoodTusker", "mireProcessional", "veiledJusticiar", "sixleggedHearse", "crucibleNewt", "carrionHeadsman", "knellcapSentinel"].map(id => [id, Object.fromEntries(ENEMY_STANCE_FAMILIES.map(category => [category, `stance-${category}`]))]));
+Object.assign(selections, conceptSelections);
 export const enemyStanceSprites = Object.freeze(Object.fromEntries(ENEMY_POSES.map(id => [id, Object.freeze(selections[id])])));
 export const enemyStanceAssets = Object.freeze(Object.fromEntries(ENEMY_POSES.map(id => [id,
   Object.freeze(Object.fromEntries(Object.entries(enemyStanceSprites[id]).map(([category, pose]) =>

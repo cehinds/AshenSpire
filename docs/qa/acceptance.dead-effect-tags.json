@@ -1,0 +1,31 @@
+{
+  "request": "Owner 2026-11-20: please remove effects and/reward tags for features that no longer exist in core. One example is foresite, another is precision. anything like that should be replaced. (Answers: Precision tags become Pierce; Foresight, Veil and Charm get live equivalents, Prone and accuracy no longer in Core, Charm is Weak and Vulnerable; remove all crit feats.)",
+  "success": "In combat with Foresight, Charm and Veil in hand at 1280x800 and 390x844, Foresight's face reads Draw 3 cards with no Foresight, Charm's face names Weak and Vulnerable, and Veil's face names Evade with no Perception; no console errors.",
+  "failure": "A hand card still names Foresight as a status, Perception, Precision or Charm as a status, or the page logs a console error.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "reworked-base-cards-in-hand",
+      "url": "?shot=combat&shotSeed=2&shotClass=rogue&shotEnemies=wanderingSoldier&shotDeck=base.foresight,base.charm,base.perception-untargetable,core.strike,core.defend",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [],
+      "success": [
+        { "kind": "visible", "label": "Foresight is in hand", "selector": ".hand .card[data-card-id=\"base.foresight\"]" },
+        { "kind": "text", "label": "Foresight draws cards", "selector": ".hand .card[data-card-id=\"base.foresight\"]", "includes": "Draw" },
+        { "kind": "text", "label": "Charm applies Weak", "selector": ".hand .card[data-card-id=\"base.charm\"]", "includes": "Weak" },
+        { "kind": "text", "label": "Charm applies Vulnerable", "selector": ".hand .card[data-card-id=\"base.charm\"]", "includes": "Vulnerable" },
+        { "kind": "text", "label": "Veil grants Evade", "selector": ".hand .card[data-card-id=\"base.perception-untargetable\"]", "includes": "Evade" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "text", "label": "Foresight still grants a Foresight status", "selector": ".hand .card[data-card-id=\"base.foresight\"]", "matches": "Gain \\d+ Foresight" },
+        { "kind": "text", "label": "Veil still names Perception", "selector": ".hand .card[data-card-id=\"base.perception-untargetable\"]", "includes": "Perception" },
+        { "kind": "text", "label": "A hand card names Precision", "selector": ".hand", "includes": "Precision" }
+      ]
+    }
+  ]
+}

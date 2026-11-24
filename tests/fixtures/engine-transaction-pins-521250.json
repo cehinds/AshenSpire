@@ -1,0 +1,240 @@
+{
+  "runtimeHash": "sha256:521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772",
+  "note": "Preceding dev pins preserved before the versioned Arcane/Divine and Wisdom Poise rules; recapture changes state digests only. Log digests, event counts and turns remain identical.",
+  "groups": {
+    "LEGACY_PINNED": [
+      [
+        [
+          "PERF1",
+          "reaver"
+        ],
+        {
+          "log": "043a5a703a60ea25",
+          "state": "e4a474076da71729",
+          "events": 218,
+          "turn": 6
+        }
+      ],
+      [
+        [
+          4242,
+          "reaver"
+        ],
+        {
+          "log": "9ff413b4a033ed60",
+          "state": "d5e282191305ba60",
+          "events": 217,
+          "turn": 6
+        }
+      ]
+    ],
+    "LEGACY_ROLL_BROKEN_PINNED": [
+      [
+        [
+          "PERF1",
+          "reaver"
+        ],
+        {
+          "log": "612ddfa7123fefc8",
+          "state": "caa6e16319dc601f",
+          "events": 217,
+          "turn": 6
+        }
+      ],
+      [
+        [
+          4242,
+          "reaver"
+        ],
+        {
+          "log": "bfcabd7e3d38650f",
+          "state": "4486ab98ce19f123",
+          "events": 217,
+          "turn": 6
+        }
+      ]
+    ],
+    "PRE_BATCH2_PINNED": [
+      [
+        [
+          "PERF1",
+          "reaver"
+        ],
+        {
+          "log": "9b3e2e103e9b101c",
+          "state": "907289a2c8a6d1d0",
+          "events": 194,
+          "turn": 6
+        }
+      ],
+      [
+        [
+          4242,
+          "reaver"
+        ],
+        {
+          "log": "2e2fa954b17c070b",
+          "state": "4835048ad7cc9191",
+          "events": 196,
+          "turn": 6
+        }
+      ]
+    ],
+    "PRE_W25F_PINNED": [
+      [
+        [
+          "PERF1",
+          "reaver"
+        ],
+        {
+          "log": "ee15e03206874c64",
+          "state": "3778640922ac8365",
+          "events": 192,
+          "turn": 6
+        }
+      ],
+      [
+        [
+          4242,
+          "reaver"
+        ],
+        {
+          "log": "c99481caa4307bad",
+          "state": "e0eb0aaf0976b400",
+          "events": 195,
+          "turn": 6
+        }
+      ]
+    ],
+    "PRE_NO_CAPS_PINNED": [
+      [
+        [
+          "PERF1",
+          "reaver"
+        ],
+        {
+          "log": "ee15e03206874c64",
+          "state": "a3ae2b004b605840",
+          "events": 192,
+          "turn": 6
+        }
+      ],
+      [
+        [
+          4242,
+          "reaver"
+        ],
+        {
+          "log": "c99481caa4307bad",
+          "state": "3be7db7eb4111056",
+          "events": 195,
+          "turn": 6
+        }
+      ]
+    ],
+    "PRE_BATCH5_PINNED": [
+      [
+        [
+          "PERF1",
+          "reaver"
+        ],
+        {
+          "log": "ee15e03206874c64",
+          "state": "0c05291748f63d68",
+          "events": 192,
+          "turn": 6
+        }
+      ],
+      [
+        [
+          4242,
+          "reaver"
+        ],
+        {
+          "log": "c99481caa4307bad",
+          "state": "7759fd61e3377468",
+          "events": 195,
+          "turn": 6
+        }
+      ]
+    ],
+    "PRE_EVADECARDS_PINNED": [
+      [
+        [
+          "PERF1",
+          "reaver"
+        ],
+        {
+          "log": "ee15e03206874c64",
+          "state": "1199b444d81c832e",
+          "events": 192,
+          "turn": 6
+        }
+      ],
+      [
+        [
+          4242,
+          "reaver"
+        ],
+        {
+          "log": "c99481caa4307bad",
+          "state": "49f37cd3b4bb898b",
+          "events": 195,
+          "turn": 6
+        }
+      ]
+    ],
+    "PRE_THEME_B_PINNED": [
+      [
+        [
+          "PERF1",
+          "reaver"
+        ],
+        {
+          "log": "ee15e03206874c64",
+          "state": "6787a46a046217ff",
+          "events": 192,
+          "turn": 6
+        }
+      ],
+      [
+        [
+          4242,
+          "reaver"
+        ],
+        {
+          "log": "c99481caa4307bad",
+          "state": "840ad55377faa4cb",
+          "events": 195,
+          "turn": 6
+        }
+      ]
+    ],
+    "PINNED": [
+      [
+        [
+          "PERF1",
+          "reaver"
+        ],
+        {
+          "log": "fb4f923cd562413e",
+          "state": "bbb64c8f26459e66",
+          "events": 207,
+          "turn": 6
+        }
+      ],
+      [
+        [
+          4242,
+          "reaver"
+        ],
+        {
+          "log": "872df8f1e3aee8e3",
+          "state": "5c9def4a8c9d283d",
+          "events": 217,
+          "turn": 6
+        }
+      ]
+    ]
+  }
+}

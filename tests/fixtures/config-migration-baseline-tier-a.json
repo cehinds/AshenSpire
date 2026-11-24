@@ -3483,7 +3483,7 @@
                 "__string": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it."
               },
               "playerPoise": {
-                "__string": "The threshold that Breaks you — your Constitution, armament, armour and relics steady it. Enemy impact fills it."
+                "__string": "The threshold that Breaks you. Your Constitution, armament, armour and relics steady it. Enemy impact fills it."
               },
               "enemyPoise": {
                 "__string": "Fill it to Break. {effect}"

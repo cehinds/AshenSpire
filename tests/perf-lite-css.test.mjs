@@ -18,16 +18,53 @@ test('perf-lite.css exists and is the last stylesheet before the generated HUD s
   assert.equal(hrefs.filter((h) => h === 'styles/perf-lite.css').length, 1);
 });
 
-test('every rule in perf-lite.css is scoped to Lite AND to a phone layout (desktop Lite is unchanged)', () => {
-  const rules = [...css.matchAll(/([^{}]+)\{[^{}]*\}/g)].map((m) => m[1].trim());
+// Every selector is either phone Lite (the Auto rule) or forced by a Blur / Shadows
+// Off flag the player chose (owner, 2026-11-20). Nothing else reaches desktop.
+const PHONE_LITE = ":is([data-layout='narrow'], [data-form-factor='mobile'])";
+const FORCED_OFF = /^:root:root(:root)?\[data-fx-(blur|shadows)='off'\]/;
+const rulesOf = (text) => [...text.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+  selectors: m[1].trim().split(/,\s*(?![^()]*\))/).map((sel) => sel.trim()), body: m[2] }));
+
+test('every rule in perf-lite.css is phone Lite, or forced by a Blur or Shadows Off choice (desktop Auto is unchanged)', () => {
+  const rules = rulesOf(css);
   assert.ok(rules.length > 10);
-  for (const selectorList of rules) {
-    for (const selector of selectorList.split(/,\s*(?![^()]*\))/)) {
-      const sel = selector.trim();
-      assert.match(sel, /^:root(:root)?\[data-performance='lite'\]/, `not Lite-scoped: ${sel}`);
-      assert.ok(sel.includes(":is([data-layout='narrow'], [data-form-factor='mobile'])"), `not phone-scoped: ${sel}`);
+  for (const { selectors } of rules) {
+    for (const sel of selectors) {
+      if (FORCED_OFF.test(sel)) {
+        assert.ok(!sel.includes("data-effects='off'") && !sel.includes(PHONE_LITE), `a forced-off rule is not device-scoped: ${sel}`);
+        continue;
+      }
+      assert.match(sel, /^:root(:root)?\[data-effects='off'\]/, `not Lite-scoped: ${sel}`);
+      assert.ok(sel.includes(PHONE_LITE), `not phone-scoped: ${sel}`);
     }
   }
+});
+
+test('Blur and Shadows split the phone rules: On exempts a phone, Off reaches every device', () => {
+  const rules = rulesOf(css);
+  const kindOf = ({ selectors, body }) => /backdrop-filter/.test(body) ? 'blur'
+    : /mix-blend-mode/.test(body) || selectors.some((sel) => sel.includes('data-art-background-color')) ? null
+    : selectors.some((sel) => sel.includes('aim-silho')) ? 'blur' : 'shadows';
+  const forcedSeen = { blur: 0, shadows: 0 };
+  for (const rule of rules) {
+    const kind = kindOf(rule);
+    const phone = rule.selectors.filter((sel) => !FORCED_OFF.test(sel));
+    const forced = rule.selectors.filter((sel) => FORCED_OFF.test(sel));
+    if (!kind) {
+      assert.equal(forced.length, 0, `blends stay phone Lite only: ${rule.selectors[0]}`);
+      for (const sel of phone) assert.ok(!sel.includes('data-fx-'), sel);
+      continue;
+    }
+    for (const sel of phone) assert.ok(sel.includes(`${PHONE_LITE}:not([data-fx-${kind}='on'])`), `On must exempt a phone: ${sel}`);
+    for (const sel of forced) assert.ok(sel.includes(`[data-fx-${kind}='off']`), `wrong flag: ${sel}`);
+    if (phone.length) assert.equal(forced.length, phone.length, `every phone selector has its forced-off twin: ${phone[0]}`);
+    forcedSeen[kind] += forced.length;
+  }
+  assert.ok(forcedSeen.blur >= 4 && forcedSeen.shadows >= 10, JSON.stringify(forcedSeen));
+  // Off on desktop: the filter and backdrop resets carry no Lite or phone scope.
+  assert.match(css, /:root:root\[data-fx-shadows='off'\] \*:not\(#lite-nofilter\)[^{]*\{\s*filter: none !important;/);
+  assert.match(css, /:root:root\[data-fx-blur='off'\] \*:not\(#lite-nofilter\)[^{]*\{\s*backdrop-filter: none !important;/);
+  assert.match(css, /:root:root\[data-fx-blur='off'\] \.aim-silho:not\(#lite-nofilter\) \{ filter: none !important; \}/);
 });
 
 test('perf-lite.css never adds a filter, backdrop filter or blend of its own', () => {

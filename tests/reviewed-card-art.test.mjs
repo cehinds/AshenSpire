@@ -16,7 +16,9 @@ const reg=createRegistries(contentBundle);
 
 test('every card without a dedicated illustration has a reviewed layered recipe',()=>{
   const missing=contentBundle.cards.filter(card=>!playingCardArtwork({cardId:card.id}));
-  assert.equal(missing.length,156);
+  // 156 before theme G (playtest 2026-11-17) added 19 conditional and self-buff cards, each reusing an approved recipe.
+  // +1 (176): Gravebinder's Lament (rare Herald card) reuses the Crimson Blight projectile recipe.
+  assert.equal(missing.length,176);
   assert.deepEqual(new Set(missing.map(c=>c.id)),new Set(Object.keys(catalog.records)));
   for(const card of missing){
     const ref={cardId:card.id},definition=playingCardDefinition(reg,ref),before=structuredClone(definition);

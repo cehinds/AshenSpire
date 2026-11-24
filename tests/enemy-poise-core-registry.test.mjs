@@ -24,7 +24,7 @@ test('Core 2 runtime registry: Wandering Soldier starts at poise 5', () => {
 
 test('Core 2 runtime registry: every enemy poiseMax equals the Core 2 pack', () => {
   const runtime = registryFor('ashen.core@2.0.0');
-  assert.equal(corePack.length, 33);
+  assert.equal(corePack.length, 65);
   for (const row of corePack) {
     assert.equal(runtime.enemies.get(row.id)?.poiseMax, row.enemy.poiseMax, `${row.id} poiseMax`);
   }

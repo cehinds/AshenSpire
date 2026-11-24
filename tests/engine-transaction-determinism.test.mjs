@@ -6,6 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
@@ -16,15 +18,53 @@ import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
 import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules, withoutStatusCapsRule, withoutCounterStackDefaults, withoutQuickstepCounterStacks, withoutThemeBRules } from './legacyHitRules.mjs';
+import { legacyGearProfile } from './helpers/legacy-gear.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
-function fight([seed, classId]) {
-  const profile = resolveGameProfile('default');
+// Exact resolved Dev profile at a1d31db6b5, runtime 521250500d421c9742b8877b11e395c5718e0fc218c1add1c27c85d338253772.
+// Archive SHA256: 40c87e9a705457ca0504cd44677f7e1a8cb630edb6a3ff5067439af7a6ca0324.
+const precedingDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-521250.json.gz', import.meta.url))));
+// Exact equipment table at a1d31db6b5; SHA256 fa0d4d53ecb59a9020a909b1f40fade5b156131f81db0a8fc7f4b3abf0989990.
+const precedingEquipment = JSON.parse(readFileSync(new URL('./fixtures/pre-codex-equipment-a1d31db6.json', import.meta.url), 'utf8'));
+// Exact resolved Dev profile at 6727a25530, before the stat changes and after the Codex content merge.
+// Archive SHA256: ce955c3da5182f89cd1e1e78fedbb2d8f4d92be84e63569468a0cbd827de5cbd.
+const incomingDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
+// Genuine resolved Dev 4fc475a249 profile, with the Defend-only Smash rule and without stat traditions.
+// Archive SHA256: 0c4712d1748aa2424505d5ad40f2ba354deb988cda19bdee3abb3aeeec0cfbe6.
+const smashDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-4fc475a2.json.gz', import.meta.url))));
+// Genuine archived Gear parent stays unchanged; only the explicitly derived pre-Gear control below removes its type-effects opt-in.
+const gearParentProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/gear-profile-62323292.json.gz', import.meta.url))));
+// Genuine published Dev 213 before Retreat versioning: these existing stat/Smash goldens remain historical controls.
+const preRetreatProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-0b11a358-profile.json.gz', import.meta.url))));
+
+function fight([seed, classId], profile = resolveGameProfile('default'), equipment = null) {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId, seed });
+  if (equipment) run.combatExpansionRules.equipment = structuredClone(equipment);
   // W25-BANDS legacy fixture: these digests pin the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them).
   const combat = withoutBands(() => createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] }));
   for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = 5000;
+  return combat;
+}
+function legacyFight(setup) {
+  return withoutSmashOverride(withoutGearPierce(fight(setup, precedingDevProfile, precedingEquipment)));
+}
+function withoutGearPierce(combat) {
+  // These immutable historical fixtures predate the three new Pierce snapshot fields.
+  for (const key of ['builtInElements', 'skinStatus', 'earthSource']) delete combat.fixCoreRules.pierce[key];
+  // ...and the Magic Adept zero Mana floor key (owner ruling 2026-11-22): a fight saved before it keeps floor 1 and its original state.
+  delete combat.fixCoreRules.stance?.playerMinimumCost;
+  // ...and they predate the dropped spell Stamina surcharge (owner ruling 2026-11-23): a fight saved before it keeps staminaSurcharge 1 in its snapshot.
+  if (combat.fixCoreRules.spellCosts) combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
+  return combat;
+}
+function preGearFight(setup, profile = legacyGearProfile(preRetreatProfile)) {
+  // Explicit pre-type-effects compatibility lane. The current stat policy remains enabled.
+  return withoutSmashOverride(withoutGearPierce(fight(setup, profile)));
+}
+function withoutSmashOverride(combat) {
+  // A saved fixture from before the Defend-only Smash ruling retains its entire original state and arithmetic.
+  delete combat.fixCoreRules.smashVsDefensive.defendDamageMultiplier;
   return combat;
 }
 function answerReactions(combat) {
@@ -44,8 +84,9 @@ function play(combat, turns) {
   return combat;
 }
 const replacer = (key, value) => value instanceof Map ? { map: [...value] } : value;
+const stateData = combat => Object.fromEntries(Object.entries(combat).filter(([key, value]) => typeof value !== 'function' && !['registries', 'rng', 'gameProfile'].includes(key)));
 export function digest(combat) {
-  const data = Object.fromEntries(Object.entries(combat).filter(([key, value]) => typeof value !== 'function' && !['registries', 'rng', 'gameProfile'].includes(key)));
+  const data = stateData(combat);
   const text = JSON.stringify({ data, rng: combat.rng.getCounters() }, replacer);
   return { log: createHash('sha256').update(JSON.stringify(combat.eventLog, replacer)).digest('hex').slice(0, 16),
     state: createHash('sha256').update(text).digest('hex').slice(0, 16), events: combat.eventLog.length, turn: combat.turn };
@@ -126,45 +167,65 @@ function withStaggeredRule(build) {
   delete fixCoreMechanics.poise.breakRule; delete fixCoreMechanics.poise.brokenDamageMultiplier;
   try { return build(); } finally { fixCoreMechanics.poise.breakRule = held.breakRule; fixCoreMechanics.poise.brokenDamageMultiplier = held.mult; }
 }
+// Recaptured 2026-11-17 for theme A (base damage halved through the profile's effects module, player HP 30 + 5 x (CON + level), SP and MP at 3 points,
+// gear granting attribute points and Poise instead of AR and DR): these are profile content, not fight rule keys, so every fight below plays them and
+// every pin moved (logs, event counts and states); no turn moved. The layered relations still hold: the pre-W25-F, pre-no-caps, pre-batch-5,
+// pre-Evade-cards and pre-theme-B fights share one log per seed and differ only in state, as before.
+// Recaptured 2026-11-17 after the balance review tuned Core's pool thresholds, starter gear and tier HP.
+// Recaptured 2026-11-18 for the owner's balance ruling (player and enemy damage x0.7, Block gain x0.7, enemy HP 70%, spell Poise damage x2): profile content again,
+// so every pin moved by its log and state hashes (a few by one event); the turns did not.
+// Recaptured 2026-11-18 (second cut, owner's playtest): physicalDamageMultiplier 0.7 and blockGainMultiplier 0.49 are profile content too, so all pins moved by log
+// and state hashes (event counts and turns unchanged). Measured with this test's own digest(), not derived.
+// Recaptured 2026-11-18 on the merge of the physical cut with the ratings removal (STR, DEX and magic stat replace AR, DR and PR; the runtime hash moved): every
+// pin moved by log and state hashes (a few by event count); no turn moved. Measured with this test's own digest().
+// These legacy-policy lanes retain the exact preceding Dev profile; the current PINNED lanes below resolve the new default.
+// RNG counters, event types, event counts and turns are unchanged. The exact pre-tuning resolved profile
+// from 174714e7d8 still reproduces all 18 previous digests in this engine.
+// Re-pinned 2026-11-21 for the score-engine starter decks and card retunes (owner rulings A-F, branch worker/score-engine/templates):
+// the Reaver starter deck and the cards it plays changed (new Strike/Defend/weapon-art numbers, Defend Block 4), so every seeded fight
+// draws and plays different cards and 20 of the 36 pinned digests moved (events 218 -> 216 in the first lane, and so on). src/engine
+// combat code is unchanged on this branch (only data and scoring modules moved), the in-test controls (assertStatPolicyOnly, the
+// override-removal controls, the PRE_STAT and incoming-Smash cross-checks) still pass on the new values. The incoming-Smash golden
+// strings are the new SMASH_PARENT_PINNED state hashes. The values are this test's own digest().
 const LEGACY_PINNED = [
-  [['PERF1', 'reaver'], { log: 'cbd4b75ce1f76ec8', state: '9a896733712286eb', events: 222, turn: 6 }],
-  [[4242, 'reaver'], { log: 'ebf2ff90af3f523f', state: '4b9bc8f45a337096', events: 219, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '67da47d0ff9332e9', state: '8c72620abcea0291', events: 216, turn: 6 }],
+  [[4242, 'reaver'], { log: '87d3cc66dd3d091f', state: '24e6e62642326bbf', events: 217, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_PINNED) {
   test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
-    const first = digest(play(withLegacyDefaults(() => withStaggeredRule(() => fight(setup))), 5));
+    const first = digest(play(withLegacyDefaults(() => withStaggeredRule(() => legacyFight(setup))), 5));
     assert.deepEqual(first, expected);
   });
 }
 const LEGACY_ROLL_BROKEN_PINNED = [
-  [['PERF1', 'reaver'], { log: '88015cbf67e2810a', state: '030723ddf1557346', events: 220, turn: 6 }],
-  [[4242, 'reaver'], { log: 'c8d3876a5cc18243', state: '7b93ec1901f14eb1', events: 218, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'aacad8e740d048eb', state: '69ebce7bf7d1f375', events: 216, turn: 6 }],
+  [[4242, 'reaver'], { log: 'c13caf38707a8c17', state: '9d62eb6b393cc74b', events: 217, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
   test(`roll-legacy fight ${setup[0]}/${setup[1]} under the Broken rule reproduces its digest`, () => {
-    assert.deepEqual(digest(play(withLegacyDefaults(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withLegacyDefaults(() => legacyFight(setup)), 5)), expected);
   });
 }
 // Batch 2 (stance benefits, element identities, PR from max(INT, WIS)): these are the shipped digests before it. A fight whose rules lack those three keys
 // (one created earlier) still reproduces them exactly, which is the proof that the new PINNED values below moved only through those rules.
 const PRE_BATCH2_PINNED = [
-  [['PERF1', 'reaver'], { log: '5a55d1ad4cb62806', state: '3b6f75f6b40ed4d5', events: 197, turn: 6 }],
-  [[4242, 'reaver'], { log: 'f58b92f7261b4fa5', state: '171d2b48760768e8', events: 192, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '3f9282ae3fb76cd1', state: '0a79e15c362a8296', events: 193, turn: 6 }],
+  [[4242, 'reaver'], { log: 'fe5085cbfedd4172', state: '3295d2915054600c', events: 196, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_BATCH2_PINNED) {
   test(`pre-batch-2 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Wave 2.5 rules`, () => {
-    assert.deepEqual(digest(play(withoutBatch2Rules(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutBatch2Rules(() => legacyFight(setup)), 5)), expected);
   });
 }
 // W25-F (spell costs and elemental flux): these are the shipped digests before it. A fight whose rules lack `spellCosts` and `elementFlux` still reproduces them exactly,
 // which is the proof that the new PINNED values below moved only through those rules.
 const PRE_W25F_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: 'ec18b722c511f64a', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'be10dc76fcfdcf39', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: 'e575074e6d08ed01', events: 191, turn: 6 }],
+  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: 'e972022a2101d257', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_W25F_PINNED) {
   test(`pre-W25-F fight ${setup[0]}/${setup[1]} still reproduces the digest from before spell costs and flux`, () => {
-    assert.deepEqual(digest(play(withoutSpellCostRules(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutSpellCostRules(() => legacyFight(setup)), 5)), expected);
   });
 }
 // Recaptured 2026-11-15 for W25-F: PRE_W25F_PINNED above reproduces the previous digests with the two keys removed (and the legacy and pre-batch-2 fights above, built through helpers that remove them too, are unchanged). Logs, event counts, turns and RNG are identical, so only the state hashes move (the fight's rules snapshot gains the two blocks).
@@ -175,61 +236,178 @@ for (const [setup, expected] of PRE_W25F_PINNED) {
 // rules snapshot. Verified: PRE_NO_CAPS_PINNED below (the previous shipped values) is reproduced exactly by the shipped rules with `statusCaps` and the Counter-stack keys removed, as are the legacy, roll-legacy,
 // pre-batch-2 and pre-W25-F fights (their helpers in tests/legacyHitRules.mjs remove them too).
 const PRE_NO_CAPS_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '52a937c3967fbd9e', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '287bdd8235e37954', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: 'ec53043cdfa93873', events: 191, turn: 6 }],
+  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: 'da4dbb517e9843fa', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_NO_CAPS_PINNED) {
   test(`pre-no-caps fight ${setup[0]}/${setup[1]} still reproduces the digest from before statusCaps`, () => {
-    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => withoutStatusCapsRule(() => fight(setup))), 5)), expected);
+    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => withoutStatusCapsRule(() => legacyFight(setup))), 5)), expected);
   });
 }
 // Recaptured 2026-11-15 for Wave 2 batch 5 (Counter stacks `counter.stackSource` and friends, no Counter-stance return): a fight whose rules lack the Counter-stack
 // keys (and keep the stance's hpReturnFraction), built through withoutCounterStackDefaults, reproduces PRE_BATCH5_PINNED (the values shipped after the no-caps rule) exactly, which proves the new PINNED
 // values below moved only through those rules: log, event counts and turns are identical (the Counter is never armed in these fights), only the state hashes move through the new keys in the fight's snapshot.
 const PRE_BATCH5_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '9a0e9981b6b3bd87', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'f63b09461a81f60e', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: '48fb3d0c2f7effe7', events: 191, turn: 6 }],
+  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: '5fe67d75a6558ece', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_BATCH5_PINNED) {
   test(`pre-batch-5 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Counter stack rule`, () => {
-    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => legacyFight(setup)), 5)), expected);
   });
 }
 // Recaptured 2026-11-15 for W25-EvadeCards (Quickstep joins `counter.stacksByCard`): log, event counts and turns are identical, only the state hashes move, through the new key in the fight's rules
 // snapshot. Verified: a fight built through withoutQuickstepCounterStacks reproduces PRE_EVADECARDS_PINNED (the values shipped before) exactly.
 const PRE_EVADECARDS_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '33eb4180cba351fa', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '8a7b6f7b35a08604', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: '0c7901d04748b8d9', events: 191, turn: 6 }],
+  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: '7f9864db4bff3bf8', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_EVADECARDS_PINNED) {
   test(`pre-Evade-cards fight ${setup[0]}/${setup[1]} still reproduces the digest from before Quickstep's Counter stack`, () => {
-    assert.deepEqual(digest(play(withoutQuickstepCounterStacks(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutQuickstepCounterStacks(() => legacyFight(setup)), 5)), expected);
   });
 }
 // Recaptured 2026-11-17 for theme B (Counter armed while stacks remain, the Defend Poise floor, the enemy Counter badge, the Prepared/Idle stance weaknesses):
 // a fight built through withoutThemeBRules reproduces PRE_THEME_B_PINNED (the values shipped before) exactly. PERF1's log moves (an Idle target takes x1.25, same
 // event count and turn); 4242's log is identical and only its state hash moves, through the new keys in the fight's rules snapshot.
 const PRE_THEME_B_PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '0b43d27657af6bb0', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '782874823ef24c18', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '911696bce225bba7', state: '15584821f2ae29ea', events: 191, turn: 6 }],
+  [[4242, 'reaver'], { log: '8a90cb432c0c97b9', state: '005eced03ee344d8', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_THEME_B_PINNED) {
   test(`pre-theme-B fight ${setup[0]}/${setup[1]} still reproduces the digest from before the 2026-11-17 status and stance rules`, () => {
-    assert.deepEqual(digest(play(withoutThemeBRules(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutThemeBRules(() => legacyFight(setup)), 5)), expected);
   });
 }
-const PINNED = [
-  [['PERF1', 'reaver'], { log: '36184dbaac4958bf', state: '8f3cc7a77e760f98', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'd272fbdaa2167d09', events: 195, turn: 6 }],
+// Recaptured 2026-11-18 (owner rulings 20 and 21: Ward decay and break keys, Pierce per-stack Block, Force Poise share): the current profile's rules snapshot gained keys, so the state hashes moved; the Poise-break statuses (poise.breakStatusStacks, 2 each of Staggered, Vulnerable, Weak and Frail) add status events, so the logs and event counts moved too (192 -> 207 and 195 -> 217; the Broken x1.5 is gone too, so the hit sizes moved); turns are identical. The legacy wrappers in tests/legacyHitRules.mjs strip the new keys, so every older pin above is unchanged.
+// Stat allocation: the 16 legacy-policy lanes pin their exact preceding Dev profile and equipment table. The next two lanes explicitly predate gear type effects.
+// After merging Dev 6727a25530, its archived profile with live equipment reproduces both incoming Dev state pins below.
+// Only their state digests move: the Poise row/base row replaces CON with WIS, its explicit override is recorded, and
+// fixCoreRules.spellTraditionsVersion is added. The control below restores exactly those fields and compares the entire
+// serialized state; full logs, event counts, turns and every RNG counter are unchanged. The prior current pins remain controls.
+// Recaptured 2026-11-19 after the bare content Poise row returned to CON (saved runs keep it; the
+// default profile overrides it with WIS): only the four current state digests moved. assertStatPolicyOnly
+// and PRE_STAT_PINNED still prove logs, RNG and every non-Poise field are unchanged.
+// Recaptured 2026-11-24 for Ward as a health buffer (fixCoreMechanics.ward: hpPerStack 5, routing "hpBuffer"): only the state hashes of the current/stat/Smash pins moved; every log, event count, turn, RNG counter, and all 16 legacy pins are unchanged.
+const PRE_STAT_PINNED = [
+  { log: '72f173c08a17d9ae', state: '44e71f51b274b675', events: 205, turn: 6 },
+  { log: '32ede5df457c6309', state: '2adf48d895f8f44d', events: 217, turn: 6 },
 ];
-for (const [setup, expected] of PINNED) {
+const PINNED = [
+  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'ee31bf2123fb5bd7', events: 205, turn: 6 }],
+  [[4242, 'reaver'], { log: '32ede5df457c6309', state: 'c7d0124ab9e0713d', events: 217, turn: 6 }],
+];
+function assertStatPolicyOnly(current, previous) {
+  assert.deepEqual(current.eventLog, previous.eventLog, 'stat metadata changes no log payload');
+  assert.deepEqual(current.rng.getCounters(), previous.rng.getCounters(), 'stat metadata changes no RNG position');
+  const before = JSON.parse(JSON.stringify(stateData(previous), replacer));
+  const restored = JSON.parse(JSON.stringify(stateData(current), replacer));
+  for (const key of ['rules', 'baseRules']) restored.derivedStatRuleSnapshot[key].rules.poise = before.derivedStatRuleSnapshot[key].rules.poise;
+  delete restored.derivedStatRuleSnapshot.modifierOverride.rules.poise;
+  delete restored.fixCoreRules.spellTraditionsVersion;
+  assert.equal(JSON.stringify(restored), JSON.stringify(before), 'only saved Poise ownership and the tradition flag differ');
+}
+for (const [index, [setup, expected]] of PINNED.entries()) {
   const seed = `${setup[0]}/${setup[1]}`;
-  test(`seeded fight ${seed} reproduces its log, final state and RNG position`, () => {
-    const first = digest(play(fight(setup), 5));
-    const second = digest(play(fight(setup), 5));
+  test(`pre-gear seeded fight ${seed} reproduces its stat-policy log, final state and RNG position`, () => {
+    const current = play(preGearFight(setup), 5);
+    const first = digest(current);
+    const second = digest(play(preGearFight(setup), 5));
     assert.deepEqual(second, first, 'two plays of one seed agree');
     assert.ok(first.events > 40 && first.turn >= 4, 'the fight did real work');
-    assert.deepEqual(first, expected, 'digest matches the pre-optimisation engine');
+    assert.deepEqual(first, expected, 'digest matches the pinned profile and fight rules');
+    const previous = play(preGearFight(setup, incomingDevProfile), 5);
+    assert.deepEqual(digest(previous), PRE_STAT_PINNED[index], 'the exact prior profile retains its entire prior digest');
+    assertStatPolicyOnly(current, previous);
+  });
+}
+
+// New Smash pins are additional controls; every historical array and pre-Smash pin above stays intact.
+// PERF1 adds only the saved Defend multiplier. Seed4242 has one Smash into Defend: HP7 ->9 and Poise4 ->5.
+// That hit's HP/Poise receipts and subsequent HP snapshots change; event counts, turns and all RNG counters do not.
+const SMASH_PINNED = [
+  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'a64d822b2582969a', events: 205, turn: 6 }, 'c67e6243ead534a4'],
+  [[4242, 'reaver'], { log: '0436771adacf8d08', state: 'eabca0bd44978f7c', events: 217, turn: 6 }, 'eac1bbe186ab2213'],
+];
+for (const [index, [setup, expected, incomingState]] of SMASH_PINNED.entries()) {
+  test(`pre-Retreat pre-gear Smash fight ${setup[0]}/${setup[1]} matches genuine Dev and preserves pre-ruling controls`, () => {
+    const current = play(withoutGearPierce(fight(setup, legacyGearProfile(preRetreatProfile))), 5);
+    const incoming = play(withoutGearPierce(fight(setup, legacyGearProfile(smashDevProfile))), 5);
+    assert.equal(current.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5);
+    assert.deepEqual(digest(current), expected);
+    assert.deepEqual(digest(incoming), { ...expected, state: incomingState }, 'the genuine incoming profile reproduces its Dev golden');
+    assertStatPolicyOnly(current, incoming);
+    const prior = play(preGearFight(setup), 5);
+    assert.deepEqual(digest(prior), PINNED[index][1], 'removing only the new Smash override reproduces the exact prior stat pin');
+    assert.equal(current.eventLog.length, prior.eventLog.length);
+    assert.equal(current.turn, prior.turn);
+    assert.deepEqual(current.rng.getCounters(), prior.rng.getCounters());
+    const changedHits = current.eventLog.flatMap((event, i) => event.type === 'damageDealt' && event.hpLoss !== prior.eventLog[i].hpLoss
+      ? [[prior.eventLog[i].hpLoss, event.hpLoss, prior.eventLog[i].poiseDamage, event.poiseDamage]] : []);
+    assert.deepEqual(changedHits, index === 0 ? [] : [[7, 9, 4, 5]], 'only the documented Defend Smash hit changes HP and Poise');
+    if (index === 0) {
+      const restored = JSON.parse(JSON.stringify(stateData(current), replacer));
+      delete restored.fixCoreRules.smashVsDefensive.defendDamageMultiplier;
+      assert.equal(JSON.stringify(restored), JSON.stringify(JSON.parse(JSON.stringify(stateData(prior), replacer))), 'PERF1 changes only the saved Smash key');
+    }
+  });
+}
+
+// Incoming Dev's exact current-Smash goldens use its preceding Gear stat policy, before type effects.
+// This is a derived control from the genuine archived parent, never a rewrite of that archive.
+const SMASH_PARENT_PINNED = [
+  [['PERF1', 'reaver'], { log: '72f173c08a17d9ae', state: 'c67e6243ead534a4', events: 205, turn: 6 }],
+  [[4242, 'reaver'], { log: '0436771adacf8d08', state: 'eac1bbe186ab2213', events: 217, turn: 6 }],
+];
+for (const [setup, expected] of SMASH_PARENT_PINNED) {
+  test(`derived Gear-parent pre-type fight ${setup[0]}/${setup[1]} preserves incoming Smash goldens`, () => {
+    const original = JSON.stringify(gearParentProfile);
+    assert.equal(gearParentProfile.hash, 'sha256:6980a72704c52d9d4f3849ed7a5387ed513f5a37f7f83802e2ab7ceaefce47d3');
+    const derived = legacyGearProfile(gearParentProfile);
+    assert.equal(derived.modules.gear.typeEffectsVersion, undefined);
+    assert.equal(derived.modules.effects.spellTraditionsVersion, undefined);
+    const combat = withoutGearPierce(fight(setup, derived));
+    assert.equal(combat.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5, 'the current override is active in this control');
+    assert.deepEqual(digest(play(combat, 5)), expected, 'preserve the exact incoming pin, without recapture');
+    assert.equal(JSON.stringify(gearParentProfile), original, 'the genuine parent profile remains untouched');
+  });
+}
+
+for (const setup of [['PERF1', 'reaver'], [4242, 'reaver']]) {
+  test(`current Retreat and gear seeded fight ${setup[0]}/${setup[1]} keeps real stat ownership, preview receipts and deterministic play`, () => {
+    function scenario() {
+      const combat = fight(setup);
+      assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'exercise current gear, not the pre-gear fixture');
+      assert.equal(combat.fixCoreRules.spellTraditionsVersion, 1);
+      assert.equal(combat.fixCoreRules.retreatRulesVersion, 1, 'new default fights own the Retreat opt-in');
+      assert.equal(combat.fixCoreRules.smashVsDefensive.defendDamageMultiplier, 1.5, 'the full current Gear/stat lane keeps the current Smash override');
+      const poise = combat.derivedStatRuleSnapshot.rules.rules.poise;
+      assert.equal(poise.wisdom, 1);
+      for (const id of ['constitution', 'strength', 'dexterity', 'intelligence']) assert.equal(poise[id], 0);
+      assert.equal(combat.player.ratingSources.find(row => row.kind === 'attribute').poise, 1 + combat.player.attributes.wisdom, 'live attribute Poise counts effective WIS exactly once');
+      assert.ok(combat.player.itemProps.cardRules.length > 0, 'current worn gear contributes real rules');
+      const instanceId = 'current-gear-strike';
+      combat.piles.hand.push({ instanceId, cardId: 'core.strike', upgraded: false });
+      const before = digest(combat);
+      const quote = previewCard(combat, instanceId, combat.enemies[0].id);
+      assert.deepEqual(digest(combat), before, 'preview does not mutate combat or RNG');
+      const hits = quote.values.filter(row => row.op === 'damage').flatMap(row => row.perTargetHitDamages[combat.enemies[0].id]);
+      const mark = combat.eventLog.length;
+      dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: combat.enemies[0].id });
+      answerReactions(combat);
+      const events = combat.eventLog.slice(mark);
+      assert.deepEqual(events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player' && event.cardInstanceId === instanceId).map(event => event.hpLoss), hits, 'the current gear quote equals every live hit');
+      const paid = events.slice(0, events.findIndex(event => event.type === 'cardPlayed'));
+      const spent = type => paid.filter(event => event.type === type).reduce((sum, event) => sum + event.amount, 0);
+      assert.equal(spent('staminaSpent'), quote.staminaCost || 0);
+      assert.equal(spent('manaSpent'), quote.manaCost || 0);
+      return play(combat, 5);
+    }
+    const first = scenario(), second = scenario();
+    assert.deepEqual(digest(second), digest(first));
+    assert.deepEqual(second.eventLog, first.eventLog, 'the full current-gear logs agree');
+    assert.deepEqual(second.rng.getCounters(), first.rng.getCounters());
+    assert.ok(first.eventLog.length > 40 && first.turn >= 4);
   });
 }
 

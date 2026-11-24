@@ -1,4 +1,6 @@
 // W25-R step 1: a won fight can offer "Rank up a card" as one option of its reward door (5% normal, 25% elite/boss).
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
+import { OwnCardRank } from '../src/model/cardRank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -15,7 +17,12 @@ import '../src/engine/runCombat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const registries = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), {})), profile);
-const newRun = (seed = 9) => createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup-reward' });
+// Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
+const newRun = (seed = 9) => {
+  const run = createRunState({ seed, classId: 'reaver', registries, runId: 'w25-rankup-reward' });
+  FillUpgradeSlots(run);
+  return run;
+};
 const hasRankUp = (offer) => offer.options.some((option) => option.kind === 'rankUps');
 
 function offerFor(run, n, pool) {
@@ -51,13 +58,16 @@ test('the same door answers the same way every time, and it draws nothing from t
   assert.deepEqual(rngN.getCounters(), rngA.getCounters(), 'tier changes the roll, never the streams');
 });
 
-test('claiming a rank-up raises the chosen card by one rank, its slots follow, and the offer is spent', () => {
+test('claiming a rank-up raises the chosen card by one rank, its slots follow, and the rank-up is spent', () => {
   const run = newRun();
   let offer = null, n = 0;
-  while (!offer) { const found = offerFor(run, n += 1, 'elite'); if (hasRankUp(found) && !found.options.some((option) => option.bonus)) offer = found; assert.ok(n < 500, 'a rank-up offer exists'); }
+  while (!offer) { const found = offerFor(run, n += 1, 'elite'); if (hasRankUp(found)) offer = found; assert.ok(n < 500, 'a rank-up offer exists'); }
   const index = offer.options.findIndex((option) => option.kind === 'rankUps');
-  assert.deepEqual(offer.options[index], { kind: 'rankUps', id: 'cardRank' });
+  // Owner 2026-11-18: a combat rank-up is always its own step (bonus: true), never one of the card picks.
+  assert.deepEqual(offer.options[index], { kind: 'rankUps', id: 'cardRank', bonus: true });
   const card = RankUpCandidates(registries, run)[0];
+  card.rank = 1; // a "Rank 1" card: slots are rank + 1, so each raise opens one
+  FillUpgradeSlots(run, [card]);
   const rank = InstanceRank(card), slots = UpgradeSlots(run, card);
   assert.throws(() => claimGameProfileReward(registries, run, offer.id, index), /Choose a card/);
   assert.throws(() => claimGameProfileReward(registries, run, offer.id, index, { instanceId: 'nobody' }), /cannot be ranked up/);
@@ -67,7 +77,9 @@ test('claiming a rank-up raises the chosen card by one rank, its slots follow, a
   const raised = RankUpCandidates(registries, run).find((row) => row.instanceId === card.instanceId); // a claim swaps in a clone
   assert.equal(InstanceRank(raised), rank + 1);
   assert.equal(UpgradeSlots(run, raised), slots + 1);
-  assert.equal(run.gameProfileRewardOffers[offer.id].claimed, index);
+  // Owner 2026-11-18: the rank-up is its own step, so it never closes the offer's card picks.
+  assert.deepEqual(run.gameProfileRewardOffers[offer.id].taken, [index]);
+  assert.equal(run.gameProfileRewardOffers[offer.id].claimed, null);
   assert.throws(() => claimGameProfileReward(registries, run, offer.id, index, { instanceId: card.instanceId }), /already claimed/);
 });
 
@@ -81,17 +93,16 @@ test('a run whose profile carries no rankUp data lays out the offer it always di
 const bonusOf = (offer) => offer.options.findIndex((option) => option.kind === 'rankUps' && option.bonus);
 const cardIndex = (offer) => offer.options.findIndex((option) => option.kind === 'combatCards');
 
-test('a rank-up is usually one of the picks and sometimes (rankUp.bonusPickPct) an extra pick; both rolls draw no stream', () => {
+test('a rank-up is always its own step, never a card pick (owner 2026-11-18, replaces rankUp.bonusPickPct); the roll draws no stream', () => {
   const run = newRun();
-  let usual = 0, bonus = 0;
+  let seen = 0;
   for (let n = 0; n < 800; n += 1) {
     const offer = offerFor(run, n, 'boss');
     if (!hasRankUp(offer)) continue;
-    if (bonusOf(offer) >= 0) bonus += 1; else usual += 1;
+    seen += 1;
+    assert.ok(bonusOf(offer) >= 0, 'every combat rank-up carries bonus: true');
   }
-  assert.ok(bonus > 0 && usual > bonus, `bonus ${bonus}, usual ${usual}`);
-  const share = bonus / (bonus + usual);
-  assert.ok(share > 0.15 && share < 0.35, `bonus share ${share}`);
+  assert.ok(seen > 0, 'boss doors offer rank-ups');
   const a = newRun(), b = newRun();
   assert.deepEqual(offerFor(a, 3, 'boss'), offerFor(b, 3, 'boss'));
 });
@@ -108,29 +119,33 @@ test('the bonus offer lets you claim a card AND a rank-up, in either order', () 
   for (const cardFirst of [true, false]) {
     const { run, offer } = runWithOffer(true);
     const rankAt = bonusOf(offer), card = cardIndex(offer);
-    const target = RankUpCandidates(registries, run)[0].instanceId, before = InstanceRank(RankUpCandidates(registries, run)[0]);
+    const target = RankUpCandidates(registries, run)[0].instanceId, before = OwnCardRank(RankUpCandidates(registries, run)[0]);
     const claimRank = () => claimGameProfileReward(registries, run, offer.id, rankAt, { instanceId: target });
     const claimCard = () => claimGameProfileReward(registries, run, offer.id, card);
     if (cardFirst) { claimCard(); assert.equal(run.gameProfileRewardOffers[offer.id].claimed, null, 'the bonus is still open'); claimRank(); } else { claimRank(); assert.equal(run.gameProfileRewardOffers[offer.id].claimed, null); claimCard(); }
     assert.notEqual(run.gameProfileRewardOffers[offer.id].claimed, null);
-    assert.equal(InstanceRank(run.deck.concat(run.sideboard).find((c) => c.instanceId === target)), before + 1);
+    assert.equal(OwnCardRank(run.deck.concat(run.sideboard).find((c) => c.instanceId === target)), before + 1);
     assert.ok(run.sideboard.some((c) => c.instanceId === `reward:${offer.id}:${card}`));
     const second = offer.options.findIndex((o, i) => i !== card && i !== rankAt && o.kind === 'combatCards');
     if (second >= 0) assert.throws(() => claimGameProfileReward(registries, run, offer.id, second));
   }
 });
 
-test('the usual offer lets you take only one: the card or the rank-up', () => {
-  const { run, offer } = runWithOffer(false);
+test('the offer lets you take the card and then the rank-up, its own step (owner 2026-11-18)', () => {
+  const { run, offer } = runWithOffer(true);
   const rankAt = offer.options.findIndex((option) => option.kind === 'rankUps');
   claimGameProfileReward(registries, run, offer.id, cardIndex(offer));
-  assert.equal(run.gameProfileRewardOffers[offer.id].claimed, cardIndex(offer));
-  assert.throws(() => claimGameProfileReward(registries, run, offer.id, rankAt, { instanceId: RankUpCandidates(registries, run)[0].instanceId }));
+  assert.equal(run.gameProfileRewardOffers[offer.id].claimed, null, 'the rank-up is still owed');
+  claimGameProfileReward(registries, run, offer.id, rankAt, { instanceId: RankUpCandidates(registries, run)[0].instanceId });
+  assert.notEqual(run.gameProfileRewardOffers[offer.id].claimed, null);
 });
 
-test('a saved offer without the bonus field behaves as before: the rank-up uses the pick', () => {
-  const { run, offer } = runWithOffer(false);
+test('a saved offer without the bonus field still claims the rank-up; its taken rank-up stays the plain pick it was (IsBonusOption, 2026-11-18)', () => {
+  const { run, offer } = runWithOffer(true);
+  for (const option of offer.options) delete option.bonus; // an older saved offer lists the rank-up without the field
   assert.ok(offer.options.every((option) => option.bonus === undefined));
-  claimGameProfileReward(registries, run, offer.id, offer.options.findIndex((option) => option.kind === 'rankUps'), { instanceId: RankUpCandidates(registries, run)[0].instanceId });
-  assert.notEqual(run.gameProfileRewardOffers[offer.id].claimed, null);
+  const rankAt = offer.options.findIndex((option) => option.kind === 'rankUps');
+  claimGameProfileReward(registries, run, offer.id, rankAt, { instanceId: RankUpCandidates(registries, run)[0].instanceId });
+  // Before the ruling that rank-up used the offer's pick, so once taken it is no bonus and the offer closes.
+  assert.equal(run.gameProfileRewardOffers[offer.id].claimed, rankAt);
 });
