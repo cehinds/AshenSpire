@@ -59,3 +59,16 @@ test('CombatPlaybackModel tracks wardHpChanged, damageDealt.wardHpRemaining, and
   ApplyCombatBeat(disp, [{ type: 'wardBroken', targetId: enemy.id }], opts);
   assert.equal(disp.ents[enemy.id].wardHp, 0);
 });
+
+test('Ward HP buffer full absorption reports blocked outcome for floaters while legacy Ward keeps wardResisted', async () => {
+  const { outcomeKindForEvent } = await import('../src/ui/fx.js');
+  const { floaterWordShown } = await import('../src/ui/models/FloaterPolicyModel.js');
+  const wardOnly = { type: 'damageDealt', amount: 0, blocked: 0, hpLoss: 0, wardAbsorbed: 5, wardHpBuffer: true, wardHpRemaining: 0 };
+  assert.equal(outcomeKindForEvent(wardOnly), 'blocked');
+  assert.equal(floaterWordShown(outcomeKindForEvent(wardOnly)), 'blocked');
+  const wardAndPoise = { type: 'damageDealt', amount: 0, blocked: 0, hpLoss: 0, wardAbsorbed: 5, wardHpBuffer: true, wardHpRemaining: 0, poiseAbsorbed: 2, magicPoise: 2 };
+  assert.equal(outcomeKindForEvent(wardAndPoise), 'blocked');
+  assert.equal(floaterWordShown(outcomeKindForEvent(wardAndPoise)), 'blocked');
+  const legacyWard = { type: 'damageDealt', amount: 0, blocked: 0, hpLoss: 0, wardAbsorbed: 3, wardRemaining: 0 };
+  assert.equal(outcomeKindForEvent(legacyWard), 'wardResisted');
+});

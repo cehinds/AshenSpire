@@ -10,6 +10,7 @@ import { reg } from './elementFixture.mjs';
 import { createRng } from '../src/engine/rng.js';
 
 const ward = (combat, entity, stacks) => Statuses.applyStatus(combat, entity, 'ward', stacks, entity);
+const barrier = (combat, entity, stacks) => Statuses.applyStatus(combat, entity, 'barrier', stacks, entity);
 const clean = combat => assert.deepEqual(combatSnapshotProblems(createCombatSnapshotLoose(combat)).filter(p => /persistentPoise/.test(p)), []);
 const createCombatSnapshotLoose = combat => createCombatSnapshot(combat);
 
@@ -30,6 +31,8 @@ test('an attribute change keeps Ward/Barrier Poise bonus inside the maximum', ()
 
 test('Ward decay and a later attribute change keep the pool consistent', () => {
   const { combat, player } = fight({ classId: 'reaver' });
+  // Legacy Ward-on-Poise rules (saved fight before hpBuffer): Ward stacks grant barrierBonus and decay at turn start.
+  combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst', decayPerTurn: 1 };
   ChangeAttribute(combat, player, 'wisdom', 1);
   ward(combat, player, 2);
   const withWard = player.persistentPoise.max;
@@ -46,7 +49,7 @@ test('Ward decay and a later attribute change keep the pool consistent', () => {
 
 test('a saved snapshot already holding barrierBonus above max loads repaired and can be saved again', () => {
   const { combat, player } = fight({ classId: 'reaver' });
-  ward(combat, player, 4);
+  barrier(combat, player, 4);
   const saved = createCombatSnapshot(combat);
   const bonus = saved.player.persistentPoise.barrierBonus;
   assert.equal(bonus, 20);
@@ -66,10 +69,11 @@ test('a fight saved with the bonus inside liveStats.base does not inflate the ma
   for (const devFormat of [true, false]) {
     const { combat, player } = fight({ classId: 'reaver' });
     ChangeAttribute(combat, player, 'wisdom', 1);
-    ward(combat, player, 2);
+    barrier(combat, player, 2);
     if (devFormat) player.liveStats.base.persistentPoiseMax += 10; // what build 0.7.4.216 stored when Ward was up at the first change
     const saved = createCombatSnapshot(combat);
     const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(5), snapshot: saved });
+    assert.equal(restored.player.persistentPoise.barrierBonus, 10);
     const before = { ...restored.player.persistentPoise };
     ChangeAttribute(restored, restored.player, 'strength', 1);
     assert.deepEqual(restored.player.persistentPoise, before, devFormat ? 'dev-format base' : 'new-format base');
