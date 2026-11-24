@@ -281,8 +281,10 @@ export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {})
   run.cinders -= plan.cost;
   bump(run, plan);
   // The work may also raise the card's rank (rolled before the step was added: the count it had when quoted).
+  // The roll is always made, but it lands only when the rank-up rule allows it with this step on (RankUpBlock).
   const card = owned(run).find((row) => row.instanceId === receipt.instanceId);
-  const ranked = !!card && InstanceRank(card) < RANK_CEILING && upgradeGrantsRankAt(run, card, receipt.n - 1);
+  const rolled = !!card && InstanceRank(card) < RANK_CEILING && upgradeGrantsRankAt(run, card, receipt.n - 1);
+  const ranked = rolled && !RankUpBlock(run, card);
   if (ranked) card.rank = OwnCardRank(card) + 1;
   return { instanceId: receipt.instanceId, spentStones: receipt.spentStones - lent, step: receipt.step, n: receipt.n, ...(ranked ? { rankedUp: card.rank } : {}) };
 }

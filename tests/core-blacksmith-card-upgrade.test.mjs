@@ -145,3 +145,34 @@ test('Core Blacksmith: a sideboard card plans and commits an upgrade, and a side
   assert.ok(upgradeableArts(coreOut, run).length > 0);
   assert.ok(serviceCandidates(coreOut, run, "upgradeArt").length > 0, "the Blacksmith button counts sideboard-only candidates");
 });
+
+// Review fix (2026-11-23): the 20% rank roll on Blacksmith work lands only when the full-upgrade rank-up rule allows it
+// with the new step on; otherwise the card keeps its rank.
+test('Core Blacksmith: the rank roll lands only when the card is fully upgraded after the work', async () => {
+  const { UpgradeGrantsRank } = await import('../src/model/blacksmith.js');
+  const { InstanceRank } = await import('../src/model/rankUpService.js');
+  const landing = (run, card) => {
+    const base = card.instanceId;
+    for (let i = 0; i < 500; i += 1) {
+      card.instanceId = `${base}~${i}`;
+      if (UpgradeGrantsRank(run, card)) return;
+    }
+    assert.fail('no landing roll found');
+  };
+  const blocked = smithRun(coreOut, 0, 31, 9000);
+  const held = strikes(blocked)[0];
+  held.rank = 2; // three slots: one upgrade leaves it short of full
+  landing(blocked, held);
+  const first = upgrade(blocked, held.instanceId);
+  assert.equal(first.rankedUp, undefined);
+  assert.equal(InstanceRank(held), 2, 'a Rank 2 card with 1 of 3 slots used stays Rank 2');
+
+  const full = smithRun(coreOut, 0, 31, 9000);
+  const card = strikes(full)[0];
+  card.rank = 1; // two slots
+  upgrade(full, card.instanceId);
+  landing(full, card);
+  const last = upgrade(full, card.instanceId);
+  assert.equal(last.rankedUp, 2, 'the step that fills the last slot may raise the rank');
+  assert.equal(InstanceRank(card), 2);
+});
