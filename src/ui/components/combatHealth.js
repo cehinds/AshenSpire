@@ -130,3 +130,41 @@ export function ApplyPoiseBonus(meter, view) {
   }
   meter.setAttribute('aria-label', t('combat.protection.poiseBonusAria', { value: view.shown, max: view.base, bonus: view.bonus }));
 }
+
+/**
+ * Draws the Ward health buffer on an HP meter (owner, 2026-11-24): the number reads "hp/maxHp" followed by "+N" in purple,
+ * and the Ward part of the bar is a purple segment immediately after current HP. Idempotent.
+ */
+export function ApplyHealthWard(meter, view) {
+  if (!meter || !view) return;
+  meter.dataset.wardBonus = String(view.ward);
+  const fill = meter.querySelector('.m-fill');
+  if (fill) setStyle(fill, 'width', `${view.hpPct}%`);
+  const track = meter.querySelector('.m-track');
+  if (track && view.totalMax > 0) {
+    let seg = track.querySelector('.m-ward-seg');
+    if (!seg) {
+      seg = document.createElement('span');
+      seg.className = 'm-ward-seg';
+      seg.setAttribute('aria-hidden', 'true');
+      track.append(seg);
+    }
+    const from = `${view.wardFromPct}%`, width = `${view.wardWidthPct}%`;
+    seg.dataset.from = from;
+    seg.dataset.width = width;
+    seg.style.setProperty('--ward-from', from);
+    seg.style.setProperty('--ward-width', width);
+  }
+  const value = meter.querySelector('.m-value');
+  const label = t('combat.protection.hpWardAria', { hp: view.hp, maxHp: view.maxHp, ward: view.ward });
+  if (value) {
+    value.textContent = `${view.hp}/${view.maxHp}`;
+    const extra = document.createElement('span');
+    extra.className = 'm-ward-bonus';
+    extra.textContent = ` +${view.ward}`;
+    value.append(extra);
+    setAttr(value, 'aria-label', label);
+    setData(value, 'currentHp', String(view.hp));
+  }
+  setAttr(meter, 'aria-label', label);
+}

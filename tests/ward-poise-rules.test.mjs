@@ -1,11 +1,12 @@
-// Owner ruling 2026-11-18 section 20 (Ward): each Ward stack adds +5 max Poise (and that much current Poise); while a character holds Ward a hit
-// goes Block, then Poise absorbs 100% until it is 0, then HP. Ward loses 1 stack (ward.decayPerTurn) at the start of its holder's turn, and the
-// +5 max Poise leaves with it. When Poise reaches 0 every Ward stack is removed. Without Ward the post-Block split is 25/75 (Force 50/50).
+// Owner ruling 2026-11-24 (Ward health buffer): each Ward stack adds +5 Ward HP (`ward.hpPerStack`) on the health bar.
+// Damage order: Block > Ward > Poise + Health. Ward loses 1 stack (5 Ward HP) at the start of its holder's turn, and is
+// independent of Poise break. Legacy fights saved with `ward.routing: "blockFirst"` retain their saved behavior.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fight, play } from './elementFixture.mjs';
+import { fight } from './elementFixture.mjs';
 import * as Statuses from '../src/engine/statuses.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { applyAttackDamage } from '../src/engine/actions.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 const FORCE = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane' }, tags: ['school:force'] };
@@ -14,83 +15,102 @@ const hit = (combat, target, carrier, base = 20) => profileDamageReceipt(combat,
 const ward = (combat, entity, stacks) => Statuses.applyStatus(combat, entity, 'ward', stacks, entity);
 const nextTurnStart = (combat, entity) => { entity.fixCoreDecayRound = -1; Statuses.decayAtTurnStart(combat, entity); };
 
-test('Ward is configured as +5 max Poise per stack, losing 1 stack per turn, and breaking at 0 Poise', () => {
-  assert.equal(fixCoreMechanics.ward.poisePerStack, 5);
+test('Ward is configured as +5 Ward HP per stack, hpBuffer routing, losing 1 stack per turn', () => {
+  assert.equal(fixCoreMechanics.ward.hpPerStack, 5);
+  assert.equal(fixCoreMechanics.ward.routing, 'hpBuffer');
   assert.equal(fixCoreMechanics.ward.decayPerTurn, 1);
-  assert.equal(fixCoreMechanics.ward.breaksAtZeroPoise, true);
-  assert.equal(fixCoreMechanics.ward.routing, 'blockFirst');
+  assert.equal(fixCoreMechanics.ward.breaksAtZeroPoise, undefined);
 });
 
-test('2 Ward = +10 max Poise; at the holder\'s next turn start 1 stack and +5 remain, then none and base Poise returns', () => {
-  // Use a class without a Ward-granting staff: this assertion isolates Ward's own decay.
+test('2 Ward = 10 Ward HP (Poise untouched); at turn start 1 stack (5 Ward HP) remains, then 0', () => {
   const { combat, player } = fight({ classId: 'reaver', enemies: 1 });
-  const base = player.persistentPoise.max;
+  const basePoise = player.persistentPoise.max;
   ward(combat, player, 2);
-  assert.equal(player.persistentPoise.max, base + 10, '+5 per stack');
-  assert.equal(player.persistentPoise.value, base + 10, 'and that much current Poise');
+  assert.equal(player.wardHp, 10, '+5 Ward HP per stack');
+  assert.equal(player.statuses.ward.stacks, 2);
+  assert.equal(player.persistentPoise.max, basePoise, 'Poise max unchanged');
+  assert.equal(player.persistentPoise.value, basePoise, 'Poise value unchanged');
   nextTurnStart(combat, player);
-  assert.equal(player.statuses.ward.stacks, 1, 'only 1 stack decays');
-  assert.equal(player.persistentPoise.max, base + 5, 'its +5 max Poise leaves with it');
-  assert.equal(player.persistentPoise.value, base + 5, 'current Poise is clamped to the new maximum');
+  assert.equal(player.statuses.ward.stacks, 1, '1 stack decayed');
+  assert.equal(player.wardHp, 5, '5 Ward HP remains');
   nextTurnStart(combat, player);
   assert.equal(player.statuses.ward, undefined);
-  assert.equal(player.persistentPoise.max, base, 'max Poise is back to base');
-  assert.equal(player.persistentPoise.value, base);
+  assert.equal(player.wardHp, undefined);
 });
 
-test('a hit on a Ward holder goes Block, then Poise absorbs 100% until it is 0, then HP', () => {
-  const { combat, enemy } = fight({ enemies: 1, poise: 0 });
-  enemy.block = 4;
-  ward(combat, enemy, 1);
-  enemy.persistentPoise.value = 8; // 3 held plus the Ward's +5
-  const receipt = hit(combat, enemy, BLUNT);
-  const incoming = receipt.damageReceipt.hits[0].incoming;
-  assert.equal(receipt.wardBlockFirst, true);
-  assert.equal(receipt.blocked, 4, 'Block first');
-  assert.equal(receipt.poiseMitigated, Math.min(8, incoming - 4), 'Poise absorbs the whole rest, 1:1, up to what it holds');
-  assert.equal(receipt.hpLoss, Math.max(0, incoming - 4 - 8), 'only what Poise cannot hold reaches HP');
-});
-
-test('a Force hit on a Ward holder is also 100% Poise after Block (Ward overrides the 50/50)', () => {
+test('order Block > Ward > Poise + Health: Block absorbs first, Ward absorbs 1:1 before Poise + HP, overflow splits', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 40 });
-  ward(combat, enemy, 1);
-  const receipt = hit(combat, enemy, FORCE);
-  assert.equal(receipt.wardBlockFirst, true);
-  assert.equal(receipt.hpLoss, 0);
-  assert.equal(receipt.poiseMitigated, receipt.damageReceipt.hits[0].incoming);
+  delete combat.player.combatStance;
+  delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
+  enemy.block = 4;
+  ward(combat, enemy, 1); // 5 Ward HP
+  const receipt = hit(combat, enemy, BLUNT, 30); // base 30 -> 15 -> 18 with Attack stance (1.2x)
+  const incoming = receipt.damageReceipt.hits[0].incoming;
+  assert.equal(incoming, 18);
+  assert.equal(receipt.wardHpBuffer, true);
+  assert.equal(receipt.blocked, 4, 'Block first (18 -> 14)');
+  assert.equal(receipt.wardHpAbsorbed, 5, 'Ward second (14 -> 9)');
+  assert.equal(receipt.poiseMitigated + receipt.hpLoss, 9, 'all 9 overflow goes to Poise + HP');
+  assert.ok(receipt.poiseMitigated > 0 && receipt.hpLoss > 0, 'overflow splits between Poise and HP');
 });
 
-test('a hit that empties Poise strips every Ward stack and its max Poise; the next hit goes Block then the normal 25/75 (Force 50/50)', () => {
+test('Ward completely absorbing post-Block damage leaves Poise and HP untouched', () => {
+  const { combat, enemy } = fight({ enemies: 1, poise: 40 });
+  delete combat.player.combatStance;
+  delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
+  enemy.block = 4;
+  ward(combat, enemy, 2); // 10 Ward HP
+  const poiseBefore = enemy.persistentPoise.value;
+  enemy.hp = enemy.maxHp = 100;
+  applyAttackDamage(combat, combat.player, enemy, 20, [], { ...BLUNT, skipRatingBonus: true }); // 12 incoming: 4 Block, 8 Ward
+  assert.equal(enemy.block, 0);
+  assert.equal(enemy.wardHp, 2, '10 - 8 absorbed = 2 Ward HP remaining');
+  assert.equal(enemy.statuses.ward.stacks, 1, 'ceil(2/5) = 1 stack');
+  assert.equal(enemy.persistentPoise.value, poiseBefore, 'Poise untouched');
+  assert.equal(enemy.hp, 100, 'HP untouched');
+});
+
+test('a Force hit on a Ward holder also meets Block > Ward > Poise + Health (overflow splits 50/50)', () => {
+  const { combat, enemy } = fight({ enemies: 1, poise: 40 });
+  delete enemy.combatStance;
+  enemy.block = 2;
+  ward(combat, enemy, 1); // 5 Ward HP
+  const receipt = hit(combat, enemy, FORCE, 30); // 15 incoming -> 2 Block -> 5 Ward -> 8 overflow (50/50)
+  assert.equal(receipt.wardHpBuffer, true);
+  assert.equal(receipt.blocked, 2);
+  assert.equal(receipt.wardHpAbsorbed, 5);
+  assert.equal(receipt.poiseMitigated, 4);
+  assert.equal(receipt.hpLoss, 4);
+});
+
+test('emptying Poise does NOT strip Ward (Ward is independent of Poise break)', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 0 });
-  ward(combat, enemy, 3);
-  const base = enemy.persistentPoise.max - 15;
-  assert.equal(enemy.persistentPoise.barrierBonus, 15, '+5 per stack');
-  enemy.persistentPoise.value = 4;
-  play(combat, 'cometFragment', enemy.id);
-  assert.equal(enemy.statuses.ward, undefined, 'every Ward stack is gone');
-  assert.equal(enemy.persistentPoise.barrierBonus || 0, 0);
-  assert.equal(enemy.persistentPoise.max, base, 'the +15 max Poise went with it');
-  assert.equal(enemy.persistentPoise.value, 0);
-  // Poise refilled, no Ward: the next hit meets Block, then the plain split.
-  enemy.persistentPoise.value = 40; enemy.persistentPoise.max = 40; enemy.broken = false; enemy.block = 3;
-  const blunt = hit(combat, enemy, BLUNT);
-  assert.equal(blunt.wardRouted, undefined);
-  const leftBlunt = blunt.damageReceipt.hits[0].incoming - 3;
-  assert.equal(blunt.blocked, 3);
-  assert.equal(blunt.hpLoss, Math.floor(leftBlunt * 0.75), '75% to HP');
-  const force = hit(combat, enemy, FORCE);
-  const leftForce = force.damageReceipt.hits[0].incoming - 3;
-  assert.equal(force.poiseMitigated, leftForce - Math.floor(leftForce * 0.5), '50% to Poise');
-  assert.equal(force.hpLoss, Math.floor(leftForce * 0.5), '50% to HP');
+  delete enemy.combatStance;
+  enemy.persistentPoise.value = 1;
+  enemy.persistentPoise.max = 10;
+  ward(combat, enemy, 2); // 10 Ward HP
+  enemy.hp = enemy.maxHp = 100;
+  // Deal 20 (10 incoming): 10 Ward absorbs all 10; Poise stays 1.
+  applyAttackDamage(combat, combat.player, enemy, 20, [], { ...BLUNT, skipRatingBonus: true });
+  assert.equal(enemy.wardHp, undefined);
+  assert.equal(enemy.statuses.ward, undefined);
+  // Now re-apply Ward, then break Poise with a second hit that overflows Ward
+  ward(combat, enemy, 1); // 5 Ward HP
+  enemy.persistentPoise.value = 1;
+  applyAttackDamage(combat, combat.player, enemy, 30, [], { ...BLUNT, skipRatingBonus: true }); // 15 incoming -> 5 Ward -> 10 overflow -> breaks Poise
+  assert.ok(enemy.broken);
+  // Re-apply Ward while Broken: Ward stays intact
+  ward(combat, enemy, 1);
+  assert.equal(enemy.wardHp, 5);
+  assert.equal(enemy.statuses.ward.stacks, 1);
 });
 
-test('the Ward tooltip reads its numbers from config and says Ward breaks at 0 Poise', () => {
+test('the Ward tooltip reads its numbers from config and describes the health buffer', () => {
   const { combat } = fight({ enemies: 1 });
   const text = Statuses.statusDefinition(combat, 'ward').tooltip;
-  assert.match(text, /each stack adds 5 maximum and current Poise/);
-  assert.match(text, /Block first, then Poise absorbs the whole rest/);
-  assert.match(text, /Lose 1 Ward at the start of your turn/);
-  assert.match(text, /When your Poise reaches 0, all Ward is lost/);
+  assert.match(text, /each stack adds 5 Ward HP/);
+  assert.match(text, /Block first, then Ward absorbs the rest 1:1 before Poise and HP/);
+  assert.match(text, /Lose 1 stack \(5 Ward HP\) at the start of your turn/);
 });
 
 test('every card that grants Ward carries the Reaction tag (Mote Shield)', () => {

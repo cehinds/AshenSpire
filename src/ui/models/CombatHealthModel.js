@@ -39,6 +39,21 @@ export function PoiseBonusView(pool) {
   return bonus > 0 ? Object.freeze({ base, shown: Math.min(value, base), bonus, max, value }) : null;
 }
 
+/**
+ * Ward health buffer (Owner, 2026-11-24): Ward points sit on the HP bar past current HP (`+N` in purple).
+ * Returns { hp, maxHp, ward, totalMax, hpPct, wardFromPct, wardWidthPct } while wardHp > 0, else null.
+ */
+export function HealthWardView(hp, maxHp, wardHp) {
+  const ward = count(wardHp);
+  if (!(ward > 0)) return null;
+  const curHp = count(hp);
+  const baseMax = Math.max(1, count(maxHp));
+  const totalMax = Math.max(baseMax, curHp + ward);
+  const hpPct = Math.round(1000 * curHp / totalMax) / 10;
+  const wardWidthPct = Math.round(1000 * ward / totalMax) / 10;
+  return Object.freeze({ hp: curHp, maxHp: baseMax, ward, totalMax, hpPct, wardFromPct: hpPct, wardWidthPct });
+}
+
 export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, counterDecay = mechanics.counter.decayPerTurn, enemyCounter = false, reflectStacks = 0 } = {}) {
   const shield = count(defense);
   const arcaneWard = count(ward);

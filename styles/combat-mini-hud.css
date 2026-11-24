@@ -106,6 +106,15 @@
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar[data-bonus] > .m-well { flex: 0 1 var(--mh-bar-w); }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar[data-bonus] > .m-plate.m-plate { flex: 0 0 auto; }
 
+/* Ward health buffer (owner, 2026-11-24): purple segment on the HP bar past current HP, "+N" in purple, and narrow-screen plate fit. */
+:root .combat .combatant .combat-health-meter .m-track > .m-ward-seg {
+  position: absolute; inset-block: 0; left: var(--ward-from, 100%); width: var(--ward-width, 0); background: var(--ward-purple); border-radius: inherit; pointer-events: none;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.35);
+}
+:root .combat .combatant .combat-health-meter .m-value .m-ward-bonus { color: var(--ward-purple); font-weight: 600; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-meter[data-ward-bonus] > .m-well { flex: 0 1 var(--mh-bar-w); }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-meter[data-ward-bonus] > .m-plate.m-plate { flex: 0 0 auto; }
+
 /* The badge row: every badge kind and the status tray, one size, one row. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-badges {
   grid-column: 2; grid-row: 3; display: flex; align-items: center; justify-content: flex-start; flex-wrap: nowrap;

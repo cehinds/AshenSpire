@@ -1,0 +1,35 @@
+{
+  "request": "Ward adds a health buffer instead of a poise buffer: when Ward is added, it adds the points to the health bar and must hit the health bar first before hitting health. Order: Block > Ward > Poise + Health.",
+  "success": "Playing Mote Shield (Ward 1, Barrier 1) renders the purple Ward health-buffer segment (.m-ward-seg) and +5 readout (.m-ward-bonus) on the player's HP bar alongside Bonus Poise (+5) on the Poise bar, with zero console errors and no viewport overflow at 1280x800 and 390x844.",
+  "failure": "No purple Ward segment or +5 readout appears on the HP bar after Mote Shield; Ward status is missing; console errors or layout overflow occur.",
+  "viewports": [
+    { "name": "desktop", "width": 1280, "height": 800 },
+    { "name": "phone", "width": 390, "height": 844 }
+  ],
+  "scenes": [
+    {
+      "name": "ward-on-health-bar",
+      "url": "?shot=combat&shotSeed=2&shotClass=reaver&shotEnemies=wanderingSoldier&shotDeck=core.moteShield,core.defend",
+      "ready": ".hand .card",
+      "settleMs": 1500,
+      "actions": [
+        { "click": ".hand .card[data-card-id=\"core.moteShield\"]" },
+        { "wait": { "ms": 500 } },
+        { "click": ".hand .card[data-card-id=\"core.moteShield\"]" },
+        { "wait": { "ms": 4000 } }
+      ],
+      "success": [
+        { "kind": "visible", "label": "The player holds a Ward status", "selector": ".combatant.player [data-status-id=\"ward\"]" },
+        { "kind": "count", "label": "Purple Ward health-buffer segment is present on the player HP bar", "selector": ".combatant.player .combat-health-meter[data-ward-bonus=\"5\"] .m-ward-seg", "eq": 1 },
+        { "kind": "text", "label": "Player HP bar displays +5 Ward bonus", "selector": ".combatant.player .combat-health-meter .m-ward-bonus", "matches": "\\+5" },
+        { "kind": "text", "label": "Player Poise bar displays +5 Bonus Poise from Barrier only", "selector": ".combatant.player .combat-health-poise-bar .m-bonus", "matches": "\\+5" },
+        { "kind": "within", "label": "Player HP bar stays inside the combat screen", "selector": ".combatant.player .combat-health-meter", "container": ".combat" },
+        { "kind": "within", "label": "The hand stays inside the combat screen", "selector": ".hand", "container": ".combat" },
+        { "kind": "consoleErrors", "label": "No console errors", "max": 0, "ignore": ["Failed to load resource", "navigator\\.vibrate", "status of 404"] }
+      ],
+      "failure": [
+        { "kind": "count", "label": "No Ward segment on player HP bar", "selector": ".combatant.player .combat-health-meter .m-ward-seg", "eq": 0 }
+      ]
+    }
+  ]
+}
