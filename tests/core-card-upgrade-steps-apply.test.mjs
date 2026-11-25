@@ -79,7 +79,7 @@ test('poise and tag steps: poise grows, tags replace their family, retarget and 
   const run = (step) => applyUpgradeSteps(card, [step]);
   assert.equal(run({ k: 'poise', n: 1 }).effects[1].amount, 4);
   const reach = run({ k: 'tag', tag: 'range:reach' });
-  assert.deepEqual(reach.tags, ['camp:physical', 'maneuver:attack', 'targeting:single', 'range:reach']);
+  assert.deepEqual(reach.tags, ['camp:physical', 'maneuver:attack', 'targeting:single', 'range:reach', 'upgrade:tempered']);
   const area = run({ k: 'tag', tag: 'targeting:area', retarget: 'area' });
   assert.equal(area.effects[0].target, 'allEnemies');
   assert.equal(area.effects[0].amount, 6);

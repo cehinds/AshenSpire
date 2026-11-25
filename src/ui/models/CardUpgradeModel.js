@@ -66,6 +66,13 @@ function effectPhrase(registries, def, effect) {
     const key = effect.target === 'randomEnemy' ? 'randomTarget' : 'otherTarget';
     return [key, 0, () => t(`cardUpgrade.fx.${key}`)];
   }
+  if (effect.op === 'heal') {
+    return ['heal', effect.amount, (n) => `Heals ${n ?? ''}`.trim()];
+  }
+  if (effect.op === 'removeStatus') {
+    const st = effect.status || 'weak';
+    return [`cleanse:${st}`, effect.amount ?? 1, (n) => `Cleanses ${n > 1 ? `${n} ` : ''}${statusName(registries, st)}`];
+  }
   return null;
 }
 

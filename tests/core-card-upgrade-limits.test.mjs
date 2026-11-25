@@ -59,7 +59,7 @@ test('a track level alone no longer frees upgrades: only the instance rank does'
 });
 
 test('a Basic card: first upgrade free, second 1 stone, up to the cap of 10 then null', () => {
-  const costs = costSchedule(newRun(), rich);
+  const costs = costSchedule(newRun(), rich, 9);
   assert.deepEqual(costs, [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, null]);
 });
 

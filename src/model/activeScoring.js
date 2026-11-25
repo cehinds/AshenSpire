@@ -59,6 +59,30 @@ export function ValidateScoringConfig(obj) {
       }
     }
   }
+  if (obj.tierUnlocks !== undefined) {
+    const tu = obj.tierUnlocks;
+    if (!tu || typeof tu !== 'object' || Array.isArray(tu)) {
+      errors.push('tierUnlocks must be an object when present.');
+    } else {
+      if (tu.rarityBonus && typeof tu.rarityBonus === 'object') {
+        for (const [r, v] of Object.entries(tu.rarityBonus)) {
+          if (!Number.isFinite(v)) errors.push(`tierUnlocks.rarityBonus.${r} must be a finite number.`);
+        }
+      }
+      if (tu.upgrades && typeof tu.upgrades === 'object') {
+        for (const [k, v] of Object.entries(tu.upgrades)) {
+          if (!Number.isFinite(v) || v < 0) errors.push(`tierUnlocks.upgrades.${k} must be a non-negative number.`);
+        }
+      }
+      if (tu.upgradeTagStacks && typeof tu.upgradeTagStacks === 'object') {
+        for (const [fam, arr] of Object.entries(tu.upgradeTagStacks)) {
+          if (!Array.isArray(arr) || arr.some((v) => !Number.isFinite(v) || v < 0)) {
+            errors.push(`tierUnlocks.upgradeTagStacks.${fam} must be an array of non-negative numbers.`);
+          }
+        }
+      }
+    }
+  }
   // naming.card.limit and naming.item.limit are optional (no block, or no maxChars, = no limit): {maxChars: whole number >= 1, keep: name parts, most important first}.
   for (const kind of ['card', 'item']) {
     const limit = obj.naming?.[kind]?.limit;

@@ -40,7 +40,8 @@ test('every fx kind applies, validates, and an unknown one is refused', () => {
   const steps = [
     { k: 'fx', fx: 'block', n: 4 }, { k: 'fx', fx: 'draw', n: 1 }, { k: 'fx', fx: 'cycle', n: 1 }, { k: 'fx', fx: 'cull' }, { k: 'fx', fx: 'copy' },
     { k: 'fx', fx: 'shuffle' }, { k: 'fx', fx: 'retain' }, { k: 'fx', fx: 'innate' }, { k: 'fx', fx: 'holdOne' }, { k: 'fx', fx: 'boost', stat: 'strength', n: 2 },
-    { k: 'fx', fx: 'target' }, { k: 'fx', fx: 'reaction' }, { k: 'fx', fx: 'counter', n: 1 }, { k: 'fx', fx: 'recurring' }];
+    { k: 'fx', fx: 'target' }, { k: 'fx', fx: 'reaction' }, { k: 'fx', fx: 'counter', n: 1 }, { k: 'fx', fx: 'recurring' },
+    { k: 'fx', fx: 'heal', n: 2 }, { k: 'fx', fx: 'cleanse', status: 'weak', n: 1 }];
   // Batch 2: INT / WIS boosts exist, for this turn or the rest of the fight. They are the same kind ('boost'), so the kind count is unchanged.
   const attributeBoosts = [{ k: 'fx', fx: 'boost', stat: 'intelligence', n: 2, until: 'turn' }, { k: 'fx', fx: 'boost', stat: 'wisdom', n: 1, until: 'fight' }];
   // unexhaust, unethereal and steady change nothing on Strike (it has no Exhaust, Ethereal or rising cost); tests/card-cost-balance.test.mjs covers the last two.
@@ -64,7 +65,7 @@ test('every fx kind applies, validates, and an unknown one is refused', () => {
 
 test('a card is only offered what it lacks', () => {
   const run = { seed: 7, level: { level: 10 }, gameProfile: profile, rangePolicy: {} };
-  const fxOf = (cardId, steps = []) => nextUpgradeOptions(run, { instanceId: 'x', cardId, ...(steps.length ? withSteps(steps) : { upgraded: false }) }, registries.cards.get(cardId), registries, 40, { noAuthored: true, everyFamily: true })
+  const fxOf = (cardId, steps = []) => nextUpgradeOptions(run, { instanceId: 'x', cardId, rank: 3, ...(steps.length ? withSteps(steps) : { upgraded: false }) }, registries.cards.get(cardId), registries, 40, { noAuthored: true, everyFamily: true })
     .filter((s) => s.k === 'fx').map((s) => s.fx);
   assert.ok(fxOf('core.strike').includes('block'));
   assert.ok(!fxOf('core.defend').includes('block'), 'Defend already gives Block');
@@ -72,7 +73,7 @@ test('a card is only offered what it lacks', () => {
   assert.ok(fxOf('core.mendingTouch').includes('unexhaust'));
   assert.ok(!fxOf('core.strike', [{ k: 'fx', fx: 'retain' }]).includes('retain'), 'no second Retain');
   assert.ok(!fxOf('core.strike', [{ k: 'fx', fx: 'block', n: 4 }]).includes('block'));
-  const boostStats = (cardId) => nextUpgradeOptions(run, { instanceId: 'x', cardId, upgraded: false }, registries.cards.get(cardId), registries, 40, { noAuthored: true, everyFamily: true })
+  const boostStats = (cardId) => nextUpgradeOptions(run, { instanceId: 'x', cardId, rank: 3, upgraded: false }, registries.cards.get(cardId), registries, 40, { noAuthored: true, everyFamily: true })
     .filter((s) => s.k === 'fx' && s.fx === 'boost').map((s) => s.stat);
   assert.ok(boostStats('core.spark').includes('intelligence'), 'a damaging spell is offered an INT boost');
   assert.ok(!boostStats('core.spark').some((stat) => ['strength', 'dexterity'].includes(stat)), 'a spell is offered INT / WIS boosts, never STR / DEX');

@@ -23,6 +23,7 @@ test('every step of every Core card in the deck, over many seeds, leaves the pla
     const run = newRun(seed); run.smithingStones = 99;
     for (const card of run.deck) {
       if (card.sourceArmamentId || card.grantedBy) continue;
+      card.rank = 3;
       for (let i = 0; i < 6; i += 1) {
         const quote = planCardUpgrade(run, registries, card.instanceId);
         if (!quote.step) break;

@@ -10,6 +10,18 @@ import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { EvaluateUpgradeStepCp } from './cardUpgradeCp.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
+import {
+  EffectiveTier,
+  UpgradeKindUnlocked,
+  UpgradeRarityUnlocked,
+  UpgradeTagStackUnlocked,
+  ZeroCostUnlocked,
+  HybridUnlocked,
+  ElementUnlocked,
+  StatusUnlocked,
+  StatusStackCapAtTier,
+  NumericCeilingAtTier,
+} from './tierUnlocks.js';
 
 export { STACK_CAPS };
 // Owner ask 2026-10-31: poise, a range / targeting / stance / school / element change and a rank-down join the
@@ -20,6 +32,8 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
   'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8, 'fx:counter': 8, 'fx:recurring': 5,
+  // Purified upgrade line (owner, 2026-11-25): healing & cleansing.
+  'fx:heal': 7, 'fx:cleanse': 6,
   // Easing a drawback (playtest 2026-11-17, theme C): offered only on a card that has it, and weighted to come up.
   'fx:unethereal': 12, 'fx:steady': 12,
   // Owner, 2026-11-19: a signed `stk` lowers a drawback's count (self debuff, enemy buff, discard, added status cards); dropped at 0.
@@ -95,7 +109,7 @@ export function UpgradeCategoryOf(kind, option, card) {
   switch (kind) {
     case 'dmg': case 'hits': case 'poise': case 'dmgType': case 'maneuver': case 'range': case 'fx:target': case 'fx:counter': return 'physical';
     case 'blk': case 'fx:block': return spell ? 'magic' : 'physical';
-    case 'element': case 'school': case 'attr': case 'rankDown': return 'magic';
+    case 'element': case 'school': case 'attr': case 'rankDown': case 'fx:heal': case 'fx:cleanse': return 'magic';
     case 'fx:boost': return ['intelligence', 'wisdom'].includes(option?.stat) ? 'magic' : 'physical';
     case 'addStatus': return (option?.statuses || []).some((status) => ['burn', 'vulnerable'].includes(status)) ? 'magic' : 'physical';
     case 'stk': return WARD_STATUSES.includes(option?.status) ? 'magic' : 'neutral';
@@ -111,13 +125,13 @@ export const RarityOfStep = (step) => (UPGRADE_RARITIES.includes(step?.r) ? step
 // How much bigger each rarity makes a sized step (times limits.scale, the rank-up bonus's own x2): damage, Block and Poise x1 / x2 / x4,
 // stacks +1 / +2 / +3, a status added 1 / 2 / 3 stacks, a Block effect x1 / x2 / x3. Every kind's own guard (the +100% cap, the status cap,
 // the cost floors) still limits the size, and a rarity whose size would not beat the one below it is not offered.
-const SIZE_MULT = Object.freeze({ dmg: [1, 2, 4], blk: [1, 2, 4], poise: [1, 2, 4], stk: [1, 2, 3], 'fx:block': [1, 2, 3], element: [1, 2, 4] });
+const SIZE_MULT = Object.freeze({ dmg: [1, 2, 4], blk: [1, 2, 4], poise: [1, 2, 4], stk: [1, 2, 3], 'fx:block': [1, 2, 3], 'fx:heal': [1, 2, 3], element: [1, 2, 4] });
 // The element packet is 75% of the matching damage step, at least this much per rarity (owner, 2026-11-19; proposal section 9).
 const PACKET_MIN = Object.freeze([2, 3, 6]);
 // Kinds with one size: the rarity they sit at is only a placement (proposal section 10 tables).
 const PLACED_AT = Object.freeze({
   'fx:cull': 0, 'fx:copy': 0, 'fx:shuffle': 0, 'fx:counter': 0,
-  'fx:retain': 1, 'fx:innate': 1, 'fx:holdOne': 1, 'fx:reaction': 1, targeting: 1, maneuver: 1, rankDown: 1,
+  'fx:retain': 1, 'fx:innate': 1, 'fx:holdOne': 1, 'fx:reaction': 1, 'fx:cleanse': 1, targeting: 1, maneuver: 1, rankDown: 1,
   range: 2, attr: 2, school: 0, dmgType: 0,
 });
 // The ease kinds: easing a drawback is common; the uncommon version removes it and draws a card, the rare one removes it and takes a rare-size step.
@@ -141,8 +155,8 @@ export const UPGRADE_OPTION_KINDS = Object.freeze(Object.keys(WEIGHTS));
 //   form      how and when the card is played: range, stance, school, damage type, Reaction (a play in the enemy's turn), a run attribute
 export const UPGRADE_FAMILIES = Object.freeze({
   damage: Object.freeze(['dmg', 'hits', 'targeting', 'element', 'fx:target']),
-  defense: Object.freeze(['blk', 'fx:block', 'fx:counter']),
-  pressure: Object.freeze(['stk', 'stkEase', 'addStatus', 'poise']),
+  defense: Object.freeze(['blk', 'fx:block', 'fx:counter', 'fx:heal']),
+  pressure: Object.freeze(['stk', 'stkEase', 'addStatus', 'poise', 'fx:cleanse']),
   cost: Object.freeze(['cost', 'costSwap', 'fx:steady', 'rankDown']),
   flow: Object.freeze(['fx:draw', 'fx:cycle', 'fx:shuffle', 'fx:cull', 'fx:copy']),
   keyword: Object.freeze(['fx:unexhaust', 'fx:innate', 'fx:retain', 'fx:holdOne', 'fx:unethereal']),
@@ -220,31 +234,45 @@ const biggest = (plain, scale, ok) => {
 };
 
 // `rarity` (0 common, 1 uncommon, 2 rare) is the size tier this call builds: the options it returns are the ones the card can take at it.
-function options(base, current, applied, limits, rarity = 0) {
+function resolveEffectiveTier(base, current, limits, scoring) {
+  if (limits.tierUnlocks === false) return Infinity;
+  if (Number.isFinite(limits.tier)) return Math.max(0, Math.floor(limits.tier));
+  if (Number.isFinite(limits.cardRank)) {
+    const rarity = limits.instance?.rarityOverride || current.rarity || base.rarity || 'common';
+    return EffectiveTier(limits.cardRank, rarity, scoring);
+  }
+  return Infinity;
+}
+
+function options(base, current, applied, limits, rarity = 0, scoring = GetActiveScoring()) {
   const type = base.type;
   const scale = Number.isFinite(limits.scale) ? limits.scale : 1;
   const sized = (kind) => scale * SIZE_MULT[kind][rarity];
   const restricted = RESTRICTED_TYPES.has(type);
   const found = {};
+  const tier = resolveEffectiveTier(base, current, limits, scoring);
+  const tierGated = Number.isFinite(tier);
 
   // cost: each cost reduction adds 1 Efficient stack (Efficient / Efficient+ / Efficient+2, max 3 stacks, doubling CP surcharge 10/20/40).
   const efficientStacks = upgradeTagStacks(current, 'efficient');
-  const maxEffStacks = GetActiveScoring()?.upgradeTags?.efficient?.maxStacks ?? MAX_UPGRADE_TAG_STACKS;
-  if (efficientStacks < maxEffStacks) {
+  const maxEffStacks = scoring?.upgradeTags?.efficient?.maxStacks ?? MAX_UPGRADE_TAG_STACKS;
+  const minCostFloor = tierGated && !ZeroCostUnlocked(tier, scoring) ? 1 : 0;
+  if (efficientStacks < maxEffStacks && (!tierGated || UpgradeTagStackUnlocked('efficient', efficientStacks + 1, tier, scoring))) {
     const pools = [];
     const by = {};
     if (Number.isInteger(current.staminaCost) && current.cost === current.staminaCost) {
-      const floor = hitFloor(current, currentHits(current.effects || []));
-      if (current.staminaCost - 1 >= 0 && current.cost - 1 >= 0 && floor <= current.staminaCost - 1) {
+      const floor = Math.max(minCostFloor, hitFloor(current, currentHits(current.effects || [])));
+      if (current.staminaCost - 1 >= floor && current.cost - 1 >= minCostFloor) {
         by.sp = 1;
         pools.push('sp');
       }
     }
-    if (Number.isInteger(current.manaCost) && current.manaCost - 1 >= 0) {
+    if (Number.isInteger(current.manaCost) && current.manaCost - 1 >= minCostFloor) {
       by.mp = 1;
       pools.push('mp');
     }
-    if (rarity === 1 && by.sp && by.mp && efficientStacks + 2 <= maxEffStacks) {
+    if (rarity === 1 && by.sp && by.mp && efficientStacks + 2 <= maxEffStacks
+      && (!tierGated || UpgradeTagStackUnlocked('efficient', efficientStacks + 2, tier, scoring))) {
       found.cost = { combo: ['sp', 'mp'] };
     } else if (rarity === 0 && pools.length) {
       found.cost = { pools, by };
@@ -271,18 +299,25 @@ function options(base, current, applied, limits, rarity = 0) {
   // return: a range, area, damage, hits or poise step could never be honoured, so none of them is offered.
   const counterReturn = familyValue(tagsOf(current), 'maneuver:') === 'counter';
   const improvedStacks = upgradeTagStacks(current, 'improved');
-  const impRule = GetActiveScoring()?.upgradeTags?.improved;
+  const impRule = scoring?.upgradeTags?.improved;
   const maxImpStacks = impRule?.maxStacks ?? MAX_UPGRADE_TAG_STACKS;
   const impMult = Number.isFinite(impRule?.effectMultPerStack) && impRule.effectMultPerStack > 1 ? impRule.effectMultPerStack : 1.1;
+  let maxAllowedImpStacks = maxImpStacks;
+  if (tierGated) {
+    maxAllowedImpStacks = 0;
+    for (let s = 1; s <= maxImpStacks; s += 1) {
+      if (UpgradeTagStackUnlocked('improved', s, tier, scoring)) maxAllowedImpStacks = s;
+    }
+  }
   const improvedDeltaFor = (baseAmount, curAmount) => {
-    const addStacks = Math.min(rarity + 1, maxImpStacks - improvedStacks);
+    const addStacks = Math.min(rarity + 1, maxAllowedImpStacks - improvedStacks);
     if (addStacks <= 0 || baseAmount <= 0) return null;
     const targetAmount = improvedScaledAmount(baseAmount, improvedStacks + addStacks, impMult);
     const delta = Math.max(addStacks, targetAmount - curAmount);
     return delta > 0 ? { n: delta, improvedStacks: addStacks } : null;
   };
   const dmgIndex = firstPlainIndex(effects, 'damage');
-  // Compounding 10% Improved scaling (1.10^1, 1.10^2, 1.10^3) capped at maxImpStacks and the +100% total-damage guard.
+  // Compounding 10% Improved scaling (1.10^1, 1.10^2, 1.10^3) capped at maxImpStacks, tier ceiling, and the +100% total-damage guard.
   if (!counterReturn && dmgIndex >= 0 && hitsAnEnemy(effects[dmgIndex])) {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const curTotal = totalOf(effects, 'damage');
@@ -290,7 +325,9 @@ function options(base, current, applied, limits, rarity = 0) {
     const basePerHit = (baseEffects[dmgIndex]?.op === 'damage' ? baseEffects[dmgIndex].amount : effects[dmgIndex].amount) || 1;
     const hitRes = improvedDeltaFor(basePerHit, effects[dmgIndex].amount);
     if (hitRes) {
-      const maxDelta = Math.floor((baseTotal * 2 - curTotal) / Math.max(1, hits));
+      const tierCeiling = tierGated ? NumericCeilingAtTier('damage', tier, scoring) : Infinity;
+      const maxTotal = Math.min(baseTotal * 2, tierCeiling);
+      const maxDelta = Math.floor((maxTotal - curTotal) / Math.max(1, hits));
       const clamped = Math.min(hitRes.n, maxDelta);
       if (clamped >= 1) found.dmg = { ...hitRes, n: clamped };
     }
@@ -301,7 +338,9 @@ function options(base, current, applied, limits, rarity = 0) {
     const baseTotal = totalOf(baseEffects, 'block');
     const blkRes = improvedDeltaFor(baseTotal, effects[blkIndex].amount);
     if (blkRes) {
-      const maxDelta = Math.max(0, baseTotal * 2 - effects[blkIndex].amount);
+      const tierCeiling = tierGated ? NumericCeilingAtTier('block', tier, scoring) : Infinity;
+      const maxTotal = Math.min(baseTotal * 2, tierCeiling);
+      const maxDelta = Math.max(0, maxTotal - effects[blkIndex].amount);
       const clamped = Math.min(blkRes.n, maxDelta);
       if (clamped >= 1) found.blk = { ...blkRes, n: clamped };
     }
@@ -313,19 +352,28 @@ function options(base, current, applied, limits, rarity = 0) {
     const shown = rank > 1 ? { ...card, effects: rankedEffectsCapped(card, rank - 1) } : card;
     return (shown.effects || []).find((e) => isPlainStatus(e) && e.status === status)?.stacks;
   };
+  const effectiveStatusCap = (status) => {
+    const baseCap = stackCap(status, current);
+    if (!tierGated) return baseCap;
+    const tierCap = StatusStackCapAtTier(status, tier, scoring);
+    if (baseCap === undefined) return Number.isFinite(tierCap) ? tierCap : undefined;
+    return Math.min(baseCap, tierCap);
+  };
   const seenStatus = new Set();
   const stackable = effects.find((e) => {
     if (!isPlainStatus(e) || isDrawbackStatus(e) || seenStatus.has(e.status)) return false;
     seenStatus.add(e.status);
-    const cap = stackCap(e.status, current);
+    if (tierGated && !StatusUnlocked(e.status, tier, scoring)) return false;
+    const cap = effectiveStatusCap(e.status);
     if (cap === undefined || e.stacks + 1 > cap) return false;
     const stepped = applyUpgradeSteps(base, [...applied, { k: 'stk', status: e.status, n: 1 }]);
     return finalStacks(stepped, e.status) > finalStacks(current, e.status);
   });
   if (stackable) {
-    const n = biggest(1, sized('stk'), (k) => stackable.stacks + k <= stackCap(stackable.status, current)
+    const cap = effectiveStatusCap(stackable.status);
+    const n = biggest(1, sized('stk'), (k) => stackable.stacks + k <= cap
       && finalStacks(applyUpgradeSteps(base, [...applied, { k: 'stk', status: stackable.status, n: k }]), stackable.status) > finalStacks(current, stackable.status));
-    found.stk = { status: stackable.status, n };
+    if (n) found.stk = { status: stackable.status, n };
   }
 
   if (!effects.some((e) => e.op === 'applyStatus') && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
@@ -333,8 +381,13 @@ function options(base, current, applied, limits, rarity = 0) {
     // mechanics generator does not take this file for the tag's reader).
     const camp = ((base.tags || []).find((tag) => tag.startsWith('camp:')) || '').slice(5);
     const school = base.damageSchool === 'magic' || camp === 'spell' ? 'spell' : base.damageSchool === 'physical' || camp === 'physical' ? 'physical' : '';
-    if (school === 'spell') found.addStatus = { statuses: ['burn', 'vulnerable'], stacks: rarity + 1 };
-    else if (school === 'physical') found.addStatus = { statuses: ['bleed', 'weak'], stacks: rarity + 1 };
+    const rawStatuses = school === 'spell' ? ['burn', 'vulnerable'] : school === 'physical' ? ['bleed', 'weak'] : [];
+    const unlockedStatuses = tierGated ? rawStatuses.filter((s) => StatusUnlocked(s, tier, scoring)) : rawStatuses;
+    if (unlockedStatuses.length) {
+      const cap = tierGated ? Math.min(...unlockedStatuses.map((s) => StatusStackCapAtTier(s, tier, scoring))) : Infinity;
+      const stacks = Math.min(rarity + 1, cap);
+      if (stacks >= 1) found.addStatus = { statuses: unlockedStatuses, stacks };
+    }
   }
 
   if (!counterReturn && dmgIndex >= 0 && !applied.some((s) => s.k === 'hits') && !effects.some((e) => e.op === 'damage' && hitsOf(e) > 1)
@@ -347,7 +400,7 @@ function options(base, current, applied, limits, rarity = 0) {
     const counts = [rarity === 2 ? 3 : 2].filter((hits) => rarity !== 1 && hits <= 3 && per * hits - baseTotal <= baseTotal && per * hits > amount && hitFloor(current, hits) <= sp);
     if (counts.length) found.hits = { per, counts };
   }
-  addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn, rarity);
+  addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn, rarity, tier, scoring);
   addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity, scale);
   addDrawbackEase(base, current, found);
   if (!counterReturn && isSpellCard(current) && !applied.some((s) => s.k === 'attr')) found.attr = { stats: RUN_ATTRIBUTE_STATS };
@@ -407,6 +460,10 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn, rarity = 
   if (!tags.includes('trait:reaction') && !['defend', 'counter'].includes(maneuver) && !tags.includes('maneuver:defend') && !tags.includes('maneuver:counter') && current.cost !== 'X' && base.cost !== 'X') set('reaction');
   const hasSelfBuff = effects.some((e) => e && e.target === 'self' && (e.op === 'changeAttribute' || (e.op === 'applyStatus' && !SELF_DEBUFFS.includes(e.status))));
   if (hasSelfBuff && !tags.includes('trait:recurring')) set('recurring');
+  // Purified upgrade line (owner, 2026-11-25): healing & cleansing.
+  const curHeal = effects.filter((e) => isPlainEffect(e, 'heal')).reduce((sum, e) => sum + e.amount, 0);
+  if (!counterReturn && maneuver !== 'counter' && curHeal < 12) set('heal', { n: 2 * SIZE_MULT['fx:heal'][rarity] });
+  if (!counterReturn && !hasOp(effects, 'removeStatus')) set('cleanse', { status: 'weak', n: 1 });
 }
 
 /** Ethereal and a rising cost (both `fx` steps) and the signed `stk` (proposal section 7) lower what a card's drawback costs. */
@@ -441,7 +498,7 @@ const basicDef = (def) => {
 };
 
 /** The identity-change options (poise, range, targeting, stance, school, element, rank-down) for a non-restricted card. */
-function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, counterReturn = false, rarity = 0) {
+function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, counterReturn = false, rarity = 0, tier = Infinity, scoring = GetActiveScoring()) {
   const effects = current.effects || [];
   const tags = tagsOf(current);
   const camp = familyValue(tags, 'camp:');
@@ -503,14 +560,17 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   // A card with an authored `attack` block (typed components) keeps its own mix: no packet is offered there.
   if (hitsEnemy && !counterReturn && camp !== 'spell' && !current.attack && isPlainEffect(effects[dmgIndex], 'damage')) {
     const held = HoldsPacket(current);
-    if (held || (current.damageSchool === 'physical' && !tagged((s) => s.damageSchool))) {
+    const tierGated = Number.isFinite(tier);
+    if ((held || (current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)))
+      && (!tierGated || held || HybridUnlocked(tier, scoring))) {
       const baseTotal = totalOf(base.effects || [], 'damage') || totalOf(effects, 'damage');
       const hits = hitsOf(effects[dmgIndex]);
       const step = Math.max(2, Math.ceil(baseTotal * 0.15)) * SIZE_MULT.dmg[rarity];
       const lift = Number.isFinite(limits.scale) && limits.scale > 1 ? limits.scale : 1;
       let n = Math.round(Math.max(PACKET_MIN[rarity], Math.ceil(step * 0.75)) * lift);
       while (n >= 2 && (effects[dmgIndex].amount + n) * hits - baseTotal > baseTotal) n -= 1;
-      if (n >= 2) found.element = { schools: held ? [current.damageSchool] : UPGRADE_ELEMENTS, n, ...(held ? {} : { exposure: limits.exposure }) };
+      const schools = held ? [current.damageSchool] : (tierGated ? UPGRADE_ELEMENTS.filter((el) => ElementUnlocked(el, tier, scoring)) : UPGRADE_ELEMENTS);
+      if (n >= 2 && schools.length) found.element = { schools, n, ...(held ? {} : { exposure: limits.exposure }) };
     }
   }
   // a card that pays no Stamina (the 0 SP / 0 MP zero-cost cards) would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
@@ -526,15 +586,18 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
  * offers two rarities of one number; a placed kind (one size) shows at its own rarity only. An ease option is common as is,
  * uncommon as a combo of the ease and a draw, and rare as a combo of the ease and a rare-size step the card can take.
  */
-function optionsByRarity(base, current, applied, limits) {
-  const per = [0, 1, 2].map((rarity) => options(base, current, applied, limits, rarity));
+const TEMPERED_KINDS = new Set(['hits', 'poise', 'fx:block', 'fx:counter', 'range', 'targeting', 'maneuver', 'element']);
+const PURIFIED_KINDS = new Set(['fx:heal', 'fx:cleanse']);
+
+function optionsByRarity(base, current, applied, limits, scoring = GetActiveScoring()) {
+  const per = [0, 1, 2].map((rarity) => options(base, current, applied, limits, rarity, scoring));
   for (let r = 0; r < 3; r += 1) {
     for (const kind of Object.keys(per[r])) if (kind in PLACED_AT && PLACED_AT[kind] !== r) delete per[r][kind];
     for (const kind of EASE_KINDS) if (r > 0) delete per[r][kind];
   }
   for (let r = 1; r < 3; r += 1) {
     for (const kind of Object.keys(SIZE_MULT)) {
-      const size = (option) => (['stk', 'fx:block', 'dmg', 'blk', 'poise', 'element'].includes(kind) ? option?.n : 0);
+      const size = (option) => (['stk', 'fx:block', 'fx:heal', 'dmg', 'blk', 'poise', 'element'].includes(kind) ? option?.n : 0);
       const below = Math.max(0, ...per.slice(0, r).map((found) => size(found[kind]) || 0));
       if (per[r][kind] && size(per[r][kind]) <= below) delete per[r][kind];
     }
@@ -547,6 +610,34 @@ function optionsByRarity(base, current, applied, limits) {
     if (partner) per[1][kind] = { ...ease, remove: true, also: [{ kind: partner, option: per[0][partner] }] };
     const rare = ['cost', 'dmg', 'blk'].filter((k) => per[2][k]).map((k) => ({ kind: k, option: per[2][k] }));
     if (rare.length) per[2][kind] = { ...ease, remove: true, also: rare };
+  }
+  // Tier unlock gating (owner, 2026-11-25): filter kinds, upgrade rarity sizes, and stacking tag lines
+  // (Improved, Efficient, Refined, Tempered, Purified) by effectiveTier = cardRank + rarityBonus[rarity].
+  // Authored card `upgradeMenu` and graded ability cards' drawback steps keep their authored menus.
+  const tier = resolveEffectiveTier(base, current, limits, scoring);
+  if (Number.isFinite(tier)) {
+    const menu = Array.isArray(base.upgradeMenu) ? base.upgradeMenu : null;
+    const graded = Array.isArray(base.gradeProfiles) && !menu;
+    const refinedStacks = upgradeTagStacks(current, 'refined');
+    const temperedStacks = upgradeTagStacks(current, 'tempered');
+    const purifiedStacks = upgradeTagStacks(current, 'purified');
+    for (let r = 0; r < 3; r += 1) {
+      for (const kind of Object.keys(per[r])) {
+        if (menu?.includes(kind)) continue;
+        if (graded && EASE_KINDS.includes(kind) && r === 0) continue;
+        if (!UpgradeKindUnlocked(kind, tier, scoring)) { delete per[r][kind]; continue; }
+        if (!UpgradeRarityUnlocked(r, tier, scoring) && !(kind in PLACED_AT)) { delete per[r][kind]; continue; }
+        if (EASE_KINDS.includes(kind)) {
+          // Common ease = next Refined stack; uncommon ease = Refined+ (2nd tier); rare ease = Refined+2 (3rd tier)
+          const reqStack = Math.max(refinedStacks + 1, r + 1);
+          if (!UpgradeTagStackUnlocked('refined', reqStack, tier, scoring)) { delete per[r][kind]; continue; }
+        } else if (TEMPERED_KINDS.has(kind)) {
+          if (!UpgradeTagStackUnlocked('tempered', temperedStacks + 1, tier, scoring)) { delete per[r][kind]; continue; }
+        } else if (PURIFIED_KINDS.has(kind)) {
+          if (!UpgradeTagStackUnlocked('purified', purifiedStacks + 1, tier, scoring)) { delete per[r][kind]; continue; }
+        }
+      }
+    }
   }
   return per;
 }
@@ -620,7 +711,8 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   // A combo is two effects in one slot: the checks below (once per card, already tagged) look through it.
   const applied = FlatSteps(appliedSteps);
   const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
-  const perRarity = optionsByRarity(baseDef, current, applied, limits);
+  const activeScoring = limits.scoring || GetActiveScoring();
+  const perRarity = optionsByRarity(baseDef, current, applied, limits, activeScoring);
   // An authored `upgradeMenu` limits the rolled options to the kinds it names (Star Seer's Ethereal: Reaction, drop Ethereal or more Block).
   // A ranked ability card's grade table owns its numbers, so it applies only drawback-removal steps (cardUpgrade.js DrawbackSteps):
   // it is offered only those, at the common size (a combo's second step would be one the grade table ignores), so the offer equals the
@@ -638,7 +730,6 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   // combo never brings back a family already on offer. `optionAt` drops the closed partners; an ease with none left is closed.
   // Memoize CP checks per (r, kind[, also]) within this roll so kindsAt/open do not re-run applyUpgradeSteps + ScoreCard
   // thousands of times across the Blacksmith/Trader/Rest picker (was ~20,000+ calls per card).
-  const activeScoring = limits.playerLevel != null ? GetActiveScoring() : null;
   const cpCache = new Map();
   const cpCheck = (r, kind, opt, cacheKey) => {
     if (!opt || limits.playerLevel == null) return opt;
