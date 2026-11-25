@@ -105,7 +105,8 @@ test('a cast cantrip deals its halved damage, and the hit meets Poise before HP'
   const { combat } = live('starseer');
   const target = combat.enemies[0];
   target.hp = target.maxHp = 500; target.block = 0;
-  assert.ok(target.poiseMeter.max > 0, 'the target has Poise');
+  target.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  assert.ok(target.persistentPoise.value > 0, 'the Countering target has Poise');
   combat.piles.hand.push({ cardId: 'core.cantrip', instanceId: 'c1', upgraded: false });
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c1', targetId: target.id });
   const dealt = out.events.find(event => event.type === 'damageDealt');
@@ -122,6 +123,7 @@ import { applyStatus } from '../src/engine/statuses.js';
 const poiseOf = combat => ({ ...combat.player.persistentPoise });
 const enemyHit = combat => {
   combat.enemies[0].intentRevealed = false;
+  dispatch(combat, { type: 'setReactions', enabled: false });
   const hp = combat.player.hp;
   const out = dispatch(combat, { type: 'endTurn' });
   return { out, lost: hp - combat.player.hp, dealt: out.events.find(event => event.type === 'damageDealt' && event.targetId === 'player') };
@@ -171,6 +173,7 @@ test('Mote Shield (Ward 1 and Barrier 1) raises Poise by 5 and Ward HP by 5; Hal
 test('while the holder has Barrier, a hit meets Poise; while the holder has Ward, Ward absorbs before Poise + HP', () => {
   const { combat: bCombat } = live('starseer');
   bCombat.player.block = 0;
+  bCombat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   applyStatus(bCombat, bCombat.player, 'barrier', 3, null);
   const poise = poiseOf(bCombat).value;
   const bRes = enemyHit(bCombat);
