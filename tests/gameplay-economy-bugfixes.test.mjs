@@ -9,7 +9,7 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { WeaponPoiseDamage } from '../src/model/weaponPoise.js';
 import { ReceiptPoiseLoss } from '../src/model/fixCoreMechanics.js';
 import { ChangeAttribute, RecomputeLiveStats } from '../src/engine/liveStats.js';
-import { isFinesseHit, sourceWeaponHasTag } from '../src/model/combatRatings.js';
+import { IsFinesseHit, SourceWeaponHasTag } from '../src/model/combatRatings.js';
 import { ScoreItem, RankOf } from '../src/model/combatPower.js';
 import { ItemRankOf, ItemRankBadge } from '../src/model/itemRank.js';
 import { equipmentCardModel } from '../src/model/equipmentCard.js';
@@ -20,7 +20,7 @@ import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 import { EvaluateUpgradeStepCp } from '../src/model/cardUpgradeCp.js';
 import { RankUpCardRows } from '../src/ui/components/rankUpCardModal.js';
 import { RankUpUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
-import { attributePointsEarnedBetween, awardLevelXp } from '../src/model/levelup.js';
+import { AttributePointsEarnedBetween, awardLevelXp } from '../src/model/levelup.js';
 import { ShopOpensDeckEditor, RestOpensDeckEditor } from '../src/model/armouryRules.js';
 import { createRegistries } from '../src/model/registries.js';
 import { projectGameCard } from '../src/model/gameProfile.js';
@@ -90,9 +90,9 @@ test('2. Finesse switches STR->DEX (weapons except Smash; card-level finesse onl
 
   const strike = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'piercing' }, tags: ['camp:physical', 'maneuver:attack'] };
   const smash = { combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'piercing' }, tags: ['camp:physical', 'maneuver:smash'] };
-  assert.equal(sourceWeaponHasTag(combat, player, strike, 'finesse'), true, 'dagger has finesse tag');
-  assert.equal(isFinesseHit(combat, player, strike, 'ar'), true, 'finesse weapon uses DEX on attack');
-  assert.equal(isFinesseHit(combat, player, smash, 'ar'), false, 'finesse weapon does NOT use DEX on Smash');
+  assert.equal(SourceWeaponHasTag(combat, player, strike, 'finesse'), true, 'dagger has finesse tag');
+  assert.equal(IsFinesseHit(combat, player, strike, 'ar'), true, 'finesse weapon uses DEX on attack');
+  assert.equal(IsFinesseHit(combat, player, smash, 'ar'), false, 'finesse weapon does NOT use DEX on Smash');
 
   const strikeHit = profileDamageReceipt(combat, player, enemy, 10, strike, { roll: 0 }).raw;
   const smashHit = profileDamageReceipt(combat, player, enemy, 10, smash, { roll: 0 }).raw;
@@ -100,9 +100,9 @@ test('2. Finesse switches STR->DEX (weapons except Smash; card-level finesse onl
 
   // Non-finesse weapon + finesse-tagged card
   combat.loadout.sets.rightHand = ['straightSword'];
-  assert.equal(isFinesseHit(combat, player, strike, 'ar'), false);
+  assert.equal(IsFinesseHit(combat, player, strike, 'ar'), false);
   const finesseCard = { ...strike, tags: ['camp:physical', 'maneuver:attack', 'finesse'] };
-  assert.equal(isFinesseHit(combat, player, finesseCard, 'ar'), true, 'finesse tag on card uses DEX');
+  assert.equal(IsFinesseHit(combat, player, finesseCard, 'ar'), true, 'finesse tag on card uses DEX');
 
   // dexDamage strictly adds DEX to existing damage
   const deftCard = { ...strike, tags: ['camp:physical', 'maneuver:attack', 'dexDamage'] };
@@ -209,14 +209,14 @@ test('12. Owned cards, armors, and relics excluded from rewards and shop pools',
 });
 
 test('13. Leveling up grants rank-up every level, attribute point every 4 levels, and temp combat buffs do not raise HP/MP/SP', () => {
-  assert.equal(attributePointsEarnedBetween(1, 2, 4, 1), 0);
-  assert.equal(attributePointsEarnedBetween(1, 4, 4, 1), 1);
-  assert.equal(attributePointsEarnedBetween(1, 8, 4, 1), 2);
+  assert.equal(AttributePointsEarnedBetween(1, 2, 4, 1), 0);
+  assert.equal(AttributePointsEarnedBetween(1, 4, 4, 1), 1);
+  assert.equal(AttributePointsEarnedBetween(1, 8, 4, 1), 2);
   const run = makeCoreRun(202, 'reaver');
   const res = awardLevelXp(registries, run, 5000);
   assert.ok(res.levelUps >= 3);
   assert.equal(run.level.pendingRankUps, res.levelUps, '1 rank-up per level gained');
-  assert.equal(run.level.unspentPoints, attributePointsEarnedBetween(1, run.level.level, 4, 1), '1 attr point per 4 levels');
+  assert.equal(run.level.unspentPoints, AttributePointsEarnedBetween(1, run.level.level, 4, 1), '1 attr point per 4 levels');
 
   const { combat, player } = fight({ classId: 'reaver', enemies: 1 });
   const hp0 = player.maxHp, sp0 = player.maxStamina, mp0 = player.maxMana;

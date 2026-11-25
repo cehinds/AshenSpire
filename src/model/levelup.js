@@ -277,7 +277,7 @@ export function levelPace(registries, { pointsPerLevel = null } = {}) {
  * Count how many levels in `(fromLevel, toLevel]` grant an attribute point
  * when points are awarded every `every` levels (e.g. 4, 8, 12, 16, 20).
  */
-export function attributePointsEarnedBetween(fromLevel, toLevel, every = 4, pointsPerGrant = 1) {
+export function AttributePointsEarnedBetween(fromLevel, toLevel, every = 4, pointsPerGrant = 1) {
   if (!Number.isInteger(toLevel) || toLevel <= fromLevel || !Number.isInteger(pointsPerGrant) || pointsPerGrant <= 0) return 0;
   const step = Number.isInteger(every) && every >= 1 ? every : 1;
   let grants = 0;
@@ -301,7 +301,7 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
   const rankUpPerLevel = Number.isInteger(t.rankUpPerLevel) && t.rankUpPerLevel >= 0 ? t.rankUpPerLevel : 1;
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
-  const points = attributePointsEarnedBetween(before, climb.level, every, perLevel);
+  const points = AttributePointsEarnedBetween(before, climb.level, every, perLevel);
   const rankUps = configured?.cardRanks !== false ? levelUps * rankUpPerLevel : 0;
   row.xp = climb.xp;
   row.level = climb.level;

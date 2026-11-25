@@ -516,7 +516,7 @@ export function carrierHasTag(ctx, carrier, tag) {
 }
 
 /** Whether the source's active/source weapon carries `tag`. */
-export function sourceWeaponHasTag(ctx, source, carrier, tag) {
+export function SourceWeaponHasTag(ctx, source, carrier, tag) {
   if (!tag) return false;
   const weaponId = carrier?.sourceArmamentId
     || ctx?.loadout?.sets?.rightHand?.[ctx?.loadout?.active?.rightHand || 0]
@@ -533,11 +533,11 @@ export function sourceWeaponHasTag(ctx, source, carrier, tag) {
  * - a `finesse`-tagged combat card always uses DEX for that card;
  * - a `finesse` weapon uses DEX for all martial offensive cards except Smash.
  */
-export function isFinesseHit(ctx, source, carrier, ratingId = 'ar') {
+export function IsFinesseHit(ctx, source, carrier, ratingId = 'ar') {
   if (ratingId !== 'ar') return false;
   if (carrierHasTag(ctx, carrier, 'finesse')) return true;
   if (carrierHasTag(ctx, carrier, 'maneuver:smash') || carrier?.combatProfile?.maneuver === 'smash') return false;
-  return sourceWeaponHasTag(ctx, source, carrier, 'finesse');
+  return SourceWeaponHasTag(ctx, source, carrier, 'finesse');
 }
 
 export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false, carrier = null) {
