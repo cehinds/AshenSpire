@@ -84,6 +84,7 @@
             </div>
             <div class="filter-row names-row">
               <button id="btn-rename-all" class="s-btn" title="Turn Auto-name on for every card, so each shows its convention name. Nothing reaches the game until Export.">Rename all</button>
+              <button id="btn-generate-cards" class="s-btn" type="button" title="Make a pool of cards at exact combat power from the weights and your settings. Nothing reaches the game until Export.">Generate cards…</button>
               <div class="studio-menu">
                 <button id="btn-restore-names" class="s-btn" title="Put back Default names or a saved set of names" aria-haspopup="true" aria-expanded="false" aria-controls="restore-names-menu">Restore names ▾</button>
                 <div id="restore-names-menu" class="studio-menu-panel restore-names-panel" hidden>
@@ -570,6 +571,22 @@
         <button value="cancel" class="s-btn" title="Keep the names as they are">Cancel</button>
         <button id="btn-rename-all-skip" value="skip" class="s-btn" title="Rename all without saving the current names">Skip</button>
         <button id="btn-rename-all-save" value="save" class="s-btn s-btn-primary" title="Save the current names, then rename all">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- GENERATE CARDS MODAL (owner, 2026-11-24) -->
+  <dialog id="generate-cards-modal" class="studio-modal generate-cards-modal">
+    <form method="dialog">
+      <h3>Generate cards</h3>
+      <p class="studio-muted">Each card lands exactly on its combat power under the current weights. One undo step. Nothing reaches the game until Export.</p>
+      <div id="gen-body" class="gen-body"></div>
+      <div id="gen-preview" class="gen-preview" hidden></div>
+      <div class="modal-actions">
+        <button value="cancel" class="s-btn" title="Close without changing any card">Cancel</button>
+        <button id="btn-gen-defaults" type="button" class="s-btn" title="Put every setting back to the shape of today's Core cards">Defaults</button>
+        <button id="btn-gen-preview" type="button" class="s-btn" title="Show counts and sample names without changing any card">Preview</button>
+        <button id="btn-gen-apply" type="button" class="s-btn s-btn-primary" title="Make the cards now (one undo step)">Generate</button>
       </div>
     </form>
   </dialog>

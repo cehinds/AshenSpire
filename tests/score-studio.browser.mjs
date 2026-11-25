@@ -420,6 +420,60 @@ try {
   assert.ok(renameAll.restored, 'Restore Default names gives back the authored name');
   assert.ok(renameAll.autoNameOff, 'restored cards have Auto-name off');
 
+  // 11. Generate cards (owner, 2026-11-24): the modal opens on today's Core shape, Preview shows counts and sample
+  //     names, Generate with Replace generated only makes the pool beside the Core cards, and one undo restores the list.
+  const generate = await page.evaluate(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const tiles = () => document.querySelectorAll('.studio-card-tile').length;
+    const modal = document.getElementById('generate-cards-modal');
+    const generated = async () => { document.getElementById('btn-gen-apply').click(); for (let t = 0; modal.open && t < 600; t++) await wait(100); };
+    const before = tiles();
+    document.getElementById('btn-generate-cards').click();
+    const open = modal.open;
+    const untitled = [...modal.querySelectorAll('input, select, button')].filter((el) => !el.closest('[title], [data-tip]')).map((el) => el.id || el.outerHTML.slice(0, 60));
+    const sums = [...modal.querySelectorAll('[data-group] .gen-sum')].map((el) => el.textContent);
+    modal.querySelector('input[name="gen-mode"][value="replaceGenerated"]').checked = true;
+    document.getElementById('btn-gen-preview').click();
+    const preview = document.getElementById('gen-preview');
+    const sampleNames = preview.querySelectorAll('.gen-sample-names li').length;
+    const previewText = preview.textContent;
+    // An off-100 group shows red, and Generate scales it back to 100.
+    const rare = modal.querySelector('[data-pct-rarity="rare"]');
+    rare.value = String(Number(rare.value) + 10);
+    rare.dispatchEvent(new Event('input', { bubbles: true }));
+    const red = modal.querySelector('[data-sum="rarity"]').classList.contains('is-off');
+    await generated();
+    const toastText = document.getElementById('studio-toast').textContent;
+    const after = tiles();
+    const generatedCount = document.querySelectorAll('.studio-card-tile[data-card-id^="gen."]').length;
+    const closed = !modal.open;
+    // Generate again with Replace generated only: the generated cards are rebuilt, not added twice.
+    document.getElementById('btn-generate-cards').click();
+    const remembered = modal.querySelector('[data-sum="rarity"]').textContent;
+    await generated();
+    const again = tiles();
+    document.getElementById('btn-undo').click();
+    await wait(400);
+    document.getElementById('btn-undo').click();
+    await wait(400);
+    return { before, open, untitled, sums, sampleNames, previewText, red, toastText, after, generated: generatedCount, closed, remembered, again, undone: tiles(), genLeft: document.querySelectorAll('.studio-card-tile[data-card-id^="gen."]').length };
+  });
+  assert.ok(generate.open, 'Generate cards opens its modal');
+  assert.deepEqual(generate.untitled, [], 'every control in the modal has a tooltip');
+  assert.ok(generate.sums.length >= 7 && generate.sums.every((t) => t === 'Total 100%'), `the default percent groups add up to 100 (${generate.sums})`);
+  assert.equal(generate.sampleNames, 8, 'Preview shows 8 sample names');
+  assert.match(generate.previewText, /106 cards[\s\S]*Rarity:[\s\S]*Rank:[\s\S]*School:/, 'Preview shows counts by rarity, rank and school');
+  assert.ok(generate.red, 'a group that does not add up to 100 shows its total in red');
+  assert.ok(generate.closed, 'Generate closes the modal');
+  const exactCount = Number(generate.toastText.match(/(\d+) at their exact CP/)?.[1]);
+  assert.ok(exactCount >= 90, `most generated cards show their exact target CP in the studio (${generate.toastText})`);
+  assert.equal(generate.generated, 106, 'the default pool is 106 generated cards');
+  assert.equal(generate.after, generate.before + 106, 'Replace generated only keeps the Core cards');
+  assert.equal(generate.remembered, 'Total 100%', 'the modal reopens on the last (normalised) settings');
+  assert.equal(generate.again, generate.after, 'a second Replace generated only rebuilds the generated cards instead of adding more');
+  assert.equal(generate.undone, generate.before, 'undo puts the card list back');
+  assert.equal(generate.genLeft, 0, 'no generated card is left after undo');
+
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
   await page.close();

@@ -13,12 +13,12 @@ Naming (feature/ProceduralCardNames, in progress)
 
 Card pool generator
 - [x] Generator makes 1-3 effects, statuses, schools, SP/MP costs at exact CP
-- [ ] Regenerate modal: mode (replace generated / replace all / add)
-- [ ] Totals: card count, cards per school, per camp
-- [ ] Odds: rarity, rank, cost, card type, range, effects per card
-- [ ] Allowed effects/statuses, keyword, drawback and area odds
-- [ ] Seed with dice, class, live totals, preview before Apply
-- [ ] Tooltips on every control
+- [x] Regenerate modal: mode (replace generated / replace all / add)
+- [x] Totals: card count, cards per school, per camp
+- [x] Odds: rarity, rank, cost, card type, range, effects per card
+- [x] Allowed effects/statuses, keyword, drawback and area odds
+- [x] Seed with dice, class, live totals, preview before Apply
+- [x] Tooltips on every control
 
 Class decks
 - [ ] Starting deck per class with copy steppers
