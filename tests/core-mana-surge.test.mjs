@@ -323,7 +323,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         dispatch(combat, intent === 'swapArmament'
           ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
           : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? POOL_PIECE : 'greatsword' });
-        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the rod’s two Wisdom points add two MP without a raw pool bonus');
+        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the fixture rod grants one MP through Wisdom without a raw pool bonus');
         assert.equal(p.drawPerTurn, before.draw, 'the rod carries no intelligence, so Draw holds');
         for (const field of ['hp', 'mana', 'stamina']) {
           const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];
