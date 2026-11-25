@@ -11,7 +11,7 @@ import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 
 const classes = ['reaver', 'starseer', 'rogue', 'herald'];
-const references = new Map(), contextCaches = new WeakMap(), projectedDefinitions = new WeakMap();
+const referencesByRegistry = new WeakMap(), contextCaches = new WeakMap(), projectedDefinitions = new WeakMap();
 let defaultRegistries, defaultProfile;
 const transient = new Set(['_edited', '_custom', '_generated', '_cpMiss', 'scoringOverride', '_autoName', '_autoNameCore', '_autoNameBudget']);
 // Only neutral-face inputs belong here. Runtime piles, enemy state and stance
@@ -27,17 +27,30 @@ const freeze = value => {
   return value;
 };
 
-export function CardScoreReferenceContext(def) {
-  if (!defaultRegistries) {
-    defaultProfile = Profile.resolveGameProfile('default');
-    defaultRegistries = Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(contentBundle, defaultProfile)), defaultProfile);
+export function CardScoreReferenceContext(def, { registries } = {}) {
+  // A bound registry already owns the profile used by its renderer. Reuse that
+  // configuration, while creating a separate neutral run rather than borrowing
+  // the player's progressed attributes, equipment, or combat state.
+  if (!registries?.gameProfile) {
+    if (!defaultRegistries) {
+      defaultProfile = Profile.resolveGameProfile('default');
+      defaultRegistries = Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(contentBundle, defaultProfile)), defaultProfile);
+    }
+    registries = defaultRegistries;
   }
+  const profile = registries.gameProfile;
+  let entry = referencesByRegistry.get(registries);
+  if (!entry || entry.profile !== profile) {
+    entry = { profile, references: new Map() };
+    referencesByRegistry.set(registries, entry);
+  }
+  const { references } = entry;
   const magic = def?.tags?.includes('camp:spell') || def?.damageSchool && def.damageSchool !== 'physical';
   const classId = classes.includes(def?.class) ? def.class : magic ? 'starseer' : 'reaver';
   if (!references.has(classId)) {
-    const rules = createRunState({ registries: defaultRegistries, classId, seed: 31, runId: `score-reference-${classId}`, profileMeta: { gameProfileUnlocks: { [defaultProfile.id]: { completedRunIds: ['a', 'b', 'c'] } } } });
+    const rules = createRunState({ registries, classId, seed: 31, runId: `score-reference-${classId}`, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } } });
     rules.relics = [];
-    references.set(classId, { registries: defaultRegistries, rules });
+    references.set(classId, { registries, rules });
   }
   return references.get(classId);
 }
@@ -48,7 +61,7 @@ export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
   const previous = projectedDefinitions.get(def);
   if (previous) def = previous.source;
   if (!registries || !rules) {
-    const reference = CardScoreReferenceContext(def);
+    const reference = CardScoreReferenceContext(def, { registries });
     registries ||= reference.registries; rules ||= reference.rules;
   }
   let byRules = contextCaches.get(registries);

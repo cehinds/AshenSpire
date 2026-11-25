@@ -5,6 +5,10 @@ import { ScoreCard } from '../src/model/combatPower.js';
 import { scoring } from '../src/content/generated/scoring.js';
 import { ActNodeUpgradeStock } from '../src/model/actSeedSchedule.js';
 import { productionBundle } from './helpers/production-bundle.mjs';
+import { rollUpgradeOptions, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
+import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
+import { CardScoreReferenceContext, ProjectCardMechanicalValues } from '../src/model/cardMechanicalProjection.js';
+import { NumericCeilingAtTier } from '../src/model/tierUnlocks.js';
 
 const card = { id:'subclass.seeded-mechanical.fixture',name:'Seeded mechanical fixture',class:'reaver',rarity:'common',type:'attack',cost:1,staminaCost:1,manaCost:0,damageSchool:'physical',tags:['camp:physical','source:weapon','maneuver:attack'],effects:[{op:'damage',target:'enemy',amount:100,if:{p:'firstAttackThisCombat'}}] };
 
@@ -15,6 +19,38 @@ test('prepared candidate CP context preserves shared mechanical projection and c
   assert.equal(context.rawBefore,ScoreCard(CardDefinitionToScoreFace(card,{scoring:custom}),custom).raw);
   assert.notEqual(context.rawBefore,PrepareUpgradeStepCpContext({...args,scoring}).rawBefore);
   for(const step of [{k:'dmg',n:4},{k:'fx',fx:'block',n:4},{k:'fx',fx:'draw',n:1}])assert.deepEqual(EvaluateUpgradeStepCp({...args,step,context}),EvaluateUpgradeStepCp({...args,step}));
+});
+
+test('injected canonical registries preserve neutral CP and numeric upgrade caps for every class',()=>{
+  const {registries}=CardScoreReferenceContext(card);
+  let authored=0;
+  for(const id of registries.cards.ids()) if(id.startsWith('core.')) {
+    const base=registries.cards.get(id);
+    assert.deepEqual(CardDefinitionToScoreFace(base,{scoring,registries}),CardDefinitionToScoreFace(base,{scoring}),id);
+    authored++;
+  }
+  assert.ok(authored>=106,'all original Core definitions keep their scoring baseline');
+  for(const classId of ['reaver','rogue','starseer','herald']) {
+    const base={...card,class:classId,effects:[{op:'damage',target:'enemy',amount:8},{op:'block',target:'self',amount:8}]};
+    assert.deepEqual(CardDefinitionToScoreFace(base,{scoring,registries}),CardDefinitionToScoreFace(base,{scoring}),classId);
+    const args={baseDef:base,currentDef:base,instance:{rank:2},playerLevel:5,scoring,registries};
+    const context=PrepareUpgradeStepCpContext(args);
+    assert.equal(context.registries,registries);
+    for(const step of [{k:'dmg',n:4},{k:'blk',n:4},{k:'fx',fx:'draw',n:1}]) {
+      const direct=EvaluateUpgradeStepCp({...args,step});
+      assert.deepEqual(EvaluateUpgradeStepCp({...args,step,context}),direct,classId);
+      assert.deepEqual(direct,EvaluateUpgradeStepCp({...args,registries:undefined,step}),classId);
+    }
+    const limits={tier:2,cardRank:2,playerLevel:5,scoring,everyFamily:true};
+    const stock=rollUpgradeOptions(base,[],0,upgradeStepRng(17,classId,0),{...limits,registries},60);
+    assert.deepEqual(stock,rollUpgradeOptions(base,[],0,upgradeStepRng(17,classId,0),limits,60),classId);
+    assert.ok(stock.some(step=>step.k==='dmg'),`${classId} keeps a real damage upgrade`);
+    for(const step of stock.filter(row=>['dmg','blk'].includes(row.k))) {
+      const after=ProjectCardMechanicalValues(applyUpgradeSteps(base,[step]),{registries}).card;
+      for(const op of ['damage','block']) assert.ok(after.effects.filter(effect=>effect.op===op).reduce((sum,effect)=>sum+effect.amount*(effect.hits||1),0)<=NumericCeilingAtTier(op,2,scoring),`${classId} ${op} cap`);
+    }
+    assert.ok(!JSON.stringify(stock).includes('registries'),'dependencies never enter saved steps');
+  }
 });
 
 test('production classic bundle executes seeded schedule and mechanical upgrade paths with live dependencies',()=>{

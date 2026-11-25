@@ -24,7 +24,9 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
     const unranked = plain;
     // The authored upgrade is the owner's own numbers: the rules bound what is rolled on top of it.
     const authored = base.upgrade ? projectGameCard(subject, { instanceId: 'x', cardId, upgraded: true, upgradeSteps: [{ k: 'authored' }] }) : plain;
-    const mechanicalPlain = ProjectCardMechanicalValues(plain).card, mechanicalAuthored = ProjectCardMechanicalValues(authored).card;
+    // This fixture deliberately uses its own side-damage/Block scales. Read
+    // the same neutral bound profile as the upgrade generator and card face.
+    const mechanicalPlain = ProjectCardMechanicalValues(plain,{registries}).card, mechanicalAuthored = ProjectCardMechanicalValues(authored,{registries}).card;
     for (let seed = 1; seed <= 10; seed += 1) {
       const run = { seed, gameProfile: profile };
       const instance = { instanceId: `inst-${cardId}`, cardId, upgraded: false, ...(rank > 1 ? { rank } : {}) };
@@ -39,7 +41,7 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
         const where = `${cardId} rank ${rank} seed ${seed} upgrade ${n} (${JSON.stringify(step)})`;
         assert.notEqual(numbers(face), numbers(before), `${where} changed nothing`);
         before = face;
-        const mechanicalFace = ProjectCardMechanicalValues(face).card;
+        const mechanicalFace = ProjectCardMechanicalValues(face,{registries}).card;
         for (const op of ['damage', 'block']) {
           const b = total(mechanicalPlain, op);
           if (b && rank === 1) assert.ok(total(mechanicalFace, op) <= Math.max(b * 2, total(mechanicalAuthored, op)), `${where}: mechanical ${op} ${total(mechanicalFace, op)} > 2 x ${b}`);

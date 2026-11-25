@@ -35,6 +35,37 @@ test('cached projections respect alternate contexts and mutations to a supplied 
   assert.equal(base.effects[0].amount,8);
 });
 
+test('bound registries reuse their own neutral class reference and canonical contexts match the default renderer',()=>{
+  const canonical=CardScoreReferenceContext(base).registries,supplied={...canonical};
+  for(const classId of ['reaver','rogue','starseer','herald']){
+    const definition={...card(16),class:classId};
+    const reference=CardScoreReferenceContext(definition,{registries:supplied});
+    assert.equal(reference.registries,supplied);assert.equal(reference.rules.class,classId);
+    assert.equal(reference.rules.seed,31);assert.deepEqual(reference.rules.relics,[]);
+    assert.equal(CardScoreReferenceContext(definition,{registries:supplied}),reference);
+    assert.deepEqual(ProjectCardMechanicalValues(definition,{registries:supplied}).tokens,ProjectCardMechanicalValues(definition).tokens);
+    assert.deepEqual(CardDefinitionToScoreFace(definition,{registries:supplied}),CardDefinitionToScoreFace(definition));
+  }
+});
+
+test('custom bound profiles retain their own renderer values and raw registries keep the original partial-context fallback',async()=>{
+  const {registries:customRegistries}=await import('./helpers/fixcore-combat-rules.mjs');
+  const supplied={...customRegistries},definition=card(16),reference=CardScoreReferenceContext(definition,{registries:supplied});
+  const before=ProjectCardMechanicalValues(definition,{registries:supplied});
+  assert.deepEqual(before.tokens,staticCardTokens(definition,supplied,reference.rules));
+  assert.notEqual(before.tokens.damage,ProjectCardMechanicalValues(definition).tokens.damage);
+  reference.rules.faceAttributes={strength:20,dexterity:0,intelligence:0,wisdom:0};
+  const mutated=ProjectCardMechanicalValues(definition,{registries:supplied});
+  assert.notEqual(mutated,before);assert.deepEqual(mutated.tokens,staticCardTokens(definition,supplied,reference.rules));
+  const canonical=CardScoreReferenceContext(definition);supplied.gameProfile=canonical.registries.gameProfile;
+  const replaced=CardScoreReferenceContext(definition,{registries:supplied});
+  assert.notEqual(replaced,reference);assert.equal(replaced.rules.gameProfile.hash,supplied.gameProfile.hash);
+  assert.deepEqual(ProjectCardMechanicalValues(definition,{registries:supplied}).tokens,ProjectCardMechanicalValues(definition).tokens);
+  const {gameProfile:_profile,...raw}=canonical.registries;
+  assert.equal(CardScoreReferenceContext(definition,{registries:raw}),canonical);
+  assert.deepEqual(ProjectCardMechanicalValues(definition,{registries:raw}),ProjectCardMechanicalValues(definition,{registries:raw,rules:canonical.rules}));
+});
+
 test('identical full inputs reuse the frozen final projection while source and context changes invalidate it',()=>{
   const context=CardScoreReferenceContext(base),source=card(8),snapshot=structuredClone(source);
   const original=ProjectCardMechanicalValues(source,context);
@@ -70,6 +101,11 @@ test('the shipped classic bundle initializes shared projection lazily without ca
   assert.equal(adapter.CardDefinitionToScoreFace(card(8)).dmg,3);
   assert.equal(adapter.CardDefinitionToScoreFace(card(7)).dmg,3);
   assert.equal(adapter.CardDefinitionToScoreFace(card(16)).dmg,5);
+  const supplied={...model.CardScoreReferenceContext(base).registries};
+  const reference=model.CardScoreReferenceContext(base,{registries:supplied});
+  assert.equal(reference.registries,supplied);
+  assert.equal(model.ProjectCardMechanicalValues(card(8),{registries:supplied}).tokens.damage,3);
+  assert.equal(adapter.CardDefinitionToScoreFace(card(16),{registries:supplied}).dmg,5);
 });
 
 test('default projection equals the actual static token reader in the injected reference run',()=>{

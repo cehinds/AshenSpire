@@ -128,7 +128,7 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
     const cardTier = EffectiveTier(visibleRank, instance?.rarityOverride || base.rarity || 'common', activeScoring);
     nodeSpecialty = ActNodeUpgradeStock(run.seed, nodeKey, { vendor, scoring: activeScoring }).forTier(cardTier);
   }
-  const limits = { ...mana, rank, cardRank: visibleRank, playerLevel, instance, scale,
+  const limits = { ...mana, rank, cardRank: visibleRank, playerLevel, instance, scale, registries,
     damageChanges: checkDamageUpgrade(run, registries, rank, ranked),
     exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}), ...(nodeSpecialty ? { nodeSpecialty } : {}) };
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;

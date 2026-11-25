@@ -8,6 +8,7 @@ import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { UpgradeSlots } from '../src/model/cardUpgradeLimits.js';
+import { GetActiveScoring, HasCustomScoring, SetCustomScoring, ClearCustomScoring } from '../src/model/activeScoring.js';
 import {
   RankUpCandidates, RaiseCardRank, RollRankUp, CombatRankUpChance, ShopRankUpChance, ShopRankUpPrice,
   CombatRewardRanksUp, ShopStocksRankUp, InstanceRank, RANK_CEILING,
@@ -143,45 +144,134 @@ test('a profile with no rankUp data, or a run that cannot rank cards, offers not
 // Review fix (2026-11-23): rank-up bonus steps use no slot, so they do not count toward the 10-upgrade cap either.
 // Five skill rank-ups leave a Rank 5 card with 5 bonus steps; it can still fill its 6 slots and rank up again.
 test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (bonus steps skip the 10 cap)', async () => {
-  const { awardSkillXp, xpToNext, coreCardRanks, raiseCardRank } = await import('../src/model/skills.js');
-  const { rankUpBonusOptions } = await import('../src/model/rankUpBonus.js');
-  const { planCardUpgrade, commitCardUpgrade } = await import('../src/model/cardUpgradeService.js');
-  const { canUpgrade } = await import('../src/model/cardUpgradeLimits.js');
-  const { paidUpgradeCount, upgradeCount, upgradeStepsProblems } = await import('../src/model/cardUpgrade.js');
-  const { registries } = await import('./helpers/fixcore-combat-rules.mjs');
-  const run = createRunState({ registries, classId: 'reaver', seed: 17, runId: 'w25-cap', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  run.smithingStones = 99;
-  const xp = Array.from({ length: 8 }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0);
-  awardSkillXp(registries, run, 'item:blade', xp, { queueRewards: false, queueRankUps: coreCardRanks(run) });
-  // Its CP budget leaves eligible paid and bonus steps across all six ranks.
-  const card = run.deck.find((c) => c.cardId === 'core.strike');
-  card.cardId = 'core.smash';
-  const fill = () => {
-    while (paidUpgradeCount(card) < UpgradeSlots(run, card)) {
-      const quote = planCardUpgrade(run, registries, card.instanceId, { choices: 3 });
-      assert.equal(quote.ok, true, quote.reason);
-      const step = (quote.options ?? [quote]).find((option) => option.step && option.step.nextRank === undefined)?.step;
-      assert.ok(step, 'buy an upgrade that leaves rank advancement to the skill reward');
-      commitCardUpgrade(run, registries, { ...quote, step });
+  // This case isolates paid-slot and bonus-cap accounting. Explicit CP headroom
+  // keeps the independent budget gate from advancing rank or ending the menu.
+  // The default-budget behavior has its own regression below.
+  const previousScoring = GetActiveScoring(), hadCustomScoring = HasCustomScoring();
+  const accountingScoring = structuredClone(previousScoring);
+  accountingScoring.rank.width = 32;
+  assert.equal(SetCustomScoring(accountingScoring).ok, true);
+  try {
+    const { awardSkillXp, xpToNext, coreCardRanks, raiseCardRank } = await import('../src/model/skills.js');
+    const { rankUpBonusOptions } = await import('../src/model/rankUpBonus.js');
+    const { planCardUpgrade, commitCardUpgrade } = await import('../src/model/cardUpgradeService.js');
+    const { canUpgrade } = await import('../src/model/cardUpgradeLimits.js');
+    const { paidUpgradeCount, upgradeCount, upgradeStepsProblems } = await import('../src/model/cardUpgrade.js');
+    const { registries } = await import('./helpers/fixcore-combat-rules.mjs');
+    const run = createRunState({ registries, classId: 'reaver', seed: 17, runId: 'w25-cap', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+    run.smithingStones = 99;
+    const xp = Array.from({ length: 8 }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0);
+    awardSkillXp(registries, run, 'item:blade', xp, { queueRewards: false, queueRankUps: coreCardRanks(run) });
+    // The explicit accounting fixture leaves CP headroom across all six ranks.
+    const card = run.deck.find((c) => c.cardId === 'core.strike');
+    card.cardId = 'core.smash';
+    const fill = () => {
+      while (paidUpgradeCount(card) < UpgradeSlots(run, card)) {
+        const quote = planCardUpgrade(run, registries, card.instanceId, { choices: 3 });
+        assert.equal(quote.ok, true, quote.reason);
+        const step = (quote.options ?? [quote]).find((option) => option.step && option.step.nextRank === undefined)?.step;
+        assert.ok(step, 'buy an upgrade that leaves rank advancement to the skill reward');
+        commitCardUpgrade(run, registries, { ...quote, step });
+      }
+    };
+    const rankUp = () => {
+      const options = rankUpBonusOptions(registries, run, card);
+      assert.ok(raiseCardRank(registries, run, 'item:blade', card.instanceId, options[0]?.step ?? null), 'the rank-up lands');
+    };
+    for (let i = 0; i < 5; i += 1) { fill(); rankUp(); }
+    assert.equal(card.rank, 5);
+    assert.equal(UpgradeSlots(run, card), 6);
+    assert.equal(paidUpgradeCount(card), 5);
+    assert.equal(upgradeCount(card), 10, 'five paid steps and five bonus steps');
+    const sixth = canUpgrade(registries, run, card);
+    assert.equal(sixth.ok, true, sixth.reason || 'the sixth slot can still be bought');
+    fill();
+    assert.equal(paidUpgradeCount(card), 6);
+    assert.equal(RankUpBlock(run, card), '');
+    rankUp();
+    assert.equal(card.rank, 6);
+    assert.deepEqual(upgradeStepsProblems(card, 'card'), [], 'a save holding the card stays valid');
+  } finally {
+    if (hadCustomScoring) assert.equal(SetCustomScoring(previousScoring).ok, true);
+    else ClearCustomScoring();
+    assert.equal(HasCustomScoring(), hadCustomScoring);
+    assert.deepEqual(GetActiveScoring(), previousScoring, 'restore the actual previous scoring configuration');
+  }
+});
+
+test('default Smash can exhaust its CP budget before its paid slots; a character level increase refreshes the legal quote', async () => {
+  const previousScoring = GetActiveScoring(), hadCustomScoring = HasCustomScoring();
+  ClearCustomScoring();
+  try {
+    const { awardSkillXp, xpToNext, coreCardRanks, raiseCardRank } = await import('../src/model/skills.js');
+    const { rankUpBonusOptions } = await import('../src/model/rankUpBonus.js');
+    const { planCardUpgrade, commitCardUpgrade } = await import('../src/model/cardUpgradeService.js');
+    const { canUpgrade, nextUpgradeOptions, upgradeCost } = await import('../src/model/cardUpgradeLimits.js');
+    const { paidUpgradeCount, applyUpgradeSteps } = await import('../src/model/cardUpgrade.js');
+    const { PrepareUpgradeStepCpContext, EvaluateUpgradeStepCp } = await import('../src/model/cardUpgradeCp.js');
+    const { CombatPower, RankOf } = await import('../src/model/combatPower.js');
+    // Use the canonical bound game profile, not the separate 1x combat-arithmetic fixture.
+    const run = createRunState({ registries, classId: 'reaver', seed: 17, runId: 'w25-cp-budget', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+    run.smithingStones = 99;
+    const xp = Array.from({ length: 8 }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0);
+    awardSkillXp(registries, run, 'item:blade', xp, { queueRewards: false, queueRankUps: coreCardRanks(run) });
+    const card = run.deck.find((row) => row.cardId === 'core.strike');
+    card.cardId = 'core.smash';
+    let blocked;
+    for (let round = 0; round < 6 && !blocked; round += 1) {
+      while (paidUpgradeCount(card) < UpgradeSlots(run, card)) {
+        const quote = planCardUpgrade(run, registries, card.instanceId, { choices: 3 });
+        if (!quote.ok) { blocked = quote; break; }
+        const step = quote.options.find((option) => option.step && option.step.nextRank === undefined)?.step;
+        assert.ok(step, 'reach the budget boundary through ordinary non-rank-advancing purchases');
+        commitCardUpgrade(run, registries, { ...quote, step });
+      }
+      if (!blocked) {
+        const options = rankUpBonusOptions(registries, run, card);
+        assert.ok(raiseCardRank(registries, run, 'item:blade', card.instanceId, options[0]?.step ?? null));
+      }
     }
-  };
-  const rankUp = () => {
-    const options = rankUpBonusOptions(registries, run, card);
-    assert.ok(raiseCardRank(registries, run, 'item:blade', card.instanceId, options[0]?.step ?? null), 'the rank-up lands');
-  };
-  for (let i = 0; i < 5; i += 1) { fill(); rankUp(); }
-  assert.equal(card.rank, 5);
-  assert.equal(UpgradeSlots(run, card), 6);
-  assert.equal(paidUpgradeCount(card), 5);
-  assert.equal(upgradeCount(card), 10, 'five paid steps and five bonus steps');
-  const sixth = canUpgrade(registries, run, card);
-  assert.equal(sixth.ok, true, sixth.reason || 'the sixth slot can still be bought');
-  fill();
-  assert.equal(paidUpgradeCount(card), 6);
-  assert.equal(RankUpBlock(run, card), '');
-  rankUp();
-  assert.equal(card.rank, 6);
-  assert.deepEqual(upgradeStepsProblems(card, 'card'), [], 'a save holding the card stays valid');
+    assert.ok(blocked, 'the bounded public-service progression reaches a CP refusal');
+    assert.deepEqual([run.level.level, card.rank, paidUpgradeCount(card), UpgradeSlots(run, card), card.rarityOverride], [1, 3, 3, 4, 'rare']);
+    const baseDef = registries.cards.get(card.cardId), currentDef = applyUpgradeSteps(baseDef, card.upgradeSteps);
+    const context = PrepareUpgradeStepCpContext({ baseDef, currentDef, instance: card, playerLevel: run.level.level, registries });
+    const cp = CombatPower(context.rawBefore, context.currentRarity, GetActiveScoring());
+    assert.equal(cp, 12, 'actual default-profile mechanics occupy the Rank 3 CP ceiling');
+    assert.equal(RankOf(cp, GetActiveScoring()), 3);
+    assert.equal(context.maxAllowedRank, 3);
+    const before = structuredClone(run);
+    assert.equal(blocked.code, 'maxed');
+    assert.equal(canUpgrade(registries, run, card).code, 'maxed');
+    assert.equal(upgradeCost(run, card, baseDef, registries), null);
+    assert.deepEqual(nextUpgradeOptions(run, card, baseDef, registries, 3, { everyFamily: true }), []);
+    assert.throws(() => commitCardUpgrade(run, registries, blocked), /fully upgraded/);
+    assert.deepEqual(run, before, 'refused plans and commits preserve cards, currency and the pending skill ledger');
+
+    run.level.level = 4;
+    const beforeQuote = structuredClone(run);
+    // No cache clear or scoring override: the normal level-aware plan key must invalidate the refusal.
+    const refreshed = planCardUpgrade(run, registries, card.instanceId, { choices: 3 });
+    assert.equal(refreshed.ok, true, refreshed.reason);
+    assert.ok(refreshed.options.length > 0);
+    for (const { step } of refreshed.options) {
+      const lowLevel = EvaluateUpgradeStepCp({ baseDef, currentDef, instance: card, step, playerLevel: 1, registries });
+      const available = EvaluateUpgradeStepCp({ baseDef, currentDef, instance: card, step, playerLevel: 4, registries });
+      assert.equal(lowLevel.allowed, false, 'the newly offered power still exceeds the old budget');
+      assert.equal(available.allowed, true);
+      assert.ok(RankOf(available.cp, GetActiveScoring()) <= 4, 'an offered upgrade stays within the new level budget');
+    }
+    assert.deepEqual(run, beforeQuote, 'refreshing the quote remains read-only');
+    const paidBefore = paidUpgradeCount(card), stonesBefore = run.smithingStones;
+    commitCardUpgrade(run, registries, refreshed);
+    assert.equal(paidUpgradeCount(card), paidBefore + 1);
+    assert.equal(card.rank, 4);
+    assert.equal(run.smithingStones, stonesBefore - refreshed.cost);
+  } finally {
+    if (hadCustomScoring) assert.equal(SetCustomScoring(previousScoring).ok, true);
+    else ClearCustomScoring();
+    assert.equal(HasCustomScoring(), hadCustomScoring);
+    assert.deepEqual(GetActiveScoring(), previousScoring);
+  }
 });
 
 // Review fix (2026-11-23): a missing setting counts as on, so saved runs get the rule too; the help text says so.
