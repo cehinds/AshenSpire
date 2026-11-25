@@ -26,6 +26,7 @@
 // measured / browser or fixture failure. Generated root/build/dist artifacts
 // are deliberately outside this lane until #201/#203/#37 sequencing clears.
 
+import { catalogVersionScanText } from './buildversion.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -742,7 +743,7 @@ async function main() {
         // Same authored optional rail fixture as flask-menu-probe.mjs: the
         // browser reads the real config module with only roomRail enabled.
         const configPath = 'src/config/generated/ui.js';
-        const config = readFileSync(join(ROOT, configPath), 'utf8');
+        const config = catalogVersionScanText(configPath, readFileSync(join(ROOT, configPath), 'utf8'));
         const railOn = config.replace(/("roomRail"\s*:\s*)false/, '$1true');
         if (!/"roomRail"\s*:\s*true/.test(railOn)) throw new Error('map flask fixture has no authored roomRail config row');
         cdp.on((message) => {
