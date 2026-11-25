@@ -79,10 +79,10 @@ test('item 1: static rank-up faces show base damage for the supplied run profile
 
   // Owner, 2026-11-18: the player's side scale (x0.7, floored, min 1) follows the base halving: ceil(6 x 0.5) = 3, floor(3 x 0.7) = 2.
   // Owner, 2026-11-18 (second cut): the physical share takes another x0.7 first: floor(3 x 0.7 x 0.7) = 1.
-  // Owner, 2026-11-18 (static faces): the run's always-on STR joins before the cuts, as a neutral-stance hit does. A new Reaver's effective STR is 5 (class, gear and level):
-  // floor((3 + 5) x 0.7 x 0.7) = 3, and rank 2: floor((4 + 5) x 0.7 x 0.7) = 4.
-  assert.equal(damageLine(strike, run), '3 damage');
-  assert.equal(damageLine(ranked, run), '4 damage', 'rank 2 composes the authored 7 before rounding the scaled base up (4), adds STR, then the cuts');
+  // The current starter has STR 6 with gear. It joins the authored and ranked bases before the side multipliers.
+  assert.equal(gameProfileEffectiveAttributes(registries, run).strength, 6);
+  assert.equal(damageLine(strike, run), '4 damage');
+  assert.equal(damageLine(ranked, run), '4 damage', 'rank 2 composes authored 7 before base rounding, STR and the cuts');
   assert.equal(damageLine(ranked, null), '7 damage', 'a face without a run keeps the authored amount');
   assert.equal(damageLine(ranked, beforeBalance), '7 damage', 'an older pinned profile keeps the authored amount');
   assert.equal(damageLine(ranked, run, { tokens: { damage: 9 } }), '9 damage', 'a final preview value stays authoritative');

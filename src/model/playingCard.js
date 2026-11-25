@@ -4,7 +4,7 @@ import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
 import { CardSpellTraditions, SpellTraditionLabel } from './spellTraditions.js';
 import { FaceCostProfile } from './faceCosts.js';
-import { evadeStackGainPhrase } from './fixCoreMechanics.js';
+import { evadeStackGainPhrase, fixCoreEnabled } from './fixCoreMechanics.js';
 import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
@@ -60,7 +60,7 @@ import { combatProfileFor, isSpellCard, ScaleCardBaseDamage, ScalePhysicalDamage
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from './d20Chance.js';
-import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, PacketSplit, PacketWeights, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
+import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, PacketSplit, PacketWeights, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor, IsFinesseHit } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -426,8 +426,9 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const attributes = Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
   const faceShare = magicShareOf(faceProfile) || 0;
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
-  const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
-  const finesseSource = Array.isArray(def?.tags) && def.tags.includes('finesse');
+  const finesseSource = def?.tags?.includes('finesse') || (fixCoreEnabled({ combatExpansionVersion: 2, ...holder })
+    && IsFinesseHit({ registries, loadout: rules?.loadout }, rules?.player, { ...def, combatProfile: faceProfile }));
+  const finesseHit = !magicHit && finesseSource;
   const magicStat = attributes && SpellTraditionsActive(holder) ? SpellScalingValue(attributes, { ...def, combatProfile: faceProfile })
     : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);
   const damageStat = attributes ? (magicHit ? magicStat : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
@@ -452,7 +453,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
   };
   // Block: (authored + DEX) x blockGainMultiplier, floored, as the configured Block gain computes it. A face with no run keeps the authored number.
   const blockScale = (value, isBlock) => {
-    if (!isBlock || !(value > 0) || !faceEffects || !attributes) return value;
+    if (!isBlock || value < 0 || !faceEffects || !attributes) return value;
     const scale = Number.isFinite(blockMultiplier) && blockMultiplier >= 0 ? blockMultiplier : 1;
     return scale === 1 && !blockBonus ? value : Math.max(0, Math.floor((value + blockBonus) * scale));
   };

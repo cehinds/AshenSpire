@@ -73,3 +73,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 - `tests/class-level-bonus.test.mjs` proves the live effective stat for all four classes, the exact ladder through 20, a current save restored against changed authored rules, and 16 save cases for earlier absent and odd-level markers. The old save rules are not backfilled.
 - `tests/character-progression.test.mjs` and `tests/progression-modal.test.mjs` use the same earned points as the level ledger. `tests/content-expansion-equipment.test.mjs` pins the current three signatures and still tests positive and negative archived pool addends across XP and allocation.
 - `node --test tests/class-level-bonus.test.mjs tests/character-progression.test.mjs tests/content-expansion-equipment.test.mjs tests/progression-modal.test.mjs tests/save-migration.test.mjs` passed 72/72, and `node tools/content-build.mjs --check` passed. The original lane count had 18 failures remaining before cross-lane updates.
+
+## Static card face parity
+
+- `src/model/playingCard.js` uses the same Finesse weapon reader as modern combat and includes Dexterity when the authored Block value is zero. No-character faces still show authored numbers. The two dated face suites check the current starter weapon/armour values, live receipt and saved-profile controls.
+- `node --test tests/balance-stats-2026-11-17.test.mjs tests/static-face-attributes-2026-11-18.test.mjs tests/card-face-colours-2026-11-18.test.mjs` passed 54/54, including both Arcane and Divine attribute paths. The original lane had 15 remaining failures.

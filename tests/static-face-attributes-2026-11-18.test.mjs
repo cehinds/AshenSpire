@@ -26,14 +26,14 @@ test('a face with no run keeps the authored number', () => {
   assert.equal(number(cardPlainText(registries, { cardId: 'core.defend' }, {})), 0); // Defend authors 0 Block (final Block 4), owner 2026-11-21 (was 8, before that 10)
 });
 
-test('Strike and Defend add STR and DEX through the shipped multipliers', () => {
+test('Strike and Defend use the wielded attack stat and DEX through the shipped multipliers', () => {
   for (const classId of ['reaver', 'rogue']) {
     const run = newRun(classId);
     const attributes = gameProfileEffectiveAttributes(registries, run);
-    const strike = Math.floor((Math.ceil(6 * effects.baseDamageMultiplier) + attributes.strength * effects.strengthDamageWeight)
+    const attribute = classId === 'rogue' ? 'dexterity' : 'strength'; // The starter dagger is finesse.
+    const strike = Math.floor((Math.ceil(6 * effects.baseDamageMultiplier) + attributes[attribute] * effects.strengthDamageWeight)
       * effects.physicalDamageMultiplier * effects.playerDamageMultiplier);
-    const armourBlock = classId === 'reaver' ? 3 : 1; // Heavy +3, Light +1 on Block cards.
-    const defend = Math.floor((0 + armourBlock + attributes.dexterity * effects.dexterityBlockWeight) * effects.blockGainMultiplier);
+    const defend = Math.floor(attributes.dexterity * effects.dexterityBlockWeight * effects.blockGainMultiplier);
     assert.equal(number(face(run, 'core.strike')), strike, `${classId} Strike`);
     assert.equal(number(face(run, 'core.defend')), defend, `${classId} Defend`);
   }
@@ -55,9 +55,9 @@ test('the face equals the combat receipt amount before any stance stage', () => 
     combat.piles.hand.push({ instanceId: 'probe', cardId: 'core.strike' });
     const hit = previewCard(combat, 'probe', combat.enemies[0].id).values[0].damageReceipt.hits[0];
     const attributed = hit.sources.find(source => source.id === 'ar:0' || source.id === 'ar');
-    assert.ok(attributed, 'the receipt names the STR stage');
+    assert.ok(attributed, 'the receipt names its attack attribute stage');
     const withoutStance = Math.floor(attributed.effective * effects.physicalDamageMultiplier * effects.playerDamageMultiplier);
-    assert.equal(number(face(run, 'core.strike')), withoutStance, `${classId}: the static face is the receipt's STR stage through the cuts, without the stance stages`);
+    assert.equal(number(face(run, 'core.strike')), withoutStance, `${classId}: the static face is the receipt's attack attribute stage through the cuts, without the stance stages`);
   }
 });
 
