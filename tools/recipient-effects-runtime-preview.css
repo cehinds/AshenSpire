@@ -41,6 +41,17 @@ input[type=range],input[type=checkbox]{accent-color:var(--accent)}
 .editor-column{display:grid;gap:12px}
 .panel{padding:14px}
 .timing-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 8px;margin:12px 0}
+#timing-editor>.check{display:block;margin-top:10px}
+#category-fields fieldset{min-inline-size:0;margin:9px 0 0;padding:8px;border:1px solid var(--edge);border-radius:6px}
+#category-fields legend{font-size:.83rem;color:var(--muted)}
+#timing-categories{display:grid;gap:5px;margin:0;padding-left:1.5rem}
+#timing-categories li{padding-left:2px}
+#timing-categories li::marker{font-variant-numeric:tabular-nums;color:var(--muted)}
+#timing-categories label{display:inline-flex;justify-content:space-between;align-items:center;gap:4px;width:calc(100% - 70px);font-size:.84rem}
+#timing-categories input{width:3.6em;min-width:0;padding:4px 5px}
+#timing-categories button{width:31px;margin-left:4px;padding:3px}
+#legacy-timing{margin-top:8px}
+.clip-category{display:block;color:var(--muted);font-size:.72rem}
 .wide{grid-column:1/-1}
 .hint{font-size:.79rem}
 .timing-fields input:not([type=range]),.timing-fields select{width:100%;min-width:0}

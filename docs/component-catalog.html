@@ -216,23 +216,22 @@
     <h2 id="recipient-effects-title">Combat recipient effects</h2>
     <p><a href="../tools/recipient-effects-runtime-preview.html">Open the sprite and timing preview</a> · <a href="RECIPIENT-EFFECTS.md">Configuration and art export</a>. <code>RecipientEffectsForEvent</code> selects sprites from confirmed combat results. <code>DecorateRecipientEffects</code> associates actions and recipients, then <code>PlayRecipientEffectLayers</code> plays the clips. Spell circles remain on the caster. Impact and elemental texture play together, and Sweep uses one sprite across its targets.</p>
     <div class="mini mini-stack" style="width:min(100%,452px)">
-      <svg viewBox="0 0 352 96" width="352" style="max-width:100%" role="img" aria-label="A shared battlefield queue plays Enemy A impact and element together, then Enemy B Bind, then Enemy A Weak, with 30 millisecond gaps and no overlap.">
+      <svg viewBox="0 0 352 112" width="352" style="max-width:100%" role="img" aria-label="Casting and movement, attack impacts, defense and reactions, then buffs and statuses. Adjacent categories can overlap.">
         <g fill="currentColor" font-size="11">
-          <text x="3" y="24">Enemy A</text><text x="3" y="60">Enemy B</text>
+          <text x="3" y="19">Casting and movement</text>
+          <text x="3" y="45">Attack impacts</text>
+          <text x="3" y="71">Defense and reactions</text>
+          <text x="3" y="97">Buffs and statuses</text>
         </g>
-        <g fill="#31556b" stroke="#8fbacc">
-          <rect x="62" y="7" width="94" height="28" rx="4"/><rect x="178" y="43" width="72" height="28" rx="4"/>
+        <g stroke-width="1">
+          <rect x="132" y="7" width="60" height="16" rx="3" fill="#31556b" stroke="#8fbacc"/>
+          <rect x="181" y="33" width="63" height="16" rx="3" fill="#77502c" stroke="#dbaa6b"/>
+          <rect x="233" y="59" width="61" height="16" rx="3" fill="#55446c" stroke="#b4a5d0"/>
+          <rect x="283" y="85" width="65" height="16" rx="3" fill="#35544f" stroke="#a0c5af"/>
         </g>
-        <rect x="272" y="7" width="76" height="28" rx="4" fill="#77502c" stroke="#dbaa6b"/>
-        <g fill="#fff4df" font-size="11" text-anchor="middle">
-          <text x="109" y="25">Impact + element</text><text x="214" y="61">Bind</text><text x="310" y="25">Weak</text>
-        </g>
-        <path d="M156 73v4h22v-4 M250 73v4h22v-4" fill="none" stroke="#dbaa6b"/>
-        <text x="167" y="90" text-anchor="middle" fill="currentColor" font-size="10">30 ms gap</text>
-        <text x="261" y="90" text-anchor="middle" fill="currentColor" font-size="10">30 ms gap</text>
       </svg>
     </div>
-    <p>The default battlefield queue shows one clip at a time with a 30 ms gap and zero overlap. Score Studio’s Effects Timing tab opens the same editor as the standalone preview. Preview and save a different scope, cap, gap, overlap or opacity. The clip duration stays fixed. Ward shatter keeps the protected actor's tint and silhouette. Dedicated gain sprites mark Evade and Counter preparation. Missing artwork uses a static debug mark.</p>
+    <p>The default queues allow two active clips per category and per actor, with three across the battlefield. Clips in a category start at least 10 ms apart. The next category can begin 10 ms before the previous one ends when capacity allows. Score Studio's Effects Timing tab previews and saves the order, limits, stagger, transition overlap and opacity. Clip duration stays fixed. Missing artwork uses a static debug mark.</p>
   </section>
   <section class="catalog-footer" aria-labelledby="procedural-art-title">
     <h2 id="procedural-art-title">Procedural card artwork</h2>

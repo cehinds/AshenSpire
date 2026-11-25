@@ -4478,7 +4478,7 @@ async function boot() {
     renderCardsGrid,
     toast,
     normalizeStudioCard,
-    deriveFaceFromDef,
+    deriveFaceFromDef: def => cardDefToFace(def, state.scoring),
     getFilteredCards,
     getFilteredItems,
     studioCardOverrides,
