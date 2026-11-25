@@ -78,8 +78,12 @@ test('live Core implicit Strike pays its used weapon group; previews and unused 
   const committed = combat.eventLog.find(event => event.type === 'cardPlayed').cardInstance;
   assert.equal(committed.usedArmamentId, 'greatsword');
   assert.equal(committed.sourceArmamentId, undefined, 'receipt identity cannot alter rating scope');
-  // Strike's base 6 halves to 3 (Core base-damage scale 0.5), + AR 4 + 1 stance/status AR = 8, x0.7 physical cut x0.7 player side scale (owner, 2026-11-18) = 3.92, then Poise protection = 3.
-  assert.equal(hit.amount, 3, 'attribution does not scope or change the existing damage rating');
+  // Current gear contributes to the actor's effective STR. A non-mitigating
+  // stance still takes the weapon's separate Poise damage.
+  const [receipt] = hit.damageReceipt.hits;
+  assert.equal(receipt.sources.find(row => row.id === 'ar:0').amount, 6, 'attribution preserves the actor STR damage source');
+  assert.equal(hit.amount, 4);
+  assert.deepEqual([receipt.poiseReduced, receipt.poiseDamage], [0, 3]);
   assert.ok(skillXpReceipt(combat)['item:blade'] > 0);
   assert.equal(skillXpReceipt(combat)['item:shield'], undefined);
   recordSkillXp(combat, { type: 'combatEnd', victory: true });
