@@ -111,6 +111,13 @@ const historicalHash = JSON.parse(historicalJson).hash;
 const historicalDerivedStatsBytes = readFileSync(new URL('./fixtures/js01-pre-equipment-derived-stat-rules.json', import.meta.url));
 const historicalDerivedStats = JSON.parse(historicalDerivedStatsBytes);
 const historicalPoiseRules = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
+const currentLevelRewards = {
+  version: 1,
+  classPrimary: { firstLevel: 2, every: 4, amount: 1 },
+  classPrimaryAttribute: { reaver: 'strength', rogue: 'dexterity', starseer: 'intelligence', herald: 'wisdom' },
+  freeAttribute: { firstLevel: 4, every: 8, amount: 1 },
+  cardRankUpsPerLevel: 1,
+};
 const seed = 511;
 const plain = value => JSON.parse(JSON.stringify(value));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -151,7 +158,10 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   const registries = api.bindGameProfileRegistries(api.createRegistries(content), profile);
   if (contentVersion !== undefined) assert.equal(registries.contentVersion, contentVersion);
   const run = api.createRunState({ registries, classId: 'reaver', seed, runId: `js01-${profileId}-${enemyId}` });
-  if (historical) run.classLevelBonusVersion = 1;
+  if (historical) {
+    run.classLevelBonusVersion = 1;
+    delete run.levelRewardRuleSnapshot;
+  }
   const encounter = registries.encounters.get(encounterId);
   assert.deepEqual(plain(encounter.enemies), [enemyId]);
   // W25-BANDS legacy fixture: this baseline pins the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them), in whichever module realm `api` is.
@@ -179,7 +189,7 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   // This scenario pins an actual pre-override combat, not today's new-fight defaults.
   if (profileId === 'historical') delete combat.fixCoreRules?.smashVsDefensive?.defendDamageMultiplier;
   assert.equal(combat.core2ActionRulesVersion, profileId === 'historical' ? 1 : 2);
-  return { api, profile, registries, run, combat, encounter };
+  return { api, profile, registries, run, combat, encounter, historical };
 }
 
 function settle(api, combat) {
@@ -202,15 +212,19 @@ function checkpoint(api, combat) {
 // raw bytes would change at every cut. The recorded version is swapped for a constant only when it
 // equals the version the registries really carry: a save that drops or mis-records it still moves the hash.
 const CONTENT_VERSION_STAMP = '<contentVersion>';
-function hashRun(json, contentVersion) {
+function hashRun(json, contentVersion, levelRewards) {
   const payload = JSON.parse(json);
   delete payload.savedAt;
   if (payload.contentVersion === contentVersion) payload.contentVersion = CONTENT_VERSION_STAMP;
+  // The archive predates this field. Check the exact new snapshot before
+  // comparing every other part of the save with the captured envelope.
+  assert.deepEqual(payload.levelRewardRuleSnapshot, levelRewards, 'save carries its birth-era level reward rules');
+  delete payload.levelRewardRuleSnapshot;
   return hashJson(payload);
 }
 
 let lastStoredContentVersion;
-function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
+function saveAndRestore({ api, profile, registries, run, combat, encounter, historical }) {
   const storage = memoryStorage();
   const manager = api.createSaveManager(storage);
   api.commitCombatSnapshot({
@@ -220,7 +234,8 @@ function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
   const storedJson = storage.getItem(api.runKey(1));
   assert.equal(JSON.parse(storedJson).contentVersion, registries.contentVersion);
   lastStoredContentVersion = JSON.parse(storedJson).contentVersion;
-  const stored = hashRun(storedJson, registries.contentVersion);
+  const levelRewards = historical ? undefined : currentLevelRewards;
+  const stored = hashRun(storedJson, registries.contentVersion, levelRewards);
   const loaded = manager.loadRun(registries);
   assert.ok(loaded, manager.runStatus().reason);
   assert.equal(loaded.gameProfile.hash, profile.hash);
@@ -232,7 +247,7 @@ function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
     expectedGameProfile: loaded.gameProfile,
   });
   assert.equal(restored.core2ActionRulesVersion, combat.core2ActionRulesVersion);
-  return { restored, save: { stored, loaded: hashRun(api.serializeRun(loaded, { inline: true }), registries.contentVersion) } };
+  return { restored, save: { stored, loaded: hashRun(api.serializeRun(loaded, { inline: true }), registries.contentVersion, levelRewards) } };
 }
 
 function continued(api, combat, restored, action) {
