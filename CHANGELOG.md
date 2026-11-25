@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-25
 
+- **Builds page shows 3–4 recent change bullets per build** ([#2992](https://github.com/cehinds/AshenSpire/pull/2992), `0.7.5.106`). Every build card, branch index, feature preview, and table row on the AshenSpire builds page now displays a short 3–4 bullet summary of its most substantial recent changes derived from that build's changelog.
+- **Auto-balance, batch generator, upgrade tag surcharges, lag fix, and rare gear attributes** ([#2991](https://github.com/cehinds/AshenSpire/pull/2991), `0.7.5.106`). Score Studio adds deterministic card/item auto-balancing, batch procedural generation, custom decks/classes, and customizable flat/multiplicative surcharge toggles. Blacksmith, Trader, and Rest card upgrades are faster and seeded, add stacking Efficient and compounding +10% Improved tags, and flat gear attributes are now rare, high-CP, and cut into armour Poise budgets.
 - **Score Studio: Generate cards** ([#2982](https://github.com/cehinds/AshenSpire/pull/2982), `0.7.5.106`). A new button builds a whole card pool from counts and odds (schools, rarity, rank, costs, types, effects), each card at its exact combat power. Preview first; one undo removes it, and nothing reaches the game until you Export.
 
 ## 2026-11-24
