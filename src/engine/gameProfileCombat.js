@@ -196,7 +196,7 @@ export function PacketFaceSplit(ctx, source, carrier, authoredBase, total) {
   const share = FightMagicShare(ctx, profile);
   if (!IsPacketHit(ctx, source, carrier, profile, share) || carrier.skipRatingBonus) return null;
   const effects = configuredModule(ctx, 'effects');
-  const finesse = IsFinesseHit(ctx, source, carrier, 'ar');
+  const finesse = core2MultiHitRulesEnabled(ctx) && IsFinesseHit(ctx, source, carrier, 'ar');
   const channel = (id, entity) => Math.max(0, Math.floor(sourceRatingValue(ctx, entity, id, carrier.sourceArmamentId, carrier.equipmentScoped, carrier) * ChannelWeight(effects, id)));
   return PacketSplit({ base: ScaleCardBaseDamage(authoredBase, effects?.baseDamageMultiplier), share, physicalBonus: channel('ar', finesse ? finesseRatingView(source) : source), magicBonus: channel('pr', source),
     magicMultiplier: PacketMagicMultiplier(FluxMultiplier(ctx, source, carrier)),
@@ -241,7 +241,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const ratingId = !packetHit && modern && (source?.kind !== 'enemy' || SpellTraditionsActive(ctx)) && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar';
   const ratingLabel = ratingId === 'pr' && SpellTraditionsActive(ctx) ? SpellTraditionLabel(carrier) : ChannelLabel(ratingId);
   // A finesse hit scales with Dexterity instead of Strength (owner, 2026-10-25; Core 2 rules version 2).
-  const finesse = modern && IsFinesseHit(ctx, source, carrier, ratingId);
+  const finesse = modern && core2MultiHitRulesEnabled(ctx) && IsFinesseHit(ctx, source, carrier, ratingId);
   const rated = finesse ? finesseRatingView(source) : source;
   const ar = modern ? sourceRatingValue(ctx, rated, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped, carrier) : rating(source,'ar');
   const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * ChannelWeight(effects,ratingId);
