@@ -30,3 +30,13 @@ node --test tests/magic-poise-first.test.mjs tests/flowing-transition-stance.tes
 ```
 
 The unchanged core lane completed 151 checks, and `npm run code:check` passed on the INT/WIS fix. Other inherited combat failures remain under review.
+
+## Mechanics registry compatibility
+
+The mechanics generator produces 27 changes. Four existing legacy manifests reference the existing configured damage receipt reader and update their corresponding guides. The registry adds Wisdom, Intelligence and Recurring. None of the hashed rules-source files changed.
+
+The genuine archived save in `tests/fixtures/pre-registry-dev-7dff4b03-save.json.gz` was produced with the archived Dev build at `7dff4b03a1783054a4ed807f4d45db028b104343` before regeneration. It records a Reaver fight against the Wandering Soldier, seed 7491. The compressed file SHA-256 is `fb2cdb88f5072d509738716968fed042977e75d2cc8c36eb2af17543a00a14e5`; the saved profile digest is `sha256:0d1e774aa158d069e4516e769249cc3c97c6864d14ab61bccf0b30ddf8034cb7`. With the regenerated catalog and no compatibility edge, the save refuses the previous runtime. With the explicit edge, it resumes its saved policies and resolves a real attack. The unchanged save still validates after a SaveManager round trip.
+
+The catalog's compiled runtime is now `sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d`. The existing compatibility checks still require a known prior fingerprint, supported ABI and numeric policy, and configured Core rules. Historical checks also reject unknown runtimes and digest damage.
+
+Verification ran the canonical mechanics and catalog checks, 8 mechanics tests, 22 compatibility tests, 61 profile, combat save and recipient-effect tests, and the native and bundled combat audits with all 120 statuses covered in each.
