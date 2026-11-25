@@ -108,3 +108,11 @@ The old Act-band receipts remain in `65134299eca:tests/gear-pass-save-compatibil
 
 - `tests/a3-lean-retune.test.mjs` pins the reworked starting shard and uses an explicit three-point award to cross the legacy Energy threshold. `tests/game-profile.test.mjs` still verifies immutable profile facts and checks the current authored starting hands. `tests/card-stat-modifiers.test.mjs` verifies the additional authored Wisdom fact on Gilded Oath. These passed 13/13.
 - `tests/wireframe-possession-variants.test.mjs` keeps current weapon art and exercises pre-rework modifier rendering with independent legacy item signatures. `tests/face-cost-effective.test.mjs` proves Prepared-only current robe and Focus pricing across deck, pile, quote, play and resumed fight, while preserving the no-type older price coverage. These passed 12/12.
+
+## Owner-approved temporary pools and current equipment tuning
+
+Temporary Constitution, Dexterity and Wisdom changes adjust maximum HP, Stamina and Mana for either combatant. Raising a maximum leaves the held amount untouched. A decrease or expiry clamps the held amount. Tests cover enemy turns that act or skip, ordinary combat exit, a real SaveManager checkpoint with temporary values only in its nested fight, and equipment changes during a boost with and without a prior boost. The paired swap retains the same permanent attributes and ratings after expiry. Configured swaps already refresh pool and draw pricing independently of their existing non-pool attribute/rating behavior, which is outside this repair.
+
+The type-enabled Sage's Robe without a saved signature uses today's unarmoured group and its Wisdom-derived Mana. The old raw +1 MP remains in authored data and is excluded by the existing duplicate-pool rule. Pre-type profiles still use their original raw gear rules. No gear tuning or save pins changed in this group. The SPEC records these rulings and the separate five-percent lower-rank fallback for newly created Core profiles.
+
+Passed 180/180 across live stats, gear mechanics, gear signatures, gear save compatibility, save migration, pool projections, Ashen Blight, Blight gauges and both combat snapshot suites.

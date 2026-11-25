@@ -125,13 +125,13 @@ test('legacy pin: a genuine pre-type-pass save keeps Sage\'s Robe at +1 max MP a
   assert.equal(wardGrant(robe.summary), 0);
 });
 
-test('legacy pin: an existing typeEffectsVersion 1 save (no signatureMods snapshotted) keeps Sage\'s Robe with no Ward, and (owner, 2026-11-20) at +1 max MP: its raw +1 is dropped because its Wisdom points already feed Mana', () => {
+test('an earlier type-enabled profile uses current robe tuning without acquiring an unsaved signature', () => {
   const profile = editedProfile(current(), 'armor.sagesRobe', row => { delete row.signatureMods; });
   assert.equal(profile.modules.gear.typeEffectsVersion, 1);
   const registries = registriesFor(profile);
   assert.deepEqual(piece(registries, 'sagesRobe').mods, ['self.maxMana=+1']);
   const robe = wearing(registries, { armor: 'sagesRobe', classId: 'starseer' });
-  assert.equal(robe.mods.maxMana, 1, 'the robe base +1 only; the raw +1 would count its Wisdom points twice (2026-11-20)');
+  assert.equal(robe.mods.maxMana, 0, 'current robe group has no flat Mana; Wisdom already accounts for the old raw addend');
   assert.equal(wardGrant(robe.summary), 0, 'no Sage Ward');
 });
 

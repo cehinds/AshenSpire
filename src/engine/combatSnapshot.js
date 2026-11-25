@@ -380,11 +380,13 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   // longer does; this is the invariant itself, so no future caller can either.
   if (combat && combat.result) throw new Error(`Cannot save a combat that has already ended ('${combat.result}')`);
   const snapshot = serializeCombatSnapshot(combat);
+  const player = combat.player;
+  const permanent = player.liveStats?.base;
   if (combat.combatExpansionVersion === 2) {
     run.ashenBlight = structuredClone(combat.player.ashenBlight);
     run.ashenBlightBasePools = structuredClone(combat.player.baseResourceMaxima);
-    run.energyMax = combat.player.energyMax;
-    run.drawPerTurn = combat.player.drawPerTurn;
+    run.energyMax = permanent?.energyMax ?? player.energyMax;
+    run.drawPerTurn = permanent?.drawPerTurn ?? player.drawPerTurn;
   }
   run.loadout = structuredClone(combat.loadout);
   // Piles keep their combat lifecycle; the saved run deck only follows what
@@ -403,9 +405,9 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   }
   delete run.armamentLevels;
   for (const field of ['hp', 'mana', 'stamina']) {
-    run[field] = field === 'stamina' ? Math.min(combat.player.stamina, combat.player.maxStamina) : combat.player[field];
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
-    run[maxField] = combat.player[maxField];
+    run[maxField] = permanent?.[maxField] ?? player[maxField];
+    run[field] = permanent || field === 'stamina' ? Math.min(player[field], run[maxField]) : player[field];
   }
   run.combatEntered = { nodeId, encounterId, snapshot };
   return snapshot;
