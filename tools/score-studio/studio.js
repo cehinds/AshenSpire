@@ -912,10 +912,10 @@ function applyGeneratedPool() {
   state.generatorSettings = clone(settings);
   const kept = settings.mode === 'replaceAll' ? [] : settings.mode === 'add' ? state.cards : state.cards.filter((c) => !c._generated);
   const keptIds = new Set(kept.map((c) => c.id));
+  // Removed cards leave the studio view only: their scoring overrides stay, so Export writes the same weights.
   for (const gone of state.cards.filter((c) => !keptIds.has(c.id))) {
     studioCardOverrides.delete(gone.id);
     studioCardOverrides.delete(`${LIVE_ID_PREFIX}${gone.id}`);
-    if (state.scoring.overrides) delete state.scoring.overrides[gone.id];
   }
   // Ids stay unique when Add to the pool runs twice with one seed.
   const fitted = plan.cards.map((card, i) => {
