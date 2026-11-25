@@ -10,6 +10,7 @@ import { applyAttackDamage } from '../src/engine/actions.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 const FORCE = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane' }, tags: ['school:force'] };
+const FIRE = { combatProfile: { camp: 'spell', school: 'fire', damageType: 'arcane', magicShare: 1 } };
 const BLUNT = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'blunt', reach: 'contact' }, tags: ['camp:physical', 'damage:blunt'] };
 const hit = (combat, target, carrier, base = 20) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const ward = (combat, entity, stacks) => Statuses.applyStatus(combat, entity, 'ward', stacks, entity);
@@ -81,6 +82,29 @@ test('Ward completely absorbing post-Block damage leaves Poise and HP untouched'
   assert.equal(enemy.statuses.ward.stacks, Math.ceil(enemy.wardHp / 5));
   assert.equal(enemy.persistentPoise.value, poiseBefore, 'Poise untouched');
   assert.equal(enemy.hp, 100, 'HP untouched');
+});
+
+test('full Ward absorbs Fire before its attached Poise drain, including with full Block', () => {
+  for (const [block, stacks, fullyProtected] of [[4, 3, true], [30, 3, true], [4, 1, false]]) {
+    const { combat, enemy } = fight({ enemies: 1, poise: 20, attributes: { intelligence: 4 } });
+    delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
+    const unprotected = hit(combat, enemy, FIRE, 30);
+    assert.ok(unprotected.element.poiseAdded > 0, 'control: Fire drains additional Poise without a buffer');
+    enemy.block = block;
+    ward(combat, enemy, stacks);
+    const startingPoise = enemy.persistentPoise.value;
+    const startingWard = enemy.wardHp;
+    const startingHp = enemy.hp;
+    const quote = hit(combat, enemy, FIRE, 30);
+    const packet = quote.damageReceipt.hits[0];
+    assert.equal((quote.wardHpAbsorbed ?? 0) === packet.incoming - quote.blocked, fullyProtected);
+    if (fullyProtected) assert.equal(quote.element.poiseAdded, 0, 'Ward shields Poise completely');
+    else assert.ok(quote.element.poiseAdded > 0, 'the overflowing Fire drains additional Poise');
+    applyAttackDamage(combat, combat.player, enemy, 30, [], { ...FIRE, skipRatingBonus: true });
+    assert.equal(enemy.wardHp ?? 0, startingWard - (quote.wardHpAbsorbed ?? 0));
+    assert.equal(enemy.persistentPoise.value, startingPoise - quote.poiseDrain);
+    assert.equal(enemy.hp, startingHp - quote.hpLoss);
+  }
 });
 
 test('saved Force routing still splits Ward overflow 50/50', () => {

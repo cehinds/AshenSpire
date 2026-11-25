@@ -137,7 +137,12 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, op
   target.persistentPoise.value = view.value;
   let receipt;
   try { receipt = profileDamageReceiptCore(ctx, source, target, base, carrier, options); } finally { target.persistentPoise.value = real; }
-  return SpellPoiseFinish(ctx, source, target, carrier, ApplyDefendPoiseFloor(ctx, target, carrier, ElementReceiptFinish(ctx, carrier, receipt, view, { value: real })));
+  // An active HP buffer stops the whole hit's Poise damage when there is no overflow,
+  // including Fire's additional drain at this later receipt stage.
+  const wardProtected = FixCoreWardHpBuffer(ctx) && EffectiveWardHp(ctx, target) > 0
+    && receipt.damageReceipt.hits[0].incoming <= receipt.blocked + (receipt.wardHpAbsorbed ?? 0);
+  const finished = ElementReceiptFinish(ctx, carrier, receipt, wardProtected ? null : view, { value: real });
+  return SpellPoiseFinish(ctx, source, target, carrier, ApplyDefendPoiseFloor(ctx, target, carrier, finished));
 }
 /**
  * Owner, 2026-11-18: a player's spell takes `effects.spellPoiseDamageMultiplier` times the Poise it costs an enemy. Applied last, to the completed net loss
