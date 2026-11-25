@@ -29,6 +29,13 @@ import { GenerateCard } from '../../src/model/cardGenerator.js';
 import { RenderPoolForm, ReadPoolForm, NormaliseSettings, UpdatePoolSums } from './cardPoolForm.js';
 import { buildItemRoster, typeModsForEntry, scoreItemEntry, livePieceFromEntry, describeItemMod, formatModString, ITEM_TRAIT_SELECTORS, ITEM_QUICK_TRAITS, ITEM_MOTIF_OPTIONS } from './itemStudio.js';
 import { initStudioToolsModals } from './studioToolsModal.js';
+import {
+  DEFAULT_ART_LOAD_TIMEOUT_MS,
+  parseLoadingShotMode,
+  artLoadingPercent,
+  formatArtLoadingStatus,
+  summarizeTileArtLoad,
+} from './loadingState.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -442,8 +449,14 @@ function snapshotState() {
 }
 
 function updateUndoButtons() {
-  document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
-  document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
+  const noUndo = state.undoStack.length === 0;
+  const noRedo = state.redoStack.length === 0;
+  document.getElementById('btn-undo').disabled = noUndo;
+  document.getElementById('btn-redo').disabled = noRedo;
+  const menuUndo = document.getElementById('btn-menu-undo');
+  const menuRedo = document.getElementById('btn-menu-redo');
+  if (menuUndo) menuUndo.disabled = noUndo;
+  if (menuRedo) menuRedo.disabled = noRedo;
 }
 
 // Records an undo point for the state as it is now. Call before mutating; call saveDraft() after.
@@ -491,11 +504,116 @@ function isDirty() {
 function refreshDirtyStatus() {
   const pill = document.getElementById('draft-status');
   const dirty = isDirty();
+  pill.classList.remove('is-loading');
   pill.classList.toggle('is-dirty', dirty);
   if (!dirty) pill.textContent = 'Synced with repo';
   else if (!state.autosave) pill.textContent = 'Unsaved edits';
   else if (state.draftStorageFailed) pill.textContent = 'Unsaved edits (storage full)';
   else pill.textContent = 'Draft auto-saved (local temp copy)';
+}
+
+const LOADING_SHOT_MODE = parseLoadingShotMode(location.search);
+let artLoadGeneration = 0;
+let artLoadSafetyTimer = null;
+
+function nextPaint() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+function setCardsLoading(visible, title = 'Loading cards…', detail = '', { error = false } = {}) {
+  const el = document.getElementById('cards-loading');
+  const grid = document.getElementById('cards-grid');
+  if (el) {
+    el.hidden = !visible;
+    el.setAttribute('aria-busy', visible && !error ? 'true' : 'false');
+    el.classList.toggle('is-error', Boolean(error));
+    const titleEl = document.getElementById('cards-loading-title');
+    if (titleEl && title) titleEl.textContent = title;
+    const detailEl = document.getElementById('cards-loading-detail');
+    if (detailEl && detail !== undefined) detailEl.textContent = detail;
+  }
+  if (grid) grid.hidden = visible;
+}
+
+function setItemsLoading(visible, title = 'Loading items…', detail = '') {
+  const el = document.getElementById('items-loading');
+  const grid = document.getElementById('items-grid');
+  if (el) {
+    el.hidden = !visible;
+    el.setAttribute('aria-busy', visible ? 'true' : 'false');
+    const titleEl = document.getElementById('items-loading-title');
+    if (titleEl && title) titleEl.textContent = title;
+    const detailEl = document.getElementById('items-loading-detail');
+    if (detailEl && detail !== undefined) detailEl.textContent = detail;
+  }
+  if (grid) grid.hidden = visible;
+}
+
+function setCardsArtLoadingBar(visible, settled = 0, total = 0) {
+  const bar = document.getElementById('cards-art-loading');
+  if (!bar) return;
+  bar.hidden = !visible;
+  if (!visible) return;
+  const textEl = document.getElementById('cards-art-loading-text');
+  const fillEl = document.getElementById('cards-art-loading-fill');
+  if (textEl) textEl.textContent = formatArtLoadingStatus(settled, total);
+  if (fillEl) fillEl.style.width = `${artLoadingPercent(settled, total)}%`;
+}
+
+function trackCardsArtLoading(grid) {
+  const token = ++artLoadGeneration;
+  clearTimeout(artLoadSafetyTimer);
+  artLoadSafetyTimer = null;
+
+  const tiles = [...grid.querySelectorAll('.studio-card-tile')];
+  if (LOADING_SHOT_MODE === 'art-loading') {
+    const total = Math.max(1, tiles.length);
+    const settled = Math.max(1, Math.round(total * 0.4));
+    tiles.slice(settled, settled + 4).forEach((t) => t.classList.add('is-art-loading'));
+    setCardsArtLoadingBar(true, settled, total);
+    return;
+  }
+
+  const tileEntries = tiles
+    .map((tile) => ({ tile, imgs: [...tile.querySelectorAll('img')] }))
+    .filter((entry) => entry.imgs.length > 0);
+
+  const update = () => {
+    if (token !== artLoadGeneration) return;
+    for (const entry of tileEntries) {
+      const done = entry.imgs.every((img) => img.complete);
+      entry.tile.classList.toggle('is-art-loading', !done);
+    }
+    const summary = summarizeTileArtLoad(tileEntries.map((e) => e.imgs));
+    if (summary.complete) {
+      clearTimeout(artLoadSafetyTimer);
+      artLoadSafetyTimer = null;
+      setCardsArtLoadingBar(false);
+    } else {
+      setCardsArtLoadingBar(true, summary.settled, summary.total);
+    }
+  };
+
+  const initial = summarizeTileArtLoad(tileEntries.map((e) => e.imgs));
+  if (initial.complete) {
+    for (const entry of tileEntries) entry.tile.classList.remove('is-art-loading');
+    setCardsArtLoadingBar(false);
+    return;
+  }
+
+  update();
+  for (const entry of tileEntries) {
+    for (const img of entry.imgs) {
+      if (img.complete) continue;
+      img.addEventListener('load', update, { once: true });
+      img.addEventListener('error', update, { once: true });
+    }
+  }
+  artLoadSafetyTimer = setTimeout(() => {
+    if (token !== artLoadGeneration) return;
+    for (const entry of tileEntries) entry.tile.classList.remove('is-art-loading');
+    setCardsArtLoadingBar(false);
+  }, DEFAULT_ART_LOAD_TIMEOUT_MS);
 }
 
 function writeDraftNow() {
@@ -1038,6 +1156,8 @@ function restoreSelectedNameSet() {
   renderInspector();
   saveDraft({ autoName: false });
   closeMenus();
+  const restoreModal = document.getElementById('restore-names-modal');
+  if (restoreModal?.open) restoreModal.close();
   toast(count ? `Restored ${set.label} on ${count} card(s); Auto-name is off for them` : `Every card already has ${set.label}`);
 }
 
@@ -1137,6 +1257,10 @@ function wireNameSets() {
     if (!remove) return;
     e.preventDefault();
     deleteNameSet(remove.dataset.nameSetDelete);
+  });
+  document.getElementById('btn-restore-names')?.addEventListener('click', () => {
+    renderNameSetsList();
+    document.getElementById('restore-names-modal')?.showModal();
   });
   document.getElementById('btn-restore-names-apply').addEventListener('click', restoreSelectedNameSet);
   renderNameSetsList();
@@ -1466,6 +1590,10 @@ function renderCardsGrid() {
     tile.addEventListener('click', selectTile);
     tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTile(); } });
     grid.appendChild(tile);
+  }
+  if (LOADING_SHOT_MODE !== 'loading') {
+    setCardsLoading(false);
+    trackCardsArtLoading(grid);
   }
   computeShiftCount();
 }
@@ -2727,6 +2855,7 @@ function renderItemsGrid() {
     });
     grid.appendChild(tile);
   }
+  setItemsLoading(false);
 }
 
 function renderItemInspector() {
@@ -3180,7 +3309,9 @@ function buildScoringDiff() {
 
 async function loadFromRepo(customPath = state.repoPath) {
   clearPendingWeights();
+  setCardsLoading(true, 'Loading cards…', isLocalServer ? 'Reading repository configuration…' : 'Preparing card pool and scoring…');
   if (!isLocalServer) {
+    await nextPaint();
     state.repoScoring = clone(shippedScoring);
     state.scoring = clone(shippedScoring);
     recomputeBaselineRanks();
@@ -3711,6 +3842,7 @@ function wireEvents() {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
       document.querySelectorAll('.studio-tab').forEach((b) => { b.classList.toggle('is-active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
+      document.querySelectorAll('[data-window-tab]').forEach((item) => item.classList.toggle('is-active', item.dataset.windowTab === tab));
       document.querySelectorAll('.studio-panel').forEach((p) => p.classList.toggle('is-active', p.id === `tab-${tab}`));
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
       if (tab === 'art') renderArtTab();
@@ -3719,6 +3851,25 @@ function wireEvents() {
       } else {
         pauseEffects();
       }
+    });
+  });
+  document.querySelectorAll('[data-window-tab]').forEach((item) => {
+    item.addEventListener('click', () => {
+      document.querySelector(`.studio-tab[data-tab="${item.dataset.windowTab}"]`)?.click();
+    });
+  });
+
+  // Hovering another app-bar menu trigger while one app menu is open switches directly, like native desktop apps.
+  document.querySelectorAll('.studio-app-menus .studio-menu').forEach((menu) => {
+    const trigger = menu.querySelector(':scope > button[aria-controls]');
+    const panel = trigger && document.getElementById(trigger.getAttribute('aria-controls'));
+    if (!trigger || !panel) return;
+    trigger.addEventListener('mouseenter', () => {
+      const appMenuOpen = [...document.querySelectorAll('.studio-app-menus .studio-menu-panel')].some((p) => !p.hidden);
+      if (!appMenuOpen || !panel.hidden) return;
+      closeMenus(menu);
+      panel.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
     });
   });
 
@@ -4406,6 +4557,58 @@ function wireEvents() {
   document.getElementById('btn-download-json').addEventListener('click', downloadScoringJson);
   document.getElementById('input-upload-json').addEventListener('change', importScoringFile);
 
+  // Application Menu Bar shortcuts (File / Edit / View / Tools / Window / Export dropdown)
+  document.getElementById('btn-menu-new-card')?.addEventListener('click', () => {
+    document.querySelector('.studio-tab[data-tab="cards"]')?.click();
+    document.getElementById('btn-new-card')?.click();
+  });
+  document.getElementById('btn-menu-undo')?.addEventListener('click', () => document.getElementById('btn-undo')?.click());
+  document.getElementById('btn-menu-redo')?.addEventListener('click', () => document.getElementById('btn-redo')?.click());
+  document.getElementById('btn-menu-view-grid')?.addEventListener('click', () => {
+    document.querySelector('.studio-tab[data-tab="cards"]')?.click();
+    document.getElementById('view-grid')?.click();
+  });
+  document.getElementById('btn-menu-view-single')?.addEventListener('click', () => {
+    document.querySelector('.studio-tab[data-tab="cards"]')?.click();
+    document.getElementById('view-single')?.click();
+  });
+  document.getElementById('btn-menu-toggle-filters')?.addEventListener('click', () => {
+    document.querySelector('.studio-tab[data-tab="cards"]')?.click();
+    document.getElementById('btn-filters')?.click();
+  });
+  const menuRankToggle = document.getElementById('menu-toggle-rank-badges');
+  const filterRankToggle = document.getElementById('toggle-rank-badges');
+  if (menuRankToggle && filterRankToggle) {
+    menuRankToggle.checked = filterRankToggle.checked;
+    menuRankToggle.addEventListener('change', () => {
+      filterRankToggle.checked = menuRankToggle.checked;
+      filterRankToggle.dispatchEvent(new Event('change'));
+    });
+    filterRankToggle.addEventListener('change', () => {
+      menuRankToggle.checked = filterRankToggle.checked;
+    });
+  }
+  document.getElementById('btn-menu-custom-decks')?.addEventListener('click', () => document.getElementById('btn-custom-decks')?.click());
+  document.getElementById('btn-reset-inspector-width')?.addEventListener('click', () => {
+    document.querySelector('.cards-layout')?.style.removeProperty('--inspector-width');
+    try { localStorage.removeItem(INSPECTOR_WIDTH_KEY); } catch { /* ignore */ }
+    toast('Inspector width reset');
+  });
+
+  const downloadJsonBlob = (filename, payload, label) => {
+    const blob = new Blob([JSON.stringify(payload, null, 2) + '\n'], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    Object.assign(document.createElement('a'), { href: url, download: filename }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`Downloaded ${label} (${filename})`);
+  };
+  document.getElementById('btn-export-accept-ranks')?.addEventListener('click', openAcceptRanksDialog);
+  document.getElementById('btn-export-decks-repo')?.addEventListener('click', () => document.getElementById('btn-decks-save-repo')?.click());
+  document.getElementById('btn-export-bundle-json')?.addEventListener('click', () => document.getElementById('btn-decks-export-json')?.click());
+  document.getElementById('btn-export-names-json')?.addEventListener('click', saveNames);
+  document.getElementById('btn-export-art-json')?.addEventListener('click', () => downloadJsonBlob('cardArtLayers.json', state.artLayers, 'card art layers'));
+  document.getElementById('btn-export-item-art-json')?.addEventListener('click', () => downloadJsonBlob('itemArtLayers.json', state.itemArtLayers, 'item art layers'));
+
   // Weights toolbar: staged edits, the studio's saved config, import, export and accepting the new ranks.
   document.getElementById('btn-weights-apply').addEventListener('click', applyPendingWeights);
   document.getElementById('btn-weights-discard').addEventListener('click', discardPendingWeights);
@@ -4449,6 +4652,16 @@ function buildCardList() {
 }
 
 async function boot() {
+  setCardsLoading(true, 'Loading cards…', 'Preparing card pool and scoring…');
+  setItemsLoading(true, 'Loading items…', 'Preparing weapons, armours, and relics…');
+  if (LOADING_SHOT_MODE === 'loading') {
+    const pill = document.getElementById('draft-status');
+    if (pill) {
+      pill.classList.add('is-loading');
+      pill.textContent = 'Loading…';
+    }
+    return;
+  }
   state.cards = buildCardList();
   const roster = buildItemRoster(contentBundle);
   state.items = roster.items;
@@ -4484,12 +4697,12 @@ async function boot() {
     studioCardOverrides,
   });
 
-  // Web mode (GitHub Pages): nothing can be written to the repo, so the repo controls go and
-  // Download JSON in the More menu is how work leaves the studio.
+  // Web mode (GitHub Pages): nothing can be written to the repo, so repo-write controls hide and
+  // the Export ▾ dropdown downloads JSON files instead.
   if (!isLocalServer) {
     for (const id of ['btn-export-repo', 'btn-save-art', 'btn-revert', 'btn-rebal-save-repo', 'btn-decks-save-repo', ...WEIGHTS_REPO_BUTTON_IDS]) document.getElementById(id)?.classList.add('hidden');
-    document.querySelector('#more-menu .menu-section')?.classList.add('hidden');
-    document.getElementById('draft-status').title = 'Web mode: use Download JSON in the More menu to export';
+    document.querySelectorAll('.repo-only-item').forEach((el) => el.classList.add('hidden'));
+    document.getElementById('draft-status').title = 'Web mode: use Export ▾ to download JSON files';
   }
 
   await loadFromRepo(state.repoPath);
@@ -4551,4 +4764,14 @@ async function boot() {
   refreshDirtyStatus();
 }
 
-boot().then(checkCardArt);
+boot()
+  .then(() => { if (LOADING_SHOT_MODE !== 'loading') return checkCardArt(); })
+  .catch((err) => {
+    setCardsLoading(true, 'Failed to load cards', err?.message || 'Unexpected error while starting Score Studio.', { error: true });
+    const pill = document.getElementById('draft-status');
+    if (pill) {
+      pill.classList.remove('is-loading');
+      pill.classList.add('is-dirty');
+      pill.textContent = 'Load failed';
+    }
+  });

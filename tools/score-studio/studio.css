@@ -53,20 +53,70 @@ body.studio-body [hidden] { display: none !important; }
 body.studio-body .sandbox-ward-hp { color: #6fa8ff; font-weight: 700; }
 body.studio-body .sandbox-poise-bonus { color: #c49bff; font-weight: 700; }
 
-/* TOP BAR: title and status, tabs, then undo, redo, Export and the More menu. */
+/* TOP BAR: classic desktop application menu bar (File/Edit/View/Tools/Window + Export ▾) over workspace tabs. */
 body.studio-body .studio-topbar {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: "brand tabs actions";
-  align-items: center;
-  gap: var(--studio-gap-3);
-  min-height: 44px;
-  padding: 0 var(--studio-gap-3);
+  display: flex;
+  flex-direction: column;
   background: var(--st-surface);
   border-bottom: 1px solid var(--st-border);
 }
-body.studio-body .studio-brand { grid-area: brand; display: flex; align-items: center; gap: var(--studio-gap-2); min-width: 0; }
-body.studio-body .studio-title { font-weight: 700; font-size: 15px; white-space: nowrap; }
+body.studio-body .studio-menubar {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-gap-2);
+  min-height: 38px;
+  padding: 0 var(--studio-gap-3);
+  border-bottom: 1px solid var(--st-border);
+}
+body.studio-body .studio-brand { display: flex; align-items: center; gap: var(--studio-gap-2); min-width: 0; margin-right: var(--studio-gap-1); }
+body.studio-body .studio-title { font-weight: 700; font-size: 14px; white-space: nowrap; }
+body.studio-body .studio-app-menus {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+body.studio-body .menu-trigger {
+  height: 28px;
+  padding: 0 9px;
+  background: transparent;
+  color: var(--st-text);
+  border: 1px solid transparent;
+  border-radius: var(--studio-radius);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+body.studio-body .menu-trigger:hover,
+body.studio-body .menu-trigger[aria-expanded="true"] {
+  background: var(--st-surface-2);
+  border-color: var(--st-border);
+}
+body.studio-body .menu-trigger:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 1px; }
+body.studio-body .menu-item-split { justify-content: space-between; }
+body.studio-body .menu-item kbd {
+  font-family: inherit;
+  font-size: 10px;
+  color: var(--st-muted);
+  background: var(--st-surface-2);
+  border: 1px solid var(--st-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+body.studio-body .menu-item[data-window-tab]::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  flex-shrink: 0;
+}
+body.studio-body .menu-item[data-window-tab].is-active::before {
+  background: var(--st-accent);
+}
 body.studio-body .studio-pill {
   background: var(--st-surface-2);
   border: 1px solid var(--st-border);
@@ -81,7 +131,14 @@ body.studio-body .studio-pill {
 }
 body.studio-body .studio-pill.is-dirty { border-color: var(--st-warn); color: var(--st-warn); }
 
-body.studio-body .studio-tabs { grid-area: tabs; display: flex; justify-content: center; gap: var(--studio-gap-1); min-width: 0; }
+body.studio-body .studio-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-gap-1);
+  padding: 4px var(--studio-gap-3);
+  min-width: 0;
+  overflow-x: auto;
+}
 body.studio-body .studio-tab {
   height: var(--studio-control-h);
   background: transparent;
@@ -98,7 +155,7 @@ body.studio-body .studio-tab.is-active { background: var(--st-surface-2); border
 body.studio-body .tab-short { display: none; }
 body.studio-body .badge { background: var(--st-warn); color: #111; border-radius: 999px; padding: 1px 6px; font-size: 10px; margin-left: var(--studio-gap-1); }
 
-body.studio-body .studio-actions { grid-area: actions; display: flex; gap: var(--studio-gap-1); align-items: center; }
+body.studio-body .studio-actions { display: flex; gap: var(--studio-gap-1); align-items: center; flex-shrink: 0; }
 
 /* BUTTONS: one height and radius. Primary is reserved for Export and New. */
 body.studio-body .s-btn {
@@ -630,20 +687,27 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
     top: 0;
     z-index: 20;
     flex-shrink: 0;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "brand actions"
-      "tabs tabs";
-    row-gap: 0;
-    padding: env(safe-area-inset-top, 0px) max(var(--studio-gap-2), env(safe-area-inset-right, 0px)) 0 max(var(--studio-gap-2), env(safe-area-inset-left, 0px));
+    padding: env(safe-area-inset-top, 0px) 0 0;
   }
-  body.studio-body .studio-brand { min-height: 44px; }
+  body.studio-body .studio-menubar {
+    flex-wrap: wrap;
+    row-gap: var(--studio-gap-1);
+    padding: var(--studio-gap-1) max(var(--studio-gap-2), env(safe-area-inset-right, 0px)) var(--studio-gap-1) max(var(--studio-gap-2), env(safe-area-inset-left, 0px));
+  }
+  body.studio-body .studio-brand { min-height: 32px; }
+  body.studio-body .studio-actions { margin-left: auto; }
+  body.studio-body .studio-app-menus {
+    order: 3;
+    flex: 1 0 100%;
+    padding-top: 2px;
+    border-top: 1px solid var(--st-border);
+    overflow-x: auto;
+  }
   body.studio-body .studio-tabs {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
-    margin: 0 calc(-1 * var(--studio-gap-2));
-    border-top: 1px solid var(--st-border);
+    padding: 0;
   }
   body.studio-body .studio-tab {
     border-radius: 0;
@@ -1188,4 +1252,168 @@ body.studio-body .studio-menu-panel .menu-divider {
   border: 0;
   border-top: 1px solid var(--st-border);
   margin: 4px 0;
+}
+
+/* Loading states: initial card pool skeleton + spinner, and non-blocking card art progress bar. */
+body.studio-body .studio-pill.is-loading {
+  border-color: var(--st-accent);
+  color: var(--st-accent);
+}
+body.studio-body .studio-loading-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--studio-gap-4);
+  padding: 20px 14px;
+  overflow-y: auto;
+}
+body.studio-body .studio-loading-state.studio-loading-compact {
+  justify-content: center;
+  align-items: center;
+}
+body.studio-body .studio-loading-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--studio-gap-3);
+  padding: 12px 16px;
+  background: var(--st-surface);
+  border: 1px solid var(--st-border);
+  border-radius: 10px;
+}
+body.studio-body .studio-loading-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+body.studio-body .studio-loading-copy strong {
+  font-size: 13px;
+  color: var(--st-text);
+}
+body.studio-body .studio-loading-spinner {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2.5px solid var(--st-border);
+  border-top-color: var(--st-accent);
+  animation: studio-spin 0.8s linear infinite;
+}
+body.studio-body .studio-loading-spinner.studio-loading-spinner-sm {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+body.studio-body .studio-loading-state.is-error .studio-loading-head {
+  border-color: var(--st-bad);
+}
+body.studio-body .studio-loading-state.is-error .studio-loading-spinner {
+  animation: none;
+  border-color: var(--st-bad);
+}
+body.studio-body .studio-loading-state.is-error .studio-loading-skeletons {
+  display: none;
+}
+body.studio-body .studio-loading-skeletons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-tile-width, 185px), 1fr));
+  gap: 14px;
+}
+body.studio-body .studio-skeleton-tile {
+  background: var(--st-surface);
+  border: 1px solid var(--st-border);
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+body.studio-body .studio-skeleton-stage {
+  width: 100%;
+  aspect-ratio: var(--card-ratio, 2 / 3);
+  border-radius: 7px;
+  background: linear-gradient(110deg, var(--st-surface-2) 25%, #2a3244 50%, var(--st-surface-2) 75%);
+  background-size: 200% 100%;
+  animation: studio-shimmer 1.4s ease-in-out infinite;
+}
+body.studio-body .studio-skeleton-line {
+  height: 10px;
+  border-radius: 4px;
+  background: var(--st-surface-2);
+  animation: studio-pulse 1.4s ease-in-out infinite;
+}
+body.studio-body .studio-skeleton-line.is-short {
+  width: 62%;
+}
+body.studio-body .studio-loading-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-gap-2);
+  padding: 6px var(--studio-gap-3);
+  background: var(--st-surface);
+  border-bottom: 1px solid var(--st-border);
+  font-size: 12px;
+  color: var(--st-muted);
+}
+body.studio-body .studio-loading-bar-text {
+  white-space: nowrap;
+  color: var(--st-text);
+}
+body.studio-body .studio-loading-progress {
+  flex: 1 1 120px;
+  max-width: 240px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--st-surface-2);
+  border: 1px solid var(--st-border);
+  overflow: hidden;
+}
+body.studio-body .studio-loading-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--st-accent);
+  transition: width 0.15s ease;
+}
+body.studio-body .studio-card-tile.is-art-loading .studio-card-stage {
+  background: linear-gradient(110deg, var(--st-surface-2) 25%, #2a3244 50%, var(--st-surface-2) 75%);
+  background-size: 200% 100%;
+  animation: studio-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes studio-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes studio-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes studio-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
+}
+@media (max-width: 900px) {
+  body.studio-body .studio-loading-state {
+    height: auto;
+    overflow: visible;
+    padding: var(--studio-gap-3) var(--studio-gap-2);
+  }
+  body.studio-body .studio-loading-skeletons {
+    grid-template-columns: repeat(auto-fill, minmax(min(var(--card-tile-width, 160px), calc(50% - 8px)), 1fr));
+    gap: var(--studio-gap-2);
+  }
+  body.studio-body .studio-loading-bar {
+    flex-wrap: wrap;
+    padding: 6px var(--studio-gap-2);
+  }
+  body.studio-body .studio-loading-progress {
+    max-width: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.studio-body .studio-loading-spinner,
+  body.studio-body .studio-skeleton-stage,
+  body.studio-body .studio-skeleton-line,
+  body.studio-body .studio-card-tile.is-art-loading .studio-card-stage {
+    animation: none;
+  }
 }
