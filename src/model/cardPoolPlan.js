@@ -12,8 +12,8 @@
 //   - Card count: the per-school counts win when any is set (their sum is the count and `total` is ignored); otherwise `total`.
 //   - Camps: perCamp when any is set (scaled to the card count); otherwise a card with a school is magic and one without is martial.
 //     With neither per-school nor per-camp counts, martial and magic split evenly.
-//   - Schools: per-school counts are dealt with real schools going to magic cards first, then hybrid, then martial, and 'none' to the
-//     rest. Without per-school counts, magic and hybrid cards spread evenly over the real schools and martial cards get none.
+//   - Schools: only magic and hybrid cards get a school. When the per-school counts need more of them than per-camp gives, martial
+//     cards become magic (reported as martialToMagic); 'none' goes to the rest. Without per-school counts, magic and hybrid cards spread evenly over the real schools and martial cards get none.
 //   - Percent groups are weights: they need not add to 100 (an all-zero group is spread evenly).
 //   - MP odds apply to magic and hybrid cards; martial cards cost no MP. Range odds apply to single-target attacks.
 //     Area odds apply to attacks that are not sweeps (a sweep is always area). Keyword, drawback and area odds are a share of the cards.
@@ -61,7 +61,7 @@ function chooseShare(indices, odds, rand) {
   return new Set(shuffle([...indices], rand).slice(0, k));
 }
 
-/** The planned GenerateCard targets: {count, inputs}. */
+/** The planned GenerateCard targets: {count, inputs, martialToMagic} (martial cards made magic to fit the school counts). */
 export function PlanCardPoolInputs(options = {}, { scoring = shippedScoring } = {}) {
   const o = options;
   const seed = o.seed ?? 1;
@@ -76,7 +76,13 @@ export function PlanCardPoolInputs(options = {}, { scoring = shippedScoring } = 
   if (campSet) camps = deal(o.perCamp, n, CAMPS, rand);
   else if (schools) camps = schools.map((s) => (s === 'none' ? 'martial' : 'magic'));
   else camps = deal({ martial: 1, magic: 1 }, n, CAMPS, rand);
+  let martialToMagic = 0;
   if (schools && campSet) {
+    // Schools belong to magic and hybrid cards only: when the school counts need more of them, martial cards become magic.
+    const real = schools.filter((s) => s !== 'none').length;
+    const martial = idx.filter((i) => camps[i] === 'martial');
+    martialToMagic = Math.max(0, Math.min(martial.length, real - (n - martial.length)));
+    for (const i of martial.slice(0, martialToMagic)) camps[i] = 'magic';
     const order = ['magic', 'hybrid', 'martial'].flatMap((c) => idx.filter((i) => camps[i] === c));
     const queue = [...schools.filter((s) => s !== 'none'), ...schools.filter((s) => s === 'none')];
     schools = Array(n);
@@ -118,7 +124,7 @@ export function PlanCardPoolInputs(options = {}, { scoring = shippedScoring } = 
     ...(keyed.has(i) ? { keyword: keywordList[Math.floor(rand() * keywordList.length)] } : {}),
     drawback: drawn.has(i), area: areas.has(i), seed: `${seed}.${i + 1}`,
   }));
-  return { count: n, inputs };
+  return { count: n, inputs, martialToMagic };
 }
 
 /** Counts of a planned pool by rarity, rank, school, camp and type (for the preview). */
@@ -128,13 +134,13 @@ export function PoolCounts(inputs) {
 }
 
 /**
- * PlanCardPool(options, {scoring, spellExposureBuildup}) -> {count, inputs, cards, targets, misses, counts}: the planned targets, the generated
+ * PlanCardPool(options, {scoring, spellExposureBuildup}) -> {count, inputs, cards, targets, misses, martialToMagic, counts}: the planned targets, the generated
  * cards, the combat power each card was built to (targets[i] for cards[i]) and how many could not reach it (marked _cpMiss).
  */
 export function PlanCardPool(options = {}, { scoring = shippedScoring, spellExposureBuildup } = {}) {
-  const { count, inputs } = PlanCardPoolInputs(options, { scoring });
+  const { count, inputs, martialToMagic } = PlanCardPoolInputs(options, { scoring });
   const built = inputs.map((t) => GenerateCardWithTarget(t, { scoring, ...(spellExposureBuildup !== undefined ? { spellExposureBuildup } : {}) }));
-  return { count, inputs, cards: built.map((b) => b.card), targets: built.map((b) => b.cp), misses: built.filter((b) => b.miss).length, counts: PoolCounts(inputs) };
+  return { count, inputs, cards: built.map((b) => b.card), targets: built.map((b) => b.cp), misses: built.filter((b) => b.miss).length, martialToMagic, counts: PoolCounts(inputs) };
 }
 
 // The rider kind a Core effect would be on a generated card (null when it is the primary or not a rider).

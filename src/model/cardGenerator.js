@@ -22,8 +22,8 @@
 //   camp     physical | spell, or martial | magic | hybrid (hybrid = a physical hit with a 0.5 magic share);
 //   type     attack | skill | smash | sweep | counter | defend (smash, sweep and counter are attacks, defend a skill; a magic card
 //            casts, so its smash or sweep is a plain attack and its counter or defend a plain skill; sweep is always area);
-//   school   fire | frost | lightning | force | decay | divine | illusion | earth | alteration | none (school:* on magic and hybrid
-//            cards, the matching damage:* tag on any attack);
+//   school   fire | frost | lightning | force | decay | divine | illusion | earth | alteration | none (school:* and, on attacks, the
+//            matching damage:* tag on magic and hybrid cards; a martial card ignores it);
 //   range    melee | reach (single-target attacks only);  area  true = targeting:area;
 //   sp, mp   costs 0..3 (default: picked by the seed; martial cards cost no MP);
 //   effects  1..3 (with allowedEffects / allowedStatuses: which riders may be picked), or riders: an explicit list such as ['poise', 'status:weak'];
@@ -161,7 +161,7 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
   tags.push(`classification.${kind}`, ...(shape.extraTags || []));
   if (campKind !== 'martial' && school !== 'none') tags.push(`school:${school}`);
   if (camp === 'spell') tags.push(school === 'divine' ? 'tradition:divine' : 'tradition:arcane');
-  if (kind === 'attack' && SCHOOL_DAMAGE[school]) tags.push(SCHOOL_DAMAGE[school]);
+  if (kind === 'attack' && campKind !== 'martial' && SCHOOL_DAMAGE[school]) tags.push(SCHOOL_DAMAGE[school]); // a martial card has no school
   let area = Boolean(input.area || shape.area);
   if (kind === 'attack' && !area && input.range) tags.push(`range:${input.range}`);
   if (type === 'counter' && campKind !== 'magic') face.counter = 1; // Score Studio reads a counter maneuver as one Counter stack

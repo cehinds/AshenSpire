@@ -58,3 +58,19 @@ test('card pool plan: every planned card lands on its target and the plan is det
   const other = PlanCardPool({ ...opts, seed: 'xyz' });
   assert.notDeepEqual(other.cards.map((c) => c.name), a.cards.map((c) => c.name));
 });
+
+test('card pool plan: schools go only to magic and hybrid cards; extra school counts turn martial cards magic', () => {
+  const plan = PlanCardPool({ perSchool: { fire: 6, frost: 4 }, perCamp: { martial: 10 }, rarity: { common: 1 }, rank: { 1: 1 }, seed: 2 });
+  assert.equal(plan.count, 10);
+  assert.equal(plan.martialToMagic, 10, 'all ten martial cards became magic to hold ten schools');
+  for (const [i, t] of plan.inputs.entries()) {
+    if (t.school !== 'none') assert.notEqual(t.camp, 'martial', 'no martial card has a school');
+    const tags = plan.cards[i].tags;
+    if (t.camp === 'martial') assert.ok(!tags.some((x) => x.startsWith('damage:') || x.startsWith('school:')), 'a martial card has no element tag');
+    if (tags.some((x) => x.startsWith('damage:'))) assert.ok(tags.some((x) => x.startsWith('school:')), 'an element tag comes with its school');
+  }
+  const mixed = PlanCardPool({ perSchool: { fire: 3, none: 7 }, perCamp: { martial: 8, magic: 2 }, seed: 2 });
+  assert.equal(mixed.martialToMagic, 1);
+  assert.equal(mixed.inputs.filter((t) => t.camp === 'martial').length, 7);
+  assert.ok(mixed.inputs.filter((t) => t.camp === 'martial').every((t) => t.school === 'none'));
+});
