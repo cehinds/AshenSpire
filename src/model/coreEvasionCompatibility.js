@@ -41,6 +41,8 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  'sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63',
+  'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d',
   'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd',
   'sha256:d243637be191cbe2c2580420f88bf2f5a672caa4a17e0c8c0eeca7685b75cf7d',
   'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3',
@@ -173,9 +175,13 @@ const PREVIOUS_RUNTIMES = new Set([
 // Weapon poise damage & stance-gated Poise reduction (owner ruling: weaponPoiseEnabled in fixCoreMechanics.json) moves the runtime artifact; d24363... joins PREVIOUS_RUNTIMES, and prior saves keep their snapshotted rules.
 // The canonical Wisdom, Intelligence and Recurring registry additions and four reader relocations
 // move the registry fingerprint. A saved fight keeps its original envelope and rules (777939...).
-const FIXED_EVASION_RUNTIME = 'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d';
+const COMPATIBLE_HOST_RUNTIMES = new Set([
+  'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d',
+  // The gear budget honors the pinned Poise floor when an archived profile omits its cost.
+  'sha256:b49503d593056a588d5ae9a25ac214fc801c7b7eaea22093d601f76afe9d27f8',
+]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
-  return currentRuntime === FIXED_EVASION_RUNTIME
+  return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
     && profile.lock.runtimeABI === 'ashen.runtime@1'
     && profile.lock.numericPolicy === 'ashen.adapter-numbers@1'
