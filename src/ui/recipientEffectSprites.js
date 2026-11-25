@@ -183,7 +183,6 @@ export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacin
       let opacity=recipe.opacity??(recipe.shape==='spell-circle'?O.spellCircle:O.primary);
       if(overlay)opacity*=slash?O.elementOverSlash:O.elementOverlay;
       if(recipe.shape==='ward')opacity*=O.wardRim;
-      if(recipe.shape==='ward-shatter')opacity*=O.wardBreakRim[index];
       if(recipe.shape==='evade')opacity*=O.evadeLines;
       if(overlay&&recipe.overlayTreatment==='fade-out')opacity*=O.statusFade[index];
       if(overlay&&recipe.overlayTreatment==='deflect')opacity*=O.statusDeflect[index];

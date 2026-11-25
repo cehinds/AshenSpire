@@ -410,6 +410,9 @@ test('runtime tint preserves shading, reads royal-blue/opacity config and leaves
     const shatter={...poison,shape:'ward-shatter',treatment:'break'};
     await PrewarmRecipientEffect(shatter,{resolveAsset});PlayRecipientEffect(layer,box,shatter,{resolveAsset,frame:0});
     assert.ok(draws.some(draw=>draw.filter==='grayscale(1)'), 'Ward shatter takes the protected actor’s Ward tint');
+    const shatterPlane=layer.children[0].children[0];
+    assert.ok(draws.some(draw=>draw.canvas===shatterPlane&&draw.alpha===SETTINGS.layering.opacity.primary),
+      'shatter art keeps its authored alpha envelope under the shared clip opacity');
     ClearRecipientEffects(layer);
     PlayRecipientDelivery(layer,box,{...box,left:100},{...physical,range:'reach',camp:'physical',
       impactShape:'slash'},{resolveAsset});
