@@ -33,6 +33,9 @@ const shorten = html => html.replace(/At the end of your turn, if this is in you
   .replace(/\bInflict (?=(?:<[^>]*>)*\d)/g, 'Deal ').replace(/\bInflict /g, 'Apply ')
   .replace(/\(leave at least 1 HP\)/g, '(leave 1)')
   // Face-only shortenings (the full wording stays in Information).
+  .replace(/\bonce per turn per family\b/g, 'once per family/turn')
+  .replace(/\bGain ((?:<span[^>]*>)?\d+(?:<\/span>)? Block once per family\/turn)/g, '+$1')
+  .replace(/(\+(?:<span[^>]*>)?\d+(?:<\/span>)? [A-Z]{3}) this turn(?=, .*once per family\/turn)/g, '$1 (turn)')
   .replace(/ \((?:<[^>]*>)*\d+(?:<\/span>)* total across \d+ hits\)/g, '')
   .replace(/Double the target(?:'|&#39;)s Blight \(Crimson and Necrotic\)/g, 'Double target Blight (Crimson, Necrotic)')
   // Two damage types of one hit read as one clause ("2 Blunt + 1 Force ×3"): the hit count and area qualify both.
@@ -57,7 +60,7 @@ export const QUALIFIERS = [
   ['random', /\brandom\b(?! cards in your draw pile)/i],
   ['chance', /\bchance\b/i],
   ['lock', /\block\b|become vulnerable|\breveals?\b/i],
-  ['frequency', /\bonce per (?:turn|combat)\b(?! from this family)|\bfirst\b[^.]*\beach turn\b|\bfirst time\b|\bper combat\b/i, /\bonce per (?:turn|combat)\b|\bper combat\b|\bfirst time\b|\beach turn\b/i],
+  ['frequency', /\bonce per (?:turn|combat)\b(?! from this family)|\bfirst\b[^.]*\beach turn\b|\bfirst time\b|\bper combat\b/i, /\bonce per (?:turn|combat|family\/turn)\b|\bper combat\b|\bfirst time\b|\beach turn\b/i],
   ['selfDebuff', /\bbecome (?:vulnerable|weak|frail)\b/i],
   ['exhaust', /\bexhaust|\bethereal/i],
 ];
@@ -114,7 +117,7 @@ function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
   for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > words) parts[i] = parts[i].replace(/^(?:Deal|Apply|Inflict) /, '');
   // A piece is a complete effect only when it names what the amount is of (damage, Poise, Block ...) or ends in its
   // amount ("Weak 2"); a bare damage type ("Deal 2 Blunt") shares its noun and qualifiers with the next piece.
-  const whole = part => /^\d+ [A-Za-z]+ \+ \d+ [A-Za-z]+(?: ×\d+)?$/.test(plain(part).trim()) || (/\d/.test(plain(part)) && (/\d(?: \([^)]*\))?$/.test(plain(part).trim()) || /\b(?:damage|Poise|Ward|Block|HP|SP|Mana|Barrier|Evade|Draw|Strength|Dexterity)\b/i.test(plain(part)) || /^\+\d+ [A-Z]{3} this turn$/.test(plain(part).trim()))) || COST_RE.test(plain(part));
+  const whole = part => /^\d+ [A-Za-z]+ \+ \d+ [A-Za-z]+(?: ×\d+)?$/.test(plain(part).trim()) || (/\d/.test(plain(part)) && (/\d(?: \([^)]*\))?$/.test(plain(part).trim()) || /\b(?:damage|Poise|Ward|Block|HP|SP|Mana|Barrier|Evade|Draw|Strength|Dexterity)\b/i.test(plain(part)) || /^\+\d+ [A-Z]{3} (?:this turn|\(turn\))$/.test(plain(part).trim()))) || COST_RE.test(plain(part));
   // A trailing qualifier (hit count, area) belongs to every piece or to none: a split would otherwise lose it.
   const qualifier = part => /( ×\d+| to all| to random enemy)$/.exec(plain(part).trim())?.[1] ?? '';
   if (parts.length > 1 && parts.some(part => qualifier(part) !== qualifier(parts[parts.length - 1]))) return null;
