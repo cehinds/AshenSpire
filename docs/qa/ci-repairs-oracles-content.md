@@ -31,3 +31,9 @@ The only current differences are the new runtime and profile digests, the two pi
 ## Level-one reward variety
 
 The original 35% frequency check stays in place while the owner decides policy. Mana Surge appears on 184 of 500 level-one doors. It is one of seven equally eligible missing-stance reserve cards, accounting for 91 first-slot offers. It is also the sole candidate in the independent 10% lower-rank ordinary pool and appears in 93 later slots. No occurrence comes from the weapon-art pool. The authored rank and stance policies account for both paths.
+
+## Rest upgrade odds and scoped validation
+
+At level 4, all seven rest-slot tests passed with the 10,000-seed full Strike menu fixture. The statistical case took 1,570.14 seconds, exceeding the 15-minute fast-shard budget. The four-family fixture uses the production resolver and actual CP eligibility. It retains all 10,000 seeds, the 17–23% band and the zero-short-list assertion. Its statistical case passed in 358.42 seconds and all seven cases in that run passed. A separate 200-seed case checks the complete authored Strike menu with the same sampler and passed in 37.88 seconds with zero short lists and 18.75% two-effect offers.
+
+The 40-file scoped oracle and content run passed 489 of 489 cases in 172.25 seconds. Rest odds and the outstanding level-one reward frequency check were run separately.
