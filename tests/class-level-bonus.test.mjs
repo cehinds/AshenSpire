@@ -97,6 +97,9 @@ for (const classId of Object.keys(classLevelBonuses.attributeByClass)) for (cons
     assert.equal(loaded.levelRewardRuleSnapshot, undefined, 'old saves stay on their own rule shape');
     assert.deepEqual(ClassLevelAttributeBonus(loaded), {});
     assert.equal(loaded.maxHp, run.maxHp);
+    const ladder = characterLadder(registries, loaded);
+    assert.deepEqual(ladder.rows.filter(row => row.grants.some(grant => grant.kind === 'classBonus')).map(row => row.level), []);
+    assert.deepEqual(ladder.rows.filter(row => row.grants.some(grant => grant.kind === 'points')).map(row => row.level), [4, 8, 12, 16, 20]);
   });
   test(`${classId} L${level}: an archived odd-level run saves and loads with its original bonus`, () => {
     const run = make(classId);
@@ -108,6 +111,8 @@ for (const classId of Object.keys(classLevelBonuses.attributeByClass)) for (cons
     const loaded = saves.loadRun(registries);
     assert.ok(loaded, saves.runStatus().reason);
     assert.deepEqual(ClassLevelAttributeBonus(loaded), { [classLevelBonuses.attributeByClass[classId]]: ClassBonusCount(level) });
+    const ladder = characterLadder(registries, loaded);
+    assert.deepEqual(ladder.rows.filter(row => row.grants.some(grant => grant.kind === 'classBonus')).map(row => row.level), [3, 5, 7, 9, 11, 13, 15, 17, 19]);
   });
 }
 

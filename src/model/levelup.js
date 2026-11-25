@@ -288,6 +288,18 @@ export function AttributePointsEarnedBetween(fromLevel, toLevel, every = 4, poin
   return grants * pointsPerGrant;
 }
 
+export function CharacterLevelPointCadence(registries, run, { pointsPerLevel = null, grantStats = true } = {}) {
+  const snapshot = run?.levelRewardRuleSnapshot;
+  if (snapshot) return snapshot.freeAttribute;
+  const configured = gameModule(run, 'progression');
+  const amount = configured?.entitlementPolicy === 'authored'
+    ? (gameModule(run, 'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0)
+    : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const authoredInterval = grantTable(registries).attributePointEveryLevels;
+  const every = Number.isInteger(authoredInterval) && authoredInterval >= 1 ? authoredInterval : 4;
+  return { firstLevel: every, every, amount };
+}
+
 export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, grantStats = true } = {}) {
   if (!run) throw new Error('awardLevelXp: no run');
   if (!run.level || typeof run.level !== 'object') run.level = emptyLevel();
@@ -295,18 +307,14 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
   if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, rankUps: 0, thresholds: 0, gained: 0, discarded: 0 };
-  const configured = gameModule(run,'progression');
-  const perLevel = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const configured = gameModule(run, 'progression');
   const t = grantTable(registries);
-  const every = Number.isInteger(t.attributePointEveryLevels) && t.attributePointEveryLevels >= 1 ? t.attributePointEveryLevels : 4;
   const rankUpPerLevel = Number.isInteger(t.rankUpPerLevel) && t.rankUpPerLevel >= 0 ? t.rankUpPerLevel : 1;
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
   const rewards = run.levelRewardRuleSnapshot;
-  const free = rewards?.freeAttribute;
-  const points = free
-    ? AttributePointsEarnedBetween(before, climb.level, free.every, free.amount, free.firstLevel)
-    : AttributePointsEarnedBetween(before, climb.level, every, perLevel);
+  const free = CharacterLevelPointCadence(registries, run, { pointsPerLevel, grantStats });
+  const points = AttributePointsEarnedBetween(before, climb.level, free.every, free.amount, free.firstLevel);
   const rankUps = configured?.cardRanks !== false ? levelUps * (rewards?.cardRankUpsPerLevel ?? rankUpPerLevel) : 0;
   row.xp = climb.xp;
   row.level = climb.level;
