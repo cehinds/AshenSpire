@@ -1,3 +1,4 @@
+import { IsLevelReward } from './classLevelBonus.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { gameModule } from './gameProfile.js';
 import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
@@ -277,12 +278,12 @@ export function levelPace(registries, { pointsPerLevel = null } = {}) {
  * Count how many levels in `(fromLevel, toLevel]` grant an attribute point
  * when points are awarded every `every` levels (e.g. 4, 8, 12, 16, 20).
  */
-export function AttributePointsEarnedBetween(fromLevel, toLevel, every = 4, pointsPerGrant = 1) {
+export function AttributePointsEarnedBetween(fromLevel, toLevel, every = 4, pointsPerGrant = 1, firstLevel = every) {
   if (!Number.isInteger(toLevel) || toLevel <= fromLevel || !Number.isInteger(pointsPerGrant) || pointsPerGrant <= 0) return 0;
   const step = Number.isInteger(every) && every >= 1 ? every : 1;
   let grants = 0;
   for (let lv = fromLevel + 1; lv <= toLevel; lv += 1) {
-    if (lv % step === 0) grants += 1;
+    if (IsLevelReward(lv, { firstLevel, every: step })) grants += 1;
   }
   return grants * pointsPerGrant;
 }
@@ -301,8 +302,12 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
   const rankUpPerLevel = Number.isInteger(t.rankUpPerLevel) && t.rankUpPerLevel >= 0 ? t.rankUpPerLevel : 1;
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
-  const points = AttributePointsEarnedBetween(before, climb.level, every, perLevel);
-  const rankUps = configured?.cardRanks !== false ? levelUps * rankUpPerLevel : 0;
+  const rewards = run.levelRewardRuleSnapshot;
+  const free = rewards?.freeAttribute;
+  const points = free
+    ? AttributePointsEarnedBetween(before, climb.level, free.every, free.amount, free.firstLevel)
+    : AttributePointsEarnedBetween(before, climb.level, every, perLevel);
+  const rankUps = configured?.cardRanks !== false ? levelUps * (rewards?.cardRankUpsPerLevel ?? rankUpPerLevel) : 0;
   row.xp = climb.xp;
   row.level = climb.level;
   row.unspentPoints += points;

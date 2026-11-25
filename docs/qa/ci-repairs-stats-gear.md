@@ -66,3 +66,10 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/gear-pool-no-double-count.test.mjs` loads explicit pre-rework pool signatures from the old item rows for the discard/preserve tests. It still measures repeated equipment points, previously double-counted saves, no healing on correction, and positive/negative signatures that survive Blacksmith attribute picks. Current Sage robe verifies the flat group bonus was removed.
 - `node --test tests/gear-pool-no-double-count.test.mjs` passed 7/7, from 4/7. The lane had 33 original failures remaining.
+
+## Owner-approved character level rewards
+
+- `content/source/balanceLevelUp.json` defines the version-1 rule copied into new configured Core runs. The class's primary attribute gains one at levels 2, 6, 10, 14 and 18. An assignable point is earned at 4, 12 and 20. One rank-up credit is earned at every level after creation. The character ladder shows these grants alongside its separate level-card offers.
+- `tests/class-level-bonus.test.mjs` proves the live effective stat for all four classes, the exact ladder through 20, a current save restored against changed authored rules, and 16 save cases for earlier absent and odd-level markers. The old save rules are not backfilled.
+- `tests/character-progression.test.mjs` and `tests/progression-modal.test.mjs` use the same earned points as the level ledger. `tests/content-expansion-equipment.test.mjs` pins the current three signatures and still tests positive and negative archived pool addends across XP and allocation.
+- `node --test tests/class-level-bonus.test.mjs tests/character-progression.test.mjs tests/content-expansion-equipment.test.mjs tests/progression-modal.test.mjs tests/save-migration.test.mjs` passed 72/72, and `node tools/content-build.mjs --check` passed. The original lane count had 18 failures remaining before cross-lane updates.

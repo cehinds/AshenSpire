@@ -2,6 +2,15 @@
   "pointsPerLevel": 1,
   "attributePointEveryLevels": 4,
   "rankUpPerLevel": 1,
+  "characterLevelRewards": {
+    "version": 1,
+    "classPrimary": { "firstLevel": 2, "every": 4, "amount": 1 },
+    "classPrimaryAttribute": {
+      "reaver": "strength", "rogue": "dexterity", "starseer": "intelligence", "herald": "wisdom"
+    },
+    "freeAttribute": { "firstLevel": 4, "every": 8, "amount": 1 },
+    "cardRankUpsPerLevel": 1
+  },
   "maxLevels": 20,
   "pointsPerLevelMin": 1,
   "pointsPerLevelMax": 20,

@@ -1,5 +1,4 @@
-// Owner, 2026-11-17 (playtest item 24): Core's progression ladder lists the bonuses a
-// level really pays, with a class-specific bonus at every odd level, and that bonus applies.
+// Character level rewards retain the saved cadence after updates to authored balance.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -30,13 +29,13 @@ test('odd levels from 3 carry the class bonus', () => {
 });
 
 for (const [classId, attribute] of Object.entries(classLevelBonuses.attributeByClass)) {
-  test(`${classId}: the odd-level bonus raises ${attribute} where a fight and the pools read it`, () => {
+  test(`${classId}: the current class-primary bonus raises ${attribute} where a fight and the pools read it`, () => {
     const run = make(classId);
     const before = gameProfileEffectiveAttributes(registries, run)[attribute];
-    climbTo(run, 3);
+    climbTo(run, 2);
     assert.deepEqual(ClassLevelAttributeBonus(run), { [attribute]: 1 });
     assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], before + 1);
-    climbTo(run, 5);
+    climbTo(run, 6);
     assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], before + 2);
     assert.equal(run.attributes[attribute], make(classId).attributes[attribute], 'nothing is written onto the allocated attributes');
   });
@@ -49,16 +48,18 @@ test('a class taken off pays no class bonus', () => {
   assert.deepEqual(ClassLevelAttributeBonus(run), {});
 });
 
-test('the Core ladder shows the real grants: points, class bonus on odd levels, deck minimum down, a level card; no feat pick', () => {
+test('the Core ladder shows current class, free-point and rank rewards alongside existing level cards', () => {
   const run = make('reaver');
   const ladder = characterLadder(registries, run);
   const kinds = (level) => ladder.rows.find((row) => row.level === level).grants.map((g) => g.kind);
-  assert.ok(kinds(2).includes('points'));
-  assert.ok(!kinds(2).includes('classBonus'));
-  assert.ok(kinds(3).includes('classBonus'));
-  assert.equal(ladder.rows.find((row) => row.level === 3).grants.find((g) => g.kind === 'classBonus').attribute, 'Strength');
+  assert.ok(!kinds(2).includes('points'));
+  assert.ok(kinds(2).includes('classBonus'));
+  assert.ok(!kinds(3).includes('classBonus'));
+  assert.equal(ladder.rows.find((row) => row.level === 2).grants.find((g) => g.kind === 'classBonus').attribute, 'Strength');
   for (const row of ladder.rows.filter((r) => r.level > 1)) {
-    assert.equal(row.grants.some((g) => g.kind === 'classBonus'), IsClassBonusLevel(row.level), `level ${row.level}`);
+    assert.equal(row.grants.some((g) => g.kind === 'classBonus'), [2, 6, 10, 14, 18].includes(row.level), `level ${row.level}`);
+    assert.equal(row.grants.some((g) => g.kind === 'points'), [4, 12, 20].includes(row.level), `level ${row.level}`);
+    assert.deepEqual(row.grants.find((g) => g.kind === 'rankUp'), { kind: 'rankUp', amount: 1 });
     assert.ok(row.grants.some((g) => g.kind === 'levelCard'), `level ${row.level} offers its card`);
     assert.ok(!row.grants.some((g) => ['featChoice', 'featOrNodeChoice', 'classNodeChoice', 'deckMinimum'].includes(g.kind)), `level ${row.level} promises no feat or rising floor`);
   }
@@ -85,6 +86,7 @@ import { CLASS_LEVEL_BONUS_VERSION } from '../src/model/classLevelBonus.js';
 for (const classId of Object.keys(classLevelBonuses.attributeByClass)) for (const level of [3, 5]) {
   test(`${classId} L${level}: a save on the old run shape (no class bonus field) loads, and pays no bonus`, () => {
     const run = make(classId);
+    delete run.levelRewardRuleSnapshot;
     delete run.classLevelBonusVersion;
     climbTo(run, level);
     const saves = createSaveManager(createMemoryStorage());
@@ -92,12 +94,14 @@ for (const classId of Object.keys(classLevelBonuses.attributeByClass)) for (cons
     const loaded = saves.loadRun(registries);
     assert.ok(loaded, saves.runStatus().reason);
     assert.equal(loaded.classLevelBonusVersion, undefined);
+    assert.equal(loaded.levelRewardRuleSnapshot, undefined, 'old saves stay on their own rule shape');
     assert.deepEqual(ClassLevelAttributeBonus(loaded), {});
     assert.equal(loaded.maxHp, run.maxHp);
   });
-  test(`${classId} L${level}: a run born with the class bonus saves and loads with it`, () => {
+  test(`${classId} L${level}: an archived odd-level run saves and loads with its original bonus`, () => {
     const run = make(classId);
-    assert.equal(run.classLevelBonusVersion, CLASS_LEVEL_BONUS_VERSION);
+    delete run.levelRewardRuleSnapshot;
+    run.classLevelBonusVersion = CLASS_LEVEL_BONUS_VERSION;
     climbTo(run, level);
     const saves = createSaveManager(createMemoryStorage());
     saves.saveRun(run, createRng(run.seed));
@@ -106,3 +110,32 @@ for (const classId of Object.keys(classLevelBonuses.attributeByClass)) for (cons
     assert.deepEqual(ClassLevelAttributeBonus(loaded), { [classLevelBonuses.attributeByClass[classId]]: ClassBonusCount(level) });
   });
 }
+
+test('a current run earns its free points and rank-up credits exactly once across a save', () => {
+  const run = make('reaver');
+  climbTo(run, 2);
+  assert.deepEqual(run.level, { xp: 0, level: 2, unspentPoints: 0, pendingRankUps: 1 });
+  climbTo(run, 4);
+  assert.equal(run.level.unspentPoints, 1);
+  climbTo(run, 8);
+  assert.equal(run.level.unspentPoints, 1);
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(run, createRng(run.seed));
+  const loaded = saves.loadRun(registries);
+  assert.ok(loaded, saves.runStatus().reason);
+  assert.deepEqual(loaded.levelRewardRuleSnapshot, run.levelRewardRuleSnapshot);
+  assert.deepEqual(loaded.level, run.level);
+  assert.deepEqual(ClassLevelAttributeBonus(loaded), { strength: 2 });
+  const changedRegistries = { ...registries, balance: { ...registries.balance, levelUp: {
+    ...registries.balance.levelUp,
+    characterLevelRewards: { ...registries.balance.levelUp.characterLevelRewards, freeAttribute: { firstLevel: 3, every: 2, amount: 5 } },
+  } } };
+  for (let level = 8; level < 12; level += 1) awardLevelXp(changedRegistries, loaded, xpToNext(changedRegistries, level));
+  assert.equal(loaded.level.level, 12);
+  assert.equal(loaded.level.unspentPoints, 2);
+  assert.equal(loaded.level.pendingRankUps, 11);
+  climbTo(loaded, 20);
+  assert.deepEqual(ClassLevelAttributeBonus(loaded), { strength: 5 });
+  assert.equal(loaded.level.unspentPoints, 3);
+  assert.equal(loaded.level.pendingRankUps, 19);
+});
