@@ -34,14 +34,14 @@ test('every kind the generator emits is a known step kind and never retain', () 
   for (const k of ['dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits']) assert.ok(all.has(k), `${k} is reachable`);
 });
 
-test('dmg step is +max(2, ceil(15%)) and blk is +max(2, ceil(20%))', () => {
+test('dmg and blk steps use compounding 10% Improved scaling (min +1 per stack)', () => {
   const pick = (card, kind) => { for (let i = 0; i < 400; i += 1) { const s = rollUpgradeStep(card, [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === kind && !s.r) return s; } };
-  // A common step (no `r`) is today's size; the uncommon and rare ones are x2 and x4 of it.
-  assert.equal(pick(dmg(6), 'dmg').n, 2);
-  assert.equal(pick(dmg(40), 'dmg').n, 6);
+  // Common step (1 Improved stack) is +max(1, round(base * 1.10) - base).
+  assert.equal(pick(dmg(6), 'dmg').n, 1);
+  assert.equal(pick(dmg(40), 'dmg').n, 4);
   const blk = { ...dmg(1), effects: [{ op: 'block', target: 'self', amount: 20 }], type: 'skill' };
-  assert.equal(pick(blk, 'blk').n, 4);
-  assert.equal(pick({ ...blk, effects: [{ op: 'block', target: 'self', amount: 5 }] }, 'blk').n, 2);
+  assert.equal(pick(blk, 'blk').n, 2);
+  assert.equal(pick({ ...blk, effects: [{ op: 'block', target: 'self', amount: 5 }] }, 'blk').n, 1);
 });
 
 test('stk only on capped statuses below their cap; others never stack', () => {
@@ -66,7 +66,7 @@ test('addStatus only when the card applies no status, from its school', () => {
   assert.ok(!kindsFor(dmg(6, { tags: [], damageSchool: undefined })).has('addStatus'));
 });
 
-test('cost: at most once; SP and MP cuts reach 0 (owner 2026-11-22, no card has a minimum); cost tracks staminaCost', () => {
+test('cost: stacks up to 3 Efficient tiers; SP and MP cuts reach 0; cost tracks staminaCost', () => {
   assert.ok(kindsFor(dmg(6)).has('cost'), '1 SP card can still lose its SP (owner 2026-11-22)');
   assert.ok(!kindsFor(dmg(6, { cost: 0, staminaCost: 0 })).has('cost'), 'a 0 SP, 0 MP card has nothing to cut');
   const two = dmg(6, { cost: 2, staminaCost: 2 });
@@ -74,9 +74,13 @@ test('cost: at most once; SP and MP cuts reach 0 (owner 2026-11-22, no card has 
   assert.deepEqual(step, { k: 'cost', pool: 'sp' });
   const after = applyUpgradeSteps(two, [step]);
   assert.deepEqual([after.staminaCost, after.cost], [1, 1]);
+  assert.ok(after.tags.includes('upgrade:efficient'), 'first cost cut adds Efficient tag');
   const one = applyUpgradeSteps(dmg(6), [{ k: 'cost', pool: 'sp' }]);
   assert.deepEqual([one.staminaCost, one.cost], [0, 0], 'a 1 SP card drops to 0 SP');
-  assert.ok(!kindsFor(two, [step]).has('cost'), 'once per card');
+  // Second cut is allowed (adds Efficient+); after 3 Efficient stacks, cost is capped.
+  const four = dmg(6, { cost: 4, staminaCost: 4 });
+  assert.ok(kindsFor(four, [step]).has('cost'), 'second Efficient stack is eligible');
+  assert.ok(!kindsFor(four, [step, step, step]).has('cost'), 'capped after 3 Efficient stacks');
   const mp1 = dmg(6, { manaCost: 1 });
   assert.ok(kindsFor(mp1).has('cost'), 'a 1 MP card can drop to 0 MP (owner 2026-11-22)');
   const mp3 = dmg(6, { manaCost: 3 });
@@ -135,14 +139,14 @@ test('conditional status effects are never stacked', () => {
   assert.ok(!kindsFor(card).has('stk'));
 });
 
-test('over many rolls, cost and hits each land at most once per card and cost keeps tracking staminaCost', () => {
+test('over many rolls, cost (max 3 Efficient) and hits (max 1) stay capped and cost tracks staminaCost', () => {
   const rich = dmg(8, { cost: 3, staminaCost: 3, manaCost: 3, effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'block', target: 'self', amount: 20 }] });
   let costs = 0, swaps = 0;
   for (let seed = 0; seed < 200; seed += 1) {
     const steps = [];
     while (steps.length < 10) { const s = rollUpgradeStep(rich, steps, steps.length, upgradeStepRng(seed, 'rich', steps.length)); if (!s) break; steps.push(s); }
     const face = applyUpgradeSteps(rich, steps);
-    assert.ok(steps.filter((s) => s.k === 'cost').length <= 1, 'cost once');
+    assert.ok(steps.filter((s) => s.k === 'cost').length <= 3, 'at most 3 Efficient cost cuts');
     assert.ok(steps.filter((s) => s.k === 'hits').length <= 1, 'hits once');
     const exchanges = steps.filter((s) => s.k === 'costSwap');
     assert.ok(exchanges.length <= 1, 'cost swap once');

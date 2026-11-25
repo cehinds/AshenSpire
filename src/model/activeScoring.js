@@ -51,6 +51,14 @@ export function ValidateScoringConfig(obj) {
       }
     }
   }
+  if (obj.upgradeTags && typeof obj.upgradeTags === 'object') {
+    for (const [id, rule] of Object.entries(obj.upgradeTags)) {
+      if (id[0] === '$' || !rule || typeof rule !== 'object') continue;
+      for (const field of ['base', 'pMultiplier', 'effectMultPerStack']) {
+        if (field in rule && !Number.isFinite(rule[field])) errors.push(`upgradeTags.${id}.${field} must be a finite number.`);
+      }
+    }
+  }
   // naming.card.limit and naming.item.limit are optional (no block, or no maxChars, = no limit): {maxChars: whole number >= 1, keep: name parts, most important first}.
   for (const kind of ['card', 'item']) {
     const limit = obj.naming?.[kind]?.limit;

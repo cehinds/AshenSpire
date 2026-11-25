@@ -78,7 +78,7 @@ export function RenderPoolForm(s, ctx) {
       <div class="gen-grid">
         ${numberBox('id', 'gen-total', 'Total cards', s.total, 'How many cards to make. Per-school counts win when any is set.', { min: 0, max: 999 })}
         <label class="gen-field" title="The class every new card belongs to. Colorless cards are for every class."><span>Class</span><select id="gen-class" aria-label="Class">${classes}</select></label>
-        <label class="gen-field gen-seed" title="The same seed and settings always make the same cards."><span>Seed</span><span class="gen-seed-row"><input id="gen-seed" type="text" maxlength="24" value="${esc(s.seed)}" aria-label="Seed" /><button id="btn-gen-dice" type="button" class="s-btn" title="Pick a new random seed" aria-label="Random seed">🎲</button></span></label>
+        <label class="gen-field gen-seed" title="The same seed and settings always make the same cards."><span>Seed</span><span class="gen-seed-row"><input id="gen-pool-seed" type="text" maxlength="24" value="${esc(s.seed)}" aria-label="Seed" /><button id="btn-gen-dice" type="button" class="s-btn" title="Pick a new random seed" aria-label="Random seed">🎲</button></span></label>
       </div>
       <p class="studio-muted gen-note" id="gen-count-note"></p>
     </fieldset>
@@ -105,7 +105,7 @@ export function ReadPoolForm(root, maxRank) {
     mode: root.querySelector('input[name="gen-mode"]:checked')?.value || 'replaceGenerated',
     total: num(root.querySelector('#gen-total')?.value),
     cls: root.querySelector('#gen-class')?.value || 'colorless',
-    seed: root.querySelector('#gen-seed')?.value.trim() || '1',
+    seed: root.querySelector('#gen-pool-seed')?.value.trim() || '1',
     perSchool: read('data-count-school'),
     perCamp: read('data-count-camp'),
     allowedEffects: listOf('allowedEffects'),

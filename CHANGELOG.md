@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-25
 
-- **Score Studio: Generate cards** ([#2982](https://github.com/cehinds/AshenSpire/pull/2982), `0.7.5.102`). A new button builds a whole card pool from counts and odds (schools, rarity, rank, costs, types, effects), each card at its exact combat power. Preview first; one undo removes it, and nothing reaches the game until you Export.
+- **Score Studio: Generate cards** ([#2982](https://github.com/cehinds/AshenSpire/pull/2982), `0.7.5.104`). A new button builds a whole card pool from counts and odds (schools, rarity, rank, costs, types, effects), each card at its exact combat power. Preview first; one undo removes it, and nothing reaches the game until you Export.
 
 ## 2026-11-24
 

@@ -48,9 +48,7 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
           assert.ok(e.stacks <= Math.max(STACK_CAPS[e.status], given), `${where}: ${e.status} ${e.stacks} over its cap`);
         }
         const flat = FlatSteps(instance.upgradeSteps);
-        for (const pool of ['sp', 'mp']) {
-          assert.ok(flat.filter((x) => x.k === 'cost' && x.pool === pool).length <= 1, `${where}: repeated ${pool} cost cut`);
-        }
+        assert.ok(flat.filter((x) => x.k === 'cost').length <= 3, `${where}: cost cuts exceed 3 Efficient stacks`);
         assert.ok(flat.filter((x) => x.k === 'hits').length <= 1, `${where}: hits more than once`);
         const swaps = flat.filter((x) => x.k === 'costSwap');
         assert.ok(swaps.length <= 1, `${where}: cost swap more than once`);

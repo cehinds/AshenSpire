@@ -6,9 +6,12 @@
     "tier.boss"
   ],
   "stats": {
+    "attributes": {
+      "wisdom": 2
+    },
     "attributePriority": [
-      "strength",
       "wisdom",
+      "strength",
       "intelligence",
       "dexterity",
       "constitution"

@@ -1,6 +1,7 @@
 import { RANGES } from './combatRanges.js';
 import { SplitAfter } from './splitAfter.js';
 import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
+import { GetActiveScoring } from './activeScoring.js';
 
 // A card definition with its authored upgrade merged over the base. A leaf
 // module: gameProfile.js and registries.js both use it, and importing
@@ -73,6 +74,59 @@ export const ELEMENT_IDENTITY = Object.freeze({
 export const PHYSICAL_DAMAGE_TYPES = Object.freeze(words('slashing piercing blunt'));
 export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
+export const MAX_UPGRADE_TAG_STACKS = 3;
+
+/** Format a stacking upgrade tag: stack 1 -> 'upgrade:efficient', stack 2 -> 'upgrade:efficient+', stack 3 -> 'upgrade:efficient+2'. */
+export function upgradeTagFor(family, stacks) {
+  const n = Math.max(0, Math.floor(Number(stacks) || 0));
+  if (n <= 0) return null;
+  if (n === 1) return `upgrade:${family}`;
+  if (n === 2) return `upgrade:${family}+`;
+  return `upgrade:${family}+${n - 1}`;
+}
+
+/** Read current stack count (0..MAX_UPGRADE_TAG_STACKS) of an upgrade tag family on a card definition. */
+export function upgradeTagStacks(card, family) {
+  const list = [...(card?.cardTags || []), ...(card?.tags || [])];
+  const prefix = `upgrade:${family}`;
+  let best = 0;
+  for (const tag of list) {
+    if (tag === prefix) best = Math.max(best, 1);
+    else if (tag === `${prefix}+`) best = Math.max(best, 2);
+    else if (tag.startsWith(`${prefix}+`)) {
+      const extra = Number(tag.slice(prefix.length + 1));
+      if (Number.isInteger(extra) && extra >= 1) best = Math.max(best, 1 + extra);
+    }
+  }
+  return best;
+}
+
+/**
+ * Compounding 10% effect scaling for Improved stacks: 1.10^1, 1.10^2 (1.21), 1.10^3 (1.331),
+ * with a floor of at least +1 per stack so small numbers never round down to +0.
+ */
+export function improvedScaledAmount(baseAmount, stacks, multPerStack = 1.1) {
+  const base = Math.max(0, Number(baseAmount) || 0);
+  const n = Math.max(0, Math.floor(Number(stacks) || 0));
+  if (n === 0 || base === 0) return base;
+  return Math.max(base + n, Math.round(base * Math.pow(multPerStack, n)));
+}
+
+const CORE_UPGRADE_TAG_FAMILIES = new Set(['efficient', 'improved']);
+
+function bumpUpgradeTag(out, card, family, delta = 1, maxStacks = MAX_UPGRADE_TAG_STACKS) {
+  if (!CORE_UPGRADE_TAG_FAMILIES.has(family) && GetActiveScoring()?.upgradeTags?.[family]?.surchargeEnabled !== true) return;
+  const cur = upgradeTagStacks(out, family);
+  const next = Math.min(maxStacks, cur + Math.max(1, Math.floor(Number(delta) || 1)));
+  if (next <= cur) return;
+  const tag = upgradeTagFor(family, next);
+  const prefix = `upgrade:${family}`;
+  const keep = (t) => t !== prefix && !t.startsWith(`${prefix}+`);
+  const keys = ['tags', 'cardTags'].filter((k) => Array.isArray(card[k]));
+  for (const key of keys.length ? keys : ['tags']) {
+    out[key] = [...(out[key] || card[key] || []).filter(keep), tag];
+  }
+}
 // A rolled step may carry `r`, its rarity, for the picker's colour and label (owner, 2026-11-19). It changes no number: the size is in the step.
 export const UPGRADE_RARITIES = Object.freeze(words('common uncommon rare'));
 // The effect menu. Each id adds one effect the card did not have: block (n), draw (n), cycle (discard n then draw n),
@@ -170,7 +224,10 @@ function applyStep(card, step) {
     case 'dmg':
     case 'blk': {
       const index = firstPlainIndex(effects, step.k === 'dmg' ? 'damage' : 'block');
-      if (index >= 0) effects[index].amount += step.n;
+      if (index >= 0) {
+        effects[index].amount += step.n;
+        bumpUpgradeTag(out, card, 'improved', step.improvedStacks || 1);
+      }
       break;
     }
     case 'stk': {
@@ -182,6 +239,7 @@ function applyStep(card, step) {
           const key = step.op === 'discard' ? 'amount' : 'count';
           effects[index][key] += step.n;
           if (effects[index][key] <= 0) { effects.splice(index, 1); dropEffectText(out, card, step.op === 'discard' ? /discard/i : /\badd\b.*\b(wound|dazed|slimed|guilt|cards?)\b/i); }
+          if (step.n < 0) bumpUpgradeTag(out, card, 'drawbackEase', 1);
         }
       } else if (step.side) {
         const onSelf = step.side === 'self';
@@ -189,21 +247,27 @@ function applyStep(card, step) {
         if (index >= 0) {
           effects[index].stacks += step.n;
           if (effects[index].stacks <= 0) { effects.splice(index, 1); dropEffectText(out, card, new RegExp(`\\b${step.status}\\b`, 'i')); }
+          if (step.n < 0) bumpUpgradeTag(out, card, 'drawbackEase', 1);
         }
       } else {
         const effect = effects.find((e) => isPlainStatus(e) && e.status === step.status);
-        if (effect) effect.stacks += step.n;
+        if (effect) {
+          effect.stacks += step.n;
+          if (step.n > 0) bumpUpgradeTag(out, card, 'improved', 1);
+        }
       }
       break;
     }
     case 'addStatus':
       effects.push({ op: 'applyStatus', target: 'enemy', status: step.status, stacks: step.stacks });
+      bumpUpgradeTag(out, card, 'extraEffect', 1);
       break;
     case 'cost':
       {
         const cut = isCount(step.n, 9) ? step.n : 1;
         if (step.pool === 'mp') out.manaCost = (card.manaCost || 0) - cut;
         else { out.staminaCost = (card.staminaCost || 0) - cut; out.cost = (card.cost ?? 0) - cut; }
+        bumpUpgradeTag(out, card, 'efficient', cut);
       }
       break;
     case 'costSwap':
@@ -233,7 +297,10 @@ function applyStep(card, step) {
     case 'attr': out.runAttributeBonus = { ...(card.runAttributeBonus || {}), [step.stat]: ((card.runAttributeBonus || {})[step.stat] || 0) + step.n }; break;
     case 'poise': {
       const index = firstPlainIndex(effects, 'poiseDamage');
-      if (index >= 0) effects[index].amount += step.n;
+      if (index >= 0) {
+        effects[index].amount += step.n;
+        bumpUpgradeTag(out, card, 'improved', step.improvedStacks || 1);
+      }
       break;
     }
     case 'tag': {
@@ -277,10 +344,13 @@ function applyStep(card, step) {
       if (Number.isInteger(step.exposureBuildupPerHit)) out.exposureBuildupPerHit = step.exposureBuildupPerHit;
       if (Number.isFinite(step.magicShare)) out.magicShare = step.magicShare;
       if (packet) out = addElementPacket(out, card, step);
+      bumpUpgradeTag(out, card, 'identityShift', 1);
       break;
     }
     case 'fx':
       out = applyFx(out, step);
+      if (['unexhaust', 'unethereal', 'steady'].includes(step.fx)) bumpUpgradeTag(out, card, 'drawbackEase', 1);
+      else bumpUpgradeTag(out, card, 'extraEffect', 1);
       break;
     case 'combo':
       for (const inner of step.steps) out = applyStep(out, inner);

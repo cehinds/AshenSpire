@@ -28,6 +28,7 @@ import { PlanCardPool, MeasurePoolShape } from '../../src/model/cardPoolPlan.js'
 import { GenerateCard } from '../../src/model/cardGenerator.js';
 import { RenderPoolForm, ReadPoolForm, NormaliseSettings, UpdatePoolSums } from './cardPoolForm.js';
 import { buildItemRoster, typeModsForEntry, scoreItemEntry, livePieceFromEntry, describeItemMod, formatModString, ITEM_TRAIT_SELECTORS, ITEM_QUICK_TRAITS, ITEM_MOTIF_OPTIONS } from './itemStudio.js';
+import { initStudioToolsModals } from './studioToolsModal.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -119,6 +120,8 @@ const state = {
   baselineItemRanks: {}, // key -> baseline rank under repoScoring
   selectedCardId: null,
   selectedItemKey: null,
+  customClasses: [],
+  customDecks: [],
   selectedLayerIdx: 0,
   artTarget: 'cards',   // 'cards' | 'items'
   selectedItemLayerIdx: 0,
@@ -427,7 +430,15 @@ function toast(msg) {
 }
 
 function snapshotState() {
-  return JSON.stringify({ scoring: state.scoring, cards: state.cards, items: state.items, artLayers: state.artLayers, itemArtLayers: state.itemArtLayers });
+  return JSON.stringify({
+    scoring: state.scoring,
+    cards: state.cards,
+    items: state.items,
+    artLayers: state.artLayers,
+    itemArtLayers: state.itemArtLayers,
+    customClasses: state.customClasses,
+    customDecks: state.customDecks,
+  });
 }
 
 function updateUndoButtons() {
@@ -467,7 +478,14 @@ function removedCoreIds() {
 }
 
 function isDirty() {
-  return removedCoreIds().length > 0 || weightChangeCount() > 0 || pendingWeightCount() > 0 || editedCards().length > 0 || editedItems().length > 0 || artLayersChanged();
+  return removedCoreIds().length > 0
+    || weightChangeCount() > 0
+    || pendingWeightCount() > 0
+    || editedCards().length > 0
+    || editedItems().length > 0
+    || (state.customClasses || []).length > 0
+    || (state.customDecks || []).length > 0
+    || artLayersChanged();
 }
 
 function refreshDirtyStatus() {
@@ -498,6 +516,8 @@ function writeDraftNow() {
           editedItems: editedItems(),
           removedCardIds: removedCoreIds(),
           generatorSettings: state.generatorSettings,
+          customClasses: state.customClasses,
+          customDecks: state.customDecks,
         }));
       } else {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -533,6 +553,8 @@ function restoreSnapshot(snapStr) {
   if (Array.isArray(snap.items)) state.items = snap.items;
   state.artLayers = snap.artLayers;
   if (snap.itemArtLayers?.layers) state.itemArtLayers = snap.itemArtLayers;
+  if (Array.isArray(snap.customClasses)) state.customClasses = snap.customClasses;
+  if (Array.isArray(snap.customDecks)) state.customDecks = snap.customDecks;
   studioCardOverrides.clear();
   if (!state.cards.some((c) => c.id === state.selectedCardId)) state.selectedCardId = state.cards[0]?.id || null;
   if (!state.items.some((x) => x.key === state.selectedItemKey)) state.selectedItemKey = state.items[0]?.key || null;
@@ -955,7 +977,7 @@ function wireGenerateCards() {
   body.addEventListener('change', () => UpdatePoolSums(body, generatorMaxRank()));
   body.addEventListener('click', (e) => {
     if (e.target.closest('#btn-gen-dice')) {
-      document.getElementById('gen-seed').value = Math.floor(Math.random() * 1e9).toString(36);
+      document.getElementById('gen-pool-seed').value = Math.floor(Math.random() * 1e9).toString(36);
       document.getElementById('gen-preview').hidden = true;
     }
   });
@@ -1390,17 +1412,20 @@ function tileMetaHtml(def, sc, shiftHtml) {
     </div>`;
 }
 
-function renderCardsGrid() {
-  const grid = document.getElementById('cards-grid');
-  grid.classList.toggle('is-single', state.viewMode === 'single');
+function getFilteredCards() {
   const q = document.getElementById('card-search').value.trim().toLowerCase();
   const typeF = document.getElementById('filter-type').value;
   const clsF = document.getElementById('filter-class').value;
   const rankF = document.getElementById('filter-rank').value;
   const shiftF = document.getElementById('filter-shift').value;
+  const deckF = document.getElementById('filter-deck')?.value || 'all';
+  const deckSet = deckF !== 'all'
+    ? new Set((state.customDecks || []).find((d) => d.id === deckF)?.cardIds || [])
+    : null;
 
-  const filtered = state.cards.filter((c) => {
+  return state.cards.filter((c) => {
     const sc = scoreCardEntry(c);
+    if (deckSet && !deckSet.has(c.id)) return false;
     if (typeF !== 'all' && c.type !== typeF) return false;
     if (clsF !== 'all' && (c.class || 'colorless') !== clsF) return false;
     if (rankF !== 'all' && String(sc.rank) !== rankF) return false;
@@ -1411,6 +1436,12 @@ function renderCardsGrid() {
     }
     return true;
   });
+}
+
+function renderCardsGrid() {
+  const grid = document.getElementById('cards-grid');
+  grid.classList.toggle('is-single', state.viewMode === 'single');
+  const filtered = getFilteredCards();
 
   grid.innerHTML = '';
   for (const def of filtered) {
@@ -2123,6 +2154,7 @@ function renderWeights({ shifts = true } = {}) {
         set: (n) => { const kw = state.scoring.keywords[k]; if (kw.flat !== undefined) kw.flat = n; else kw.multiplier = n; },
         // Flat adds `flat`; multiplier adds the positive score times it. Switching resets to the no-change value (0).
         mult: { value: v.flat === undefined, base: bv ? bv.flat === undefined : undefined, set: (on) => { SetKeywordForm(state.scoring.keywords[k], on); } },
+        surcharge: { value: v.surchargeEnabled !== false, base: bv ? bv.surchargeEnabled !== false : true, set: (on) => { state.scoring.keywords[k].surchargeEnabled = Boolean(on); } },
       };
     }) },
     { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, base: R.rarity?.discount?.[k], set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
@@ -2130,7 +2162,7 @@ function renderWeights({ shifts = true } = {}) {
       { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, base: R.rank?.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
       { id: 'width', label: 'Band Width', val: state.scoring.rank.width, base: R.rank?.width, set: (n) => { state.scoring.rank.width = Math.max(1, n); } },
       { id: 'maxRank', label: 'Max Rank', val: state.scoring.rank.maxRank, base: R.rank?.maxRank, set: (n) => { state.scoring.rank.maxRank = Math.max(1, Math.round(n)); } },
-      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; } },
+      { id: 'effectCount', label: 'Multi-Effect Bonus', val: state.scoring.effectCount?.weight ?? 5, base: R.effectCount?.weight ?? 5, set: (n) => { (state.scoring.effectCount ||= {}).weight = n; }, surcharge: { value: state.scoring.effectCount?.surchargeEnabled !== false, base: R.effectCount?.surchargeEnabled !== false, set: (on) => { (state.scoring.effectCount ||= {}).surchargeEnabled = Boolean(on); } } },
     ] },
     { key: 'categories', title: 'Categories', entries: CATEGORY_KEYS.map((k) => {
       const v = categoryWeight(state.scoring, k);
@@ -2144,6 +2176,7 @@ function renderWeights({ shifts = true } = {}) {
         set: (n) => { categoryWeight(state.scoring, k).weight = n; },
         // Flat adds the weight; multiplier scales the positive score by it. Switching resets to the no-change value.
         mult: { value: Boolean(v.multiplier), base: bv ? Boolean(bv.multiplier) : undefined, set: (on) => { Object.assign(categoryWeight(state.scoring, k), { multiplier: on, weight: on ? 1 : 0 }); } },
+        surcharge: { value: v.surchargeEnabled !== false, base: bv ? bv.surchargeEnabled !== false : true, set: (on) => { categoryWeight(state.scoring, k).surchargeEnabled = Boolean(on); } },
       };
     }) },
     { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => {
@@ -2166,8 +2199,58 @@ function renderWeights({ shifts = true } = {}) {
         per: v.per !== undefined ? { value: v.per, base: bv?.per, options: TAG_PER_OPTIONS, set: (n) => { state.scoring.tags[k].per = n; } } : null,
         // A multiplier tag may be set flat (adds its weight). Switching resets to the no-change value.
         mult: multKey ? { value: isMult, base: bv ? (bv.multiplier !== undefined || bv.pMultiplier !== undefined) : undefined, set: (on) => { SetTagForm(state.scoring.tags[k], multKey, on); } } : null,
+        surcharge: { value: v.surchargeEnabled !== false, base: bv ? bv.surchargeEnabled !== false : true, set: (on) => { state.scoring.tags[k].surchargeEnabled = Boolean(on); } },
       };
     }) },
+    { key: 'upgradeTags', title: 'Upgrade Tags & Surcharges', entries: [
+      ...Object.entries(state.scoring.upgradeTags || {}).filter(([k, v]) => k[0] !== '$' && v && typeof v === 'object').map(([k, v]) => {
+        const bv = R.upgradeTags?.[k];
+        const isMult = v.mode === 'multiplicative';
+        const baseIsMult = bv ? bv.mode === 'multiplicative' : false;
+        return {
+          id: k,
+          label: `${v.label || k} (${k})`,
+          val: isMult ? (v.pMultiplier ?? 0.1) : (v.base ?? (Array.isArray(v.stacks) ? v.stacks[0] : 0)),
+          base: bv ? (baseIsMult ? (bv.pMultiplier ?? 0.1) : (bv.base ?? (Array.isArray(bv.stacks) ? bv.stacks[0] : 0))) : undefined,
+          step: isMult ? 0.05 : 1,
+          set: (n) => {
+            const rule = state.scoring.upgradeTags[k];
+            if (rule.mode === 'multiplicative') {
+              rule.pMultiplier = n;
+            } else {
+              rule.base = n;
+              const maxS = Math.max(1, Number(rule.maxStacks) || 3);
+              rule.stacks = Array.from({ length: maxS }, (_, i) => (
+                rule.escalate === 'linear' ? n * (i + 1) : n * Math.pow(2, i)
+              ));
+            }
+          },
+          mult: {
+            value: isMult,
+            base: baseIsMult,
+            set: (on) => {
+              const rule = state.scoring.upgradeTags[k];
+              rule.mode = on ? 'multiplicative' : 'flat';
+              if (on && !Number.isFinite(rule.pMultiplier)) rule.pMultiplier = 0.1;
+              if (!on && !Number.isFinite(rule.base)) { rule.base = 0; rule.stacks = [0, 0, 0]; }
+            },
+          },
+          surcharge: {
+            value: v.surchargeEnabled !== false,
+            base: bv ? bv.surchargeEnabled !== false : true,
+            set: (on) => { state.scoring.upgradeTags[k].surchargeEnabled = Boolean(on); },
+          },
+        };
+      }),
+      {
+        id: 'improved.effectMultPerStack',
+        label: 'Improved Effect Multiplier / Stack',
+        val: state.scoring.upgradeTags?.improved?.effectMultPerStack ?? 1.1,
+        base: R.upgradeTags?.improved?.effectMultPerStack ?? 1.1,
+        step: 0.05,
+        set: (n) => { ((state.scoring.upgradeTags ||= {}).improved ||= {}).effectMultPerStack = Math.max(1, n); },
+      },
+    ] },
     { key: 'items', title: 'Equipment & Items', entries: [
       { id: 'weaponPoiseDamage.perPoint', label: 'Weapon Inherent Poise Dmg', val: state.scoring.items?.weaponPoiseDamage?.perPoint ?? 1, base: R.items?.weaponPoiseDamage?.perPoint ?? 1, step: 0.25, set: (n) => { ((state.scoring.items ||= {}).weaponPoiseDamage ||= { baseline: 1, perPoint: 1 }).perPoint = n; } },
       { id: 'weaponPoiseDamage.baseline', label: 'Weapon Poise Dmg Baseline', val: state.scoring.items?.weaponPoiseDamage?.baseline ?? 1, base: R.items?.weaponPoiseDamage?.baseline ?? 1, step: 1, set: (n) => { ((state.scoring.items ||= {}).weaponPoiseDamage ||= { baseline: 1, perPoint: 1 }).baseline = n; } },
@@ -2177,6 +2260,7 @@ function renderWeights({ shifts = true } = {}) {
       { id: 'range.reach', label: 'Reach Weapon Bonus', val: state.scoring.items?.range?.reach ?? 2, base: R.items?.range?.reach ?? 2, step: 0.5, set: (n) => { ((state.scoring.items ||= {}).range ||= { melee: 0, reach: 2, ranged: 3 }).reach = n; } },
       { id: 'range.ranged', label: 'Ranged Weapon Bonus', val: state.scoring.items?.range?.ranged ?? 3, base: R.items?.range?.ranged ?? 3, step: 0.5, set: (n) => { ((state.scoring.items ||= {}).range ||= { melee: 0, reach: 2, ranged: 3 }).ranged = n; } },
       { id: 'conditionFactor', label: 'Conditional Trait Factor', val: state.scoring.items?.conditionFactor ?? 0.65, base: R.items?.conditionFactor ?? 0.65, step: 0.05, set: (n) => { (state.scoring.items ||= {}).conditionFactor = n; } },
+      { id: 'attributeBudgetCost', label: 'Gear Attribute Budget Cost', val: state.scoring.items?.attributeBudgetCost ?? 3, base: R.items?.attributeBudgetCost ?? 3, step: 1, set: (n) => { (state.scoring.items ||= {}).attributeBudgetCost = Math.max(0, Math.round(n)); } },
     ] },
     { key: 'gearFields', title: 'Gear Traits', entries: Object.entries(state.scoring.items?.gearFields || {}).map(([k, v]) => ({
       id: k,
@@ -2209,7 +2293,7 @@ function renderWeights({ shifts = true } = {}) {
       const baseNum = r.base !== undefined ? safeNum(r.base, 0) : undefined;
       const applied = entryIn(appliedGroups, g.key, r.id);
       const row = document.createElement('div');
-      row.className = 'weight-row' + (r.per || r.mult ? ' has-per' : '');
+      row.className = 'weight-row' + (r.per || r.mult || r.surcharge ? ' has-per' : '');
       const kind = WEIGHT_GROUP_KINDS[g.key];
       const info = kind ? describeFeature(kind, r.id) : null;
       const labelHtml = info
@@ -2220,10 +2304,11 @@ function renderWeights({ shifts = true } = {}) {
       const shownScoring = () => stagedScoring() || state.scoring;
       const words = weightSentence(g.key, r.id, shownScoring(), r.label);
       const weightBox = `<input type="number" class="weight-input" step="${esc(safeNum(r.step, 1))}" value="${esc(numVal)}" aria-label="${esc(`${r.label} points`)}" />`;
-      row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button></span><div class="weight-example"></div>`;
+      row.innerHTML = `${labelHtml}<span class="weight-sentence"><span class="weight-words" data-part="before">${esc(words.before)}</span>${weightBox}<span class="weight-words" data-part="mid">${esc(words.mid)}</span>${perControlHtml(r)}<span class="weight-words" data-part="after">${esc(words.after)}</span>${multControlHtml(r)}${surchargeControlHtml(r)}<button type="button" class="weight-reset-btn" title="${esc(resetTitle)}">↺</button></span><div class="weight-example"></div>`;
       const input = row.querySelector('.weight-input');
       const perInput = row.querySelector('.weight-per');
       const multInput = row.querySelector('.weight-mult');
+      const surchargeInput = row.querySelector('.weight-surcharge');
       const resetBtn = row.querySelector('.weight-reset-btn');
       const exampleEl = row.querySelector('.weight-example');
       // The example follows the boxes as they are typed in: a copy of the shown config with the boxes' values set.
@@ -2236,6 +2321,7 @@ function renderWeights({ shifts = true } = {}) {
             const per = Math.round(Number(perInput.value));
             if (Number.isFinite(per) && per >= 1) r.per.set(per);
           }
+          if (r.surcharge && surchargeInput) r.surcharge.set(surchargeInput.checked);
         });
         return typed;
       };
@@ -2251,12 +2337,14 @@ function renderWeights({ shifts = true } = {}) {
       const perNow = () => (r.per.options ? perInput.value : Number(perInput.value));
       const perDiffers = (other) => Boolean(r.per) && other !== undefined && perNow() !== other;
       const multDiffers = (other) => Boolean(multInput) && other !== undefined && multInput.checked !== other;
+      const surchargeDiffers = (other) => Boolean(surchargeInput) && other !== undefined && surchargeInput.checked !== other;
       const markRow = () => {
         const value = Number(input.value);
-        const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base);
-        const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value);
+        const modified = (baseNum !== undefined && value !== baseNum) || perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
+        const pending = !applied || value !== safeNum(applied.val, 0) || perDiffers(applied.per?.value) || multDiffers(applied.mult?.value) || surchargeDiffers(applied.surcharge?.value);
         row.classList.toggle('is-modified', modified);
         row.classList.toggle('is-pending', pending);
+        row.classList.toggle('is-surcharge-off', Boolean(surchargeInput && !surchargeInput.checked));
         row.title = pending ? 'Staged: Apply to rescore the cards' : '';
         resetBtn.classList.toggle('is-clean', !modified);
       };
@@ -2266,6 +2354,7 @@ function renderWeights({ shifts = true } = {}) {
         if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
         if (stored?.per && perInput) perInput.value = String(stored.per.value);
         if (stored?.mult && multInput) multInput.checked = stored.mult.value;
+        if (stored?.surcharge && surchargeInput) surchargeInput.checked = stored.surcharge.value;
         markRow();
         showExample();
       };
@@ -2286,14 +2375,20 @@ function renderWeights({ shifts = true } = {}) {
         applyWeightEdit(() => r.mult.set(multInput.checked));
         showStored();
       });
+      surchargeInput?.addEventListener('change', () => {
+        applyWeightEdit(() => r.surcharge.set(surchargeInput.checked));
+        showStored();
+      });
       resetBtn.addEventListener('click', () => {
-        const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base);
+        const perChanged = perDiffers(r.per?.base) || multDiffers(r.mult?.base) || surchargeDiffers(r.surcharge?.base);
         if (baseNum === undefined && !perChanged) return;
         // Read the row's live controls: staged edits do not redraw it, so r.per / r.mult values can be stale.
         const resetMult = multDiffers(r.mult?.base);
         const resetPer = perDiffers(r.per?.base);
+        const resetSurcharge = surchargeDiffers(r.surcharge?.base);
         applyWeightEdit(() => {
           if (resetMult) r.mult.set(r.mult.base);
+          if (resetSurcharge) r.surcharge.set(r.surcharge.base);
           if (baseNum !== undefined) r.set(baseNum);
           if (resetPer) r.per.set(r.per.base);
         });
@@ -2324,6 +2419,12 @@ function categoryWeight(scoring, key) {
 function multControlHtml(entry) {
   if (!entry.mult) return '';
   return `<label class="weight-per-label weight-mult-label" title="Off: add the number as flat points. On: use it as a multiplier of the card's positive score."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiply instead</label>`;
+}
+
+// "surcharge" switch for upgrade tags, keywords, categories, weighted tags and multi-effect bonus: off disables the CP surcharge (0 pts).
+function surchargeControlHtml(entry) {
+  if (!entry.surcharge) return '';
+  return `<label class="weight-per-label weight-surcharge-label" title="On: apply this CP surcharge. Off: disable it (0 CP)."><input type="checkbox" class="weight-surcharge" ${entry.surcharge.value ? 'checked' : ''} aria-label="${esc(`${entry.label} surcharge enabled`)}" /> surcharge</label>`;
 }
 
 // The values a tag's per can take: score once per action, or once per hit.
@@ -2558,17 +2659,14 @@ function populateItemTraitControls() {
   }
 }
 
-function renderItemsGrid() {
-  const grid = document.getElementById('items-grid');
-  if (!grid) return;
+function getFilteredItems() {
   const q = (document.getElementById('item-filter-search')?.value || '').trim().toLowerCase();
   const kindF = document.getElementById('item-filter-kind')?.value || 'all';
   const rarF = document.getElementById('item-filter-rarity')?.value || 'all';
   const rankF = document.getElementById('item-filter-rank')?.value || 'all';
-  const sortF = document.getElementById('item-filter-sort')?.value || 'rank-desc';
 
-  const scored = state.items.map((entry) => ({ entry, sc: scoreItemEntry(entry, state.scoring, state.itemRules) }));
-  const filtered = scored.filter(({ entry, sc }) => {
+  return state.items.filter((entry) => {
+    const sc = scoreItemEntry(entry, state.scoring, state.itemRules);
     if (kindF !== 'all' && entry.kind !== kindF) return false;
     if (rarF !== 'all' && entry.rarity !== rarF) return false;
     if (rankF !== 'all') {
@@ -2581,6 +2679,14 @@ function renderItemsGrid() {
     }
     return true;
   });
+}
+
+function renderItemsGrid() {
+  const grid = document.getElementById('items-grid');
+  if (!grid) return;
+  const sortF = document.getElementById('item-filter-sort')?.value || 'rank-desc';
+
+  const filtered = getFilteredItems().map((entry) => ({ entry, sc: scoreItemEntry(entry, state.scoring, state.itemRules) }));
 
   filtered.sort((a, b) => {
     if (sortF === 'cp-desc') return b.sc.cp - a.sc.cp || a.entry.name.localeCompare(b.entry.name);
@@ -2928,6 +3034,16 @@ function startSandboxCombat() {
   const liveId = activeCard ? liveCardIdFor(activeCard) : null;
 
   const run = createRunState({ registries: studioRegistries, classId, seed: 42, profileMeta: UNLOCK_META });
+  const activeDeck = (state.customDecks || []).find((d) => d.isActiveDeckList)
+    || (state.customDecks || []).find((d) => d.assignedClassId === classId);
+  if (activeDeck && activeDeck.cardIds.length) {
+    const deckCards = activeDeck.cardIds
+      .map((id) => state.cards.find((c) => c.id === id))
+      .filter(Boolean);
+    if (deckCards.length) {
+      run.deck = deckCards.map((c, idx) => ({ instanceId: `deck-${idx}`, cardId: liveCardIdFor(c), upgraded: false }));
+    }
+  }
   const combat = createRunCombat({ registries: studioRegistries, run, rng: createRng(42), enemyIds: [enemyId] });
   dispatch(combat, { type: 'setReactions', enabled: false });
   if (activeCard && liveId) {
@@ -3086,6 +3202,10 @@ async function loadFromRepo(customPath = state.repoPath) {
     if (data.itemArtLayers?.layers) {
       state.itemArtLayers = clone(data.itemArtLayers);
       state.repoItemArtLayers = clone(data.itemArtLayers);
+    }
+    if (data.customDecks && typeof data.customDecks === 'object') {
+      if (Array.isArray(data.customDecks.customClasses)) state.customClasses = clone(data.customDecks.customClasses);
+      if (Array.isArray(data.customDecks.customDecks)) state.customDecks = clone(data.customDecks.customDecks);
     }
     state.repoPath = data.scoringPath;
     localStorage.setItem(PATH_STORAGE_KEY, state.repoPath);
@@ -3351,17 +3471,23 @@ function fillSelect(select, values, allLabel = null) {
   select.value = keep ? previous : (allLabel ? 'all' : values[0] ?? '');
 }
 
-// Type, class and rarity choices come from the loaded cards, so no option matches nothing.
+let studioToolsUi = null;
+
+// Type, class and rarity choices come from the loaded cards (+ custom classes), so no option matches nothing.
 function populateCardOptions() {
   const distinct = (field, fallback) => [...new Set(state.cards.map((c) => c[field] || fallback))].sort();
   const types = distinct('type', 'attack');
-  const classes = distinct('class', 'colorless');
+  const classes = [...new Set([...distinct('class', 'colorless'), ...(state.customClasses || []).map((c) => c.id)])].sort();
   const rarities = distinct('rarity', 'common');
   fillSelect(document.getElementById('filter-type'), types, 'All Types');
   fillSelect(document.getElementById('filter-class'), classes, 'All Classes');
   fillSelect(document.getElementById('edit-class'), classes);
   fillSelect(document.getElementById('edit-rarity'), rarities);
-  const poolText = `Core pool · ${state.cards.length} cards`;
+  studioToolsUi?.populateDeckAndClassDropdowns();
+  const activeDeck = (state.customDecks || []).find((d) => d.isActiveDeckList);
+  const poolText = activeDeck
+    ? `Active deck: ${activeDeck.name} (${activeDeck.cardIds.length}) · ${state.cards.length} total`
+    : `Core pool · ${state.cards.length} cards`;
   document.querySelectorAll('.pool-label').forEach((el) => { el.textContent = poolText; });
 }
 
@@ -4343,11 +4469,25 @@ async function boot() {
 
   initSandboxEnemies();
   wireEvents();
+  studioToolsUi = initStudioToolsModals({
+    state,
+    isLocalServer,
+    pushHistory,
+    saveDraft,
+    syncAllViews,
+    renderCardsGrid,
+    toast,
+    normalizeStudioCard,
+    deriveFaceFromDef,
+    getFilteredCards,
+    getFilteredItems,
+    studioCardOverrides,
+  });
 
   // Web mode (GitHub Pages): nothing can be written to the repo, so the repo controls go and
   // Download JSON in the More menu is how work leaves the studio.
   if (!isLocalServer) {
-    for (const id of ['btn-export-repo', 'btn-save-art', 'btn-revert', ...WEIGHTS_REPO_BUTTON_IDS]) document.getElementById(id)?.classList.add('hidden');
+    for (const id of ['btn-export-repo', 'btn-save-art', 'btn-revert', 'btn-rebal-save-repo', 'btn-decks-save-repo', ...WEIGHTS_REPO_BUTTON_IDS]) document.getElementById(id)?.classList.add('hidden');
     document.querySelector('#more-menu .menu-section')?.classList.add('hidden');
     document.getElementById('draft-status').title = 'Web mode: use Download JSON in the More menu to export';
   }
@@ -4370,15 +4510,27 @@ async function boot() {
         if (key === 'rule' || state.scoring.categories?.[key]) continue;
         (state.scoring.categories ||= {})[key] = clone(weight);
       }
+      // Hydrate upgradeTags (Efficient, Improved, gearAttribute, etc.) on drafts saved before they existed.
+      for (const [key, rule] of Object.entries(state.repoScoring.upgradeTags || {})) {
+        if (key[0] === '$' || state.scoring.upgradeTags?.[key]) continue;
+        (state.scoring.upgradeTags ||= {})[key] = clone(rule);
+      }
+      if (state.repoScoring.items?.attributeBudgetCost !== undefined && state.scoring.items && state.scoring.items.attributeBudgetCost === undefined) {
+        state.scoring.items.attributeBudgetCost = state.repoScoring.items.attributeBudgetCost;
+      }
       if (draft.pendingScoring && draft.pendingBase && ValidateScoringConfig(draft.pendingScoring).length === 0) {
         state.pendingScoring = RefreshRestoredNaming(draft.pendingScoring, state.repoScoring);
         state.pendingBase = RefreshRestoredNaming(draft.pendingBase, state.repoScoring);
       }
       if (draftArtLayers) state.artLayers = draftArtLayers;
       if (Array.isArray(draft.itemArtLayers?.layers)) state.itemArtLayers = draft.itemArtLayers;
+      if (Array.isArray(draft.customClasses)) state.customClasses = draft.customClasses;
+      if (Array.isArray(draft.customDecks)) state.customDecks = draft.customDecks;
       for (const draftItem of (Array.isArray(draft.editedItems) ? draft.editedItems : [])) {
-        const j = state.items.findIndex((x) => x.key === draftItem?.key);
+        if (!draftItem?.key) continue;
+        const j = state.items.findIndex((x) => x.key === draftItem.key);
         if (j >= 0) state.items[j] = draftItem;
+        else state.items.unshift(draftItem);
       }
       if (draft.generatorSettings && typeof draft.generatorSettings === 'object') state.generatorSettings = draft.generatorSettings;
       if (Array.isArray(draft.removedCardIds) && draft.removedCardIds.length) {

@@ -2312,8 +2312,8 @@
       "tier.boss"
     ],
     "attributePriority": [
-      "strength",
       "wisdom",
+      "strength",
       "intelligence",
       "dexterity",
       "constitution"
@@ -2420,6 +2420,9 @@
           "effect": "damage"
         }
       ]
+    },
+    "attributes": {
+      "wisdom": 2
     },
     "spFloor": 3
   },
@@ -2839,7 +2842,7 @@
       ]
     },
     "attributes": {
-      "wisdom": 2
+      "wisdom": 3
     }
   },
   {
