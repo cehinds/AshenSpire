@@ -8,7 +8,7 @@ import { sourceRatingValue, magicShareOf, splitContactParts, PacketSplit, Packet
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { ScaleCardBaseDamage, ScalePhysicalDamage, isSpellCard } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreWardHpBuffer, EffectiveWardHp, FixCoreBrokenRules, FixCoreWeaponPoiseRules, FixCoreAttributeStatusDamageEnabled, ReceiptPoiseLoss } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreWardHpBuffer, EffectiveWardHp, FixCoreBrokenRules, FixCoreWeaponPoiseRules, ReceiptPoiseLoss } from '../model/fixCoreMechanics.js';
 import { WeaponPoiseDamage, StanceHasPoiseMitigation } from '../model/weaponPoise.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
@@ -316,7 +316,8 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   if (sideMultiplier !== 1 && raw > 0) raw = transition('side-damage-scale',`${source?.kind === 'enemy' ? 'Enemy' : 'Player'} damage scale`,raw,Math.max(raw >= 1 && sideMultiplier > 0 ? 1 : 0,raw*sideMultiplier),'offense',sideMultiplier);
   // Stat-adding buff statuses on the attacker (+1 per stack, never shrunk by side/physical multipliers):
   // STR (`attackDamageAdd`) on physical/attack hits; WIS (`divineDamageAdd`) on Divine hits; INT (`magicDamageAdd` + `arcaneDamageAdd`) on magic/Arcane hits.
-  if (modern && !flatReturn && FixCoreAttributeStatusDamageEnabled(ctx)) {
+  // The same snapshot revision authored the weapon-Poise switch; its presence marks the era, even when disabled.
+  if (modern && !flatReturn && typeof fixCoreRules(ctx).poise?.weaponPoiseEnabled === 'boolean') {
     const strBuff = ratingId === 'ar' || share < 1 ? getAdd(ctx, source, 'attackDamageAdd') : 0;
     if (strBuff) raw = transition('status:strength', 'Strength buff', raw, raw + strBuff);
     const traditions = CardSpellTraditions(carrier);
