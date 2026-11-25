@@ -6,7 +6,7 @@ import * as Tactics from './combatCardTactics.js';
 import * as Control from './combatStatusControl.js';
 import * as Proposal from './proposalStatusRuntime.js';
 import { knowledgeIntentProjection } from './enemyKnowledge.js';
-import { decayAtTurnStart as decayStatuses } from './statuses.js';
+import { decayAtTurnStart as decayStatuses, getFlag } from './statuses.js';
 
 import * as Counter from './counterRule.js';
 import { IsBroken } from './brokenRule.js';
@@ -116,6 +116,13 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
     // An unread attacker can spend the player's Poise or change what protects it before this move.
     if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) { prepared.unreadBefore = true; continue; }
     decayAtTurnStart(ctx, other);
+    if (getFlag(ctx, other, 'skipTurn')) continue;
+    // The actual owner start resets Resolve and rolls recovery before choosing to act.
+    // Where a lock may prevent this attack, don't price the next enemy on the assumption it lands.
+    const control = other.statusControl;
+    if (!control?.resolveNextTurn && Control.controlRestrictions(ctx, {
+      ...other, statusControl: { ...control, resolveActive: false },
+    }).locked) return 'controlRecovery';
     if (!broken) {
       const head = advance(other, intent.moveId, intent.damage, intent.hits);
       if (head === 'stop') return 'stop';
@@ -184,7 +191,11 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
     // through the same state before the Counter's own Block is read; the receipt taken as an action starts already holds them.
     // The attacker's own statuses tick at its turn start (Weak wears off), before its move: a forecast prices the hit after that tick.
     if (!action) decayAtTurnStart(ctx, source);
-    const prepared = enemyIntentDamageState(ctx, source, carrier, base, action, action ? null : state => { if (advanceThroughEarlierEnemies(ctx, source, state, own?.moves) === 'stop' && own) own.unknown = true; });
+    let advance;
+    const prepared = enemyIntentDamageState(ctx, source, carrier, base, action, action ? null : state => {
+      advance = advanceThroughEarlierEnemies(ctx, source, state, own?.moves);
+    });
+    if (advance === 'controlRecovery' || (advance === 'stop' && own)) return null;
     // Owner, 2026-11-14: the shown number is the HP the player loses if the move resolved now (receipt.hpLoss): after the player's Block, Poise, stance,
     // Reflect and Evade, carried hit to hit. Supersedes the 2026-11-03 raw hit. `landed` counts the hits that connected so the displayed range ignores misses.
     const poiseStart = prepared.defender?.persistentPoise?.value ?? null;
@@ -214,7 +225,6 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
       states = [...next.values()];
     }
     // Misses (Evade/AC/perception) are a chance, not a smaller number: the range spans the states where every reachable hit connected.
-    if (own?.unknown) return null;
     const mostLanded = Math.max(...states.map(row => row.landed));
     const connected = states.filter(row => row.landed === mostLanded);
     const losses = connected.map(row => row.loss);
