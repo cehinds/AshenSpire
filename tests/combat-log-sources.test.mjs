@@ -172,12 +172,14 @@ test('engine events carry their cause: an enemy move stamps moveId, a status tic
     player: { id: 'p1', classId: 'herald', maxHp: 80, maxMana: 10, maxStamina: 5, energyMax: 5, drawPerTurn: 6, relicIds: [],
       deck: Array.from({ length: 8 }, (_, i) => ({ instanceId: `c${i}`, cardId: i % 2 ? 'strike' : 'blightTouch', upgraded: false })) },
     enemyIds: ['wyrmLord'] });
+  c.enemies[0].poiseMeter.max = 100; // Keep the exchange focused on moves and status ticks.
   for (let turn = 0; turn < 4 && !c.result; turn++) {
     for (const card of [...c.piles.hand]) { try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' }); } catch {} }
     try { dispatch(c, { type: 'endTurn' }); } catch { break; }
   }
   const fromMove = c.eventLog.filter(event => ['blockGained', 'healed', 'statusApplied'].includes(event.type) && event.sourceId === 'e1');
-  assert.ok(fromMove.length > 0 && fromMove.every(event => event.moveId
+  assert.ok(fromMove.some(event => event.moveId), 'fixture includes an executed enemy move effect');
+  assert.ok(fromMove.every(event => event.moveId
     || (event.preparing === true && event.triggeredBy?.kind === 'stance' && event.triggeredBy.ownerId === event.sourceId)),
   'every enemy effect names its executed move or its safely concealed stance preparation');
   const preparation = fromMove.filter(event => event.preparing);
