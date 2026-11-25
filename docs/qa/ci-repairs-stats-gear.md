@@ -61,3 +61,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 - `tests/gear-signature-mods.test.mjs` verifies Sweep Weak is Broadsword's raw signature and is replaced or cleared through profile projection. Current Sage's Robe keeps its Ward, discount and vulnerability without a flat group Mana bonus.
 - `tests/gear-pass-save-compatibility.test.mjs` proves the starter outfit mapping before equipping Cinderforged Plate for the type-enabled Thorns save round trip. The legacy option-off control still runs.
 - The two full files passed 12/15, from 9/15. Three unresolved historical assertions remain in these files (type-enabled Sage's Robe and two offer oracles). The lane had 36 original failures remaining.
+
+## Gear pool double-count controls
+
+- `tests/gear-pool-no-double-count.test.mjs` loads explicit pre-rework pool signatures from the old item rows for the discard/preserve tests. It still measures repeated equipment points, previously double-counted saves, no healing on correction, and positive/negative signatures that survive Blacksmith attribute picks. Current Sage robe verifies the flat group bonus was removed.
+- `node --test tests/gear-pool-no-double-count.test.mjs` passed 7/7, from 4/7. The lane had 33 original failures remaining.
