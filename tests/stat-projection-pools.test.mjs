@@ -57,7 +57,8 @@ function wear({ registries, run }, id) {
 test('a real current run keeps HP receipts aligned through XP, Wisdom allocation and armour removal', () => {
   const state = world(), { registries, run } = state;
   assert.equal(run.attributes.constitution, 1);
-  assert.equal(gameProfileEffectiveAttributes(registries, run).constitution, 2, 'the real starting armour grants one Constitution');
+  wear(state, 'cinderforgedPlate');
+  assert.equal(gameProfileEffectiveAttributes(registries, run).constitution, 2, 'the rare Cinderforged Plate grants one Constitution');
   assert.equal(run.maxHp, 55);
   assert.equal(poolsAgree(state).attributes.find(row => row.id === 'constitution').value, 1, 'attribute rows still display allocated points');
   earnPoint(state);
@@ -97,11 +98,12 @@ test('flat equipment Mana and Stamina addends and permanent HP adjustments are e
 
 test('deck upgrades and Ashen Blight affect pool receipts once while allocated attribute rows stay raw', () => {
   const state = world(), { registries, run } = state;
+  const originalConstitution = gameProfileEffectiveAttributes(registries, run).constitution;
   run.ashenBlight = { milestones: [{ path: 'survivor', tier: 2 }, { path: 'spell', tier: 1 }] };
   run.deck[0] = { ...run.deck[0], upgraded: true, upgradeSteps: [{ k: 'attr', stat: 'wisdom', n: 4 }] };
   assert.equal(DeckAttributeBonuses(run.deck).wisdom, 4, 'the real run-long upgrade is active');
   rederivePools(registries, run, 'pool projection integration');
-  assert.equal(gameProfileEffectiveAttributes(registries, run, effectiveAshenBlightAttributes(run)).constitution, 4);
+  assert.equal(gameProfileEffectiveAttributes(registries, run, effectiveAshenBlightAttributes(run)).constitution, originalConstitution + 2);
   const projection = poolsAgree(state);
   assert.equal(projection.attributes.find(row => row.id === 'constitution').value, run.attributes.constitution);
 });
