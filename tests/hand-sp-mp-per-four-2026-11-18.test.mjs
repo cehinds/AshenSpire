@@ -1,6 +1,4 @@
-// Owner, 2026-11-18 (docs/balance/owner-ruling-2026-11-18.md section 9): opening hand and draw are 5 + floor(INT / 4) (base 5 so a starting character holds
-// 5 to 6 cards), max MP is 1 + floor(WIS / 4), max SP is 3 + floor(DEX / 4), a staff or sceptre takes 1 off a spell's final Mana cost only in Prepared (never below 0), and
-// a few magic relics give +1 max Mana. The formula boundaries (3/4, 7/8) are pinned in tests/balance-stats-2026-11-17.test.mjs item 5.
+// Current per-point hand/SP/MP tuning (owner, 2026-11-24). The previous quarter-point rules remain part of saved-profile coverage.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -34,32 +32,29 @@ function fight(classId, { weapon = null, relics = null, attributes = {} } = {}) 
   return { run, combat };
 }
 
-test('a starting character of every class holds 5 to 6 cards, and the hand follows floor(INT / 4)', () => {
+test('every class starts at 3 + effective INT cards and each INT adds one', () => {
   for (const classId of CLASSES) {
     const { combat } = fight(classId);
     const hand = combat.piles.hand.length;
-    assert.ok(hand >= 5 && hand <= 6, `${classId} opens on ${hand}`);
-    assert.equal(hand, 5 + Math.floor(combat.player.attributes.intelligence / 4), classId);
+    assert.equal(hand, 3 + combat.player.attributes.intelligence, classId);
     assert.equal(profileHandSize(combat), hand, 'the hand size the engine reads is the same number');
   }
-  // The boundaries, on one class: INT 3 -> 4 and 7 -> 8 each add one card, nothing in between does.
+  // Check every value across the old four-point thresholds.
   const cards = int => profileHandSize(fight('reaver', { attributes: { intelligence: int } }).combat);
-  const base = cards(1);
   const gear = fight('reaver').combat.player.attributes.intelligence - 1;
-  const at = int => 5 + Math.floor((int + gear) / 4);
+  const at = int => 3 + int + gear;
   for (const int of [1, 2, 3, 4, 5, 6, 7, 8]) assert.equal(cards(int), at(int), `INT ${int}`);
-  assert.ok(base >= 5);
 });
 
-test('max SP and MP read DEX and WIS in fours', () => {
+test('each DEX adds one max SP and each WIS adds one max MP', () => {
   for (const classId of CLASSES) {
     const { combat } = fight(classId);
     const a = createRunState({ registries, classId, seed: 31, profileMeta: META }).attributes;
     const sp = combat.player.maxStamina, mp = combat.player.maxMana;
     const raisedDex = fight(classId, { attributes: { dexterity: a.dexterity + 4 } }).combat.player.maxStamina;
     const raisedWis = fight(classId, { attributes: { wisdom: a.wisdom + 4 } }).combat.player.maxMana;
-    assert.equal(raisedDex - sp, 1, `${classId}: four more DEX is one more SP`);
-    assert.equal(raisedWis - mp, 1, `${classId}: four more WIS is one more MP`);
+    assert.equal(raisedDex - sp, 4, `${classId}: four more DEX is four more SP`);
+    assert.equal(raisedWis - mp, 4, `${classId}: four more WIS is four more MP`);
     assert.equal(fight(classId, { attributes: { intelligence: a.intelligence + 4 } }).combat.player.maxMana, mp, `${classId}: INT buys no Mana`);
   }
 });

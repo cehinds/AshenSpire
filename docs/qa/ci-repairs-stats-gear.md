@@ -24,3 +24,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 - `tests/gear-pass-thorns-preview.test.mjs` equips current Cinderforged Plate and requires its authored Thorns signature. The two forecast/live checks still cover killing the attacker before later hits or Reflect.
 - `tests/gear-pass-stone-skin.test.mjs` gives the multi-hit target enough Block to test the full three-hit sequence. Its two Stone Skin stacks still must be depleted in live play, and forecast must match live HP without consuming the target's stacks.
 - `node --test tests/gear-pass-thorns-preview.test.mjs tests/gear-pass-stone-skin.test.mjs` passed 12/12, from 9/12 before the fixture corrections. The lane had 73 original failures remaining.
+
+## Confirmed per-point resource and draw tuning
+
+- `tests/a4-hand-rules.test.mjs`, `tests/turn-stamina.test.mjs` and `tests/hand-sp-mp-per-four-2026-11-18.test.mjs` now pin the owner's 2026-11-24 per-point settings in actual new fights and configured class pools. Draw remains clamped to available capacity. The old Draw fixture explicitly pins its quarter-point coefficient. Legacy combat refills, fixed draws, equipment Focus discounts, and Mana relic addends remain covered.
+- `node --test tests/a4-hand-rules.test.mjs tests/turn-stamina.test.mjs tests/hand-sp-mp-per-four-2026-11-18.test.mjs` passed 21/21, from 14/21. The lane had 66 original failures remaining.
