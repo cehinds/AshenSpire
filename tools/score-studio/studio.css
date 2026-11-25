@@ -221,8 +221,9 @@ body.studio-body .menu-item {
   font-weight: 600;
   cursor: pointer;
 }
-body.studio-body .menu-item:hover,
+body.studio-body .menu-item:hover:not(:disabled),
 body.studio-body .menu-item:focus-visible { background: var(--st-surface-2); outline: none; }
+body.studio-body .menu-item:disabled { opacity: .45; cursor: not-allowed; }
 body.studio-body .menu-section { display: flex; flex-direction: column; gap: var(--studio-gap-1); padding: var(--studio-gap-1) var(--studio-gap-2); }
 body.studio-body .menu-label { font-size: 11px; color: var(--st-muted); text-transform: uppercase; letter-spacing: .05em; }
 body.studio-body .menu-path-row { display: flex; gap: var(--studio-gap-1); }
@@ -695,14 +696,27 @@ body.studio-body .studio-toast { position: fixed; bottom: 16px; right: 16px; bac
     padding: var(--studio-gap-1) max(var(--studio-gap-2), env(safe-area-inset-right, 0px)) var(--studio-gap-1) max(var(--studio-gap-2), env(safe-area-inset-left, 0px));
   }
   body.studio-body .studio-brand { min-height: 32px; }
-  body.studio-body .studio-actions { margin-left: auto; }
+  body.studio-body .studio-actions { margin-left: auto; min-width: 0; flex-shrink: 1; }
+  body.studio-body .studio-actions .studio-pill { max-width: 96px; }
+  body.studio-body .studio-actions .s-btn { height: 32px; padding: 0 8px; }
+  body.studio-body .studio-actions .s-btn-icon { width: 32px; padding: 0; }
   body.studio-body .studio-app-menus {
     order: 3;
     flex: 1 0 100%;
+    flex-wrap: wrap;
+    position: relative;
     padding-top: 2px;
     border-top: 1px solid var(--st-border);
-    overflow-x: auto;
   }
+  body.studio-body .studio-app-menus .studio-menu { position: static; }
+  body.studio-body .studio-app-menus .studio-menu-panel {
+    left: var(--studio-gap-2);
+    right: var(--studio-gap-2);
+    width: auto;
+    max-width: none;
+  }
+  body.studio-body .filter-row { flex-wrap: wrap; }
+  body.studio-body #filter-deck { max-width: 160px; }
   body.studio-body .studio-tabs {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1242,7 +1256,8 @@ body.studio-body .class-swatch {
   vertical-align: middle;
 }
 body.studio-body .studio-menu-panel label.menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   text-align: left;
   cursor: pointer;

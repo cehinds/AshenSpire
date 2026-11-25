@@ -521,6 +521,12 @@ function nextPaint() {
 }
 
 function setCardsLoading(visible, title = 'Loading cards…', detail = '', { error = false } = {}) {
+  if (visible) {
+    ++artLoadGeneration;
+    clearTimeout(artLoadSafetyTimer);
+    artLoadSafetyTimer = null;
+    setCardsArtLoadingBar(false);
+  }
   const el = document.getElementById('cards-loading');
   const grid = document.getElementById('cards-grid');
   if (el) {
@@ -535,12 +541,13 @@ function setCardsLoading(visible, title = 'Loading cards…', detail = '', { err
   if (grid) grid.hidden = visible;
 }
 
-function setItemsLoading(visible, title = 'Loading items…', detail = '') {
+function setItemsLoading(visible, title = 'Loading items…', detail = '', { error = false } = {}) {
   const el = document.getElementById('items-loading');
   const grid = document.getElementById('items-grid');
   if (el) {
     el.hidden = !visible;
-    el.setAttribute('aria-busy', visible ? 'true' : 'false');
+    el.setAttribute('aria-busy', visible && !error ? 'true' : 'false');
+    el.classList.toggle('is-error', Boolean(error));
     const titleEl = document.getElementById('items-loading-title');
     if (titleEl && title) titleEl.textContent = title;
     const detailEl = document.getElementById('items-loading-detail');
@@ -1204,6 +1211,7 @@ function openSaveNamesAsDialog() {
 }
 
 async function loadNamesFile(e) {
+  closeMenus();
   const file = e.target.files?.[0];
   e.target.value = '';
   if (!file) return;
@@ -3433,6 +3441,7 @@ function downloadScoringJson() {
 
 // An imported file is staged, not applied: the owner reviews it in the Weights tab, then Applies.
 async function importScoringFile(e) {
+  closeMenus();
   const file = e.target.files?.[0];
   if (!file) return;
   try {
@@ -3678,7 +3687,7 @@ function setupMenus() {
       closeMenus(menu);
       panel.hidden = !opening;
       button.setAttribute('aria-expanded', String(opening));
-      if (opening) panel.querySelector('button, input')?.focus();
+      if (opening) panel.querySelector('button:not(:disabled):not(.hidden), input:not(:disabled):not([hidden])')?.focus();
     });
     // Picking an action closes the menu; the path field, Load and the auto-save toggle keep it open.
     panel.addEventListener('click', (e) => {
@@ -4767,7 +4776,9 @@ async function boot() {
 boot()
   .then(() => { if (LOADING_SHOT_MODE !== 'loading') return checkCardArt(); })
   .catch((err) => {
-    setCardsLoading(true, 'Failed to load cards', err?.message || 'Unexpected error while starting Score Studio.', { error: true });
+    const msg = err?.message || 'Unexpected error while starting Score Studio.';
+    setCardsLoading(true, 'Failed to load cards', msg, { error: true });
+    setItemsLoading(true, 'Failed to load items', msg, { error: true });
     const pill = document.getElementById('draft-status');
     if (pill) {
       pill.classList.remove('is-loading');
