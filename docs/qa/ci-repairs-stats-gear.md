@@ -12,3 +12,9 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/armour-card-text.test.mjs` still pins the complete bonus lines for Ashen Vigil and Wayfarer Plate, including spelled-out attribute grants, distinct group and signature text, and the absence of rank and points. The equipment rework removed Vigil's Defend signature and the Plate's raw Defend/HP bonuses, and reduced the group grants.
 - `node --test tests/armour-card-text.test.mjs` passed 3/3, from 2/3 before the fixture correction. The lane had 79 original failures remaining after this group.
+
+## Deferred Strength and recurring Reach
+
+- `tests/gear-pass-deferred-strength.test.mjs` explicitly restores the former Axe's +1 Strength on one fixture weapon. Assertions still cover the reaction pause, pre-grant damage, exactly-once post-play application, save/restore, and a non-grant weapon control.
+- `tests/gear-pass-reach-decay.test.mjs` uses Waywatcher Coat's authored turn-start Reach instead of Shortbow's retired turn grant. The next-round expiry and fresh grant remain required in the real turn loop. Current, custom, and saved decay cases remain covered.
+- `node --test tests/gear-pass-deferred-strength.test.mjs tests/gear-pass-reach-decay.test.mjs` passed 15/15, from 12/15 before the fixture corrections. The lane had 76 original failures remaining.
