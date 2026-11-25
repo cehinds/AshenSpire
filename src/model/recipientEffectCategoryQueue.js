@@ -4,11 +4,12 @@ export const RECIPIENT_EFFECT_CATEGORIES = Object.freeze([
 
 const movement = new Set(['spell-circle', 'advance', 'retreat']);
 const attacks = new Set(['slash', 'multi-slash', 'thrust', 'smash', 'sweep', 'blunt', 'projectile', 'spell']);
-const defenses = new Set(['block', 'block-hit', 'ward', 'ward-shatter', 'poise', 'poise-break', 'parry', 'evade', 'evade-gain', 'counter-hit', 'counter-gain']);
+const defenses = new Set(['block', 'block-hit', 'ward', 'ward-shatter', 'poise', 'poise-hit', 'poise-break', 'reflect', 'parry', 'evade', 'evade-gain', 'counter-hit', 'counter-gain']);
 
 export function RecipientEffectCategory(recipe) {
+  if (recipe.phase === 'windup' || recipe.phase === 'delivery') return 'castingMovement';
   if (RECIPIENT_EFFECT_CATEGORIES.includes(recipe.category)) return recipe.category;
-  if (recipe.phase === 'windup' || recipe.phase === 'delivery' || movement.has(recipe.shape)) return 'castingMovement';
+  if (movement.has(recipe.shape)) return 'castingMovement';
   if (recipe.phase === 'reaction' || defenses.has(recipe.shape)) return 'defenseReactions';
   if (recipe.phase === 'contact' && (attacks.has(recipe.shape) || recipe.action === 'attack' || recipe.camp === 'spell')) return 'attackImpacts';
   return 'buffsStatuses';

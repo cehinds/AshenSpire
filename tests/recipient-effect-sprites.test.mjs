@@ -704,3 +704,13 @@ test('live group counts once globally and occupies each actor slot, with no disc
     ClearRecipientEffects(layer);
   });
 });
+
+test('converting a confirmed Reach attack into a delivery reserves the casting category before impact', () => {
+  const impact = { ...onA, range: 'reach', actionKey: 'reach', category: 'attackImpacts', delivery: { durationMs: 100 } };
+  const delivery = { ...impact, phase: 'delivery', impactShape: impact.shape, shape: null };
+  const clips = PlanRecipientEffectLayers([impact, delivery]);
+  assert.deepEqual(clips.map(clip => [clip.category, clip.start, clip.end]), [
+    ['castingMovement', 0, 100],
+    ['attackImpacts', 90, 390],
+  ]);
+});
