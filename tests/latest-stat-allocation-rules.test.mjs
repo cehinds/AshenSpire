@@ -48,7 +48,7 @@ test('fresh Core snapshots assign only Health to CON and Poise/Mana to WIS', () 
   assert.equal(run.maxHp, before.hp + 5);
 });
 
-test('real allocations pay SP/MP/hand only on the saved fourth-point thresholds', () => {
+test('real allocations grant one SP, MP or hand card per applicable point', () => {
   for (const [attribute, pool] of [['dexterity', 'maxStamina'], ['wisdom', 'maxMana']]) {
     const run = makeRun();
     const offset = gameProfileEffectiveAttributes(registries, run)[attribute] - run.attributes[attribute];
@@ -59,10 +59,10 @@ test('real allocations pay SP/MP/hand only on the saved fourth-point thresholds'
     run.level.unspentPoints = 2;
     allocateAttributePoint(registries, run, attribute);
     assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], 3);
-    assert.equal(run[pool], before, `${attribute} 2 -> 3`);
+    assert.equal(run[pool], before + 1, `${attribute} 2 -> 3`);
     allocateAttributePoint(registries, run, attribute);
     assert.equal(gameProfileEffectiveAttributes(registries, run)[attribute], 4);
-    assert.equal(run[pool], before + 1, `${attribute} 3 -> 4`);
+    assert.equal(run[pool], before + 2, `${attribute} 3 -> 4`);
   }
   const run = makeRun();
   const offset = gameProfileEffectiveAttributes(registries, run).intelligence - run.attributes.intelligence;
@@ -74,10 +74,10 @@ test('real allocations pay SP/MP/hand only on the saved fourth-point thresholds'
   run.level.unspentPoints = 2;
   allocateAttributePoint(registries, run, 'intelligence');
   assert.equal(gameProfileEffectiveAttributes(registries, run).intelligence, 3);
-  assert.equal(profileHandSize(fight(run)), initial);
+  assert.equal(profileHandSize(fight(run)), initial + 1);
   allocateAttributePoint(registries, run, 'intelligence');
   assert.equal(gameProfileEffectiveAttributes(registries, run).intelligence, 4);
-  assert.equal(profileHandSize(fight(run)), initial + 1);
+  assert.equal(profileHandSize(fight(run)), initial + 2);
   assert.equal(run.maxMana, mana, 'INT no longer buys Mana');
 });
 

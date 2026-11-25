@@ -145,14 +145,14 @@ test(`every mana-only spell has at least ${MARGIN}x the power per Mana of the me
 const live = (classId, seed) => createRunState({ registries: reg, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 test('each new card is offered to its own class (colorless to every caster) and never to another class', () => {
   const stockHerald = live('herald', 1);
-  assert.equal(stockHerald.maxMana, 1 + 1 + 1, 'base 1 + Rite Vestments 1 + robe type 1');
+  assert.equal(stockHerald.maxMana, 5, 'the current equipped Herald has five MP under per-point Wisdom');
   assert.ok(gameProfileRewardPools(reg, stockHerald).combatCards.includes('core.radiantVerdict'), 'the geared Herald can pay its printed 2 MP');
   const oneManaHerald = { ...stockHerald, maxMana: 1 };
   assert.ok(!gameProfileRewardPools(reg, oneManaHerald).combatCards.includes('core.radiantVerdict'), 'the same class still cannot receive a card above its Mana capacity');
   const seen = { starseer: new Set(), herald: new Set(), rogue: new Set() };
   for (const classId of Object.keys(seen)) for (let seed = 1; seed <= 400; seed++) {
     const run = live(classId, seed); run.floor = 1 + (seed % 6);
-    run.actNumber = 1 + (seed % 3); // owner 2026-11-21: rewards come from the act's rank band, so class eligibility is checked across acts 1-3
+    run.level.level = 1 + (seed % 10); // Current reward offers follow the character-level rank band.
     // Give each class enough Mana for every printed price to isolate class eligibility.
     run.maxMana = 2;
     for (const option of gameProfileRewardOffers(reg, run, createRng(seed + 50000), { offerId: 'ms' }).options) if (option.kind === 'combatCards') seen[classId].add(option.id);
@@ -173,7 +173,7 @@ test('the element spells play for 0 SP, set their element as the flux and the ne
   const energy = combat.player.energy, mana = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: a.instanceId, targetId: enemy.id });
   assert.equal(combat.player.energy, energy, 'Pyre Lash cost no Stamina');
-  assert.equal(mana - combat.player.mana, 1, 'printed 1 + surcharge 1 - robe 1; Focus gives no discount before Prepared');
+  assert.equal(mana - combat.player.mana, 2, 'printed 1 + surcharge 1; robes and Focus both require Prepared');
   assert.equal(combat.player.elementFlux, 'fire');
   const before = enemy.hp, preparedMana = combat.player.mana;
   assert.equal(cardPlayCosts(combat, b.instanceId).mana, 0, 'Prepared Adept reduces printed 2 to 1, then surcharge +1, robe -1 and Focus -1');
@@ -188,11 +188,11 @@ test('Open the Archive draws, restores Mana and exhausts (non-element: it clears
   combat.loadout.sets.rightHand[0] = 'greatsword';
   const card = combat.piles.hand[0]; card.cardId = 'core.openArchive';
   combat.player.elementFlux = 'fire';
-  combat.player.maxMana = Math.max(combat.player.maxMana, 10); // ruling 2026-11-18 §9: max MP is 1 + floor(WIS / 4), so give the restore room
+  combat.player.maxMana = Math.max(combat.player.maxMana, 10); // Leave room for the restoration.
   combat.player.mana = 4;
   const mana = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
-  assert.equal(combat.player.mana - mana, 2 - Math.max(0, def('core.openArchive').manaCost + 1 - 1), 'printed Mana + spell surcharge - current robe discount, then restores 2');
+  assert.equal(combat.player.mana - mana, 2 - (def('core.openArchive').manaCost + 1), 'printed Mana + spell surcharge out of Prepared, then restores 2');
   assert.equal(combat.player.elementFlux ?? null, null);
   assert.ok(combat.piles.exhaust.some(c => c.instanceId === card.instanceId));
 });

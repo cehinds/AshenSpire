@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:d10e6b625d9c6b8b1efbc52997b4062b3cbadf7d91f973609bbcdeb29da8637f",
+      "hash": "sha256:0b6192eecd61f7e78ad4bf0d6f0a527446c82e62e12569c8802c87c5eefb6975",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -34,7 +34,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics,retreatRuleFaces}.js",
-          "hash": "sha256:23a3dfd8cf63e93cc18c91a84025d9e24a289e74f8869b9d6abc4205cb809849"
+          "hash": "sha256:fde2316c7de8f8ba070a6ca4e1cd07b92018e069f0efcd53d8c688461406f25c"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -436,7 +436,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:c7068514dba76f79213e670bc0dcecafaa0af4813b0c79431badc965eeed711d"
+          "hash": "sha256:0c47c365b82d002f43880b6150527a6b6d3df42d2bd2f94149f8a7442afb4e6c"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -712,7 +712,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:5fab92b9e74036a679475a1e2d0bc8d64704111c67aa35e21a8d3dc09825ea1e"
+          "hash": "sha256:f537ff9fe3dc5f16363c556324c2ca01d4599ba61c57888cb94a0f8b365473b7"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",
@@ -723,10 +723,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:fc5c8875847a9fbb3a5bc6faa70e7e41e831cdc7c3acde8fb1434fb3cf447c0a"
+      "runtimeHash": "sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63"
     },
     "core": {
-      "hash": "sha256:d10e6b625d9c6b8b1efbc52997b4062b3cbadf7d91f973609bbcdeb29da8637f",
+      "hash": "sha256:0b6192eecd61f7e78ad4bf0d6f0a527446c82e62e12569c8802c87c5eefb6975",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -758,7 +758,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics,retreatRuleFaces}.js",
-          "hash": "sha256:23a3dfd8cf63e93cc18c91a84025d9e24a289e74f8869b9d6abc4205cb809849"
+          "hash": "sha256:fde2316c7de8f8ba070a6ca4e1cd07b92018e069f0efcd53d8c688461406f25c"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -1160,7 +1160,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:c7068514dba76f79213e670bc0dcecafaa0af4813b0c79431badc965eeed711d"
+          "hash": "sha256:0c47c365b82d002f43880b6150527a6b6d3df42d2bd2f94149f8a7442afb4e6c"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -1436,7 +1436,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:5fab92b9e74036a679475a1e2d0bc8d64704111c67aa35e21a8d3dc09825ea1e"
+          "hash": "sha256:f537ff9fe3dc5f16363c556324c2ca01d4599ba61c57888cb94a0f8b365473b7"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",
@@ -1447,7 +1447,7 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:fc5c8875847a9fbb3a5bc6faa70e7e41e831cdc7c3acde8fb1434fb3cf447c0a"
+      "runtimeHash": "sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63"
     }
   }
 }

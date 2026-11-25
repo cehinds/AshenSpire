@@ -56,9 +56,8 @@ const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i +
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const PLAYS = Number(argOf('--plays') || 5);
 const ROUNDS = Math.max(1, Math.floor(Number(argOf('--rounds') || 2)) || 1);
-// The timing fixture starts against a Briar Hermit with Sweep and Strike in hand.
-// The quick-start input fixture's hand can end its first fight in two hits.
-const SEED = Number(argOf('--seed') || 97);
+// This Core seed opens with enough live targets for three HP damage readouts.
+const SEED = Number(argOf('--seed') || 96);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function connectCdp(wsUrl, pageErrors = []) {

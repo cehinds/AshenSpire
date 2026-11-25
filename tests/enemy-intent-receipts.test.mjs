@@ -28,6 +28,9 @@ function fixture() {
 // base-damage scale to 3, + AR 8 = 11 a hit; Block 3 and Poise 8 are spent hit by hit), the same as damageDealt.hpLoss, and refreshes as the player's Block, Poise and Counter grants change.
 test('committed full-action and each contact carry the HP lost, hit by hit', () => {
   const { combat, enemy } = fixture(); primeAccuracyRolls(combat, { count: 3 });
+  // ccb452a3f63: this archived receipt spent passive Poise on repeated contacts.
+  combat.fixCoreRules.poise = { drain: 'prevented' };
+  combat.fixCoreRules.ward = { enabled: false };
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
   const revealed = combat.eventLog.slice(start).find(e => e.type === 'enemyActorTurnStarted');

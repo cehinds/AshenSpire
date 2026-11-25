@@ -3,7 +3,7 @@
 // raw = effect power over 3 rounds, cp = raw - rarity discount, rank 0 = Unranked, 1..10 (src/model/combatPower.js).
 
 export const cardCombatPower = {
- "blightTouch": {"raw":0,"cp":-5,"rank":0,"rarity":"rare"},
+ "blightTouch": {"raw":0,"cp":1,"rank":1,"rarity":"rare","overridden":true},
  "core.acidSplash": {"raw":5,"cp":5,"rank":2,"rarity":"common"},
  "core.advance": {"raw":-1,"cp":-1,"rank":0,"rarity":"common"},
  "core.arcaneSiphon": {"raw":-2,"cp":-4,"rank":0,"rarity":"uncommon"},
@@ -97,7 +97,7 @@ export const cardCombatPower = {
  "core.stormBlessing": {"raw":1,"cp":-1,"rank":0,"rarity":"uncommon"},
  "core.stormLash": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
  "core.stormcall": {"raw":-6,"cp":-11,"rank":0,"rarity":"rare"},
- "core.strike": {"raw":0,"cp":0,"rank":0,"rarity":"common"},
+ "core.strike": {"raw":0,"cp":0,"rank":0,"rarity":"common","overridden":true},
  "core.stunningBlow": {"raw":4,"cp":2,"rank":1,"rarity":"uncommon"},
  "core.sweep": {"raw":1,"cp":1,"rank":1,"rarity":"common"},
  "core.temperedEdge": {"raw":0,"cp":-5,"rank":0,"rarity":"rare"},
@@ -110,7 +110,7 @@ export const cardCombatPower = {
  "core.whirlwind": {"raw":17,"cp":12,"rank":3,"rarity":"rare"},
  "core.wideSweep": {"raw":11,"cp":11,"rank":3,"rarity":"common"},
  "core.witherDraught": {"raw":14,"cp":12,"rank":3,"rarity":"uncommon"},
- "greatswordSunderingHew": {"raw":0,"cp":-5,"rank":0,"rarity":"rare"},
+ "greatswordSunderingHew": {"raw":0,"cp":1,"rank":1,"rarity":"rare","overridden":true},
  "twinFang": {"raw":5,"cp":0,"rank":0,"rarity":"rare"}
 };
 
@@ -126,7 +126,7 @@ export const itemCombatPower = {
  "armour:herald.wayfarerPlate": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
  "armour:reaver.bastion": {"raw":-2,"cp":-4,"rank":0,"rarity":"uncommon"},
  "armour:reaver.cinderforgedPlate": {"raw":3,"cp":1,"rank":1,"rarity":"uncommon"},
- "armour:reaver.default": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
+ "armour:reaver.default": {"raw":-2,"cp":0,"rank":0,"rarity":"common","overridden":true},
  "armour:reaver.gutterLeathers": {"raw":8,"cp":8,"rank":2,"rarity":"common"},
  "armour:reaver.nightweave": {"raw":-1,"cp":-1,"rank":0,"rarity":"common"},
  "armour:reaver.oathsworn": {"raw":1,"cp":-1,"rank":0,"rarity":"uncommon"},
@@ -135,7 +135,7 @@ export const itemCombatPower = {
  "armour:reaver.warden": {"raw":7,"cp":5,"rank":2,"rarity":"uncommon"},
  "armour:reaver.wayfarerPlate": {"raw":-2,"cp":-2,"rank":0,"rarity":"common"},
  "armour:reaver.wyrmscaleMail": {"raw":7,"cp":5,"rank":2,"rarity":"uncommon"},
- "armour:rogue.default": {"raw":8,"cp":8,"rank":2,"rarity":"common"},
+ "armour:rogue.default": {"raw":8,"cp":0,"rank":0,"rarity":"common","overridden":true},
  "armour:rogue.duelist": {"raw":10,"cp":8,"rank":2,"rarity":"uncommon"},
  "armour:rogue.gutterLeathers": {"raw":8,"cp":8,"rank":2,"rarity":"common"},
  "armour:rogue.huntersHide": {"raw":21,"cp":19,"rank":5,"rarity":"uncommon"},

@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { live, baseRegistries, registries } from './helpers/fixcore-combat-rules.mjs';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat as createRunCombatWithBenefits } from '../src/engine/runCombat.js';
@@ -22,20 +22,22 @@ const unlocks = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c']
 const settle = combat => { while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }); };
 const plain = { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 };
 
-test('Rogue dagger strike (7) against Block 50 loses 1 HP (one Pierce stack ignores 1 Block)', () => {
+test('Rogue dagger strike against Block 50 loses 1 HP (one Pierce stack ignores 1 Block)', () => {
   const run = createRunState({ registries, classId: 'rogue', seed: 511, profileMeta: unlocks });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const enemy = combat.enemies[0];
   Object.assign(enemy, { hp: 500, maxHp: 500, block: 50, barrier: 0, persistentPoise: { value: 0, max: 0 } });
   const strike = combat.piles.hand.find(c => c.cardId === 'core.strike');
   primeAccuracyRolls(combat, { count: 3 });
+  const quote = previewCard(combat, strike.instanceId, enemy.id).values.find(row => row.op === 'damage');
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: enemy.id });
   const hit = combat.eventLog.slice(start).find(e => e.type === 'damageDealt' && e.targetId === enemy.id);
-  assert.equal(hit.amount, 7, 'fixture: the dagger strike deals 7');
+  assert.ok(hit.amount > 1 && hit.amount < 50, 'the hit is fully blockable before Pierce');
+  assert.equal(quote.perTargetHitDamages[enemy.id][0], 1, 'the preview quotes one HP lost');
   assert.equal(500 - enemy.hp, 1);
-  assert.equal(hit.blocked, 6);
-  assert.equal(enemy.block, 43, 'Block is spent as the same hit without pierce would spend it (7)');
+  assert.equal(hit.blocked, hit.amount - 1);
+  assert.equal(enemy.block, 50 - hit.amount, 'Block is spent as the same hit without Pierce');
 });
 
 // An enemy whose Slash is a piercing action of `damage` x `hits`.
@@ -47,10 +49,14 @@ const pierceRegistries = (damage, hits) => Object.freeze({ ...baseRegistries, en
   } } });
 
 // `damage` is the hit after Core halves card base damage (ceil, effects.baseDamageMultiplier 0.5), so the move is authored at twice it.
-function enemyPierce({ damage, hits, block, poise }) { return enemyHit(pierceRegistries(damage * 2, hits), { hits, block, poise }); }
-function enemyHit(regs, { hits, block, poise }) {
+function enemyPierce({ damage, hits, block, poise, legacyPoise = false }) { return enemyHit(pierceRegistries(damage * 2, hits), { hits, block, poise, legacyPoise }); }
+function enemyHit(regs, { hits, block, poise, legacyPoise = false }) {
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: unlocks });
   const combat = createRunCombat({ registries: regs, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  if (legacyPoise) {
+    combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+    combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst', decayPerTurn: 1, breaksAtZeroPoise: true };
+  }
   const enemy = combat.enemies[0];
   Object.assign(combat.player, { hp: 100, maxHp: 100, block, barrier: 0, statuses: {}, ratings: { ...plain, poise: 10 }, ratingSources: [{ name: 'Fixture', kind: 'attribute', ...plain, poise: 10 }],
     persistentPoise: { value: poise, max: Math.max(poise, 10) } });
@@ -79,7 +85,7 @@ test('dispatch: an enemy 5x3 piercing action on Block 40 loses 3 x 1 = 3 HP, and
 
 // Owner, 2026-11-18: stack Pierce leaves all post-Block damage on the ordinary Poise split, with no separate 1:1 absorption.
 test('an 18 pierce hit, fully Blocked otherwise, vs Poise 8 -> pierce 1, Poise 7, HP loss 0', () => {
-  const { combat, forecast, hits } = enemyPierce({ damage: 14, hits: 1, block: 40, poise: 8 });
+  const { combat, forecast, hits } = enemyPierce({ damage: 14, hits: 1, block: 40, poise: 8, legacyPoise: true });
   assert.equal(hits[0].damageReceipt.hits[0].incoming, 18, 'fixture: the hit arrives as 18 (14 + Attack + stance), one Pierce stack ignores 1 Block');
   assert.equal(hits[0].pierced, 1); assert.equal(hits[0].piercePoise, 0);
   assert.equal(hits[0].damageReceipt.hits[0].poiseReduced, 1, 'ordinary Poise absorbs the one remaining point after rounding');
@@ -89,7 +95,7 @@ test('an 18 pierce hit, fully Blocked otherwise, vs Poise 8 -> pierce 1, Poise 7
 });
 
 test('the same hit vs Poise 1 -> Poise 0, Poise broken, HP loss 0', () => {
-  const { combat, forecast, hits, events } = enemyPierce({ damage: 14, hits: 1, block: 40, poise: 1 });
+  const { combat, forecast, hits, events } = enemyPierce({ damage: 14, hits: 1, block: 40, poise: 1, legacyPoise: true });
   assert.equal(hits[0].pierced, 1); assert.equal(hits[0].piercePoise, 0);
   assert.equal(hits[0].damageReceipt.hits[0].poiseReduced, 1);
   assert.equal(hits[0].hpLoss, 0);
@@ -118,7 +124,7 @@ test('only what Block would have soaked is pierced: with Block 0 a pierce hit is
 
 test('the pierced part is not double-counted by Poise: everything Block leaves takes the ordinary rule', () => {
   // 18 incoming, Block 15: one Pierce stack leaves only 14 absorbed. All 4 remaining damage uses the ordinary split: 1 Poise and 3 HP.
-  const { combat, forecast, hits } = enemyPierce({ damage: 14, hits: 1, block: 15, poise: 8 });
+  const { combat, forecast, hits } = enemyPierce({ damage: 14, hits: 1, block: 15, poise: 8, legacyPoise: true });
   assert.equal(hits[0].pierced, 1); assert.equal(hits[0].piercePoise, 0);
   assert.equal(hits[0].blocked, 14);
   assert.equal(hits[0].damageReceipt.hits[0].poiseReduced, 1);
@@ -129,7 +135,7 @@ test('the pierced part is not double-counted by Poise: everything Block leaves t
 });
 
 test('the Pierced float and the log line show the pierced amount and what Poise took', () => {
-  const { hits } = enemyPierce({ damage: 14, hits: 1, block: 40, poise: 8 });
+  const { hits } = enemyPierce({ damage: 14, hits: 1, block: 40, poise: 8, legacyPoise: true });
   assert.equal(guardHitFloatParts(hits[0]).pierced.text, 'Pierced 1');
   // Owner, 2026-11-14: a hit that cost no HP shows the fully-absorbed word, a pierced one included (the Pierced float stays in the part list and the log).
   assert.equal(outcomeKindForEvent(hits[0]), 'blocked', 'a fully absorbed pierced hit shows the BLOCKED word');

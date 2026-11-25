@@ -116,11 +116,11 @@ test('hits never raises the SP a card costs to play: its Core hit floor must fit
   assert.ok(!kindsFor(volley).has('cost'));
 });
 
-test('power, status and curse cards take only cost, then are maxed (null)', () => {
+test('power, status and curse cards take only price changes, then are maxed at zero cost', () => {
   for (const type of ['power', 'status', 'curse']) {
     const card = { id: 't.p', name: 'P', type, cost: 2, staminaCost: 2, manaCost: 0, keywords: [], tags: ['camp:physical'],
       effects: [{ op: 'block', target: 'self', amount: 4 }, { op: 'damage', target: 'enemy', amount: 3 }] };
-    assert.deepEqual([...kindsFor(card)].sort(), ['cost']);
+    assert.deepEqual([...kindsFor(card)].sort(), ['cost', 'costSwap']);
     assert.deepEqual([...kindsFor({ ...card, cost: 0, staminaCost: 0 })], ['none']);
   }
 });
@@ -141,18 +141,24 @@ test('conditional status effects are never stacked', () => {
 
 test('over many rolls, cost (max 3 Efficient) and hits (max 1) stay capped and cost tracks staminaCost', () => {
   const rich = dmg(8, { cost: 3, staminaCost: 3, manaCost: 3, effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'block', target: 'self', amount: 20 }] });
-  let costs = 0;
+  let costs = 0, swaps = 0;
   for (let seed = 0; seed < 200; seed += 1) {
     const steps = [];
     while (steps.length < 10) { const s = rollUpgradeStep(rich, steps, steps.length, upgradeStepRng(seed, 'rich', steps.length)); if (!s) break; steps.push(s); }
     const face = applyUpgradeSteps(rich, steps);
     assert.ok(steps.filter((s) => s.k === 'cost').length <= 3, 'at most 3 Efficient cost cuts');
     assert.ok(steps.filter((s) => s.k === 'hits').length <= 1, 'hits once');
+    const exchanges = steps.filter((s) => s.k === 'costSwap');
+    assert.ok(exchanges.length <= 1, 'cost swap once');
     assert.equal(face.cost, face.staminaCost, 'cost equals staminaCost');
-    assert.ok(face.staminaCost >= 0 && face.manaCost >= 0);
+    assert.ok(face.staminaCost >= 0 && face.manaCost >= 0, 'no resource cost becomes negative');
+    if (steps.some((s) => s.k === 'tag' && s.tag === RANK_DOWN_TAG)) assert.equal(face.manaCost, 0);
+    assert.ok(face.staminaCost + 2 * face.manaCost <= rich.staminaCost + 2 * rich.manaCost, 'total exchange-weighted cost does not rise');
     costs += steps.filter((s) => s.k === 'cost').length;
+    swaps += exchanges.length;
   }
   assert.ok(costs > 20, 'the cost step is actually exercised');
+  assert.ok(swaps > 20, 'the cost swap step is actually exercised');
 });
 
 // ---- Owner ask 2026-10-31: a choice of options, and the poise / tag steps ----

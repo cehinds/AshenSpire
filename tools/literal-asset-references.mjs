@@ -1,3 +1,5 @@
+import { catalogVersionScanText } from './buildversion.mjs';
+
 // Optional art is a presentation contract, not a blanket missing-file exemption.
 // Only the generated recipient atlas's exact asset properties can opt out.
 function optionalRecipientOffsets(source, config) {
@@ -5,8 +7,8 @@ function optionalRecipientOffsets(source, config) {
   for (const [shape, entry] of Object.entries(atlas)) {
     if (entry.optional !== true) continue;
     if (!/^[a-z]+(?:-[a-z]+)*$/.test(shape)
-      || config.behavior.atlasId !== 'v5'
-      || entry.asset !== `assets/recipient-effects/v5/${shape}.png`
+      || !['v5', 'v6'].includes(config.behavior.atlasId)
+      || !['v5', config.behavior.atlasId].some(generation => entry.asset === `assets/recipient-effects/${generation}/${shape}.png`)
       || entry.columns !== 3 || entry.rows !== 1 || entry.row !== 0) {
       throw new Error(`Invalid optional recipient atlas entry: ${shape}`);
     }
@@ -44,7 +46,9 @@ function optionalRecipientOffsets(source, config) {
 export function danglingLiteralAssets(sources, manifestIds, recipientConfig) {
   const literal = /['"`](assets\/[A-Za-z0-9_\-./]+\.[a-z0-9]{2,5})['"`]/g;
   const dangling = [];
-  for (const [id, source] of sources) {
+  for (const [id, stored] of sources) {
+    const source = ['src/config/generated/ui.js', 'src/content/reviewedCardArt.generated.js',
+      'src/content/changelog.generated.js'].includes(id) ? catalogVersionScanText(id, stored) : stored;
     const optional = id === 'src/config/generated/ui.js'
       ? optionalRecipientOffsets(source, recipientConfig) : new Set();
     let offset = 0;

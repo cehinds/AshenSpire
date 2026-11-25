@@ -4978,7 +4978,12 @@
     }
   },
   "overrides": {
-    "$comment": "Optional per-id overrides ({raw, cp, rank, rarity}) for unique cards or items (e.g. \"core.conflagration\" or \"weapon:longsword\"); empty by default so scoring drives every rank."
+    "$comment": "The starter policy pins only the combat-power classification. Raw scores, combat effects and saved upgrade ranks still come from their own sources.",
+    "core.strike": { "cp": 0 },
+    "greatswordSunderingHew": { "cp": 1 },
+    "blightTouch": { "cp": 1 },
+    "armour:reaver.default": { "cp": 0 },
+    "armour:rogue.default": { "cp": 0 }
   },
   "upgradeTags": {
     "efficient": {

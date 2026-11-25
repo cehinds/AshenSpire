@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fight } from './elementFixture.mjs';
+import { createRunCombat } from './withoutWeaknesses.mjs';
 import * as Statuses from '../src/engine/statuses.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { computeBlockGain, applyAttackDamage } from '../src/engine/actions.js';
@@ -9,7 +10,7 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { WeaponPoiseDamage } from '../src/model/weaponPoise.js';
 import { ReceiptPoiseLoss } from '../src/model/fixCoreMechanics.js';
 import { ChangeAttribute, RecomputeLiveStats } from '../src/engine/liveStats.js';
-import { isFinesseHit, sourceWeaponHasTag } from '../src/model/combatRatings.js';
+import { IsFinesseHit, SourceWeaponHasTag } from '../src/model/combatRatings.js';
 import { ScoreItem, RankOf } from '../src/model/combatPower.js';
 import { ItemRankOf, ItemRankBadge } from '../src/model/itemRank.js';
 import { equipmentCardModel } from '../src/model/equipmentCard.js';
@@ -20,7 +21,7 @@ import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 import { EvaluateUpgradeStepCp } from '../src/model/cardUpgradeCp.js';
 import { RankUpCardRows } from '../src/ui/components/rankUpCardModal.js';
 import { RankUpUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
-import { attributePointsEarnedBetween, awardLevelXp } from '../src/model/levelup.js';
+import { AttributePointsEarnedBetween, awardLevelXp, xpToNext } from '../src/model/levelup.js';
 import { ShopOpensDeckEditor, RestOpensDeckEditor } from '../src/model/armouryRules.js';
 import { createRegistries } from '../src/model/registries.js';
 import { projectGameCard } from '../src/model/gameProfile.js';
@@ -90,9 +91,9 @@ test('2. Finesse switches STR->DEX (weapons except Smash; card-level finesse onl
 
   const strike = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'piercing' }, tags: ['camp:physical', 'maneuver:attack'] };
   const smash = { combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'piercing' }, tags: ['camp:physical', 'maneuver:smash'] };
-  assert.equal(sourceWeaponHasTag(combat, player, strike, 'finesse'), true, 'dagger has finesse tag');
-  assert.equal(isFinesseHit(combat, player, strike, 'ar'), true, 'finesse weapon uses DEX on attack');
-  assert.equal(isFinesseHit(combat, player, smash, 'ar'), false, 'finesse weapon does NOT use DEX on Smash');
+  assert.equal(SourceWeaponHasTag(combat, player, strike, 'finesse'), true, 'dagger has finesse tag');
+  assert.equal(IsFinesseHit(combat, player, strike, 'ar'), true, 'finesse weapon uses DEX on attack');
+  assert.equal(IsFinesseHit(combat, player, smash, 'ar'), false, 'finesse weapon does NOT use DEX on Smash');
 
   const strikeHit = profileDamageReceipt(combat, player, enemy, 10, strike, { roll: 0 }).raw;
   const smashHit = profileDamageReceipt(combat, player, enemy, 10, smash, { roll: 0 }).raw;
@@ -100,9 +101,9 @@ test('2. Finesse switches STR->DEX (weapons except Smash; card-level finesse onl
 
   // Non-finesse weapon + finesse-tagged card
   combat.loadout.sets.rightHand = ['straightSword'];
-  assert.equal(isFinesseHit(combat, player, strike, 'ar'), false);
+  assert.equal(IsFinesseHit(combat, player, strike, 'ar'), false);
   const finesseCard = { ...strike, tags: ['camp:physical', 'maneuver:attack', 'finesse'] };
-  assert.equal(isFinesseHit(combat, player, finesseCard, 'ar'), true, 'finesse tag on card uses DEX');
+  assert.equal(IsFinesseHit(combat, player, finesseCard, 'ar'), true, 'finesse tag on card uses DEX');
 
   // dexDamage strictly adds DEX to existing damage
   const deftCard = { ...strike, tags: ['camp:physical', 'maneuver:attack', 'dexDamage'] };
@@ -111,7 +112,7 @@ test('2. Finesse switches STR->DEX (weapons except Smash; card-level finesse onl
   assert.ok(deftSword > plainSword, 'dexDamage strictly adds DEX on top of STR');
 });
 
-test('3. Poise effect applies before Ward (temp health) and Bonus Poise (temp poise) reduces damage before Ward', () => {
+test('3. Bonus Poise reduces damage that gets past Ward', () => {
   const { combat, player, enemy } = fight({ classId: 'reaver', enemies: 1 });
   // Under stance-gated Poise mitigation, Poise reduces damage while Countering, Preparing, or Smashing.
   combat.player.combatStance = { maneuver: 'prepared', camp: 'physical', range: 'melee' };
@@ -121,9 +122,11 @@ test('3. Poise effect applies before Ward (temp health) and Bonus Poise (temp po
   Statuses.applyStatus(combat, player, 'ward', 2, player); // 10 Ward HP
   const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'blunt', reach: 'contact' }, tags: ['camp:physical', 'damage:blunt'], skipRatingBonus: true };
   const receipt = profileDamageReceipt(combat, enemy, player, 20, carrier, { roll: 0 });
-  assert.ok(receipt.poiseMitigated > 0, 'Poise reduces hit before Ward while Preparing');
+  assert.ok(receipt.poiseMitigated > 0, 'Poise reduces the overflow while Preparing');
   assert.equal(receipt.poiseMitigated + receipt.wardHpAbsorbed + receipt.hpLoss, receipt.damageReceipt.hits[0].incoming);
-  assert.ok(receipt.wardHpAbsorbed < receipt.damageReceipt.hits[0].incoming, 'Ward only absorbs post-Poise remainder');
+  assert.equal(receipt.wardHpAbsorbed, 10, 'the hit consumes the whole Ward buffer before mitigating Poise');
+  const stages = receipt.damageReceipt.hits[0].sources.map(row => row.id);
+  assert.ok(stages.indexOf('ward-hp') < stages.indexOf('poise-mitigation'));
 });
 
 test('4. Armament poise only adds weighted CP, items carry ranks & badges, and enemy poiseMax is lowered', () => {
@@ -208,24 +211,42 @@ test('12. Owned cards, armors, and relics excluded from rewards and shop pools',
   assert.equal(pools.armor.includes('vigil'), false, 'owned armor excluded');
 });
 
-test('13. Leveling up grants rank-up every level, attribute point every 4 levels, and temp combat buffs do not raise HP/MP/SP', () => {
-  assert.equal(attributePointsEarnedBetween(1, 2, 4, 1), 0);
-  assert.equal(attributePointsEarnedBetween(1, 4, 4, 1), 1);
-  assert.equal(attributePointsEarnedBetween(1, 8, 4, 1), 2);
-  const run = makeCoreRun(202, 'reaver');
-  const res = awardLevelXp(registries, run, 5000);
-  assert.ok(res.levelUps >= 3);
-  assert.equal(run.level.pendingRankUps, res.levelUps, '1 rank-up per level gained');
-  assert.equal(run.level.unspentPoints, attributePointsEarnedBetween(1, run.level.level, 4, 1), '1 attr point per 4 levels');
+test('13a. Legacy generic attribute-point cadence awards every four levels', () => {
+  assert.equal(AttributePointsEarnedBetween(1, 2, 4, 1), 0);
+  assert.equal(AttributePointsEarnedBetween(1, 4, 4, 1), 1);
+  assert.equal(AttributePointsEarnedBetween(1, 8, 4, 1), 2);
+});
 
-  const { combat, player } = fight({ classId: 'reaver', enemies: 1 });
-  const hp0 = player.maxHp, sp0 = player.maxStamina, mp0 = player.maxMana;
-  ChangeAttribute(combat, player, 'constitution', 5, { thisTurn: true });
-  ChangeAttribute(combat, player, 'dexterity', 5, { thisTurn: true });
-  ChangeAttribute(combat, player, 'wisdom', 5, { thisTurn: true });
-  assert.equal(player.maxHp, hp0, 'temp CON does not raise maxHp in combat');
-  assert.equal(player.maxStamina, sp0, 'temp DEX does not raise maxStamina in combat');
-  assert.equal(player.maxMana, mp0, 'temp WIS does not raise maxMana in combat');
+test('13b. Fresh Core awards card rank-ups each level and free points at 4, 12 and 20', () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 202 });
+  const freePointLevels = new Set([4, 12, 20]);
+  let freePoints = 0;
+  const initialRankUps = run.level.pendingRankUps ?? 0;
+  for (let level = 2; level <= 20; level++) {
+    const result = awardLevelXp(registries, run, xpToNext(registries, level - 1));
+    assert.equal(result.levelUps, 1, `one level earned at level ${level}`);
+    assert.equal(run.level.level, level);
+    if (freePointLevels.has(level)) freePoints++;
+    assert.equal(run.level.unspentPoints, freePoints, `free points at level ${level}`);
+    assert.equal(run.level.pendingRankUps, initialRankUps + level - 1, `rank-ups at level ${level}`);
+  }
+});
+
+test('13c. Temporary Core attributes raise maximum HP, SP and MP without refilling them', () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 202 });
+  const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
+  const player = combat.player;
+  for (const [attribute, maximum, current, capacityPerPoint] of [
+    ['constitution', 'maxHp', 'hp', 5],
+    ['dexterity', 'maxStamina', 'stamina', 1],
+    ['wisdom', 'maxMana', 'mana', 1],
+  ]) {
+    const previousMaximum = player[maximum];
+    const previousCurrent = player[current];
+    ChangeAttribute(combat, player, attribute, 5, { thisTurn: true });
+    assert.equal(player[maximum], previousMaximum + 5 * capacityPerPoint, `${attribute} raises ${maximum}`);
+    assert.equal(player[current], previousCurrent, `${attribute} leaves ${current} unchanged`);
+  }
 });
 
 test('14. Recurring buff tag costs +15 CP and pairs with Exhaust', () => {
@@ -283,9 +304,10 @@ test('17. Weapon inherent poise damage (1-3), Sceptres/Bows/Staves +20%, Smash 1
   assert.equal(dagger.amount, 1);
   assert.equal(sword.amount, 2);
   assert.equal(greatsword.amount, 3);
-  for (const id of ['shortbow', 'ashStaff', 'boneSceptre']) {
+  for (const [id, base] of [['shortbow', 1], ['ashStaff', 2], ['boneSceptre', 2]]) {
     const ranged = WeaponPoiseDamage(combat, player, enemy, { ...strike, sourceArmamentId: id }, { defending: 'neutral' });
-    assert.ok(ranged.raw > sword.raw && ranged.amount > sword.amount, `${id} gives +20% poise damage over martial counterpart`);
+    assert.equal(ranged.raw, base * 1.2, `${id} multiplies its own authored Poise base by 1.2`);
+    assert.equal(ranged.amount, Math.ceil(base * 1.2), `${id} rounds the multiplied Poise up`);
   }
   const swordSmash = WeaponPoiseDamage(combat, player, enemy, { ...smash, sourceArmamentId: 'straightSword' }, { defending: 'neutral' });
   const swordSmashGuard = WeaponPoiseDamage(combat, player, enemy, { ...smash, sourceArmamentId: 'straightSword' }, { defending: 'defend' });

@@ -221,7 +221,11 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     }
     if (file === 'tests.yml') {
       const shards = [...discovery.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]);
-      assert.deepEqual(shards, ['0/6', '1/6', '2/6', '3/6', '4/6', '5/6']);
+      assert.deepEqual(shards, ['0/6', '1/6', '2/6', '3/6', '4/12', '10/24', '22/24', '5/6']);
+      const fast = discoverySpeedFiles(discoveredCorpus(), 'exclude');
+      const assigned = shards.flatMap(shard => discoveryShardFiles(fast,
+        parseRunNodeOptions(['--discovered-only', '--no-slow', '--shard', shard]).shard));
+      assert.deepEqual(assigned.sort(), fast, 'Dev runs every fast discovery file exactly once');
     }
     assert.match(discovery, /fetch-art/);
     assert.match(discovery, /Pillow==11\.1\.0/);
@@ -237,6 +241,25 @@ test('both workflow matrices execute all discovery shards and both selftest grou
   }
 });
 
+
+function discoveredCorpus() {
+  const skipped = new Set(['node_modules', 'dist', 'build', 'scratch']);
+  const elsewhere = new Set([...RUNNER.slice(RUNNER.indexOf('const NOT_SPAWNED ='), RUNNER.indexOf('const found =')).matchAll(/\['([^']+\.test\.mjs)'/g)].map(match => match[1]));
+  assert.equal(elsewhere.size, 3, 'the census retains every runner exclusion');
+  const files = [];
+  const walk = dir => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (!skipped.has(entry.name) && (!entry.name.startsWith('.') || entry.name === '.github')) walk(join(dir, entry.name));
+      } else if (entry.name.endsWith('.test.mjs')) {
+        const file = relative(ROOT, join(dir, entry.name)).split(sep).join('/');
+        if (!elsewhere.has(file)) files.push(file);
+      }
+    }
+  };
+  walk(ROOT); files.sort();
+  return files;
+}
 
 test('the configured discovery shards and isolated jobs cover the real corpus once per platform', () => {
   const workflow = readSourceTextSync(join(ROOT, '.github/workflows/ci.yml'));
@@ -264,34 +287,43 @@ test('the configured discovery shards and isolated jobs cover the real corpus on
   assert.doesNotMatch(isolated, /fetch-art|Pillow/);
   const slow = [...isolated.matchAll(/'(tests\/[^'\n]+\.test\.mjs)'/g)].map(match => match[1]);
   assert.deepEqual(slow.slice().sort(), [...SLOW_DISCOVERED.keys()].sort(), 'matrix is the existing closed slow set, without duplicates');
-  const skipped = new Set(['node_modules', 'dist', 'build', 'scratch']);
-  const elsewhere = new Set([...RUNNER.slice(RUNNER.indexOf('const NOT_SPAWNED ='), RUNNER.indexOf('const found =')).matchAll(/\['([^']+\.test\.mjs)'/g)].map(match => match[1]));
-  assert.equal(elsewhere.size, 3, 'the census retains every runner exclusion');
-  const files = [];
-  const walk = dir => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        if (!skipped.has(entry.name) && (!entry.name.startsWith('.') || entry.name === '.github')) walk(join(dir, entry.name));
-      } else if (entry.name.endsWith('.test.mjs')) {
-        const file = relative(ROOT, join(dir, entry.name)).split(sep).join('/');
-        if (!elsewhere.has(file)) files.push(file);
-      }
-    }
-  };
-  walk(ROOT); files.sort();
-  const eligible = files;
+  const eligible = discoveredCorpus();
   const fast = discoverySpeedFiles(eligible, 'exclude');
-  const counts = { 'ubuntu-latest': 4, 'macos-latest': 4, 'windows-latest': 8 };
-  assert.deepEqual([...configured.keys()].sort(), Object.keys(counts).sort());
-  for (const [os, count] of Object.entries(counts)) {
+  const eight = Array.from({ length: 8 }, (_, i) => `${i}/8`);
+  const expected = {
+    'ubuntu-latest': eight,
+    'macos-latest': eight,
+    'windows-latest': ['0/8', '1/8', '2/8', '3/8', '4/8', '5/8', '6/16', '14/16', '7/8'],
+  };
+  assert.deepEqual([...configured.keys()].sort(), Object.keys(expected).sort());
+  for (const [os, expectedShards] of Object.entries(expected)) {
     const windows = os === 'windows-latest';
     const shards = configured.get(os);
-    assert.deepEqual([...shards].sort(), Array.from({ length: count }, (_, i) => `${i}/${count}`), os);
+    assert.deepEqual([...shards].sort(), [...expectedShards].sort(), os);
     const assigned = shards.flatMap(shard => discoveryShardFiles(windows ? fast : eligible,
       parseRunNodeOptions(['--discovered-only', '--shard', shard]).shard));
     if (windows) assigned.push(...slow);
     assert.deepEqual(assigned.sort(), eligible, `${os} runs every eligible file exactly once`);
   }
+});
+
+test('the split Dev shard covers every index of its parent exactly once', () => {
+  // All membership patterns repeat every 24 indices for any corpus size.
+  const period = Array.from({ length: 24 }, (_, index) => index);
+  const parent = discoveryShardFiles(period, { index: 4, count: 6 });
+  const children = [
+    ...discoveryShardFiles(period, { index: 4, count: 12 }),
+    ...[10, 22].flatMap(index => discoveryShardFiles(period, { index, count: 24 })),
+  ];
+  assert.deepEqual(children.sort((a, b) => a - b), parent);
+});
+
+test('the split Windows shard covers every index of its parent exactly once', () => {
+  // Both membership patterns repeat every 16 indices, regardless of the discovered corpus size.
+  const period = Array.from({ length: 16 }, (_, index) => index);
+  const parent = discoveryShardFiles(period, { index: 6, count: 8 });
+  const children = [6, 14].flatMap(index => discoveryShardFiles(period, { index, count: 16 }));
+  assert.deepEqual(children, parent);
 });
 
 test('browser layout and startup matrices retain every shard with an independent twenty-minute bound', () => {

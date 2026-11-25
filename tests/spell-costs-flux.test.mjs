@@ -101,7 +101,7 @@ test('a cantrip after a first spell with a Focus costs 0 SP and 0 MP, and the pa
   const [first, second] = combat.piles.hand;
   first.cardId = 'core.cometLance'; second.cardId = 'core.mendingTouch'; // a 0 MP cantrip: Arcane Spark prints 1 MP since the owner ruling of 2026-11-22 (SPEC.md Cantrip and Basic Mana) and a Graduate's stance cut floors at 0 on the player's turn since 2026-11-22
   const open = cardPlayCosts(combat, second.instanceId);
-  assert.deepEqual([open.stamina, open.mana], [1, 0], 'before the first cast: 1 SP, 0 MP (Focus took the surcharge back)');
+  assert.deepEqual([open.stamina, open.mana], [1, 1], 'before the first cast: 1 SP and the 1 MP surcharge; Focus requires Prepared');
   const [energy, mana] = [combat.player.energy, combat.player.mana];
   dispatch(combat, { type: 'playCard', cardInstanceId: first.instanceId, targetId: combat.enemies[0].id });
   assert.ok(energy - combat.player.energy >= 1);

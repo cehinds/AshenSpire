@@ -15,8 +15,14 @@ const body = (classId, id) => equipmentCardModel(reg, reg.equipment.armour.find(
 test('armour with attribute grants states the rating and spells out each attribute', () => {
   assert.equal(GearEffectText(reg, { poise: 3, dexterity: 1, constitution: 1 }, { poise: 'Poise' }, 'Flavour.').text, '3 Poise. Gain 1 Dexterity and 1 Constitution.');
   // Common/uncommon armour carry 0 free flat attributes under the tightened attribute budget.
-  assert.ok(body('reaver', 'vigil')[0] === '3 Poise.');
-  assert.ok(body('reaver', 'wayfarerPlate')[0] === '6 Poise.');
+  assert.deepEqual(body('reaver', 'vigil'), [
+    '3 Poise.',
+    '+1 Poise', 'Block cards: +1 Block',
+  ]);
+  assert.deepEqual(body('reaver', 'wayfarerPlate'), [
+    '6 Poise.',
+    '+2 Poise', '-1 DEX',
+  ]);
 });
 
 test('armour with only a Poise value says just that', () => {

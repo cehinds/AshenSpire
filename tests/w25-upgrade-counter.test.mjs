@@ -8,7 +8,7 @@ import { nextUpgradeOptions } from '../src/model/cardUpgradeLimits.js';
 import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
-const RUN = { seed: 7, gameProfile: profile, rangePolicy: {} };
+const RUN = { seed: 7, level: { level: 10 }, gameProfile: profile, rangePolicy: {} };
 const options = (cardId, steps = []) => {
   const base = registries.cards.get(cardId);
   const inst = { instanceId: 'k1', cardId, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) };

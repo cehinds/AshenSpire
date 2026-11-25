@@ -22,8 +22,12 @@ test('combat power: every shipped item scores consistently and produces a conven
   for (const item of items) {
     const key = `${item.kind}:${item.id}`;
     const scored = ScoreItem(item, scoring, props);
-    assert.equal(itemCombatPower[key].raw, scored.raw, key);
-    assert.equal(itemCombatPower[key].cp, scored.cp, key);
+    const expected = ApplyScoringOverride(
+      { raw: scored.raw, cp: scored.cp, rank: RankOf(scored.cp), rarity: item.rarity },
+      { ...scoring.overrides?.[key], ...item.scoringOverride },
+      scoring,
+    );
+    assert.deepEqual(itemCombatPower[key], expected, key);
     const name = ItemName(item, 0, scoring, props);
     assert.ok(typeof name === 'string' && name.length > 0, `name of ${key}`);
     assert.ok(name.length <= scoring.naming.item.limit.maxChars, `name length of ${key}: ${name}`);

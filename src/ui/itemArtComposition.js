@@ -146,7 +146,7 @@ function matchesRule(rule, facts) {
  * Compose the layered art stack for a weapon, armour, or relic.
  * Accepts an optional `layerConfig` override so Score Studio can preview unsaved layer edits live.
  */
-export function itemArtComposition(item, { kind = null, registries = null, rules = null, layerConfig = shippedItemArtLayers } = {}) {
+export function ItemArtComposition(item, { kind = null, registries = null, rules = null, layerConfig = shippedItemArtLayers } = {}) {
   if (!item) return null;
   const cfg = layerConfig && Array.isArray(layerConfig.layers) ? layerConfig : shippedItemArtLayers;
   const facts = ItemArtFacts(item, { kind, registries, rules });

@@ -122,8 +122,9 @@ const stanceRun = registries => {
   return run;
 };
 // Stance of the reserved slot (the first option of a combat offer), over 200 seeds, each on a fresh copy of the run.
-function reservedStances(registries) {
+function reservedStances(registries, keepHistory = true) {
   const base = stanceRun(registries);
+  if (!keepHistory) delete base.rewardOfferHistory;
   return SEEDS_200.map(seed => {
     const offer = gameProfileRewardOffers(registries, structuredClone(base), createRng(seed), { offerId: `s${seed}`, source: 'combat' });
     const stance = stanceOfId(registries, offer.options[0].id);
@@ -134,7 +135,10 @@ function reservedStances(registries) {
 test('the reserved stance slot favours the stance never offered, and is not skewed by history at weight 1', () => {
   const share = (stances, stance) => stances.filter(value => value === stance).length / stances.length;
   const skewed = reservedStances(build()), neutral = reservedStances(build(1));
+  const neutralWithoutHistory = reservedStances(build(1), false);
   console.log(`reserved casting share: Core 2 0.25 = ${share(skewed, 'casting').toFixed(3)}, weight 1 = ${share(neutral, 'casting').toFixed(3)}`);
   assert.ok(share(skewed, 'casting') >= 0.7, `unoffered stance (casting) at 0.25: ${share(skewed, 'casting')}`);
-  assert.ok(share(neutral, 'sweep') >= 0.3 && share(neutral, 'sweep') <= 0.7, `offered stance (sweep) at weight 1: ${share(neutral, 'sweep')}`);
+  assert.ok(neutral.includes('sweep') && neutral.includes('casting'), 'both eligible stances are exercised');
+  assert.deepEqual(neutral, neutralWithoutHistory, 'the history never changes the reserved stance at weight 1');
+  assert.ok(share(skewed, 'casting') > share(neutral, 'casting'), 'history increases the casting share within the same rank band');
 });

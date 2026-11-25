@@ -151,7 +151,7 @@ export const UPGRADE_FAMILIES = Object.freeze({
 // Kinds a random roll never offers (owner, 2026-11-20: no "no upgrade"): a run-long +1 attribute (`attr`) and a rank
 // down (`rankDown`) change nothing on a single play. Saved steps of these kinds still resolve; a card's authored
 // `upgradeMenu` may still name one.
-export const DUD_KINDS = Object.freeze(['attr', 'rankDown', 'costSwap']);
+export const DUD_KINDS = Object.freeze(['attr', 'rankDown']);
 const FAMILY_OF = Object.freeze(Object.fromEntries(Object.entries(UPGRADE_FAMILIES).flatMap(([family, kinds]) => kinds.map((kind) => [kind, family]))));
 const DEFENSE_STATS = Object.freeze(['dexterity', 'wisdom']);
 /** The family of an option kind (a boost goes with what it raises: STR / INT damage, DEX / WIS defense). */

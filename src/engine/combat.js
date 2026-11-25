@@ -73,7 +73,7 @@ import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoi
 import { handRow, scaledCards } from '../model/handRules.js';
 import { FALLBACK_HAND_MAX } from '../model/statRows.js';
 import { cardRatingBonus, clearMeterGuards } from './combatRatings.js';
-import { ChangeAttribute, ClearTurnAttributeBoosts, RestoreLiveStats } from './liveStats.js';
+import { ChangeAttribute, ClearTurnAttributeBoosts, LiveEquipmentPoolMaximum, RecomputeLiveStats, RestoreLiveStats, ShiftLiveEquipmentPools } from './liveStats.js';
 import { persistentWardMaximum, persistentPoiseMaximum, BarrierPoisePerStack } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
@@ -870,7 +870,10 @@ function enemyPhase(combat) {
       drainQueue(combat);
       ElementTurnEnd(combat, enemy); // element identity (W25)
       if (combat.result) return;
-      if (enemy.alive) S.decayAtTurnEnd(combat, enemy);
+      if (enemy.alive) {
+        S.decayAtTurnEnd(combat, enemy);
+        ClearTurnAttributeBoosts(combat, enemy);
+      }
       if (combat.combatExpansionVersion === 2) Control.endControlTurn(combat, enemy);
       // Broken ends with the turn whose action it lost: the enemy's Poise refills to full (Wave 3).
       if (enemy.alive) EndBrokenWhenDue(combat, enemy);
@@ -1394,6 +1397,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
   }
   const poolAfter = combatEquipmentPoolProjection(combat);
+  ShiftLiveEquipmentPools(p, poolBefore, poolAfter);
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.stamina -= price.cost;
   // The hand now holds a different set: its old piece's properties leave with
@@ -1408,7 +1412,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
       const floor = maxField === 'maxHp' ? 1 : 0;
       const nextMax = Math.max(floor, p[maxField] + poolAfter[maxField] - poolBefore[maxField]);
       combat.equipmentPoolDeficits[currentField] = moveEquipmentPool(
-        p, maxField, nextMax, combat.equipmentPoolDeficits[currentField],
+        p, maxField, LiveEquipmentPoolMaximum(combat, p, maxField, nextMax), combat.equipmentPoolDeficits[currentField],
       );
     }
   }
@@ -1470,6 +1474,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
       // Blight adapter would discard those attributes and reset Draw and pools.
       p.energyMax = p.maxStamina;
       p.drawPerTurn = poolAfter.drawPerTurn;
+      if (p.liveStats) RecomputeLiveStats(combat, p);
     } else settleExpandedPools(combat, p);
   }
   combat.emit('armamentSwapped', { slotId, setIndex, cost: price.cost, rule: price.ruleId });
@@ -1538,6 +1543,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   syncLoadoutProperties(combat);
   RefreshGearItemProps(combat);
   const poolAfter = combatEquipmentPoolProjection(combat);
+  ShiftLiveEquipmentPools(p, poolBefore, poolAfter);
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.stamina -= price.cost;
   combat.equipmentChanged = true;
@@ -1547,7 +1553,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     const floor = maxField === 'maxHp' ? 1 : 0;
     const nextMax = Math.max(floor, p[maxField] + poolAfter[maxField] - poolBefore[maxField]);
     combat.equipmentPoolDeficits[currentField] = moveEquipmentPool(
-      p, maxField, nextMax, combat.equipmentPoolDeficits[currentField],
+      p, maxField, LiveEquipmentPoolMaximum(combat, p, maxField, nextMax), combat.equipmentPoolDeficits[currentField],
     );
   }
 
@@ -1591,6 +1597,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
       // Blight adapter would discard those attributes and reset Draw and pools.
       p.energyMax = p.maxStamina;
       p.drawPerTurn = poolAfter.drawPerTurn;
+      if (p.liveStats) RecomputeLiveStats(combat, p);
     } else settleExpandedPools(combat, p);
   }
   if (changeEvent) combat.emit('equipmentChanged', changeEvent);
@@ -2631,6 +2638,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes,
       // A saved combat's absent/disabled policy wins over its profile, without sharing mutable combat rules with the face.
       fixCoreRules: combat.fixCoreRules === undefined ? undefined : structuredClone(combat.fixCoreRules),
+      core2ActionRulesVersion: combat.core2ActionRulesVersion,
       faceDefinition: structuredClone(faceDefinition),
       // The source-type context (Codex on PR #2835): an untyped card resolves its armament's type exactly as the run and pile faces do.
       gameProfile: combat.gameProfile, loadout: combat.loadout, classId: combat.player?.classId,

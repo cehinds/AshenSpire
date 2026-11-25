@@ -10,8 +10,8 @@ import { itemCombatPower } from '../src/content/generated/combatPower.js';
 import { itemArtLayers } from '../src/content/generated/itemArtLayers.js';
 import { ScoreItem, ItemName, ItemNameParts, ModValue, ModLabel, PropertyValue, RankOf } from '../src/model/combatPower.js';
 import { ValidateScoringConfig } from '../src/model/activeScoring.js';
-import { itemArtComposition } from '../src/ui/itemArtComposition.js';
-import { itemArtLayersParts } from '../src/ui/itemArtLayers.js';
+import { ItemArtComposition } from '../src/ui/itemArtComposition.js';
+import { ItemArtLayersParts } from '../src/ui/itemArtLayers.js';
 import { buildItemRoster, scoreItemEntry, livePieceFromEntry } from '../tools/score-studio/itemStudio.js';
 import { weightSentence, weightExample } from '../tools/score-studio/weightExamples.js';
 import { readStudioConfig, saveStudioItemArtLayers } from '../tools/score-studio-save.mjs';
@@ -84,23 +84,23 @@ test('layered art differentiates similar weapons, armours, and relics', () => {
   const reg = createRegistries(contentBundle);
   const byId = (arr, id) => arr.find((x) => x.id === id);
 
-  const straight = itemArtComposition(byId(contentBundle.equipment.armaments, 'straightSword'), { kind: 'weapon', registries: reg });
-  const broad = itemArtComposition(byId(contentBundle.equipment.armaments, 'broadsword'), { kind: 'weapon', registries: reg });
-  const flamberge = itemArtComposition(byId(contentBundle.equipment.armaments, 'flamberge'), { kind: 'weapon', registries: reg });
+  const straight = ItemArtComposition(byId(contentBundle.equipment.armaments, 'straightSword'), { kind: 'weapon', registries: reg });
+  const broad = ItemArtComposition(byId(contentBundle.equipment.armaments, 'broadsword'), { kind: 'weapon', registries: reg });
+  const flamberge = ItemArtComposition(byId(contentBundle.equipment.armaments, 'flamberge'), { kind: 'weapon', registries: reg });
   assert.notEqual(JSON.stringify(straight.overlays.map((l) => l.id)), JSON.stringify(broad.overlays.map((l) => l.id)));
   assert.notEqual(JSON.stringify(broad.overlays.map((l) => l.id)), JSON.stringify(flamberge.overlays.map((l) => l.id)));
   assert.ok(flamberge.overlays.some((l) => l.id === 'fire-burn-glow'));
-  assert.ok(itemArtLayersParts(flamberge).under.includes('data-item-art-layers="under"'));
-  assert.ok(itemArtLayersParts(flamberge).over.includes('data-item-art-layers="over"'));
+  assert.ok(ItemArtLayersParts(flamberge).under.includes('data-item-art-layers="under"'));
+  assert.ok(ItemArtLayersParts(flamberge).over.includes('data-item-art-layers="over"'));
 
-  const plate = itemArtComposition(contentBundle.equipment.armour.find((a) => a.classId === 'reaver' && a.id === 'cinderforgedPlate'), { kind: 'armour', registries: reg });
-  const rime = itemArtComposition(contentBundle.equipment.armour.find((a) => a.classId === 'starseer' && a.id === 'rimeweave'), { kind: 'armour', registries: reg });
+  const plate = ItemArtComposition(contentBundle.equipment.armour.find((a) => a.classId === 'reaver' && a.id === 'cinderforgedPlate'), { kind: 'armour', registries: reg });
+  const rime = ItemArtComposition(contentBundle.equipment.armour.find((a) => a.classId === 'starseer' && a.id === 'rimeweave'), { kind: 'armour', registries: reg });
   assert.ok(plate.overlays.some((l) => l.id === 'armour-poise-crest'));
   assert.ok(plate.overlays.some((l) => l.id === 'fire-burn-glow'));
   assert.ok(rime.overlays.some((l) => l.id === 'frost-glow'));
 
-  const coin = itemArtComposition(byId(contentBundle.relics, 'cutpursesCoin'), { kind: 'relic', registries: reg });
-  const sprout = itemArtComposition(byId(contentBundle.relics, 'goldenSprout'), { kind: 'relic', registries: reg });
+  const coin = ItemArtComposition(byId(contentBundle.relics, 'cutpursesCoin'), { kind: 'relic', registries: reg });
+  const sprout = ItemArtComposition(byId(contentBundle.relics, 'goldenSprout'), { kind: 'relic', registries: reg });
   assert.notEqual(JSON.stringify(coin.overlays.map((l) => l.id)), JSON.stringify(sprout.overlays.map((l) => l.id)));
 });
 

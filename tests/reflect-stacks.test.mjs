@@ -32,6 +32,11 @@ function live(registries = reg) {
   Object.assign(combat.player, { block: 0, persistentPoise: { value: 0, max: 0 } });
   return { combat, enemy };
 }
+// The original magical and per-root Reflect cases predate weapon-only Poise.
+function pinHistoricalReflectPoise(combat) {
+  combat.fixCoreRules.poise = { drain: 'prevented' };
+  combat.fixCoreRules.ward = { enabled: false };
+}
 function exchange(stacks, setup) {
   const { combat, enemy } = live();
   combat.player.reflectStacks = stacks;
@@ -174,6 +179,7 @@ test('a lethal hit on the Reflect holder still returns damage and spends the sta
 test('a reflected hit keeps the incoming carrier\'s magicShare split (fully magical return is absorbed by Poise)', () => {
   // Isolate the reflected packet: plate Thorns is a separate HP cost, not part of its magic share.
   const { combat, enemy } = live(preGearRegistries);
+  pinHistoricalReflectPoise(combat);
   combat.player.reflectStacks = 1;
   enemy.persistentPoise = { value: 20, max: 20 };
   const carrier = { magicShare: 1, combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'blunt', range: 'melee', targeting: 'single', traits: [] } };
@@ -218,6 +224,7 @@ test('a Reflect return that breaks the attacker\'s Poise ends its matching-stanc
   const prime = () => {
     const { combat, enemy } = live();
     combat.player.reflectStacks = 1;
+    pinHistoricalReflectPoise(combat);
     // Enough HP that no hit is a killing blow: the stance-less player is Idle and takes x1.25 (theme B, 2026-11-17), so three hits outgrow a level-1 pool.
     Object.assign(combat.player, { hp: 500, maxHp: 500 });
     enemy.persistentPoise = { value: 1, max: 5 };
@@ -237,6 +244,8 @@ test('a Reflect return that breaks the attacker\'s Poise ends its matching-stanc
   assert.deepEqual(view.damageReceipt.hits.map(hit => hit.hpLoss), liveHits, 'preview hit-by-hit HP loss equals live');
   assert.equal(view.hpLoss, liveHits.reduce((a, b) => a + b, 0));
   assert.equal(view.hitDamages.length, 3);
+  assert.ok(l.combat.eventLog.some(event => event.type === 'poiseBroken' && event.targetId === l.enemy.id),
+    'the Reflect return broke the attacker’s Poise');
   assert.ok(liveHits[1] < liveHits[0] + 6 && liveHits[1] === liveHits[2], 'later hits are equal once the stance bonus is gone');
 });
 
@@ -293,6 +302,7 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
     const bundle = { ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage, hits: 3, weight: 45 } } } : e) };
     const triple = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle, rules)), rules);
     const { combat, enemy } = live(triple);
+    pinHistoricalReflectPoise(combat);
     delete combat.reactionRules.contactPolicy;
     combat.player.reflectStacks = 1;
     combat.player.counterStacks = 10;

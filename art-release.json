@@ -1,20 +1,20 @@
 {
   "schema": 2,
   "repo": "cehinds/AI-Art",
-  "tag": "ashenspire-hd-assets-v29",
-  "zip": "hd-assets-v29.zip",
-  "sha256": "ac1ef453191985b991cf9280445676baa98dce1eb634016f1ffead03114deacf",
+  "tag": "ashenspire-hd-assets-v30",
+  "zip": "hd-assets-v30.zip",
+  "sha256": "b120b14e54238f48f59e8abab946214b967e60def9385730bda9a7ff16f9b047",
   "packs": {
     "high": {
-      "zip": "hd-assets-v29.zip",
-      "sha256": "ac1ef453191985b991cf9280445676baa98dce1eb634016f1ffead03114deacf"
+      "zip": "hd-assets-v30.zip",
+      "sha256": "b120b14e54238f48f59e8abab946214b967e60def9385730bda9a7ff16f9b047"
     },
     "light": {
-      "zip": "light-assets-v29.zip",
-      "sha256": "b34c41a29f9b894a9ac3e1628b3d656386c7cbf962de717131f82d2ce70eeb14"
+      "zip": "light-assets-v30.zip",
+      "sha256": "13b25b378b0987cc2588ad2072ff3633e75246610ef845a825ac1a3c6ab851bd"
     },
     "common": {
-      "zip": "common-assets-v29.zip",
+      "zip": "common-assets-v30.zip",
       "sha256": "eea7d2b81a6a9da4e25e1523fde5cc8c667c422243f2f3ce40c713b22d1c06dd"
     }
   }

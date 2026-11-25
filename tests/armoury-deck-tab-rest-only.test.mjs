@@ -42,24 +42,27 @@ function clickDeckTab(dom, run, options = {}) {
   return { text: textOf(dom.document.body), tab };
 }
 
-test('editorWhere "rest": the Deck tab names the rest-site rule', () => {
-  withKitDom(dom => {
-    armouryDom(dom);
-    const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
-    assert.equal(gameModule(run, 'cards')?.editorWhere, 'rest');
-    const deckBefore = JSON.stringify(run.deck);
-    const { text, tab } = clickDeckTab(dom, run);
-    assert.equal(tab.textContent, 'View Deck');
-    assert.equal(tab.getAttribute('aria-disabled'), 'false');
-    const viewer = dom.document.body.querySelector('.deck-view-modal');
-    assert.ok(viewer, 'the read-only deck viewer opens');
-    assert.equal(viewer.querySelector('h2').textContent, 'View Deck');
-    assert.equal(viewer.querySelector('.modal-eyebrow'), null);
-    assert.equal(JSON.stringify(run.deck), deckBefore, 'viewing preserves the deck');
-    assert.match(text, /You can edit your deck at a rest site\./);
-    assert.doesNotMatch(text, /unavailable with the current settings/);
+for (const [editorWhere, hint] of [['rest', 'You can edit your deck at a rest site.'], ['restAndShop', 'You can edit your deck at a rest site or shop.']]) {
+  test(`editorWhere "${editorWhere}": the Deck tab names where deck editing is available`, () => {
+    withKitDom(dom => {
+      armouryDom(dom);
+      const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
+      if (editorWhere === 'rest') run.gameProfile.modules.cards = { ...run.gameProfile.modules.cards, editorWhere };
+      assert.equal(gameModule(run, 'cards')?.editorWhere, editorWhere);
+      const deckBefore = JSON.stringify(run.deck);
+      const { text, tab } = clickDeckTab(dom, run);
+      assert.equal(tab.textContent, 'View Deck');
+      assert.equal(tab.getAttribute('aria-disabled'), 'false');
+      const viewer = dom.document.body.querySelector('.deck-view-modal');
+      assert.ok(viewer, 'the read-only deck viewer opens');
+      assert.equal(viewer.querySelector('h2').textContent, 'View Deck');
+      assert.equal(viewer.querySelector('.modal-eyebrow'), null);
+      assert.equal(JSON.stringify(run.deck), deckBefore, 'viewing preserves the deck');
+      assert.ok(text.includes(hint));
+      assert.doesNotMatch(text, /unavailable with the current settings/);
+    });
   });
-});
+}
 
 test('any other profile keeps the settings text', () => {
   withKitDom(dom => {
@@ -89,4 +92,5 @@ test('an available editor keeps the Edit Deck label and opens the editor', () =>
 
 test('the rest-site text lives in uiStrings', () => {
   assert.equal(t('armoury.deck.restOnly'), 'You can edit your deck at a rest site.');
+  assert.equal(t('armoury.deck.restOrShop'), 'You can edit your deck at a rest site or shop.');
 });

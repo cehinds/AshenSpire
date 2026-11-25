@@ -13,7 +13,7 @@ const registries = createRegistries(contentBundle);
 const card = (id, cardId = 'strike', upgraded = false) => ({ instanceId: id, cardId, upgraded });
 const ids = cards => cards.map(c => c.instanceId);
 // These mechanics fixtures pin the hand size at the old flat 15 so the cap
-// arithmetic stays covered; the shipped 7 + INT row is asserted in stat-rows.
+// arithmetic stays covered; the shipped capacity row is asserted in stat-rows.
 const rules = () => resolveHandRules({}, { ...handStatRows(registries, null), handSize: { base: 15, min: 1, max: 15 } });
 function fight(options = {}) {
   return createCombat({ registries, rng: createRng(2309), handRules: rules(),
@@ -46,7 +46,7 @@ test('refresh shuffles ordinary unplayed cards, keeps Retain, exhausts Ethereal,
   c.piles.discard = [card('played')];
   const before = c.rng.getCounters().shuffle;
   dispatch(c, { type: 'endTurn' });
-  assert.equal(c.piles.hand.length, 6, 'the Retained card plus the 5 a turn draws (ruling 2026-11-18 §9)');
+  assert.equal(c.piles.hand.length, 4, 'the Retained card plus the three base draws');
   assert(ids(c.piles.hand).includes('prepared'));
   assert(ids([...c.piles.draw, ...c.piles.hand]).includes('ordinary'));
   assert.deepEqual(ids(c.piles.discard), ['played']);
@@ -71,9 +71,9 @@ test('every added Retain keyword survives upgrades; playing a retained spell sti
   assert(ids(c.piles.exhaust).includes('phoenix'));
 });
 
-test('draw scaling is unchanged and the absolute capacity does not scale', () => {
-  // Owner 2026-11-18 (§9, §12): the draw per turn and the opening hand are 5 + floor(INT/4), capped at 10.
-  for (const [intelligence, expected] of [[1,5],[4,6],[8,7],[9,7],[14,8],[99,10]]) {
+test('per-point draw scaling is bounded and the fixture capacity does not scale', () => {
+  // The opening and turn draws grow 1 per point, while this capacity stays flat.
+  for (const [intelligence, expected] of [[0,3],[1,4],[3,6],[4,7],[6,9],[7,10],[14,10],[99,10]]) {
     const r = rules();
     for (const opening of [false, true]) {
       const draw = handDrawCount(r, { intelligence }, { opening });

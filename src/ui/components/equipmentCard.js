@@ -5,8 +5,8 @@ import { equipmentCardModel, equipmentCardTokens } from '../../model/equipmentCa
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { litCard } from './cardSelection.js';
 import { equipmentCardArt } from '../assets.js';
-import { itemArtComposition } from '../itemArtComposition.js';
-import { itemArtLayersParts, bindItemArtLayerFailures } from '../itemArtLayers.js';
+import { ItemArtComposition } from '../itemArtComposition.js';
+import { ItemArtLayersParts, BindItemArtLayerFailures } from '../itemArtLayers.js';
 import { imageHintAttrs } from '../imageHints.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { cardLevelWidthCss } from '../models/CardSizeModel.js';
@@ -285,8 +285,8 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     // and leave a card that can no longer be read the second time it is lit.
     const artComp = presentation
       ? (presentation.itemArt !== undefined ? presentation.itemArt : null)
-      : (piece && piece.id !== 'empty-hand' ? itemArtComposition(piece, { kind: model.armor ? 'armour' : 'weapon', registries, ...(itemLayerConfig ? { layerConfig: itemLayerConfig } : {}) }) : null);
-    const artLayers = itemArtLayersParts(artComp);
+      : (piece && piece.id !== 'empty-hand' ? ItemArtComposition(piece, { kind: model.armor ? 'armour' : 'weapon', registries, ...(itemLayerConfig ? { layerConfig: itemLayerConfig } : {}) }) : null);
+    const artLayers = ItemArtLayersParts(artComp);
     const frameHtml = `<span class="epc-frame">
       <span class="epc-name ec-name" style="--title-units:${Math.max(1, Array.from(String(model.name)).length * 0.62)}">${esc(model.name)}<span aria-hidden="true">◆</span></span>
       ${region('art', `<span class="epc-art">${artLayers.under}${presentation && !model.art ? `<span class="epc-art-glyph" aria-hidden="true">${engravedIconHtml(model.glyph || piece.icon || 'equipment') || 'Item'}</span>` : `<img class="epc-art-base"${imageHintAttrs({ offscreen: true })} src="${esc(presentation ? model.art : equipmentCardArt(piece))}" alt="${esc(model.name)}">`}${artLayers.over}</span>`)}
@@ -305,7 +305,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     card.dataset.cardLevel = at;
     card.style.setProperty('--epc-level-w', cardLevelWidthCss(at));
     swapOnError(card.querySelector('img.epc-art-base') || card.querySelector('.epc-art > img'), () => engravedIcon(piece.icon || 'equipment') || Object.assign(document.createElement('span'), { textContent: 'Item' }));
-    bindItemArtLayerFailures(card);
+    BindItemArtLayerFailures(card);
     card.querySelectorAll('[data-card-tip]').forEach(target => {
       const { label, explanation } = explanations[Number(target.dataset.cardTip)];
       const html = () => label === explanation ? `<p>${esc(label)}</p>` : `<div class="tt-title">${esc(label)}</div><p>${esc(explanation)}</p>`;

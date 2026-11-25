@@ -376,6 +376,51 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         if(req.method!=='POST'||req.headers.origin!==`http://${host}`||!String(req.headers['content-type']).startsWith('application/json')){reply(403,{error:'Save from the local card editor.'});return;}
         try{const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>131072)throw Error('Card layout exceeds the save limit.');chunks.push(chunk);}reply(200,{ok:true,...saveCardLayout(rootResolved,JSON.parse(Buffer.concat(chunks).toString('utf8')))});}catch(error){reply(400,{error:error.message});}return;
       }
+      if (urlPath === '/__editor/recipient-effects') {
+        const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress || '');
+        const host = req.headers.host || '';
+        const reply = (status, body) => {
+          res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+          res.end(JSON.stringify(body));
+        };
+        const origin = 'http://' + host;
+        if (!editorWrite || !local || !/^(localhost|127\.0\.0\.1):\d+$/.test(host)
+            || (req.headers.origin && req.headers.origin !== origin)
+            || (req.headers['sec-fetch-site'] && req.headers['sec-fetch-site'] !== 'same-origin' && req.headers['sec-fetch-site'] !== 'none')) {
+          reply(403, { error: 'Timing saves require a local server started with --editor-write.' });
+          return;
+        }
+        const { readRecipientEffects, saveRecipientEffects } = await import('./recipient-effects-save.mjs');
+        if (req.method === 'GET') {
+          reply(200, readRecipientEffects(rootResolved));
+          return;
+        }
+        if (req.method !== 'POST') {
+          reply(405, { error: 'Use GET or POST for effect timing.' });
+          return;
+        }
+        if (req.headers.origin !== origin || !/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) {
+          reply(403, { error: 'Save from the local effect timing editor.' });
+          return;
+        }
+        const chunks = [];
+        const limit = 4096;
+        let size = 0;
+        for await (const chunk of req) {
+          size += chunk.length;
+          if (size > limit) {
+            reply(413, { error: 'Effect timing exceeds the save limit.' });
+            return;
+          }
+          chunks.push(chunk);
+        }
+        try {
+          reply(200, await saveRecipientEffects(rootResolved, JSON.parse(Buffer.concat(chunks).toString('utf8'))));
+        } catch (error) {
+          reply(error.status || (error instanceof SyntaxError ? 400 : 500), { error: error.message });
+        }
+        return;
+      }
       if (urlPath === '/__editor/prologue-defaults') {
         const remote = req.socket.remoteAddress || '';
         const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
@@ -542,6 +587,11 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         const html = body.toString('utf8');
         const at = html.toLowerCase().lastIndexOf('</body>');
         body = Buffer.from(at < 0 ? html + DEV_RELOAD_SCRIPT : html.slice(0, at) + DEV_RELOAD_SCRIPT + html.slice(at), 'utf8');
+      }
+      if (editorWrite && urlPath === '/tools/recipient-effects-runtime-preview.html'
+          && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress || '')
+          && /^(localhost|127\.0\.0\.1):\d+$/.test(req.headers.host || '')) {
+        body = Buffer.from(body.toString('utf8').replace('<html ', '<html data-editor-write="on" '), 'utf8');
       }
       const type = MIME[extname(filePath).toLowerCase()] || 'application/octet-stream';
       res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache' });
