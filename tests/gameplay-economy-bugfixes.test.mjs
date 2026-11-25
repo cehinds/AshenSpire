@@ -283,9 +283,10 @@ test('17. Weapon inherent poise damage (1-3), Sceptres/Bows/Staves +20%, Smash 1
   assert.equal(dagger.amount, 1);
   assert.equal(sword.amount, 2);
   assert.equal(greatsword.amount, 3);
-  for (const id of ['shortbow', 'ashStaff', 'boneSceptre']) {
+  for (const [id, base] of [['shortbow', 1], ['ashStaff', 2], ['boneSceptre', 2]]) {
     const ranged = WeaponPoiseDamage(combat, player, enemy, { ...strike, sourceArmamentId: id }, { defending: 'neutral' });
-    assert.ok(ranged.raw > sword.raw && ranged.amount > sword.amount, `${id} gives +20% poise damage over martial counterpart`);
+    assert.equal(ranged.raw, base * 1.2, `${id} multiplies its own authored Poise base by 1.2`);
+    assert.equal(ranged.amount, Math.ceil(base * 1.2), `${id} rounds the multiplied Poise up`);
   }
   const swordSmash = WeaponPoiseDamage(combat, player, enemy, { ...smash, sourceArmamentId: 'straightSword' }, { defending: 'neutral' });
   const swordSmashGuard = WeaponPoiseDamage(combat, player, enemy, { ...smash, sourceArmamentId: 'straightSword' }, { defending: 'defend' });
