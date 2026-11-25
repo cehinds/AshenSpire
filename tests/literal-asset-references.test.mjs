@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { catalogJSONExpression } from '../tools/catalog-json.mjs';
 import { catalogVersionScanText } from '../tools/buildversion.mjs';
 import { danglingLiteralAssets } from '../tools/literal-asset-references.mjs';
@@ -89,17 +91,18 @@ test('packed art and changelog projections still expose missing literal assets',
 });
 
 test('generated UI, art and changelog scan as the same ordered data that the runtime imports', async () => {
+  const root = fileURLToPath(new URL('../', import.meta.url));
   for (const [id, name, wrapper] of [
     ['src/config/generated/ui.js', 'uiConfig', 'deepFreeze('],
     ['src/content/reviewedCardArt.generated.js', 'reviewedCardArtCatalog', ''],
     ['src/content/changelog.generated.js', 'GENERATED_CHANGELOG', 'Object.freeze('],
   ]) {
-    const file = new URL('../' + id, import.meta.url);
+    const file = resolve(root, id);
     const source = readFileSync(file, 'utf8');
     const prefix = `export const ${name} = ${wrapper}`;
     const line = catalogVersionScanText(id, source).split('\n').find(row => row.startsWith(prefix));
     const canonicalJSON = line.slice(prefix.length, wrapper ? -2 : -1);
-    const runtime = (await import(file.href))[name];
+    const runtime = (await import(pathToFileURL(file).href))[name];
     assert.equal(canonicalJSON, JSON.stringify(runtime), id);
   }
 });
