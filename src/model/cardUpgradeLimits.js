@@ -8,6 +8,9 @@ import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgrade
 const MAX_CANDIDATES = 20;
 import { rollUpgradeOptions, upgradeStepRng, upgradeSeed, UpgradeStepFamilies } from './cardUpgradeSteps.js';
 import { OfferSalted } from './upgradeOffer.js';
+import { ActNodeUpgradeStock, NodeScheduleKey } from './actSeedSchedule.js';
+import { EffectiveTier } from './tierUnlocks.js';
+import { GetActiveScoring } from './activeScoring.js';
 import { staticCardTokens } from './playingCard.js';
 
 function checkDamageUpgrade(run, registries, rank, ranked) {
@@ -117,9 +120,17 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   const ranked = run.gameProfile?.modules?.progression?.cardRanks === true;
   const rank = ranked ? cardRank(instance) : 1;
   const playerLevel = Number.isInteger(run?.level?.level) && run.level.level >= 1 ? run.level.level : 1;
-  const limits = { ...mana, rank, cardRank: VisibleCardRank(instance), playerLevel, instance, scale,
+  const visibleRank = VisibleCardRank(instance);
+  const nodeKey = !everyFamily && !salt ? NodeScheduleKey(run) : '';
+  const activeScoring = GetActiveScoring();
+  let nodeSpecialty = null;
+  if (nodeKey) {
+    const cardTier = EffectiveTier(visibleRank, instance?.rarityOverride || base.rarity || 'common', activeScoring);
+    nodeSpecialty = ActNodeUpgradeStock(run.seed, nodeKey, { vendor, scoring: activeScoring }).forTier(cardTier);
+  }
+  const limits = { ...mana, rank, cardRank: visibleRank, playerLevel, instance, scale,
     damageChanges: checkDamageUpgrade(run, registries, rank, ranked),
-    exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}) };
+    exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}), ...(nodeSpecialty ? { nodeSpecialty } : {}) };
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1 && authored) return [{ k: 'authored' }];
   // An authored first step occupies its family (AuthoredFamilies): the rolled alternative is of another family.
