@@ -638,7 +638,13 @@ export function playingCardModel(registries, ref, { preview = null, definition =
         ? `${label}: reduced SP/MP cost (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}); doubles efficiency CP surcharge per stack.`
         : parsed.family === 'improved'
           ? `${label}: strengthened effect by +10% compounding per stack (×${Math.pow(1.1, parsed.stacks).toFixed(2)}).`
-          : `${label}: card upgrade tier (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}).`;
+          : parsed.family === 'refined'
+            ? `${label}: softened or removed card drawback (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}).`
+            : parsed.family === 'tempered'
+              ? `${label}: forged combat form or defensive structure (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}).`
+              : parsed.family === 'purified'
+                ? `${label}: added or strengthened healing, Ward, or cleansing (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}).`
+                : `${label}: card upgrade tier (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}).`;
       return { id, domain: 'upgrade', label, glyph: '', color: '', blurb };
     })
     .filter(Boolean);

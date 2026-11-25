@@ -12,7 +12,7 @@ const RAMP = new Set(['core.flick', 'core.brace', 'core.temperedEdge', 'core.hex
 // Menu steps whose effect is not in the single play (end of turn, start of the next fight, a trait): tests/w25-upgrade-menu.test.mjs proves each in the engine.
 // Dropping Ethereal acts at the end of a turn the card stays in hand, and stopping a rising cost acts from the second play:
 // tests/card-cost-balance.test.mjs proves both in the engine.
-const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction', 'unethereal', 'steady']);
+const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction', 'unethereal', 'steady', 'cleanse']);
 // A run-long `attr` step (+1 INT/WIS) changes no single play: it acts when the deck loads into a fight. tests/w25-live-stats-run-bonus.test.mjs
 // ('the run-long +1 INT applies to the effective attributes, the ratings, the sheet and a fight') proves it there.
 const isDeferred = (step) => (step.k === 'fx' && DEFERRED.has(step.fx)) || step.k === 'attr';
@@ -30,7 +30,7 @@ test('every rolled upgrade option changes what the card does when played', () =>
     for (const lead of [[], base.upgrade ? [{ k: 'authored' }] : null]) {
       if (lead === null) continue;
       const run = { seed: 7, gameProfile: profile, rangePolicy: {} };
-      const inst = { instanceId: 'probe-1', cardId: id, ...(lead.length ? { upgraded: true, upgradeSteps: lead } : { upgraded: false }) };
+      const inst = { instanceId: 'probe-1', cardId: id, rank: 4, ...(lead.length ? { upgraded: true, upgradeSteps: lead } : { upgraded: false }) };
       const options = nextUpgradeOptions(run, inst, base, registries, 40, { noAuthored: true, everyFamily: true })
         .filter((step) => !isDeferred(step)).slice(0, PER_CARD);
       // The card before the option depends only on the card, its lead and the field, so it is played once per field.
@@ -82,7 +82,7 @@ test('every deferred option (Retain, Innate, hold one, Reaction, drop Ethereal, 
   let checked = 0;
   for (const id of ids) {
     const base = registries.cards.get(id);
-    const inst = { instanceId: 'probe-1', cardId: id, upgraded: false };
+    const inst = { instanceId: 'probe-1', cardId: id, rank: 4, upgraded: false };
     const steps = nextUpgradeOptions({ seed: 7, gameProfile: profile, rangePolicy: {} }, inst, base, registries, 40, { noAuthored: true, everyFamily: true }).filter(isDeferred);
     for (const step of steps) {
       checked += 1;
@@ -109,7 +109,7 @@ test('no roll offers a dud: no run attribute, no rank down, no one enemy to all,
   for (const id of ids) {
     const base = registries.cards.get(id);
     for (let seed = 1; seed <= 6; seed += 1) {
-      const steps = nextUpgradeOptions({ seed, gameProfile: profile, rangePolicy: {} }, { instanceId: `d${seed}`, cardId: id, upgraded: false }, base, registries, 40, { noAuthored: true, everyFamily: true });
+      const steps = nextUpgradeOptions({ seed, gameProfile: profile, rangePolicy: {} }, { instanceId: `d${seed}`, cardId: id, rank: 4, upgraded: false }, base, registries, 40, { noAuthored: true, everyFamily: true });
       for (const step of steps) {
         const where = `${id} ${JSON.stringify(step)}`;
         assert.notEqual(step.k, 'attr', where);
@@ -124,7 +124,7 @@ test('no roll offers a dud: no run attribute, no rank down, no one enemy to all,
 const RUN = { seed: 7, gameProfile: profile, rangePolicy: {} };
 const kindsOf = (cardId, steps = []) => {
   const base = registries.cards.get(cardId);
-  const inst = { instanceId: 'k1', cardId, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) };
+  const inst = { instanceId: 'k1', cardId, rank: 4, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) };
   return nextUpgradeOptions(RUN, inst, base, registries, 30, { noAuthored: true, everyFamily: true });
 };
 

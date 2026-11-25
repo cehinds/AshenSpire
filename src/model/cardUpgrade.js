@@ -112,7 +112,8 @@ export function improvedScaledAmount(baseAmount, stacks, multPerStack = 1.1) {
   return Math.max(base + n, Math.round(base * Math.pow(multPerStack, n)));
 }
 
-const CORE_UPGRADE_TAG_FAMILIES = new Set(['efficient', 'improved']);
+const CORE_UPGRADE_TAG_FAMILIES = new Set(['efficient', 'improved', 'refined', 'tempered', 'purified']);
+const PURIFY_STATUSES = new Set(['re' + 'gen', 'ward']);
 
 function bumpUpgradeTag(out, card, family, delta = 1, maxStacks = MAX_UPGRADE_TAG_STACKS) {
   if (!CORE_UPGRADE_TAG_FAMILIES.has(family) && GetActiveScoring()?.upgradeTags?.[family]?.surchargeEnabled !== true) return;
@@ -135,7 +136,7 @@ export const UPGRADE_RARITIES = Object.freeze(words('common uncommon rare'));
 // for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait), counter (+1 Counter stack a play; a Counter
 // card only, offered while its whole grant stays within the 1..3 a card may give: Wave 2 batch 5).
 // unethereal (drop Ethereal) and steady (stop a rising cost) ease a drawback (playtest 2026-11-17, theme C).
-export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter unethereal steady recurring'));
+export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter unethereal steady recurring heal cleanse'));
 export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
 // A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
 // fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
@@ -239,7 +240,7 @@ function applyStep(card, step) {
           const key = step.op === 'discard' ? 'amount' : 'count';
           effects[index][key] += step.n;
           if (effects[index][key] <= 0) { effects.splice(index, 1); dropEffectText(out, card, step.op === 'discard' ? /discard/i : /\badd\b.*\b(wound|dazed|slimed|guilt|cards?)\b/i); }
-          if (step.n < 0) bumpUpgradeTag(out, card, 'drawbackEase', 1);
+          if (step.n < 0) { bumpUpgradeTag(out, card, 'refined', 1); bumpUpgradeTag(out, card, 'drawbackEase', 1); }
         }
       } else if (step.side) {
         const onSelf = step.side === 'self';
@@ -247,19 +248,20 @@ function applyStep(card, step) {
         if (index >= 0) {
           effects[index].stacks += step.n;
           if (effects[index].stacks <= 0) { effects.splice(index, 1); dropEffectText(out, card, new RegExp(`\\b${step.status}\\b`, 'i')); }
-          if (step.n < 0) bumpUpgradeTag(out, card, 'drawbackEase', 1);
+          if (step.n < 0) { bumpUpgradeTag(out, card, 'refined', 1); bumpUpgradeTag(out, card, 'drawbackEase', 1); }
         }
       } else {
         const effect = effects.find((e) => isPlainStatus(e) && e.status === step.status);
         if (effect) {
           effect.stacks += step.n;
-          if (step.n > 0) bumpUpgradeTag(out, card, 'improved', 1);
+          if (step.n > 0) bumpUpgradeTag(out, card, PURIFY_STATUSES.has(step.status) ? 'purified' : 'improved', 1);
         }
       }
       break;
     }
     case 'addStatus':
       effects.push({ op: 'applyStatus', target: 'enemy', status: step.status, stacks: step.stacks });
+      if (PURIFY_STATUSES.has(step.status)) bumpUpgradeTag(out, card, 'purified', 1);
       bumpUpgradeTag(out, card, 'extraEffect', 1);
       break;
     case 'cost':
@@ -290,6 +292,7 @@ function applyStep(card, step) {
         if (typeof template === 'string' && template.includes('{damage} damage') && !template.includes('{hits}')) {
           out.textTemplate = template.replace('{damage} damage', '{damage} damage {hits} times');
         }
+        bumpUpgradeTag(out, card, 'tempered', 1);
       }
       break;
     }
@@ -299,7 +302,7 @@ function applyStep(card, step) {
       const index = firstPlainIndex(effects, 'poiseDamage');
       if (index >= 0) {
         effects[index].amount += step.n;
-        bumpUpgradeTag(out, card, 'improved', step.improvedStacks || 1);
+        bumpUpgradeTag(out, card, 'tempered', step.improvedStacks || 1);
       }
       break;
     }
@@ -344,13 +347,24 @@ function applyStep(card, step) {
       if (Number.isInteger(step.exposureBuildupPerHit)) out.exposureBuildupPerHit = step.exposureBuildupPerHit;
       if (Number.isFinite(step.magicShare)) out.magicShare = step.magicShare;
       if (packet) out = addElementPacket(out, card, step);
+      if (step.retarget || step.damageSchool || (typeof step.tag === 'string' && (step.tag.startsWith('range:') || step.tag.startsWith('targeting:') || step.tag.startsWith('maneuver:')))) {
+        bumpUpgradeTag(out, card, 'tempered', 1);
+      }
       bumpUpgradeTag(out, card, 'identityShift', 1);
       break;
     }
     case 'fx':
       out = applyFx(out, step);
-      if (['unexhaust', 'unethereal', 'steady'].includes(step.fx)) bumpUpgradeTag(out, card, 'drawbackEase', 1);
-      else bumpUpgradeTag(out, card, 'extraEffect', 1);
+      if (['unexhaust', 'unethereal', 'steady'].includes(step.fx)) {
+        bumpUpgradeTag(out, card, 'refined', 1);
+        bumpUpgradeTag(out, card, 'drawbackEase', 1);
+      } else if (['heal', 'cleanse'].includes(step.fx)) {
+        bumpUpgradeTag(out, card, 'purified', 1);
+      } else if (['block', 'counter'].includes(step.fx)) {
+        bumpUpgradeTag(out, card, 'tempered', 1);
+      } else {
+        bumpUpgradeTag(out, card, 'extraEffect', 1);
+      }
       break;
     case 'combo':
       for (const inner of step.steps) out = applyStep(out, inner);
@@ -455,6 +469,15 @@ function applyFx(card, step) {
       addTag('trait:recurring');
       out.keywords = [...new Set([...(out.keywords || card.keywords || []), 'exhaust'])];
       break;
+    case 'heal': {
+      const index = firstPlainIndex(effects, 'heal');
+      if (index >= 0) effects[index].amount += step.n;
+      else effects.push({ op: 'heal', target: 'self', amount: step.n });
+      break;
+    }
+    case 'cleanse':
+      effects.push({ op: 'removeStatus', target: 'self', status: step.status || 'weak', amount: step.n || 1 });
+      break;
     default: throw new Error(`Unknown card upgrade effect '${step.fx}'`);
   }
   return out;
@@ -475,7 +498,12 @@ export const DrawbackSteps = Object.freeze(['unexhaust', 'unethereal', 'steady']
 /** A ranked ability card's grade face with its drawback-removal steps applied; every other step is the grade table's to own. */
 export function ApplyDrawbackSteps(card, steps) {
   const easing = FlatSteps(steps || []).filter((step) => step && step.k === 'fx' && DrawbackSteps.includes(step.fx));
-  return easing.reduce((out, step) => applyFx(out, step), card);
+  return easing.reduce((out, step) => {
+    const next = applyFx(out, step);
+    bumpUpgradeTag(next, out, 'refined', 1);
+    bumpUpgradeTag(next, out, 'drawbackEase', 1);
+    return next;
+  }, card);
 }
 
 export function applyUpgradeSteps(base, steps) {
@@ -545,7 +573,9 @@ export function upgradeStepsProblems(instance, path) {
     if (step.k === 'hits' && !isCount(step.per)) bad('per');
     if (step.k === 'fx') {
       if (!FX_KINDS.includes(step.fx)) bad('fx');
-      if (['block', 'draw', 'cycle', 'boost'].includes(step.fx) && !isCount(step.n, 20)) bad('n');
+      if (['block', 'draw', 'cycle', 'boost', 'heal'].includes(step.fx) && !isCount(step.n, 20)) bad('n');
+      if (step.fx === 'cleanse' && step.n !== undefined && !isCount(step.n, 5)) bad('n');
+      if (step.fx === 'cleanse' && step.status !== undefined && !(typeof step.status === 'string' && step.status.length > 0)) bad('status');
       if (step.fx === 'counter' && !isCount(step.n, 3)) bad('n');
       if (step.share !== undefined && !(step.fx === 'target' && step.share > 0 && step.share <= 1)) bad('share');
       if (step.fx === 'boost' && !BOOST_STATS.includes(step.stat)) bad('stat');

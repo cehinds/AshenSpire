@@ -130,6 +130,7 @@ test('a procedural step the template does not mention (an added status) still sh
   let found = 0;
   for (let seed = 1; seed <= 40 && !found; seed += 1) {
     const run = createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+    strike(run).rank = 1;
     const model = cardUpgradeModel(registries, run, strike(run).instanceId);
     if (model.selected.plan.step.k !== 'addStatus') continue;
     found = seed;

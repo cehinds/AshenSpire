@@ -44,7 +44,7 @@ function fight(cards, classId = 'starseer') {
   return combat;
 }
 const inst = (id, cardId, steps) => ({ instanceId: id, cardId, ...(steps ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) });
-const fxOffered = (cardId) => nextUpgradeOptions({ seed: 7, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: 'x', cardId, upgraded: false },
+const fxOffered = (cardId) => nextUpgradeOptions({ seed: 7, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: 'x', cardId, rank: 2, upgraded: false },
   registries.cards.get(cardId), registries, 40, { noAuthored: true })
   // An ease offered at uncommon or rare is a combo whose first step is the ease (upgrade rarity, #2920).
   .map((s) => (s.k === 'combo' ? s.steps[0] : s)).filter((s) => s.k === 'fx').map((s) => s.fx);
@@ -71,7 +71,7 @@ test('rest and blacksmith quotes offer Quickstep only the upgrade its grade appl
   run.sideboard.push(quickstep);
   assert.ok(!PlanRestCardUpgrade(run, registries, quickstep.instanceId).ok, 'the CP rank is above a level-one character');
   run.level.level = 5;
-  const step = { k: 'fx', fx: 'unexhaust', nextRank: 5 };
+  const step = { k: 'fx', fx: 'unexhaust', nextRarity: 'rare', nextRank: 5 };
   const rest = PlanRestCardUpgrade(run, registries, quickstep.instanceId);
   const smith = planCardUpgrade(run, registries, quickstep.instanceId, { choices: 3 });
 
@@ -80,6 +80,7 @@ test('rest and blacksmith quotes offer Quickstep only the upgrade its grade appl
   assert.deepEqual(smith.options.map((option) => option.step), [step]);
   assert.ok(rest.before.keywords.includes('exhaust'));
   assert.ok(!rest.after.keywords.includes('exhaust'));
+  assert.ok(rest.after.tags.includes('upgrade:refined'));
   assert.doesNotMatch(rest.after.textTemplate, /Exhaust/i);
   assert.equal(rest.after.abilityRank, 3);
   assert.deepEqual(rest.after.effects, rest.before.effects);
