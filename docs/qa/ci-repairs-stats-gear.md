@@ -97,3 +97,9 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 ## Intermediate lane verification
 
 The 54-file stats, gear and progression run completed with 488 of 494 tests passing. The six remaining checks concern temporary Health/Stamina/Mana pool rules (three), historical Sage robe group Mana (one), and future offers under the old rank-band oracles (two). Generated content validation passes. The old save fixtures and their historical expectations remain in place.
+
+## Future stock under character-level bands
+
+The old Act-band receipts remain in `65134299eca:tests/gear-pass-save-compatibility.test.mjs` (shop), `7d66e6cad64` (boss armament) and `bd0a3b32b5b` (Blacksmith). A separate replay extracted the exact pre-feature `origin/dev` tree at `7dff4b03a17` and resolved the same immutable pre-type profile, character seed 511 and offer RNG 41. It reproduced the new character-level band selections and exact ranked costs. These are future offers against the current catalog. No extra theme RNG is spent, and an offer already cached is byte-identical when read again.
+
+`node --test tests/gear-pass-save-compatibility.test.mjs` passed 7/7. Stream receipts stayed at 21 shop, 9 boss reward and 19 Blacksmith draws, with zero on other streams. The separate unresolved type-enabled Sage robe check retains its original expectation.

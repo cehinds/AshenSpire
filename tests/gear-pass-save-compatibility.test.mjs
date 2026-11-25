@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { reconcileRunLoadoutHp } from '../src/model/loadout.js';
 import { canonicalGameJSON } from '../engine/kernel/gameConfig.js';
+import { itemCombatPower } from '../src/content/generated/combatPower.js';
 import { contentBundle } from '../src/content/index.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -101,32 +102,60 @@ test('the genuine pre-gear historical profile keeps Tower Shield pool suppressio
   assert.equal(runMods(registries, restored.loadout, restored.class, restored).maxHp, 0);
 });
 
-test('an old profile future shop offer matches Dev items and RNG, and cached offers roll nothing', () => {
-  // Oracle captured from clean Dev 66e473a77c with the original immutable 73ef profile bytes.
+const totalDraws = rng => Object.values(rng.getCounters()).reduce((sum, count) => sum + count, 0);
+
+test('a pre-type profile applies current bands to new shop stock and never rerolls stock already cached', () => {
+  // The immutable old profile is replayed on clean origin/dev 7dff4b03a17.
+  // The previous act-band oracle remains in 65134299eca. Current offers use character bands (15d221435dc).
   const profile = resolveGameProfile(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url)))));
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 511 }), rng = createRng(41);
+  assert.equal(run.level.level, 1);
+  assert.equal(run.gameProfile.modules.gear.typeEffectsVersion, undefined);
   const offer = gameProfileShopStock(registries, run, rng, { shopId: 'old-smith' });
-  // Shop banding (owner ruling, 2026-11-22): shop shelves draw from the act's rank band like rewards, so the weapon, armour and relic shelves differ from the Dev oracle's; the card shelf, the draw counters and the cached-offer rule are unchanged.
-  assert.deepEqual(offer.options.map(row => row.id), ['buckler', 'straightSword', 'kiteShield', 'progression-whisperglass-die', 'curedHide', 'sacrificialKnife', 'base.modify-card-stance', 'base.weak', 'base.bind', 'poiseBreaker', 'greatswordSunderingHew', 'core.reaverSpecial', 'wondrousDraught', 'blightCoating', 'flaskOfFerocity', 'bastion', 'wayfarerPlate', 'riteVestments']);
+  assert.deepEqual(offer.options.map(row => row.id), [
+    'shortbow', 'towerShield', 'parryDagger',
+    'progression-purse-of-borrowed-shadows', 'sacrificialKnife', 'crackedLantern',
+    'base.modify-card-stance', 'base.weak', 'base.restrained',
+    'poiseBreaker', 'greatswordSunderingHew', 'core.reaverSpecial',
+    'wondrousDraught', 'blightCoating', 'flaskOfFerocity',
+    'wayfarerPlate', 'riteVestments', 'nightweave',
+  ]);
+  for (const choice of offer.options) {
+    const prefix = { weapons: 'weapon:', armor: 'armour:reaver.', relics: 'relic:' }[choice.kind];
+    if (prefix) assert.ok(itemCombatPower[prefix + choice.id].rank <= 2, `${choice.id}: ordinary level-one band with possible rare boost`);
+  }
   assert.equal(rng.getCounters().shop, 21);
-  assert.equal(Object.values(rng.getCounters()).reduce((sum, n) => sum + n, 0), 21);
+  assert.equal(totalDraws(rng), 21);
   const before = rng.getCounters();
-  assert.deepEqual(gameProfileShopStock(registries, structuredClone(run), rng, { shopId: 'old-smith' }), offer);
+  const cached = gameProfileShopStock(registries, structuredClone(run), rng, { shopId: 'old-smith' });
+  assert.equal(JSON.stringify(cached), JSON.stringify(offer));
   assert.deepEqual(rng.getCounters(), before);
 });
 
-test('pre-type profiles keep Dev future armament and Blacksmith offers without new theme rolls', () => {
-  // Independent oracle: Dev 6727a25530050d63aaa3d960a0d8e3d1855e9fc4, seed511 / offer RNG41: its Codex-expanded catalog with legacy gear rules.
+test('pre-type profiles use eligible boss and Blacksmith ranks without additional theme rolls', () => {
+  // Clean origin/dev 7dff4b03a17, same seed 511, offer RNG 41.
+  // The former act-band and pre-ranked-price IDs/costs are recorded in 7d66e6cad64 and bd0a3b32b5b.
   const { registries, run } = world(false), rng = createRng(41);
   const offer = GameProfileArmamentOffer(registries, run, rng, { offerId: 'old-boss', pool: 'boss' });
-  // Level lists (owner, 2026-11-21): the offer draws from the act's rank band, so the candidate set (and the same RNG's weapon pick) differs from the Dev oracle's: kiteShield -> halberd. The armour pick and the draw counter are unchanged.
-  assert.deepEqual(offer.options, [{ kind: 'weapons', id: 'halberd' }, { kind: 'armor', id: 'riteVestments' }]);
+  assert.equal(run.gameProfile.modules.gear.typeEffectsVersion, undefined);
+  assert.deepEqual(offer.options, [{ kind: 'weapons', id: 'kiteShield' }, { kind: 'armor', id: 'riteVestments' }]);
+  assert.deepEqual(offer.options.map(({ kind, id }) => itemCombatPower[(kind === 'armor' ? 'armour:reaver.' : 'weapon:') + id].rank), [2, 0]);
   assert.equal(rng.getCounters().cardRewards, 9);
+  assert.equal(totalDraws(rng), 9);
   const other = world(false), smithRng = createRng(41);
   const smith = coreBlacksmithShelves(other.registries, smithRng, other.run);
-  assert.deepEqual(smith.armaments, [{ id: 'flamberge', tier: 3, cost: 407 }, { id: 'buckler', tier: 2, cost: 124 }, { id: 'sunTalisman', tier: 3, cost: 225 }, { id: 'kiteShield', tier: 0, cost: 67 }, { id: 'wyrmhornStaff', tier: 0, cost: 157 }, { id: 'broadsword', tier: 1, cost: 129 }]);
+  assert.deepEqual(smith.armaments, [
+    { id: 'ashenClaymore', tier: 3, cost: 320 },
+    { id: 'battleaxe', tier: 2, cost: 155 },
+    { id: 'grimoire', tier: 3, cost: 283 },
+    { id: 'towerShield', tier: 0, cost: 164 },
+    { id: 'broadsword', tier: 0, cost: 119 },
+    { id: 'zweihander', tier: 1, cost: 267 },
+  ]);
+  assert.ok(smith.armaments.every(row => itemCombatPower[`weapon:${row.id}`].rank <= 1));
   assert.equal(smithRng.getCounters().shopOffers, 19);
+  assert.equal(totalDraws(smithRng), 19);
 });
 
 test('old equipment inspectors do not advertise new Lantern or Torch vocabulary', () => {
