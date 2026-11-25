@@ -505,29 +505,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const played = returned?.sourceKind === 'player' ? { ...returned, cardType: 'attack' } : beat.events.find(event => event.type === 'cardPlayed');
       const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => ['enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared'].includes(event.type));
       if (!played && !moved) return null;
-      // The authored caster motion still owns contact timing. Start the new
-      // circle at that motion's onset on every actor path, including Reaver.
+      // The actor's motion still owns combat contact. Recipient windup and
+      // delivery use its timing estimates, then finish on the visual queue.
+      // Skipping or leaving combat clears the entire effect layer.
       const windup = beat.events.map(event => event.recipientWindup).filter(Boolean);
       const withRecipientWindup = animation => {
         const impactMs = animation?.impactMs ?? (animation?.totalMs || 0) * COMBAT_TIMING.windupFraction;
-        const circles = impactMs > 0 ? windup.map(effect => ({ ...effect, durationMs: Math.min(effect.durationMs, impactMs) })) : [];
-        const cancelRecipientWindup = PlayRecipientEffectLayers(fxCtx.layer, circles, { anchorFor: fxCtx.anchorFor, sourceId: beat.actorId });
-        // Sprite frame-hold floors must not keep a short circle past contact.
-        // This only removes presentation; it never adds a timeline wait.
-        const circleDeadline = circles.length ? setTimeout(cancelRecipientWindup, impactMs) : null;
-        const stopCircle = () => { clearTimeout(circleDeadline); cancelRecipientWindup(); };
-        // Authored frame contact can resolve before the numeric timing estimate.
-        animation?.contact?.then?.(stopCircle, stopCircle);
-        const contacts = beat.events.flatMap(event => [event.recipientDelivery, ...(event.recipientEffects || [])]).filter(effect => effect?.delivery);
-        const deliveries = contacts.map(effect => {
+        if (!(impactMs > 0)) return animation;
+        const circles = windup.map(effect => ({ ...effect, durationMs: Math.min(effect.durationMs, impactMs) }));
+        const contacts = beat.events.flatMap(event => [event.recipientDelivery, ...(event.recipientEffects || [])]);
+        const deliveries = contacts.filter(effect => effect?.range === 'reach' && effect.delivery?.durationMs > 0).map(effect => {
           const durationMs = Math.min(effect.delivery.durationMs, impactMs);
-          return { ...effect, phase: 'delivery', impactShape: effect.impactShape || effect.shape, shape: null, durationMs, delayMs: Math.max(0, impactMs - durationMs),
-            delivery: { ...effect.delivery, durationMs } };
+          return { ...effect, phase: 'delivery', impactShape: effect.impactShape || effect.shape, shape: null, durationMs,
+            delayMs: impactMs - durationMs, delivery: { ...effect.delivery, durationMs } };
         });
-        const cancelDelivery = PlayRecipientEffectLayers(fxCtx.layer, deliveries, { anchorFor: fxCtx.anchorFor, sourceId: beat.actorId });
-        return { ...animation, cancel() {
-          stopCircle(); cancelDelivery(); animation?.cancel?.();
-        } };
+        PlayRecipientEffectLayers(fxCtx.layer, [...circles, ...deliveries], { anchorFor: fxCtx.anchorFor, sourceId: beat.actorId });
+        return animation;
       };
       // The pre-dispatch hand snapshot retains Powers removed from every pile,
       // and the full instance carries equipment profile tags and upgrades.

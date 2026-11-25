@@ -170,12 +170,12 @@ test('Sweep is one unchanged group sprite per action; a repeated action is not d
   }
 });
 
-test('actual heal/bleed secondaries overlap the contact by the configured window', () => {
+test('actual heal/bleed secondaries follow the contact by the configured interval', () => {
   const bleed = { type: 'statusApplied', targetId: 'e1', sourceId: 'player', status: 'bleed', stacks: 2 };
   const out = DecorateRecipientEffects([marker, hit, bleed], { resolveCard: () => fire });
   assert.deepEqual(out[1].recipientEffects.map(layer => layer.shape), ['spell', 'bleed-drops']);
   const [primary, secondary] = PlanRecipientEffectLayers(out[1].recipientEffects);
-  assert.equal(primary.end - secondary.start, SETTINGS.motion.resultOverlapMs);
+  assert.equal(secondary.start - primary.end, SETTINGS.motion.resultGapMs);
   assert.equal(out[1].recipientEffects[1].color, SETTINGS.behavior.palettes.blood);
   assert.deepEqual(out[2].recipientEffects, []);
   assert.ok(!RecipientEffectsForEvent({ tags: ['bleed'] }, hit).some(layer => layer.shape === 'bleed-drops'));
@@ -293,12 +293,14 @@ test('prepared Reach telegraph carries only delivery, with no duplicate delivery
   assert.equal(telegraph.recipientDelivery.shape, null);
   assert.equal(telegraph.recipientDelivery.impactShape, 'spell');
   assert.equal(telegraph.recipientDelivery.claimsDamage, false);
+  assert.equal(telegraph.recipientWindup.actionKey, telegraph.recipientDelivery.actionKey);
   assert.deepEqual(telegraph.recipientDelivery.targetIds, ['seat-b']);
   assert.deepEqual(telegraph.recipientEffects, []);
   const continuation = { ...start, type: 'combatHitStarted', contactPrepared: true };
   const rows = DecorateRecipientEffects([continuation, { ...hit, sourceId: 'mage', targetId: 'seat-b' }], options);
   assert.equal(rows[0].recipientDelivery, undefined);
   assert.equal(rows[1].recipientEffect.delivery, null);
+  assert.equal(rows[1].recipientEffect.actionKey, telegraph.recipientDelivery.actionKey);
   const miss = DecorateRecipientEffects([continuation, { type: 'attackMissed', sourceId: 'mage', targetId: 'seat-b', missReason: 'evaded' }], options);
   assert.deepEqual(flatten(miss).map(layer => layer.shape), ['evade']);
 });

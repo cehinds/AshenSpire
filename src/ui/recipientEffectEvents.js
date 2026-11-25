@@ -96,7 +96,8 @@ export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove
     }
     let windup = null;
     if (marker && !marker.windupShown) {
-      windup = RecipientWindupFor(marker.definition, normalized);
+      const circle = RecipientWindupFor(marker.definition, normalized);
+      if (circle) windup = { ...circle, actionKey: marker.key };
       marker.windupShown = true;
     }
     let approach = null;
@@ -105,7 +106,7 @@ export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove
       if (targetIds.length) {
         const base = ResolveRecipientEffect(marker.definition, normalized);
         approach = { ...base, impactShape: base.shape, shape: null, phase: 'delivery', mount: 'target',
-          sourceId, targetIds, claimsDamage: false, delivery: RecipientDeliveryFor(marker.definition, normalized) };
+          sourceId, targetIds, actionKey: marker.key, claimsDamage: false, delivery: RecipientDeliveryFor(marker.definition, normalized) };
         (marker.preparedDeliveries ||= new Set()).add(marker.contactIndex || 0);
         PrewarmRecipientEffect({ ...approach, shape: approach.impactShape });
       }

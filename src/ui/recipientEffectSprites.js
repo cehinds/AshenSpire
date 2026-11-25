@@ -1,12 +1,15 @@
 import { assetUrl, assetsAreInlined, builtInSource } from './assetmap.js';
 import { reducedMotionRequested } from './motion.js';
 import { SETTINGS } from '../content/recipientEffectSettings.js';
+import { ReadRecipientEffectTiming, ValidateRecipientEffectTiming } from '../model/recipientEffectTiming.js';
 import { RecipientEffectAtlasEntry } from '../content/recipientEffectAtlas.js';
 import { currentSpriteBodyBounds } from './components/combatSpriteGeometry.js';
 import { stageFor } from './services/PoseAnimator.js';
 
 const active = new WeakMap(), loaded = new Map(), groups = new WeakMap();
 const resultWindows = new WeakMap();
+const defaultTiming = ReadRecipientEffectTiming();
+const timingFor = timing => timing == null ? defaultTiming : ValidateRecipientEffectTiming(timing);
 const S = SETTINGS.sizing, O = SETTINGS.layering.opacity, M = SETTINGS.motion;
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const disabled = () => !SETTINGS.behavior.enabled || reducedMotionRequested() || document.body.classList.contains('reduce-flashes');
@@ -148,14 +151,14 @@ function actorSnapshot(actor,layer,box) {
 function register(layer,stop){const set=active.get(layer)||new Set();active.set(layer,set);set.add(stop);return set;}
 
 /** Three-frame flat composition; a cold clip stays the same placeholder to its end. */
-export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacing,cardBox,actor,duration=recipe?.durationMs||M.clipMs,resolveAsset=assetUrl,forcePlaceholder=false,onStop,frame=null}={}) {
+export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacing,cardBox,actor,duration=recipe?.durationMs||M.clipMs,resolveAsset=assetUrl,forcePlaceholder=false,onStop,frame=null,timing}={}) {
   if(!layer||!box||!recipe||disabled())return ()=>{};
   const count=clamp(Math.round(recipe.frameCount||SETTINGS.behavior.frameCount),1,3);
   const ms=clipDuration(recipe, duration);
   const view=RecipientEffectView(recipe,{box,cardBox,targetFacing,size});
   const host=document.createElement('div');host.className='recipient-effect';host.setAttribute('aria-hidden','true');
   Object.assign(host.dataset,{action:recipe.action||'skill',targetType:recipe.targetType||'target',shape:recipe.shape,phase:recipe.phase||'contact',frame:'1',renderer:'placeholder',facing:view.facing,mirrorX:String(view.base.scaleX),mirrorY:'1',rotation:'0',scaleY:'1',anchor:view.cardAnchored?'card-bottom':'body'});
-  Object.assign(host.style,{position:'absolute',pointerEvents:'none',zIndex:'4',opacity:String(O.global),left:`${view.left}px`,top:`${view.top}px`,width:`${view.width}px`,height:`${view.height}px`,transformOrigin:'bottom center',overflow:view.cardAnchored?'hidden':'visible'});
+  Object.assign(host.style,{position:'absolute',pointerEvents:'none',zIndex:'4',opacity:String(timingFor(timing).opacity),left:`${view.left}px`,top:`${view.top}px`,width:`${view.width}px`,height:`${view.height}px`,transformOrigin:'bottom center',overflow:view.cardAnchored?'hidden':'visible'});
   const placeholder=document.createElement('img');placeholder.alt='';placeholder.src=`data:image/svg+xml,${encodeURIComponent(RecipientPlaceholderSvg(recipe.action,recipe.targetType))}`;
   const placeholderSize=Math.min(S.fallbackPx,view.width,view.height);
   Object.assign(placeholder.style,{position:'absolute',left:`${(view.width-placeholderSize)/2}px`,top:`${(view.height-placeholderSize)/2}px`,width:`${placeholderSize}px`,height:`${placeholderSize}px`,objectFit:'contain',transform:view.placeholder.transform});placeholder.style.opacity=String(recipe.opacity??(recipe.shape==='spell-circle'?O.spellCircle:O.primary));host.appendChild(placeholder);layer.appendChild(host);
@@ -212,98 +215,184 @@ export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacin
   timers.push(setTimeout(stop,ms));return stop;
 }
 
-export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUrl,forcePlaceholder=false}={}) {
+export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUrl,forcePlaceholder=false,timing,duration}={}) {
   if(recipe.range!=='reach'||!from||disabled()||forcePlaceholder)return ()=>{};
   const sources=sourcesFor({...recipe,shape:recipe.impactShape||'skill'},resolveAsset);
   if(!sources.every(source=>!source.absent&&loaded.get(source.url)?.ready))return ()=>{};
   const c=canvas(layer.clientWidth||layer.offsetWidth||layer.getBoundingClientRect().width,layer.clientHeight||layer.offsetHeight||layer.getBoundingClientRect().height),ctx=context(c);
-  if(!ctx)return ()=>{};c.className='recipient-delivery';Object.assign(c.dataset,{phase:'delivery',style:recipe.camp==='spell'?'spell-link':'weapon-extension',sourceId:recipe.sourceId||'',targetId:recipe.targetId||recipe.targetIds?.join(',')||''});c.setAttribute('aria-hidden','true');Object.assign(c.style,{position:'absolute',inset:'0',pointerEvents:'none',opacity:String(O.global)});layer.appendChild(c);
+  if(!ctx)return ()=>{};c.className='recipient-delivery';Object.assign(c.dataset,{phase:'delivery',style:recipe.camp==='spell'?'spell-link':'weapon-extension',sourceId:recipe.sourceId||'',targetId:recipe.targetId||recipe.targetIds?.join(',')||''});c.setAttribute('aria-hidden','true');Object.assign(c.style,{position:'absolute',inset:'0',pointerEvents:'none',opacity:String(timingFor(timing).opacity)});layer.appendChild(c);
   const ax=from.left+from.width/2,ay=from.top+from.height/2,bx=to.left+to.width/2,by=to.top+to.height/2;
   const distance=Math.hypot(bx-ax,by-ay),fraction=Math.min(S.deliveryLengthFraction,S.deliveryMaxLengthPx/Math.max(1,distance));
   const sx=bx-(bx-ax)*fraction,sy=by-(by-ay)*fraction;
   ctx.strokeStyle=recipe.color;ctx.fillStyle=recipe.color;ctx.globalAlpha=O.delivery;
   if(recipe.camp==='spell'){ctx.lineWidth=S.spellLinkWidthPx;ctx.setLineDash(S.spellLinkDash);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(bx,by);ctx.stroke();ctx.setLineDash([]);for(let i=0;i<S.spellLinkParticles;i++){const f=i/S.spellLinkParticles;ctx.beginPath();ctx.arc(sx+(bx-sx)*f,sy+(by-sy)*f,S.spellLinkWidthPx,0,Math.PI*2);ctx.fill();}}
   else{const nx=-(by-sy)/Math.max(1,distance*fraction)*S.deliveryWidthPx,ny=(bx-sx)/Math.max(1,distance*fraction)*S.deliveryWidthPx;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+(bx-sx)*S.deliveryTipStart+nx,sy+(by-sy)*S.deliveryTipStart+ny);ctx.lineTo(bx,by);ctx.lineTo(sx+(bx-sx)*S.deliveryTipStart-nx,sy+(by-sy)*S.deliveryTipStart-ny);ctx.closePath();ctx.fill();}
-  let timer;const stop=()=>{clearTimeout(timer);c.remove();set.delete(stop);};const set=register(layer,stop);timer=setTimeout(stop,recipe.delivery?.durationMs||M.reachDeliveryMs);return stop;
+  let timer;const stop=()=>{clearTimeout(timer);c.remove();set.delete(stop);};const set=register(layer,stop);timer=setTimeout(stop,clipDuration({...recipe,phase:'delivery'},duration));return stop;
 }
 
-function clipDuration(recipe, duration = recipe.durationMs) {
+function clipDuration(recipe, duration) {
+  if (recipe.phase === 'delivery') return Math.max(0, duration ?? recipe.delivery?.durationMs ?? recipe.durationMs ?? M.reachDeliveryMs);
   const count = clamp(Math.round(recipe.frameCount || SETTINGS.behavior.frameCount), 1, 3);
-  return Math.max(SETTINGS.behavior.minimumFrameMs * count, Number(duration) || M.clipMs);
+  return Math.max(SETTINGS.behavior.minimumFrameMs * count, Number(duration ?? recipe.durationMs) || M.clipMs);
 }
 
-const resultPhases = new Set(['contact', 'reaction', 'status']);
+const preludePhases = new Set(['windup', 'delivery']);
 
-/** Lay out recipient results in receipt order, with one timeline per actor. */
+function earliestStart(entry, previous, timing, now) {
+  const { scope, maxConcurrent, gapMs, overlapMs } = timing;
+  let start = now;
+  const lanes = scope === 'battlefield' ? [previous] : entry.ids.map(id => previous.filter(clip => clip.ids.includes(id)));
+  const overlap = maxConcurrent > 1 ? Math.min(overlapMs, entry.durationMs) : 0;
+  for (const lane of lanes) {
+    const releases = [];
+    for (const clip of lane) {
+      start = Math.max(start, clip.start, clip.end + gapMs - overlap);
+      releases.push(clip.end);
+    }
+    if (releases.length >= maxConcurrent) {
+      releases.sort((a, b) => b - a);
+      start = Math.max(start, releases[maxConcurrent - 1]);
+    }
+  }
+  // A spell's windup and approach precede its own impact even when caster
+  // and recipient occupy separate lanes or a user permits result overlap.
+  if (entry.recipe.actionKey) {
+    for (const clip of previous) {
+      if (clip.recipe.actionKey === entry.recipe.actionKey && clip.recipe.phase !== entry.recipe.phase
+        && preludePhases.has(clip.recipe.phase)) start = Math.max(start, clip.end + gapMs);
+    }
+  }
+  return start;
+}
+
+/** Lay out presentation clips in receipt order under the selected queue policy. */
 export function PlanRecipientEffectLayers(recipes, {
-  sourceId, targetId, now = 0, windows = new Set(), seenGroups = new Set(), sequence = true, duration,
+  sourceId, targetId, now = 0, windows = new Set(), seenGroups = new Set(), sequence = true, duration, timing,
 } = {}) {
+  const settings = timingFor(timing);
   const planned = [];
   const results = [...windows];
   const groupKeys = new Set(seenGroups);
-  for (const { recipe } of windows) if (recipe.groupKey) groupKeys.add(recipe.groupKey);
-  const overlap = Math.max(0, Number(M.resultOverlapMs) || 0);
+  for (const { recipe } of windows) if (recipe.groupKey && recipe.phase !== 'delivery') groupKeys.add(recipe.groupKey);
+
   for (const recipe of recipes || []) {
     const groupKey = recipe.mount === 'group' && recipe.phase !== 'delivery' && recipe.groupKey;
     if (groupKey && groupKeys.has(groupKey)) continue;
     if (groupKey) groupKeys.add(groupKey);
     const ids = (recipe.targetIds?.length ? recipe.targetIds
       : [recipe.targetId || targetId || recipe.sourceId || sourceId]).filter(Boolean);
-    const result = sequence && resultPhases.has(recipe.phase || 'contact');
-    const ms = clipDuration(recipe, duration);
-    let start = now + Math.max(0, recipe.delayMs || 0);
-    if (result) {
-      for (const previous of results) {
-        if (!previous.ids.some(id => ids.includes(id))) continue;
-        start = Math.max(start, previous.start, previous.end - Math.min(overlap, ms));
-      }
-    }
-    const entry = { recipe, ids, result, start, end: start + ms, delayMs: start - now };
+    const durationMs = clipDuration(recipe, duration);
+    const delayStart = now + Math.max(0, recipe.delayMs || 0);
+    const entry = { recipe, ids, result: sequence, durationMs };
+    const start = sequence ? earliestStart(entry, results, settings, delayStart) : delayStart;
+    Object.assign(entry, { start, end: start + durationMs, delayMs: start - now });
     planned.push(entry);
-    if (result) results.push(entry);
+    if (sequence) results.push(entry);
   }
   return planned;
 }
 
-/** Schedules receipt layers without delaying the combat model or caster pose. */
-export function PlayRecipientEffectLayers(layer,recipes,{anchorFor,sourceId,targetId,...options}={}) {
-  if(!layer||!anchorFor||disabled())return ()=>{};
-  const stops=[],timers=[];let cancelled=false;
-  const windows=resultWindows.get(layer)||new Set();
-  resultWindows.set(layer,windows);
-  const schedule=PlanRecipientEffectLayers(recipes,{sourceId,targetId,now:Date.now(),windows,
-    seenGroups:groups.get(layer),sequence:options.frame==null,duration:options.duration});
-  const stop=()=>{cancelled=true;timers.forEach(clearTimeout);stops.forEach(fn=>fn());
-    schedule.forEach(window=>windows.delete(window));set.delete(stop);};const set=register(layer,stop);
-  let lifetime=0;
-  for(const window of schedule) {
-    const {recipe,ids,delayMs,start,end,result}=window;
-    lifetime=Math.max(lifetime,delayMs+end-start);
-    if(result)windows.add(window);
-    const play=()=>{
-      if(cancelled||disabled()){windows.delete(window);return;}
-      const actors=ids.map(id=>anchorFor(id)).filter(Boolean);if(!actors.length){windows.delete(window);return;}
-      const actor=actors[0],boxes=actors.map(a=>bodyBox(layer,a));let box=boxes[0];
-      if(recipe.mount==='group') {
-        const seen=groups.get(layer)||new Set();groups.set(layer,seen);if(recipe.phase!=='delivery'){if(recipe.groupKey&&seen.has(recipe.groupKey)){windows.delete(window);return;}if(recipe.groupKey)seen.add(recipe.groupKey);}
-        const left=Math.min(...boxes.map(b=>b.left))-S.sweepGroupPaddingPx,top=Math.min(...boxes.map(b=>b.top));
-        box={left,top,width:Math.max(...boxes.map(b=>b.left+b.width))-left+S.sweepGroupPaddingPx,height:Math.max(...boxes.map(b=>b.top+b.height))-top};
-        if(recipe.phase!=='delivery')stops.push(()=>seen.delete(recipe.groupKey));
+/** Schedules presentation independently of combat resolution and actor motion. */
+export function PlayRecipientEffectLayers(layer, recipes, { anchorFor, sourceId, targetId, ...options } = {}) {
+  if (!layer || !anchorFor || disabled()) return () => {};
+  const timing = timingFor(options.timing);
+  const windows = resultWindows.get(layer) || new Set();
+  const schedule = PlanRecipientEffectLayers(recipes, {
+    sourceId, targetId, now: Date.now(), windows, seenGroups: groups.get(layer),
+    sequence: options.frame == null, duration: options.duration, timing,
+  });
+  if (!schedule.length) return () => {};
+  resultWindows.set(layer, windows);
+
+  const stops = [], timers = [];
+  let remaining = schedule.length;
+  let cancelled = false;
+  const stop = () => {
+    if (cancelled) return;
+    cancelled = true;
+    timers.forEach(clearTimeout);
+    stops.forEach(fn => fn());
+    for (const entry of schedule) windows.delete(entry);
+    activeSet.delete(stop);
+  };
+  const activeSet = register(layer, stop);
+  const retire = entry => {
+    windows.delete(entry);
+    if (--remaining === 0) stop();
+  };
+
+  for (const entry of schedule) {
+    const { recipe, ids, delayMs, result, durationMs } = entry;
+    if (result) windows.add(entry);
+    const play = () => {
+      if (cancelled) return;
+      if (disabled()) { retire(entry); return; }
+      if (result) {
+        // A late browser timer can make the actual start differ from its planned
+        // one. Recheck older reservations so the live cap still holds.
+        const earlier = [];
+        for (const clip of windows) {
+          if (clip === entry) break;
+          earlier.push(clip);
+        }
+        const now = Date.now();
+        // A delayed renderer teardown can share this timer turn with the next
+        // clip. Stop elapsed canvases before admitting a successor.
+        for (const clip of earlier) if (clip.finish && clip.end <= now) clip.finish();
+        entry.start = earliestStart(entry, earlier, timing, now);
+        entry.end = entry.start + durationMs;
+        if (entry.start > now) {
+          timers.push(setTimeout(play, entry.start - now));
+          return;
+        }
       }
-      const source=anchorFor(recipe.sourceId||sourceId);const sourceBox=source?bodyBox(layer,source):null;
-      const card=actor.closest('.combatant')?.querySelector('.combatant-card');
-      const targetFacing=actor.closest('.combatant')?.classList.contains('enemy')?'front':'back';
-      if(recipe.phase==='delivery') { stops.push(PlayRecipientDelivery(layer,sourceBox,box,recipe,options)); return; }
-      stops.push(PlayRecipientEffect(layer,box,recipe,{...options,actor,sourceBox,targetFacing,
-        cardBox:card?localBox(layer,card):null,onStop:()=>{windows.delete(window);options.onStop?.();}}));
+      const actors = ids.map(id => anchorFor(id)).filter(Boolean);
+      if (!actors.length) { retire(entry); return; }
+      const actor = actors[0];
+      const boxes = actors.map(node => bodyBox(layer, node));
+      let box = boxes[0];
+      if (recipe.mount === 'group') {
+        if (recipe.phase !== 'delivery' && recipe.groupKey) {
+          const seen = groups.get(layer) || new Set();
+          if (seen.has(recipe.groupKey)) { retire(entry); return; }
+          groups.set(layer, seen);
+          seen.add(recipe.groupKey);
+          stops.push(() => seen.delete(recipe.groupKey));
+        }
+        const left = Math.min(...boxes.map(b => b.left)) - S.sweepGroupPaddingPx;
+        const top = Math.min(...boxes.map(b => b.top));
+        box = { left, top, width: Math.max(...boxes.map(b => b.left + b.width)) - left + S.sweepGroupPaddingPx,
+          height: Math.max(...boxes.map(b => b.top + b.height)) - top };
+      }
+      const source = anchorFor(recipe.sourceId || sourceId);
+      const sourceBox = source ? bodyBox(layer, source) : null;
+      let finish;
+      if (recipe.phase === 'delivery') {
+        finish = PlayRecipientDelivery(layer, sourceBox, box, recipe, { ...options, duration: durationMs, timing });
+      } else {
+        const combatant = actor.closest('.combatant');
+        const card = combatant?.querySelector('.combatant-card');
+        const targetFacing = combatant?.classList.contains('enemy') ? 'front' : 'back';
+        finish = PlayRecipientEffect(layer, box, recipe, { ...options, duration: durationMs, timing, actor, sourceBox,
+          targetFacing, cardBox: card ? localBox(layer, card) : null });
+      }
+      entry.finish = () => {
+        delete entry.finish;
+        finish();
+      };
+      stops.push(entry.finish);
+      // Keep completed reservations through the configured gap, including
+      // between independent calls from the combat timeline.
+      timers.push(setTimeout(() => retire(entry), durationMs + (result ? timing.gapMs : 0) + M.cleanupSlackMs));
     };
     if (delayMs > 0) timers.push(setTimeout(play, delayMs));
     else play();
   }
-  timers.push(setTimeout(stop,lifetime+M.cleanupSlackMs));return stop;
+  return stop;
 }
+
 export function ClearRecipientEffects(layer) {
-  for(const stop of [...(active.get(layer)||[])])stop();
+  for (const stop of [...(active.get(layer) || [])]) stop();
   groups.delete(layer);
   resultWindows.delete(layer);
 }
