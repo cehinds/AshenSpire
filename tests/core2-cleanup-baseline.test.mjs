@@ -100,6 +100,12 @@ const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanu
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;
+// c18f0d0cdb6 authored inputs used to build the JS01 capture. The historical
+// profile predates carrying these inputs. The synthetic new run needs them
+// just as a real restored run needs the rules already stored in its snapshot.
+const historicalDerivedStatsBytes = readFileSync(new URL('./fixtures/js01-pre-equipment-derived-stat-rules.json', import.meta.url));
+const historicalDerivedStats = JSON.parse(historicalDerivedStatsBytes);
+const historicalPoiseRules = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
 const seed = 511;
 const plain = value => JSON.parse(JSON.stringify(value));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -115,8 +121,9 @@ function memoryStorage() {
 }
 
 function openFight(api, enemyId, encounterId, profileId, contentVersion) {
+  const historical = profileId === 'historical';
   let profile;
-  if (profileId === 'historical') {
+  if (historical) {
     const storage = memoryStorage();
     // Let each runtime parse the original bytes in its own realm through the
     // profile read door. The following run is then created from that pin.
@@ -133,18 +140,30 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
     storage.setItem(api.runKey(1), JSON.stringify({ gameProfile: profile }));
     profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
   }
-  const applied = api.applyGameProfileToContent(api.contentBundle, profile);
+  const bundle = historical ? { ...api.contentBundle, derivedStatRules: historicalDerivedStats } : api.contentBundle;
+  const applied = api.applyGameProfileToContent(bundle, profile);
   const content = contentVersion === undefined ? applied : { ...applied, version: contentVersion };
   const registries = api.bindGameProfileRegistries(api.createRegistries(content), profile);
   if (contentVersion !== undefined) assert.equal(registries.contentVersion, contentVersion);
   const run = api.createRunState({ registries, classId: 'reaver', seed, runId: `js01-${profileId}-${enemyId}` });
+  if (historical) run.classLevelBonusVersion = 1;
   const encounter = registries.encounters.get(encounterId);
   assert.deepEqual(plain(encounter.enemies), [enemyId]);
   // W25-BANDS legacy fixture: this baseline pins the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them), in whichever module realm `api` is.
   const shippedBands = api.fixCoreMechanics.bands;
+  const shippedPoise = api.fixCoreMechanics.poise;
   delete api.fixCoreMechanics.bands;
+  if (historical) api.fixCoreMechanics.poise = historicalPoiseRules;
   let combat;
-  try { combat = api.createRunCombat({ registries, run, rng: api.createRng(seed), encounter, enemyIds: encounter.enemies }); } finally { if (shippedBands !== undefined) api.fixCoreMechanics.bands = shippedBands; }
+  try {
+    combat = api.createRunCombat({
+      registries, run, rng: api.createRng(seed), encounter, enemyIds: encounter.enemies,
+      ...(historical ? { player: { poiseMax: 6 } } : {}),
+    });
+  } finally {
+    if (historical) api.fixCoreMechanics.poise = shippedPoise;
+    if (shippedBands !== undefined) api.fixCoreMechanics.bands = shippedBands;
+  }
   // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
   delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux; delete combat.fixCoreRules?.stance?.playerMinimumCost; // the Magic Adept zero Mana floor key (owner ruling 2026-11-22) is newer than this fight
   // Wave 2 batch 5 legacy fixture: the Counter-stack keys are newer than this baseline and the Counter stance still returns 25% of the HP lost, as in a fight saved before the ruling.
@@ -317,6 +336,7 @@ const scenarios = [
 
 test('the original historical profile fixture keeps its provenance', () => {
   assert.equal(digest(historicalBytes), fixture.historicalProfileSha256);
+  assert.equal(digest(historicalDerivedStatsBytes), '236c8e3c474ca126884f5edf1acaa8b57e9d02b8c00c9bea5e4d4a030bc7a4a5');
 });
 
 test('the tradition-policy recapture preserves preceding events, RNG, receipts and continuations', () => {
