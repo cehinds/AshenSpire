@@ -6,13 +6,17 @@
 //   1. target cp  = the given combatPower (never over scoring.rank.maxCp), or a cp inside the rank band (picked by the seed); raw target = cp + rarity discount;
 //   2. the face (src/model/combatPower.js BaseFace) gets its camp, school, range, area, keyword, SP/MP costs, an optional HP-cost drawback
 //      and up to two riders (`effects` 1..3 counts the primary), then the primary amount (damage for attacks, Block for skills) is searched
-//      against the live weights so the rounded raw score equals the target. When nothing fits (the target is below the base), riders drop
-//      last-picked first, then a keyword that adds power, then area, then an HP cost is added one point at a time. Every step is fixed,
-//      so a seed always gives the same card;
+//      against the live weights so the rounded raw score equals the target. When the card is too strong even at a primary of 1, the
+//      fallback raises the SP cost (to 3), then the MP cost of a magic or hybrid card (to 3), then drops riders last-picked first, a
+//      keyword that adds power and area, and only on a card that allows a drawback adds HP cost (to MAX_HP_COST). A card still too
+//      strong keeps its nearest combat power and is marked `miss` (GenerateCard: `_cpMiss`). Every step is fixed, so a seed always
+//      gives the same card;
 //   3. the AUTHORED effect amounts are converted back from the face numbers with the scorer's authored-to-final constants
 //      (scoring.model.AUTH_PHYS / AUTH_SPELL / AUTH_BLOCK; the unarmed attack baseline from scoring.items.kit and the Block add of 6 that
 //      scoring.items.kit.weaponArt documents): face damage = 3 + 0.35 x authored (spell 0.5), face Block = 6 + 0.49 x authored.
 // The face, not the authored amount, is the scored truth; authored amounts never go below 1.
+// Since 2026-11-24 the primary search starts at 1 (a card always does its main thing) and no HP is added without `drawback`, so
+// tools/generate-cards.mjs prints different cards than the first generator for the same seed.
 //
 // Target fields: rarity, rank | combatPower, cls, seed, and optionally
 //   camp     physical | spell, or martial | magic | hybrid (hybrid = a physical hit with a 0.5 magic share);
@@ -57,7 +61,8 @@ export const RIDER_EFFECTS = Object.freeze(['poise', 'block', 'damage', 'draw', 
 const ATTACK_ONLY = new Set(['poise', 'block']);
 const SKILL_ONLY = new Set(['damage']);
 const HEAVY_STATUS_WEIGHT = 10; // a status this strong gets one stack
-const MAX_HP_COST = 99;
+const MAX_HP_COST = 6; // the most HP a drawback costs
+const MAX_COST = 3;    // the highest SP or MP cost the fallback raises to
 const MAX_PRIMARY = 999;
 
 /** The hard combat-power ceiling: scoring.rank.maxCp, else the top of the top rank's band (maxRank x width). */
@@ -160,8 +165,8 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
   if (kind === 'attack' && !area && input.range) tags.push(`range:${input.range}`);
   if (type === 'counter' && campKind !== 'magic') face.counter = 1; // Score Studio reads a counter maneuver as one Counter stack
   const setTags = () => { face.tags = area ? [...tags, 'targeting:area', 'targeting.allEnemies'] : [...tags]; };
-  face.sp = Number.isInteger(input.sp) ? input.sp : pick(rand, 3);
-  face.mp = campKind === 'martial' ? 0 : Number.isInteger(input.mp) ? input.mp : camp === 'spell' ? pick(rand, 2) : 0;
+  let sp = Number.isInteger(input.sp) ? input.sp : pick(rand, 3);
+  let mp = campKind === 'martial' ? 0 : Number.isInteger(input.mp) ? input.mp : camp === 'spell' ? pick(rand, 2) : 0;
   let keyword = input.keyword || null;
   const baseHp = input.drawback ? 1 + pick(rand, 3) : 0;
 
@@ -179,7 +184,7 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
 
   const key = kind === 'attack' ? 'dmg' : 'blk';
   const build = (hp) => {
-    Object.assign(face, { dmg: 0, blk: 0, poise: 0, draw: 0, heal: 0, cleanse: 0, restoreSp: 0, restoreMp: 0, move: 0, statuses: [], loseHp: hp });
+    Object.assign(face, { sp, mp, dmg: 0, blk: 0, poise: 0, draw: 0, heal: 0, cleanse: 0, restoreSp: 0, restoreMp: 0, move: 0, statuses: [], loseHp: hp });
     for (const r of riders) applyRider(face, r);
     face.kw = keyword ? [keyword] : [];
     setTags();
@@ -191,16 +196,22 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
     for (let v = 1; v <= MAX_PRIMARY; v++) { face[key] = base + v; const r = ScoreCard(face, scoring).raw; if (r === raw) return true; if (r > raw) return false; }
     return false;
   };
-  // Fallback order when nothing fits: drop riders last-picked first, then a keyword that adds power, then area, then add HP cost.
+  // Fallback order when the card is too strong: raise SP, then MP (magic and hybrid), then drop riders last-picked first, a keyword
+  // that adds power and area, then add HP cost only when a drawback is allowed.
   let ok = solve(baseHp);
+  while (!ok && sp < MAX_COST) { sp++; ok = solve(baseHp); }
+  while (!ok && campKind !== 'martial' && mp < MAX_COST) { mp++; ok = solve(baseHp); }
   while (!ok && riders.length) { riders.pop(); ok = solve(baseHp); }
   if (!ok && keyword && (scoring.keywords[keyword]?.flat ?? 1) >= 0) { keyword = null; ok = solve(baseHp); }
   if (!ok && area && !shape.area) { area = false; ok = solve(baseHp); }
-  for (let hp = baseHp + 1; !ok && hp <= MAX_HP_COST; hp++) ok = solve(hp);
-  if (!ok) throw new Error(`cardGenerator: no face reaches raw ${raw} (${JSON.stringify(input)})`);
-  const check = CombatPower(ScoreCard(face, scoring).raw, rarity, scoring);
-  if (check !== cp) throw new Error(`cardGenerator: face scores ${check}, wanted ${cp} (${JSON.stringify(input)})`);
-  return { face, cp, riders, target: { rarity, cls, camp, campKind, type, kind, school, area, keyword, seed } };
+  let hp = baseHp;
+  if (input.drawback) while (!ok && hp < MAX_HP_COST) { hp++; ok = solve(hp); }
+  // Still too strong: keep the weakest face (primary 1) and its combat power, marked as a miss.
+  let miss = false;
+  if (!ok) { build(hp); face[key] += 1; miss = true; }
+  const got = CombatPower(ScoreCard(face, scoring).raw, rarity, scoring);
+  if (!miss && got !== cp) throw new Error(`cardGenerator: face scores ${got}, wanted ${cp} (${JSON.stringify(input)})`);
+  return { face, cp: got, wanted: cp, miss, riders, target: { rarity, cls, camp, campKind, type, kind, school, area, keyword, seed } };
 }
 
 // The effect, rules text and short face line for one rider. `to` is the enemy target ('allEnemies' on area).
@@ -230,9 +241,9 @@ function riderPart(r, to, area) {
  */
 export const GenerateCard = (input, options) => GenerateCardWithTarget(input, options).card;
 
-/** GenerateCardWithTarget(target, options) -> {card, cp}: GenerateCard's card and the combat power it was built to. */
+/** GenerateCardWithTarget(target, options) -> {card, cp, scored, miss}: GenerateCard's card, the combat power it was built to, what it scores (differs only on a miss). */
 export function GenerateCardWithTarget(input, { scoring = shippedScoring, spellExposureBuildup = 5 } = {}) {
-  const { face, cp, riders, target } = GenerateFace(input, { scoring });
+  const { face, cp, miss, wanted, riders, target } = GenerateFace(input, { scoring });
   const { rarity, cls, camp, campKind, type, kind, area, keyword, seed } = target;
   const to = area ? 'allEnemies' : 'enemy';
   const all = area ? ' to ALL enemies' : '', allFace = area ? ' to ALL' : '';
@@ -256,7 +267,8 @@ export function GenerateCardWithTarget(input, { scoring = shippedScoring, spellE
     textTemplate: parts.map((p) => p.text).join(' ') + keywordText, ...(parts.length > 1 ? { faceTemplate: parts.slice(0, 3).map((p) => p.face || p.text) } : {}),
     flavor: `Generated: combat power ${cp}, Rank ${RankOf(cp, scoring)}.`,
     ...(face.magicShare ? { magicShare: face.magicShare } : {}),
+    ...(miss ? { _cpMiss: wanted } : {}),
     ...(kind === 'attack' ? { damageSchool: camp === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: camp === 'spell' && face.mp ? spellExposureBuildup : 0 } : {}),
   };
-  return { card, cp };
+  return { card, cp: wanted, scored: cp, miss };
 }

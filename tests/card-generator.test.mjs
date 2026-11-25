@@ -120,13 +120,32 @@ test('card generator: an explicit rider list, school, range and area reach the c
   assert.equal(martial.manaCost, 0, 'a martial card costs no MP');
 });
 
-test('card generator: a target below the base drops riders first, then pays HP, and stays exact', () => {
+test('card generator: a target below the base raises costs and drops riders before any HP, and stays exact', () => {
   const target = { rarity: 'common', combatPower: -10, seed: 5, sp: 0, effects: 3, riders: ['status:strength', 'heal'], keyword: 'retain' };
-  const { face, cp, riders } = GenerateFace(target);
+  const { face, cp, riders, miss } = GenerateFace(target);
   assert.equal(cp, -10);
+  assert.equal(miss, false);
   assert.equal(CombatPower(ScoreCard(face).raw, 'common'), -10);
+  assert.ok(face.sp > 0, 'the SP cost was raised first');
+  assert.equal(face.loseHp, 0, 'no HP without a drawback');
   assert.ok(riders.length < 2, 'a rider was dropped');
-  assert.ok(face.loseHp > 0, 'the HP cost made up the rest');
+  // Too low to reach even at the highest costs: the nearest combat power, marked as a miss, with HP only up to the cap.
+  const low = GenerateCard({ rarity: 'common', combatPower: -40, seed: 5, effects: 1, drawback: true });
+  assert.ok(low._cpMiss === -40, 'the card is marked as a miss');
+  assert.ok(low.effects.find((e) => e.op === 'loseHp').amount <= 6, 'HP cost stays under the cap');
+});
+
+test('card generator: no HP cost without a drawback, and never more than 6, over many seeds', () => {
+  for (let seed = 0; seed < 400; seed++) for (const type of CARD_TYPES) for (const drawback of [false, true]) {
+    const target = { rarity: RARITIES[seed % 3], rank: 0, seed: `hp.${seed}`, camp: CAMPS[seed % 3], type, effects: 1 + (seed % 3), allowedEffects: RIDER_EFFECTS, allowedStatuses: RIDER_STATUSES, drawback };
+    const { face, cp, wanted, miss } = GenerateFace(target);
+    if (!drawback) assert.equal(face.loseHp, 0, `seed ${seed} ${type}: HP without a drawback`);
+    assert.ok(face.loseHp <= 6, `seed ${seed} ${type}: HP ${face.loseHp} over the cap`);
+    if (!miss) assert.equal(cp, wanted);
+    else assert.ok(cp > wanted, 'a miss is only ever too strong');
+  }
+  // the reviewer's case: a common martial counter at Rank 0
+  for (let seed = 1; seed <= 40; seed++) assert.equal(GenerateFace({ rarity: 'common', rank: 0, seed, camp: 'martial', type: 'counter', effects: 1 }).face.loseHp, 0);
 });
 
 test('card generator: multi-effect cards pass the card template validator and use only real ops', () => {

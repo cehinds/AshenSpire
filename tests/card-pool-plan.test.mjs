@@ -53,7 +53,8 @@ test('card pool plan: every planned card lands on its target and the plan is det
   assert.deepEqual(a.cards, b.cards);
   assert.equal(a.cards.length, a.count);
   assert.equal(new Set(a.cards.map((c) => c.id)).size, a.cards.length);
-  a.inputs.forEach((t, i) => { const { face, cp } = GenerateFace(t); assert.equal(cp, a.targets[i]); assert.equal(CombatPower(ScoreCard(face).raw, t.rarity), cp); });
+  a.inputs.forEach((t, i) => { const { face, cp, wanted } = GenerateFace(t); assert.equal(wanted, a.targets[i]); assert.equal(CombatPower(ScoreCard(face).raw, t.rarity), cp); });
+  assert.equal(a.misses, a.cards.filter((c) => c._cpMiss !== undefined).length);
   const other = PlanCardPool({ ...opts, seed: 'xyz' });
   assert.notDeepEqual(other.cards.map((c) => c.name), a.cards.map((c) => c.name));
 });

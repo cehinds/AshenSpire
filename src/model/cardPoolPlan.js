@@ -128,13 +128,13 @@ export function PoolCounts(inputs) {
 }
 
 /**
- * PlanCardPool(options, {scoring, spellExposureBuildup}) -> {count, inputs, cards, targets, counts}: the planned targets, the generated
- * cards and the combat power each card was built to (targets[i] for cards[i]).
+ * PlanCardPool(options, {scoring, spellExposureBuildup}) -> {count, inputs, cards, targets, misses, counts}: the planned targets, the generated
+ * cards, the combat power each card was built to (targets[i] for cards[i]) and how many could not reach it (marked _cpMiss).
  */
 export function PlanCardPool(options = {}, { scoring = shippedScoring, spellExposureBuildup } = {}) {
   const { count, inputs } = PlanCardPoolInputs(options, { scoring });
   const built = inputs.map((t) => GenerateCardWithTarget(t, { scoring, ...(spellExposureBuildup !== undefined ? { spellExposureBuildup } : {}) }));
-  return { count, inputs, cards: built.map((b) => b.card), targets: built.map((b) => b.cp), counts: PoolCounts(inputs) };
+  return { count, inputs, cards: built.map((b) => b.card), targets: built.map((b) => b.cp), misses: built.filter((b) => b.miss).length, counts: PoolCounts(inputs) };
 }
 
 // The rider kind a Core effect would be on a generated card (null when it is the primary or not a rider).
