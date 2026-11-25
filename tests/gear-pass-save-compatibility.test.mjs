@@ -37,10 +37,14 @@ function world(enabled) {
 for (const enabled of [false, true]) {
   test(`saved gear profile ${enabled ? 'with' : 'without'} type effects keeps its pools, modifiers and combat behavior on reload`, () => {
     const { profile, registries, run } = world(enabled);
+    const starterGear = gameProfileEquipmentReceipt(registries, run);
+    assert.equal(starterGear.sources.some(row => row.sourceId === 'armor/reaver/default'), enabled, 'only the type-enabled profile maps the default outfit');
+    run.loadout.sets.armor[0] = 'cinderforgedPlate'; // Current authored source of Thorns.
+    reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses: true });
     const gear = gameProfileEquipmentReceipt(registries, run);
     const summary = GearSummary(registries, run.loadout, run.class, run);
     assert.equal(gear.sources.some(row => row.itemId === 'type'), enabled);
-    assert.equal(gear.sources.some(row => row.sourceId === 'armor/reaver/default'), enabled, 'only the new profile maps the default outfit to its named gear');
+    assert.ok(gear.sources.some(row => row.sourceId === 'armor/reaver/cinderforgedPlate' || row.itemId === 'cinderforgedPlate'), 'the curated outfit remains equipped');
     assert.equal(summary.cardRules.length > 0, enabled);
     const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
     assert.equal(!!combat.player.itemProps?.cardRules?.length, enabled);

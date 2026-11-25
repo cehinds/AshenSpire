@@ -55,3 +55,9 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 - `tests/gear-pass-codex-types.test.mjs` pins all 38 updated raw signatures. Git shows the source outfit and weapon tables are unchanged from 057fbe0905a. Current sword, glaives, claws, Focus, tomes, talismans, and group/signature interactions retain exact outcome checks. The historical no-type control remains unchanged.
 - `tests/gear-pass-effect-variants.test.mjs` independently plays a no-stack control for the selected Smash branch and requires exactly three equal hits, exact total damage, and a matching face in native and bundled runtimes.
 - `node --test tests/gear-pass-codex-types.test.mjs tests/gear-pass-effect-variants.test.mjs` passed 15/15 in the two focused runs, from 7/15. The lane had 39 original failures remaining.
+
+## Current signatures and save round-trip fixtures
+
+- `tests/gear-signature-mods.test.mjs` verifies Sweep Weak is Broadsword's raw signature and is replaced or cleared through profile projection. Current Sage's Robe keeps its Ward, discount and vulnerability without a flat group Mana bonus.
+- `tests/gear-pass-save-compatibility.test.mjs` proves the starter outfit mapping before equipping Cinderforged Plate for the type-enabled Thorns save round trip. The legacy option-off control still runs.
+- The two full files passed 12/15, from 9/15. Three unresolved historical assertions remain in these files (type-enabled Sage's Robe and two offer oracles). The lane had 36 original failures remaining.

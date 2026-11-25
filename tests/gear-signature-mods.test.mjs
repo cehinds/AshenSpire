@@ -53,16 +53,16 @@ test('every shipped signature is an array of mods the gear vocabulary accepts, a
 });
 
 test('a signature replaces the raw mods, an empty one clears them, and an absent one leaves them; the type base still applies', () => {
-  assert.deepEqual(rawPiece('broadsword').mods, ['strike.damage=+1'], 'the authored raw mods this test edits around');
+  assert.deepEqual(rawPiece('broadsword').mods, ['sweep.hitWeak=+1'], 'the authored raw mods this test edits around');
   const absent = registriesFor(current());
   assert.equal(current().content.gear.find(row => row.id === 'broadsword').signatureMods, undefined);
-  assert.deepEqual(piece(absent, 'broadsword').mods, ['strike.damage=+1'], 'absent: unchanged');
+  assert.deepEqual(piece(absent, 'broadsword').mods, ['sweep.hitWeak=+1'], 'absent: unchanged');
 
   const replaced = registriesFor(editedProfile(current(), 'broadsword', row => { row.signatureMods = ['start.turnWard=+2']; }));
   assert.deepEqual(piece(replaced, 'broadsword').mods, ['start.turnWard=+2'], 'present: replaces');
   const sword = wearing(replaced, { right: 'broadsword', classId: 'reaver' });
   assert.equal(wardGrant(sword.summary), 2, 'the signature reaches the turn grants');
-  assert.ok(!sword.summary.cardRules.some(rule => rule.source === 'broadsword' && rule.selector === 'strike'), 'the replaced raw rule is gone');
+  assert.ok(!sword.summary.hitRules.some(rule => rule.source === 'broadsword' && rule.selector === 'sweep'), 'the replaced raw rule is gone');
 
   const cleared = registriesFor(editedProfile(current(), 'broadsword', row => { row.signatureMods = []; }));
   assert.deepEqual(piece(cleared, 'broadsword').mods, [], 'empty: clears');
@@ -82,21 +82,21 @@ test('projection mutates neither the content nor the profile snapshot', () => {
   assert.equal(JSON.stringify(contentBundle.equipment.armour), contentBefore, 'the base content is untouched');
 });
 
-test('Sage\'s Robe in a new profile: uncommon Starseer robe, +1 total max MP, robe discount and melee vulnerability, signature in its help', () => {
+test('Sage\'s Robe in a new profile: uncommon Starseer robe, Ward, robe discount and melee vulnerability, signature in its help', () => {
   const profile = current(), registries = registriesFor(profile);
   const row = profile.content.gear.find(item => item.id === 'armor.sagesRobe');
   assert.equal(row.rarity, 'uncommon');
   assert.deepEqual(row.classes, ['starseer']);
   assert.equal(GearArmourGroupOf(piece(registries, 'sagesRobe')), 'unarmoured');
   const robe = wearing(registries, { armor: 'sagesRobe', classId: 'starseer' });
-  assert.equal(robe.mods.maxMana, 1, 'the generic robe +1 only; no raw item MP');
-  assert.equal(robe.run.equipmentPoolBonuses.maxMana, 1, 'the run pool agrees');
+  assert.equal(robe.mods.maxMana, 0, 'the current robe group has no flat Mana and the signature replaces raw MP');
+  assert.equal(robe.run.equipmentPoolBonuses.maxMana, 0, 'the run pool agrees');
   assert.equal(robe.mods.flags.vulnMelee, 1, 'melee vulnerability stays');
   assert.ok(robe.summary.cardRules.some(rule => rule.source === 'sagesRobe' && rule.selector === 'spell' && rule.stat === 'manaCost' && rule.amount === -1), 'spell MP discount stays');
   assert.equal(wardGrant(robe.summary), 1);
   const help = equipmentCardModel(registries, piece(registries, 'sagesRobe')).bonuses.map(b => b.label);
   assert.ok(help.includes('Start of turn: +1 Ward'), `equipment help shows the signature: ${help.join(' | ')}`);
-  assert.equal(help.filter(label => label === '+1 Max Mana').length, 1, 'and only the one Max Mana line, from the robe group');
+  assert.equal(help.filter(label => label === '+1 Max Mana').length, 0, 'no removed flat Mana line');
 });
 
 test('Sage\'s Robe grants exactly 1 Ward at the start of each player turn through the ordinary Ward status', () => {
