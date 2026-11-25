@@ -9,6 +9,7 @@ import { awardLevelXp, xpToNext } from '../src/model/levelup.js';
 import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 import { ClassLevelAttributeBonus, ClassBonusCount, IsClassBonusLevel } from '../src/model/classLevelBonus.js';
 import { classLevelBonuses } from '../src/content/classLevelBonuses.js';
+import { grantText } from '../src/ui/screens/characterSheet.js';
 import { characterLadder } from '../src/ui/models/CharacterSheetModel.js';
 import { deckMinimum } from '../src/model/loadout.js';
 import { deckRules } from '../src/content/deckRules.js';
@@ -164,4 +165,18 @@ for (const [name, modules] of [
     const ladder = characterLadder(reg, run);
     assert.ok(ladder.rows.every(row => row.grants.every(grant => grant.kind !== 'points')));
   }
+});
+
+
+test('custom rank credit counts are paid and shown together', () => {
+  const levelUp = registries.balance.levelUp;
+  const custom = { ...registries, balance: { ...registries.balance,
+    levelUp: { ...levelUp, characterLevelRewards: { ...levelUp.characterLevelRewards, cardRankUpsPerLevel: 2 } },
+  } };
+  const run = createRunState({ registries: custom, seed: 3, classId: 'reaver' });
+  awardLevelXp(custom, run, xpToNext(custom, 1));
+  const grant = characterLadder(custom, run).rows[1].grants.find(row => row.kind === 'rankUp');
+  assert.equal(run.level.pendingRankUps, 2);
+  assert.equal(grantText(grant), 'Rank up 2 cards');
+  assert.equal(grantText({ kind: 'rankUp', amount: 1 }), 'Rank up a card');
 });
