@@ -111,7 +111,7 @@ test('2. Finesse switches STR->DEX (weapons except Smash; card-level finesse onl
   assert.ok(deftSword > plainSword, 'dexDamage strictly adds DEX on top of STR');
 });
 
-test('3. Poise effect applies before Ward (temp health) and Bonus Poise (temp poise) reduces damage before Ward', () => {
+test('3. Bonus Poise reduces damage that gets past Ward', () => {
   const { combat, player, enemy } = fight({ classId: 'reaver', enemies: 1 });
   // Under stance-gated Poise mitigation, Poise reduces damage while Countering, Preparing, or Smashing.
   combat.player.combatStance = { maneuver: 'prepared', camp: 'physical', range: 'melee' };
@@ -121,9 +121,11 @@ test('3. Poise effect applies before Ward (temp health) and Bonus Poise (temp po
   Statuses.applyStatus(combat, player, 'ward', 2, player); // 10 Ward HP
   const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'blunt', reach: 'contact' }, tags: ['camp:physical', 'damage:blunt'], skipRatingBonus: true };
   const receipt = profileDamageReceipt(combat, enemy, player, 20, carrier, { roll: 0 });
-  assert.ok(receipt.poiseMitigated > 0, 'Poise reduces hit before Ward while Preparing');
+  assert.ok(receipt.poiseMitigated > 0, 'Poise reduces the overflow while Preparing');
   assert.equal(receipt.poiseMitigated + receipt.wardHpAbsorbed + receipt.hpLoss, receipt.damageReceipt.hits[0].incoming);
-  assert.ok(receipt.wardHpAbsorbed < receipt.damageReceipt.hits[0].incoming, 'Ward only absorbs post-Poise remainder');
+  assert.equal(receipt.wardHpAbsorbed, 10, 'the hit consumes the whole Ward buffer before mitigating Poise');
+  const stages = receipt.damageReceipt.hits[0].sources.map(row => row.id);
+  assert.ok(stages.indexOf('ward-hp') < stages.indexOf('poise-mitigation'));
 });
 
 test('4. Armament poise only adds weighted CP, items carry ranks & badges, and enemy poiseMax is lowered', () => {

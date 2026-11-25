@@ -43,15 +43,21 @@ test('order Block > Ward > Poise + Health: Block absorbs first, Ward absorbs 1:1
   delete combat.player.combatStance;
   delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   enemy.block = 4;
-  ward(combat, enemy, 1); // 5 Ward HP
-  const receipt = hit(combat, enemy, BLUNT, 30); // base 30 -> 15 -> 18 with Attack stance (1.2x)
+  enemy.ratings.poise = 6;
+  enemy.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  ward(combat, enemy, 1);
+  enemy.persistentPoise = { value: 6, max: 6 };
+  const receipt = hit(combat, enemy, BLUNT, 30);
   const incoming = receipt.damageReceipt.hits[0].incoming;
-  assert.equal(incoming, 18);
   assert.equal(receipt.wardHpBuffer, true);
-  assert.equal(receipt.blocked, 4, 'Block first (18 -> 14)');
-  assert.equal(receipt.wardHpAbsorbed, 5, 'Ward second (14 -> 9)');
-  assert.equal(receipt.poiseMitigated + receipt.hpLoss, 9, 'all 9 overflow goes to Poise + HP');
-  assert.ok(receipt.poiseMitigated > 0 && receipt.hpLoss > 0, 'overflow splits between Poise and HP');
+  assert.equal(receipt.blocked, 4);
+  assert.equal(receipt.wardHpAbsorbed, 5);
+  assert.equal(receipt.poiseMitigated, 3, 'Counter mitigates half the six Poise from the overflow');
+  assert.equal(receipt.hpLoss, incoming - 4 - 5 - 3);
+  assert.ok(receipt.hpLoss > 0, 'the fixture leaves positive HP damage after all three layers');
+  const stages = receipt.damageReceipt.hits[0].sources.map(row => row.id);
+  assert.ok(stages.indexOf('block') < stages.indexOf('ward-hp'));
+  assert.ok(stages.indexOf('ward-hp') < stages.indexOf('poise-mitigation'));
 });
 
 test('Ward completely absorbing post-Block damage leaves Poise and HP untouched', () => {
@@ -59,22 +65,32 @@ test('Ward completely absorbing post-Block damage leaves Poise and HP untouched'
   delete combat.player.combatStance;
   delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
   enemy.block = 4;
-  ward(combat, enemy, 2); // 10 Ward HP
+  enemy.combatStance = { maneuver: 'prepared', camp: 'spell', range: 'reach' };
+  ward(combat, enemy, 3);
+  enemy.persistentPoise = { value: enemy.ratings.poise, max: enemy.ratings.poise };
   const poiseBefore = enemy.persistentPoise.value;
   enemy.hp = enemy.maxHp = 100;
-  applyAttackDamage(combat, combat.player, enemy, 20, [], { ...BLUNT, skipRatingBonus: true }); // 12 incoming: 4 Block, 8 Ward
+  const quoted = hit(combat, enemy, BLUNT);
+  assert.equal(quoted.blocked, 4);
+  assert.ok(quoted.wardHpAbsorbed > 0 && quoted.wardHpAbsorbed < 15);
+  assert.equal(quoted.poiseMitigated, 0);
+  assert.equal(quoted.poiseDrain, 0);
+  applyAttackDamage(combat, combat.player, enemy, 20, [], { ...BLUNT, skipRatingBonus: true });
   assert.equal(enemy.block, 0);
-  assert.equal(enemy.wardHp, 2, '10 - 8 absorbed = 2 Ward HP remaining');
-  assert.equal(enemy.statuses.ward.stacks, 1, 'ceil(2/5) = 1 stack');
+  assert.equal(enemy.wardHp, 15 - quoted.wardHpAbsorbed);
+  assert.equal(enemy.statuses.ward.stacks, Math.ceil(enemy.wardHp / 5));
   assert.equal(enemy.persistentPoise.value, poiseBefore, 'Poise untouched');
   assert.equal(enemy.hp, 100, 'HP untouched');
 });
 
-test('a Force hit on a Ward holder also meets Block > Ward > Poise + Health (overflow splits 50/50)', () => {
+test('saved Force routing still splits Ward overflow 50/50', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 40 });
   delete enemy.combatStance;
+  // The original hpBuffer policy predated inherent weapon Poise (50e1bc28db6).
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
   enemy.block = 2;
   ward(combat, enemy, 1); // 5 Ward HP
+  enemy.persistentPoise = { value: 40, max: 40 };
   const receipt = hit(combat, enemy, FORCE, 30); // 15 incoming -> 2 Block -> 5 Ward -> 8 overflow (50/50)
   assert.equal(receipt.wardHpBuffer, true);
   assert.equal(receipt.blocked, 2);
