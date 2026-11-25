@@ -39,3 +39,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/stat-rows.test.mjs`, `tests/starting-stat-config.test.mjs`, and `tests/latest-stat-allocation-rules.test.mjs` pin the per-point coefficients and bounds, separate Core stamina alias, and exact consecutive 2-to-3 and 3-to-4 allocation gains. Old profile integrity, explicit saved rules, and custom fractional row coverage stay intact.
 - `node --test tests/stat-rows.test.mjs tests/starting-stat-config.test.mjs tests/latest-stat-allocation-rules.test.mjs` passed 51/51. The lane had 57 original failures remaining.
+
+## Attribute and creation previews
+
+- `tests/attribute-point-preview.test.mjs` and `tests/creation-primary-benefits.test.mjs` assert current per-point labels, effective Dexterity with and without Heavy armour, and exact allocation deltas in the UI and fight. The custom fractional examples and prior four-point draw and capacity check now isolate their own snapshot rows.
+- `node --test tests/creation-primary-benefits.test.mjs tests/attribute-point-preview.test.mjs` passed 28/28, from 19/28. The lane had 48 original failures remaining.
