@@ -152,30 +152,34 @@ test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (b
   run.smithingStones = 99;
   const xp = Array.from({ length: 8 }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0);
   awardSkillXp(registries, run, 'item:blade', xp, { queueRewards: false, queueRankUps: coreCardRanks(run) });
-  const strike = run.deck.find((c) => c.cardId === 'core.strike');
+  // Its CP budget leaves eligible paid and bonus steps across all six ranks.
+  const card = run.deck.find((c) => c.cardId === 'core.strike');
+  card.cardId = 'core.stunningBlow';
   const fill = () => {
-    while (paidUpgradeCount(strike) < UpgradeSlots(run, strike)) {
-      const quote = planCardUpgrade(run, registries, strike.instanceId);
+    while (paidUpgradeCount(card) < UpgradeSlots(run, card)) {
+      const quote = planCardUpgrade(run, registries, card.instanceId, { choices: 3 });
       assert.equal(quote.ok, true, quote.reason);
-      commitCardUpgrade(run, registries, quote);
+      const step = (quote.options ?? [quote]).find((option) => option.step && option.step.nextRank === undefined)?.step;
+      assert.ok(step, 'buy an upgrade that leaves rank advancement to the skill reward');
+      commitCardUpgrade(run, registries, { ...quote, step });
     }
   };
   const rankUp = () => {
-    const options = rankUpBonusOptions(registries, run, strike);
-    assert.ok(raiseCardRank(registries, run, 'item:blade', strike.instanceId, options[0]?.step ?? null), 'the rank-up lands');
+    const options = rankUpBonusOptions(registries, run, card);
+    assert.ok(raiseCardRank(registries, run, 'item:blade', card.instanceId, options[0]?.step ?? null), 'the rank-up lands');
   };
   for (let i = 0; i < 5; i += 1) { fill(); rankUp(); }
-  assert.equal(strike.rank, 5);
-  assert.equal(UpgradeSlots(run, strike), 6);
-  assert.equal(paidUpgradeCount(strike), 5);
-  assert.equal(upgradeCount(strike), 10, 'five paid steps and five bonus steps');
-  assert.equal(canUpgrade(registries, run, strike).ok, true, 'the sixth slot can still be bought');
+  assert.equal(card.rank, 5);
+  assert.equal(UpgradeSlots(run, card), 6);
+  assert.equal(paidUpgradeCount(card), 5);
+  assert.equal(upgradeCount(card), 10, 'five paid steps and five bonus steps');
+  assert.equal(canUpgrade(registries, run, card).ok, true, 'the sixth slot can still be bought');
   fill();
-  assert.equal(paidUpgradeCount(strike), 6);
-  assert.equal(RankUpBlock(run, strike), '');
+  assert.equal(paidUpgradeCount(card), 6);
+  assert.equal(RankUpBlock(run, card), '');
   rankUp();
-  assert.equal(strike.rank, 6);
-  assert.deepEqual(upgradeStepsProblems(strike, 'card'), [], 'a save holding the card stays valid');
+  assert.equal(card.rank, 6);
+  assert.deepEqual(upgradeStepsProblems(card, 'card'), [], 'a save holding the card stays valid');
 });
 
 // Review fix (2026-11-23): a missing setting counts as on, so saved runs get the rule too; the help text says so.
