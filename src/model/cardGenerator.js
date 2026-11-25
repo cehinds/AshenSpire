@@ -31,6 +31,15 @@
 //   keyword    exhaust | ethereal | retain | innate;  drawback  true = an HP cost.
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
 import { BaseFace, ScoreCard, CombatPower, RankOf, CardName } from './combatPower.js';
+import {
+  EffectiveTier,
+  HybridUnlocked,
+  ElementUnlocked,
+  StatusUnlocked,
+  StatusStackCapAtTier,
+  ZeroCostUnlocked,
+  UpgradeKindUnlocked,
+} from './tierUnlocks.js';
 
 const BLOCK_ADD = 6; // scoring.items.kit.weaponArt: "Block x0.49 + 6 (DR add)"
 const hash = (s) => { let h = 2166136261; for (const ch of String(s)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -220,9 +229,9 @@ const NEW_FIELDS = ['effects', 'riders', 'range', 'area', 'keyword', 'drawback',
  * on. Supports both pool-planner targets (`effects`, `riders`, `range`, `area`, `keyword`, `drawback`) and batch/auto-balance targets
  * (`stances`, `effectCount`, `targeting`, `keywords`, `aimMaxCp`).
  */
-export function GenerateFace(input, { scoring = shippedScoring } = {}) {
-  const { rarity, cls, type, seed, campKind, school } = normaliseInput(input, scoring);
-  const camp = campKind === 'magic' ? 'spell' : 'physical';
+export function GenerateFace(input, { scoring = shippedScoring, enforceTierUnlocks = false } = {}) {
+  let { rarity, cls, type, seed, campKind, school } = normaliseInput(input, scoring);
+  const tierEnforced = Boolean(enforceTierUnlocks || input.enforceTierUnlocks);
   const batchMode = hasBatchCriteria(input);
   const stances = normalizeStances(input);
   const requestedKeywords = Array.isArray(input.keywords)
@@ -231,12 +240,13 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
   const effectCount = Number.isInteger(input.effectCount) ? Math.max(1, Math.min(4, input.effectCount)) : null;
 
   // A target with none of the newer fields is the first generator's card (one optional Poise or draw rider) and keeps its seed string.
+  const campForSeed = campKind === 'magic' ? 'spell' : 'physical';
   const legacy = !batchMode && input.effects === undefined && input.riders === undefined;
   const plain = !batchMode && school === 'none' && campKind !== 'hybrid' && NEW_FIELDS.every((k) => input[k] === undefined);
   const extra = batchMode
     ? `|${campKind}|${school}|${stances.join(',')}|${effectCount || ''}|${input.targeting || ''}|${requestedKeywords.join(',')}`
     : (plain ? '' : `|${campKind}|${school}|${NEW_FIELDS.map((k) => JSON.stringify(input[k] ?? null)).join('|')}`);
-  const rand = seededPrng(`${seed}|${rarity}|${cls}|${camp}|${type}${extra}`);
+  const rand = seededPrng(`${seed}|${rarity}|${cls}|${campForSeed}|${type}${extra}`);
 
   let cp;
   if (Number.isFinite(input.combatPower)) cp = Math.round(input.combatPower);
@@ -244,6 +254,17 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
   else throw new Error('cardGenerator: give a rank or a combatPower');
   if (cp > MaxCpOf(scoring)) throw new Error(`cardGenerator: combat power ${cp} is over the ceiling ${MaxCpOf(scoring)} (scoring.rank.maxCp)`);
   const raw = cp + scoring.rarity.discount[rarity];
+
+  const cardRankForTier = Number.isInteger(input.rank) ? input.rank : RankOf(cp, scoring);
+  const effectiveTier = tierEnforced ? EffectiveTier(cardRankForTier, rarity, scoring) : Infinity;
+  if (tierEnforced) {
+    if (campKind === 'hybrid' && !HybridUnlocked(effectiveTier, scoring)) campKind = 'martial';
+    if (campKind !== 'martial' && school !== 'none' && !ElementUnlocked(school, effectiveTier, scoring)) {
+      const fallbackSchools = SCHOOLS.filter((s) => s !== 'none' && ElementUnlocked(s, effectiveTier, scoring));
+      school = fallbackSchools.length ? pickFrom(rand, fallbackSchools) : 'none';
+    }
+  }
+  const camp = campKind === 'magic' ? 'spell' : 'physical';
 
   // A magic card casts: its maneuver is casting, so smash / sweep play as an attack and counter / defend as a skill.
   const shape = campKind === 'magic' ? { type: MAGIC_ATTACK_TYPES.has(type) ? 'attack' : 'skill', maneuver: 'maneuver:casting', area: TYPE_SHAPE[type].area } : TYPE_SHAPE[type];
@@ -271,12 +292,21 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
   if (camp === 'spell') tags.push(school === 'divine' ? 'tradition:divine' : 'tradition:arcane');
   if (kind === 'attack' && campKind !== 'martial' && SCHOOL_DAMAGE[school]) tags.push(SCHOOL_DAMAGE[school]); // a martial card has no school
   let area = Boolean(input.area || input.targeting === 'area' || shape.area);
+  if (tierEnforced && area && !shape.area && !UpgradeKindUnlocked('targeting', effectiveTier, scoring)) area = false;
   if (kind === 'attack' && !area && input.range) tags.push(`range:${input.range}`);
   if (type === 'counter' && campKind !== 'magic') face.counter = 1; // Score Studio reads a counter maneuver as one Counter stack
   const setTags = () => { face.tags = area ? [...tags, 'targeting:area', 'targeting.allEnemies'] : [...tags]; };
   let sp = Number.isInteger(input.sp) ? Math.max(0, input.sp) : pick(rand, 3);
   let mp = campKind === 'martial' ? 0 : Number.isInteger(input.mp) ? Math.max(0, input.mp) : camp === 'spell' ? pick(rand, 2) : 0;
+  if (tierEnforced && !ZeroCostUnlocked(effectiveTier, scoring) && sp === 0 && mp === 0) sp = 1;
   let keywords = [...requestedKeywords];
+  if (tierEnforced) {
+    keywords = keywords.filter((kw) => {
+      if (kw === 'retain') return UpgradeKindUnlocked('fx:retain', effectiveTier, scoring);
+      if (kw === 'innate') return UpgradeKindUnlocked('fx:innate', effectiveTier, scoring);
+      return true;
+    });
+  }
   const baseHp = input.drawback ? 1 + pick(rand, 3) : 0;
 
   // Riders: the legacy target keeps the first generator's Poise or draw; batch mode honours stances & effectCount;
@@ -286,8 +316,12 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
   if (batchMode) {
     const addStatusRider = (status, stacks, target) => {
       if (!status || !(status in (scoring.statuses || {}))) return false;
+      if (tierEnforced && !StatusUnlocked(status, effectiveTier, scoring)) return false;
       if (riders.some((r) => r.status === status)) return false;
-      riders.push({ kind: `status:${status}`, status, target, stacks });
+      const cap = tierEnforced ? StatusStackCapAtTier(status, effectiveTier, scoring) : Infinity;
+      const clamped = Math.min(stacks, cap);
+      if (!(clamped >= 1)) return false;
+      riders.push({ kind: `status:${status}`, status, target, stacks: clamped });
       return true;
     };
     for (const st of stances) {
@@ -318,10 +352,23 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
     const n = kind === 'attack' ? 3 * pick(rand, 3) : pick(rand, 2);
     if (n) riders.push(kind === 'attack' ? { kind: 'poise', amount: n } : { kind: 'draw', amount: n });
   } else if (Array.isArray(input.riders)) {
-    riders = input.riders.slice(0, 2).map((k) => makeRider(k, rand, camp, scoring));
+    riders = input.riders.slice(0, 2)
+      .filter((k) => !tierEnforced || !k.startsWith('status:') || StatusUnlocked(k.slice('status:'.length), effectiveTier, scoring))
+      .map((k) => {
+        const r = makeRider(k, rand, camp, scoring);
+        if (tierEnforced && r.status) r.stacks = Math.min(r.stacks, StatusStackCapAtTier(r.status, effectiveTier, scoring));
+        return r;
+      });
   } else {
-    const pool = riderPool(kind, input.allowedEffects, input.allowedStatuses, scoring);
-    for (let i = 1; i < input.effects && pool.length; i++) riders.push(makeRider(pool.splice(pick(rand, pool.length), 1)[0], rand, camp, scoring));
+    const allowedStatuses = tierEnforced
+      ? (input.allowedStatuses || []).filter((s) => StatusUnlocked(s, effectiveTier, scoring))
+      : input.allowedStatuses;
+    const pool = riderPool(kind, input.allowedEffects, allowedStatuses, scoring);
+    for (let i = 1; i < input.effects && pool.length; i++) {
+      const r = makeRider(pool.splice(pick(rand, pool.length), 1)[0], rand, camp, scoring);
+      if (tierEnforced && r.status) r.stacks = Math.min(r.stacks, StatusStackCapAtTier(r.status, effectiveTier, scoring));
+      riders.push(r);
+    }
   }
 
   const key = kind === 'attack' ? 'dmg' : 'blk';
@@ -415,8 +462,8 @@ function riderPart(r, to, area) {
 export const GenerateCard = (input, options) => GenerateCardWithTarget(input, options).card;
 
 /** GenerateCardWithTarget(target, options) -> {card, cp, scored, miss}: GenerateCard's card, the combat power it was built to, what it scores (differs only on a miss). */
-export function GenerateCardWithTarget(input, { scoring = shippedScoring, spellExposureBuildup = 5, idPrefix = 'gen', applyNaming = true } = {}) {
-  const { face, cp, miss, wanted, riders, target } = GenerateFace(input, { scoring });
+export function GenerateCardWithTarget(input, { scoring = shippedScoring, spellExposureBuildup = 5, idPrefix = 'gen', applyNaming = true, enforceTierUnlocks = false } = {}) {
+  const { face, cp, miss, wanted, riders, target } = GenerateFace(input, { scoring, enforceTierUnlocks });
   const { rarity, cls, camp, campKind, type, kind, area, keywords, stanceTrigger, seed } = target;
   const to = area ? 'allEnemies' : 'enemy';
   const all = area ? ' to ALL enemies' : '', allFace = area ? ' to ALL' : '';
@@ -509,6 +556,7 @@ export function GenerateCardBatch(criteria = {}, { scoring = shippedScoring, spe
       keywords,
       ...(Number.isInteger(criteria.sp) ? { sp: criteria.sp } : {}),
       ...(Number.isInteger(criteria.mp) ? { mp: criteria.mp } : {}),
+      ...(criteria.enforceTierUnlocks ? { enforceTierUnlocks: true } : {}),
       seed: itemSeed,
     }, { scoring, spellExposureBuildup, idPrefix, applyNaming });
     cards.push(card);

@@ -15,6 +15,7 @@ test('every option carries its rarity and a size, for a rest-site row and a Blac
   const seen = new Set();
   for (let seed = 1; seed <= 40; seed += 1) {
     const run = newRun(seed); run.smithingStones = 9;
+    for (const card of run.deck) card.rank = 3;
     for (const blacksmith of [false, true]) {
       const model = cardUpgradeModel(registries, run, null, { blacksmith });
       for (const row of model.rows) {

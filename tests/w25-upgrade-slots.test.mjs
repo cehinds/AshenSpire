@@ -81,7 +81,7 @@ test('rest quotes: 1 option for upgrades 1-3 and 2 for the 4th; the picker model
 
 function restComboSample(base, count) {
   const lead = [{ k: 'dmg', n: 1 }, { k: 'fx', fx: 'draw', n: 1 }, { k: 'fx', fx: 'block', n: 4 }];
-  const instance = { instanceId: 'odds', cardId: 'core.strike', upgraded: true, upgradeSteps: lead };
+  const instance = { instanceId: 'odds', cardId: 'core.strike', rank: 3, upgraded: true, upgradeSteps: lead };
   let options = 0, combos = 0, shortLists = 0;
   for (let seed = 1; seed <= count; seed += 1) {
     const run = { seed, level: { level: 4 }, gameProfile: registries.gameProfile, rangePolicy: {} };

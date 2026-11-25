@@ -5017,6 +5017,51 @@
       "maxStacks": 3,
       "why": "Added when an upgrade strengthens an effect by 10% compounding per stack (1.10^1, 1.10^2, 1.10^3). Surcharge can be flat, multiplicative, or toggled off."
     },
+    "refined": {
+      "label": "Refined (drawback eased)",
+      "surchargeEnabled": true,
+      "mode": "flat",
+      "base": 6,
+      "escalate": "double",
+      "stacks": [
+        6,
+        12,
+        24
+      ],
+      "pMultiplier": 0.15,
+      "maxStacks": 3,
+      "why": "Added when a higher-rank upgrade softens or removes a card drawback (Refined, Refined+, Refined+2): self-debuffs, rising cost, Ethereal, or Exhaust."
+    },
+    "tempered": {
+      "label": "Tempered (combat form & forging)",
+      "surchargeEnabled": true,
+      "mode": "flat",
+      "base": 4,
+      "escalate": "double",
+      "stacks": [
+        4,
+        8,
+        16
+      ],
+      "pMultiplier": 0.15,
+      "maxStacks": 3,
+      "why": "Added when an upgrade forges a card's combat form or tactical structure (Tempered, Tempered+, Tempered+2): multi-hit, reach, targeting, stance, Poise, Block, or Counter."
+    },
+    "purified": {
+      "label": "Purified (healing & cleansing)",
+      "surchargeEnabled": true,
+      "mode": "flat",
+      "base": 4,
+      "escalate": "double",
+      "stacks": [
+        4,
+        8,
+        16
+      ],
+      "pMultiplier": 0.15,
+      "maxStacks": 3,
+      "why": "Added when an upgrade adds or strengthens healing, regeneration, Ward, or cleansing effects (Purified, Purified+, Purified+2)."
+    },
     "extraEffect": {
       "label": "Added Effect (upgrade)",
       "surchargeEnabled": false,
@@ -5076,6 +5121,151 @@
       "pMultiplier": 0.25,
       "maxStacks": 3,
       "why": "Escalating CP surcharge per flat attribute point on weapons/armour so attribute-bearing gear is rare and expensive."
+    }
+  },
+  "tierUnlocks": {
+    "$comment": "Rank and rarity tier gates for upgrades, tags, statuses, elements, magic+martial hybrids, cost reductions, and numeric ceilings (owner, 2026-11-25). effectiveTier = cardRank + rarityBonus[rarity].",
+    "enabled": true,
+    "rarityBonus": {
+      "common": 0,
+      "uncommon": 0,
+      "rare": 1,
+      "starter": 0,
+      "special": 0
+    },
+    "upgradeRarityMinTier": [
+      0,
+      1,
+      3
+    ],
+    "upgradeTagStacks": {
+      "improved": [
+        0,
+        2,
+        3
+      ],
+      "efficient": [
+        2,
+        3,
+        4
+      ],
+      "refined": [
+        2,
+        3,
+        4
+      ],
+      "tempered": [
+        0,
+        2,
+        3
+      ],
+      "purified": [
+        1,
+        2,
+        3
+      ]
+    },
+    "zeroCostMinTier": 3,
+    "hybridMinTier": 2,
+    "upgrades": {
+      "dmg": 0,
+      "blk": 0,
+      "poise": 0,
+      "stk": 0,
+      "dmgType": 0,
+      "school": 0,
+      "fx:block": 0,
+      "fx:cycle": 0,
+      "fx:cull": 0,
+      "fx:shuffle": 0,
+      "costSwap": 1,
+      "fx:draw": 1,
+      "fx:counter": 1,
+      "addStatus": 1,
+      "fx:copy": 1,
+      "fx:boost": 1,
+      "element": 2,
+      "fx:heal": 1,
+      "fx:cleanse": 1,
+      "cost": 2,
+      "fx:retain": 2,
+      "fx:innate": 2,
+      "fx:holdOne": 2,
+      "fx:reaction": 2,
+      "maneuver": 2,
+      "targeting": 2,
+      "fx:target": 2,
+      "stkEase": 2,
+      "fx:unethereal": 2,
+      "fx:steady": 2,
+      "fx:unexhaust": 3,
+      "hits": 3,
+      "range": 3,
+      "fx:recurring": 3
+    },
+    "elements": {
+      "fire": 0,
+      "frost": 0,
+      "earth": 0,
+      "magic": 1,
+      "arcane": 1,
+      "lightning": 2,
+      "holy": 2,
+      "divine": 2,
+      "sacred": 2,
+      "decay": 2,
+      "illusion": 3,
+      "psychic": 3,
+      "force": 3,
+      "alteration": 3
+    },
+    "statuses": {
+      "chill": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },
+      "weak": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },
+      "bleed": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },
+      "dazed": { "minTier": 0, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "prepared": { "minTier": 0, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "shock": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "confused": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "silenced": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "crimsonBlight": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "vulnerable": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "frail": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "burn": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "venom": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "frost": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "barrier": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "decoy": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "paralysis": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "necroticBlight": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "regen": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "ward": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "stoneskin": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "sleep": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "evade": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "entombed": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "staggered": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "strength": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "dexterity": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "intelligence": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "wisdom": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "invulnerability": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 }
+    },
+    "ceilings": {
+      "damage": [
+        12,
+        18,
+        28,
+        40,
+        null
+      ],
+      "block": [
+        10,
+        15,
+        22,
+        32,
+        null
+      ]
     }
   }
 }
