@@ -69,6 +69,7 @@
 // map DOES. It does not drive combat's confirm beyond the one Azure drink it
 // needs to reach an empty flask (every other Use it taps there is cancelled at
 // the question).
+import { catalogVersionScanText } from './buildversion.mjs';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -928,7 +929,7 @@ async function planProbe(cdp, base, check) {
   }
   // THE RUN HUD's room rail, turned on through the config row it reads.
   const configPath = 'src/config/generated/ui.js';
-  const configBody = readFileSync(resolve(ROOT, configPath), 'utf8');
+  const configBody = catalogVersionScanText(configPath, readFileSync(resolve(ROOT, configPath), 'utf8'));
   const roomRailOff = /("roomRail"\s*:\s*)false/;
   const roomRailOn = /"roomRail"\s*:\s*true/;
   const railOn = configBody.replace(roomRailOff, '$1true');

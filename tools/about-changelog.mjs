@@ -13,8 +13,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { catalogJSONExpression } from './catalog-json.mjs';
 // THE ORDERING RULE HAS ONE HOME, AND IT IS NOT HERE. See stampKey below.
-import { versionTuple, compareVersions } from './buildversion.mjs';
+import { catalogVersionScanText, versionTuple, compareVersions } from './buildversion.mjs';
 // The landing rule and the event's pull request number, from the modules that own them.
 import { pullFromEnv } from './receipts.mjs';
 import { landedSince } from './build-stamp.mjs';
@@ -1361,7 +1362,9 @@ async function orderCorpus(ordinalFile) {
 }
 // Compact generated JS data keeps the standalone pack small; authored sources stay readable.
 function generatedText(entries) {
-  return `// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.\n// Do not edit: the focused check refuses any drift from the authoritative Markdown.\n\nexport const GENERATED_CHANGELOG = Object.freeze(${JSON.stringify(entries)});\n`;
+  const packed = catalogJSONExpression(entries);
+  const decoderImport = packed.encoded ? "import { decodeCatalogJSON } from '../model/catalogJson.js';\n" : '';
+  return `// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.\n// Do not edit: the focused check refuses any drift from the authoritative Markdown.\n\n${decoderImport}export const GENERATED_CHANGELOG = Object.freeze(${packed.expression});\n`;
 }
 
 async function generatedEntries() {
@@ -2166,8 +2169,9 @@ async function selftest() {
       });
       const output = `${child.stdout || ''}\n${child.stderr || ''}`;
       if (plant.write) {
+        const projection = 'src/content/changelog.generated.js';
         const projected = child.status === 0
-          ? readFileSync(resolve(tempRoot, 'src/content/changelog.generated.js'), 'utf8')
+          ? catalogVersionScanText(projection, readFileSync(resolve(tempRoot, projection), 'utf8'))
           : '';
         if (child.status !== 0 || !projected.includes(JSON.stringify(plant.write.detail).slice(1, -1))) {
           console.error(`MISS ${plant.name}: exit=${child.status}; expected detail ${JSON.stringify(plant.write.detail)}; output=${output.slice(-600)}`);
