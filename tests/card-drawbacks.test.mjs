@@ -55,17 +55,25 @@ test('Hold Block costs 1 more Stamina each play, up to +2, and its authored upgr
   assert.ok(registries.cards.get('base.retain-block').effects.some((e) => e.op === 'block' && e.amount === 6), 'still 6 Block');
 });
 
-test("Star Seer's Ethereal starter keeps 10 Block and is offered Reaction, dropping Ethereal, or more Block", async () => {
+test("Star Seer's Ethereal starter keeps 10 Block and unlocks a Block upgrade at Rank 1", async () => {
   const { nextUpgradeOptions } = await import('../src/model/cardUpgradeLimits.js');
   const { applyUpgradeSteps } = await import('../src/model/cardUpgrade.js');
   const ethereal = registries.cards.get('base.ethereal');
   assert.ok(ethereal.effects.some((e) => e.op === 'block' && e.amount === 10));
   assert.ok(ethereal.keywords.includes('ethereal'));
   for (const seed of [1, 2, 3, 4, 5]) {
-    const offered = nextUpgradeOptions({ seed, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: `e${seed}`, cardId: ethereal.id, upgraded: false }, ethereal, registries, 3);
-    // An ease offered at uncommon or rare is a combo whose first step is the ease (upgrade rarity, #2920): name it by that step.
-    const kinds = offered.map((s) => (s.k === 'combo' ? s.steps[0] : s)).map((s) => (s.k === 'fx' ? `fx:${s.fx}` : s.k)).sort();
-    assert.deepEqual(kinds, ['blk', 'fx:reaction', 'fx:unethereal'], `seed ${seed}: ${JSON.stringify(offered)}`);
+    const run = { seed, gameProfile: registries.gameProfile, rangePolicy: {} };
+    const instance = { instanceId: `e${seed}`, cardId: ethereal.id, upgraded: false };
+    // The unranked tier caps Block at the printed 10. Rank 1 opens room above it.
+    const offeredKinds = offers => offers.map(step => step.k === 'combo' ? step.steps[0] : step)
+      .map(step => step.k === 'fx' ? `fx:${step.fx}` : step.k).sort();
+    const unranked = nextUpgradeOptions(run, instance, ethereal, registries, 3);
+    assert.deepEqual(offeredKinds(unranked), ['fx:reaction', 'fx:unethereal'], `unranked seed ${seed}`);
+    const ranked = nextUpgradeOptions(run, { ...instance, rank: 1 }, ethereal, registries, 3);
+    assert.deepEqual(offeredKinds(ranked), ['blk', 'fx:reaction', 'fx:unethereal'], `Rank 1 seed ${seed}`);
+    const blockUpgrade = ranked.find(step => step.k === 'blk' || step.steps?.[0]?.k === 'blk');
+    const upgraded = applyUpgradeSteps(ethereal, [blockUpgrade]);
+    assert.ok(upgraded.effects.some(effect => effect.op === 'block' && effect.amount > 10));
   }
   const kept = applyUpgradeSteps(ethereal, [{ k: 'fx', fx: 'unethereal' }]);
   assert.ok(!kept.keywords.includes('ethereal'));
