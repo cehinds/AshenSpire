@@ -7,7 +7,8 @@ import { BaseFace, ScoreCard, CombatPower, RankOf, RankName, RankRange } from '.
 const EFFECT_UNITS = Object.freeze({
   damage: 'damage',
   block: 'Block',
-  ward: 'Ward',
+  ward: 'Ward HP',
+  gainBarrier: 'Bonus Poise stacks',
   poiseDamage: 'Poise',
   restorePoise: 'Poise',
   heal: 'HP healed',
@@ -32,8 +33,8 @@ const EFFECT_UNITS = Object.freeze({
 const COUNTED_ONCE_EFFECTS = new Set(['removeStatus', 'pullEnemy', 'swapRows', 'moveEngagement']);
 // Effects cardDefToFace (studio.js) scores with another row's weight (EFFECT_SCORE_KEYS there): their own box does nothing.
 const BORROWED_EFFECT_WEIGHTS = Object.freeze({ ward: 'block', restorePoise: 'block', gainEnergy: 'restoreStamina', swapRows: 'pullEnemy' });
-// Effects the scorer never reads; Evade stacks score through the evade status row.
-const UNREAD_EFFECTS = Object.freeze({ evadeStack: 'Not scored here: Evade uses the evade status row', addCard: 'Not scored yet', buildup: 'Not scored yet' });
+// Effects the scorer never reads; Evade stacks score through the evade status row, and gainBarrier through barrier.
+const UNREAD_EFFECTS = Object.freeze({ evadeStack: 'Not scored here: Evade uses the evade status row', gainBarrier: 'Not scored here: Bonus Poise uses the barrier status row', addCard: 'Not scored yet', buildup: 'Not scored yet' });
 // Statuses ScoreCard values with a fixed formula that ignores the weight (exactStatus in combatPower.js).
 const FORMULA_STATUSES = new Set(['burn', 'venom', 'shock', 'chill']);
 // A round positive score for the multiplier examples.
@@ -103,8 +104,28 @@ export function weightSentence(groupKey, id, scoring, label)
         : { before: 'adds', mid: 'pts', after: '' };
     case 'tags':
       return tagSentence(scoring.tags?.[id]);
+    case 'items':
+      return itemParamSentence(id);
+    case 'gearFields':
+      return { before: '', mid: 'pts per stack / point', after: '' };
     default:
       return { before: '', mid: '', after: '' };
+  }
+}
+
+function itemParamSentence(id)
+{
+  switch (id)
+  {
+    case 'weaponPoiseDamage.perPoint': return { before: '', mid: 'pts per inherent Poise dmg', after: '' };
+    case 'weaponPoiseDamage.baseline': return { before: 'Free up to', mid: 'Poise dmg', after: '' };
+    case 'poiseThreshold.perPoint': return { before: '', mid: 'pts per armour Poise', after: '' };
+    case 'poiseThreshold.baseline': return { before: 'Free up to', mid: 'armour Poise', after: '' };
+    case 'plays.weaponArt': return { before: '×', mid: 'weapon art raw score', after: '' };
+    case 'range.reach': return { before: 'Reach weapon adds', mid: 'pts', after: '' };
+    case 'range.ranged': return { before: 'Ranged weapon adds', mid: 'pts', after: '' };
+    case 'conditionFactor': return { before: 'Conditional trait ×', mid: '', after: '' };
+    default: return { before: '', mid: 'pts', after: '' };
   }
 }
 
@@ -152,9 +173,53 @@ export function weightExample(groupKey, id, scoring, label)
       return categoryExample(id, scoring, label);
     case 'tags':
       return tagExample(id, scoring);
+    case 'items':
+      return itemParamExample(id, scoring);
+    case 'gearFields':
+      return gearFieldExample(id, scoring, label);
     default:
       return '';
   }
+}
+
+function itemParamExample(id, scoring)
+{
+  const items = scoring.items || {};
+  switch (id)
+  {
+    case 'weaponPoiseDamage.perPoint':
+    case 'weaponPoiseDamage.baseline':
+    {
+      const base = Number(items.weaponPoiseDamage?.baseline ?? 1);
+      const per = Number(items.weaponPoiseDamage?.perPoint ?? 1);
+      return `Poise dmg 3 weapon (e.g. Hammer) = ${signedPts((3 - base) * per)}`;
+    }
+    case 'poiseThreshold.perPoint':
+    case 'poiseThreshold.baseline':
+    {
+      const base = Number(items.poiseThreshold?.baseline ?? 0);
+      const per = Number(items.poiseThreshold?.perPoint ?? 0.5);
+      return `Armour Poise 6 (Plate) = ${signedPts(Math.max(0, 6 - base) * per)}`;
+    }
+    case 'plays.weaponArt':
+      return `Weapon art raw 12 = ${signedPts(12 * (Number(items.plays?.weaponArt ?? 0.25)))}`;
+    case 'range.reach':
+      return `Spear / Staff = ${signedPts(Number(items.range?.reach ?? 2))}`;
+    case 'range.ranged':
+      return `Bow / Crossbow = ${signedPts(Number(items.range?.ranged ?? 3))}`;
+    case 'conditionFactor':
+      return `Trait worth 4 pts with @stance = ${signedPts(4 * (Number(items.conditionFactor ?? 0.65)))}`;
+    default:
+      return '';
+  }
+}
+
+function gearFieldExample(id, scoring, label)
+{
+  const field = scoring.items?.gearFields?.[id];
+  if (!field) return '';
+  const w = Number(field.weight) || 0;
+  return `+1 ${field.label || label || id} (always-on) = ${signedPts(w)}; conditional = ${signedPts(w * (Number(scoring.items?.conditionFactor ?? 0.65)))}`;
 }
 
 function costExample(id, scoring)
@@ -193,15 +258,16 @@ function statusExample(id, scoring)
   return `${EXAMPLE_STACKS} stacks = ${pts(value)}${note}`;
 }
 
-// ScoreCard's keyword value: flat, or the positive score times the multiplier, held to `min`.
+// ScoreCard's keyword value: flat, or the positive score times the multiplier, either held to `min`.
 function keywordExample(id, scoring)
 {
   const keyword = scoring.keywords?.[id];
   if (!keyword) return '';
-  if (keyword.flat !== undefined) return `Any card with it: ${signedPts(keyword.flat)}`;
-  let value = EXAMPLE_POSITIVE_SCORE * (Number(keyword.multiplier) || 0);
+  const flat = keyword.flat !== undefined;
+  let value = flat ? Number(keyword.flat) || 0 : EXAMPLE_POSITIVE_SCORE * (Number(keyword.multiplier) || 0);
+  // ScoreCard holds either form to `min` (at least min, or at most a negative min).
   if (keyword.min !== undefined) value = keyword.min < 0 ? Math.min(value, keyword.min) : Math.max(value, keyword.min);
-  return `Positive score ${EXAMPLE_POSITIVE_SCORE}: ${signedPts(value)}`;
+  return flat ? `Any card with it: ${signedPts(value)}` : `Positive score ${EXAMPLE_POSITIVE_SCORE}: ${signedPts(value)}`;
 }
 
 function rarityExample(id, scoring)
@@ -270,4 +336,44 @@ function tagExample(id, scoring)
       if (tag.perN !== undefined && id === scoring.cardModel?.honedTag) return `Any card with it: ${signedPts((Number(tag.weight) || 0) + (Number(tag.perN) || 0))}`;
       return `Any card with it: ${signedPts(tag.weight)}`;
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Flat or multiplier: the "multiply instead" switch on keyword and multiplier-tag rows (owner, 2026-11-24). Unchecked stores the
+// flat form, checked the multiplier form; switching resets the number to the no-change value, as the category switch does.
+// ---------------------------------------------------------------------------------------------------------------------------------
+
+/** The multiplier field a tag row switches to: 'multiplier' or 'pMultiplier' (the tag's own, else the repo's), or null for a flat-only tag. */
+export function TagMultiplierKey(tag, repoTag)
+{
+  for (const source of [tag, repoTag])
+  {
+    if (source?.pMultiplier !== undefined) return 'pMultiplier';
+    if (source?.multiplier !== undefined) return 'multiplier';
+  }
+  return null;
+}
+
+/** Switch a keyword between flat (adds `flat`) and multiplier (adds positive score x `multiplier`); both start at 0. */
+export function SetKeywordForm(keyword, multiply)
+{
+  if (multiply)
+  {
+    delete keyword.flat;
+    keyword.multiplier = 0;
+  }
+  else
+  {
+    delete keyword.multiplier;
+    keyword.flat = 0;
+  }
+}
+
+/** Switch a tag between flat (adds `weight`) and its multiplier: 'multiplier' starts at 1 (x1), 'pMultiplier' at 0. */
+export function SetTagForm(tag, multKey, multiply)
+{
+  delete tag.multiplier;
+  delete tag.pMultiplier;
+  tag.weight = 0;
+  if (multiply) tag[multKey] = multKey === 'multiplier' ? 1 : 0;
 }

@@ -498,6 +498,7 @@
     "triggers": [
       {
         "on": "enemyDied",
+        "once": true,
         "do": [
           {
             "op": "applyStatus",
@@ -629,7 +630,8 @@
   "titansCinder": {
     "triggers": [
       {
-        "on": "playerTurnStart",
+        "on": "hpLost",
+        "once": true,
         "do": [
           {
             "op": "applyStatus",
@@ -883,7 +885,8 @@
   "travelersWhetstone": {
     "triggers": [
       {
-        "on": "combatStart",
+        "on": "enemyStaggered",
+        "once": true,
         "do": [
           {
             "op": "applyStatus",
@@ -970,6 +973,7 @@
     "triggers": [
       {
         "on": "playerTurnStart",
+        "once": true,
         "if": {
           "p": "not",
           "pred": {

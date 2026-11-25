@@ -483,7 +483,14 @@ export function ratingReceipt(registries, run, config) {
 
 export function ratingValue(ctx, entity, id, carrier = null) {
   let value = (entity?.ratings?.[id] || 0) + stanceRatingBonus(ctx, entity, id, carrier);
-  for (const [status, instance] of Object.entries(entity?.statuses || {})) value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+  for (const [status, instance] of Object.entries(entity?.statuses || {})) {
+    value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+    if (id === 'poise') {
+      const def = ctx?.registries?.statuses?.has?.(status) ? ctx.registries.statuses.get(status) : null;
+      const per = def?.modifiers?.poiseAdd;
+      if (Number.isFinite(per) && per !== 0) value += per * (instance.stacks || 0);
+    }
+  }
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
   return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);
 }
@@ -505,7 +512,32 @@ export function finesseRatingView(entity) {
 /** Whether a hit's carrier (or its card) carries `tag`. */
 export function carrierHasTag(ctx, carrier, tag) {
   const def = carrier?.cardId && ctx?.registries?.cards?.has?.(carrier.cardId) ? ctx.registries.cards.get(carrier.cardId) : null;
-  return [...(carrier?.tags || def?.tags || []), ...(carrier?.cardTags || [])].includes(tag);
+  return [...(carrier?.tags || def?.tags || []), ...(carrier?.cardTags || []), ...(carrier?.authoredTags || [])].includes(tag);
+}
+
+/** Whether the source's active/source weapon carries `tag`. */
+export function sourceWeaponHasTag(ctx, source, carrier, tag) {
+  if (!tag) return false;
+  const weaponId = carrier?.sourceArmamentId
+    || ctx?.loadout?.sets?.rightHand?.[ctx?.loadout?.active?.rightHand || 0]
+    || source?.equipment?.mainHand
+    || (source?.ratingSources || []).find(r => r.kind === 'equipment' && r.slot !== 'armor' && !r.sourceId?.startsWith('armor/'))?.sourceId?.replace(/^armament\//, '');
+  if (!weaponId) return false;
+  const piece = (ctx?.registries?.equipment?.armaments || []).find(row => row.id === weaponId);
+  if (!piece) return false;
+  return [...(piece.tags || []), ...(piece.entityTags || []), ...(piece.itemTypeTags || [])].includes(tag);
+}
+
+/**
+ * Whether a hit uses Dexterity instead of Strength (`finesse`):
+ * - a `finesse`-tagged combat card always uses DEX for that card;
+ * - a `finesse` weapon uses DEX for all martial offensive cards except Smash.
+ */
+export function isFinesseHit(ctx, source, carrier, ratingId = 'ar') {
+  if (ratingId !== 'ar') return false;
+  if (carrierHasTag(ctx, carrier, 'finesse')) return true;
+  if (carrierHasTag(ctx, carrier, 'maneuver:smash') || carrier?.combatProfile?.maneuver === 'smash') return false;
+  return sourceWeaponHasTag(ctx, source, carrier, 'finesse');
 }
 
 export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false, carrier = null) {
@@ -518,6 +550,11 @@ export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentSc
   }
   for (const [status, instance] of Object.entries(entity.statuses || {})) {
     value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+    if (id === 'poise') {
+      const def = ctx?.registries?.statuses?.has?.(status) ? ctx.registries.statuses.get(status) : null;
+      const per = def?.modifiers?.poiseAdd;
+      if (Number.isFinite(per) && per !== 0) value += per * (instance.stacks || 0);
+    }
   }
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
   return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);

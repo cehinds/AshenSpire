@@ -199,6 +199,9 @@
   },
   "eligibility": {
     "playableOnly": true,
+    "combatCards": {
+      "skipOwned": true
+    },
     "excludeCardIds": [
       "base.evade",
       "base.buff-ally",

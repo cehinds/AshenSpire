@@ -13,38 +13,38 @@
       "perLevel": 0.1
     },
     "openingHand": {
-      "base": 5,
-      "intelligence": 0.25,
+      "base": 3,
+      "intelligence": 1,
       "min": 2,
       "max": 10,
       "byClass": {
         "reaver": {
-          "base": 5,
-          "intelligence": 0.25
+          "base": 3,
+          "intelligence": 1
         },
         "rogue": {
-          "base": 5,
-          "intelligence": 0.25
+          "base": 3,
+          "intelligence": 1
         },
         "herald": {
-          "base": 5,
-          "intelligence": 0.25
+          "base": 3,
+          "intelligence": 1
         },
         "starseer": {
-          "base": 5,
-          "intelligence": 0.25
+          "base": 3,
+          "intelligence": 1
         }
       }
     },
     "draw": {
-      "base": 5,
-      "intelligence": 0.25,
+      "base": 3,
+      "intelligence": 1,
       "min": 2,
       "max": 10
     },
     "handSize": {
-      "base": 7,
-      "intelligence": 0.2,
+      "base": 5,
+      "intelligence": 1,
       "attributeBaseline": 4,
       "min": 1,
       "max": 20
@@ -52,12 +52,12 @@
     "hp": { "base": 51, "constitution": 1, "perLevel": 2 },
     "stamina": {
       "base": 3,
-      "dexterity": 0.25,
+      "dexterity": 1,
       "perLevel": 0.1
     },
     "mana": {
       "base": 1,
-      "wisdom": 0.25,
+      "wisdom": 1,
       "perLevel": 0.2
     },
     "ward": {

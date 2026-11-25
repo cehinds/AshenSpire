@@ -5,7 +5,7 @@
   },
   "starstoneShard": {
     "name": "Starstone Shard",
-    "text": "Max HP +14. Mana +1. Magic damage +2. Begin each combat with Starstone Charge and restore 1 Mana."
+    "text": "Max HP +6. Magic damage +1. Begin each combat with Starstone Charge and restore 1 Mana."
   },
   "cutpursesCoin": {
     "name": "Cutpurse's Coin",
@@ -89,7 +89,7 @@
   },
   "vowOfVengeance": {
     "name": "Vow of Vengeance",
-    "text": "Whenever an enemy dies, gain 2 Strength."
+    "text": "The first time an enemy dies each combat, gain 1 Strength."
   },
   "pearlOfSagacity": {
     "name": "Pearl of Sagacity",
@@ -121,7 +121,7 @@
   },
   "titansCinder": {
     "name": "Titan's Cinder",
-    "text": "At the start of each turn, gain 1 Strength."
+    "text": "The first time you lose HP each combat, gain 1 Strength."
   },
   "radiantAegis": {
     "name": "Radiant Aegis",
@@ -165,7 +165,7 @@
   },
   "travelersWhetstone": {
     "name": "Traveler's Whetstone",
-    "text": "At the start of each combat, gain 1 Strength."
+    "text": "The first time you Stagger an enemy each combat, gain 1 Strength."
   },
   "moonlitVial": {
     "name": "Moonlit Vial",
@@ -189,7 +189,7 @@
   },
   "watchmansBadge": {
     "name": "Watchman's Badge",
-    "text": "At the start of each turn, if you are not Weak: gain 1 Strength."
+    "text": "On your first turn, if you are not Weak: gain 1 Strength."
   },
   "howlingStandard": {
     "name": "Howling Standard",

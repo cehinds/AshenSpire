@@ -47,9 +47,16 @@
     "ward": {
       "weight": 2,
       "per": 1,
-      "basis": "final Ward",
-      "projection": "as Block",
-      "why": "Magical Block."
+      "basis": "Ward HP",
+      "projection": "temporary HP buffer (no Poise)",
+      "why": "Temporary HP buffer (no Poise)."
+    },
+    "gainBarrier": {
+      "weight": 4,
+      "per": 1,
+      "basis": "per Bonus Poise stack (+5 Poise)",
+      "projection": "as the barrier (Bonus Poise) status",
+      "why": "Adds Bonus Poise stacks, separate from Ward."
     },
     "poiseDamage": {
       "weight": 1,
@@ -314,8 +321,14 @@
     "ward": {
       "weight": 8,
       "target": "self",
-      "projection": "magical Block, decays per turn",
-      "why": "Shared ward word."
+      "projection": "+5 temporary Ward HP per stack on HP bar (no Poise); Block > Poise > Ward > HP; loses 1 stack/turn",
+      "why": "Temporary HP buffer stacks (no Poise)."
+    },
+    "barrier": {
+      "weight": 4,
+      "target": "self",
+      "projection": "+5 max & current Poise per stack (Bonus Poise, purple on Poise bar); loses 1 stack/turn",
+      "why": "Adds temporary Bonus Poise stacks, separate from Ward."
     },
     "stoneskin": {
       "weight": 8,
@@ -340,6 +353,18 @@
       "target": "self",
       "projection": "redirects one hit",
       "why": "Taunt-like."
+    },
+    "wisdom": {
+      "weight": 15,
+      "target": "self",
+      "projection": "+1 Poise and +1 Divine damage per stack",
+      "why": "poiseAdd 1 + divineDamageAdd 1, no decay."
+    },
+    "intelligence": {
+      "weight": 15,
+      "target": "self",
+      "projection": "+1 magic damage (+2 Arcane) per stack",
+      "why": "magicDamageAdd 1 + arcaneDamageAdd 1, no decay."
     }
   },
   "keywords": {
@@ -1102,6 +1127,13 @@
       "why": "Card family (pool and synergy key). Synergy value is scored on the card that tests it.",
       "domain": "card",
       "label": "Guard"
+    },
+    "bonusPoise": {
+      "weight": 0,
+      "projection": "identity",
+      "why": "Card grants Bonus Poise (+5 temporary Poise per stack), separate from Ward; stacks score under the barrier status.",
+      "domain": "card",
+      "label": "Bonus Poise"
     },
     "guile": {
       "weight": 0,
@@ -2201,14 +2233,28 @@
       "why": "Legacy framework marker with no card using it.",
       "domain": "utility",
       "label": "manaCharge"
+    },
+    "dexDamage": {
+      "weight": 3,
+      "projection": "adds DEX to existing damage",
+      "why": "strictly adds Dexterity damage without replacing Strength.",
+      "domain": "card",
+      "label": "Deft"
+    },
+    "trait:recurring": {
+      "weight": 15,
+      "projection": "buffs recur at the start of every turn for the fight",
+      "why": "Owner ruling: default cost +15 CP, usually paired with Exhaust.",
+      "domain": "trait",
+      "label": "Recurring"
     }
   },
   "conditionals": {
     "probability": {
-      "4": 0.9,
-      "3": 0.7,
+      "1": 0.2,
       "2": 0.5,
-      "1": 0.2
+      "3": 0.7,
+      "4": 0.9
     },
     "tags": {
       "ability:ash-opener": 4,
@@ -3648,7 +3694,7 @@
     "plays": {
       "strike": 3,
       "defend": 2,
-      "weaponArt": 1
+      "weaponArt": 0.25
     },
     "kit": {
       "attack": "(attack profile baseValue - 3 unarmed) x 0.35 authored-to-final (spell share x 0.5) x 3 Strikes",
@@ -3659,16 +3705,93 @@
       "unarmedNote": "bare hands: Strike 3, Guard 1 (the baseline a weapon profile is measured against)"
     },
     "poiseThreshold": {
-      "baseline": 4,
+      "baseline": 0,
       "perPoint": 0.5,
-      "why": "median piece is 4; each point delays a Break (skipped turn + Vulnerable)"
+      "why": "Armour Poise threshold strictly adds weighted poise (0.5 CP per point; weapons use weight, not poiseThreshold)."
+    },
+    "weaponPoiseDamage": {
+      "baseline": 1,
+      "perPoint": 1,
+      "why": "Inherent weapon Poise damage above baseline (1) adds +1 CP per point across 3 attacks."
+    },
+    "selectorFactors": {
+      "self": 1,
+      "start": 1,
+      "end": 1,
+      "any": 1,
+      "anyAttack": 1,
+      "attack": 0.7,
+      "sweep": 0.45,
+      "smash": 0.45,
+      "counter": 0.45,
+      "defend": 0.6,
+      "zeroCost": 0.4,
+      "blockCard": 0.75,
+      "spell": 0.8,
+      "healSpell": 0.45
+    },
+    "conditionFactor": 0.65,
+    "gearFields": {
+      "statPoise": { "label": "Poise bonus", "weight": 2, "why": "+1 Poise stat delays Stagger every fight." },
+      "statStr": { "label": "STR bonus", "weight": 2, "why": "+1 STR adds physical attack power." },
+      "statDex": { "label": "DEX bonus", "weight": 1.5, "why": "+1 DEX adds finesse and defense." },
+      "statCon": { "label": "CON bonus", "weight": 2, "why": "+1 CON adds durability." },
+      "statInt": { "label": "INT bonus", "weight": 2, "why": "+1 INT adds arcane power." },
+      "statWis": { "label": "WIS bonus", "weight": 2, "why": "+1 WIS adds divine power and poise." },
+      "thorns": { "label": "Thorns", "weight": 2, "why": "Retaliates on incoming melee hits." },
+      "thornsFire": { "label": "Fire Thorns", "weight": 2, "why": "Blocked hits deal Fire damage back." },
+      "twoHanded": { "label": "Two-handed", "weight": -2, "why": "Occupies both hands (forfeits off-hand slot)." },
+      "vulnMelee": { "label": "Vulnerable to melee", "weight": -4, "why": "Takes extra melee physical damage." },
+      "firstTurnSp": { "label": "First-turn SP", "weight": 4, "why": "+/-1 SP on turn 1 (Encumbered is -4)." },
+      "gainCounter": { "label": "Counter gain", "weight": 2.5, "why": "Extra Counter stack on every Counter gain." },
+      "gainEvade": { "label": "Evade gain", "weight": 4, "why": "Extra Evade stack on every Evade gain." },
+      "resistFire": { "label": "Resist Fire", "weight": 2, "why": "25% less Fire damage." },
+      "resistFrost": { "label": "Resist Frost", "weight": 2, "why": "25% less Frost damage." },
+      "resistLightning": { "label": "Resist Lightning", "weight": 2, "why": "25% less Lightning damage." },
+      "resistBlight": { "label": "Resist Blight", "weight": 2, "why": "25% less Blight damage." },
+      "resistDark": { "label": "Resist Dark", "weight": 2, "why": "25% less Dark damage." },
+      "cardDamage": { "label": "Card damage", "weight": 2, "why": "+1 damage per matching card played across 3 rounds." },
+      "cardPoise": { "label": "Card Poise damage", "weight": 1.5, "why": "+1 Poise damage per matching card." },
+      "cardBlock": { "label": "Card Block", "weight": 1.5, "why": "+1 Block per matching Block/Defend card." },
+      "cardPierce": { "label": "Pierce", "weight": 1.5, "why": "Bypasses Block on matching attacks." },
+      "cardIgnoreBlock": { "label": "Ignore Block", "weight": 2, "why": "Ignores Block regardless of Stone Skin." },
+      "cardMultiHit": { "label": "Multi-hit", "weight": 5, "why": "Repeats matching attacks an extra time." },
+      "cardReach": { "label": "Reach", "weight": 2, "why": "Matching attacks strike the back row without tax." },
+      "cardCost": { "label": "Card SP cost", "weight": -6, "why": "Changes SP cost on matching cards." },
+      "cardMana": { "label": "Card MP cost", "weight": -5, "why": "Changes MP cost on matching spells." },
+      "cardAddDex": { "label": "DEX to damage", "weight": 3, "why": "Adds DEX to matching physical attacks." },
+      "cardAddStr": { "label": "STR again", "weight": 3, "why": "Adds STR a second time to matching attacks." },
+      "cardRetain": { "label": "Retain", "weight": 2, "why": "Matching cards stay in hand at turn end." },
+      "cardEscalate": { "label": "Escalating", "weight": -2, "why": "Matching cards cost +1 SP each repeat." },
+      "cardHeal": { "label": "Card Healing", "weight": 2.5, "why": "+1 HP healed on matching healing spells." },
+      "hitBleed": { "label": "Bleed on hit", "weight": 2, "why": "Matching hits apply Bleed." },
+      "hitBurn": { "label": "Burn on hit", "weight": 3, "why": "Matching hits apply Burn." },
+      "hitWeak": { "label": "Weak on hit", "weight": 2, "why": "Matching hits apply Weak." },
+      "hitVulnerable": { "label": "Vulnerable on hit", "weight": 3, "why": "Matching hits apply Vulnerable." },
+      "hitShock": { "label": "Shock on hit", "weight": 2.5, "why": "Matching hits apply Shock." },
+      "hitFrost": { "label": "Frost on hit", "weight": 2.5, "why": "Matching hits apply Frost." },
+      "hitFireVulnerable": { "label": "Fire Vulnerable on hit", "weight": 2.5, "why": "Matching hits apply Fire Vulnerable." },
+      "hitBlight": { "label": "Blight on hit", "weight": 2.5, "why": "Matching hits apply Crimson Blight." },
+      "hitRemoveRetreat": { "label": "Remove Retreat", "weight": 2, "why": "Matching hits pull Retreat stacks off targets." },
+      "hitRetreat": { "label": "Push to back row", "weight": 2, "why": "Matching hits push the target back with Retreat." },
+      "turnBlock": { "label": "Turn Block", "weight": 1.5, "why": "Block granted each turn (over 3 rounds)." },
+      "turnCounter": { "label": "Turn Counter", "weight": 3, "why": "Counter stack granted each turn." },
+      "turnRetreat": { "label": "Turn Retreat", "weight": 2, "why": "Retreat stack granted each turn." },
+      "turnHeal": { "label": "Turn Heal", "weight": 3, "why": "HP healed each turn." },
+      "turnEvade": { "label": "Turn Evade", "weight": 5, "why": "Evade stack granted each turn." },
+      "turnWard": { "label": "Turn Ward", "weight": 3, "why": "Ward stack granted each turn." },
+      "turnReach": { "label": "Turn Reach", "weight": 2, "why": "Reach stack granted each turn." },
+      "playEvade": { "label": "Evade on play", "weight": 4, "why": "Playing a matching card grants Evade." },
+      "playWard": { "label": "Ward on play", "weight": 2.5, "why": "Playing a matching card grants Ward." },
+      "playDraw": { "label": "Draw on play", "weight": 3.5, "why": "Playing a matching card draws." },
+      "playStrength": { "label": "STR this turn", "weight": 2.5, "why": "Playing a matching card grants temporary STR." }
     },
     "range": {
-      "appliesTo": "every Strike (3 in 3 rounds)",
-      "melee": -3,
-      "reach": 3,
+      "appliesTo": "weapon base range (not double-counted when cardReach is present)",
+      "melee": 0,
+      "reach": 2,
       "ranged": 3,
-      "why": "card range weight x 3 Strikes"
+      "why": "Reach/ranged weapons avoid melee row tax without inflating common spears/staves."
     },
     "modifiers": {
       "strike.damage": "n x 0.35 x 3",
@@ -4097,6 +4220,40 @@
         ],
         "why": "as Max HP"
       },
+      "passive.resource.flat.mana": {
+        "label": "Max MP (relic)",
+        "calc": [
+          [
+            "*",
+            "-costs.mp"
+          ]
+        ],
+        "why": "one more MP per fight"
+      },
+      "passive.resource.flat.stamina": {
+        "label": "Max SP (relic)",
+        "calc": [
+          [
+            "*",
+            "-costs.sp"
+          ],
+          [
+            "*",
+            "model.R"
+          ]
+        ],
+        "why": "one more SP per turn across 3R"
+      },
+      "passive.resource.flat.poise": {
+        "label": "Poise (relic)",
+        "calc": [
+          [
+            "*",
+            0.5
+          ]
+        ],
+        "why": "additive Poise threshold"
+      },
       "passive.damage.school.flat": {
         "label": "School damage (relic)",
         "calc": [
@@ -4155,7 +4312,7 @@
     }
   },
   "naming": {
-    "rule": "Convention name = effect word + base word + rank numeral (+N upgrades). Effect words are chosen from the highest-scoring part; rank numerals come from combat power.",
+    "rule": "Convention name = rarity word + second-effect word + element word (magic only) + base word + rank numeral, with + or +N for upgrades (Greater Searing Strike II+). The base word comes from the maneuver, or from camp and range (melee or reach) for attacks; the second-effect word names the highest-scoring part the base word does not already name.",
     "roman": [
       "",
       "I",
@@ -4171,8 +4328,8 @@
     ],
     "card": {
       "element": {
-        "school:fire": "Ember",
-        "damage:fire": "Ember",
+        "school:fire": "Flame",
+        "damage:fire": "Flame",
         "school:frost": "Frost",
         "damage:frost": "Frost",
         "school:lightning": "Storm",
@@ -4181,8 +4338,8 @@
         "damage:arcane": "Arcane",
         "school:decay": "Blight",
         "damage:decay": "Blight",
-        "school:divine": "Holy",
-        "damage:sacred": "Holy",
+        "school:divine": "Divine",
+        "damage:sacred": "Divine",
         "school:illusion": "Mind",
         "damage:psychic": "Mind",
         "school:earth": "Stone",
@@ -4232,6 +4389,7 @@
         "dexterity": "Nimble",
         "prepared": "Poised",
         "ward": "Warded",
+        "barrier": "Steadfast",
         "stoneskin": "Stoneskin",
         "evade": "Evasive",
         "invulnerability": "Invulnerable",
@@ -4244,7 +4402,12 @@
         "ramp.honed": "Honed",
         "finesse": "Deft",
         "trait:unavoidable": "True",
-        "trait:impact": "Impact"
+        "trait:impact": "Impact",
+        "dexDamage": "Deft"
+      },
+      "rarity": {
+        "uncommon": "Improved",
+        "rare": "Greater"
       },
       "base": {
         "maneuver:smash": "Smash",
@@ -4252,19 +4415,65 @@
         "maneuver:counter": "Riposte",
         "maneuver:defend": "Guard",
         "maneuver:evade": "Step",
-        "attack:physical": "Strike",
-        "attack:spell": "Bolt",
-        "attack:area:physical": "Cleave",
-        "attack:area:spell": "Wave",
-        "skill:physical": "Technique",
-        "skill:spell": "Rite"
+        "attack:martial:melee": "Strike",
+        "attack:martial:reach": "Shot",
+        "attack:magic:melee": "Touch",
+        "attack:magic:reach": "Bolt",
+        "attack:area:martial": "Cleave",
+        "attack:area:magic": "Wave",
+        "skill:martial": "Technique",
+        "skill:magic": "Rite"
       },
+      "range": {
+        "range:melee": "melee",
+        "delivery:melee": "melee",
+        "range:reach": "reach",
+        "delivery:area": "reach",
+        "range:ranged": "reach",
+        "delivery:projectile": "reach",
+        "maneuver:ranged": "reach"
+      },
+      "defaultRange": {
+        "martial": "melee",
+        "magic": "reach"
+      },
+      "tradition": {
+        "tradition:arcane": "Arcane",
+        "tradition:divine": "Divine"
+      },
+      "defaultTradition": "Arcane",
       "fallback": {
-        "physical": "Keen",
-        "spell": "Astral"
+        "damage": "Keen"
+      },
+      "limit": {
+        "maxChars": 24,
+        "keep": [
+          "base",
+          "rank",
+          "upgrade",
+          "element",
+          "effect",
+          "rarity"
+        ]
       }
     },
     "item": {
+      "rarity": {
+        "uncommon": "Improved",
+        "rare": "Greater",
+        "boss": "Fabled"
+      },
+      "limit": {
+        "maxChars": 24,
+        "keep": [
+          "base",
+          "rank",
+          "upgrade",
+          "element",
+          "effect",
+          "rarity"
+        ]
+      },
       "mod": {
         "Strike damage": "Keen",
         "Strike Poise": "Heavy",
@@ -4286,10 +4495,63 @@
         "Power potency": "Potent",
         "Fire hits apply Vulnerable": "Scorching",
         "Max HP (relic)": "Hale",
+        "Max MP (relic)": "Arcane",
+        "Max SP (relic)": "Tireless",
+        "Poise (relic)": "Steadfast",
         "School damage (relic)": "Empowered",
         "Attack profile": "Keen",
         "Guard profile": "Stalwart",
         "Poise threshold": "Steadfast",
+        "Weapon Poise": "Heavy",
+        "Poise bonus": "Steadfast",
+        "STR bonus": "Mighty",
+        "DEX bonus": "Nimble",
+        "CON bonus": "Stout",
+        "INT bonus": "Arcane",
+        "WIS bonus": "Devout",
+        "Thorns": "Barbed",
+        "Fire Thorns": "Ember",
+        "Counter gain": "Riposting",
+        "Evade gain": "Evasive",
+        "Resist Fire": "Flameward",
+        "Resist Frost": "Frostward",
+        "Resist Lightning": "Grounded",
+        "Resist Blight": "Pure",
+        "Resist Dark": "Radiant",
+        "Card damage": "Keen",
+        "Card Poise damage": "Crushing",
+        "Card Block": "Guarding",
+        "Pierce": "Piercing",
+        "Ignore Block": "Sundering",
+        "Multi-hit": "Twin",
+        "Reach": "Long",
+        "Card SP cost": "Quick",
+        "Card MP cost": "Channeling",
+        "DEX to damage": "Deft",
+        "STR again": "Brutal",
+        "Retain": "Patient",
+        "Card Healing": "Mending",
+        "Bleed on hit": "Bleeding",
+        "Burn on hit": "Searing",
+        "Weak on hit": "Sapping",
+        "Vulnerable on hit": "Exposing",
+        "Shock on hit": "Shocking",
+        "Frost on hit": "Freezing",
+        "Fire Vulnerable on hit": "Scorching",
+        "Blight on hit": "Blighted",
+        "Remove Retreat": "Hooking",
+        "Push to back row": "Repelling",
+        "Turn Block": "Bulwark",
+        "Turn Counter": "Riposting",
+        "Turn Retreat": "Skirmishing",
+        "Turn Heal": "Mending",
+        "Turn Evade": "Evasive",
+        "Turn Ward": "Warded",
+        "Turn Reach": "Seeking",
+        "Evade on play": "Slippery",
+        "Ward on play": "Warded",
+        "Draw on play": "Insightful",
+        "STR this turn": "Fierce",
         "range:reach": "Long",
         "range:ranged": "Far"
       },
@@ -4310,24 +4572,107 @@
       "base": {
         "sword": "Sword",
         "colossal": "Greatsword",
+        "greatsword": "Greatsword",
         "dagger": "Dagger",
-        "curved": "Saber",
+        "rapier": "Rapier",
+        "curved": "Katana",
+        "katana": "Katana",
         "polearm": "Spear",
+        "spear": "Spear",
         "hammer": "Hammer",
-        "twin": "Twinblades",
+        "mace": "Mace",
+        "twin": "Twinblade",
+        "twinblade": "Twinblade",
         "axe": "Axe",
+        "bow": "Bow",
+        "crossbow": "Crossbow",
+        "whip": "Whip",
+        "claws": "Claws",
         "round": "Buckler",
         "kite": "Shield",
         "tower": "Tower Shield",
         "spiked": "Shield",
+        "shield": "Shield",
         "lantern": "Lantern",
         "torch": "Torch",
+        "lightSource": "Lantern",
         "staff": "Staff",
+        "sceptre": "Sceptre",
+        "tome": "Tome",
+        "talisman": "Talisman",
+        "chime": "Chime",
+        "heavy": "Plate",
+        "medium": "Mail",
+        "light": "Leathers",
+        "unarmoured": "Robes",
         "metal": "Plate",
         "leather": "Leathers",
         "cloth": "Robes",
         "relic": "Relic"
-      }
+      },
+      "relicSuffixes": [
+        "Medallion",
+        "Shard",
+        "Coin",
+        "Figurine",
+        "Sprout",
+        "Gourd",
+        "Fragment",
+        "Charm",
+        "Pouch",
+        "Eye",
+        "Knife",
+        "Hide",
+        "Whetstone",
+        "Vial",
+        "Lantern",
+        "Morsel",
+        "Knot",
+        "Tear",
+        "Key",
+        "Brand",
+        "Talisman",
+        "Idol",
+        "Horn",
+        "Vow",
+        "Pearl",
+        "Sigil",
+        "Relic",
+        "Oath",
+        "Thorn",
+        "Sapling",
+        "Cinder",
+        "Aegis",
+        "Censer",
+        "Halo",
+        "Talon",
+        "Badge",
+        "Crown",
+        "Comb",
+        "Dew",
+        "Bell",
+        "Heart",
+        "Grip",
+        "Seal",
+        "Chalice",
+        "Covenant",
+        "Standard",
+        "Warflag",
+        "Coil",
+        "Clasp",
+        "Diadem",
+        "Anvil",
+        "Bowl",
+        "Token",
+        "Lens",
+        "Rosary",
+        "Wheel",
+        "Purse",
+        "Die",
+        "Mirror",
+        "Hook",
+        "Satchel"
+      ]
     },
     "itemArmourSuffixes": [
       "Plate",

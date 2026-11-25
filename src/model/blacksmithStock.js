@@ -16,6 +16,10 @@ import { shopSentence } from './shopKinds.js';
 import { CORE_BLACKSMITH_OFFERINGS } from './blacksmith.js';
 import { RollStockCount, VendorNodeKey } from './vendorStockRange.js';
 import { VendorStocksCardCopy, CardCopyRule } from './cardCopyService.js';
+import { RankBandForLevel, FilterToRankBand } from './levelLists.js';
+import { characterLevel } from './levelup.js';
+import { ItemRankOf } from './itemRank.js';
+import { RankedCardPrice } from './rankedCardPrice.js';
 
 const STREAM = 'shopOffers';
 const say = (id, tokens = {}) => shopSentence(id, tokens);
@@ -63,10 +67,14 @@ export function coreBlacksmithShelves(registries, rng, run) {
   // run seed and the node (vendorStockRange.js). A missing `weaponArtStock` lays out every eligible art.
   const node = VendorNodeKey(run);
   const armamentCount = RollStockCount(rules.armamentStock ?? 0, run.seed, `${node}:blacksmith:armaments`);
-  const armaments = pickSome(rng, pools.weapons.filter((id) => defs.has(id)), armamentCount).map((id) => {
+  const { minRank, maxRank } = RankBandForLevel({ level: characterLevel(run), pool: 'normal' });
+  const weaponPool = FilterToRankBand('weapon', pools.weapons.filter((id) => defs.has(id)), { minRank, maxRank });
+  const armaments = pickSome(rng, weaponPool, armamentCount).map((id) => {
     const tier = rollTier(rules.tierWeights, rng, tierCeiling(registries, run, id));
     const base = rng.int(STREAM, ...rangeFor(table, 'armament', defs.get(id).rarity));
-    return { id, tier, cost: Math.max(1, Math.round(base * (Number.isFinite(mult[tier]) ? mult[tier] : 1))) };
+    const itemRank = ItemRankOf('weapon', defs.get(id));
+    const rankedBase = itemRank > 0 ? RankedCardPrice(run, base, { rank: itemRank }) : base;
+    return { id, tier, cost: Math.max(1, Math.round(rankedBase * (Number.isFinite(mult[tier]) ? mult[tier] : 1))) };
   });
   // Owner 2026-11-05: never stock an art the open reward door is showing; owned arts are already out of the pool.
   const onDoor = new Set(artsOnOtherSide(run, 'blacksmith', null));

@@ -1726,10 +1726,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const soloStartMana = soloMagic.player.mana;
     const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
     const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
-    // A2: Starstone Shard's magic damage is +2 (was +1).
-    eq(soloPreview.value, 8, 'solo preview includes the stamped +2 magic damage');
+    // Starstone Shard's reworked magic damage bonus is +1.
+    eq(soloPreview.value, 7, 'solo preview includes the stamped +1 magic damage');
     dispatch(soloMagic, { type: 'playCard', cardInstanceId: soloSpell.instanceId, targetId: 'e1' });
-    eq(logOf(soloMagic, 'damageDealt')[0].amount, 8, 'solo live primary damage matches preview');
+    eq(logOf(soloMagic, 'damageDealt')[0].amount, 7, 'solo live primary damage matches preview');
 
 
 
@@ -1820,8 +1820,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // base of 1. Before, the pool IS Wisdom and the same Reaver opened at 2.
     // The creation scale that made one lean point five tuned tiers is still
     // gone (2026-09-21); this row is the authored one, unconverted.
-    eq(fresh.mana, 1, 'run starts at its WIS-derived mana maximum');
-    eq(fresh.maxMana, 1, 'Reaver maximum follows the lean preset — a base of 1 and every attribute term floored to zero (ruleset 6, 2026-09-24 weights)');
+    eq(fresh.mana, 2, 'run starts at its WIS-derived mana maximum (base 1 + WIS 1 = 2)');
+    eq(fresh.maxMana, 2, 'Reaver maximum follows the lean preset — base 1 + 1 per WIS');
     assert(validateRunShape(fresh).length === 0, 'the new run shape accepts a sound mana pool');
     assert(validateRunShape({ ...fresh, mana: fresh.maxMana + 1 }).some((s) => s.includes('between 0 and maxMana')), 'overflow mana is refused by name');
 
@@ -3755,7 +3755,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     stampDeck(LEGACY_REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
     eq(dmgOf(resolveCard(LEGACY_REG, aStrike)), 3, 'the deck definition carries its base while runtime adds source AR');
-    eq(runMods(LEGACY_REG, run.loadout, 'reaver').startStatuses.find(row => row.status === 'strength')?.status, 'strength', 'the Oathsworn set grants Strength (a heavy set also carries Thorns 1, 2026-11-18)');
+    assert(LEGACY_REG.equipment.armour.find((a) => a.classId === 'reaver' && a.id === 'oathsworn')?.mods.includes('self.statPoise=+1'), 'the reworked Oathsworn set adds Poise bonus');
     assert(loadoutTags(LEGACY_REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
 
     // Swapping mid-fight: the price is paid, and the hand is re-armed.
@@ -3919,13 +3919,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('28s. equipment authors HP, Mana, and Stamina pools without healing saves or swaps', () => {
-    for (const [id, mod] of [
-      ['towerShield', 'self.maxHp=+10'],
-      ['blightRod', 'self.maxMana=+1'],
-      ['twinblade', 'self.maxStamina=+1'],
-    ]) {
-      assert(REG.equipment.armaments.find((piece) => piece.id === id)?.mods.includes(mod), `${id} authors ${mod} in generated content`);
-    }
+    assert(REG.equipment.armaments.find((piece) => piece.id === 'duskChime')?.mods.includes('self.maxMana=+1'), 'duskChime authors self.maxMana=+1 in generated content');
+    assert(REG.equipment.armour.find((piece) => piece.id === 'pilgrim' && piece.classId === 'herald')?.mods.includes('self.maxHp=+6'), 'pilgrim authors self.maxHp=+6 in generated content');
     const poolFields = {
       ...REG.equipment.modFields,
       maxMana: { field: 'maxMana', scope: 'run', apply: 'maxMana', label: 'Max Mana' },
@@ -5214,18 +5209,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     //
     // The trap Vira hit and corrected before reporting: `cost` inverts. Paying
     // more is worse, and comparing it naively invents dominance that isn't there.
-    const LOWER_IS_BETTER = new Set(['cost']);
+    const LOWER_IS_BETTER = new Set(['cost', 'cardCost', 'cardMana', 'cardEscalate', 'vulnMelee']);
     const RARITY = { common: 0, uncommon: 1, rare: 2 };
 
     const vec = (piece) => {
+      const gearType = GEAR_TYPES.items?.[piece.id] || null;
+      const typeRow = gearType ? GEAR_TYPES.weaponTypes?.[gearType] : null;
+      const poiseDamage = Number.isFinite(GEAR_TYPES.itemPoiseDamage?.[piece.id])
+        ? GEAR_TYPES.itemPoiseDamage[piece.id]
+        : (typeRow?.poiseDamage ?? 1);
       const out = {
         'impact.weight': piece.weight || 0,
+        'impact.poiseDamage': poiseDamage,
       };
       for (const [attribute, minimum] of Object.entries(piece.requirements?.attributes || {})) {
         out[`requirement.${attribute}`] = -minimum;
       }
-      for (const raw of piece.mods) {
-        const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
+      for (const raw of [...(typeRow?.mods || []), ...(piece.mods || [])]) {
+        const m = /^([A-Za-z][\w:@]*)\.([A-Za-z]\w*)=([+-]?\d+)$/.exec(raw);
         if (!m) continue;
         const key = `${m[1]}.${m[2]}`;
         const n = Number(m[3]);
@@ -6421,7 +6422,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // points); Draw is the ruleset-7 draw row, base 4 since the hand refresh update
     // (2026-10-03) and nothing from INT 1, below the row's baseline of 4. It
     // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '53/3/5', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
+    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '53/3/4', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows (draw base 3 + 1 INT = 4)');
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '200,300,450,680,1010,1520,2280,3420,5130,7690', 'default XP steps start at 200 and grow ×1.5 (SPEC §13.4o)');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
@@ -6432,7 +6433,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const rogue = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 4 + nothing from INT 1.
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/53/3/5', 'Rogue lean stats reach the HP, action, and hand formulas');
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/53/3/4', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
@@ -6658,7 +6659,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.maxHp, live.hp.base + attributeTerms(live.hp, run.attributes) + 10, 'legacy maxHp is re-derived through the current attribute/flat-bonus authority (ruleset 6 row + 10 flat)');
     eq(run.hp, run.maxHp, 'a legacy full-HP save remains full after current-rule migration');
     eq(run.energyMax, live.energy.base + attributeTerms(live.energy, run.attributes), 'energyMax follows the live row over its base of 3, not the rename');
-    eq(run.drawPerTurn, live.draw.base + attributeTerms(live.draw, run.attributes), 'drawPerTurn follows the live row over its base of 3, not the rename');
+    eq(run.drawPerTurn, Math.min(live.draw.max, live.draw.base + attributeTerms(live.draw, run.attributes)), 'drawPerTurn follows the live row over its base of 3 (capped at draw.max), not the rename');
     // Forward hygiene: the next save writes zero dead bytes.
     assert(!serializeRun(run).includes('"vigour"'), 'a re-serialized healed run spells the retired name zero times');
 
@@ -6676,7 +6677,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const perPoint = 1;
     const liveHp = REG.derivedStatRules.rules.hp;
     const otherTerms = (attributes) => attributeTerms(liveHp, { ...attributes, constitution: 0 });
-    for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 14], ['rogue', 2, 0], ['herald', 2, 0]]) {
+    for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 6], ['rogue', 2, 0], ['herald', 2, 0]]) {
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(run.attributes.constitution, con, `${classId} uses the approved lean CON preset`);
@@ -6914,41 +6915,35 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     try { applyLevelUp(REG, run, 'charisma'); } catch (e) { badId = e.message; }
     assert(/not an attribute id/.test(badId), `a stat that does not exist is refused by name (got: ${badId})`);
 
-    // THE CLIMB: XP buys the level, the level grants the point, the point waits.
-    const got = awardLevelXp(REG, run, firstStep);
-    eq(got.levelUps, 1); eq(got.points, 1); eq(run.level.level, 2); eq(run.level.xp, 0); eq(run.level.unspentPoints, 1, 'the point waits on the ledger');
+    // THE CLIMB: XP buys levels; every level grants a card rank-up, and every 4th level grants an attribute point.
+    const got1 = awardLevelXp(REG, run, firstStep);
+    eq(got1.levelUps, 1); eq(got1.points, 0); eq(run.level.level, 2); eq(run.level.xp, 0); eq(run.level.pendingRankUps, 1, 'every level grants a card rank-up');
+    const got4 = awardLevelXp(REG, run, xpToNextLevel(REG, 2) + xpToNextLevel(REG, 3));
+    eq(got4.levelUps, 2); eq(got4.points, 1); eq(run.level.level, 4); eq(run.level.unspentPoints, 1, 'reaching level 4 grants 1 attribute point');
     eq(run.attributes.constitution, startCon, 'no stat moved yet — the shrine assigns, the fight does not');
     eq(run.cinders, createRunState({ seed: 0x1e7e1, classId: 'reaver', registries: REG }).cinders, 'no cinder was touched');
     plan = levelUpPlan(REG, run); assert(plan.offerable); eq(plan.blockedBy, null); eq(plan.points, 1);
     eq(awardLevelXp(REG, run, 0).levelUps, 0, 'nothing is nothing'); eq(awardLevelXp(REG, run, -5).levelUps, 0);
 
     // THE ASSIGNMENT.
-    // Actions, not Mana, since 2026-09-24: the owner's Mana row reads CON at
-    // 0.25, while the action row reads STR, DEX, WIS and INT and no CON.
     const energyBefore = run.energyMax;
     const spent = applyLevelUp(REG, run, 'constitution');
     eq(run.attributes.constitution, startCon + 1, 'the point lands on the stat it was assigned to');
     eq(run.level.unspentPoints, 0, 'and leaves the ledger'); eq(spent.points, 0);
     eq(run.levelUps, 1, 'the assignment is recorded — this is the number the load door reads'); eq(run.levelPoints, 1);
     eq(run.energyMax, energyBefore, 'the pool CON does not feed did not move');
-    // RULESET 6 SPLITS THIS IN TWO, and the sum is what the pool reads: the
-    // POINT is now one HP (`constitution: 1`), and the LEVEL itself adds
-    // its own decimal (`perLevel: 2` since 2026-09-24, 1 before) every level
-    // rather than five HP every fifth level.
-    eq(run.maxHp, startHp + 1 + 2, 'one CON point adds one HP, and the level two more');
-    awardLevelXp(REG, run, xpToNextLevel(REG, 2) + xpToNextLevel(REG, 3));
-    eq(run.level.level, 4, 'enough XP for two steps climbs two'); eq(run.level.unspentPoints, 2);
+    eq(run.maxHp, startHp + 1 + 6, 'one CON point adds one HP, and three levels add two each');
+    awardLevelXp(REG, run, [4, 5, 6, 7, 8, 9, 10, 11].reduce((s, l) => s + xpToNextLevel(REG, l), 0));
+    eq(run.level.level, 12, 'enough XP climbs to level 12'); eq(run.level.unspentPoints, 2, 'levels 8 and 12 grant 2 more attribute points');
     applyLevelUp(REG, run, 'constitution'); applyLevelUp(REG, run, 'constitution');
-    eq(run.maxHp, startHp + 3 + 6, 'three CON points add three HP, and three levels add two each');
+    eq(run.maxHp, startHp + 3 + 22, 'three CON points add three HP, and eleven levels add two each');
     eq(run.levelUps, 3, 'three points assigned');
 
-    // A LEVEL IS NOT A REST: the pool grows and the deficit is carried. The
-    // shrine sells the heal at the next panel; a level that healed would make
-    // that panel pointless at the same counter.
+    // A LEVEL IS NOT A REST: the pool grows and the deficit is carried.
     const hurt = createRunState({ seed: 0x4c4e, classId: 'reaver', registries: REG });
     hurt.hp = hurt.maxHp - 10;
     const hurtMax = hurt.maxHp;
-    awardLevelXp(REG, hurt, xpToNextLevel(REG, 1)); applyLevelUp(REG, hurt, 'constitution');
+    awardLevelXp(REG, hurt, [1, 2, 3].reduce((s, l) => s + xpToNextLevel(REG, l), 0)); applyLevelUp(REG, hurt, 'constitution');
     eq(hurt.maxHp - hurt.hp, 10, 'the 10-HP deficit is carried across the level — levelling does not heal');
     assert(hurt.maxHp > hurtMax, 'and the ceiling still rose (the probe has a referent)');
 
@@ -6976,10 +6971,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // perfect on screen and destroy the player's run at the next load.
     const run = createRunState({ seed: 0x5a7ed, classId: 'reaver', registries: REG });
     run.seedString = 'LEVELS';
-    awardLevelXp(REG, run, [1, 2, 3, 4, 5, 6].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
-    eq(run.level.level, 7, 'six levels earned'); eq(run.level.unspentPoints, 6);
-    for (let i = 0; i < 6; i++) applyLevelUp(REG, run, 'constitution');
-    eq(run.levelUps, 6, 'six points assigned');
+    // Every 4 levels grants 1 attribute point; climb 15 levels (to level 16) for 4 attribute points (enough to pass creation cap 4).
+    const xpTo16 = Array.from({ length: 15 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce((sum, x) => sum + x, 0);
+    awardLevelXp(REG, run, xpTo16);
+    eq(run.level.level, 16, 'fifteen levels earned'); eq(run.level.unspentPoints, 4);
+    for (let i = 0; i < 4; i++) applyLevelUp(REG, run, 'constitution');
+    eq(run.levelUps, 4, 'four points assigned');
     assert(run.attributes.constitution > 4, 'and the stat is past the lean creation ceiling of 4');
 
     const storage = createMemoryStorage();
@@ -6987,20 +6984,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const back = createSaveManager(storage).loadRun(REG);
     assert(back !== null, 'THE LEVELLED RUN LOADS — it is not archived by the creation rules');
     eq(back.attributes.constitution, run.attributes.constitution, 'the levelled points survive the door');
-    eq(back.levelUps, 6, 'and so does the count that makes them legal');
+    eq(back.levelUps, 4, 'and so does the count that makes them legal');
     eq(back.maxHp, run.maxHp, 'the derived pool the levels moved is accepted, not re-derived away');
-    eq(back.level.level, 7, 'the character level rides the save'); eq(back.maxHp, run.maxHp);
-    assert(back.maxHp >= 30 + 4 * back.attributes.constitution + 5, `level 7 carries the level-6 threshold bump beside the six CON points — got ${back.maxHp}`);
+    eq(back.level.level, 16, 'the character level rides the save'); eq(back.maxHp, run.maxHp);
+    assert(back.maxHp >= 30 + 4 * back.attributes.constitution + 5, `level 16 carries level bumps beside the four CON points — got ${back.maxHp}`);
 
-    // THE e05be89 SAVE SHAPE, AND IT MUST LOAD. That build recorded `levelUps`
-    // and no `levelPoints`, and it had exactly one possible level value, so for
-    // those saves the count IS the points. This cell is the migration; it is
-    // not a plant, and it is the reason the fallback is exact rather than a
-    // guess at today's dial.
     const raw = JSON.parse(storage.getItem(RUN_KEY));
     const legacy = JSON.parse(JSON.stringify(raw));
     delete legacy.levelPoints;
-    eq(legacy.levelUps, 6, 'the legacy shape really carries the count (the probe has a referent)');
+    eq(legacy.levelUps, 4, 'the legacy shape really carries the count (the probe has a referent)');
     storage.setItem(RUN_KEY, JSON.stringify(legacy));
     const migrated = createSaveManager(storage).loadRun(REG);
     assert(migrated !== null, 'a run saved by e05be89 — levelUps, no levelPoints — still loads');
@@ -7045,29 +7037,28 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // The dial is read where the level is REACHED (plan phase 6): a level at
     // value 1 grants one point to the ledger, at value 3 three; the shrine
     // then assigns them one at a time.
+    const xp1to4 = [1, 2, 3].reduce((s, l) => s + xpToNextLevel(REG, l), 0);
+    const xp4to8 = [4, 5, 6, 7].reduce((s, l) => s + xpToNextLevel(REG, l), 0);
     const one = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
-    awardLevelXp(REG, one, xpToNextLevel(REG, 1), { pointsPerLevel: 1 });
-    eq(one.level.unspentPoints, 1, 'at 1, a level grants one point');
+    awardLevelXp(REG, one, xp1to4, { pointsPerLevel: 1 });
+    eq(one.level.unspentPoints, 1, 'at 1, reaching level 4 grants one point');
     applyLevelUp(REG, one, 'constitution');
     eq(one.attributes.constitution - REG.attributeRules.presets.lean.reaver.constitution, 1); eq(one.levelPoints, 1, 'and records one point assigned');
 
     const three = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
     const hpBefore = three.maxHp;
-    awardLevelXp(REG, three, xpToNextLevel(REG, 1), { pointsPerLevel: 3 });
-    eq(three.level.unspentPoints, 3, 'at 3, one level grants three points');
-    eq(three.level.level, one.level.level, 'and costs the same XP: the value is what a level GRANTS, not what it costs');
+    awardLevelXp(REG, three, xp1to4, { pointsPerLevel: 3 });
+    eq(three.level.unspentPoints, 3, 'at 3, reaching level 4 grants three points');
+    eq(three.level.level, one.level.level, 'and costs the same XP: the value is what a grant pays, not what it costs');
     for (let i = 0; i < 3; i++) applyLevelUp(REG, three, 'constitution');
     eq(three.attributes.constitution - REG.attributeRules.presets.lean.reaver.constitution, 3); eq(three.levelPoints, 3, 'and records three');
-    // Both values are visible under the per-CON HP formula.
-    assert(three.maxHp > hpBefore, 'at 3, ONE level moves max HP — the dial answers the dead-level finding');
-    eq(one.maxHp, hpBefore + 1 + 2, 'one CON point adds one HP and the level its own two');
+    assert(three.maxHp > hpBefore, 'at 3, ONE grant moves max HP — the dial answers the dead-level finding');
+    eq(one.maxHp, hpBefore + 1 + 6, 'one CON point adds one HP and three levels add six');
 
-    // MIXED VALUES IN ONE RUN, which is what "I can test each" produces the
-    // moment he turns the dial mid-climb.
-    awardLevelXp(REG, three, xpToNextLevel(REG, 2), { pointsPerLevel: 1 });
+    awardLevelXp(REG, three, xp4to8, { pointsPerLevel: 1 });
     applyLevelUp(REG, three, 'wisdom');
-    eq(three.level.level, 3, 'two levels');
-    eq(three.levelPoints, 4, 'four points assigned over two levels at two values');
+    eq(three.level.level, 8, 'reached level 8');
+    eq(three.levelPoints, 4, 'four points assigned over two 4-level milestones at two values');
     const mixedStore = createMemoryStorage();
     three.seedString = 'MIXED';
     createSaveManager(mixedStore).saveRun(three);
@@ -7124,8 +7115,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const run = createRunState({ seed: 0x7ed, classId: 'reaver', registries: REG });
     const authored = REG.balance.levelUp.pointsPerLevel;
     assert(Number.isInteger(authored) && authored >= 1, 'the authored value is a whole number of at least 1');
-    awardLevelXp(REG, run, xpToNextLevel(REG, 1), { pointsPerLevel: authored });
-    eq(run.level.unspentPoints, authored, 'one level grants the authored points');
+    const xpToGrant = [1, 2, 3].reduce((s, l) => s + xpToNextLevel(REG, l), 0);
+    awardLevelXp(REG, run, xpToGrant, { pointsPerLevel: authored });
+    eq(run.level.unspentPoints, authored, 'reaching the 4-level milestone grants the authored points');
   });
 
   // ---- 60e. the affordability predicate the fold reads ---------------------
@@ -7149,13 +7141,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(p.offerable, false, 'so it is not offerable');
     eq(`${p.level}/${p.xp}/${p.xpToNext}`, `1/0/${xpToNextLevel(CURVED, 1)}`, 'and the card can say where the climb stands');
 
-    // THE THRESHOLD'S OWN NEIGHBOURHOOD: one XP either side of the step.
-    awardLevelXp(CURVED, run, xpToNextLevel(CURVED, 1) - 1);
+    // THE THRESHOLD'S OWN NEIGHBOURHOOD: one XP either side of the 4-level attribute milestone.
+    const toL4 = xpToNextLevel(CURVED, 1) + xpToNextLevel(CURVED, 2) + xpToNextLevel(CURVED, 3);
+    awardLevelXp(CURVED, run, toL4 - 1);
     p = levelUpPlan(CURVED, run);
-    eq(p.level, 1, 'one XP short is still level 1'); eq(p.xp, xpToNextLevel(CURVED, 1) - 1); eq(p.offerable, false);
+    eq(p.level, 3, 'one XP short of level 4 is still level 3'); eq(p.offerable, false);
     awardLevelXp(CURVED, run, 1);
     p = levelUpPlan(CURVED, run);
-    eq(p.level, 2, 'the exact step climbs — the boundary is inclusive'); eq(p.xp, 0);
+    eq(p.level, 4, 'the exact step climbs to level 4 — the boundary is inclusive'); eq(p.xp, 0);
     eq(p.points, 1); eq(p.blockedBy, null, 'and there is no reason, because there is no block'); eq(p.offerable, true);
 
     // IT MOVES WITH THE LEDGER, WHICH IS WHY A FOLD MUST RE-READ IT AND NOT
@@ -9311,7 +9304,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     saves.saveRun(run, createRng(1));
     const back = saves.loadRun(REG);
     assert(back && back.level.level === 11 && back.maxHp === run.maxHp, `a run at level 11 loads with its bumped pools — ${JSON.stringify(saves.runStatus()).slice(0, 160)}`);
-    eq(back.level.unspentPoints, 10, 'the ten points wait through the save');
+    eq(back.level.unspentPoints, 2, 'the two 4-level attribute points (at levels 4 and 8) wait through the save');
     assert(/level\.level must be an integer of at least 1/.test(levelProblems({ xp: 0, level: 0, unspentPoints: 0 }).join('|')));
     assert(/level\.xp must be a non-negative integer/.test(levelProblems({ xp: -1, level: 1, unspentPoints: 0 }).join('|')));
     assert(/is not a field of the level ledger/.test(levelProblems({ xp: 0, level: 1, unspentPoints: 0, cinders: 3 }).join('|')));
@@ -9704,8 +9697,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(['openingHand', 'draw', 'handSize', 'ward'].every((id) => !!rules.rules[id]) && ['ar', 'dr', 'pr'].every((id) => !rules.rules[id]), true, 'the hand and Ward rows are authored in it, the three retired rows are not');
     eq(derivedStatIdsFor(6).includes('handSize') || derivedStatIdsFor(6).includes('ar'), false, 'ruleset 6 requires no hand or rating row');
     eq(derivedStatIdsFor(7).includes('handSize') && derivedStatIdsFor(7).includes('ar'), true, 'ruleset 7 does');
-    eq(rules.rules.mana.wisdom, 0.25, 'Wisdom alone leads Mana, one in four points (owner, 2026-11-18)');
-    eq(rules.rules.stamina.dexterity, 0.25, 'Dexterity alone leads Stamina, one in four points (owner, 2026-11-18)');
+    eq(rules.rules.mana.wisdom, 1, 'Wisdom alone leads Mana, +1 per point');
+    eq(rules.rules.stamina.dexterity, 1, 'Dexterity alone leads Stamina, +1 per point');
     eq(rules.rules.stamina.constitution, undefined, 'Constitution no longer feeds Stamina');
     eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '51/1', 'HP is 51 + CON');
     const star = createRunState({ seed: 93, classId: 'starseer', registries: REG });

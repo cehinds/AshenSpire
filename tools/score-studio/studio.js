@@ -9,18 +9,27 @@ import { createRng } from '../../src/engine/rng.js';
 import { createRunCombat } from '../../src/engine/runCombat.js';
 import { dispatch, previewCard, cardPlayCosts } from '../../src/engine/combat.js';
 import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
+import { renderEquipmentCard } from '../../src/ui/components/equipmentCard.js';
+import { renderCollectibleCard } from '../../src/ui/components/collectibleCard.js';
+import { GEAR_TYPES } from '../../src/content/gearTypes.js';
+import { itemArtLayers as shippedItemArtLayers } from '../../src/content/generated/itemArtLayers.js';
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
 import { BaseFace, CardKind, CardCategories, ScoreCard, CombatPower, RankOf, RankName, CardName, CardNameParts, ApplyScoringOverride } from '../../src/model/combatPower.js';
-import { ValidateScoringConfig } from '../../src/model/activeScoring.js';
+import { ValidateScoringConfig, NAME_LIMIT_PARTS } from '../../src/model/activeScoring.js';
+import { EffectiveWardHp } from '../../src/model/fixCoreMechanics.js';
 import { staticCardTokens } from '../../src/model/playingCard.js';
 import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
-import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH } from './weightsStaging.js';
-import { weightSentence, weightExample } from './weightExamples.js';
+import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
+import { DEFAULT_NAME_SET_ID, DefaultNameSet, CaptureNameSet, TurnOnAutoNames, ApplyNameSet, SortedNameSets, ValidNameSets, MergeNameSets, SplitSavedConfig, JoinSavedConfig, DefaultNameSetLabel, NameSetFile, NameSetFileName, ParseNameSetFile } from './nameSets.js';
+import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
+import { buildItemRoster, typeModsForEntry, scoreItemEntry, livePieceFromEntry, describeItemMod, formatModString, ITEM_TRAIT_SELECTORS, ITEM_QUICK_TRAITS, ITEM_MOTIF_OPTIONS } from './itemStudio.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
+// Saved name sets (Rename all), kept apart from the draft so they survive a clean or exported draft.
+const NAME_SETS_STORAGE_KEY = 'ashenspire:scoreStudioNameSets:v1';
 const PATH_STORAGE_KEY = 'ashenspire:scoreStudioPath:v1';
 const DRAFT_SAVE_DELAY_MS = 300;
 const TEXT_EDIT_BURST_MS = 1000;
@@ -83,8 +92,7 @@ const offenseAmount = (hit) => {
   return rows.length ? rows[rows.length - 1].effective : (hit?.incoming ?? 0);
 };
 function safeCardName(face, scoringRef) {
-  const withNaming = scoringRef?.naming ? scoringRef : { ...scoringRef, naming: shippedScoring.naming };
-  return CardName(face, 0, withNaming);
+  return CardName(face, 0, namingScoring(scoringRef));
 }
 
 // ---------------------------------------------------------------------------
@@ -102,8 +110,15 @@ const state = {
   redoStack: [],
   cards: [],            // editable card definitions + derived faces
   baselineRanks: {},    // id -> baseline rank under repoScoring
+  items: [],            // editable weapons, armours, and relics
+  itemRules: {},        // relic property-rule table for ScoreItem
+  defaultItemNames: {}, // key -> shipped authored item name
+  baselineItemRanks: {}, // key -> baseline rank under repoScoring
   selectedCardId: null,
+  selectedItemKey: null,
   selectedLayerIdx: 0,
+  artTarget: 'cards',   // 'cards' | 'items'
+  selectedItemLayerIdx: 0,
   viewMode: 'grid',
   artLayers: {
     version: 1,
@@ -112,7 +127,12 @@ const state = {
     ],
   },
   repoArtLayers: null,  // art layers as loaded from the repo (or the built-in default); set in boot
+  itemArtLayers: clone(shippedItemArtLayers),
+  repoItemArtLayers: clone(shippedItemArtLayers),
   abSlots: { A: null, B: null, activeLabel: 'Draft' },
+  // Rename all: the repo's authored names (never overwritten) and the saved name sets, newest first.
+  defaultNameSet: null,
+  nameSets: [],
   sandbox: { combat: null, classId: 'reaver', enemyId: 'wanderingSoldier', appliedScoring: null, customCardId: null, log: [] },
 };
 
@@ -266,7 +286,8 @@ function cardDefToFace(def, scoringRef) {
     if (e.op === 'applyStatus' && statusIds.has(e.status) && typeof e.stacks === 'number' && Number.isFinite(e.stacks)) {
       if (e.status === 'evade' && m.evade > 0) continue;
       f.statuses.push([e.status, e.stacks, e.target === 'self' ? 'self' : 'enemy']);
-    } else if (e.op === 'restorePoise') f.blk += amt;
+    } else if (e.op === 'gainBarrier') f.statuses.push(['barrier', amt, 'self']);
+    else if (e.op === 'restorePoise') f.blk += amt;
     else if (e.op === 'draw') f.draw += amt;
     else if (e.op === 'heal') f.heal += amt;
     else if (e.op === 'loseHp') f.loseHp += amt;
@@ -399,7 +420,7 @@ function toast(msg) {
 }
 
 function snapshotState() {
-  return JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers });
+  return JSON.stringify({ scoring: state.scoring, cards: state.cards, items: state.items, artLayers: state.artLayers, itemArtLayers: state.itemArtLayers });
 }
 
 function updateUndoButtons() {
@@ -419,16 +440,21 @@ function editedCards() {
   return state.cards.filter((c) => c._edited || c._custom);
 }
 
+function editedItems() {
+  return state.items.filter((it) => it._edited);
+}
+
 function weightChangeCount() {
   return buildScoringDiff().length;
 }
 
 function artLayersChanged() {
-  return JSON.stringify(state.artLayers) !== JSON.stringify(state.repoArtLayers);
+  return JSON.stringify(state.artLayers) !== JSON.stringify(state.repoArtLayers)
+    || JSON.stringify(state.itemArtLayers) !== JSON.stringify(state.repoItemArtLayers);
 }
 
 function isDirty() {
-  return weightChangeCount() > 0 || pendingWeightCount() > 0 || editedCards().length > 0 || artLayersChanged();
+  return weightChangeCount() > 0 || pendingWeightCount() > 0 || editedCards().length > 0 || editedItems().length > 0 || artLayersChanged();
 }
 
 function refreshDirtyStatus() {
@@ -454,7 +480,9 @@ function writeDraftNow() {
           pendingScoring: state.pendingScoring,
           pendingBase: state.pendingBase,
           artLayers: state.artLayers,
+          itemArtLayers: state.itemArtLayers,
           customCards: editedCards(),
+          editedItems: editedItems(),
         }));
       } else {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -487,9 +515,12 @@ function restoreSnapshot(snapStr) {
   const snap = JSON.parse(snapStr);
   state.scoring = snap.scoring;
   state.cards = snap.cards;
+  if (Array.isArray(snap.items)) state.items = snap.items;
   state.artLayers = snap.artLayers;
+  if (snap.itemArtLayers?.layers) state.itemArtLayers = snap.itemArtLayers;
   studioCardOverrides.clear();
   if (!state.cards.some((c) => c.id === state.selectedCardId)) state.selectedCardId = state.cards[0]?.id || null;
+  if (!state.items.some((x) => x.key === state.selectedItemKey)) state.selectedItemKey = state.items[0]?.key || null;
   syncAllViews();
   saveDraft();
 }
@@ -562,9 +593,16 @@ function describeFeature(kind, id) {
     does = tag?.blurb || null;
     entry = S.tags?.[id];
   } else if (kind === 'effect') {
-    const keys = EFFECT_SCORE_KEYS[id];
-    title = capitalise(id);
-    entry = S.effects?.[keys?.weight || id];
+    if (id === 'gainBarrier') {
+      title = 'Gain Bonus Poise';
+      does = registryEntry(registries.statuses, 'barrier')?.tooltip || null;
+      entry = S.statuses?.barrier;
+      unit = ' per stack (self)';
+    } else {
+      const keys = EFFECT_SCORE_KEYS[id];
+      title = capitalise(id);
+      entry = S.effects?.[keys?.weight || id];
+    }
   } else if (kind === 'cost') {
     title = `${id.toUpperCase()} cost`;
     entry = S.costs?.[id];
@@ -638,112 +676,39 @@ function renderAddFeatureDescription() {
 }
 
 // ---------------------------------------------------------------------------
-// Auto-name: "<Adjective> <core noun> [of <Noun>] <Rank numeral>"
+// Auto-name: the card's convention name (CardName, trimmed to naming.card.limit), e.g. "Flame Bolt VII"
 // ---------------------------------------------------------------------------
-// The adjective and the "of" noun are data (scoring.naming.card.prefix / .suffix, part key -> word),
-// editable in the Weights tab and written into scoring.json on export. Seeded with these defaults.
-const DEFAULT_NAME_PREFIX = Object.freeze({
-  frail: 'Brittle', vulnerable: 'Exposing', weak: 'Sapping', burn: 'Searing', bleed: 'Serrated', venom: 'Venomous',
-  frost: 'Rime', chill: 'Rime', shock: 'Crackling', damage: 'Keen', block: 'Warding', draw: 'Keen-eyed',
-  heal: 'Mending', poise: 'Crushing', 'SP restore': 'Second-wind', 'MP restore': 'Draining',
-});
-const DEFAULT_NAME_SUFFIX = Object.freeze({
-  frail: 'Frailty', vulnerable: 'Ruin', weak: 'Weakness', burn: 'Embers', bleed: 'Bleeding', venom: 'Venom',
-  frost: 'Winter', chill: 'Winter', shock: 'Storms', damage: 'Might', block: 'the Wall', draw: 'Insight',
-  heal: 'Mercy', poise: 'Ruin', 'SP restore': 'Vigor', 'MP restore': 'Mana',
-});
-const AUTO_NAME_MIN_WORDS = 2;
-const AUTO_NAME_SUFFIX_MIN_WORDS = 4;
-const NON_NAME_PARTS = new Set(['SP', 'MP', 'effect count', 'HP cost', 'discard']);
-
-// Adds the word tables when a scoring table has none, to both the working and the repo copy so the
-// seed itself is not an edit.
-function ensureNamingWords(scoringRef) {
-  if (!scoringRef) return;
-  const card = ((scoringRef.naming ||= clone(shippedScoring.naming || {})).card ||= {});
-  card.prefix ||= { ...DEFAULT_NAME_PREFIX };
-  card.suffix ||= { ...DEFAULT_NAME_SUFFIX };
-}
-
 function romanFor(rank) {
   const roman = state.scoring.naming?.roman || shippedScoring.naming?.roman || [];
   return roman[rank] || '';
 }
 
-// A name's words without its rank numeral, upgrade mark or "(Copy)", so a duplicate keeps its source's noun.
-function nameWords(name) {
-  return String(name || '').trim().split(/\s+/).filter((word) => word && !/^[IVXLC]+$/.test(word) && !/^\+\d+$/.test(word) && !/^\(Copy\)$/i.test(word));
+// A config's naming with the shipped word tables under it, so an older config (no range or tradition words) still names
+// cards. The length limit is not filled in: a config without one has no limit.
+function namingScoring(scoringRef) {
+  const own = scoringRef?.naming;
+  if (!own) return { ...scoringRef, naming: shippedScoring.naming };
+  const { limit, ...shippedCard } = shippedScoring.naming.card;
+  // Table by table and key by key, so a table missing a newer key still finds the shipped word.
+  const card = { ...shippedCard };
+  for (const [table, words] of Object.entries(own.card || {})) {
+    const shippedWords = shippedCard[table];
+    card[table] = shippedWords && typeof shippedWords === 'object' && !Array.isArray(shippedWords) && words && typeof words === 'object' && !Array.isArray(words) ? { ...shippedWords, ...words } : words;
+  }
+  return { ...scoringRef, naming: { ...shippedScoring.naming, ...own, card } };
 }
 
 function nameParts(def, sc = scoreCardEntry(def)) {
   try {
-    return CardNameParts(sc.face, 0, state.scoring.naming ? state.scoring : { ...state.scoring, naming: shippedScoring.naming });
+    return CardNameParts(sc.face, 0, namingScoring(state.scoring));
   } catch {
-    return { name: def.name, effect: null, base: null, rank: sc.rank, source: null };
+    return { name: def.name, effect: null, base: null, rank: sc.rank, source: null, dropped: [] };
   }
 }
 
-// Turning Auto-name on keeps the card's own noun and length: Acid Splash stays a "... Splash".
-function startAutoName(def) {
-  const words = nameWords(def.name);
-  def._autoNameCore = def._custom && /^New Custom Card$/.test(def.name) ? '' : (words[words.length - 1] || '');
-  def._autoNameBudget = Math.max(AUTO_NAME_MIN_WORDS, words.length);
-}
-
-// The title box of a card face and the smallest font its fitter will use, measured once from a rendered
-// card (every illustrated card shares the frame). A candidate fits when it fits at that smallest font.
-let titleMetric = null;
-function measureTitleMetric() {
-  if (titleMetric) return titleMetric;
-  const node = document.querySelector('.studio-card-stage [data-card-binding="name"], #inspector-card-preview [data-card-binding="name"]');
-  const face = node?.closest('.illustrated-card-face');
-  if (!node || !face || !node.clientWidth) return null;
-  const scale = face.clientWidth / Number(face.dataset.designWidth || face.clientWidth);
-  const style = getComputedStyle(node);
-  titleMetric = {
-    fontFamily: style.fontFamily,
-    fontWeight: style.fontWeight,
-    minFontPx: Number(node.dataset.minFont || parseFloat(style.fontSize) / scale) * scale,
-    boxPx: node.clientWidth,
-  };
-  return titleMetric;
-}
-
-let measureCanvas = null;
-function titleFits(text) {
-  const metric = measureTitleMetric();
-  if (!metric) return true;
-  measureCanvas ||= document.createElement('canvas');
-  const ctx = measureCanvas.getContext('2d');
-  ctx.font = `${metric.fontWeight} ${metric.minFontPx}px ${metric.fontFamily}`;
-  return ctx.measureText(text).width <= metric.boxPx;
-}
-
-function wordFor(table, key) {
-  return state.scoring.naming?.card?.[table]?.[key] || null;
-}
-
-// The name Auto-name gives a card now.
+// The name Auto-name gives a card now: its convention name.
 function autoNameFor(def, sc = scoreCardEntry(def)) {
-  const parts = nameParts(def, sc);
-  const ranked = Object.entries(sc.parts || {})
-    .filter(([key, value]) => value > 0 && !NON_NAME_PARTS.has(key))
-    .sort((a, b) => b[1] - a[1])
-    .map(([key]) => key);
-  const adjectiveKey = parts.source && parts.source !== 'fallback' ? parts.source : ranked[0];
-  const adjective = (adjectiveKey && wordFor('prefix', adjectiveKey)) || parts.effect || null;
-  const suffixKey = ranked.find((key) => key !== adjectiveKey && wordFor('suffix', key));
-  const suffix = suffixKey ? wordFor('suffix', suffixKey) : null;
-  const core = def._autoNameCore || parts.base || 'Card';
-  const numeral = romanFor(sc.rank);
-  const withNumeral = (words) => [...words, numeral].filter(Boolean).join(' ');
-  const budget = Math.max(AUTO_NAME_MIN_WORDS, def._autoNameBudget || AUTO_NAME_MIN_WORDS);
-  const candidates = [];
-  if (adjective && suffix && budget >= AUTO_NAME_SUFFIX_MIN_WORDS) candidates.push(withNumeral([adjective, core, 'of', suffix]));
-  if (adjective) candidates.push(withNumeral([adjective, core]));
-  candidates.push(withNumeral([core]));
-  // Measure, don't count: drop the suffix, then the adjective, until the title fits. The numeral stays.
-  return candidates.find((candidate) => titleFits(candidate)) || candidates[candidates.length - 1];
+  return nameParts(def, sc).name;
 }
 
 // Renames every auto-named card whose name has moved. Runs after every mutation (from saveDraft and
@@ -775,8 +740,182 @@ function renderNameHint(def, sc = scoreCardEntry(def)) {
   const hint = document.getElementById('name-hint');
   if (!hint) return;
   const parts = nameParts(def, sc);
-  const source = parts.source && parts.source !== 'fallback' ? parts.source : 'no main effect';
-  hint.textContent = `From ${source} · ${def._autoNameCore || parts.base || 'Card'} · ${RankName(sc.rank)}`;
+  const source = parts.source || 'no second effect';
+  const trimmed = parts.dropped?.length ? ` · Trimmed: ${parts.dropped.join(', ')}` : '';
+  hint.textContent = `Convention: ${parts.name}${trimmed} · from ${source} · ${RankName(sc.rank)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Rename all and name sets (owner, 2026-11-24)
+// ---------------------------------------------------------------------------
+// Rename all turns Auto-name on for every card. Before it, the owner may save the current names as a set;
+// Restore names puts back Default names (the repo's authored names) or a saved set, with Auto-name off.
+// Sets stay in the studio (local storage and the saved JSON config); Export never writes them.
+let selectedNameSetId = DEFAULT_NAME_SET_ID;
+
+function loadStoredNameSets() {
+  try { state.nameSets = SortedNameSets(ValidNameSets(JSON.parse(localStorage.getItem(NAME_SETS_STORAGE_KEY) || '[]'))); } catch { state.nameSets = []; }
+}
+
+function storeNameSets() {
+  try { localStorage.setItem(NAME_SETS_STORAGE_KEY, JSON.stringify(state.nameSets)); } catch { toast('Could not keep the name sets: browser storage is full'); }
+}
+
+function nameSetById(id) {
+  return id === DEFAULT_NAME_SET_ID ? state.defaultNameSet : state.nameSets.find((set) => set.id === id) || null;
+}
+
+function renderNameSetsList() {
+  const list = document.getElementById('restore-names-list');
+  if (!list) return;
+  if (!nameSetById(selectedNameSetId)) selectedNameSetId = DEFAULT_NAME_SET_ID;
+  const sets = [state.defaultNameSet, ...state.nameSets].filter(Boolean);
+  list.innerHTML = sets.map((set) => {
+    const id = esc(set.id);
+    const remove = set.id === DEFAULT_NAME_SET_ID ? '' : `<button type="button" class="name-set-delete" data-name-set-delete="${id}" title="Delete this saved set" aria-label="${esc(`Delete ${set.label}`)}">×</button>`;
+    return `<label class="name-set-row"><input type="radio" name="name-set" value="${id}" ${set.id === selectedNameSetId ? 'checked' : ''} /><span>${esc(set.label)}</span>${remove}</label>`;
+  }).join('');
+}
+
+function renameAll() {
+  pushHistory();
+  const count = TurnOnAutoNames(state.cards);
+  syncAutoNames({ render: false });
+  renderCardsGrid();
+  renderInspector();
+  saveDraft();
+  toast(count ? `Auto-name is on for ${count} more card(s). Undo puts the names back.` : 'Every card already uses Auto-name');
+}
+
+function openRenameAllDialog() {
+  const dialog = document.getElementById('rename-all-modal');
+  document.getElementById('rename-all-set-name').value = DefaultNameSetLabel();
+  dialog.returnValue = '';
+  dialog.showModal();
+}
+
+function finishRenameAllDialog() {
+  const choice = document.getElementById('rename-all-modal').returnValue;
+  if (choice !== 'save' && choice !== 'skip') return;
+  if (choice === 'save') {
+    const set = CaptureNameSet(state.cards, document.getElementById('rename-all-set-name').value);
+    state.nameSets = SortedNameSets([set, ...state.nameSets]);
+    storeNameSets();
+    renderNameSetsList();
+  }
+  renameAll();
+}
+
+function restoreSelectedNameSet() {
+  const set = nameSetById(selectedNameSetId);
+  if (!set) return;
+  pushHistory();
+  const count = ApplyNameSet(state.cards, set);
+  renderCardsGrid();
+  renderInspector();
+  saveDraft({ autoName: false });
+  closeMenus();
+  toast(count ? `Restored ${set.label} on ${count} card(s); Auto-name is off for them` : `Every card already has ${set.label}`);
+}
+
+function deleteNameSet(id) {
+  state.nameSets = state.nameSets.filter((set) => set.id !== id);
+  storeNameSets();
+  renderNameSetsList();
+}
+
+// Save names / Save as / Load names (owner, 2026-11-24): card names as a JSON file. Save reuses the last file name;
+// Save as asks for a name. Both also add the names to Restore names. Load adds the file's names there and gives them
+// to the cards as one undo step.
+let lastNamesFileLabel = '';
+
+function downloadNameSet(set) {
+  const blob = new Blob([JSON.stringify(NameSetFile(set), null, 2) + '\n'], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const fileName = NameSetFileName(set.label);
+  Object.assign(document.createElement('a'), { href: url, download: fileName }).click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return fileName;
+}
+
+function saveNamesAs(label) {
+  const set = CaptureNameSet(state.cards, label);
+  lastNamesFileLabel = set.label;
+  // Saving under a name already in the list replaces that set, so repeated Saves keep one entry.
+  state.nameSets = SortedNameSets([set, ...state.nameSets.filter((other) => other.label !== set.label)]);
+  storeNameSets();
+  renderNameSetsList();
+  toast(`Saved ${set.label} to ${downloadNameSet(set)}`);
+}
+
+function saveNames() {
+  if (!lastNamesFileLabel) { openSaveNamesAsDialog(); return; }
+  saveNamesAs(lastNamesFileLabel);
+}
+
+function openSaveNamesAsDialog() {
+  const dialog = document.getElementById('save-names-modal');
+  document.getElementById('save-names-label').value = lastNamesFileLabel || DefaultNameSetLabel();
+  dialog.returnValue = '';
+  dialog.showModal();
+}
+
+async function loadNamesFile(e) {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  let sets;
+  try {
+    sets = ParseNameSetFile(JSON.parse(await file.text()));
+  } catch (err) {
+    toast(`Could not load names: ${err.message}`);
+    return;
+  }
+  state.nameSets = MergeNameSets(state.nameSets, sets);
+  storeNameSets();
+  const set = sets[0];
+  selectedNameSetId = set.id;
+  lastNamesFileLabel = set.label;
+  renderNameSetsList();
+  pushHistory();
+  const count = ApplyNameSet(state.cards, set);
+  renderCardsGrid();
+  renderInspector();
+  saveDraft({ autoName: false });
+  const more = sets.length > 1 ? ` (${sets.length - 1} more set(s) added to Restore names)` : '';
+  toast(`Loaded ${set.label}: ${count} card(s) renamed${more}. Undo puts the names back.`);
+}
+
+function wireNameSets() {
+  document.getElementById('btn-save-names').addEventListener('click', saveNames);
+  document.getElementById('btn-save-names-as').addEventListener('click', openSaveNamesAsDialog);
+  document.getElementById('save-names-modal').addEventListener('close', () => {
+    if (document.getElementById('save-names-modal').returnValue === 'save') saveNamesAs(document.getElementById('save-names-label').value);
+  });
+  document.getElementById('save-names-label').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    document.getElementById('save-names-modal').close('save');
+  });
+  document.getElementById('input-load-names').addEventListener('change', loadNamesFile);
+  document.getElementById('btn-rename-all').addEventListener('click', openRenameAllDialog);
+  document.getElementById('rename-all-modal').addEventListener('close', finishRenameAllDialog);
+  // Enter in the name field saves (the form's first button is Cancel).
+  document.getElementById('rename-all-set-name').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    document.getElementById('rename-all-modal').close('save');
+  });
+  const list = document.getElementById('restore-names-list');
+  list.addEventListener('change', (e) => { if (e.target.name === 'name-set') selectedNameSetId = e.target.value; });
+  list.addEventListener('click', (e) => {
+    const remove = e.target.closest('[data-name-set-delete]');
+    if (!remove) return;
+    e.preventDefault();
+    deleteNameSet(remove.dataset.nameSetDelete);
+  });
+  document.getElementById('btn-restore-names-apply').addEventListener('click', restoreSelectedNameSet);
+  renderNameSetsList();
 }
 
 // The game draws core cards from the profile's own card list (projectGameCard in src/model/gameProfile.js),
@@ -886,9 +1025,17 @@ function renderTextWarnings(def) {
 
 // Plain clauses + Add Feature appends when the card text does not mention the new token yet.
 function clauseForNewFeature(kind, key) {
-  if (kind === 'status') return { token: key, clause: `Apply {${key}} ${tokenLabel(key)}.` };
+  if (kind === 'status') {
+    if (key === 'barrier') return { token: 'barrier', clause: 'Gain {barrier} Poise.' };
+    if (key === 'ward') return { token: 'ward', clause: 'Gain {ward} Ward.' };
+    const self = state.scoring.statuses?.[key]?.target === 'self';
+    return { token: key, clause: `${self ? 'Gain' : 'Apply'} {${key}} ${tokenLabel(key)}.` };
+  }
   if (kind === 'effect' && key === 'damage') return { token: 'damage', clause: 'Deal {damage} damage.' };
   if (kind === 'effect' && key === 'block') return { token: 'block', clause: 'Gain {block} Block.' };
+  if (kind === 'effect' && key === 'gainBarrier') return { token: 'gainBarrier', clause: 'Gain {gainBarrier} Poise.' };
+  if (kind === 'effect' && key === 'restorePoise') return { token: 'restorePoise', clause: 'Restore {restorePoise} Poise.' };
+  if (kind === 'effect' && key === 'poiseDamage') return { token: 'poiseDamage', clause: 'Deal {poiseDamage} Poise damage.' };
   if (kind === 'effect' && key === 'draw') return { token: 'draw', clause: 'Draw {draw}.' };
   return null;
 }
@@ -1099,6 +1246,8 @@ function populateAddFeatureDropdown() {
     'Effects': [
       ['effect:damage', 'Damage'],
       ['effect:block', 'Block'],
+      ['effect:gainBarrier', 'Gain Bonus Poise (+5 Poise/stack)'],
+      ['effect:restorePoise', 'Restore Poise'],
       ['effect:poiseDamage', 'Poise Damage'],
       ['effect:draw', 'Draw Cards'],
       ['effect:heal', 'Heal HP'],
@@ -1109,10 +1258,14 @@ function populateAddFeatureDropdown() {
       ['effect:moveEngagement', 'Move Engagement'],
       ['effect:pullEnemy', 'Pull Enemy'],
     ],
-    'Statuses': Object.keys(state.scoring.statuses || {}).sort().map((id) => [`status:${id}`, `Status: ${id}`]),
+    'Statuses': Object.keys(state.scoring.statuses || {}).sort().map((id) => {
+      if (id === 'barrier') return [`status:${id}`, 'Status: Bonus Poise (barrier)'];
+      if (id === 'ward') return [`status:${id}`, 'Status: Ward — Temp HP (ward)'];
+      return [`status:${id}`, `Status: ${id}`];
+    }),
     'Keywords': Object.keys(state.scoring.keywords || {}).sort().map((id) => [`kw:${id}`, `Keyword: ${id}`]),
     'Weighted Tags': Object.entries(state.scoring.tags || {})
-      .filter(([k, v]) => k[0] !== '$' && v && (v.weight || v.multiplier || v.pMultiplier || k.startsWith('school:') || k.startsWith('maneuver:')))
+      .filter(([k, v]) => k[0] !== '$' && v && (v.weight || v.multiplier || v.pMultiplier || k === 'bonusPoise' || k.startsWith('school:') || k.startsWith('maneuver:')))
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([k, v]) => [`tag:${k}`, `${v.label || k} (${k})`]),
   };
@@ -1229,8 +1382,9 @@ function renderInspector() {
       const stacksCtrl = stacksIsNum
         ? `<input type="number" min="1" max="30" value="${esc(safeNum(eff.stacks, 1))}" data-eff-stacks="${idx}" />`
         : '<span class="studio-muted" title="Formula-computed stack count">formula</span>';
+      const statusDisplay = eff.status === 'barrier' ? 'Bonus Poise (barrier)' : eff.status === 'ward' ? 'Ward (ward)' : eff.status;
       row.innerHTML = `
-        <span class="feature-label" title="${esc(featureTitleText(describeFeature('status', eff.status)))}">Status: <strong>${esc(eff.status)}</strong> ${infoButtonHtml()}</span>
+        <span class="feature-label" title="${esc(featureTitleText(describeFeature('status', eff.status)))}">Status: <strong>${esc(statusDisplay)}</strong> ${infoButtonHtml()}</span>
         <div class="feature-controls">
           ${chipFor()}
           ${stacksCtrl}
@@ -1243,11 +1397,15 @@ function renderInspector() {
         ${infoLineHtml(describeFeature('status', eff.status))}`;
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
+      const isDirectStacks = eff.op === 'gainBarrier';
+      const displayedAmt = isDirectStacks ? safeNum(eff.amount, 1) : (faceAmountFor(def, idx) ?? safeNum(eff.amount, 1));
+      const amtTitle = isDirectStacks ? 'Bonus Poise stacks (+5 Poise per stack)' : "The card's own number, before the hero's bonus";
       const amtCtrl = amtIsNum
-        ? `<input type="number" min="0" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The card's own number, before the hero's bonus" />`
+        ? `<input type="number" min="0" max="99" value="${esc(displayedAmt)}" data-eff-amt="${idx}" title="${esc(amtTitle)}" />`
         : '<span class="studio-muted" title="Formula-computed value">formula</span>';
+      const opDisplay = eff.op === 'gainBarrier' ? 'Gain Bonus Poise (gainBarrier)' : eff.op;
       row.innerHTML = `
-        <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(eff.op)}</strong> ${infoButtonHtml()}</span>
+        <span class="feature-label" title="${esc(featureTitleText(describeFeature('effect', eff.op)))}">Effect: <strong>${esc(opDisplay)}</strong> ${infoButtonHtml()}</span>
         <div class="feature-controls">
           ${chipFor()}
           ${amtCtrl}
@@ -1292,6 +1450,7 @@ const EFFECT_SCORE_KEYS = Object.freeze({
   damage:         { part: 'damage',     weight: 'damage' },
   block:          { part: 'block',      weight: 'block' },
   ward:           { part: 'block',      weight: 'block' },
+  restorePoise:   { part: 'block',      weight: 'block' },
   poiseDamage:    { part: 'poise',      weight: 'poiseDamage' },
   draw:           { part: 'draw',       weight: 'draw' },
   heal:           { part: 'heal',       weight: 'heal' },
@@ -1348,6 +1507,19 @@ function featureScoreRows(def, face = null) {
         sign: helpsPlayer ? 1 : -1,
         exact: EXACT_SCORED_STATUSES.has(eff.status),
         capAt: state.scoring.cardModel?.decayOneStatuses?.includes(eff.status) ? state.scoring.model?.R : null,
+      });
+      continue;
+    }
+    if (eff.op === 'gainBarrier') {
+      const status = state.scoring.statuses?.barrier;
+      rows.push({
+        part: status ? 'barrier' : null,
+        count: eff.amount ?? 1,
+        unitWeight: status?.weight,
+        per: 1,
+        sign: 1,
+        exact: false,
+        capAt: null,
       });
       continue;
     }
@@ -1603,10 +1775,14 @@ function textFromEffects(def) {
     if (e.op === 'damage') parts.push(`Deal {damage} damage${e.hits > 1 ? ` ${e.hits} times` : ''}${area}.`);
     else if (e.op === 'block') parts.push('Gain {block} Block.');
     else if (e.op === 'ward') parts.push(`Gain ${amt} Ward.`);
-    else if (e.op === 'gainBarrier') parts.push(`Gain ${amt} Barrier.`);
+    else if (e.op === 'gainBarrier') parts.push('Gain {gainBarrier} Poise.');
     else if (e.op === 'poiseDamage') parts.push(`Deal {poiseDamage} Poise damage${area}.`);
-    else if (e.op === 'restorePoise') parts.push(`Restore ${amt} Poise.`);
-    else if (e.op === 'applyStatus') parts.push(`${e.target === 'self' ? 'Gain' : 'Apply'} {${e.status}} ${tokenLabel(e.status)}${e.target !== 'self' ? area : ''}.`);
+    else if (e.op === 'restorePoise') parts.push('Restore {restorePoise} Poise.');
+    else if (e.op === 'applyStatus') {
+      if (e.status === 'barrier') parts.push('Gain {barrier} Poise.');
+      else if (e.status === 'ward') parts.push('Gain {ward} Ward.');
+      else parts.push(`${e.target === 'self' ? 'Gain' : 'Apply'} {${e.status}} ${tokenLabel(e.status)}${e.target !== 'self' ? area : ''}.`);
+    }
     else if (e.op === 'draw') parts.push('Draw {draw}.');
     else if (e.op === 'discard') parts.push(`Discard ${amt} card${amt === 1 ? '' : 's'}.`);
     else if (e.op === 'heal') parts.push(`Heal ${amt} HP.`);
@@ -1736,8 +1912,17 @@ function renderWeights({ shifts = true } = {}) {
       id: k, label: k, val: v.weight, base: R.effects?.[k]?.weight, set: (n) => { state.scoring.effects[k].weight = n; },
       per: { value: v.per, base: R.effects?.[k]?.per, set: (n) => { state.scoring.effects[k].per = n; } },
     })) },
-    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
-    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => ({ id: k, label: k + (v.flat !== undefined ? ' (flat)' : ' (mult)'), val: v.flat ?? v.multiplier, base: R.keywords?.[k]?.flat ?? R.keywords?.[k]?.multiplier, step: v.flat !== undefined ? 1 : 0.05, set: (n) => { if (v.flat !== undefined) state.scoring.keywords[k].flat = n; else state.scoring.keywords[k].multiplier = n; } })) },
+    { key: 'statuses', title: 'Statuses', entries: Object.entries(state.scoring.statuses || {}).map(([k, v]) => ({ id: k, label: k === 'barrier' ? `Bonus Poise / barrier (${v.target})` : k === 'ward' ? `Ward (Temp HP) / ward (${v.target})` : `${k} (${v.target})`, val: v.weight, base: R.statuses?.[k]?.weight, set: (n) => { state.scoring.statuses[k].weight = n; } })) },
+    { key: 'keywords', title: 'Keywords', entries: Object.entries(state.scoring.keywords || {}).map(([k, v]) => {
+      const bv = R.keywords?.[k];
+      return {
+        id: k, label: k, val: v.flat ?? v.multiplier, base: bv?.flat ?? bv?.multiplier, step: v.flat !== undefined ? 1 : 0.05,
+        // Reads the stored form, not the one this row was drawn with: the switch may have changed it since.
+        set: (n) => { const kw = state.scoring.keywords[k]; if (kw.flat !== undefined) kw.flat = n; else kw.multiplier = n; },
+        // Flat adds `flat`; multiplier adds the positive score times it. Switching resets to the no-change value (0).
+        mult: { value: v.flat === undefined, base: bv ? bv.flat === undefined : undefined, set: (on) => { SetKeywordForm(state.scoring.keywords[k], on); } },
+      };
+    }) },
     { key: 'rarity', title: 'Rarity Discounts', entries: Object.entries(state.scoring.rarity?.discount || {}).map(([k, v]) => ({ id: k, label: k, val: v, base: R.rarity?.discount?.[k], set: (n) => { state.scoring.rarity.discount[k] = n; } })) },
     { key: 'rank', title: 'Rank Bands', entries: [
       { id: 'unrankedMax', label: 'Unranked Max CP', val: state.scoring.rank.unrankedMax, base: R.rank?.unrankedMax, set: (n) => { state.scoring.rank.unrankedMax = n; } },
@@ -1762,21 +1947,43 @@ function renderWeights({ shifts = true } = {}) {
     { key: 'tags', title: 'Weighted Tags', entries: Object.entries(state.scoring.tags || {}).filter(([k, v]) => {
       if (k[0] === '$' || !v) return false;
       const bv = R.tags?.[k];
-      return v.weight !== 0 || v.multiplier !== undefined || v.pMultiplier !== undefined || (bv && (bv.weight !== 0 || bv.multiplier !== undefined || bv.pMultiplier !== undefined));
+      return k === 'bonusPoise' || v.weight !== 0 || v.multiplier !== undefined || v.pMultiplier !== undefined || (bv && (bv.weight !== 0 || bv.multiplier !== undefined || bv.pMultiplier !== undefined));
     }).map(([k, v]) => {
       const bv = R.tags?.[k];
       const isMult = v.multiplier !== undefined || v.pMultiplier !== undefined;
+      // Which multiplier this tag uses when switched on: its own, else the repo's.
+      const multKey = TagMultiplierKey(v, bv);
       return {
         id: k,
         label: `${v.label || k} (${k})`,
         val: v.multiplier ?? v.pMultiplier ?? v.weight ?? 0,
         base: bv ? (bv.multiplier ?? bv.pMultiplier ?? bv.weight ?? 0) : undefined,
         step: isMult ? 0.05 : 1,
-        set: (n) => { if (v.multiplier !== undefined) state.scoring.tags[k].multiplier = n; else if (v.pMultiplier !== undefined) state.scoring.tags[k].pMultiplier = n; else state.scoring.tags[k].weight = n; },
+        set: (n) => { const tag = state.scoring.tags[k]; if (tag.multiplier !== undefined) tag.multiplier = n; else if (tag.pMultiplier !== undefined) tag.pMultiplier = n; else tag.weight = n; },
         // Damage-type tags score once per action or once per hit (ScoreCard reads per === 'hit').
         per: v.per !== undefined ? { value: v.per, base: bv?.per, options: TAG_PER_OPTIONS, set: (n) => { state.scoring.tags[k].per = n; } } : null,
+        // A multiplier tag may be set flat (adds its weight). Switching resets to the no-change value.
+        mult: multKey ? { value: isMult, base: bv ? (bv.multiplier !== undefined || bv.pMultiplier !== undefined) : undefined, set: (on) => { SetTagForm(state.scoring.tags[k], multKey, on); } } : null,
       };
     }) },
+    { key: 'items', title: 'Equipment & Items', entries: [
+      { id: 'weaponPoiseDamage.perPoint', label: 'Weapon Inherent Poise Dmg', val: state.scoring.items?.weaponPoiseDamage?.perPoint ?? 1, base: R.items?.weaponPoiseDamage?.perPoint ?? 1, step: 0.25, set: (n) => { ((state.scoring.items ||= {}).weaponPoiseDamage ||= { baseline: 1, perPoint: 1 }).perPoint = n; } },
+      { id: 'weaponPoiseDamage.baseline', label: 'Weapon Poise Dmg Baseline', val: state.scoring.items?.weaponPoiseDamage?.baseline ?? 1, base: R.items?.weaponPoiseDamage?.baseline ?? 1, step: 1, set: (n) => { ((state.scoring.items ||= {}).weaponPoiseDamage ||= { baseline: 1, perPoint: 1 }).baseline = n; } },
+      { id: 'poiseThreshold.perPoint', label: 'Armour Poise Weight', val: state.scoring.items?.poiseThreshold?.perPoint ?? 0.5, base: R.items?.poiseThreshold?.perPoint ?? 0.5, step: 0.25, set: (n) => { ((state.scoring.items ||= {}).poiseThreshold ||= { baseline: 0, perPoint: 0.5 }).perPoint = n; } },
+      { id: 'poiseThreshold.baseline', label: 'Armour Poise Baseline', val: state.scoring.items?.poiseThreshold?.baseline ?? 0, base: R.items?.poiseThreshold?.baseline ?? 0, step: 1, set: (n) => { ((state.scoring.items ||= {}).poiseThreshold ||= { baseline: 0, perPoint: 0.5 }).baseline = n; } },
+      { id: 'plays.weaponArt', label: 'Weapon Art Share', val: state.scoring.items?.plays?.weaponArt ?? 0.25, base: R.items?.plays?.weaponArt ?? 0.25, step: 0.05, set: (n) => { ((state.scoring.items ||= {}).plays ||= { strike: 3, defend: 2, weaponArt: 0.25 }).weaponArt = n; } },
+      { id: 'range.reach', label: 'Reach Weapon Bonus', val: state.scoring.items?.range?.reach ?? 2, base: R.items?.range?.reach ?? 2, step: 0.5, set: (n) => { ((state.scoring.items ||= {}).range ||= { melee: 0, reach: 2, ranged: 3 }).reach = n; } },
+      { id: 'range.ranged', label: 'Ranged Weapon Bonus', val: state.scoring.items?.range?.ranged ?? 3, base: R.items?.range?.ranged ?? 3, step: 0.5, set: (n) => { ((state.scoring.items ||= {}).range ||= { melee: 0, reach: 2, ranged: 3 }).ranged = n; } },
+      { id: 'conditionFactor', label: 'Conditional Trait Factor', val: state.scoring.items?.conditionFactor ?? 0.65, base: R.items?.conditionFactor ?? 0.65, step: 0.05, set: (n) => { (state.scoring.items ||= {}).conditionFactor = n; } },
+    ] },
+    { key: 'gearFields', title: 'Gear Traits', entries: Object.entries(state.scoring.items?.gearFields || {}).map(([k, v]) => ({
+      id: k,
+      label: `${v.label || k} (${k})`,
+      val: v.weight ?? 0,
+      base: R.items?.gearFields?.[k]?.weight,
+      step: 0.5,
+      set: (n) => { state.scoring.items.gearFields[k].weight = n; },
+    })) },
   ];
   // Built from the applied config (to mark pending rows) and from the config Apply would produce.
   const appliedGroups = buildGroups();
@@ -1854,7 +2061,7 @@ function renderWeights({ shifts = true } = {}) {
       // After an edit the row shows what its setter stored (Band Width 0 is stored as 1), then re-marks.
       const showStored = () => {
         const stored = entryIn(withScoring(stagedScoring() || state.scoring, buildGroups), g.key, r.id);
-        if (stored) input.value = String(safeNum(stored.val, 0));
+        if (stored) { input.value = String(safeNum(stored.val, 0)); input.step = String(safeNum(stored.step, 1)); }
         if (stored?.per && perInput) perInput.value = String(stored.per.value);
         if (stored?.mult && multInput) multInput.checked = stored.mult.value;
         markRow();
@@ -1895,7 +2102,7 @@ function renderWeights({ shifts = true } = {}) {
     }
     container.appendChild(card);
   }
-  if (groupF === 'all' || groupF === 'naming') renderNamingWordsGroup(container, q);
+  if (groupF === 'all' || groupF === 'naming') renderNamingLimitGroup(container, q);
   renderDescriptionGaps();
   updateWeightsToolbar();
   if (shifts) computeShiftCount();
@@ -1911,10 +2118,10 @@ function categoryWeight(scoring, key) {
   return scoring.categories[key];
 }
 
-// "× mult" switch for a category weight: off adds the weight flat, on multiplies the positive score.
+// "multiply instead" switch for category, keyword and multiplier-tag rows: off adds the number flat, on multiplies.
 function multControlHtml(entry) {
   if (!entry.mult) return '';
-  return `<label class="weight-per-label weight-mult-label" title="Off: add the weight. On: multiply the card's positive score by it."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiply instead</label>`;
+  return `<label class="weight-per-label weight-mult-label" title="Off: add the number as flat points. On: use it as a multiplier of the card's positive score."><input type="checkbox" class="weight-mult" ${entry.mult.value ? 'checked' : ''} aria-label="${esc(`${entry.label} is a multiplier`)}" /> multiply instead</label>`;
 }
 
 // The values a tag's per can take: score once per action, or once per hit.
@@ -1987,12 +2194,15 @@ function discardPendingWeights() {
 }
 
 // Stages a whole scoring config (an imported file or the saved config) for review; Apply makes it live.
-function stageWholeScoring(scoring, sourceName) {
+function stageWholeScoring(incoming, sourceName) {
+  // A studio config (Save, or an imported copy of it) carries name sets beside the weights: they join the list and
+  // never reach the weights, so Apply and Export cannot write them into the game's scoring.json.
+  const { scoring, nameSets } = SplitSavedConfig(incoming);
+  if (nameSets.length) { state.nameSets = MergeNameSets(state.nameSets, nameSets); storeNameSets(); renderNameSetsList(); }
   const errors = ValidateScoringConfig(scoring);
   if (errors.length) throw new Error(errors.join(' '));
-  state.pendingScoring = clone(scoring);
-  // Seed naming words as the applied copy is seeded, so they do not count as staged changes.
-  ensureNamingWords(state.pendingScoring);
+  // A config saved before convention names gets the repo's naming tables and loses the retired word tables.
+  state.pendingScoring = RefreshRestoredNaming(clone(scoring), state.repoScoring);
   state.pendingBase = clone(state.scoring);
   document.querySelector('.studio-tab[data-tab="weights"]')?.click();
   renderWeights({ shifts: false });
@@ -2024,99 +2234,435 @@ function renderDescriptionGaps() {
   gaps.textContent = missing ? `${missing} tag${missing === 1 ? ' has' : 's have'} no description` : 'Every tag has a description';
 }
 
-// The Auto-name word tables: per scoring part, the adjective ("Brittle") and the "of" noun ("Frailty").
-function renderNamingWordsGroup(container, query) {
-  ensureNamingWords(state.scoring);
-  const words = state.scoring.naming.card;
-  const keys = [...new Set([...Object.keys(words.prefix || {}), ...Object.keys(words.suffix || {})])].sort();
-  const rows = keys.filter((key) => !query || `naming words ${key} ${words.prefix[key] || ''} ${words.suffix[key] || ''}`.toLowerCase().includes(query));
-  if (!rows.length) return;
+// What each part of a convention name is, for the keep-order list.
+const NAME_PART_LABELS = Object.freeze({ base: 'Base word (Strike)', rank: 'Rank numeral (II)', upgrade: 'Upgrade mark (+)', element: 'Element word (Frost)', effect: 'Second-effect word (Searing)', rarity: 'Rarity word (Greater)' });
+
+// The card name length limit (scoring.naming.card.limit): a characters box and the keep order, most important first.
+// Edits are staged like other weight edits; Apply renames. An empty box means no limit.
+// The keep order a limit uses; an empty or missing list shows (and edits) the default order, so the owner can always reorder.
+function KeepOrderOf(limit)
+{
+  return limit?.keep?.length ? [...limit.keep] : [...NAME_LIMIT_PARTS];
+}
+
+function renderNamingLimitGroup(container, query) {
+  if (query && !'naming name length limit characters keep order'.includes(query)) return;
+  const shown = () => (stagedScoring() || state.scoring).naming?.card?.limit || null;
+  const appliedLimit = () => state.scoring.naming?.card?.limit || null;
   const group = document.createElement('details');
-  group.className = 'weight-group-card studio-section naming-words-group';
-  group.dataset.section = 'weights-naming';
+  group.className = 'weight-group-card studio-section naming-limit-group';
+  group.dataset.section = 'weights-naming-limit';
   group.open = true;
-  group.innerHTML = '<summary class="section-head"><h3>Naming words</h3></summary><div class="naming-word-row naming-word-head"><span>Part</span><span>Adjective</span><span>"of" noun</span></div>';
   rememberSection(group);
-  for (const key of rows) {
-    const row = document.createElement('div');
-    row.className = 'naming-word-row';
-    row.innerHTML = `<span>${esc(key)}</span>
-      <input type="text" data-naming-table="prefix" data-naming-key="${esc(key)}" value="${esc(words.prefix[key] || '')}" aria-label="${esc(`Adjective for ${key}`)}" />
-      <input type="text" data-naming-table="suffix" data-naming-key="${esc(key)}" value="${esc(words.suffix[key] || '')}" aria-label="${esc(`"of" noun for ${key}`)}" />`;
-    group.appendChild(row);
-  }
-  group.addEventListener('change', (e) => {
-    const { namingTable, namingKey } = e.target.dataset;
-    if (!namingTable) return;
-    const value = e.target.value.trim();
-    const table = state.scoring.naming.card[namingTable];
-    if ((table[namingKey] || '') === value) return;
-    pushHistory();
-    // An emptied word keeps its row, so it can be filled in again.
-    table[namingKey] = value;
-    saveDraft();
-    renderInspector();
-  });
+  const stage = (fn) => {
+    applyWeightEdit(() => {
+      const card = ((state.scoring.naming ||= clone(shippedScoring.naming)).card ||= {});
+      fn(card);
+    });
+    draw();
+  };
+  const draw = () => {
+    const limit = shown();
+    const keep = KeepOrderOf(limit);
+    const pending = JSON.stringify(limit) !== JSON.stringify(appliedLimit());
+    group.classList.toggle('is-pending', pending);
+    group.innerHTML = `<summary class="section-head"><h3>Naming</h3></summary>
+      <div class="weight-row naming-limit-row${pending ? ' is-pending' : ''}"><span>Name length</span><span class="weight-sentence"><input type="number" class="weight-input naming-max-chars" min="1" step="1" value="${Number.isFinite(limit?.maxChars) ? esc(limit.maxChars) : ''}" placeholder="none" aria-label="Most characters in a card name" /><span class="weight-words">characters max</span></span>
+      <div class="weight-example">Too long: drop parts from the bottom of this list until the name fits. Base, rank and upgrade always stay. Empty: no limit.</div></div>
+      <ol class="naming-keep-list">${keep.map((part, i) => `<li class="naming-keep-item" data-part="${esc(part)}"><span>${esc(NAME_PART_LABELS[part] || part)}</span><button type="button" class="naming-keep-move" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="${esc(`Move ${part} up`)}">↑</button><button type="button" class="naming-keep-move" data-dir="1" ${i === keep.length - 1 ? 'disabled' : ''} aria-label="${esc(`Move ${part} down`)}">↓</button></li>`).join('')}</ol>`;
+    group.querySelector('.naming-max-chars').addEventListener('change', (e) => {
+      const raw = e.target.value.trim();
+      const n = Math.round(Number(raw));
+      // Empty: no limit. A keep order already set stays, with no maxChars.
+      if (raw === '') stage((card) => { if (card.limit?.keep) card.limit = { keep: [...card.limit.keep] }; else delete card.limit; });
+      else if (Number.isFinite(n) && n >= 1) stage((card) => { card.limit = { maxChars: n, keep: KeepOrderOf(card.limit) }; });
+    });
+    for (const btn of group.querySelectorAll('.naming-keep-move')) {
+      btn.addEventListener('click', () => {
+        const part = btn.closest('.naming-keep-item').dataset.part;
+        const dir = Number(btn.dataset.dir);
+        stage((card) => {
+          // Reordering never sets a length: with the box empty the limit stays off.
+          const next = { ...(Number.isFinite(card.limit?.maxChars) ? { maxChars: card.limit.maxChars } : {}), keep: KeepOrderOf(card.limit) };
+          const i = next.keep.indexOf(part), j = i + dir;
+          if (i < 0 || j < 0 || j >= next.keep.length) return;
+          [next.keep[i], next.keep[j]] = [next.keep[j], next.keep[i]];
+          card.limit = next;
+        });
+        group.querySelector(`.naming-keep-item[data-part="${part}"] .naming-keep-move[data-dir="${dir}"]`)?.focus();
+      });
+    }
+  };
+  draw();
   container.appendChild(group);
 }
 
 // ---------------------------------------------------------------------------
-// Art & Layers Tab
+// Items & Relics Tab (Weapons, Armours, Relics)
 // ---------------------------------------------------------------------------
+function renderItemCardPreview(entry, container, level = 'inspect') {
+  if (!entry || !container) return;
+  container.innerHTML = '';
+  let piece;
+  if (entry.kind === 'relic' && studioRegistries.relics.has(entry.id)) {
+    piece = { ...studioRegistries.relics.get(entry.id), name: entry.name, rarity: entry.rarity };
+  } else if (entry.kind === 'weapon') {
+    const resolved = studioRegistries.equipment.armaments.find((a) => a.id === entry.id);
+    piece = resolved ? { ...resolved, ...livePieceFromEntry(entry), itemTypes: resolved.itemTypes, tags: resolved.tags, propertyTags: resolved.propertyTags } : livePieceFromEntry(entry);
+  } else if (entry.kind === 'armour') {
+    const resolved = studioRegistries.equipment.armour.find((a) => a.id === entry.id && a.classId === entry.raw?.classId);
+    piece = resolved ? { ...resolved, ...livePieceFromEntry(entry), tags: resolved.tags, propertyTags: resolved.propertyTags } : livePieceFromEntry(entry);
+  } else {
+    piece = livePieceFromEntry(entry);
+  }
+  const rendered = entry.kind === 'relic'
+    ? renderCollectibleCard(studioRegistries, piece, 'Relic', { interactive: false, inspection: false, level, itemLayerConfig: state.itemArtLayers })
+    : renderEquipmentCard(studioRegistries, piece, { interactive: false, inspection: false, level, itemLayerConfig: state.itemArtLayers });
+  container.appendChild(rendered.card);
+}
+
+function populateItemTraitControls() {
+  const selEl = document.getElementById('item-trait-selector');
+  const fieldEl = document.getElementById('item-trait-field');
+  const quickEl = document.getElementById('item-quick-traits');
+  if (!selEl || !fieldEl || !quickEl) return;
+  if (!selEl.options.length) {
+    for (const s of ITEM_TRAIT_SELECTORS) {
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = s.label;
+      selEl.appendChild(o);
+    }
+  }
+  const prevField = fieldEl.value;
+  fieldEl.innerHTML = '';
+  const gearFields = state.scoring.items?.gearFields || shippedScoring.items?.gearFields || {};
+  for (const [k, v] of Object.entries(gearFields)) {
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = `${v.label || k} (${v.weight >= 0 ? `+${v.weight}` : v.weight})`;
+    fieldEl.appendChild(o);
+  }
+  if (prevField && gearFields[prevField]) fieldEl.value = prevField;
+  if (!quickEl.children.length) {
+    for (const qt of ITEM_QUICK_TRAITS) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'q-chip';
+      btn.dataset.itemQuickTrait = qt.mod;
+      btn.textContent = qt.label;
+      quickEl.appendChild(btn);
+    }
+  }
+}
+
+function renderItemsGrid() {
+  const grid = document.getElementById('items-grid');
+  if (!grid) return;
+  const q = (document.getElementById('item-filter-search')?.value || '').trim().toLowerCase();
+  const kindF = document.getElementById('item-filter-kind')?.value || 'all';
+  const rarF = document.getElementById('item-filter-rarity')?.value || 'all';
+  const rankF = document.getElementById('item-filter-rank')?.value || 'all';
+  const sortF = document.getElementById('item-filter-sort')?.value || 'rank-desc';
+
+  const scored = state.items.map((entry) => ({ entry, sc: scoreItemEntry(entry, state.scoring, state.itemRules) }));
+  const filtered = scored.filter(({ entry, sc }) => {
+    if (kindF !== 'all' && entry.kind !== kindF) return false;
+    if (rarF !== 'all' && entry.rarity !== rarF) return false;
+    if (rankF !== 'all') {
+      const rn = Number(rankF);
+      if (rn >= 5 ? sc.rank < 5 : sc.rank !== rn) return false;
+    }
+    if (q) {
+      const hay = `${entry.name} ${entry.id} ${entry.kind} ${entry.gearType || ''} ${entry.gearGroup || ''} ${sc.convention.name} ${(entry.mods || []).join(' ')} ${(entry.props || []).join(' ')}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (sortF === 'cp-desc') return b.sc.cp - a.sc.cp || a.entry.name.localeCompare(b.entry.name);
+    if (sortF === 'cp-asc') return a.sc.cp - b.sc.cp || a.entry.name.localeCompare(b.entry.name);
+    if (sortF === 'name') return a.entry.name.localeCompare(b.entry.name);
+    return b.sc.rank - a.sc.rank || b.sc.cp - a.sc.cp || a.entry.name.localeCompare(b.entry.name);
+  });
+
+  const countEl = document.getElementById('items-count');
+  if (countEl) countEl.textContent = `${filtered.length} / ${state.items.length} items`;
+
+  grid.innerHTML = '';
+  for (const { entry, sc } of filtered) {
+    const tile = document.createElement('div');
+    tile.className = 'item-grid-tile' + (entry.key === state.selectedItemKey ? ' is-selected' : '');
+    tile.dataset.itemKey = entry.key;
+    const cardHost = document.createElement('div');
+    cardHost.style.width = '100%';
+    cardHost.style.display = 'flex';
+    cardHost.style.justifyContent = 'center';
+    renderItemCardPreview(entry, cardHost, 'glance');
+    tile.appendChild(cardHost);
+
+    const meta = document.createElement('div');
+    meta.className = 'item-tile-meta';
+    const sub = entry.kind === 'weapon'
+      ? `${entry.gearType || 'weapon'} · P${entry.poiseDamage}`
+      : entry.kind === 'armour'
+        ? `${entry.gearGroup || 'armour'} · P${entry.poise}`
+        : 'relic';
+    meta.innerHTML = `<span class="item-kind-pill">${esc(sub)}</span><span>CP <strong>${esc(sc.cp)}</strong> · ${esc(RankName(sc.rank))}</span>`;
+    tile.appendChild(meta);
+
+    tile.addEventListener('click', () => {
+      state.selectedItemKey = entry.key;
+      grid.querySelectorAll('.item-grid-tile').forEach((n) => n.classList.toggle('is-selected', n.dataset.itemKey === entry.key));
+      renderItemInspector();
+    });
+    grid.appendChild(tile);
+  }
+}
+
+function renderItemInspector() {
+  const entry = state.items.find((x) => x.key === state.selectedItemKey) || state.items[0];
+  if (!entry) return;
+  state.selectedItemKey = entry.key;
+  populateItemTraitControls();
+  const sc = scoreItemEntry(entry, state.scoring, state.itemRules);
+
+  renderItemCardPreview(entry, document.getElementById('item-preview-host'), 'inspect');
+
+  document.getElementById('item-score-raw').textContent = String(sc.raw);
+  document.getElementById('item-score-disc').textContent = sc.disc ? `-${sc.disc}` : '0';
+  document.getElementById('item-score-cp').textContent = String(sc.cp);
+  document.getElementById('item-score-rank').textContent = RankName(sc.rank);
+
+  const nameInput = document.getElementById('item-edit-name');
+  if (document.activeElement !== nameInput) nameInput.value = entry.name || '';
+  const hintEl = document.getElementById('item-convention-hint');
+  if (hintEl) hintEl.textContent = `Convention name: ${sc.convention.name}${sc.convention.dropped?.length ? ` (trimmed: ${sc.convention.dropped.join(', ')})` : ''}`;
+
+  document.getElementById('item-edit-rarity').value = entry.rarity || 'common';
+
+  // Type / Group selector
+  const typeWrap = document.getElementById('item-edit-type-wrap');
+  const typeLabel = document.getElementById('item-edit-type-label');
+  const typeSel = document.getElementById('item-edit-type');
+  const poiseDmgWrap = document.getElementById('item-edit-poise-dmg-wrap');
+  const rangeWrap = document.getElementById('item-edit-range-wrap');
+  const poiseWrap = document.getElementById('item-edit-poise-wrap');
+
+  if (entry.kind === 'weapon') {
+    typeWrap.classList.remove('hidden');
+    poiseDmgWrap.classList.remove('hidden');
+    rangeWrap.classList.remove('hidden');
+    poiseWrap.classList.add('hidden');
+    typeLabel.textContent = 'Weapon Type';
+    typeSel.innerHTML = Object.entries(GEAR_TYPES.weaponTypes || {}).map(([id, row]) => `<option value="${esc(id)}" ${entry.gearType === id ? 'selected' : ''}>${esc(row.label || id)} (Poise ${row.poiseDamage ?? 1})</option>`).join('');
+    document.getElementById('item-edit-poise-dmg').value = String(entry.poiseDamage ?? 1);
+    document.getElementById('item-edit-range').value = entry.range || 'melee';
+  } else if (entry.kind === 'armour') {
+    typeWrap.classList.remove('hidden');
+    poiseDmgWrap.classList.add('hidden');
+    rangeWrap.classList.add('hidden');
+    poiseWrap.classList.remove('hidden');
+    typeLabel.textContent = 'Armour Group';
+    typeSel.innerHTML = Object.entries(GEAR_TYPES.armourGroups || {}).map(([id, row]) => `<option value="${esc(id)}" ${entry.gearGroup === id ? 'selected' : ''}>${esc(row.label || id)}</option>`).join('');
+    document.getElementById('item-edit-poise').value = String(entry.poise ?? 0);
+  } else {
+    typeWrap.classList.add('hidden');
+    poiseDmgWrap.classList.add('hidden');
+    rangeWrap.classList.add('hidden');
+    poiseWrap.classList.add('hidden');
+  }
+
+  // Inherited Type / Group Base Traits
+  const baseList = document.getElementById('item-type-base-list');
+  const baseMods = typeModsForEntry(entry);
+  if (entry.kind === 'relic') {
+    const props = (entry.props || []).map((p) => `<span class="item-base-chip">Property: ${esc(p)}</span>`).join('');
+    baseList.innerHTML = props || '<span class="studio-muted">Passive / trigger relic</span>';
+  } else {
+    baseList.innerHTML = baseMods.length
+      ? baseMods.map((raw) => {
+        const info = describeItemMod(raw, state.scoring);
+        const cls = info.pts > 0 ? 'pos' : info.pts < 0 ? 'neg' : 'zero';
+        return `<span class="item-base-chip">Base: ${esc(info.label)} (${esc(raw)}) <span class="feature-score ${cls}">${info.pts >= 0 ? `+${info.pts}` : info.pts}</span></span>`;
+      }).join('')
+      : '<span class="studio-muted">No inherited type/group traits</span>';
+  }
+
+  // Editable Item Traits
+  const traitsWrap = document.getElementById('item-trait-editor-wrap');
+  const activeTraits = document.getElementById('item-active-traits');
+  traitsWrap.classList.toggle('hidden', entry.kind === 'relic');
+  activeTraits.innerHTML = '';
+  (entry.mods || []).forEach((raw, idx) => {
+    const info = describeItemMod(raw, state.scoring);
+    const cls = info.pts > 0 ? 'pos' : info.pts < 0 ? 'neg' : 'zero';
+    const row = document.createElement('div');
+    row.className = 'feature-chip';
+    row.innerHTML = `
+      <span class="fc-title"><strong>${esc(info.label)}</strong> <span class="studio-muted">${esc(info.key)}</span></span>
+      <span class="feature-score ${cls}">${info.pts >= 0 ? `+${info.pts}` : info.pts} pts</span>
+      <input type="number" class="fc-num" data-item-mod-idx="${idx}" value="${esc(info.value)}" step="1" aria-label="${esc(info.label)} value" />
+      <button type="button" class="s-btn s-btn-sm s-btn-warn" data-item-mod-del="${idx}" title="Remove trait">×</button>`;
+    activeTraits.appendChild(row);
+  });
+
+  // Override fields
+  const ov = state.scoring.overrides?.[entry.key] || null;
+  document.getElementById('item-override-enabled').checked = Boolean(ov);
+  document.getElementById('item-override-fields').classList.toggle('hidden', !ov);
+  document.getElementById('item-override-rank').value = ov?.rank !== undefined ? String(ov.rank) : '';
+  document.getElementById('item-override-cp').value = ov?.cp !== undefined ? String(ov.cp) : '';
+
+  // Score Breakdown
+  const partsEl = document.getElementById('item-score-parts-list');
+  const entries = Object.entries(sc.parts || {});
+  partsEl.innerHTML = entries.length
+    ? entries.map(([k, v]) => {
+      const r = Math.round(v * 10) / 10;
+      const cls = r > 0 ? 'pos' : r < 0 ? 'neg' : 'zero';
+      return `<div class="score-part-row"><span>${esc(k)}</span><strong class="feature-score ${cls}">${r >= 0 ? `+${r}` : r}</strong></div>`;
+    }).join('')
+    : '<div class="studio-muted">No scored parts (raw 0).</div>';
+}
+
+// ---------------------------------------------------------------------------
+// Art & Layers Tab (Combat Cards + Weapons/Armours/Relics)
+// ---------------------------------------------------------------------------
+function activeArtLayersObj() {
+  return state.artTarget === 'items' ? state.itemArtLayers : state.artLayers;
+}
+function activeArtLayerIdx() {
+  return state.artTarget === 'items' ? state.selectedItemLayerIdx : state.selectedLayerIdx;
+}
+function setActiveArtLayerIdx(idx) {
+  if (state.artTarget === 'items') state.selectedItemLayerIdx = idx;
+  else state.selectedLayerIdx = idx;
+}
+
+function renderArtPreviewOnly() {
+  const sel = document.getElementById('art-preview-card-select');
+  const host = document.getElementById('art-live-preview');
+  if (state.artTarget === 'items') {
+    const item = state.items.find((x) => x.key === sel.value) || state.items[0];
+    if (item) renderItemCardPreview(item, host, 'inspect');
+  } else {
+    const previewDef = state.cards.find((c) => c.id === sel.value) || state.cards[0];
+    if (previewDef) renderCardWithLayers(previewDef, host);
+  }
+}
+
 function renderArtTab() {
   const list = document.getElementById('art-layers-list');
   const assets = Object.values(reviewedCardArtCatalog.assets || {});
   document.getElementById('asset-count').textContent = String(assets.length);
+  const isItems = state.artTarget === 'items';
 
-  // Preview card selector (always synced with current card roster)
+  document.getElementById('btn-art-target-cards')?.classList.toggle('is-active', !isItems);
+  document.getElementById('btn-art-target-items')?.classList.toggle('is-active', isItems);
+  const desc = document.getElementById('art-layers-desc');
+  if (desc) {
+    desc.textContent = isItems
+      ? 'Configure layered art for weapons, armours, and relics (content/source/itemArtLayers.json). Match by trait, element, poise, weapon type, armour group, rarity, or default, and combine approved cutout PNGs with SVG motifs.'
+      : 'Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.';
+  }
+
+  // Preview selector (cards or items)
   const cardSel = document.getElementById('art-preview-card-select');
   const prevVal = cardSel.value;
   cardSel.innerHTML = '';
-  for (const c of state.cards) {
-    const o = document.createElement('option');
-    o.value = c.id;
-    o.textContent = c.name || c.id;
-    cardSel.appendChild(o);
+  if (isItems) {
+    for (const it of state.items) {
+      const o = document.createElement('option');
+      o.value = it.key;
+      o.textContent = `[${it.kind[0].toUpperCase() + it.kind.slice(1)}] ${it.name || it.id}`;
+      cardSel.appendChild(o);
+    }
+    const preferred = state.items.some((x) => x.key === state.selectedItemKey)
+      ? state.selectedItemKey
+      : (state.items.some((x) => x.key === prevVal) ? prevVal : (state.items[0]?.key || ''));
+    cardSel.value = preferred;
+  } else {
+    for (const c of state.cards) {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.name || c.id;
+      cardSel.appendChild(o);
+    }
+    const preferredId = state.cards.some((c) => c.id === state.selectedCardId)
+      ? state.selectedCardId
+      : (state.cards.some((c) => c.id === prevVal) ? prevVal : (state.cards[0]?.id || ''));
+    cardSel.value = preferredId;
   }
-  const preferredId = state.cards.some((c) => c.id === state.selectedCardId)
-    ? state.selectedCardId
-    : (state.cards.some((c) => c.id === prevVal) ? prevVal : (state.cards[0]?.id || ''));
-  cardSel.value = preferredId;
-  const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
-  if (previewDef) renderCardWithLayers(previewDef, document.getElementById('art-live-preview'));
+  renderArtPreviewOnly();
 
-  if (state.selectedLayerIdx >= state.artLayers.layers.length) state.selectedLayerIdx = Math.max(0, state.artLayers.layers.length - 1);
+  const layersObj = activeArtLayersObj();
+  const layers = layersObj.layers || [];
+  if (activeArtLayerIdx() >= layers.length) setActiveArtLayerIdx(Math.max(0, layers.length - 1));
+  const selIdx = activeArtLayerIdx();
+
   list.innerHTML = '';
-  state.artLayers.layers.forEach((layer, idx) => {
+  layers.forEach((layer, idx) => {
     const el = document.createElement('div');
-    el.className = 'layer-card' + (idx === state.selectedLayerIdx ? ' is-selected' : '');
+    el.className = 'layer-card' + (idx === selIdx ? ' is-selected' : '');
     el.dataset.layerCardIdx = String(idx);
+    const matchOptions = isItems
+      ? [
+        ['trait', 'Trait / Mod'],
+        ['element', 'Element'],
+        ['poise', 'Poise Rule'],
+        ['gearType', 'Weapon Type'],
+        ['armourGroup', 'Armour Group'],
+        ['rarity', 'Rarity'],
+        ['tag', 'Tag'],
+        ['default', 'Always (Default)'],
+      ]
+      : [
+        ['tag', 'Tag'],
+        ['status', 'Status'],
+        ['type', 'Card Type'],
+        ['default', 'Always (Default)'],
+      ];
+    const modeOptions = isItems
+      ? [['under', 'Behind item (aura)'], ['stack', 'On top (sigil)']]
+      : [['stack', 'Stack on top'], ['replace', 'Replace slot']];
+    const kindsHtml = isItems
+      ? `<div class="layer-kind-checks" style="grid-column: span 2;"><span>Applies to:</span>${['weapon', 'armour', 'relic'].map((k) => `<label class="studio-check"><input type="checkbox" data-l-kind="${k}" data-l-idx="${idx}" ${(layer.entityKinds || ['weapon', 'armour', 'relic']).includes(k) ? 'checked' : ''} /> ${k}</label>`).join('')}</div>`
+      : '';
+    const extraItemFields = isItems
+      ? `
+        <label>SVG Motif
+          <select data-l-field="motif" data-l-idx="${idx}">
+            ${ITEM_MOTIF_OPTIONS.map((m) => `<option value="${esc(m)}" ${(layer.motif || '') === m ? 'selected' : ''}>${m || '(none)'}</option>`).join('')}
+          </select>
+        </label>
+        <label>Tint Color <input type="text" data-l-field="color" data-l-idx="${idx}" value="${esc(layer.color || '#c9a227')}" placeholder="#c9a227" /></label>
+        <label>Glow Color <input type="text" data-l-field="glow" data-l-idx="${idx}" value="${esc(layer.glow || '')}" placeholder="optional #hex" /></label>`
+      : '';
     el.innerHTML = `
       <div class="layer-card-head">
         <strong>#${idx + 1} · ${esc(layer.name || layer.id)}</strong>
         <div>
           <label class="studio-toggle"><input type="checkbox" data-l-enabled="${idx}" ${layer.enabled !== false ? 'checked' : ''} /> On</label>
           <button class="s-btn s-btn-sm" data-l-up="${idx}" ${idx === 0 ? 'disabled' : ''}>↑</button>
-          <button class="s-btn s-btn-sm" data-l-down="${idx}" ${idx === state.artLayers.layers.length - 1 ? 'disabled' : ''}>↓</button>
+          <button class="s-btn s-btn-sm" data-l-down="${idx}" ${idx === layers.length - 1 ? 'disabled' : ''}>↓</button>
           <button class="s-btn s-btn-sm s-btn-warn" data-l-del="${idx}">×</button>
         </div>
       </div>
       <div class="layer-grid">
+        ${kindsHtml}
         <label>Name <input type="text" data-l-field="name" data-l-idx="${idx}" value="${esc(layer.name)}" /></label>
         <label>Match Rule
           <select data-l-field="matchKind" data-l-idx="${idx}">
-            <option value="tag" ${layer.matchKind === 'tag' ? 'selected' : ''}>Tag</option>
-            <option value="status" ${layer.matchKind === 'status' ? 'selected' : ''}>Status</option>
-            <option value="type" ${layer.matchKind === 'type' ? 'selected' : ''}>Card Type</option>
-            <option value="default" ${layer.matchKind === 'default' ? 'selected' : ''}>Always (Default)</option>
+            ${matchOptions.map(([val, lbl]) => `<option value="${val}" ${layer.matchKind === val ? 'selected' : ''}>${lbl}</option>`).join('')}
           </select>
         </label>
-        <label>Match Value <input type="text" data-l-field="matchValue" data-l-idx="${idx}" value="${esc(layer.matchValue)}" placeholder="e.g. school:fire" /></label>
+        <label>Match Value <input type="text" data-l-field="matchValue" data-l-idx="${idx}" value="${esc(layer.matchValue)}" placeholder="${isItems ? 'e.g. hitBurn,statPoise or weaponPoise>=3' : 'e.g. school:fire'}" /></label>
         <label>PNG Asset ID <input type="text" data-l-field="assetId" data-l-idx="${idx}" value="${esc(layer.assetId)}" placeholder="click thumbnail →" /></label>
         <label>Mode
           <select data-l-field="mode" data-l-idx="${idx}">
-            <option value="stack" ${layer.mode === 'stack' ? 'selected' : ''}>Stack on top</option>
-            <option value="replace" ${layer.mode === 'replace' ? 'selected' : ''}>Replace slot</option>
+            ${modeOptions.map(([val, lbl]) => `<option value="${val}" ${layer.mode === val ? 'selected' : ''}>${lbl}</option>`).join('')}
           </select>
         </label>
         <label>Blend Mode
@@ -2124,6 +2670,7 @@ function renderArtTab() {
             ${['normal', 'screen', 'multiply', 'overlay', 'color'].map((m) => `<option value="${m}" ${layer.blendMode === m ? 'selected' : ''}>${m}</option>`).join('')}
           </select>
         </label>
+        ${extraItemFields}
         <label>X % <input type="number" data-l-num="x" data-l-idx="${idx}" min="0" max="100" value="${esc(safeNum(layer.x, 50))}" /></label>
         <label>Y % <input type="number" data-l-num="y" data-l-idx="${idx}" min="0" max="100" value="${esc(safeNum(layer.y, 50))}" /></label>
         <label>Scale % <input type="number" data-l-num="scale" data-l-idx="${idx}" min="10" max="150" value="${esc(safeNum(layer.scale, 80))}" /></label>
@@ -2140,18 +2687,18 @@ function renderArtTab() {
   for (const a of assets.filter((x) => !aq || `${x.id} ${x.name}`.toLowerCase().includes(aq)).slice(0, 60)) {
     const t = document.createElement('div');
     t.className = 'asset-thumb';
-    t.title = `${a.id} — ${a.name} (click to assign to selected layer #${state.selectedLayerIdx + 1})`;
+    t.title = `${a.id} — ${a.name} (click to assign to selected layer #${selIdx + 1})`;
     t.innerHTML = `<img src="${esc(a.path)}" loading="lazy" alt="" /><div title="${esc(a.id)}">${esc(a.id)}</div>`;
     t.addEventListener('click', () => {
-      const targetLayer = state.artLayers.layers[state.selectedLayerIdx] || state.artLayers.layers[0];
+      const targetLayer = layers[activeArtLayerIdx()] || layers[0];
       if (!targetLayer) return;
       pushHistory();
       targetLayer.assetId = a.id;
       saveDraft();
       renderArtTab();
-      renderCardsGrid();
-      renderInspector();
-      toast(`Assigned ${a.id} to layer #${state.selectedLayerIdx + 1}`);
+      if (isItems) { renderItemsGrid(); renderItemInspector(); }
+      else { renderCardsGrid(); renderInspector(); }
+      toast(`Assigned ${a.id} to layer #${activeArtLayerIdx() + 1}`);
     });
     gal.appendChild(t);
   }
@@ -2211,26 +2758,32 @@ function renderSandbox() {
   const fmtStatuses = (actor) => Object.entries(actor?.statuses || {})
     .map(([k, v]) => [k, typeof v === 'number' ? v : (v?.stacks ?? 0)])
     .filter(([, n]) => n > 0)
-    .map(([k, n]) => `${k} ${n}`)
+    .map(([k, n]) => `${k === 'barrier' ? 'Bonus Poise' : k === 'ward' ? 'Ward' : k} ${n}`)
     .join(', ') || 'None';
 
+  const pWardHp = EffectiveWardHp(combat, p);
+  const pPoise = p.persistentPoise;
+  const pBonus = pPoise?.barrierBonus || 0;
   document.getElementById('sandbox-player-panel').innerHTML = `
     <h4>Player (${esc(state.sandbox.classId)})</h4>
     <div class="stat-line">
-      <span>HP: <strong>${p.hp}/${p.maxHp}</strong></span>
+      <span>HP: <strong>${p.hp}/${p.maxHp}</strong>${pWardHp > 0 ? ` <span class="sandbox-ward-hp">+${pWardHp} Ward</span>` : ''}</span>
       <span>Block: <strong>${p.block || 0}</strong></span>
+      <span>Poise: <strong>${pPoise?.value ?? 0}/${pPoise?.max ?? 0}</strong>${pBonus > 0 ? ` <span class="sandbox-poise-bonus">(+${pBonus} Bonus)</span>` : ''}</span>
       <span>SP: <strong>${p.stamina ?? p.energy ?? 0}</strong></span>
       <span>MP: <strong>${p.mana ?? 0}</strong></span>
     </div>
     <div class="studio-muted">Statuses: ${esc(fmtStatuses(p))}</div>
   `;
 
+  const eWardHp = e ? EffectiveWardHp(combat, e) : 0;
+  const eBonus = e?.persistentPoise?.barrierBonus || 0;
   document.getElementById('sandbox-enemy-panel').innerHTML = e ? `
     <h4>${esc(e.name || e.enemyId)} ${e.hp <= 0 ? '(DEFEATED)' : ''}</h4>
     <div class="stat-line">
-      <span>HP: <strong>${e.hp}/${e.maxHp}</strong></span>
+      <span>HP: <strong>${e.hp}/${e.maxHp}</strong>${eWardHp > 0 ? ` <span class="sandbox-ward-hp">+${eWardHp} Ward</span>` : ''}</span>
       <span>Block: <strong>${e.block || 0}</strong></span>
-      <span>Poise: <strong>${e.poiseMeter?.current ?? 0}/${e.poiseMeter?.max ?? 0}</strong></span>
+      <span>Poise: <strong>${e.persistentPoise?.value ?? e.poiseMeter?.current ?? 0}/${e.persistentPoise?.max ?? e.poiseMeter?.max ?? 0}</strong>${eBonus > 0 ? ` <span class="sandbox-poise-bonus">(+${eBonus} Bonus)</span>` : ''}</span>
     </div>
     <div class="studio-muted">Statuses: ${esc(fmtStatuses(e))}</div>
   ` : '<div class="studio-muted">No enemies remaining.</div>';
@@ -2304,32 +2857,7 @@ function buildScoringDiff() {
     }
   };
   walk(state.repoScoring, state.scoring);
-  // Naming words the studio only seeded (the repo has none and nobody edited them) are not an edit;
-  // the export dialog still says it will add them.
-  if (namingWordsSeedOnly()) return lines.filter((line) => !NAMING_WORD_PATHS.some((path) => line.startsWith(path)));
   return lines;
-}
-
-const NAMING_WORD_PATHS = ['naming.card.prefix', 'naming.card.suffix'];
-
-function repoHasNamingWords() {
-  const card = state.repoScoring?.naming?.card;
-  return Boolean(card?.prefix && card?.suffix);
-}
-
-function namingWordsSeedOnly() {
-  if (repoHasNamingWords()) return false;
-  const card = state.scoring?.naming?.card;
-  return JSON.stringify(card?.prefix) === JSON.stringify(DEFAULT_NAME_PREFIX)
-    && JSON.stringify(card?.suffix) === JSON.stringify(DEFAULT_NAME_SUFFIX);
-}
-
-// The export dialog's note when export will add the naming word tables to a scoring.json without them.
-function namingWordsExportNote() {
-  if (repoHasNamingWords()) return '';
-  const card = state.scoring?.naming?.card;
-  const count = (table) => Object.values(table || {}).filter(Boolean).length;
-  return `Adds naming words (${count(card?.prefix)} prefixes, ${count(card?.suffix)} suffixes) to naming.card.`;
 }
 
 async function loadFromRepo(customPath = state.repoPath) {
@@ -2353,6 +2881,10 @@ async function loadFromRepo(customPath = state.repoPath) {
       state.artLayers = clone(data.artLayers);
       state.repoArtLayers = clone(data.artLayers);
     }
+    if (data.itemArtLayers?.layers) {
+      state.itemArtLayers = clone(data.itemArtLayers);
+      state.repoItemArtLayers = clone(data.itemArtLayers);
+    }
     state.repoPath = data.scoringPath;
     localStorage.setItem(PATH_STORAGE_KEY, state.repoPath);
     document.getElementById('repo-path-input').value = state.repoPath;
@@ -2373,11 +2905,15 @@ async function loadFromRepo(customPath = state.repoPath) {
 
 const RANK_SHIFT_LIST_LIMIT = 40;
 
-// Cards whose rank differs from the repo baseline, for the export dialog.
+// Cards and items whose rank differs from the repo baseline, for the export dialog.
 function rankShifts() {
-  return state.cards
+  const cardShifts = state.cards
     .map((card) => ({ card, now: scoreCardEntry(card).rank, before: state.baselineRanks[card.id] }))
     .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
+  const itemShifts = state.items
+    .map((it) => ({ card: { name: `[${it.kind}] ${it.name}` }, now: scoreItemEntry(it, state.scoring, state.itemRules).rank, before: state.baselineItemRanks[it.key] }))
+    .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
+  return [...cardShifts, ...itemShifts];
 }
 
 function renderRankShiftList(shifts = rankShifts(), countId = 'export-modal-shift-count', listId = 'export-modal-shifts') {
@@ -2410,7 +2946,7 @@ function openExportDialog() {
   const diff = buildScoringDiff();
   document.getElementById('export-modal-path').textContent = `Target: ${exportPath()} (${diff.length} change(s))`;
   document.getElementById('export-modal-diff').textContent = diff.length ? diff.slice(0, 80).join('\n') : 'No weight differences from the loaded repo file.';
-  document.getElementById('export-modal-naming').textContent = namingWordsExportNote() + stagedNotIncludedNote();
+  document.getElementById('export-modal-naming').textContent = stagedNotIncludedNote();
   renderRankShiftList();
   document.getElementById('export-modal').showModal();
 }
@@ -2418,7 +2954,7 @@ function openExportDialog() {
 // Writes the applied scoring to a repo file and rebuilds the game's scoring, combat-power and Act tables.
 async function writeScoringToGame(path, doneNote = 'Exported') {
   try {
-    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: state.scoring, rebuild: true }) });
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, scoring: SplitSavedConfig(state.scoring).scoring, rebuild: true }) });
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
     state.repoScoring = clone(state.scoring);
@@ -2434,7 +2970,7 @@ async function writeScoringToGame(path, doneNote = 'Exported') {
 }
 
 function downloadScoringJson() {
-  const blob = new Blob([JSON.stringify(state.scoring, null, 2) + '\n'], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(SplitSavedConfig(state.scoring).scoring, null, 2) + '\n'], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), { href: url, download: 'scoring.json' });
   a.click();
@@ -2457,7 +2993,7 @@ async function importScoringFile(e) {
 // Save keeps the applied weights as the studio's own config, apart from the game's scoring.json.
 async function saveStudioConfig() {
   try {
-    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: STUDIO_SAVE_PATH, scoring: state.scoring, rebuild: false }) });
+    const r = await fetch('/__studio/scoring', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: STUDIO_SAVE_PATH, scoring: JoinSavedConfig(state.scoring, state.nameSets), rebuild: false }) });
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
     toast(`Saved to ${data.path}.${stagedNotIncludedNote()}`);
@@ -2472,7 +3008,10 @@ async function openSavedConfig() {
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
     if (!data.scoringExists) { toast('Nothing saved yet: Save first'); return; }
-    stageWholeScoring(data.scoring, 'the saved config');
+    // The saved config carries the name sets beside the weights: the sets join the list, the weights are staged.
+    const saved = SplitSavedConfig(data.scoring);
+    if (saved.nameSets.length) { state.nameSets = MergeNameSets(state.nameSets, saved.nameSets); storeNameSets(); renderNameSetsList(); }
+    stageWholeScoring(saved.scoring, 'the saved config');
   } catch (err) {
     toast(`Open saved failed: ${err.message}`);
   }
@@ -2555,17 +3094,24 @@ async function revertToRepo() {
   clearTimeout(draftTimer);
   try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch { /* storage unavailable */ }
   const keepSelection = state.selectedCardId;
+  const keepItem = state.selectedItemKey;
   studioCardOverrides.clear();
   state.cards = buildCardList();
+  const roster = buildItemRoster(contentBundle);
+  state.items = roster.items;
+  state.itemRules = roster.rules;
   state.selectedCardId = state.cards.some((c) => c.id === keepSelection) ? keepSelection : state.cards[0]?.id || null;
+  state.selectedItemKey = state.items.some((x) => x.key === keepItem) ? keepItem : state.items[0]?.key || null;
   state.undoStack = [];
   state.redoStack = [];
   updateUndoButtons();
   // Revert to the last loaded repo copy first, so a failed reload (server offline) still reverts.
   state.scoring = clone(state.repoScoring);
   state.artLayers = clone(state.repoArtLayers);
+  state.itemArtLayers = clone(state.repoItemArtLayers);
   const reloaded = await loadFromRepo(state.repoPath);
   state.artLayers = clone(state.repoArtLayers);
+  state.itemArtLayers = clone(state.repoItemArtLayers);
   syncAllViews();
   refreshDirtyStatus();
   toast(reloaded ? 'Reverted to the repo version' : 'Reverted to the last loaded repo copy (server offline)');
@@ -2574,6 +3120,8 @@ async function revertToRepo() {
 function recomputeBaselineRanks() {
   state.baselineRanks = {};
   for (const c of state.cards) state.baselineRanks[c.id] = scoreCardEntry(c, state.repoScoring).rank;
+  state.baselineItemRanks = {};
+  for (const it of state.items) state.baselineItemRanks[it.key] = scoreItemEntry(it, state.repoScoring, state.itemRules).rank;
 }
 
 function populateRankFilter() {
@@ -2616,12 +3164,13 @@ function populateCardOptions() {
 }
 
 function syncAllViews() {
-  ensureNamingWords(state.scoring);
   populateRankFilter();
   populateCardOptions();
   populateAddFeatureDropdown();
   renderCardsGrid();
   renderInspector();
+  renderItemsGrid();
+  renderItemInspector();
   renderWeights();
   renderArtTab();
   // The sandbox hand's rank badges follow undo, redo, slot loads, imports and Revert too.
@@ -2807,6 +3356,7 @@ function closeInspectorSheet() {
 // ---------------------------------------------------------------------------
 function wireEvents() {
   setupMenus();
+  wireNameSets();
   // Flush a pending draft save when the tab is hidden or closed.
   window.addEventListener('pagehide', flushDraft);
   document.addEventListener('visibilitychange', () => {
@@ -2853,7 +3403,6 @@ function wireEvents() {
       keywords: [], tags: ['camp:physical', 'maneuver:attack', 'source:weapon', 'classification.attack', 'targeting:single'],
       textTemplate: 'Deal {damage} damage.', _custom: true, _autoName: true,
     });
-    startAutoName(card);
     state.cards.unshift(card);
     state.selectedCardId = id;
     renderCardsGrid();
@@ -2867,7 +3416,6 @@ function wireEvents() {
     if (!src) return;
     pushHistory();
     const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true, _autoName: true });
-    startAutoName(copy);
     state.cards.unshift(copy);
     state.selectedCardId = copy.id;
     renderCardsGrid();
@@ -2923,14 +3471,11 @@ function wireEvents() {
     }
     mutateSelectedCard((d) => { d.name = e.target.value; }, { recordHistory: false, autoName: false });
   });
-  // Auto-name is per card. Turning it on records where the name starts from (its last word and its
-  // length), then renames at once; the toggle and the rename are one undo step.
+  // Auto-name is per card. Turning it on renames the card to its convention name at once; the toggle and
+  // the rename are one undo step.
   document.getElementById('toggle-auto-name').addEventListener('change', (e) => {
     const on = e.target.checked;
-    mutateSelectedCard((d) => {
-      d._autoName = on;
-      if (on) startAutoName(d);
-    });
+    mutateSelectedCard((d) => { d._autoName = on; });
   });
   const textBurst = createEditBurst();
   const textInput = document.getElementById('edit-text');
@@ -3045,8 +3590,11 @@ function wireEvents() {
       d.effects ||= [];
       d.keywords ||= [];
       d.tags ||= [];
-      if (kind === 'effect') d.effects.push({ op: key, target: getCardTarget(d), amount: key === 'damage' ? 6 : key === 'block' ? 5 : 2 });
-      else if (kind === 'status') d.effects.push({ op: 'applyStatus', status: key, stacks: 2, target: state.scoring.statuses?.[key]?.target || 'enemy' });
+      if (kind === 'effect') {
+        const selfOps = ['block', 'draw', 'heal', 'restoreStamina', 'restoreMana', 'applyReflect', 'gainBarrier', 'restorePoise'];
+        const amt = key === 'damage' ? 6 : key === 'block' ? 5 : key === 'gainBarrier' ? 1 : key === 'restorePoise' ? 5 : 2;
+        d.effects.push({ op: key, target: selfOps.includes(key) ? 'self' : getCardTarget(d), amount: amt });
+      } else if (kind === 'status') d.effects.push({ op: 'applyStatus', status: key, stacks: (key === 'ward' || key === 'barrier') ? 1 : 2, target: state.scoring.statuses?.[key]?.target || 'enemy' });
       else if (kind === 'kw' && !d.keywords.includes(key)) d.keywords.push(key);
       else if (kind === 'tag' && !d.tags.includes(key)) d.tags.push(key);
       appendClauseForFeature(d, kind, key);
@@ -3088,7 +3636,10 @@ function wireEvents() {
     if (target.dataset.effAmt !== undefined) {
       const effectIndex = Number(target.dataset.effAmt);
       const wanted = Number(target.value) || 0;
-      applyLiveCardEdit(featureBurst, (d) => { d.effects[effectIndex].amount = authoredAmountForFace(d, effectIndex, wanted); });
+      applyLiveCardEdit(featureBurst, (d) => {
+        const eff = d.effects[effectIndex];
+        eff.amount = eff.op === 'gainBarrier' ? wanted : authoredAmountForFace(d, effectIndex, wanted);
+      });
       return true;
     }
     if (target.dataset.effStacks !== undefined) {
@@ -3138,17 +3689,209 @@ function wireEvents() {
   document.getElementById('weights-search').addEventListener('input', renderWeights);
   document.getElementById('weights-group-filter').addEventListener('change', renderWeights);
 
-  // Art & Layers events
+  // Items & Relics tab events
+  const selectedItem = () => state.items.find((x) => x.key === state.selectedItemKey) || null;
+  for (const id of ['item-filter-search', 'item-filter-kind', 'item-filter-rarity', 'item-filter-rank', 'item-filter-sort']) {
+    document.getElementById(id)?.addEventListener(id === 'item-filter-search' ? 'input' : 'change', renderItemsGrid);
+  }
+  document.getElementById('btn-rename-all-items')?.addEventListener('click', () => {
+    pushHistory();
+    for (const it of state.items) {
+      const next = scoreItemEntry(it, state.scoring, state.itemRules).convention.name;
+      if (it.name !== next) { it.name = next; it._edited = true; }
+    }
+    renderItemsGrid();
+    renderItemInspector();
+    renderArtTab();
+    saveDraft({ autoName: false });
+    toast(`Applied convention names to ${state.items.length} items`);
+  });
+  document.getElementById('btn-restore-item-names')?.addEventListener('click', () => {
+    pushHistory();
+    for (const it of state.items) {
+      const orig = state.defaultItemNames[it.key];
+      if (orig) { it.name = orig; it._edited = false; }
+    }
+    renderItemsGrid();
+    renderItemInspector();
+    renderArtTab();
+    saveDraft({ autoName: false });
+    toast('Restored shipped item names');
+  });
+  document.getElementById('btn-item-autoname')?.addEventListener('click', () => {
+    const it = selectedItem();
+    if (!it) return;
+    pushHistory();
+    it.name = scoreItemEntry(it, state.scoring, state.itemRules).convention.name;
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-name')?.addEventListener('input', (e) => {
+    const it = selectedItem();
+    if (!it) return;
+    it.name = e.target.value;
+    it._edited = true;
+    renderItemsGrid();
+    renderItemCardPreview(it, document.getElementById('item-preview-host'), 'inspect');
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-rarity')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it) return;
+    pushHistory();
+    it.rarity = e.target.value;
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-type')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it) return;
+    pushHistory();
+    if (it.kind === 'weapon') {
+      it.gearType = e.target.value;
+      const row = GEAR_TYPES.weaponTypes?.[it.gearType];
+      if (Number.isFinite(row?.poiseDamage)) it.poiseDamage = row.poiseDamage;
+    } else if (it.kind === 'armour') {
+      it.gearGroup = e.target.value;
+    }
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-poise-dmg')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it || it.kind !== 'weapon') return;
+    pushHistory();
+    it.poiseDamage = Math.max(0, Math.round(safeNum(e.target.value, 1)));
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-range')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it || it.kind !== 'weapon') return;
+    pushHistory();
+    it.range = e.target.value;
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-poise')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it || it.kind !== 'armour') return;
+    pushHistory();
+    it.poise = Math.max(0, Math.round(safeNum(e.target.value, 0)));
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('btn-item-add-trait')?.addEventListener('click', () => {
+    const it = selectedItem();
+    if (!it || it.kind === 'relic') return;
+    const sel = document.getElementById('item-trait-selector').value || 'self';
+    const field = document.getElementById('item-trait-field').value;
+    const amt = safeNum(document.getElementById('item-trait-amount').value, 1);
+    if (!field) return;
+    pushHistory();
+    (it.mods ||= []).push(formatModString(`${sel}.${field}`, amt));
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-quick-traits')?.addEventListener('click', (e) => {
+    const mod = e.target.closest('[data-item-quick-trait]')?.dataset.itemQuickTrait;
+    const it = selectedItem();
+    if (!mod || !it || it.kind === 'relic') return;
+    pushHistory();
+    (it.mods ||= []).push(mod);
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-active-traits')?.addEventListener('click', (e) => {
+    const del = e.target.dataset.itemModDel;
+    const it = selectedItem();
+    if (del === undefined || !it) return;
+    pushHistory();
+    it.mods.splice(Number(del), 1);
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-active-traits')?.addEventListener('change', (e) => {
+    const idx = e.target.dataset.itemModIdx;
+    const it = selectedItem();
+    if (idx === undefined || !it) return;
+    const i = Number(idx);
+    const [key] = String(it.mods[i] || '').split('=');
+    if (!key) return;
+    pushHistory();
+    it.mods[i] = formatModString(key, safeNum(e.target.value, 1));
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  const updateItemOverride = () => {
+    const it = selectedItem();
+    if (!it) return;
+    pushHistory();
+    const enabled = document.getElementById('item-override-enabled').checked;
+    state.scoring.overrides ||= {};
+    if (!enabled) {
+      delete state.scoring.overrides[it.key];
+    } else {
+      const ov = {};
+      const rk = document.getElementById('item-override-rank').value;
+      const cp = document.getElementById('item-override-cp').value;
+      if (rk !== '') ov.rank = Math.max(0, Math.round(Number(rk)));
+      if (cp !== '') ov.cp = Math.round(Number(cp));
+      state.scoring.overrides[it.key] = ov;
+    }
+    renderItemsGrid();
+    renderItemInspector();
+    renderWeights();
+    saveDraft({ autoName: false });
+  };
+  document.getElementById('item-override-enabled')?.addEventListener('change', updateItemOverride);
+  document.getElementById('item-override-rank')?.addEventListener('change', updateItemOverride);
+  document.getElementById('item-override-cp')?.addEventListener('change', updateItemOverride);
+
+  // Art & Layers events (supports both Combat Cards and Equipment & Relics)
+  document.querySelectorAll('[data-art-target]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.artTarget = btn.dataset.artTarget === 'items' ? 'items' : 'cards';
+      renderArtTab();
+    });
+  });
   document.getElementById('btn-add-layer').addEventListener('click', () => {
     pushHistory();
-    state.artLayers.layers.push({ id: `layer-${Date.now().toString(36)}`, name: 'New Layer', matchKind: 'default', matchValue: '', mode: 'stack', assetId: 'Z.effect.5', zIndex: state.artLayers.layers.length + 1, x: 50, y: 50, scale: 80, opacity: 60, blendMode: 'screen', enabled: true });
-    state.selectedLayerIdx = state.artLayers.layers.length - 1;
+    const layers = activeArtLayersObj().layers;
+    if (state.artTarget === 'items') {
+      layers.push({ id: `item-layer-${Date.now().toString(36)}`, name: 'New Item Layer', enabled: true, entityKinds: ['weapon', 'armour', 'relic'], matchKind: 'trait', matchValue: 'statPoise', assetId: 'cue.unbreakable.glow', motif: '', color: '#c9a227', glow: '#c9a227', mode: 'under', blendMode: 'screen', x: 50, y: 50, scale: 100, opacity: 60, zIndex: layers.length + 1 });
+    } else {
+      layers.push({ id: `layer-${Date.now().toString(36)}`, name: 'New Layer', matchKind: 'default', matchValue: '', mode: 'stack', assetId: 'Z.effect.5', zIndex: layers.length + 1, x: 50, y: 50, scale: 80, opacity: 60, blendMode: 'screen', enabled: true });
+    }
+    setActiveArtLayerIdx(layers.length - 1);
     renderArtTab();
+    if (state.artTarget === 'items') { renderItemsGrid(); renderItemInspector(); }
     saveDraft();
   });
   document.getElementById('art-preview-card-select').addEventListener('change', (e) => {
-    state.selectedCardId = e.target.value;
-    renderArtTab();
+    if (state.artTarget === 'items') state.selectedItemKey = e.target.value;
+    else state.selectedCardId = e.target.value;
+    renderArtPreviewOnly();
   });
   document.getElementById('asset-search').addEventListener('input', renderArtTab);
   document.getElementById('art-layers-list').addEventListener('click', (e) => {
@@ -3156,21 +3899,22 @@ function wireEvents() {
     const cardEl = e.target.closest('.layer-card');
     if (cardEl && e.target.dataset.lUp === undefined && e.target.dataset.lDown === undefined && e.target.dataset.lDel === undefined) {
       const selIdx = Number(cardEl.dataset.layerCardIdx);
-      if (!Number.isNaN(selIdx) && selIdx !== state.selectedLayerIdx) {
-        state.selectedLayerIdx = selIdx;
+      if (!Number.isNaN(selIdx) && selIdx !== activeArtLayerIdx()) {
+        setActiveArtLayerIdx(selIdx);
         document.querySelectorAll('#art-layers-list .layer-card').forEach((n, i) => n.classList.toggle('is-selected', i === selIdx));
       }
       return;
     }
     const idx = Number(e.target.dataset.lUp ?? e.target.dataset.lDown ?? e.target.dataset.lDel);
     if (Number.isNaN(idx)) return;
+    const layers = activeArtLayersObj().layers;
     pushHistory();
-    if (e.target.dataset.lUp !== undefined && idx > 0) { [state.artLayers.layers[idx - 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx - 1]]; state.selectedLayerIdx = idx - 1; }
-    if (e.target.dataset.lDown !== undefined && idx < state.artLayers.layers.length - 1) { [state.artLayers.layers[idx + 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx + 1]]; state.selectedLayerIdx = idx + 1; }
-    if (e.target.dataset.lDel !== undefined) state.artLayers.layers.splice(idx, 1);
+    if (e.target.dataset.lUp !== undefined && idx > 0) { [layers[idx - 1], layers[idx]] = [layers[idx], layers[idx - 1]]; setActiveArtLayerIdx(idx - 1); }
+    if (e.target.dataset.lDown !== undefined && idx < layers.length - 1) { [layers[idx + 1], layers[idx]] = [layers[idx], layers[idx + 1]]; setActiveArtLayerIdx(idx + 1); }
+    if (e.target.dataset.lDel !== undefined) layers.splice(idx, 1);
     renderArtTab();
-    renderCardsGrid();
-    renderInspector();
+    if (state.artTarget === 'items') { renderItemsGrid(); renderItemInspector(); }
+    else { renderCardsGrid(); renderInspector(); }
     saveDraft();
   });
   // Typing and slider drags in a layer record one undo step per focus.
@@ -3179,10 +3923,16 @@ function wireEvents() {
   document.getElementById('art-layers-list').addEventListener('input', (e) => {
     const idx = Number(e.target.dataset.lIdx ?? e.target.dataset.lEnabled);
     if (Number.isNaN(idx)) return;
-    const layer = state.artLayers.layers[idx];
+    const layer = activeArtLayersObj().layers[idx];
     if (!layer) return;
     if (!layerEditHistoryPushed) { pushHistory(); layerEditHistoryPushed = true; }
     if (e.target.dataset.lEnabled !== undefined) layer.enabled = e.target.checked;
+    else if (e.target.dataset.lKind) {
+      const k = e.target.dataset.lKind;
+      const set = new Set(layer.entityKinds || ['weapon', 'armour', 'relic']);
+      if (e.target.checked) set.add(k); else set.delete(k);
+      layer.entityKinds = [...set];
+    }
     else if (e.target.dataset.lField) layer[e.target.dataset.lField] = e.target.value;
     else if (e.target.dataset.lNum) {
       layer[e.target.dataset.lNum] = safeNum(e.target.value, 0);
@@ -3193,30 +3943,42 @@ function wireEvents() {
     }
     saveDraft();
     // Update the live preview in place without rebuilding #art-layers-list (keeps focus and slider drags).
-    const cardSel = document.getElementById('art-preview-card-select');
-    const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
-    if (previewDef) renderCardWithLayers(previewDef, document.getElementById('art-live-preview'));
-    renderInspector();
+    renderArtPreviewOnly();
+    if (state.artTarget === 'items') renderItemInspector();
+    else renderInspector();
   });
   document.getElementById('art-layers-list').addEventListener('change', () => {
     layerEditHistoryPushed = false;
-    renderCardsGrid();
+    if (state.artTarget === 'items') renderItemsGrid();
+    else renderCardsGrid();
   });
   document.getElementById('btn-save-art').addEventListener('click', async () => {
     try {
-      const r = await fetch('/__studio/art-layers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artLayers: state.artLayers }) });
-      const data = await r.json();
-      if (!data.ok) throw new Error(data.error);
-      state.repoArtLayers = clone(state.artLayers);
-      writeDraftNow();
-      refreshDirtyStatus();
-      toast(`Saved ${data.layerCount} art layer(s) to ${data.path}`);
+      if (state.artTarget === 'items') {
+        const r = await fetch('/__studio/item-art-layers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemArtLayers: state.itemArtLayers }) });
+        const data = await r.json();
+        if (!data.ok) throw new Error(data.error);
+        state.repoItemArtLayers = clone(state.itemArtLayers);
+        writeDraftNow();
+        refreshDirtyStatus();
+        toast(`Saved ${data.layerCount} item art layer(s) to ${data.path}`);
+      } else {
+        const r = await fetch('/__studio/art-layers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artLayers: state.artLayers }) });
+        const data = await r.json();
+        if (!data.ok) throw new Error(data.error);
+        state.repoArtLayers = clone(state.artLayers);
+        writeDraftNow();
+        refreshDirtyStatus();
+        toast(`Saved ${data.layerCount} art layer(s) to ${data.path}`);
+      }
     } catch (err) { toast(`Save failed: ${err.message}`); }
   });
   document.getElementById('btn-download-art').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(state.artLayers, null, 2) + '\n'], { type: 'application/json' });
+    const isItems = state.artTarget === 'items';
+    const payload = isItems ? state.itemArtLayers : state.artLayers;
+    const blob = new Blob([JSON.stringify(payload, null, 2) + '\n'], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'cardArtLayers.json' });
+    const a = Object.assign(document.createElement('a'), { href: url, download: isItems ? 'itemArtLayers.json' : 'cardArtLayers.json' });
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
@@ -3230,7 +3992,7 @@ function wireEvents() {
   const loadAB = (slot) => {
     if (!state.abSlots[slot]) { toast(`Slot ${slot} is empty`); return; }
     pushHistory();
-    state.scoring = clone(state.abSlots[slot]);
+    state.scoring = RefreshRestoredNaming(clone(state.abSlots[slot]), state.repoScoring);
     state.abSlots.activeLabel = `Slot ${slot}`;
     document.getElementById('ab-active-label').textContent = `Slot ${slot}`;
     syncAllViews();
@@ -3347,8 +4109,17 @@ function buildCardList() {
 
 async function boot() {
   state.cards = buildCardList();
+  const roster = buildItemRoster(contentBundle);
+  state.items = roster.items;
+  state.itemRules = roster.rules;
+  state.defaultItemNames = Object.fromEntries(state.items.map((it) => [it.key, it.name]));
+  state.selectedItemKey = state.items[0]?.key || null;
+  // Default names are the repo's authored names, taken before any draft is restored.
+  state.defaultNameSet = DefaultNameSet(state.cards);
+  loadStoredNameSets();
   state.selectedCardId = state.cards[0]?.id || null;
   state.repoArtLayers = clone(state.artLayers);
+  state.repoItemArtLayers = clone(state.itemArtLayers);
 
   try {
     const ab = JSON.parse(localStorage.getItem(AB_STORAGE_KEY) || 'null');
@@ -3375,17 +4146,23 @@ async function boot() {
       const draftArtLayers = Array.isArray(draft.artLayers?.layers) ? draft.artLayers : null;
       const draftCards = (Array.isArray(draft.customCards) ? draft.customCards : [])
         .filter((card) => card && typeof card === 'object' && !Array.isArray(card) && typeof card.id === 'string' && card.id);
-      state.scoring = draft.scoring;
+      // A draft saved before convention names takes the repo's naming tables and drops the retired word tables.
+      state.scoring = RefreshRestoredNaming(draft.scoring, state.repoScoring);
       // A draft saved before a category existed takes the repo's weight for it (Hybrid +10 reaches old drafts).
       for (const [key, weight] of Object.entries(state.repoScoring.categories || {})) {
         if (key === 'rule' || state.scoring.categories?.[key]) continue;
         (state.scoring.categories ||= {})[key] = clone(weight);
       }
       if (draft.pendingScoring && draft.pendingBase && ValidateScoringConfig(draft.pendingScoring).length === 0) {
-        state.pendingScoring = draft.pendingScoring;
-        state.pendingBase = draft.pendingBase;
+        state.pendingScoring = RefreshRestoredNaming(draft.pendingScoring, state.repoScoring);
+        state.pendingBase = RefreshRestoredNaming(draft.pendingBase, state.repoScoring);
       }
       if (draftArtLayers) state.artLayers = draftArtLayers;
+      if (Array.isArray(draft.itemArtLayers?.layers)) state.itemArtLayers = draft.itemArtLayers;
+      for (const draftItem of (Array.isArray(draft.editedItems) ? draft.editedItems : [])) {
+        const j = state.items.findIndex((x) => x.key === draftItem?.key);
+        if (j >= 0) state.items[j] = draftItem;
+      }
       for (const draftCard of draftCards) {
         const i = state.cards.findIndex((c) => c.id === draftCard.id);
         if (i >= 0) state.cards[i] = draftCard;

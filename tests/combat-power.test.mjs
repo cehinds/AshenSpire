@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ScoreCard, CardCategories, CardKind, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
+import { BaseFace, ScoreCard, CardCategories, CardKind, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, CardNameParts, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
 import { scoring } from '../src/content/generated/scoring.js';
 import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
 
@@ -15,16 +15,19 @@ test('combat power: all 95 Core card faces score the expected raw value of the r
   for (const face of faces) assert.equal(ScoreCard(face).raw, face.pyScore, face.id);
 });
 
-test('combat power: every item scores what the standalone simulator scores (raw and convention name)', () => {
-  const { items, props } = fixture('combat-power-items.json');
-  const expected = fixture('combat-power-items-expected.json');
+test('combat power: every shipped item scores consistently and produces a convention name within the limit', async () => {
+  const { itemFaces } = await import('../tools/combat-power-report.mjs');
+  const { items, props } = (() => { const r = itemFaces(); return { items: r.items, props: r.rules }; })();
   assert.equal(items.length, 181);
-  assert.equal(expected.length, items.length);
-  items.forEach((item, i) => {
-    assert.equal(`${item.kind}:${item.id}`, `${expected[i].kind}:${expected[i].id}`);
-    assert.equal(ScoreItem(item, scoring, props).raw, expected[i].raw, `${item.kind}:${item.id}`);
-    assert.equal(ItemName(item, 0, scoring, props), expected[i].name, `name of ${item.kind}:${item.id}`);
-  });
+  for (const item of items) {
+    const key = `${item.kind}:${item.id}`;
+    const scored = ScoreItem(item, scoring, props);
+    assert.equal(itemCombatPower[key].raw, scored.raw, key);
+    assert.equal(itemCombatPower[key].cp, scored.cp, key);
+    const name = ItemName(item, 0, scoring, props);
+    assert.ok(typeof name === 'string' && name.length > 0, `name of ${key}`);
+    assert.ok(name.length <= scoring.naming.item.limit.maxChars, `name length of ${key}: ${name}`);
+  }
 });
 
 test('combat power: rank bands and rarity discounts', () => {
@@ -122,4 +125,118 @@ test('combat power: category weights add flat or scale the positive score, and d
   const scaled = ScoreCard(face, withWeights({ [type]: { weight: 2, multiplier: true } }));
   assert.equal(scaled.parts[`category:${type}`], base.positive);
   assert.equal(ScoreCard(face, withWeights({ [type]: { weight: 1, multiplier: true } })).raw, base.raw);
+});
+
+// Owner 2026-11-24: <rarity> <second effect> <element (magic only)> <base> <rank numeral><upgrade mark>.
+const nameFace = (o) => Object.assign(BaseFace(), o);
+// The full convention, before naming.card.limit trims it (a config with no limit block has no limit).
+const noLimit = JSON.parse(JSON.stringify(scoring)); delete noLimit.naming.card.limit;
+const FullName = (face, ups = 0) => CardName(face, ups, noLimit);
+const martialHit = (o = {}) => nameFace({ sp: 1, dmg: 3, tags: ['camp:physical', 'maneuver:attack', 'range:melee'], ...o });
+const magicHit = (tags, o = {}) => nameFace({ camp: 'spell', sp: 0, mp: 1, dmg: 3, tags: ['camp:spell', ...tags], ...o });
+
+test('card names: a common martial melee hit with only damage is "Strike"', () => {
+  assert.equal(FullName(martialHit()), 'Strike');
+  assert.equal(FullName(martialHit(), 1), 'Strike+');
+  assert.equal(FullName(martialHit(), 2), 'Strike+2');
+});
+
+test('card names: rarity word and second-effect word', () => {
+  const searing = martialHit({ rarity: 'uncommon', sp: 2, statuses: [['burn', 1, 'enemy']] });
+  assert.equal(FullName(searing), 'Improved Searing Strike');
+  const greater = martialHit({ rarity: 'rare', dmg: 12, statuses: [['burn', 2, 'enemy']] });
+  assert.equal(CardNameParts(greater, 0, noLimit).rank, 2);
+  assert.equal(FullName(greater, 1), 'Greater Searing Strike II+');
+  assert.equal(FullName(greater, 2), 'Greater Searing Strike II+2');
+});
+
+test('card names: range picks the base word, and the base word names its range', () => {
+  assert.equal(FullName(martialHit({ tags: ['camp:physical', 'range:reach'] })), 'Shot');
+  assert.equal(FullName(martialHit({ tags: ['camp:physical'] })), 'Strike'); // martial defaults to melee
+  assert.equal(FullName(magicHit(['school:fire', 'tradition:arcane'])), 'Flame Bolt'); // magic defaults to reach
+  assert.equal(FullName(magicHit(['range:melee', 'tradition:arcane'])), 'Arcane Touch');
+  assert.equal(FullName(magicHit(['targeting:area', 'school:frost'])), 'Frost Wave');
+});
+
+test('card names: magic always has an element word, from school, damage or tradition', () => {
+  assert.equal(FullName(magicHit(['damage:fire'])), 'Flame Bolt');
+  assert.equal(FullName(magicHit(['tradition:divine'])), 'Divine Bolt');
+  assert.equal(FullName(magicHit(['tradition:arcane', 'tradition:divine'])), 'Arcane Bolt');
+  assert.equal(FullName(magicHit([])), 'Arcane Bolt');
+  // A hybrid hit (martial with a magic share) takes the magic words.
+  assert.match(FullName(martialHit({ magicShare: 0.5, tags: ['camp:physical', 'range:melee', 'damage:frost'] })), /^Frost Touch( [IVX]+)?$/);
+});
+
+test('card names: a skill names its top effect; a heal-only divine rite is "Mending Divine Rite"', () => {
+  const rite = nameFace({ camp: 'spell', type: 'skill', sp: 0, mp: 1, heal: 3, tags: ['camp:spell', 'tradition:divine'] });
+  assert.match(FullName(rite), /^Mending Divine Rite( [IVX]+)?$/);
+});
+
+// Owner 2026-11-24: naming.card.limit {maxChars, keep}. Over maxChars, parts drop from the end of keep; base, rank and upgrade never drop.
+const limitScoring = (limit) => { const s = JSON.parse(JSON.stringify(scoring)); s.naming.card.limit = limit; return s; };
+const KEEP = ['base', 'rank', 'upgrade', 'element', 'effect', 'rarity'];
+// A rare Rank 2 frost bolt that burns: 'Greater Searing Frost Bolt II+' in full (30 characters).
+const frostBolt = magicHit(['school:frost'], { rarity: 'rare', mp: 0, dmg: 6, statuses: [['burn', 2, 'enemy']] });
+
+test('card names: the shipped limit is 24 characters, keeping base, rank, upgrade, element, effect, rarity', () => {
+  assert.deepEqual(scoring.naming.card.limit, { maxChars: 24, keep: KEEP });
+});
+
+test('card names: the length limit trims rarity, then effect, then element', () => {
+  assert.equal(FullName(frostBolt, 1), 'Greater Searing Frost Bolt II+');
+  assert.equal(CardName(frostBolt, 1, limitScoring({ maxChars: 31, keep: KEEP })), 'Greater Searing Frost Bolt II+');
+  const p1 = CardNameParts(frostBolt, 1, limitScoring({ maxChars: 22, keep: KEEP }));
+  assert.equal(p1.name, 'Searing Frost Bolt II+');
+  assert.deepEqual(p1.dropped, ['rarity']);
+  const p2 = CardNameParts(frostBolt, 1, limitScoring({ maxChars: 20, keep: KEEP }));
+  assert.equal(p2.name, 'Frost Bolt II+');
+  assert.deepEqual(p2.dropped, ['rarity', 'effect']);
+  assert.equal(CardName(frostBolt, 1), 'Searing Frost Bolt II+'); // the shipped limit (24)
+});
+
+test('card names: base, rank and upgrade are never dropped, even when still too long', () => {
+  const p = CardNameParts(frostBolt, 3, limitScoring({ maxChars: 1, keep: KEEP }));
+  assert.deepEqual(p.dropped, ['rarity', 'effect', 'element']);
+  assert.equal(p.name, 'Bolt II+3');
+});
+
+test('card names: a custom keep order drops its last part first', () => {
+  const p = CardNameParts(frostBolt, 1, limitScoring({ maxChars: 25, keep: ['base', 'rank', 'upgrade', 'rarity', 'effect', 'element'] }));
+  assert.equal(p.name, 'Greater Searing Bolt II+');
+  assert.deepEqual(p.dropped, ['element']);
+});
+
+test('card names: no limit block means no limit', () => {
+  const p = CardNameParts(frostBolt, 2, noLimit);
+  assert.deepEqual(p.dropped, []);
+  assert.equal(p.name, 'Greater Searing Frost Bolt II+2');
+});
+
+test('card names: the divine words are "Divine"', () => {
+  assert.equal(FullName(magicHit(['school:divine'])), 'Divine Bolt');
+  assert.equal(FullName(magicHit(['damage:sacred'])), 'Divine Bolt');
+  assert.equal(FullName(magicHit(['tradition:divine'])), 'Divine Bolt');
+});
+
+test('card names: an effect word that shares its first 4 letters with the element or base word is dropped', () => {
+  // Ward (Warded) on an alteration (Warding) rite, and Block (Guarding) on a Guard.
+  const rite = nameFace({ camp: 'spell', type: 'skill', sp: 0, mp: 1, statuses: [['ward', 2, 'self']], tags: ['camp:spell', 'school:alteration'] });
+  assert.match(FullName(rite), /^Warding Rite( [IVX]+)?$/);
+  const parts = CardNameParts(rite, 0, noLimit);
+  assert.equal(parts.effect, null);
+  // Words that only share fewer letters stay: Searing Strike.
+  assert.equal(FullName(martialHit({ rarity: 'uncommon', sp: 2, statuses: [['burn', 1, 'enemy']] })), 'Improved Searing Strike');
+});
+
+test('card names: a limit with a keep order but no maxChars is no limit', () => {
+  const p = CardNameParts(frostBolt, 1, limitScoring({ keep: ['base', 'rank', 'upgrade', 'rarity', 'effect', 'element'] }));
+  assert.deepEqual(p.dropped, []);
+  assert.equal(p.name, 'Greater Searing Frost Bolt II+');
+});
+
+test('CardNameParts: a custom scoring table saved before the newer naming tables still names cards', () => {
+  const old = JSON.parse(JSON.stringify(scoring));
+  for (const table of ['range', 'defaultRange', 'tradition', 'defaultTradition', 'limit']) delete old.naming.card[table];
+  assert.equal(CardName(frostBolt, 0, old), CardName(frostBolt, 0, limitScoring(undefined)), 'missing tables fall back to the shipped words');
+  assert.match(CardName({ ...BaseFace(), dmg: 6 }, 0, old), /Strike/);
 });

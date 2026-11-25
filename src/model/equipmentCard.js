@@ -5,6 +5,7 @@ import { GearIdOf } from './gearIds.js';
 import { GearTypeEffectsEnabled, GearVocabularyEnabled, GearPieceMods, GearModText, GearTypeRow } from './gearEffects.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
+import { ItemRankOf, ItemRankBadge } from './itemRank.js';
 import { breakPropertyText } from './breakMeter.js';
 import { affinityTags } from '../engine/elementRules.js';
 
@@ -86,7 +87,10 @@ export function equipmentCardModel(registries, piece) {
     bonuses = [...(item ? bonuses : []), ...rules];
   }
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
-  return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
+  const itemKind = armor ? 'armour' : 'weapon';
+  const rank = ItemRankOf(itemKind, piece, piece.classId);
+  const rankBadge = ItemRankBadge(itemKind, piece, piece.classId);
+  return { id: piece.id, name: piece.name, armor, type, facts, bonuses, rank, rankBadge,
     tags: tags.map(id => field(tag(id)?.label || id, id, registries.breakMeterVersion === 1 ? breakPropertyText(registries, id) || tag(id)?.blurb || 'Authored equipment classification.' : tag(id)?.blurb || 'Authored equipment classification.')),
     typeExplanation: typeEffects ? `${typeRow?.label || type}. Compatibility is determined by the equipment position.`
       : (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
@@ -115,7 +119,7 @@ export function equipmentCardModel(registries, piece) {
  * shrinks to stay whole instead of being cut. `idealCh` is expressed against
  * the card's own width, so the face scales with the card and not the viewport.
  */
-export function equipmentCardTokens(config = balance.ui.equipmentCard, { collapse = [], omit = [] } = {}) {
+export function equipmentCardTokens(config = balance.ui.equipmentCard, { collapse = [], omit = [], regionMinPx = null } = {}) {
   const { text, frameWidthPx, frameHeightPx, paddingPx, gapPx } = config;
   // COLLAPSE AND OMIT ARE NOT THE SAME THING, and the difference is the whole
   // value of the presentation levels (src/model/cardFields.js).
@@ -136,7 +140,11 @@ export function equipmentCardTokens(config = balance.ui.equipmentCard, { collaps
   // returns its pixels — and its gaps — to the regions that remain.
   const regions = Object.fromEntries(Object.entries(config.regions)
     .filter(([key]) => !omit.includes(key))
-    .map(([key, spec]) => [key, collapse.includes(key) ? { ...spec, minPx: 0, grow: 0 } : spec]));
+    .map(([key, spec]) => {
+      if (collapse.includes(key)) return [key, { ...spec, minPx: 0, grow: 0 }];
+      const overrideMin = regionMinPx && Number.isFinite(regionMinPx[key]) ? regionMinPx[key] : null;
+      return [key, overrideMin != null ? { ...spec, minPx: overrideMin } : spec];
+    }));
   const order = Object.keys(regions);
   const gaps = gapPx * Math.max(0, order.length - 1);
   const budget = frameHeightPx - paddingPx * 2 - gaps;
