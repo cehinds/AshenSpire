@@ -994,6 +994,33 @@ body.studio-body .layer-kind-checks {
   align-items: center;
 }
 
+/* Generate cards modal (owner, 2026-11-24): grouped number boxes, live totals, a preview block. */
+body.studio-body .generate-cards-modal { width: min(880px, calc(100vw - 2 * var(--studio-gap-3))); }
+body.studio-body .gen-body { display: flex; flex-direction: column; gap: var(--studio-gap-2); }
+body.studio-body .gen-group { border: 1px solid var(--st-border); border-radius: var(--studio-radius); padding: var(--studio-gap-2) var(--studio-gap-3); margin: 0; min-width: 0; }
+body.studio-body .gen-group legend { font-size: 12px; font-weight: 600; padding: 0 var(--studio-gap-1); }
+body.studio-body .gen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--studio-gap-2); }
+body.studio-body .gen-row, body.studio-body .gen-checks { display: flex; flex-wrap: wrap; gap: var(--studio-gap-1) var(--studio-gap-3); }
+body.studio-body .gen-field { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--st-muted); min-width: 0; }
+body.studio-body .gen-field input, body.studio-body .gen-field select { background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 4px 6px; min-height: var(--studio-control-h); box-sizing: border-box; width: 100%; min-width: 0; }
+body.studio-body .gen-field input:disabled { opacity: .45; }
+body.studio-body .gen-seed { grid-column: span 2; }
+body.studio-body .gen-seed-row { display: flex; gap: var(--studio-gap-1); }
+body.studio-body .gen-seed-row .s-btn { flex: 0 0 auto; }
+body.studio-body .gen-check { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; min-height: 28px; cursor: pointer; }
+body.studio-body .gen-sum { font-weight: 400; color: var(--st-muted); margin-left: var(--studio-gap-1); }
+body.studio-body .gen-sum.is-off { color: var(--st-bad); font-weight: 600; }
+body.studio-body .gen-note { margin: var(--studio-gap-1) 0 0; font-size: 12px; }
+body.studio-body .gen-preview { margin-top: var(--studio-gap-2); background: #0e1117; border: 1px solid var(--st-border); border-radius: 6px; padding: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+body.studio-body .gen-preview h4 { margin: 0; font-size: 12px; }
+body.studio-body .gen-preview-note { color: var(--st-warn); }
+body.studio-body .gen-preview ul { margin: 0; padding-left: 18px; }
+@media (max-width: 480px) {
+  body.studio-body .gen-group { padding: var(--studio-gap-1) var(--studio-gap-2); }
+  body.studio-body .gen-grid { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+  body.studio-body .generate-cards-modal .modal-actions { flex-wrap: wrap; }
+}
+
 /* ---------------------------------------------------------------------------
  * Auto-Balance, Batch Generator, and Custom Decks / Classes Modals
  * --------------------------------------------------------------------------- */

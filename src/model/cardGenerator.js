@@ -1,9 +1,34 @@
-// src/model/cardGenerator.js — generate a card (or batch of cards) of a target combat power (owner, 2026-11-21).
+// src/model/cardGenerator.js — generate a card (or batch of cards) of a target combat power (owner, 2026-11-21; riders, schools and costs 2026-11-24).
 //
-// Pure and headless; safe for both Score Studio and procedural runtime generation inside the game.
-// GenerateCard({rarity, rank | combatPower, cls, camp, type, school, stances, effectCount, targeting, keywords,
-// aimMaxCp, sp, mp, seed}, {scoring}) returns a Core cards.json-shaped definition whose ScoreCard face lands on
-// the target combat power (or closest CP <= rank ceiling when aimMaxCp is set).
+// Pure and headless; safe for Score Studio, card pool planning, auto-balancing, and runtime generation.
+// GenerateCard(target, {scoring, spellExposureBuildup, idPrefix, applyNaming}) returns a Core cards.json-shaped definition
+// whose ScoreCard face lands on the target combat power:
+//
+//   1. target cp  = the given combatPower (never over scoring.rank.maxCp), or a cp inside the rank band (picked by the seed, or the band ceiling when aimMaxCp is true); raw target = cp + rarity discount;
+//   2. the face (src/model/combatPower.js BaseFace) gets its camp, school, range, area/targeting, keyword(s), SP/MP costs, optional stances,
+//      optional HP-cost drawback and riders (`effects` 1..3 or `effectCount` 1..4 counts the primary), then the primary amount (damage for attacks,
+//      Block for skills) is searched against the live weights so the rounded raw score equals the target. When the card is too strong even at a
+//      primary of 1, the fallback raises the SP cost (to 3), then the MP cost of a magic or hybrid card (to 3), then drops riders last-picked first,
+//      a keyword that adds power and area, and only on a card that allows a drawback adds HP cost (to MAX_HP_COST). A card still too strong keeps
+//      its nearest combat power and is marked `miss` (GenerateCard: `_cpMiss`). Every step is fixed, so a seed always gives the same card;
+//   3. the AUTHORED effect amounts are converted back from the face numbers with the scorer's authored-to-final constants
+//      (scoring.model.AUTH_PHYS / AUTH_SPELL / AUTH_BLOCK; the unarmed attack baseline from scoring.items.kit and the Block add of 6 that
+//      scoring.items.kit.weaponArt documents): face damage = 3 + 0.35 x authored (spell 0.5), face Block = 6 + 0.49 x authored.
+// The face, not the authored amount, is the scored truth; authored amounts never go below 1.
+// Since 2026-11-24 the primary search starts at 1 (a card always does its main thing) and no HP is added without `drawback`, so
+// tools/generate-cards.mjs prints different cards than the first generator for the same seed.
+//
+// Target fields: rarity, rank | combatPower, cls, seed, and optionally
+//   camp       physical | spell, or martial | magic | hybrid (hybrid = a physical hit with a 0.5 magic share);
+//   type       attack | skill | smash | sweep | counter | defend (smash, sweep and counter are attacks, defend a skill; a magic card
+//              casts, so its smash or sweep is a plain attack and its counter or defend a plain skill; sweep is always area);
+//   school     fire | frost | lightning | force | decay | divine | illusion | earth | alteration | none (school:* and, on attacks, the
+//              matching damage:* tag on magic and hybrid cards; a martial card ignores it);
+//   range      melee | reach (single-target attacks only);  area / targeting:'area' = targeting:area;
+//   sp, mp     costs 0..3 (default: picked by the seed; martial cards cost no MP);
+//   effects    1..3 (with allowedEffects / allowedStatuses: which riders may be picked), or riders: an explicit list such as ['poise', 'status:weak'];
+//   effectCount 1..4, stances / stance, keywords (array), aimMaxCp (for batch generation & auto-balancing);
+//   keyword    exhaust | ethereal | retain | innate;  drawback  true = an HP cost.
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
 import { BaseFace, ScoreCard, CombatPower, RankOf, CardName } from './combatPower.js';
 
@@ -21,6 +46,36 @@ export function seededPrng(seed) {
 }
 const pick = (rand, n) => Math.floor(rand() * n);
 const pickFrom = (rand, list) => list[pick(rand, list.length)];
+/** The generator's seeded random source (a string or number seed -> a function returning 0..1). */
+export const SeededRandom = seededPrng;
+
+/** Card types the generator makes, and what each one is in the game. */
+export const CARD_TYPES = Object.freeze(['attack', 'skill', 'smash', 'sweep', 'counter', 'defend']);
+const TYPE_SHAPE = {
+  attack: { type: 'attack', maneuver: 'maneuver:attack' },
+  skill: { type: 'skill', maneuver: null },
+  smash: { type: 'attack', maneuver: 'maneuver:smash' },
+  sweep: { type: 'attack', maneuver: 'maneuver:sweep', area: true },
+  counter: { type: 'attack', maneuver: 'maneuver:counter', extraTags: ['trait:reaction'] },
+  defend: { type: 'skill', maneuver: 'maneuver:defend' },
+};
+/** Magic schools (school:* tags) and the damage:* tag each one deals. Alteration deals no element. */
+export const SCHOOLS = Object.freeze(['fire', 'frost', 'lightning', 'force', 'decay', 'divine', 'illusion', 'earth', 'alteration', 'none']);
+const SCHOOL_DAMAGE = { fire: 'damage:fire', frost: 'damage:frost', lightning: 'damage:lightning', force: 'damage:arcane', decay: 'damage:decay', divine: 'damage:sacred', illusion: 'damage:psychic', earth: 'damage:earth' };
+export const CAMPS = Object.freeze(['martial', 'magic', 'hybrid']);
+const CAMP_ALIAS = { physical: 'martial', spell: 'magic', martial: 'martial', magic: 'magic', hybrid: 'hybrid' };
+export const RANGES = Object.freeze(['melee', 'reach']);
+export const KEYWORDS = Object.freeze(['exhaust', 'ethereal', 'retain', 'innate']);
+const HYBRID_MAGIC_SHARE = 0.5;
+const MAGIC_ATTACK_TYPES = new Set(['attack', 'smash', 'sweep']);
+/** Rider effects (beyond the primary). Statuses are riders too, named 'status:<id>' from scoring.statuses. */
+export const RIDER_EFFECTS = Object.freeze(['poise', 'block', 'damage', 'draw', 'heal', 'cleanse', 'restoreSp', 'restoreMp', 'move']);
+const ATTACK_ONLY = new Set(['poise', 'block']);
+const SKILL_ONLY = new Set(['damage']);
+const HEAVY_STATUS_WEIGHT = 10; // a status this strong gets one stack
+const MAX_HP_COST = 6; // the most HP a drawback costs
+const MAX_COST = 3;    // the highest SP or MP cost the fallback raises to
+const MAX_PRIMARY = 999;
 
 export const GENERATOR_SCHOOLS = Object.freeze([
   'fire', 'frost', 'lightning', 'decay', 'divine', 'earth', 'force', 'illusion', 'alteration',
@@ -92,54 +147,96 @@ export function TargetCp(rank, rand, scoring = shippedScoring, { aimMaxCp = fals
   return lo + pick(rand, hi - lo + 1);
 }
 
-const authoredDamage = (face, camp, scoring) => Math.max(1, Math.round((face - scoring.items.kit.unarmedAttack) / (camp === 'spell' ? scoring.model.AUTH_SPELL : scoring.model.AUTH_PHYS)));
+const authFactor = (camp, scoring) => (camp === 'spell' ? scoring.model.AUTH_SPELL : scoring.model.AUTH_PHYS);
+const authoredDamage = (face, camp, scoring) => Math.max(1, Math.round((face - scoring.items.kit.unarmedAttack) / authFactor(camp, scoring)));
 const authoredBlock = (face, scoring) => Math.max(1, Math.round((face - BLOCK_ADD) / scoring.model.AUTH_BLOCK));
+const statusWords = (id) => STATUS_LABELS[id] || id.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+
+// One rider, its face numbers picked by the seed. Block and damage riders pick the authored amount and score its exact face.
+function makeRider(kind, rand, camp, scoring) {
+  if (kind.startsWith('status:')) {
+    const id = kind.slice('status:'.length), st = scoring.statuses[id];
+    if (!st) throw new Error(`cardGenerator: unknown status '${id}'`);
+    return { kind, status: id, target: st.target === 'self' ? 'self' : 'enemy', stacks: st.weight >= HEAVY_STATUS_WEIGHT ? 1 : 1 + pick(rand, 2) };
+  }
+  switch (kind) {
+    case 'poise': return { kind, amount: 3 * (1 + pick(rand, 2)) };
+    case 'block': { const authored = 2 + pick(rand, 4); return { kind, authored, face: BLOCK_ADD + scoring.model.AUTH_BLOCK * authored }; }
+    case 'damage': { const authored = 2 + pick(rand, 4); return { kind, authored, face: scoring.items.kit.unarmedAttack + authFactor(camp, scoring) * authored }; }
+    case 'heal': return { kind, amount: 2 + pick(rand, 3) };
+    case 'draw': case 'cleanse': case 'restoreSp': case 'restoreMp': case 'move': return { kind, amount: 1 };
+    default: throw new Error(`cardGenerator: unknown rider '${kind}'`);
+  }
+}
+
+const RIDER_FIELD = { poise: 'poise', block: 'blk', damage: 'dmg', draw: 'draw', heal: 'heal', cleanse: 'cleanse', restoreSp: 'restoreSp', restoreMp: 'restoreMp', move: 'move' };
+function applyRider(face, r) {
+  if (r.status) face.statuses.push([r.status, r.stacks, r.target]);
+  else face[RIDER_FIELD[r.kind]] += r.face ?? r.amount;
+}
+
+// The riders a card of this shape may pick: the allowed effects that suit its type, then the allowed statuses.
+function riderPool(kind, allowedEffects, allowedStatuses, scoring) {
+  const wrongType = kind === 'attack' ? SKILL_ONLY : ATTACK_ONLY;
+  const fx = (allowedEffects || RIDER_EFFECTS).filter((k) => RIDER_EFFECTS.includes(k) && !wrongType.has(k));
+  const st = (allowedStatuses || []).filter((s) => scoring.statuses[s]).map((s) => `status:${s}`);
+  return [...fx, ...st];
+}
 
 function normalizeStances(input) {
   const raw = Array.isArray(input.stances) ? input.stances : (input.stance ? [input.stance] : []);
   return [...new Set(raw.map((s) => String(s || '').trim().toLowerCase()).filter((s) => GENERATOR_STANCES.includes(s)))];
 }
 
-function hasExtendedCriteria(input) {
+function hasBatchCriteria(input) {
   return !!(
-    input.school
-    || (Array.isArray(input.stances) && input.stances.length)
+    (Array.isArray(input.stances) && input.stances.length)
     || input.stance
     || Number.isInteger(input.effectCount)
-    || (input.targeting && input.targeting !== 'single')
+    || input.targeting
     || (Array.isArray(input.keywords) && input.keywords.length)
-    || Number.isInteger(input.sp)
-    || Number.isInteger(input.mp)
-    || input.aimMaxCp
   );
 }
 
+function normaliseInput(input, scoring) {
+  const { rarity = 'common', cls = 'colorless', type = 'attack', seed = 1 } = input;
+  if (!(rarity in scoring.rarity.discount)) throw new Error(`cardGenerator: unknown rarity '${rarity}'`);
+  if (!CARD_TYPES.includes(type)) throw new Error(`cardGenerator: type must be one of ${CARD_TYPES.join(', ')}, not '${type}'`);
+  const school = input.school == null || input.school === '' ? 'none' : input.school;
+  if (!SCHOOLS.includes(school)) throw new Error(`cardGenerator: unknown school '${school}'`);
+  const rawCamp = input.camp ?? (school !== 'none' ? 'spell' : 'physical');
+  const campKind = CAMP_ALIAS[rawCamp];
+  if (!campKind) throw new Error(`cardGenerator: camp must be physical, spell, martial, magic or hybrid, not '${input.camp}'`);
+  if (input.range != null && !RANGES.includes(input.range)) throw new Error(`cardGenerator: range must be melee or reach, not '${input.range}'`);
+  if (input.keyword && !KEYWORDS.includes(input.keyword)) throw new Error(`cardGenerator: unknown keyword '${input.keyword}'`);
+  if (input.effects !== undefined && !(Number.isInteger(input.effects) && input.effects >= 1 && input.effects <= 3)) throw new Error('cardGenerator: effects must be 1, 2 or 3');
+  return { rarity, cls, type, seed, campKind, school };
+}
+
+const NEW_FIELDS = ['effects', 'riders', 'range', 'area', 'keyword', 'drawback', 'sp', 'mp'];
+
 /**
- * GenerateFace(target, {scoring}) -> {face, cp, target}: the scorer's face (src/model/combatPower.js) and the combat power it lands on.
- * Backwards-compatible with the original {rarity, rank | combatPower, cls, camp, type, seed} signature, and supports optional extended
- * criteria: {school, stances, effectCount, targeting, keywords, sp, mp, aimMaxCp}.
+ * GenerateFace(target, {scoring}) -> {face, cp, riders, target}: the scorer's face (src/model/combatPower.js) and the combat power it lands
+ * on. Supports both pool-planner targets (`effects`, `riders`, `range`, `area`, `keyword`, `drawback`) and batch/auto-balance targets
+ * (`stances`, `effectCount`, `targeting`, `keywords`, `aimMaxCp`).
  */
 export function GenerateFace(input, { scoring = shippedScoring } = {}) {
-  const { rarity = 'common', cls = 'colorless', seed = 1 } = input;
-  const school = input.school && GENERATOR_SCHOOLS.includes(input.school) ? input.school : null;
-  const camp = input.camp || (school ? 'spell' : 'physical');
-  const type = input.type || 'attack';
-  if (!(rarity in scoring.rarity.discount)) throw new Error(`cardGenerator: unknown rarity '${rarity}'`);
-  if (!['attack', 'skill'].includes(type)) throw new Error(`cardGenerator: type must be attack or skill, not '${type}'`);
-  if (!['physical', 'spell'].includes(camp)) throw new Error(`cardGenerator: camp must be physical or spell, not '${camp}'`);
-
-  const extended = hasExtendedCriteria(input);
+  const { rarity, cls, type, seed, campKind, school } = normaliseInput(input, scoring);
+  const camp = campKind === 'magic' ? 'spell' : 'physical';
+  const batchMode = hasBatchCriteria(input);
   const stances = normalizeStances(input);
-  const targeting = input.targeting === 'area' ? 'area' : 'single';
-  const keywords = Array.isArray(input.keywords)
-    ? [...new Set(input.keywords.map((k) => String(k || '').toLowerCase()).filter((k) => GENERATOR_KEYWORDS.includes(k)))]
-    : [];
+  const requestedKeywords = Array.isArray(input.keywords)
+    ? [...new Set(input.keywords.map((k) => String(k || '').toLowerCase()).filter((k) => KEYWORDS.includes(k)))]
+    : (input.keyword ? [input.keyword] : []);
   const effectCount = Number.isInteger(input.effectCount) ? Math.max(1, Math.min(4, input.effectCount)) : null;
 
-  const seedKey = extended
-    ? `${seed}|${rarity}|${cls}|${camp}|${type}|${school || ''}|${stances.join(',')}|${effectCount || ''}|${targeting}|${keywords.join(',')}`
-    : `${seed}|${rarity}|${cls}|${camp}|${type}`;
-  const rand = seededPrng(seedKey);
+  // A target with none of the newer fields is the first generator's card (one optional Poise or draw rider) and keeps its seed string.
+  const legacy = !batchMode && input.effects === undefined && input.riders === undefined;
+  const plain = !batchMode && school === 'none' && campKind !== 'hybrid' && NEW_FIELDS.every((k) => input[k] === undefined);
+  const extra = batchMode
+    ? `|${campKind}|${school}|${stances.join(',')}|${effectCount || ''}|${input.targeting || ''}|${requestedKeywords.join(',')}`
+    : (plain ? '' : `|${campKind}|${school}|${NEW_FIELDS.map((k) => JSON.stringify(input[k] ?? null)).join('|')}`);
+  const rand = seededPrng(`${seed}|${rarity}|${cls}|${camp}|${type}${extra}`);
 
   let cp;
   if (Number.isFinite(input.combatPower)) cp = Math.round(input.combatPower);
@@ -148,197 +245,207 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
   if (cp > MaxCpOf(scoring)) throw new Error(`cardGenerator: combat power ${cp} is over the ceiling ${MaxCpOf(scoring)} (scoring.rank.maxCp)`);
   const raw = cp + scoring.rarity.discount[rarity];
 
-  const face = Object.assign(BaseFace(), { cls, rarity, camp, type });
-  let primaryManeuver = camp === 'spell' ? 'casting' : (type === 'attack' ? 'attack' : 'defend');
+  // A magic card casts: its maneuver is casting, so smash / sweep play as an attack and counter / defend as a skill.
+  const shape = campKind === 'magic' ? { type: MAGIC_ATTACK_TYPES.has(type) ? 'attack' : 'skill', maneuver: 'maneuver:casting', area: TYPE_SHAPE[type].area } : TYPE_SHAPE[type];
+  const kind = shape.type;
+  let primaryManeuver = shape.maneuver;
   let stanceTrigger = null;
   if (stances.length) {
     const first = stances[0];
     if (first === 'evade') {
-      primaryManeuver = 'defend';
+      primaryManeuver = 'maneuver:defend';
       stanceTrigger = { stance: 'evade' };
-    } else if (first === 'prepared') {
-      primaryManeuver = camp === 'spell' ? 'casting' : (type === 'attack' ? 'attack' : 'defend');
-    } else {
-      primaryManeuver = first;
+    } else if (first !== 'prepared') {
+      primaryManeuver = `maneuver:${first}`;
     }
   }
 
-  face.tags = [
-    `camp:${camp}`,
-    ...(camp === 'spell' ? ['source:spell', `maneuver:${primaryManeuver}`] : [`maneuver:${primaryManeuver}`]),
-    `classification.${type}`,
-  ];
-  if (camp === 'spell') {
-    face.tags.push(school === 'divine' ? 'tradition:divine' : 'tradition:arcane');
-    if (school) face.tags.push(`school:${school}`);
-  }
-  if (targeting === 'area') face.tags.push('targeting:area');
-  if (keywords.length) face.kw = [...keywords];
+  const face = Object.assign(BaseFace(), { cls, rarity, camp, type: kind });
+  if (campKind === 'hybrid') face.magicShare = HYBRID_MAGIC_SHARE;
+  const tags = [`camp:${camp}`];
+  if (camp === 'spell') tags.push('source:spell');
+  if (primaryManeuver) tags.push(primaryManeuver);
+  else if ((legacy || batchMode) && camp !== 'spell') tags.push('maneuver:defend'); // legacy & batch physical skills default to Guard
+  tags.push(`classification.${kind}`, ...(shape.extraTags || []));
+  if (campKind !== 'martial' && school !== 'none') tags.push(`school:${school}`);
+  if (camp === 'spell') tags.push(school === 'divine' ? 'tradition:divine' : 'tradition:arcane');
+  if (kind === 'attack' && campKind !== 'martial' && SCHOOL_DAMAGE[school]) tags.push(SCHOOL_DAMAGE[school]); // a martial card has no school
+  let area = Boolean(input.area || input.targeting === 'area' || shape.area);
+  if (kind === 'attack' && !area && input.range) tags.push(`range:${input.range}`);
+  if (type === 'counter' && campKind !== 'magic') face.counter = 1; // Score Studio reads a counter maneuver as one Counter stack
+  const setTags = () => { face.tags = area ? [...tags, 'targeting:area', 'targeting.allEnemies'] : [...tags]; };
+  let sp = Number.isInteger(input.sp) ? Math.max(0, input.sp) : pick(rand, 3);
+  let mp = campKind === 'martial' ? 0 : Number.isInteger(input.mp) ? Math.max(0, input.mp) : camp === 'spell' ? pick(rand, 2) : 0;
+  let keywords = [...requestedKeywords];
+  const baseHp = input.drawback ? 1 + pick(rand, 3) : 0;
 
-  face.sp = Number.isInteger(input.sp) ? Math.max(0, input.sp) : pick(rand, 3);
-  face.mp = Number.isInteger(input.mp) ? Math.max(0, input.mp) : (camp === 'spell' ? pick(rand, 2) : 0);
-
-  const key = type === 'attack' ? 'dmg' : 'blk';
-  const addStatus = (status, stacks, target) => {
-    if (!status || !(status in (scoring.statuses || {}))) return;
-    if (face.statuses.some(([s]) => s === status)) return;
-    face.statuses.push([status, stacks, target]);
-  };
-
-  if (!extended) {
-    if (type === 'attack') face.poise = 3 * pick(rand, 3); else face.draw = pick(rand, 2);
-  } else {
-    // Stance riders (evade / counter / prepared)
+  // Riders: the legacy target keeps the first generator's Poise or draw; batch mode honours stances & effectCount;
+  // otherwise effects-1 riders from the allowed pools, no repeats.
+  let riders = [];
+  let protectedRiderCount = 0;
+  if (batchMode) {
+    const addStatusRider = (status, stacks, target) => {
+      if (!status || !(status in (scoring.statuses || {}))) return false;
+      if (riders.some((r) => r.status === status)) return false;
+      riders.push({ kind: `status:${status}`, status, target, stacks });
+      return true;
+    };
     for (const st of stances) {
-      if (st === 'evade') { stanceTrigger = { stance: 'evade' }; addStatus('evade', 1, 'self'); }
-      else if (st === 'counter') addStatus('counter', 1, 'self');
-      else if (st === 'prepared') addStatus('prepared', 1, 'self');
+      if (st === 'evade') { stanceTrigger = { stance: 'evade' }; if (addStatusRider('evade', 1, 'self')) protectedRiderCount++; }
+      else if (st === 'counter') { if (addStatusRider('counter', 1, 'self')) protectedRiderCount++; }
+      else if (st === 'prepared') { if (addStatusRider('prepared', 1, 'self')) protectedRiderCount++; }
     }
     const desiredExtras = Math.max(0, (effectCount ?? (1 + pick(rand, 2))) - 1);
-    const currentExtras = () => (face.poise ? 1 : 0) + (face.draw ? 1 : 0) + (face.heal ? 1 : 0) + (face.restoreMp ? 1 : 0) + face.statuses.length;
-
-    // Add deterministic extra riders up to desiredExtras
     let guard = 0;
-    while (currentExtras() < desiredExtras && guard++ < 8) {
+    while (riders.length < desiredExtras && guard++ < 8) {
       const slot = (guard + pick(rand, 4)) % 4;
-      if (school && SCHOOL_STATUS[school] && !face.statuses.some(([s]) => s === SCHOOL_STATUS[school][0])) {
+      if (school !== 'none' && SCHOOL_STATUS[school] && !riders.some((r) => r.status === SCHOOL_STATUS[school][0])) {
         const [st, tgt] = SCHOOL_STATUS[school];
-        addStatus(st, 1 + pick(rand, 2), tgt);
-      } else if (type === 'attack' && !face.poise && slot === 0) {
-        face.poise = 3 * (1 + pick(rand, 2));
-      } else if (!face.draw && slot === 1) {
-        face.draw = 1;
-      } else if (type === 'skill' && !face.heal && school === 'divine') {
-        face.heal = 3;
+        addStatusRider(st, 1 + pick(rand, 2), tgt);
+      } else if (kind === 'attack' && !riders.some((r) => r.kind === 'poise') && slot === 0) {
+        riders.push({ kind: 'poise', amount: 3 * (1 + pick(rand, 2)) });
+      } else if (!riders.some((r) => r.kind === 'draw') && slot === 1) {
+        riders.push({ kind: 'draw', amount: 1 });
+      } else if (kind === 'skill' && !riders.some((r) => r.kind === 'heal') && school === 'divine') {
+        riders.push({ kind: 'heal', amount: 3 });
       } else {
-        const pool = type === 'attack' ? PHYSICAL_ATTACK_STATUSES : PHYSICAL_SKILL_STATUSES;
+        const pool = kind === 'attack' ? PHYSICAL_ATTACK_STATUSES : PHYSICAL_SKILL_STATUSES;
         const [st, tgt] = pickFrom(rand, pool);
-        addStatus(st, 1 + pick(rand, 2), tgt);
+        addStatusRider(st, 1 + pick(rand, 2), tgt);
       }
     }
+  } else if (legacy) {
+    const n = kind === 'attack' ? 3 * pick(rand, 3) : pick(rand, 2);
+    if (n) riders.push(kind === 'attack' ? { kind: 'poise', amount: n } : { kind: 'draw', amount: n });
+  } else if (Array.isArray(input.riders)) {
+    riders = input.riders.slice(0, 2).map((k) => makeRider(k, rand, camp, scoring));
+  } else {
+    const pool = riderPool(kind, input.allowedEffects, input.allowedStatuses, scoring);
+    for (let i = 1; i < input.effects && pool.length; i++) riders.push(makeRider(pool.splice(pick(rand, pool.length), 1)[0], rand, camp, scoring));
   }
 
-  const rawOf = () => ScoreCard(face, scoring).raw;
-  const solve = () => {
-    for (let v = 0; v <= 999; v++) {
-      face[key] = v;
-      const r = rawOf();
-      if (r === raw) return true;
-      if (r > raw) return false;
-    }
+  const key = kind === 'attack' ? 'dmg' : 'blk';
+  const build = (hp) => {
+    Object.assign(face, { sp, mp, dmg: 0, blk: 0, poise: 0, draw: 0, heal: 0, cleanse: 0, restoreSp: 0, restoreMp: 0, move: 0, statuses: [], loseHp: hp });
+    for (const r of riders) applyRider(face, r);
+    face.kw = [...keywords];
+    setTags();
+  };
+  // The primary is at least 1 face point, so a card always does its main thing.
+  const solve = (hp) => {
+    build(hp);
+    const base = face[key];
+    for (let v = 1; v <= MAX_PRIMARY; v++) { face[key] = base + v; const r = ScoreCard(face, scoring).raw; if (r === raw) return true; if (r > raw) return false; }
     return false;
   };
-  let ok = solve();
-  if (!ok) { face.poise = 0; face.draw = 0; face.heal = 0; ok = solve(); }
-  const protectedStatusCount = stances.filter((s) => ['evade', 'counter', 'prepared'].includes(s)).length;
-  if (!ok && face.statuses.length > protectedStatusCount) {
-    while (!ok && face.statuses.length > protectedStatusCount) {
-      face.statuses.pop();
-      ok = solve();
-    }
-  }
-  if (!ok && extended && !Number.isInteger(input.sp)) {
-    const origSp = face.sp;
-    for (const sp of [origSp + 1, origSp + 2, 0, 1, 2, 3]) {
-      if (sp < 0 || sp > 3) continue;
-      face.sp = sp;
-      if (solve()) { ok = true; break; }
-    }
-    if (!ok) face.sp = origSp;
-  }
-  for (let hp = 1; !ok && hp <= 99; hp++) { face.loseHp = hp; ok = solve(); }
-  if (!ok && face.statuses.length) {
-    face.statuses.length = 0;
-    face.loseHp = 0;
-    ok = solve();
-    for (let hp = 1; !ok && hp <= 99; hp++) { face.loseHp = hp; ok = solve(); }
-  }
-  // If still unable to land exact raw (e.g. step size > 1 with area/multipliers), pick closest raw <= target
-  if (!ok && extended) {
-    let bestV = 0;
-    let bestDiff = Infinity;
-    for (let v = 0; v <= 999; v++) {
-      face[key] = v;
-      const r = rawOf();
+  // Fallback order when the card is too strong: raise SP, then MP (magic and hybrid), then drop non-protected riders last-picked first,
+  // a keyword that adds power and area (unless preserved by batch criteria), then add HP cost only when a drawback is allowed.
+  let ok = solve(baseHp);
+  while (!ok && sp < MAX_COST) { sp++; ok = solve(baseHp); }
+  while (!ok && campKind !== 'martial' && mp < MAX_COST) { mp++; ok = solve(baseHp); }
+  while (!ok && riders.length > protectedRiderCount) { riders.pop(); ok = solve(baseHp); }
+  if (!ok && !batchMode && keywords.length && (scoring.keywords[keywords[0]]?.flat ?? 1) >= 0) { keywords = []; ok = solve(baseHp); }
+  if (!ok && !batchMode && area && !shape.area) { area = false; ok = solve(baseHp); }
+  let hp = baseHp;
+  if (input.drawback) while (!ok && hp < MAX_HP_COST) { hp++; ok = solve(hp); }
+  // In batch/aimMaxCp mode, if an exact hit was skipped (e.g. area step > 1), pick the closest primary whose raw <= target so requested
+  // school, area, keywords, and stance statuses stay intact inside the rank ceiling.
+  let miss = false;
+  if (!ok && batchMode) {
+    build(hp);
+    const base = face[key];
+    let bestV = 1, bestDiff = Infinity;
+    for (let v = 1; v <= MAX_PRIMARY; v++) {
+      face[key] = base + v;
+      const r = ScoreCard(face, scoring).raw;
       const diff = raw - r;
       if (diff >= 0 && diff < bestDiff) { bestDiff = diff; bestV = v; }
       if (r > raw + 4) break;
     }
-    face[key] = bestV;
-    ok = true;
+    face[key] = base + bestV;
+    ok = bestDiff < Infinity;
   }
-  if (!ok) throw new Error(`cardGenerator: no face reaches raw ${raw} (${JSON.stringify(input)})`);
-  const check = CombatPower(ScoreCard(face, scoring).raw, rarity, scoring);
-  if (!extended && check !== cp) throw new Error(`cardGenerator: face scores ${check}, wanted ${cp} (${JSON.stringify(input)})`);
+  // Still too strong: keep the weakest face (primary 1) and its combat power, marked as a miss.
+  if (!ok) { build(hp); face[key] += 1; miss = true; }
+  const got = CombatPower(ScoreCard(face, scoring).raw, rarity, scoring);
+  if (!miss && !batchMode && got !== cp) throw new Error(`cardGenerator: face scores ${got}, wanted ${cp} (${JSON.stringify(input)})`);
   return {
     face,
-    cp: check,
-    target: { rarity, cls, camp, type, seed, school, stances, targeting, keywords, stanceTrigger },
+    cp: got,
+    wanted: cp,
+    miss,
+    riders,
+    target: {
+      rarity, cls, camp, campKind, type, kind, school, area,
+      targeting: area ? 'area' : 'single',
+      keyword: keywords[0] || null,
+      keywords,
+      stances,
+      stanceTrigger,
+      seed,
+    },
   };
+}
+
+// The effect, rules text and short face line for one rider. `to` is the enemy target ('allEnemies' on area).
+function riderPart(r, to, area) {
+  const all = area ? ' to ALL enemies' : '', allFace = area ? ' to ALL' : '';
+  switch (r.kind) {
+    case 'poise': return { effect: { op: 'poiseDamage', target: to, amount: r.amount }, text: `Deal {poiseDamage} Poise damage${all}.`, face: `Deal {poiseDamage} Poise${allFace}.` };
+    case 'block': return { effect: { op: 'block', target: 'self', amount: r.authored }, text: 'Gain {block} Block.' };
+    case 'damage': return { effect: { op: 'damage', target: to, amount: r.authored }, text: `Deal {damage} damage${all}.`, face: `Deal {damage} damage${allFace}.` };
+    case 'draw': return { effect: { op: 'draw', amount: r.amount }, text: `Draw {draw} card${r.amount > 1 ? 's' : ''}.` };
+    case 'heal': return { effect: { op: 'heal', target: 'self', amount: r.amount }, text: 'Heal {heal} HP.' };
+    case 'cleanse': return { effect: { op: 'removeStatus', target: 'self', status: 'weak' }, text: 'Remove your Weak.' };
+    case 'restoreSp': return { effect: { op: 'restoreStamina', target: 'self', amount: r.amount }, text: 'Restore {restoreStamina} Stamina.' };
+    case 'restoreMp': return { effect: { op: 'restoreMana', target: 'self', amount: r.amount }, text: 'Restore {restoreMana} Mana.' };
+    case 'move': return { effect: { op: 'moveEngagement', target: 'enemy', bands: -1 }, text: 'Close one band.' };
+    default: {
+      const words = statusWords(r.status);
+      if (r.target === 'self') return { effect: { op: 'applyStatus', target: 'self', status: r.status, stacks: r.stacks }, text: `Gain {${r.status}} ${words}.` };
+      return { effect: { op: 'applyStatus', target: to, status: r.status, stacks: r.stacks }, text: `Apply {${r.status}} ${words}${all}.`, face: area ? `{${r.status}} ${words} to ALL.` : undefined };
+    }
+  }
 }
 
 /**
  * GenerateCard(target, {scoring, spellExposureBuildup, idPrefix, applyNaming}) -> a Core cards.json-shaped definition
  * whose ScoreCard face lands on the target combat power.
  */
-export function GenerateCard(input, { scoring = shippedScoring, spellExposureBuildup = 5, idPrefix = 'gen', applyNaming = true } = {}) {
-  const { face, cp, target } = GenerateFace(input, { scoring });
-  const { rarity, cls, camp, type, seed, targeting, keywords, stanceTrigger } = target;
-  const enemyTarget = targeting === 'area' ? 'allEnemies' : 'enemy';
-  const effects = [], parts = [], faceTemplate = [];
-  const text = (t) => { parts.push(t); faceTemplate.push(t); };
+export const GenerateCard = (input, options) => GenerateCardWithTarget(input, options).card;
 
-  if (face.loseHp) effects.push({ op: 'loseHp', target: 'self', amount: face.loseHp, nonlethal: true });
-  if (face.draw) effects.push({ op: 'draw', amount: face.draw });
-  if (type === 'attack') {
-    effects.push({ op: 'damage', target: enemyTarget, amount: authoredDamage(face.dmg, camp, scoring) });
-    text(targeting === 'area' ? 'Deal {damage} damage to all enemies.' : 'Deal {damage} damage.');
-    if (face.poise) {
-      effects.push({ op: 'poiseDamage', target: enemyTarget, amount: face.poise });
-      text('Deal {poiseDamage} Poise damage.');
-    }
-  } else {
-    if (face.blk > 0 || !face.statuses.length) {
-      effects.push({ op: 'block', target: 'self', amount: authoredBlock(face.blk, scoring) });
-      text('Gain {block} Block.');
-    }
-    if (face.heal) {
-      effects.push({ op: 'heal', target: 'self', amount: face.heal });
-      text('Heal {heal} HP.');
-    }
-    if (face.draw) text(`Draw {draw} card${face.draw > 1 ? 's' : ''}.`);
-  }
-  if (type === 'attack' && face.draw) text(`Draw {draw} card${face.draw > 1 ? 's' : ''}.`);
-  for (const [status, stacks, stTarget] of face.statuses) {
-    const resolvedTarget = stTarget === 'self' ? 'self' : enemyTarget;
-    effects.push({ op: 'applyStatus', target: resolvedTarget, status, stacks });
-    const label = STATUS_LABELS[status] || status;
-    if (resolvedTarget === 'self') text(`Gain ${stacks} ${label}.`);
-    else text(`Apply ${stacks} ${label}.`);
-  }
-  if (face.loseHp) text('Lose {loseHp} HP.');
-
-  const computedName = applyNaming ? CardName(face, 0, scoring) : `Generated ${type === 'attack' ? 'Attack' : 'Skill'} ${seed}`;
-  return {
-    id: `${idPrefix}.${seed}`,
-    name: computedName,
-    class: cls,
-    rarity,
-    cost: face.sp,
-    staminaCost: face.sp,
-    manaCost: face.mp,
-    costRule: 'fixed',
-    type,
-    icon: type === 'attack' ? 'attack' : 'shield',
-    keywords: [...(keywords || [])],
-    effects,
-    tags: [...face.tags],
-    textTemplate: parts.join(' '),
-    ...(parts.length > 1 ? { faceTemplate } : {}),
+/** GenerateCardWithTarget(target, options) -> {card, cp, scored, miss}: GenerateCard's card, the combat power it was built to, what it scores (differs only on a miss). */
+export function GenerateCardWithTarget(input, { scoring = shippedScoring, spellExposureBuildup = 5, idPrefix = 'gen', applyNaming = true } = {}) {
+  const { face, cp, miss, wanted, riders, target } = GenerateFace(input, { scoring });
+  const { rarity, cls, camp, campKind, type, kind, area, keywords, stanceTrigger, seed } = target;
+  const to = area ? 'allEnemies' : 'enemy';
+  const all = area ? ' to ALL enemies' : '', allFace = area ? ' to ALL' : '';
+  // The primary's face amount is everything the riders did not add.
+  const riderFace = (k) => riders.filter((r) => r.kind === k).reduce((s, r) => s + r.face, 0);
+  const parts = [];
+  if (kind === 'attack') {
+    const counter = type === 'counter' && campKind !== 'magic';
+    parts.push({
+      effect: { op: 'damage', target: to, amount: authoredDamage(face.dmg - riderFace('damage'), camp, scoring) },
+      text: counter ? 'Prepare Melee Counter: return {damage} damage.' : `Deal {damage} damage${all}.`,
+      face: counter ? 'Counter for {damage} damage.' : `Deal {damage} damage${allFace}.`,
+    });
+  } else parts.push({ effect: { op: 'block', target: 'self', amount: authoredBlock(face.blk - riderFace('block'), scoring) }, text: 'Gain {block} Block.' });
+  for (const r of riders) parts.push(riderPart(r, to, area));
+  if (face.loseHp) parts.push({ effect: { op: 'loseHp', target: 'self', amount: face.loseHp, nonlethal: true }, text: 'Lose {loseHp} HP.' });
+  const keywordText = keywords.length ? ' ' + keywords.map((kw) => `${kw[0].toUpperCase()}${kw.slice(1)}.`).join(' ') : '';
+  const computedName = applyNaming ? CardName(face, 0, scoring) : `Generated ${kind === 'attack' ? 'Attack' : 'Skill'} ${seed}`;
+  const card = {
+    id: `${idPrefix}.${seed}`, name: computedName, class: cls, rarity, cost: face.sp, staminaCost: face.sp, manaCost: face.mp, costRule: 'fixed', type: kind,
+    icon: kind === 'attack' ? 'attack' : 'shield', keywords: [...keywords], effects: parts.map((p) => p.effect), tags: [...face.tags],
+    textTemplate: parts.map((p) => p.text).join(' ') + keywordText, ...(parts.length > 1 ? { faceTemplate: parts.slice(0, 3).map((p) => p.face || p.text) } : {}),
     flavor: `Generated: combat power ${cp}, Rank ${RankOf(cp, scoring)}.`,
+    ...(face.magicShare ? { magicShare: face.magicShare } : {}),
     ...(stanceTrigger ? { stanceTrigger } : {}),
-    ...(type === 'attack' ? { damageSchool: camp === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: camp === 'spell' && face.mp ? spellExposureBuildup : 0 } : {}),
+    ...(miss ? { _cpMiss: wanted } : {}),
+    ...(kind === 'attack' ? { damageSchool: camp === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: camp === 'spell' && face.mp ? spellExposureBuildup : 0 } : {}),
   };
+  return { card, cp: wanted, scored: cp, miss };
 }
 
 /**

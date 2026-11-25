@@ -24,6 +24,9 @@ import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
 import { DEFAULT_NAME_SET_ID, DefaultNameSet, CaptureNameSet, TurnOnAutoNames, ApplyNameSet, SortedNameSets, ValidNameSets, MergeNameSets, SplitSavedConfig, JoinSavedConfig, DefaultNameSetLabel, NameSetFile, NameSetFileName, ParseNameSetFile } from './nameSets.js';
 import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
+import { PlanCardPool, MeasurePoolShape } from '../../src/model/cardPoolPlan.js';
+import { GenerateCard } from '../../src/model/cardGenerator.js';
+import { RenderPoolForm, ReadPoolForm, NormaliseSettings, UpdatePoolSums } from './cardPoolForm.js';
 import { buildItemRoster, typeModsForEntry, scoreItemEntry, livePieceFromEntry, describeItemMod, formatModString, ITEM_TRAIT_SELECTORS, ITEM_QUICK_TRAITS, ITEM_MOTIF_OPTIONS } from './itemStudio.js';
 import { initStudioToolsModals } from './studioToolsModal.js';
 
@@ -136,6 +139,10 @@ const state = {
   // Rename all: the repo's authored names (never overwritten) and the saved name sets, newest first.
   defaultNameSet: null,
   nameSets: [],
+  // Generate cards (owner, 2026-11-24): the shipped Core ids (so Replace everything is remembered), the measured Core shape, the modal's last settings.
+  coreCardIds: [],
+  coreShape: null,
+  generatorSettings: null,
   sandbox: { combat: null, classId: 'reaver', enemyId: 'wanderingSoldier', appliedScoring: null, customCardId: null, log: [] },
 };
 
@@ -464,8 +471,15 @@ function artLayersChanged() {
     || JSON.stringify(state.itemArtLayers) !== JSON.stringify(state.repoItemArtLayers);
 }
 
+// Shipped Core cards no longer in the list (Replace everything removed them).
+function removedCoreIds() {
+  const present = new Set(state.cards.map((c) => c.id));
+  return state.coreCardIds.filter((id) => !present.has(id));
+}
+
 function isDirty() {
-  return weightChangeCount() > 0
+  return removedCoreIds().length > 0
+    || weightChangeCount() > 0
     || pendingWeightCount() > 0
     || editedCards().length > 0
     || editedItems().length > 0
@@ -500,6 +514,8 @@ function writeDraftNow() {
           itemArtLayers: state.itemArtLayers,
           customCards: editedCards(),
           editedItems: editedItems(),
+          removedCardIds: removedCoreIds(),
+          generatorSettings: state.generatorSettings,
           customClasses: state.customClasses,
           customDecks: state.customDecks,
         }));
@@ -564,7 +580,7 @@ function matchingCustomLayers(def) {
     .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
 }
 
-const STUDIO_ONLY_FIELDS = ['_edited', '_custom', 'scoringOverride', '_autoName', '_autoNameCore', '_autoNameBudget'];
+const STUDIO_ONLY_FIELDS = ['_edited', '_custom', '_generated', '_cpMiss', 'scoringOverride', '_autoName', '_autoNameCore', '_autoNameBudget'];
 
 // ---------------------------------------------------------------------------
 // Feature descriptions: what a status, keyword, tag or effect does in play, and how it scores
@@ -798,6 +814,192 @@ function renderNameSetsList() {
   }).join('');
 }
 
+// ---------------------------------------------------------------------------
+// Generate cards (owner, 2026-11-24)
+// ---------------------------------------------------------------------------
+// A modal of pool priorities (src/model/cardPoolPlan.js) makes cards at exact combat power. Generated cards carry
+// _generated, so Replace generated only finds them. One undo step; nothing reaches the game until Export.
+const GENERATOR_CLASSES = Object.freeze(['colorless', ...REF_CLASSES]);
+const GENERATOR_SAMPLE_NAMES = 8;
+const GENERATE_PAINT_DELAY_MS = 30;
+
+function generatorDefaults() {
+  return { mode: 'replaceGenerated', ...clone(state.coreShape || MeasurePoolShape(buildCardList(), { scoring: state.repoScoring })) };
+}
+
+const generatorMaxRank = () => state.scoring.rank.maxRank;
+const generatorForm = () => document.getElementById('gen-body');
+
+function renderGeneratorForm(settings) {
+  const body = generatorForm();
+  body.innerHTML = RenderPoolForm(settings, { maxRank: generatorMaxRank(), statuses: Object.keys(state.scoring.statuses || {}), classes: GENERATOR_CLASSES });
+  UpdatePoolSums(body, generatorMaxRank());
+  document.getElementById('gen-preview').hidden = true;
+}
+
+function openGenerateDialog() {
+  renderGeneratorForm({ ...generatorDefaults(), ...(state.generatorSettings || {}) });
+  document.getElementById('generate-cards-modal').showModal();
+}
+
+// The form's settings; with normalise, each percent group is scaled to 100 and written back to the form so the owner sees what ran.
+function readGeneratorSettings({ normalise = false } = {}) {
+  const read = ReadPoolForm(generatorForm(), generatorMaxRank());
+  if (!normalise) return read;
+  const settings = NormaliseSettings(read, generatorMaxRank());
+  renderGeneratorForm(settings);
+  return settings;
+}
+
+function planGeneratedPool(settings) {
+  const { mode, ...options } = settings;
+  return PlanCardPool(options, { scoring: state.scoring, spellExposureBuildup: contentBundle.balance.exposure.elementUpgradeBuildup });
+}
+
+function previewGeneratedPool() {
+  const settings = NormaliseSettings(readGeneratorSettings(), generatorMaxRank());
+  const preview = document.getElementById('gen-preview');
+  let plan;
+  try {
+    plan = planGeneratedPool(settings);
+  } catch (err) {
+    preview.hidden = false;
+    preview.textContent = `Cannot plan these cards: ${err.message}`;
+    return;
+  }
+  const line = (counts, label) => Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${label(k)} ${n}`).join(', ');
+  preview.innerHTML = `
+    <h4>${plan.count} cards</h4>
+    <div><strong>Rarity:</strong> ${esc(line(plan.counts.rarity, (k) => k))}</div>
+    <div><strong>Rank:</strong> ${esc(line(plan.counts.rank, (k) => RankName(Number(k))))}</div>
+    <div><strong>School:</strong> ${esc(line(plan.counts.school, (k) => (k === 'none' ? 'no school' : k)))}</div>
+    ${plan.martialToMagic ? `<div class="gen-preview-note">${plan.martialToMagic} martial card${plan.martialToMagic === 1 ? '' : 's'} became magic to fit the school counts.</div>` : ''}
+    ${costRaisedCount(plan) ? `<div class="gen-preview-note">${costRaisedCount(plan)} card${costRaisedCount(plan) === 1 ? ' costs' : 's cost'} more than planned, to stay at their CP without an HP cost.</div>` : ''}
+    ${plan.misses ? `<div class="gen-preview-note">${plan.misses === 1 ? '1 card is too strong for its CP and keeps' : `${plan.misses} cards are too strong for their CP and keep`} the nearest.</div>` : ''}
+    <h4>Sample names</h4>
+    <ul class="gen-sample-names">${plan.cards.slice(0, GENERATOR_SAMPLE_NAMES).map((c) => `<li>${esc(c.name)}</li>`).join('')}</ul>`;
+  preview.hidden = false;
+}
+
+// The generator scores its own face; the studio measures the card in the class's reference fight, where class stats, weapon
+// Poise and spell pricing move the numbers (measured 2026-11-24: 6 of 106 default cards matched). So each new card's primary
+// amount is fitted until the studio's CP equals the target: one probe estimates CP per authored point, a jump lands near the
+// target, then single steps finish. Returns the gap left (0 = exact).
+const FIT_STEP_LIMIT = 60;
+function fitCardToStudioCp(def, target) {
+  const primary = def.effects?.[0];
+  if (!primary || !Number.isFinite(primary.amount)) return Infinity;
+  const cpAt = (amount) => { primary.amount = amount; return scoreCardEntry(def).cp; };
+  let amount = primary.amount, cp = cpAt(amount);
+  if (cp !== target) {
+    const probe = Math.max(1, amount + (cp < target ? 2 : -2));
+    if (probe !== amount) {
+      const probeCp = cpAt(probe);
+      const slope = (probeCp - cp) / (probe - amount);
+      if (slope > 0) amount = Math.max(1, Math.round(amount + (target - cp) / slope));
+      else amount = probe;
+      cp = cpAt(amount);
+    }
+  }
+  let best = { amount, gap: Math.abs(cp - target) };
+  const dir = cp < target ? 1 : -1;
+  for (let step = 0; best.gap > 0 && step < FIT_STEP_LIMIT && amount + dir >= 1; step++) {
+    amount += dir;
+    cp = cpAt(amount);
+    const gap = Math.abs(cp - target);
+    if (gap < best.gap) best = { amount, gap };
+    if (dir > 0 ? cp > target : cp < target) break;
+  }
+  primary.amount = best.amount;
+  return best.gap;
+}
+
+// Fits a generated card; when its riders still score too high at the smallest primary, the one-effect card of the same
+// target is fitted too and the closer of the two kept.
+function fitGeneratedCard(def, input, target) {
+  const gap = fitCardToStudioCp(def, target);
+  if (gap === 0 || input.effects === 1) return { def, gap };
+  const plain = normalizeStudioCard({ ...GenerateCard({ ...input, effects: 1 }, { scoring: state.scoring, spellExposureBuildup: contentBundle.balance.exposure.elementUpgradeBuildup }), id: def.id, _custom: true, _generated: true, _autoName: true });
+  const plainGap = fitCardToStudioCp(plain, target);
+  return plainGap < gap ? { def: plain, gap: plainGap } : { def, gap };
+}
+
+// Cards the generator made dearer than the plan dealt them (it raises SP, then MP, before any HP cost).
+function costRaisedCount(plan) {
+  return plan.cards.filter((card, i) => {
+    const input = plan.inputs[i] || {};
+    const sp = card.staminaCost ?? card.cost ?? 0;
+    return (Number.isFinite(input.sp) && sp > input.sp) || (Number.isFinite(input.mp) && (card.manaCost || 0) > input.mp);
+  }).length;
+}
+
+function applyGeneratedPool() {
+  const settings = readGeneratorSettings({ normalise: true });
+  let plan;
+  try {
+    plan = planGeneratedPool(settings);
+  } catch (err) {
+    toast(`Cannot generate: ${err.message}`);
+    return false;
+  }
+  pushHistory();
+  state.generatorSettings = clone(settings);
+  const kept = settings.mode === 'replaceAll' ? [] : settings.mode === 'add' ? state.cards : state.cards.filter((c) => !c._generated);
+  const keptIds = new Set(kept.map((c) => c.id));
+  // Removed Core cards leave the studio view only: their scoring overrides stay, so Export writes the same weights.
+  // A removed generated card's override goes with it, so a new card that reuses its id never takes its rank pin.
+  for (const gone of state.cards.filter((c) => !keptIds.has(c.id))) {
+    if (gone._generated && state.scoring.overrides) delete state.scoring.overrides[gone.id];
+    studioCardOverrides.delete(gone.id);
+    studioCardOverrides.delete(`${LIVE_ID_PREFIX}${gone.id}`);
+  }
+  // Ids stay unique when Add to the pool runs twice with one seed.
+  const fitted = plan.cards.map((card, i) => {
+    let id = card.id;
+    for (let k = 2; keptIds.has(id); k++) id = `${card.id}.${k}`;
+    keptIds.add(id);
+    return fitGeneratedCard(normalizeStudioCard({ ...card, id, _custom: true, _generated: true, _autoName: true }), plan.inputs[i], plan.targets[i]);
+  });
+  const fresh = fitted.map((f) => f.def);
+  const exact = fitted.filter((f) => f.gap === 0).length;
+  state.cards = [...fresh, ...kept];
+  state.selectedCardId = fresh[0]?.id || state.cards[0]?.id || null;
+  syncAllViews();
+  saveDraft();
+  toast(`Generated ${fresh.length} card(s), ${exact} at their exact CP. Undo puts the list back.`);
+  return true;
+}
+
+function wireGenerateCards() {
+  document.getElementById('btn-generate-cards').addEventListener('click', openGenerateDialog);
+  const body = generatorForm();
+  body.addEventListener('input', () => UpdatePoolSums(body, generatorMaxRank()));
+  body.addEventListener('change', () => UpdatePoolSums(body, generatorMaxRank()));
+  body.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-gen-dice')) {
+      document.getElementById('gen-pool-seed').value = Math.floor(Math.random() * 1e9).toString(36);
+      document.getElementById('gen-preview').hidden = true;
+    }
+  });
+  document.getElementById('btn-gen-defaults').addEventListener('click', () => renderGeneratorForm({ ...generatorDefaults(), mode: readGeneratorSettings().mode }));
+  document.getElementById('btn-gen-preview').addEventListener('click', previewGeneratedPool);
+  // Scoring a whole pool takes a few seconds, so the button says so and the work starts after the next paint.
+  document.getElementById('btn-gen-apply').addEventListener('click', (e) => {
+    const button = e.currentTarget;
+    if (button.disabled) return;
+    button.disabled = true;
+    button.textContent = 'Generating…';
+    setTimeout(() => {
+      try {
+        if (applyGeneratedPool()) document.getElementById('generate-cards-modal').close('generate');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Generate';
+      }
+    }, GENERATE_PAINT_DELAY_MS);
+  });
+}
+
 function renameAll() {
   pushHistory();
   const count = TurnOnAutoNames(state.cards);
@@ -920,6 +1122,7 @@ function wireNameSets() {
   });
   document.getElementById('input-load-names').addEventListener('change', loadNamesFile);
   document.getElementById('btn-rename-all').addEventListener('click', openRenameAllDialog);
+  wireGenerateCards();
   document.getElementById('rename-all-modal').addEventListener('close', finishRenameAllDialog);
   // Enter in the name field saves (the form's first button is Cancel).
   document.getElementById('rename-all-set-name').addEventListener('keydown', (e) => {
@@ -4290,6 +4493,8 @@ async function boot() {
   }
 
   await loadFromRepo(state.repoPath);
+  state.coreCardIds = state.cards.map((c) => c.id);
+  state.coreShape = MeasurePoolShape(state.cards, { rankOf: (c) => state.baselineRanks[c.id] ?? 0, scoring: state.repoScoring });
 
   // Restore local draft temp copy if present. Everything is checked first; state changes only after.
   try {
@@ -4326,6 +4531,11 @@ async function boot() {
         const j = state.items.findIndex((x) => x.key === draftItem.key);
         if (j >= 0) state.items[j] = draftItem;
         else state.items.unshift(draftItem);
+      }
+      if (draft.generatorSettings && typeof draft.generatorSettings === 'object') state.generatorSettings = draft.generatorSettings;
+      if (Array.isArray(draft.removedCardIds) && draft.removedCardIds.length) {
+        const removed = new Set(draft.removedCardIds);
+        state.cards = state.cards.filter((c) => !removed.has(c.id));
       }
       for (const draftCard of draftCards) {
         const i = state.cards.findIndex((c) => c.id === draftCard.id);

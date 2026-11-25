@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-25
+
+- **Score Studio: Generate cards** ([#2982](https://github.com/cehinds/AshenSpire/pull/2982), `0.7.5.104`). A new button builds a whole card pool from counts and odds (schools, rarity, rank, costs, types, effects), each card at its exact combat power. Preview first; one undo removes it, and nothing reaches the game until you Export.
+
 ## 2026-11-24
 
 - **Development checks split their longest group** ([#2988](https://github.com/cehinds/AshenSpire/pull/2988), `0.7.5.102`). The Dev discovery group that repeatedly reached its time limit now runs in three smaller groups with the same test coverage.
