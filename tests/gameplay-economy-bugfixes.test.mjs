@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fight } from './elementFixture.mjs';
+import { createRunCombat } from './withoutWeaknesses.mjs';
 import * as Statuses from '../src/engine/statuses.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { computeBlockGain, applyAttackDamage } from '../src/engine/actions.js';
@@ -20,7 +21,7 @@ import { applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 import { EvaluateUpgradeStepCp } from '../src/model/cardUpgradeCp.js';
 import { RankUpCardRows } from '../src/ui/components/rankUpCardModal.js';
 import { RankUpUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
-import { AttributePointsEarnedBetween, awardLevelXp } from '../src/model/levelup.js';
+import { AttributePointsEarnedBetween, awardLevelXp, xpToNext } from '../src/model/levelup.js';
 import { ShopOpensDeckEditor, RestOpensDeckEditor } from '../src/model/armouryRules.js';
 import { createRegistries } from '../src/model/registries.js';
 import { projectGameCard } from '../src/model/gameProfile.js';
@@ -210,24 +211,42 @@ test('12. Owned cards, armors, and relics excluded from rewards and shop pools',
   assert.equal(pools.armor.includes('vigil'), false, 'owned armor excluded');
 });
 
-test('13. Leveling up grants rank-up every level, attribute point every 4 levels, and temp combat buffs do not raise HP/MP/SP', () => {
+test('13a. Legacy generic attribute-point cadence awards every four levels', () => {
   assert.equal(AttributePointsEarnedBetween(1, 2, 4, 1), 0);
   assert.equal(AttributePointsEarnedBetween(1, 4, 4, 1), 1);
   assert.equal(AttributePointsEarnedBetween(1, 8, 4, 1), 2);
-  const run = makeCoreRun(202, 'reaver');
-  const res = awardLevelXp(registries, run, 5000);
-  assert.ok(res.levelUps >= 3);
-  assert.equal(run.level.pendingRankUps, res.levelUps, '1 rank-up per level gained');
-  assert.equal(run.level.unspentPoints, AttributePointsEarnedBetween(1, run.level.level, 4, 1), '1 attr point per 4 levels');
+});
 
-  const { combat, player } = fight({ classId: 'reaver', enemies: 1 });
-  const hp0 = player.maxHp, sp0 = player.maxStamina, mp0 = player.maxMana;
-  ChangeAttribute(combat, player, 'constitution', 5, { thisTurn: true });
-  ChangeAttribute(combat, player, 'dexterity', 5, { thisTurn: true });
-  ChangeAttribute(combat, player, 'wisdom', 5, { thisTurn: true });
-  assert.equal(player.maxHp, hp0, 'temp CON does not raise maxHp in combat');
-  assert.equal(player.maxStamina, sp0, 'temp DEX does not raise maxStamina in combat');
-  assert.equal(player.maxMana, mp0, 'temp WIS does not raise maxMana in combat');
+test('13b. Fresh Core awards card rank-ups each level and free points at 4, 12 and 20', () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 202 });
+  const freePointLevels = new Set([4, 12, 20]);
+  let freePoints = 0;
+  const initialRankUps = run.level.pendingRankUps ?? 0;
+  for (let level = 2; level <= 20; level++) {
+    const result = awardLevelXp(registries, run, xpToNext(registries, level - 1));
+    assert.equal(result.levelUps, 1, `one level earned at level ${level}`);
+    assert.equal(run.level.level, level);
+    if (freePointLevels.has(level)) freePoints++;
+    assert.equal(run.level.unspentPoints, freePoints, `free points at level ${level}`);
+    assert.equal(run.level.pendingRankUps, initialRankUps + level - 1, `rank-ups at level ${level}`);
+  }
+});
+
+test('13c. Temporary Core attributes raise maximum HP, SP and MP without refilling them', () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 202 });
+  const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
+  const player = combat.player;
+  for (const [attribute, maximum, current, capacityPerPoint] of [
+    ['constitution', 'maxHp', 'hp', 5],
+    ['dexterity', 'maxStamina', 'stamina', 1],
+    ['wisdom', 'maxMana', 'mana', 1],
+  ]) {
+    const previousMaximum = player[maximum];
+    const previousCurrent = player[current];
+    ChangeAttribute(combat, player, attribute, 5, { thisTurn: true });
+    assert.equal(player[maximum], previousMaximum + 5 * capacityPerPoint, `${attribute} raises ${maximum}`);
+    assert.equal(player[current], previousCurrent, `${attribute} leaves ${current} unchanged`);
+  }
 });
 
 test('14. Recurring buff tag costs +15 CP and pairs with Exhaust', () => {
