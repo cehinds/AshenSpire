@@ -1,12 +1,13 @@
 // Owner ask 2026-11-01: the "Upgrade an Item" list shows only items that can be upgraded;
 // Blacksmith-gated ones sink to the bottom, disabled; the default pick is the first upgradeable item.
+import { ResolveSmithFixtureProfile } from './helpers/smith-tier-profile.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
-import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
+import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { restSmithMaxTier } from '../src/model/blacksmithConfig.js';
@@ -15,7 +16,7 @@ import { smithCandidateRows } from '../src/ui/models/SmithWorkspaceModel.js';
 import { classifySmithCandidate, orderSmithCandidates, defaultSmithSelection } from '../src/ui/models/smithCandidateOrder.js';
 import '../src/engine/runCombat.js';
 
-const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
+const profile = ResolveSmithFixtureProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const reg = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile))), profile);
 
 const cand = (over) => ({ itemRef: 'armament/x', currentLevel: 1, nextLevel: 2, ...over });

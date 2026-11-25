@@ -1,4 +1,5 @@
 // Owner ask 2026-10-31: every Blacksmith purchase shows the what-changed receipt (SPEC 14.4); a refusal does not.
+import { ResolveSmithFixtureProfile } from './helpers/smith-tier-profile.mjs';
 import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -7,7 +8,7 @@ import { contentBundle } from '../src/content/index.js';
 import { shops as shippedShops } from '../src/content/shops.js';
 import { createRegistries } from '../src/model/registries.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
-import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
+import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock, blacksmithVisitStock } from '../src/engine/shopKinds.js';
@@ -24,7 +25,7 @@ import { pruneUnknownAdditionOffers } from '../src/model/marketStock.js';
 import { rankUpPlan, commitRankUp, rankUpCards, serviceCandidates } from '../src/model/blacksmith.js';
 import '../src/engine/runCombat.js';
 
-const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
+const profile = ResolveSmithFixtureProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
 const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
 const legacyOut = createRegistries(configuredContentBundle(contentBundle, OUT_ROWS));
