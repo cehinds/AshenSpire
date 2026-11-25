@@ -321,13 +321,13 @@
     "ward": {
       "weight": 8,
       "target": "self",
-      "projection": "+5 temporary Ward HP per stack on HP bar (no Poise); Block > Ward > Poise + HP; loses 1 stack/turn",
+      "projection": "+5 temporary Ward HP per stack on HP bar (no Poise); Block > Poise > Ward > HP; loses 1 stack/turn",
       "why": "Temporary HP buffer stacks (no Poise)."
     },
     "barrier": {
       "weight": 4,
       "target": "self",
-      "projection": "+5 max & current Poise per stack (Bonus Poise, purple on Poise bar); decays at turn end",
+      "projection": "+5 max & current Poise per stack (Bonus Poise, purple on Poise bar); loses 1 stack/turn",
       "why": "Adds temporary Bonus Poise stacks, separate from Ward."
     },
     "stoneskin": {

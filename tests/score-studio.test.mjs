@@ -358,4 +358,8 @@ test('Ward and Bonus Poise (barrier / gainBarrier / bonusPoise tag) are separate
   assert.match(weightExample('statuses', 'barrier', shippedScoring), /^3 stacks = /);
   assert.ok(cardCombatPower['core.moteShield'].raw >= 18, 'Mote Shield scores both Ward and Bonus Poise');
   assert.ok(cardCombatPower['core.hallowedWard'].raw >= 9, 'Hallowed Ward scores its gainBarrier Bonus Poise');
+
+  const studioSrc = readFileSync(new URL('../tools/score-studio/studio.js', import.meta.url), 'utf8');
+  assert.match(studioSrc, /restorePoise:\s*\{\s*part:\s*'block',\s*weight:\s*'block'\s*\}/, 'restorePoise is mapped in EFFECT_SCORE_KEYS');
+  assert.match(studioSrc, /eff\.op === 'gainBarrier'\s*\?\s*wanted\s*:\s*authoredAmountForFace/, 'gainBarrier edits stacks directly without x5 Poise scaling');
 });

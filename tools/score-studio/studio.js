@@ -1397,8 +1397,11 @@ function renderInspector() {
         ${infoLineHtml(describeFeature('status', eff.status))}`;
     } else {
       const amtIsNum = eff.amount == null || (typeof eff.amount === 'number' && Number.isFinite(eff.amount));
+      const isDirectStacks = eff.op === 'gainBarrier';
+      const displayedAmt = isDirectStacks ? safeNum(eff.amount, 1) : (faceAmountFor(def, idx) ?? safeNum(eff.amount, 1));
+      const amtTitle = isDirectStacks ? 'Bonus Poise stacks (+5 Poise per stack)' : "The card's own number, before the hero's bonus";
       const amtCtrl = amtIsNum
-        ? `<input type="number" min="0" max="99" value="${esc(faceAmountFor(def, idx) ?? safeNum(eff.amount, 1))}" data-eff-amt="${idx}" title="The card's own number, before the hero's bonus" />`
+        ? `<input type="number" min="0" max="99" value="${esc(displayedAmt)}" data-eff-amt="${idx}" title="${esc(amtTitle)}" />`
         : '<span class="studio-muted" title="Formula-computed value">formula</span>';
       const opDisplay = eff.op === 'gainBarrier' ? 'Gain Bonus Poise (gainBarrier)' : eff.op;
       row.innerHTML = `
@@ -1447,6 +1450,7 @@ const EFFECT_SCORE_KEYS = Object.freeze({
   damage:         { part: 'damage',     weight: 'damage' },
   block:          { part: 'block',      weight: 'block' },
   ward:           { part: 'block',      weight: 'block' },
+  restorePoise:   { part: 'block',      weight: 'block' },
   poiseDamage:    { part: 'poise',      weight: 'poiseDamage' },
   draw:           { part: 'draw',       weight: 'draw' },
   heal:           { part: 'heal',       weight: 'heal' },
@@ -2773,12 +2777,13 @@ function renderSandbox() {
   `;
 
   const eWardHp = e ? EffectiveWardHp(combat, e) : 0;
+  const eBonus = e?.persistentPoise?.barrierBonus || 0;
   document.getElementById('sandbox-enemy-panel').innerHTML = e ? `
     <h4>${esc(e.name || e.enemyId)} ${e.hp <= 0 ? '(DEFEATED)' : ''}</h4>
     <div class="stat-line">
       <span>HP: <strong>${e.hp}/${e.maxHp}</strong>${eWardHp > 0 ? ` <span class="sandbox-ward-hp">+${eWardHp} Ward</span>` : ''}</span>
       <span>Block: <strong>${e.block || 0}</strong></span>
-      <span>Poise: <strong>${e.persistentPoise?.value ?? e.poiseMeter?.current ?? 0}/${e.persistentPoise?.max ?? e.poiseMeter?.max ?? 0}</strong></span>
+      <span>Poise: <strong>${e.persistentPoise?.value ?? e.poiseMeter?.current ?? 0}/${e.persistentPoise?.max ?? e.poiseMeter?.max ?? 0}</strong>${eBonus > 0 ? ` <span class="sandbox-poise-bonus">(+${eBonus} Bonus)</span>` : ''}</span>
     </div>
     <div class="studio-muted">Statuses: ${esc(fmtStatuses(e))}</div>
   ` : '<div class="studio-muted">No enemies remaining.</div>';
@@ -3631,7 +3636,10 @@ function wireEvents() {
     if (target.dataset.effAmt !== undefined) {
       const effectIndex = Number(target.dataset.effAmt);
       const wanted = Number(target.value) || 0;
-      applyLiveCardEdit(featureBurst, (d) => { d.effects[effectIndex].amount = authoredAmountForFace(d, effectIndex, wanted); });
+      applyLiveCardEdit(featureBurst, (d) => {
+        const eff = d.effects[effectIndex];
+        eff.amount = eff.op === 'gainBarrier' ? wanted : authoredAmountForFace(d, effectIndex, wanted);
+      });
       return true;
     }
     if (target.dataset.effStacks !== undefined) {
