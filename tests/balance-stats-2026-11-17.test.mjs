@@ -140,29 +140,27 @@ test('item 1: player and enemy Counters scale their authored base once before th
   assert.ok(returnedDamage(knight.combat, knight.enemy.id, 3) >= 3, 'the return keeps its counter base');
 });
 
-test('item 5 (owner, 2026-11-18): SP = 3 + floor(DEX / 4) and MP = 1 + floor(WIS / 4), at every level', () => {
+test('item 5 (owner, 2026-11-24): SP = 3 + DEX and MP = 1 + WIS in Core', () => {
   for (const classId of ['reaver', 'starseer', 'rogue', 'herald']) {
     const run = newRun(classId);
     const rules = run.derivedStatRuleSnapshot.rules, classDef = registries.classes.get(classId);
     const ones = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
-    const relic = { stamina: 0, mana: 0 };
-    // A starting relic's flat Mana or SP adds on top (as relic HP does); read it at all-ones.
     const at = (id, attributes, level = 1) => deriveStat(rules, id, { attributes: { ...ones, ...attributes }, classDef, level }).value;
-    relic.stamina = at('stamina', {}) - 3; relic.mana = at('mana', {}) - 1;
     for (const level of [1, 5, 10]) {
-      // The boundaries: 3 and 4, 7 and 8 (each +1 needs 4 points).
-      for (const dex of [0, 1, 3, 4, 7, 8, 11, 12]) assert.equal(at('stamina', { dexterity: dex }, level), 3 + Math.floor(dex / 4) + relic.stamina, `${classId} SP at DEX ${dex}, level ${level}`);
-      for (const wis of [0, 1, 3, 4, 7, 8, 11, 12]) assert.equal(at('mana', { wisdom: wis }, level), 1 + Math.floor(wis / 4) + relic.mana, `${classId} MP at WIS ${wis}, level ${level}`);
-      // INT does not buy Mana any more, and the hand and the draw are 5 + floor(INT / 4).
+      // Consecutive points, including the old fourth-point boundaries.
+      for (const dex of [0, 1, 3, 4, 7, 8, 11, 12]) assert.equal(at('stamina', { dexterity: dex }, level), 3 + dex, `${classId} SP at DEX ${dex}, level ${level}`);
+      for (const wis of [0, 1, 3, 4, 7, 8, 11, 12]) assert.equal(at('mana', { wisdom: wis }, level), 1 + wis, `${classId} MP at WIS ${wis}, level ${level}`);
+      // INT does not buy Mana any more, and the snapshotted hand rows use 3 + INT.
       for (const int of [0, 3, 4, 7, 8, 12]) {
         assert.equal(at('mana', { intelligence: int }, level), at('mana', {}, level), `${classId} MP ignores INT ${int}`);
-        assert.equal(at('draw', { intelligence: int }, level), Math.min(10, 5 + Math.floor(int / 4)), `${classId} draw at INT ${int}`);
-        assert.equal(at('openingHand', { intelligence: int }, level), Math.min(10, 5 + Math.floor(int / 4)), `${classId} opening hand at INT ${int}`);
+        assert.equal(at('draw', { intelligence: int }, level), Math.min(10, 3 + int), `${classId} draw at INT ${int}`);
+        assert.equal(at('openingHand', { intelligence: int }, level), Math.min(10, 3 + int), `${classId} opening hand at INT ${int}`);
       }
     }
     for (const other of ['strength', 'constitution', 'wisdom', 'intelligence']) assert.equal(at('stamina', { [other]: 12 }), at('stamina', {}), `${classId} SP ignores ${other}`);
     for (const other of ['strength', 'dexterity', 'constitution', 'intelligence']) assert.equal(at('mana', { [other]: 12 }), at('mana', {}), `${classId} MP ignores ${other}`);
-    assert.ok(relic.stamina >= 0 && relic.mana >= 0, `${classId}: a starting relic never lowers SP or MP`);
+    assert.ok(run.maxStamina >= at('stamina', gameProfileEffectiveAttributes(registries, run)), `${classId}: equipment and relic addends do not lower SP`);
+    assert.ok(run.maxMana >= at('mana', gameProfileEffectiveAttributes(registries, run)), `${classId}: equipment and relic addends do not lower MP`);
   }
 });
 

@@ -44,3 +44,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/attribute-point-preview.test.mjs` and `tests/creation-primary-benefits.test.mjs` assert current per-point labels, effective Dexterity with and without Heavy armour, and exact allocation deltas in the UI and fight. The custom fractional examples and prior four-point draw and capacity check now isolate their own snapshot rows.
 - `node --test tests/creation-primary-benefits.test.mjs tests/attribute-point-preview.test.mjs` passed 28/28, from 19/28. The lane had 48 original failures remaining.
+
+## Core resource formulas across levels
+
+- `tests/balance-stats-2026-11-17.test.mjs` checks the governed SP, MP, and hand rows at consecutive points and still requires every starter card to be payable. The configured rows have no SP/MP level term, whereas generic rows retain the level terms covered separately.
+- `node --test --test-name-pattern 'item 5' tests/balance-stats-2026-11-17.test.mjs` passed 2/2. The lane had 47 original failures remaining.
