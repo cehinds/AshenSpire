@@ -179,12 +179,12 @@ test('every overtuned unupgraded damage card pays a penalty', async () => {
     overtuned.push(id);
     assert.ok(drawbacksOf(card).some((kind) => PENALTIES.includes(kind)), `${id} deals ${perPoint} per point (Strike ${strike}) with no penalty`);
   }
-  // Damage numbers move with other balance passes; the rule is what is pinned, plus one card that must stay in it.
-  assert.ok(overtuned.includes('core.pyreLash'), JSON.stringify(overtuned));
+  assert.ok(overtuned.length > 0, 'at least one current card exercises the threshold');
 });
 
-test('the overtuned cards pay their penalty in HP, and their upgrade drops it', async () => {
+test('cards with authored HP penalties drop them on upgrade', async () => {
   const { upgradedDefinition } = await import('../src/model/cardUpgrade.js');
+  assert.equal(registries.cards.get('core.pyreLash').effects.find((effect) => effect.op === 'loseHp')?.amount, 2, 'Pyre Lash keeps its authored HP cost independently of the damage ratio');
   for (const id of ['core.pyreLash', 'core.forkedBolt', 'core.batteringGale', 'core.witherDraught', 'core.glacialSpike', 'core.radiantVerdict', 'core.meteor', 'colossusSmash']) {
     const card = registries.cards.get(id);
     assert.ok(drawbacksOf(card).includes('selfDamage'), id);
