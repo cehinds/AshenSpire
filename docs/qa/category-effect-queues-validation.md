@@ -6,4 +6,6 @@
 - The local save endpoint passed five tests. A category edit preserves unrelated bytes and recompiles the generated config. A flat legacy request preserves the existing category settings. Stale revisions, malformed settings and unauthorized requests are rejected. Compiler failure leaves both files intact.
 - The sandbox check against `origin/dev` passed 36/36 across 1280 × 800 and 390 × 844, with before and after captures for the standalone editor and Score Studio. Playwright used the installed desktop Chrome because its own headless binary was unavailable.
 
+- Independent review at `73927b9a138` passed 83 focused scheduler, combat receipt, layering and upgrade tests. Actual multi-hit contacts and different statuses remain separate, while duplicate movement and same-status application cues merge. The caps are shared across pending combat batches, and skipped playback clears pending clips without altering combat receipts.
+
 Run the endpoint suite with `node --test tests/recipient-effects-save.test.mjs` and browser checks with `node tests/recipient-effect-timing-editor.browser.mjs`. Run the visual acceptance with `npm run qa:sandbox -- docs/qa/acceptance.recipient-effects-timing.json --base origin/dev`.
