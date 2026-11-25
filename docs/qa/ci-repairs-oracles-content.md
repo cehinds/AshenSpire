@@ -46,7 +46,7 @@ All six local fast shards finished on the intermediate integration tree before t
 | --- | --- |
 | One item combat-power comparison and one tools inventory check | `d2bbb4fc154` checks every item against its authored scoring overrides and lists both Effects Timing modules. Combat power, starter policy and tools inventory passed 63/63. |
 | Two build-summary checks | `bb829878635` refreshes the canonical summary for the mechanics registry. Its full targeted suite passed 19/19. |
-| One version-metadata check | `04ff3fcc5c3` excludes level-reward format help from release version detection. Full version-schema verification was still running when this receipt was written. |
+| One version-metadata check | `04ff3fcc5c3` excludes level-reward format help from release version detection. The full version-schema suite passed 5/5 in 164.84 seconds. |
 | One saved gear entitlement check | `a7e7f747a3c` tests a legacy point across save, claim and reload without applying the new progression cadence. Focused tests passed 12/12 and independent verification passed 40/40. |
 
 The five remaining failures await three [owner choices](recipient-effects-integration-decisions.md) covering temporary attribute pools (three checks), version-1 gear (one) and reward repetition (one). This intermediate run and the focused follow-ups provide diagnostic evidence. CI on subsequent heads was still running when this receipt was written.
