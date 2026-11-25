@@ -70,7 +70,7 @@ test('every new card resolves at base and upgraded with its authored SP cost, a 
   for (const id of BASICS.filter(id => def(id).tags.some(tag => tag === 'maneuver:smash' || tag === 'maneuver:sweep'))) assert.equal(def(id).staminaCost, 2, `${id}: a basic smash or sweep costs 2 SP`);
 });
 
-test('offers at map depth 4+ reach unowned higher-rank cards of each class over 1200 seeds', () => {
+test('character-level reward bands reach unowned higher-rank cards of each class over 1200 seeds', () => {
   const classOf = { reaver: ['core.skullsplitter', 'core.whirlwind'], rogue: ['core.feint', 'core.hitAndRun'], starseer: [], herald: [] };
   const colorless = ['core.stunningBlow', 'core.rakingSweep'];
   for (const classId of Object.keys(classOf)) {
@@ -83,7 +83,7 @@ test('offers at map depth 4+ reach unowned higher-rank cards of each class over 
     for (let seed = 1; seed <= 1200; seed++) {
       const run = live(classId, [], seed);
       run.floor = 4;
-      run.actNumber = 1 + (seed % 3); // level lists (owner 2026-11-21): offers draw from the act's rank band; spread the seeds over the acts
+      run.level.level = 1 + (seed % 10); // Reward rank bands now follow character level, not act number.
       // Feint starts in the Rogue's deck. This samples reachability before the separate owned-copy weight applies.
       run.deck = run.deck.filter(card => !expected.includes(card.cardId));
       for (const option of gameProfileRewardOffers(registries, run, createRng(seed + 40000), { offerId: 'b2' }).options) if (option.kind === 'combatCards') seen.add(option.id);

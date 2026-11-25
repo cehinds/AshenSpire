@@ -28,6 +28,16 @@ const tagged = (tags, prefix) => tags.find(tag => tag.startsWith(prefix))?.slice
 const sourceOf = (action, event) => event.sourcePlayerId || event.sourceId || action.sourcePlayerId || action.sourceId;
 const targetOf = event => event.targetPlayerId || (event.targetId === 'player' && event.playerId) || event.targetId;
 
+const STATUS_RESULT_SHAPES = SETTINGS.behavior.statusResultShapes;
+const statusResultShape = status => {
+  const id = status?.replace(/^base\./, '');
+  return has(STATUS_RESULT_SHAPES, id) ? STATUS_RESULT_SHAPES[id] : null;
+};
+const BENEFICIAL_RESULTS = new Set(['evade-gain', 'counter-gain', 'mirrors', 'reflect']);
+const SELF_GAIN_EVENTS = new Set(['evadeGained', 'combatCounterArmed']);
+const statusStackGained = event => positive(event.stacks)
+  && (!Number.isFinite(event.previousTotal) || !Number.isFinite(event.total) || event.total > event.previousTotal);
+
 function effectMatchesEvent(effect, event) {
   switch (event.type) {
     case 'statusApplied': case 'procBurst': return effect.op === 'applyStatus' && effect.status === event.status;
@@ -36,6 +46,8 @@ function effectMatchesEvent(effect, event) {
     case 'staminaRecovered': return effect.op === 'restoreStamina';
     case 'energyGained': return effect.op === 'gainEnergy';
     case 'blockGained': return effect.op === 'block';
+    case 'counterStacksChanged': return effect.op === 'gainCounterStacks';
+    case 'reflectStacksChanged': return effect.op === 'applyReflect';
     case 'persistentWardChanged': return ['gainWard', 'block'].includes(effect.op);
     case 'persistentPoiseChanged': return effect.op === 'gainPoise';
     case 'meterGuardGained': return effect.op === (event.meter === 'ward' ? 'gainWard' : 'gainPoise');
@@ -111,10 +123,16 @@ export function ResolveRecipientEffect(action = {}, event = {}) {
     // prevents a frost-applying fire action from showing another flame burst.
     palette = isAttribute ? attribute : STATUS_PALETTES[status] || palette;
   }
-  const aura = ['ward', 'buff', 'debuff', 'heal', 'status'].includes(shape);
+  const dedicated = event.type === 'statusApplied' ? statusResultShape(status) : null;
+  if (dedicated) {
+    shape = dedicated;
+    polarity = BENEFICIAL_RESULTS.has(shape) ? 'positive' : 'negative';
+    palette = SETTINGS.behavior.statusResultPalettes[shape] || palette;
+  }
+  const aura = dedicated || ['ward', 'buff', 'debuff', 'heal', 'status'].includes(shape);
   return {
     shape, palette, color: PALETTES[palette],
-    overlay: ['fire', 'frost', 'lightning', 'earth', 'force', 'illusion', 'decay'].includes(palette) ? palette : null,
+    overlay: dedicated ? null : texture(palette),
     action: actionKind, stance: actionKind,
     targetType: targetTypeOf(action, event, profile, tags), range, polarity,
     camp: spell ? 'spell' : 'physical', school: paletteOf(school),
@@ -131,7 +149,7 @@ export function RecipientEffectForEvent(action = {}, event = {}) {
       accepted = !event.evaded && !event.immune && !event.missed && !event.dodged
         && [event.amount, event.blocked, event.wardAbsorbed, event.wardMitigated, event.poiseAbsorbed, event.poiseMitigated].some(positive);
       break;
-    case 'statusApplied': accepted = positive(event.stacks); break;
+    case 'statusApplied': accepted = statusStackGained(event); break;
     case 'healed': case 'blockGained': case 'meterGuardGained': accepted = positive(event.amount); break;
     case 'persistentWardChanged': accepted = positive(event.restored) || positive(event.missingRecovered); break;
     // Proc receipts carry their own status. The paired damage receipt remains
@@ -202,17 +220,22 @@ export function RecipientDeliveryFor(action = {}, event = {}) {
  */
 export function RecipientEffectsForEvent(action = {}, event = {}) {
   const type = event.type;
-  if (type === 'statusApplied' && Number.isFinite(event.total) && Number.isFinite(event.previousTotal)
-    && event.total <= event.previousTotal) return [];
-  if (type === 'statusApplied' && SILENT_STATUSES.includes(event.status)) return [];
-  const targetId = targetOf(event) || (['combatAdvancedChanged', 'implicitAdvance'].includes(type) ? sourceOf(action, event) : null);
+  if (type === 'statusApplied' && (!statusStackGained(event) || SILENT_STATUSES.includes(event.status))) return [];
+  const selfResult = SELF_GAIN_EVENTS.has(type) || type === 'reflectTriggered';
+  const targetId = selfResult ? sourceOf(action, event)
+    : targetOf(event) || (['combatAdvancedChanged', 'implicitAdvance'].includes(type) ? sourceOf(action, event) : null);
   if (!targetId) return [];
-  event = { ...event, targetId };
+  event = { ...event, targetId, ...(selfResult ? { targetPlayerId: null, targetType: 'self' } : {}) };
   const base = ResolveRecipientEffect(action, event);
   const clip = (shape, options) => layerFor(action, event, shape, options);
   const reaction = (shape, options = {}) => clip(shape, { phase: 'reaction', delayMs: SETTINGS.motion.reactionLeadMs,
     color: PALETTES.physical, palette: 'physical', overlay: null, ...options });
   const aura = (shape, options = {}) => clip(shape, { phase: 'status', durationMs: SETTINGS.motion.auraMs, ...options });
+  if (SELF_GAIN_EVENTS.has(type) || ['counterStacksChanged', 'reflectStacksChanged', 'reflectTriggered'].includes(type)) {
+    if (!positive(event.amount)) return [];
+    const shape = type === 'evadeGained' ? 'evade-gain' : type.startsWith('reflect') ? 'reflect' : 'counter-gain';
+    return [aura(shape, { overlay: null, polarity: 'positive', durationMs: SETTINGS.motion.clipMs, treatment: type === 'reflectTriggered' ? 'reflect' : 'gain' })];
+  }
   if (['staminaRecovered', 'manaRestored', 'energyGained'].includes(type) && positive(event.amount)) return [aura('buff', {
     palette: type === 'staminaRecovered' ? 'stamina' : type === 'manaRestored' ? 'mana' : 'skill',
     color: PALETTES[type === 'staminaRecovered' ? 'stamina' : type === 'manaRestored' ? 'mana' : 'skill'],
@@ -235,7 +258,7 @@ export function RecipientEffectsForEvent(action = {}, event = {}) {
   }
   if (['blockBroken', 'combatGuardBroken', 'poiseBroken', 'statusPoiseBreak', 'wardBroken'].includes(type)) {
     if (event.evaded || event.immune) return [];
-    return [reaction(['poiseBroken', 'statusPoiseBreak'].includes(type) ? 'poise-break' : type === 'wardBroken' ? 'ward' : 'block-break',
+    return [reaction(['poiseBroken', 'statusPoiseBreak'].includes(type) ? 'poise-break' : type === 'wardBroken' ? 'ward-shatter' : 'block-break',
       type === 'wardBroken' ? { color: base.color, palette: base.palette, silhouette: 'ward', treatment: 'break' } : { treatment: 'break' })];
   }
   if (type === 'persistentWardChanged' && positive(event.spent)) return [reaction('ward', {
@@ -265,13 +288,12 @@ export function RecipientEffectsForEvent(action = {}, event = {}) {
     return [aura('ward', { silhouette: 'ward', treatment: 'gain', overlay: null })];
   }
   if (type === 'healed' && positive(event.amount)) {
-    // A separate secondary layer starts on the primary's last frame. The
-    // decorator reuses a preceding actual contact when the same action has one.
+    // The decorator reuses a preceding confirmed contact when the action has one.
     const primary = ResolveRecipientEffect(action, { ...event, type: 'supportPrimary' });
     return [clip(primary.camp === 'spell' ? 'spell' : 'skill', { ...primary, shape: primary.camp === 'spell' ? 'spell' : 'skill',
       targetType: base.targetType, phase: 'status', claimsDamage: false, treatment: 'support' }),
     clip('heal-plus', { phase: 'status', palette: 'healing', color: PALETTES.healing, overlay: null,
-      secondary: true, treatment: 'heal', delayMs: SETTINGS.motion.clipMs * SETTINGS.motion.secondaryStartFrame / SETTINGS.behavior.frameCount })];
+      secondary: true, treatment: 'heal' })];
   }
   if ((['blockGained', 'meterGuardGained'].includes(type) && positive(event.amount))
     || (type === 'persistentPoiseChanged' && [event.restored, event.missingRecovered].some(positive))) {
@@ -290,10 +312,11 @@ export function RecipientEffectsForEvent(action = {}, event = {}) {
   const palette = STATUS_PALETTES[status] || resolved.palette;
   const blood = BLOOD_STATUSES.includes(status);
   const clear = ['clear', 'resist'].includes(lifecycle);
-  const shape = lifecycle === 'apply' && ['buff', 'debuff'].includes(resolved.shape) && (!STATUS_PALETTES[status] || resolved.polarity === 'positive')
-    ? resolved.shape : `status-${lifecycle}`;
+  const dedicated = lifecycle === 'apply' ? statusResultShape(status) : null;
+  const shape = dedicated || (lifecycle === 'apply' && ['buff', 'debuff'].includes(resolved.shape) && (!STATUS_PALETTES[status] || resolved.polarity === 'positive')
+    ? resolved.shape : `status-${lifecycle}`);
   const primary = aura(shape, { status, lifecycle, palette, color: PALETTES[palette], polarity: resolved.polarity,
-    overlay: blood ? null : texture(palette), statusMotif: blood ? 'droplets' : 'glyph',
+    overlay: blood || dedicated ? null : texture(palette), statusMotif: blood ? 'droplets' : 'glyph',
     overlayScale: SETTINGS.sizing.statusOverlay[lifecycle],
     overlayOffset: clear ? SETTINGS.layering.statusOffset : { x: 0, y: 0 },
     overlayTreatment: lifecycle === 'clear' ? 'fade-out' : lifecycle === 'resist' ? 'deflect' : lifecycle === 'tick' ? 'small-pulse' : 'pulse',
@@ -303,7 +326,6 @@ export function RecipientEffectsForEvent(action = {}, event = {}) {
   if (!blood) return [primary];
   return [primary, clip('bleed-drops', { phase: 'status', status, lifecycle, secondary: !clear,
     palette, color: PALETTES[palette], overlay: null, claimsDamage: false,
-    delayMs: clear ? 0 : primary.durationMs * SETTINGS.motion.secondaryStartFrame / SETTINGS.behavior.frameCount,
     overlayTreatment: primary.overlayTreatment, treatment: primary.overlayTreatment,
     scale: clear ? SETTINGS.sizing.statusOverlay[lifecycle] : 1,
     offset: clear ? SETTINGS.layering.statusOffset : { x: 0, y: 0 } })];

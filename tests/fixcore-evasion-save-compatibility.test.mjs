@@ -12,11 +12,62 @@ import { createRunCombat, withoutWeaknesses } from './withoutWeaknesses.mjs'; //
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { createSaveManager } from '../src/engine/save.js';
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { fixCoreSmashVsDefensiveRules } from '../src/model/fixCoreMechanics.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
+
+const preRegistryRuntime = 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd';
+const registryRuntime = 'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d';
+const preRegistrySave = () => gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url))).toString('utf8');
+
+test('the real Dev 7dff4b03 save resumes its active fight without changing the old profile or policy', () => {
+  const bytes = preRegistrySave();
+  const original = JSON.parse(bytes);
+  assert.equal(original.gameProfile.lock.runtimeHash, preRegistryRuntime);
+  assert.equal(original.gameProfile.hash, 'sha256:0d1e774aa158d069e4516e769249cc3c97c6864d14ab61bccf0b30ddf8034cb7');
+  const run = deserializeRun(bytes);
+  assert.deepEqual(run.gameProfile, original.gameProfile);
+  assert.equal(run.levelRewardRuleSnapshot, undefined);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, run.gameProfile)), run.gameProfile);
+  const saved = run.combatEntered.snapshot;
+  const combat = restoreCombatSnapshot({ registries, snapshot: saved,
+    rng: createRng(run.seed, run.streamCounters), expectedGameProfile: run.gameProfile });
+  assert.equal(combat.phase, 'player');
+  assert.deepEqual(combat.fixCoreRules, original.combatEntered.snapshot.fixCoreRules);
+  assert.equal(combat.fixCoreRules.poise.weaponPoiseEnabled, true);
+  assert.equal(combat.fixCoreRules.ward.routing, 'hpBuffer');
+  assert.deepEqual(serializeCombatSnapshot(combat).piles, saved.piles);
+  const held = combat.piles.hand.find(row => row.cardId === 'core.strike');
+  const result = dispatch(combat, { type: 'playCard', cardInstanceId: held.instanceId, targetId: combat.enemies[0].id, rangeRoute: 'advance' });
+  assert.ok(result.events.some(event => event.type === 'damageDealt' && event.cardInstanceId === held.instanceId));
+  assert.equal(combat.gameProfile.hash, original.gameProfile.hash);
+
+  const manager = createSaveManager(createMemoryStorage());
+  manager.saveRun(run, createRng(run.seed, run.streamCounters));
+  const loaded = manager.loadRun(registries);
+  assert.ok(loaded, manager.runStatus().reason);
+  assert.deepEqual(loaded.gameProfile, original.gameProfile);
+  assert.equal(loaded.combatEntered.snapshot.gameProfile.hash, saved.gameProfile.hash);
+});
+
+test('the registry transition retains a closed Core-specific edge and rejects changed saved profiles', () => {
+  const genuine = JSON.parse(preRegistrySave()).gameProfile;
+  assert.equal(coreEvasionCompatibleRuntime(genuine, registryRuntime), preRegistryRuntime);
+  assert.equal(coreEvasionCompatibleRuntime(genuine, 'sha256:arbitrary-runtime'), 'sha256:arbitrary-runtime');
+  for (const [key, value] of [['runtimeABI', 'ashen.runtime@999'], ['numericPolicy', 'ashen.adapter-numbers@999'], ['core', 'ashen.core@999']]) {
+    const wrong = structuredClone(genuine);
+    wrong.lock[key] = value;
+    assert.equal(coreEvasionCompatibleRuntime(wrong, registryRuntime), registryRuntime);
+  }
+  const unknown = structuredClone(genuine);
+  unknown.lock.runtimeHash = 'sha256:unknown-runtime';
+  assert.throws(() => validateGameProfileSnapshot(digest(unknown)), /unsupported runtime artifact/);
+  const tampered = structuredClone(genuine);
+  tampered.modules.cards.handBase++;
+  assert.throws(() => validateGameProfileSnapshot(tampered), /digest mismatch/);
+});
 
 const oldRuntime = 'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9';
 const digest = profile => { delete profile.hash; profile.hash = gameDigest(profile); return profile; };
@@ -222,7 +273,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-23: the spell Stamina surcharge is dropped (spellCosts.staminaSurcharge 0, owner ruling); 0805e9... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-24: Ward health buffer (ward.routing "hpBuffer", owner ruling); e31663... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-24: Weapon poise damage & stance-gated Poise reduction (weaponPoiseEnabled, owner ruling); d24363... is now in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd');
+  assert.equal(profile.lock.runtimeHash, registryRuntime);
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

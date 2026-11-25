@@ -98,7 +98,7 @@ test('a three-hit card spends Stone Skin hit by hit in the quote too: Pierce 1, 
   const card = { tags: ['camp:physical', 'maneuver:attack', 'classification.attack'], gear: { pierce: 1 } };
   const setup = () => {
     const { combat, enemy, player } = world();
-    enemy.block = 30;
+    enemy.block = 200; // Cover all three hits so Stone Skin can intercept Pierce on the first two.
     applyStatus(combat, enemy, 'stoneHide', 2, enemy);
     return { combat, enemy, player };
   };

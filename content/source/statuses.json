@@ -50,7 +50,7 @@
     "id": "wisdom",
     "tint": "#f0d99a",
     "name": "Wisdom",
-    "icon": "wisdom",
+    "icon": "poise",
     "stackMode": "add",
     "decay": "none",
     "modifiers": {
@@ -63,7 +63,7 @@
     "id": "intelligence",
     "tint": "#9fc3e8",
     "name": "Intelligence",
-    "icon": "intelligence",
+    "icon": "skill",
     "stackMode": "add",
     "decay": "none",
     "modifiers": {
@@ -165,7 +165,7 @@
         ]
       }
     },
-    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed — then the build-up resets to zero."
+    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed - then the build-up resets to zero."
   },
   {
     "id": "insanity",
@@ -197,7 +197,7 @@
         ]
       }
     },
-    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger — then the build-up resets to zero."
+    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger - then the build-up resets to zero."
   },
   {
     "id": "bleedResist",
@@ -212,7 +212,7 @@
       "status": "bleed",
       "percent": 50
     },
-    "tooltip": "Just burst — hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
+    "tooltip": "Just burst - hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
   },
   {
     "id": "frostResist",
@@ -227,7 +227,7 @@
       "status": "frost",
       "percent": 50
     },
-    "tooltip": "Just burst — hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
+    "tooltip": "Just burst - hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
   },
   {
     "id": "insanityResist",
@@ -242,7 +242,7 @@
       "status": "insanity",
       "percent": 50
     },
-    "tooltip": "Just burst — hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
+    "tooltip": "Just burst - hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
   },
   {
     "id": "frostExposed",
@@ -1356,7 +1356,7 @@
     "tint": "#6fa8ff",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Ward adds a health buffer on your HP bar: each stack adds 5 Ward HP. Hits meet Block and Poise first, then Ward absorbs the rest 1:1 before HP. Lose 1 stack (5 Ward HP) at the start of your turn.",
+    "tooltip": "Ward adds a health buffer on your HP bar: each stack adds 5 Ward HP. Hits meet Block first, then Ward absorbs the rest 1:1 before Poise and HP. Lose 1 stack (5 Ward HP) at the start of your turn.",
     "sharedWord": true
   },
   {

@@ -63,7 +63,7 @@ function renderLayerList(layers, band) {
 }
 
 /** Render under-layers (behind base item image) and stack-layers (in front of base item image). */
-export function itemArtLayersParts(composition) {
+export function ItemArtLayersParts(composition) {
   if (!composition || composition.kind !== 'item') return { under: '', over: '' };
   const rim = safeColor(composition.rimColor || composition.glow);
   const rimAlpha = Math.round(Math.max(0, Math.min(1, Number(composition.rimOpacity) || 0.2)) * 255).toString(16).padStart(2, '0');
@@ -79,13 +79,13 @@ export function itemArtLayersParts(composition) {
 }
 
 /** Combined overlay helper (useful when appending on top of an existing image host). */
-export function itemArtLayersHtml(composition) {
-  const { under, over } = itemArtLayersParts(composition);
+export function ItemArtLayersHtml(composition) {
+  const { under, over } = ItemArtLayersParts(composition);
   return `${under}${over}`;
 }
 
 /** Hide any missing cutout PNG cleanly so a missing optional art pack never leaves a broken icon. */
-export function bindItemArtLayerFailures(host) {
+export function BindItemArtLayerFailures(host) {
   if (!host?.querySelectorAll) return;
   for (const img of host.querySelectorAll('[data-item-art-layer-img]')) {
     img.addEventListener('error', () => { img.hidden = true; img.style.display = 'none'; }, { once: true });

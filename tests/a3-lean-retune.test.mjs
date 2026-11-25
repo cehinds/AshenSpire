@@ -32,13 +32,13 @@ const run = (registries, classId, attributes) => createRunState({ seed: 0xa3, cl
 test('stock lean pools open on the retuned HP base', () => {
   assert.equal(contentBundle.derivedStatRules.rules.hp.base, 51, 'hp.base is the A3 figure');
   // The 2026-10-06 primary-bonus retune keeps this base and gives one HP per
-  // CON. Reaver's medallion adds ten; Starseer's shard adds fourteen.
+  // CON. Reaver's medallion adds ten; the reworked Starseer shard adds six.
   const pools = Object.fromEntries(['reaver', 'starseer', 'rogue', 'herald'].map((id) => [id, run(REG, id).maxHp]));
-  assert.deepEqual(pools, { reaver: 63, starseer: 66, rogue: 53, herald: 53 });
+  assert.deepEqual(pools, { reaver: 63, starseer: 58, rogue: 53, herald: 53 });
   for (const [id, hp] of Object.entries(pools)) assert.equal(run(REG, id).hp, hp, `${id} opens at full HP`);
 });
 
-test('the first extra Action is at DEX 4: reachable at creation, and three level-ups from DEX 1', () => {
+test('the first extra Action is at DEX 4: reachable at creation, and three allocated points from DEX 1', () => {
   assert.equal(contentBundle.derivedStatRules.rules.energy.dexterity, 0.25, 'energy.dexterity is the A3 figure');
   // Stock presets: nobody opens on DEX 4, so every class opens on 3.
   for (const id of ['reaver', 'starseer', 'rogue', 'herald']) assert.equal(run(REG, id).energyMax, 3, `${id} opens on 3 Actions`);
@@ -46,10 +46,9 @@ test('the first extra Action is at DEX 4: reachable at creation, and three level
   // into Dexterity now opens on 4 Actions (0.2 × 4 floored to 0 before).
   const quick = run(REG, 'rogue', { strength: 1, dexterity: 4, constitution: 1, wisdom: 1, intelligence: 1 });
   assert.equal(quick.energyMax, 4, 'DEX 4 at creation is the fourth Action');
-  // A DEX-1 preset (the Reaver) reaches it in three level-ups — level 4, well
-  // before the level term's own step at level 11.
+  // The Reaver reaches it using three earned points at level 4, before level-based Energy growth.
   const reaver = run(REG, 'reaver');
-  awardLevelXp(REG, reaver, [1, 2, 3].reduce((total, level) => total + xpToNext(REG, level), 0));
+  awardLevelXp(REG, reaver, [1, 2, 3].reduce((total, level) => total + xpToNext(REG, level), 0), { pointsPerLevel: 3 });
   assert.equal(reaver.level.level, 4);
   for (let i = 0; i < 2; i++) applyLevelUp(REG, reaver, 'dexterity');
   assert.equal(reaver.energyMax, 3, 'DEX 3 is still 3 Actions');

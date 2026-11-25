@@ -30,18 +30,18 @@ function fight(cardId, classId = 'reaver', reg = registries) {
   return { combat, card };
 }
 
-// Owner, 2026-11-17: MP grows with the greater of INT and WIS, with the first increase at 4.
-test('core Reaver starts with one MP and an earned fourth WIS adds exactly one maximum MP', () => {
+// Current Core Mana starts at 1 + Wisdom, independent of Intelligence.
+test('core Reaver Mana grows by one with each earned Wisdom, independent of Intelligence', () => {
   // Level Up is no longer a shipped rest service; a run pinned to the pre-one-pick rests keeps it.
-  const run = pinLegacyRests(fresh()); assert.equal(run.maxMana, 1); assert.equal(run.mana, 1);
+  const run = pinLegacyRests(fresh()); assert.equal(run.maxMana, 2); assert.equal(run.mana, 2);
   assert.equal(run.attributes.wisdom, 1);
-  run.attributes.intelligence = 3; run.attributes.wisdom = 3;
+  run.attributes.intelligence = 7; run.attributes.wisdom = 3;
   rederivePools(registries, run, 'test');
-  assert.equal(run.maxMana, 1, 'INT 3 and WIS 3 leave Mana at the base');
+  assert.equal(run.maxMana, 4, 'Mana is 1 + WIS 3 despite the higher Intelligence');
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; // the first rest of act 1 (a branch may open narrow)
   beginGameProfileRest(run, '1:' + run.mapNodeId); run.level.unspentPoints = 1;
   commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });
-  assert.equal(run.maxMana, 2); assert.equal(run.mana, 2);
+  assert.equal(run.maxMana, 5); assert.equal(run.mana, 5);
 });
 
 // Owner ruling 2026-11-21 (starter budget): Sundering Art is Unranked, so it prints 32 (was 3x Smash = 36).
@@ -88,20 +88,18 @@ test('Star Spark pays two MP (one printed, one spell surcharge) and applies no V
 
 test('current robes, Focus and Prepared keep spell quotes, payment and restored snapshots in agreement', () => {
   // Independent worked prices: spells add 1 MP and no SP (the +1 SP on non-cantrip spells was dropped by the owner on 2026-11-23);
-  // Prepared cuts SP by 1 (floor 0) and positive printed MP by 1 (the Graduate's floor is 0, owner 2026-11-22).
-  // Robes then cut final MP by 1; a Focus cuts it by exactly 1 only in Prepared.
-  // In particular, robes cancel Cantrip's surcharge even though it prints 0 MP.
+  // Prepared cuts SP by 1 (floor 0) and positive printed MP by 1. Robes and Focus each cut another MP only while Prepared.
   const prices = [
-    ['core.cometLance', [1, 1], [0, 0], [0, 0]], // Prepared: Graduate cut 1 -> 0 (owner 2026-11-22), then +1 surcharge, -1 robe
-    ['core.meteor', [1, 3], [0, 2], [0, 1]],
-    ['core.cantrip', [1, 1], [0, 0], [0, 0]], // Arcane Spark prints 1 MP (owner 2026-11-22): plain 1 + 1 surcharge - 1 robe
+    ['core.cometLance', [1, 2], [0, 0], [0, 0]], // Prepared: Graduate cut 1 -> 0 (owner 2026-11-22), then +1 surcharge, -1 robe
+    ['core.meteor', [1, 4], [0, 2], [0, 1]],
+    ['core.cantrip', [1, 2], [0, 0], [0, 0]], // Arcane Spark prints 1 MP (owner 2026-11-22): plain 1 + 1 surcharge - 1 robe
     // A current gear profile without spellCosts has neither surcharge nor its SP cut.
     // Meteor stays 3 MP plain / 2 MP with Adept, before robe -1 and Prepared Focus -1.
-    ['core.meteor', [1, 2], [1, 1], [1, 0], false],
+    ['core.meteor', [1, 3], [1, 1], [1, 0], false],
     // A fight saved before 2026-11-23 keeps staminaSurcharge 1 in its rules snapshot, so its spells still pay +1 SP.
-    ['core.cometLance', [2, 1], [1, 0], [1, 0], 'saved'],
-    ['core.meteor', [2, 3], [1, 2], [1, 1], 'saved'],
-    ['core.cantrip', [1, 1], [0, 0], [0, 0], 'saved'],
+    ['core.cometLance', [2, 2], [1, 0], [1, 0], 'saved'],
+    ['core.meteor', [2, 4], [1, 2], [1, 1], 'saved'],
+    ['core.cantrip', [1, 2], [0, 0], [0, 0], 'saved'],
   ];
   for (const [cardId, plain, prepared, focused, spellCosts = true] of prices) for (const [hand, stance, expected] of [
     ['greatsword', null, plain], ['ashStaff', null, plain], ['boneSceptre', null, plain],
@@ -114,8 +112,8 @@ test('current robes, Focus and Prepared keep spell quotes, payment and restored 
     if (!spellCosts) delete combat.fixCoreRules.spellCosts;
     if (spellCosts === 'saved') combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
     assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'this is current gear integration');
-    assert.equal(combat.player.maxMana, 3, 'base 1 + Nightweave 1 + robe type 1');
-    assert.equal(getStacks(combat.player, 'ward'), hand === 'greatsword' ? 0 : 1, 'staff and sceptre types grant Ward at turn start');
+    assert.equal(combat.player.maxMana, 4, 'the current Nightweave kit starts with four MP');
+    assert.equal(getStacks(combat.player, 'ward'), 0, 'these weapon types have no automatic turn-start Ward');
     combat.piles.hand = [{ instanceId: 'robe-focus', cardId, upgraded: false }];
     combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
     combat.enemies[0].persistentPoise = { value: 100, max: 100 };

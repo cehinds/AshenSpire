@@ -1,7 +1,7 @@
 {
   "mode": "configured",
   "minRank": 1,
-  "lowerRankChance": 0.1,
+  "lowerRankChance": 0.05,
   "rankOfRarity": {
     "starter": 0,
     "common": 1,

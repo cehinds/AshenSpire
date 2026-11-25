@@ -28,12 +28,12 @@ const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRn
 
 test('fixed classes, ten starters, persistent pin and restamping do not mint equipment grants',()=>{
  const run=fresh(); assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b),6);
- assert.equal(run.attributes.strength,2);assert.equal(run.drawPerTurn,5);assert.equal(run.deck.length,10);
+ assert.equal(run.attributes.strength,2);assert.equal(run.drawPerTurn,4);assert.equal(run.deck.length,10);
  assert.equal(run.loadout.sets.rightHand[0],'greatsword');assert.equal(run.loadout.sets.leftHand[0],null);
  stampDeck(reg,run);assert.equal(run.deck.length,10);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,4);
  assert.throws(()=>createRunState({seed:1,classId:'starseer',registries:reg}),/locked/);
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one']}}};
- const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,5+Math.floor(gameProfileEffectiveAttributes(reg,star).intelligence/4));
+ const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,3+gameProfileEffectiveAttributes(reg,star).intelligence);
  const restored=deserializeRun(serializeRun(run));assert.equal(restored.gameProfile.hash,profile.hash);assert.equal(restored.runId,run.runId);
 });
 
@@ -148,18 +148,19 @@ test('profile completion ledger persists independently from bounded history and 
 });
 
 
-// Owner, 2026-11-17 (#2820): SP = 3 + floor((DEX - 1) / 3), so DEX 2 -> 4 crosses a threshold and adds one authored SP; CON adds none.
-test('two DEX increases from 2 add one authored SP, and Smith commits an equipment tier before full recovery',async()=>{
+// Current Core derives one SP per DEX point. CON adds no SP.
+test('two DEX increases from 2 add two authored SP, and Smith commits an equipment tier before full recovery',async()=>{
  const run=freshLegacy();visit(run);
  const {rederivePools}=await import('../src/model/levelup.js');
  run.attributes.dexterity+=2-gameProfileEffectiveAttributes(reg,run).dexterity;rederivePools(reg,run,'test');
  assert.equal(gameProfileEffectiveAttributes(reg,run).dexterity,2);
  run.level.unspentPoints=3;const initial=run.maxStamina;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'dexterity'});
- run.mapNodeId=restId(run,6);beginGameProfileRest(run,'1:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'dexterity'});
  assert.equal(run.maxStamina,initial+1);
+ run.mapNodeId=restId(run,6);beginGameProfileRest(run,'1:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'dexterity'});
+ assert.equal(run.maxStamina,initial+2);
  run.actNumber=2;run.mapNodeId=restId(run,9);beginGameProfileRest(run,'2:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
- assert.equal(run.maxStamina,initial+1,'CON adds no SP');
+ assert.equal(run.maxStamina,initial+2,'CON adds no SP');
  const smith=freshLegacy();visit(smith);smith.smithingStones=999;smith.hp=1;
  const {smithingPlan}=await import('../src/model/smithing.js');const candidate=smithingPlan(reg,smith).candidates.find(row=>row.affordable);
  assert.ok(candidate);commitGameProfileRest(reg,smith,'smith',{itemRef:candidate.itemRef});

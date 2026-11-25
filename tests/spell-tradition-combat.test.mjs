@@ -52,7 +52,9 @@ test('exclusive schools read their own attribute, shared schools read the greate
 test('a Divine hit that breaks Poise quotes its direct damage and the separate Smite rider', () => {
   const { combat, p, target } = make({ intelligence: 3, wisdom: 3 });
   target.hp = target.maxHp = 500;
-  target.persistentPoise = { max: 5, value: 5 };
+  // The weapon Poise contact must break the pool before any relic acts.
+  target.ratings.poise = 3;
+  target.persistentPoise = { max: 3, value: 3 };
   target.block = 8;
   p.mana = p.maxMana = p.stamina = p.maxStamina = p.energy = 100;
   combat.piles.hand = [{ instanceId: 'divine-break', cardId: 'core.smite', upgraded: false }];
@@ -62,8 +64,9 @@ test('a Divine hit that breaks Poise quotes its direct damage and the separate S
   dispatch(combat, { type: 'playCard', cardInstanceId: 'divine-break', targetId: target.id, rangeRoute: 'advance' });
   const events = combat.eventLog.slice(start);
   const direct = events.find(row => row.type === 'damageDealt' && row.targetId === target.id).hpLoss;
-  const smite = events.find(row => row.type === 'elementSmite' && row.targetId === target.id).amount;
-  assert.ok(smite > 0);
+  const rider = events.find(row => row.type === 'elementSmite' && row.targetId === target.id);
+  assert.ok(rider?.amount > 0, 'a Divine contact breaking the target’s Poise emits its own Smite damage');
+  const smite = rider.amount;
   assert.equal(quoted, direct + smite);
   assert.equal(500 - target.hp, quoted);
 });

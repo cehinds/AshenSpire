@@ -4,6 +4,7 @@
 
 import { CARD_RARITIES } from '../schemas.js';
 import { normalizeCardMountRules } from '../cardMounts.js';
+import { ValidLevelRewardRules } from '../classLevelBonus.js';
 
 export function progressionProblems(b, err, ctx) {
   const { bundle } = ctx;
@@ -62,7 +63,10 @@ export function progressionProblems(b, err, ctx) {
     if (!lu || typeof lu !== 'object' || Array.isArray(lu)) err('balance.levelUp', 'must be an object');
     else {
       for (const key of ['offerStatPoints', 'offerBonusCard']) if (lu[key] !== undefined && typeof lu[key] !== 'boolean') err(`balance.levelUp.${key}`, `must be true or false, got ${JSON.stringify(lu[key])}`);
-      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'attributePointEveryLevels', 'rankUpPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax', 'offerStatPoints', 'offerBonusCard'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
+      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'attributePointEveryLevels', 'rankUpPerLevel', 'characterLevelRewards', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax', 'offerStatPoints', 'offerBonusCard'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
+      if (lu.characterLevelRewards !== undefined && !ValidLevelRewardRules(lu.characterLevelRewards)) {
+        err('balance.levelUp.characterLevelRewards', 'must define a supported version, class primary map and valid reward cadences');
+      }
       if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
       if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
     }

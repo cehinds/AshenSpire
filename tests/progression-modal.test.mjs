@@ -14,8 +14,9 @@ const registries = createRegistries(contentBundle);
 test('Progression keeps allocation separate from expansion, and commits only Done', () => {
   withModalDom(() => {
     const run = createRunState({ seed: 4242, classId: 'reaver', registries });
-    awardLevelXp(registries, run, xpToNext(registries, 1), { pointsPerLevel: 2 });
-        let changes = 0;
+    for (const from of [1, 2, 3]) awardLevelXp(registries, run, xpToNext(registries, from), { pointsPerLevel: 2 });
+    assert.equal(run.level.unspentPoints, 2);
+    let changes = 0;
     const sheet = openCharacterSheet({ registries, run, onChange: () => changes++ });
     assert.equal(sheet.panel.querySelector('.progression-feats'), null, 'the Feats section is retired');
     const before = { ...run.attributes };

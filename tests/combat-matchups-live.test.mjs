@@ -72,6 +72,7 @@ test('live enemy Counter arms before player phase and reflects incoming Attack, 
 test('live Smash gets guarded bonus and adds Poise only after actual Guard break', () => {
   const c = solo('kilnCleave'), enemy = c.enemies[0], hp = enemy.hp;
   enemy.block = 9;
+  enemy.poiseMeter.max = 20; // Keep both contributions visible below the break threshold.
   dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
   const hit = c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player');
   assert.equal(hit.amount, 15);
@@ -79,6 +80,13 @@ test('live Smash gets guarded bonus and adds Poise only after actual Guard break
   assert.equal(enemy.hp, hp - 6);
   assert.equal(enemy.poiseMeter.value, 6, 'printed3 plus actual-break3');
   assert.equal(getStacks(enemy, 'burn'), 4, 'printed Burn not duplicated by rider');
+
+  const held = solo('kilnCleave'), guarded = held.enemies[0];
+  guarded.block = 16;
+  guarded.poiseMeter.max = 20;
+  dispatch(held, { type: 'playCard', cardInstanceId: 'card1', targetId: guarded.id });
+  assert.equal(guarded.block, 1);
+  assert.equal(guarded.poiseMeter.value, 3, 'only printed Poise when Guard holds');
 });
 
 test('live card identity applies penetration and conditional Lightning rider without double status', () => {

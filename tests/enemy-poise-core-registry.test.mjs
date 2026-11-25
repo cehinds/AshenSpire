@@ -1,7 +1,6 @@
 // The runtime enemy registry (registries.enemies, which combat reads) takes each
 // enemy's starting poiseMax from the active profile's own pack. Core 2 carries the
-// halved values (owner, 2026-10-19: lower enemy starting poise by 50 percent); the
-// the retired Core 1 profile and its pack are gone.
+// authored starting values, including the 2026-11-24 retune in 15d221435dc.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -18,8 +17,8 @@ function registryFor(core) {
   return bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 }
 
-test('Core 2 runtime registry: Wandering Soldier starts at poise 5', () => {
-  assert.equal(registryFor('ashen.core@2.0.0').enemies.get('wanderingSoldier').poiseMax, 5);
+test('Core 2 runtime registry: Wandering Soldier starts at the authored 3 Poise', () => {
+  assert.equal(registryFor('ashen.core@2.0.0').enemies.get('wanderingSoldier').poiseMax, 3);
 });
 
 test('Core 2 runtime registry: every enemy poiseMax equals the Core 2 pack', () => {

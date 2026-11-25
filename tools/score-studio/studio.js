@@ -3572,6 +3572,14 @@ function wireEvents() {
     document.getElementById('art-missing-banner').hidden = true;
   });
 
+  // Keep one embedded editor so unsaved values survive changing workspaces.
+  const effectsFrame = document.getElementById('effects-timing-frame');
+  const pauseEffects = () => effectsFrame.contentWindow?.recipientRuntimePreview?.pause();
+  window.addEventListener('pagehide', pauseEffects);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') pauseEffects();
+  });
+
   // Tabs
   document.querySelectorAll('.studio-tab').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -3580,6 +3588,11 @@ function wireEvents() {
       document.querySelectorAll('.studio-panel').forEach((p) => p.classList.toggle('is-active', p.id === `tab-${tab}`));
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
       if (tab === 'art') renderArtTab();
+      if (tab === 'effects') {
+        if (!effectsFrame.hasAttribute('src')) effectsFrame.src = effectsFrame.dataset.src;
+      } else {
+        pauseEffects();
+      }
     });
   });
 

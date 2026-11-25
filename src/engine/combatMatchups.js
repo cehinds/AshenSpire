@@ -78,6 +78,7 @@ export function armCombatCounter(ctx, entity, carrier, options = {}) {
   const profile = combatProfileOf(carrier);
   if (!entity || !profile) return null;
   if (combatExpansionEnabled(ctx)) return armExpansionCounter(ctx, entity, carrier, options);
+  const previousCharges = entity.combatCounter?.charges || 0;
   entity.combatCounter = {
     charges: 1,
     mode: options.mode || profile.counterMode || (isSpell(profile) ? 'spell' : 'melee'),
@@ -89,7 +90,7 @@ export function armCombatCounter(ctx, entity, carrier, options = {}) {
   };
   ctx.emit?.('combatCounterArmed', { ...eventCarrier(entity, carrier),
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}),
-    sourceId: entity.id, mode: entity.combatCounter.mode });
+    sourceId: entity.id, mode: entity.combatCounter.mode, amount: Math.max(0, 1 - previousCharges) });
   return entity.combatCounter;
 }
 
@@ -468,12 +469,14 @@ export function startTacticalTurn(ctx, entity) {
 export function prepareCombatEvade(ctx, entity, config = {}) {
   if (!combatExpansionEnabled(ctx) || !entity?.alive) return null;
   if (config.whileStatus && !(entity.statuses?.[config.whileStatus]?.stacks > 0)) return null;
+  const previousCharges = entity.combatEvade?.charges || 0;
   entity.combatEvade = { charges: Math.max(1, Math.floor(config.charges || 1)),
     bonus: Number(config.bonus) || 0, advantage: Boolean(config.advantage), disadvantage: Boolean(config.disadvantage),
     ...(config.whileStatus ? { whileStatus: config.whileStatus } : {}),
     expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1 };
   ctx.emit?.('evadeGained', { sourceId: entity.id,
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), charges: entity.combatEvade.charges,
+    amount: Math.max(0, entity.combatEvade.charges - previousCharges),
     // Tells this prepared Evade apart from the foundation's evadeGained (combatRules.js).
     combatEvade: true });
   return entity.combatEvade;
@@ -484,6 +487,7 @@ function armExpansionCounter(ctx, entity, carrier, options) {
   const mode = options.mode || profile.counterMode || (isSpell(profile) ? 'spell' : 'melee');
   entity.combatPreparationSerial = (entity.combatPreparationSerial || 0) + 1;
   const authored = options.payload || profile.counterPayload;
+  const previousCharges = entity.combatCounter?.charges || 0;
   entity.combatCounter = {
     version: 2, charges: 1, serial: entity.combatPreparationSerial, mode,
     coverage: structuredClone(options.coverage || profile.counterCoverage || expansionMatchupRules(ctx).counter.defaultCoverage[mode]),
@@ -499,7 +503,9 @@ function armExpansionCounter(ctx, entity, carrier, options) {
     ...(profile.schoolEffect ? { schoolEffect: profile.schoolEffect } : {}),
     carrier: structuredClone(carrier),
   };
-  ctx.emit?.('combatCounterArmed', { ...eventCarrier(entity, carrier), ...seats(ctx, entity, null), sourceId: entity.id, mode });
+  ctx.emit?.('combatCounterArmed', { ...eventCarrier(entity, carrier), ...seats(ctx, entity, null), sourceId: entity.id, mode,
+    amount: (entity.kind === 'player' && fixCoreEnabled(ctx) || EnemyCounterBadgeRule(ctx, entity))
+      ? 0 : Math.max(0, 1 - previousCharges) });
   return entity.combatCounter;
 }
 

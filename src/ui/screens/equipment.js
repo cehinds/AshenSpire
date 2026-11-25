@@ -76,7 +76,7 @@ import { inventoryRowUsable } from '../models/ArmouryInventoryModel.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t, tFull, tTip } from '../strings.js';
-import { RestOpensDeckEditor } from '../../model/armouryRules.js';
+import { RestOpensDeckEditor, ShopOpensDeckEditor } from '../../model/armouryRules.js';
 import { openPileModal } from '../components/piles.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
@@ -1779,6 +1779,7 @@ export function mountEquipment(host, {
     const back = button({ label: t(picking ? 'armoury.destination.back' : 'common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
     back.addEventListener('click', () => { if (picking) { clearInventorySelection(); draw(); } else leave(); });
     const readOnlyDeck = !onEditDeck && !inCombat && RestOpensDeckEditor(run);
+    const deckLocationHint = readOnlyDeck && t(ShopOpensDeckEditor(run) ? 'armoury.deck.restOrShop' : 'armoury.deck.restOnly');
     const rendered = renderArmouryPanel(panelModel, wrap, { back,
       tabs: [
         { id: 'character', label: t('progression.tab.character'), selected: view === 'grid' },
@@ -1791,11 +1792,10 @@ export function mountEquipment(host, {
           // Remember the Deck tab as the last menu, so the Armoury button reopens the editor (main.js showArmoury).
           if (onEditDeck) { onChange?.(run.loadout, { equipView: 'deck' }); leave(); if (!wrap.isConnected) onEditDeck(); else draw(); }
           else {
-            const restOnly = !inCombat && RestOpensDeckEditor(run);
-            notice = inCombat ? 'Deck editing is unavailable during combat.' : restOnly ? t('armoury.deck.restOnly') : 'Deck editing is unavailable with the current settings.';
+            notice = inCombat ? 'Deck editing is unavailable during combat.' : deckLocationHint || 'Deck editing is unavailable with the current settings.';
             draw();
             // Read-only look at the deck (the combat pile viewer); nothing in it can change the deck.
-            if (restOnly) openPileModal(registries, t('armoury.hub.viewDeck'), run.deck || [], { deckView: true });
+            if (readOnlyDeck) openPileModal(registries, t('armoury.hub.viewDeck'), run.deck || [], { deckView: true });
           }
           return;
         }
@@ -1808,7 +1808,7 @@ export function mountEquipment(host, {
     });
     const deckTab = rendered.panel.querySelector('[data-modal-tab="deck"]');
     deckTab?.setAttribute('aria-disabled', String(!onEditDeck && !readOnlyDeck));
-    if (deckTab) progressionTip(deckTab, onEditDeck ? 'Edit your deck' : inCombat ? 'Unavailable during combat' : RestOpensDeckEditor(run) ? t('armoury.deck.restOnly') : 'Deck editing is disabled by the current settings');
+    if (deckTab) progressionTip(deckTab, onEditDeck ? 'Edit your deck' : inCombat ? 'Unavailable during combat' : deckLocationHint || 'Deck editing is disabled by the current settings');
     setFooterPrimary = rendered.setPrimary;
     const panel = rendered.panel;
     panel.dataset.viewMode = viewMode().label;

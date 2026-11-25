@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (246 tool files, plus the 9 subfolders)
+## Tools something references (248 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -174,6 +174,8 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `level-pace-sim.mjs` | Character level reached at the end of each act, walked over the real act maps (owner 2026-11-18 pace targets). | docs docs/balance/level-pace-2026-11-18.md |
 | `literal-asset-references.mjs` | Checks missing literal assets; only exact, explicitly optional generated recipient atlas properties may use the static fallback. | tools bundle; tests literal-asset-references; docs RECIPIENT-EFFECTS |
 | `recipient-effects-export.py` | Validates and stages approved three-frame PNG strips, tier copies, source hashes and provenance for art intake. | docs RECIPIENT-EFFECTS |
+| `recipient-effects-runtime-preview.mjs` | Drives the Effects Timing editor and previews drafts with the production effect scheduler and renderer. | tools recipient-effects-runtime-preview.html |
+| `recipient-effects-save.mjs` | Reads and saves revision-checked Effects Timing settings and rebuilds the generated config. | tools serve |
 | `layered-environment-build.mjs` | Publish native-size reviewed components; never read authoring PNGs at runtime. | tests layered-environment-build; docs CREDITS.md; other src/content/layeredEnvironments.js |
 | `linkcheck.mjs` | linkcheck — every named import in the tree resolves to a real | wf dev-preview; tests linkcheck-batch-sharing, run-node-lanes, run-node +1; tools gatelist; docs DEVELOPER.md; other src/ui/screens/rest.js |
 | `local-checks.mjs` | Shared finite local QA payload. Run in an owned background worker when needed. | tests local-checks-snapshot; docs docs/local-background-checks.md |

@@ -1,15 +1,19 @@
 // Owner ruling 2026-10-19 (Core): exact opening decks per character.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, deserializeRun, serializeRun } from '../src/model/state.js';
 import { gameProfileStarterDeck } from '../src/model/gameProfileRun.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from './withoutWeaknesses.mjs';
 import { dispatch } from '../src/engine/combat.js';
 import { legacyCoreRegistries } from './helpers/legacy-core-profile.mjs';
+import { reconcileGrantedCards } from '../src/model/loadout.js';
+import { playingCardDefinition, playingCardModel } from '../src/model/playingCard.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -37,6 +41,26 @@ for (const [classId, expected] of Object.entries(DECKS)) {
     assert.deepEqual(run.sideboard, []);
     // The ledger is seeded from the authored list; the weapon-granted art (Sundering Hew, Twin Fang, Blight Touch) are not in it.
     for (const id of gameProfileStarterDeck(run, classId)) assert.ok(run.collectedCardIds.includes(id), `${id} is in the collection ledger`);
+  });
+
+  test(`Core ${classId} shows Rank 1 on its starter weapon art through a save round trip`, async () => {
+    const run = start(classId);
+    const lent = run.deck.filter((card) => card.equipmentRole === 'weaponArt');
+    assert.equal(lent.length, 1);
+    const [art] = lent;
+    assert.equal(reg.cards.get(art.cardId).rarity, 'rare');
+    assert.equal(art.rank, 1);
+    assert.equal(playingCardModel(reg, art).rankBadge, 'Rank 1');
+    for (const card of run.deck.filter((card) => card !== art)) assert.equal(playingCardModel(reg, card).rankBadge, null, card.cardId);
+    const { rank, ...unranked } = art;
+    const [before, after] = [unranked, art].map((ref) => playingCardDefinition(reg, ref, { rules: run }));
+    assert.deepEqual([after.effects, after.cost, after.manaCost], [before.effects, before.cost, before.manaCost]);
+    const restored = deserializeRun(serializeRun(run, { inline: true }));
+    reconcileGrantedCards(reg, restored);
+    assert.equal(restored.deck.find((card) => card.instanceId === art.instanceId).rank, 1);
+    const rendered = (await renderedBadges(reg, restored)).filter(({ row }) => row.cardId === art.cardId);
+    assert.ok(rendered.length > 0);
+    for (const badge of rendered) assert.deepEqual([badge.rank, badge.text, badge.shown], [1, 'Rank 1', false]);
   });
 
   test(`Core ${classId} starter is exactly the recipe: 4 basic attacks, 4 defences, 1 own-class card, 1 weapon art, none costing more MP than it starts with (owner ruling 2026-11-21)`, () => {
@@ -81,6 +105,28 @@ for (const [classId, expected] of Object.entries(DECKS)) {
     }
   });
 }
+
+const archivedStarter = () => {
+  const bytes = readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url));
+  const run = deserializeRun(gunzipSync(bytes).toString('utf8'));
+  const profile = resolveGameProfile(run.gameProfile);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  return { run, profile, registries };
+};
+
+test('the genuine pre-registry starter art keeps its original save rank through reconciliation', () => {
+  const { run, profile, registries } = archivedStarter();
+  const art = run.deck.find((card) => card.equipmentRole === 'weaponArt');
+  assert.ok(art);
+  assert.equal(art.rank, undefined);
+  assert.equal(profile.content.starterDeck.weaponArtRank, undefined);
+  reconcileGrantedCards(registries, run);
+  assert.equal(run.deck.find((card) => card.instanceId === art.instanceId).rank, undefined);
+  art.rank = 3;
+  const rankedCopy = deserializeRun(serializeRun(run, { inline: true }));
+  reconcileGrantedCards(registries, rankedCopy);
+  assert.equal(rankedCopy.deck.find((card) => card.instanceId === art.instanceId).rank, 3);
+});
 
 test('Core editor offers only collected definitions under the matching Adept (legacy unlimited rules, owner ruling 2026-10-23)', async () => {
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
@@ -242,8 +288,10 @@ async function renderedBadges(registries, run) {
   return out;
 }
 
-test('DOM: Core Herald weapon art renders its source label, not Basic (reverting the rankNode call site fails this)', async () => {
-  const badges = await renderedBadges(reg, start('herald'));
+test('DOM: a Herald under the archived profile still sees the original Cantrip badge on its unranked weapon art', async () => {
+  const { registries } = archivedStarter();
+  const run = createRunState({ registries, classId: 'herald', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const badges = await renderedBadges(registries, run);
   const art = badges.filter((b) => b.row.cardId === 'blightTouch');
   assert.ok(art.length > 0, 'a rendered weapon-art row with a rank badge');
   for (const b of art) { assert.equal(b.rank, 0); assert.equal(b.text, 'Cantrip'); assert.notEqual(b.text, 'Basic'); assert.equal(b.shown, false); }

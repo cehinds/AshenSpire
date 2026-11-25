@@ -26,6 +26,7 @@
     }
   ],
   "classSpecificCopies": 1,
+  "weaponArtRank": 1,
   "classSpecials": {
     "reaver": "core.reaverSpecial",
     "starseer": "core.starseerSpecial",

@@ -1,0 +1,47 @@
+{
+  "profile": {
+    "hash": "sha256:3e79711486dec8c428dc4934efb8b60060c67a59c11af2011846566276146bc0",
+    "runtimeHash": "sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d"
+  },
+  "scenarios": {
+    "paid reaction": {
+      "snapshots": {
+        "start": "92676a4e403976e6f51bdfd062496aedb2e7446d96e55c4a08e2dd2654da8d45",
+        "pending": "934482f46d4278b019e75b450e13bc3a4e43e96c9b14f97c6d0532bcd2727ad5",
+        "restored": "934482f46d4278b019e75b450e13bc3a4e43e96c9b14f97c6d0532bcd2727ad5",
+        "live": "90560872a0da076613247ff1674c450f45004e5ccce706f138d9e4f9f0638bf7",
+        "afterRestore": "90560872a0da076613247ff1674c450f45004e5ccce706f138d9e4f9f0638bf7"
+      },
+      "save": {
+        "stored": "f3edeb4d9b1abcae5b628d166f9e3aa555fbefc545e5688061521dc05e17f89d",
+        "loaded": "e1a807a789270c5ce76d6d87be676f51ecc2f66dbae32ed15229ea5681852cf7"
+      }
+    },
+    "paid delayed charge": {
+      "snapshots": {
+        "start": "b9b47de03d34b610f4d65d892bdcb49c099f58eeb82b111e232295c6c20c7307",
+        "pending": "f9d89947ff87e8929efbb2e72f081ea7aaf1f327b94024b01c1cb61818586a3b",
+        "restored": "f9d89947ff87e8929efbb2e72f081ea7aaf1f327b94024b01c1cb61818586a3b",
+        "live": "b79dcf11f42ccb1f8cc78abb7950c2f3233392707c6887f4358419c51d38b2ac",
+        "afterRestore": "b79dcf11f42ccb1f8cc78abb7950c2f3233392707c6887f4358419c51d38b2ac"
+      },
+      "save": {
+        "stored": "1711f03685f92b84e46fea4f4a0a316ff7755d68024f71e2e9f685def402d2fc",
+        "loaded": "22e7dadc545f1481ad041a70013eef1067d416b07fa9855407b99d1f8cd12a55"
+      }
+    },
+    "ordered enemy plan": {
+      "snapshots": {
+        "start": "395d4d40c3de053020f9fc7ae0e552905cec66c637d856e2c1c8a5bb2fd3913f",
+        "pending": "395d4d40c3de053020f9fc7ae0e552905cec66c637d856e2c1c8a5bb2fd3913f",
+        "restored": "395d4d40c3de053020f9fc7ae0e552905cec66c637d856e2c1c8a5bb2fd3913f",
+        "live": "d97775cb5fa0ef7eb09654972eec1f4a7600e03a0df5c3d74ca71828e69e0809",
+        "afterRestore": "d97775cb5fa0ef7eb09654972eec1f4a7600e03a0df5c3d74ca71828e69e0809"
+      },
+      "save": {
+        "stored": "f04f67be56698805463620ded8de24c0b5f07bcb9af173cf277a13a5a1e08c21",
+        "loaded": "2557720a79ee54451c58b81717928657f8bb2981ed9b2dcfe99ba3c4785cc162"
+      }
+    }
+  }
+}

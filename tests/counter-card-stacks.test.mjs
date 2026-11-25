@@ -23,8 +23,9 @@ const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0',
 const bundle = (hits, damage = 8) => ({ ...contentBundle, enemies: contentBundle.enemies.map(e => e.id === 'wanderingSoldier' ? { ...e, moves: { ...e.moves, slash: { intent: 'attack', damage, hits, weight: 45 } } } : e) });
 const regFor = (hits, damage = 8) => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle(hits, damage), profile)), profile);
 const reg = regFor(1), reg3 = regFor(3);
-function live({ registries = reg, hits = 1, legacy = false, damage = 8 } = {}) {
+function live({ registries = reg, hits = 1, legacy = false, damage = 8, leftHand } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  if (leftHand) run.loadout.sets.leftHand[0] = leftHand;
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   if (legacy) withoutCounterStacks(combat);
   const enemy = combat.enemies[0];
@@ -107,9 +108,9 @@ test('the Counter stance returns nothing of its own: a hit that costs HP in Coun
 });
 
 test('shown = dealt: the card face and the per-root forecast quote the return the exchange deals', () => {
-  const { combat } = live({ registries: reg3, hits: 3 });
+  const { combat } = live({ registries: reg3, hits: 3, leftHand: 'spikedShield' });
   assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'current gear remains active in this combined Counter forecast');
-  assert.equal(combat.player.statuses.thorns.stacks, 1, 'plate contributes its Thorns independently of Counter');
+  assert.equal(combat.player.statuses.thorns.stacks, 1, 'Spiked Shield contributes its Thorns independently of Counter');
   combat.player.counterStacks = 4; give(combat, 'c');
   const forecast = previewCard(combat, 'c').counterReturn;
   play(combat, 'c');
@@ -117,7 +118,7 @@ test('shown = dealt: the card face and the per-root forecast quote the return th
   const trig = events.find(e => e.type === 'combatCounterTriggered');
   assert.ok(forecast.hp > 0);
   assert.equal(forecast.hp, trig.amount);
-  assert.equal(events.filter(event => event.type === 'thornsReturned').reduce((sum, event) => sum + event.amount, 0), 3, 'three landed hits each return one plate Thorns as well');
+  assert.equal(events.filter(event => event.type === 'thornsReturned').reduce((sum, event) => sum + event.amount, 0), 3, 'three landed hits each return one Thorns from Spiked Shield as well');
 });
 
 test('a fight saved before the ruling keeps the Block-as-stacks rule: stacks = the Block held, a single return, 2 fade a turn', () => {

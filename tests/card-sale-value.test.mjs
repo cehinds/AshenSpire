@@ -53,13 +53,13 @@ test('buying a card and selling it back never profits: the paid price caps the s
   assert.ok(quote.price <= cheapest(run, rarity) - 7, `sold for ${quote.price}`);
 });
 
-test('other kinds keep the ordinary sale', () => {
+test('a ranked relic sells at the ordinary fraction of its rank-adjusted basis', () => {
   const { run } = visit();
-  const relic = registries.relics.all().find((row) => !run.relics.includes(row.id));
-  run.relics = [...run.relics, relic.id];
+  const relic = registries.relics.get('ashOfRemembrance');
+  if (!run.relics.includes(relic.id)) run.relics = [...run.relics, relic.id];
   const row = gameContent(run, 'shops').priceTable.relic;
   const basis = (Array.isArray(row) ? row : row[relic.rarity] ?? row.common)[0];
-  assert.equal(gameProfileShopSalePlan(registries, run, SHOP, 'relics', relic.id).price, Math.floor(basis * 0.5));
+  assert.equal(gameProfileShopSalePlan(registries, run, SHOP, 'relics', relic.id).price, Math.floor(Math.round(basis * 1.5) * 0.5));
 });
 
 test('a multiplier of 1 sells cards like everything else', () => {

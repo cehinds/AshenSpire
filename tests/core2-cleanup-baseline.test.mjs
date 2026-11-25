@@ -97,9 +97,35 @@ const bundled = Object.assign({}, ...moduleIds.map(id => require(id)));
 // (they embed it); every events, rng and continuation hash is identical, with the legacy fixture in openFight (no Counter-stack keys, the stance's 25% return) in place.
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline.json', import.meta.url), 'utf8'));
 const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-baseline-521250.json', import.meta.url), 'utf8'));
+// The current lanes use the pre-feature Dev capture, backed by the archived
+// source tree and the same JS01 scenario bodies. Their raw checkpoints agree
+// with this tree; the historical action-policy lane keeps the original pin.
+const currentFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-7dff4b03.json', import.meta.url), 'utf8'));
+const currentIdentity = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-reward-fallback-identity.json', import.meta.url), 'utf8'));
+// The current runtime registry and the birth-only Rank 1 art change the
+// profile and snapshots. Keep the independently archived behavior digests.
+const expectedScenarios = { ...fixture.scenarios };
+for (const [name, original] of Object.entries(currentFixture.scenarios)) {
+  const { snapshots, save } = currentIdentity.scenarios[name];
+  const checkpoints = Object.fromEntries(Object.entries(snapshots).map(([phase, snapshot]) => [phase, { ...original[phase], snapshot }]));
+  expectedScenarios[name] = { ...original, ...checkpoints, profile: { ...original.profile, ...currentIdentity.profile }, save };
+}
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;
+// c18f0d0cdb6 authored inputs used to build the JS01 capture. The historical
+// profile predates carrying these inputs. The synthetic new run needs them
+// just as a real restored run needs the rules already stored in its snapshot.
+const historicalDerivedStatsBytes = readFileSync(new URL('./fixtures/js01-pre-equipment-derived-stat-rules.json', import.meta.url));
+const historicalDerivedStats = JSON.parse(historicalDerivedStatsBytes);
+const historicalPoiseRules = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
+const currentLevelRewards = {
+  version: 1,
+  classPrimary: { firstLevel: 2, every: 4, amount: 1 },
+  classPrimaryAttribute: { reaver: 'strength', rogue: 'dexterity', starseer: 'intelligence', herald: 'wisdom' },
+  freeAttribute: { firstLevel: 4, every: 8, amount: 1 },
+  cardRankUpsPerLevel: 1,
+};
 const seed = 511;
 const plain = value => JSON.parse(JSON.stringify(value));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -115,8 +141,9 @@ function memoryStorage() {
 }
 
 function openFight(api, enemyId, encounterId, profileId, contentVersion) {
+  const historical = profileId === 'historical';
   let profile;
-  if (profileId === 'historical') {
+  if (historical) {
     const storage = memoryStorage();
     // Let each runtime parse the original bytes in its own realm through the
     // profile read door. The following run is then created from that pin.
@@ -133,18 +160,33 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
     storage.setItem(api.runKey(1), JSON.stringify({ gameProfile: profile }));
     profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
   }
-  const applied = api.applyGameProfileToContent(api.contentBundle, profile);
+  const bundle = historical ? { ...api.contentBundle, derivedStatRules: historicalDerivedStats } : api.contentBundle;
+  const applied = api.applyGameProfileToContent(bundle, profile);
   const content = contentVersion === undefined ? applied : { ...applied, version: contentVersion };
   const registries = api.bindGameProfileRegistries(api.createRegistries(content), profile);
   if (contentVersion !== undefined) assert.equal(registries.contentVersion, contentVersion);
   const run = api.createRunState({ registries, classId: 'reaver', seed, runId: `js01-${profileId}-${enemyId}` });
+  if (historical) {
+    run.classLevelBonusVersion = 1;
+    delete run.levelRewardRuleSnapshot;
+  }
   const encounter = registries.encounters.get(encounterId);
   assert.deepEqual(plain(encounter.enemies), [enemyId]);
   // W25-BANDS legacy fixture: this baseline pins the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them), in whichever module realm `api` is.
   const shippedBands = api.fixCoreMechanics.bands;
+  const shippedPoise = api.fixCoreMechanics.poise;
   delete api.fixCoreMechanics.bands;
+  if (historical) api.fixCoreMechanics.poise = historicalPoiseRules;
   let combat;
-  try { combat = api.createRunCombat({ registries, run, rng: api.createRng(seed), encounter, enemyIds: encounter.enemies }); } finally { if (shippedBands !== undefined) api.fixCoreMechanics.bands = shippedBands; }
+  try {
+    combat = api.createRunCombat({
+      registries, run, rng: api.createRng(seed), encounter, enemyIds: encounter.enemies,
+      ...(historical ? { player: { poiseMax: 6 } } : {}),
+    });
+  } finally {
+    if (historical) api.fixCoreMechanics.poise = shippedPoise;
+    if (shippedBands !== undefined) api.fixCoreMechanics.bands = shippedBands;
+  }
   // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
   delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux; delete combat.fixCoreRules?.stance?.playerMinimumCost; // the Magic Adept zero Mana floor key (owner ruling 2026-11-22) is newer than this fight
   // Wave 2 batch 5 legacy fixture: the Counter-stack keys are newer than this baseline and the Counter stance still returns 25% of the HP lost, as in a fight saved before the ruling.
@@ -155,7 +197,7 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
   // This scenario pins an actual pre-override combat, not today's new-fight defaults.
   if (profileId === 'historical') delete combat.fixCoreRules?.smashVsDefensive?.defendDamageMultiplier;
   assert.equal(combat.core2ActionRulesVersion, profileId === 'historical' ? 1 : 2);
-  return { api, profile, registries, run, combat, encounter };
+  return { api, profile, registries, run, combat, encounter, historical };
 }
 
 function settle(api, combat) {
@@ -178,15 +220,19 @@ function checkpoint(api, combat) {
 // raw bytes would change at every cut. The recorded version is swapped for a constant only when it
 // equals the version the registries really carry: a save that drops or mis-records it still moves the hash.
 const CONTENT_VERSION_STAMP = '<contentVersion>';
-function hashRun(json, contentVersion) {
+function hashRun(json, contentVersion, levelRewards) {
   const payload = JSON.parse(json);
   delete payload.savedAt;
   if (payload.contentVersion === contentVersion) payload.contentVersion = CONTENT_VERSION_STAMP;
+  // The archive predates this field. Check the exact new snapshot before
+  // comparing every other part of the save with the captured envelope.
+  assert.deepEqual(payload.levelRewardRuleSnapshot, levelRewards, 'save carries its birth-era level reward rules');
+  delete payload.levelRewardRuleSnapshot;
   return hashJson(payload);
 }
 
 let lastStoredContentVersion;
-function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
+function saveAndRestore({ api, profile, registries, run, combat, encounter, historical }) {
   const storage = memoryStorage();
   const manager = api.createSaveManager(storage);
   api.commitCombatSnapshot({
@@ -196,7 +242,8 @@ function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
   const storedJson = storage.getItem(api.runKey(1));
   assert.equal(JSON.parse(storedJson).contentVersion, registries.contentVersion);
   lastStoredContentVersion = JSON.parse(storedJson).contentVersion;
-  const stored = hashRun(storedJson, registries.contentVersion);
+  const levelRewards = historical ? undefined : currentLevelRewards;
+  const stored = hashRun(storedJson, registries.contentVersion, levelRewards);
   const loaded = manager.loadRun(registries);
   assert.ok(loaded, manager.runStatus().reason);
   assert.equal(loaded.gameProfile.hash, profile.hash);
@@ -208,7 +255,7 @@ function saveAndRestore({ api, profile, registries, run, combat, encounter }) {
     expectedGameProfile: loaded.gameProfile,
   });
   assert.equal(restored.core2ActionRulesVersion, combat.core2ActionRulesVersion);
-  return { restored, save: { stored, loaded: hashRun(api.serializeRun(loaded, { inline: true }), registries.contentVersion) } };
+  return { restored, save: { stored, loaded: hashRun(api.serializeRun(loaded, { inline: true }), registries.contentVersion, levelRewards) } };
 }
 
 function continued(api, combat, restored, action) {
@@ -317,6 +364,7 @@ const scenarios = [
 
 test('the original historical profile fixture keeps its provenance', () => {
   assert.equal(digest(historicalBytes), fixture.historicalProfileSha256);
+  assert.equal(digest(historicalDerivedStatsBytes), '236c8e3c474ca126884f5edf1acaa8b57e9d02b8c00c9bea5e4d4a030bc7a4a5');
 });
 
 test('the tradition-policy recapture preserves preceding events, RNG, receipts and continuations', () => {
@@ -339,7 +387,7 @@ for (const [name, ...scenario] of scenarios) {
     const source = baseline(native, ...scenario);
     const bundle = baseline(bundled, ...scenario);
     assert.deepEqual(bundle, source, 'the production module transform preserves source behavior');
-    assert.deepEqual(source, fixture.scenarios[name], 'compare against the immutable JS01 capture');
+    assert.deepEqual(source, expectedScenarios[name], 'compare against its pinned JS01 capture');
   });
 }
 
@@ -348,7 +396,7 @@ test('the saved-run baseline does not depend on the content version', () => {
     lastStoredContentVersion = undefined;
     const result = baseline(native, ...scenario, { contentVersion: '9.99.99' });
     assert.equal(lastStoredContentVersion, '9.99.99', `${name}: the save recorded the overridden version`);
-    assert.deepEqual(result, fixture.scenarios[name], name);
+    assert.deepEqual(result, expectedScenarios[name], name);
   }
 });
 

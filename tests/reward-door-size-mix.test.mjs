@@ -2,9 +2,11 @@
 // and first doors vary across seeds. Chests keep offerCount (3).
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, deserializeRun, serializeRun } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
@@ -41,4 +43,23 @@ test('first doors vary across 50 seeds: no card in more than 35% of doors, 45+ d
   const top = Math.max(...freq.values());
   assert.ok(top <= 50 * 0.35, `top card in ${top}/50 doors`);
   assert.ok(freq.size >= 45, `${freq.size} distinct`);
+});
+
+test('new runs use 5% lower-rank fallback and old saves retain 10% and their cached offer', () => {
+  const fresh = createRunState({ seed: 9, classId: 'reaver', registries: reg });
+  assert.equal(fresh.gameProfile.content.rewards.eligibility.combatCards.lowerRankChance, 0.05);
+  const bytes = readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url));
+  const archived = deserializeRun(gunzipSync(bytes).toString('utf8'));
+  const savedProfile = resolveGameProfile(archived.gameProfile);
+  assert.equal(savedProfile.content.rewards.eligibility.combatCards.lowerRankChance, 0.1);
+  assert.deepEqual(savedProfile.content.rewards.eligibility.combatCards.stanceCoverage,
+    fresh.gameProfile.content.rewards.eligibility.combatCards.stanceCoverage);
+  const savedReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, savedProfile)), savedProfile);
+  const request = { offerId: 'legacy-lower-rank', source: 'combat' };
+  const offer = gameProfileRewardOffers(savedReg, archived, createRng(9), request);
+  assert.ok(offer.options.length >= 3);
+  const restored = deserializeRun(serializeRun(archived, { inline: true }));
+  assert.equal(restored.gameProfile.hash, savedProfile.hash);
+  assert.equal(restored.gameProfile.content.rewards.eligibility.combatCards.lowerRankChance, 0.1);
+  assert.deepEqual(gameProfileRewardOffers(savedReg, restored, createRng(77), request), offer);
 });

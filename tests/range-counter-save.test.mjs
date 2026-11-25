@@ -38,7 +38,8 @@ function fixture({ die = 20, count = 4 } = {}) {
   } } };
   const run = createRunState({ registries, seed: 511, classId: 'reaver' });
   uncappedRun(run);
-  const alternate = registries.equipment.armaments.find(piece => piece.range !== 'melee'
+  // The halberd changes coverage without changing the Reaver's Stamina maximum.
+  const alternate = registries.equipment.armaments.find(piece => piece.id === 'halberd' && piece.range !== 'melee'
     && attackDescriptor(piece).source === 'weapon' && equipmentRequirementReceipt(registries, piece, run.attributes).ok);
   assert.ok(alternate, 'the fixture has an owned usable alternate weapon with different coverage');
   run.loadout.storage.push(alternate.id);

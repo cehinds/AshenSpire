@@ -37,7 +37,9 @@ export function grantText(grant) {
     case 'masteryUnlock': return `Unlocks ${grant.names.join(', ')}`;
     case 'classNodeDraft': return t('characterSheet.grant.classNodeDraft');
     case 'rarity': return t('characterSheet.grant.rarity', { rarity: RARITY_WORDS[grant.rarity] || grant.rarity });
-    case 'rankUp': return t('characterSheet.grant.rankUp');
+    case 'rankUp': return grant.amount > 1
+      ? t('characterSheet.grant.rankUpCount', { n: grant.amount })
+      : t('characterSheet.grant.rankUp');
     case 'classTier': return t('characterSheet.grant.classTier', { tier: grant.tier, nodes: grant.nodes.join(', ') });
     case 'feat': return grant.options.length
       ? t('characterSheet.grant.feat', { options: grant.options.join(' / ') })

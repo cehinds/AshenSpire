@@ -20,6 +20,9 @@ const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent
 function fight({ classId = 'reaver', cardId = 'strike', enemies = [{}] } = {}) {
   const run = createRunState({ registries: reg, classId, seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = withoutStanceBenefits(createRunCombat({ registries: reg, run, rng: createRng(5), enemyIds: enemies.map(() => 'wanderingSoldier') }));
+  // 9101e627a5b: the quantified baseline predates the current stance-gated weapon-Poise rules.
+  combat.fixCoreRules.poise = { drain: 'prevented' };
+  combat.fixCoreRules.ward = { enabled: false };
   combat.enemies.forEach((enemy, i) => {
     const { poise = 0, block = 0, statuses = {} } = enemies[i];
     Object.assign(enemy, { hp: 500, maxHp: 500, block, barrier: 0, statuses, persistentPoise: { value: poise, max: 20 }, attributes: { dexterity: 0 } });

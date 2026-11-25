@@ -52,9 +52,14 @@ for (const [id, art, status] of [['frostSpear', 'rimeThrust', 'frost'], ['cinder
     assert.equal(effect.amount, target.before + target.delta, `${id}: smithing applies the exact ${target.op} delta`);
   }
 }
-for (const [classId, id, alias] of [['reaver', 'bastion', 'warden'], ['starseer', 'rimeweave', 'starlit'], ['rogue', 'waywatcher', 'nightveil']]) {
+for (const [classId, id, alias, signature] of [
+  ['reaver', 'bastion', 'warden', ['blockCard.cardBlock=+2', 'self.firstTurnSp=-1']],
+  ['starseer', 'rimeweave', 'starlit', ['self.resistFrost=+1', 'start.turnWard=+1']],
+  ['rogue', 'waywatcher', 'nightveil', ['start.turnReach=+1']],
+]) {
   const piece = r.equipment.armour.find(p => p.classId === classId && p.id === id);
-  assert.ok(piece.unlock && piece.mods.length === 2);
+  assert.ok(piece.unlock, `${id}: still earned through its unlock`);
+  assert.deepEqual(piece.mods, signature, `${id}: current equipment signature`);
   const run = createRunState({ seed: 17, classId, registries: r });
   assert.ok(equipPiece(r, run.loadout, 'armor', 0, id, owns, { inCombat: false, attributes: run.attributes }));
   stampDeck(r, run);
@@ -119,21 +124,39 @@ for (const [id, classId, skillId, school] of [
 console.log('PASS new weapon skill schools and first-level drafts in intended classes');
 import { applyLevelUp, awardLevelXp, xpToNext as characterXpToNext } from '../src/model/levelup.js';
 
+// Pre-rework signatures remain supported by the pool reconciliation path.
+const legacyPoolSignatures = {
+  waywatcher: 'self.maxStamina=+1',
+  duskChime: 'self.maxMana=+1',
+  bastion: 'self.maxStamina=-1',
+};
+const legacyPoolPiece = piece => legacyPoolSignatures[piece.id]
+  ? { ...piece, mods: [legacyPoolSignatures[piece.id]] } : piece;
+const poolRegistries = createRegistries({
+  ...contentBundle,
+  equipment: {
+    ...contentBundle.equipment,
+    armour: contentBundle.equipment.armour.map(legacyPoolPiece),
+    armaments: contentBundle.equipment.armaments.map(legacyPoolPiece),
+  },
+});
+
 for (const [id, classId, slot, pool] of [
   ['waywatcher', 'rogue', 'armor', 'stamina'],
   ['duskChime', 'herald', 'rightHand', 'mana'],
   ['bastion', 'reaver', 'armor', 'stamina'],
 ]) {
-  const run = createRunState({ seed: 17, classId, registries: r });
-  assert.ok(equipPiece(r, run.loadout, slot, 0, id, owns, { inCombat: false, attributes: run.attributes }));
-  stampDeck(r, run);
+  const run = createRunState({ seed: 17, classId, registries: poolRegistries });
+  assert.ok(equipPiece(poolRegistries, run.loadout, slot, 0, id, owns, { inCombat: false, attributes: run.attributes }));
+  stampDeck(poolRegistries, run);
   const maxKey = pool === 'mana' ? 'maxMana' : 'maxStamina';
+  assert.equal(run.equipmentPoolBonuses[maxKey], id === 'bastion' ? -1 : 1);
   const initialMax = run[maxKey];
   const deficit = Math.min(2, initialMax);
   run[pool] = initialMax - deficit;
   const bonuses = { ...run.equipmentPoolBonuses };
   for (let level = 2; level <= 6; level++) {
-    const receipt = awardLevelXp(r, run, characterXpToNext(r, run.level.level));
+    const receipt = awardLevelXp(poolRegistries, run, characterXpToNext(poolRegistries, run.level.level));
     assert.equal(run.level.level, level);
     assert.equal(run[maxKey], initialMax + (pool === 'mana' && level === 6 ? 1 : 0), `${id}: final equipped maximum at level ${level}`);
     assert.equal(run[maxKey] - run[pool], deficit, `${id}: leveling carries spent ${pool} at level ${level}`);
@@ -143,25 +166,13 @@ for (const [id, classId, slot, pool] of [
     assert.equal(receipt.thresholds, level === 6 ? 2 : 1, `${id}: only genuine HP/Mana/Stamina maximum increases count`);
   }
   const beforeAssignment = run[maxKey];
-  const assigned = pool === 'mana' ? 'wisdom' : 'dexterity'; // owner, 2026-11-18: Mana is WIS and Stamina is DEX, each in fours
+  const assigned = pool === 'mana' ? 'wisdom' : 'dexterity';
   const attributeBefore = run.attributes[assigned];
-  for (let point = 0; point < 5; point++) {
-    applyLevelUp(r, run, assigned);
-    assert.equal(run[maxKey] - run[pool], deficit, `${id}: shrine assignment preserves spent ${pool}`);
-  }
-  // Ruleset 5 (plan phase 9): Mana IS Wisdom and Stamina IS Constitution, so
-  // every assigned point moves the pool rather than every fifth one — and the
-  // lean creation mode converts at its own scale, so a point is that many
-  // tiers of it. Read off the run's own snapshot rather than restated here.
-  const poolRow = run.derivedStatRuleSnapshot.rules.rules[pool];
-  const weight = poolRow[assigned];
-  // Ruleset 6: the attribute term is floored on its own, so five points buy
-  // the difference of the floored term — with a fractional weight (the stock
-  // 0.5) that is not five times a per-point amount.
-  const term = (value) => Math.floor(value * weight + 1e-9);
-  assert.equal(run.attributes[assigned], attributeBefore + 5);
-  const gained = term(attributeBefore + 5) - term(attributeBefore);
-  assert.ok(gained > 0, `${id}: five assigned points move the pool at the stock weight`);
-  assert.equal(run[maxKey], beforeAssignment + gained, `${id}: each assigned point raises the equipped pool`);
+  assert.equal(run.level.unspentPoints, 1, 'the existing level-four award supplies one point');
+  applyLevelUp(poolRegistries, run, assigned);
+  assert.equal(run.level.unspentPoints, 0);
+  assert.equal(run[maxKey] - run[pool], deficit, `${id}: shrine assignment preserves spent ${pool}`);
+  assert.equal(run.attributes[assigned], attributeBefore + 1);
+  assert.equal(run[maxKey], beforeAssignment + 1, `${id}: the governing attribute increases the pool`);
 }
 console.log('PASS level gains preserve positive and negative equipment pool deficits through the level-six increase');

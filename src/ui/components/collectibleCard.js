@@ -2,7 +2,7 @@ import { renderEquipmentCard, renderEquipmentInspection } from './equipmentCard.
 import { relicText } from './card.js';
 import { assetUrl } from '../assetmap.js';
 import { relicArtUrl } from '../assets.js';
-import { itemArtComposition } from '../itemArtComposition.js';
+import { ItemArtComposition } from '../itemArtComposition.js';
 import { OpenModal } from './modalShell.js';
 import { possessionVariant } from '../models/PossessionVariantModel.js';
 import { ItemRankOf, ItemRankBadge } from '../../model/itemRank.js';
@@ -22,7 +22,7 @@ function presentation(registries, item, kind, { charges = null, itemLayerConfig 
   return {
     id: item.id, name: item.name, cardKind: kind.toLowerCase(), type: usage ? `${kind} · ${usage}` : kind,
     art: (!potion && relicArtUrl(item)) || (item.artAsset ? assetUrl(item.artAsset) : null),
-    itemArt: potion ? null : itemArtComposition(item, { kind: 'relic', registries, ...(itemLayerConfig ? { layerConfig: itemLayerConfig } : {}) }),
+    itemArt: potion ? null : ItemArtComposition(item, { kind: 'relic', registries, ...(itemLayerConfig ? { layerConfig: itemLayerConfig } : {}) }),
     glyph: potion ? 'flask-health' : 'skill',
     accent: item.tint || (potion ? '#87b5d0' : '#d0ac5d'),
     typeExplanation: potion ? 'A carried potion. Use it through the potion action menu.'

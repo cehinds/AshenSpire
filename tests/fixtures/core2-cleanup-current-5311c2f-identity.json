@@ -1,0 +1,47 @@
+{
+  "profile": {
+    "hash": "sha256:d2ff32d4e924c6782570b6de552a3589414f62aed93f1635afaacd76a09cab07",
+    "runtimeHash": "sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d"
+  },
+  "scenarios": {
+    "paid reaction": {
+      "snapshots": {
+        "start": "bb9b8d66afc78f8b80f156953129b8c85ddb1230c32ee6c8e50797eafc8c1bb5",
+        "pending": "df5bb38a03c54fa0d211e1288c4803d929d15a4675d1484a4483ef8bab1ec08d",
+        "restored": "df5bb38a03c54fa0d211e1288c4803d929d15a4675d1484a4483ef8bab1ec08d",
+        "live": "3a6704041dea95009c1720676edb533392543b0d34899ae452fcd8adffc0e650",
+        "afterRestore": "3a6704041dea95009c1720676edb533392543b0d34899ae452fcd8adffc0e650"
+      },
+      "save": {
+        "stored": "2d23586242c8322b1d50069cb1b147337eeb1000f6a6d08daae9a7868bab7aab",
+        "loaded": "f1591abae276cfdf2ed64b5c20c77efea15803beffb2d090d195a151c1094db5"
+      }
+    },
+    "paid delayed charge": {
+      "snapshots": {
+        "start": "e0e9bac01ae104bd8ed04cf7e7e3eebc08a5d8b3f98776f59b40d5345170954f",
+        "pending": "08014ca01ebddc7aacf048e4bd5237b280383788b131962c9caef6e7880b3a2d",
+        "restored": "08014ca01ebddc7aacf048e4bd5237b280383788b131962c9caef6e7880b3a2d",
+        "live": "6cf3d1e2d7cbf6292241391142053c823d11024e26ab30ed3ebd22da45f6ead4",
+        "afterRestore": "6cf3d1e2d7cbf6292241391142053c823d11024e26ab30ed3ebd22da45f6ead4"
+      },
+      "save": {
+        "stored": "d6f270adadbed5177ef00de772799bcbb6a600f07c3688d24a01f418fae2ed06",
+        "loaded": "be0c5ab56a4071b3a9cfcdbc8d12ffc356b5ec126876dd5826f4633043865e75"
+      }
+    },
+    "ordered enemy plan": {
+      "snapshots": {
+        "start": "e66a07a65dca7d5527fd5b5f5f59fcd0c7b34a462b0301c01c01f189e5a8f579",
+        "pending": "e66a07a65dca7d5527fd5b5f5f59fcd0c7b34a462b0301c01c01f189e5a8f579",
+        "restored": "e66a07a65dca7d5527fd5b5f5f59fcd0c7b34a462b0301c01c01f189e5a8f579",
+        "live": "3b18a48d6907bd575cda2fd111ba359aa95e83936d5126aefdbdcb61715c1a4d",
+        "afterRestore": "3b18a48d6907bd575cda2fd111ba359aa95e83936d5126aefdbdcb61715c1a4d"
+      },
+      "save": {
+        "stored": "dddb3e5d81d92682ee0af80485697e5e7ed488c4831d323c8948732243a4cf0c",
+        "loaded": "b08721d3dc7b5ea04755e3c1ce8da3fcf2af0873508823528ca229f59088e888"
+      }
+    }
+  }
+}
