@@ -102,23 +102,34 @@ export function CardDefinitionToScoreFace(def, { scoring = GetActiveScoring(), r
 }
 
 /**
- * Evaluate whether an upgrade step keeps the card within its rank (possibly by bumping rarity up to `rare`)
- * or within a rank accessible to the player (`max(cardRank, playerLevel)`).
+ * Precompute the invariant "before" baseline for a card so evaluating multiple candidate steps
+ * against the same `currentDef` does not re-run `ScoreCard(CardDefinitionToScoreFace(currentDef))`.
  */
-export function EvaluateUpgradeStepCp({ baseDef, currentDef, instance = null, step, playerLevel = 1, scoring = GetActiveScoring() }) {
-  if (!baseDef || !step) return { allowed: true };
-  // Fast path: when currentDef is already resolved, apply just the single candidate step instead of replaying every prior step.
-  const afterDef = currentDef
-    ? applyUpgradeSteps(currentDef, [step])
-    : applyUpgradeSteps(baseDef, [...upgradeStepsOf(instance || {}), step]);
-  const rawBefore = ScoreCard(CardDefinitionToScoreFace(currentDef || baseDef, { scoring }), scoring).raw;
-  const rawAfter = ScoreCard(CardDefinitionToScoreFace(afterDef, { scoring }), scoring).raw;
-  const currentRarity = instance?.rarityOverride || currentDef?.rarity || baseDef.rarity || 'common';
+export function PrepareUpgradeStepCpContext({ baseDef, currentDef, instance = null, playerLevel = 1, scoring = GetActiveScoring() }) {
+  const refDef = currentDef || baseDef;
+  const rawBefore = ScoreCard(CardDefinitionToScoreFace(refDef, { scoring }), scoring).raw;
+  const currentRarity = instance?.rarityOverride || currentDef?.rarity || baseDef?.rarity || 'common';
   const startIdx = Math.max(0, RARITY_LADDER.indexOf(currentRarity));
   const scoredBeforeRank = RankOf(CombatPower(rawBefore, currentRarity, scoring), scoring);
   const cardRank = Math.max(VisibleCardRank(instance || baseDef), scoredBeforeRank);
   const accessibleRank = Math.max(1, Math.min(scoring?.rank?.maxRank || 10, Math.trunc(Number(playerLevel) || 1)));
   const maxAllowedRank = Math.max(cardRank, accessibleRank);
+  return { rawBefore, currentRarity, startIdx, cardRank, maxAllowedRank };
+}
+
+/**
+ * Evaluate whether an upgrade step keeps the card within its rank (possibly by bumping rarity up to `rare`)
+ * or within a rank accessible to the player (`max(cardRank, playerLevel)`).
+ */
+export function EvaluateUpgradeStepCp({ baseDef, currentDef, instance = null, step, playerLevel = 1, scoring = GetActiveScoring(), context = null }) {
+  if (!baseDef || !step) return { allowed: true };
+  // Fast path: when currentDef is already resolved, apply just the single candidate step instead of replaying every prior step.
+  const afterDef = currentDef
+    ? applyUpgradeSteps(currentDef, [step])
+    : applyUpgradeSteps(baseDef, [...upgradeStepsOf(instance || {}), step]);
+  const ctx = context || PrepareUpgradeStepCpContext({ baseDef, currentDef, instance, playerLevel, scoring });
+  const rawAfter = ScoreCard(CardDefinitionToScoreFace(afterDef, { scoring }), scoring).raw;
+  const { startIdx, cardRank, maxAllowedRank } = ctx;
 
   // Pass 1: Check if the upgraded card stays within its current rank at current or higher rarity (up to rare).
   for (let i = startIdx; i < RARITY_LADDER.length; i++) {

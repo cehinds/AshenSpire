@@ -3,12 +3,67 @@
 // commit: the roll is the stateless mulberry32(hash(run.seed, instanceId, stepIndex)).
 import { canUpgrade, nextUpgradeStep, nextUpgradeOptions, RestUpgradeRule } from './cardUpgradeLimits.js';
 import { upgradeStepsOf, paidUpgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { playsEverOf } from './cardRamp.js';
+import { VisibleCardRank } from './cardRank.js';
+import { UpgradeOfferKey } from './upgradeOffer.js';
+import { GetActiveScoring } from './activeScoring.js';
 import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
 
 const MAX_CHOICES = 3;
+const MAX_PLAN_CACHE_PER_RUN = 256;
+const planCacheByRun = new WeakMap();
+
 const findInstance = (run, instanceId) => [...(run.deck || []), ...(run.sideboard || [])].find((card) => card && card.instanceId === instanceId) || null;
 const face = (registries, run, instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
+
+/** Compact fingerprint of run-level gear/stat/relic/skill state that affects projected faces and checkDamageUpgrade. */
+export function RunUpgradeStateFingerprint(run) {
+  if (!run || typeof run !== 'object') return '';
+  return JSON.stringify([
+    run.loadout?.active || null,
+    run.loadout?.sets || null,
+    run.itemUpgradeLevels || null,
+    run.itemUpgradePicks || null,
+    run.itemCategories || null,
+    run.relics || null,
+    run.skills || null,
+    run.attributes || null,
+    run.baseAttributes || null,
+    run.attributeBonuses || null,
+  ]);
+}
+
+function planCacheKey(run, instance, count, combos, vendor) {
+  return [
+    run?.seed ?? 0,
+    UpgradeOfferKey(run),
+    run?.actNumber ?? 0,
+    run?.mapNodeId ?? '',
+    run?.level?.level ?? 1,
+    run?.rangePolicy?.maxRange ?? '',
+    Number.isSafeInteger(run?.smithingStones) ? run.smithingStones : 0,
+    RunUpgradeStateFingerprint(run),
+    instance.instanceId,
+    instance.cardId,
+    JSON.stringify(upgradeStepsOf(instance)),
+    VisibleCardRank(instance),
+    instance.rank ?? '',
+    instance.rarityOverride ?? '',
+    instance.abilityRank ?? '',
+    instance.sourceArmamentId ?? '',
+    instance.grantedBy ?? '',
+    playsEverOf(instance),
+    count,
+    combos ? 1 : 0,
+    vendor || '',
+  ].join('|');
+}
+
+/** Clear the in-memory upgrade plan cache for a run (or when custom scoring changes). */
+export function ClearCardUpgradePlanCache(run) {
+  if (run && typeof run === 'object') planCacheByRun.delete(run);
+}
 
 /**
  * planCardUpgrade(run, registries, instanceId) → a quote, mutating nothing:
@@ -21,20 +76,41 @@ const face = (registries, run, instance) => projectGameCard(run, instance) || re
  */
 export function planCardUpgrade(run, registries, instanceId, { choices = 1, combos = false, vendor = '' } = {}) {
   const instance = findInstance(run, instanceId);
+  const count = Number.isInteger(choices) && choices > 1 ? Math.min(choices, MAX_CHOICES) : 1;
+  const activeScoring = GetActiveScoring();
+  let runMap = null;
+  let cacheKey = '';
+  if (run && typeof run === 'object' && instance) {
+    runMap = planCacheByRun.get(run);
+    if (!runMap) {
+      runMap = new Map();
+      planCacheByRun.set(run, runMap);
+    }
+    cacheKey = planCacheKey(run, instance, count, combos, vendor);
+    const hit = runMap.get(cacheKey);
+    if (hit && hit.scoring === activeScoring && hit.registries === registries && hit.gameProfile === run.gameProfile) return hit.quote;
+  }
+
   const verdict = canUpgrade(registries, run, instance || { instanceId, cardId: '' });
   const quote = { ok: verdict.ok, code: verdict.code, reason: verdict.reason, instanceId, n: verdict.n, cost: verdict.cost, free: verdict.free, step: null, before: null, after: null };
-  if (!instance || (!verdict.ok && verdict.code !== 'stones')) return quote;
-
-  const base = registries.cards.get(instance.cardId);
-  const applied = upgradeStepsOf(instance);
-  const count = Number.isInteger(choices) && choices > 1 ? Math.min(choices, MAX_CHOICES) : 1;
-  const after = (step) => face(registries, run, { ...instance, upgraded: true, upgradeSteps: [...applied, step] });
-  if (count === 1) {
-    const step = vendor ? nextUpgradeOptions(run, instance, base, registries, 1, { vendor })[0] || null : nextUpgradeStep(run, instance, base, registries);
-    return { ...quote, ...(vendor ? { vendor } : {}), step, before: face(registries, run, instance), after: after(step) };
+  let result = quote;
+  if (instance && (verdict.ok || verdict.code === 'stones')) {
+    const base = registries.cards.get(instance.cardId);
+    const applied = upgradeStepsOf(instance);
+    const after = (step) => face(registries, run, { ...instance, upgraded: true, upgradeSteps: [...applied, step] });
+    if (count === 1) {
+      const step = vendor ? nextUpgradeOptions(run, instance, base, registries, 1, { vendor })[0] || null : nextUpgradeStep(run, instance, base, registries);
+      result = { ...quote, ...(vendor ? { vendor } : {}), step, before: face(registries, run, instance), after: after(step) };
+    } else {
+      const options = nextUpgradeOptions(run, instance, base, registries, count, { combos, vendor }).map((step) => ({ step, after: after(step) }));
+      result = { ...quote, choices: count, combos, ...(vendor ? { vendor } : {}), step: options[0].step, options, before: face(registries, run, instance), after: options[0].after };
+    }
   }
-  const options = nextUpgradeOptions(run, instance, base, registries, count, { combos, vendor }).map((step) => ({ step, after: after(step) }));
-  return { ...quote, choices: count, combos, ...(vendor ? { vendor } : {}), step: options[0].step, options, before: face(registries, run, instance), after: options[0].after };
+  if (runMap && cacheKey) {
+    if (runMap.size >= MAX_PLAN_CACHE_PER_RUN) runMap.delete(runMap.keys().next().value);
+    runMap.set(cacheKey, { scoring: activeScoring, registries, gameProfile: run.gameProfile, quote: result });
+  }
+  return result;
 }
 
 /** The quote a rest-site Upgrade Card shows for an instance: 1 option up to the third upgrade, 2 (some with two effects) from the fourth. */

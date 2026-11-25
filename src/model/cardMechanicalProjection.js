@@ -98,13 +98,11 @@ export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
       if (!packetAdded && effect.op === 'damage' && binding.field === 'amount' && Number.isFinite(tokens.packet)) { value += tokens.packet; packetAdded = true; }
       values[binding.index][binding.field] = value;
     }
+    for (const [index, fields] of values.entries()) Object.assign(card.effects[index], fields);
     data = freeze({ card, values, tokens, bindings });
+    projectedDefinitions.set(card, { source: structuredClone(authored), registries, rules, profile, signature, result: data });
     cache.set(key, data);
     if (cache.size > 512) cache.delete(cache.keys().next().value);
   }
-  const card = structuredClone(data.card);
-  for (const [index, fields] of data.values.entries()) Object.assign(card.effects[index], fields);
-  const result = freeze({ card, values: data.values, tokens: data.tokens, bindings: data.bindings });
-  projectedDefinitions.set(card, { source: structuredClone(authored), registries, rules, profile, signature, result });
-  return result;
+  return data;
 }

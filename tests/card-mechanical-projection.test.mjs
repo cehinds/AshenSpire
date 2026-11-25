@@ -35,6 +35,26 @@ test('cached projections respect alternate contexts and mutations to a supplied 
   assert.equal(base.effects[0].amount,8);
 });
 
+test('identical full inputs reuse the frozen final projection while source and context changes invalidate it',()=>{
+  const context=CardScoreReferenceContext(base),source=card(8),snapshot=structuredClone(source);
+  const original=ProjectCardMechanicalValues(source,context);
+  assert.equal(ProjectCardMechanicalValues(structuredClone(source),context),original);
+  assert.equal(ProjectCardMechanicalValues({...structuredClone(source),_edited:true},context),original);
+  assert.ok(Object.isFrozen(original));assert.ok(Object.isFrozen(original.card.effects[0]));
+  assert.throws(()=>{original.card.effects[0].amount=99;},TypeError);
+  assert.deepEqual(source,snapshot);
+  source.effects[0].amount=16;
+  const changed=ProjectCardMechanicalValues(source,context);
+  assert.notEqual(changed,original);assert.equal(changed.tokens.damage,5);assert.equal(original.tokens.damage,3);
+  assert.deepEqual(original.card.effects[1],snapshot.effects[1]);assert.equal(snapshot.effects[0].amount,8);
+  const rules={...context.rules,faceAttributes:{strength:0,dexterity:0,intelligence:0,wisdom:0},gearRules:[]};
+  const alternate=ProjectCardMechanicalValues(original.card,{registries:context.registries,rules});
+  assert.notEqual(alternate,original);assert.deepEqual(alternate.tokens,staticCardTokens(snapshot,context.registries,rules));
+  const prior=alternate.tokens.damage;rules.faceAttributes.strength=20;
+  const mutated=ProjectCardMechanicalValues(original.card,{registries:context.registries,rules});
+  assert.notEqual(mutated,alternate);assert.ok(mutated.tokens.damage>prior);
+});
+
 test('configured Evade counts and element packet channels preserve canonical mechanic units',()=>{
   const evade={...base,effects:[{op:'applyStatus',target:'self',status:'evade',stacks:{f:'metric',metric:'evadeStackGain',of:'self',per:2}}]};
   const projection=ProjectCardMechanicalValues(evade);assert.equal(projection.tokens.evade,'2');assert.equal(projection.card.effects[0].stacks,2);
