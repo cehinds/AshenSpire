@@ -13,7 +13,7 @@ The authored JSON defaults schedule one clip at a time across the battlefield, w
 
 Independent review of `12fcba8a97f` confirmed the fix removes the second live Intelligence damage increment. Arcane still reads INT, Divine reads WIS, and shared spells read the greater of the two. The separate flat Intelligence status modifiers still apply. The card face, target quote and landed HP damage agree. All 33 card-face checks passed, including historical profile fixtures. [Casting rules](../ARCANE-DIVINE-RULES.md)
 
-Both focused regressions failed with the preceding runtime source, then passed with the repair. The combined card-face, spell tradition and historical save run passed 85 of 86 test entries. The Divine Poise-break Smite receipt test fails with the same missing receipt on the preceding runtime source. Historical profile validation, enemy roster pins and save migrations passed.
+Both focused regressions failed with the preceding runtime source, then passed with the repair. The combined card-face, spell tradition and historical save run passed 86 of 86 test entries at `f4ebe9e13af`. The neighboring Divine Smite test now uses a Poise pool consistent with its rating, so the direct hit breaks Poise and the test separately checks the Smite receipt. Historical profile validation, enemy roster pins and save migrations passed.
 
 Feature-specific checks passed. Mandatory discovered CI still includes inherited combat and stat contract failures. Dev and Test deployment require a green integration gate.
 
