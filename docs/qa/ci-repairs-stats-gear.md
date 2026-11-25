@@ -103,3 +103,8 @@ The 54-file stats, gear and progression run completed with 488 of 494 tests pass
 The old Act-band receipts remain in `65134299eca:tests/gear-pass-save-compatibility.test.mjs` (shop), `7d66e6cad64` (boss armament) and `bd0a3b32b5b` (Blacksmith). A separate replay extracted the exact pre-feature `origin/dev` tree at `7dff4b03a17` and resolved the same immutable pre-type profile, character seed 511 and offer RNG 41. It reproduced the new character-level band selections and exact ranked costs. These are future offers against the current catalog. No extra theme RNG is spent, and an offer already cached is byte-identical when read again.
 
 `node --test tests/gear-pass-save-compatibility.test.mjs` passed 7/7. Stream receipts stayed at 21 shop, 9 boss reward and 19 Blacksmith draws, with zero on other streams. The separate unresolved type-enabled Sage robe check retains its original expectation.
+
+## Additional profile and display fixtures
+
+- `tests/a3-lean-retune.test.mjs` pins the reworked starting shard and uses an explicit three-point award to cross the legacy Energy threshold. `tests/game-profile.test.mjs` still verifies immutable profile facts and checks the current authored starting hands. `tests/card-stat-modifiers.test.mjs` verifies the additional authored Wisdom fact on Gilded Oath. These passed 13/13.
+- `tests/wireframe-possession-variants.test.mjs` keeps current weapon art and exercises pre-rework modifier rendering with independent legacy item signatures. `tests/face-cost-effective.test.mjs` proves Prepared-only current robe and Focus pricing across deck, pile, quote, play and resumed fight, while preserving the no-type older price coverage. These passed 12/12.

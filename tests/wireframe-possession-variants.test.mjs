@@ -39,9 +39,13 @@ test('WC2a1 weapon: hand / requirements, then the granted card package with its 
   assert.equal(sword.heading, 'Granted card package');
   assert.deepEqual(sword.entries.map((e) => e.label), ['Weapon art: Guard Counter']);
   assert.deepEqual([...sword.regions.facts], ['WC2a1.body.detail1']);
-  const greatsword = equipment(armament('greatsword'));
+  const currentGreatsword = armament('greatsword');
+  assert.equal(equipment(currentGreatsword).entries[0].label, 'Weapon art: Sundering Hew');
+  // A pre-type wireframe deliberately consumes only legacy signatures. Use the pre-rework modifier list.
+  const legacyGreatsword = { ...currentGreatsword, mods: ['strike.cost=+1', 'strike.poise=+3'] };
+  const greatsword = equipment(legacyGreatsword);
   assert.equal(greatsword.entries[0].label, 'Weapon art: Sundering Hew');
-  assert.equal(greatsword.entries.length, 1 + armament('greatsword').mods.length);
+  assert.equal(greatsword.entries.length, 1 + legacyGreatsword.mods.length);
   // Scaling and the equipped comparison are not authored; they are noted, not drawn.
   assert.ok(sword.omitted.some((o) => o.id === 'WC2a1.body.detail1' && o.part === 'scaling'));
   assert.ok(sword.omitted.some((o) => o.id === 'WC2a.body.detail2'));
@@ -53,7 +57,8 @@ test('WC2a1 weapon: hand / requirements, then the granted card package with its 
 });
 
 test('WC2a2 armour: defense bonuses move to facts; other modifiers remain and missing data is noted', () => {
-  const outfit = r.equipment.armour.find((p) => p.mods.length);
+  const currentOutfit = r.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default');
+  const outfit = { ...currentOutfit, mods: ['defend.block=+2', 'self.maxHp=+4'] };
   const variant = equipment(outfit);
   assert.deepEqual([...variant.families], ['WC2', 'WC2a', 'WC2a2']);
   assert.equal(variant.heading, 'Granted modifiers');

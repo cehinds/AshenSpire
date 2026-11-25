@@ -104,7 +104,7 @@ test('current deck and pile Mana faces share final gear pricing with quotes, pay
       SetFaceCostRun(run);
       try {
         const deck = playingCardModel(currentReg, { cardId }, { rules: run }).costs;
-        assert.equal(deck.mana, Math.max(0, printedMana + 1 - robe), `${label}: a deck has no Prepared Focus`);
+        assert.equal(deck.mana, printedMana + 1, `${label}: the deck has no Prepared gear discounts`);
         const combat = createRunCombat({ registries: currentReg, run, rng: createRng(5), enemyIds: ['wanderingSoldier'] });
         combat.player.stamina = combat.player.maxStamina = 40;
         combat.player.mana = combat.player.maxMana = 40;
@@ -119,7 +119,10 @@ test('current deck and pile Mana faces share final gear pricing with quotes, pay
         const alreadyProjected = resolveCombatCard(combat, combat.piles.hand[0]);
         assert.equal(FaceCostProfile(currentReg, alreadyProjected).mana, quote.mana, `${label}: an already adjusted definition is priced once`);
         assert.equal(pile.mana, quote.mana, `${label}: Prepared pile equals the live quote`);
-        assert.ok(combat.player.itemProps.cardRules.filter(row => row.stat === 'manaCost' && row.conds.some(cond => cond.name === 'stance')).length <= 1, `${label}: built-in Focus is one shared effect`);
+        const preparedRules = combat.player.itemProps.cardRules.filter(row => row.stat === 'manaCost' && row.conds.some(cond => cond.name === 'stance'));
+        const wornWeaponIds = [right, left].filter(Boolean);
+        assert.equal(preparedRules.filter(row => wornWeaponIds.includes(row.source)).length, focus, `${label}: built-in Focus is one shared effect`);
+        assert.equal(preparedRules.filter(row => !wornWeaponIds.includes(row.source)).length, robe, `${label}: the robe is a separate Prepared source`);
         const base = classId === 'starseer' && printedMana > 0 ? Math.max(0, printedMana - 1) : printedMana; // Starseer is a Graduate; Reaver is not.
         const chainCut = cardId === 'core.cantrip' ? 1 : 0; // a mirrored cantrip takes the successive-Spell cut, and with no cost minimum (owner 2026-11-22) it may reach 0 for a non-Graduate too
         assert.equal(pile.mana, Math.max(0, base + 1 - robe - focus - chainCut), `${label}: one Focus plus independent robe`);
