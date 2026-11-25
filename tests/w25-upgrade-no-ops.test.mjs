@@ -5,6 +5,9 @@ import assert from 'node:assert/strict';
 import { play, outcome, registries } from './helpers/upgrade-probe.mjs';
 import { profile } from './helpers/fixcore-combat-rules.mjs';
 import { nextUpgradeOptions } from '../src/model/cardUpgradeLimits.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRegistries } from '../src/model/registries.js';
+import { contentBundle } from '../src/content/index.js';
 
 const ids = registries.cards.all().filter((c) => c.id.startsWith('core.')).map((c) => c.id);
 // Ramp upgrades act from the second play, and Hexmark's contest fails in the single-play harness: a single play cannot show them.
@@ -21,15 +24,35 @@ const PER_CARD = 14;
 // takes the same damage whatever the type, so the single play shows it through that `damage:<type>` tag instead.
 const damageTagOf = (played) => (played.ev.find((e) => e.type === 'cardPreparing')?.cardTags || []).filter((t) => t.startsWith('damage:')).join();
 
+test('damage proposals skip a rounded-away +1 but keep an effective neighboring rank and other riders', () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const instance = { instanceId: 'probe-1', cardId: 'core.strike', rank: 4 };
+  const plusOne = { k: 'dmg', n: 1 };
+  const options = card => nextUpgradeOptions(run, card, registries.cards.get(card.cardId), registries, 40,
+    { everyFamily: true, noAuthored: true });
+  const withPlusOne = card => play(card.cardId, { ...card, upgraded: true, upgradeSteps: [plusOne] });
+  assert.equal(outcome(withPlusOne(instance)), outcome(play(instance.cardId, instance)), 'the archived step is a neutral hit at rank 4');
+  assert.ok(options(instance).every(step => step.k !== 'dmg' || step.n > 1));
+  const next = { ...instance, rank: 5 };
+  assert.ok(options(next).some(step => step.k === 'dmg' && step.n === 1));
+  assert.notEqual(outcome(withPlusOne(next)), outcome(play(next.cardId, next)));
+  const multi = options({ ...instance, cardId: 'core.whirlwind' });
+  assert.ok(multi.some(step => step.k === 'hits'));
+  assert.ok(multi.some(step => step.k === 'poise'));
+});
+
 test('every rolled upgrade option changes what the card does when played', () => {
   const noOps = [];
+  const runs = new Map();
   let checked = 0;
   for (const id of ids) {
     const base = registries.cards.get(id);
     const classId = { reaver: 'reaver', starseer: 'starseer', rogue: 'rogue', herald: 'herald' }[base.class] || 'reaver';
     for (const lead of [[], base.upgrade ? [{ k: 'authored' }] : null]) {
       if (lead === null) continue;
-      const run = { seed: 7, gameProfile: profile, rangePolicy: {} };
+      if (!runs.has(classId)) runs.set(classId, createRunState({ registries, classId, seed: 511,
+        profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } }));
+      const run = runs.get(classId);
       const inst = { instanceId: 'probe-1', cardId: id, rank: 4, ...(lead.length ? { upgraded: true, upgradeSteps: lead } : { upgraded: false }) };
       const options = nextUpgradeOptions(run, inst, base, registries, 40, { noAuthored: true, everyFamily: true })
         .filter((step) => !isDeferred(step)).slice(0, PER_CARD);
@@ -40,9 +63,10 @@ test('every rolled upgrade option changes what the card does when played', () =>
         // A second-target step can only show itself with a second enemy on the field.
         const opts = { classId, ...(step.k === 'fx' && step.fx === 'target' ? { enemies: ['wanderingSoldier', 'wanderingSoldier'] } : {}) };
         const field = JSON.stringify(opts);
-        if (!beforeByField.has(field)) beforeByField.set(field, play(id, lead.length ? { upgraded: true, upgradeSteps: lead } : {}, opts));
+        if (!beforeByField.has(field)) beforeByField.set(field, play(id, inst, opts));
         const playedBefore = beforeByField.get(field);
-        const playedAfter = play(id, { upgraded: true, upgradeSteps: [...lead, step] }, opts);
+        const playedAfter = play(id, { ...inst, rank: step.nextRank ?? inst.rank, rarityOverride: step.nextRarity,
+          upgraded: true, upgradeSteps: [...lead, step] }, opts);
         const typeShown = step.k === 'tag' && step.damage && !step.damageSchool && damageTagOf(playedAfter) === `damage:${step.damage}` && damageTagOf(playedAfter) !== damageTagOf(playedBefore);
         if (outcome(playedAfter) === outcome(playedBefore) && !typeShown && !RAMP.has(id)) noOps.push(`${id}${lead.length ? '+' : ''} ${JSON.stringify(step)}`);
       }
@@ -164,10 +188,10 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { resolveCard } from '../src/model/registries.js';
 
 // A magic weapon's Smith tier raises its spells (PR), not only the physical Strike.
-function spellDamage(itemTier) {
-  const run = createRunState({ registries, classId: 'starseer', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+function spellDamage(itemTier, registry = registries) {
+  const run = createRunState({ registries: registry, classId: 'starseer', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   if (itemTier) run.itemUpgradeLevels = { 'armament/boneSceptre': itemTier };
-  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const combat = createRunCombat({ registries: registry, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const inst = { instanceId: 'p1', cardId: 'core.spark', upgraded: false };
   for (const pile of Object.values(combat.piles)) pile.length = 0;
   combat.piles.hand.push(inst);
@@ -180,7 +204,14 @@ function spellDamage(itemTier) {
 }
 // Owner, 2026-11-17 (gear `statPoints`): a tier adds an attribute point split by the sceptre's weights, not PR, so a
 // tier whose point lands on the lower of INT/WIS leaves PR = max(INT, WIS) alone; the ladder still raises the spell.
-test('a magic weapon tier raises spell damage', () => {
-  const amounts = [0, 1, 2, 3].map(spellDamage);
+test('a fixed magic weapon tier raises spell damage when the profile grants tier attributes', () => {
+  const current = [0, 1, 2, 3].map(tier => spellDamage(tier));
+  assert.ok(current.every(amount => amount === current[0]), 'current ranks do not add automatic gear attributes');
+  const custom = resolveGameProfile({formatVersion: 1, core:'ashen.core@2.0.0', modules: {
+    effects: profile.modules.effects,
+    gear: {statPoints: {...profile.modules.gear.statPoints, perRank: 1}},
+  }});
+  const tierRegistry = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, custom)), custom);
+  const amounts = [0, 1, 2, 3].map(tier => spellDamage(tier, tierRegistry));
   assert.ok(amounts.every((amount, i) => i === 0 || amount >= amounts[i - 1]) && amounts[3] > amounts[0], amounts.join(','));
 });

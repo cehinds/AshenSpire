@@ -744,7 +744,8 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     let allowedNow = cpCache.get(key);
     if (allowedNow === undefined) {
       const probe = stepOf(kind, opt, 0, r);
-      allowedNow = EvaluateUpgradeStepCp({ baseDef, currentDef: current, instance: limits.instance || null, step: probe, playerLevel: limits.playerLevel, scoring: activeScoring }).allowed;
+      const result = EvaluateUpgradeStepCp({ baseDef, currentDef: current, instance: limits.instance || null, step: probe, playerLevel: limits.playerLevel, scoring: activeScoring });
+      allowedNow = result.allowed && (probe.k !== 'dmg' || !limits.damageChanges || limits.damageChanges(current, probe, result.rank));
       cpCache.set(key, allowedNow);
     }
     return allowedNow ? opt : null;
