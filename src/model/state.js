@@ -434,7 +434,15 @@ export function createRunState({
   if (!configured) ensureExpandedStarterCoverage(registries, run);
   initializeGameProfileRun(registries, run, { profileMeta });
   // Core: the authored deck exists now; add what the worn gear's grantedCards lend (owner 2026-10-19).
-  if (configured) reconcileGrantedCards(registries, run);
+  if (configured) {
+    reconcileGrantedCards(registries, run);
+    const starterArtRank = gameContent(run, 'starterDeck')?.weaponArtRank;
+    if (starterArtRank === 1 && gameModule(run, 'progression')?.cardRanks === true) {
+      for (const card of run.deck) {
+        if (card.equipmentRole === 'weaponArt' && registries.cards.get(card.cardId).rarity === 'rare') card.rank = starterArtRank;
+      }
+    }
+  }
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
