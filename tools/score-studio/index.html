@@ -34,6 +34,7 @@
       <button class="studio-tab" data-tab="items" role="tab" aria-selected="false"><span class="tab-long">Items &amp; Relics</span><span class="tab-short">Items</span></button>
       <button class="studio-tab" data-tab="weights" role="tab" aria-selected="false">Weights <span id="shift-count-badge" class="badge hidden">0</span></button>
       <button class="studio-tab" data-tab="art" role="tab" aria-selected="false"><span class="tab-long">Art &amp; Layers</span><span class="tab-short">Art</span></button>
+      <button id="effects-tab-button" class="studio-tab" data-tab="effects" role="tab" aria-selected="false" aria-controls="tab-effects"><span class="tab-long">Effects Timing</span><span class="tab-short">Effects</span></button>
       <button class="studio-tab" data-tab="sandbox" role="tab" aria-selected="false"><span class="tab-long">Combat Sandbox</span><span class="tab-short">Sandbox</span></button>
     </nav>
     <div class="studio-actions">
@@ -531,6 +532,12 @@
           <div id="sandbox-log" class="sandbox-log"></div>
         </details>
       </div>
+    </section>
+    <section id="tab-effects" class="studio-panel" role="tabpanel" aria-labelledby="effects-tab-button">
+      <div class="effects-frame-toolbar">
+        <a href="tools/recipient-effects-runtime-preview.html" target="_blank" rel="noopener">Open standalone preview</a>
+      </div>
+      <iframe id="effects-timing-frame" title="Recipient effects timing editor" data-src="tools/recipient-effects-runtime-preview.html"></iframe>
     </section>
   </main>
 

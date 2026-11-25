@@ -354,7 +354,7 @@ syncFields();
 if (editorWritable) await restoreSaved();
 else { showTimingStatus(); await refresh(); }
 window.recipientRuntimePreview = {
-  refresh, scrub, configure,
+  refresh, scrub, configure, pause,
   get invoker() { return control('invoker').value; },
   get recipient() { return control('recipient').value; },
   get recipes() { return scheduledRecipes(); },
