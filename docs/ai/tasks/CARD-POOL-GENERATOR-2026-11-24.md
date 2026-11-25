@@ -12,7 +12,7 @@ Naming (feature/ProceduralCardNames, in progress)
 - [ ] Flat option on every multiplier in the Weights tab
 
 Card pool generator
-- [ ] Generator makes 1-3 effects, statuses, schools, SP/MP costs at exact CP
+- [x] Generator makes 1-3 effects, statuses, schools, SP/MP costs at exact CP
 - [ ] Regenerate modal: mode (replace generated / replace all / add)
 - [ ] Totals: card count, cards per school, per camp
 - [ ] Odds: rarity, rank, cost, card type, range, effects per card
