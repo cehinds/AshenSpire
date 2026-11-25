@@ -147,7 +147,7 @@ export function UpgradeStepLook(registries, step, before, after) {
         if (one.damage) return t('cardUpgrade.size.damageType', { type: cap(one.damage) });
         return one.tag ? t('cardUpgrade.size.tag', { value: cap(String(one.tag).split(':').pop().replace(/^rank\./, '')) }) : '';
       }
-      case 'fx': return one.fx === 'block' ? t('cardUpgrade.size.block', { n: one.n }) : ['draw', 'cycle'].includes(one.fx) ? t(`cardUpgrade.size.${one.fx}`, { n: one.n }) : one.fx === 'heal' ? `+${one.n} HP` : one.fx === 'cleanse' ? `Cleanse ${statusName(registries, one.status || 'weak')}` : one.fx === 'recurring' ? 'Recurring + Exhaust' : '';
+      case 'fx': return one.fx === 'block' ? t('cardUpgrade.size.block', { n: one.n }) : ['draw', 'cycle'].includes(one.fx) ? t(`cardUpgrade.size.${one.fx}`, { n: one.n }) : one.fx === 'heal' ? `+${one.n} HP` : one.fx === 'cleanse' ? `${t('cardArtBuilder.utility.cleanse')} ${statusName(registries, one.status || 'weak')}` : one.fx === 'recurring' ? 'Recurring + Exhaust' : '';
       default: return '';
     }
   })).filter(Boolean);
