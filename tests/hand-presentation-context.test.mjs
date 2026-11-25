@@ -22,7 +22,8 @@ function fixture(api) {
   const run = api.createRunState({ registries, classId: 'starseer', seed: 31, runId: 'hand-presentation',
     profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.relics = [];
-  Object.assign(run.attributes, { intelligence: 8, wisdom: 2 });
+  // Keep the reference effective INT after the starting sceptre lost its two points.
+  Object.assign(run.attributes, { intelligence: 10, wisdom: 2 });
   api.rederivePools(registries, run, 'hand presentation fixture');
   const combat = api.createRunCombat({ registries, run, rng: api.createRng(31), enemyIds: ['wanderingSoldier'] });
   api.dispatch(combat, { type: 'setReactions', enabled: false });

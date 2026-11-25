@@ -2,6 +2,9 @@
 // an offensive stance entry grants exactly 1 stack; stacks lose 1 at the owner's turn start, Persistent stacks exempt.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
+import { gameDigest } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
@@ -20,7 +23,13 @@ import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-const preGearRegistries = legacyGearRegistries(reg);
+const savedGear = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url)))).gameProfile;
+const archivedSettings = structuredClone(legacyGearRegistries(reg).gameProfile);
+archivedSettings.modules.gear.statPoints = savedGear.modules.gear.statPoints;
+archivedSettings.content.gear = savedGear.content.gear;
+delete archivedSettings.hash;
+archivedSettings.hash = gameDigest(archivedSettings);
+const preGearRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, archivedSettings)), archivedSettings);
 const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 const unlocks = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 // Precision and Evasion only price the d20, so these fights carry the rules of one saved before the 2026-11-14 ruling (no hitRoll key).

@@ -48,26 +48,26 @@ const restore = combat => restoreCombatSnapshot({ registries, snapshot: JSON.par
 
 for (const saved of [false, true]) test(`Axe Strength waits for the reaction-paused Smash and grants once${saved ? ' after save/restore' : ''}`, () => {
   let combat = fixture();
-  assert.equal(strength(combat), 3);
+  const base = strength(combat);
   play(combat);
   assert.ok(combat.pendingReaction, 'the real Gilded Guard pauses the root');
   assert.equal(combat.reactionStack.entries[0].moveId, 'gildedGuard');
-  assert.equal(strength(combat), 3, 'the paused hit cannot gain its own Axe Strength');
+  assert.equal(strength(combat), base, 'the paused hit cannot gain its own Axe Strength');
   assert.deepEqual(combat.reactionRootPlay.gearStrengthGrants, [1]);
   if (saved) combat = restore(combat);
-  assert.equal(strength(combat), 3);
+  assert.equal(strength(combat), base);
   assert.deepEqual(combat.reactionRootPlay.gearStrengthGrants, [1]);
   const response = { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null };
   dispatch(combat, response);
-  assert.equal(strength(combat), 4);
+  assert.equal(strength(combat), base + 1);
   assert.deepEqual(combat.eventLog.filter(row => row.type === 'attributeChanged' && row.attribute === 'strength').map(row => row.amount), [1]);
   assert.throws(() => dispatch(combat, response), /reaction choice is unavailable/);
-  assert.equal(strength(combat), 4, 'a repeated response cannot grant again');
+  assert.equal(strength(combat), base + 1, 'a repeated response cannot grant again');
   assert.equal(combat.reactionRootPlay, undefined);
   assert.equal(combat.pendingAbilityPlay, undefined);
   assert.equal(combat.eventLog.filter(row => row.type === 'cardResolved' && row.cardInstanceId === 'smash').length, 1);
   const ownHit = combat.eventLog.find(row => row.type === 'damageDealt' && row.cardId === 'core.smash');
-  assert.equal(ownHit.damageReceipt.hits[0].sources.find(row => row.id === 'ar:0').amount, 3, 'the resumed hit uses the pre-grant Strength');
+  assert.equal(ownHit.damageReceipt.hits[0].sources.find(row => row.id === 'ar:0').amount, base, 'the resumed hit uses the pre-grant Strength');
   const control = fixture();
   control.player.itemProps.playGrants = [];
   play(control);
@@ -81,7 +81,7 @@ for (const saved of [false, true]) test(`Axe Strength waits for the reaction-pau
   const hp = target.hp;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'next', targetId: target.id });
   assert.equal(hp - combat.enemies[1].hp, quoted, 'the next live quote includes the resolved grant');
-  assert.equal(strength(combat), 5, 'each resolved card grants exactly once');
+  assert.equal(strength(combat), base + 2, 'each resolved card grants exactly once');
 });
 
 test('non-Axe reaction-paused cards do not acquire a gear Strength field', () => {
@@ -96,19 +96,20 @@ test('non-Axe reaction-paused cards do not acquire a gear Strength field', () =>
 
 for (const saved of [false, true]) test(`a card-choice pause preserves separate Strength grants until resolution${saved ? ' after save/restore' : ''}`, () => {
   let combat = fixture({ enemy: 'wanderingSoldier' });
+  const base = strength(combat);
   // Shipped choice card plus test-only matching grants exercise the same pending-play contract without inventing a new card.
   combat.piles.hand[0].cardId = 'base.exhaust-choose';
   combat.player.itemProps.playGrants = [1, 2].map(amount => ({ selector: 'any', arg: null, conds: [], grant: 'strength', amount }));
   dispatch(combat, { type: 'playCard', cardInstanceId: 'smash', targetId: combat.player.id });
   assert.ok(combat.pendingCardChoice);
-  assert.equal(strength(combat), 3);
+  assert.equal(strength(combat), base);
   assert.deepEqual(combat.pendingAbilityPlay.gearStrengthGrants, [1, 2]);
   if (saved) combat = restore(combat);
   // Only the amounts captured at play time are owned by this play; later gear state is not re-read on resume.
   combat.player.itemProps.playGrants = [];
   const response = { type: 'chooseCards', cardInstanceIds: ['answer'] };
   dispatch(combat, response);
-  assert.equal(strength(combat), 6);
+  assert.equal(strength(combat), base + 3);
   assert.equal(combat.pendingAbilityPlay, undefined);
   assert.equal(combat.pendingCardChoice, undefined);
   const changes = combat.eventLog.filter(row => row.type === 'attributeChanged' && row.attribute === 'strength');
@@ -117,5 +118,5 @@ for (const saved of [false, true]) test(`a card-choice pause preserves separate 
   const resolved = combat.eventLog.findIndex(row => row.type === 'cardResolved' && row.cardInstanceId === 'smash');
   assert.ok(combat.eventLog.indexOf(changes[0]) > resolved, 'the grants follow card resolution');
   assert.throws(() => dispatch(combat, response), /No card-zone choice/);
-  assert.equal(strength(combat), 6);
+  assert.equal(strength(combat), base + 3);
 });
