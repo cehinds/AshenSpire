@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatSpriteGeometry } from '../src/ui/components/combatSpriteGeometry.js';
 import { combatArtworkKey } from '../src/ui/models/CombatCompositionModel.js';
-import { insetPerspectiveFootprint, alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
+import { insetPerspectiveFootprint, PerspectiveFootInsetY, BackRowEnemySizes, alternativeCombatComposition, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
@@ -101,7 +101,7 @@ test('a short portrait field keeps its enemies back on the floor, clear of the p
     assert.ok(player.ground - enemy.ground >= height * .25, 'depth between the player and the enemy row');
   }
   // The perspective composition carries no camera override: the backdrop frames the back rank.
-  assert.equal(combatStandingGround(fit, actors, 0), Math.min(...fit.filter(f => f.id !== 'p').map(f => f.ground)));
+  assert.ok(fit.every(f => f.sceneryGround === undefined && f.standingGround === undefined));
 });
 
 test('a 130px field keeps short enemies readable on their distinct foot anchors', () => {
@@ -121,9 +121,11 @@ test('a 130px field keeps short enemies readable on their distinct foot anchors'
     const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
     const wanted = { ...actor.slot, ground: top + strip * (1 - grid.footInCellFraction) };
     const shadow = actor.visibleHeight * size.scale * .08;
-    // A strip too short for the shadow plus both insets stands the foot at its middle, inside both lines.
-    const expected = strip >= shadow + 2 * grid.footprintInsetPx
-      ? insetPerspectiveFootprint(wanted, { width: actor.visibleWidth * size.scale, height: shadow }).ground : top + strip / 2;
+    // Owner 2026-11-20: a short strip shrinks the vertical inset to keep the foot at footInCellFraction; only a strip
+    // shorter than the shadow itself stands the foot at its middle, inside both lines.
+    const insetY = PerspectiveFootInsetY({ cellHeight: strip, shadowHeight: shadow, inset: grid.footprintInsetPx });
+    const expected = strip >= shadow
+      ? insetPerspectiveFootprint(wanted, { width: actor.visibleWidth * size.scale, height: shadow, insetY }).ground : top + strip / 2;
     assert.equal(size.ground, expected, 'the body stays inside its drawn cell, footInCellFraction above the bottom line when the shadow fits');
   }
   assert.equal(new Set(enemies.map(size => size.ground)).size, 2, 'the two enemy ranks keep distinct foot lines');
@@ -291,4 +293,31 @@ test('no hand top, or a stale anchor the stage drops, gives no grid lift', async
   const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
   assert.match(source, /const planHandTop = planHandRect && planHand\.clientWidth > 0 \? planHandRect\.top - fieldRect\.top : null/, 'the stage reads the hand top in the same pass');
   assert.doesNotMatch(source, /layoutState\.handAnchor\?\.key === planLayoutKey/, 'no earlier pass feeds the grid lift');
+});
+
+test('a short cell shrinks the shadow inset so the foot stays footInCellFraction above its bottom line', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  const fraction = grid.footInCellFraction, inset = grid.footprintInsetPx;
+  const box = { left: 0, top: 100, width: 120, height: 25, skew: 0 };
+  const slot = { x: 60, ground: box.top + box.height * (1 - fraction), box };
+  // Owner 2026-11-20: a 25px phone cell cannot hold a 9.3px shadow plus the full inset at 35%; the inset shrinks, the foot stays.
+  const short = PerspectiveFootInsetY({ cellHeight: 25, shadowHeight: 9.3, inset });
+  assert.ok(short >= 0 && short < inset, 'the short cell gets a smaller inset');
+  assert.ok(Math.abs(insetPerspectiveFootprint(slot, { width: 40, height: 9.3, insetY: short }).ground - slot.ground) < 1e-9, 'the foot stays at the fraction');
+  // A cell too short even for the shadow at the fraction floors the inset at 0.
+  assert.equal(PerspectiveFootInsetY({ cellHeight: 25, shadowHeight: 20, inset }), 0);
+  // A tall cell keeps the full inset.
+  assert.equal(PerspectiveFootInsetY({ cellHeight: 120, shadowHeight: 9.3, inset }), inset);
+});
+
+test('a back-row enemy is drawn backRowEnemyScale of its fitted size by the layout', () => {
+  const scale = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.backRowEnemyScale;
+  assert.ok(scale > 0 && scale < 1, 'the back row is drawn smaller');
+  const sizes = [{ id: 'a', scale: 1, visibleHeight: 100 }, { id: 'b', scale: 1, visibleHeight: 100 }];
+  sizes.lastResort = 0.8;
+  const actors = [{ slot: { id: 'a' }, backRow: true }, { slot: { id: 'b' }, backRow: false }];
+  const out = BackRowEnemySizes(sizes, actors);
+  assert.equal(out, sizes, 'scaled in place, the fit\'s lastResort kept');
+  assert.equal(out.lastResort, 0.8);
+  assert.deepEqual(out.map(s => [s.scale, s.visibleHeight]), [[scale, 100 * scale], [1, 100]]);
 });

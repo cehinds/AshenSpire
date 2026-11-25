@@ -273,7 +273,9 @@
     "rarity": "common",
     "cost": 1,
     "type": "skill",
-    "keywords": [],
+    "keywords": [
+      "exhaust"
+    ],
     "icon": "motion",
     "flavor": "Retreat of the lower-river ice-cutters.\n\nThe cutters know which ice beneath the bridges holds and which only seems to, and sell the knowledge by the season. Their map is drawn inside a cutter's coat and passed down with it.\n\nIts present wearer says it has been wrong since the second winter.",
     "effects": [
@@ -304,8 +306,22 @@
         }
       }
     ],
-    "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared.",
+    "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Exhaust.",
+    "retreatRuleFaces": {
+      "legacy": {
+        "keywords": [],
+        "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared."
+      },
+      "current": {
+        "keywords": [
+          "exhaust"
+        ],
+        "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared. Exhaust."
+      }
+    },
     "upgrade": {
+      "keywords": [],
+      "textTemplate": "Gain {evade} Evade. Retreat foes. Become Prepared.",
       "effects": [
         {
           "op": "applyStatus",
@@ -2580,10 +2596,11 @@
     "type": "skill",
     "flavor": "A whetstone's last pass, done in the dark.\n\nCutpurses of the low quarter sharpened by feel, never by sight, so no lamp would mark them. The edge lasted one good night. By morning the steel was dull again and the purse was empty.\n\nA true thief owns only one stone.",
     "keywords": [
-      "ethereal"
+      "ethereal",
+      "exhaust"
     ],
     "icon": "smith",
-    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal.",
+    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal. Exhaust.",
     "faceTemplate": [
       "Gain {strength} Strength.",
       "Gain {dexterity} Dexterity."

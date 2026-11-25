@@ -28,6 +28,7 @@ import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { levelUpPlan, applyLevelUp, awardLevelXp, combatLevelXp, xpToNext as xpToNextLevel } from '../src/model/levelup.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
+import { choiceAffordable } from '../src/engine/quests.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollSkillDraftIds, rollFlaskDrop,
@@ -229,11 +230,11 @@ export function createRunLoop(REG, config) {
             run.seenEvents.push(res.eventId);
             const ev = REG.events.get(res.eventId);
             // The same door the Event screen walks: the choices the run's history
-            // allows, then the first the purse affords — and the choice is
+            // allows, then the first the run can take (choiceAffordable: purse, rankable card, relic not held) — and the choice is
             // RECORDED, so a later act's map can roll the quest step it earned
             // (E12). Without the record no gated content ever enters a sim.
             const offered = availableEventChoices(eventChoicesWithHistory(ev), run).map(({ choice: c }) => c);
-            const choice = offered.find((c) => !c.requires || (c.requires.cinders || 0) <= run.cinders) || offered[offered.length - 1];
+            const choice = offered.find((c) => choiceAffordable(c, run, REG)) || offered[offered.length - 1];
             const hpBeforeEvent = run.hp;
             run.floor = pick.floor;
             run.mapNodeId = pick.id;

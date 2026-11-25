@@ -25142,6 +25142,126 @@
         }
       ],
       "source": "content/source/cards/starseerCards.json"
+    },
+    {
+      "id": "gravebinderLament",
+      "name": "Gravebinder's Lament",
+      "type": "attack",
+      "class": "herald",
+      "code": "C176",
+      "tags": [
+        "fx:ritual",
+        "fx:blight",
+        "source:spell",
+        "delivery:melee",
+        "theme:blight",
+        "classification.attack",
+        "ritual",
+        "camp:spell",
+        "range:melee",
+        "school:decay",
+        "damage:decay",
+        "maneuver:casting",
+        "tradition:divine"
+      ],
+      "visualCues": [
+        "action:attack",
+        "element:necrotic",
+        "status:crimsonBlight"
+      ],
+      "cost": 1,
+      "mana": 0,
+      "keywords": [],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 24
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "crimsonBlight",
+          "stacks": 3
+        }
+      ],
+      "currentRecipe": "Y05",
+      "currentRoute": "layered",
+      "rule": "cast-projectile",
+      "reason": "Proposed visual rule: non-melee Casting uses a floating elemental projectile; earth adds the shared pebble. No combat range is changed.",
+      "needsReview": null,
+      "layers": [
+        {
+          "assetId": "background.5",
+          "role": "background",
+          "x": 256,
+          "y": 320,
+          "width": 512,
+          "height": 640,
+          "rotation": 0,
+          "opacity": 1,
+          "blendMode": "normal",
+          "affine": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "css": {
+            "position": "absolute",
+            "left": "50%",
+            "top": "50%",
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "contain",
+            "transformOrigin": "50% 50%",
+            "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+            "opacity": "1",
+            "mixBlendMode": "normal",
+            "pointerEvents": "none",
+            "zIndex": "0",
+            "display": "block"
+          },
+          "z": 0
+        },
+        {
+          "assetId": "Z.effect.1",
+          "role": "object",
+          "x": 256,
+          "y": 320,
+          "width": 480,
+          "height": 480,
+          "rotation": 0,
+          "opacity": 0.56,
+          "blendMode": "screen",
+          "z": 1
+        },
+        {
+          "assetId": "cue.crimsonBlight.glow",
+          "role": "status-glow",
+          "x": 256,
+          "y": 320,
+          "width": 490,
+          "height": 490,
+          "rotation": 0,
+          "opacity": 0.13,
+          "blendMode": "screen",
+          "z": 2
+        },
+        {
+          "assetId": "cue.crimsonBlight.mark",
+          "role": "status-mark",
+          "x": 256,
+          "y": 320,
+          "width": 340,
+          "height": 340,
+          "rotation": 0,
+          "opacity": 0.26,
+          "blendMode": "normal",
+          "z": 3
+        }
+      ],
+      "source": "content/source/cards/heraldCards.json"
     }
   ],
   "assets": {

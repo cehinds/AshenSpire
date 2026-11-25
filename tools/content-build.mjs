@@ -181,25 +181,30 @@ function checkWeaponRanges(rows, file) {
 }
 
 function checkSpellTraditions(data, file) {
+  const allowed = ['version', 'traditions', 'schools', 'classTraditions', 'roles', 'offensiveStatuses'];
+  if (!data || data.version !== 1 || Object.keys(data).some(key => !allowed.includes(key))) bthrow(`${file}: invalid version or unknown policy field`);
+  if (!Array.isArray(data.offensiveStatuses) || !data.offensiveStatuses.length
+    || new Set(data.offensiveStatuses).size !== data.offensiveStatuses.length
+    || data.offensiveStatuses.some(id => typeof id !== 'string' || !/^[a-z][a-zA-Z]*$/.test(id))) bthrow(`${file}: invalid offensive status list`);
   const ids = ['arcane', 'divine'];
-  if (!data || data.version !== 1 || Object.keys(data).some(key => !['version', 'traditions', 'schools'].includes(key))) {
-    bthrow(`${file}: invalid spell tradition version or field`);
-  }
   if (!data.traditions || Object.keys(data.traditions).length !== ids.length) bthrow(`${file}: expected Arcane and Divine traditions`);
   for (const id of ids) {
     const row = data.traditions[id];
-    if (!row || Object.keys(row).some(key => !['label', 'attribute'].includes(key))
-      || typeof row.label !== 'string' || !row.label.trim()
-      || !['intelligence', 'wisdom'].includes(row.attribute)) bthrow(`${file}: invalid tradition '${id}'`);
+    if (!row || Object.keys(row).some(key => !['label', 'attribute', 'offense', 'support'].includes(key))
+      || typeof row.label !== 'string' || !row.label.trim() || !['intelligence', 'wisdom'].includes(row.attribute)
+      || ![row.offense, row.support].every(value => Number.isInteger(value) && value > 0)) bthrow(`${file}: invalid tradition '${id}'`);
   }
+  if (Object.keys(data.traditions).some(id => !ids.includes(id))) bthrow(`${file}: unknown tradition`);
   if (!data.schools || typeof data.schools !== 'object' || Array.isArray(data.schools)) bthrow(`${file}: missing spell schools`);
   for (const [school, traditions] of Object.entries(data.schools)) {
     if (!Array.isArray(traditions) || !traditions.length || new Set(traditions).size !== traditions.length
       || traditions.some(id => !ids.includes(id))) bthrow(`${file}: invalid school '${school}'`);
   }
   for (const school of ['arcane', 'fire', 'earth', 'lightning', 'frost']) {
-    if (!ids.every(id => data.schools[school]?.includes(id))) bthrow(`${file}: shared school '${school}' must include both traditions`);
+    if (!ids.every(id => data.schools[school]?.includes(id))) bthrow(`${file}: shared school '${school}' must carry both traditions`);
   }
+  for (const [id, tradition] of Object.entries(data.classTraditions || {})) if (!ids.includes(tradition)) bthrow(`${file}: invalid class tradition '${id}'`);
+  for (const [id, role] of Object.entries(data.roles || {})) if (!['offense', 'support'].includes(role)) bthrow(`${file}: invalid card role '${id}'`);
 }
 
 /**
@@ -272,10 +277,10 @@ function compileDir(srcDir, outDir, { write } = {}) {
   }
   const orphans = existsSync(outDir)
     ? readdirSortedSync(outDir).filter((f) => f.endsWith('.js') && !produced.has(f)
-      // This exact output belongs to tools/game-config.mjs; its separate check
+      // combatPower.js belongs to tools/combat-power-report.mjs (npm run combat-power:check), levelLists.js to tools/level-lists.mjs (npm run level-lists:check). gameProfiles.js etc. belong to tools/game-config.mjs; its separate check
       // validates source JSON, runtime pins and freshness before the HTML bundler.
       // Do not exempt the filename in arbitrary output trees or other JS files.
-      && !(resolve(outDir) === OUT && ['gameProfiles.js', 'baseCards.js', 'fixCoreProtection.js'].includes(f)))
+      && !(resolve(outDir) === OUT && ['gameProfiles.js', 'baseCards.js', 'fixCoreProtection.js', 'combatPower.js', 'levelLists.js'].includes(f)))
     : [];
   if (existsSync(cardsOut)) {
     for (const f of readdirSortedSync(cardsOut)) {

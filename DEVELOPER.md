@@ -148,7 +148,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]`, then dispatch `dev-preview` for that commit | — | yes (push to `dev` only; not on a pull request) | — | — |
 | `pr-restamp.yml` → re-stamp: after a successful `build-stamp` on `dev`, merge `dev` into each conflicting open PR into `dev` with `tools/pr-restamp.mjs`, push that merge, dispatch its checks; or comment once when a person must merge | — | yes (after a stamp on `dev`; also dispatch) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
-| `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
+| `tests.yml` → discovered tests, six shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
 | `quick-start.yml` → Quick start input budget; ordered Core2 stages retain four 500 ms waits and half-rate sprites. `tools/click-impact-probe.mjs` reports raw latency and gates median contact/first-number overhead at 400/750 ms after declared waits, the active authored clip and receipt-derived hit-stop. Requires a real hostile contact and at least three numeric readouts; optional reactions use the real Back control. | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
@@ -585,7 +585,7 @@ The configured Core build reports an explicit skip before spawning its
 300-seed report. Manual `node tools/balance.mjs` remains available; shared
 runsim checks, report/parser contracts and simulation unit tests stay active.
 `.github/workflows/tests.yml` runs the core suite and the
-four discovered shards as Linux jobs on a pull request into `dev` and on a push
+six discovered shards as Linux jobs on a pull request into `dev` and on a push
 to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate
 fixtures (`node tools/bundle.test.mjs`, several minutes) run in `ci.yml` on a
 push to `test` (see *Which checks gate a pull request* above).
@@ -1665,7 +1665,7 @@ Shared enemy IDs, HP ranges, legacy move payloads and AI weights live in
 `games/ashenspire/packs/core/enemyCards.json` owns the referenced cards’ effects and prices.
 At registry creation, the Core profile overlays the authored closing and retreat cards and their range data.
 Each `ai` hint can reference a shared or declared range move with `legacyMove`.
-`coreOffense: "card"` takes damage and hit count from one integer damage effect on an owned card.
+`coreOffense: "card"` takes damage and hit count from one integer damage effect on an owned card. `coreBlock: "card"` (owner, 2026-11-20) takes the move's Block from one integer block effect on an owned card; a profile saved without it keeps the shared move's Block.
 `coreSp: "card"` takes its nonnegative integer stamina cost. Either opt-in works without a closing move.
 `aiWeight` is a finite nonnegative weight and `maxConsecutive` is a positive integer when supplied.
 The sheet checker names invalid hint fields and the runtime adapter checks the resolved card payload.

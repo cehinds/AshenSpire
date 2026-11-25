@@ -44,11 +44,12 @@ test('unknown rows, stale declarations and arbitrary optional paths cannot bypas
   }
 });
 
-test('real generated catalog permits its 35 optional rows and no unrelated literal', () => {
+test('real generated catalog permits its 47 optional rows and no unrelated literal', () => {
   const authored = JSON.parse(readFileSync(new URL('../content/config/ui/presentation/recipientEffects.json', import.meta.url), 'utf8'));
   const source = readFileSync(new URL('../src/config/generated/ui.js', import.meta.url), 'utf8');
   const ids = Object.values(authored.behavior.atlas).map(entry => entry.asset);
-  assert.equal(ids.length, 35);
+  assert.equal(ids.filter(id => id.includes('/v5/')).length, 35);
+  assert.equal(ids.filter(id => id.includes('/v6/')).length, 12);
   const manifest = new Set(Object.keys(JSON.parse(readFileSync(new URL('../art-manifest.json', import.meta.url), 'utf8')).assets));
   ids.forEach(id => manifest.delete(id));
   assert.deepEqual(scan(source, authored, 'src/config/generated/ui.js', manifest), []);

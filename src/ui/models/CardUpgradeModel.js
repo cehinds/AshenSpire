@@ -2,16 +2,19 @@
 // Every fact comes from planCardUpgrade, which is inert: the rolled step shown here
 // is the step commitCardUpgrade applies. Nothing here mutates the run.
 import { planCardUpgrade } from '../../model/cardUpgradeService.js';
-import { upgradeCount, upgradeStepsOf } from '../../model/cardUpgrade.js';
-import { cardRank } from '../../model/cardRank.js';
+import { upgradeCount, upgradeStepsOf, FlatSteps } from '../../model/cardUpgrade.js';
+import { RarityOfStep } from '../../model/cardUpgradeSteps.js';
+import { cardRank, OwnCardRank, VisibleCardRank } from '../../model/cardRank.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { upgradeChoiceCount, RestUpgradeRule } from '../../model/cardUpgradeLimits.js';
 import { rampParts, playsEverOf } from '../../model/cardRamp.js';
 import { staticTokens } from '../components/card.js';
 import { playingCardArtwork } from '../cardArtwork.js';
-import { t } from '../strings.js';
+import { t, has as hasString } from '../strings.js';
+import { RankLabel } from '../rankLabel.js';
 import { rankUpCandidates } from '../../model/skills.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
+import { RankUpBlock } from '../../model/rankUpService.js';
 
 const freeze = (value) => Object.freeze(value);
 // Completed cards leave the picker. A card that upgrades with its weapon stays listed, disabled, with its reason.
@@ -109,6 +112,41 @@ export function UpgradeEffectGain(registries, before, after) {
   return gained.join(', ');
 }
 
+const ELEMENT_WORD = freeze({ fire: 'Fire', frost: 'Frost', arcane: 'Arcane', sacred: 'Holy' });
+const plainAmount = (def, op) => num((def?.effects || []).find((e) => e.op === op && Number.isFinite(e.amount))?.amount);
+/**
+ * UpgradeStepLook(registries, step, before, after) -> { rarity, rarityLabel, size }: the rarity the picker colours an option by and
+ * its exact size in words ("+6 Fire damage"). The size is read off the card the step makes (after minus before), not off the step's own
+ * number, so what the picker promises is the change the card then shows (a rank-up scale included), and a combo lists each part.
+ */
+export function UpgradeStepLook(registries, step, before, after) {
+  const rarity = RarityOfStep(step);
+  const sizes = (FlatSteps([step]).map((one) => {
+    switch (one.k) {
+      case 'dmg': return t('cardUpgrade.size.damage', { n: plainAmount(after, 'damage') - plainAmount(before, 'damage') });
+      case 'blk': return t('cardUpgrade.size.block', { n: plainAmount(after, 'block') - plainAmount(before, 'block') });
+      case 'poise': return t('cardUpgrade.size.poise', { n: plainAmount(after, 'poiseDamage') - plainAmount(before, 'poiseDamage') });
+      case 'hits': return t('cardUpgrade.size.hits', { hits: one.hits, per: one.per });
+      case 'addStatus': return t('cardUpgrade.size.status', { n: one.stacks, status: statusName(registries, one.status) });
+      case 'stk': {
+        const was = statusStacks(before).get(one.status) ?? 0, now = statusStacks(after).get(one.status) ?? 0;
+        return one.side || one.op ? t('cardUpgrade.size.eases', { n: Math.abs(one.n), what: one.status ? statusName(registries, one.status) : one.op }) : t('cardUpgrade.size.stacks', { n: now - was, status: statusName(registries, one.status) });
+      }
+      case 'cost': return t(one.pool === 'mp' ? 'cardUpgrade.size.costMp' : 'cardUpgrade.size.costSp', { n: one.n || 1 });
+      case 'costSwap': return one.dir === 'mpToSp' ? '-1 MP, +2 SP' : '-2 SP, +1 MP';
+      case 'tag': {
+        if (Number.isFinite(one.packet)) return t('cardUpgrade.size.packet', { n: plainAmount(after, 'damage') - plainAmount(before, 'damage'), element: ELEMENT_WORD[one.damage] || cap(one.damage) });
+        // An identity step has one size: the value it sets ("Blunt damage", "Reach", "Cantrip").
+        if (one.damage) return t('cardUpgrade.size.damageType', { type: cap(one.damage) });
+        return one.tag ? t('cardUpgrade.size.tag', { value: cap(String(one.tag).split(':').pop().replace(/^rank\./, '')) }) : '';
+      }
+      case 'fx': return one.fx === 'block' ? t('cardUpgrade.size.block', { n: one.n }) : ['draw', 'cycle'].includes(one.fx) ? t(`cardUpgrade.size.${one.fx}`, { n: one.n }) : one.fx === 'recurring' ? 'Recurring + Exhaust' : '';
+      default: return '';
+    }
+  })).filter(Boolean);
+  return freeze({ rarity, rarityLabel: t(`cardUpgrade.rarity.${rarity}`), size: sizes.join(' + ') });
+}
+
 /** The face numbers that changed between the plan's before and after faces, as [{ label, before, after }]. */
 export function cardUpgradeChanges(registries, before, after, playsEver = 0, maxRange = undefined) {
   if (!before || !after) return [];
@@ -136,6 +174,7 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.stance'), cap(combatProfileFor(before).maneuver || 'none'), cap(combatProfileFor(after).maneuver || 'none'));
   push(t('cardUpgrade.change.school'), cap(combatProfileFor(before).school || 'none'), cap(combatProfileFor(after).school || 'none'));
   push(t('cardUpgrade.change.element'), cap(before.damageSchool || 'none'), cap(after.damageSchool || 'none'));
+  push(t('cardUpgrade.change.damageType'), cap(combatProfileFor(before).damageType || 'none'), cap(combatProfileFor(after).damageType || 'none'));
   const cantrip = (def) => t((def?.tags || []).includes('rank.cantrip') ? 'cardUpgrade.value.cantrip' : 'cardUpgrade.value.ranked');
   push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
   // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target.
@@ -144,15 +183,44 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   const gained = UpgradeEffectGain(registries, before, after);
   if (gained) out.push(freeze({ label: t('cardUpgrade.change.also'), before: '', after: gained, adds: true }));
   else if (gained === null) push(t('cardUpgrade.change.effects'), UpgradeEffectWords(registries, before), UpgradeEffectWords(registries, after));
-  const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
+  // Keywords by their shown name ("Retain", not "retain"); Reaction is not a keyword but when the card is played, so it
+  // has its own row (it is a `form` step, cardUpgradeSteps.js UPGRADE_FAMILIES).
+  const keywordName = (kw) => registries.framework?.keywordDisplay?.(kw)?.name || cap(kw);
+  const words = (def) => (def?.keywords || []).map(keywordName).sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));
+  const timing = (def) => t((def?.tags || []).includes('trait:reaction') ? 'cardUpgrade.value.reaction' : 'cardUpgrade.value.ownTurn');
+  push(t('cardUpgrade.change.timing'), timing(before), timing(after));
   // A rising cost (costGrowth) and the steady step that stops it (review of #2819: the picker named no change for it).
   const rising = (def) => (def?.costGrowth?.stamina > 0 ? t('cardUpgrade.value.risingCost', { n: def.costGrowth.stamina }) : t('cardUpgrade.value.steadyCost'));
   push(t('cardUpgrade.change.risingCost'), rising(before), rising(after));
   const from = statusStacks(before), to = statusStacks(after);
   if (statusText(registries, from) !== statusText(registries, to)) out.push(freeze({ label: t('cardUpgrade.change.status'), before: statusText(registries, from), after: statusText(registries, to) }));
+  // Every other amount an effect carries (owner, 2026-11-20: every change an option makes is on the modal): Counter
+  // stacks, Ward, Barrier, a heal, a second hit, a resource back, per op, summed like the face sums them.
+  const before2 = otherAmounts(before), after2 = otherAmounts(after);
+  for (const key of new Set([...before2.keys(), ...after2.keys()])) push(otherLabel(key), num(before2.get(key)), num(after2.get(key)));
+  if (num(before.exposureBuildupPerHit) !== num(after.exposureBuildupPerHit)) push(t('cardUpgrade.change.exposure'), num(before.exposureBuildupPerHit), num(after.exposureBuildupPerHit));
+  // Nothing above names the change, yet the card reads differently: say so rather than show a bare option.
+  if (!out.length && faceText(before) !== faceText(after)) out.push(freeze({ label: t('cardUpgrade.change.text'), before: '', after: t('cardUpgrade.change.textChanges'), adds: true }));
   return freeze(out);
 }
+
+// The effect ops the rows above already read; every other op's amount is compared by otherAmounts.
+const READ_OPS = freeze(['damage', 'block', 'poiseDamage', 'applyStatus', 'draw', 'discard', 'exhaust', 'retain', 'addCard', 'shuffleDiscardIntoDraw', 'changeAttribute', 'removeStatus', 'swapRows']);
+const amountOf = (effect) => num(effect.amount ?? effect.stacks ?? effect.count ?? effect.bands);
+/** Summed amounts of the effects no other row reads, by op (a hit on another or a random enemy is `secondHit`). */
+function otherAmounts(def) {
+  const totals = new Map();
+  for (const effect of def?.effects || []) {
+    const key = effect.op === 'damage' && (effect.target === 'randomEnemy' || effect.target === 'otherEnemy') ? 'secondHit'
+      : READ_OPS.includes(effect.op) ? '' : effect.op;
+    if (key) totals.set(key, (totals.get(key) || 0) + amountOf(effect));
+  }
+  return totals;
+}
+const otherLabel = (key) => (hasString(`cardUpgrade.op.${key}`) ? t(`cardUpgrade.op.${key}`) : key.toUpperCase());
+/** The words a face prints (its template and the fields it fills), for the last-resort "Card text changes" line. */
+const faceText = (def) => JSON.stringify([def?.textTemplate, def?.faceTemplate, def?.text, def?.description, def?.effects, def?.keywords, def?.tags, def?.costGrowth]);
 
 /** Card type, rarity and keyword words, as the face shows them. */
 const cardTags = (registries, def, rarity) => freeze([
@@ -178,7 +246,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   for (const { instance, inDeck } of owned) {
     if (!instance || !registries.cards.has(instance.cardId)) continue;
     // Blacksmith: 2 or 3 options. Rest site (owner, 2026-11-14): 1 option up to the third upgrade, then 2, some with two effects.
-    const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false } : RestUpgradeRule(instance);
+    const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith, run }), combos: false, vendor: 'blacksmith' } : RestUpgradeRule(instance);
     const plan = planCardUpgrade(run, registries, instance.instanceId, rule);
     if (HIDDEN_CODES.includes(plan.code)) continue;
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
@@ -187,7 +255,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     // The next step is rolled per instance id and does not split a row: the row shows the step of its first copy
     // (the one an upgrade is applied to) and flags `nextDiffers` when another copy would roll something else.
     const nextKey = JSON.stringify(plan.options ? plan.options.map((o) => o.step) : plan.step);
-    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), inDeck]);
+    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), VisibleCardRank(instance), inDeck]); // unranked and Rank 1 differ in slots
     if (groups.has(key)) {
       const group = groups.get(key);
       group.instanceIds.push(instance.instanceId); group.copies += 1;
@@ -208,12 +276,15 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       shortStones: priced ? priced.cost > stones : plan.code === 'stones', disabled: !ok || !!blockedReason, cost: priced ? priced.cost : plan.cost,
       costLabel: priced?.cinders > 0 ? t('cardUpgrade.cinders', { n: priced.cinders }) : costLabel(priced ? { cost: priced.cost } : plan),
       blockedReason: weaponBound ? t('cardUpgrade.row.weaponBound') : (priced ? priced.reason : plan.reason) || blockedReason,
-      chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
+      // The rank the face shows: Rank N, or Basic / Cantrip for an unranked card (owner, 2026-11-23).
+      chipLabel: t(row_upgrades(instance), { rank: RankLabel(base, VisibleCardRank(instance)), n: upgradeCount(instance) }),
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
       levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
       changes: cardUpgradeChanges(registries, plan.before, plan.after, playsEverOf(instance), run.rangePolicy?.maxRange),
+      look: plan.step ? UpgradeStepLook(registries, plan.step, plan.before, plan.after) : null,
       options: freeze((plan.options || (plan.step ? [{ step: plan.step, after: plan.after }] : [])).map((option, index) => freeze({
         index, step: option.step, after: option.after, changes: cardUpgradeChanges(registries, plan.before, option.after, playsEverOf(instance), run.rangePolicy?.maxRange),
+        look: UpgradeStepLook(registries, option.step, plan.before, option.after),
       }))),
       tags: cardTags(registries, plan.before || base, rarity),
       artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (plan.before || base).icon || 'smith',
@@ -247,7 +318,8 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
   const rows = rankUpCandidates(registries, run, skillId).map((instance) => {
     const inDeck = (run.deck || []).includes(instance);
     const base = registries.cards.get(instance.cardId);
-    const rank = cardRank(instance);
+    const rank = OwnCardRank(instance); // an unranked card reads 0 and rises to Rank 1 (owner, 2026-11-23)
+    const blocked = RankUpBlock(run, instance); // the full-upgrade rule: shown, disabled, with its reason
     const before = faceOf(instance);
     const raised = faceOf({ ...instance, rank: rank + 1 });
     const bonus = rankUpBonusOptions(registries, run, instance);
@@ -257,19 +329,19 @@ export function RankUpUpgradeModel(registries, run, skillId, selectedInstanceId 
       instanceId: instance.instanceId, instanceIds: freeze([instance.instanceId]), copies: 1, inDeck, cardId: instance.cardId,
       name: before?.name || base?.name || instance.cardId, rarity: base?.rarity || 'common', rank,
       // A lone bonus is no choice, so the picker commits the plan itself: it carries that option's step and face.
-      plan: freeze({ before, after: options[0].after, step: options[0].step }), ok: true, disabled: false, weaponBound: false, cost: 0, cinders: 0, shortStones: false,
-      costLabel: t('cardUpgrade.free'), blockedReason: '', levelFrom: rank, levelTo: rank + 1,
-      status: t('cardUpgrade.row.rankStatus', { from: rank, to: rank + 1 }),
+      plan: freeze({ before, after: options[0].after, step: options[0].step }), ok: !blocked, disabled: !!blocked, weaponBound: false, cost: 0, cinders: 0, shortStones: false,
+      costLabel: t('cardUpgrade.free'), blockedReason: blocked, levelFrom: rank, levelTo: rank + 1,
+      status: t('cardUpgrade.row.rankStatus', { from: RankLabel(base, rank), to: RankLabel(base, rank + 1) }),
       changes: options[0].changes, options: freeze(options), nextDiffers: false,
       tags: cardTags(registries, before || base, base?.rarity || 'common'),
       artAsset: playingCardArtwork({ cardId: instance.cardId }), artGlyph: (before || base)?.icon || 'skill',
     });
-  });
+  }).sort((a, b) => Number(a.disabled) - Number(b.disabled));
   rows.sort((a, b) => Number(b.inDeck) - Number(a.inDeck));
   const selected = rows.find((row) => row.instanceId === selectedInstanceId) || null;
   return freeze({
-    rows: freeze(rows), selected, stones: 0, affordable: !!selected, canConfirm: !!selected, purse: false,
-    blockedReasons: freeze([]),
+    rows: freeze(rows), selected, stones: 0, affordable: !!selected, canConfirm: !!selected && selected.ok, purse: false,
+    blockedReasons: freeze(selected && !selected.ok ? [selected.blockedReason] : []),
     faces: selected ? freeze({ before: selected.plan.before, after: selected.options[0].after }) : null,
   });
 }

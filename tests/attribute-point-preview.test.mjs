@@ -82,7 +82,7 @@ test('allocation uses benefit names without numeric badges while the model retai
     sheet.panel.querySelector('.progression-points').click();
     assert.equal(document.querySelectorAll('.cc-stat-modal .se-gain').length, 0, 'no numeric gain badges');
     const summaries = [...document.querySelectorAll('.cc-stat-modal .disc-summary')].map(node => node.textContent);
-    assert.deepEqual(summaries, ['Physical damage', 'Block', 'Health', 'Poise · Divine magic', 'Arcane magic']);
+    assert.deepEqual(summaries, ['Physical damage', 'Defense', 'Health', 'Poise · Divine magic', 'Hand size · Arcane magic']);
     assert.ok(summaries.every(text => !/\d|\b(?:AR|DR|PR|Ward)\b/.test(text)));
     sheet.close();
   });
@@ -91,7 +91,7 @@ test('allocation uses benefit names without numeric badges while the model retai
   assert.ok(cards.every(c => Array.isArray(c.gains)));
 });
 
-// Owner, 2026-11-18: Mana is 1 + floor(WIS / 4); INT no longer buys any, so a blight INT bonus moves no Mana threshold.
+// Owner, 2026-11-24: Mana is 1 + WIS; INT still buys none, so a blight INT bonus moves no Mana threshold.
 test('a blight INT bonus moves no Mana threshold, and the preview equals the allocation', () => {
   const { registries, run } = build((r) => {
     r.attributes.intelligence = 2;
@@ -124,22 +124,21 @@ test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', (
   assert.equal(predicted?.text, '+1 Energy');
 });
 
-test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4 deals one more card (5 + floor(INT / 4))', () => {
+test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4 deals one more card (3 + INT)', () => {
   const { registries, run } = build();
   run.attributes.intelligence = 3;
   const gains = attributePointGains(registries, run, 'intelligence');
   for (const id of ['draw', 'openingHand', 'handSize']) assert.equal(gains.find(g => g.statId === id)?.delta, 1, `${id} +1`);
-  assert.equal(gains.find(g => g.statId === 'draw').before, 5);
-  assert.equal(gains.find(g => g.statId === 'draw').after, 6);
+  assert.equal(gains.find(g => g.statId === 'draw').before, 6);
+  assert.equal(gains.find(g => g.statId === 'draw').after, 7);
   assert.ok(gains.some(g => g.statId === 'arcaneMagic' && g.delta === 1));
   assert.equal(largestAttributeGain(registries, run, 'intelligence').statId, 'arcaneMagic');
 });
 
-test('allocation preview and progression totals agree at threshold and nonthreshold points', () => {
+test('allocation preview and progression totals agree at consecutive points', () => {
   // Fixed current-Heavy controls: raw DEX 3->4 / 4->5 / 5->6 is effective 2->3 / 3->4 / 4->5.
-  const heavyDex = { 3: { before: 2, after: 3, stamina: 0 }, 4: { before: 3, after: 4, stamina: 1 }, 5: { before: 4, after: 5, stamina: 0 } };
+  const heavyDex = { 3: { before: 2, after: 3, stamina: 1 }, 4: { before: 3, after: 4, stamina: 1 }, 5: { before: 4, after: 5, stamina: 1 } };
   for (const attribute of ['constitution', 'wisdom', 'dexterity', 'intelligence']) {
-    const observedCadence = new Set();
     for (const beforePoints of [3, 4, 5]) {
       const { registries, run } = build(character => {
         character.attributes[attribute] = beforePoints;
@@ -148,8 +147,6 @@ test('allocation preview and progression totals agree at threshold and nonthresh
       rederivePools(registries, run, 'test');
       if (attribute === 'dexterity') assert.equal(gameProfileEffectiveAttributes(registries, run).dexterity, heavyDex[beforePoints].before);
       const effectiveBefore = gameProfileEffectiveAttributes(registries, run)[attribute];
-      const thresholdGain = Math.floor((effectiveBefore + 1) / 4) - Math.floor(effectiveBefore / 4);
-      observedCadence.add(thresholdGain);
       const predicted = new Map(attributePointGains(registries, run, attribute).map(gain => [gain.statId, gain.delta]));
       const before = { hp: run.maxHp, mana: run.maxMana, stamina: run.maxStamina, handSize: AttributeHandReceipts(registries, run).capacity.value };
       const beforeUi = progressionStats(registries, run);
@@ -160,24 +157,20 @@ test('allocation preview and progression totals agree at threshold and nonthresh
       for (const stat of Object.keys(before)) assert.equal(after[stat] - before[stat], predicted.get(stat) || 0, `${attribute} ${beforePoints}->${beforePoints + 1}: ${stat}`);
       const afterUi = progressionStats(registries, run);
       assert.equal(afterUi.rows.find(row => row.id === 'draw').value, after.handSize);
-      if (attribute === 'intelligence') assert.equal(predicted.get('handSize') || 0, beforePoints === 3 ? 1 : 0);
-      if (attribute === 'wisdom') assert.equal(predicted.get('mana') || 0, beforePoints === 3 ? 1 : 0);
-      if (attribute === 'intelligence') assert.equal(predicted.get('handSize') || 0, thresholdGain);
-      if (attribute === 'wisdom') assert.equal(predicted.get('mana') || 0, thresholdGain);
+      if (attribute === 'intelligence') assert.equal(predicted.get('handSize') || 0, 1);
+      if (attribute === 'wisdom') assert.equal(predicted.get('mana') || 0, 1);
       if (attribute === 'dexterity') {
-        assert.equal(predicted.get('stamina') || 0, thresholdGain);
         assert.equal(gameProfileEffectiveAttributes(registries, run).dexterity, heavyDex[beforePoints].after);
         assert.equal(predicted.get('stamina') || 0, heavyDex[beforePoints].stamina);
-        assert.equal(after.stamina - before.stamina, heavyDex[beforePoints].stamina, 'the real allocation crosses only the equipped fourth point');
+        assert.equal(after.stamina - before.stamina, heavyDex[beforePoints].stamina, 'the real allocation adds one with the active armour offset');
       }
       if (attribute === 'constitution') assert.equal(predicted.get('hp'), 5);
     }
-    if (attribute !== 'constitution') assert.deepEqual([...observedCadence].sort(), [0, 1], `${attribute}: exercise both a real crossing and a non-crossing with current gear`);
   }
 });
 
-test('unarmoured Dexterity keeps the raw fourth-point threshold in both preview and real allocation', () => {
-  for (const [beforePoints, expectedGain] of [[3, 1], [4, 0]]) {
+test('unarmoured Dexterity adds one Stamina per point in preview and allocation', () => {
+  for (const [beforePoints, expectedGain] of [[3, 1], [4, 1]]) {
     const { registries, run } = build(character => {
       character.loadout.sets.armor = [];
       character.attributes.dexterity = beforePoints;
@@ -215,7 +208,7 @@ test('configured hand properties appear in allocation totals and the real fight 
   const shown = AttributeHandReceipts(registries, run).capacity.value;
   assert.equal(JSON.stringify({ attributes: run.attributes, itemProps: run.itemProps, deck: run.deck }), protectedState, 'reading the hand never mutates the run');
   const live = () => profileHandSize(createRunCombat({ registries, run, rng: createRng(73), enemyIds: ['wanderingSoldier'] }));
-  assert.equal(shown, 6, 'five base cards plus the equipped hand-size property');
+  assert.equal(shown, 7, 'three base plus three Intelligence and one equipped hand-size property');
   assert.equal(shown, live());
   const predicted = attributePointGains(registries, run, 'intelligence').find(gain => gain.statId === 'handSize');
   assert.equal(predicted.before, shown);
@@ -256,6 +249,10 @@ test('a legacy run still counts Draw and Opening hand through the hand rows: cap
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 4242, classId: 'rogue', registries });
   run.combatExpansionVersion = 1;
+  const rows = run.derivedStatRuleSnapshot.rules.rules;
+  Object.assign(rows.openingHand, { base: 5, intelligence: 0.25 });
+  Object.assign(rows.draw, { base: 5, intelligence: 0.25 });
+  Object.assign(rows.handSize, { base: 7, intelligence: 0.2, attributeBaseline: 4 });
   const ids = (int) => { run.attributes.intelligence = int; return attributePointGains(registries, run, 'intelligence').map(g => g.statId); };
   // Owner, 2026-11-18: opening hand and draw are 5 + floor(INT / 4): the card arrives at INT 4, capacity (7 + 0.2 per INT over 4) does not.
   const arrives = ids(3);

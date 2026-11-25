@@ -209,7 +209,11 @@ test('expanded level and attribute writers preserve Cinder SP penalty and unboos
   const { run } = fixture(), save = manager();
   payAshenBlight({ combatExpansionVersion: 2, draw: () => .5 }, run, { amount: 25, receiptId: 'cinder', combatKey: 'prior' });
   chooseAshenBlightFeat({ combatExpansionVersion: 2 }, run, { threshold: 25, path: 'spell' });
-  awardLevelXp(registries, run, xpToNext(registries, 1));
+  for (let level = 1; level < 4; level += 1) {
+    const earned = awardLevelXp(registries, run, xpToNext(registries, level));
+    assert.equal(earned.after, level + 1);
+    assert.equal(earned.points, level === 3 ? 1 : 0);
+  }
   assert.ok(applyLevelUp(registries, run, 'constitution'));
   assert.equal(run.energyMax, run.maxStamina);
   assert.equal(run.maxStamina, run.ashenBlightBasePools.maxStamina - 1);

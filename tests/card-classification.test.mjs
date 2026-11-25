@@ -48,14 +48,20 @@ test('Sweep Reaction uses actual rank two, while Defense uses rank one', () => {
 
 test('shared card model exposes canonical identity and separate ability labels with legacy CSS hooks', () => {
   const registries = createRegistries(contentBundle);
-  for (const [id, category, subtype] of [['frostCounter', 'spell', 'Prepare'], ['crystalBarrier', 'spell', 'Prepare'], ['dodgeRoll', 'stance', 'Defense']]) {
+  for (const [id, category, subtype, label] of [['frostCounter', 'spell', 'Prepare', 'SPELL'], ['crystalBarrier', 'spell', 'Prepare', 'ARCANE'], ['dodgeRoll', 'stance', 'Defense', 'STANCE']]) {
     const def = applyCardTraits(applyCombatExpansionCard(registries.cards.get(id)));
     const model = playingCardModel(registries, { cardId: id }, { definition: def });
     assert.equal(model.type.id, category);
-    assert.equal(model.type.label, category.toUpperCase());
-    assert.equal(model.type.subtype, subtype);
+    assert.equal(model.type.label, label);
+    assert.equal(model.type.subtype, category === 'spell' ? null : subtype);
     assert.ok(playingCardClasses(model).includes('type-' + category));
     assert.ok(playingCardClasses(model).includes('type-' + def.type));
     assert.equal(model.stanceType, subtype.toLowerCase());
+    const rules = { gameProfile: { modules: { effects: { mode: 'legacy' } } } };
+    const legacy = playingCardModel(registries, { cardId: id }, { definition: def, rules });
+    assert.equal(legacy.type.id, category);
+    assert.equal(legacy.type.label, category.toUpperCase());
+    assert.equal(legacy.type.subtype, subtype, 'saved profiles retain their generic type and stance word');
+    assert.equal(legacy.stanceType, model.stanceType, 'tradition branding leaves the canonical stance unchanged');
   }
 });

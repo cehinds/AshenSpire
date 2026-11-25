@@ -25,10 +25,17 @@ test('in Defend stance an Evade card (cost 2) costs 1 for a Martial Adept', () =
   assert.equal(defensiveFamily(c.player, evade), true);
   assert.equal(stanceStaminaCost(2, c.player, evade, c), 1);
 });
-test('in Defend stance a Counter card takes the cut but the floor of 1 holds', () => {
+test('in Defend stance a Counter card takes the cut, floored at 1 SP on the player turn (owner 2026-11-23)', () => {
   const c = ctxFor('reaver', defend);
   assert.equal(stanceStaminaCost(2, c.player, counter, c), 1);
   assert.equal(stanceStaminaCost(1, c.player, counter, c), 1);
+  assert.equal(stanceStaminaCost(3, c.player, counter, c), 2);
+});
+test('a same-stance martial action on the player turn costs max(SP - 1, 1) (owner 2026-11-23)', () => {
+  const c = ctxFor('reaver', attack);
+  assert.equal(stanceStaminaCost(1, c.player, attack, c), 1);
+  assert.equal(stanceStaminaCost(2, c.player, attack, c), 1);
+  assert.equal(stanceStaminaCost(4, c.player, attack, c), 3);
 });
 test('an Evade card entering Defend stance is the Defend stance (no Evade stance exists)', () => {
   const c = ctxFor('reaver', evade);
@@ -70,7 +77,7 @@ test('physical Defend stance discounts a Ward cantrip by 1 MP for a Magic Adept;
   const r = ctxFor('reaver', ward);
   assert.equal(stanceStaminaCost(2, r.player, defend, r), 1);
 });
-test('an enemy-turn defensive reaction from a different defensive stance floors at 0', () => {
+test('a defensive reaction floors at 0 only when used as a reaction on the enemy turn; on its own turn it floors at 1 (owner 2026-11-23)', () => {
   const reaction = mk('counter', 'physical', { cardTags: ['trait:reaction'] });
   const c = ctxFor('reaver', defend, 'enemy');
   assert.equal(stanceStaminaCost(1, c.player, reaction, c), 0);

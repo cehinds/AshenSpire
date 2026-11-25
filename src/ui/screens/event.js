@@ -162,7 +162,7 @@ export function mountEvent(app, opts) {
 
     if (!affordable) {
       btn.disabled = true;
-      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: unmet === 'rankableCard' ? t('event.noRankableCard') : 'Cannot afford' }));
+      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: unmet === 'rankableCard' ? t('event.noRankableCard') : unmet === 'relicHeld' ? t('event.relicHeld') : 'Cannot afford' }));
     } else {
       // THE EVENT DOOR (engine/quests.js): effects, then the history row, then
       // the quest completion check — one writer for all three, shared with the

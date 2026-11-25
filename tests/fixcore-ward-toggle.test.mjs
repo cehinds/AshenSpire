@@ -18,6 +18,8 @@ function fixture(wardEnabled, points = 20) {
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   combat.fixCoreRules = structuredClone(fixCoreRules(combat));
   combat.fixCoreRules.ward = { enabled: wardEnabled };
+  // These tests exercise the legacy Ward on/off toggle before weaponPoiseEnabled.
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
   const target = combat.enemies[0];
   Object.assign(target, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: { ar: 0, dr: 0, pr: 0, ward: points, poise: points },
     persistentWard: { value: points, max: points }, persistentPoise: { value: points, max: points }, damageResistanceFlat: {}, damageWeaknessPercent: {} });

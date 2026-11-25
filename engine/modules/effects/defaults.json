@@ -11,6 +11,9 @@
   "enemyDamageMultiplier": 1,
   "physicalDamageMultiplier": 1,
   "blockGainMultiplier": 1,
+  "statusBlockWeight": 0,
   "spellPoiseDamageMultiplier": 1,
-  "spellTraditionsVersion": 0
+  "spellTraditionsVersion": 0,
+  "retreatRulesVersion": 0,
+  "spellRewardPolicyVersion": 0
 }

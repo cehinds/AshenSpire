@@ -17,7 +17,7 @@
       "min": 5,
       "max": 5
     },
-    "poiseMax": 17,
+    "poiseMax": 10,
     "spFloor": 2
   },
   "derived": {
@@ -73,7 +73,8 @@
       "aiWeight": 25,
       "maxConsecutive": 1,
       "costSource": "stance",
-      "legacyMove": "tailBastion"
+      "legacyMove": "tailBastion",
+      "coreBlock": "card"
     },
     "card:ashheartDragon.heartRumble": {
       "aiWeight": 15,

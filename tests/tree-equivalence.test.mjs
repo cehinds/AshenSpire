@@ -15,9 +15,8 @@
 // red by design. What must not have moved is every row that existed — and
 // this says exactly which rows those are.
 //
-// WHEN A NUMBER IS DELIBERATELY RETUNED, the property-rules fixture is
-// re-recorded in the pull request that retunes it. Regenerating it to make a
-// red go away is the one use it does not have.
+// Later authored changes are asserted explicitly against the historical
+// capture, with the commit that introduced each change.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -45,15 +44,36 @@ const REG = createRegistries(contentBundle);
 // The fixture is the pre-tree rules with one id re-pointed since: siphon's
 // mastery gate read `skill: focus`, a name no ledger holds, and names the focus
 // track `item:magic-focus` from plan phase 4a (the id is a track, not a number).
-test('every property rule resolves to exactly the numbers it had before its rule became a node', () => {
+test('every property rule resolves to its historical values or an explicit authored retune', () => {
   const pre = fixture('property-rules-pre-tree.json');
   const now = new Map(PROPERTY_RULES.map((r) => [r.tag, r]));
+  // 057fbe0905 retuned these four Strength relics and made them once per fight.
+  const gainStrength = { op: 'applyStatus', target: 'owner', status: 'strength', stacks: 1 };
+  const approvedRetunes = {
+    vowOfVengeance: {
+      triggers: [{ on: 'enemyDied', once: true, do: [gainStrength] }],
+    },
+    titansCinder: {
+      triggers: [{ on: 'hpLost', once: true, do: [gainStrength] }],
+    },
+    travelersWhetstone: {
+      triggers: [{ on: 'enemyStaggered', once: true, do: [gainStrength] }],
+    },
+    watchmansBadge: {
+      triggers: [{
+        on: 'playerTurnStart',
+        once: true,
+        if: { p: 'not', pred: { p: 'hasStatus', of: 'owner', status: 'weak' } },
+        do: [gainStrength],
+      }],
+    },
+  };
   assert.equal(pre.length, 50, 'the fixture holds the 50 rules that existed');
   for (const old of pre) {
     const rule = now.get(old.tag);
     assert.ok(rule, `rule '${old.tag}' is still derived`);
     for (const field of ['requires', 'excludes', 'textTemplate', 'passives', 'triggers']) {
-      assert.deepEqual(rule[field], old[field], `rule '${old.tag}'.${field} reads as it did — its numbers now come through variableBindings.csv and balance.js`);
+      assert.deepEqual(rule[field], approvedRetunes[old.tag]?.[field] ?? old[field], `rule '${old.tag}'.${field} matches its historical or explicitly retuned value`);
     }
   }
 });
@@ -91,6 +111,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     'camp:spell': { glyph: '✧' },
     'maneuver:casting': { glyph: '✧' },
     'trait:persistent': { domain: 'trait', label: 'Persistent', color: '9FC3E8', glyph: '◇', blurb: "Granted Precision survives the end of its owner's turn." },
+    // 15d221435d introduced Recurring as a start-of-turn card buff.
+    'trait:recurring': { domain: 'trait', label: 'Recurring', color: 'C9A227', glyph: '♻', blurb: 'Buff effects on this card recur at the start of each of your turns for the rest of combat. Usually paired with Exhaust.' },
+    dexDamage: { domain: 'card', label: 'Deft', color: '9FC3E8', glyph: '✧', blurb: 'Adds Dexterity to damage in addition to existing damage scaling.' },
     'damage:slashing': { blurb: 'Applies 1 Bleed on a Health hit unless the card already prints a Bleed effect.' },
     'damage:piercing': { blurb: 'Bypasses up to 2 Guard; bypasses melee Counter.' },
     'damage:blunt': { blurb: 'Adds 2 Poise damage once per action against each target.' },
@@ -140,8 +163,8 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   for (const old of pre.tagFamilyDomains) assert.ok(pairs.has(`${old.family}|${old.domain}`), `pairing ${old.family}×${old.domain} is derived`);
   // The additions, by name, so a stray one cannot hide among them.
   const addedDomains = TAG_DOMAINS.map((d) => d.id).filter((id) => !pre.tagDomains.some((d) => d.id === id)).sort();
-  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'range', 'scaling', 'school', 'targeting', 'trait', 'utility'],
-    'the roots that joined are the framework\'s nine plus four named tactical domains');
+  assert.deepEqual(addedDomains, ['camp', 'classification', 'cost', 'counterMode', 'damage', 'equipment', 'internal', 'lifecycle', 'maneuver', 'range', 'scaling', 'school', 'targeting', 'tradition', 'trait', 'utility'],
+    'the roots that joined are exactly the named framework, tactical and spell tradition domains');
   const addedTags = TAGS.filter((t) => !pre.tags.some((o) => o.id === t.id));
   // Plan phase 5a's property nodes: the class card's leaning and the four
   // kit relics' rules. Named, so a stray chip cannot hide among them.
@@ -174,9 +197,10 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     camp: ['camp:physical', 'camp:spell'],
     maneuver: ['maneuver:attack', 'maneuver:defend', 'maneuver:counter', 'maneuver:sweep', 'maneuver:ranged', 'maneuver:smash', 'maneuver:casting'],
     school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay', 'school:earth'], // Earth: owner decision 5, 2026-10-12
+    tradition: ['tradition:arcane', 'tradition:divine'],
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     range: ['range:melee', 'range:reach', 'range:ranged'],
-    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:persistent', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
+    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:persistent', 'trait:projectile', 'trait:reaction', 'trait:recurring', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
   };
   for (const [domain, ids] of Object.entries(TACTICAL_TAGS)) {
     assert.deepEqual(TAGS.filter(tag => tag.domain === domain).map(tag => tag.id).sort(), [...ids].sort(), `${domain} holds exactly its approved tactical identities`);
@@ -196,9 +220,10 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     assert.equal(tag.domain, 'technique');
     assert.ok(tag.label && tag.blurb && tag.glyph && tag.color, `${id} has visible presentation and an authored description`);
   }
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse', 'retreat'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
+  const CARD_TAGS = ['bow', 'finesse', 'retreat', 'pullRetreat', 'bonusPoise', 'dexDamage'];
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (CARD_TAGS.includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
     'every tag that joined is a framework node, named property, Bow, approved ability, named tactical identity or exact FixCore identity');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', 'retreat', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, ...CARD_TAGS, ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 
@@ -219,7 +244,7 @@ test('every object states exactly one kind, the one its collection and type name
   }
   // The original 513, forty cards, ten relics, fifty new class feats, and the
   // twenty existing mastery feats now participating in the kind registry.
-  assert.equal(contentBundle.classSkillFeats.length, 70);
+  assert.equal(contentBundle.classSkillFeats.length, 58, "12 crit feats removed (owner, 2026-11-20: crits and Precision are gone from Core)");
   // Plus the two enemy reaction moves (gildedGuard, bindingRiposte; docs/combat-card-traits-contract.md).
   assert.equal(contentBundle.enemyMoves.length, 237, 'the scoped enemy move collection contains all 237 authored actions');
   // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).

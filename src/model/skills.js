@@ -1,4 +1,6 @@
 import { rankUpBonusOptions } from './rankUpBonus.js';
+import { OwnCardRank } from './cardRank.js';
+import { RankUpBlock } from './rankUpService.js';
 import { upgradeStepsOf } from './cardUpgrade.js';
 import {spendAbilityDraft} from './abilityDraftReceipts.js';
 import { activateAbilitySkill } from './abilitySkillActivation.js';
@@ -298,6 +300,14 @@ export function pendingRankUpRows(registries, run) {
 }
 
 /**
+ * RankUpRowsReady(registries, run, rows) → whether any of these rank-up rows has a card the full-upgrade rule lets rise
+ * now (RankUpBlock). The after-fight door opens only then; with none ready the rank-ups stay queued for a later fight.
+ */
+export function RankUpRowsReady(registries, run, rows) {
+  return (rows || []).some((row) => rankUpCandidates(registries, run, row.skillId).some((card) => !RankUpBlock(run, card)));
+}
+
+/**
  * raiseCardRank(registries, run, skillId, instanceId, bonus?) → the instance raised by
  * one rank, spending one queued rank-up; null (and nothing written) when the
  * ledger holds none or the card is not a candidate.
@@ -309,7 +319,7 @@ export function raiseCardRank(registries, run, skillId, instanceId, bonus = null
   const row = run && run.skills && run.skills[skillId];
   if (!row || !(row.pendingRankUps > 0)) return null;
   const inst = rankUpCandidates(registries, run, skillId).find((card) => card.instanceId === instanceId);
-  if (!inst) return null;
+  if (!inst || RankUpBlock(run, inst)) return null; // the full-upgrade rule (rankUpService.js)
   const options = rankUpBonusOptions(registries, run, inst);
   let picked = null;
   if (options.length) {
@@ -317,7 +327,7 @@ export function raiseCardRank(registries, run, skillId, instanceId, bonus = null
     if (!picked) return null;
   }
   row.pendingRankUps -= 1;
-  inst.rank = (Number.isInteger(inst.rank) && inst.rank >= 1 ? inst.rank : 1) + 1;
+  inst.rank = OwnCardRank(inst) + 1; // owner 2026-11-23: an unranked card becomes Rank 1
   if (picked) { inst.upgradeSteps = [...upgradeStepsOf(inst), picked.step]; inst.upgraded = true; }
   return inst;
 }

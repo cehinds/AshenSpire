@@ -47,21 +47,25 @@ test('live: Cinder Dart reaches both enemies, each loses exactly what the quote 
   assert.ok(before.lost.e1 > played.lost.e1, 'and no x0.6');
 });
 
-test('current fire ignores max(INT, WIS) Poise, never their sum, with either casting attribute higher', () => {
+test('current Fire identifies max(INT, WIS) while an idle target uses weapon Poise, with either casting attribute higher', () => {
   for (const [attributes, ignored] of [[{ intelligence: 4, wisdom: 2 }, 4], [{ intelligence: 2, wisdom: 4 }, 4], [{ intelligence: 0, wisdom: 0 }, 0]]) {
     const { combat, enemy } = fight({ poise: 20, attributes });
     const fire = hit(combat, enemy);
     assert.equal(fire.element.poiseIgnored, ignored, JSON.stringify(attributes));
-    assert.deepEqual([fire.poiseMitigated, fire.poiseDrain, fire.hpLoss], [10, ignored, 0]);
+    assert.ok(fire.weaponPoiseDamage > 0, 'the current weapon rule supplies Poise damage');
+    assert.deepEqual([fire.poiseMitigated, fire.poiseDrain, fire.hpLoss], [0, fire.weaponPoiseDamage + ignored, 10]);
     assert.equal(enemy.persistentPoise.value, 20, 'a receipt never edits the pool');
     enemy.persistentPoise.value = 8;
     const small = hit(combat, enemy);
-    assert.deepEqual([small.poiseMitigated, small.poiseDrain, small.hpLoss], [8 - ignored, ignored, 2 + ignored], 'the higher casting stat alone determines ignored Poise; zero ignores none');
+    assert.deepEqual([small.poiseMitigated, small.poiseDrain, small.hpLoss], [0, Math.min(8, fire.weaponPoiseDamage + ignored), 10]);
   }
 });
 
 test('archived 6727 fire retains WIS + INT ignored Poise with its original damage and spell Poise scales', () => {
   const { combat, enemies } = fight({ profile: archivedProfile, enemies: 1, poise: 20, attributes: { wisdom: 2, intelligence: 4 } });
+  // The standalone profile does not carry encounter rules; a fight saved on 6727a255 did.
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
+  combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst', decayPerTurn: 1, breaksAtZeroPoise: true };
   assert.equal(combat.fixCoreRules.elements.version, 1, 'elements remain enabled');
   // The untouched archive scales player damage by 0.7: base 30 yields an integer incoming hit of 10.
   const target = enemies[0], plain = hit(combat, target, { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'poison', damageType: 'poison' }, tags: [] }, 30);

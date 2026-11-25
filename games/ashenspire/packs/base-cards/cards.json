@@ -780,11 +780,17 @@
           {
             "op": "applyStatus",
             "target": "enemy",
-            "status": "base.charm",
+            "status": "weak",
+            "stacks": 1
+          },
+          {
+            "op": "applyStatus",
+            "target": "enemy",
+            "status": "vulnerable",
             "stacks": 1
           }
         ],
-        "textTemplate": "Apply {base.charm} Charm.",
+        "textTemplate": "Apply {weak} Weak and {vulnerable} Vulnerable.",
         "icon": "skill",
         "flavor": "A courtly working carried beyond the frozen bridges.\n\nPetitioners learned to soften the attention of armed doorwardens before presenting their claims. The words lost their courtesy as the queues grew hungry. Their cadence still causes a raised weapon to hesitate before its appointed stroke.\n\nAn audience can be won without consent."
       },
@@ -1146,18 +1152,12 @@
         "keywords": [],
         "effects": [
           {
-            "op": "applyStatus",
-            "target": "self",
-            "status": "base.foresight",
-            "stacks": 3
-          },
-          {
             "op": "draw",
-            "amount": 2
+            "amount": 3
           }
         ],
-        "textTemplate": "Gain {base.foresight} Foresight and draw {draw} cards.",
-        "faceTemplate": ["Gain {base.foresight} Foresight.", "Draw {draw} cards."],
+        "textTemplate": "Draw {draw} cards.",
+        "faceTemplate": ["Draw {draw} cards."],
         "icon": "skill",
         "flavor": "An exercise of the Observatory's night students.\n\nApprentices watched a candle's reflection through a bowl of dark water before they were allowed near the lenses. The practice taught them to notice a movement before seeking its cause. Few saw farther than the next breath.\n\nThat breath was sometimes sufficient."
       },
@@ -3909,7 +3909,7 @@
         "staminaCost": 1,
         "manaCost": 0,
         "type": "skill",
-        "keywords": [],
+        "keywords": ["exhaust"],
         "effects": [
           {
             "op": "applyStatus",
@@ -3918,7 +3918,11 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "Gain {strength} Strength for this combat.",
+        "textTemplate": "Gain {strength} Strength for this combat. Exhaust.",
+        "upgrade": {
+          "keywords": [],
+          "textTemplate": "Gain {strength} Strength for this combat."
+        },
         "faceTemplate": ["Gain {strength} Strength."],
         "icon": "shield",
         "flavor": "A strengthening rite of the Bastion's stone carriers.\n\nLaborers pressed both palms against the first block before beginning the morning's lift. The gesture steadied tired arms through a day on the ridge. Their descendants found the same borrowed resolve useful beneath a weapon's weight.\n\nStone taught the hand before steel did."
@@ -4166,7 +4170,6 @@
                     "burn",
                     "venom",
                     "base.weak",
-                    "base.charm",
                     "base.bind",
                     "base.restrained",
                     "base.poison",
@@ -7116,7 +7119,7 @@
         "staminaCost": 1,
         "manaCost": 0,
         "type": "skill",
-        "keywords": [],
+        "keywords": ["exhaust"],
         "effects": [
           {
             "op": "applyStatus",
@@ -7125,7 +7128,11 @@
             "stacks": 2
           }
         ],
-        "textTemplate": "No ally gains {strength} Strength.",
+        "textTemplate": "No ally gains {strength} Strength. Exhaust.",
+        "upgrade": {
+          "keywords": [],
+          "textTemplate": "No ally gains {strength} Strength."
+        },
         "faceTemplate": ["No ally gains {strength} Strength."],
         "icon": "shield",
         "flavor": "An encouragement kept by the Bastion's shared watches.\n\nThe guards touched a companion's shoulder before exchanging places at the gate. A small working grew around the gesture, lending tired arms some of the giver's resolve. It passed between survivors long after the gate ceased to stand.\n\nThe hand is withdrawn; the steadiness remains."
@@ -7706,11 +7713,11 @@
           {
             "op": "applyStatus",
             "target": "self",
-            "status": "base.veil",
+            "status": "evade",
             "stacks": 2
           }
         ],
-        "textTemplate": "Gain Veil for {base.veil} turns. Single-target actions must pass a Perception check.",
+        "textTemplate": "Gain {evade} Evade.",
         "icon": "skill",
         "flavor": "A veiling art of the river city's hidden messengers.\n\nCouriers crossed occupied bridges by moving where a watcher's attention had just departed. A small working deepened that omission until a searching gaze passed over them. Those with a practiced eye could still find the disturbance in the crowd.\n\nA missing figure leaves an occupied space."
       },

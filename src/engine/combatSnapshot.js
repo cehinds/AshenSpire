@@ -191,6 +191,19 @@ function restoredPoolDeck(saved, fallback) {
   return saved === true || fallback === true;
 }
 
+/**
+ * A fight saved by build 0.7.4.216 can hold persistentPoise.barrierBonus (Ward/Barrier Poise) above its maximum: a stat change rebuilt the
+ * maximum without the bonus. Such a save was refused on every dispatch. Load gives the bonus back to the maximum (a fractional one is floored),
+ * so the run goes on; a healthy snapshot is untouched.
+ */
+function repairPoiseBonus(entity) {
+  const poise = entity?.persistentPoise;
+  if (!poise || typeof poise !== 'object' || poise.barrierBonus === undefined || !Number.isFinite(poise.barrierBonus)) return;
+  const bonus = Math.max(0, Math.floor(poise.barrierBonus));
+  if (bonus !== poise.barrierBonus) { if (bonus > 0) poise.barrierBonus = bonus; else delete poise.barrierBonus; }
+  if (bonus > poise.max && Number.isSafeInteger(poise.max)) poise.max += bonus;
+}
+
 export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck, expectedGameProfile = null }) {
   // A fight saved before the range rename reads melee/reach/ranged (combatRanges.js);
   // the caller's object is left as saved.
@@ -199,7 +212,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   bringStancesForward(saved);
   // Stack counts above the live cap (a cap changed since the save) load clamped, never refused.
   const enemies = Array.isArray(saved?.enemies) ? saved.enemies : [];
-  for (const entity of [saved?.player, ...enemies]) clampStackCounts(entity, saved?.fixCoreRules?.statusCaps === 'none');
+  for (const entity of [saved?.player, ...enemies]) { clampStackCounts(entity, saved?.fixCoreRules?.statusCaps === 'none'); repairPoiseBonus(entity); }
   if (saved?.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
@@ -367,11 +380,13 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   // longer does; this is the invariant itself, so no future caller can either.
   if (combat && combat.result) throw new Error(`Cannot save a combat that has already ended ('${combat.result}')`);
   const snapshot = serializeCombatSnapshot(combat);
+  const player = combat.player;
+  const permanent = player.liveStats?.base;
   if (combat.combatExpansionVersion === 2) {
     run.ashenBlight = structuredClone(combat.player.ashenBlight);
     run.ashenBlightBasePools = structuredClone(combat.player.baseResourceMaxima);
-    run.energyMax = combat.player.energyMax;
-    run.drawPerTurn = combat.player.drawPerTurn;
+    run.energyMax = permanent?.energyMax ?? player.energyMax;
+    run.drawPerTurn = permanent?.drawPerTurn ?? player.drawPerTurn;
   }
   run.loadout = structuredClone(combat.loadout);
   // Piles keep their combat lifecycle; the saved run deck only follows what
@@ -390,9 +405,9 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   }
   delete run.armamentLevels;
   for (const field of ['hp', 'mana', 'stamina']) {
-    run[field] = field === 'stamina' ? Math.min(combat.player.stamina, combat.player.maxStamina) : combat.player[field];
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
-    run[maxField] = combat.player[maxField];
+    run[maxField] = permanent?.[maxField] ?? player[maxField];
+    run[field] = permanent || field === 'stamina' ? Math.min(player[field], run[maxField]) : player[field];
   }
   run.combatEntered = { nodeId, encounterId, snapshot };
   return snapshot;

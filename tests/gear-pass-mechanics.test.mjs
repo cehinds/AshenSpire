@@ -25,15 +25,25 @@ import { ParseGearMod, GearPieceMods, GearSummary, ApplyGearCardRules, GearHitRi
 
 const { catalog, authors } = compileGameProfiles();
 const profile = resolveGameAuthor(authors.core, catalog);
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const profileContent = applyGameProfileToContent(contentBundle, profile);
+const registries = bindGameProfileRegistries(createRegistries(profileContent), profile);
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const owned = { has: () => true };
 
-function build({ right, left, armor, classId = 'reaver', player } = {}) {
-  const run = createRunState({ registries, classId, seed: 31, profileMeta: META });
-  const equip = (slot, id) => id && equipPiece(registries, run.loadout, slot, 0, id, owned, { inCombat: false, classId: run.class, attributes: run.attributes });
+// Fixture signatures exercise the same compilation and combat hooks as authored
+// pieces. The reworked equipment table no longer gives these rules to whole groups.
+function fixtureRegistries(data, mods) {
+  const withMods = piece => mods[piece.id] ? { ...piece, mods: [...piece.mods, ...mods[piece.id]] } : piece;
+  const equipment = { ...data.equipment, armaments: data.equipment.armaments.map(withMods), armour: data.equipment.armour.map(withMods) };
+  return bindGameProfileRegistries(createRegistries({ ...data, equipment }), profile);
+}
+
+function build({ right, left, armor, classId = 'reaver', player, mods } = {}) {
+  const reg = mods ? fixtureRegistries(profileContent, mods) : registries;
+  const run = createRunState({ registries: reg, classId, seed: 31, profileMeta: META });
+  const equip = (slot, id) => id && equipPiece(reg, run.loadout, slot, 0, id, owned, { inCombat: false, classId: run.class, attributes: run.attributes });
   equip('rightHand', right); equip('leftHand', left); equip('armor', armor);
-  const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'], ...(player ? { player } : {}) });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(31), enemyIds: ['wanderingSoldier'], ...(player ? { player } : {}) });
   dispatch(combat, { type: 'setReactions', enabled: false });
   primeAccuracyRolls(combat, { count: 3 });
   const enemy = combat.enemies[0];
@@ -63,11 +73,14 @@ test('mod strings parse selectors, conditions and values; unknown ones are not p
   assert.ok(ParseGearMod('self.thorns=+1'));
 });
 
-test('a type base and a piece signature add together; an armour group base carries its Thorns', () => {
+test('a type base and a piece signature add together; Thorns is a piece signature', () => {
   const sword = registries.equipment.armaments.find(piece => piece.id === 'straightSword');
-  assert.deepEqual(GearPieceMods(sword), ['attack.cardDamage=+1', 'sweep.cardDamage=+1', ...sword.mods]);
+  assert.deepEqual(GearPieceMods(sword), ['attack.cardDamage=+1', ...sword.mods]);
   const plate = registries.equipment.armour.find(piece => piece.classId === 'reaver' && piece.id === 'default');
-  assert.ok(GearPieceMods(plate).includes('self.thorns=+1'), 'the heavy body piece carries Thorns 1');
+  assert.ok(GearPieceMods(plate).includes('self.statPoise=+2'));
+  assert.ok(!GearPieceMods(plate).includes('self.thorns=+1'));
+  const shield = registries.equipment.armaments.find(piece => piece.id === 'spikedShield');
+  assert.ok(GearPieceMods(shield).includes('self.thorns=+1'));
 });
 
 test('the Sword base adds +1 to a physical attack, on the face and in the hit (preview equals play)', () => {
@@ -230,39 +243,50 @@ test('Encumbered takes 1 SP on the first turn only; the summary carries the flag
   assert.deepEqual(registries.equipment.modFields.firstTurnSp.apply, 'flag');
 });
 
-test('turn grants: a Shield gives 2 Block at the end of the turn', () => {
+test('turn grants: a Shield gives 1 Block at the end of the turn', () => {
   const world = build({ left: 'roundShield' });
-  assert.ok(world.combat.player.itemProps.turnGrants.some(grant => grant.phase === 'end' && grant.grant === 'block' && grant.amount === 2));
+  assert.ok(world.combat.player.itemProps.turnGrants.some(grant => grant.phase === 'end' && grant.grant === 'block' && grant.amount === 1));
   const start = world.combat.eventLog.length;
   dispatch(world.combat, { type: 'endTurn' });
-  assert.ok(world.combat.eventLog.slice(start).some(e => e.type === 'blockGained' && e.targetId === world.combat.player.id && e.amount === 2));
+  assert.ok(world.combat.eventLog.slice(start).some(e => e.type === 'blockGained' && e.targetId === world.combat.player.id && e.amount === 1));
 });
 
 test('the gear summary reads types, groups and signatures from data for every worn piece', () => {
   const run = createRunState({ registries, classId: 'rogue', seed: 3, profileMeta: META });
   const summary = GearSummary(registries, run.loadout, run.class);
   assert.ok(summary.statPoints.dexterity >= 1, 'a light armour group adds DEX');
-  assert.ok(summary.cardRules.some(rule => rule.stat === 'block'), 'and Block-card bonuses');
+  assert.equal(summary.flags.gainEvade, undefined, 'Light no longer grants a group Evade bonus');
+  assert.ok(!summary.cardRules.some(rule => rule.stat === 'block'), 'the default Light piece has no Block bonus');
+  const nightveil = build({ classId: 'rogue', armor: 'nightveil' });
+  assert.ok(nightveil.combat.player.itemProps.turnGrants.some(grant => grant.source === 'nightveil' && grant.status === 'evade'), 'Nightveil keeps its own Evade signature');
   assert.equal(GearModText(registries, 'sweep.cardDamage=+1'), 'Sweeps: +1 Damage');
   assert.equal(GearModText(registries, 'anyAttack@target:retreating.cardAddDex=+1'), 'Physical attacks against a Retreat-stacked target: +1 DEX to damage');
 });
 
-test('staves and sceptres grant 1 Ward and tomes 2 at the start of each turn, by the path a talisman uses', () => {
-  const wardGrant = (type, amount) => assert.ok(GEAR_TYPES.weaponTypes[type].mods.includes(`start.turnWard=+${amount}`), `${type} carries start-of-turn Ward +${amount}`);
-  wardGrant('staff', 1); wardGrant('sceptre', 1); wardGrant('talisman', 1); wardGrant('tome', 2);
-  assert.ok(GEAR_TYPES.weaponTypes.tome.mods.includes('spell@first:turn.playDraw=+1'), 'the tome keeps its first-spell draw');
-  for (const right of ['ashStaff', 'boneSceptre']) {
-    const world = build({ right, classId: 'starseer' });
-    assert.ok(world.combat.player.itemProps.turnGrants.some(grant => grant.phase === 'start' && grant.status === 'ward' && grant.amount === 1), `${right} grants Ward at the start of each turn`);
+test('tomes and talismans grant 1 Ward at the start of each turn', () => {
+  for (const type of ['staff', 'sceptre']) {
+    assert.ok(!GEAR_TYPES.weaponTypes[type].mods.some(mod => mod.startsWith('start.turnWard=')), type);
   }
-  const world = build({ right: 'ashStaff', classId: 'starseer' });
-  const before = world.combat.player.statuses.ward?.stacks || 0;
-  dispatch(world.combat, { type: 'endTurn' });
-  assert.ok((world.combat.player.statuses.ward?.stacks || 0) >= 1, `the next turn start applied Ward (had ${before})`);
+  for (const type of ['tome', 'talisman']) assert.ok(GEAR_TYPES.weaponTypes[type].mods.includes('start.turnWard=+1'), type);
+  for (const left of ['grimoire', 'boneTalisman']) {
+    const world = build({ left, classId: 'starseer' });
+    assert.ok(world.combat.player.itemProps.turnGrants?.some(grant => grant.phase === 'start' && grant.status === 'ward' && grant.amount === 1), left);
+    assert.equal(world.combat.player.statuses.ward.stacks, 1);
+    delete world.combat.player.statuses.ward;
+    dispatch(world.combat, { type: 'endTurn' });
+    assert.equal(world.combat.player.statuses.ward?.stacks, 1, 'the next turn gets its own grant');
+  }
 });
 
 // Owner, 2026-11-18 (ruling 15): always-on gear is part of the baseline face (black); a triggered effect that changes a number turns it green.
 import { cardFaceLines } from '../src/model/cardFaceText.js';
+function quietFaceFight() {
+  const world = build({ right: 'battleaxe' });
+  // A live stance rating also turns the face green. Isolate the gear trigger.
+  world.combat.stanceRules = { ...world.combat.stanceRules, offensiveRating: 0 };
+  delete world.combat.fixCoreRules.stanceBenefits;
+  return world;
+}
 const faceClasses = (world, cardId) => {
   const id = addCard(world, cardId);
   const preview = previewCard(world.combat, id, world.enemy.id);
@@ -270,23 +294,24 @@ const faceClasses = (world, cardId) => {
   return [...line.html.matchAll(/<span class="(val[^"]*)">(\d+)<\/span>/g)].map(match => `${match[1].replace('val', '').trim() || 'black'}:${match[2]}`);
 };
 test('the face baseline holds always-on gear only; a first-attack trigger turns the number green', () => {
-  const world = build({ right: 'dagger' });
+  const world = quietFaceFight();
   const rules = world.combat.player.itemProps.cardRules;
   rules.push({ selector: 'anyAttack', arg: null, conds: [{ name: 'first', arg: 'fight' }], stat: 'damage', amount: 8, mode: 'add', source: 'handCrossbow' });
-  const faceRules = previewCard(world.combat, addCard(world, 'core.strike'), world.enemy.id).faceRules;
+  const faceRules = previewCard(world.combat, addCard(world, 'core.sweep'), world.enemy.id).faceRules;
   assert.ok(faceRules.gearRules.length && faceRules.gearRules.every(rule => !GearRuleTriggered(rule)), 'triggered rules are not in the baseline');
   assert.ok(!faceRules.gearRules.some(rule => rule.source === 'handCrossbow'));
-  const lit = faceClasses(world, 'core.strike');
-  assert.ok(lit.some(entry => entry.startsWith('up')), `a first-attack bonus is a triggered effect: ${lit}`);
-  const calm = build({ right: 'dagger' });
-  assert.ok(faceClasses(calm, 'core.sweep').every(entry => entry.startsWith('black')), 'with nothing triggered the face is black');
+  const calm = faceClasses(quietFaceFight(), 'core.sweep');
+  const lit = faceClasses(world, 'core.sweep');
+  assert.match(calm[0], /^black:/, 'Sweep includes the always-on Axe bonus in its baseline');
+  assert.match(lit[0], /^up:/, 'the first-attack damage bonus is green');
+  assert.deepEqual(lit.slice(1), calm.slice(1), 'the damage rule leaves the other values unchanged');
 });
 
-// Owner, 2026-11-19: a Hammer Smash sends the target back with 1 Retreat stack only when the hit breaks its Poise.
+// A fixture signature keeps coverage of pushing on a Poise break after its removal from Hammer types.
 function hammerSmash(poise) {
-  const world = build({ right: 'warhammer' });
+  const world = build({ right: 'warhammer', mods: { warhammer: ['smash@breaks.hitRetreat=+1'] } });
   const { combat, enemy } = world;
-  assert.ok(combat.player.itemProps.hitRules.some(rule => rule.selector === 'smash' && rule.push === 1 && rule.conds.some(c => c.name === 'breaks')), 'the Hammer type carries the push on a break');
+  assert.ok(combat.player.itemProps.hitRules.some(rule => rule.selector === 'smash' && rule.push === 1 && rule.conds.some(c => c.name === 'breaks')), 'the fixture carries the push on a break');
   assert.equal(enemy.row, 'front', 'fixture: the soldier opens in the front row');
   enemy.persistentPoise = { value: poise, max: poise };
   const id = addCard(world, 'core.smash');
@@ -294,27 +319,29 @@ function hammerSmash(poise) {
   return world;
 }
 
-test('a Hammer Smash that breaks Poise sends the enemy back with 1 Retreat stack', () => {
+test('a Smash with a push-on-break signature that breaks Poise sends the enemy back with 1 Retreat stack', () => {
   const { enemy, combat } = hammerSmash(1);
   assert.ok(combat.eventLog.some(e => e.type === 'poiseBroken' && e.targetId === enemy.id), 'fixture: the Smash broke Poise');
   assert.equal(enemy.statuses.retreat?.stacks, 1, 'one Retreat stack');
   assert.equal(enemy.row, 'back', 'in the back row');
 });
 
-test('a Hammer Smash that leaves Poise standing sends nothing back', () => {
+test('a Smash with a push-on-break signature that leaves Poise standing sends nothing back', () => {
   const { enemy, combat } = hammerSmash(900);
   assert.ok(!combat.eventLog.some(e => e.type === 'poiseBroken' && e.targetId === enemy.id), 'fixture: no break');
   assert.equal(enemy.statuses.retreat?.stacks || 0, 0, 'no Retreat stack');
   assert.equal(enemy.row, 'front', 'still in the front row');
 });
 
-// Owner, 2026-11-18: Medium and Light armour. Every Counter (or Evade) gain gives +1 more stack; ending your turn in Counter (or Defend) stance while
-// holding at least 1 of them gives +1. Holding none gives nothing from the end-of-turn part.
+// The fixture grants one extra stack per positive gain, and an end grant
+// only while in the matching stance and holding at least one stack.
+const counterGearMods = { vigil: ['self.gainCounter=+1', 'end@stance:counter@holding:counter.turnCounter=+1'] };
+const evadeGearMods = { huntersHide: ['self.gainEvade=+1', 'end@stance:defend@holding:evade.turnEvade=+1'] };
 const counterGains = (world, from) => world.combat.eventLog.slice(from).filter(e => e.type === 'counterStacksChanged' && e.targetId === world.combat.player.id).map(e => e.amount);
 const evadeGains = (world, from) => world.combat.eventLog.slice(from).filter(e => e.type === 'statusApplied' && e.status === 'evade' && e.targetId === world.combat.player.id);
 
-test('Medium mail: 3 Counter, ending the turn in Counter stance, gives 1 more', () => {
-  const world = build({ armor: 'vigil' });
+test('Counter gear: 3 Counter, ending the turn in Counter stance, gives 1 more', () => {
+  const world = build({ armor: 'vigil', mods: counterGearMods });
   assert.ok(world.combat.player.itemProps.turnGrants.some(grant => grant.phase === 'end' && grant.grant === 'counter'));
   world.combat.player.counterStacks = 3;
   world.combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
@@ -323,8 +350,8 @@ test('Medium mail: 3 Counter, ending the turn in Counter stance, gives 1 more', 
   assert.deepEqual(counterGains(world, from).slice(0, 1), [1], 'exactly +1, the end grant takes no gain bonus');
 });
 
-test('Medium mail: a card granting 2 Counter gives 3', () => {
-  const world = build({ armor: 'vigil' });
+test('Counter gear: a card granting 2 Counter gives 3', () => {
+  const world = build({ armor: 'vigil', mods: counterGearMods });
   const { combat } = world;
   combat.player.counterStacks = 0;
   combat.enqueue({ effect: { op: 'gainCounterStacks', target: 'self', amount: 2 }, source: combat.player, owner: combat.player, target: combat.player });
@@ -332,8 +359,8 @@ test('Medium mail: a card granting 2 Counter gives 3', () => {
   assert.equal(combat.player.counterStacks, 3);
 });
 
-test('Medium mail: holding no Counter gives nothing at the end of the turn', () => {
-  const world = build({ armor: 'vigil' });
+test('Counter gear: holding no Counter gives nothing at the end of the turn', () => {
+  const world = build({ armor: 'vigil', mods: counterGearMods });
   world.combat.player.counterStacks = 0;
   world.combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   const from = world.combat.eventLog.length;
@@ -341,8 +368,8 @@ test('Medium mail: holding no Counter gives nothing at the end of the turn', () 
   assert.deepEqual(counterGains(world, from).slice(0, 1).filter(amount => amount > 0), []);
 });
 
-test('Light leathers: 2 Evade, ending the turn in Defend stance, gives 1 more; with none held, nothing', () => {
-  const world = build({ classId: 'rogue', armor: 'nightveil' });
+test('Evade gear: 2 Evade, ending the turn in Defend stance, gives 1 more; with none held, nothing', () => {
+  const world = build({ classId: 'rogue', armor: 'huntersHide', mods: evadeGearMods });
   assert.ok(world.combat.player.itemProps.gainBonus.evade === 1);
   applyStatus(world.combat, world.combat.player, 'evade', 2, world.combat.player);
   world.combat.player.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
@@ -350,7 +377,7 @@ test('Light leathers: 2 Evade, ending the turn in Defend stance, gives 1 more; w
   dispatch(world.combat, { type: 'endTurn' });
   const gains = evadeGains(world, from);
   assert.ok(gains.length >= 1 && gains[0].stacks === 1, `exactly +1: ${JSON.stringify(gains.map(e => e.stacks))}`);
-  const none = build({ classId: 'rogue', armor: 'nightveil' });
+  const none = build({ classId: 'rogue', armor: 'huntersHide', mods: evadeGearMods });
   none.combat.player.statuses = {};
   none.combat.player.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
   const start = none.combat.eventLog.length;
@@ -358,8 +385,8 @@ test('Light leathers: 2 Evade, ending the turn in Defend stance, gives 1 more; w
   assert.equal(evadeGains(none, start).length, 0);
 });
 
-test('Light leathers: a card granting 2 Evade gives 3', () => {
-  const world = build({ classId: 'rogue', armor: 'nightveil' });
+test('Evade gear: a card granting 2 Evade gives 3', () => {
+  const world = build({ classId: 'rogue', armor: 'huntersHide', mods: evadeGearMods });
   world.combat.player.statuses = {};
   world.combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: 'evade', stacks: 2 }, source: world.combat.player, owner: world.combat.player, target: world.combat.player });
   dispatch(world.combat, { type: 'playCard', cardInstanceId: addCard(world, 'core.defend'), targetId: undefined });
@@ -367,7 +394,7 @@ test('Light leathers: a card granting 2 Evade gives 3', () => {
 });
 
 test('Stone Skin is spent hit by hit: Pierce 1, three hits, Stone Skin 2 leaves the third hit piercing for 1', () => {
-  const world = build({ right: 'halberd' });
+  const world = build({ right: 'halberd', mods: { halberd: ['anyAttack.cardPierce=+1'] } });
   const { combat, enemy } = world;
   applyStatus(combat, combat.player, 'multiHit', 2, combat.player);
   enemy.block = 30;
@@ -381,10 +408,11 @@ test('Stone Skin is spent hit by hit: Pierce 1, three hits, Stone Skin 2 leaves 
   assert.equal(enemy.statuses.stoneHide?.stacks || 0, 0);
 });
 
-test('the Axe STR arrives after the card resolves: the second Strike quotes what it deals', () => {
-  const world = build({ right: 'battleaxe' });
+test('a played-card STR signature applies after the hit and the next Strike quotes it', () => {
+  const world = build({ right: 'battleaxe', mods: { battleaxe: ['anyAttack.playStrength=+1'] } });
   const first = quoteAndPlay(world, 'core.strike');
   assert.equal(first.quote, first.dealt);
+  assert.equal(world.combat.player.liveStats.turnBoosts.strength, 1, 'the first play actually granted STR');
   const second = quoteAndPlay(world, 'core.strike');
   assert.equal(second.quote, second.dealt, 'preview equals play on the second Strike');
   assert.ok(second.dealt >= first.dealt, 'the first Strike STR is in the second');
@@ -403,34 +431,35 @@ test('Escalating raises the card cost by 1 SP each time it is played', () => {
   assert.equal(resolveCombatCard(world.combat, played).staminaCost, before + 1);
 });
 
-test('a Bow Reach stack is granted at the start of the turn, so it is live for the attack that follows', () => {
-  const world = build({ right: 'shortbow' });
+test('the Waywatcher Coat Reach stack is granted at the start of the turn, so it is live for the attack that follows', () => {
+  const world = build({ classId: 'rogue', armor: 'waywatcher' });
   assert.ok(world.combat.player.itemProps.turnGrants.some(grant => grant.phase === 'start' && grant.status === 'reach'));
   assert.equal(world.combat.player.statuses.reach?.stacks, 1, 'the stack is there at turn 1');
 });
 
-test('the unarmoured type gives +1 max MP and a specific robe adds its own on top, uncapped', () => {
-  assert.ok(GEAR_TYPES.armourGroups.unarmoured.mods.includes('self.maxMana=+1'));
-  const plain = build({ classId: 'starseer' }).run;
-  assert.equal(runMods(registries, plain.loadout, plain.class).maxMana, 1, 'a plain robe: the type base');
-  const nightweave = build({ classId: 'starseer', armor: 'nightweave' }).run;
-  assert.equal(runMods(registries, nightweave.loadout, nightweave.class).maxMana, 2, 'Nightweave: the type base plus its own +1');
+test('a mana signature adds a flat bonus unless the piece already feeds Mana', () => {
+  const maxManaBonus = ({ combat, run }) => runMods(combat.registries, run.loadout, run.class, run).maxMana;
+  const robes = { classId: 'starseer' };
+  assert.equal(maxManaBonus(build(robes)), 0, 'ordinary robes have no flat mana bonus');
+  const signature = ['self.maxMana=+1'];
+  assert.equal(maxManaBonus(build({ ...robes, right: 'straightSword', mods: { straightSword: signature } })), 1, 'the piece has no Mana feeder');
+  assert.equal(maxManaBonus(build({ ...robes, armor: 'nightweave', mods: { nightweave: signature } })), 0, 'resolved Wisdom already feeds Mana');
 });
 
-// Owner, 2026-11-19: the Bow's end-of-turn Retreat is a floor of 1 stack, and only while in Defend stance.
-function bowEnd({ stacks, stance }) {
-  const world = build({ right: 'shortbow' });
+// An end-of-turn Retreat signature floors the stack count at one in Defend.
+function retreatAtTurnEnd({ stacks, stance }) {
+  const world = build({ right: 'shortbow', mods: { shortbow: ['end@stance:defend.turnRetreat=+1'] } });
   const { combat } = world;
-  assert.ok(combat.player.itemProps.turnGrants.some(grant => grant.phase === 'end' && grant.grant === 'retreat' && grant.conds.some(c => c.name === 'stance' && c.arg === 'defend')), 'the Bow grant is Defend-gated');
+  assert.ok(combat.player.itemProps.turnGrants.some(grant => grant.phase === 'end' && grant.grant === 'retreat' && grant.conds.some(c => c.name === 'stance' && c.arg === 'defend')), 'the fixture grant is Defend-gated');
   if (stacks) combat.player.statuses.retreat = { stacks };
   combat.player.combatStance = { maneuver: stance, camp: 'physical', range: 'melee' };
   dispatch(combat, { type: 'endTurn' });
   return combat.player.statuses.retreat?.stacks || 0;
 }
-test('Bow end of turn in Defend: 0 Retreat stacks becomes 1', () => assert.equal(bowEnd({ stacks: 0, stance: 'defend' }), 1));
-test('Bow end of turn in Defend: 1 Retreat stack stays 1, no extra stack', () => assert.equal(bowEnd({ stacks: 1, stance: 'defend' }), 1));
-test('Bow end of turn in Defend: 2 Retreat stacks stay 2', () => assert.equal(bowEnd({ stacks: 2, stance: 'defend' }), 2));
-test('Bow end of turn outside Defend gives no Retreat stack', () => assert.equal(bowEnd({ stacks: 0, stance: 'counter' }), 0));
+test('Retreat signature in Defend: 0 Retreat stacks becomes 1', () => assert.equal(retreatAtTurnEnd({ stacks: 0, stance: 'defend' }), 1));
+test('Retreat signature in Defend: 1 Retreat stack stays 1, no extra stack', () => assert.equal(retreatAtTurnEnd({ stacks: 1, stance: 'defend' }), 1));
+test('Retreat signature in Defend: 2 Retreat stacks stay 2', () => assert.equal(retreatAtTurnEnd({ stacks: 2, stance: 'defend' }), 2));
+test('Retreat signature outside Defend gives no Retreat stack', () => assert.equal(retreatAtTurnEnd({ stacks: 0, stance: 'counter' }), 0));
 
 for (const intent of ['swapArmament', 'changeEquipment']) {
   test(`${intent} refreshes gear effects, removes the old type, and survives a snapshot`, () => {
@@ -448,7 +477,7 @@ for (const intent of ['swapArmament', 'changeEquipment']) {
     assert.equal(combat.player.itemProps.mainWeaponType, 'bow');
     assert.ok(!combat.player.itemProps.cardRules.some(row => row.stat === 'addStr'));
     assert.ok(combat.player.itemProps.cardRules.some(row => row.stat === 'reach'));
-    assert.ok(combat.player.itemProps.turnGrants.some(row => row.grant === 'retreat'));
+    assert.ok(!combat.player.itemProps.turnGrants?.some(row => row.grant === 'retreat'));
     assert.equal(combat.player.itemProps.testRelic, 7);
     assert.equal(combat.player.counters.spellsPlayedThisTurn, 2);
     const restored = restoreCombatSnapshot({ registries: combat.registries, snapshot: serializeCombatSnapshot(combat), rng: createRng(31), expectedGameProfile: combat.gameProfile });
@@ -466,15 +495,15 @@ test('a gear Reach grant preserves a root range:ranged tag or combat profile', (
   }
 });
 
-test('current Light armour Evade gain is included once in the pure preview and the live grant', () => {
-  const { combat } = build({ classId: 'rogue', right: 'dagger' });
+test('a gear Evade bonus is included once in the pure preview and the live grant', () => {
+  const { combat } = build({ classId: 'rogue', right: 'dagger', armor: 'huntersHide', mods: evadeGearMods });
   assert.equal(combat.player.itemProps.gainBonus.evade, 1);
   const id = 'gear-light-shadowstep';
   combat.piles.hand.push({ instanceId: id, cardId: 'shadowstep' });
   combat.player.stamina = 20;
   const before = combat.player.statuses.evade?.stacks || 0, counters = combat.rng.getCounters();
   const shown = previewCard(combat, id).values.find(row => row.status === 'evade').value;
-  assert.equal(shown, 3, 'Shadowstep base 2 plus the worn Light armour bonus');
+  assert.equal(shown, 3, 'Shadowstep base 2 plus the gear gain bonus');
   assert.equal(combat.player.statuses.evade?.stacks || 0, before);
   assert.deepEqual(combat.rng.getCounters(), counters);
   dispatch(combat, { type: 'playCard', cardInstanceId: id });
@@ -482,8 +511,8 @@ test('current Light armour Evade gain is included once in the pure preview and t
 });
 
 
-test('current Medium armour Counter forecast matches the played card and exchange', () => {
-  const { combat, enemy } = build({ armor: 'vigil' });
+test('the Counter forecast with gain and turn-end gear matches the played card and exchange', () => {
+  const { combat, enemy } = build({ armor: 'vigil', mods: counterGearMods });
   combat.player.counterStacks = 4;
   combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
   enemy.intentRevealed = true;
@@ -499,7 +528,7 @@ test('current Medium armour Counter forecast matches the played card and exchang
   assert.equal(combat.player.counterStacks, before);
   assert.deepEqual(combat.rng.getCounters(), counters);
   dispatch(combat, { type: 'playCard', cardInstanceId: id });
-  assert.equal(combat.player.counterStacks, 6, 'card grant 1 plus Medium gain bonus 1');
+  assert.equal(combat.player.counterStacks, 6, 'card grant 1 plus gear gain bonus 1');
   const from = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
   const actual = combat.eventLog.slice(from).find(e => e.type === 'combatCounterTriggered');
@@ -509,8 +538,8 @@ test('current Medium armour Counter forecast matches the played card and exchang
 });
 
 
-test('a current Medium Counter reaction forecast adds the card gain but no intervening turn-end grant', () => {
-  const { combat, enemy } = build({ armor: 'vigil' });
+test('a Counter reaction forecast with gear adds the card gain but no intervening turn-end grant', () => {
+  const { combat, enemy } = build({ armor: 'vigil', mods: counterGearMods });
   combat.phase = 'enemy';
   combat.player.counterStacks = 3;
   combat.player.stamina = 30;
@@ -521,13 +550,13 @@ test('a current Medium Counter reaction forecast adds the card gain but no inter
   combat.piles.hand.push({ instanceId: 'medium-reaction', cardId: 'core.counter' });
   const forecast = previewCard(combat, 'medium-reaction').counterReturn;
   assert.ok(forecast?.hp > 0);
-  assert.equal(forecast.hp, 2 + Math.floor(forecast.incoming * 0.1 * 5), '3 held plus card 1 and Medium 1, no end grant');
+  assert.equal(forecast.hp, 2 + Math.floor(forecast.incoming * 0.1 * 5), '3 held plus card 1 and gear 1, no end grant');
   assert.equal(combat.player.counterStacks, 3);
 });
 
 
-test('current Medium spell Counter forecast keeps Prepared and gives no Counter stance end grant', () => {
-  const { combat, enemy } = build({ armor: 'vigil' });
+test('a spell Counter forecast with gear keeps Prepared and gives no Counter stance end grant', () => {
+  const { combat, enemy } = build({ armor: 'vigil', mods: counterGearMods });
   combat.player.counterStacks = 4;
   combat.player.basePrecisionBonus = enemy.basePrecisionBonus = 1000;
   enemy.intentRevealed = true;
@@ -544,7 +573,7 @@ test('current Medium spell Counter forecast keeps Prepared and gives no Counter 
   assert.equal(combat.player.counterStacks, before);
   assert.deepEqual(combat.rng.getCounters(), counters);
   dispatch(combat, { type: 'playCard', cardInstanceId: id });
-  assert.equal(combat.player.counterStacks, 6, 'card grant 1 plus Medium gain bonus 1');
+  assert.equal(combat.player.counterStacks, 6, 'card grant 1 plus gear gain bonus 1');
   const from = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
   const actual = combat.eventLog.slice(from).find(e => e.type === 'combatCounterTriggered');
@@ -579,17 +608,18 @@ test('dual Focus shares its built-in discount while robe and piece signatures re
 });
 
 
-test('current Light armour leaves a valid zero Evade grant at zero in repeated previews and live play', () => {
+test('an Evade-gain gear signature leaves a valid zero Evade grant at zero in repeated previews and live play', () => {
   const zero = { op: 'applyStatus', target: 'self', status: 'evade', stacks: 0 };
   const problems = [];
   validateEffects([zero], 'zeroEvade', { err: (path, message) => problems.push({ path, message }), ids: { statuses: new Set(['evade']) } });
   assert.deepEqual(problems, [], 'the authored effect grammar accepts zero stacks');
-  const data = applyGameProfileToContent(contentBundle, profile);
+  const data = profileContent;
   assert.ok(data.cards.some(card => card.id === 'shadowstep'));
-  const zeroRegistries = bindGameProfileRegistries(createRegistries({ ...data, cards: data.cards.map(card => card.id === 'shadowstep' ? { ...card, effects: card.effects.map(effect => effect.op === 'applyStatus' && effect.status === 'evade' ? zero : effect) } : card) }), profile);
+  const zeroRegistries = fixtureRegistries({ ...data, cards: data.cards.map(card => card.id === 'shadowstep' ? { ...card, effects: card.effects.map(effect => effect.op === 'applyStatus' && effect.status === 'evade' ? zero : effect) } : card) }, { huntersHide: ['self.gainEvade=+1'] });
   const run = createRunState({ registries: zeroRegistries, classId: 'rogue', seed: 31, profileMeta: META });
+  equipPiece(zeroRegistries, run.loadout, 'armor', 0, 'huntersHide', owned, { inCombat: false, classId: run.class, attributes: run.attributes });
   const combat = createRunCombat({ registries: zeroRegistries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
-  assert.equal(combat.player.itemProps.gainBonus.evade, 1, 'current Light armour remains enabled');
+  assert.equal(combat.player.itemProps.gainBonus.evade, 1, 'the fixture Evade bonus is enabled');
   combat.piles.hand.push({ instanceId: 'zero-evade', cardId: 'shadowstep', upgraded: false });
   combat.player.stamina = 20;
   const before = structuredClone(combat.player.statuses), counters = combat.rng.getCounters();

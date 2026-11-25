@@ -13,7 +13,7 @@ export function resolveCombatCard(ctx, instance, { upcastTier, upcastRanks, appl
     const projected = projectGameCard(ctx, instance);
     if (projected) return projectCardBehavior(ctx,instance,projected,{applyGear});
   }
-  const def = resolveCard(ctx.registries, instance, ctx.breakMeterVersion || 0);
+  const def = resolveCard(ctx.registries, instance, ctx.breakMeterVersion || 0, ctx);
   if (ctx.combatExpansionVersion !== 2) {
     if (upcastTier || upcastRanks) throw new Error('Upcasting requires the expanded combat rules');
     if (def.minCombatExpansionVersion > 1) throw new Error('This card requires the expanded combat rules');

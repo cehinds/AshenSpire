@@ -22,8 +22,11 @@ test('magicShareOf: a school:force spell is all physical at any reach, by profil
   assert.equal(magicShareOf({ camp: 'spell', damageType: 'arcane' }), 0.5, 'an unschooled Arcane spell keeps its 50% split');
 });
 
-test('a Force spell meets Block first, then Poise, then HP: Ward is never touched', () => {
+test('under the historical split a Force spell meets Block first, then Poise, then HP: magic-only Ward is never touched', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 40 });
+  // b0f8f0606d3: archived Force split and magic-only Ward, before the HP buffer.
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+  combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst' };
   enemy.persistentWard = { value: 5, max: 5 };
   enemy.block = 4;
   const hand = combat.piles.hand[0];

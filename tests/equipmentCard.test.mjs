@@ -13,42 +13,35 @@ import { core2Registries } from './helpers/core2.mjs';
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 const r = createRegistries(contentBundle);
 
-test('current Staff inspector shows Ward, Prepared Focus and its signature beside configured stats', () => {
+test('current Staff inspector shows Prepared Focus beside configured stats', () => {
   const current = core2Registries(), piece = current.equipment.armaments.find(p => p.id === 'ashStaff');
   const m = equipmentCardModel(current, piece), labels = m.bonuses.map(b => b.label);
-  assert.ok(labels.includes('Start of turn: +1 Ward'));
   assert.ok(labels.includes('Spells in Prepared stance: -1 MP cost'));
-  assert.ok(labels.includes('Power: +2 Potency'));
   assert.ok(m.facts.some(f => f.label === 'intelligence' && f.value === 1), 'configured attribute receipt remains');
   assert.ok(!m.typeExplanation.includes('every spell'), 'classification copy must not claim unconditional Focus');
   assert.ok(m.bonuses.every(b => !b.value.includes('=') && !b.label.includes('@')), 'no raw modifier strings');
 });
 
-test('current Hammer inspector shows on-hit Vulnerable and Poise-break Retreat with its signature', () => {
+test('current Hammer inspector shows Smash Poise damage with its signature Vulnerable trait', () => {
   const current = core2Registries(), piece = current.equipment.armaments.find(p => p.id === 'warhammer');
   const labels = equipmentCardModel(current, piece).bonuses.map(b => b.label);
-  assert.ok(labels.includes('Physical attacks: +1 Poise damage'));
+  assert.ok(labels.includes('Smashes: +1 Poise damage'));
   assert.ok(labels.includes('Smashes: apply 1 Vulnerable'));
-  assert.ok(labels.includes('Smashes that break Poise: +1 Retreat on hit'));
-  assert.ok(labels.includes('Strike: +6 Poise'));
 });
 
-test('current Heavy inspector keeps configured stats and adds group Poise, Thorns and signature rules once', () => {
+test('current Heavy inspector keeps configured stats and adds group Poise bonus once', () => {
   const current = core2Registries(), piece = current.equipment.armour.find(p => p.id === 'wayfarerPlate' && p.classId === 'reaver');
   const m = equipmentCardModel(current, piece), labels = m.bonuses.map(b => b.label);
   assert.ok(labels.includes('6 Poise. Gain 1 Constitution.'));
   assert.equal(labels.filter(label => label === '+2 Poise').length, 1);
-  assert.equal(labels.filter(label => label === '+1 Thorns').length, 1);
-  assert.ok(labels.includes('Defend cards: +2 Block'));
-  assert.ok(labels.includes('+4 Max HP'), 'signature pool remains when configured item supplies none');
   assert.equal(m.facts.find(f => f.label === 'Poise').value, 6, 'group bonus is additional to the configured item receipt');
 });
 
-test('Light and Medium inspector conditions name the held status', () => {
+test('Light and Medium signature conditions name the stance', () => {
   const current = core2Registries();
-  for (const [id, stance, status] of [['gutterLeathers', 'Defend', 'Evade'], ['vigil', 'Counter', 'Counter']]) {
+  for (const [id, stance, status] of [['nightveil', 'Defend', 'Evade'], ['duelist', 'Counter', 'Counter']]) {
     const piece = current.equipment.armour.find(p => p.id === id);
-    assert.ok(equipmentCardModel(current, piece).bonuses.some(b => b.label === `End of turn in ${stance} stance, while holding ${status}: +1 ${status}`));
+    assert.ok(equipmentCardModel(current, piece).bonuses.some(b => b.label === `End of turn in ${stance} stance: +1 ${status}`));
   }
 });
 
@@ -105,6 +98,17 @@ test('a card with no tag badges gives the tag row to the effect row, never to th
   assert.equal(bare.heights.art, full.heights.art);
   assert.ok(bare.heights.effects > full.heights.effects);
   assert.ok(Object.values(bare.heights).reduce((sum, height) => sum + height, 0) <= bare.budget + 1e-9);
+});
+
+test('compact horizontal fact lines and omitted empty regions return vertical room to effects', () => {
+  const full = equipmentCardTokens();
+  const compact = equipmentCardTokens(undefined, { omit: ['tags'], regionMinPx: { facts: 20 } });
+  const noFacts = equipmentCardTokens(undefined, { omit: ['facts', 'tags'] });
+  assert.equal(compact.heights.facts, 20);
+  assert.equal(compact.heights.tags, undefined);
+  assert.ok(compact.heights.effects > full.heights.effects + 30);
+  assert.equal(noFacts.heights.facts, undefined);
+  assert.ok(noFacts.heights.effects > compact.heights.effects + 20);
 });
 
 // THE READING DOOR'S LEVEL IS NOT THE CALLER'S TO SET (Copilot review, #1127).

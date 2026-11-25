@@ -33,7 +33,7 @@ const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0',
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
-const FIGHTS = 152;
+const FIGHTS = 208;
 const POOL = reg.encounters.all().filter(row => ['normal', 'elite'].includes(row.pool)).map(row => row.enemies);
 
 function fightFor(classId, seed, enemyIds = null, { weaknesses = true } = {}) {
@@ -106,6 +106,12 @@ function playChecked(combat, card, targetId, tally, label) {
     const weaknessStaggered = new Set();
     for (const event of cut >= 0 ? events.slice(0, cut) : events) {
       if (event.type === 'enemyStaggered' && event.cause === 'weakness') weaknessStaggered.add(event.targetId);
+      // Divine's Poise-break Smite belongs to the preceding contact. The quote
+      // includes this direct HP rider, emitted separately from damageDealt.
+      if (event.type === 'elementSmite' && event.sourceId === 'player') {
+        const hits = dealt.get(event.targetId);
+        if (hits?.length) hits[hits.length - 1] += event.amount;
+      }
       if (event.type !== 'damageDealt' || event.sourceId !== 'player' || event.cardInstanceId !== card.instanceId || !event.isAttack) continue;
       if (weaknessStaggered.has(event.targetId)) continue;
       (dealt.get(event.targetId) || dealt.set(event.targetId, []).get(event.targetId)).push(event.hpLoss);
@@ -211,7 +217,7 @@ function forecastBeforeTurn(combat) {
     if (enemy.intent?.kind !== 'attack' || enemy.intent.damage == null) continue;
     const projection = projectCombatIntent(combat, enemy.id);
     const shown = projection?.projectedDamage;
-    if (shown && shown.basis === 'hp' && shown.min === shown.max) out.set(enemy.id, {
+    if (shown && shown.basis === 'hp' && Number.isFinite(shown.max) && shown.min === shown.max) out.set(enemy.id, {
       moveId: enemy.intent.moveId, shown: shown.max, hits: projection.hitDamages, playerHp: combat.player.hp,
     });
   }
@@ -249,12 +255,14 @@ function checkForecast(forecast, events, tally, label) {
   }
 }
 
-function playFight(classId, seed, tally) {
+function playFight(classId, seed, tally, takeReactions = Math.floor(seed / CLASSES.length) % 4 === 1) {
   const combat = fightFor(classId, seed);
   const label = `${classId} seed ${seed}`;
-  const takeReactions = seed % 2 === 1;
+  // Take reactions across each class, with more turns left for unassisted pre-turn intent checks.
   for (let turn = 0; turn < 5 && !combat.result; turn++) {
     const refused = refusalsFor(combat);
+    // With no cost minimum (owner 2026-11-22) the bot can afford every reaction card on its own turn and spends them all, so no prompt would ever reach the enemy turn: keep them in hand.
+    for (const held of combat.piles.hand) if ((reg.cards.get(held.cardId)?.tags || []).includes('trait:reaction')) refused.add(held.instanceId);
     for (let plays = 0; plays < 12 && !combat.result && combat.phase === 'player'; plays++) {
       if (combat.pendingReaction || combat.pendingCardChoice || combat.pendingAbilityDiscard) break;
       const card = firstAffordableCard(reg, combat, refused);
@@ -311,6 +319,52 @@ test(`${FIGHTS} seeded fights across the four classes: face = dealt, intent = lo
   assert.ok(tally.floaters > 300, `enough floaters were checked: ${tally.floaters}`);
 });
 
+test('a predecessor lost to control does not over-promise the next enemy attack', () => {
+  const tally = { hits: 0, costs: 0, actions: 0, floaters: 0, reactions: 0, forecasts: 0 };
+  // This seed holds Block that the first enemy would spend were it to recover and attack.
+  playFight('herald', 247, tally, false);
+  assert.ok(tally.actions > 0, 'resolved enemy contacts still have exact HP quotes');
+});
+
+test('the later intent accounts for control, Freeze and Shock without drawing RNG', () => {
+  const { combat } = fixture({ classId: 'herald', enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  combat.player.block = 3;
+  const [first, later] = combat.enemies;
+  for (const enemy of [first, later]) {
+    const move = expandedEnemyMove(enemy, reg.enemies.get(enemy.enemyId).moves.slash, 'slash', combat);
+    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 12, hits: 1,
+      combatProfile: enemyMoveCarrier(enemy, move, 'slash', combat).combatProfile };
+    enemy.plannedMoves = [];
+    enemy.knowledgeAction = { serial: 1, reads: { [combat.playerKey || 'player']: { visibility: 'exact' } } };
+  }
+  const counters = combat.rng.getCounters();
+  const forecast = () => projectCombatIntent(combat, later.id)?.projectedDamage;
+  const open = forecast();
+  assert.ok(Number.isFinite(open?.max));
+  first.statuses.sleep = { stacks: 1 };
+  const locked = forecast();
+  assert.deepEqual({ damage: locked?.max, label: locked?.label, uncertain: locked?.uncertain },
+    { damage: null, label: '?', uncertain: true });
+  first.statusControl.resolveNextTurn = true;
+  const ready = forecast();
+  assert.equal(ready?.max, open.max, 'scheduled Resolve allows the first attack to spend Block');
+  first.skipNextTurn = true;
+  const skipped = forecast();
+  assert.equal(skipped?.max, ready.max - 3, 'a known skip preserves all three Block for the later attack');
+  first.skipNextTurn = false;
+  first.statuses = { freeze: { stacks: 1 } };
+  assert.equal(forecast()?.max, skipped.max, 'Freeze deterministically skips the first attack before decay');
+  first.statuses = { shock: { stacks: 1 } };
+  const shocked = forecast();
+  assert.deepEqual({ damage: shocked?.max, label: shocked?.label, uncertain: shocked?.uncertain },
+    { damage: null, label: '?', uncertain: true });
+  const chancePerStack = combat.fixCoreRules.elements.shock.actionLossChancePerStack;
+  first.statuses.shock.stacks = Math.ceil(100 / chancePerStack);
+  assert.equal(forecast()?.max, skipped.max, 'certain Shock loss also preserves Block');
+  assert.equal(combat.player.block, 3);
+  assert.deepEqual(combat.rng.getCounters(), counters, 'previews consume no live RNG');
+});
+
 test('a lethal enemy multi-hit stops at the exact forecast prefix while a survivor takes the full intent', () => {
   for (const hp of [1, 100]) {
     const combat = fightFor('starseer', 162, ['cinderMantis']);
@@ -324,16 +378,16 @@ test('a lethal enemy multi-hit stops at the exact forecast prefix while a surviv
     combat.player.persistentPoise = { value: 18, max: 18, barrierBonus: 15 };
     combat.player.combatStance = { maneuver: 'sweep', camp: 'physical', range: 'melee' };
     const forecast = forecastBeforeTurn(combat);
-    assert.deepEqual(forecast.get(enemy.id).hits, [3, 3]);
-    assert.equal(forecast.get(enemy.id).shown, 6);
+    assert.deepEqual(forecast.get(enemy.id).hits, [5, 5]);
+    assert.equal(forecast.get(enemy.id).shown, 10);
     const start = combat.eventLog.length;
     dispatch(combat, { type: 'endTurn' });
     while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
     const events = combat.eventLog.slice(start);
     const contacts = events.filter(event => event.type === 'damageDealt' && event.sourceId === enemy.id && event.targetId === 'player');
-    assert.deepEqual(contacts.map(event => event.hpLoss), hp === 1 ? [3] : [3, 3]);
-    assert.deepEqual(contacts.map(event => event.hpRemoved), hp === 1 ? [1] : [3, 3]);
-    assert.equal(combat.player.hp, hp === 1 ? 0 : 94);
+    assert.deepEqual(contacts.map(event => event.hpLoss), hp === 1 ? [5] : [5, 5]);
+    assert.deepEqual(contacts.map(event => event.hpRemoved), hp === 1 ? [1] : [5, 5]);
+    assert.equal(combat.player.hp, hp === 1 ? 0 : 90);
     assert.equal(combat.result, hp === 1 ? 'defeat' : null);
     const tally = { forecasts: 0, actions: 0, floaters: 0 };
     checkForecast(forecast, events, tally, `enemy two-hit HP ${hp}`);
@@ -364,6 +418,9 @@ test('a target with Block, a target with Poise, and both', () => {
     const { combat, card } = fixture();
     Object.assign(combat.enemies[0], state);
     const open = fixture().combat; // the same hit on the same target with no Block or Poise
+    if (state.persistentPoise) {
+      for (const world of [combat, open]) world.enemies[0].combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+    }
     const undefended = faceOf(open, open.piles.hand[0].instanceId, 'e1').perEnemy.get('e1')[0];
     const shown = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1');
     assert.ok(shown[0] < undefended, `${label}: the face already is the HP after defences (${shown} against ${undefended})`);
@@ -705,11 +762,9 @@ test('an enemy Smash into Block: the intent number equals the HP lost by that ac
 });
 
 // ---- Review fix 7: a player attack that took no HP always has a visible cause (gildedKnight) --------------------------------------------
-// Reproduced at model level: the Knight's gildedGuard reaction (it answers a player action worth 8 or more) hits the player and gains Block
-// BEFORE the card lands, so the card's hit is wholly Blocked. The card face states the pre-reaction number (the rule for a play an enemy
-// reaction answers); the resolution emits the damageDealt receipt whose Blocked word the floater policy shows.
+// A held Guard can absorb the whole attack. The resolution's damageDealt receipt must show how it was stopped.
 
-test('gildedKnight: every player attack that leaves its HP unchanged emits a receipt that reads Blocked or another shown word', () => {
+test('gildedKnight: every stopped player hit emits a receipt that reads Blocked or another shown word', () => {
   let zeroHpPlays = 0;
   for (const classId of CLASSES) {
     const cards = reg.cards.all().filter(card => card.class === classId && card.type === 'attack' && !card.id.startsWith('progression-'));
@@ -719,16 +774,22 @@ test('gildedKnight: every player attack that leaves its HP unchanged emits a rec
       const enemy = combat.enemies[0];
       Object.assign(combat.piles.hand[0], { cardId: card.id, upgraded: false });
       combat.player.energy = combat.player.stamina = combat.player.mana = 9;
+      // The Knight's opening reaction alone no longer absorbs the retuned attacks.
+      enemy.block = 12; // A held guard lets the fixture exercise the zero-HP floater path.
       const hp = enemy.hp, start = combat.eventLog.length;
       try { dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: enemy.id }); } catch { continue; } // an unaffordable or illegal play is refused, not resolved
       while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
       if (enemy.hp !== hp || !enemy.alive) continue;
       const events = combat.eventLog.slice(start);
       const mine = events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player' && event.targetId === enemy.id);
-      // A play that dealt nothing at all is a status or Poise play with no hit; every hit that took no HP carries a shown word.
       for (const event of mine) {
-        zeroHpPlays++;
         assert.equal(event.hpLoss, 0);
+        // An authored zero-sized hit never reached a defense layer.
+        if (event.damageReceipt?.hits.every(hit => hit.incoming === 0) && !event.evaded) {
+          assert.equal(outcomeKindForEvent(event), null, 'zero incoming damage has no mitigation word');
+          continue;
+        }
+        zeroHpPlays++;
         assert.ok(floaterWordShown(outcomeKindForEvent(event)), `${classId} ${card.id}: the hit that took no HP has no word (${outcomeKindForEvent(event)})`);
       }
     }

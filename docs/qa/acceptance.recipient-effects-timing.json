@@ -1,0 +1,102 @@
+{
+  "request": "go ahead and add the effects timing panel with live preview and save to json. use those settings as the defaults and keep the animation speed the same\n\nonce done integrate into the score tool",
+  "success": "The recipient effects preview opens a usable Timing panel at desktop and phone sizes. It previews changes immediately and shows each result on a timeline. The authored defaults are entire battlefield, one result at a time, a 30 ms gap, 0 ms overlap and 80% opacity. The editor saves timing and opacity to the authoritative JSON, rebuilds the generated UI configuration, and reads them after reload. The live browser checks cover saving, animation playback and the sequence. The fixed sandbox checks cover the visible panel and timeline. Score Studio opens the same editor in its Effects tab, preserves its draft across tabs and pauses playback when you leave it. The browser check verifies Score Studio writes to the same JSON.",
+  "failure": "The panel or timeline is unreachable, the fields do not update the preview immediately, a save fails to update the authored and generated config together, the default sequence overlaps, or edits alter clip durations or frame speed. Score Studio replaces the draft, keeps playback running when the tab is hidden, or loses access to existing workspaces.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "effects-timing-panel",
+      "url": "/tools/recipient-effects-runtime-preview.html",
+      "ready": "#viewport",
+      "settleMs": 500,
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Timing panel is visible",
+          "selector": "#timing-editor"
+        },
+        {
+          "kind": "visible",
+          "label": "Scope selector is visible",
+          "selector": "#timing-scope"
+        },
+        {
+          "kind": "visible",
+          "label": "Clip cap is visible",
+          "selector": "#timing-cap"
+        },
+        {
+          "kind": "visible",
+          "label": "Gap control is visible",
+          "selector": "#timing-gap"
+        },
+        {
+          "kind": "visible",
+          "label": "Overlap control is visible",
+          "selector": "#timing-overlap"
+        },
+        {
+          "kind": "visible",
+          "label": "Opacity control is visible",
+          "selector": "#timing-opacity"
+        },
+        {
+          "kind": "visible",
+          "label": "JSON save is visible",
+          "selector": "#save-timing"
+        },
+        {
+          "kind": "visible",
+          "label": "Result timeline is visible",
+          "selector": "#result-timeline"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No browser errors",
+          "max": 0
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "score-studio-effects",
+      "url": "/tools/score-studio/",
+      "ready": "#tab-cards",
+      "actions": [
+        {
+          "click": "#effects-tab-button"
+        }
+      ],
+      "settleMs": 500,
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Effects tab is visible",
+          "selector": "#effects-tab-button"
+        },
+        {
+          "kind": "visible",
+          "label": "The timing editor frame is visible",
+          "selector": "#effects-timing-frame"
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No browser errors",
+          "max": 0
+        }
+      ],
+      "failure": []
+    }
+  ]
+}

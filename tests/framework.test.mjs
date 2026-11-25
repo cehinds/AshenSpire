@@ -1066,15 +1066,15 @@ test('the bridge decides Weight Class through the framework service, with the Te
 test('the Armoury equip-load receipt counts authored armament weights and the armour rule, and is a readout only', () => {
   const run = createRunState({ seed: 7, classId: 'reaver', registries: LEGACY_REG });
   const r = playerLoadReceipt(LEGACY_REG, run);
-  // reaver start: straightSword 5 + roundShield 7 in hand, default armour poiseThreshold 8 (A-side rule),
+  // Reaver start: straightSword 5 + roundShield 7 in hand, Wayfarer Plate uses its authored Poise threshold of 3,
   // each rescaled by mechanics.weight.itemWeightScale onto the lean attribute scale's capacity
   const scale = mechanicsHome.mechanics.weight.itemWeightScale;
   const tenth = (n) => Math.round(n * 10) / 10;
   eq(r.hands, tenth(tenth(5 * scale) + tenth(7 * scale)), 'hands weigh their authored weight, rescaled');
-  eq(r.armour, tenth(8 * scale), 'armour weighs its poiseThreshold under the A-side rule, rescaled');
+  eq(r.armour, tenth(3 * scale), 'armour weighs its poiseThreshold under the A-side rule, rescaled');
   eq(r.load, tenth(r.hands + r.armour), 'load sums both');
   eq(r.capacity, mechanicsHome.mechanics.weight.capacityBase + 2 * run.attributes.constitution + run.attributes.strength, 'capacity from mechanics.json and the run attributes');
-  eq(r.classId, 'medium', `the sword-and-shield reaver start stands Medium (${r.load} of ${r.capacity}, ${r.percent}%) — the class exists for the player`);
+  eq(r.classId, 'light', `the sword-and-shield Reaver starts Light (${r.load} of ${r.capacity}, ${r.percent}%)`);
   eq(r.active, true, 'every deck carries a Dodge Roll, so the class is consumed');
 });
 

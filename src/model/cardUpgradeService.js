@@ -2,7 +2,7 @@
 // planCardUpgrade reads the run and writes nothing, so a preview equals the
 // commit: the roll is the stateless mulberry32(hash(run.seed, instanceId, stepIndex)).
 import { canUpgrade, nextUpgradeStep, nextUpgradeOptions, RestUpgradeRule } from './cardUpgradeLimits.js';
-import { upgradeStepsOf, upgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { upgradeStepsOf, paidUpgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
 
@@ -19,7 +19,7 @@ const face = (registries, run, instance) => projectGameCard(run, instance) || re
  * `choices` > 1 (a blacksmith; see upgradeChoiceCount) adds `options: [{ step, after }]`, the distinct steps the
  * player picks from, `step`/`after` being the first; the quote remembers `choices` so a commit re-plans the same list.
  */
-export function planCardUpgrade(run, registries, instanceId, { choices = 1, combos = false } = {}) {
+export function planCardUpgrade(run, registries, instanceId, { choices = 1, combos = false, vendor = '' } = {}) {
   const instance = findInstance(run, instanceId);
   const verdict = canUpgrade(registries, run, instance || { instanceId, cardId: '' });
   const quote = { ok: verdict.ok, code: verdict.code, reason: verdict.reason, instanceId, n: verdict.n, cost: verdict.cost, free: verdict.free, step: null, before: null, after: null };
@@ -30,11 +30,11 @@ export function planCardUpgrade(run, registries, instanceId, { choices = 1, comb
   const count = Number.isInteger(choices) && choices > 1 ? Math.min(choices, MAX_CHOICES) : 1;
   const after = (step) => face(registries, run, { ...instance, upgraded: true, upgradeSteps: [...applied, step] });
   if (count === 1) {
-    const step = nextUpgradeStep(run, instance, base, registries);
-    return { ...quote, step, before: face(registries, run, instance), after: after(step) };
+    const step = vendor ? nextUpgradeOptions(run, instance, base, registries, 1, { vendor })[0] || null : nextUpgradeStep(run, instance, base, registries);
+    return { ...quote, ...(vendor ? { vendor } : {}), step, before: face(registries, run, instance), after: after(step) };
   }
-  const options = nextUpgradeOptions(run, instance, base, registries, count, { combos }).map((step) => ({ step, after: after(step) }));
-  return { ...quote, choices: count, combos, step: options[0].step, options, before: face(registries, run, instance), after: options[0].after };
+  const options = nextUpgradeOptions(run, instance, base, registries, count, { combos, vendor }).map((step) => ({ step, after: after(step) }));
+  return { ...quote, choices: count, combos, ...(vendor ? { vendor } : {}), step: options[0].step, options, before: face(registries, run, instance), after: options[0].after };
 }
 
 /** The quote a rest-site Upgrade Card shows for an instance: 1 option up to the third upgrade, 2 (some with two effects) from the fourth. */
@@ -50,7 +50,7 @@ export function PlanRestCardUpgrade(run, registries, instanceId) {
  * the step. Throws on a refusal; the run is untouched then.
  */
 export function commitCardUpgrade(run, registries, quote) {
-  const plan = planCardUpgrade(run, registries, quote && quote.instanceId, { choices: quote && quote.choices, combos: !!(quote && quote.combos) });
+  const plan = planCardUpgrade(run, registries, quote && quote.instanceId, { choices: quote && quote.choices, combos: !!(quote && quote.combos), vendor: (quote && quote.vendor) || '' });
   if (!plan.ok) throw new Error(plan.reason || 'That card cannot be upgraded.');
   // A quote with several options commits whichever one the player chose, as long as it is still on the re-planned list.
   const offered = (plan.options ? plan.options.map((o) => o.step) : [plan.step]).map((s) => JSON.stringify(s));
@@ -62,6 +62,8 @@ export function commitCardUpgrade(run, registries, quote) {
   run.smithingStones = (Number.isSafeInteger(run.smithingStones) ? run.smithingStones : 0) - plan.cost;
   instance.upgradeSteps = [...upgradeStepsOf(instance), step];
   instance.upgraded = true;
+  if (step?.nextRarity) instance.rarityOverride = step.nextRarity;
+  if (Number.isInteger(step?.nextRank) && step.nextRank > (instance.rank || 0)) instance.rank = step.nextRank;
   return { instanceId: plan.instanceId, step, n: plan.n, spentStones: plan.cost };
 }
 
@@ -75,7 +77,7 @@ export const cardUpgradeStepsOn = (run) => run?.gameProfile?.modules?.progressio
  */
 export function freeCardUpgradeStep(run, registries, instance) {
   if (!instance || instance.sourceArmamentId || instance.grantedBy || !registries.cards.has(instance.cardId)) return null;
-  if (upgradeCount(instance) >= MAX_CARD_UPGRADES) return null;
+  if (paidUpgradeCount(instance) >= MAX_CARD_UPGRADES) return null; // the cap counts slot-using steps (canUpgrade)
   return nextUpgradeStep(run, instance, registries.cards.get(instance.cardId), registries);
 }
 

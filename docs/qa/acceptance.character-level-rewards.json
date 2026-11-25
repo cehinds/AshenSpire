@@ -1,0 +1,116 @@
+{
+  "request": "how about class specific 2, 6, 10, 14, and so forth\n\nFree choice at 4, 12, 20…",
+  "success": "A fresh configured Core run earns one point in its class primary attribute at 2, 6, 10, 14 and 18, one assignable point at 4, 12 and 20, and one card rank-up at every earned level. The production character ladder shows these milestones at desktop and phone widths. The browser replay verifies allocation and save/restore with the new cadence.",
+  "failure": "A class point appears at the wrong level, a free choice is offered early or missed, the rank-up is absent, saved runs reprice, or the milestone labels cannot be read on phone.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "character-progression",
+      "url": "/index.html?shot=map&gameProfile=core&shotClass=reaver&shotSeed=3&shotProgression=1",
+      "ready": "#open-armoury",
+      "actions": [
+        {
+          "click": "#open-armoury"
+        },
+        {
+          "click": "[data-modal-tab=\"character\"]"
+        },
+        {
+          "click": ".character-level-action"
+        },
+        {
+          "click": ".progression-levels summary"
+        }
+      ],
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Character level ladder is open",
+          "selector": ".progression-levels[open]"
+        },
+        {
+          "kind": "count",
+          "label": "Twenty character levels are listed",
+          "selector": ".progression-levels .cs-row",
+          "eq": 20
+        },
+        {
+          "kind": "visible",
+          "label": "Level 2 is the current level after production XP settlement",
+          "selector": ".cs-row[data-level=\"2\"][data-state=\"current\"]"
+        },
+        {
+          "kind": "text",
+          "label": "Reaver grants Strength at level 2",
+          "selector": ".cs-row[data-level=\"2\"] [data-grant=\"classBonus\"]",
+          "includes": "Strength +1"
+        },
+        {
+          "kind": "count",
+          "label": "The class milestones are 2, 6, 10, 14 and 18",
+          "selector": ".progression-levels [data-grant=\"classBonus\"]",
+          "eq": 5
+        },
+        {
+          "kind": "count",
+          "label": "No free choice at the class milestone",
+          "selector": ".cs-row[data-level=\"2\"] [data-grant=\"points\"]",
+          "eq": 0
+        },
+        {
+          "kind": "count",
+          "label": "There are three assignable-point milestones",
+          "selector": ".progression-levels [data-grant=\"points\"]",
+          "eq": 3
+        },
+        {
+          "kind": "count",
+          "label": "Level 4 grants a chosen attribute point",
+          "selector": ".cs-row[data-level=\"4\"] [data-grant=\"points\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Level 12 grants a chosen attribute point",
+          "selector": ".cs-row[data-level=\"12\"] [data-grant=\"points\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "Level 20 grants a chosen attribute point",
+          "selector": ".cs-row[data-level=\"20\"] [data-grant=\"points\"]",
+          "eq": 1
+        },
+        {
+          "kind": "count",
+          "label": "All 19 earned levels list a card rank-up",
+          "selector": ".progression-levels [data-grant=\"rankUp\"]",
+          "eq": 19
+        },
+        {
+          "kind": "count",
+          "label": "The existing separate level card remains present",
+          "selector": ".progression-levels [data-grant=\"levelCard\"]",
+          "eq": 19
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "The character sheet opens without browser errors",
+          "max": 0
+        }
+      ],
+      "failure": []
+    }
+  ]
+}

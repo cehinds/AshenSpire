@@ -5,21 +5,38 @@ import { createRunState } from '../../src/model/state.js';
 import { createRng } from '../../src/engine/rng.js';
 import { createRunCombat } from '../../src/engine/runCombat.js';
 import { primeAccuracyRolls } from '../accuracyFixture.mjs';
+import { candidateState } from '../../src/engine/combatRules.js';
 export { registries };
 const clean = (o) => JSON.parse(JSON.stringify(o, (k, v) => (typeof v === 'function' ? undefined : v)));
-export function play(cardId, instExtra = {}, { classId = 'reaver', enemies = ['wanderingSoldier'], seed = 511 } = {}) {
+// Building a fight costs ~90 ms (run, combat, profile copy, Accuracy priming) and a play ~12 ms, so each
+// (class, enemies, seed) fight is built once and every play runs on its own copy: candidateState is the
+// engine's own transaction clone (every field and bound function, the event log rows and the RNG counters).
+const preparedFights = new Map();
+function preparedFight(classId, enemies, seed) {
+  const key = JSON.stringify([classId, enemies, seed]);
+  if (preparedFights.has(key)) return preparedFights.get(key);
   const run = createRunState({ registries, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: enemies });
-  const instance = { instanceId: 'probe-1', cardId, upgraded: false, ...instExtra };
   for (const pile of Object.values(combat.piles)) pile.length = 0;
-  combat.piles.hand.push(instance);
   // filler so draw has something
   const filler = (n) => ({ instanceId: 'f' + n, cardId: 'core.strike', upgraded: false });
   for (let i = 0; i < 6; i++) combat.piles.draw.push(filler(i));
-  for (const e of combat.enemies) Object.assign(e, { hp: 500, maxHp: 500, block: 0, barrier: 0, persistentPoise: { value: 80, max: 80 } });
+  for (const e of combat.enemies) {
+    Object.assign(e, { hp: 500, maxHp: 500, block: 0, barrier: 0, persistentPoise: { value: 80, max: 80 } });
+    // Status application reconciles maximum Poise from the rating. Keep the
+    // probe's enlarged pool and its rating consistent across Frost/Chill hits.
+    e.ratings.poise = 80;
+  }
   combat.player.hp = 30; combat.player.stamina = combat.player.maxStamina = 20;
   if ('mana' in combat.player) combat.player.mana = combat.player.maxMana = Math.max(20, combat.player.maxMana || 0);
   primeAccuracyRolls(combat, { count: 3 });
+  preparedFights.set(key, combat);
+  return combat;
+}
+export function play(cardId, instExtra = {}, { classId = 'reaver', enemies = ['wanderingSoldier'], seed = 511 } = {}) {
+  const combat = candidateState(preparedFight(classId, enemies, seed));
+  const instance = { instanceId: 'probe-1', cardId, upgraded: false, ...instExtra };
+  combat.piles.hand.push(instance);
   const enemy = combat.enemies[0];
   const before = snap(combat);
   const start = combat.eventLog.length;

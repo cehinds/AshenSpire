@@ -15,13 +15,13 @@ import { LoadSavedRunContext } from '../src/engine/savedRunContext.js';
 import { createRunState } from '../src/model/state.js';
 const author=modules=>({formatVersion:1,core:'ashen.core@1.0.0',modules});
 test('core class/hand/deck facts are source-owned and immutable per profile',()=>{
-// Owner 2026-11-18 (ruling §9, §12): hand = 5 + floor(INT/4); the Starseer's INT 2 gives 5 (the 6-card target needs INT 4, a point choice).
- const p=resolveGameProfile('core');assert.deepEqual(gameContent(p,'startingHands'),{reaver:5,starseer:5,rogue:5,herald:5});
+// Owner 2026-11-24: configured Core uses three cards plus one per Intelligence point.
+ const p=resolveGameProfile('core');assert.deepEqual(gameContent(p,'startingHands'),{reaver:4,starseer:5,rogue:4,herald:4});
  assert.deepEqual(gameContent(p,'classes').map(row=>Object.values(row.attributes).reduce((a,b)=>a+b)),[6,6,6,6]);
  assert.equal(gameContent(p,'starterDeck').shared.reduce((n,row)=>n+row.copies,0)+1,10);
  assert.equal(gameContent(p,'starterDeck').shared.some(row=>row.card==='core.evade'),false);
  assert.deepEqual(gameContent(p,'rests').services,['rest','smith','upgradeCard']);assert.equal(gameContent(p,'rests').servicesPerVisit,1);assert.equal(gameContent(p,'stats').levelGains.constitution.hp,5);
- assert.throws(()=>{p.modules.cards.handBase=90},TypeError);assert.notEqual(p,resolveGameProfile('core'));assert.equal(resolveGameProfile('core').modules.cards.handBase,5);
+ assert.throws(()=>{p.modules.cards.handBase=90},TypeError);assert.notEqual(p,resolveGameProfile('core'));assert.equal(resolveGameProfile('core').modules.cards.handBase,3);
 });
 
 

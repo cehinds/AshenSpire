@@ -2,6 +2,7 @@
 // active game profile's shops content (`games/ashenspire/packs/core/shops.json` -> `blacksmith`). Pure reads:
 // nothing here rolls, prices or mutates. A profile without the block (Legacy, Current) gets null / neutral values.
 import { gameContent } from './gameProfile.js';
+import { PricedShops } from './liveShopPrices.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 
 /** The `short` form of a uiStrings row with {tokens} filled (model code has no t()). */
@@ -31,7 +32,8 @@ export const blacksmithStoneDiscount = (subject) => {
 
 /** The cinder price rows: tierUpgrade[tier-1], cardUpgrade (+ cardUpgradePerUpgrade, cardUpgradePerRank), rankUp. Missing rows read 0. */
 export function blacksmithPrices(subject) {
-  const prices = blacksmithRules(subject)?.prices || {};
+  // The current Core prices, even for a saved run (liveShopPrices.js, owner 2026-11-23).
+  const prices = PricedShops(subject)?.blacksmith?.prices || {};
   const whole = (n) => (Number.isSafeInteger(n) && n >= 0 ? n : 0);
   return {
     tierUpgrade: (Array.isArray(prices.tierUpgrade) ? prices.tierUpgrade : []).map(whole),

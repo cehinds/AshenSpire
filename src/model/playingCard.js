@@ -1,8 +1,11 @@
 import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
+import { t } from './strings.js';
 import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
+import { CardSpellTraditions, SpellTraditionLabel } from './spellTraditions.js';
 import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
+import { core2MultiHitRulesEnabled } from './core2ActionPolicy.js';
 import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
@@ -58,7 +61,7 @@ import { combatProfileFor, isSpellCard, ScaleCardBaseDamage, ScalePhysicalDamage
 import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { effectiveD20Percent } from './d20Chance.js';
-import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor } from './combatRatings.js';
+import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, PacketSplit, PacketWeights, splitContactParts, splitDamageTypesOf, BarrierPoisePerStack, BarrierPoiseFactor, IsFinesseHit } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -138,6 +141,21 @@ export function combatCardType(def) {
   const classification = cardClassification(def);
   const type = (classification.stanceType !== 'prepare' && classification.stanceType) || (classification.cardCategory === 'curse' ? 'status' : classification.cardCategory);
   return type[0].toUpperCase() + type.slice(1);
+}
+
+/** The same profile-aware type identity for a card face and compact list rows. */
+export function CardPresentationSigils(def, { registries = null, rules = null, preview = null } = {}) {
+  // Saved profiles retain their historical shared scaling and generic label.
+  // A catalog without a selected profile describes the current rules.
+  const context = CardPresentationContext(def, preview, rules);
+  const presentationRules = context?.gameProfile || context?.fixCoreRules ? context
+    : registries?.gameProfile ? { gameProfile: registries.gameProfile } : null;
+  const profile = combatProfileFor(def);
+  const identity = cardSigilIdentity(combatCardType(def), profile);
+  if (presentationRules && !SpellTraditionsActive(presentationRules)
+    || identity.action !== 'spell' && profile.camp !== 'spell') return identity;
+  const card = { ...def, combatProfile: profile };
+  return freeze({ ...identity, traditions: freeze(CardSpellTraditions(card)), displayLabel: SpellTraditionLabel(card) });
 }
 
 /** Live saved policy plus the matching quote's detached baseline metadata. */
@@ -290,6 +308,7 @@ export function combatCardSummary(def, preview = null, registries = null, rules 
       case 'gainEnergy': text = `Gain ${n} Stamina`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} Stamina`; break;
+      case 'restorePoise': text = `Restore ${n} Poise`; break;
       case 'applyReflect': text = `Gain ${n} Reflect`; break;
       case 'poiseDamage': case 'wardDamage': {
         const merged = poiseMerge?.get(index);
@@ -302,6 +321,7 @@ export function combatCardSummary(def, preview = null, registries = null, rules 
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
       case 'swapRows': text = 'Swap its row with the nearest enemy in the other row'; break;
+      case 'pullEnemy': text = 'Remove a Retreat stack from it; with none left it comes forward to the front row'; break;
       case 'moveEngagement': {
         if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker', 'self'].includes(effect.target)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) return null;
@@ -407,7 +427,13 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const attributes = Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
   const faceShare = magicShareOf(faceProfile) || 0;
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
-  const finesseHit = !magicHit && Array.isArray(def?.tags) && def.tags.includes('finesse');
+  const actionVersion = rules?.player || Object.hasOwn(rules || {}, 'core2ActionRulesVersion')
+    ? rules.core2ActionRulesVersion : faceEffects?.core2ActionRulesVersion;
+  const finesseSource = core2MultiHitRulesEnabled({
+    gameProfile: holder?.gameProfile, fixCoreRules: holder?.fixCoreRules,
+    combatExpansionVersion: holder?.combatExpansionVersion ?? 2, core2ActionRulesVersion: actionVersion,
+  }) && IsFinesseHit({ registries, loadout: rules?.loadout }, rules?.player, { ...def, combatProfile: faceProfile });
+  const finesseHit = !magicHit && finesseSource;
   const magicStat = attributes && SpellTraditionsActive(holder) ? SpellScalingValue(attributes, { ...def, combatProfile: faceProfile })
     : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);
   const damageStat = attributes ? (magicHit ? magicStat : (attributes[finesseHit ? 'dexterity' : 'strength'] || 0)) : 0;
@@ -432,7 +458,7 @@ export function staticCardTokens(def, registries = null, rules = null) {
   };
   // Block: (authored + DEX) x blockGainMultiplier, floored, as the configured Block gain computes it. A face with no run keeps the authored number.
   const blockScale = (value, isBlock) => {
-    if (!isBlock || !(value > 0) || !faceEffects || !attributes) return value;
+    if (!isBlock || value < 0 || !faceEffects || !attributes) return value;
     const scale = Number.isFinite(blockMultiplier) && blockMultiplier >= 0 ? blockMultiplier : 1;
     return scale === 1 && !blockBonus ? value : Math.max(0, Math.floor((value + blockBonus) * scale));
   };
@@ -473,6 +499,27 @@ export function staticCardTokens(def, registries = null, rules = null) {
       }
     }
   }
+  // An element packet hit (owner, 2026-11-19; a physical card with a magic share and no rating of its own) prints its physical part in {damage} and
+  // its magic part in {packet}: STR on the first, INT / Power on the second, the same two stages the receipt reads.
+  const packetIndex = effects.findIndex(effect => effect.op === 'damage' && typeof constant(effect.amount) === 'number');
+  if (packetIndex >= 0 && def.ratingId === undefined && faceProfile.camp === 'physical' && Number.isFinite(def.magicShare) && faceShare > 0 && faceShare < 1) {
+    const token = computeTokenBindings(effects).find(binding => binding.index === packetIndex && binding.field === 'amount')?.token;
+    if (token && typeof tokens[token] === 'number') {
+      const base = ScaleCardBaseDamage(constant(effects[packetIndex].amount), baseDamageMultiplier);
+      const physicalBonus = attributes ? (attributes[finesseSource ? 'dexterity' : 'strength'] || 0) * ChannelWeight(faceEffects, 'ar') : 0;
+      const magicBonus = attributes ? magicStat * ChannelWeight(faceEffects, 'pr') : 0;
+      // The receipt's order: the physical-damage scale cuts the physical part alone, the side scale takes the whole hit, the amount is floored ONCE,
+      // then the same PacketSplit (same weights) divides that amount. Flooring parts separately would drift a point from the hit.
+      const cut = Number.isFinite(physicalMultiplier) && physicalMultiplier >= 0 ? physicalMultiplier : 1;
+      // The card's own share (`magicShare`) rules a packet, as the receipt reads it; the face profile alone would give the configured Technique share.
+      const weights = PacketWeights({ base, share: def.magicShare, physicalBonus, magicBonus });
+      const whole = weights.physical * cut + weights.magic;
+      const sided = Number.isFinite(playerMultiplier) && playerMultiplier !== 1 ? Math.max(whole >= 1 && playerMultiplier > 0 ? 1 : 0, whole * playerMultiplier) : whole;
+      const parts = PacketSplit({ base, share: def.magicShare, physicalBonus, magicBonus, physicalMultiplier: cut, total: sided });
+      tokens[token] = parts.physical;
+      tokens.packet = parts.magic;
+    }
+  }
   return tokens;
 }
 
@@ -483,7 +530,7 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
   const configured = projectGameCard(rules?.gameProfile ? rules : registries, ref);
   if (configured) return configured;
   const def = rules?.breakMeterVersion == null
-    ? resolveCard(registries, ref) : resolveCard(registries, ref, rules.breakMeterVersion);
+    ? resolveCard(registries, ref, undefined, rules || registries) : resolveCard(registries, ref, rules.breakMeterVersion, rules || registries);
   if (rules?.combatExpansionVersion !== 2) return def;
   const expanded = applyCombatExpansionCard(def);
   return rules.reactionRulesVersion === 2 ? applyCardTraits(expanded, rules.reactionRules) : expanded;
@@ -612,6 +659,8 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   const rankBadge = visibleRank > 0 ? `Rank ${visibleRank}` : null;
   const rankHelp = abilityRank !== null ? `Rank ${abilityRank}: authored ${abilityLabel.toLowerCase()} profile. Actions and Mana are charged separately.`
     : rankBadge || '';
+  const sigils = CardPresentationSigils(def, { registries, rules, preview });
+  const traditionType = sigils.displayLabel || null;
 
   return freeze({
     id: def.id,
@@ -628,9 +677,10 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     rankHelp,
     type: freeze({
       id: classification.cardCategory,
-      label: classification.cardCategory.toUpperCase(),
-      subtype: classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
-      abilityLabel,
+      label: traditionType ? traditionType.toUpperCase() : classification.cardCategory.toUpperCase(),
+      subtype: traditionType ? classification.cardCategory === 'power' ? t('deckEditor.stance.power') : null
+        : classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
+      abilityLabel: traditionType ? abilityRank === 0 ? t('deckEditor.rank.cantrip') : null : abilityLabel,
       weaponArt: weaponArt ? 'Weapon Art' : null,
       glyph: abilityLabel ? def.abilityKind === 'spell' ? 'skill' : weaponArt ? 'attack' : 'actions' : null,
       help: abilityLabel ? `${abilityLabel}${weaponArt ? ' · Weapon Art' : ''}. ${rankHelp}` : '',
@@ -639,7 +689,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     legacyType: def.type,
     costs,
     tags,
-    sigils: cardSigilIdentity(combatCardType(def), combatProfileFor(def)),
+    sigils,
     paint: freeze({
       typeColor: typeRow ? typeRow.color : null,
       radiusPx: typeRow ? typeRow.radius : null,

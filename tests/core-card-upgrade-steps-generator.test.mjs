@@ -35,7 +35,8 @@ test('every kind the generator emits is a known step kind and never retain', () 
 });
 
 test('dmg step is +max(2, ceil(15%)) and blk is +max(2, ceil(20%))', () => {
-  const pick = (card, kind) => { for (let i = 0; i < 400; i += 1) { const s = rollUpgradeStep(card, [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === kind) return s; } };
+  const pick = (card, kind) => { for (let i = 0; i < 400; i += 1) { const s = rollUpgradeStep(card, [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === kind && !s.r) return s; } };
+  // A common step (no `r`) is today's size; the uncommon and rare ones are x2 and x4 of it.
   assert.equal(pick(dmg(6), 'dmg').n, 2);
   assert.equal(pick(dmg(40), 'dmg').n, 6);
   const blk = { ...dmg(1), effects: [{ op: 'block', target: 'self', amount: 20 }], type: 'skill' };
@@ -65,19 +66,22 @@ test('addStatus only when the card applies no status, from its school', () => {
   assert.ok(!kindsFor(dmg(6, { tags: [], damageSchool: undefined })).has('addStatus'));
 });
 
-test('cost: at most once; SP never below 1; MP keeps mana >= 1; cost tracks staminaCost', () => {
-  assert.ok(!kindsFor(dmg(6)).has('cost'), '1 SP card cannot go lower');
+test('cost: at most once; SP and MP cuts reach 0 (owner 2026-11-22, no card has a minimum); cost tracks staminaCost', () => {
+  assert.ok(kindsFor(dmg(6)).has('cost'), '1 SP card can still lose its SP (owner 2026-11-22)');
+  assert.ok(!kindsFor(dmg(6, { cost: 0, staminaCost: 0 })).has('cost'), 'a 0 SP, 0 MP card has nothing to cut');
   const two = dmg(6, { cost: 2, staminaCost: 2 });
   const step = (() => { for (let i = 0; i < 400; i += 1) { const s = rollUpgradeStep(two, [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === 'cost') return s; } })();
   assert.deepEqual(step, { k: 'cost', pool: 'sp' });
   const after = applyUpgradeSteps(two, [step]);
   assert.deepEqual([after.staminaCost, after.cost], [1, 1]);
+  const one = applyUpgradeSteps(dmg(6), [{ k: 'cost', pool: 'sp' }]);
+  assert.deepEqual([one.staminaCost, one.cost], [0, 0], 'a 1 SP card drops to 0 SP');
   assert.ok(!kindsFor(two, [step]).has('cost'), 'once per card');
   const mp1 = dmg(6, { manaCost: 1 });
-  assert.ok(!kindsFor(mp1).has('cost'));
+  assert.ok(kindsFor(mp1).has('cost'), 'a 1 MP card can drop to 0 MP (owner 2026-11-22)');
   const mp3 = dmg(6, { manaCost: 3 });
   const seen = new Set(); for (let i = 0; i < 400; i += 1) { const s = rollUpgradeStep(mp3, [], 0, upgradeStepRng(i, 'x', 0)); if (s.k === 'cost') seen.add(s.pool); }
-  assert.deepEqual([...seen], ['mp'].sort());
+  assert.deepEqual([...seen].sort(), ['mp', 'sp'], 'a 1 SP 3 MP card can cut either (owner 2026-11-22)');
   assert.ok(!kindsFor(dmg(6, { cost: 2, staminaCost: 1 })).has('cost'), 'cost must equal staminaCost');
   assert.ok(!kindsFor(dmg(6, { cost: 'X', staminaCost: 2 })).has('cost'));
 });
@@ -108,17 +112,17 @@ test('hits never raises the SP a card costs to play: its Core hit floor must fit
   assert.ok(!kindsFor(volley).has('cost'));
 });
 
-test('power, status and curse cards take only cost, then are maxed (null)', () => {
+test('power, status and curse cards take only price changes, then are maxed at zero cost', () => {
   for (const type of ['power', 'status', 'curse']) {
     const card = { id: 't.p', name: 'P', type, cost: 2, staminaCost: 2, manaCost: 0, keywords: [], tags: ['camp:physical'],
       effects: [{ op: 'block', target: 'self', amount: 4 }, { op: 'damage', target: 'enemy', amount: 3 }] };
-    assert.deepEqual([...kindsFor(card)].sort(), ['cost']);
-    assert.deepEqual([...kindsFor({ ...card, cost: 1, staminaCost: 1 })], ['none']);
+    assert.deepEqual([...kindsFor(card)].sort(), ['cost', 'costSwap']);
+    assert.deepEqual([...kindsFor({ ...card, cost: 0, staminaCost: 0 })], ['none']);
   }
 });
 
 test('when nothing is eligible the card is maxed: the roll is null, never a filler step', () => {
-  const capped = dmg(6, { rarity: 'common', type: 'power', effects: [{ op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 }] });
+  const capped = dmg(6, { rarity: 'common', type: 'power', cost: 0, staminaCost: 0, effects: [{ op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 }] });
   assert.equal(rollUpgradeStep(capped, [], 0, upgradeStepRng(1, 'x', 0)), null);
   // Rolling until null always ends, and never past the cap of 10 steps a card can hold.
   const steps = [];
@@ -133,18 +137,24 @@ test('conditional status effects are never stacked', () => {
 
 test('over many rolls, cost and hits each land at most once per card and cost keeps tracking staminaCost', () => {
   const rich = dmg(8, { cost: 3, staminaCost: 3, manaCost: 3, effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'block', target: 'self', amount: 20 }] });
-  let costs = 0;
+  let costs = 0, swaps = 0;
   for (let seed = 0; seed < 200; seed += 1) {
     const steps = [];
     while (steps.length < 10) { const s = rollUpgradeStep(rich, steps, steps.length, upgradeStepRng(seed, 'rich', steps.length)); if (!s) break; steps.push(s); }
     const face = applyUpgradeSteps(rich, steps);
     assert.ok(steps.filter((s) => s.k === 'cost').length <= 1, 'cost once');
     assert.ok(steps.filter((s) => s.k === 'hits').length <= 1, 'hits once');
+    const exchanges = steps.filter((s) => s.k === 'costSwap');
+    assert.ok(exchanges.length <= 1, 'cost swap once');
     assert.equal(face.cost, face.staminaCost, 'cost equals staminaCost');
-    assert.ok(face.staminaCost >= 1 && (steps.some((s) => s.k === 'tag' && s.tag === RANK_DOWN_TAG) ? face.manaCost === 0 : face.manaCost >= 1));
+    assert.ok(face.staminaCost >= 0 && face.manaCost >= 0, 'no resource cost becomes negative');
+    if (steps.some((s) => s.k === 'tag' && s.tag === RANK_DOWN_TAG)) assert.equal(face.manaCost, 0);
+    assert.ok(face.staminaCost + 2 * face.manaCost <= rich.staminaCost + 2 * rich.manaCost, 'total exchange-weighted cost does not rise');
     costs += steps.filter((s) => s.k === 'cost').length;
+    swaps += exchanges.length;
   }
   assert.ok(costs > 20, 'the cost step is actually exercised');
+  assert.ok(swaps > 20, 'the cost swap step is actually exercised');
 });
 
 // ---- Owner ask 2026-10-31: a choice of options, and the poise / tag steps ----
@@ -152,8 +162,11 @@ const withPoise = (extra = {}) => dmg(8, { cost: 2, staminaCost: 2, rarity: 'unc
   effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }], ...extra });
 const tagsFor = (card) => {
   const out = new Set();
-  for (let i = 0; i < 600; i += 1) for (const s of rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 3)) {
-    out.add(s.k === 'tag' ? JSON.stringify(s) : s.k);
+  // Late upgrade numbers (stepIndex 9) put the most weight on the rarer, identity and new-effect rolls, so every placed kind turns up.
+  for (let i = 0; i < 1200; i += 1) for (const s of rollUpgradeOptions(card, [], 9, upgradeStepRng(i, 'x', 0), {}, 3)) {
+    // the stored rarity (`r`) is not what these tests look at: they pin the tag a step writes
+    const { r, ...step } = s;
+    out.add(s.k === 'tag' ? JSON.stringify(step) : s.k);
   }
   return out;
 };
@@ -162,20 +175,27 @@ test('poise: +max(1, ceil 20%) and only on a card with a poiseDamage effect', ()
   const poise = [];
   const plain = (extra = {}) => withPoise({ tags: ['camp:physical', 'maneuver:attack'], ...extra });
   for (let i = 0; i < 600; i += 1) for (const s of rollUpgradeOptions(plain(), [], 0, upgradeStepRng(i, 'x', 0), {}, 3)) if (s.k === 'poise') poise.push(s.n);
-  assert.ok(poise.length > 0 && poise.every((n) => n === 1));
+  assert.ok(poise.length > 0 && poise.every((n) => n === 1 || n === 2 || n === 4), 'common 1, uncommon x2, rare x4');
+  assert.ok(poise.includes(1));
   assert.ok(!kindsFor(dmg(8)).has('poise'));
   // A Smash card's Poise number never reaches the engine (it is derived from the hit), so it is never offered a Poise step (W25).
   assert.ok(!kindsFor(withPoise()).has('poise'));
   const big = plain({ effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 20 }] });
-  assert.ok(rollUpgradeOptions(big, [], 0, upgradeStepRng(1, 'x', 0), {}, 20).some((s) => s.k === 'poise' && s.n === 4));
+  // a poise step of every rarity is possible: the common one is 20% of 20 (4), the others x2 and x4 up to the +100% guard
+  const sizes = new Set();
+  for (let i = 0; i < 80; i += 1) for (const s of rollUpgradeOptions(big, [], 0, upgradeStepRng(i, 'x', 0), {}, 20)) if (s.k === 'poise') sizes.add(`${s.r || 'common'}:${s.n}`);
+  assert.ok(sizes.has('common:4'), [...sizes].join());
 });
 
-test('range tag steps switch melee and reach (never ranged), replace the old range tag and stop after two', () => {
+test('a range step only lengthens melee to reach (never ranged, never back to melee), replaces the old tag and stops after two', () => {
   const seen = tagsFor(withPoise());
   assert.ok(seen.has('{"k":"tag","tag":"range:reach"}'));
   assert.ok(![...seen].some((k) => k.includes('range:ranged')), 'ranged cards are gone');
+  // Owner, 2026-11-20 (no downgrades): Reach to Melee loses range on a single play, so a reach card is offered no range step.
   const reach = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack', 'range:reach'] }));
-  assert.ok(reach.has('{"k":"tag","tag":"range:melee"}') && !reach.has('{"k":"tag","tag":"range:reach"}'));
+  assert.ok(![...reach].some((k) => k.includes('range:')), 'a reach card keeps its reach');
+  // A spell already reaches (combatCardProfile defaultRangeFor), so a reach tag would change nothing on it.
+  assert.ok(![...tagsFor(dmg(6, { tags: ['camp:spell', 'maneuver:casting'], damageSchool: 'magic', manaCost: 1 }))].some((k) => k.includes('range:')), 'a spell gets no range step');
   const done = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:attack', 'range:ranged'] }));
   assert.ok(![...done].some((k) => k.includes('range:')));
   const twice = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'range:reach' }, { k: 'tag', tag: 'range:melee' }], 2, upgradeStepRng(1, 'x', 2), {}, 30);
@@ -183,15 +203,16 @@ test('range tag steps switch melee and reach (never ranged), replace the old ran
   assert.ok(![...tagsFor(dmg(6, { effects: [{ op: 'block', target: 'self', amount: 5 }], type: 'skill', tags: ['camp:physical', 'maneuver:defend'] }))].some((k) => k.includes('range:')), 'a block card has no range');
 });
 
-test('targeting flips single and area, the amount x0.75 up or x1.25 up, once per card', () => {
+test('targeting moves an area hit to one enemy (x1.25 up), never one enemy to all; a saved area step still applies (x0.75 up); once per card', () => {
+  // Owner, 2026-11-20 (no downgrades): one enemy to all cuts the hit 25%, so a single-target card is offered no targeting step.
   const single = tagsFor(withPoise());
-  assert.ok(single.has('{"k":"tag","tag":"targeting:area","retarget":"area"}'));
+  assert.ok(![...single].some((k) => k.includes('targeting:')), 'a single-target card keeps its target');
   const area = tagsFor(withPoise({ effects: [{ op: 'damage', target: 'allEnemies', amount: 8 }], tags: ['camp:physical', 'maneuver:attack', 'targeting:area'] }));
   assert.ok(area.has('{"k":"tag","tag":"targeting:single","retarget":"single"}'));
   const flipped = applyUpgradeSteps(withPoise(), [{ k: 'tag', tag: 'targeting:area', retarget: 'area' }]);
   assert.equal(flipped.effects[0].target, 'allEnemies');
   assert.equal(flipped.effects[0].amount, 6);
-  const after = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'targeting:area', retarget: 'area' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  const after = rollUpgradeOptions(withPoise(), [{ k: 'tag', tag: 'targeting:area', retarget: 'area' }], 1, upgradeStepRng(1, 'x', 1), { everyFamily: true }, 20);
   assert.ok(!after.some((s) => s.retarget), 'targeting changes once per card');
   const sweep = tagsFor(withPoise({ tags: ['camp:physical', 'maneuver:sweep', 'targeting:area'] }));
   assert.ok(![...sweep].some((k) => k.includes('targeting:')), 'a sweep stays area');
@@ -220,13 +241,15 @@ test('no school swap is offered (it changes no play); element: physical to magic
   assert.ok(!again.some((s) => s.damageSchool), 'element once per card');
 });
 
-test('rank-down adds rank.cantrip to a card that pays Mana and is not basic, once', () => {
+test('rank-down is never rolled at random (a dud on a single play); a card menu naming it gets it on a card that pays Mana and is not basic, once', () => {
   const mana = (extra = {}) => withPoise({ manaCost: 1, ...extra });
-  assert.ok(!tagsFor(withPoise()).has('{"k":"tag","tag":"rank.cantrip"}'), 'a 0-Mana card would change a tag and nothing else');
-  assert.ok(tagsFor(mana()).has('{"k":"tag","tag":"rank.cantrip"}'));
-  assert.ok(!tagsFor(dmg(6, { rarity: 'common' })).has('{"k":"tag","tag":"rank.cantrip"}'), 'a common non-spell is already basic');
-  assert.ok(!tagsFor(mana({ tags: ['camp:physical', 'maneuver:smash', 'rank.cantrip'] })).has('{"k":"tag","tag":"rank.cantrip"}'));
-  const again = rollUpgradeOptions(mana(), [{ k: 'tag', tag: 'rank.cantrip' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
+  assert.ok(!tagsFor(mana()).has('{"k":"tag","tag":"rank.cantrip"}'), 'owner, 2026-11-20: no rank down in a random roll');
+  const menu = (extra = {}) => mana({ upgradeMenu: ['rankDown', 'dmg'], ...extra });
+  assert.ok(!tagsFor(withPoise({ upgradeMenu: ['rankDown', 'dmg'] })).has('{"k":"tag","tag":"rank.cantrip"}'), 'a 0-Mana card would change a tag and nothing else');
+  assert.ok(tagsFor(menu()).has('{"k":"tag","tag":"rank.cantrip"}'));
+  assert.ok(!tagsFor(dmg(6, { rarity: 'common', upgradeMenu: ['rankDown', 'dmg'] })).has('{"k":"tag","tag":"rank.cantrip"}'), 'a common non-spell is already basic');
+  assert.ok(!tagsFor(menu({ tags: ['camp:physical', 'maneuver:smash', 'rank.cantrip'] })).has('{"k":"tag","tag":"rank.cantrip"}'));
+  const again = rollUpgradeOptions(menu(), [{ k: 'tag', tag: 'rank.cantrip' }], 1, upgradeStepRng(1, 'x', 1), {}, 20);
   assert.ok(!again.some((s) => s.tag === 'rank.cantrip'));
 });
 
@@ -274,7 +297,7 @@ test('a counter card never gets a range or targeting option; Strike still does',
   assert.ok(counters[0], 'core.counter exists');
   const seen = (card) => {
     const kinds = new Set();
-    for (let i = 0; i < 400; i += 1) for (const s of rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), {}, 20)) kinds.add(s.retarget ? 'targeting' : s.tag?.startsWith('range:') ? 'range' : s.k);
+    for (let i = 0; i < 400; i += 1) for (const s of rollUpgradeOptions(card, [], 0, upgradeStepRng(i, 'x', 0), { everyFamily: true }, 20)) kinds.add(s.retarget ? 'targeting' : s.tag?.startsWith('range:') ? 'range' : s.k);
     return kinds;
   };
   for (const card of counters) {
@@ -284,6 +307,9 @@ test('a counter card never gets a range or targeting option; Strike still does',
   }
   const plain = seen(withPoiseEffect(dmg(6)));
   assert.ok(plain.has('poise') && plain.has('dmg'), 'a non-counter card still gets poise and damage');
+  // Strike hits one enemy at melee: it is offered the longer reach, and (owner, 2026-11-20) no move to all enemies.
   const strike = seen(byId('core.strike'));
-  assert.ok(strike.has('targeting') && strike.has('range'), 'core.strike still gets both');
+  assert.ok(strike.has('range') && !strike.has('targeting'), 'core.strike gets reach, not area');
+  const area = seen({ ...byId('core.strike'), effects: [{ op: 'damage', target: 'allEnemies', amount: 6 }], tags: [...byId('core.strike').tags, 'targeting:area'] });
+  assert.ok(area.has('targeting'), 'an area Strike may move to one enemy');
 });

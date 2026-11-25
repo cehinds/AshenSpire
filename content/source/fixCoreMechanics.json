@@ -1,13 +1,13 @@
 {
   "version": 1,
   "enabled": true,
+  "spellTraditionsVersion": 1,
   "statusCaps": "none",
   "ward": {
     "enabled": false,
-    "poisePerStack": 5,
-    "routing": "blockFirst",
-    "decayPerTurn": 1,
-    "breaksAtZeroPoise": true
+    "hpPerStack": 5,
+    "routing": "hpBuffer",
+    "decayPerTurn": 1
   },
   "ratings": {
     "prAttributes": ["intelligence", "wisdom"]
@@ -20,7 +20,25 @@
     "drain": "prevented",
     "breakRule": "broken",
     "brokenDamageMultiplier": 1,
-    "breakStatusStacks": 2
+    "breakStatusStacks": 2,
+    "weaponPoiseEnabled": true,
+    "defaultWeaponPoise": 2,
+    "enemyWeaponPoise": 1,
+    "weaponTypePoiseMultiplier": {
+      "sceptre": 1.2,
+      "bow": 1.2,
+      "staff": 1.2
+    },
+    "smashPoiseMultiplier": 1.25,
+    "smashVsGuardingPoiseMultiplier": 2,
+    "mitigationStances": [
+      "counter",
+      "prepared",
+      "smash"
+    ],
+    "mitigationPoiseFraction": 0.5,
+    "mitigationDrainDamageFraction": 0.5,
+    "mitigationDrainFlat": 1
   },
   "staggered": {
     "stance": true,
@@ -71,7 +89,8 @@
   "stance": {
     "effectivenessMultiplier": 1.25,
     "discount": 1,
-    "minimumCost": 1
+    "minimumCost": 1,
+    "playerMinimumCost": 0
   },
   "stanceBenefits": {
     "version": 1,
@@ -102,7 +121,7 @@
   "spellCosts": {
     "version": 1,
     "manaSurcharge": 1,
-    "staminaSurcharge": 1,
+    "staminaSurcharge": 0,
     "cantripTag": "rank.cantrip",
     "manaOnlyTag": "cost.manaOnly",
     "preparedStaminaDiscount": 1,
@@ -243,6 +262,5 @@
       "push": false,
       "knockback": false
     }
-  },
-  "spellTraditionsVersion": 1
+  }
 }

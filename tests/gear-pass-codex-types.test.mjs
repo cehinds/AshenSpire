@@ -95,31 +95,34 @@ test('all 33 Codex armaments and five armour rows resolve their authored type an
   }
 });
 
-test('classification preserves every one of the 38 original item modifier lists', () => {
-  const mods = Object.keys({ ...WEAPONS, ...ARMOUR }).sort().map(id => [id, pieceById(id).mods]);
-  assert.equal(createHash('sha256').update(JSON.stringify(mods)).digest('hex'), '70271201db192902e073af3b14fdcc4243cc1b23088be35f90f4f5369829d2a0');
+test('classification preserves the 38 authored item signatures from the equipment rework', () => {
+  // The authored lists from 057fbe0905a, read from the unprojected content: a profile's signatureMods (Sage's Robe, 2026-11-19) replace a registry
+  // piece's raw mods, never the content they were authored in (tests/gear-signature-mods.test.mjs).
+  const raw = id => contentBundle.equipment.armaments.find(p => p.id === id) || contentBundle.equipment.armour.find(p => p.id === id);
+  const mods = Object.keys({ ...WEAPONS, ...ARMOUR }).sort().map(id => [id, raw(id).mods]);
+  assert.equal(createHash('sha256').update(JSON.stringify(mods)).digest('hex'), '52b4453ae54a7c80aa8f1618a182d4e33c65a85d9f336d3bdcfb99c00c2404bc');
 });
 
-test('Codex Sword adds one damage to real Core Strike without replaying the old Strike modifier', () => {
+test('Codex Sword adds one damage to real Core Strike without applying the signature reserved for Sweep', () => {
   assert.equal(world().card('core.strike').effects.find(e => e.op === 'damage').amount, 6);
   const sword = world({ right: 'broadsword' });
-  assert.deepEqual(pieceById('broadsword').mods, ['strike.damage=+1']);
+  assert.deepEqual(pieceById('broadsword').mods, ['sweep.hitWeak=+1']);
   assert.equal(sword.card('core.strike').effects.find(e => e.op === 'damage').amount, 7);
 });
 
-test('Moon Glaives adds exactly one hit and Iron Knuckles applies its cost and damage base once', () => {
+test('Moon Glaives adds exactly one hit and Iron Knuckles applies its damage base once', () => {
   const glaives = world({ right: 'moonGlaives' }).card('core.strike').effects.find(e => e.op === 'damage');
   assert.equal(glaives.amount, 6);
   assert.equal(glaives.hits, 2, 'old strike.hits=3 is not applied to configured Core cards');
   const plain = world().card('core.strike'), claws = world({ right: 'ironKnuckles' }).card('core.strike');
-  assert.equal(plain.cost, 1); assert.equal(claws.cost, 0);
+  assert.equal(plain.cost, 1); assert.equal(claws.cost, plain.cost, 'Claws no longer change Stamina cost');
   assert.equal(plain.effects.find(e => e.op === 'damage').amount, 6);
   assert.equal(claws.effects.find(e => e.op === 'damage').amount, 5);
 });
 
-test('Storm Sceptre grants Ward and one Prepared Focus even alongside another Focus', () => {
+test('Storm Sceptre no longer grants Ward and still gives one Prepared Focus', () => {
   const storm = world({ right: 'stormSceptre' });
-  assert.equal(storm.summary.turnGrants.filter(g => g.phase === 'start' && g.status === 'ward').reduce((n, g) => n + g.amount, 0), 1);
+  assert.equal(storm.summary.turnGrants.filter(g => g.phase === 'start' && g.status === 'ward').reduce((n, g) => n + g.amount, 0), 0);
   const spell = world().card('core.spark');
   for (const equipped of [storm, world({ right: 'stormSceptre', left: 'ashStaff' })]) {
     const prepared = ApplyGearCardRules(equipped.summary.cardRules, spell, { stance: 'prepared' });
@@ -129,22 +132,24 @@ test('Storm Sceptre grants Ward and one Prepared Focus even alongside another Fo
   }
 });
 
-test('both Codex tomes grant two Ward and talismans grant one', () => {
+test('Codex tomes and talismans each grant one Ward at turn start', () => {
   for (const id of ['grimoire', 'prayerBook', 'sunTalisman', 'boneTalisman']) {
-    const amount = id === 'grimoire' || id === 'prayerBook' ? 2 : 1;
     const summary = world({ left: id }).summary;
-    assert.equal(summary.turnGrants.filter(g => g.phase === 'start' && g.status === 'ward').reduce((n, g) => n + g.amount, 0), amount, id);
+    assert.equal(summary.turnGrants.filter(g => g.phase === 'start' && g.status === 'ward').reduce((n, g) => n + g.amount, 0), 1, id);
   }
 });
 
-test('Codex armour grants its group Block once and preserves the authored robe Mana and Hunter Dexterity status', () => {
-  for (const [id, block] of [['cinderforgedPlate', 13], ['wyrmscaleMail', 12], ['ringmailHauberk', 12], ['huntersHide', 11], ['sagesRobe', 10]]) {
+test('Codex armour grants only authored Block and keeps its distinct group and signature effects', () => {
+  for (const [id, block] of [['cinderforgedPlate', 0], ['wyrmscaleMail', 0], ['ringmailHauberk', 1], ['huntersHide', 0], ['sagesRobe', 0]]) {
     const piece = pieceById(id), equipped = world({ armor: id, classId: piece.classId });
     assert.equal(equipped.card('core.defend').effects.find(e => e.op === 'block').amount, block, id);
-    if (id === 'sagesRobe') assert.equal(equipped.mods.maxMana, 2, 'authored +1 and generic robe +1 remain additive');
+    if (id === 'sagesRobe') {
+      assert.equal(equipped.mods.maxMana, 0, 'the robe group has no flat Mana');
+      assert.equal(equipped.combat.player.statuses.ward?.stacks, 1, 'the robe signature grants Ward');
+    }
     if (id === 'huntersHide') {
-      assert.equal(equipped.summary.statPoints.dexterity, 1);
-      assert.equal(equipped.combat.player.statuses.dexterity.stacks, 1, 'the original positive status is preserved');
+      assert.equal(equipped.summary.statPoints.dexterity, 2, 'one point each from the light group and item');
+      assert.equal(equipped.combat.player.statuses.dexterity?.stacks || 0, 0, 'the item grants a stat point instead of a status');
     }
   }
 });

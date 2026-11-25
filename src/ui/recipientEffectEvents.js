@@ -13,6 +13,8 @@ function matchingGrants(action, event) {
     if (event.type === 'staminaRecovered') return effect.op === 'restoreStamina';
     if (event.type === 'manaRestored') return effect.op === 'restoreMana';
     if (event.type === 'blockGained') return effect.op === 'block';
+    if (event.type === 'counterStacksChanged') return effect.op === 'gainCounterStacks';
+    if (event.type === 'reflectStacksChanged') return effect.op === 'applyReflect';
     if (event.type === 'persistentWardChanged' || (event.type === 'meterGuardGained' && event.meter === 'ward')) return ['gainWard', 'block'].includes(effect.op);
     return false;
   });
@@ -88,13 +90,14 @@ export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove
       ...(polarity !== 'neutral' && !event.polarity ? { polarity, beneficial: polarity === 'positive' } : {}) };
     let layers = RecipientEffectsForEvent(definition, normalized).map(layer => ({ ...layer, actionKey: context?.key || null }));
     // Ward remembers the protected actor's own granted tint, not the attacker's.
-    for (const layer of layers) if (layer.shape === 'ward') {
+    for (const layer of layers) if (['ward', 'ward-shatter'].includes(layer.shape)) {
       if (layer.treatment === 'gain') state.wardColors.set(layer.targetId, { color: layer.color, palette: layer.palette });
       else Object.assign(layer, state.wardColors.get(layer.targetId) || {});
     }
     let windup = null;
     if (marker && !marker.windupShown) {
-      windup = RecipientWindupFor(marker.definition, normalized);
+      const circle = RecipientWindupFor(marker.definition, normalized);
+      if (circle) windup = { ...circle, actionKey: marker.key };
       marker.windupShown = true;
     }
     let approach = null;
@@ -103,14 +106,14 @@ export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove
       if (targetIds.length) {
         const base = ResolveRecipientEffect(marker.definition, normalized);
         approach = { ...base, impactShape: base.shape, shape: null, phase: 'delivery', mount: 'target',
-          sourceId, targetIds, claimsDamage: false, delivery: RecipientDeliveryFor(marker.definition, normalized) };
+          sourceId, targetIds, actionKey: marker.key, claimsDamage: false, delivery: RecipientDeliveryFor(marker.definition, normalized) };
         (marker.preparedDeliveries ||= new Set()).add(marker.contactIndex || 0);
         PrewarmRecipientEffect({ ...approach, shape: approach.impactShape });
       }
     }
     if (context?.preparedDeliveries?.has(context.contactIndex || 0)) layers = layers.map(layer => ({ ...layer, delivery: null }));
     const result = { ...raw, recipientEffects: layers, recipientEffect: layers[0] || null,
-      recipientTargetId: event.targetId || layers[0]?.targetId || null,
+      recipientTargetId: layers[0]?.targetId || event.targetId || null,
       recipientSourceId: sourceId, recipientActionKey: context?.key || null,
       recipientContactKey: context ? `${context.key}:${context.contactIndex || 0}` : null,
       ...(windup ? { recipientWindup: windup } : {}) };
@@ -138,10 +141,8 @@ export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove
       && other.result.recipientEffects.some(layer => layer.phase === 'contact'));
     const secondary = result.recipientEffects.find(layer => layer.secondary);
     if (secondary && preceding) {
-      const primary = preceding.result.recipientEffects.find(layer => layer.phase === 'contact');
       const bloodApply = event.type === 'statusApplied' && ['bleed', 'bleeding'].includes(event.status);
       if (event.type === 'healed' || bloodApply) {
-        secondary.delayMs = primary.durationMs * SETTINGS.motion.secondaryStartFrame / SETTINGS.behavior.frameCount;
         preceding.result.recipientEffects.push(secondary);
         result.recipientEffects = [];
       }
@@ -160,11 +161,11 @@ export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove
     }
     for (const layer of result.recipientEffects) {
       const hitShape = layer.shape === 'block-break' ? 'block-hit' : layer.shape === 'poise-break' ? 'poise-hit'
-        : layer.shape === 'ward' && layer.treatment === 'break' ? 'ward' : null;
+        : layer.shape === 'ward-shatter' ? 'ward' : null;
       if (!hitShape) continue;
       const previous = annotated.slice(0, i).findLast(other => sameContact(row, other)
-        && other.result.recipientEffects.some(clip => clip.shape === hitShape));
-      if (previous) previous.result.recipientEffects = previous.result.recipientEffects.filter(clip => clip.shape !== hitShape);
+        && other.result.recipientEffects.some(clip => clip.shape === hitShape && clip.treatment !== 'gain'));
+      if (previous) previous.result.recipientEffects = previous.result.recipientEffects.filter(clip => clip.shape !== hitShape || clip.treatment === 'gain');
     }
     // Avoidance belongs to this individual hit. A later evasion must never
     // remove an earlier successful hit of a multi-contact action.

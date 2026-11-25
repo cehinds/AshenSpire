@@ -1,7 +1,37 @@
 {
   "behavior": {
+    "enabled": true,
+    "warmShapes": [
+      "slash",
+      "multi-slash",
+      "thrust",
+      "smash",
+      "sweep",
+      "counter",
+      "spell",
+      "spell-circle",
+      "fire",
+      "frost",
+      "lightning",
+      "earth",
+      "force",
+      "illusion",
+      "decay",
+      "ward-shatter",
+      "evade-gain",
+      "counter-gain",
+      "reflect",
+      "poison",
+      "blight",
+      "magic-vulnerable",
+      "mirrors",
+      "bind",
+      "weak",
+      "vulnerable",
+      "frail"
+    ],
     "frameCount": 3,
-    "atlasId": "v5",
+    "atlasId": "v6",
     "palettes": {
       "physical": "#E3E7ED",
       "magic": "#4169E1",
@@ -271,6 +301,101 @@
         "rows": 1,
         "row": 0,
         "optional": true
+      },
+      "ward-shatter": {
+        "asset": "assets/recipient-effects/v6/ward-shatter.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true
+      },
+      "evade-gain": {
+        "asset": "assets/recipient-effects/v6/evade-gain.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "counter-gain": {
+        "asset": "assets/recipient-effects/v6/counter-gain.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "reflect": {
+        "asset": "assets/recipient-effects/v6/reflect.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "poison": {
+        "asset": "assets/recipient-effects/v6/poison.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "blight": {
+        "asset": "assets/recipient-effects/v6/blight.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "magic-vulnerable": {
+        "asset": "assets/recipient-effects/v6/magic-vulnerable.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "mirrors": {
+        "asset": "assets/recipient-effects/v6/mirrors.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "bind": {
+        "asset": "assets/recipient-effects/v6/bind.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "weak": {
+        "asset": "assets/recipient-effects/v6/weak.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "vulnerable": {
+        "asset": "assets/recipient-effects/v6/vulnerable.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
+      },
+      "frail": {
+        "asset": "assets/recipient-effects/v6/frail.png",
+        "columns": 3,
+        "rows": 1,
+        "row": 0,
+        "optional": true,
+        "authoredColor": true
       }
     },
     "anchors": {
@@ -285,33 +410,68 @@
       "ward",
       "spell-circle",
       "buff",
-      "debuff"
+      "debuff",
+      "ward-shatter"
     ],
     "alphaBoundsThreshold": 40,
-    "minimumFrameMs": 16
+    "minimumFrameMs": 16,
+    "statusResultShapes": {
+      "evade": "evade-gain",
+      "auto-counter": "counter-gain",
+      "reflect": "reflect",
+      "poison": "poison",
+      "venom": "poison",
+      "blight": "blight",
+      "crimsonBlight": "blight",
+      "necroticBlight": "blight",
+      "necroticBuildup": "blight",
+      "magicVulnerable": "magic-vulnerable",
+      "magic-vulnerable": "magic-vulnerable",
+      "mirrors": "mirrors",
+      "bind": "bind",
+      "restrained": "bind",
+      "weak": "weak",
+      "vulnerable": "vulnerable",
+      "frail": "frail"
+    },
+    "statusResultPalettes": {
+      "poison": "decay",
+      "blight": "decay",
+      "magic-vulnerable": "magic"
+    }
   },
   "motion": {
     "clipMs": 300,
     "auraMs": 420,
     "spellWindupMs": 300,
-    "spellCircleScale": [0.3, 0.65, 1],
+    "spellCircleScale": [
+      0.3,
+      0.65,
+      1
+    ],
     "statusTickMs": 220,
     "meleeDeliveryMs": 80,
     "reachDeliveryMs": 160,
-    "secondaryStartFrame": 2,
     "secondaryOffsetY": {
-      "heal-plus": [0.28, 0, -0.28],
-      "bleed-drops": [-0.28, 0, 0.28]
+      "heal-plus": [
+        0.28,
+        0,
+        -0.28
+      ],
+      "bleed-drops": [
+        -0.28,
+        0,
+        0.28
+      ]
     },
-    "auraRiseFractions": [0, 0.08, 0.16],
+    "auraRiseFractions": [
+      0,
+      0.08,
+      0.16
+    ],
     "movementMs": 220,
     "reactionLeadMs": 60,
     "cleanupSlackMs": 80,
-    "wardBreakFrames": [
-      1,
-      2,
-      2
-    ],
     "evadeOffsetFractions": [
       -0.13,
       0.14,
@@ -322,11 +482,18 @@
       0,
       0.12,
       0.25
-    ]
+    ],
+    "resultOverlapMs": 0,
+    "resultQueueScope": "battlefield",
+    "resultMaxConcurrent": 1,
+    "resultGapMs": 30
   },
   "sizing": {
     "tilePx": 256,
-    "cardBoundShapes": ["buff", "debuff"],
+    "cardBoundShapes": [
+      "buff",
+      "debuff"
+    ],
     "impactBodyWidth": 1.05,
     "impactBodyHeight": 0.88,
     "impactMinPx": 48,
@@ -369,41 +536,41 @@
     "fallbackPx": 120
   },
   "layering": {
-    "auraReveal": [0.38, 0.72, 1],
+    "auraReveal": [
+      0.38,
+      0.72,
+      1
+    ],
     "opacity": {
-      "primary": 0.9,
-      "spellCircle": 0.9,
+      "global": 0.8,
+      "primary": 1.0,
+      "spellCircle": 1.0,
       "elementOverlay": 0.5,
       "elementOverSlash": 0.3,
       "wardRim": 0.9,
       "wardGhost": [
-        0.12,
-        0.32,
-        0.12
+        0.133333,
+        0.355556,
+        0.133333
       ],
       "wardAbsorbGhost": [
-        0.15,
-        0.45,
-        0.1
+        0.166667,
+        0.5,
+        0.111111
       ],
       "wardBreakGhost": [
-        0.22,
-        0.1,
-        0
-      ],
-      "wardBreakRim": [
-        0.6,
-        0.35,
-        0.08
+        0.244444,
+        0.111111,
+        0.0
       ],
       "evadeGhost": [
-        0.36,
-        0.3,
-        0.12
+        0.4,
+        0.333333,
+        0.133333
       ],
-      "evadeSecondary": 0.08,
+      "evadeSecondary": 0.088889,
       "evadeLines": 0.38,
-      "protectedContact": 0.45,
+      "protectedContact": 0.5,
       "statusFade": [
         0.35,
         0.16,
@@ -415,12 +582,16 @@
         0.05
       ],
       "statusTick": 0.22,
-      "delivery": 0.65,
+      "delivery": 0.722222,
       "deliveryHighlight": 0.8,
       "secondary": 0.9
     },
     "tintStrength": 0.48,
-    "tintStrengthByShape": { "spell-circle": 0.9, "heal-plus": 0.9, "bleed-drops": 0.9 },
+    "tintStrengthByShape": {
+      "spell-circle": 0.9,
+      "heal-plus": 0.9,
+      "bleed-drops": 0.9
+    },
     "grayscaleBeforeTint": true,
     "statusOffset": {
       "x": 0.25,

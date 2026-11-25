@@ -256,8 +256,8 @@ check(sameCombatProjection(swordLeft, swordRight), 'left-only and right-only out
 check(hands(swordLeft).every((hand) => hand === 'left') && hands(swordRight).every((hand) => hand === 'right'), 'single-weapon provenance records the owning hand');
 check(profiles(daggerLeft).every((id) => id === 'daggerPierceAttack'), 'left-only Dagger owns all authored attack slots', profiles(daggerLeft).join(','));
 check(JSON.stringify(profiles(dual)) === JSON.stringify(['bladeAttack', 'bladeAttack', 'daggerPierceAttack', 'daggerPierceAttack']), 'dual wield is a deterministic right/left 2+2 split', profiles(dual).join(','));
-check(attacks(dual).slice(0, 2).every((card) => !(card.mods || []).includes('hits=2'))
-  && attacks(dual).slice(2).every((card) => (card.mods || []).includes('hits=2')), 'weapon-specific effects stay on their source package');
+check(attacks(dual).slice(0, 2).every((card) => card.sourceArmamentId === 'straightSword' && card.profileId === 'bladeAttack')
+  && attacks(dual).slice(2).every((card) => card.sourceArmamentId === 'dagger' && card.profileId === 'daggerPierceAttack'), 'weapon-specific effects stay on their source package');
 const preview = equipmentSurfaceReceipt(baseRegistries, swordRight, {
   candidate: { slotId: 'leftHand', setIndex: 0, pieceId: 'dagger' },
 }).candidate;

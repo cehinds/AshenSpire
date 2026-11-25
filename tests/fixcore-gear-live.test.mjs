@@ -62,19 +62,29 @@ test('equipped resolved values reach live pools/ratings once and survive restore
   assert.equal(restored.maxHp,run.maxHp);
   assert.deepEqual(gameProfileRatingReceipt(reg,restored).totals,ratings.totals);
 });
-test('previously earned Core attribute entitlement remains claimable and changes live AR', () => {
+test('a saved Core attribute entitlement predating the new cadence remains claimable and changes live AR', () => {
   const run=fresh(), old=gameProfileRatingReceipt(reg,run).totals.ar;
   assert.equal(profile.modules.progression.characterLevels,true, 'Core earns character levels');
-  // A point already earned stays claimable and changes live AR.
+  // Under the earlier cadence level 2 had no automatic class point.
+  delete run.levelRewardRuleSnapshot;
   run.level.level=2; run.level.unspentPoints=1;
-  withGameProfileService(run,'levelUp',()=>applyLevelUp(reg,run,'strength'));
-  assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,old+1);
-  assert.equal(run.level.unspentPoints,0);
-  const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);
+  rederivePools(reg,run,'level-reward-fixture');
+  const pendingSave=createSaveManager(createMemoryStorage());pendingSave.saveRun(run,null);
+  const pending=pendingSave.loadRun(reg);assert.ok(pending,JSON.stringify(pendingSave.runStatus()));
+  assert.equal(pending.levelRewardRuleSnapshot,undefined);
+  assert.equal(pending.level.unspentPoints,1);
+  assert.equal(gameProfileRatingReceipt(reg,pending).totals.ar,old);
+  const strength=pending.attributes.strength;
+  withGameProfileService(pending,'levelUp',()=>applyLevelUp(reg,pending,'strength'));
+  assert.equal(gameProfileRatingReceipt(reg,pending).totals.ar,old+1);
+  assert.equal(pending.attributes.strength,strength+1);
+  assert.equal(pending.level.unspentPoints,0);
+  const save=createSaveManager(createMemoryStorage());save.saveRun(pending,null);
   const restored=save.loadRun(reg);assert.ok(restored,JSON.stringify(save.runStatus()));
   initializeRunDerivedStats(restored,reg);
   assert.equal(restored.levelPoints,1);
-  assert.equal(restored.attributes.strength,run.attributes.strength);
+  assert.equal(restored.attributes.strength,strength+1);
+  assert.equal(gameProfileRatingReceipt(reg,restored).totals.ar,old+1);
 });
 
 test('authored attribute gear reaches HP MP SP pools with one contribution on reload', () => {
@@ -91,7 +101,7 @@ test('authored attribute gear reaches HP MP SP pools with one contribution on re
     for (const attribute of ['dexterity','dexterity','wisdom','wisdom']) applyLevelUp(registries,run,attribute);
   });
   const unworn=[run.maxHp,run.maxMana,run.maxStamina];
-  assert.deepEqual(unworn.slice(1),[1,3]);
+  assert.deepEqual(unworn.slice(1),[4,6]);
   const unwornPoints=gameProfileEquipmentReceipt(registries,run).totals;
   run.loadout.sets.armor[0]='vigil'; // Medium: its type adds Poise only (Heavy would take 1 DEX, ruling 18), so the 3 authored points are the whole stat change
   rederivePools(registries,run,'test');

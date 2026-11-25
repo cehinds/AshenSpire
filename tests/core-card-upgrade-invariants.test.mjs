@@ -5,13 +5,14 @@ import { registries, profile } from './helpers/fixcore-combat-rules.mjs';
 import { projectGameCard, gameContent } from '../src/model/gameProfile.js';
 import { nextUpgradeStep } from '../src/model/cardUpgradeLimits.js';
 import { STACK_CAPS } from '../src/model/cardRank.js';
+import { FlatSteps } from '../src/model/cardUpgrade.js';
 
 const subject = { gameProfile: profile };
 const ids = gameContent(subject, 'cards').filter((c) => c.id.startsWith('core.') && registries.cards.has(c.id)).map((c) => c.id);
 const sum = (face, op) => face.effects.filter((e) => e.op === op).reduce((t, e) => t + (Number.isFinite(e.amount) ? e.amount * (e.hits > 1 ? e.hits : 1) : 0), 0);
 const first = (face, op) => face.effects.find((e) => e.op === op && Number.isFinite(e.amount));
 const total = (face, op) => { const e = first(face, op); return e ? e.amount * (e.hits > 1 ? e.hits : 1) : 0; };
-const numbers = (face) => JSON.stringify([face.cost, face.staminaCost, face.manaCost, face.effects, face.tags, face.damageSchool, face.keywords, face.runAttributeBonus || null]); // a run-long attribute step (W25-L) changes the face by what it gives the run
+const numbers = (face) => JSON.stringify([face.cost, face.staminaCost, face.manaCost, face.effects, face.tags, face.damageSchool, face.keywords, face.costGrowth || null, face.runAttributeBonus || null]); // a run-long attribute step (W25-L) changes the face by what it gives the run
 
 test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost rules and "every step changes something" hold for 10 seeds x 10 upgrades', () => {
   assert.ok(ids.length >= 50);
@@ -46,13 +47,21 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
           const given = Math.max(0, ...authored.effects.filter((p) => p.op === 'applyStatus' && p.status === e.status && Number.isFinite(p.stacks)).map((p) => p.stacks));
           assert.ok(e.stacks <= Math.max(STACK_CAPS[e.status], given), `${where}: ${e.status} ${e.stacks} over its cap`);
         }
-        const kinds = instance.upgradeSteps.map((x) => x.k);
-        assert.ok(kinds.filter((k) => k === 'cost').length <= 1 && kinds.filter((k) => k === 'hits').length <= 1, `${where}: cost or hits more than once`);
+        const flat = FlatSteps(instance.upgradeSteps);
+        for (const pool of ['sp', 'mp']) {
+          assert.ok(flat.filter((x) => x.k === 'cost' && x.pool === pool).length <= 1, `${where}: repeated ${pool} cost cut`);
+        }
+        assert.ok(flat.filter((x) => x.k === 'hits').length <= 1, `${where}: hits more than once`);
+        const swaps = flat.filter((x) => x.k === 'costSwap');
+        assert.ok(swaps.length <= 1, `${where}: cost swap more than once`);
         assert.equal(face.cost, plain.cost - (plain.staminaCost - face.staminaCost) - 0, `${where}: cost must track staminaCost`);
-        if (base.staminaCost > 0) assert.ok(face.staminaCost >= 1, `${where}: SP floor`);
-        const cantripped = instance.upgradeSteps.some((x) => x.k === 'tag' && x.tag === 'rank.cantrip');
-        // a cantrip costs no Mana (owner, 2026-11-01): a rank-down step zeroes it; otherwise the MP floor holds (a Mana-only spell, batch 4, has no Stamina to floor)
-        if (base.manaCost > 0) assert.ok(cantripped ? face.manaCost === 0 : face.manaCost >= 1 && (base.staminaCost > 0 ? face.cost >= 1 : face.cost >= 0), `${where}: MP floor`);
+        const spLimit = base.staminaCost + (swaps[0]?.dir === 'mpToSp' ? 2 : 0);
+        const mpLimit = (base.manaCost ?? 0) + (swaps[0]?.dir === 'spToMp' ? 1 : 0);
+        assert.ok(face.staminaCost >= 0 && face.staminaCost <= spLimit, `${where}: SP outside the cost bounds`);
+        const cantripped = flat.some((x) => x.k === 'tag' && x.tag === 'rank.cantrip');
+        if (base.manaCost > 0 || swaps.length) {
+          assert.ok(cantripped ? face.manaCost === 0 : face.manaCost >= 0 && face.manaCost <= mpLimit && face.cost >= 0, `${where}: MP outside the cost bounds`);
+        }
       }
     }
   }

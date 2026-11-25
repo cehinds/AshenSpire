@@ -1,3 +1,4 @@
+import { ValidLevelRewardRules } from './classLevelBonus.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
 import { gameModule, gameContent } from './gameProfile.js';
@@ -58,6 +59,7 @@ import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, co
 import { bringRangesForward } from './combatRanges.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
+import { OfferKeyProblems } from './upgradeOffer.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
 import { sigilInventoryProblems, attunedSigilProblems } from './sigils.js';
 
@@ -122,7 +124,9 @@ export const MAX_CARD_RANK = 99;
 // 25: pinned game profile, durable run ID and configured service receipts.
 // 26: the stored form may carry `gameProfileRef` instead of the pinned profile
 // (model/runStorage.js); a 25 save loads unchanged, an older build keeps a 26 one.
-export const RUN_SCHEMA_VERSION = 26;
+// 27: a run owns only the armour it acquired. A 26-or-older save is given, at
+// the load door, the unworn sets the old rule let it own (engine/save.js).
+export const RUN_SCHEMA_VERSION = 27;
 
 // Schema versions named for the version that FIRST carries each field. A run is
 // "pre-X" when its schemaVersion is below RUN_SCHEMA_X (migrateRunSchema).
@@ -160,6 +164,8 @@ const RUN_SCHEMA_CONSUMABLES = 16;
 const RUN_SCHEMA_TRAINING_POOL = 18;
 // Attuned sigils first appear in v19.
 const RUN_SCHEMA_ATTUNED_SIGILS = 19;
+// Armour owned by acquisition only (shared sets included) first applies in v27.
+export const RUN_SCHEMA_ACQUIRED_ARMOUR = 27;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -210,6 +216,9 @@ export function createRunState({
   if (![null, 1, 2].includes(reactionRulesVersion) || (reactionRulesVersion >= 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
   const profileSubject = { gameProfile };
   const configured = isConfiguredRun(profileSubject);
+  const newLevelRewards = configured && gameModule(profileSubject, 'progression')?.characterLevels
+    ? registries.balance.levelUp?.characterLevelRewards : null;
+  if (newLevelRewards && !ValidLevelRewardRules(newLevelRewards)) throw new Error('Invalid character level-reward rules');
   // A configured profile (Core 2) fights expanded combat with the profile's own
   // reaction rules whatever the caller asked — engine/combat.js createCombat
   // forces the same — so the run and every checkpoint its fights write agree.
@@ -295,6 +304,7 @@ export function createRunState({
     // and the attribute points waiting to be assigned at a shrine. Written
     // only by model/levelup.js. A fresh run is level 1 with nothing waiting.
     level: { xp: 0, level: 1, unspentPoints: 0 },
+    ...(newLevelRewards ? { levelRewardRuleSnapshot: structuredClone(newLevelRewards) } : {}),
     // THE SKILL LEDGER (plan phase 4a): { [trackId]: { xp, level, pendingDrafts } },
     // written only by model/skills.js awardSkillXp. Empty until a hit lands.
     skills: {},
@@ -424,7 +434,15 @@ export function createRunState({
   if (!configured) ensureExpandedStarterCoverage(registries, run);
   initializeGameProfileRun(registries, run, { profileMeta });
   // Core: the authored deck exists now; add what the worn gear's grantedCards lend (owner 2026-10-19).
-  if (configured) reconcileGrantedCards(registries, run);
+  if (configured) {
+    reconcileGrantedCards(registries, run);
+    const starterArtRank = gameContent(run, 'starterDeck')?.weaponArtRank;
+    if (starterArtRank === 1 && gameModule(run, 'progression')?.cardRanks === true) {
+      for (const card of run.deck) {
+        if (card.equipmentRole === 'weaponArt' && registries.cards.get(card.cardId).rarity === 'rare') card.rank = starterArtRank;
+      }
+    }
+  }
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -795,7 +813,11 @@ export const RUN_SHAPE = [
   { key: 'weaknessDiscovery', type: 'object', optional: true },
   { key: 'runId', type: 'string', optional: true },
   { key: 'gameProfileRestVisits', type: 'object', optional: true },
+  // The upgrade offer counter (upgradeOffer.js): each upgrade source a run enters takes the next number.
+  { key: 'upgradeOfferSerial', type: 'number', optional: true },
   { key: 'rewardOfferHistory', type: 'object', optional: true },
+  // Owner 2026-11-20: one-time card copies a copy relic queued (model/cardCopyService.js); absent means none waiting.
+  { key: 'pendingCardCopies', type: 'number', optional: true },
   { key: 'contentVersion', type: 'string' },
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
@@ -872,6 +894,7 @@ export const RUN_SHAPE = [
   // The odd-level class bonus (model/classLevelBonus.js) is paid only to a run born with it (1); a run saved
   // before it existed has no field and keeps the pools its snapshot validated, so it loads unchanged.
   { key: 'classLevelBonusVersion', type: 'number', optional: true },
+  { key: 'levelRewardRuleSnapshot', type: 'object', optional: true },
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
   { key: 'lastSmithingReceipt', type: 'object', optional: true },
@@ -893,6 +916,9 @@ export const RUN_SHAPE = [
   // Optional so a run saved before equipment existed still loads; save.js
   // heals it with a fresh loadout rather than refusing the save.
   { key: 'loadout', type: 'object', optional: true },
+  // The Armoury's remembered Equip destination per item (docs/ARMOURY-LAYOUT-BRIEF.md,
+  // Armaments List). A UI preference only: older saves need no default or schema bump.
+  { key: 'equipmentSlotChoices', type: 'object', optional: true },
   // Plan phase 3a. Required at schema 7; a preZones save (≤ 6) is filled at
   // the migration door from the four legacy fields, no registries needed.
   { key: 'zones', type: 'object' },
@@ -1077,11 +1103,12 @@ const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key
 export function levelProblems(level) {
   if (!level || typeof level !== 'object' || Array.isArray(level)) return ['level must be { xp, level, unspentPoints }'];
   const problems = [];
-  for (const key of Object.keys(level)) if (!['xp', 'level', 'unspentPoints'].includes(key)) problems.push(`level.${key} is not a field of the level ledger`);
+  for (const key of Object.keys(level)) if (!['xp', 'level', 'unspentPoints', 'pendingRankUps'].includes(key)) problems.push(`level.${key} is not a field of the level ledger`);
   if (!Number.isInteger(level.level) || level.level < 1) problems.push('level.level must be an integer of at least 1');
   for (const key of ['xp', 'unspentPoints']) {
     if (!Number.isInteger(level[key]) || level[key] < 0) problems.push(`level.${key} must be a non-negative integer`);
   }
+  if (level.pendingRankUps !== undefined && (!Number.isInteger(level.pendingRankUps) || level.pendingRankUps < 0)) problems.push('level.pendingRankUps must be a non-negative integer');
   return problems;
 }
 
@@ -1151,6 +1178,15 @@ function checkProfileAndCombatRules(run, problems) {
     try { validateResolvedGameProfile(run.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (typeof run.runId !== 'string' || !run.runId) problems.push('Configured run requires a durable runId');
   } else if (run.runId || run.gameProfileRestVisits) problems.push('Profile-owned fields require a pinned gameProfile');
+  // Upgrade offer keys (upgradeOffer.js): the run's counter and each source's key are positive integers, never past the counter.
+  problems.push(...OfferKeyProblems(run.upgradeOfferSerial, 'upgradeOfferSerial'));
+  const offerKeyed = [['shopStock', run.shopStock], ['gameProfilePendingReward', run.gameProfilePendingReward],
+    ...Object.entries(run.gameProfileRestVisits || {}).map(([id, visit]) => [`gameProfileRestVisits.${id}`, visit])];
+  for (const [path, record] of offerKeyed) {
+    if (!record || typeof record !== 'object' || record.offerKey === undefined) continue;
+    problems.push(...OfferKeyProblems(record.offerKey, `${path}.offerKey`));
+    if (Number.isSafeInteger(record.offerKey) && !(record.offerKey <= (run.upgradeOfferSerial || 0))) problems.push(`${path}.offerKey must not exceed upgradeOfferSerial`);
+  }
   // Defeat summaries may acknowledge earned XP, but never open spoils or
   // resume combat. The acknowledgement itself is persisted before finishing.
   if (run.gameProfilePendingReward?.after === 'defeat') {
@@ -1359,7 +1395,11 @@ function checkLevelAndSmithingCounters(run, problems) {
       problems.push(`${key} must be a non-negative integer`);
     }
   }
+  if (run.levelRewardRuleSnapshot !== undefined && !ValidLevelRewardRules(run.levelRewardRuleSnapshot)) {
+    problems.push('levelRewardRuleSnapshot is invalid');
+  }
   if (run.level !== undefined) problems.push(...levelProblems(run.level));
+  if (run.pendingCardCopies !== undefined && (!Number.isInteger(run.pendingCardCopies) || run.pendingCardCopies < 0)) problems.push('pendingCardCopies must be a non-negative integer');
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
   }
@@ -1998,6 +2038,8 @@ export function migrateRunSchema(run) {
   // before this runs, so there is nothing to fill. The bump exists so an OLDER
   // build refuses and keeps a v26 slot (save.js 'newer') rather than reading a
   // run with no pinned profile as corrupt and archiving it.
+  // v26 → v27: nothing is filled HERE; the load door records the armour the
+  // old ownership rule granted, which needs the registries.
   if (run.combatExpansionVersion === 2) {
     bringCombatExpansionRulesForward(run.combatExpansionRules);
     // A run saved in (or just after) a fight carries its own frozen copy in

@@ -132,6 +132,22 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
       });
       label.append(input); panel.append(label);
     }
+    // Owner 2026-11-23: a gameplay rule beside the XP rates, on unless set false (progression.rankUpNeedsFullUpgrades).
+    const ruleLabel = document.createElement('label');
+    const rule = document.createElement('input'); rule.type = 'checkbox';
+    rule.className = 'game-profile-rank-up-rule';
+    const ruleOn = () => profile.modules.progression?.rankUpNeedsFullUpgrades !== false;
+    rule.checked = ruleOn();
+    rule.setAttribute('aria-label', t('gameProfile.settings.rankUpNeedsFull'));
+    rule.addEventListener('change', async () => {
+      const author = structuredClone(profile.author);
+      author.modules ||= {};
+      const previous = author.modules.progression;
+      author.modules.progression = { ...(previous && typeof previous === 'object' ? previous : {}), rankUpNeedsFullUpgrades: rule.checked };
+      if (!await apply(author)) rule.checked = ruleOn();
+    });
+    ruleLabel.append(rule, document.createTextNode(` ${t('gameProfile.settings.rankUpNeedsFull')}`));
+    panel.append(ruleLabel);
   }
   host.append(panel);
   return panel;

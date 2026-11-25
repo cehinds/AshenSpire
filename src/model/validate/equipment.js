@@ -131,23 +131,11 @@ export function equipmentProblems(b, err, ctx) {
         if (typeof card.damageSchool !== 'string') err(`${path}.damageSchool`, 'Missing required explicit damage school');
         if (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0) err(`${path}.exposureBuildupPerHit`, 'Missing required non-negative per-hit buildup');
         if (carrier && (card.damageSchool !== carrier.damageSchool || card.exposureBuildupPerHit !== carrier.exposureBuildupPerHit)) err(path, 'Resolved card carrier disagrees with authored row or grade traits');
-        // A Mana spell works toward a break faster than an action-only one
-        // (plan phase 8): its row carries at least balance.exposure.buildupPerManaSpell.
-        const floor = b.balance && b.balance.exposure && b.balance.exposure.buildupPerManaSpell;
-        const schoolMult = ((b.balance || {}).arcaneExposure || {}).schoolBuildupMultipliers || {};
-        // EITHER FACE COSTING MANA BINDS THE ROW. An upgrade that adds a Mana
-        // line was slipping past the floor while its buildup stayed at the
-        // base's (Codex, #1203); the row is one per card, so one face is enough.
-        const upgradedMana = card.upgrade && Number.isInteger(card.upgrade.manaCost) ? card.upgrade.manaCost : card.manaCost;
-        const costsMana = (Number.isInteger(card.manaCost) && card.manaCost > 0) || (Number.isInteger(upgradedMana) && upgradedMana > 0);
-        if (carrier && Number.isInteger(floor) && costsMana && (schoolMult[carrier.damageSchool] || 0) > 0 && carrier.exposureBuildupPerHit < floor) {
-          err(`equipment.cardExposure.${card.id}.exposureBuildupPerHit`, `'${card.name || card.id}' costs Mana and builds Arcane Exposure, so it builds at least ${floor} per hit (balance.exposure.buildupPerManaSpell); it builds ${carrier.exposureBuildupPerHit}`);
-        }
+        // No Exposure floor: Exposure per hit is authored per card (owner ruling 2026-11-22, SPEC §Exposure).
         for (const profile of card.gradeProfiles || []) {
           const traits = profile.traits;
           const profilePath = `${path}.gradeProfiles.${profile.rank}.traits`;
           if (!traits || !DAMAGE_SCHOOLS.includes(traits.damageSchool) || !Number.isInteger(traits.exposureBuildupPerHit) || traits.exposureBuildupPerHit < 0) err(profilePath, 'Damage grade requires an explicit valid school and non-negative per-hit buildup');
-          else if (profile.manaCost > 0 && (schoolMult[traits.damageSchool] || 0) > 0 && Number.isInteger(floor) && traits.exposureBuildupPerHit < floor) err(profilePath, `Mana-costing damage grade must build at least ${floor} Exposure per hit`);
         }
       }
     }

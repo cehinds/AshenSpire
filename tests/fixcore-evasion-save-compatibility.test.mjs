@@ -12,11 +12,62 @@ import { createRunCombat, withoutWeaknesses } from './withoutWeaknesses.mjs'; //
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { createSaveManager } from '../src/engine/save.js';
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { fixCoreSmashVsDefensiveRules } from '../src/model/fixCoreMechanics.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
+
+const preRegistryRuntime = 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd';
+const registryRuntime = 'sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d';
+const preRegistrySave = () => gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url))).toString('utf8');
+
+test('the real Dev 7dff4b03 save resumes its active fight without changing the old profile or policy', () => {
+  const bytes = preRegistrySave();
+  const original = JSON.parse(bytes);
+  assert.equal(original.gameProfile.lock.runtimeHash, preRegistryRuntime);
+  assert.equal(original.gameProfile.hash, 'sha256:0d1e774aa158d069e4516e769249cc3c97c6864d14ab61bccf0b30ddf8034cb7');
+  const run = deserializeRun(bytes);
+  assert.deepEqual(run.gameProfile, original.gameProfile);
+  assert.equal(run.levelRewardRuleSnapshot, undefined);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, run.gameProfile)), run.gameProfile);
+  const saved = run.combatEntered.snapshot;
+  const combat = restoreCombatSnapshot({ registries, snapshot: saved,
+    rng: createRng(run.seed, run.streamCounters), expectedGameProfile: run.gameProfile });
+  assert.equal(combat.phase, 'player');
+  assert.deepEqual(combat.fixCoreRules, original.combatEntered.snapshot.fixCoreRules);
+  assert.equal(combat.fixCoreRules.poise.weaponPoiseEnabled, true);
+  assert.equal(combat.fixCoreRules.ward.routing, 'hpBuffer');
+  assert.deepEqual(serializeCombatSnapshot(combat).piles, saved.piles);
+  const held = combat.piles.hand.find(row => row.cardId === 'core.strike');
+  const result = dispatch(combat, { type: 'playCard', cardInstanceId: held.instanceId, targetId: combat.enemies[0].id, rangeRoute: 'advance' });
+  assert.ok(result.events.some(event => event.type === 'damageDealt' && event.cardInstanceId === held.instanceId));
+  assert.equal(combat.gameProfile.hash, original.gameProfile.hash);
+
+  const manager = createSaveManager(createMemoryStorage());
+  manager.saveRun(run, createRng(run.seed, run.streamCounters));
+  const loaded = manager.loadRun(registries);
+  assert.ok(loaded, manager.runStatus().reason);
+  assert.deepEqual(loaded.gameProfile, original.gameProfile);
+  assert.equal(loaded.combatEntered.snapshot.gameProfile.hash, saved.gameProfile.hash);
+});
+
+test('the registry transition retains a closed Core-specific edge and rejects changed saved profiles', () => {
+  const genuine = JSON.parse(preRegistrySave()).gameProfile;
+  assert.equal(coreEvasionCompatibleRuntime(genuine, registryRuntime), preRegistryRuntime);
+  assert.equal(coreEvasionCompatibleRuntime(genuine, 'sha256:arbitrary-runtime'), 'sha256:arbitrary-runtime');
+  for (const [key, value] of [['runtimeABI', 'ashen.runtime@999'], ['numericPolicy', 'ashen.adapter-numbers@999'], ['core', 'ashen.core@999']]) {
+    const wrong = structuredClone(genuine);
+    wrong.lock[key] = value;
+    assert.equal(coreEvasionCompatibleRuntime(wrong, registryRuntime), registryRuntime);
+  }
+  const unknown = structuredClone(genuine);
+  unknown.lock.runtimeHash = 'sha256:unknown-runtime';
+  assert.throws(() => validateGameProfileSnapshot(digest(unknown)), /unsupported runtime artifact/);
+  const tampered = structuredClone(genuine);
+  tampered.modules.cards.handBase++;
+  assert.throws(() => validateGameProfileSnapshot(tampered), /digest mismatch/);
+});
 
 const oldRuntime = 'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9';
 const digest = profile => { delete profile.hash; profile.hash = gameDigest(profile); return profile; };
@@ -35,6 +86,8 @@ function priorRuntimeEnvelope() {
 const restoreStripped = (...args) => withoutWeaknesses(restoreCombatSnapshot(...args)); // a restore refills enemy weaknesses; the fixture drops them again
 // Genuine resolved profiles from the two exact merge parents, rather than current profiles with edited runtime hashes.
 for (const [name, file, runtime, rulesFile] of [
+  ['Dev 213 parent 0b11a358', 'dev-0b11a358-profile.json.gz', 'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92', 'dev-0b11a358-rules.json'],
+  ['Retreat WIP parent 54d43945', 'retreat-54d43945-profile.json.gz', 'sha256:edb03b160d360fcbd7ac312134fc535bc1e2b90ad45d6bcbfcff780c6dc8ec06', 'retreat-54d43945-rules.json'],
   ['stat parent 6e2cb1b8', 'stat-profile-6e2cb1b8.json.gz', 'sha256:de42dafc4ec394c607c7c52a5772bdd940728ff863ccfb21508e8a2a05f1d0bc'],
   ['Gear parent 62323292', 'gear-profile-62323292.json.gz', 'sha256:72ec668dbba9685fd6fe6ab7f95b33c98410450e412336982b5a9dc005281649'],
   ['stat parent 05ce3864', 'stat-profile-05ce3864.json.gz', 'sha256:045ee701108b82e397597cb08696c4400efd156c848b4cf2e4e18dae1db286c9', 'stat-rules-05ce3864.json'],
@@ -55,7 +108,7 @@ for (const [name, file, runtime, rulesFile] of [
   const rulesBefore = structuredClone(snapshot.fixCoreRules);
   if (rulesFile) {
     assert.equal(snapshot.fixCoreRules.spellTraditionsVersion, profile.modules.effects.spellTraditionsVersion);
-    assert.equal(snapshot.fixCoreRules.smashVsDefensive.defendDamageMultiplier, name.startsWith('Smash') ? 1.5 : undefined);
+    assert.equal(snapshot.fixCoreRules.smashVsDefensive.defendDamageMultiplier, name.startsWith('Smash') || name.startsWith('Dev 213') ? 1.5 : undefined);
     const entries = new Map();
     const save = createSaveManager({ getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value), removeItem: key => entries.delete(key) });
     restoredRun.combatEntered = { nodeId: 'n1_4', encounterId: 'patrol', snapshot };
@@ -212,7 +265,15 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-17 (review of #2819): the Ethereal manifest names the engine as its reader again (edad64... is in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-19: the deferred Axe Strength reader's generated call-map now names finishAbilityPlay; 2a83899... remains readable.
   // Gear and stat traditions combine; both independently shipped parent runtimes remain compatible.
-  assert.equal(profile.lock.runtimeHash, 'sha256:7dd4e158c7af1a4af501cc4fa83f9647c2559a84b20a9c1c5ae881712bfcbc92');
+  // Re-pinned 2026-11-20 (#2892 review): card tradition labels move to uiStrings.csv (card.tradition.*); wording only, edf0d9... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-20 on the Retreat reach merge: 7d13f1... (dev) and e5b5d5... (this branch before dev) are now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-22: the Magic Adept zero Mana floor (stance.playerMinimumCost, owner ruling) moves the runtime hash; fbf370... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-22: no card has a cost minimum (owner ruling); d5db9a... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-22: cost.manaOnly is a data mechanic now (the cost-minimum validator rule is gone) and Exhaust/Ethereal score flat (owner rulings); a5c68d... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-23: the spell Stamina surcharge is dropped (spellCosts.staminaSurcharge 0, owner ruling); 0805e9... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-24: Ward health buffer (ward.routing "hpBuffer", owner ruling); e31663... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-24: Weapon poise damage & stance-gated Poise reduction (weaponPoiseEnabled, owner ruling); d24363... is now in PREVIOUS_RUNTIMES.
+  assert.equal(profile.lock.runtimeHash, registryRuntime);
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
@@ -233,7 +294,10 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // This is a CURRENT-rules round trip: 12 -> 6, x1.5 against Defend = 9; Prepared keeps its shared x1.25 = 7.
   assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 9);
   target.combatStance.maneuver = 'prepared';
-  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 7);
+  const preparedReceipt = profileDamageReceipt(restored, restored.player, target, 12, smash);
+  assert.equal(preparedReceipt.rawHit, 7);
+  assert.equal(preparedReceipt.poiseMitigated, 7, 'Prepared target with 20 Poise mitigates up to 10 (50% of 20), reducing 7 -> 0');
+  assert.equal(preparedReceipt.amount, 0);
   assert.equal(restored.gameProfile.lock.runtimeHash, profile.lock.runtimeHash);
 });
 

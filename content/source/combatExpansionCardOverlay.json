@@ -427,6 +427,10 @@
     "school": "decay",
     "damageType": "decay"
   },
+  "gravebinderLament": {
+    "school": "decay",
+    "damageType": "decay"
+  },
   "desperateRite": {
     "school": "decay",
     "damageType": "decay"

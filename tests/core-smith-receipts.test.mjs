@@ -11,6 +11,7 @@ import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gamePr
 import { gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { coreCardSimulationCount } from '../src/model/smithingCore.js';
+import { stampCombatPlaysEver } from '../src/model/playsEver.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
 import { CloseConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { mountSmithUpgradeModal } from '../src/ui/components/smithUpgradeModal.js';
@@ -331,12 +332,17 @@ test('Smith card receipts read a Honed card at its lifetime plays (Whetstone Nic
     run.deck.push({ ...createCardInstance('core.whetstoneNick', false, () => `nick-${playsEver}`), ...(playsEver ? { playsEver } : {}) });
     const row = coreSmithingCards(reg, run, 'armament/greatsword', 1, 2).find((card) => card.cardId === 'core.whetstoneNick' && card.op === 'damage');
     assert.ok(row, 'the Smith lists Whetstone Nick among the cards the tier changes');
+    for (const [level, key] of [[1, 'before'], [2, 'after']]) {
+      run.itemUpgradeLevels = { ...run.itemUpgradeLevels, [GS]: level };
+      const combat = stampCombatPlaysEver(run, fight(run));
+      const card = cardsOf(combat).find((entry) => entry.cardId === 'core.whetstoneNick');
+      assert.equal(card.playsEver ?? 0, playsEver);
+      const value = previewCard(combat, card.instanceId, undefined, undefined, { rawFace: true }).values.find((effect) => effect.op === 'damage');
+      assert.equal(row[key], value.faceValue ?? value.value, `the tier ${level} receipt preserves the held card's lifetime plays`);
+    }
     return row;
   };
   const fresh0 = nick(0), honed = nick(8);
-  // Nick is an Attack card: its face carries Attack's +20% (stance benefit, Wave 2.5) and the Core base-damage scale 0.5
-  // (rounded up): base 2 scales to 1 and base 2 + 8 plays to 5, so at AR 5 the faces are floor(1.2 x 6) = 7 and
-  // floor(1.2 x 10) = 12, and at AR 6 they are 8 and 13.
   assert.equal(honed.before - fresh0.before, 5, 'before: base 2 + 8 plays, not the fresh base');
-  assert.equal(honed.after - fresh0.after, 5, 'after: the same 8 plays');
+  assert.equal(honed.after - fresh0.after, 4, 'after: the same 8 plays through the next tier’s rounding');
 });

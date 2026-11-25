@@ -483,7 +483,14 @@ export function ratingReceipt(registries, run, config) {
 
 export function ratingValue(ctx, entity, id, carrier = null) {
   let value = (entity?.ratings?.[id] || 0) + stanceRatingBonus(ctx, entity, id, carrier);
-  for (const [status, instance] of Object.entries(entity?.statuses || {})) value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+  for (const [status, instance] of Object.entries(entity?.statuses || {})) {
+    value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+    if (id === 'poise') {
+      const def = ctx?.registries?.statuses?.has?.(status) ? ctx.registries.statuses.get(status) : null;
+      const per = def?.modifiers?.poiseAdd;
+      if (Number.isFinite(per) && per !== 0) value += per * (instance.stacks || 0);
+    }
+  }
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
   return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);
 }
@@ -505,7 +512,32 @@ export function finesseRatingView(entity) {
 /** Whether a hit's carrier (or its card) carries `tag`. */
 export function carrierHasTag(ctx, carrier, tag) {
   const def = carrier?.cardId && ctx?.registries?.cards?.has?.(carrier.cardId) ? ctx.registries.cards.get(carrier.cardId) : null;
-  return [...(carrier?.tags || def?.tags || []), ...(carrier?.cardTags || [])].includes(tag);
+  return [...(carrier?.tags || def?.tags || []), ...(carrier?.cardTags || []), ...(carrier?.authoredTags || [])].includes(tag);
+}
+
+/** Whether the source's active/source weapon carries `tag`. */
+export function SourceWeaponHasTag(ctx, source, carrier, tag) {
+  if (!tag) return false;
+  const weaponId = carrier?.sourceArmamentId
+    || ctx?.loadout?.sets?.rightHand?.[ctx?.loadout?.active?.rightHand || 0]
+    || source?.equipment?.mainHand
+    || (source?.ratingSources || []).find(r => r.kind === 'equipment' && r.slot !== 'armor' && !r.sourceId?.startsWith('armor/'))?.sourceId?.replace(/^armament\//, '');
+  if (!weaponId) return false;
+  const piece = (ctx?.registries?.equipment?.armaments || []).find(row => row.id === weaponId);
+  if (!piece) return false;
+  return [...(piece.tags || []), ...(piece.entityTags || []), ...(piece.itemTypeTags || [])].includes(tag);
+}
+
+/**
+ * Whether a hit uses Dexterity instead of Strength (`finesse`):
+ * - a `finesse`-tagged combat card always uses DEX for that card;
+ * - a `finesse` weapon uses DEX for all martial offensive cards except Smash.
+ */
+export function IsFinesseHit(ctx, source, carrier, ratingId = 'ar') {
+  if (ratingId !== 'ar') return false;
+  if (carrierHasTag(ctx, carrier, 'finesse')) return true;
+  if (carrierHasTag(ctx, carrier, 'maneuver:smash') || carrier?.combatProfile?.maneuver === 'smash') return false;
+  return SourceWeaponHasTag(ctx, source, carrier, 'finesse');
 }
 
 export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false, carrier = null) {
@@ -518,6 +550,11 @@ export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentSc
   }
   for (const [status, instance] of Object.entries(entity.statuses || {})) {
     value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+    if (id === 'poise') {
+      const def = ctx?.registries?.statuses?.has?.(status) ? ctx.registries.statuses.get(status) : null;
+      const per = def?.modifiers?.poiseAdd;
+      if (Number.isFinite(per) && per !== 0) value += per * (instance.stacks || 0);
+    }
   }
   if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
   return Math.max(0, id === 'pr' && carrier ? TraditionSpellPower(ctx, entity, carrier, value) : value);
@@ -749,6 +786,31 @@ export function splitContactParts({ amount, base = amount, ratingBonus = 0, rati
   return { magic, physical };
 }
 
+/**
+ * PacketSplit({ base, share, physicalBonus, magicBonus, magicMultiplier, total }) -> { physical, magic } of the figure `total` of an element packet
+ * hit (a physical hit with a magic share and its own INT / Power stage, owner 2026-11-19). The ONE split the receipt, the live preview and the
+ * face all read. Each part starts as its own share of the hit (the card's magic share of its base plus the Power bonus; the rest of the base plus
+ * STR / AR); every multiplier of the chain (Vulnerable, stance, weakness, Burn and the other element stages) then scales both parts in proportion, and
+ * `physicalMultiplier` (the effects' physical-damage scale) cuts the physical part alone, and `magicMultiplier` (elemental flux, owner ruling 2026-11-20) weighs the magic part alone: the chain carries it as a factor on the magic share of the hit only.
+ */
+export function PacketSplit({ base, share, physicalBonus = 0, magicBonus = 0, magicMultiplier = 1, physicalMultiplier = 1, total }) {
+  const value = Math.max(0, Math.floor(Number(total) || 0));
+  const weights = PacketWeights({ base, share, physicalBonus, magicBonus });
+  const magicWeight = weights.magic * Math.max(0, Number.isFinite(magicMultiplier) ? magicMultiplier : 1);
+  const physicalWeight = weights.physical * Math.max(0, Number.isFinite(physicalMultiplier) ? physicalMultiplier : 1);
+  const sum = magicWeight + physicalWeight;
+  let magic = sum > 0 ? Math.min(value, Math.floor(value * magicWeight / sum + 1e-9)) : 0;
+  // Owner ruling: a packet's magic part always deals at least 1 of its element. The 1 comes off the physical part (never below 0); a hit of 0 stays 0.
+  if (value > 0 && magic < 1 && share > 0) magic = 1;
+  return { physical: value - magic, magic };
+}
+/** PacketWeights({ base, share, physicalBonus, magicBonus }) -> { magic, physical }: the two parts of a packet hit before any multiplier. */
+export function PacketWeights({ base, share, physicalBonus = 0, magicBonus = 0 }) {
+  const card = Math.max(0, Math.floor(Number(base) || 0));
+  const magicCard = Math.floor(card * Math.min(1, Math.max(0, share)) + 1e-9);
+  return { magic: magicCard + Math.max(0, magicBonus), physical: card - magicCard + Math.max(0, physicalBonus) };
+}
+
 /** magicDamageTypeOf(profile) → the Ward type a hit's magic part deals: its school's, else its damage type when that is magic. */
 export function magicDamageTypeOf(profile) {
   const row = damageTypeRules.schools?.[schoolOf(profile)];
@@ -818,6 +880,7 @@ export function BarrierPoiseFactor(effect, source) {
  * fight's FixCore rules, the same Poise effect Barrier is (no separate Ward pool). A fight whose rules carry no `poisePerStack`
  * (saved before this ruling) gives none. It rides on the Poise `barrierBonus` field with Barrier's, so it is clamped the same way. */
 function wardPoiseBonus(ctx, entity) {
+  if (ctx?.fixCoreRules?.ward?.routing === 'hpBuffer') return 0;
   const per = ctx?.fixCoreRules?.ward?.poisePerStack;
   return Number.isInteger(per) && per > 0 ? Math.floor((entity?.statuses?.ward?.stacks || 0) * per) : 0;
 }

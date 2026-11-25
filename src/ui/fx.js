@@ -4,7 +4,7 @@ import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 import { PlayRecipientEffectLayers, ClearRecipientEffects } from './recipientEffectSprites.js';
 import { RecipientEffectForEvent } from '../model/recipientEffects.js';
-import { effectsOff } from './performance.js';
+import { effectsOff, FxOff } from './performance.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
 // Rules: every animation ≤300 ms; queued events play ≤80 ms apart; a click
@@ -820,7 +820,7 @@ export function dmgClass(amount, targetMaxHp = 0) {
 
 /** Spawn a transient effect element (slash arc, cast glyph, block spark…). */
 function spawnFx(layer, anchor, cls, ms, text) {
-  if (!layer || !anchor || effectsOff()) return; // Effects off: no sparks, slashes or glyphs (numbers and callouts stay)
+  if (!layer || !anchor || FxOff('sparks')) return; // Effects or Hit sparks off: no sparks, slashes or glyphs (numbers and callouts stay)
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = cls;
@@ -850,7 +850,7 @@ export function banner(layer, text, cls = '', lifeMs = null) {
 let hitStop = 0;
 const heldFigures = new Map();
 function hold(el, ms, combatEl) {
-  if (!el || !(ms > 0) || effectsOff()) return;
+  if (!el || !(ms > 0) || FxOff('hitstop')) return;
   const swing = flashTimers.get(el)?.get('act-attack');
   if (swing) {
     clearTimeout(swing.id); swing.due += ms;
@@ -915,7 +915,7 @@ const flashTimers = new WeakMap();
 const MOTION_FLASH = new Set(['act-attack', 'act-move', 'hitflash', 'hit-heavy', 'wobble']);
 function flash(el, cls, ms = 300, pauseMs = 0) {
   if (!el) return;
-  if (effectsOff() && !MOTION_FLASH.has(cls)) return; // relic proc / orb pulse flashes
+  if (FxOff('flash') && !MOTION_FLASH.has(cls)) return; // relic proc / orb pulse flashes
   // Photosensitivity: suppress bright impact/proc flashes when asked. Damage
   // numbers and HUD updates (which carry the actual info) are unaffected.
   if (document.body.classList.contains('reduce-flashes')) return;
@@ -940,7 +940,7 @@ function flash(el, cls, ms = 300, pauseMs = 0) {
 
 // Radial flare over an anchor (stance entries, big procs).
 function flare(layer, anchor, color) {
-  if (!layer || !anchor || effectsOff()) return;
+  if (!layer || !anchor || FxOff('sparks')) return;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = 'stance-flare';
@@ -1348,7 +1348,7 @@ export function playTimeline(events, ctx, done) {
       runParts(beat, 'contact');
       const hits = beat.events.filter(event => event.type === 'damageDealt');
       const holdMs = timing.scale === 0 ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
-      if (holdMs && !effectsOff()) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs, ctx.combatEl); }
+      if (holdMs && !FxOff('hitstop')) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs, ctx.combatEl); }
       if (beat.actorId && ctx.layer?.dataset) ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + Math.max(1, hits.length));
       return holdMs;
     },
@@ -1622,6 +1622,8 @@ export function outcomeKindForEvent(e = {}) {
   // Nothing reached Block or Health: Barrier or Ward took the whole hit. A Barrier that broke
   // keeps its BREAK callout and its number, as it did before.
   if (parts.amount === 0 && Math.max(0, Number(e.barrierAbsorbed) || 0) > 0) return e.barrierRemaining === 0 ? null : 'resisted';
+  // Ward HP buffer absorbed the hit whole (alone or with Poise) and cost no HP: read as BLOCKED so the floater policy shows a word instead of silence.
+  if (e.wardHpBuffer && parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'blocked';
   if (parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'wardResisted';
   // A hit that Poise alone absorbed whole cost no HP: it reads as the same fully-absorbed word, not as silence.
   if (parts.amount === 0 && (parts.poise || parts.magicPoise)) return 'blocked';

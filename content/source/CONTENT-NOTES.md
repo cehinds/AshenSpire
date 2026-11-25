@@ -1365,10 +1365,8 @@ _No comments were written beside these numbers in the old balance.js._
 - **`exposure.staggerBreakPoise`** — Plan phase 8 (proposal §7.2): what the other two foci make of YOUR break.
 - **`exposure.staggerBreakPoise`** — PROVISIONAL — Poise damage to the broken foe (staff `staggerBreak`)
 - **`exposure.resonanceSpreadPct`** — PROVISIONAL — % of the broken foe's threshold poured into every OTHER foe (orb `resonance`)
-- **`exposure.buildupPerManaSpell`** — A Mana spell's buildup per hit (content/source/cardExposure.csv must carry at
-  least this on a card that costs Mana): an empty caster still works toward
-  a break with action-only spells, a Mana spell works faster.
-- **`exposure.buildupPerManaSpell`** — PROVISIONAL
+- **`exposure.elementUpgradeBuildup`** — The buildup per hit an upgrade that gives a card a new damage school builds. No card has an Exposure floor: it is authored per card (owner ruling 2026-11-22; this key was `buildupPerManaSpell`, a floor).
+- **`exposure.elementUpgradeBuildup`** — PROVISIONAL
 
 ### balancePoise.json — poise
 
@@ -1394,7 +1392,7 @@ _No comments were written beside these numbers in the old balance.js._
 ### balanceMana.json — mana
 
 - **`mana`** — Mana is an additional cost beside the single turn-Stamina cost.
-  minActionCost retains its serialized name; the old additive floor is zero.
+  The minActionCost and minStaminaCost floors are retired (owner ruling 2026-11-22: no card has a cost minimum).
 
 ### balanceDeck.json — deck
 
@@ -1460,7 +1458,6 @@ _No comments were written beside these numbers in the old balance.js._
   reading against the OLD faucet for a week; both are re-tuned against
   this one now (2026-09-11) — the shop by this same ×3, the level ladder
   by measurement, each explained where it lives.
-- **`rewards.rarityWeightsByClass`** — Caster rewards favor uncommon/rare cards when the skill gate allows them.
 - **`rewards.elementAffinity`** — Owner decision #13: Psychic and Earth cards belong to no class, but the
   Herald and Starseer meet them more naturally. Within a rarity, a card
   tagged damage:<element> for one of the class's elements weighs

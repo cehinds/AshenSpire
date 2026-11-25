@@ -17,9 +17,14 @@ const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0',
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 
 /** A fight against `moves` ([enemyId, moveId] each, in turn order) with the player holding `poise` Poise and `block` Block in `stance`. */
-function fight(moves, { poise = 12, block = 0, stance = null, ward = 0, hp = 500 } = {}) {
+function fight(moves, { poise = 12, block = 0, stance = null, ward = 0, hp = 500, legacyPoise = true } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: moves.map(([enemyId]) => enemyId) });
+  if (legacyPoise) {
+    // Preserve the original intent examples under their saved Poise routing policy.
+    combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+    combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst' };
+  }
   dispatch(combat, { type: 'setReactions', enabled: false });
   const player = combat.player;
   Object.assign(player, { hp, maxHp: hp, block, persistentPoise: { value: poise, max: Math.max(poise, 8) }, statuses: ward ? { ward: { stacks: ward } } : {} });
@@ -70,6 +75,14 @@ test('a plain attack: the intent Poise is the Poise the hit takes', () => {
   expectMatch(forecastAndPlay(fight([['wanderingSoldier', 'slash']])), 'slash');
 });
 
+test('current enemy weapon Poise appears in the intent even when Block soaks the attack', () => {
+  const combat = fight([['wanderingSoldier', 'slash']], { poise: 1, block: 40, legacyPoise: false });
+  const rows = forecastAndPlay(combat);
+  expectMatch(rows, 'fully blocked Slash with current weapon Poise');
+  assert.equal(rows[0].forecast.max, 1);
+  assert.equal(rows[0].forecast.breaks, true);
+});
+
 test('an attack that empties the player Poise is marked BREAK', () => {
   const rows = forecastAndPlay(fight([['wanderingSoldier', 'slash']], { poise: 3 }));
   expectMatch(rows, 'slash into 3 Poise');
@@ -97,7 +110,7 @@ test('Defend stance with Block keeps the 1 Poise floor in the forecast', () => {
 });
 
 test('Ward against magic: a spell meets the Ward lane in the forecast as live', () => {
-  for (const ward of [0, 2]) expectMatch(forecastAndPlay(fight([['lanternMoth', 'wingSparks']], { ward })), `wingSparks, Ward ${ward}`);
+  for (const ward of [0, 2]) expectMatch(forecastAndPlay(fight([['lanternMoth', 'wingSparks']], { ward, poise: 16 })), `wingSparks, Ward ${ward}`, { someLoss: ward === 0 });
 });
 
 test('multi-hit moves: every hit Poise is counted, hit after hit', () => {

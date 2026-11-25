@@ -808,7 +808,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 .rebind-ctl .as-keycap { min-width: 4.4rem; min-height: var(--tap-floor); padding-inline: 0.8rem; font-size: 1.2rem; color: var(--gold); }
 .rebind-ctl .rebind-btn { padding-inline: 1.2rem; }
 .rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.9s ease-in-out infinite alternate; }
-:root[data-performance='lite'] .rebind-btn.listening { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
+:root[data-effects='off'] .rebind-btn.listening { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
 .pad-live { color: var(--green); }
 .pad-off { color: var(--muted); }
 .controls-pane { padding: 0; }
@@ -888,10 +888,10 @@ input[type="range"] { min-height: var(--tap-floor); }
 }
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 /* Lite: filters force an offscreen pass per card. Selection is a ring, unaffordable a flat dim; no filter on either. */
-:root[data-performance='lite'] .card.selected, :root[data-performance='lite'] .card[data-selected="true"], :root[data-performance='lite'] .as-card[data-selected="true"] {
+:root[data-effects='off'] .card.selected, :root[data-effects='off'] .card[data-selected="true"], :root[data-effects='off'] .as-card[data-selected="true"] {
   filter: none; box-shadow: 0 0 0 2px var(--gold), 0 0 12px color-mix(in srgb, var(--gold) 55%, transparent);
 }
-:root[data-performance='lite'] .card.unaffordable:not(.illustrated-card) { filter: none; opacity: 0.6; }
+:root[data-effects='off'] .card.unaffordable:not(.illustrated-card) { filter: none; opacity: 0.6; }
 .card[data-small="true"] { transform: scale(0.92); }
 /* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
 .card .card-costs { display: contents; }
@@ -1837,11 +1837,9 @@ body:has(.reward-veil) .hand-overlay { visibility: hidden; }
   border-color: var(--green);
 }
 /* Owner 2026-11-18: the card-pick door's Continue stays neutral until every pick is made (then it wears .primary above);
-   the confirmation lists the chosen cards with one destination choice for all of them. */
+   the confirmation lists the chosen cards; its footer answers Add to deck or Send to library (owner 2026-11-20). */
 .reward-pick-confirm-list { margin: 0 0 .5rem; padding-left: 1.2rem; }
 .reward-pick-confirm-unused { margin: .25rem 0 .5rem; opacity: .85; }
-.reward-pick-destinations { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
-.reward-pick-destination.is-chosen { background: color-mix(in srgb, var(--green) 22%, var(--panel)); border-color: var(--green); }
 
 /* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
 /* A PAGE DOOR wears the door's box without the veil (as the event does), in
@@ -2326,6 +2324,16 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .card-upgrade-option.selected { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
 .card-upgrade-option:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .card-upgrade-option-title { font-family: var(--font-display); color: var(--gold); }
+.card-upgrade-look { display: inline-flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0.1rem 0.5rem; font-size: 0.85rem; color: var(--ink-dim); }
+.card-upgrade-look-rarity { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-dim); }
+.card-upgrade-look-uncommon .card-upgrade-look-rarity { color: var(--frost); }
+.card-upgrade-look-rare .card-upgrade-look-rarity { color: var(--gold); }
+.card-upgrade-look-size { color: var(--parchment); font-weight: 600; }
+/* The card's cost medallion hangs 1rem above its face, so the chip clears it on a wide option; a narrow one has the chip in the title row. */
+.card-upgrade-option-body .card-upgrade-look { margin-bottom: 1rem; font-size: var(--upgrade-text, 0.85rem); }
+@media (max-width: 600px) {
+  .card-upgrade-option-body .card-upgrade-look { flex: 0 0 100%; justify-content: flex-start; margin-bottom: 0; }
+}
 .card-upgrade-option-face { min-width: 0; }
 .card-upgrade-option-face .card { transform: none !important; }
 .card-upgrade-option-changes { list-style: none; margin: 0; padding: 0; font-size: 0.85rem; color: var(--ink-dim); }
@@ -2480,6 +2488,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 @keyframes startupMarkIn { from { opacity: 0; transform: translateY(0.65rem); } to { opacity: 1; transform: none; } }
 @keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
 .reduced-motion .startup-gate > .as-titlemenu, .reduced-motion .startup-gate .tm-foot { animation: none; }
+:root[data-effects='off'] .startup-gate > .as-titlemenu .tm-foot { animation: none; }
 /* The built-in art's status line (docs/EXTERNAL-ASSETS-PLAN.md step 5): its
    own component beside the startup gate in #app, not one of the gate's parts
    (SPEC §7.1), laid over the top edge of the gate, clear of its centred lockup
@@ -2497,6 +2506,8 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 @keyframes bootArtPulse { from { opacity: 0.55; } to { opacity: 0.9; } }
 .reduced-motion #app > .boot-art-status { animation: none; }
 @media (prefers-reduced-motion: reduce) { #app > .boot-art-status { animation: none; } }
+/* Effects off: the loading line stays plain text; its words already say it is loading. */
+:root[data-effects='off'] #app > .boot-art-status[data-state="loading"] { animation: none; }
 /* The title's notice when the art could not be loaded (step 5): a small panel
    at the top of the title, never a dialog; Retry is a plain control. */
 .title-screen > .art-load-notice {
@@ -2523,7 +2534,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   animation: startupAshRise var(--ash-duration) linear var(--ash-delay) infinite;
 }
 /* Lite: the rising ash is decoration only; hide it. */
-:root[data-performance='lite'] .startup-ash-field { display: none; }
+:root[data-effects='off'] .startup-ash-field { display: none; }
 @keyframes startupAshRise {
   0% { transform: translate3d(0, 0, 0); opacity: 0; }
   14% { opacity: 0.62; }
@@ -2769,7 +2780,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .as-meter.skinny > .m-plate { display: none; }
 .as-meter.pulse .m-fill { animation: pulse-gold 600ms infinite alternate; }
 /* Lite: pulse-gold animates box-shadow (paint every frame); show one still glow. */
-:root[data-performance='lite'] .as-meter.pulse .m-fill { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
+:root[data-effects='off'] .as-meter.pulse .m-fill { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
 .reduced-motion .as-meter.pulse .m-fill { animation: none; }
 /* A dashed rim says "this length is the floor, not the data". */
 .as-meter .m-track[data-floored="1"] { box-shadow: none; border: 1px dashed var(--line-soft); }
@@ -3428,6 +3439,7 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 @keyframes upright-turn { 0%, 18% { transform: rotate(-90deg); } 55%, 100% { transform: rotate(0deg); } }
 .reduced-motion .upright-phone { animation: none; }
 @media (prefers-reduced-motion: reduce) { .upright-phone { animation: none; } }
+:root[data-effects='off'] .upright-phone { animation: none; }
 
 /* THE FIRST-RUN CALLOUT is the Spotlight: the lit box and a Popover beside it.
    Both are placed in the veil's own local space by components/tutorial.js. */
@@ -3836,8 +3848,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-frame > * { min-width:0; min-height:0; box-sizing:border-box; }
 .epc-name { display:flex; justify-content:space-between; gap:8px; align-items:center; font:600 20px/1.12 Georgia,serif; color:#f0dfaf; }
 .epc-name > span { font-size:13px; color:var(--accent); }
-.epc-art { display:grid; place-items:center; border:1px solid #665238; border-radius:5px; background:radial-gradient(ellipse at 50% 40%,#403322,#18140f 75%); }
-.epc-art img { box-sizing:border-box; height:100%; width:100%; min-height:0; object-fit:contain; padding:6px; filter:drop-shadow(0 3px 5px #0006); }
+.epc-art { position:relative; overflow:hidden; isolation:isolate; display:grid; place-items:center; border:1px solid #665238; border-radius:5px; background:radial-gradient(ellipse at 50% 40%,#403322,#18140f 75%); }
+.epc-art > img, .epc-art > .epc-art-glyph { position:relative; z-index:2; }
+.epc-art > img { box-sizing:border-box; height:100%; width:100%; min-height:0; object-fit:contain; padding:6px; filter:drop-shadow(0 3px 5px #0006); }
 .epc-type { font:600 11px/1.2 Arial,sans-serif; text-align:center; text-transform:uppercase; letter-spacing:.12em; padding:5px 2px; color:var(--accent); background:color-mix(in srgb,var(--accent) 13%,#1c1813); border-block:1px solid #665238; }
 .epc-facts { display:flex; justify-content:space-around; gap:5px; padding:5px 0; border-bottom:1px solid #5e4c32; }
 .epc-fact { font:10px/1.1 Arial,sans-serif; text-transform:uppercase; text-align:center; color:#b1a38c; }
@@ -4015,7 +4028,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .collectible-poker-card .epc-frame { padding:var(--epc-pad,19px); gap:var(--epc-gap,3px); }
 .epc-frame > .epc-name { position:absolute; z-index:1; top:26px; left:27px; right:27px; min-height:29px; height:auto; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#211a12dd; padding:3px 6px; }
 .epc-name > span { display:none; }
-.epc-art img { padding:35px 8px 8px; }
+.epc-art > img { padding:35px 8px 8px; }
 .epc-frame > :is(.epc-type,.epc-flavor), .epc-footer > span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 /* A BONUS IS THE MECHANIC, SO IT WRAPS BEFORE IT TRUNCATES. `nowrap` + ellipsis
    cut real numbers mid-word — "Class power: +1 Poten…" — which is worse than a
@@ -4081,7 +4094,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    --card-info-size, which nothing does today — the hook stays for a host that
    must pin the circle to a size the zoom does not choose. */
 .card-inspection-target > .card-info-button,
-.merchant-offer-media > .card-info-button,
 .card-upgrade-detail-modal .card-upgrade-inspect,
 .combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
 /* A clue is a word; the formation column must not clip it to a number badge. */
@@ -4091,16 +4103,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    selected; the in-card copy stays hidden so it never paints at a temporary spot and then moves. */
 .card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .hand .card-inspection-target > .card-info-button { visibility:hidden; pointer-events:none; }
-/* A shop card row has no selection step: its (i) is always shown, in the thumbnail's top-right corner, and only inspects. */
-.merchant-offer-media.has-card-info { position:relative; }
-.merchant-offer-media > .card-info-button { position:absolute; z-index:2; top:-6px; right:-6px; visibility:visible; pointer-events:auto; }
-/* The thumbnail is narrower than the (i) circle, so a corner badge covers the art. Seat the badge centred in a lane under
-   the art (the reward door reserves one above its row), and let a shelf holding such rows size them to fit the lane. */
-.merchant-offer-media.has-card-info { --shop-inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); padding-bottom:calc(var(--shop-inspect-box) + 4px); }
-.merchant-offer-media.has-card-info > .card-info-button { top:auto; right:auto; bottom:0; left:50%; transform:translateX(-50%); }
-:root .shop-workspace.merchant-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services):has(.merchant-offer-media.has-card-info) { grid-auto-rows:minmax(var(--merchant-row-height,110px), auto); }
-:root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer:has(> .merchant-offer-media.has-card-info) { height:auto; min-height:var(--merchant-row-height,110px); }
-:root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer-media.has-card-info { height:auto; min-height:calc(var(--shop-inspect-box) + 4px + 48px / var(--ui-zoom, 1)); }
 /* WCF3: the selected card and its inspect control share one glow. The hand
    moves that control into an overlay, so the portal wears the same filter. */
 .inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
@@ -4119,6 +4121,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Reward card pickers: the CHOSEN card (the chooser's own state, set by a face tap or its name button alike)
    shows its (i) in the lane reserved above the row. */
 .reward-door .reward-choice-face.is-chosen > .card-info-button { visibility:visible; pointer-events:auto; }
+/* Owner 2026-11-20: the (i) appears above ANY selected card that can be selected (outside the hand, whose (i) is the
+   portal above), not only on reward doors. */
+.card-inspection-target:is(.inspection-selected, .is-chosen, [aria-pressed="true"]):not(.hand *, .reward-door *) > .card-info-button { visibility:visible; pointer-events:auto; z-index:var(--layer-screen-chrome, 100); }
 /* Playtest 2026-11-17 item 45: the card-pick grid keeps only a little room above and between its rows, so the chosen
    card's (i) keeps its place above the face on the top layer, over the note or the row above, never under them. */
 .reward-door .reward-choice-option:has(> .is-chosen) { position:relative; z-index:var(--layer-screen-chrome, 100); }
@@ -4774,12 +4779,14 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
    rows a region carries and how many the face shows (wireframeUi.possession);
    rows past that budget carry `hidden` and stay listed in the inspection. */
 .equipment-poker-card .epc-frame [hidden] { display:none !important; }
-.equipment-poker-card .epc-facts[data-layout='lines'] { display:flex; flex-direction:column; justify-content:center; gap:1px; padding:2px 0; }
-.epc-facts[data-layout='lines'] > .epc-line { display:block; min-width:0; font:13px/1.2 Arial,sans-serif; color:#e5dccb; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.equipment-poker-card .epc-facts[data-layout='lines'] { display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; justify-content:flex-start; gap:0; padding:1px 0; }
+.epc-facts[data-layout='lines'] > .epc-line { display:inline-block; flex:0 1 auto; min-width:0; font:11px/1.2 Arial,sans-serif; color:#d8ccb2; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.epc-facts[data-layout='lines'] > .epc-line + .epc-line:not([hidden])::before { content:'·'; margin-inline:6px; color:var(--accent); }
 /* WC2c2: the registered resource tint marks the row; the text keeps its contrast. */
 .epc-facts[data-layout='lines'] > .epc-line[style*='--line-tint'] { border-inline-start:3px solid var(--line-tint); padding-inline-start:5px; }
 .equipment-poker-card[data-possession] .epc-bonus + .epc-bonus:not([hidden]) { display:-webkit-box; margin-top:0; }
-.equipment-poker-card[data-possession] .epc-effects[data-entries='many'] .epc-bonus { -webkit-line-clamp:1; }
+.equipment-poker-card[data-possession] .epc-effects[data-entries='many'] .epc-bonus:not([hidden]) { display:inline; -webkit-line-clamp:unset; overflow:visible; white-space:normal; padding-right:0; }
+.equipment-poker-card[data-possession] .epc-effects[data-entries='many'] .epc-bonus + .epc-bonus:not([hidden])::before { content:' · '; color:var(--accent); }
 .equipment-poker-card[data-possession] .epc-effects:not([data-more]) .epc-bonus { padding-right:0; }
 .equipment-poker-card[data-possession] .epc-effects:has(.epc-bonus + .epc-bonus):not([data-more])::after { content:none; }
 /* WC2a1/WC2a2 detail one (Damage / Defense values): value over label inside the
@@ -4823,6 +4830,12 @@ p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; te
 /* Leave space inside scrollports for the above-card control, including wrapped rows. */
 :is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
   padding-top: var(--modal-grid-pad-top, 64px); row-gap: var(--modal-grid-row-gap, 64px);
+}
+/* Read-only deck inspection keeps only a tiny clearance for the cost pennants. */
+.deck-view-modal .pile-body { padding-top: 0; }
+.deck-view-modal .pile-body .as-cardgrid {
+  --modal-grid-pad-top: calc(16px / var(--ui-zoom, 1)); --modal-grid-row-gap: 32px;
+  column-gap: calc(9px / var(--ui-zoom, 1));
 }
 .reward-door .reward-row.reward-choice-grid { row-gap: 12px; }
 /* Reward-card status stack, top to bottom: Information, NEW, card.
@@ -5044,6 +5057,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 @keyframes towerDoorBreathe { from { opacity: 1; } to { opacity: .92; } }
 .reduced-motion .title-screen .tower-door-frame,
 :root[data-ambient='off'] .title-screen .tower-door-frame { animation: none; }
+:root[data-effects='off'] .title-screen .tower-door-frame { animation: none; }
 .title-screen .as-titlemenu { text-shadow: 0 2px 12px #090705; }
 .startup-wordmark, .title-screen .tm-name { position: relative; isolation: isolate; }
 .startup-wordmark::before, .title-screen .tm-name::before {
@@ -5573,7 +5587,8 @@ button[data-button-size] {
    keeps encountered names readable at the phone rung. Shared kit controls,
    typography and workspace scrolling still own the presentation. */
 .bestiary-list.cp-grid, :root[data-layout='narrow'] .bestiary .bestiary-list.cp-grid { grid-template-columns: minmax(0, 1fr); }
-:root[data-layout='narrow'] .bestiary .w1-split { grid-template-rows: minmax(0, 7fr) minmax(0, 13fr); }
+/* A knowledge door's compact list/detail shares come from content/config/ui/screens/knowledgeDoor.json. */
+:root[data-layout='narrow'] .knowledge-door .w1-split { grid-template-rows: var(--knowledge-compact-rows, minmax(0, 1fr) minmax(0, 1fr)); }
 .enemy-intent-prediction.as-pane { flex: 0 0 auto; gap: .6rem; padding: 0; overflow: visible; }
 .enemy-intent-prediction .as-row.setting { flex-direction: column; align-items: stretch; padding: 0; }
 .enemy-intent-prediction .as-row.setting > .r-trail { width: 100%; max-width: 100%; margin-left: 0; }

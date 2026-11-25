@@ -1,15 +1,16 @@
+import { GrantRelicCardCopies } from '../model/cardCopyService.js';
 import { ChannelWeight } from '../model/damageChannels.js';
 import { GearGainBonus, GearProps, GearState } from './gearReceipt.js';
 import { GearHitRiders } from '../model/gearEffects.js';
 import * as RangeLineage from './combatRangeLineage.js';
 import { recordCollectedCards } from '../model/collectedCards.js';
 import * as Engagement from './combatEngagement.js';
-import { SwapEnemyRows } from './bandRows.js';
+import { SwapEnemyRows, PullEnemy } from './bandRows.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness, stanceOf } from '../model/stanceRules.js';
 import { FightMagicShare, ForceRules } from '../model/elementIdentityRules.js';
-import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreWardBreaksAtZeroPoise, fixCorePierceRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreWardBreaksAtZeroPoise, FixCoreWardHpPerStack, EffectiveWardHp, fixCorePierceRules, FixCoreWeaponPoiseRules, ReceiptPoiseLoss } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -89,7 +90,7 @@ import { creditKnowledgeImpact } from './enemyKnowledge.js';
 import * as Expanded from './combatExpansionActions.js';
 import * as Control from './combatStatusControl.js';
 import { isSpellCard, silencedStacks, combatProfileFor } from '../model/combatCardProfile.js';
-import { RankUpCandidates, RaiseCardRank } from '../model/rankUpService.js';
+import { RankUpReady, RaiseCardRank } from '../model/rankUpService.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
@@ -377,7 +378,8 @@ function GearBreakRiders(ctx, source, target, carrier) {
 export function drainFixCorePoise(ctx, source, target, amount, carrier = null, blockAtHit = 0) {
   const poise = target?.persistentPoise;
   // Owner, 2026-11-18: a player's spell takes `effects.spellPoiseDamageMultiplier` times the Poise damage it deals an enemy (combatDamagePreview.js reads the same factor).
-  const n = Math.max(0, Math.floor(amount * SpellPoiseMultiplier(configuredModule(ctx, 'effects'), source, target, carrier)));
+  const mult = FixCoreWeaponPoiseRules(ctx) ? 1 : SpellPoiseMultiplier(configuredModule(ctx, 'effects'), source, target, carrier);
+  const n = Math.max(0, Math.floor(amount * mult));
   if (!target?.alive || !(n > 0) || !(poise?.value > 0)) return 0;
   // Owner, 2026-11-17 (theme B): the Poise rider of a physical hit cannot take a Defend-stance target holding Block below the floor either.
   // Poise damage with no card of its own (a relic's or a trigger's, the Forsaken Medallion) is physical and keeps the floor too (owner decision, 2026-11-17).
@@ -445,13 +447,26 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   }
   const before = target.block || 0;
   let poiseBefore = 0;
+  let wardBefore = 0, wardAfter = 0;
   target.block = receipt.blockRemaining;
   if (target.earthBlock) target.earthBlock = Math.min(target.earthBlock, target.block);
   if (fixCoreEnabled(ctx)) {
-    if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
+    if (receipt.wardHpAbsorbed > 0) {
+      wardBefore = EffectiveWardHp(ctx, target);
+      wardAfter = Math.max(0, wardBefore - receipt.wardHpAbsorbed);
+      if (wardAfter > 0) {
+        target.wardHp = wardAfter;
+        const per = FixCoreWardHpPerStack(ctx);
+        if (per > 0 && target.statuses?.ward) target.statuses.ward.stacks = Math.ceil(wardAfter / per);
+      } else {
+        delete target.wardHp;
+        if (target.statuses?.ward) statuses.removeStatus(ctx, target, 'ward', { reason: 'depleted' });
+      }
+    }
+    if (!receipt.wardHpBuffer && target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
       poiseBefore = target.persistentPoise.value;
-      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
+      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - ReceiptPoiseLoss(receipt));
     }
   }
   const hpBefore = target.hp;
@@ -463,9 +478,10 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss, hpRemoved: Math.max(0, Math.min(receipt.hpLoss, hpBefore)),
-    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(target.broken ? { targetBroken: true } : {}), ...(receipt.wardRouted ? { wardRouted: true } : {}), ...(receipt.wardBlockFirst ? { wardBlockFirst: true } : {}), ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
+    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(target.broken ? { targetBroken: true } : {}), ...(receipt.wardHpAbsorbed ? { wardAbsorbed: receipt.wardHpAbsorbed, wardHpBuffer: true, wardHpRemaining: target.wardHp || 0 } : {}), ...(receipt.wardRouted ? { wardRouted: true } : {}), ...(receipt.wardBlockFirst ? { wardBlockFirst: true } : {}), ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, ...(receipt.weaknesses?.length ? { weaknesses: receipt.weaknesses } : {}), blockRemaining: target.block,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
+  if (wardBefore > 0 && wardAfter === 0) ctx.emit('wardBroken', { targetId: target.id, targetKind: target.kind, sourceId: source?.id, ...seatOf(ctx, target) });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
   ApplyElementReceipt(ctx, source, target, receipt, carrier); // element identity (W25): what a landed hit of its element does
@@ -1045,6 +1061,16 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
 
 // Owner, 2026-11-18: `effects.blockGainMultiplier` scales every configured Block gain, both sides (the live Block preview calls computeBlockGain).
 const BlockGainScale = ctx => { const m = configuredModule(ctx, 'effects')?.blockGainMultiplier; return Number.isFinite(m) && m >= 0 ? m : 1; };
+// Owner, 2026-11-20: each Dexterity stack (a `blockAdd` status) adds `effects.statusBlockWeight` Block to every Block CARD played after it
+// (a player card or an enemy move card), after the scale, so +1 Dexterity is +1 Block on the next card. Protection that is not a played
+// card gets none: Defend-stance turn protection, the Dodge Roll guard, a power's or status's `block`, a Counter's Ward share, a synthetic
+// stance-entry guard (#2912 review). Absent (profiles saved before) = 0: the status added nothing.
+const PlayedBlockCard = card => !!card && !card.syntheticDefense && !card.combatReaction && !card.skipRatingBonus && !!(card.cardId || card.moveId);
+const StatusBlockAdd = (ctx, entity, card) => {
+  if (!PlayedBlockCard(card)) return 0;
+  const w = configuredModule(ctx, 'effects')?.statusBlockWeight;
+  return Number.isFinite(w) && w > 0 ? Math.floor(statuses.getAdd(ctx, entity, 'blockAdd') * w) : 0;
+};
 
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
@@ -1054,7 +1080,7 @@ const BlockGainScale = ctx => { const m = configuredModule(ctx, 'effects')?.bloc
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * ChannelWeight(configuredModule(ctx, 'effects'), 'dr')) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx))) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
+    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * ChannelWeight(configuredModule(ctx, 'effects'), 'dr')) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card) * FluxMultiplier(ctx, entity, card) * BlockGainScale(ctx)) + StatusBlockAdd(ctx, entity, card)) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
@@ -1354,13 +1380,14 @@ export function growPoiseMeter(ctx, entity) {
   entity.poiseMeter.growthMult = growth;
 }
 
-export function breakEnemy(ctx, enemy) {
+export function breakEnemy(ctx, enemy, origin = { kind: 'meter', id: 'poise', ownerId: enemy?.id }) {
   if (!staggerEnemy(ctx, enemy)) return false;
   // Outside Core 2 (FixCore owns the versioned riders there) the break still
   // runs balance.poise.onFill; the sim's unconfigured fights depend on it.
   if (!fixCoreEnabled(ctx)) {
     const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
-    for (const eff of cfg.onFill || []) ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
+    for (const eff of cfg.onFill || []) ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy,
+      meta: origin ? { triggeredBy: origin } : {} });
   }
   return true;
 }
@@ -1718,6 +1745,25 @@ export function ComputeStatusGrant(ctx, action, eff, target, base) {
   return FluxScale(ctx, action.source, action.card, authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0));
 }
 
+/**
+ * The Counter stacks one Counter play grants a holder, summed the way live play grants them: the card's own base grant (the synthetic
+ * `gainCounterStacks` the armed Counter adds; 0 under the Block-as-stacks rule) plus every authored `gainCounterStacks` with an explicit
+ * amount (the fx:counter upgrade), each given Mail's gain bonus unless it opts out. `effects` are the card's prepared effects and
+ * `amountOf(effect)` reads an authored amount; the quote and the landed opcode below must agree.
+ */
+export function CounterStacksGranted(ctx, card, holder, effects = [], amountOf = effect => Number(effect.amount) || 0) {
+  if (!fixCoreEnabled(ctx)) return 0;
+  const bonus = GearGainBonus(holder, 'counter');
+  const base = CounterStackGrant(ctx, card);
+  let total = base > 0 ? base + bonus : 0;
+  for (const effect of effects) {
+    if (effect.op !== 'gainCounterStacks' || effect.amount === undefined || !['self', 'owner'].includes(effect.target)) continue;
+    const gained = amountOf(effect);
+    total += gained > 0 && !effect.noGainBonus ? gained + bonus : Math.max(0, gained);
+  }
+  return total;
+}
+
 function runGuardStackOpcode(ctx, action, eff) {
   if (eff.op === 'gainCounterStacks') {
     if (!fixCoreEnabled(ctx)) return true; // Core 2 only (SPEC §17)
@@ -1928,6 +1974,7 @@ export const OPCODE_HANDLERS = Object.freeze({
     },
     moveEngagement: (ctx, action, eff) => { Engagement.executeEngagementMovement(ctx, action); return; },
     swapRows: (ctx, action) => { SwapEnemyRows(ctx, action.target); return; }, // rows (W25-BANDS rule 7)
+    pullEnemy: (ctx, action) => { PullEnemy(ctx, action.target); return; }, // Gale Pull (owner 2026-11-18 section 22)
     dodgeRoll: (ctx, action, eff) => {
       if (configuredCombat(ctx)) {
         if (configuredModule(ctx, 'stances')?.include?.includes('defend')) action.source.combatStance = { maneuver: 'defend', camp: 'physical' };
@@ -2221,7 +2268,9 @@ export const OPCODE_HANDLERS = Object.freeze({
     },
     stagger: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        breakEnemy(ctx, t);
+        const origin = action.meta?.triggeredBy
+          ?? (action.card?.cardId ? { kind: 'card', id: action.card.cardId, ownerId: action.source?.id } : null);
+        breakEnemy(ctx, t, origin);
       }
       return;
     },
@@ -2336,7 +2385,7 @@ export const RUN_OPCODE_HANDLERS = Object.freeze({
     // only when a card rises, so a run that cannot rank cards (Legacy, or every card capped) keeps its purse.
     rankUpCard: (ctx, action, eff) => {
       const run = ctx.run;
-      const candidates = RankUpCandidates(ctx.registries, run);
+      const candidates = RankUpReady(ctx.registries, run); // only a card the full-upgrade rule lets rise
       const cost = Number.isSafeInteger(eff.cost) && eff.cost > 0 ? eff.cost : 0;
       if (!candidates.length || run.cinders < cost) return;
       const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
@@ -2409,6 +2458,7 @@ export const RUN_OPCODE_HANDLERS = Object.freeze({
       if (relicId && !run.relics.includes(relicId)) {
         ctx.registries.relics.get(relicId); // throws on dangling id
         run.relics.push(relicId);
+        GrantRelicCardCopies(ctx.registries, run, relicId); // a copy relic queues its one-time copy door
         syncFlaskGrowth(ctx.registries, run); // growth chain: a relic source binds the moment it is held
         reconcileRunLoadoutHp(ctx.registries, run); // relic properties (maxMana1) raise the pools the moment it is held
       }

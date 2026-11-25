@@ -35,6 +35,14 @@ test('a fight on Core 2 rules version 1 keeps Strength scaling for finesse', () 
   assert.equal(raw(ctx, 'twinbladeFlurry'), 3 + 4);
 });
 
+test('a Finesse weapon uses Dexterity for an ordinary attack only under action policy v2', () => {
+  const ctx = strongNotQuick();
+  ctx.loadout.sets.rightHand[0] = 'dagger';
+  assert.equal(raw(ctx, 'core.strike'), 3 + 1);
+  ctx.core2ActionRulesVersion = 1;
+  assert.equal(raw(ctx, 'core.strike'), 3 + 4);
+});
+
 test('the finesse view swaps only the attribute part of the Attack rating', () => {
   const entity = { ratings: { ar: 6, dr: 3 }, ratingSources: [{ kind: 'attribute', ar: 4, dr: 1 }, { kind: 'equipment', ar: 2, dr: 2 }] };
   const view = finesseRatingView(entity);

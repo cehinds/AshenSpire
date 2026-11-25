@@ -1,6 +1,7 @@
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
-// Owner ruling 2026-10-19 (Core): equipped gear grants cards; the Bone Sceptre grants Mana Surge
-// (1 SP, gain 2 Mana) to any class holding it.
+// Owner ruling 2026-10-19 (Core): equipped gear grants cards (gear.grantedCards).
+// Owner ruling 2026-11-21: the shipped Bone Sceptre no longer grants Mana Surge. The grant mechanism is still live,
+// so these tests run on a fixture profile in which the Bone Sceptre grants Mana Surge (1 SP, gain 2 Mana); the shipped Core is checked separately.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -12,7 +13,9 @@ test('gear.grantedCards is validated at profile construction, naming the item an
   const pack = catalog.bundles[authors.core.core].manifest.packs.find(row => row.id === 'ashen.core-content');
   const build = (mutate) => {
     const copy = JSON.parse(JSON.stringify(catalog));
-    mutate(copy.packs[`${pack.id}@${pack.version}`].content.gear.find(item => item.id === 'boneSceptre'));
+    const item = copy.packs[`${pack.id}@${pack.version}`].content.gear.find(item => item.id === 'boneSceptre');
+    item.grantedCards = [{ card: 'core.manaSurge', copies: 1 }]; // the shipped sceptre grants nothing (owner 2026-11-21): the fixture row stands in
+    mutate(item);
     return () => resolveGameAuthor(authors.core, copy);
   };
   assert.doesNotThrow(build(() => {}), 'the shipped Core bundle validates');
@@ -37,9 +40,16 @@ import { dispatch } from '../src/engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { withWeaponRack } from './withWeaponRack.mjs';
+import { gameDigest } from '../engine/kernel/gameConfig.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
-const reg = bindGameProfileRegistries(createRegistries(withWeaponRack(applyGameProfileToContent(contentBundle, profile))), profile);
+const shippedReg = bindGameProfileRegistries(createRegistries(withWeaponRack(applyGameProfileToContent(contentBundle, profile))), profile);
+// Fixture: the same Core with a Bone Sceptre that grants one Mana Surge.
+const grantProfile = structuredClone(profile);
+grantProfile.content.gear.find(item => item.id === 'boneSceptre').grantedCards = [{ card: 'core.manaSurge', copies: 1 }];
+delete grantProfile.hash;
+grantProfile.hash = gameDigest(grantProfile);
+const reg = bindGameProfileRegistries(createRegistries(withWeaponRack(applyGameProfileToContent(contentBundle, grantProfile))), grantProfile);
 const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const start = (classId, seed = 511) => createRunState({ registries: reg, classId, seed, profileMeta: meta });
 const surges = (run) => run.deck.filter((c) => c.cardId === 'core.manaSurge');
@@ -67,7 +77,25 @@ test('the card is Mana Surge: 1 SP, no Mana cost, gains 2 Mana, reads "Gain 2 Ma
   if (cardFaceText) assert.match(JSON.stringify(cardFaceText(def)), /Gain 2 Mana/);
 });
 
-test('fresh Core Starseer and Herald each hold exactly one granted Mana Surge; Reaver and Rogue none', () => {
+test('the shipped Core grants no Mana Surge: fresh casters start with ten cards, and older saves holding it still load (owner 2026-11-21)', () => {
+  const shippedStart = (classId) => createRunState({ registries: shippedReg, classId, seed: 511, profileMeta: meta });
+  for (const id of ['starseer', 'herald', 'reaver', 'rogue']) {
+    const run = shippedStart(id);
+    assert.equal(run.deck.filter((c) => c.cardId === 'core.manaSurge').length, 0, id);
+    assert.equal(run.deck.length, 10, `${id} starts with ten cards`);
+    assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
+  }
+  // An older save whose deck holds the granted card still loads and keeps playing.
+  const old = shippedStart('herald');
+  old.deck.push({ cardId: 'core.manaSurge', instanceId: 'granted:boneSceptre:core.manaSurge:0', upgraded: false, equipmentRole: 'granted', grantedBy: 'boneSceptre' });
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(old, createRng(511));
+  const loaded = saves.loadRun(shippedReg);
+  assert.ok(loaded, JSON.stringify(saves.runStatus()));
+  assert.ok(loaded.deck.length >= 10);
+});
+
+test('with a granting sceptre, a fresh Starseer and Herald hold exactly one granted Mana Surge; Reaver and Rogue none', () => {
   for (const id of ['starseer', 'herald']) {
     const run = start(id);
     const found = surges(run);
@@ -77,16 +105,6 @@ test('fresh Core Starseer and Herald each hold exactly one granted Mana Surge; R
     assert.equal(found[0].instanceId, 'granted:boneSceptre:core.manaSurge:0');
   }
   for (const id of ['reaver', 'rogue']) assert.equal(surges(start(id)).length, 0, id);
-});
-
-test('Starseer replaces Resource Gain and both sceptre classes start with eleven cards', () => {
-  const run = start('starseer');
-  assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
-  assert.equal(run.deck.length, 11, 'the starting weapon art replaces the class special');
-  assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 9);
-  const herald = start('herald');
-  assert.equal(herald.deck.length, 11, 'Herald authors nine cards plus granted Mana Surge and Blight Touch');
-  assert.equal(herald.deck.filter(c => c.cardId === 'base.ethereal').length, 2);
 });
 
 test('a Reaver gains Mana Surge on equipping a Bone Sceptre, loses it on unequip, never duplicates', () => {
@@ -132,12 +150,15 @@ test('an older Core save without the card gets it on the next reconcile', () => 
 });
 
 // As a cantrip, Mana Surge stays at 1 SP. The sceptre's Focus cancels the spell's MP surcharge.
-for (const [intelligencePoints, maxMana] of [[0, 1], [1, 2]]) {
+for (const [wisdomPoints, maxMana, spent] of [[0, 4, 1], [1, 5, 5]]) {
   test(`Mana Surge costs 1 SP and restores Mana up to the Herald's ${maxMana} MP cap`, () => {
     // These 1/2 MP cap examples predate robe-type capacity; the swap/save integration below keeps current gear.
     const historical = legacyGearRegistries(reg);
     const run = createRunState({ registries: historical, classId: 'herald', seed: 511, profileMeta: meta });
-    if (intelligencePoints) spendEarnedPoints(historical, run, 'wisdom', intelligencePoints);
+    if (wisdomPoints) {
+      run.level.unspentPoints = 1; // An earned point waiting to be assigned.
+      withGameProfileService(run, 'levelUp', () => applyLevelUp(historical, run, 'wisdom'));
+    }
     const combat = createRunCombat({ registries: historical, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
     assert.equal(combat.player.maxMana, maxMana);
     const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
@@ -145,11 +166,11 @@ for (const [intelligencePoints, maxMana] of [[0, 1], [1, 2]]) {
     combat.piles.draw = combat.piles.draw.filter((c) => c !== card);
     combat.piles.discard = combat.piles.discard.filter((c) => c !== card);
     if (!combat.piles.hand.includes(card)) combat.piles.hand.push(card);
-    combat.player.mana = 0;
+    combat.player.mana = maxMana - spent;
     const sp = combat.player.stamina;
     dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
     assert.equal(combat.player.stamina, sp - 1, 'costs 1 SP');
-    assert.equal(combat.player.mana, maxMana, 'restores as much of the 2 Mana as the pool can hold');
+    assert.equal(combat.player.mana, maxMana - spent + Math.min(spent, 2), 'restores up to 2 Mana, capped at the pool maximum');
   });
 }
 
@@ -261,16 +282,15 @@ test('Core combat checkpoints preserve a set-aside Mana Surge', async () => {
   assert.equal(pileSurges(combat).length, 0);
 });
 
-// Mana's first increase is at max(INT, WIS) 4. Bone Sceptre takes the fresh Reaver to INT 3 and raises Draw.
-// The pool test starts at WIS 3 so the Blight Rod's +1 WIS crosses the Mana threshold.
+// Current Core Draw and Mana increase per effective Intelligence and Wisdom point respectively.
 const POOL_PIECE = 'blightRod';
-test('Core changeEquipment: the Bone Sceptre intelligence leaves Draw at 5 (INT 3 is under 4) and moves no pool', () => {
+test('Core changeEquipment: Bone Sceptre Intelligence raises Draw and its Wisdom raises Mana', () => {
   const { combat, run } = equipmentFight('reaver');
   const p = combat.player;
   const before = { maxHp: p.maxHp, maxMana: p.maxMana, maxStamina: p.maxStamina, draw: run.drawPerTurn };
   dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 0, pieceId: 'boneSceptre' });
-  assert.equal(p.drawPerTurn, before.draw, 'Draw is 5 + floor(INT / 4) (owner, 2026-11-18): the sceptre takes INT to 3, short of the 4 that buys a card');
-  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana, before.maxStamina], 'a sceptre moves no pool');
+  assert.equal(p.drawPerTurn, before.draw + 2, 'the Bone Sceptre grants two Intelligence');
+  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana + 1, before.maxStamina], 'only its one Wisdom increases a pool');
 });
 for (const intent of ['changeEquipment', 'swapArmament']) {
   test(`Core ${intent} preserves missing pools across repeated staff swaps and saves valid stats`, () => {
@@ -290,7 +310,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         dispatch(combat, intent === 'swapArmament'
           ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
           : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? POOL_PIECE : 'greatsword' });
-        assert.equal(p.maxMana, before.maxMana + (sceptre ? 2 : 0), 'the rod adds one MP through WIS and one uncapped raw maxMana bonus');
+        assert.equal(p.maxMana, before.maxMana + (sceptre ? 2 : 0), 'the rod’s two Wisdom points add two MP without a raw pool bonus');
         assert.equal(p.drawPerTurn, before.draw, 'the rod carries no intelligence, so Draw holds');
         for (const field of ['hp', 'mana', 'stamina']) {
           const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];
@@ -301,7 +321,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         assert.equal(p.energyMax, p.maxStamina);
         assert.equal(p.combatTraits, undefined, 'a Core swap leaves the legacy expansion equipment projection off, as combat creation does');
         commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
-        assert.equal(run.equipmentPoolBonuses.maxMana, sceptre ? 1 : 0, 'persist only the rod raw +1 MP, never the WIS-derived increase');
+        assert.equal(run.equipmentPoolBonuses.maxMana, 0, 'the rod raw +1 MP line is dropped (its Wisdom feeds Mana, owner 2026-11-20), and the WIS-derived increase is never persisted');
         const saves = createSaveManager(createMemoryStorage());
         saves.saveRun(run, combat.rng);
         assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));
@@ -313,7 +333,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
     combat.result = 'victory';
     runCombatEnd(run, combat);
     run.combatEntered = null; // The finished-fight transition clears its resume point.
-    assert.equal(run.equipmentPoolBonuses.maxMana, 1, 'the combat-end door persists the same raw pool bonus');
+    assert.equal(run.equipmentPoolBonuses.maxMana, 0, 'the combat-end door persists the same raw pool bonus (none: the rod line is dropped, owner 2026-11-20)');
     const saves = createSaveManager(createMemoryStorage());
     saves.saveRun(run, combat.rng);
     assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));

@@ -1,3 +1,4 @@
+import { IsLevelReward } from './classLevelBonus.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { gameModule } from './gameProfile.js';
 import { gameProfileServiceActive, withGameProfileService } from './gameProfileRun.js';
@@ -273,21 +274,55 @@ export function levelPace(registries, { pointsPerLevel = null } = {}) {
  * per-fight cap threw away, so the spoils receipt can say both (Codex, #1349).
  * A non-positive or non-finite amount writes nothing.
  */
+/**
+ * Count how many levels in `(fromLevel, toLevel]` grant an attribute point
+ * when points are awarded every `every` levels (e.g. 4, 8, 12, 16, 20).
+ */
+export function AttributePointsEarnedBetween(fromLevel, toLevel, every = 4, pointsPerGrant = 1, firstLevel = every) {
+  if (!Number.isInteger(toLevel) || toLevel <= fromLevel || !Number.isInteger(pointsPerGrant) || pointsPerGrant <= 0) return 0;
+  const step = Number.isInteger(every) && every >= 1 ? every : 1;
+  let grants = 0;
+  for (let lv = fromLevel + 1; lv <= toLevel; lv += 1) {
+    if (IsLevelReward(lv, { firstLevel, every: step })) grants += 1;
+  }
+  return grants * pointsPerGrant;
+}
+
+export function CharacterLevelPointCadence(registries, run, { pointsPerLevel = null, grantStats = true } = {}) {
+  const configured = gameModule(run, 'progression');
+  const free = run?.levelRewardRuleSnapshot?.freeAttribute;
+  if (free) {
+    return gameModule(run, 'stats') && configured?.characterLevels && configured.attributePointsPerLevel !== 0
+      ? free : { ...free, amount: 0 };
+  }
+  const amount = configured?.entitlementPolicy === 'authored'
+    ? (gameModule(run, 'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0)
+    : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const authoredInterval = grantTable(registries).attributePointEveryLevels;
+  const every = Number.isInteger(authoredInterval) && authoredInterval >= 1 ? authoredInterval : 4;
+  return { firstLevel: every, every, amount };
+}
+
 export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, grantStats = true } = {}) {
   if (!run) throw new Error('awardLevelXp: no run');
   if (!run.level || typeof run.level !== 'object') run.level = emptyLevel();
   const row = run.level;
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
-  if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0, gained: 0, discarded: 0 };
-  const configured = gameModule(run,'progression');
-  const perLevel = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, rankUps: 0, thresholds: 0, gained: 0, discarded: 0 };
+  const configured = gameModule(run, 'progression');
+  const t = grantTable(registries);
+  const rankUpPerLevel = Number.isInteger(t.rankUpPerLevel) && t.rankUpPerLevel >= 0 ? t.rankUpPerLevel : 1;
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
-  const points = levelUps * perLevel;
+  const rewards = run.levelRewardRuleSnapshot;
+  const free = CharacterLevelPointCadence(registries, run, { pointsPerLevel, grantStats });
+  const points = AttributePointsEarnedBetween(before, climb.level, free.every, free.amount, free.firstLevel);
+  const rankUps = configured?.cardRanks !== false ? levelUps * (rewards?.cardRankUpsPerLevel ?? rankUpPerLevel) : 0;
   row.xp = climb.xp;
   row.level = climb.level;
   row.unspentPoints += points;
+  if (rankUps > 0) row.pendingRankUps = (Number.isInteger(row.pendingRankUps) ? row.pendingRankUps : 0) + rankUps;
   let thresholds = 0;
   if (levelUps > 0) {
     thresholds = rederivePools(registries, run, `level ${before} → ${row.level}`);
@@ -297,10 +332,10 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
       field: 'level',
       was: { level: before, unspentPoints: row.unspentPoints - points },
       now: { level: row.level, unspentPoints: row.unspentPoints },
-      why: `${gain} XP paid; ${levelUps} level${levelUps === 1 ? '' : 's'} climbed at ${perLevel} point(s) each (${row.xp} XP toward level ${row.level + 1}, ${xpToNext(registries, row.level)} needed)${climb.cappedBy === 'fight' ? `; capped at ${levelUps} a fight, ${climb.discarded} XP past it discarded` : ''}`,
+      why: `${gain} XP paid; ${levelUps} level${levelUps === 1 ? '' : 's'} climbed (${points} attribute point(s), ${rankUps} rank-up(s)) (${row.xp} XP toward level ${row.level + 1}, ${xpToNext(registries, row.level)} needed)${climb.cappedBy === 'fight' ? `; capped at ${levelUps} a fight, ${climb.discarded} XP past it discarded` : ''}`,
     });
   }
-  return { before, after: row.level, levelUps, points, thresholds, gained: gain, discarded: climb.discarded };
+  return { before, after: row.level, levelUps, points, rankUps, thresholds, gained: gain, discarded: climb.discarded };
 }
 
 /**

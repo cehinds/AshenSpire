@@ -45,7 +45,9 @@ function fight(cards, classId = 'starseer') {
 }
 const inst = (id, cardId, steps) => ({ instanceId: id, cardId, ...(steps ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) });
 const fxOffered = (cardId) => nextUpgradeOptions({ seed: 7, gameProfile: registries.gameProfile, rangePolicy: {} }, { instanceId: 'x', cardId, upgraded: false },
-  registries.cards.get(cardId), registries, 40, { noAuthored: true }).filter((s) => s.k === 'fx').map((s) => s.fx);
+  registries.cards.get(cardId), registries, 40, { noAuthored: true })
+  // An ease offered at uncommon or rare is a combo whose first step is the ease (upgrade rarity, #2920).
+  .map((s) => (s.k === 'combo' ? s.steps[0] : s)).filter((s) => s.k === 'fx').map((s) => s.fx);
 
 test('the upgrade menu offers to drop Ethereal and to stop a rising cost, only on a card that has them', () => {
   assert.ok(fxOffered('base.cost-per-use').includes('steady'), 'Shifting Cost may stop its rising cost');
@@ -67,7 +69,9 @@ test('rest and blacksmith quotes offer Quickstep only the upgrade its grade appl
   const run = createRunState({ registries, classId: 'reaver', seed: 5 });
   const quickstep = { ...inst('quickstep', 'quickstep'), abilityRank: 3 };
   run.sideboard.push(quickstep);
-  const step = { k: 'fx', fx: 'unexhaust' };
+  assert.ok(!PlanRestCardUpgrade(run, registries, quickstep.instanceId).ok, 'the CP rank is above a level-one character');
+  run.level.level = 5;
+  const step = { k: 'fx', fx: 'unexhaust', nextRank: 5 };
   const rest = PlanRestCardUpgrade(run, registries, quickstep.instanceId);
   const smith = planCardUpgrade(run, registries, quickstep.instanceId, { choices: 3 });
 
@@ -83,13 +87,14 @@ test('rest and blacksmith quotes offer Quickstep only the upgrade its grade appl
   assert.deepEqual(smith.options[0].after, rest.after);
   assert.equal(commitCardUpgrade(run, registries, rest).n, 1);
   assert.deepEqual(quickstep.upgradeSteps, [step]);
+  assert.equal(quickstep.rank, 5);
 });
 
 // Puts a played copy back in hand, so the same copy can be played again this fight.
 function backToHand(c, id) {
   for (const pile of Object.values(c.piles)) { const at = pile.findIndex((card) => card.instanceId === id); if (at >= 0 && pile !== c.piles.hand) c.piles.hand.push(pile.splice(at, 1)[0]); }
 }
-// What the third play of ONE copy costs, after its two earlier plays (the Attack stance the first play enters takes 1 off, never below 1).
+// What the third play of ONE copy costs, after its two earlier plays (the Attack stance the first play enters takes 1 off, never below 1 on the player's turn: owner 2026-11-23).
 function thirdPlayCost(cardId, steps, classId = 'reaver') {
   const c = fight([inst('a', cardId, steps)], classId);
   dispatch(c, { type: 'playCard', cardInstanceId: 'a', targetId: c.enemies[0].id });
@@ -106,7 +111,7 @@ test('a steady upgrade holds the printed cost on every play', () => {
   assert.equal(thirdPlayCost('base.cost-per-use', [{ k: 'fx', fx: 'steady' }]).stamina, 1, 'the steady copy keeps its printed cost');
 });
 
-// The first play enters the casting stance; later plays take its 1-Stamina stance cut (never below 1), so the rise shows from the third play.
+// The first play enters the casting stance; later plays take its 1-Stamina stance cut (never below 1 on the player's turn, owner 2026-11-23), so the rise shows from the third play.
 test('Hold Block costs more each play; upgraded it never rises', () => {
   const plays = (steps) => {
     const c = fight([{ instanceId: 'a', cardId: 'base.retain-block', upgraded: !!steps }], 'reaver');

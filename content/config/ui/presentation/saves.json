@@ -1,6 +1,7 @@
 {
   "behavior": {
-    "note": "Owner ruling 2026-11-18 (docs/balance/owner-ruling-2026-11-18.md section 11). true = a build that differs from the one that wrote the run saves deletes them at boot instead of loading or migrating them (settings and profile are kept). DEV DEFAULT. MUST BE false BEFORE ANY PUBLIC RELEASE so players keep their saves (DEVELOPER.md, Release checklist). tests/save-wipe.test.mjs fails if it is true on the release or main branch.",
-    "discardOnNewBuild": true
+    "note": "Owner ruling 2026-11-18 (docs/balance/owner-ruling-2026-11-18.md section 11). true = a build that differs from the one that wrote the run saves deletes them at boot instead of loading or migrating them (settings and profile are kept). DEV DEFAULT. MUST BE false BEFORE ANY PUBLIC RELEASE so players keep their saves (DEVELOPER.md, Release checklist). `epoch` (owner ruling 2026-11-21): a browser whose stored epoch stamp is missing (counts as 1) or lower discards EVERY game key once, profile included (src/engine/epochWipe.js). Raise it to schedule another hard wipe. tests/save-wipe.test.mjs fails if it is true on the release or main branch.",
+    "discardOnNewBuild": true,
+    "epoch": 2
   }
 }

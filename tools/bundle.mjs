@@ -16,6 +16,7 @@ import {readLayeredArt} from './layered-art.mjs';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
 import { scanDynamicImports, commentRanges } from './dynamic-imports.mjs';
+import { stripModulePreamble } from './js-preamble.mjs';
 import { cardCutoutAssets } from './card-cutout-assets.mjs';
 import { danglingLiteralAssets } from './literal-asset-references.mjs';
 
@@ -941,7 +942,10 @@ for (const id of order) {
     fail('module ' + id + ' still has a top-level import/export after transform:\n' + badLine);
   }
   assertNoNativeImport(id, body);
-  transformed.set(id, body);
+  // Keep authored documentation in source, but omit non-license leading
+  // comments from the shipped factory. Stop at its first code token: this is
+  // deliberately not a JavaScript lexer or an in-body comment minifier.
+  transformed.set(id, stripModulePreamble(body));
 }
 
 // ---------------------------------------------------------------------------

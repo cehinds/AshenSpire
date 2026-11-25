@@ -66,31 +66,31 @@ test('successive Spells still cut Mana after a mirrored cantrip, both ways', () 
   assert.equal(stanceManaCost(3, combat.player, costly, combat), 3, 'a physical Strike breaks the chain');
 });
 
-// ---- Card face: Spell mark + the basic's mark + the basic's word ----
+// ---- Card face: tradition mark(s) plus the mirrored basic's mark ----
 import { cardSigilIdentity } from '../src/content/combatSigils.js';
 import { cardSigilsHtml, sigilExplanationHtml } from '../src/ui/components/combatSigilView.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 
-test('footer of a mirrored cantrip: two marks and the basic\'s word', () => {
+test('footer of a shared mirrored cantrip retains both traditions and the basic mark', () => {
   const model = playingCardModel(reg, { cardId: 'core.cantrip', instanceId: 'x', upgraded: false });
-  assert.deepEqual(model.sigils, { action: 'spell', school: null, mirror: 'attack' });
+  assert.deepEqual(model.sigils, { action: 'spell', school: null, mirror: 'attack', traditions: ['arcane', 'divine'], displayLabel: 'Spell' });
   const html = cardSigilsHtml(model.sigils);
   assert.match(html, /data-primary-sigil="spell"/);
   assert.match(html, /data-mirror="attack"/);
   const marks = [...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]);
-  assert.deepEqual(marks, ['spell', 'attack'], 'Spell mark first, then the Attack mark');
-  assert.match(html, /card-type-name[^>]*>Attack</);
-  assert.match(sigilExplanationHtml(model.sigils), /Spell[\s\S]*Attack/);
+  assert.deepEqual(marks, ['arcane', 'divine', 'attack'], 'both tradition marks precede the mirrored Attack mark');
+  assert.match(html, /card-type-name[^>]*>Spell</);
+  assert.match(sigilExplanationHtml(model.sigils), /Arcane[\s\S]*Divine[\s\S]*Attack/);
 });
 
-test('footer of a smash mirror reads Smash; a spell that mirrors nothing still reads Spell', () => {
+test('generic smash mirror retains its word; a current exclusive spell uses its tradition', () => {
   assert.deepEqual(cardSigilIdentity('Spell', { camp: 'spell', mirrors: 'smash' }), { action: 'spell', school: null, mirror: 'smash' });
   assert.match(cardSigilsHtml(cardSigilIdentity('Spell', { camp: 'spell', mirrors: 'smash' })), /card-type-name[^>]*>Smash</);
   const special = playingCardModel(reg, { cardId: 'core.starseerSpecial', instanceId: 'y', upgraded: false });
-  assert.deepEqual(special.sigils, { action: 'spell', school: null });
+  assert.deepEqual(special.sigils, { action: 'spell', school: 'force', traditions: ['arcane'], displayLabel: 'Arcane' });
   const html = cardSigilsHtml(special.sigils);
-  assert.deepEqual([...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]), ['spell']);
-  assert.match(html, /card-type-name[^>]*>Spell</);
+  assert.deepEqual([...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]), ['arcane']);
+  assert.match(html, /card-type-name[^>]*>Arcane</);
   assert.doesNotMatch(html, /data-mirror/);
   assert.deepEqual(cardSigilIdentity('Attack', { camp: 'physical', mirrors: 'smash' }), { action: 'attack', school: null }, 'only a Spell mirrors');
 });
@@ -123,13 +123,13 @@ test('Arcane Strike, Ritual Ward and Staff Channel are Spells and Cantrips in th
   assert.equal(stanceOf(slash).camp, 'physical');
 });
 
-test('footers: Arcane Strike [spell][attack] ATTACK, Ritual Ward [spell][defend] DEFEND, Staff Channel [spell][skill] TECHNIQUE', () => {
+test('equipment spell footers show school traditions and retain each mirrored basic mark', () => {
   const foot = (card, id) => { const m = playingCardModel(reg, { cardId: card, profileId: id, instanceId: 'p-' + id, upgraded: false }); return cardSigilsHtml(m.sigils); };
   const marks = html => [...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]);
   const word = html => html.match(/card-type-name[^>]*>([^<]*)</)[1];
-  let h = foot('strike', 'sceptreArcaneAttack'); assert.deepEqual(marks(h), ['spell', 'attack']); assert.equal(word(h), 'Attack');
-  h = foot('defend', 'sceptreGuard'); assert.deepEqual(marks(h), ['spell', 'defend']); assert.equal(word(h), 'Defend');
-  h = foot('technique', 'staffTechnique'); assert.deepEqual(marks(h), ['spell', 'skill']); assert.equal(word(h), 'Technique');
+  let h = foot('strike', 'sceptreArcaneAttack'); assert.deepEqual(marks(h), ['divine', 'attack']); assert.equal(word(h), 'Divine');
+  h = foot('defend', 'sceptreGuard'); assert.deepEqual(marks(h), ['divine', 'defend']); assert.equal(word(h), 'Divine');
+  h = foot('technique', 'staffTechnique'); assert.deepEqual(marks(h), ['arcane', 'skill']); assert.equal(word(h), 'Arcane');
   h = foot('strike', 'bladeAttack'); assert.deepEqual(marks(h), ['attack']); assert.equal(word(h), 'Attack');
   assert.equal(mirrorSigil('technique').mark.label, 'Technique');
 });
@@ -192,7 +192,7 @@ test('dispatching a sceptre Ritual Ward and Arcane Strike records Defend and Att
   assert.equal(combat.player.combatStance.mirrored, true);
 });
 
-test('Current/v2 is unchanged: a sceptre Arcane Strike and Ritual Ward still stance casting with the old footer', () => {
+test('legacy/v2 remains casting and a saved profile without traditions retains its old footer', () => {
   const strike = projectedCurrent('strike', 'sceptreArcaneAttack'), ward = projectedCurrent('defend', 'sceptreGuard');
   for (const d of [strike, ward]) {
     assert.equal(d.mirrors, undefined);
@@ -205,7 +205,8 @@ test('Current/v2 is unchanged: a sceptre Arcane Strike and Ritual Ward still sta
   assert.equal(combat.player.combatStance.maneuver, 'casting');
   assert.equal(combat.player.combatStance.camp, 'spell');
   assert.equal(combat.player.combatStance.mirrored, undefined);
-  const footer = cardSigilsHtml(playingCardModel(cur, { cardId: 'strike', profileId: 'sceptreArcaneAttack', instanceId: 'c', upgraded: false }).sigils);
+  const rules = { gameProfile: { modules: { effects: { mode: 'legacy' } } } };
+  const footer = cardSigilsHtml(playingCardModel(cur, { cardId: 'strike', profileId: 'sceptreArcaneAttack', instanceId: 'c', upgraded: false }, { rules }).sigils);
   assert.deepEqual([...footer.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]), ['spell']);
   assert.match(footer, /card-type-name[^>]*>Spell</);
 });

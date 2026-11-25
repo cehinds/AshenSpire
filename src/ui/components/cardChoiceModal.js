@@ -14,6 +14,12 @@ const FALLBACK_TITLE_KEY = 'common.choose';
 function buildChoiceRow(option)
 {
     const isActive = !!option.active;
+    const costs = [];
+    if (option.costs) {
+        const stamina = option.costs.stamina || option.costs.energy;
+        if (Number.isFinite(stamina)) costs.push(translate('combat.reaction.sp', { amount: stamina }));
+        if (option.costs.mana > 0) costs.push(translate('combat.reaction.mp', { amount: option.costs.mana }));
+    }
     const nameSuffix = isActive
         ? ACTIVE_NAME_SUFFIX
         : '';
@@ -24,7 +30,8 @@ function buildChoiceRow(option)
             : ROW_CLASS,
         name: `${option.name}${nameSuffix}`,
         text: option.tooltip || '',
-        disabled: isActive,
+        costs,
+        disabled: isActive || option.affordable === false,
     };
 }
 

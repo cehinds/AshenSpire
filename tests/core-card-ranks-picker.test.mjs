@@ -1,13 +1,19 @@
 // Card ranks 11d: a Core track level queues a rank-up and the existing reward-door picker raises a Core card.
+import { FillUpgradeSlots, RankUpRuleOff } from './helpers/rank-up-ready.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { rankUpBonusOptions } from '../src/model/rankUpBonus.js';
-import { awardSkillXp, xpToNext, pendingRankUpRows, coreCardRanks } from '../src/model/skills.js';
+import { awardSkillXp, xpToNext, pendingRankUpRows, RankUpRowsReady, coreCardRanks } from '../src/model/skills.js';
 
-const newRun = () => createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+// Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
+const newRun = () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  FillUpgradeSlots(run);
+  return run;
+};
 const level = (run, id, n) => awardSkillXp(registries, run, id, Array.from({ length: n }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0), { queueRewards: false, queueRankUps: coreCardRanks(run) });
 
 test('pendingRankUpRows lists queued rank-ups that have a card to raise, and nothing at level 1', () => {
@@ -31,7 +37,7 @@ test('the reward door shows the Core card at its next rank and raises it', async
   // The kit DOM: the rank-up opens the shared card-upgrade modal (playtest 2026-11-17 item 45a).
   await withKitDom(async () => {
     const app = document.createElement('main'); document.body.append(app);
-    const run = newRun();
+    const run = RankUpRuleOff(newRun()); // the bonus alone, on a card with no other steps
     level(run, 'item:blade', 3);
     const strike = run.deck.find((c) => c.cardId === 'core.strike');
     let persisted = 0;
@@ -45,7 +51,7 @@ test('the reward door shows the Core card at its next rank and raises it', async
     // under it in the same option design the Blacksmith uses, and Rank up commits the picked one.
     const mine = () => document.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`);
     assert.ok(mine(), 'a Core Strike is offered');
-    assert.match(mine().querySelector('.co-chip').textContent, /Rank 1 → 2/);
+    assert.match(mine().querySelector('.co-chip').textContent, /Basic → Rank 1/); // an unranked Strike reads Basic and rises to Rank 1 (owner 2026-11-23)
     const expected = rankUpBonusOptions(registries, run, strike)[1].step;
     mine().click();
     const bonuses = [...document.querySelectorAll('.card-upgrade-option')];
@@ -54,7 +60,7 @@ test('the reward door shows the Core card at its next rank and raises it', async
     assert.equal(document.querySelector('.card-upgrade-confirm').disabled, false);
     assert.equal(strike.rank, undefined, 'picking a bonus spends nothing');
     document.querySelector('.card-upgrade-confirm').click();
-    assert.equal(strike.rank, 2);
+    assert.equal(strike.rank, 1);
     assert.equal(strike.upgradeSteps.length, 1, 'exactly the one picked bonus landed');
     assert.equal(strike.upgradeSteps[0].bonus, true);
     assert.deepEqual(strike.upgradeSteps[0], expected, 'the second option, the one picked');
@@ -69,6 +75,8 @@ test('main.js offers the rank-up door once per victory for Core runs only', () =
   assert.match(block, /coreCardRanks\(run\)/);
   assert.match(block, /pendingRankUpRows\(registries, run\)/);
   assert.match(block, /rankUpsOffered/);
+  // A new door opens only when a queued card may rise now (review fix 2026-11-23).
+  assert.match(block, /!pending\.rankUpRows && !RankUpRowsReady\(registries, run, rankUps\)/);
   // A claim is saved with the door's rows and claim state, so a reload resumes it rather than re-offering.
   assert.match(block, /pending\.rankUpRows/);
   assert.match(block, /checkpoint: \(pending\.rankUpCheckpoint \|\|= \{\}\)/);
@@ -112,7 +120,7 @@ test('a reload after a rank-up claim resumes the same door and offers no second 
     document.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`).click();
     document.querySelector('.card-upgrade-option').click();
     document.querySelector('.card-upgrade-confirm').click();
-    assert.equal(strike.rank, 2);
+    assert.equal(strike.rank, 1);
     assert.equal(run.skills['item:blade'].pendingRankUps, queued - 1);
     // Reload: rebuild from the saved run.
     run = JSON.parse(saveJson);
@@ -156,4 +164,28 @@ test('a rank-up with one bonus option commits that bonus', async () => {
     assert.equal(confirmed?.id, strike.instanceId);
     assert.deepEqual(confirmed.plan.step, lone.step, 'the lone bonus is what commits');
   });
+});
+
+// Review fix (2026-11-23): the after-fight rank-up door opens only when a queued card may rise now (the full-upgrade
+// rule). With none ready it is skipped and the rank-ups stay queued; when it does open, held-back cards show disabled.
+test('the rank-up door needs a ready card: none ready skips it and keeps the queue; held-back cards show disabled', async () => {
+  const { RankUpUpgradeModel } = await import('../src/ui/models/CardUpgradeModel.js');
+  const { projectGameCard } = await import('../src/model/gameProfile.js');
+  const { resolveCard } = await import('../src/model/registries.js');
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  level(run, 'item:blade', 3);
+  const queued = run.skills['item:blade'].pendingRankUps;
+  const rows = pendingRankUpRows(registries, run);
+  assert.equal(rows.length, 1, 'the rank-up is queued and its track has candidates');
+  assert.equal(RankUpRowsReady(registries, run, rows), false, 'no card has its slots filled: the door is skipped');
+  assert.equal(run.skills['item:blade'].pendingRankUps, queued, 'the rank-ups stay queued');
+  const strike = run.deck.find((c) => c.cardId === 'core.strike');
+  FillUpgradeSlots(run, [strike]);
+  assert.equal(RankUpRowsReady(registries, run, rows), true, 'one full card opens the door');
+  const faceOf = (instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
+  const model = RankUpUpgradeModel(registries, run, 'item:blade', strike.instanceId, { faceOf });
+  const mine = model.rows.find((row) => row.instanceId === strike.instanceId);
+  const held = model.rows.filter((row) => row.instanceId !== strike.instanceId);
+  assert.equal(mine.disabled, false);
+  assert.ok(held.length > 0 && held.every((row) => row.disabled && row.blockedReason), 'the others are listed, disabled, with the reason');
 });

@@ -112,7 +112,7 @@
     "id": "blightTouch",
     "name": "Blight Touch",
     "class": "herald",
-    "rarity": "common",
+    "rarity": "rare",
     "cost": 1,
     "type": "attack",
     "flavor": "Blessing of the Feral Ember.\n\nTaken from the Chapel's blessing of the sick and turned to what the Feral Ember holds its truer purpose: to give warmth and keep no account. The Saints name it heresy.\n\nThe converts say the touch is warm. None have said otherwise.",
@@ -776,9 +776,15 @@
         "target": "self",
         "status": "dexterity",
         "stacks": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "wisdom",
+        "stacks": 2
       }
     ],
-    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity.",
+    "textTemplate": "Gain {strength} Strength, {dexterity} Dexterity, and {wisdom} Wisdom.",
     "upgrade": {
       "effects": [
         {
@@ -791,6 +797,12 @@
           "op": "applyStatus",
           "target": "self",
           "status": "dexterity",
+          "stacks": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "wisdom",
           "stacks": 3
         }
       ]
@@ -1419,6 +1431,47 @@
     }
   },
   {
+    "id": "gravebinderLament",
+    "name": "Gravebinder's Lament",
+    "class": "herald",
+    "rarity": "rare",
+    "cost": 1,
+    "manaCost": 0,
+    "type": "attack",
+    "flavor": "Gravebinders sing it low, so the dead will not wake to hear.\n\nThe verse has seven stanzas. Only the first three are written down, and the bell-ringers are paid not to ask after the rest. It names what the dead are owed, and the Chapel would rather that stayed unsaid.",
+    "keywords": [],
+    "icon": "blight",
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 24
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "crimsonBlight",
+        "stacks": 3
+      }
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {crimsonBlight} Crimson Blight.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 30
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "crimsonBlight",
+          "stacks": 4
+        }
+      ]
+    }
+  },
+  {
     "id": "witheringTouch",
     "name": "Withering Touch",
     "class": "herald",
@@ -1789,10 +1842,11 @@
     "type": "skill",
     "flavor": "The heat that rises when the hymn is loudest.\n\nPilgrims on the cinder road sang until their throats bled, and fought best while the song lasted. Their captains learned to strike before the final verse. After it, the fervour cooled and the pilgrims only wept.\n\nNo one ever wrote down the final verse.",
     "keywords": [
-      "ethereal"
+      "ethereal",
+      "exhaust"
     ],
     "icon": "audio",
-    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal.",
+    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity. Ethereal. Exhaust.",
     "faceTemplate": [
       "Gain {strength} Strength.",
       "Gain {dexterity} Dexterity."

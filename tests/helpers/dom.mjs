@@ -260,6 +260,9 @@ export function withModalDom(fn) {
     if (at < 0) return this.appendChild(node);
     this.children.splice(at, 0, node); node.parentNode = this; return node;
   };
+  proto.prepend = function prepend(...nodes) {
+    for (const node of nodes.filter(Boolean).reverse()) { node.remove(); node.parentNode = this; this.children.unshift(node); }
+  };
   // The fixture keeps `dataset` and the data-* attributes apart; the kit writes
   // `dataset`, so selectors read it back through the attribute methods.
   const dataKey = (key) => key.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase());

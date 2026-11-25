@@ -3447,9 +3447,10 @@
       "exhaust"
     ],
     "icon": "progression",
-    "textTemplate": "Gain {dexterity} Dexterity. Draw {draw} card. Exhaust.",
+    "textTemplate": "Gain {dexterity} Dexterity and {intelligence} Intelligence. Draw {draw} card. Exhaust.",
     "faceTemplate": [
       "Gain {dexterity} Dexterity.",
+      "Gain {intelligence} Intelligence.",
       "Draw {draw} card."
     ],
     "effects": [
@@ -3460,12 +3461,20 @@
         "stacks": 2
       },
       {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "intelligence",
+        "stacks": 2
+      },
+      {
         "op": "draw",
         "amount": 1
       }
     ],
     "upgrade": {
-      "manaCost": 1
+      "manaCost": 1,
+      "keywords": [],
+      "textTemplate": "Gain {dexterity} Dexterity and {intelligence} Intelligence. Draw {draw} card."
     },
     "minCombatExpansionVersion": 2
   },

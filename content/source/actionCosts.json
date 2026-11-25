@@ -238,7 +238,19 @@
       "weight": 0,
       "side": "sp"
     },
+    "bonusPoise": {
+      "weight": 0,
+      "side": "sp"
+    },
+    "dexDamage": {
+      "weight": 0,
+      "side": "sp"
+    },
     "retreat": {
+      "weight": 0,
+      "side": "sp"
+    },
+    "pullRetreat": {
       "weight": 0,
       "side": "sp"
     },
@@ -351,6 +363,10 @@
       "side": "sp"
     },
     "trait:persistent": {
+      "weight": 0,
+      "side": "sp"
+    },
+    "trait:recurring": {
       "weight": 0,
       "side": "sp"
     },

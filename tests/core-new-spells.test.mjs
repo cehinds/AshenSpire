@@ -9,8 +9,6 @@ import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
-import { balanceMana } from '../src/content/generated/balanceMana.js';
-import { balanceExposure } from '../src/content/generated/balanceExposure.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -24,10 +22,14 @@ const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
 
 // The reward pool's playableOnly rule uses the run's maximum Mana. Stock Core runs start with 1 MP.
+const matchesTradition = (classId, id) => !def(id).tags.includes('camp:spell')
+  || def(id).tags.includes(`tradition:${classId === 'herald' ? 'divine' : 'arcane'}`);
 const payable = (classId, id) => !(def(id).manaCost > 0) || def(id).manaCost <= live(classId, 1, 1).maxMana;
+// Level lists (owner 2026-11-21): offers draw from the act's rank band, so the seeds are spread over the three acts (act 1 + seed % 3).
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
+  run.actNumber = 1 + (seed % 3);
   return run;
 };
 const offered = (classId, seed, floor, withoutCardId) => {
@@ -42,11 +44,11 @@ test('every new spell is authored in its class, costs mana, is not a cantrip, an
     const card = def(id);
     assert.equal(card.class, cls, id);
     assert.ok(card.manaCost >= 1, `${id} costs mana`);
-    assert.ok(card.staminaCost >= balanceMana.minActionCost, `${id}: a mana card costs at least ${balanceMana.minActionCost} SP (balance.mana.minActionCost)`);
+    assert.ok(card.staminaCost >= 0, `${id}: no cost minimum (owner ruling 2026-11-22), so SP is only non-negative`);
     assert.ok(['uncommon', 'rare'].includes(card.rarity), id);
     assert.ok(!card.tags.includes('rank.cantrip'), `${id} is not a cantrip`);
     assert.ok(card.tags.includes('camp:spell'), id);
-    if (card.effects.some(e => e.op === 'damage')) assert.ok(card.exposureBuildupPerHit >= balanceExposure.buildupPerManaSpell, `${id}: a mana attack builds at least ${balanceExposure.buildupPerManaSpell} Arcane Exposure per hit`);
+    // No Exposure floor on a Mana spell (owner ruling 2026-11-22): per-hit Exposure is authored per card.
   }
   assert.equal(ALL.length, 10);
   assert.equal(new Set(ALL.map(id => def(id).name)).size, 10);
@@ -122,7 +124,7 @@ test('Magic classes see their new spells more often at depth 4+ than at depth 1-
   console.log(`new-spell share of card offers: ${report.join('; ')}`);
 });
 
-test('each class sees only payable spells from its own class or colorless', () => {
+test('each class sees only payable spells matching its class and spell tradition', () => {
   const magic = { starseer: BY_CLASS.starseer, herald: BY_CLASS.herald };
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
     const seen = new Set(), counts = new Map();
@@ -140,6 +142,9 @@ test('each class sees only payable spells from its own class or colorless', () =
       }
       else assert.ok(seen.has(id), `${classId} never offered its own payable ${id}`);
     }
-    for (const id of BY_CLASS.colorless) assert.ok(payable(classId, id) ? seen.has(id) : !seen.has(id), `${classId} colorless ${id}: offered only when payable`);
+    for (const id of BY_CLASS.colorless) {
+      const eligible = payable(classId, id) && matchesTradition(classId, id);
+      assert.equal(seen.has(id), eligible, `${classId} colorless ${id}: offered only when payable and matching its spell tradition`);
+    }
   }
 });

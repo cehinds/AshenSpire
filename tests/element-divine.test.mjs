@@ -43,8 +43,16 @@ test('an enemy of the real undead kind is read from its definition tags', () => 
   assert.equal(stage(hit(combat, enemy), 'element-divine-undead').multiplier, 1.5);
 });
 
+// d4298c12499: the original spell-Poise absorption arithmetic precedes weapon Poise.
+function historicalDivineFight(options) {
+  const world = fight(options);
+  world.combat.fixCoreRules.poise = { drain: 'prevented' };
+  world.combat.fixCoreRules.ward = { enabled: false };
+  return world;
+}
+
 test('Smite: a divine hit that breaks Poise deals 50% of the hit straight to HP on top, and the quote of the hit is unchanged', () => {
-  const smiting = fight({ enemies: 1, poise: 4 }), plain = fight({ enemies: 1, poise: 4, legacy: true });
+  const smiting = historicalDivineFight({ enemies: 1, poise: 4 }), plain = historicalDivineFight({ enemies: 1, poise: 4, legacy: true });
   const withRules = play(smiting.combat, 'core.dawnFlame', smiting.enemy.id), without = play(plain.combat, 'core.dawnFlame', plain.enemy.id);
   assert.equal(smiting.enemy.persistentPoise.value, 0, 'broke Poise');
   // Spells meet Poise first, so the quoted number is the whole hit: 4 of it went to the pool, the rest to HP, and the Smite is half of the whole hit.
@@ -53,7 +61,7 @@ test('Smite: a divine hit that breaks Poise deals 50% of the hit straight to HP 
 });
 
 test('no Smite without a break, and an old fight has no healing', () => {
-  const { combat, enemies } = fight({ enemies: 1, poise: 500 });
+  const { combat, enemies } = historicalDivineFight({ enemies: 1, poise: 500 });
   const played = play(combat, 'core.dawnFlame', enemies[0].id);
   // Poise (500) meets the whole spell first, so nothing reaches HP and no Smite follows: the pool lost exactly the quoted hit.
   assert.equal(played.lost.e1, 0);

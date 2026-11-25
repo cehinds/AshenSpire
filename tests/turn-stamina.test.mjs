@@ -10,19 +10,19 @@ import { validateContent } from '../src/model/validate.js';
 import { executeAction } from '../src/engine/actions.js';
 import { statRowValue } from '../src/model/derivedStats.js';
 
-test('stamina scales with Dexterity (+1 per 4) and level only', () => {
+test('stamina scales with Dexterity (+1 per point) and level only', () => {
   // Owner 2026-11-18 (ruling §9): SP = 3 + floor(DEX / 4); CON, WIS and INT no longer feed it.
   const row = contentBundle.derivedStatRules.rules.stamina;
   const value = (attributes, level = 1) => statRowValue(row, { attributes, level, statId: 'stamina' }).value;
   const base = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
-  assert.equal(value(base), 3);
-  assert.equal(value({ ...base, dexterity: 3 }), 3, 'dexterity');
-  assert.equal(value({ ...base, dexterity: 4 }), 4, 'dexterity');
-  assert.equal(value({ ...base, dexterity: 8 }), 5, 'dexterity');
-  for (const attribute of ['constitution', 'wisdom', 'intelligence', 'strength']) assert.equal(value({ ...base, [attribute]: 100 }), 3, attribute);
-  assert.equal(value(base, 10), 3);
-  assert.equal(value(base, 11), 4);
-  assert.equal(value({ ...base, dexterity: 4 }, 11), 5);
+  assert.equal(value(base), 4);
+  assert.equal(value({ ...base, dexterity: 3 }), 6, 'dexterity');
+  assert.equal(value({ ...base, dexterity: 4 }), 7, 'dexterity');
+  assert.equal(value({ ...base, dexterity: 8 }), 11, 'dexterity');
+  for (const attribute of ['constitution', 'wisdom', 'intelligence', 'strength']) assert.equal(value({ ...base, [attribute]: 100 }), 4, attribute);
+  assert.equal(value(base, 10), 4);
+  assert.equal(value(base, 11), 5);
+  assert.equal(value({ ...base, dexterity: 4 }, 11), 8);
 });
 
 const registries = createRegistries(contentBundle);
@@ -32,12 +32,13 @@ const player = (id = 'p1') => ({ id, classId: 'reaver', maxHp: 1000, maxMana: 10
 });
 const fight = () => createCombat({ registries, rng: createRng(5), player: player(), enemyIds: ['wanderingSoldier'] });
 
-test('shipping content validates and every class starts with three base stamina', () => {
+test('shipping content validates and every class starts at its full Dexterity-scaled stamina', () => {
   assert.deepEqual(validateContent(contentBundle).errors, []);
   for (const cls of registries.classes.all()) {
     const run = createRunState({ seed: 5, classId: cls.id, registries });
-    assert.equal(run.maxStamina, 3, cls.id);
-    assert.equal(run.stamina, 3, cls.id);
+    const expected = 3 + run.attributes.dexterity;
+    assert.equal(run.maxStamina, expected, cls.id);
+    assert.equal(run.stamina, expected, cls.id);
   }
   assert.deepEqual(contentBundle.resources.filter(r => r.surfaces.includes('main')).map(r => r.id).sort(), ['hp', 'mana']);
 });

@@ -27,7 +27,7 @@ import { workspaceFrameVars } from '../src/ui/models/WorkspaceModel.js';
 import { sceneLayers } from '../src/ui/models/SceneLayerModel.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 import { applyWireframeChoices, activeWireframeChoice, activeWireframeChoices } from '../src/ui/wireframeChoices.js';
-import { categoryHandler } from '../src/ui/screens/settings.js';
+import { categoryHandler, AdvancedTopicRowsHtml, SettingsGroupModalHtml } from '../src/ui/screens/settings.js';
 import { advancedSection, advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { workspaceFrame, restampWorkspaceFrames } from '../src/ui/components/w1Workspace.js';
 import { smithWorkspaceVars } from '../src/ui/models/SmithWorkspaceModel.js';
@@ -128,7 +128,7 @@ test('the Wireframes tab: one drop-down row per choice, filed under its family',
   assert.deepEqual(rows.map((row) => row.key), [...WIREFRAME_CHOICE_KEYS], 'derived from the catalogue, in its order');
   for (const row of rows) {
     const spec = wireframeChoiceSpec(row.key);
-    assert.equal(advancedSection(row), 'Wireframes');
+    assert.equal(advancedSection(row), 'Developer');
     assert.equal(row.type, 'choice');
     assert.equal(row.dropdown, true, 'the owner asked for drop downs, including under four options');
     assert.equal(row.def, spec.def);
@@ -136,12 +136,17 @@ test('the Wireframes tab: one drop-down row per choice, filed under its family',
     assert.deepEqual(Object.values(row.choiceLabels), spec.options.map((entry) => entry.label));
     assert.equal(row.label, spec.label);
   }
-  // The Layout tab (id Wireframes) opens on the three families, in catalogue
-  // order; card sizes and the window follow them (2026-09-23).
-  const groups = advancedSubgroups(categoryHandler('Advanced').rows, 'Wireframes').slice(0, WIREFRAME_CHOICE_GROUPS.length);
-  assert.deepEqual(groups.map((group) => group.id), WIREFRAME_CHOICE_GROUPS.map((group) => group.id));
-  assert.deepEqual(groups.map((group) => group.label), WIREFRAME_CHOICE_GROUPS.map((group) => group.label));
-  assert.deepEqual(groups.map((group) => group.rows.map((row) => row.key)),
+  // Developer › Layout draws one Wireframes button for them (owner, 2026-11-20); its modal has
+  // one section per family, in catalogue order, each holding that family's rows.
+  const layout = advancedSubgroups(categoryHandler('Advanced').rows, 'Developer').find((group) => group.id === 'Layout');
+  for (const row of rows) assert.ok(layout.rows.includes(row), `${row.key} sits in Developer › Layout`);
+  const html = AdvancedTopicRowsHtml({}, layout.rows, 'Developer', 'Layout');
+  assert.equal((html.match(/data-btn="groupModal\.wireframes"/g) || []).length, 1, 'one button stands for the six rows');
+  for (const row of rows) assert.ok(!html.includes(`data-row-key="${row.key}"`), `${row.key} is drawn only inside the modal`);
+  const body = SettingsGroupModalHtml({}, 'wireframes');
+  const sections = [...body.matchAll(/data-group-section="([^"]+)">([\s\S]*?)<\/section>/g)];
+  assert.deepEqual(sections.map((m) => m[1]), WIREFRAME_CHOICE_GROUPS.map((group) => group.id));
+  assert.deepEqual(sections.map((m) => [...m[2].matchAll(/data-row-key="([^"]+)"/g)].map((k) => k[1])),
     WIREFRAME_CHOICE_GROUPS.map((group) => group.choices.map((choice) => choice.key)));
 });
 

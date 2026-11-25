@@ -42,7 +42,8 @@ const endTurn = combat => {
 const sandbag = (target, poise = 5) => { Object.assign(target, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: poise } }); };
 
 test('shipped Core data names the Broken rule; validation accepts it; a rules object without it is the Staggered rule', () => {
-  assert.deepEqual(shipped.poise, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 });
+  const { drain, breakRule, brokenDamageMultiplier, breakStatusStacks } = shipped.poise;
+  assert.deepEqual({ drain, breakRule, brokenDamageMultiplier, breakStatusStacks }, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   assert.throws(() => validateFixCoreRules({ ...shipped, poise: { drain: 'prevented', breakRule: 'other' } }), /poise/);
   assert.throws(() => validateFixCoreRules({ ...shipped, poise: { drain: 'prevented', brokenDamageMultiplier: 0.5 } }), /poise/);
@@ -137,27 +138,34 @@ test('a Broken enemy cannot be broken again and its Poise cannot be refilled unt
   assert.equal(enemy.persistentPoise.value, 0, 'Block does not refill a Broken bar');
 });
 
-test('Ward or Barrier gained while Broken raises the maximum but does not refill the bar, so it cannot break twice', () => {
-  for (const status of ['ward', 'barrier']) {
-    const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 8);
-    drainFixCorePoise(combat, combat.player, enemy, 99);
-    assert.ok(enemy.broken); assert.equal(enemy.persistentPoise.value, 0);
-    enemy.statuses[status] = { stacks: 1 };
-    syncPoiseMaximum(combat, enemy);
-    assert.equal(enemy.persistentPoise.barrierBonus, 5, `${status}: +5 maximum, kept as the bonus`);
-    assert.ok(enemy.persistentPoise.max >= 5, `${status}: +5 maximum`);
-    assert.equal(enemy.persistentPoise.value, 0, `${status}: Broken Poise is not refilled`);
-    drainFixCorePoise(combat, combat.player, enemy, 99);
-    assert.equal(combat.eventLog.filter(row => row.type === 'poiseBroken').length, 1, `${status}: one break only`);
-  }
+test('Barrier gained while Broken raises the maximum without refilling Poise; Ward grants HP buffer independently', () => {
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 8);
+  drainFixCorePoise(combat, combat.player, enemy, 99);
+  assert.ok(enemy.broken); assert.equal(enemy.persistentPoise.value, 0);
+  enemy.statuses.barrier = { stacks: 1 };
+  syncPoiseMaximum(combat, enemy);
+  assert.equal(enemy.persistentPoise.barrierBonus, 5, 'barrier: +5 maximum, kept as the bonus');
+  assert.ok(enemy.persistentPoise.max >= 5, 'barrier: +5 maximum');
+  assert.equal(enemy.persistentPoise.value, 0, 'barrier: Broken Poise is not refilled');
+  drainFixCorePoise(combat, combat.player, enemy, 99);
+  assert.equal(combat.eventLog.filter(row => row.type === 'poiseBroken').length, 1, 'barrier: one break only');
+
+  const combat2 = fight(); const enemy2 = combat2.enemies[0]; sandbag(enemy2, 8);
+  drainFixCorePoise(combat2, combat2.player, enemy2, 99);
+  assert.ok(enemy2.broken); assert.equal(enemy2.persistentPoise.value, 0);
+  enemy2.statuses.ward = { stacks: 1 };
+  syncPoiseMaximum(combat2, enemy2);
+  assert.equal(enemy2.persistentPoise.value, 0, 'ward does not refill Broken Poise');
+  assert.equal(enemy2.persistentPoise.barrierBonus || 0, 0, 'ward adds no Poise bonus');
 });
 
 test('after Broken ends the full bar must be broken again for a second break', () => {
-  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 3);
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 8);
   drainFixCorePoise(combat, combat.player, enemy, 99); endTurn(combat);
-  // The refill is to the soldier's rated Poise, 5 (1 + CON 4: owner 2026-11-18 §13, gear Poise counts only while guarding), not the sandbagged 3 stand-in.
-  assert.equal(enemy.persistentPoise.value, 5);
-  hit(combat, enemy, 4); assert.equal(enemy.broken, undefined, 'a part of the bar is not a break');
+  assert.equal(enemy.persistentPoise.value, 3, 'the refill uses the current Soldier rating');
+  drainFixCorePoise(combat, combat.player, enemy, 1);
+  assert.equal(enemy.persistentPoise.value, 2);
+  assert.equal(enemy.broken, undefined, 'a partial drain is not a break');
   drainFixCorePoise(combat, combat.player, enemy, 99);
   assert.ok(enemy.broken, 'the second break');
 });

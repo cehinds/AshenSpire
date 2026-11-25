@@ -160,6 +160,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   };
 
   const chances = [];
+  const hasExplicitPoiseDamage = (def.effects || []).some(e => e.op === 'poiseDamage');
+  const previewWeaponPoiseTotal = (preview?.values || []).reduce((sum, row) => sum + (row.op === 'damage' && row.weaponPoiseTotal > 0 ? row.weaponPoiseTotal : 0), 0);
+  const previewWeaponPoiseBaseTotal = (preview?.values || []).reduce((sum, row) => sum + (row.op === 'damage' && row.weaponPoiseBase > 0 ? row.weaponPoiseBase * Math.max(1, Math.floor(row.hits || 1)) : 0), 0);
+  let weaponPoiseFolded = false;
   // Each effect becomes fragments: `{ cat, text }`, cat in damage | status | remove | gain | bonus.
   const phraseEffect = (effect, index) => {
     const n = value(effect, index), base = baseOf(effect, index, 'amount');
@@ -197,20 +201,32 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         } else {
           text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
         }
-        return frag('damage', conciseCounter && hits === 1 ? num(n, base) + area : text + area);
+        const damageFrags = frag('damage', conciseCounter && hits === 1 ? num(n, base) + area : text + area);
+        if (!counter && !hasExplicitPoiseDamage && live?.weaponPoise > 0) {
+          const wp = live.weaponPoise;
+          const wpBase = live.weaponPoiseBase ?? wp;
+          const poiseText = `${num(wp, wpBase)} Poise${concise ? '' : ' damage'}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
+          damageFrags.push({ cat: 'damage', text: poiseText + area });
+        }
+        return damageFrags;
       }
       case 'poiseDamage': case 'wardDamage': {
         // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
         if (counter && preview?.counterReturn && !(n > 0)) return [];
+        const extraWp = effect.op === 'poiseDamage' && !counter && !weaponPoiseFolded && previewWeaponPoiseTotal > 0 ? previewWeaponPoiseTotal : 0;
+        const extraWpBase = extraWp > 0 ? previewWeaponPoiseBaseTotal : 0;
+        if (extraWp > 0) weaponPoiseFolded = true;
         // Ward off (Core 2): Ward damage drains Poise, so the face reads one combined Poise figure.
         const merged = poiseMerge?.get(index);
         if (merged) {
           if (!merged.leader) return [];
           const live = merged.indices.map(i => value(def.effects[i], i)), authored = merged.indices.map(i => baseOf(def.effects[i], i, 'amount'));
           const sum = list => list.reduce((total, amount) => total + amount, 0);
-          return frag('damage', `${num(sum(live), authored.every(amount => typeof amount === 'number') ? sum(authored) : undefined)} Poise${concise ? '' : ' damage'}${area}`);
+          return frag('damage', `${num(sum(live) + extraWp, authored.every(amount => typeof amount === 'number') ? sum(authored) + extraWpBase : undefined)} Poise${concise ? '' : ' damage'}${area}`);
         }
-        return frag('damage', `${num(n, base)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'}${concise ? '' : ' damage'}${area}`);
+        const shownPoise = typeof n === 'number' ? n + extraWp : n;
+        const basePoise = typeof base === 'number' ? base + extraWpBase : base;
+        return frag('damage', `${num(shownPoise, basePoise)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'}${concise ? '' : ' damage'}${area}`);
       }
       case 'block': {
         const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
@@ -237,7 +253,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       // Owner, 2026-11-15: Gain may exceed the maximum, Restore stops at it. restoreMana, restoreStamina and gainWard are capped; gainEnergy and gainPoise are not.
       case 'restoreMana': return frag('restore', `${num(n, base)} Mana`);
       case 'applyReflect': return frag('gain', `${num(n, base)} Reflect`);
-      case 'gainCounterStacks': return frag('gain', `${num(n, base)} Counter`);
+      // The quote's total (base grant, Mail, every stack step) is one line below, so an authored row does not repeat part of it.
+      case 'gainCounterStacks': if (counter && preview?.counterStackGrant > 0) return []; return frag('gain', `${num(n, base)} Counter`);
       case 'restoreStamina': return frag('restore', `${num(n, base)} Stamina`);
       case 'gainEnergy': return frag('gain', `${num(n, base)} Stamina`);
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
@@ -284,6 +301,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         return frag(cat, `${amount} ${esc(title(effect.status))}${suffix}`);
       }
       case 'swapRows': return frag('bonus', 'Swap rows with nearest foe');
+      case 'pullEnemy': return frag('bonus', 'Pull Retreat');
       case 'moveEngagement': {
         if (!['enemy', 'pendingAttacker', 'self'].includes(effect.target) || ![-1, 1].includes(effect.bands)
           || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
@@ -416,6 +434,8 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     // Beating the revealed hit also adds Block before it lands.
     if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', tag: true, text: `+${num(preview.counterReturn.block)} Block against it` });
   }
+  // The Counter stacks the play grants (the base grant, Mail's gain bonus and any upgrade's stacks, summed: preview.counterStackGrant), shown with or without a revealed attack.
+  if (counter && preview?.counterStackGrant > 0) unconditional.push({ cat: 'gain', text: `${num(preview.counterStackGrant)} Counter stack${preview.counterStackGrant === 1 ? '' : 's'}` });
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', tag: true, text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
   const smashClause = coreSmashClause(def, registries, rules ?? preview?.faceRules ?? null);

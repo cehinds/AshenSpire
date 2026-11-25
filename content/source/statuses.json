@@ -47,6 +47,32 @@
     "tooltip": "Cards grant +1 Block per stack."
   },
   {
+    "id": "wisdom",
+    "tint": "#f0d99a",
+    "name": "Wisdom",
+    "icon": "poise",
+    "stackMode": "add",
+    "decay": "none",
+    "modifiers": {
+      "poiseAdd": 1,
+      "divineDamageAdd": 1
+    },
+    "tooltip": "Grants +1 Poise and +1 Divine damage per stack."
+  },
+  {
+    "id": "intelligence",
+    "tint": "#9fc3e8",
+    "name": "Intelligence",
+    "icon": "skill",
+    "stackMode": "add",
+    "decay": "none",
+    "modifiers": {
+      "magicDamageAdd": 1,
+      "arcaneDamageAdd": 1
+    },
+    "tooltip": "Magic-tagged attacks deal +1 damage per stack (+2 for Arcane)."
+  },
+  {
     "id": "weak",
     "tint": "var(--muted)",
     "name": "Weak",
@@ -139,7 +165,7 @@
         ]
       }
     },
-    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed — then the build-up resets to zero."
+    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed - then the build-up resets to zero."
   },
   {
     "id": "insanity",
@@ -171,7 +197,7 @@
         ]
       }
     },
-    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger — then the build-up resets to zero."
+    "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger - then the build-up resets to zero."
   },
   {
     "id": "bleedResist",
@@ -186,7 +212,7 @@
       "status": "bleed",
       "percent": 50
     },
-    "tooltip": "Just burst — hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
+    "tooltip": "Just burst - hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
   },
   {
     "id": "frostResist",
@@ -201,7 +227,7 @@
       "status": "frost",
       "percent": 50
     },
-    "tooltip": "Just burst — hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
+    "tooltip": "Just burst - hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
   },
   {
     "id": "insanityResist",
@@ -216,7 +242,7 @@
       "status": "insanity",
       "percent": 50
     },
-    "tooltip": "Just burst — hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
+    "tooltip": "Just burst - hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns."
   },
   {
     "id": "frostExposed",
@@ -1327,17 +1353,17 @@
     "id": "ward",
     "name": "Ward",
     "icon": "skill",
-    "tint": "#a066e0",
+    "tint": "#6fa8ff",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Ward gives Poise: each stack adds 5 maximum and current Poise. While Ward is above 0, a hit meets Block first, then Poise absorbs the whole rest, then HP. Lose 1 Ward at the start of your turn, and its +5 maximum Poise with it. When your Poise reaches 0, all Ward is lost.",
+    "tooltip": "Ward adds a health buffer on your HP bar: each stack adds 5 Ward HP. Hits meet Block first, then Ward absorbs the rest 1:1 before Poise and HP. Lose 1 stack (5 Ward HP) at the start of your turn.",
     "sharedWord": true
   },
   {
     "id": "barrier",
     "name": "Bonus Poise",
     "icon": "skill",
-    "tint": "#6fa8ff",
+    "tint": "#a066e0",
     "stackMode": "add",
     "decay": "perTurnEnd",
     "tooltip": "Poise gained above your maximum. Each stack is +5 maximum and current Poise. Lose 1 stack each turn, and its +5 maximum Poise with it.",

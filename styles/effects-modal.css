@@ -1,0 +1,54 @@
+/* Settings > Combat > Effects modal (owner, 2026-11-19). The Visual effects
+   section greys out while the Effects master is off; its values are kept. */
+.set-effects-section[data-off] .set-card-list {
+  opacity: 0.5;
+}
+/* Section headings and their notes line up with the row text, not the modal edge. */
+.set-effects-body .set-effects-section > .set-subsection-heading,
+.set-effects-body .set-effects-section > .set-note {
+  padding-inline: 0.5rem;
+}
+.set-effects-body .set-effects-section > .set-note {
+  margin: 0 0 0.3rem;
+  color: var(--muted);
+}
+
+/* Settings > Combat: the "More" toggle that holds a topic's finer dials (owner, 2026-11-20).
+   Collapsed by default; the summary is a full-width tap target. */
+.set-more { margin-top: 0.3rem; }
+/* Spelled out so the closed rows are display:none in every engine, not only unrendered. */
+.set-more:not([open]) > .set-card-list { display: none; }
+.set-more > .set-more-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap-floor, 44px);
+  padding: 0 0.7rem;
+  color: var(--accent);
+  cursor: pointer;
+  list-style: none;
+}
+.set-more > .set-more-toggle::-webkit-details-marker { display: none; }
+.set-more > .set-more-toggle::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 120ms ease;
+}
+.set-more[open] > .set-more-toggle::before { transform: rotate(45deg); }
+.set-more > .set-more-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Settings > Advanced group modals (owner, 2026-11-20): the shared OpenSettingsGroupModal body.
+   Section headings line up with the row text, as in the Effects modal. */
+.set-group-modal-body .set-group-modal-section > .set-subsection-heading {
+  padding-inline: 0.5rem;
+}
+/* The window is outside [data-settings-host], so the panel's number-row layout is restated here:
+   label above, the stepper and slider full width below, never wider than the window. */
+.set-group-modal-body { overflow-x: hidden; }
+.set-group-modal-body .set-row-number { flex-wrap: wrap; }
+.set-group-modal-body .set-row-number > .as-labelstack { flex: 1 1 100%; }
+.set-group-modal-body .set-row-number > .r-trail { flex: 1 1 100%; max-width: 100%; min-width: 0; margin-left: 0; }

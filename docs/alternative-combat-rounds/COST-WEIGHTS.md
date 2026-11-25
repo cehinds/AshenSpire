@@ -213,7 +213,10 @@ player's piles).
 | `pierce` | 1 | SP | A piercing weapon: 1. |
 | `precision` | 1 | SP | A precise technique: 1. |
 | `guard` | 0 | SP | An archetype chip, not a power. |
-| `retreat` | 0 | SP | A movement card's identity chip, like `guard`; the card's 1 SP cost prices the step back, the tag adds no power. |
+| `bonusPoise` | 0 | SP | Archetype chip for Bonus Poise; the stacks it grants are priced by the status. |
+| `dexDamage` | 0 | SP | Deft adds Dexterity in the hit. The tag adds no separate action-cost charge. |
+| `retreat` | 0 | SP | Movement identity, like `guard`; the tag adds no power. The weapon-granted Retreat card starts at 0 SP and costs 1 more SP per use in that fight, shared across fresh copies; it is Ethereal and Exhaust. Other Retreat sources pay their own authored cost or drawback. |
+| `pullRetreat` | 0 | SP | Gale Pull's identity chip; the card's 1 SP cost prices the pull, the tag adds no power. |
 | `bow` | 0 | SP | The range weight prices a bow. |
 | `ranged` | 0 | SP | The range weight prices it. |
 | `flourish` | 0 | SP | An archetype chip. |
@@ -254,6 +257,7 @@ player's piles).
 | `trait:insulated` | 0 | SP | A matchup trait, not power. |
 | `trait:mental` | 0 | SP | A matchup trait, not power. |
 | `trait:persistent` | 0 | SP | Precision lifetime marker; the status grant prices its magnitude. Preserves the existing grant cost. |
+| `trait:recurring` | 0 | SP | Recurring controls when the buff repeats. Its tag adds no separate action-cost charge. |
 | `trait:projectile` | 0 | SP | Priced by range. |
 | `trait:reveal` | 0 | SP | Information, not power. |
 | `trait:shattering` | 1 | SP | Breaks guards: 1. |
@@ -313,6 +317,8 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 | `evade` | 2 | card | The owner's floor for an authored status grant. |
 | `strength` | 2 | card | The owner's floor for a status. |
 | `dexterity` | 2 | card | The owner's floor for a status. |
+| `wisdom` | 2 | card | The owner's floor for a status. |
+| `intelligence` | 2 | card | The owner's floor for a status. |
 | `weak` | 2 | card | The owner's floor for a status. |
 | `vulnerable` | 2 | card | The owner's floor for a status. |
 | `frail` | 2 | card | The owner's floor for a status. |

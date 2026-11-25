@@ -18,14 +18,17 @@ import { createDeck, createIdGen } from './../model/state.js';
 import { buildBlacksmithStock } from './../engine/shopKinds.js';
 import { mountGameOver } from './../ui/screens/gameover.js';
 import { mountCompendium } from './../ui/screens/compendium.js';
+import { mountBestiary } from './../ui/screens/bestiary.js';
 import { gameModule } from './../model/gameProfile.js';
-import { GameProfileArmamentOffer } from './../model/gameProfileRewards.js';
+import { GameProfileArmamentOffer, gameProfileShopStock } from './../model/gameProfileRewards.js';
+import { StartCardCopyOffer, CardCopyShelf, CardCopyRule } from './../model/cardCopyService.js';
 import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
-import { configureArmamentKitPreview } from './armamentKitPreview.js';
+import { configureArmamentKitPreview, ConfigureArmourPreview } from './armamentKitPreview.js';
 import { mountDeckEditor } from './../ui/screens/deckEditor.js';
 import { OpenSiteRecord, markRestLeft } from './../model/restRevisit.js';
+import { FillRankUpCandidateSlots } from './rankUpShotPose.js';
 
 export function createShotStates(ctx) {
   const {
@@ -41,6 +44,11 @@ export function createShotStates(ctx) {
     // Suppress the first-run tutorial so captures show a clean board.
     const shotMeta = saves.loadMeta();
     shotMeta.settings.seenTutorial = true;
+    // `?shotClass=` names a class to pose; on a configured profile the later classes unlock by completed runs, so a fresh stub meta
+    // refused them ("Class 'starseer' is locked in this profile"). Three completed runs open the whole sequence. The meta is the shot
+    // boot's memory stub (pickStorage), never a player's.
+    const profileId = ctx.getRegistries().gameProfile?.id;
+    if (shotParams.get('shotClass') && profileId) shotMeta.gameProfileUnlocks = { ...(shotMeta.gameProfileUnlocks || {}), [profileId]: { completedRunIds: ['shot-1', 'shot-2', 'shot-3'] } };
     saves.saveMeta(shotMeta);
     // `?shotSeed=<string>` — ONE MAP IS NOT THE MAP (EldenSpire#28).
     //
@@ -98,6 +106,7 @@ export function createShotStates(ctx) {
     if (name === 'combat' && shotParams.get('shotKit') === '1') {
       configureArmamentKitPreview(ctx.getRegistries(), run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
     }
+    if (name === 'combat' && shotParams.get('shotArmor')) ConfigureArmourPreview(ctx.getRegistries(), run, shotParams.get('shotArmor'));
     // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
     //
     // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A
@@ -207,6 +216,19 @@ export function createShotStates(ctx) {
         run.itemProps[ref] = [0, 1, 2].map((n) => pool[(at * 2 + n) % pool.length]);
         run.itemRanks[ref] = 1 + (at % 2);
       });
+    }
+    // `?shotMapReveal=1` — THE WHOLE MAP, FOG OFF. A configured run pins its map mode to the authored route
+    // (model/map/mapknowledge.js resolveMapMode), so the player's path setting can no longer reveal plain nodes and
+    // untraveled roads, and the contrast gate's #45 structure probes (tools/contrast-audit.mjs) had nothing to read.
+    // This swaps THIS run's routes module for a copy with mapMode 'path'; the profile object other runs share is
+    // left untouched. Dev-only like every ?shot= state, and a ?shot= boot writes through the memory stub
+    // (src/main.js createMemoryStorage), so the pose never reaches a real save.
+    if (name === 'map' && shotParams.get('shotMapReveal') === '1') {
+      const profile = run.gameProfile;
+      const routes = profile?.modules?.routes;
+      if (!routes) throw new Error('?shotMapReveal=1 requires a run whose profile has a routes module.');
+      run.gameProfile = { ...profile, modules: { ...profile.modules, routes: { ...routes, mapMode: 'path' } } };
+      showMap();
     }
     // `?shotAct=<n>` — the map of act n (2 or 3 open on a Rest), built the way advanceAct builds it. Poses before `?shotAt`.
     const shotAct = name === 'map' ? shotParams.get('shotAct') : null;
@@ -408,6 +430,23 @@ export function createShotStates(ctx) {
         run.smithingStones = 12;
         run.loadout.storage.push('katana');
         run.shopStock = buildBlacksmithStock(ctx.getRegistries(), ctx.getRng(), run);
+        // `?shotSellNothing=1` — the run carries nothing a vendor would buy, so the empty Sell shelf can be photographed.
+        if (shotParams.get('shotSellNothing') === '1') {
+          Object.assign(run, { relics: [], flasks: [], consumables: {}, sideboard: [] });
+          run.loadout.storage = []; run.loadout.boughtArmour = [];
+        }
+      }
+      // `?shotCopy=1` — the visit stocks the copy-a-card service (owner 2026-11-20) whatever the seed rolled, so its shelf
+      // can be photographed: the Blacksmith's `cardCopy` offering, or a trader's copy shelf in its stock.
+      if (shotParams.get('shotCopy') === '1') {
+        if (name === 'blacksmith') {
+          const rule = CardCopyRule(run, 'blacksmith');
+          if (!run.shopStock.offerings.includes('cardCopy')) run.shopStock.offerings.push('cardCopy');
+          run.shopStock.cardCopy = { cost: rule.price, usesLeft: rule.uses };
+        } else {
+          const stock = gameProfileShopStock(ctx.getRegistries(), run, ctx.getRng(), { shopId: run.gameProfileOpenShop });
+          if (!stock.options.some(option => option.kind === 'cardCopies')) { stock.options.push(CardCopyShelf(run, 'trader')); stock.takeCount += 1; }
+        }
       }
       persist(); showShop(); return;
     } else if (name === 'reward') {
@@ -415,7 +454,14 @@ export function createShotStates(ctx) {
       // preselected option. (The legacy poses `?shotReward=full|empty|draft|...` went with the legacy door.)
       if (!isConfiguredRun(run)) throw new Error('Reward shot requires a configured game profile.');
       // `?shotRankUp=1` — a Blade rank-up waits on the door, so the card-upgrade picker it opens can be photographed.
-      if (shotParams.get('shotRankUp') === '1') run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
+      // `?shotRankUp=taken` — the same door with that row already claimed, resumed through the door's own saved
+      // claim state (rankUpCheckpoint), so the TAKEN row and its claim line can be measured (tools/contrast-audit.mjs).
+      const rankUpPose = shotParams.get('shotRankUp');
+      if (rankUpPose === '1' || rankUpPose === 'taken') {
+        run.skills['item:blade'] = { ...(run.skills['item:blade'] || {}), level: 3, xp: 0, pendingRankUps: 1 };
+        // The door opens only when a queued card may rise now (full-upgrade rule), so the Blade's cards are filled first.
+        FillRankUpCandidateSlots(ctx.getRegistries(), run, 'item:blade');
+      }
       // `?shotTake=<n>` — the card picks the door allows (1..5; absent = the content's takeCount), so the multi-pick door can be photographed.
       // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
       // `?shotVictory=points` — the won fight's ONE door (spoils strip above the choice) with one earned
@@ -429,12 +475,26 @@ export function createShotStates(ctx) {
         run.gameProfilePendingReward = { offerId, source: 'armament', after: 'map', levelOffers: 0 };
         persist(); return showGameProfileReward();
       }
+      // `?shotCopy=1` — the one-time copy door Scribe's Mirror opens (owner 2026-11-20), built by the production offer.
+      if (shotParams.get('shotCopy') === '1') {
+        run.pendingCardCopies = 1;
+        const offerId = StartCardCopyOffer(ctx.getRegistries(), run);
+        run.gameProfilePendingReward = { offerId, source: 'copy', after: 'map', levelOffers: 0, rankUpsOffered: true };
+        persist(); return showGameProfileReward();
+      }
       const shotTake = Math.floor(Number(shotParams.get('shotTake')));
       const victory = shotParams.get('shotVictory') === 'points';
       if (victory) awardLevelXp(ctx.getRegistries(), run, levelXpToNext(ctx.getRegistries(), run.level.level), {
         pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });
       beginGameProfileReward({ source: 'combat', after: 'map', takeCount: shotTake >= 1 ? Math.min(5, shotTake) : null, pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal',
         ...(victory ? { victoryReceipt: { title: 'Victory', cinders: { gained: 0, total: run.cinders || 0 }, xpGains: { level: 0, tracks: {} } } } : {}) });
+      if (rankUpPose === 'taken') {
+        // The key is the rank-up row's own (model/state.js: `skillRankUp:<skillId>:<n>`). Remounting is the
+        // reload-resume path the door already takes after a claim, not a posed alternate UI.
+        const pending = run.gameProfilePendingReward;
+        pending.rankUpCheckpoint = { ...(pending.rankUpCheckpoint || {}), states: { 'skillRankUp:item:blade:0': 'taken' } };
+        persist(); showGameProfileReward();
+      }
     } else if (name === 'combat' || name === 'fx') {
       // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
       // four POOL doors (which sit above the shot branches, right after newRun,
@@ -510,6 +570,25 @@ export function createShotStates(ctx) {
       const meta = saves.loadMeta();
       if (found != null) meta.found = found ? found.split(',') : [];
       mountCompendium(app, { registries: ctx.getRegistries(), meta, onBack: showTitle });
+    },
+    bestiary: () => {
+      // ?shot=bestiary&shotKnown=<enemyId>:<points>,… seeds the lifetime ledger the Bestiary reads;
+      // without shotKnown the first three enemies are known at rising depth, and an empty value
+      // shows the never-met state.
+      const registries = ctx.getRegistries();
+      const target = registries.balance?.enemyKnowledge?.bestiary?.encountersToMaster || 30;
+      const asked = shotParams.get('shotKnown');
+      const known = asked != null
+        ? asked.split(',').filter(Boolean)
+        : registries.enemies.all().slice(0, 3).map((enemy, index) => `${enemy.id}:${[target, 9, 1][index]}`);
+      const receiptsFor = (points) => Object.fromEntries(Array.from({ length: points }, (_, index) => [`shot${index}`, { bonus: false }]));
+      const enemies = Object.fromEntries(known.map((pair) => {
+        const [id, points] = pair.split(':');
+        return [id, { target, receipts: receiptsFor(Math.max(1, Number(points) || 1)) }];
+      }));
+      const meta = saves.loadMeta();
+      meta.enemyKnowledge = { version: 1, enemies };
+      mountBestiary(app, { registries, meta, onBack: showTitle });
     },
     startup: () => {
       showStartupGate({ forcedFamily: shotParams.get('shotInput') || '' });
@@ -608,7 +687,7 @@ export function createShotStates(ctx) {
         const posed = saves.loadMeta();
         saves.saveMeta({ ...posed, settings: {
           ...(posed.settings || {}), settingsCategory: 'Advanced',
-          settingsAdvancedCategory: posed.settings?.settingsAdvancedCategory || 'Progression',
+          settingsAdvancedCategory: posed.settings?.settingsAdvancedCategory || 'Interface',
         } });
         const adopted = saves.loadMeta();
         ctx.setActiveMeta(adopted);

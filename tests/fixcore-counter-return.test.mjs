@@ -242,6 +242,8 @@ test('a per-hit Counter preview covers the current contact, while saved whole-ro
   const { combat, enemy } = live('cinderMantis');
   Object.assign(enemy, { ratings: {}, ratingSources: [], statuses: {} });
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  // Under stance-gated Poise mitigation (floor(0.5*damage)+1), 2 Poise breaks on hit 1 (cost 3); pin legacy poise here for the historical Counter policy test.
+  combat.fixCoreRules = { ...structuredClone(combat.fixCoreRules), poise: { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 } };
   Object.assign(combat.player, { block: 0, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 2, max: 20 } });
   assert.equal(enemy.intent.moveId, 'scythePair');
   const row = CounterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));

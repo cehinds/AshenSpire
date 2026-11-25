@@ -1,8 +1,10 @@
 // Owner ask 2026-10-31: the Core Blacksmith economy — rank-up, cinder prices, tiered armament stock, tier reach.
+import { FillUpgradeSlots } from './helpers/rank-up-ready.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
+import { itemCombatPower } from '../src/content/generated/combatPower.js';
 import { shops as shippedShops } from '../src/content/shops.js';
 import { createRegistries } from '../src/model/registries.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
@@ -39,24 +41,30 @@ function smithRun(registries, { stones = 3, cinders = 2000, seed = 31 } = {}) {
 }
 const strike = (run) => run.deck.find((c) => c.cardId === 'core.strike');
 
-test('rank-up: plan names 120 cinders and 1 stone; commit raises the rank by one and bumps the revision', () => {
+test('rank-up: plan names 240 cinders and 1 stone (owner 2026-11-23: doubled); commit raises the rank by one and bumps the revision', () => {
   const run = smithRun(coreOut);
   const card = strike(run);
+  FillUpgradeSlots(run, [card]); // rank-up needs a fully upgraded card (owner 2026-11-23)
   const plan = rankUpPlan(coreOut, run, card.instanceId);
   assert.equal(plan.ok, true, plan.reason);
-  assert.deepEqual([plan.cost, plan.stones, plan.from, plan.to], [120, 1, 1, 2]);
+  assert.deepEqual([plan.cost, plan.stones, plan.from, plan.to], [240, 1, 0, 1]);
   const receipt = commitRankUp(coreOut, run, plan);
-  assert.deepEqual([receipt.rank, run.smithingStones, run.cinders, card.rank], [2, 2, 1880, 2]);
+  assert.deepEqual([receipt.rank, run.smithingStones, run.cinders, card.rank], [1, 2, 1760, 1]);
   assert.equal(rankUpPlan(coreOut, run, card.instanceId).revision, plan.revision + 1);
+  FillUpgradeSlots(run, [card]);
   commitRankUp(coreOut, run, rankUpPlan(coreOut, run, card.instanceId));
-  assert.equal(card.rank, 3, 'ranks stack');
+  assert.equal(card.rank, 2, 'ranks stack (an unranked card rose to Rank 1, then 2)');
+  FillUpgradeSlots(run, [card]);
+  assert.equal(rankUpPlan(coreOut, run, card.instanceId).cost, 720, 'Rank 3 costs the rank-up price three times (owner 2026-11-23)');
 });
 
 test('rank-up: a stale quote is refused and spends nothing', () => {
   const run = smithRun(coreOut);
   const card = strike(run);
+  FillUpgradeSlots(run, [card]);
   const plan = rankUpPlan(coreOut, run, card.instanceId);
   commitRankUp(coreOut, run, plan);
+  FillUpgradeSlots(run, [card]); // so the quote is refused for being stale, not for the full-upgrade rule
   const before = [run.smithingStones, run.cinders, card.rank];
   assert.throws(() => commitRankUp(coreOut, run, plan), /changed|stale|again/i);
   assert.deepEqual([run.smithingStones, run.cinders, card.rank], before);
@@ -64,12 +72,14 @@ test('rank-up: a stale quote is refused and spends nothing', () => {
 
 test('rank-up: refuses without cinders or or without a stone', () => {
   const poor = smithRun(coreOut, { cinders: 119 });
+  FillUpgradeSlots(poor, [strike(poor)]);
   const refused = rankUpPlan(coreOut, poor, strike(poor).instanceId);
   assert.equal(refused.ok, false);
   assert.match(refused.reason, /cinders/i);
   assert.throws(() => commitRankUp(coreOut, poor, refused));
   assert.equal(poor.cinders, 119);
   const dry = smithRun(coreOut, { stones: 0 });
+  FillUpgradeSlots(dry, [strike(dry)]);
   assert.match(rankUpPlan(coreOut, dry, strike(dry).instanceId).reason, /Smithing Stone/);
 });
 
@@ -84,30 +94,39 @@ test('rank-up: the rank ceiling refuses; the card list excludes equipment-bound 
   if (bound) assert.ok(!rankUpCards(coreOut, run).some((c) => c.instanceId === bound.instanceId));
   run.shopStock.offerings = run.shopStock.offerings.filter((id) => id !== 'rankUp');
   assert.equal(rankUpPlan(coreOut, run, strike(run).instanceId).ok, false, 'a visit that did not lay it out refuses');
-  assert.ok(serviceCandidates(coreOut, smithRun(coreOut), 'rankUp').length > 0);
+  // A fresh card is held back by the full-upgrade rule until its slots are used (owner 2026-11-23).
+  const ready = smithRun(coreOut); FillUpgradeSlots(ready, [strike(ready)]);
+  assert.ok(serviceCandidates(coreOut, ready, 'rankUp').length > 0);
 });
 
 const coreReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const RARITY_RANGE = { common: [60, 75], uncommon: [90, 113], rare: [150, 180] };
 const MULT = [1, 1.4, 1.8, 2.3];
 
-test('stock: six distinct armaments, tiers within the authored weights, prices scale with the tier', () => {
+test('stock: four to six distinct armaments (owner 2026-11-20: the rack size varies per visit), tiers within the authored weights, prices scale with the tier', () => {
   const tally = [0, 0, 0, 0];
-  let n = 0;
+  const sizes = new Set();
+  let n = 0, ranked = 0;
   for (let seed = 1; seed <= 120; seed++) {
     const run = smithRun(coreOut, { seed });
     const rack = run.shopStock.armaments;
-    assert.equal(rack.length, 6);
-    assert.equal(new Set(rack.map((row) => row.id)).size, 6, 'distinct pieces');
+    assert.ok(rack.length >= 4 && rack.length <= 6, `seed ${seed}: ${rack.length} armaments`);
+    sizes.add(rack.length);
+    assert.equal(new Set(rack.map((row) => row.id)).size, rack.length, 'distinct pieces');
     for (const row of rack) {
       assert.ok(Number.isInteger(row.tier) && row.tier >= 0 && row.tier <= 3, `tier ${row.tier}`);
       tally[row.tier]++; n++;
       const rarity = coreOut.equipment.armaments.find((piece) => piece.id === row.id).rarity;
       const [lo, hi] = RARITY_RANGE[rarity] || RARITY_RANGE.common;
-      assert.ok(row.cost >= Math.round(lo * MULT[row.tier]) && row.cost <= Math.round(hi * MULT[row.tier]), `${row.id} tier ${row.tier} price ${row.cost} outside ${lo}-${hi} x ${MULT[row.tier]}`);
+      const rank = itemCombatPower[`weapon:${row.id}`]?.rank ?? 0;
+      if (rank > 0) ranked++;
+      const [min, max] = [lo, hi].map((price) => Math.round(Math.round(price * (1 + 0.25 * rank)) * MULT[row.tier]));
+      assert.ok(row.cost >= min && row.cost <= max, `${row.id} rank ${rank} tier ${row.tier}: ${row.cost} outside ${min}–${max}`);
     }
   }
-  // 20/40/30/10 with 720 draws: each tier within 8 points of its weight, and "usually higher than default".
+  assert.ok(sizes.size > 1, 'racks differ in size between visits');
+  assert.ok(ranked > 0, 'the pricing check exercises ranked weapons');
+  // 20/40/30/10 with about 600 draws: each tier within 8 points of its weight, and "usually higher than default".
   [0.2, 0.4, 0.3, 0.1].forEach((share, tier) => assert.ok(Math.abs(tally[tier] / n - share) < 0.08, `tier ${tier}: ${tally[tier] / n}`));
   assert.ok(1 - tally[0] / n > 0.7, 'most pieces are above the default tier');
   // The same seed rolls the same rack.
@@ -184,7 +203,7 @@ test('weapon-art shelf: the Core art is sold at the weaponArt price, once, into 
 });
 
 test('blacksmith upgrade: insufficient cinders refuses and keeps both purses; stale quote refuses', () => {
-  const run = smithRun(coreOut, { stones: 5, cinders: 24 }); // W25: the first item upgrade costs 25 cinders
+  const run = smithRun(coreOut, { stones: 5, cinders: 24 }); // the first item upgrade costs 150 cinders (owner 2026-11-23)
   const plan = blacksmithUpgradePlan(coreOut, run, 'armament/greatsword');
   assert.equal(plan.ok, false);
   assert.match(plan.reason, /cinders/i);
@@ -209,35 +228,35 @@ test('tier reach: the rest-site Smith stops at tier 2 and says it needs a Blacks
   assert.equal(commitGameProfileRest(coreReg, run, 'smith', { itemRef: 'armament/greatsword' }) !== undefined, true);
   assert.equal(run.itemUpgradeLevels['armament/greatsword'], 2);
   // W25: the Blacksmith's work is a pick of rolled options, priced by the item's upgrade number (2 fixed tiers held,
-  // so this is upgrade 3: 1 stone and 120 cinders, owner 2026-11-17), and it leaves the fixed tier ladder alone.
+  // so this is upgrade 3: 1 stone and 360 cinders, owner 2026-11-17, tripled 2026-11-23), and it leaves the fixed tier ladder alone.
   const smith = smithRun(coreOut, { stones: 4, cinders: 400 });
   smith.itemUpgradeLevels = { 'armament/greatsword': 2 };
   const plan = blacksmithUpgradePlan(coreOut, smith, 'armament/greatsword');
-  assert.deepEqual([plan.ok, plan.stones, plan.cost], [true, 1, 120]);
+  assert.deepEqual([plan.ok, plan.stones, plan.cost], [true, 1, 360]);
   commitBlacksmithUpgrade(coreOut, smith, plan);
   assert.equal(smith.itemUpgradeLevels['armament/greatsword'], 2);
   assert.equal(smith.itemUpgradePicks['armament/greatsword'].length, 1);
 });
 
-// Owner, 2026-11-17: a Blacksmith card upgrade costs 50 + 35 per earlier upgrade (Strike, rank 1): 50, then 85, then 120.
-test('picker: a card past its free upgrade is enabled with 0 stones at the Blacksmith, and confirm commits for 85 cinders', () => {
-  const run = smithRun(coreOut, { stones: 0, cinders: 155 });
-  run.itemUpgradeLevels = { 'armament/greatsword': 3 }; // card slots: rank 1 + weapon level 3 + 1
+// Owner, 2026-11-17, tripled 2026-11-23: a Blacksmith card upgrade costs 150 + 105 per earlier upgrade + 75 per rank above 1 (this Strike, rank 2): 225, then 330, then 435.
+test('picker: a card past its free upgrade is enabled with 0 stones at the Blacksmith, and confirm commits for 330 cinders', () => {
+  const run = smithRun(coreOut, { stones: 0, cinders: 575 });
   const card = strike(run);
+  card.rank = 2; // card slots: rank 2 + 1
   commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
-  assert.equal(run.cinders, 105);
+  assert.equal(run.cinders, 350);
   // Rest pricing disables the row (1 stone, none held); the Blacksmith's quote enables it.
   const restRow = cardUpgradeModel(coreOut, run).rows.find((r) => r.instanceId === card.instanceId);
   assert.equal(restRow.disabled, true);
   const quote = (id) => { const p = upgradeArtPlan(coreOut, run, id); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
   const model = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
   const row = model.rows.find((r) => r.instanceId === card.instanceId);
-  assert.deepEqual([row.disabled, row.cost, row.costLabel], [false, 0, '85 cinders']);
+  assert.deepEqual([row.disabled, row.cost, row.costLabel], [false, 0, '330 cinders']);
   assert.equal(model.canConfirm, true);
   // The modal's confirm hands the row's plan to the screen, which commits it.
   const receipt = commitUpgradeArt(coreOut, run, { ...upgradeArtPlan(coreOut, run, card.instanceId), cardQuote: model.selected.plan });
   assert.deepEqual([receipt.n, receipt.spentStones, run.smithingStones, run.cinders], [2, 0, 0, 20]);
-  // 20 cinders cannot pay the third upgrade's 120: the row is disabled with the cinder reason.
+  // 20 cinders cannot pay the third upgrade's 435: the row is disabled with the cinder reason.
   const poor = cardUpgradeModel(coreOut, run, card.instanceId, { quote }).rows.find((r) => r.instanceId === card.instanceId);
   assert.equal(poor.disabled, true);
   assert.match(poor.blockedReason, /cinders/i);
@@ -282,7 +301,7 @@ test('price multiplier 2 scales each shelf price once (visit door), and a purcha
   assert.equal(coreWeaponArtPlan(coreOut, run, art.id).cost, art.cost);
   assert.equal(art.cost, base.shopStock.weaponArts[0].cost * 2);
   // Services still scale at the quote.
-  assert.equal(rankUpPlan(coreOut, run, strike(run).instanceId, { priceMult: 2 }).cost, 240);
+  assert.equal(rankUpPlan(coreOut, run, strike(run).instanceId, { priceMult: 2 }).cost, 480);
 });
 
 test('armament purchase: a rack piece the run has since acquired is refused and charges nothing', () => {
@@ -303,21 +322,21 @@ test('armament purchase: a rack piece the run has since acquired is refused and 
 });
 
 test('picker: under a cinder quote the selected row, confirm and blockers read cinders, never "0 stones" or a stone shortfall', () => {
-  // The second Blacksmith upgrade of this Strike costs 85 cinders (50 + 35 per earlier upgrade, owner 2026-11-17).
-  const run = smithRun(coreOut, { stones: 0, cinders: 200 });
-  run.itemUpgradeLevels = { 'armament/greatsword': 3 }; // card slots: rank 1 + weapon level 3 + 1
+  // The second Blacksmith upgrade of this Strike costs 255 cinders (150 + 105 per earlier upgrade, owner 2026-11-17, tripled 2026-11-23).
+  const run = smithRun(coreOut, { stones: 0, cinders: 500 });
   const card = strike(run);
+  card.rank = 1; // card slots: rank 1 + 1
   commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
   const quote = (id) => { const p = upgradeArtPlan(coreOut, run, id); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
   // The card is past its free allowance and no stones are held: the service's own code is 'stones', the Blacksmith's verdict is ok.
   const model = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
   assert.equal(model.selected.plan.code, 'stones');
-  assert.deepEqual([model.selected.cinders, model.selected.cost, model.selected.shortStones, model.selected.ok], [85, 0, false, true]);
+  assert.deepEqual([model.selected.cinders, model.selected.cost, model.selected.shortStones, model.selected.ok], [255, 0, false, true]);
   assert.deepEqual([model.canConfirm, model.blockedReasons.length], [true, 0]);
   // Cinders short: blocked with the cinder reason, and the stone purse is not named as the blocker.
   run.cinders = 10;
   const poor = cardUpgradeModel(coreOut, run, card.instanceId, { quote });
-  assert.deepEqual([poor.canConfirm, poor.selected.shortStones, poor.selected.cinders], [false, false, 85]);
+  assert.deepEqual([poor.canConfirm, poor.selected.shortStones, poor.selected.cinders], [false, false, 255]);
   assert.match(poor.blockedReasons[0], /cinders/i);
   // Rest path unchanged: no quote, the stone code decides, no cinders.
   const rest = cardUpgradeModel(coreOut, run, card.instanceId);
@@ -376,4 +395,18 @@ test('a malformed Core Blacksmith stock is refused by name; an unknown unsold ar
   assert.ok(back, 'the save loads');
   assert.equal(back.shopStock.armaments.some((item) => item.id === 'retiredBlade'), false, 'pruned, not rerolled');
   assert.equal(back.shopStock.kind, 'blacksmith');
+});
+
+// QA 2026-11-23: the Rank shelf said "9 ready" when one card could rank up. Only cards past the full-upgrade rule count.
+test('rank-up: the shelf counts only cards that may rank up now; held-back cards stay listed', async () => {
+  const { RankUpBlock } = await import('../src/model/rankUpService.js');
+  const run = smithRun(coreOut);
+  for (const card of rankUpCards(coreOut, run)) { delete card.upgradeSteps; card.upgraded = false; }
+  const listed = rankUpCards(coreOut, run);
+  assert.ok(listed.length > 1);
+  assert.equal(serviceCandidates(coreOut, run, 'rankUp').length, 0, 'none full: none ready');
+  FillUpgradeSlots(run, [strike(run)]);
+  assert.equal(RankUpBlock(run, strike(run)), '');
+  assert.deepEqual(serviceCandidates(coreOut, run, 'rankUp').map((c) => c.instanceId), [strike(run).instanceId], 'one full card: 1 ready');
+  assert.equal(rankUpCards(coreOut, run).length, listed.length, 'the others are still listed');
 });

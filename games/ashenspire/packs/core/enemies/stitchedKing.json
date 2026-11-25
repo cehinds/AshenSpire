@@ -17,7 +17,7 @@
       "min": 4,
       "max": 4
     },
-    "poiseMax": 17,
+    "poiseMax": 10,
     "spFloor": 3
   },
   "derived": {
@@ -78,7 +78,8 @@
       "aiWeight": 30,
       "maxConsecutive": 1,
       "costSource": "stance",
-      "legacyMove": "courtlyDecree"
+      "legacyMove": "courtlyDecree",
+      "coreBlock": "card"
     },
     "card:stitchedKing.thousandHands": {
       "aiWeight": 40,
