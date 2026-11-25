@@ -10,13 +10,15 @@ import { applyStatusPressure, spendPersistentWard, restorePersistentWard } from 
 import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { RecipientEffectsForEvent, RecipientWindupFor, RecipientDeliveryFor, RecipientStatusPolarity } from '../src/model/recipientEffects.js';
-import { DecorateRecipientEffects, CreateRecipientEffectState } from '../src/ui/recipientEffectEvents.js';
+import { DecorateRecipientEffects, CreateRecipientEffectState, RecipientEffectBatchForBeat } from '../src/ui/recipientEffectEvents.js';
 import { RECIPIENT_EFFECT_SETTINGS as SETTINGS } from '../src/content/recipientEffectSettings.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { armCombatCounter, prepareCombatEvade } from '../src/engine/combatMatchups.js';
 import { gainCounterStacks, gainReflectStacks, spendReflectStacks } from '../src/engine/guardStacks.js';
-import { PlanRecipientEffectLayers } from '../src/ui/recipientEffectSprites.js';
 import { reactionRulesSnapshot } from '../src/content/combatCardTraits.js';
+import { createRunState } from '../src/model/state.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { rangePairKey } from '../src/model/combatEngagement.js';
 
 const physical = { tags: ['camp:physical', 'maneuver:attack', 'damage:slashing'] };
 const fire = { tags: ['camp:spell', 'maneuver:casting', 'school:fire'], effects: [{ op: 'gainWard', target: 'self' }] };
@@ -170,12 +172,13 @@ test('Sweep is one unchanged group sprite per action; a repeated action is not d
   }
 });
 
-test('actual heal/bleed secondaries follow the contact by the configured interval', () => {
+test('actual heal/bleed secondaries depend on the contact that owns them', () => {
   const bleed = { type: 'statusApplied', targetId: 'e1', sourceId: 'player', status: 'bleed', stacks: 2 };
   const out = DecorateRecipientEffects([marker, hit, bleed], { resolveCard: () => fire });
   assert.deepEqual(out[1].recipientEffects.map(layer => layer.shape), ['spell', 'bleed-drops']);
-  const [primary, secondary] = PlanRecipientEffectLayers(out[1].recipientEffects);
-  assert.equal(secondary.start - primary.end, SETTINGS.motion.resultGapMs);
+  const [primary, secondary] = out[1].recipientEffects;
+  assert.ok(primary.primaryKey);
+  assert.equal(secondary.afterPrimaryKey, primary.primaryKey);
   assert.equal(out[1].recipientEffects[1].color, SETTINGS.behavior.palettes.blood);
   assert.deepEqual(out[2].recipientEffects, []);
   assert.ok(!RecipientEffectsForEvent({ tags: ['bleed'] }, hit).some(layer => layer.shape === 'bleed-drops'));
@@ -543,4 +546,81 @@ test('real Ward depletion uses shatter and preserves the Ward silhouette', () =>
   assert.equal(breaks[0].color, SETTINGS.behavior.palettes.fire);
   assert.equal(breaks[0].claimsDamage, false);
   assert.ok(!layers.some(layer => layer.shape === 'ward' && layer.treatment === 'absorb'));
+});
+
+test('a committed Advance paints once for the actor regardless of changed engagement pairs', () => {
+  const state = CreateRecipientEffectState();
+  const advance = [
+    { type: 'combatAdvancedChanged', sourceId: 'player', advanced: true },
+    { type: 'combatEngagementMoved', sourceId: 'player', targetId: 'e1', reason: 'advance', bands: -1 },
+    { type: 'combatEngagementMoved', sourceId: 'player', targetId: 'e2', reason: 'advance', bands: -1 },
+    marker,
+  ];
+  for (let play = 0; play < 2; play++) {
+    const visuals = flatten(DecorateRecipientEffects(advance, { state }));
+    assert.deepEqual(visuals.map(layer => [layer.shape, layer.targetId]), [['advance', 'player']]);
+  }
+});
+
+test('a paid melee Advance keeps both real engine receipts while painting one movement sprite', () => {
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.energy = 9;
+  combat.enemies[0].row = 'back';
+  combat.rangeState.engagements[rangePairKey('player:player', 'enemy:e1')] = 1;
+  const card = combat.piles.hand.find(card => card.cardId === 'core.strike');
+  const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' });
+  assert.ok(events.some(event => event.type === 'combatAdvancedChanged' && event.advanced));
+  assert.ok(events.some(event => event.type === 'combatEngagementMoved' && event.reason === 'advance'));
+  const decorated = DecorateRecipientEffects(events, { resolveCard: () => physical });
+  assert.deepEqual(decorated.map(event => event.type), events.map(event => event.type));
+  assert.equal(flatten(decorated).filter(layer => layer.shape === 'advance').length, 1);
+});
+
+test('status stack repetitions share one visual per action, recipient and status identity', () => {
+  const state = CreateRecipientEffectState();
+  const apply = (status, targetId = 'e1') => ({
+    type: 'statusApplied', sourceId: 'player', targetId, status, stacks: 1, amount: 1,
+  });
+  const shape = rows => flatten(rows).map(layer => [layer.status, layer.targetId]);
+  assert.deepEqual(shape(DecorateRecipientEffects([marker, apply('base.weak'), apply('base.weak'),
+    apply('base.vulnerable'), apply('base.weak', 'e2')], { state })),
+  [['base.weak', 'e1'], ['base.vulnerable', 'e1'], ['base.weak', 'e2']]);
+  assert.deepEqual(shape(DecorateRecipientEffects([apply('base.weak')], { state })), []);
+  assert.deepEqual(shape(DecorateRecipientEffects([marker, apply('base.weak')], { state })), [['base.weak', 'e1']]);
+});
+
+test('the battle batch keeps movement, contact, defenses and statuses on one actor action', () => {
+  const state = CreateRecipientEffectState();
+  DecorateRecipientEffects([marker], { state });
+  const events = DecorateRecipientEffects([
+    { type: 'combatAdvancedChanged', sourceId: 'player', advanced: true },
+    marker,
+    { ...hit, blocked: 2 },
+    { type: 'statusApplied', sourceId: 'player', targetId: 'e1', status: 'base.weak', stacks: 1 },
+    { type: 'blockGained', sourceId: 'player', targetId: 'player', amount: 2 },
+  ], { state, resolveCard: () => physical });
+  const batch = RecipientEffectBatchForBeat(events);
+  assert.deepEqual(batch.map(clip => clip.category), [
+    'castingMovement', 'attackImpacts', 'defenseReactions', 'buffsStatuses', 'defenseReactions',
+  ]);
+  assert.ok(batch.every(clip => clip.actionKey === events[1].recipientActionKey));
+  assert.notEqual(events[0].recipientEffect.actionKey, events[1].recipientActionKey, 'batch did not mutate the prior annotation');
+});
+
+test('distinct statuses sharing a generic sprite retain independent application clips', () => {
+  const apply = status => ({ type: 'statusApplied', sourceId: 'player', targetId: 'e1', status, stacks: 1 });
+  const clips = flatten(DecorateRecipientEffects([marker, apply('experimental.one'), apply('experimental.two')]));
+  assert.equal(clips.length, 2);
+  assert.equal(clips[0].shape, clips[1].shape);
+  assert.notEqual(clips[0].status, clips[1].status);
+});
+
+test('matching status ticks and genuinely repeated hit contacts retain their separate visuals', () => {
+  const tick = { type: 'hpLost', sourceId: 'player', targetId: 'e1', cause: 'status:poison', amount: 1 };
+  const effects = flatten(DecorateRecipientEffects([marker, hit, hit, tick, tick], { resolveCard: () => physical }));
+  assert.equal(effects.filter(layer => layer.claimsDamage).length, 2);
+  assert.equal(effects.filter(layer => layer.lifecycle === 'tick').length, 2);
 });
