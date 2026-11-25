@@ -101,7 +101,15 @@ const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanu
 // source tree and the same JS01 scenario bodies. Their raw checkpoints agree
 // with this tree; the historical action-policy lane keeps the original pin.
 const currentFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-7dff4b03.json', import.meta.url), 'utf8'));
-const expectedScenarios = { ...fixture.scenarios, ...currentFixture.scenarios };
+const currentIdentity = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-5311c2f-identity.json', import.meta.url), 'utf8'));
+// The current runtime registry and the birth-only Rank 1 art change the
+// profile and snapshots. Keep the independently archived behavior digests.
+const expectedScenarios = { ...fixture.scenarios };
+for (const [name, original] of Object.entries(currentFixture.scenarios)) {
+  const { snapshots, save } = currentIdentity.scenarios[name];
+  const checkpoints = Object.fromEntries(Object.entries(snapshots).map(([phase, snapshot]) => [phase, { ...original[phase], snapshot }]));
+  expectedScenarios[name] = { ...original, ...checkpoints, profile: { ...original.profile, ...currentIdentity.profile }, save };
+}
 const historicalBytes = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
 const historicalJson = gunzipSync(historicalBytes).toString('utf8');
 const historicalHash = JSON.parse(historicalJson).hash;
