@@ -7,7 +7,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileShopStock, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
-import { gameProfileShopSalePlans, commitGameProfileShopSale } from '../src/model/gameProfileShopSales.js';
+import { gameProfileShopSalePlans, StackCardSalePlans, commitGameProfileShopSale } from '../src/model/gameProfileShopSales.js';
 import { mountConfiguredShop } from '../src/ui/screens/shop.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 
@@ -40,7 +40,7 @@ function fixture(prep = () => {}, callbacks = {}, prepareStock = () => {}) {
   return { app, shop, run, rng, offer };
 }
 const row = (app, key) => [...app.querySelectorAll('[data-shop-key]')].find(node => node.dataset.shopKey === key);
-const saleKey = quote => `sell:${quote.kind}:${quote.identity}`;
+const saleKey = quote => `sell:${quote.kind}:stack:${quote.stackKey}`;
 
 test('merchant refresh retains shell, shelf, unaffected rows and scroll after restocking a purchase slot', () => withDom(() => {
   const { app, shop, run, rng, offer } = fixture();
@@ -69,10 +69,12 @@ test('sale removes its own row while retaining neighboring sales and active cate
   });
   app.querySelector('[data-shop-category="sell"]').click();
   const shelf = app.querySelector('[data-shop-shelf="sell"]'); shelf.scrollTop = 133;
-  const sales = gameProfileShopSalePlans(registries, run, 'market').filter(plan => plan.ok && plan.kind === 'combatCards');
+  const sales = StackCardSalePlans(gameProfileShopSalePlans(registries, run, 'market'), run)
+    .filter(plan => plan.ok && plan.kind === 'combatCards' && plan.count === 1);
   assert.ok(sales.length > 1);
   const sale = sales[0], keep = sales[1];
   const soldRow = row(app, saleKey(sale)), keptRow = row(app, saleKey(keep));
+  assert.ok(soldRow && keptRow, 'both sale stacks are rendered before the sale');
   commitGameProfileShopSale(registries, run, 'market', sale); shop.refresh({ focusKey: saleKey(sale) });
   assert.equal(soldRow.isConnected, false);
   assert.equal(row(app, saleKey(keep)), keptRow);
