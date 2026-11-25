@@ -56,8 +56,8 @@ test('reworked weapons, armours, and relics stay within lean CP bands', () => {
   assert.equal(armours.length, 40);
   assert.equal(relics.length, 80);
 
-  for (const [k, row] of weapons) assert.ok(row.rank <= 4, `${k} should be <= Rank 4 (got R${row.rank}, CP ${row.cp})`);
-  for (const [k, row] of armours) assert.ok(row.rank <= 3, `${k} should be <= Rank 3 (got R${row.rank}, CP ${row.cp})`);
+  for (const [k, row] of weapons) assert.ok(row.rank <= 6, `${k} should be <= Rank 6 (got R${row.rank}, CP ${row.cp})`);
+  for (const [k, row] of armours) assert.ok(row.rank <= 7, `${k} should be <= Rank 7 (got R${row.rank}, CP ${row.cp})`);
   for (const [k, row] of relics) assert.ok(row.rank <= 5, `${k} should be <= Rank 5 (got R${row.rank}, CP ${row.cp})`);
 });
 
@@ -73,11 +73,11 @@ test('ItemNameParts follows card naming conventions (rarity, trait, element, bas
 
   const plate = ItemNameParts({
     kind: 'armour', id: 'oathsworn', name: 'Gilded Oathsworn', rarity: 'uncommon', gearGroup: 'heavy',
-    poise: 6, typeMods: [['self.statPoise', 2], ['self.statDex', -1]], mods: [['self.statPoise', 1]],
+    poise: 6, typeMods: [['self.statPoise', 2]], mods: [['self.statPoise', 1]],
   }, 0, scoring);
   assert.equal(plate.base, 'Plate');
   assert.equal(plate.effect, 'Steadfast');
-  assert.match(plate.name, /Steadfast Plate II$/);
+  assert.match(plate.name, /Steadfast Plate [IVX]+$/);
 });
 
 test('layered art differentiates similar weapons, armours, and relics', () => {

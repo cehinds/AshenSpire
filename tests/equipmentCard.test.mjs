@@ -14,10 +14,10 @@ import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 const r = createRegistries(contentBundle);
 
 test('current Staff inspector shows Prepared Focus beside configured stats', () => {
-  const current = core2Registries(), piece = current.equipment.armaments.find(p => p.id === 'ashStaff');
+  const current = core2Registries(), piece = current.equipment.armaments.find(p => p.id === 'wyrmhornStaff');
   const m = equipmentCardModel(current, piece), labels = m.bonuses.map(b => b.label);
   assert.ok(labels.includes('Spells in Prepared stance: -1 MP cost'));
-  assert.ok(m.facts.some(f => f.label === 'intelligence' && f.value === 1), 'configured attribute receipt remains');
+  assert.ok(m.facts.some(f => f.label === 'intelligence' && f.value === 1), 'rare staff configured attribute receipt remains');
   assert.ok(!m.typeExplanation.includes('every spell'), 'classification copy must not claim unconditional Focus');
   assert.ok(m.bonuses.every(b => !b.value.includes('=') && !b.label.includes('@')), 'no raw modifier strings');
 });
@@ -32,7 +32,7 @@ test('current Hammer inspector shows Smash Poise damage with its signature Vulne
 test('current Heavy inspector keeps configured stats and adds group Poise bonus once', () => {
   const current = core2Registries(), piece = current.equipment.armour.find(p => p.id === 'wayfarerPlate' && p.classId === 'reaver');
   const m = equipmentCardModel(current, piece), labels = m.bonuses.map(b => b.label);
-  assert.ok(labels.includes('6 Poise. Gain 1 Constitution.'));
+  assert.ok(labels.includes('6 Poise.'));
   assert.equal(labels.filter(label => label === '+2 Poise').length, 1);
   assert.equal(m.facts.find(f => f.label === 'Poise').value, 6, 'group bonus is additional to the configured item receipt');
 });
@@ -52,7 +52,7 @@ test('an absent-version inspector preserves its legacy configured output without
   assert.deepEqual(staff.bonuses, []);
   assert.equal(staff.typeExplanation, staffPiece.itemTypes.map(type => old.tags.find(tag => tag.id === type.tag)?.blurb).filter(Boolean).join(' '), 'legacy classification still reads its authored tag blurbs');
   const plate = equipmentCardModel(old, old.equipment.armour.find(p => p.id === 'wayfarerPlate' && p.classId === 'reaver'));
-  assert.deepEqual(plate.bonuses.map(b => b.label), ['6 Poise. Gain 1 Constitution.']);
+  assert.deepEqual(plate.bonuses.map(b => b.label), ['6 Poise.']);
   assert.ok(!JSON.stringify(plate.bonuses).includes('Thorns'));
 });
 test('every canonical equipment item has complete card facts, bonuses and available painted identity', () => {

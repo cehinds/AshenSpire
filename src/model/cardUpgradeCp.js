@@ -89,12 +89,16 @@ export function CardDefinitionToScoreFace(def) {
  */
 export function EvaluateUpgradeStepCp({ baseDef, currentDef, instance = null, step, playerLevel = 1, scoring = GetActiveScoring() }) {
   if (!baseDef || !step) return { allowed: true };
-  const applied = upgradeStepsOf(instance || {});
-  const afterDef = applyUpgradeSteps(baseDef, [...applied, step]);
+  // Fast path: when currentDef is already resolved, apply just the single candidate step instead of replaying every prior step.
+  const afterDef = currentDef
+    ? applyUpgradeSteps(currentDef, [step])
+    : applyUpgradeSteps(baseDef, [...upgradeStepsOf(instance || {}), step]);
+  const rawBefore = ScoreCard(CardDefinitionToScoreFace(currentDef || baseDef), scoring).raw;
   const rawAfter = ScoreCard(CardDefinitionToScoreFace(afterDef), scoring).raw;
   const currentRarity = instance?.rarityOverride || currentDef?.rarity || baseDef.rarity || 'common';
   const startIdx = Math.max(0, RARITY_LADDER.indexOf(currentRarity));
-  const cardRank = VisibleCardRank(instance || baseDef);
+  const scoredBeforeRank = RankOf(CombatPower(rawBefore, currentRarity, scoring), scoring);
+  const cardRank = Math.max(VisibleCardRank(instance || baseDef), scoredBeforeRank);
   const accessibleRank = Math.max(1, Math.min(scoring?.rank?.maxRank || 10, Math.trunc(Number(playerLevel) || 1)));
   const maxAllowedRank = Math.max(cardRank, accessibleRank);
 

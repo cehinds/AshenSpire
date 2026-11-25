@@ -105,11 +105,17 @@ function propertyCandidates(run, itemRef, family) {
   return out;
 }
 
+const MAX_ITEM_ATTRIBUTE_PICKS = 1;
+
 /** Every option an item can roll now (with weights), for tests and for the roll. */
 export function SmithOptionPool(run, itemRef) {
   const family = ItemFamily(run, itemRef);
   if (!family) return [];
-  return [...statCandidates(run, itemRef, family), ...propertyCandidates(run, itemRef, family)];
+  const heldAttrPicks = ItemPicks(run, itemRef).filter((p) => SmithPickFamily(p) === 'attribute').length;
+  const all = [...statCandidates(run, itemRef, family), ...propertyCandidates(run, itemRef, family)];
+  return heldAttrPicks >= MAX_ITEM_ATTRIBUTE_PICKS
+    ? all.filter((entry) => SmithPickFamily(entry.pick) !== 'attribute')
+    : all;
 }
 
 // Item option families (owner, 2026-11-20): one roll never offers two of a family. Attribute picks are one family
