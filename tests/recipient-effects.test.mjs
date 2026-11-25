@@ -97,7 +97,7 @@ test('buff hue and debuff direction override spell damage classification', () =>
   assert.equal(intellect.palette, 'intelligence');
   assert.equal(intellect.overlay, null);
   const weak = RecipientEffectForEvent(action, { type: 'statusApplied', targetId: 'enemy-1', status: 'weak', stacks: 1 });
-  assert.equal(weak.shape, 'debuff');
+  assert.equal(weak.shape, 'weak');
   assert.equal(weak.polarity, 'negative');
   assert.equal(RecipientEffectForEvent(action, { type: 'healed', targetId: 'player', amount: 2 }).shape, 'heal');
 });

@@ -6,6 +6,7 @@ import { currentSpriteBodyBounds } from './components/combatSpriteGeometry.js';
 import { stageFor } from './services/PoseAnimator.js';
 
 const active = new WeakMap(), loaded = new Map(), groups = new WeakMap();
+const resultWindows = new WeakMap();
 const S = SETTINGS.sizing, O = SETTINGS.layering.opacity, M = SETTINGS.motion;
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const disabled = () => !SETTINGS.behavior.enabled || reducedMotionRequested() || document.body.classList.contains('reduce-flashes');
@@ -18,8 +19,8 @@ export function RecipientEffectView(recipe, {box, cardBox, targetFacing = 'back'
   const unit = size || clamp(Math.max(box.width * S.impactBodyWidth, box.height * S.impactBodyHeight), S.impactMinPx, S.impactMaxPx);
   let width = unit, height = unit, cy = box.top + box.height * S.centerY;
   const cx = box.left + box.width / 2;
-  if (recipe.shape === 'evade') { width = box.width * S.evadeWidth; height = box.height * S.evadeHeight; cy = box.top + box.height / 2; }
-  if (recipe.shape === 'ward') { width = box.width * S.wardWidth; height = box.height * S.wardHeight; }
+  if (['evade', 'evade-gain'].includes(recipe.shape)) { width = box.width * S.evadeWidth; height = box.height * S.evadeHeight; cy = box.top + box.height / 2; }
+  if (['ward', 'ward-shatter'].includes(recipe.shape)) { width = box.width * S.wardWidth; height = box.height * S.wardHeight; }
   if (recipe.shape === 'spell-circle') { width = height = box.height * S.circleBodyHeight; cy = box.top + box.height * S.circleCenterY; }
   if (recipe.shape.startsWith('status')) width = height = box.height * S.statusBodyHeight;
   if (recipe.shape === 'sweep') { width = recipe.mount === 'group' ? box.width : unit * S.sweepWidth; height = unit * S.sweepHeight; }
@@ -150,14 +151,14 @@ function register(layer,stop){const set=active.get(layer)||new Set();active.set(
 export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacing,cardBox,actor,duration=recipe?.durationMs||M.clipMs,resolveAsset=assetUrl,forcePlaceholder=false,onStop,frame=null}={}) {
   if(!layer||!box||!recipe||disabled())return ()=>{};
   const count=clamp(Math.round(recipe.frameCount||SETTINGS.behavior.frameCount),1,3);
-  const ms=Math.max(SETTINGS.behavior.minimumFrameMs*count,Number(duration)||M.clipMs);
+  const ms=clipDuration(recipe, duration);
   const view=RecipientEffectView(recipe,{box,cardBox,targetFacing,size});
   const host=document.createElement('div');host.className='recipient-effect';host.setAttribute('aria-hidden','true');
   Object.assign(host.dataset,{action:recipe.action||'skill',targetType:recipe.targetType||'target',shape:recipe.shape,phase:recipe.phase||'contact',frame:'1',renderer:'placeholder',facing:view.facing,mirrorX:String(view.base.scaleX),mirrorY:'1',rotation:'0',scaleY:'1',anchor:view.cardAnchored?'card-bottom':'body'});
-  Object.assign(host.style,{position:'absolute',pointerEvents:'none',zIndex:'4',left:`${view.left}px`,top:`${view.top}px`,width:`${view.width}px`,height:`${view.height}px`,transformOrigin:'bottom center',overflow:view.cardAnchored?'hidden':'visible'});
+  Object.assign(host.style,{position:'absolute',pointerEvents:'none',zIndex:'4',opacity:String(O.global),left:`${view.left}px`,top:`${view.top}px`,width:`${view.width}px`,height:`${view.height}px`,transformOrigin:'bottom center',overflow:view.cardAnchored?'hidden':'visible'});
   const placeholder=document.createElement('img');placeholder.alt='';placeholder.src=`data:image/svg+xml,${encodeURIComponent(RecipientPlaceholderSvg(recipe.action,recipe.targetType))}`;
   const placeholderSize=Math.min(S.fallbackPx,view.width,view.height);
-  Object.assign(placeholder.style,{position:'absolute',left:`${(view.width-placeholderSize)/2}px`,top:`${(view.height-placeholderSize)/2}px`,width:`${placeholderSize}px`,height:`${placeholderSize}px`,objectFit:'contain',transform:view.placeholder.transform});host.appendChild(placeholder);layer.appendChild(host);
+  Object.assign(placeholder.style,{position:'absolute',left:`${(view.width-placeholderSize)/2}px`,top:`${(view.height-placeholderSize)/2}px`,width:`${placeholderSize}px`,height:`${placeholderSize}px`,objectFit:'contain',transform:view.placeholder.transform});placeholder.style.opacity=String(recipe.opacity??(recipe.shape==='spell-circle'?O.spellCircle:O.primary));host.appendChild(placeholder);layer.appendChild(host);
   let stopped=false,currentFrame=frame==null?0:clamp(frame,0,count-1),art=false;const timers=[],planes=[];
   const stop=()=>{if(stopped)return;stopped=true;timers.forEach(clearTimeout);host.remove();set.delete(stop);onStop?.();};const set=register(layer,stop);
   const snapshot=recipe.silhouette?actorSnapshot(actor,layer,box):null;
@@ -181,7 +182,8 @@ export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacin
       const scale=overlay?(recipe.overlayScale??(slash?S.slashElementOverlay:recipe.shape==='sweep'?S.sweepElementOverlay:S.elementOverlay)):(M.secondaryOffsetY?.[recipe.shape]?S.secondaryOverlay:1);
       let opacity=recipe.opacity??(recipe.shape==='spell-circle'?O.spellCircle:O.primary);
       if(overlay)opacity*=slash?O.elementOverSlash:O.elementOverlay;
-      if(recipe.shape==='ward')opacity*=recipe.treatment==='break'?O.wardBreakRim[index]:O.wardRim;
+      if(recipe.shape==='ward')opacity*=O.wardRim;
+      if(recipe.shape==='ward-shatter')opacity*=O.wardBreakRim[index];
       if(recipe.shape==='evade')opacity*=O.evadeLines;
       if(overlay&&recipe.overlayTreatment==='fade-out')opacity*=O.statusFade[index];
       if(overlay&&recipe.overlayTreatment==='deflect')opacity*=O.statusDeflect[index];
@@ -193,10 +195,9 @@ export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacin
       x += (recipe.offset?.x || 0) * node.width; y += (recipe.offset?.y || 0) * node.height;
       if(!overlay && recipe.shape==='bleed-drops' && recipe.treatment==='fade-out')opacity*=O.statusFade[index];
       if(!overlay && recipe.shape==='bleed-drops' && recipe.treatment==='deflect'){opacity*=O.statusDeflect[index];x+=M.statusDeflectFractions[index]*node.width;y+=M.statusDeflectFractions[index]*node.height*SETTINGS.layering.statusDeflectY;}
-      const f=recipe.shape==='ward'&&recipe.treatment==='break'?M.wardBreakFrames[index]:index;
       if(!['fade-out','deflect'].includes(recipe.treatment)) y += (M.secondaryOffsetY?.[recipe.shape]?.[index] || 0) * node.height;
       if(view.cardAnchored) y -= node.height * M.auraRiseFractions[index];
-      const image=frameCanvas(source,f,overlay?recipe.overlayColor:recipe.color,SETTINGS.behavior.cropToContent.includes(source.shape));
+      const image=frameCanvas(source,index,source.atlas.authoredColor?null:overlay?recipe.overlayColor:recipe.color,SETTINGS.behavior.cropToContent.includes(source.shape));
       ctx.save();ctx.globalAlpha=opacity;
       if(view.cardAnchored){const reveal=SETTINGS.layering.auraReveal[index];ctx.beginPath();ctx.rect(0,node.height*(1-reveal),node.width,node.height*reveal);ctx.clip();}
       if(view.base.scaleX<0&&!overlay){ctx.translate(node.width,0);ctx.scale(-1,1);}
@@ -217,7 +218,7 @@ export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUr
   const sources=sourcesFor({...recipe,shape:recipe.impactShape||'skill'},resolveAsset);
   if(!sources.every(source=>!source.absent&&loaded.get(source.url)?.ready))return ()=>{};
   const c=canvas(layer.clientWidth||layer.offsetWidth||layer.getBoundingClientRect().width,layer.clientHeight||layer.offsetHeight||layer.getBoundingClientRect().height),ctx=context(c);
-  if(!ctx)return ()=>{};c.className='recipient-delivery';Object.assign(c.dataset,{phase:'delivery',style:recipe.camp==='spell'?'spell-link':'weapon-extension',sourceId:recipe.sourceId||'',targetId:recipe.targetId||recipe.targetIds?.join(',')||''});c.setAttribute('aria-hidden','true');Object.assign(c.style,{position:'absolute',inset:'0',pointerEvents:'none'});layer.appendChild(c);
+  if(!ctx)return ()=>{};c.className='recipient-delivery';Object.assign(c.dataset,{phase:'delivery',style:recipe.camp==='spell'?'spell-link':'weapon-extension',sourceId:recipe.sourceId||'',targetId:recipe.targetId||recipe.targetIds?.join(',')||''});c.setAttribute('aria-hidden','true');Object.assign(c.style,{position:'absolute',inset:'0',pointerEvents:'none',opacity:String(O.global)});layer.appendChild(c);
   const ax=from.left+from.width/2,ay=from.top+from.height/2,bx=to.left+to.width/2,by=to.top+to.height/2;
   const distance=Math.hypot(bx-ax,by-ay),fraction=Math.min(S.deliveryLengthFraction,S.deliveryMaxLengthPx/Math.max(1,distance));
   const sx=bx-(bx-ax)*fraction,sy=by-(by-ay)*fraction;
@@ -227,21 +228,65 @@ export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUr
   let timer;const stop=()=>{clearTimeout(timer);c.remove();set.delete(stop);};const set=register(layer,stop);timer=setTimeout(stop,recipe.delivery?.durationMs||M.reachDeliveryMs);return stop;
 }
 
+function clipDuration(recipe, duration = recipe.durationMs) {
+  const count = clamp(Math.round(recipe.frameCount || SETTINGS.behavior.frameCount), 1, 3);
+  return Math.max(SETTINGS.behavior.minimumFrameMs * count, Number(duration) || M.clipMs);
+}
+
+const resultPhases = new Set(['contact', 'reaction', 'status']);
+
+/** Lay out recipient results in receipt order, with one timeline per actor. */
+export function PlanRecipientEffectLayers(recipes, {
+  sourceId, targetId, now = 0, windows = new Set(), seenGroups = new Set(), sequence = true, duration,
+} = {}) {
+  const planned = [];
+  const results = [...windows];
+  const groupKeys = new Set(seenGroups);
+  for (const { recipe } of windows) if (recipe.groupKey) groupKeys.add(recipe.groupKey);
+  const overlap = Math.max(0, Number(M.resultOverlapMs) || 0);
+  for (const recipe of recipes || []) {
+    const groupKey = recipe.mount === 'group' && recipe.phase !== 'delivery' && recipe.groupKey;
+    if (groupKey && groupKeys.has(groupKey)) continue;
+    if (groupKey) groupKeys.add(groupKey);
+    const ids = (recipe.targetIds?.length ? recipe.targetIds
+      : [recipe.targetId || targetId || recipe.sourceId || sourceId]).filter(Boolean);
+    const result = sequence && resultPhases.has(recipe.phase || 'contact');
+    const ms = clipDuration(recipe, duration);
+    let start = now + Math.max(0, recipe.delayMs || 0);
+    if (result) {
+      for (const previous of results) {
+        if (!previous.ids.some(id => ids.includes(id))) continue;
+        start = Math.max(start, previous.start, previous.end - Math.min(overlap, ms));
+      }
+    }
+    const entry = { recipe, ids, result, start, end: start + ms, delayMs: start - now };
+    planned.push(entry);
+    if (result) results.push(entry);
+  }
+  return planned;
+}
+
 /** Schedules receipt layers without delaying the combat model or caster pose. */
 export function PlayRecipientEffectLayers(layer,recipes,{anchorFor,sourceId,targetId,...options}={}) {
   if(!layer||!anchorFor||disabled())return ()=>{};
   const stops=[],timers=[];let cancelled=false;
-  const stop=()=>{cancelled=true;timers.forEach(clearTimeout);stops.forEach(fn=>fn());set.delete(stop);};const set=register(layer,stop);
+  const windows=resultWindows.get(layer)||new Set();
+  resultWindows.set(layer,windows);
+  const schedule=PlanRecipientEffectLayers(recipes,{sourceId,targetId,now:Date.now(),windows,
+    seenGroups:groups.get(layer),sequence:options.frame==null,duration:options.duration});
+  const stop=()=>{cancelled=true;timers.forEach(clearTimeout);stops.forEach(fn=>fn());
+    schedule.forEach(window=>windows.delete(window));set.delete(stop);};const set=register(layer,stop);
   let lifetime=0;
-  for(const recipe of recipes||[]) {
-    lifetime=Math.max(lifetime,(recipe.delayMs||0)+(recipe.durationMs||M.clipMs));
+  for(const window of schedule) {
+    const {recipe,ids,delayMs,start,end,result}=window;
+    lifetime=Math.max(lifetime,delayMs+end-start);
+    if(result)windows.add(window);
     const play=()=>{
-      if(cancelled||disabled())return;
-      const ids=recipe.targetIds?.length?recipe.targetIds:[recipe.targetId||targetId||recipe.sourceId||sourceId];
-      const actors=ids.map(id=>anchorFor(id)).filter(Boolean);if(!actors.length)return;
+      if(cancelled||disabled()){windows.delete(window);return;}
+      const actors=ids.map(id=>anchorFor(id)).filter(Boolean);if(!actors.length){windows.delete(window);return;}
       const actor=actors[0],boxes=actors.map(a=>bodyBox(layer,a));let box=boxes[0];
       if(recipe.mount==='group') {
-        const seen=groups.get(layer)||new Set();groups.set(layer,seen);if(recipe.phase!=='delivery'){if(recipe.groupKey&&seen.has(recipe.groupKey))return;if(recipe.groupKey)seen.add(recipe.groupKey);}
+        const seen=groups.get(layer)||new Set();groups.set(layer,seen);if(recipe.phase!=='delivery'){if(recipe.groupKey&&seen.has(recipe.groupKey)){windows.delete(window);return;}if(recipe.groupKey)seen.add(recipe.groupKey);}
         const left=Math.min(...boxes.map(b=>b.left))-S.sweepGroupPaddingPx,top=Math.min(...boxes.map(b=>b.top));
         box={left,top,width:Math.max(...boxes.map(b=>b.left+b.width))-left+S.sweepGroupPaddingPx,height:Math.max(...boxes.map(b=>b.top+b.height))-top};
         if(recipe.phase!=='delivery')stops.push(()=>seen.delete(recipe.groupKey));
@@ -250,10 +295,16 @@ export function PlayRecipientEffectLayers(layer,recipes,{anchorFor,sourceId,targ
       const card=actor.closest('.combatant')?.querySelector('.combatant-card');
       const targetFacing=actor.closest('.combatant')?.classList.contains('enemy')?'front':'back';
       if(recipe.phase==='delivery') { stops.push(PlayRecipientDelivery(layer,sourceBox,box,recipe,options)); return; }
-      stops.push(PlayRecipientEffect(layer,box,recipe,{...options,actor,sourceBox,targetFacing,cardBox:card?localBox(layer,card):null}));
+      stops.push(PlayRecipientEffect(layer,box,recipe,{...options,actor,sourceBox,targetFacing,
+        cardBox:card?localBox(layer,card):null,onStop:()=>{windows.delete(window);options.onStop?.();}}));
     };
-    if(recipe.delayMs>0)timers.push(setTimeout(play,recipe.delayMs));else play();
+    if (delayMs > 0) timers.push(setTimeout(play, delayMs));
+    else play();
   }
   timers.push(setTimeout(stop,lifetime+M.cleanupSlackMs));return stop;
 }
-export function ClearRecipientEffects(layer) {for(const stop of [...(active.get(layer)||[])])stop();groups.delete(layer);}
+export function ClearRecipientEffects(layer) {
+  for(const stop of [...(active.get(layer)||[])])stop();
+  groups.delete(layer);
+  resultWindows.delete(layer);
+}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PlayRecipientEffect, ClearRecipientEffects, RecipientPlaceholderSvg, PrewarmRecipientEffect, PrewarmCombatRecipientEffects, RecipientEffectView, PlayRecipientEffectLayers } from '../src/ui/recipientEffectSprites.js';
+import { PlayRecipientEffect, ClearRecipientEffects, RecipientPlaceholderSvg, PrewarmRecipientEffect, PrewarmCombatRecipientEffects, RecipientEffectView, PlayRecipientEffectLayers, PlanRecipientEffectLayers, PlayRecipientDelivery } from '../src/ui/recipientEffectSprites.js';
 import { DecorateRecipientEffects } from '../src/ui/recipientEffectEvents.js';
 import { playTimeline } from '../src/ui/fx.js';
 import { withKitDom, rewardDom, installDom } from './helpers/dom.mjs';
@@ -367,7 +367,9 @@ test('only movement chevrons mirror; group sweep and delayed secondary cancel to
     const anchorFor=id=>id==='a'?a:b;
     PlayRecipientEffectLayers(layer,[{...recipe,shape:'sweep',mount:'group',groupKey:'one-action',targetIds:['a','b'],durationMs:300},{...recipe,shape:'heal-plus',targetId:'a',delayMs:200,durationMs:300}],{anchorFor,forcePlaceholder:true});
     assert.equal(layer.children.length,1);assert.equal(layer.children[0].dataset.shape,'sweep');
-    t.mock.timers.tick(200);assert.equal(layer.children.length,2);
+    const onset=300-SETTINGS.motion.resultOverlapMs;
+    t.mock.timers.tick(onset-1);assert.equal(layer.children.length,1);
+    t.mock.timers.tick(1);assert.equal(layer.children.length,2);
     assert.equal(layer.children[1].dataset.shape,'heal-plus');
     ClearRecipientEffects(layer);t.mock.timers.tick(1000);assert.equal(layer.children.length,0);
   });
@@ -381,6 +383,7 @@ test('runtime tint preserves shading, reads royal-blue/opacity config and leaves
     const node=create(tag);
     if(tag==='canvas')node.getContext=()=>({filter:'none',globalAlpha:1,clearRect(){},save(){},restore(){},
       drawImage(){draws.push({filter:this.filter,alpha:this.globalAlpha,canvas:node});},fillRect(){},
+      beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){},
       getImageData(){return {data:new Uint8ClampedArray(256*256*4)};}});
     return node;
   };
@@ -389,12 +392,90 @@ test('runtime tint preserves shading, reads royal-blue/opacity config and leaves
   try {
     const magic={...recipe,shape:'spell-circle',color:SETTINGS.behavior.palettes.magic,overlay:null,opacity:SETTINGS.layering.opacity.spellCircle};
     await PrewarmRecipientEffect(magic,{resolveAsset});PlayRecipientEffect(layer,box,magic,{resolveAsset,frame:0});
-    assert.equal(magic.color,'#4169E1');assert.equal(magic.opacity,.9);
+    assert.equal(magic.color,'#4169E1');assert.equal(magic.opacity,1);
+    assert.equal(Number(layer.children[0].style.opacity),SETTINGS.layering.opacity.global);
     assert.ok(draws.some(draw=>draw.filter==='grayscale(1)'));
     assert.ok(draws.some(draw=>draw.alpha===SETTINGS.layering.opacity.spellCircle));
     ClearRecipientEffects(layer);draws.length=0;
     const physical={...recipe,shape:'slash',color:SETTINGS.behavior.palettes.physical,overlay:null};
     await PrewarmRecipientEffect(physical,{resolveAsset});PlayRecipientEffect(layer,box,physical,{resolveAsset,frame:0});
     assert.ok(draws.every(draw=>draw.filter!=='grayscale(1)'));
+    ClearRecipientEffects(layer);draws.length=0;
+    const poison={...physical,shape:'poison',color:SETTINGS.behavior.palettes.fire};
+    await PrewarmRecipientEffect(poison,{resolveAsset});PlayRecipientEffect(layer,box,poison,{resolveAsset,frame:0});
+    assert.ok(draws.every(draw=>draw.filter!=='grayscale(1)'), 'native v6 colors survive an unrelated casting school');
+    assert.equal(Number(layer.children[0].style.opacity),SETTINGS.layering.opacity.global);
+    ClearRecipientEffects(layer);
+    draws.length=0;
+    const shatter={...poison,shape:'ward-shatter',treatment:'break'};
+    await PrewarmRecipientEffect(shatter,{resolveAsset});PlayRecipientEffect(layer,box,shatter,{resolveAsset,frame:0});
+    assert.ok(draws.some(draw=>draw.filter==='grayscale(1)'), 'Ward shatter takes the protected actor’s Ward tint');
+    ClearRecipientEffects(layer);
+    PlayRecipientDelivery(layer,box,{...box,left:100},{...physical,range:'reach',camp:'physical',
+      impactShape:'slash'},{resolveAsset});
+    assert.equal(layer.children[0].className,'recipient-delivery');
+    assert.equal(Number(layer.children[0].style.opacity),SETTINGS.layering.opacity.global);
   } finally {ClearRecipientEffects(layer);globalThis.Image=oldImage;restore();}
+});
+
+
+test('result planner sequences each recipient, keeps composite planes and leaves windup and delivery independent', () => {
+  const onA = { ...recipe, shape: 'slash', targetId: 'a', phase: 'contact', durationMs: 300 };
+  const result = PlanRecipientEffectLayers([
+    onA,
+    { ...onA, shape: 'block-hit', phase: 'reaction', delayMs: 60, durationMs: 1 },
+    { ...onA, shape: 'weak', targetId: 'b', phase: 'status' },
+    { ...onA, shape: 'sweep', mount: 'group', targetIds: ['a', 'b'], groupKey: 'sweep' },
+    { ...onA, shape: 'sweep', mount: 'group', targetIds: ['a', 'b'], groupKey: 'sweep' },
+    { ...onA, shape: 'spell-circle', phase: 'windup' },
+    { ...onA, shape: null, phase: 'delivery' },
+  ]);
+  const [slash, block, weak, sweep, windup, delivery] = result;
+  assert.equal(result.length, 6);
+  assert.equal(slash.recipe.overlay, 'fire');
+  assert.equal(slash.end - slash.start, 300);
+  assert.equal(slash.end - block.start, SETTINGS.motion.resultOverlapMs);
+  assert.equal(block.end - block.start, 3 * SETTINGS.behavior.minimumFrameMs);
+  assert.equal(weak.start, slash.start);
+  assert.deepEqual(sweep.ids, ['a', 'b']);
+  assert.equal(sweep.start, Math.max(block.end, weak.end) - SETTINGS.motion.resultOverlapMs);
+  assert.equal(windup.start, slash.start);
+  assert.equal(delivery.start, slash.start);
+});
+
+test('live result windows span separate calls and pending schedules cancel without leaking into later effects', t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 1000 });
+  withKitDom(dom => {
+    const layer = dom.document.createElement('div');
+    const actor = dom.document.createElement('div');
+    actor.box = box;
+    const options = { anchorFor: id => id && actor, forcePlaceholder: true };
+    const play = (shape, targetId) => PlayRecipientEffectLayers(layer, [{
+      ...recipe, shape, targetId, durationMs: 300,
+    }], options);
+    const shapes = () => [...layer.children].map(child => child.dataset.shape);
+    play('slash', 'a');
+    t.mock.timers.tick(40);
+    play('block-hit', 'a');
+    play('weak', 'b');
+    assert.deepEqual(shapes(), ['slash', 'weak']);
+    const toNext = 300 - SETTINGS.motion.resultOverlapMs - 40;
+    t.mock.timers.tick(toNext - 1);
+    assert.deepEqual(shapes(), ['slash', 'weak']);
+    t.mock.timers.tick(1);
+    assert.deepEqual(shapes(), ['slash', 'weak', 'block-hit']);
+    const cancelPending = play('frail', 'a');
+    cancelPending();
+    assert.ok(shapes().includes('block-hit'));
+    t.mock.timers.tick(400);
+    assert.deepEqual(shapes(), []);
+    play('ward', 'a');
+    play('heal-plus', 'a');
+    ClearRecipientEffects(layer);
+    play('evade-gain', 'a');
+    assert.deepEqual(shapes(), ['evade-gain']);
+    t.mock.timers.tick(1000);
+    assert.deepEqual(shapes(), []);
+    ClearRecipientEffects(layer);
+  });
 });

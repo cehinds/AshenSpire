@@ -59,7 +59,7 @@ import { combatEffectPlan, combatEffectTags, combatEffectTargetIds, EnemyCastEff
 import { decorateCombatEffects, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { playCombatEffectPlan } from '../combatEffectSprites.js';
 import { DecorateRecipientEffects, CreateRecipientEffectState } from '../recipientEffectEvents.js';
-import { PlayRecipientEffectLayers, PrewarmCombatRecipientEffects } from '../recipientEffectSprites.js';
+import { PlayRecipientEffectLayers, PrewarmCombatRecipientEffects, ClearRecipientEffects } from '../recipientEffectSprites.js';
 import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { createToast } from '../components/toast.js';
 // src/ui/screens/combat.js — the combat screen (SPEC §7.2–7.4, mockup:
@@ -4367,6 +4367,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     document.removeEventListener('pointerdown', pauseAutoCombat, true);
     document.removeEventListener('keydown', pauseAutoCombat, true);
     playback.Dispose();
+    ClearRecipientEffects(fxCtx.layer);
     reactionShell?.dismiss();
     releaseRangeAction();
     handStrip.teardown();
