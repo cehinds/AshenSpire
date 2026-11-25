@@ -188,6 +188,7 @@ test('a rolled alternative never resolves to the same card as the authored optio
   const face = (base, step) => { const { name, ...rest } = applyUpgradeSteps(base, [step]); return JSON.stringify(rest); };
   const base = registries.cards.get('core.drivingThrust');
   const run = { ...newRun(1) };
+  run.level.level = 5; // The CP cap permits a rolled alternative at this level.
   const options = nextUpgradeOptions(run, { instanceId: 'test', cardId: 'core.drivingThrust' }, base, registries, 3);
   assert.deepEqual(options[0], { k: 'authored' });
   assert.ok(options.length >= 2, 'a distinct alternative exists');
