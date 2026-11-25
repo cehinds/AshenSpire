@@ -34,3 +34,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/hand-rules.test.mjs`, `tests/hand-refresh.test.mjs` and `tests/solo-hand-display.test.mjs` pin the per-point opening and draw rows, their independent capacity, 10-card row ceiling, row receipts, the unchanged worked Settings override, and the per-point labels. Legacy fill, shuffled refresh, pile conservation, Retain, Ethereal and snapshot coverage remains in place.
 - `node --test tests/hand-rules.test.mjs tests/hand-refresh.test.mjs tests/solo-hand-display.test.mjs` passed 45/45, from 36/45. There were 61 original failures remaining, including four in two dated stat files measured separately (17/21 passed).
+
+## Stat rows and real allocations
+
+- `tests/stat-rows.test.mjs`, `tests/starting-stat-config.test.mjs`, and `tests/latest-stat-allocation-rules.test.mjs` pin the per-point coefficients and bounds, separate Core stamina alias, and exact consecutive 2-to-3 and 3-to-4 allocation gains. Old profile integrity, explicit saved rules, and custom fractional row coverage stay intact.
+- `node --test tests/stat-rows.test.mjs tests/starting-stat-config.test.mjs tests/latest-stat-allocation-rules.test.mjs` passed 51/51. The lane had 57 original failures remaining.
