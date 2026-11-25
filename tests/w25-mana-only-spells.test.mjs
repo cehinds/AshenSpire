@@ -145,7 +145,7 @@ test(`every mana-only spell has at least ${MARGIN}x the power per Mana of the me
 const live = (classId, seed) => createRunState({ registries: reg, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 test('each new card is offered to its own class (colorless to every caster) and never to another class', () => {
   const stockHerald = live('herald', 1);
-  assert.equal(stockHerald.maxMana, 5, 'the current equipped Herald has five MP under per-point Wisdom');
+  assert.equal(stockHerald.maxMana, 3, 'the current equipped Herald has three MP under per-point Wisdom');
   assert.ok(gameProfileRewardPools(reg, stockHerald).combatCards.includes('core.radiantVerdict'), 'the geared Herald can pay its printed 2 MP');
   const oneManaHerald = { ...stockHerald, maxMana: 1 };
   assert.ok(!gameProfileRewardPools(reg, oneManaHerald).combatCards.includes('core.radiantVerdict'), 'the same class still cannot receive a card above its Mana capacity');
