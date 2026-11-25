@@ -1913,8 +1913,8 @@ async function serverClosePlant() {
     });
     // tools/buildversion.mjs (reached through serve.mjs) decodes the packed
     // catalog with this one dependency-free module, so the copy carries it.
-    mkdirSync(join(dir, 'src', 'model'), { recursive: true });
-    cpSync(join(ROOT, 'src', 'model', 'catalogJson.js'), join(dir, 'src', 'model', 'catalogJson.js'));
+    mkdirSync(join(dir, 'src', 'config'), { recursive: true });
+    cpSync(join(ROOT, 'src', 'config', 'catalogJson.js'), join(dir, 'src', 'config', 'catalogJson.js'));
     const tool = join(dir, 'tools', 'displayfirst.mjs');
     const real = readFileSync(tool, 'utf8');
     const canonicalReal = real.replace(/\r\n/g, '\n');

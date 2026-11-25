@@ -56,8 +56,6 @@ const KNOWN_INVERSIONS = [
   'src/content/combatExpansionCards.js -> src/model/combatRanges.js',
   'src/content/combatExpansionCards.js -> src/model/spellDefense.js',
   'src/content/equipment.js -> src/model/combatRanges.js',
-  'src/content/generated/gameProfiles.js -> src/model/catalogJson.js',
-  'src/content/generated/tagging.js -> src/model/catalogJson.js',
   'src/content/index.js -> src/model/enemyMoveSources.js',
   'src/content/index.js -> src/model/progressionContent.js',
   'src/content/music.js -> src/model/schemas.js',

@@ -281,17 +281,30 @@ test('the configured discovery shards and isolated jobs cover the real corpus on
   walk(ROOT); files.sort();
   const eligible = files;
   const fast = discoverySpeedFiles(eligible, 'exclude');
-  const counts = { 'ubuntu-latest': 4, 'macos-latest': 4, 'windows-latest': 8 };
-  assert.deepEqual([...configured.keys()].sort(), Object.keys(counts).sort());
-  for (const [os, count] of Object.entries(counts)) {
+  const eight = Array.from({ length: 8 }, (_, i) => `${i}/8`);
+  const expected = {
+    'ubuntu-latest': eight,
+    'macos-latest': eight,
+    'windows-latest': ['0/8', '1/8', '2/8', '3/8', '4/8', '5/8', '6/16', '14/16', '7/8'],
+  };
+  assert.deepEqual([...configured.keys()].sort(), Object.keys(expected).sort());
+  for (const [os, expectedShards] of Object.entries(expected)) {
     const windows = os === 'windows-latest';
     const shards = configured.get(os);
-    assert.deepEqual([...shards].sort(), Array.from({ length: count }, (_, i) => `${i}/${count}`), os);
+    assert.deepEqual([...shards].sort(), [...expectedShards].sort(), os);
     const assigned = shards.flatMap(shard => discoveryShardFiles(windows ? fast : eligible,
       parseRunNodeOptions(['--discovered-only', '--shard', shard]).shard));
     if (windows) assigned.push(...slow);
     assert.deepEqual(assigned.sort(), eligible, `${os} runs every eligible file exactly once`);
   }
+});
+
+test('the split Windows shard covers every index of its parent exactly once', () => {
+  // Both membership patterns repeat every 16 indices, regardless of the discovered corpus size.
+  const period = Array.from({ length: 16 }, (_, index) => index);
+  const parent = discoveryShardFiles(period, { index: 6, count: 8 });
+  const children = [6, 14].flatMap(index => discoveryShardFiles(period, { index, count: 16 }));
+  assert.deepEqual(children, parent);
 });
 
 test('browser layout and startup matrices retain every shard with an independent twenty-minute bound', () => {

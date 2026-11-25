@@ -464,6 +464,7 @@ const DOORS = {
   rankUpOpen: `.rank-up-pick`,
   rankUpChoice: `.rank-up-pick .rank-up-option:not([disabled])`,
   rankUpCommit: `.rank-up-pick button[data-control-role="primary"]:not([disabled])`,
+  rankUpCancel: `.rank-up-pick .modal-foot-actions button[data-control-role="exit"]:not([hidden]):not([disabled])`,
   rewardPicks: `.reward-pick-prompt`,
   rewardPicksReady: `#reward-card-confirm.primary:not([disabled])`,
   chooserConfirm: `#reward-card-confirm:not([disabled])`,
@@ -503,6 +504,8 @@ function pickDoor(d) {
   if (d.rankUpOpen) {
     if (d.rankUpCommit) return { press: DOORS.rankUpCommit };
     if (d.rankUpChoice) return { press: DOORS.rankUpChoice };
+    // A rolled rank-up reward can open with every card blocked by the full-upgrade rule.
+    if (d.rankUpCancel) return { press: DOORS.rankUpCancel };
     return { wait: 'the rank-up choices' };
   }
   if (d.combat) return { done: 'combat' };
@@ -591,8 +594,10 @@ if (argv.includes('--selftest')) {
     ['a multi-pick reward with all picks made: Continue', D({ rewardVeil: true, rewardPicks: true, rewardPicksReady: true, chooserFace: true, chooserConfirm: true }), DOORS.chooserConfirm],
     ['a reward confirmation owns the press over the original Continue', D({ rewardVeil: true, chooserConfirm: true, confirmationOpen: true, confirmationAccept: true }), DOORS.confirmationAccept],
     ['a disabled confirmation shields the original Continue', D({ rewardVeil: true, chooserConfirm: true, confirmationOpen: true }), 'wait'],
-    ['a rank-up step selects and confirms inside its own picker', D({ rewardVeil: true, chooserConfirm: true, rankUpOpen: true, rankUpChoice: true }), DOORS.rankUpChoice],
-    ['a selected rank-up row enables the picker action', D({ rewardVeil: true, rankUpOpen: true, rankUpChoice: true, rankUpCommit: true }), DOORS.rankUpCommit],
+    ['a rank-up step selects and confirms inside its own picker', D({ rewardVeil: true, chooserConfirm: true, rankUpOpen: true, rankUpChoice: true, rankUpCancel: true }), DOORS.rankUpChoice],
+    ['a selected rank-up row enables the picker action', D({ rewardVeil: true, rankUpOpen: true, rankUpChoice: true, rankUpCommit: true, rankUpCancel: true }), DOORS.rankUpCommit],
+    ['an unavailable rank-up declines through its own Cancel', D({ rewardVeil: true, chooserConfirm: true, rankUpOpen: true, rankUpCancel: true }), DOORS.rankUpCancel],
+    ['an unavailable rank-up with Cancel disabled shields the original Continue', D({ rewardVeil: true, chooserConfirm: true, rankUpOpen: true }), 'wait'],
     ['a claimed level\'s reward waiting in the menu: open it', D({ rewardVeil: true, veil: true, levelOffer: true, rewardContinue: true }), DOORS.levelOffer],
     ['a level popup with its rewards taken: Continue', D({ rewardVeil: true, veil: true, levelContinue: true }), DOORS.levelContinue],
     ['the spoils with Continue enabled', D({ rewardVeil: true, veil: true, rewardContinue: true }), DOORS.rewardContinue],

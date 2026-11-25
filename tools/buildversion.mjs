@@ -55,7 +55,7 @@
 // is VISIBLE on any screen — that is ink, not source, and it is
 // tools/buildstamp-shot.mjs with a browser.
 
-import { decodeCatalogJSONText } from '../src/model/catalogJson.js';
+import { DecodeCatalogJSONText } from '../src/config/catalogJson.js';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -347,21 +347,29 @@ function isContractColumn(file, key, value) {
 // Materialize only the recognized data call. Never execute generated JavaScript;
 // every surrounding declaration remains in the scan and exact value-span rules.
 export function catalogVersionScanText(file, text) {
-  const name = file === 'src/content/generated/gameProfiles.js' ? 'gameProfileCatalog'
-    : file === 'src/content/generated/tagging.js' ? 'tagging' : null;
-  if (!name) return text;
+  const projection = {
+    'src/content/generated/gameProfiles.js': ['gameProfileCatalog', '', '{'],
+    'src/content/generated/tagging.js': ['tagging', '', '['],
+    'src/config/generated/ui.js': ['uiConfig', 'deepFreeze(', '{'],
+    'src/content/reviewedCardArt.generated.js': ['reviewedCardArtCatalog', '', '{'],
+    'src/content/changelog.generated.js': ['GENERATED_CHANGELOG', 'Object.freeze(', '['],
+  }[file];
+  if (!projection) return text;
+  const [name, wrapper, opening] = projection;
   const declaration = new RegExp('^export const ' + name + '\\s*=\\s*', 'm').exec(text);
   if (!declaration) return text;
-  const start = declaration.index + declaration[0].length;
-  if (!text.slice(start).startsWith('decodeCatalogJSON(')) {
-    if (!text.slice(start).startsWith(name === 'tagging' ? '[' : '{')) throw new Error('Unrecognized generated catalog expression');
+  const expressionStart = declaration.index + declaration[0].length;
+  if (!text.startsWith(wrapper, expressionStart)) throw new Error('Unrecognized generated catalog wrapper');
+  const start = expressionStart + wrapper.length;
+  if (!text.startsWith('decodeCatalogJSON(', start)) {
+    if (!text.startsWith(opening, start)) throw new Error('Unrecognized generated catalog expression');
     return text;
   }
   const body = text.slice(start + 'decodeCatalogJSON('.length);
   // Payload contains no executable expression: exactly one JSON object followed
   // by the call/declaration terminators. JSON strings may contain braces/quotes.
   let depth = 0, quoted = false, escaped = false, end = -1;
-  if (body[0] !== '{') throw new Error('Malformed encoded game-profile catalog');
+  if (body[0] !== '{') throw new Error('Malformed encoded generated catalog');
   for (let i = 0; i < body.length; i++) {
     const ch = body[i];
     if (quoted) {
@@ -372,12 +380,12 @@ export function catalogVersionScanText(file, text) {
     else if (ch === '{' || ch === '[') depth++;
     else if ((ch === '}' || ch === ']') && --depth === 0) { end = i + 1; break; }
   }
-  if (end < 0 || body.slice(end, end + 2) !== ');') throw new Error('Malformed encoded game-profile catalog');
+  if (end < 0 || !body.startsWith(wrapper ? '));' : ');', end)) throw new Error('Malformed encoded generated catalog');
   const literal = body.slice(0, end), payload = JSON.parse(literal);
   // The owned encoded payload is canonical JSON. Refuse duplicate keys or
   // alternate payload syntax instead of discarding hidden dictionary material.
-  if (JSON.stringify(payload) !== literal) throw new Error('Noncanonical encoded game-profile catalog');
-  const decoded = decodeCatalogJSONText(payload);
+  if (JSON.stringify(payload) !== literal) throw new Error('Noncanonical encoded generated catalog');
+  const decoded = DecodeCatalogJSONText(payload);
   JSON.parse(decoded);
   return text.slice(0, start) + decoded + text.slice(start + 'decodeCatalogJSON('.length + end + 1);
 }
