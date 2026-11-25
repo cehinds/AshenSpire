@@ -113,17 +113,27 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   // it does (face, tags, profile fields; the name aside) from the picks before it. Candidates come from the same
   // seeded stream in the same order, so the list stays deterministic; a card with no distinct candidate left shows fewer.
   const outcome = (step) => { const { name, ...face } = applyUpgradeSteps(base, [...applied, step]); return JSON.stringify(face); };
-  const picked = authored ? [{ k: 'authored' }] : [];
-  const seen = new Set(picked.map(outcome));
-  for (const step of roll(MAX_CANDIDATES)) {
-    if (picked.length >= count) break;
-    const key = outcome(step);
-    if (picked.length && seen.has(key)) continue;
-    seen.add(key);
-    picked.push(step);
+  const target = authored ? 2 : count;
+  const pickDistinct = (pool) => {
+    const picked = authored ? [{ k: 'authored' }] : [];
+    const seen = new Set(picked.map(outcome));
+    for (const step of pool) {
+      if (picked.length >= target) break;
+      const key = outcome(step);
+      if (picked.length && seen.has(key)) continue;
+      seen.add(key);
+      picked.push(step);
+    }
+    return picked;
+  };
+  let pool = roll(combos ? MAX_CANDIDATES : Math.min(MAX_CANDIDATES, target + 2));
+  let picked = pickDistinct(pool);
+  if (picked.length < target && pool.length < MAX_CANDIDATES) {
+    pool = roll(MAX_CANDIDATES);
+    picked = pickDistinct(pool);
   }
-  const chosen = picked.slice(0, authored ? 2 : count);
-  return combos ? withSecondEffects(run, instance, applied, chosen, roll(MAX_CANDIDATES), outcome, salt) : chosen;
+  const chosen = picked.slice(0, target);
+  return combos ? withSecondEffects(run, instance, applied, chosen, pool, outcome, salt) : chosen;
 }
 
 // "Two effects" (owner, 2026-11-14): each option gets a second, different effect with REST_TWO_EFFECT_CHANCE. The draw comes from

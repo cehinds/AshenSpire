@@ -47,7 +47,7 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
           assert.ok(e.stacks <= Math.max(STACK_CAPS[e.status], given), `${where}: ${e.status} ${e.stacks} over its cap`);
         }
         const kinds = instance.upgradeSteps.map((x) => x.k);
-        assert.ok(kinds.filter((k) => k === 'cost').length <= 1 && kinds.filter((k) => k === 'hits').length <= 1, `${where}: cost or hits more than once`);
+        assert.ok(kinds.filter((k) => k === 'cost').length <= 3 && kinds.filter((k) => k === 'hits').length <= 1, `${where}: cost (max 3 Efficient stacks) or hits (>1) over cap`);
         assert.equal(face.cost, plain.cost - (plain.staminaCost - face.staminaCost) - 0, `${where}: cost must track staminaCost`);
         assert.ok(face.staminaCost >= 0 && face.staminaCost <= base.staminaCost, `${where}: SP never negative (no cost minimum, owner 2026-11-22)`);
         const cantripped = instance.upgradeSteps.some((x) => x.k === 'tag' && x.tag === 'rank.cantrip');

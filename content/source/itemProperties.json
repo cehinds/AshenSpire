@@ -28,13 +28,13 @@
         "id": "poise",
         "stat": "poise",
         "n": 3,
-        "weight": 20,
+        "weight": 45,
         "text": "+3 Poise"
       },
       {
         "id": "attr",
         "n": 1,
-        "weight": 55,
+        "weight": 6,
         "byCategory": {
           "dagger": [
             "dexterity"
@@ -82,13 +82,13 @@
         "id": "poisePct",
         "effect": "poiseDamagePct",
         "n": 10,
-        "weight": 25,
+        "weight": 45,
         "text": "+10% Poise damage"
       },
       {
         "id": "attr",
         "n": 1,
-        "weight": 55,
+        "weight": 6,
         "attrs": [
           "intelligence",
           "wisdom",
@@ -100,7 +100,7 @@
       {
         "id": "attr",
         "n": 1,
-        "weight": 40,
+        "weight": 5,
         "attrs": [
           "constitution",
           "dexterity"
@@ -110,8 +110,15 @@
         "id": "ward",
         "stat": "ward",
         "n": 1,
-        "weight": 20,
+        "weight": 40,
         "text": "+1 Ward"
+      },
+      {
+        "id": "poise",
+        "stat": "poise",
+        "n": 2,
+        "weight": 35,
+        "text": "+2 Poise"
       }
     ],
     "relic": []
@@ -679,7 +686,7 @@
         "martial": 0,
         "magic": 0,
         "armor": 3,
-        "relic": 4
+        "relic": 3
       },
       "stats": {
         "strength": 1
@@ -693,7 +700,7 @@
         "martial": 0,
         "magic": 0,
         "armor": 3,
-        "relic": 4
+        "relic": 3
       },
       "stats": {
         "dexterity": 1
@@ -707,7 +714,7 @@
         "martial": 0,
         "magic": 0,
         "armor": 3,
-        "relic": 4
+        "relic": 3
       },
       "stats": {
         "constitution": 1
@@ -721,7 +728,7 @@
         "martial": 0,
         "magic": 0,
         "armor": 3,
-        "relic": 4
+        "relic": 3
       },
       "stats": {
         "wisdom": 1
@@ -735,7 +742,7 @@
         "martial": 0,
         "magic": 0,
         "armor": 3,
-        "relic": 4
+        "relic": 3
       },
       "stats": {
         "intelligence": 1
