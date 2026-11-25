@@ -101,7 +101,7 @@ const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanu
 // source tree and the same JS01 scenario bodies. Their raw checkpoints agree
 // with this tree; the historical action-policy lane keeps the original pin.
 const currentFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-7dff4b03.json', import.meta.url), 'utf8'));
-const currentIdentity = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-5311c2f-identity.json', import.meta.url), 'utf8'));
+const currentIdentity = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-reward-fallback-identity.json', import.meta.url), 'utf8'));
 // The current runtime registry and the birth-only Rank 1 art change the
 // profile and snapshots. Keep the independently archived behavior digests.
 const expectedScenarios = { ...fixture.scenarios };

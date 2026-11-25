@@ -6,15 +6,16 @@ import subprocess
 import sys
 from pathlib import Path
 
-if len(sys.argv) != 4:
-    raise SystemExit("Usage: verify-js01-identity.py BEFORE_SOURCE AFTER_SOURCE OUTPUT_DIR")
-before_root, repo, output = (Path(value).resolve() for value in sys.argv[1:])
+if len(sys.argv) not in [4, 5] or (len(sys.argv) == 5 and sys.argv[4] != "--reward-fallback"):
+    raise SystemExit("Usage: verify-js01-identity.py BEFORE_SOURCE AFTER_SOURCE OUTPUT_DIR [--reward-fallback]")
+before_root, repo, output = (Path(value).resolve() for value in sys.argv[1:4])
 output.mkdir(parents=True)
 ART = "weaponArt:greatsword:greatswordSunderingHew"
 OLD_RUNTIME = "sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd"
 NEW_RUNTIME = "sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d"
 OLD_PROFILE = "sha256:375cef033da7ca8e95366698b991446d57c496e5ed4d36e6a3122719d9c79506"
 NEW_PROFILE = "sha256:d2ff32d4e924c6782570b6de552a3589414f62aed93f1635afaacd76a09cab07"
+REWARD_PROFILE = "sha256:3e79711486dec8c428dc4934efb8b60060c67a59c11af2011846566276146bc0"
 PHASES = ["start", "pending", "restored", "live", "afterRestore"]
 ARTIFACT_HASHES = {
     "ashen.mechanics-runtime": (
@@ -108,6 +109,80 @@ def compare_snapshot(old, current):
         compare_profile(old["gameProfile"], adjusted["gameProfile"])
     remove_art_rank(card for pile in adjusted["piles"].values() for card in pile)
     assert adjusted == old
+
+
+
+def normalize_reward_profile(old, new):
+    assert old["hash"] == NEW_PROFILE and new["hash"] == REWARD_PROFILE
+    assert old["lock"]["runtimeHash"] == new["lock"]["runtimeHash"] == NEW_RUNTIME
+    expected = copy.deepcopy(old)
+    expected["hash"] = new["hash"]
+    expected["modules"]["reward-ranks"]["lowerRankChance"] = 0.05
+    expected["content"]["rewards"]["eligibility"]["combatCards"]["lowerRankChance"] = 0.05
+    [defaults] = [row for row in expected["lock"]["artifacts"]
+                  if row["path"] == "engine/modules/reward-ranks/defaults.json"]
+    assert defaults["hash"] == "sha256:c7068514dba76f79213e670bc0dcecafaa0af4813b0c79431badc965eeed711d"
+    defaults["hash"] = "sha256:0c47c365b82d002f43880b6150527a6b6d3df42d2bd2f94149f8a7442afb4e6c"
+    assert old["modules"]["reward-ranks"]["lowerRankChance"] == 0.1
+    assert old["content"]["rewards"]["eligibility"]["combatCards"]["lowerRankChance"] == 0.1
+    assert new == expected
+
+
+def compare_reward_payload(old, new):
+    adjusted = copy.deepcopy(new)
+    if "gameProfile" in old:
+        normalize_reward_profile(old["gameProfile"], adjusted["gameProfile"])
+        adjusted["gameProfile"] = old["gameProfile"]
+    assert adjusted == old
+
+
+def check_reward_fallback(before, after):
+    old = before["result"]
+    new = after["result"]
+    historical = "historical action policy"
+    assert old[historical] == new[historical]
+    assert old.keys() == new.keys()
+    overlay = {"profile": {"hash": REWARD_PROFILE, "runtimeHash": NEW_RUNTIME}, "scenarios": {}}
+    for name in (key for key in old if key != historical):
+        before_case, after_case = old[name], new[name]
+        old_digest, digest = before_case["digest"], after_case["digest"]
+        assert old_digest["profile"]["hash"] == NEW_PROFILE
+        assert digest["profile"]["runtimeHash"] == NEW_RUNTIME
+        identity = {key: digest["profile"][key] for key in ["hash", "runtimeHash"]}
+        assert identity == overlay["profile"]
+        assert len(before_case["checkpoints"]) == len(after_case["checkpoints"])
+        for prev, current in zip(before_case["checkpoints"], after_case["checkpoints"]):
+            assert prev["events"] == current["events"]
+            compare_reward_payload(prev["snapshot"], current["snapshot"])
+        expected_digest = copy.deepcopy(old_digest)
+        expected_digest["profile"].update(identity)
+        snapshots = {phase: digest[phase]["snapshot"] for phase in PHASES}
+        for phase, sha in snapshots.items():
+            expected_digest[phase]["snapshot"] = sha
+        expected_digest["save"] = digest["save"]
+        assert digest == expected_digest
+        overlay["scenarios"][name] = {"snapshots": snapshots, "save": digest["save"]}
+    assert before["saveCaptures"].keys() == after["saveCaptures"].keys()
+    for name, saves in before["saveCaptures"].items():
+        for mode, snapshot in saves.items():
+            old_save = copy.deepcopy(snapshot)
+            new_save = copy.deepcopy(after["saveCaptures"][name][mode])
+            for payload in [old_save, new_save]:
+                payload.pop("savedAt", None)
+            if name.startswith("js01-current-"):
+                compare_reward_payload(old_save["combatEntered"]["snapshot"], new_save["combatEntered"]["snapshot"])
+                new_save["combatEntered"]["snapshot"] = old_save["combatEntered"]["snapshot"]
+                compare_reward_payload(old_save, new_save)
+            else:
+                assert old_save == new_save
+    (output / "reward-fallback-identity.json").write_text(
+        json.dumps(overlay, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+    print("JS01 verified reward fallback profile delta, all raw checkpoints and save envelopes")
+
+
+if len(sys.argv) == 5:
+    check_reward_fallback(capture(before_root, "before-reward"), capture(repo, "after-reward"))
+    raise SystemExit(0)
 
 
 before = capture(before_root, "before")

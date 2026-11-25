@@ -50,3 +50,9 @@ All six local fast shards finished on the intermediate integration tree before t
 | One saved gear entitlement check | `a7e7f747a3c` tests a legacy point across save, claim and reload without applying the new progression cadence. Focused tests passed 12/12 and independent verification passed 40/40. |
 
 The five remaining failures await three [owner choices](recipient-effects-integration-decisions.md) covering temporary attribute pools (three checks), version-1 gear (one) and reward repetition (one). This intermediate run and the focused follow-ups provide diagnostic evidence. CI on subsequent heads was still running when this receipt was written.
+
+## Verify the 5% reward fallback identity
+
+Extract the same directories and package file from commit `f8539e3c9fb`. Run `python docs/qa/verify-js01-identity.py <before-source> . <output-dir> --reward-fallback`. The comparison asserts that only the two resolved lower-rank fallback settings (module and reward-content projections), the authored defaults artifact digest and the profile digest change. Runtime identity, complete combat checkpoints, event histories, RNG and save envelopes after identity normalization stay equal. The script emits the verified current digest fixture. The earlier registry and starter proof retains its original fixture and command for comparison against the appropriate source trees.
+
+The reward distribution suite retains its 35% first-door ceiling and 45-card diversity floor. A genuine prior Core save still uses 10%, retains stance coverage and returns the same cached offer after save and reload.
