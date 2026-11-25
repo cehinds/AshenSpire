@@ -50,9 +50,10 @@ test('two enemies, the far one needs Advance: each quote is the HP that enemy lo
   for (const hand of ['core.strike', 'greatswordSunderingHew']) {
     const { combat, card } = fixture({ hand });
     combat.rangeState.engagements['["enemy:e2","player:player"]'] = 1;
-    combat.enemies[1].block = 5; // the far enemy also holds Block, so the two numbers differ
+    combat.enemies[1].block = 1; // a partial block keeps both quotes meaningful under current damage scaling
     const near = quoteFor(combat, card, 'e1'), far = quoteFor(combat, card, 'e2');
     assert.equal(near.kind, 'hp'); assert.equal(far.kind, 'hp');
+    assert.ok(far.hits.some(hit => hit > 0), `${hand}: the far enemy still loses HP`);
     assert.notDeepEqual(near.hits, far.hits, `${hand}: the two enemies lose different HP`);
     assert.equal(near.stamina, null, 'the reference enemy costs what the face says: no cost quoted');
     const faceStamina = preview(combat, card.instanceId, 'e1').staminaCost || 0;

@@ -2312,8 +2312,8 @@
       "tier.boss"
     ],
     "attributePriority": [
-      "strength",
       "wisdom",
+      "strength",
       "intelligence",
       "dexterity",
       "constitution"
@@ -2420,6 +2420,9 @@
           "effect": "damage"
         }
       ]
+    },
+    "attributes": {
+      "wisdom": 2
     },
     "spFloor": 3
   },
@@ -2839,7 +2842,7 @@
       ]
     },
     "attributes": {
-      "wisdom": 2
+      "wisdom": 3
     }
   },
   {
@@ -4716,7 +4719,8 @@
         }
       ]
     },
-    "spFloor": 3
+    "spFloor": 3,
+    "mpFloor": 2
   },
   {
     "id": "quarryRam",
@@ -5851,7 +5855,8 @@
           "amount": 20
         }
       ]
-    }
+    },
+    "mpFloor": 2
   },
   {
     "id": "sixleggedHearse",

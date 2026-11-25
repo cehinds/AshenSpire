@@ -1,7 +1,7 @@
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { GenerateCard, GenerateFace, MaxCpOf } from '../src/model/cardGenerator.js';
+import { GenerateCard, GenerateFace, MaxCpOf, CARD_TYPES, SCHOOLS, CAMPS, RANGES, KEYWORDS, RIDER_EFFECTS } from '../src/model/cardGenerator.js';
 import { ScoreCard, CombatPower, RankOf } from '../src/model/combatPower.js';
 import { contentBundle } from '../src/content/index.js';
 import { validateCardTemplates } from '../src/model/validate/templates.js';
@@ -74,4 +74,108 @@ test('card generator: deterministic by seed, different seeds differ, unknown inp
   assert.throws(() => GenerateCard({ rarity: 'common' }), /rank or a combatPower/);
   assert.throws(() => GenerateCard({ rarity: 'common', rank: 11 }), /outside/);
   assert.equal(GenerateCard(t, { scoring }).name, GenerateCard(t).name);
+});
+
+// Owner, 2026-11-24: 1-3 effects, statuses, schools, costs, range, area, keyword and drawback, still at the exact target CP.
+const RIDER_STATUSES = Object.keys(scoring.statuses);
+const richTarget = (seed) => {
+  const at = (list) => list[seed % list.length];
+  return {
+    rarity: at(RARITIES), rank: seed % 8, seed: `rich.${seed}`,
+    camp: at(CAMPS), type: at(CARD_TYPES), school: at(SCHOOLS), range: at([...RANGES, undefined]),
+    sp: seed % 4, mp: (seed >> 2) % 4, effects: 1 + (seed % 3),
+    allowedEffects: RIDER_EFFECTS, allowedStatuses: RIDER_STATUSES,
+    keyword: at([undefined, ...KEYWORDS, undefined]), drawback: seed % 5 === 0, area: seed % 7 === 0,
+  };
+};
+
+test('card generator: multi-effect cards land exactly on their target combat power over many seeds', () => {
+  let riders = 0, twoRiders = 0;
+  for (let seed = 0; seed < 1500; seed++) {
+    const target = richTarget(seed);
+    const { face, cp, riders: kept } = GenerateFace(target);
+    assert.equal(CombatPower(ScoreCard(face).raw, target.rarity), cp, `seed ${seed}: ${JSON.stringify(target)}`);
+    assert.equal(RankOf(cp), target.rank, `seed ${seed}: rank`);
+    assert.ok(kept.length <= target.effects - 1, `seed ${seed}: at most effects-1 riders`);
+    riders += kept.length; if (kept.length === 2) twoRiders++;
+  }
+  assert.ok(riders > 500 && twoRiders > 100, `riders are kept on most cards (${riders} riders, ${twoRiders} cards with two)`);
+});
+
+test('card generator: an explicit rider list, school, range and area reach the card', () => {
+  const card = GenerateCard({ rarity: 'uncommon', rank: 4, seed: 11, camp: 'magic', type: 'attack', school: 'fire', riders: ['status:burn', 'draw'], sp: 1, mp: 1 });
+  assert.ok(card.tags.includes('school:fire') && card.tags.includes('damage:fire') && card.tags.includes('camp:spell'));
+  assert.deepEqual(card.effects.map((e) => e.op), ['damage', 'applyStatus', 'draw']);
+  assert.equal(card.effects[1].status, 'burn');
+  assert.equal(card.manaCost, 1);
+  const sweep = GenerateCard({ rarity: 'common', rank: 2, seed: 4, type: 'sweep', effects: 1, range: 'reach' });
+  assert.ok(sweep.tags.includes('targeting:area') && sweep.tags.includes('maneuver:sweep') && !sweep.tags.includes('range:reach'));
+  assert.equal(sweep.effects[0].target, 'allEnemies');
+  const shot = GenerateCard({ rarity: 'common', rank: 2, seed: 4, type: 'attack', effects: 1, range: 'reach' });
+  assert.ok(shot.tags.includes('range:reach'));
+  const hybrid = GenerateCard({ rarity: 'rare', rank: 5, seed: 9, camp: 'hybrid', school: 'frost', effects: 1 });
+  assert.equal(hybrid.magicShare, 0.5);
+  assert.ok(hybrid.tags.includes('camp:physical') && hybrid.tags.includes('school:frost'));
+  const martial = GenerateCard({ rarity: 'common', rank: 1, seed: 2, camp: 'martial', mp: 2, effects: 1 });
+  assert.equal(martial.manaCost, 0, 'a martial card costs no MP');
+});
+
+test('card generator: a target below the base raises costs and drops riders before any HP, and stays exact', () => {
+  const target = { rarity: 'common', combatPower: -10, seed: 5, sp: 0, effects: 3, riders: ['status:strength', 'heal'], keyword: 'retain' };
+  const { face, cp, riders, miss } = GenerateFace(target);
+  assert.equal(cp, -10);
+  assert.equal(miss, false);
+  assert.equal(CombatPower(ScoreCard(face).raw, 'common'), -10);
+  assert.ok(face.sp > 0, 'the SP cost was raised first');
+  assert.equal(face.loseHp, 0, 'no HP without a drawback');
+  assert.ok(riders.length < 2, 'a rider was dropped');
+  // Too low to reach even at the highest costs: the nearest combat power, marked as a miss, with HP only up to the cap.
+  const low = GenerateCard({ rarity: 'common', combatPower: -40, seed: 5, effects: 1, drawback: true });
+  assert.ok(low._cpMiss === -40, 'the card is marked as a miss');
+  assert.ok(low.effects.find((e) => e.op === 'loseHp').amount <= 6, 'HP cost stays under the cap');
+});
+
+test('card generator: no HP cost without a drawback, and never more than 6, over many seeds', () => {
+  for (let seed = 0; seed < 400; seed++) for (const type of CARD_TYPES) for (const drawback of [false, true]) {
+    const target = { rarity: RARITIES[seed % 3], rank: 0, seed: `hp.${seed}`, camp: CAMPS[seed % 3], type, effects: 1 + (seed % 3), allowedEffects: RIDER_EFFECTS, allowedStatuses: RIDER_STATUSES, drawback };
+    const { face, cp, wanted, miss } = GenerateFace(target);
+    if (!drawback) assert.equal(face.loseHp, 0, `seed ${seed} ${type}: HP without a drawback`);
+    assert.ok(face.loseHp <= 6, `seed ${seed} ${type}: HP ${face.loseHp} over the cap`);
+    if (!miss) assert.equal(cp, wanted);
+    else assert.ok(cp > wanted, 'a miss is only ever too strong');
+  }
+  // the reviewer's case: a common martial counter at Rank 0
+  for (let seed = 1; seed <= 40; seed++) assert.equal(GenerateFace({ rarity: 'common', rank: 0, seed, camp: 'martial', type: 'counter', effects: 1 }).face.loseHp, 0);
+});
+
+test('card generator: a magic counter or defend is a skill, a magic smash or sweep an attack', () => {
+  for (const [type, kind] of [['counter', 'skill'], ['defend', 'skill'], ['smash', 'attack'], ['sweep', 'attack']]) {
+    const card = GenerateCard({ rarity: 'common', rank: 2, seed: 3, camp: 'magic', type, effects: 1 });
+    assert.equal(card.type, kind, type);
+    assert.ok(card.tags.includes('maneuver:casting'));
+  }
+});
+
+test('card generator: multi-effect cards pass the card template validator and use only real ops', () => {
+  const coreCards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
+  const coreOps = new Set(coreCards.flatMap(card => card.effects.map(e => e.op)));
+  const problems = [];
+  const err = (path, msg) => problems.push({ path, msg });
+  for (let seed = 0; seed < 400; seed++) {
+    const card = GenerateCard(richTarget(seed));
+    for (const e of card.effects) assert.ok(coreOps.has(e.op), `${card.id}: op ${e.op}`);
+    if (card.faceTemplate) assert.ok(card.faceTemplate.length <= 3);
+    assert.ok(card.name.length > 0);
+    validateCardTemplates(card, `cards.${card.id}`, err);
+  }
+  assert.deepEqual(problems, []);
+});
+
+test('card generator: multi-effect output is deterministic by seed and differs across seeds', () => {
+  for (let seed = 0; seed < 60; seed++) assert.deepEqual(GenerateCard(richTarget(seed)), GenerateCard(structuredClone(richTarget(seed))));
+  const names = new Set(Array.from({ length: 60 }, (_, i) => JSON.stringify(GenerateCard({ ...richTarget(1), seed: `x${i}` }).effects)));
+  assert.ok(names.size > 10, `different seeds give different cards (${names.size})`);
+  assert.throws(() => GenerateCard({ rarity: 'common', rank: 1, effects: 4 }), /effects must be/);
+  assert.throws(() => GenerateCard({ rarity: 'common', rank: 1, school: 'water' }), /unknown school/);
+  assert.throws(() => GenerateCard({ rarity: 'common', rank: 1, type: 'dance' }), /type must be/);
 });

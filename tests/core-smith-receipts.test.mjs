@@ -1,11 +1,13 @@
 // Core 2 Smith receipts come from the Core pipeline (gear points, ratings, live card values), never from
 // the legacy itemUpgradeChanges card rows, and each shown number is what the next fight does.
+import { ResolveSmithFixtureProfile } from './helpers/smith-tier-profile.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
+import { gameDigest } from '../engine/kernel/gameConfig.js';
 import { createRunState, createCardInstance } from '../src/model/state.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
@@ -26,12 +28,17 @@ import { previewCard, dispatch } from '../src/engine/combat.js';
 // its rounding on most cards, so the author is pinned to 1 here, as the other suites that pin other rules' arithmetic do.
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
 author.modules = { ...author.modules, effects: { ...author.modules?.effects, physicalDamageMultiplier: 1, playerDamageMultiplier: 1, blockGainMultiplier: 1 } };
-const profile = resolveGameProfile(author);
+const profile = ResolveSmithFixtureProfile(author);
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // The Core Reaver starting deck (#2199) holds its Smash as the weapon art, not core.smash; these tests measure a plain
 // Smash card's smithed face, so the fixture adds one copy as a reward pick would.
-const fresh = () => {
-  const run = createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'unique-run' });
+const { hash: _profileHash, ...roundingSnapshot } = structuredClone(profile);
+// The damage-rounding scenarios use the original three-STR Greatsword.
+roundingSnapshot.content.gear.find(item => item.source?.id === 'greatsword').points = { strength: 3 };
+const roundingProfile = resolveGameProfile({ ...roundingSnapshot, hash: gameDigest(roundingSnapshot) });
+const roundingReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, roundingProfile)), roundingProfile);
+const fresh = ({ archivedSword = false } = {}) => {
+  const run = createRunState({ seed: 73, classId: 'reaver', registries: archivedSword ? roundingReg : reg, runId: 'unique-run' });
   if (!run.deck.some((card) => card.cardId === 'core.smash')) run.deck.push(createCardInstance('core.smash', false, () => 'smash-fixture'));
   return run;
 };
@@ -63,7 +70,7 @@ const liveDamage = (run, cardId) => {
 };
 
 test('Core weapon tier: receipt names the attribute and each card it changes, and a played card gains exactly that', () => {
-  const run = pastFirstTier(fresh()); visit(run);
+  const run = pastFirstTier(fresh({ archivedSword: true })); visit(run);
   const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
   assert.ok(candidate.core);
   assert.deepEqual(candidate.changes.map((row) => [row.label, row.after - row.before]), [['STR', 1]]);
@@ -328,7 +335,7 @@ test('serializing a Core Smith plan again (or a fresh plan of the same run) runs
 test('Smith card receipts read a Honed card at its lifetime plays (Whetstone Nick, playsEver 8)', async () => {
   const { coreSmithingCards } = await import('../src/model/smithingCore.js');
   const nick = (playsEver) => {
-    const run = fresh();
+    const run = fresh({ archivedSword: true });
     run.deck.push({ ...createCardInstance('core.whetstoneNick', false, () => `nick-${playsEver}`), ...(playsEver ? { playsEver } : {}) });
     const row = coreSmithingCards(reg, run, 'armament/greatsword', 1, 2).find((card) => card.cardId === 'core.whetstoneNick' && card.op === 'damage');
     assert.ok(row, 'the Smith lists Whetstone Nick among the cards the tier changes');

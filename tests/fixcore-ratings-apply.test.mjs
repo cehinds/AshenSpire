@@ -18,6 +18,7 @@ import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { SpellTraditionsActive } from '../src/model/spellTraditions.js';
 import { ChannelWeight } from '../src/model/damageChannels.js';
+import { ResolveSmithFixtureProfile } from './helpers/smith-tier-profile.mjs';
 import { legacyGearProfile } from './helpers/legacy-gear.mjs';
 
 // Owner, 2026-10-19: AR, DR, PR and Poise still apply to cards in Core, and spell effectiveness still uses PR.
@@ -26,7 +27,7 @@ import { legacyGearProfile } from './helpers/legacy-gear.mjs';
 // weapon's STR, a shield's or armor's DEX, a staff's INT and armor/shield Poise reach the ratings through the rows above). Every source is raised on its own, in a fresh
 // Core run, and the card value must move by the configured weight, in the preview and in live combat alike.
 // Differential attribute examples isolate one source, before Greatsword's second STR, armour-type grants and Sceptre's flat damage.
-const profile = legacyGearProfile(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
+const profile = legacyGearProfile(ResolveSmithFixtureProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const N = 3;
 

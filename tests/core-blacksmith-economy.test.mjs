@@ -215,18 +215,33 @@ test('blacksmith upgrade: insufficient cinders refuses and keeps both purses; st
   assert.throws(() => commitBlacksmithUpgrade(coreOut, run, quote), /changed/, 'the same quote commits once');
 });
 
-test('tier reach: the rest-site Smith stops at tier 2 and says it needs a Blacksmith; the Blacksmith reaches 3', () => {
-  const run = createRunState({ seed: 73, classId: 'reaver', registries: coreReg, runId: 'reach' });
-  run.itemUpgradeLevels = { 'armament/greatsword': 2 };
-  run.mapGraph = buildActMap(coreReg, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = Object.values(run.mapGraph.nodes).find((n) => n.type === 'shrine').id;
-  beginGameProfileRest(run, `1:${run.mapNodeId}`);
-  assert.throws(() => commitGameProfileRest(coreReg, run, 'smith', { itemRef: 'armament/greatsword' }), /Needs a Blacksmith|needs a Blacksmith/);
-  assert.equal(run.itemUpgradeLevels['armament/greatsword'], 2);
-  // A rest still reaches tier 2 from tier 1.
-  run.itemUpgradeLevels = { 'armament/greatsword': 1 };
-  assert.equal(commitGameProfileRest(coreReg, run, 'smith', { itemRef: 'armament/greatsword' }) !== undefined, true);
-  assert.equal(run.itemUpgradeLevels['armament/greatsword'], 2);
+test('tier reach: a real fixed tier stops at rest tier 2; Core Blacksmith can still sell upgrade 3', () => {
+  const atShrine = registries => {
+    const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'reach' });
+    run.itemUpgradeLevels = { 'armament/greatsword': 2 };
+    run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
+    run.mapNodeId = Object.values(run.mapGraph.nodes).find((n) => n.type === 'shrine').id;
+    beginGameProfileRest(run, `1:${run.mapNodeId}`);
+    return run;
+  };
+  const itemRef = 'armament/greatsword';
+  const current = atShrine(coreReg);
+  const beforeRefusal = structuredClone(current);
+  assert.equal(profile.modules.gear.statPoints.perRank, 0);
+  assert.throws(() => commitGameProfileRest(coreReg, current, 'smith', { itemRef }), /not an eligible Smithing candidate/);
+  assert.deepEqual(current, beforeRefusal, 'an empty tier does not spend the visit or move the item');
+
+  // Make the tier confer an actual benefit to isolate the rest-specific cap.
+  const tierProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+    gear: { statPoints: { ...profile.modules.gear.statPoints, perRank: 1 } },
+  } });
+  const tierRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, tierProfile)), tierProfile);
+  const run = atShrine(tierRegistries);
+  assert.throws(() => commitGameProfileRest(tierRegistries, run, 'smith', { itemRef }), /Needs a Blacksmith|needs a Blacksmith/);
+  assert.equal(run.itemUpgradeLevels[itemRef], 2);
+  run.itemUpgradeLevels = { [itemRef]: 1 };
+  assert.ok(commitGameProfileRest(tierRegistries, run, 'smith', { itemRef }));
+  assert.equal(run.itemUpgradeLevels[itemRef], 2);
   // W25: the Blacksmith's work is a pick of rolled options, priced by the item's upgrade number (2 fixed tiers held,
   // so this is upgrade 3: 1 stone and 360 cinders, owner 2026-11-17, tripled 2026-11-23), and it leaves the fixed tier ladder alone.
   const smith = smithRun(coreOut, { stones: 4, cinders: 400 });

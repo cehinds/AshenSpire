@@ -1,5 +1,6 @@
 // Owner ruling 2026-10-28: upgrading at the Blacksmith and the merchant works in a Core run. Both used to throw
 // "Configured equipment upgrades require a committed Smith rest service" because neither entered the 'smith' service.
+import { ResolveSmithFixtureProfile } from './helpers/smith-tier-profile.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -7,7 +8,7 @@ import { contentBundle } from '../src/content/index.js';
 import { shops as shippedShops } from '../src/content/shops.js';
 import { createRegistries } from '../src/model/registries.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
-import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfile } from '../src/model/gameProfile.js';
+import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { rederivePools } from '../src/model/levelup.js';
 import { createRng } from '../src/engine/rng.js';
@@ -16,7 +17,7 @@ import { blacksmithUpgradePlan, commitBlacksmithUpgrade } from '../src/model/bla
 import { commitMerchantSmithing, smithingPlan } from '../src/model/smithing.js';
 import '../src/engine/runCombat.js';
 
-const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
+const profile = ResolveSmithFixtureProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
 const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
 const coreReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);

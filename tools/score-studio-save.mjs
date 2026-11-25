@@ -10,6 +10,7 @@ import { ValidateScoringConfig } from '../src/model/activeScoring.js';
 export const DEFAULT_SCORING_PATH = 'content/source/scoring.json';
 export const DEFAULT_ART_LAYERS_PATH = 'content/source/cardArtLayers.json';
 export const DEFAULT_ITEM_ART_LAYERS_PATH = 'content/source/itemArtLayers.json';
+export const DEFAULT_CUSTOM_DECKS_PATH = 'content/source/studioDecks.json';
 
 function resolveRepoPath(rootDir, relPath, fallback) {
   const chosen = typeof relPath === 'string' && relPath.trim() ? relPath.trim() : fallback;
@@ -26,13 +27,15 @@ function resolveRepoPath(rootDir, relPath, fallback) {
   return { target, rel: rel.split(sep).join('/') };
 }
 
-export function readStudioConfig(rootDir, { scoringPath, artLayersPath, itemArtLayersPath } = {}) {
+export function readStudioConfig(rootDir, { scoringPath, artLayersPath, itemArtLayersPath, customDecksPath } = {}) {
   const sc = resolveRepoPath(rootDir, scoringPath, DEFAULT_SCORING_PATH);
   const al = resolveRepoPath(rootDir, artLayersPath, DEFAULT_ART_LAYERS_PATH);
   const il = resolveRepoPath(rootDir, itemArtLayersPath, DEFAULT_ITEM_ART_LAYERS_PATH);
+  const cd = resolveRepoPath(rootDir, customDecksPath, DEFAULT_CUSTOM_DECKS_PATH);
   const scoringExists = existsSync(sc.target);
   const artLayersExists = existsSync(al.target);
   const itemArtLayersExists = existsSync(il.target);
+  const customDecksExists = existsSync(cd.target);
   return {
     scoringPath: sc.rel,
     defaultScoringPath: DEFAULT_SCORING_PATH,
@@ -46,6 +49,10 @@ export function readStudioConfig(rootDir, { scoringPath, artLayersPath, itemArtL
     defaultItemArtLayersPath: DEFAULT_ITEM_ART_LAYERS_PATH,
     itemArtLayersExists,
     itemArtLayers: itemArtLayersExists ? JSON.parse(readFileSync(il.target, 'utf8')) : null,
+    customDecksPath: cd.rel,
+    defaultCustomDecksPath: DEFAULT_CUSTOM_DECKS_PATH,
+    customDecksExists,
+    customDecks: customDecksExists ? JSON.parse(readFileSync(cd.target, 'utf8')) : null,
   };
 }
 
@@ -97,4 +104,20 @@ export function saveStudioItemArtLayers(rootDir, { path: relPath, itemArtLayers,
     rebuilt.push('tools/content-build.mjs');
   }
   return { path: rel, layerCount: itemArtLayers.layers.length, rebuilt };
+}
+
+export function saveStudioDecks(rootDir, { path: relPath, bundle } = {}) {
+  if (!bundle || typeof bundle !== 'object') {
+    throw new Error('Studio deck/list bundle must be a JSON object.');
+  }
+  const { target, rel } = resolveRepoPath(rootDir, relPath, DEFAULT_CUSTOM_DECKS_PATH);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, JSON.stringify(bundle, null, 2) + '\n', 'utf8');
+  return {
+    path: rel,
+    cardCount: Array.isArray(bundle.cards) ? bundle.cards.length : 0,
+    itemCount: Array.isArray(bundle.items) ? bundle.items.length : 0,
+    deckCount: Array.isArray(bundle.customDecks) ? bundle.customDecks.length : 0,
+    classCount: Array.isArray(bundle.customClasses) ? bundle.customClasses.length : 0,
+  };
 }

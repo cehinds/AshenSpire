@@ -3,6 +3,8 @@ import * as renderer from '../src/ui/recipientEffectSprites.js';
 import * as model from '../src/model/recipientEffects.js';
 import { SETTINGS } from '../src/content/recipientEffectSettings.js';
 import { ReadRecipientEffectTiming, ValidateRecipientEffectTiming } from '../src/model/recipientEffectTiming.js';
+import { DecorateRecipientEffects } from '../src/ui/recipientEffectEvents.js';
+import { RecipientEffectCategory } from '../src/model/recipientEffectCategoryQueue.js';
 import { RECIPIENT_EFFECT_ATLAS } from '../src/content/recipientEffectAtlas.js';
 import { setBuiltInSource, assetUrl } from '../src/ui/assetmap.js';
 const stage=document.querySelector('#stage'),layer=document.querySelector('#effect-layer'),scene=stage.querySelector('.scene');
@@ -30,6 +32,19 @@ const fieldIds = {
   overlapMs: 'timing-overlap',
   opacity: 'timing-opacity',
 };
+const categoryLabels = {
+  castingMovement: 'Casting and movement',
+  attackImpacts: 'Attack impacts',
+  defenseReactions: 'Defense and reactions',
+  buffsStatuses: 'Buffs and statuses',
+};
+const categoryFieldIds = {
+  staggerMs: 'category-stagger',
+  overlapMs: 'category-overlap',
+  maxGlobal: 'category-global',
+  maxPerActor: 'category-actor',
+};
+let displayedOrder = '';
 const singleIds = ['action', 'camp', 'school', 'range', 'invoker', 'recipient', 'outcome'];
 let saved = { revision: null, timing: ReadRecipientEffectTiming() };
 let timing = saved.timing;
@@ -75,16 +90,42 @@ function singleEvent(sourceId, targetId, outcome) {
   return events[outcome] || { ...target, type: 'statusApplied', status: statuses[outcome] || outcome, stacks: 2 };
 }
 
+function contactRecipes(action, event) {
+  const marker = { type: 'cardPlayed', sourceId: action.sourceId, cardId: 'preview' };
+  const [, result] = DecorateRecipientEffects([marker, event], { resolveCard: () => action });
+  return result.recipientEffects;
+}
+
+function stressRecipes() {
+  const actors = ['player', 'enemy-1', 'enemy-2'];
+  const actionKey = 'preview-stress';
+  const cast = actors.map(sourceId => {
+    const action = { sourceId, tags: ['camp:spell', 'maneuver:casting', 'range:reach', 'school:fire'] };
+    return model.RecipientWindupFor(action, singleEvent(sourceId, 'enemy-3', 'hit'));
+  }).filter(Boolean);
+  const attack = { sourceId: 'player', tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'school:fire'] };
+  const results = [
+    ['enemy-1', 'hit'], ['enemy-1', 'hit'], ['enemy-2', 'hit'], ['enemy-3', 'hit'],
+    ['enemy-1', 'ward-shatter'], ['enemy-2', 'poise-break'], ['enemy-3', 'evade'],
+    ['enemy-1', 'poison'], ['player', 'wisdom'], ['enemy-2', 'heal'], ['enemy-3', 'blight'],
+  ].flatMap(([target, outcome]) => {
+    const event = singleEvent(attack.sourceId, target, outcome);
+    return outcome === 'heal' ? contactRecipes(attack, event) : model.RecipientEffectsForEvent(attack, event);
+  });
+  return [...cast, ...results].map(recipe => ({ ...recipe, actionKey }));
+}
+
 function reviewRecipes() {
   const sourceId = control('invoker').value;
   const targetId = control('recipient').value;
   const demo = control('demo').value;
+  if (demo === 'stress') return stressRecipes();
   if (demo === 'single') {
     const action = selectedAction(sourceId);
     const outcome = control('outcome').value;
     const event = singleEvent(sourceId, targetId, outcome);
     const actionKey = 'preview-single-action';
-    let clips = model.RecipientEffectsForEvent(action, event).map(recipe => ({ ...recipe, actionKey }));
+    let clips = contactRecipes(action, event).map(recipe => ({ ...recipe, actionKey }));
     if (control('action').value === 'sweep' && outcome === 'hit' && targetId !== 'player') {
       clips = clips.map(recipe => ({ ...recipe, mount: 'group', targetType: 'aoe', targetIds: ['enemy-1', 'enemy-2', 'enemy-3'], groupKey: 'preview-sweep' }));
     }
@@ -126,10 +167,17 @@ function timelineNode(entry) {
   const row = document.createElement('li');
   row.className = 'timeline-row';
   const shape = recipe.shape || recipe.phase;
-  Object.assign(row.dataset, { shape, phase: recipe.phase || 'contact', start, end });
+  const category = recipe.category || '';
+  Object.assign(row.dataset, { shape, category, phase: recipe.phase || 'contact', start, end });
   const label = document.createElement('span');
   label.className = 'clip-label';
   label.textContent = [shape.replaceAll('-', ' '), ...ids].join(' · ');
+  if (categoryLabels[category]) {
+    const group = document.createElement('span');
+    group.className = 'clip-category';
+    group.textContent = categoryLabels[category];
+    label.prepend(group);
+  }
   const range = document.createElement('span');
   range.className = 'clip-time';
   range.textContent = start + '–' + end + ' ms';
@@ -188,7 +236,7 @@ async function refresh({ preserveTime = false } = {}) {
   pause();
   const request = ++refreshVersion;
   const time = reviewTime;
-  const recipes = reviewRecipes();
+  const recipes = reviewRecipes().map(recipe => ({ ...recipe, category: RecipientEffectCategory(recipe) }));
   const names = artMode(!control('fallback').checked);
   if (!control('fallback').checked) await Promise.all(recipes.map(recipe => renderer.PrewarmRecipientEffect(recipe.phase === 'delivery' ? { ...recipe, shape: recipe.impactShape } : recipe)));
   if (request !== refreshVersion) return;
@@ -224,6 +272,10 @@ function status(message, state) {
   note.dataset.state = state;
   note.textContent = message;
   for (const [field, id] of Object.entries(fieldIds)) control(id).disabled = busy || (field === 'overlapMs' && timing.maxConcurrent === 1);
+  control('category-enabled').disabled = busy;
+  const categoryFields = control('category-fields');
+  for (const input of categoryFields.querySelectorAll('input')) input.disabled = busy;
+  for (const button of categoryFields.querySelectorAll('button')) button.disabled = busy || button.dataset.edge === 'true';
   control('save-timing').disabled = busy || invalid !== '' || !saved.revision || !dirty();
   control('reset-timing').disabled = busy;
   control('download-timing').disabled = invalid !== '';
@@ -240,19 +292,81 @@ function showTimingStatus() {
   else status('Saved to ' + saved.file, 'saved');
 }
 
+function renderCategoryRows(order) {
+  const list = control('timing-categories');
+  const active = document.activeElement;
+  const rows = order.map((category, index) => {
+    const name = categoryLabels[category];
+    const row = document.createElement('li');
+    row.dataset.category = category;
+    const label = document.createElement('label');
+    label.textContent = name;
+    const cap = document.createElement('input');
+    cap.id = 'category-cap-' + category;
+    cap.type = 'number';
+    cap.min = '1';
+    cap.max = '12';
+    cap.step = '1';
+    cap.setAttribute('aria-label', name + ' clip limit');
+    cap.addEventListener('input', editTiming);
+    label.append(cap);
+    row.append(label);
+    for (const [direction, symbol, offset] of [['up', '↑', -1], ['down', '↓', 1]]) {
+      const button = document.createElement('button');
+      const next = index + offset;
+      button.type = 'button';
+      button.textContent = symbol;
+      button.setAttribute('aria-label', 'Move ' + name.toLowerCase() + ' ' + direction);
+      Object.assign(button.dataset, { category, direction, edge: String(next < 0 || next >= order.length) });
+      button.addEventListener('click', () => {
+        const reordered = [...timing.categoryQueues.order];
+        [reordered[index], reordered[next]] = [reordered[next], reordered[index]];
+        editTiming(null, reordered);
+      });
+      row.append(button);
+    }
+    return row;
+  });
+  list.replaceChildren(...rows);
+  if (active?.dataset.direction) {
+    const buttons = [...list.querySelectorAll('button')].filter(button =>
+      button.dataset.category === active.dataset.category && button.dataset.edge === 'false');
+    (buttons.find(button => button.dataset.direction === active.dataset.direction) || buttons[0])?.focus();
+  }
+}
+
 function syncFields() {
   for (const [key, id] of Object.entries(fieldIds)) control(id).value = String(timing[key]);
+  const queue = timing.categoryQueues;
+  control('category-enabled').checked = queue.enabled;
+  control('category-fields').hidden = !queue.enabled;
+  const legacy = control('legacy-timing');
+  legacy.hidden = queue.enabled;
+  if (!queue.enabled) legacy.open = true;
+  if (displayedOrder !== queue.order.join(',')) {
+    displayedOrder = queue.order.join(',');
+    renderCategoryRows(queue.order);
+  }
+  for (const [key, id] of Object.entries(categoryFieldIds)) control(id).value = String(queue[key]);
+  for (const [category, cap] of Object.entries(queue.maxPerCategory)) control('category-cap-' + category).value = String(cap);
   control('opacity-value').value = Math.round(timing.opacity * 100) + '%';
 }
 
-async function editTiming(event) {
+async function editTiming(event, order = timing.categoryQueues.order) {
   const input = Object.fromEntries(Object.entries(fieldIds).map(([field, id]) => [
     field,
     field === 'scope' ? control(id).value : control(id).valueAsNumber,
   ]));
   if (input.maxConcurrent === 1) input.overlapMs = 0;
-  if (event.target.id === fieldIds.overlapMs && input.overlapMs > 0) input.gapMs = 0;
-  if (event.target.id === fieldIds.gapMs && input.gapMs > 0) input.overlapMs = 0;
+  if (event?.target.id === fieldIds.overlapMs && input.overlapMs > 0) input.gapMs = 0;
+  if (event?.target.id === fieldIds.gapMs && input.gapMs > 0) input.overlapMs = 0;
+  input.categoryQueues = {
+    enabled: control('category-enabled').checked,
+    order,
+    ...Object.fromEntries(Object.entries(categoryFieldIds).map(([field, id]) => [field, control(id).valueAsNumber])),
+    maxPerCategory: Object.fromEntries(Object.keys(categoryLabels).map(category =>
+      [category, control('category-cap-' + category).valueAsNumber])),
+  };
   try {
     timing = ValidateRecipientEffectTiming(input);
     invalid = '';
@@ -322,7 +436,8 @@ function setDemo() { control('single-controls').hidden = control('demo').value !
 
 async function configure({ timing: override, ...values } = {}) {
   if (override !== undefined) {
-    timing = ValidateRecipientEffectTiming(override);
+    const queue = override.categoryQueues ?? { ...timing.categoryQueues, enabled: false };
+    timing = ValidateRecipientEffectTiming({ ...override, categoryQueues: queue });
     invalid = '';
     syncFields();
     showTimingStatus();
@@ -340,7 +455,7 @@ async function configure({ timing: override, ...values } = {}) {
 }
 
 const scheduledRecipes = () => plan.map(({ recipe, delayMs }) => ({ ...recipe, delayMs }));
-for (const id of Object.values(fieldIds)) control(id).addEventListener('input', editTiming);
+for (const id of [...Object.values(fieldIds), ...Object.values(categoryFieldIds), 'category-enabled']) control(id).addEventListener('input', editTiming);
 for (const id of [...singleIds, 'fallback']) control(id).addEventListener('change', () => refresh());
 control('demo').addEventListener('change', () => { setDemo(); refresh(); });
 control('scrub').addEventListener('input', event => { pause(); scrub(event.target.value); });
@@ -358,6 +473,6 @@ window.recipientRuntimePreview = {
   get recipient() { return control('recipient').value; },
   get recipes() { return scheduledRecipes(); },
   get durationMs() { return reviewEnd; },
-  get timing() { return { ...timing }; },
+  get timing() { return structuredClone(timing); },
   get plan() { return structuredClone(plan); },
 };

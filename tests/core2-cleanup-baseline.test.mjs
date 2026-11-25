@@ -102,8 +102,11 @@ const previousFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanu
 // with this tree; the historical action-policy lane keeps the original pin.
 const currentFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-7dff4b03.json', import.meta.url), 'utf8'));
 const currentIdentity = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-reward-fallback-identity.json', import.meta.url), 'utf8'));
-// The current runtime registry and the birth-only Rank 1 art change the
-// profile and snapshots. Keep the independently archived behavior digests.
+const archivedCurrentSave = readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url));
+const archivedCurrentGear = JSON.parse(gunzipSync(archivedCurrentSave)).gameProfile;
+// The compiled runtime and profile commitments move through registry and
+// startup changes. Gear inputs stay pinned below. Only identity leaves are
+// advanced here; the independent 7dff4b03 behavior digests remain the oracle.
 const expectedScenarios = { ...fixture.scenarios };
 for (const [name, original] of Object.entries(currentFixture.scenarios)) {
   const { snapshots, save } = currentIdentity.scenarios[name];
@@ -152,7 +155,10 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
     assert.equal(profile.hash, historicalHash);
   } else {
     profile = plain(api.resolveGameProfile('default'));
-    // JS01 pins combat before equipment type effects; current rules are covered by the gear suites.
+    // The current lanes replay their archived gear inputs. Modern equipment
+    // tuning and typed equipment effects are covered by the gear suites.
+    profile.modules.gear.statPoints = plain(archivedCurrentGear.modules.gear.statPoints);
+    profile.content.gear = plain(archivedCurrentGear.content.gear);
     delete profile.modules.gear.typeEffectsVersion;
     const { hash: _hash, ...payload } = profile;
     profile.hash = `sha256:${hashJson(payload)}`;
@@ -364,6 +370,7 @@ const scenarios = [
 
 test('the original historical profile fixture keeps its provenance', () => {
   assert.equal(digest(historicalBytes), fixture.historicalProfileSha256);
+  assert.equal(digest(archivedCurrentSave), 'fb2cdb88f5072d509738716968fed042977e75d2cc8c36eb2af17543a00a14e5');
   assert.equal(digest(historicalDerivedStatsBytes), '236c8e3c474ca126884f5edf1acaa8b57e9d02b8c00c9bea5e4d4a030bc7a4a5');
 });
 

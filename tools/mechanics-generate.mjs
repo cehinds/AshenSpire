@@ -63,8 +63,9 @@ function listJs(dir) {
   return out;
 }
 
-// combatPower.js scores cards (it names statuses and traits as weight keys); it does not run them, so it is never the "Lives in" reader.
-const NOT_READERS = new Set(['src/model/combatPower.js']);
+// combatPower.js scores cards (it names statuses and traits as weight keys); the card generator and pool planner write tags onto
+// generated cards. None of them runs a mechanic, so none is ever the "Lives in" reader.
+const NOT_READERS = new Set(['src/model/combatPower.js', 'src/model/cardGenerator.js', 'src/model/cardPoolPlan.js', 'src/model/itemGenerator.js']);
 const sources = ['src/engine', 'src/model'].flatMap(listJs).filter(file => !NOT_READERS.has(file)).map(file => ({ file, lines: read(file).split('\n') }));
 const isComment = line => /^\s*(\/\/|\*|\/\*)/.test(line);
 function findReader(patterns) {

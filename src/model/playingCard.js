@@ -43,6 +43,7 @@ import { resolveCard } from './registries.js';
 import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
 import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
+import { ParseUpgradeTag, UpgradeTagLabel } from './combatPower.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 
 /** A stance as it reads in a condition: "Idle", "in Defense", "in Prepared". */
@@ -619,13 +620,35 @@ export function playingCardModel(registries, ref, { preview = null, definition =
       inheritedBy.set(id, sources);
     }
   }
-  const resolved = liveTagRows.length
+  const baseResolved = liveTagRows.length
     ? service.resolve([...new Set(liveTagRows.flatMap((row) => row.tags))])
     : def.cardTags != null
       ? service.resolve(def.cardTags)
       : def.traitValues && Array.isArray(def.tags)
         ? service.resolve(def.tags)
         : service.tagsOf('card', def);
+  const resolvedIds = new Set(baseResolved.map((tag) => tag.id));
+  const upgradeTagRows = (Array.isArray(def.tags) ? def.tags : [])
+    .filter((id) => typeof id === 'string' && id.startsWith('upgrade:') && !resolvedIds.has(id))
+    .map((id) => {
+      const parsed = ParseUpgradeTag(id);
+      if (!parsed) return null;
+      const label = UpgradeTagLabel(id);
+      const blurb = parsed.family === 'efficient'
+        ? `${label}: reduced SP/MP cost (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}); doubles efficiency CP surcharge per stack.`
+        : parsed.family === 'improved'
+          ? `${label}: strengthened effect by +10% compounding per stack (×${Math.pow(1.1, parsed.stacks).toFixed(2)}).`
+          : parsed.family === 'refined'
+            ? `${label}: softened or removed card drawback (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}).`
+            : parsed.family === 'tempered'
+              ? `${label}: forged combat form or defensive structure (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}).`
+              : parsed.family === 'purified'
+                ? `${label}: added or strengthened healing, Ward, or cleansing (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}).`
+                : `${label}: card upgrade tier (${parsed.stacks} stack${parsed.stacks === 1 ? '' : 's'}).`;
+      return { id, domain: 'upgrade', label, glyph: '', color: '', blurb };
+    })
+    .filter(Boolean);
+  const resolved = [...baseResolved, ...upgradeTagRows];
   // Keep legacy schools for compatibility, but do not print Blood/Heavy twice
   // when the categorized theme/technique is the same visible word.
   const categorized = new Set(

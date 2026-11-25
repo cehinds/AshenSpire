@@ -14,10 +14,11 @@ import { CategoryChangePlan, CommitCategoryChange, CanChangeCategory } from '../
 import { KeepableProperties, KeepLimit, NewPropertyMax, CategoryChoices } from '../src/model/smithCategory.js';
 import { ItemCategory, ItemFamily, ItemPropertyIds, ItemUpgradeCount } from '../src/model/itemPicks.js';
 import { ITEM_PROPERTIES } from '../src/content/itemProperties.js';
-import { gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
+import { gameProfileEquipmentReceipt, gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
 import '../src/engine/runCombat.js';
 
-const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
+const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
+const profile = resolveGameProfile(author);
 const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
 const registries = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
 const GS = 'armament/greatsword';
@@ -113,15 +114,38 @@ test('a change refused for a short purse keeps both purses; an old save loads an
   assert.equal(ItemCategory(old, GS), 'greatsword');
 });
 
-// Owner, 2026-11-17 (gear `statPoints`): a Smith tier is attribute points on the item, never AR or PR, so a category
+// With tier attribute grants enabled, a Smith tier is attribute points on the item, never AR or PR, so a category
 // change moves no tier bonus between AR and magic damage; the ratings read the same either side of the change.
 test('a weapon\'s tier bonus stays attribute points, not AR or magic damage, when its category changes', () => {
-  const run = smithRun();
-  const untiered = gameProfileRatingReceipt(registries, run).totals;
+  const custom = resolveGameProfile({ ...author, modules: { ...author.modules,
+    gear: { ...author.modules.gear, statPoints: { ...profile.modules.gear.statPoints, perRank: 1 } },
+  } });
+  const tierRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, custom)), custom);
+  const run = createRunState({ seed: 31, classId: 'reaver', registries: tierRegistries });
+  const untiered = gameProfileRatingReceipt(tierRegistries, run).totals;
+  const source = () => gameProfileEquipmentReceipt(tierRegistries, run).sources.find(row => row.sourceId === GS).resolved;
+  const baseStrength = source().points.strength;
   run.itemUpgradeLevels = { [GS]: 2 };
-  const martial = gameProfileRatingReceipt(registries, run).totals;
+  const martial = gameProfileRatingReceipt(tierRegistries, run).totals;
+  assert.equal(source().points.strength, baseStrength + 2);
+  assert.equal(source().points.ar, 0, 'no flat AR is assigned to the weapon');
   run.itemCategories = { [GS]: 'staff' };
-  const magic = gameProfileRatingReceipt(registries, run).totals;
-  assert.ok(martial.ar > untiered.ar, 'the tier raises the greatsword STR, so AR');
+  const magic = gameProfileRatingReceipt(tierRegistries, run).totals;
+  assert.equal(source().points.strength, baseStrength + 2, 'both tier points stay on the weapon');
+  assert.equal(martial.ar - untiered.ar, 2, 'two Strength points add exactly two AR');
   assert.deepEqual([magic.ar, magic.pr], [martial.ar, martial.pr], 'a category change moves no tier bonus');
+});
+
+test('Core category changes leave the current tier attribute budget unchanged', () => {
+  const run = smithRun();
+  assert.equal(profile.modules.gear.statPoints.perRank, 0);
+  const source = () => gameProfileEquipmentReceipt(registries, run).sources.find(row => row.sourceId === GS).resolved;
+  const untiered = source();
+  const rating = gameProfileRatingReceipt(registries, run).totals;
+  run.itemUpgradeLevels = { [GS]: 2 };
+  assert.equal(source().rank, untiered.rank + 2);
+  assert.deepEqual(source().points, untiered.points);
+  run.itemCategories = { [GS]: 'staff' };
+  assert.deepEqual(source().points, untiered.points);
+  assert.deepEqual(gameProfileRatingReceipt(registries, run).totals, rating);
 });

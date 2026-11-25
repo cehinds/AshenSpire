@@ -148,13 +148,14 @@ test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (b
   const { planCardUpgrade, commitCardUpgrade } = await import('../src/model/cardUpgradeService.js');
   const { canUpgrade } = await import('../src/model/cardUpgradeLimits.js');
   const { paidUpgradeCount, upgradeCount, upgradeStepsProblems } = await import('../src/model/cardUpgrade.js');
-  const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'w25-cap', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const { registries } = await import('./helpers/fixcore-combat-rules.mjs');
+  const run = createRunState({ registries, classId: 'reaver', seed: 17, runId: 'w25-cap', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.smithingStones = 99;
   const xp = Array.from({ length: 8 }, (_, l) => xpToNext(registries, 'weapon', l)).reduce((a, b) => a + b, 0);
   awardSkillXp(registries, run, 'item:blade', xp, { queueRewards: false, queueRankUps: coreCardRanks(run) });
   // Its CP budget leaves eligible paid and bonus steps across all six ranks.
   const card = run.deck.find((c) => c.cardId === 'core.strike');
-  card.cardId = 'core.stunningBlow';
+  card.cardId = 'core.smash';
   const fill = () => {
     while (paidUpgradeCount(card) < UpgradeSlots(run, card)) {
       const quote = planCardUpgrade(run, registries, card.instanceId, { choices: 3 });
@@ -173,7 +174,8 @@ test('five skill rank-ups: a Rank 5 card still fills its 6 slots and ranks up (b
   assert.equal(UpgradeSlots(run, card), 6);
   assert.equal(paidUpgradeCount(card), 5);
   assert.equal(upgradeCount(card), 10, 'five paid steps and five bonus steps');
-  assert.equal(canUpgrade(registries, run, card).ok, true, 'the sixth slot can still be bought');
+  const sixth = canUpgrade(registries, run, card);
+  assert.equal(sixth.ok, true, sixth.reason || 'the sixth slot can still be bought');
   fill();
   assert.equal(paidUpgradeCount(card), 6);
   assert.equal(RankUpBlock(run, card), '');

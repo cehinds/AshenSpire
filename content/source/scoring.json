@@ -3732,59 +3732,271 @@
     },
     "conditionFactor": 0.65,
     "gearFields": {
-      "statPoise": { "label": "Poise bonus", "weight": 2, "why": "+1 Poise stat delays Stagger every fight." },
-      "statStr": { "label": "STR bonus", "weight": 2, "why": "+1 STR adds physical attack power." },
-      "statDex": { "label": "DEX bonus", "weight": 1.5, "why": "+1 DEX adds finesse and defense." },
-      "statCon": { "label": "CON bonus", "weight": 2, "why": "+1 CON adds durability." },
-      "statInt": { "label": "INT bonus", "weight": 2, "why": "+1 INT adds arcane power." },
-      "statWis": { "label": "WIS bonus", "weight": 2, "why": "+1 WIS adds divine power and poise." },
-      "thorns": { "label": "Thorns", "weight": 2, "why": "Retaliates on incoming melee hits." },
-      "thornsFire": { "label": "Fire Thorns", "weight": 2, "why": "Blocked hits deal Fire damage back." },
-      "twoHanded": { "label": "Two-handed", "weight": -2, "why": "Occupies both hands (forfeits off-hand slot)." },
-      "vulnMelee": { "label": "Vulnerable to melee", "weight": -4, "why": "Takes extra melee physical damage." },
-      "firstTurnSp": { "label": "First-turn SP", "weight": 4, "why": "+/-1 SP on turn 1 (Encumbered is -4)." },
-      "gainCounter": { "label": "Counter gain", "weight": 2.5, "why": "Extra Counter stack on every Counter gain." },
-      "gainEvade": { "label": "Evade gain", "weight": 4, "why": "Extra Evade stack on every Evade gain." },
-      "resistFire": { "label": "Resist Fire", "weight": 2, "why": "25% less Fire damage." },
-      "resistFrost": { "label": "Resist Frost", "weight": 2, "why": "25% less Frost damage." },
-      "resistLightning": { "label": "Resist Lightning", "weight": 2, "why": "25% less Lightning damage." },
-      "resistBlight": { "label": "Resist Blight", "weight": 2, "why": "25% less Blight damage." },
-      "resistDark": { "label": "Resist Dark", "weight": 2, "why": "25% less Dark damage." },
-      "cardDamage": { "label": "Card damage", "weight": 2, "why": "+1 damage per matching card played across 3 rounds." },
-      "cardPoise": { "label": "Card Poise damage", "weight": 1.5, "why": "+1 Poise damage per matching card." },
-      "cardBlock": { "label": "Card Block", "weight": 1.5, "why": "+1 Block per matching Block/Defend card." },
-      "cardPierce": { "label": "Pierce", "weight": 1.5, "why": "Bypasses Block on matching attacks." },
-      "cardIgnoreBlock": { "label": "Ignore Block", "weight": 2, "why": "Ignores Block regardless of Stone Skin." },
-      "cardMultiHit": { "label": "Multi-hit", "weight": 5, "why": "Repeats matching attacks an extra time." },
-      "cardReach": { "label": "Reach", "weight": 2, "why": "Matching attacks strike the back row without tax." },
-      "cardCost": { "label": "Card SP cost", "weight": -6, "why": "Changes SP cost on matching cards." },
-      "cardMana": { "label": "Card MP cost", "weight": -5, "why": "Changes MP cost on matching spells." },
-      "cardAddDex": { "label": "DEX to damage", "weight": 3, "why": "Adds DEX to matching physical attacks." },
-      "cardAddStr": { "label": "STR again", "weight": 3, "why": "Adds STR a second time to matching attacks." },
-      "cardRetain": { "label": "Retain", "weight": 2, "why": "Matching cards stay in hand at turn end." },
-      "cardEscalate": { "label": "Escalating", "weight": -2, "why": "Matching cards cost +1 SP each repeat." },
-      "cardHeal": { "label": "Card Healing", "weight": 2.5, "why": "+1 HP healed on matching healing spells." },
-      "hitBleed": { "label": "Bleed on hit", "weight": 2, "why": "Matching hits apply Bleed." },
-      "hitBurn": { "label": "Burn on hit", "weight": 3, "why": "Matching hits apply Burn." },
-      "hitWeak": { "label": "Weak on hit", "weight": 2, "why": "Matching hits apply Weak." },
-      "hitVulnerable": { "label": "Vulnerable on hit", "weight": 3, "why": "Matching hits apply Vulnerable." },
-      "hitShock": { "label": "Shock on hit", "weight": 2.5, "why": "Matching hits apply Shock." },
-      "hitFrost": { "label": "Frost on hit", "weight": 2.5, "why": "Matching hits apply Frost." },
-      "hitFireVulnerable": { "label": "Fire Vulnerable on hit", "weight": 2.5, "why": "Matching hits apply Fire Vulnerable." },
-      "hitBlight": { "label": "Blight on hit", "weight": 2.5, "why": "Matching hits apply Crimson Blight." },
-      "hitRemoveRetreat": { "label": "Remove Retreat", "weight": 2, "why": "Matching hits pull Retreat stacks off targets." },
-      "hitRetreat": { "label": "Push to back row", "weight": 2, "why": "Matching hits push the target back with Retreat." },
-      "turnBlock": { "label": "Turn Block", "weight": 1.5, "why": "Block granted each turn (over 3 rounds)." },
-      "turnCounter": { "label": "Turn Counter", "weight": 3, "why": "Counter stack granted each turn." },
-      "turnRetreat": { "label": "Turn Retreat", "weight": 2, "why": "Retreat stack granted each turn." },
-      "turnHeal": { "label": "Turn Heal", "weight": 3, "why": "HP healed each turn." },
-      "turnEvade": { "label": "Turn Evade", "weight": 5, "why": "Evade stack granted each turn." },
-      "turnWard": { "label": "Turn Ward", "weight": 3, "why": "Ward stack granted each turn." },
-      "turnReach": { "label": "Turn Reach", "weight": 2, "why": "Reach stack granted each turn." },
-      "playEvade": { "label": "Evade on play", "weight": 4, "why": "Playing a matching card grants Evade." },
-      "playWard": { "label": "Ward on play", "weight": 2.5, "why": "Playing a matching card grants Ward." },
-      "playDraw": { "label": "Draw on play", "weight": 3.5, "why": "Playing a matching card draws." },
-      "playStrength": { "label": "STR this turn", "weight": 2.5, "why": "Playing a matching card grants temporary STR." }
+      "statPoise": {
+        "label": "Poise bonus",
+        "weight": 2,
+        "why": "+1 Poise stat delays Stagger every fight."
+      },
+      "statStr": {
+        "label": "STR bonus",
+        "weight": 5,
+        "why": "+1 STR permanently boosts physical damage across every attack."
+      },
+      "statDex": {
+        "label": "DEX bonus",
+        "weight": 8,
+        "why": "+1 DEX grants +1 max SP every turn (budgeted around ~6 SP max)."
+      },
+      "statCon": {
+        "label": "CON bonus",
+        "weight": 5,
+        "why": "+1 CON permanently boosts max HP and Poise."
+      },
+      "statInt": {
+        "label": "INT bonus",
+        "weight": 7,
+        "why": "+1 INT grants +1 hand size and arcane power."
+      },
+      "statWis": {
+        "label": "WIS bonus",
+        "weight": 7,
+        "why": "+1 WIS grants +1 max MP and +1 Poise (budgeted around ~8 MP max)."
+      },
+      "thorns": {
+        "label": "Thorns",
+        "weight": 2,
+        "why": "Retaliates on incoming melee hits."
+      },
+      "thornsFire": {
+        "label": "Fire Thorns",
+        "weight": 2,
+        "why": "Blocked hits deal Fire damage back."
+      },
+      "twoHanded": {
+        "label": "Two-handed",
+        "weight": -2,
+        "why": "Occupies both hands (forfeits off-hand slot)."
+      },
+      "vulnMelee": {
+        "label": "Vulnerable to melee",
+        "weight": -4,
+        "why": "Takes extra melee physical damage."
+      },
+      "firstTurnSp": {
+        "label": "First-turn SP",
+        "weight": 4,
+        "why": "+/-1 SP on turn 1 (Encumbered is -4)."
+      },
+      "gainCounter": {
+        "label": "Counter gain",
+        "weight": 2.5,
+        "why": "Extra Counter stack on every Counter gain."
+      },
+      "gainEvade": {
+        "label": "Evade gain",
+        "weight": 4,
+        "why": "Extra Evade stack on every Evade gain."
+      },
+      "resistFire": {
+        "label": "Resist Fire",
+        "weight": 2,
+        "why": "25% less Fire damage."
+      },
+      "resistFrost": {
+        "label": "Resist Frost",
+        "weight": 2,
+        "why": "25% less Frost damage."
+      },
+      "resistLightning": {
+        "label": "Resist Lightning",
+        "weight": 2,
+        "why": "25% less Lightning damage."
+      },
+      "resistBlight": {
+        "label": "Resist Blight",
+        "weight": 2,
+        "why": "25% less Blight damage."
+      },
+      "resistDark": {
+        "label": "Resist Dark",
+        "weight": 2,
+        "why": "25% less Dark damage."
+      },
+      "cardDamage": {
+        "label": "Card damage",
+        "weight": 2,
+        "why": "+1 damage per matching card played across 3 rounds."
+      },
+      "cardPoise": {
+        "label": "Card Poise damage",
+        "weight": 1.5,
+        "why": "+1 Poise damage per matching card."
+      },
+      "cardBlock": {
+        "label": "Card Block",
+        "weight": 1.5,
+        "why": "+1 Block per matching Block/Defend card."
+      },
+      "cardPierce": {
+        "label": "Pierce",
+        "weight": 1.5,
+        "why": "Bypasses Block on matching attacks."
+      },
+      "cardIgnoreBlock": {
+        "label": "Ignore Block",
+        "weight": 2,
+        "why": "Ignores Block regardless of Stone Skin."
+      },
+      "cardMultiHit": {
+        "label": "Multi-hit",
+        "weight": 5,
+        "why": "Repeats matching attacks an extra time."
+      },
+      "cardReach": {
+        "label": "Reach",
+        "weight": 2,
+        "why": "Matching attacks strike the back row without tax."
+      },
+      "cardCost": {
+        "label": "Card SP cost",
+        "weight": -6,
+        "why": "Changes SP cost on matching cards."
+      },
+      "cardMana": {
+        "label": "Card MP cost",
+        "weight": -5,
+        "why": "Changes MP cost on matching spells."
+      },
+      "cardAddDex": {
+        "label": "DEX to damage",
+        "weight": 3,
+        "why": "Adds DEX to matching physical attacks."
+      },
+      "cardAddStr": {
+        "label": "STR again",
+        "weight": 3,
+        "why": "Adds STR a second time to matching attacks."
+      },
+      "cardRetain": {
+        "label": "Retain",
+        "weight": 2,
+        "why": "Matching cards stay in hand at turn end."
+      },
+      "cardEscalate": {
+        "label": "Escalating",
+        "weight": -2,
+        "why": "Matching cards cost +1 SP each repeat."
+      },
+      "cardHeal": {
+        "label": "Card Healing",
+        "weight": 2.5,
+        "why": "+1 HP healed on matching healing spells."
+      },
+      "hitBleed": {
+        "label": "Bleed on hit",
+        "weight": 2,
+        "why": "Matching hits apply Bleed."
+      },
+      "hitBurn": {
+        "label": "Burn on hit",
+        "weight": 3,
+        "why": "Matching hits apply Burn."
+      },
+      "hitWeak": {
+        "label": "Weak on hit",
+        "weight": 2,
+        "why": "Matching hits apply Weak."
+      },
+      "hitVulnerable": {
+        "label": "Vulnerable on hit",
+        "weight": 3,
+        "why": "Matching hits apply Vulnerable."
+      },
+      "hitShock": {
+        "label": "Shock on hit",
+        "weight": 2.5,
+        "why": "Matching hits apply Shock."
+      },
+      "hitFrost": {
+        "label": "Frost on hit",
+        "weight": 2.5,
+        "why": "Matching hits apply Frost."
+      },
+      "hitFireVulnerable": {
+        "label": "Fire Vulnerable on hit",
+        "weight": 2.5,
+        "why": "Matching hits apply Fire Vulnerable."
+      },
+      "hitBlight": {
+        "label": "Blight on hit",
+        "weight": 2.5,
+        "why": "Matching hits apply Crimson Blight."
+      },
+      "hitRemoveRetreat": {
+        "label": "Remove Retreat",
+        "weight": 2,
+        "why": "Matching hits pull Retreat stacks off targets."
+      },
+      "hitRetreat": {
+        "label": "Push to back row",
+        "weight": 2,
+        "why": "Matching hits push the target back with Retreat."
+      },
+      "turnBlock": {
+        "label": "Turn Block",
+        "weight": 1.5,
+        "why": "Block granted each turn (over 3 rounds)."
+      },
+      "turnCounter": {
+        "label": "Turn Counter",
+        "weight": 3,
+        "why": "Counter stack granted each turn."
+      },
+      "turnRetreat": {
+        "label": "Turn Retreat",
+        "weight": 2,
+        "why": "Retreat stack granted each turn."
+      },
+      "turnHeal": {
+        "label": "Turn Heal",
+        "weight": 3,
+        "why": "HP healed each turn."
+      },
+      "turnEvade": {
+        "label": "Turn Evade",
+        "weight": 5,
+        "why": "Evade stack granted each turn."
+      },
+      "turnWard": {
+        "label": "Turn Ward",
+        "weight": 3,
+        "why": "Ward stack granted each turn."
+      },
+      "turnReach": {
+        "label": "Turn Reach",
+        "weight": 2,
+        "why": "Reach stack granted each turn."
+      },
+      "playEvade": {
+        "label": "Evade on play",
+        "weight": 4,
+        "why": "Playing a matching card grants Evade."
+      },
+      "playWard": {
+        "label": "Ward on play",
+        "weight": 2.5,
+        "why": "Playing a matching card grants Ward."
+      },
+      "playDraw": {
+        "label": "Draw on play",
+        "weight": 3.5,
+        "why": "Playing a matching card draws."
+      },
+      "playStrength": {
+        "label": "STR this turn",
+        "weight": 2.5,
+        "why": "Playing a matching card grants temporary STR."
+      }
     },
     "range": {
       "appliesTo": "weapon base range (not double-counted when cardReach is present)",
@@ -4279,7 +4491,8 @@
       ],
       "why": "unmodelled: 1 per point (label is the key)"
     },
-    "weaponArtScale": "Weapon art faces are the card model: SP, MP and every effect scored by the card rules, times plays.weaponArt"
+    "weaponArtScale": "Weapon art faces are the card model: SP, MP and every effect scored by the card rules, times plays.weaponArt",
+    "attributeBudgetCost": 3
   },
   "cardModel": {
     "rule": "Constants of the card scorer that are not per-effect weights; read by src/model/combatPower.js",
@@ -4768,8 +4981,292 @@
     "$comment": "The starter policy pins only the combat-power classification. Raw scores, combat effects and saved upgrade ranks still come from their own sources.",
     "core.strike": { "cp": 0 },
     "greatswordSunderingHew": { "cp": 1 },
+    "twinFang": { "cp": 1 },
     "blightTouch": { "cp": 1 },
     "armour:reaver.default": { "cp": 0 },
     "armour:rogue.default": { "cp": 0 }
+  },
+  "upgradeTags": {
+    "efficient": {
+      "label": "Efficient (cost reduction)",
+      "surchargeEnabled": true,
+      "mode": "flat",
+      "base": 10,
+      "escalate": "double",
+      "stacks": [
+        10,
+        20,
+        40
+      ],
+      "pMultiplier": 0.25,
+      "maxStacks": 3,
+      "why": "Added when an upgrade reduces SP or MP cost (Efficient, Efficient+, Efficient+2). Doubling CP surcharge (10 / 20 / 40) prevents cheap 0-cost spam."
+    },
+    "improved": {
+      "label": "Improved (+10% compounding effect)",
+      "surchargeEnabled": true,
+      "mode": "flat",
+      "base": 2,
+      "escalate": "double",
+      "stacks": [
+        2,
+        4,
+        8
+      ],
+      "effectMultPerStack": 1.1,
+      "pMultiplier": 0.1,
+      "maxStacks": 3,
+      "why": "Added when an upgrade strengthens an effect by 10% compounding per stack (1.10^1, 1.10^2, 1.10^3). Surcharge can be flat, multiplicative, or toggled off."
+    },
+    "refined": {
+      "label": "Refined (drawback eased)",
+      "surchargeEnabled": true,
+      "mode": "flat",
+      "base": 6,
+      "escalate": "double",
+      "stacks": [
+        6,
+        12,
+        24
+      ],
+      "pMultiplier": 0.15,
+      "maxStacks": 3,
+      "why": "Added when a higher-rank upgrade softens or removes a card drawback (Refined, Refined+, Refined+2): self-debuffs, rising cost, Ethereal, or Exhaust."
+    },
+    "tempered": {
+      "label": "Tempered (combat form & forging)",
+      "surchargeEnabled": true,
+      "mode": "flat",
+      "base": 4,
+      "escalate": "double",
+      "stacks": [
+        4,
+        8,
+        16
+      ],
+      "pMultiplier": 0.15,
+      "maxStacks": 3,
+      "why": "Added when an upgrade forges a card's combat form or tactical structure (Tempered, Tempered+, Tempered+2): multi-hit, reach, targeting, stance, Poise, Block, or Counter."
+    },
+    "purified": {
+      "label": "Purified (healing & cleansing)",
+      "surchargeEnabled": true,
+      "mode": "flat",
+      "base": 4,
+      "escalate": "double",
+      "stacks": [
+        4,
+        8,
+        16
+      ],
+      "pMultiplier": 0.15,
+      "maxStacks": 3,
+      "why": "Added when an upgrade adds or strengthens healing, regeneration, Ward, or cleansing effects (Purified, Purified+, Purified+2)."
+    },
+    "extraEffect": {
+      "label": "Added Effect (upgrade)",
+      "surchargeEnabled": false,
+      "mode": "flat",
+      "base": 3,
+      "escalate": "double",
+      "stacks": [
+        3,
+        6,
+        12
+      ],
+      "pMultiplier": 0.15,
+      "maxStacks": 3,
+      "why": "Optional CP surcharge when upgrades add new effects or statuses onto a card."
+    },
+    "drawbackEase": {
+      "label": "Drawback Eased (upgrade)",
+      "surchargeEnabled": false,
+      "mode": "flat",
+      "base": 2,
+      "escalate": "double",
+      "stacks": [
+        2,
+        4,
+        8
+      ],
+      "pMultiplier": 0.1,
+      "maxStacks": 3,
+      "why": "Optional CP surcharge when upgrades remove or soften card drawbacks."
+    },
+    "identityShift": {
+      "label": "Range / Targeting / Stance Shift",
+      "surchargeEnabled": false,
+      "mode": "flat",
+      "base": 3,
+      "escalate": "double",
+      "stacks": [
+        3,
+        6,
+        12
+      ],
+      "pMultiplier": 0.15,
+      "maxStacks": 3,
+      "why": "Optional CP surcharge when upgrades alter range, targeting, school, or stance."
+    },
+    "gearAttribute": {
+      "label": "Flat Gear Attribute (+1 stat)",
+      "surchargeEnabled": true,
+      "mode": "flat",
+      "base": 4,
+      "escalate": "double",
+      "stacks": [
+        4,
+        8,
+        16
+      ],
+      "pMultiplier": 0.25,
+      "maxStacks": 3,
+      "why": "Escalating CP surcharge per flat attribute point on weapons/armour so attribute-bearing gear is rare and expensive."
+    }
+  },
+  "tierUnlocks": {
+    "$comment": "Rank and rarity tier gates for upgrades, tags, statuses, elements, magic+martial hybrids, cost reductions, and numeric ceilings (owner, 2026-11-25). effectiveTier = cardRank + rarityBonus[rarity].",
+    "enabled": true,
+    "rarityBonus": {
+      "common": 0,
+      "uncommon": 0,
+      "rare": 1,
+      "starter": 0,
+      "special": 0
+    },
+    "upgradeRarityMinTier": [
+      0,
+      1,
+      3
+    ],
+    "upgradeTagStacks": {
+      "improved": [
+        0,
+        2,
+        3
+      ],
+      "efficient": [
+        2,
+        3,
+        4
+      ],
+      "refined": [
+        2,
+        3,
+        4
+      ],
+      "tempered": [
+        0,
+        2,
+        3
+      ],
+      "purified": [
+        1,
+        2,
+        3
+      ]
+    },
+    "zeroCostMinTier": 3,
+    "hybridMinTier": 2,
+    "upgrades": {
+      "dmg": 0,
+      "blk": 0,
+      "poise": 0,
+      "stk": 0,
+      "dmgType": 0,
+      "school": 0,
+      "fx:block": 0,
+      "fx:cycle": 0,
+      "fx:cull": 0,
+      "fx:shuffle": 0,
+      "costSwap": 1,
+      "fx:draw": 1,
+      "fx:counter": 1,
+      "addStatus": 1,
+      "fx:copy": 1,
+      "fx:boost": 1,
+      "element": 2,
+      "fx:heal": 1,
+      "fx:cleanse": 1,
+      "cost": 2,
+      "fx:retain": 2,
+      "fx:innate": 2,
+      "fx:holdOne": 2,
+      "fx:reaction": 2,
+      "maneuver": 2,
+      "targeting": 2,
+      "fx:target": 2,
+      "stkEase": 2,
+      "fx:unethereal": 2,
+      "fx:steady": 2,
+      "fx:unexhaust": 3,
+      "hits": 3,
+      "range": 3,
+      "fx:recurring": 3
+    },
+    "elements": {
+      "fire": 0,
+      "frost": 0,
+      "earth": 0,
+      "magic": 1,
+      "arcane": 1,
+      "lightning": 2,
+      "holy": 2,
+      "divine": 2,
+      "sacred": 2,
+      "decay": 2,
+      "illusion": 3,
+      "psychic": 3,
+      "force": 3,
+      "alteration": 3
+    },
+    "statuses": {
+      "chill": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },
+      "weak": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },
+      "bleed": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },
+      "dazed": { "minTier": 0, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "prepared": { "minTier": 0, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "shock": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "confused": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "silenced": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "crimsonBlight": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "vulnerable": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "frail": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "burn": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "venom": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "frost": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "barrier": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
+      "decoy": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "paralysis": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "necroticBlight": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "regen": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "ward": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "stoneskin": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "sleep": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "evade": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "entombed": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "staggered": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "strength": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "dexterity": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "intelligence": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "wisdom": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
+      "invulnerability": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 }
+    },
+    "ceilings": {
+      "damage": [
+        12,
+        18,
+        28,
+        40,
+        null
+      ],
+      "block": [
+        10,
+        15,
+        22,
+        32,
+        null
+      ]
+    }
   }
 }

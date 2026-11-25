@@ -18,10 +18,12 @@ import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const smithProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { gear: { statPoints: { perRank: 1 } } } });
+const smithRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, smithProfile)), smithProfile);
 const LEGACY_RESTS = { servicesPerVisit: 'all', services: ['smith', 'levelUp', 'upgradeCard'],
   recovery: { hp: 'full', sp: 'full', mp: 'full', healingFlasks: 'full', mpFlasks: 'full' }, smith: { free: true, tiersPerService: 1 } };
-function fixture({ legacy = false } = {}) {
-  const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-one-pick' });
+function fixture({ legacy = false, smith = false } = {}) {
+  const run = createRunState({ seed: 73, classId: 'reaver', registries: smith ? smithRegistries : registries, runId: 'rest-one-pick' });
   if (legacy) run.gameProfile.content.rests = structuredClone(LEGACY_RESTS);
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
   run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id;
@@ -58,14 +60,13 @@ test('rest heals ceil(30% max HP), refills mana, stamina and both flasks, and cl
 });
 
 test('smith restores nothing and closes the visit', () => {
-  const { run } = fixture();
+  const { run } = fixture({ smith: true });
   const candidate = smithingPlan(registries, run, undefined, { free: true, maxTier: restSmithMaxTier(run) }).candidates[0];
   const deficit = run.maxHp - run.hp;
   commitGameProfileRest(registries, run, 'smith', { itemRef: candidate.itemRef });
-  // Owner, 2026-11-17 (gear `statPoints`): the greatsword's tier adds CON, so max HP grows; the pool keeps its deficit
-  // (reconcileRunLoadoutHp), which is no heal.
+  // A Smith commit preserves the deficit and does not recover spent resources.
   assert.equal(run.maxHp - run.hp, deficit);
-  assert.deepEqual(pools(run).slice(3), [0, 0]);
+  assert.deepEqual(pools(run).slice(1), [0, 0, 0, 0]);
   assert.throws(() => commitGameProfileRest(registries, run, 'rest', {}), /unavailable or spent/);
 });
 

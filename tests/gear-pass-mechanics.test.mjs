@@ -443,7 +443,7 @@ test('a mana signature adds a flat bonus unless the piece already feeds Mana', (
   assert.equal(maxManaBonus(build(robes)), 0, 'ordinary robes have no flat mana bonus');
   const signature = ['self.maxMana=+1'];
   assert.equal(maxManaBonus(build({ ...robes, right: 'straightSword', mods: { straightSword: signature } })), 1, 'the piece has no Mana feeder');
-  assert.equal(maxManaBonus(build({ ...robes, armor: 'nightweave', mods: { nightweave: signature } })), 0, 'resolved Wisdom already feeds Mana');
+  assert.equal(maxManaBonus(build({ ...robes, right: 'duskChime', mods: { duskChime: signature } })), 0, 'resolved Wisdom already feeds Mana');
 });
 
 // An end-of-turn Retreat signature floors the stack count at one in Defend.

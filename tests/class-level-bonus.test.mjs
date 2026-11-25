@@ -149,7 +149,8 @@ test('a current run earns its free points and rank-up credits exactly once acros
 
 for (const [name, modules] of [
   ['stats disabled', { stats: false }],
-  ['attribute points disabled', { progression: { attributePointsPerLevel: 0 } }],
+  // This global rate also budgets enemies; exclude fixed-budget enemy rows when isolating player rewards.
+  ['attribute points disabled', { enemies: false, progression: { attributePointsPerLevel: 0 } }],
 ]) test(`${name}: saved and new ladders respect the free-point opt-out`, () => {
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules });
   const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);

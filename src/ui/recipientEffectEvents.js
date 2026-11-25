@@ -22,7 +22,23 @@ function matchingGrants(action, event) {
 
 /** One state per mounted fight, never a global dedup cache or engine state. */
 export function CreateRecipientEffectState() {
-  return { serial: 0, actions: new Map(), contacts: new Map(), roots: new Map(), current: null, wardColors: new Map() };
+  return { serial: 0, clipSerial: 0, actions: new Map(), contacts: new Map(), roots: new Map(), current: null, wardColors: new Map() };
+}
+
+function linkSecondary(state, primary, secondary) {
+  primary.primaryKey ||= `recipient-clip-${++state.clipSerial}`;
+  secondary.afterPrimaryKey = primary.primaryKey;
+}
+
+/** Collect a presentation beat without moving or replacing its engine receipts. */
+export function RecipientEffectBatchForBeat(events) {
+  const marker = events.find(event => MARKERS.has(event.type));
+  const actionKey = marker?.recipientActionKey;
+  return events.flatMap(event => (event.recipientEffects || []).map(layer =>
+    // The engine commits a paid Advance before emitting the card or move
+    // marker. The movement sprite belongs to that upcoming actor beat.
+    actionKey && layer.phase === 'movement' && layer.sourceId === marker.recipientSourceId
+      ? { ...layer, actionKey } : layer));
 }
 
 // activateCombatContact names each hit `${rootKey}:hit:${contactIndex}`.
@@ -39,15 +55,18 @@ function rootContactKey(event) {
 // select outcomes. State survives paused reaction dispatches and nested counters.
 export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove, resolveStatus, resolveTelegraphTargets, state = CreateRecipientEffectState() } = {}) {
   let segment = 0;
+  const movement = new Set();
   const annotated = events.map(raw => {
     const event = combatEffectReceipt(raw);
     if (BOUNDARIES.has(event.type)) {
       segment++;
+      movement.clear();
       state.actions.clear(); state.contacts.clear(); state.roots.clear(); state.current = null;
     }
     let marker = null;
     if (MARKERS.has(event.type)) {
       segment++;
+      movement.clear();
       const sourceId = event.sourceId || event.playerId || 'player';
       const prior = state.actions.get(sourceId);
       const continuation = ['combatHitStarted', 'combatContactPrepared'].includes(event.type)
@@ -89,6 +108,20 @@ export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove
       ...(event.type === 'energyGained' && !event.targetId ? { targetId: event.playerId || sourceId } : {}),
       ...(polarity !== 'neutral' && !event.polarity ? { polarity, beneficial: polarity === 'positive' } : {}) };
     let layers = RecipientEffectsForEvent(definition, normalized).map(layer => ({ ...layer, actionKey: context?.key || null }));
+    if (layers[0]?.phase === 'movement') {
+      // A single step can change several pairwise distances. Paint the mover
+      // once while retaining every receipt for the formation strips.
+      const { shape, targetId } = layers[0];
+      const key = JSON.stringify([shape, targetId]);
+      if (movement.has(key)) layers = [];
+      else movement.add(key);
+    }
+    if (context && event.type === 'statusApplied' && layers.length) {
+      const key = JSON.stringify([layers[0].targetId, event.status]);
+      const applications = context.statusApplications ||= new Set();
+      if (applications.has(key)) layers = [];
+      else applications.add(key);
+    }
     // Ward remembers the protected actor's own granted tint, not the attacker's.
     for (const layer of layers) if (['ward', 'ward-shatter'].includes(layer.shape)) {
       if (layer.treatment === 'gain') state.wardColors.set(layer.targetId, { color: layer.color, palette: layer.palette });
@@ -143,9 +176,15 @@ export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove
     if (secondary && preceding) {
       const bloodApply = event.type === 'statusApplied' && ['bleed', 'bleeding'].includes(event.status);
       if (event.type === 'healed' || bloodApply) {
+        const primary = preceding.result.recipientEffects.find(layer => layer.phase === 'contact');
+        linkSecondary(state, primary, secondary);
         preceding.result.recipientEffects.push(secondary);
         result.recipientEffects = [];
       }
+    }
+    if (secondary && result.recipientEffects.includes(secondary)) {
+      const primary = result.recipientEffects.find(layer => layer !== secondary);
+      if (primary) linkSecondary(state, primary, secondary);
     }
     // A break replaces the same defense's hit pulse for this contact. Multiple
     // damage receipts still retain their distinct physical impacts.
@@ -185,6 +224,13 @@ export function DecorateRecipientEffects(events, { resolveCard, resolveEnemyMove
     first.targetIds = [...new Set(group.layers.flatMap(layer => layer.targetIds))];
     first.claimsDamage = group.layers.some(layer => layer.claimsDamage);
     first.opacity = first.claimsDamage ? SETTINGS.layering.opacity.primary : SETTINGS.layering.opacity.protectedContact;
+    const primaryKeys = new Set(group.layers.map(layer => layer.primaryKey).filter(Boolean));
+    for (const row of group.rows) for (const layer of row.result.recipientEffects) {
+      if (primaryKeys.has(layer.afterPrimaryKey)) {
+        if (group.context?.swept) delete layer.afterPrimaryKey;
+        else linkSecondary(state, first, layer);
+      }
+    }
     for (const row of group.rows) row.result.recipientEffects = row.result.recipientEffects.filter(layer => layer.shape !== 'sweep'
       || layer.phase !== 'contact' || (!group.context?.swept && layer === first));
     if (group.context) group.context.swept = true;

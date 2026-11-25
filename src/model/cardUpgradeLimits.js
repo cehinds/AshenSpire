@@ -1,13 +1,27 @@
 // How many Core card upgrades are free, what the next one costs, and whether it
 // can be bought (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md, owner rulings of
 // 2026-10-28). Pure reads of the run: nothing here mutates.
-import { cardRank, VisibleCardRank } from './cardRank.js';
+import { cardRank, rankedEffectsCapped, VisibleCardRank } from './cardRank.js';
 import { mulberry32 } from './rng.js';
 import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 
 const MAX_CANDIDATES = 20;
 import { rollUpgradeOptions, upgradeStepRng, upgradeSeed, UpgradeStepFamilies } from './cardUpgradeSteps.js';
 import { OfferSalted } from './upgradeOffer.js';
+import { staticCardTokens } from './playingCard.js';
+
+function checkDamageUpgrade(run, registries, rank, ranked) {
+  if (!Number.isFinite(run.gameProfile?.modules?.effects?.baseDamageMultiplier)) return undefined;
+  const tokens = (def, atRank) => staticCardTokens(
+    atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def, registries, run);
+  let before;
+  return (current, step, nextRank) => {
+    before ??= tokens(current, rank);
+    const after = tokens(applyUpgradeSteps(current, [step]), ranked ? Math.max(rank, nextRank || 0) : rank);
+    return !Object.values(before).some(Number.isFinite)
+      || Object.keys(after).some(key => before[key] !== after[key]);
+  };
+}
 
 /**
  * upgradeBasic(def) → whether a card is "Basic" for upgrades (owner ruling,
@@ -100,9 +114,12 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   const applied = upgradeStepsOf(instance);
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
-  const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
+  const ranked = run.gameProfile?.modules?.progression?.cardRanks === true;
+  const rank = ranked ? cardRank(instance) : 1;
   const playerLevel = Number.isInteger(run?.level?.level) && run.level.level >= 1 ? run.level.level : 1;
-  const limits = { ...mana, rank, cardRank: VisibleCardRank(instance), playerLevel, instance, scale, exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}) };
+  const limits = { ...mana, rank, cardRank: VisibleCardRank(instance), playerLevel, instance, scale,
+    damageChanges: checkDamageUpgrade(run, registries, rank, ranked),
+    exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}) };
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1 && authored) return [{ k: 'authored' }];
   // An authored first step occupies its family (AuthoredFamilies): the rolled alternative is of another family.
@@ -113,17 +130,27 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   // it does (face, tags, profile fields; the name aside) from the picks before it. Candidates come from the same
   // seeded stream in the same order, so the list stays deterministic; a card with no distinct candidate left shows fewer.
   const outcome = (step) => { const { name, ...face } = applyUpgradeSteps(base, [...applied, step]); return JSON.stringify(face); };
-  const picked = authored ? [{ k: 'authored' }] : [];
-  const seen = new Set(picked.map(outcome));
-  for (const step of roll(MAX_CANDIDATES)) {
-    if (picked.length >= count) break;
-    const key = outcome(step);
-    if (picked.length && seen.has(key)) continue;
-    seen.add(key);
-    picked.push(step);
+  const target = authored ? 2 : count;
+  const pickDistinct = (pool) => {
+    const picked = authored ? [{ k: 'authored' }] : [];
+    const seen = new Set(picked.map(outcome));
+    for (const step of pool) {
+      if (picked.length >= target) break;
+      const key = outcome(step);
+      if (picked.length && seen.has(key)) continue;
+      seen.add(key);
+      picked.push(step);
+    }
+    return picked;
+  };
+  let pool = roll(combos ? MAX_CANDIDATES : Math.min(MAX_CANDIDATES, target + 2));
+  let picked = pickDistinct(pool);
+  if (picked.length < target && pool.length < MAX_CANDIDATES) {
+    pool = roll(MAX_CANDIDATES);
+    picked = pickDistinct(pool);
   }
-  const chosen = picked.slice(0, authored ? 2 : count);
-  return combos ? withSecondEffects(run, instance, applied, chosen, roll(MAX_CANDIDATES), outcome, salt) : chosen;
+  const chosen = picked.slice(0, target);
+  return combos ? withSecondEffects(run, instance, applied, chosen, pool, outcome, salt) : chosen;
 }
 
 // "Two effects" (owner, 2026-11-14): each option gets a second, different effect with REST_TWO_EFFECT_CHANCE. The draw comes from
