@@ -2,7 +2,7 @@
 // the blacksmith's pool (damage, Block, Poise, cost, a tag...) at bigger amounts, and the player picks one. The pick
 // is an ordinary upgrade step on the card, so the face, the inspector and the save need nothing new.
 // Pure: the roll is seeded by (run.seed, instanceId, step count) with its own salt, so a reload offers the same options.
-import { nextUpgradeOptions } from './cardUpgradeLimits.js';
+import * as CardUpgradeLimits from './cardUpgradeLimits.js';
 import { OwnCardRank } from './cardRank.js';
 import { upgradeStepsOf, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 
@@ -29,7 +29,7 @@ export function rankUpBonusOptions(registries, run, instance) {
   const applied = upgradeStepsOf(instance);
   if (applied.length >= MAX_CARD_UPGRADES) return [];
   const raised = { ...instance, rank: OwnCardRank(instance) + 1 };
-  const steps = nextUpgradeOptions(run, raised, registries.cards.get(instance.cardId), registries, RANK_UP_BONUS_CHOICES,
+  const steps = CardUpgradeLimits.nextUpgradeOptions(run, raised, registries.cards.get(instance.cardId), registries, RANK_UP_BONUS_CHOICES,
     { scale: rankUpBonusScale(registries), salt: RANK_UP_BONUS_SALT, noAuthored: true });
   return steps.map((step) => ({ step: { ...step, bonus: true }, after: { ...raised, upgraded: true, upgradeSteps: [...applied, { ...step, bonus: true }] } }));
 }
