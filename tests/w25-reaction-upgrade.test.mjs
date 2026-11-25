@@ -12,7 +12,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from './withoutWeaknesses.mjs';
 import { dispatch } from '../src/engine/combat.js';
 
-const RUN = { seed: 7, gameProfile: profile, rangePolicy: {} };
+const RUN = { seed: 7, level: { level: 10 }, gameProfile: profile, rangePolicy: {} };
 const REACTION = [{ k: 'fx', fx: 'reaction' }];
 const offered = (cardId) => nextUpgradeOptions(RUN, { instanceId: 'k1', cardId, upgraded: false }, registries.cards.get(cardId), registries, 60, { noAuthored: true, everyFamily: true })
   .some((step) => step.k === 'fx' && step.fx === 'reaction');

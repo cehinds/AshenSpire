@@ -1,7 +1,7 @@
 import { itemCombatPower } from '../content/generated/combatPower.js';
 import { RankName } from './combatPower.js';
 
-export function itemCombatPowerKey(kind, item, classId = null) {
+export function ItemCombatPowerKey(kind, item, classId = null) {
   if (!item?.id) return null;
   if (kind === 'weapon' || kind === 'weapons' || kind === 'armament' || (!kind && (item.kind === 'weapon' || item.kind === 'shield' || item.kind === 'staff'))) {
     return `weapon:${item.id}`;
@@ -17,7 +17,7 @@ export function itemCombatPowerKey(kind, item, classId = null) {
 }
 
 export function ItemCombatPowerEntry(kind, item, classId = null) {
-  const key = itemCombatPowerKey(kind, item, classId);
+  const key = ItemCombatPowerKey(kind, item, classId);
   return (key && itemCombatPower[key]) || null;
 }
 

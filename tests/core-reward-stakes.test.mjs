@@ -46,9 +46,8 @@ test('no offered card costs mana the class cannot pay; a Starseer still sees man
     for (const option of gameProfileRewardOffers(reg, run, createRng(900 + i), { offerId: `o:${source}`, source }).options) {
       if (!['combatCards', 'weaponArts'].includes(option.kind)) continue;
       const cost = manaOf(run, option.id);
-      // Owner 2026-11-17: the Reaver's class mana base is 1 (its 1-MP starter card), so it may see a 1-MP card, never a dearer one.
       assert.ok(cost <= run.maxMana, `${classId} ${source} ${option.id} costs ${cost} > ${run.maxMana}`);
-      if (classId === 'reaver') assert.equal(run.maxMana, 1, 'the Reaver holds one MP');
+      if (classId === 'reaver') assert.equal(run.maxMana, 2, 'the Reaver holds base 1 MP plus 1 from starting Wisdom');
       else if (cost > 0) starseerMana++;
     }
   }

@@ -16,7 +16,7 @@ test('resolved card definitions supply legacy and direct attribute facts across 
   const cases = {
     honedEdge: ['buff:strength'],
     aegisOfEmbers: ['buff:strength'],
-    gildedOath: ['buff:strength', 'buff:dexterity'],
+    gildedOath: ['buff:strength', 'buff:dexterity', 'buff:wisdom'],
     acrobaticsRogue: ['buff:dexterity'],
     goreblood: ['debuff:poise'],
     emberCovenant: ['buff:poise'],

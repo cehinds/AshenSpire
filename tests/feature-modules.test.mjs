@@ -26,7 +26,7 @@ test('switched-off features fall back as documented', () => {
   assert.ok(off.content.enemies.every(e => enemyRelicIds(e).length === 0), 'relics off: none carried');
   const reaver = off.content.characters.find(c => c.id === 'reaver');
   assert.equal(deckCopyLimit('core.strike', reaver, off.content, s, off.modules.gear, { 'core.strike': 3 }), 3, 'training off: owned copies');
-  assert.equal(off.content.rewards.eligibility?.combatCards, undefined, 'reward ranks off');
+  assert.deepEqual(off.content.rewards.eligibility?.combatCards, { skipOwned: true }, 'reward ranks off leaves only the authored ownership guard');
   const e = off.content.enemies[0];
   assert.deepEqual(resolveEnemyAttributes(e, s, 7), resolveEnemyAttributes(e, s), 'variance off: no spread');
 });

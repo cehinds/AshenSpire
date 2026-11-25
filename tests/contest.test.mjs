@@ -74,6 +74,7 @@ for (const enemyId of ['wanderingSoldier', 'graveWisp']) {
 }
 test('a failed contest still applies the self status, resists the reveal and emits contestFailed', () => {
   const combat = fight('wanderingSoldier', LOW), target = combat.enemies[0];
+  target.persistentPoise = { value: 7, max: 7 }; // Make the lowest die fail independently of the current Soldier's rating.
   const types = play(combat);
   assert.ok(types.includes('contestFailed'), types.join());
   assert.ok(!types.includes('intentRevealed'));

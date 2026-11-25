@@ -48,6 +48,9 @@ test('an un-stepped Strike still reads STR / AR whole, and a whole-magic step (s
 
 test('the magic part meets Barrier then Ward and the physical part meets Block then Poise', () => {
   const combat = live();
+  // c98aa545183: this saved split uses independent magical and physical protection.
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
+  combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst', decayPerTurn: 1, breaksAtZeroPoise: true };
   const { card, carrier } = carrierFor(combat, [FIRE]);
   const base = card.effects.find((e) => e.op === 'damage').amount;
   Object.assign(combat.player.ratings, { ar: 0, pr: 0 });

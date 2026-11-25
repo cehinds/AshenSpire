@@ -11,19 +11,19 @@
     "high",
     "common"
   ],
-  "count": 8800,
+  "count": 8812,
   "byKind": {
     "audio": 13,
     "data": 1,
     "font": 15,
-    "image": 8770,
+    "image": 8782,
     "text": 1
   },
   "byTier": {
     "common": 910,
-    "high": 7880,
-    "light": 7880
+    "high": 7892,
+    "light": 7892
   },
   "placeholderOnly": 10,
-  "sha256": "8d3867b671bcbf96a44274d91efcc0213d81f5209b64c495c98a50b4e9a4d0ba"
+  "sha256": "8c0b837dcaa9e9cb5c7c69d877bba557a1764ea2c473b8b50f0d9d02c585a2e1"
 }

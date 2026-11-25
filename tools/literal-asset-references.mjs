@@ -5,8 +5,8 @@ function optionalRecipientOffsets(source, config) {
   for (const [shape, entry] of Object.entries(atlas)) {
     if (entry.optional !== true) continue;
     if (!/^[a-z]+(?:-[a-z]+)*$/.test(shape)
-      || config.behavior.atlasId !== 'v5'
-      || entry.asset !== `assets/recipient-effects/v5/${shape}.png`
+      || !['v5', 'v6'].includes(config.behavior.atlasId)
+      || !['v5', config.behavior.atlasId].some(generation => entry.asset === `assets/recipient-effects/${generation}/${shape}.png`)
       || entry.columns !== 3 || entry.rows !== 1 || entry.row !== 0) {
       throw new Error(`Invalid optional recipient atlas entry: ${shape}`);
     }

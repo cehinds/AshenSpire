@@ -16,7 +16,7 @@ function fight(profileId) {
     ...(profileId === 'current' ? { combatExpansionVersion: 2, reactionRulesVersion: 1 } : {}),
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 80, maxHp: 80, mana: 5, maxMana: 5,
       stamina: 5, maxStamina: 5, energyMax: 5, drawPerTurn: 5, attributes: {}, relicIds: [],
-      deck: [{ instanceId: 'ft', cardId: CARD }, ...Array.from({ length: 6 }, (_, i) => ({ instanceId: `s${i}`, cardId: profileId === 'core' ? 'core.strike' : 'strike' }))] } });
+      deck: [{ instanceId: 'ft', cardId: CARD }] } });
 }
 const current = c => c.player.combatStance && c.player.combatStance.maneuver;
 

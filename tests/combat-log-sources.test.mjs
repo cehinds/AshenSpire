@@ -176,8 +176,16 @@ test('engine events carry their cause: an enemy move stamps moveId, a status tic
     for (const card of [...c.piles.hand]) { try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' }); } catch {} }
     try { dispatch(c, { type: 'endTurn' }); } catch { break; }
   }
-  const fromMove = c.eventLog.filter(event => ['blockGained', 'healed', 'statusApplied'].includes(event.type) && event.sourceId === 'e1');
-  assert.ok(fromMove.length > 0 && fromMove.every(event => event.moveId
+  const enemyEffects = c.eventLog.filter(event => ['blockGained', 'healed', 'statusApplied'].includes(event.type) && event.sourceId === 'e1');
+  const meterStaggers = enemyEffects.filter(event => event.type === 'statusApplied' && event.status === 'staggered' && event.targetId === 'e1');
+  assert.ok(meterStaggers.length > 0, 'the fixture breaks the enemy Poise meter');
+  for (const event of meterStaggers) {
+    assert.deepEqual(event.triggeredBy, { kind: 'meter', id: 'poise', ownerId: 'e1' });
+    assert.equal(event.moveId, undefined, 'the stagger is not caused by an enemy move');
+  }
+  const fromMove = enemyEffects.filter(event => !meterStaggers.includes(event));
+  assert.ok(fromMove.some(event => event.moveId), 'fixture includes an executed enemy move effect');
+  assert.ok(fromMove.every(event => event.moveId
     || (event.preparing === true && event.triggeredBy?.kind === 'stance' && event.triggeredBy.ownerId === event.sourceId)),
   'every enemy effect names its executed move or its safely concealed stance preparation');
   const preparation = fromMove.filter(event => event.preparing);
@@ -187,6 +195,7 @@ test('engine events carry their cause: an enemy move stamps moveId, a status tic
   const ticks = c.eventLog.filter(event => event.type === 'hpLost' && event.cause === 'effect');
   assert.ok(ticks.length > 0 && ticks.every(event => event.triggeredBy?.kind === 'status'), 'every status tick names its status');
   const lines = combatLogEntries(c.eventLog, { registries, enemies: c.enemies }).map(row => row.text);
+  assert.ok(lines.some(text => /Wyrm Lord gained .*Staggered \(Poise\)\./.test(text)));
   for (const text of lines.filter(line => / (gained|recovered|lost) /.test(line))) assert.match(text, /\(.+\)\.$/, `${text} names its cause`);
 });
 

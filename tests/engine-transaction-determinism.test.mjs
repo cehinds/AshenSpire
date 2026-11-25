@@ -36,13 +36,30 @@ const smashDevProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/d
 const gearParentProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/gear-profile-62323292.json.gz', import.meta.url))));
 // Genuine published Dev 213 before Retreat versioning: these existing stat/Smash goldens remain historical controls.
 const preRetreatProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-0b11a358-profile.json.gz', import.meta.url))));
+// c18f0d0cdb6 replay inputs outside the resolved profile envelope. Current
+// scenarios still use the shipping table and weapon Poise rule.
+const historicalDerivedStats = JSON.parse(readFileSync(new URL('./fixtures/js01-pre-equipment-derived-stat-rules.json', import.meta.url)));
+const legacyPoiseKeys = ['drain', 'breakRule', 'brokenDamageMultiplier', 'breakStatusStacks'];
 
-function fight([seed, classId], profile = resolveGameProfile('default'), equipment = null) {
-  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+function fight([seed, classId], archivedProfile = null, equipment = null) {
+  const profile = archivedProfile ?? resolveGameProfile('default');
+  const bundle = archivedProfile ? { ...contentBundle, derivedStatRules: historicalDerivedStats } : contentBundle;
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle, profile)), profile);
   const run = createRunState({ registries, classId, seed });
   if (equipment) run.combatExpansionRules.equipment = structuredClone(equipment);
   // W25-BANDS legacy fixture: these digests pin the arithmetic before front/back rows, so the fight is made without the `bands` rules (as one saved before them).
-  const combat = withoutBands(() => createRunCombat({ registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] }));
+  const shippedPoise = fixCoreMechanics.poise;
+  // Keep the exact old fields selected by any outer legacy rule wrapper.
+  if (archivedProfile) fixCoreMechanics.poise = Object.fromEntries(Object.entries(shippedPoise).filter(([key]) => legacyPoiseKeys.includes(key)));
+  let combat;
+  try {
+    combat = withoutBands(() => createRunCombat({
+      registries, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'],
+      ...(archivedProfile ? { player: { poiseMax: 6 } } : {}),
+    }));
+  } finally {
+    if (archivedProfile) fixCoreMechanics.poise = shippedPoise;
+  }
   for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = 5000;
   return combat;
 }

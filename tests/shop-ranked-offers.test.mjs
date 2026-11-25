@@ -23,9 +23,12 @@ test('the data holds the owner numbers: 20% Rank 1, 5% Rank 2', () => {
 
 test('over many offer slots about 20% arrive at Rank 1 and 5% at Rank 2, the same every time asked', () => {
   const run = fresh(11), counts = { 0: 0, 1: 0, 2: 0 }, N = 4000;
+  run.level.level = 2;
+  const levelOne = fresh(11);
   for (let n = 0; n < N; n += 1) {
     const rank = RollShopOfferRank(run, `k${n}`);
     assert.equal(RollShopOfferRank(run, `k${n}`), rank, 'stable');
+    assert.equal(RollShopOfferRank(levelOne, `k${n}`), Math.min(1, rank), 'the same roll obeys the lower character band');
     counts[rank] += 1;
   }
   assert.ok(Math.abs(counts[1] / N - 0.20) < 0.03, `Rank 1 ${counts[1]}`);

@@ -1,4 +1,4 @@
-// Card ranks 11c: Core reward cards arrive ranked 1..min(track level, rankMax) (rollDraftRank, cardRewards stream).
+// Core reward card ranks are bounded by the card's track and the encounter's character-level band.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
@@ -24,9 +24,17 @@ test('with no track level, offered cards carry no rank and the cardRewards strea
   assert.ok(options.every((o) => o.rank === undefined));
 });
 
-test('with leveled tracks, offered cards roll a rank within their own track level and rankMax', () => {
-  const run = newRun();
-  run.skills = { 'item:blade': { level: 5, xp: 0, pendingDrafts: 0 }, 'item:magic-focus': { level: 2, xp: 0, pendingDrafts: 0 } };
+test('with leveled tracks, offered cards roll within their own track level and the reward band', () => {
+  const leveledRun = (level) => {
+    const run = newRun();
+    run.level.level = level;
+    run.skills = { 'item:blade': { level: 5, xp: 0, pendingDrafts: 0 }, 'item:magic-focus': { level: 2, xp: 0, pendingDrafts: 0 } };
+    return run;
+  };
+  const lowLevel = cardOptions(leveledRun(1), 1);
+  assert.ok(lowLevel.length > 10);
+  assert.ok(lowLevel.every((o) => (o.rank ?? 1) <= 2), 'normal level-one rewards allow at most the one-rank rare boost');
+  const run = leveledRun(5);
   const options = cardOptions(run, 1);
   const ranked = options.filter((o) => o.rank > 1);
   assert.ok(ranked.length > 5, 'some cards arrive ranked up');

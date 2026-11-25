@@ -42,9 +42,12 @@ test('intent shows the HP the player will lose, and follows the player\'s defenc
   combat.player.block = 400;
   assert.equal(shown(f).label, '0', 'Block soaks the whole hit');
   combat.player.block = 0;
+  combat.player.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee' };
+  const counterWithoutPoise = Number(shown(f).label);
   combat.player.persistentPoise = { value: 400, max: 400 };
-  assert.ok(Number(shown(f).label) < open, 'Poise absorbs part of it');
+  assert.ok(Number(shown(f).label) < counterWithoutPoise, 'Poise absorbs part of it while Countering');
   delete combat.player.persistentPoise;
+  delete combat.player.combatStance;
   combat.player.reflectStacks = 3;
   assert.ok(Number(shown(f).label) < open, 'Reflect cuts it');
   delete combat.player.reflectStacks;

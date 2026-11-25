@@ -417,7 +417,7 @@ export function renderCard(registries, ref, opts = {}) {
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries,opts.rules ?? opts.preview?.faceRules ?? null);
     // Dynamic weapon poise fallback for authored-template cards when attacking.
     const weaponPoiseNote = !faceLines && opts.preview?.weaponPoise > 0 && !/Poise/i.test(authoredRules)
-      ? ` <span class="val">${esc(opts.preview.weaponPoise)}</span> <span class="st-bleed">Poise</span>.` : '';
+      ? ` <span class="val">${esc(opts.preview.weaponPoise)}</span> <span class="st-bleed">${esc(t('combat.protection.poise'))}</span>.` : '';
     // Under version-one combat a sentence that opens "In expanded combat," does not apply, so the face need not carry it.
     const appliedRules = (expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '')) + weaponPoiseNote;
     // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.

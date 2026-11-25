@@ -14,6 +14,9 @@ const hit = (combat, target, carrier = FORCE, base = 20) => profileDamageReceipt
 const band = (combat, enemy) => engagementBand(combat.rangeState, actorRangeKey(combat, combat.player), actorRangeKey(combat, enemy));
 test('force sends half of the post-Block damage to Poise (owner 2026-11-18, replaces the x1.5 Poise damage), never more than the pool holds', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 30 });
+  // 672b3970cac: this archived Force share precedes weapon Poise.
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+  combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst' };
   const receipt = hit(combat, enemy);
   assert.equal(receipt.poiseMitigated, 5, 'half of the 10 that landed');
   assert.equal(receipt.poiseDrain || 0, 0, 'no extra Poise loss on top');

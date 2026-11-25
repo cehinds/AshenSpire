@@ -1,7 +1,9 @@
 # Stat descriptions and allocation
 
-Owner-confirmed, 2026-11-18. This contract applies to new Core profiles and
-supersedes earlier descriptions of attribute ownership.
+Owner-confirmed on 2026-11-18. This records the original Core allocation
+contract, including the four-point cadence in saves made under those rules.
+The owner confirmed per-point Stamina, Mana, and hand tuning for new profiles
+on 2026-11-24. See the current Core stat rules in [SPEC.md](../../SPEC.md).
 
 | Attribute | Benefits |
 | --- | --- |

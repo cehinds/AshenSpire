@@ -14,11 +14,12 @@ import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { applyStatus, getStacks, decayAtTurnEnd, decayAtTurnStart } from '../src/engine/statuses.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 
-function fixture({ weapon = 'straightSword', profile = resolveGameProfile('default') } = {}) {
+function fixture({ weapon = 'straightSword', armor, classId = 'reaver', profile = resolveGameProfile('default') } = {}) {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-  const run = createRunState({ registries, classId: 'reaver', seed: 31,
+  const run = createRunState({ registries, classId, seed: 31,
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   equipPiece(registries, run.loadout, 'rightHand', 0, weapon, { has: () => true }, { inCombat: false, classId: run.class, attributes: run.attributes });
+  if (armor) assert.ok(equipPiece(registries, run.loadout, 'armor', 0, armor, { has: () => true }, { inCombat: false, classId, attributes: run.attributes }));
   run.relics = [];
   const combat = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
   combat.player.energy = combat.player.stamina = 30;
@@ -59,8 +60,8 @@ for (const holder of ['player', 'enemy']) test(`current ${holder} Reach loses on
   assert.equal(getStacks(entity, 'reach'), 1, 'no second decay at owner start');
 });
 
-test('the Bow grants a fresh whole Reach stack at the next owner start', () => {
-  const combat = fixture({ weapon: 'shortbow' });
+test('Waywatcher Coat grants a fresh whole Reach stack at the next owner start', () => {
+  const combat = fixture({ armor: 'waywatcher', classId: 'rogue' });
   dispatch(combat, { type: 'setReactions', enabled: false });
   assert.equal(getStacks(combat.player, 'reach'), 1);
   const start = combat.eventLog.length;

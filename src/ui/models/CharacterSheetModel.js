@@ -18,7 +18,7 @@ import { classRewardBudget, expandedProgression } from '../../model/classMilesto
 // stays a spreadsheet edit.
 
 import { PerceptionEnabled } from '../../model/perception.js';
-import { characterLevel, levelOf, xpToNext as levelXpToNext } from '../../model/levelup.js';
+import { CharacterLevelPointCadence, characterLevel, levelOf, xpToNext as levelXpToNext } from '../../model/levelup.js';
 import {
   classSkillId, levelQueuesAttributePick, levelQueuesRankUp, linkedAttributes,
   rankUpKind, skillLevel, skillMaxLevel, skillTracks, xpToNext as skillXpToNext,
@@ -28,8 +28,7 @@ import { deriveStat } from '../../model/derivedStats.js';
 import { deckMinimum } from '../../model/loadout.js';
 import { orderedAttributes } from '../../model/attributes.js';
 import { gameModule } from '../../model/gameProfile.js';
-import { ClassBonusApplies, ClassBonusAttribute, ClassBonusCount, IsClassBonusLevel } from '../../model/classLevelBonus.js';
-import { classLevelBonuses } from '../../content/classLevelBonuses.js';
+import { ClassBonusAmount, ClassBonusApplies, ClassBonusAttribute, ClassBonusCount, IsClassBonusLevel, IsLevelReward } from '../../model/classLevelBonus.js';
 import { CoreDeckMinimum } from '../../model/deckMinimumRules.js';
 import { deckRules } from '../../content/deckRules.js';
 
@@ -89,15 +88,14 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS, 
   const classDef = rules && registries.classes && typeof registries.classes.get === 'function' ? registries.classes.get(run.class) : null;
   const floorAt = (level) => deckMinimum(registries, { level: { level } });
   const coreFloorAt = (level) => CoreDeckMinimum({ ...run, level: { ...run.level, level } }, settings);
-  // Core (owner, 2026-11-17): the sheet lists what a claimed level really pays — the authored points,
-  // the pools at that level (the odd-level class bonus included), the class bonus itself, the deck
-  // minimum dropping, and the level's card choice. No feat or class-tree pick is offered there.
+  // The ladder reads the same saved milestones as XP settlement and the class bonus.
   const core = !!(run && gameModule(run, 'progression')?.characterLevels);
-  const corePoints = core ? (gameModule(run, 'progression').attributePointsPerLevel || 0) : 0;
-  const bonusAttribute = core && ClassBonusApplies(run) ? ClassBonusAttribute(run.class) : null;
+  const rewards = run?.levelRewardRuleSnapshot;
+  const corePoints = core ? CharacterLevelPointCadence(registries, run, o) : null;
+  const bonusAttribute = core && ClassBonusApplies(run) ? ClassBonusAttribute(run.class, run) : null;
   const bonusLabel = bonusAttribute ? (orderedAttributes(registries).find((a) => a.id === bonusAttribute)?.label || bonusAttribute) : '';
   const attributesAt = (level) => (bonusAttribute && run.attributes
-    ? { ...run.attributes, [bonusAttribute]: (run.attributes[bonusAttribute] || 0) + ClassBonusCount(level) * classLevelBonuses.amount }
+    ? { ...run.attributes, [bonusAttribute]: (run.attributes[bonusAttribute] || 0) + ClassBonusCount(level, run) * ClassBonusAmount(run) }
     : run && run.attributes);
   const rows = [];
   let total = 0;
@@ -106,8 +104,10 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS, 
     total += stepXp;
     const grants = [];
     if (level > 1) {
-      if (core ? corePoints > 0 : o.statPoints) grants.push({ kind: 'points', amount: core ? corePoints : points });
-      if (bonusAttribute && IsClassBonusLevel(level)) grants.push({ kind: 'classBonus', attribute: bonusLabel, amount: classLevelBonuses.amount });
+      if (core) {
+        if (corePoints.amount > 0 && IsLevelReward(level, corePoints)) grants.push({ kind: 'points', amount: corePoints.amount });
+      } else if (o.statPoints) grants.push({ kind: 'points', amount: points });
+      if (bonusAttribute && IsClassBonusLevel(level, run)) grants.push({ kind: 'classBonus', attribute: bonusLabel, amount: ClassBonusAmount(run) });
       if (rules) {
         for (const stat of LEVEL_STATS) {
           const before = poolValue(rules, stat, run, classDef, level - 1, attributesAt(level - 1));
@@ -121,6 +121,9 @@ export function characterLadder(registries, run, offers = DEFAULT_LEVEL_OFFERS, 
           if (minimum < coreFloorAt(level - 1)) grants.push({ kind: 'deckMinimumDown', amount: minimum });
         }
         grants.push({ kind: 'levelCard' });
+        if (rewards?.cardRankUpsPerLevel > 0 && gameModule(run, 'progression').cardRanks !== false) {
+          grants.push({ kind: 'rankUp', amount: rewards.cardRankUpsPerLevel });
+        }
         rows.push(Object.freeze({ level, stepXp, totalXp: total, state: rowState(level, held), grants: Object.freeze(grants) }));
         continue;
       }

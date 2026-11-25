@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/combatExpansionActions.js",
-    "symbol": "completedRootTargets"
+    "file": "src/engine/gameProfileCombat.js",
+    "symbol": "profileDamageReceiptCore"
   }
 }

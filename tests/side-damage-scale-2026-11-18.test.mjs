@@ -6,6 +6,7 @@ import { gameDigest } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import * as Profile from '../src/model/gameProfile.js';
+import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
@@ -31,9 +32,14 @@ const META = { gameProfileUnlocks: { [shipped.id]: { completedRunIds: ['a', 'b',
 const NEUTRAL = Object.fromEntries(KEYS.map(key => [key, 1]));
 const shippedWorld = variant();
 
-function begin(world, { classId = 'reaver', enemyId = 'wanderingSoldier', seed = 31 } = {}) {
+function begin(world, { classId = 'reaver', enemyId = 'wanderingSoldier', seed = 31, legacySpellPoise = false } = {}) {
   const run = createRunState({ registries: world.registries, classId, seed, profileMeta: META });
   const combat = createRunCombat({ registries: world.registries, run, rng: createRng(seed), enemyIds: [enemyId] });
+  if (legacySpellPoise) {
+    // The saved x2 spell policy predates inherent weapon Poise.
+    combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+    combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst' };
+  }
   primeAccuracyRolls(combat, { count: 2 });
   dispatch(combat, { type: 'setReactions', enabled: false });
   combat.enemies[0].actorIntentRevealed = true;
@@ -117,7 +123,7 @@ test('Block gain takes blockGainMultiplier, floored, in computeBlockGain', () =>
 
 test('a player spell takes spellPoiseDamageMultiplier times the Poise, HP unchanged', () => {
   const cast = world => {
-    const combat = begin(world, { classId: 'starseer' });
+    const combat = begin(world, { classId: 'starseer', legacySpellPoise: true });
     const enemy = combat.enemies[0];
     enemy.persistentPoise = { value: 40, max: 40 };
     combat.piles.hand.push({ instanceId: 'spell', cardId: 'core.cantrip' });
@@ -131,7 +137,7 @@ test('a player spell takes spellPoiseDamageMultiplier times the Poise, HP unchan
   assert.equal(doubled.hp, single.hp, 'HP is unchanged by the Poise multiplier');
   assert.equal(doubled.taken, doubled.poiseLost, 'the damage receipt the log and inspector read shows the doubled Poise');
   const strike = world => {
-    const combat = begin(world);
+    const combat = begin(world, { legacySpellPoise: true });
     const enemy = combat.enemies[0];
     enemy.persistentPoise = { value: 40, max: 40 };
     combat.piles.hand.push({ instanceId: 'p', cardId: 'core.strike' });
@@ -145,10 +151,11 @@ test('a static card face shows the player side scale', () => {
   const run = createRunState({ registries: shippedWorld.registries, classId: 'reaver', seed: 7, profileMeta: META });
   const strike = shippedWorld.registries.cards.get('core.strike');
   const line = def => cardFaceLines(def, undefined, shippedWorld.registries, run).find(row => row.kind === 'damage').html.replace(/<[^>]+>/g, '');
-  // Owner, 2026-11-18 (static faces): the run's always-on STR (5 for a new Reaver) joins the halved base before the cuts.
-  assert.equal(line(strike), '3 damage', 'ceil(6 x 0.5) = 3, + STR 5, then floor(8 x 0.7 x 0.7) = 3 (physical cut, then side scale)');
+  const strength = gameProfileEffectiveAttributes(shippedWorld.registries, run).strength;
+  const scaled = halfBase => Math.floor((halfBase + strength) * 0.7 * 0.7) + ' damage';
+  assert.equal(line(strike), scaled(3), 'the halved base plus effective STR takes both cuts');
   const ranked = playingCardDefinition(shippedWorld.registries, { cardId: 'core.strike', rank: 2 }, { rules: run });
-  assert.equal(line(ranked), '4 damage', 'rank 2: ceil(7 x 0.5) = 4, + STR 5, floor(9 x 0.7 x 0.7) = 4');
+  assert.equal(line(ranked), scaled(4), 'the ranked base increases before the cuts');
 });
 
 test('a spell\'s Block and Ward split takes blockGainMultiplier too, and the preview quotes the played total', () => {
@@ -170,7 +177,7 @@ test('a spell\'s Block and Ward split takes blockGainMultiplier too, and the pre
 
 test('an explicit spell poiseDamage effect: the preview quote equals the Poise the play removes, at the x2 factor', () => {
   const run = (world) => {
-    const combat = begin(world, { classId: 'starseer' });
+    const combat = begin(world, { classId: 'starseer', legacySpellPoise: true });
     const enemy = combat.enemies[0];
     enemy.persistentPoise = { value: 40, max: 40 };
     combat.piles.hand.push({ instanceId: 'grasp', cardId: 'core.shockingGrasp' });
@@ -188,7 +195,7 @@ test('an explicit spell poiseDamage effect: the preview quote equals the Poise t
 test('spell Poise x2 doubles the completed net loss: a fire spell\'s ignored Poise and a Defend target\'s spared share', async () => {
   const { previewCard: preview } = await import('../src/engine/combat.js');
   const loss = (world, setup) => {
-    const combat = begin(world, { classId: 'starseer' });
+    const combat = begin(world, { classId: 'starseer', legacySpellPoise: true });
     const enemy = combat.enemies[0];
     Object.assign(enemy, { hp: 500, maxHp: 500 });
     enemy.persistentPoise = { value: 100, max: 100 };
@@ -215,7 +222,7 @@ test('a Defend target holding Block and Ward keeps its Poise floor against the s
   const { profileDamageReceipt } = await import('../src/engine/gameProfileCombat.js');
   const FORCE = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane', magicShare: 1 }, tags: ['school:force'], magicShare: 1 };
   const receipt = world => {
-    const combat = begin(world, { classId: 'starseer' });
+    const combat = begin(world, { classId: 'starseer', legacySpellPoise: true });
     const enemy = combat.enemies[0];
     Object.assign(enemy, { hp: 500, maxHp: 500, block: 1, statuses: { ward: { stacks: 1 } }, persistentPoise: { value: 16, max: 16 } });
     enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
@@ -227,7 +234,7 @@ test('a Defend target holding Block and Ward keeps its Poise floor against the s
     assert.ok(16 - lost >= 1, `${name}: at least the Defend floor of 1 Poise is left (lost ${lost})`);
   }
   // The preview prices through the same receipt, so the quote cannot drain past the floor either.
-  const combat = begin(shippedWorld, { classId: 'starseer' });
+  const combat = begin(shippedWorld, { classId: 'starseer', legacySpellPoise: true });
   const enemy = combat.enemies[0];
   Object.assign(enemy, { hp: 500, maxHp: 500, block: 1, statuses: { ward: { stacks: 1 } }, persistentPoise: { value: 16, max: 16 } });
   enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
@@ -241,7 +248,7 @@ test('a Defend target holding Block and Ward keeps its Poise floor against the s
 
 test('cantrip into a Defend target with Block and Ward: x2 leaves the same Poise floor as x1, and the quote equals the play', () => {
   const cast = (world, value) => {
-    const combat = begin(world, { classId: 'starseer' });
+    const combat = begin(world, { classId: 'starseer', legacySpellPoise: true });
     const enemy = combat.enemies[0];
     Object.assign(enemy, { hp: 500, maxHp: 500, block: 2, statuses: { ...(enemy.statuses || {}), ward: { stacks: 1 } } });
     enemy.persistentPoise = { value, max: value };

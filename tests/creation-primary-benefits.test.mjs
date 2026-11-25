@@ -33,7 +33,7 @@ test('current Wisdom and spell disclosures omit retired Ward and use the real co
   assert.equal(models.find(row => row.id === 'constitution').face.mainSummary, 'Health');
   assert.ok(wisdom.reveal.lines.every(line => !/Ward|PR/.test(line)));
   assert.ok(wisdom.reveal.lines.some(line => /Divine magic/.test(line)));
-  assert.ok(intelligence.reveal.lines.some(line => /Hand size \+1 every 4 points/.test(line)));
+  assert.ok(intelligence.reveal.lines.some(line => /Hand size \+1 every 1 point/.test(line)));
   assert.ok(intelligence.reveal.lines.every(line => !/every 5 points/.test(line)));
 });
 
@@ -54,7 +54,7 @@ test('primary faces name the main bonus while secondary benefits remain inspecta
   const rows = cards(registries, run);
   assert.equal(rows.find((row) => row.id === 'strength').face.mainSummary, 'Physical damage');
   assert.equal(rows.find((row) => row.id === 'constitution').face.mainSummary, 'Health · Poise');
-  assert.equal(rows.find((row) => row.id === 'intelligence').face.mainSummary, 'Magic damage');
+  assert.equal(rows.find((row) => row.id === 'intelligence').face.mainSummary, 'Magic damage · Hand size');
   assert.ok(rows.find((row) => row.id === 'wisdom').reveal.lines.some((line) => line.startsWith('Mana ')));
 });
 
@@ -88,7 +88,7 @@ test('Core faces use current spell and hand rules without rating names or numeri
   const character = createRunState({ registries: core, classId: 'reaver', seed: 9 });
   const expected = {
     strength: 'Physical damage', dexterity: 'Defense', constitution: 'Health',
-    wisdom: 'Poise · Divine magic', intelligence: 'Arcane magic',
+    wisdom: 'Poise · Divine magic', intelligence: 'Hand size · Arcane magic',
   };
   for (const wisdom of [1, 5]) {
     character.attributes.wisdom = wisdom;
@@ -120,9 +120,9 @@ test('current expanded benefits follow saved pools, hand intervals and casting t
   assert.match(lines('constitution'), /HP \+5 every 1 point/);
   assert.doesNotMatch(lines('constitution'), /Poise|Mana|Stamina/);
   assert.match(lines('wisdom'), /Poise \+1 every 1 point/);
-  assert.match(lines('wisdom'), /Mana \+1 every 4 points/);
-  assert.match(lines('dexterity'), /Stamina.*\+1 every 4 points/);
-  for (const label of ['Opening hand', 'Draw / turn', 'Hand size']) assert.ok(lines('intelligence').includes(`${label} +1 every 4 points`));
+  assert.match(lines('wisdom'), /Mana \+1 every 1 point/);
+  assert.match(lines('dexterity'), /Stamina.*\+1 every 1 point/);
+  for (const label of ['Opening hand', 'Draw / turn', 'Hand size']) assert.ok(lines('intelligence').includes(`${label} +1 every 1 point`));
   assert.match(lines('wisdom'), /Divine magic scales with Wisdom/);
   assert.match(lines('intelligence'), /Arcane magic scales with Intelligence/);
   assert.match(lines('intelligence'), /higher of Intelligence and Wisdom, never their sum/);

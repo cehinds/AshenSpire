@@ -50,15 +50,15 @@ test('the level bar reads the same step the shrine spends', () => {
   assert.equal(quarter.value, '25 / 100 XP');
 });
 
-test('a level climbed moves the bar to the next step and names the waiting point', () => {
+test('level progress moves the bar and names a point earned at the saved cadence', () => {
   const run = fresh();
-  awardLevelXp(registries, run, levelXpToNext(registries, 1));
+  for (const from of [1, 2, 3]) awardLevelXp(registries, run, levelXpToNext(registries, from));
   const after = levelProgress(registries, run);
-  assert.equal(after.level, 2);
+  assert.equal(after.level, 4);
   assert.equal(after.xp, 0);
-  assert.equal(after.xpToNext, levelXpToNext(registries, 2));
+  assert.equal(after.xpToNext, levelXpToNext(registries, 4));
   assert.equal(after.points, 1);
-  assert.equal(after.pointsLabel, '1 point to assign', 'the phrase is the model\'s, so the badge and the tooltip cannot disagree');
+  assert.equal(after.pointsLabel, '1 point to assign');
   assert.match(after.sense, /1 point waiting/);
 
   run.level.unspentPoints = 3;

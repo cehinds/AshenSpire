@@ -30,9 +30,11 @@ const lastHit = (combat, enemyId) => combat.eventLog
 function solo(withInsanity) {
   const c = createCombat({ registries, rng: createRng(50), player: player(withInsanity), enemyIds: ['wanderingSoldier'] });
   const enemy = c.enemies[0];
+  // Insanity also has an explicit Poise-damage rider; keep it below the meter threshold.
+  enemy.poiseMeter.max = 20;
   const poiseMaxBefore = enemy.poiseMeter.max;
   if (withInsanity) dispatch(c, { type: 'playCard', cardInstanceId: 'ins', targetId: enemy.id });
-  const state = { skip: !!enemy.skipNextTurn, staggered: getStacks(enemy, 'staggered'), poiseMax: enemy.poiseMeter.max, poiseMaxBefore };
+  const state = { poise: enemy.poiseMeter.value, skip: !!enemy.skipNextTurn, staggered: getStacks(enemy, 'staggered'), poiseMax: enemy.poiseMeter.max, poiseMaxBefore };
   dispatch(c, { type: 'playCard', cardInstanceId: 'exe', targetId: enemy.id });
   return { ...state, hit: lastHit(c, enemy.id) };
 }
@@ -44,6 +46,7 @@ test('an Insanity break applies Staggered, so Executioner deals its Staggered da
   assert.ok(broken.skip, 'the proc skips the enemy\'s next turn');
   assert.equal(broken.staggered, registries.balance.poise.onFill.find((e) => e.status === 'staggered').stacks,
     'the direct break applies the same Staggered stacks a full poise bar does');
+  assert.equal(broken.poise, registries.statuses.get('insanity').proc.poiseDamage, 'only the explicit rider fills the meter');
   assert.equal(broken.poiseMax, broken.poiseMaxBefore, 'the direct break bypasses the bar: poise max does not grow');
   // Executioner: 10 clean, 25 if Staggered, then Staggered's ×1.5 taken.
   assert.ok(broken.hit > clean.hit * 2, `Staggered rider fired (${clean.hit} -> ${broken.hit})`);
