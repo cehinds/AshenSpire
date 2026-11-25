@@ -12,7 +12,7 @@
 # 2026-10-11 (owner): a pull request into `dev` is gated by fast checks only
 # (about five minutes or less), and the heavy suites run on push to `test` and
 # `release` in ci.yml, which now holds every job that was once also here.
-#   pull_request into dev    — `core` and the six `discovered` shards, which
+#   pull_request into dev    — `core` and the eight `discovered` shards, which
 #                              leave out SLOW_DISCOVERED (--no-slow).
 #   push to dev              — the same as a pull request, so the merged tree
 #                              is read at once: two PRs each green alone can
@@ -44,10 +44,10 @@
 # history blobs, no source PNGs; its header has the strace). It runs the art
 # release fetch first (step 12: the suite reads the packs), the engine suite,
 # each tool's verdict on the tree as it stands (tests/run-node.mjs), and the
-# no-browser CHANGELOG ordering check with its own known-bads. The six
+# no-browser CHANGELOG ordering check with its own known-bads. The eight
 # discovered shards run beside it.
 #
-# SIX DISCOVERED SHARDS, NOT FOUR (2026-11-20). With four, "discovered tests
+# WHY THE DEV SHARDS SPLIT (2026-11-20). With four, "discovered tests
 # (N/4)" repeatedly stopped at run-node's 15-minute budget on #2905, #2909,
 # #2914 and #2918 (shards 0, 1 and 2), every test logged up to the stop having
 # passed; on dev the same shards take 5-14 minutes. Shards are `index % count`
@@ -56,6 +56,8 @@
 # 4-way load locally, with single files of 63-66 s (combat-audit-relic-enemy,
 # docs/tag-model/tools/workbench-store, w25-smith-category). More shards, not a
 # longer limit and no tests moved to the slow lane (ci.yml: "SHARDED, NOT CUT").
+# The six-way split still left one group reaching the limit. Its three subgroups
+# preserve exactly the old 4/6 membership, bringing the job count to eight.
 
 # CANCELLATION IS FOR PULL REQUESTS ONLY. A newer push to a PR branch makes the
 # older run's answer moot, so it is cancelled. A push to `test` or `release` is
@@ -174,7 +176,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ['0/6', '1/6', '2/6', '3/6', '4/6', '5/6']
+        # The old 4/6 group and its 10/12 subgroup hit the subprocess limit.
+        shard: ['0/6', '1/6', '2/6', '3/6', '4/12', '10/24', '22/24', '5/6']
     steps:
       - uses: actions/checkout@v5
         with:
