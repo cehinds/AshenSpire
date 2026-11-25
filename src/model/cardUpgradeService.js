@@ -67,7 +67,7 @@ export function planCardUpgrade(run, registries, instanceId, { choices = 1, comb
     }
     cacheKey = planCacheKey(run, instance, count, combos, vendor);
     const hit = runMap.get(cacheKey);
-    if (hit && hit.scoring === activeScoring && hit.registries === registries) return hit.quote;
+    if (hit && hit.scoring === activeScoring && hit.registries === registries && hit.gameProfile === run.gameProfile) return hit.quote;
   }
 
   const verdict = canUpgrade(registries, run, instance || { instanceId, cardId: '' });
@@ -87,7 +87,7 @@ export function planCardUpgrade(run, registries, instanceId, { choices = 1, comb
   }
   if (runMap && cacheKey) {
     if (runMap.size >= MAX_PLAN_CACHE_PER_RUN) runMap.delete(runMap.keys().next().value);
-    runMap.set(cacheKey, { scoring: activeScoring, registries, quote: result });
+    runMap.set(cacheKey, { scoring: activeScoring, registries, gameProfile: run.gameProfile, quote: result });
   }
   return result;
 }

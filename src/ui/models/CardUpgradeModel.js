@@ -261,7 +261,7 @@ function pickerRowsFingerprint(run, owned, blockedReason, blacksmith) {
   ];
   for (const { instance, inDeck } of owned) {
     if (!instance) continue;
-    parts.push(`${inDeck ? 1 : 0}:${instance.instanceId}:${instance.cardId}:${upgradeSignature(instance)}:${VisibleCardRank(instance)}:${instance.rarityOverride ?? ''}:${instance.abilityRank ?? ''}:${playsEverOf(instance)}`);
+    parts.push(`${inDeck ? 1 : 0}:${instance.instanceId}:${instance.cardId}:${upgradeSignature(instance)}:${VisibleCardRank(instance)}:${instance.rank ?? ''}:${instance.rarityOverride ?? ''}:${instance.abilityRank ?? ''}:${instance.sourceArmamentId ?? ''}:${instance.grantedBy ?? ''}:${playsEverOf(instance)}`);
   }
   return parts.join(';');
 }
@@ -277,7 +277,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   if (!quote && run && typeof run === 'object') {
     cacheKey = pickerRowsFingerprint(run, owned, blockedReason, blacksmith);
     const hit = pickerRowsCache.get(run);
-    if (hit && hit.key === cacheKey && hit.registries === registries && hit.scoring === activeScoring) {
+    if (hit && hit.key === cacheKey && hit.registries === registries && hit.scoring === activeScoring && hit.gameProfile === run.gameProfile) {
       rows = hit.rows;
     }
   }
@@ -340,7 +340,7 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     built.sort((a, b) => Number(b.inDeck) - Number(a.inDeck) || Number(a.disabled) - Number(b.disabled));
     rows = freeze(built);
     if (!quote && run && typeof run === 'object' && cacheKey) {
-      pickerRowsCache.set(run, { key: cacheKey, registries, scoring: activeScoring, rows });
+      pickerRowsCache.set(run, { key: cacheKey, registries, scoring: activeScoring, gameProfile: run.gameProfile, rows });
     }
   }
   const selected = rows.find((row) => row.instanceIds.includes(selectedInstanceId)) || null;

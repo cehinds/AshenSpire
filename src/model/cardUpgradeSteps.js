@@ -829,7 +829,7 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     // Seeded rejection sampling: draw from structurally open kinds and check CP only on the drawn candidate.
     if (!accepted) {
       let retryRng = null;
-      for (let attempt = 0; attempt < 48; attempt += 1) {
+      for (let attempt = 0; attempt < 96; attempt += 1) {
         if (![0, 1, 2].some((r) => kindsAt(r).length)) break;
         const p = attempt === 0 ? pick : retryRng();
         const c = attempt === 0 ? choice : retryRng();
