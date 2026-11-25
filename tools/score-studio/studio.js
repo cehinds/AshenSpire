@@ -9,6 +9,10 @@ import { createRng } from '../../src/engine/rng.js';
 import { createRunCombat } from '../../src/engine/runCombat.js';
 import { dispatch, previewCard, cardPlayCosts } from '../../src/engine/combat.js';
 import { renderCard, fitCardFace } from '../../src/ui/components/card.js';
+import { renderEquipmentCard } from '../../src/ui/components/equipmentCard.js';
+import { renderCollectibleCard } from '../../src/ui/components/collectibleCard.js';
+import { GEAR_TYPES } from '../../src/content/gearTypes.js';
+import { itemArtLayers as shippedItemArtLayers } from '../../src/content/generated/itemArtLayers.js';
 import { cardShapeCssProperties } from '../../src/ui/models/CardSizeModel.js';
 import { reviewedCardArtCatalog } from '../../src/content/reviewedCardArt.generated.js';
 import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
@@ -20,6 +24,7 @@ import { tokenRe, computeTokenBindings } from '../../src/model/validate.js';
 import { ScoringDiffPaths, MergePendingScoring, HasRankPin, WithoutRankPin, STUDIO_SAVE_PATH, RefreshRestoredNaming } from './weightsStaging.js';
 import { DEFAULT_NAME_SET_ID, DefaultNameSet, CaptureNameSet, TurnOnAutoNames, ApplyNameSet, SortedNameSets, ValidNameSets, MergeNameSets, SplitSavedConfig, JoinSavedConfig, DefaultNameSetLabel, NameSetFile, NameSetFileName, ParseNameSetFile } from './nameSets.js';
 import { weightSentence, weightExample, TagMultiplierKey, SetKeywordForm, SetTagForm } from './weightExamples.js';
+import { buildItemRoster, typeModsForEntry, scoreItemEntry, livePieceFromEntry, describeItemMod, formatModString, ITEM_TRAIT_SELECTORS, ITEM_QUICK_TRAITS, ITEM_MOTIF_OPTIONS } from './itemStudio.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -105,8 +110,15 @@ const state = {
   redoStack: [],
   cards: [],            // editable card definitions + derived faces
   baselineRanks: {},    // id -> baseline rank under repoScoring
+  items: [],            // editable weapons, armours, and relics
+  itemRules: {},        // relic property-rule table for ScoreItem
+  defaultItemNames: {}, // key -> shipped authored item name
+  baselineItemRanks: {}, // key -> baseline rank under repoScoring
   selectedCardId: null,
+  selectedItemKey: null,
   selectedLayerIdx: 0,
+  artTarget: 'cards',   // 'cards' | 'items'
+  selectedItemLayerIdx: 0,
   viewMode: 'grid',
   artLayers: {
     version: 1,
@@ -115,6 +127,8 @@ const state = {
     ],
   },
   repoArtLayers: null,  // art layers as loaded from the repo (or the built-in default); set in boot
+  itemArtLayers: clone(shippedItemArtLayers),
+  repoItemArtLayers: clone(shippedItemArtLayers),
   abSlots: { A: null, B: null, activeLabel: 'Draft' },
   // Rename all: the repo's authored names (never overwritten) and the saved name sets, newest first.
   defaultNameSet: null,
@@ -406,7 +420,7 @@ function toast(msg) {
 }
 
 function snapshotState() {
-  return JSON.stringify({ scoring: state.scoring, cards: state.cards, artLayers: state.artLayers });
+  return JSON.stringify({ scoring: state.scoring, cards: state.cards, items: state.items, artLayers: state.artLayers, itemArtLayers: state.itemArtLayers });
 }
 
 function updateUndoButtons() {
@@ -426,16 +440,21 @@ function editedCards() {
   return state.cards.filter((c) => c._edited || c._custom);
 }
 
+function editedItems() {
+  return state.items.filter((it) => it._edited);
+}
+
 function weightChangeCount() {
   return buildScoringDiff().length;
 }
 
 function artLayersChanged() {
-  return JSON.stringify(state.artLayers) !== JSON.stringify(state.repoArtLayers);
+  return JSON.stringify(state.artLayers) !== JSON.stringify(state.repoArtLayers)
+    || JSON.stringify(state.itemArtLayers) !== JSON.stringify(state.repoItemArtLayers);
 }
 
 function isDirty() {
-  return weightChangeCount() > 0 || pendingWeightCount() > 0 || editedCards().length > 0 || artLayersChanged();
+  return weightChangeCount() > 0 || pendingWeightCount() > 0 || editedCards().length > 0 || editedItems().length > 0 || artLayersChanged();
 }
 
 function refreshDirtyStatus() {
@@ -461,7 +480,9 @@ function writeDraftNow() {
           pendingScoring: state.pendingScoring,
           pendingBase: state.pendingBase,
           artLayers: state.artLayers,
+          itemArtLayers: state.itemArtLayers,
           customCards: editedCards(),
+          editedItems: editedItems(),
         }));
       } else {
         localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -494,9 +515,12 @@ function restoreSnapshot(snapStr) {
   const snap = JSON.parse(snapStr);
   state.scoring = snap.scoring;
   state.cards = snap.cards;
+  if (Array.isArray(snap.items)) state.items = snap.items;
   state.artLayers = snap.artLayers;
+  if (snap.itemArtLayers?.layers) state.itemArtLayers = snap.itemArtLayers;
   studioCardOverrides.clear();
   if (!state.cards.some((c) => c.id === state.selectedCardId)) state.selectedCardId = state.cards[0]?.id || null;
+  if (!state.items.some((x) => x.key === state.selectedItemKey)) state.selectedItemKey = state.items[0]?.key || null;
   syncAllViews();
   saveDraft();
 }
@@ -1942,6 +1966,24 @@ function renderWeights({ shifts = true } = {}) {
         mult: multKey ? { value: isMult, base: bv ? (bv.multiplier !== undefined || bv.pMultiplier !== undefined) : undefined, set: (on) => { SetTagForm(state.scoring.tags[k], multKey, on); } } : null,
       };
     }) },
+    { key: 'items', title: 'Equipment & Items', entries: [
+      { id: 'weaponPoiseDamage.perPoint', label: 'Weapon Inherent Poise Dmg', val: state.scoring.items?.weaponPoiseDamage?.perPoint ?? 1, base: R.items?.weaponPoiseDamage?.perPoint ?? 1, step: 0.25, set: (n) => { ((state.scoring.items ||= {}).weaponPoiseDamage ||= { baseline: 1, perPoint: 1 }).perPoint = n; } },
+      { id: 'weaponPoiseDamage.baseline', label: 'Weapon Poise Dmg Baseline', val: state.scoring.items?.weaponPoiseDamage?.baseline ?? 1, base: R.items?.weaponPoiseDamage?.baseline ?? 1, step: 1, set: (n) => { ((state.scoring.items ||= {}).weaponPoiseDamage ||= { baseline: 1, perPoint: 1 }).baseline = n; } },
+      { id: 'poiseThreshold.perPoint', label: 'Armour Poise Weight', val: state.scoring.items?.poiseThreshold?.perPoint ?? 0.5, base: R.items?.poiseThreshold?.perPoint ?? 0.5, step: 0.25, set: (n) => { ((state.scoring.items ||= {}).poiseThreshold ||= { baseline: 0, perPoint: 0.5 }).perPoint = n; } },
+      { id: 'poiseThreshold.baseline', label: 'Armour Poise Baseline', val: state.scoring.items?.poiseThreshold?.baseline ?? 0, base: R.items?.poiseThreshold?.baseline ?? 0, step: 1, set: (n) => { ((state.scoring.items ||= {}).poiseThreshold ||= { baseline: 0, perPoint: 0.5 }).baseline = n; } },
+      { id: 'plays.weaponArt', label: 'Weapon Art Share', val: state.scoring.items?.plays?.weaponArt ?? 0.25, base: R.items?.plays?.weaponArt ?? 0.25, step: 0.05, set: (n) => { ((state.scoring.items ||= {}).plays ||= { strike: 3, defend: 2, weaponArt: 0.25 }).weaponArt = n; } },
+      { id: 'range.reach', label: 'Reach Weapon Bonus', val: state.scoring.items?.range?.reach ?? 2, base: R.items?.range?.reach ?? 2, step: 0.5, set: (n) => { ((state.scoring.items ||= {}).range ||= { melee: 0, reach: 2, ranged: 3 }).reach = n; } },
+      { id: 'range.ranged', label: 'Ranged Weapon Bonus', val: state.scoring.items?.range?.ranged ?? 3, base: R.items?.range?.ranged ?? 3, step: 0.5, set: (n) => { ((state.scoring.items ||= {}).range ||= { melee: 0, reach: 2, ranged: 3 }).ranged = n; } },
+      { id: 'conditionFactor', label: 'Conditional Trait Factor', val: state.scoring.items?.conditionFactor ?? 0.65, base: R.items?.conditionFactor ?? 0.65, step: 0.05, set: (n) => { (state.scoring.items ||= {}).conditionFactor = n; } },
+    ] },
+    { key: 'gearFields', title: 'Gear Traits', entries: Object.entries(state.scoring.items?.gearFields || {}).map(([k, v]) => ({
+      id: k,
+      label: `${v.label || k} (${k})`,
+      val: v.weight ?? 0,
+      base: R.items?.gearFields?.[k]?.weight,
+      step: 0.5,
+      set: (n) => { state.scoring.items.gearFields[k].weight = n; },
+    })) },
   ];
   // Built from the applied config (to mark pending rows) and from the config Apply would produce.
   const appliedGroups = buildGroups();
@@ -2256,62 +2298,371 @@ function renderNamingLimitGroup(container, query) {
 }
 
 // ---------------------------------------------------------------------------
-// Art & Layers Tab
+// Items & Relics Tab (Weapons, Armours, Relics)
 // ---------------------------------------------------------------------------
+function renderItemCardPreview(entry, container, level = 'inspect') {
+  if (!entry || !container) return;
+  container.innerHTML = '';
+  let piece;
+  if (entry.kind === 'relic' && studioRegistries.relics.has(entry.id)) {
+    piece = { ...studioRegistries.relics.get(entry.id), name: entry.name, rarity: entry.rarity };
+  } else if (entry.kind === 'weapon') {
+    const resolved = studioRegistries.equipment.armaments.find((a) => a.id === entry.id);
+    piece = resolved ? { ...resolved, ...livePieceFromEntry(entry), itemTypes: resolved.itemTypes, tags: resolved.tags, propertyTags: resolved.propertyTags } : livePieceFromEntry(entry);
+  } else if (entry.kind === 'armour') {
+    const resolved = studioRegistries.equipment.armour.find((a) => a.id === entry.id && a.classId === entry.raw?.classId);
+    piece = resolved ? { ...resolved, ...livePieceFromEntry(entry), tags: resolved.tags, propertyTags: resolved.propertyTags } : livePieceFromEntry(entry);
+  } else {
+    piece = livePieceFromEntry(entry);
+  }
+  const rendered = entry.kind === 'relic'
+    ? renderCollectibleCard(studioRegistries, piece, 'Relic', { interactive: false, inspection: false, level, itemLayerConfig: state.itemArtLayers })
+    : renderEquipmentCard(studioRegistries, piece, { interactive: false, inspection: false, level, itemLayerConfig: state.itemArtLayers });
+  container.appendChild(rendered.card);
+}
+
+function populateItemTraitControls() {
+  const selEl = document.getElementById('item-trait-selector');
+  const fieldEl = document.getElementById('item-trait-field');
+  const quickEl = document.getElementById('item-quick-traits');
+  if (!selEl || !fieldEl || !quickEl) return;
+  if (!selEl.options.length) {
+    for (const s of ITEM_TRAIT_SELECTORS) {
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = s.label;
+      selEl.appendChild(o);
+    }
+  }
+  const prevField = fieldEl.value;
+  fieldEl.innerHTML = '';
+  const gearFields = state.scoring.items?.gearFields || shippedScoring.items?.gearFields || {};
+  for (const [k, v] of Object.entries(gearFields)) {
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = `${v.label || k} (${v.weight >= 0 ? `+${v.weight}` : v.weight})`;
+    fieldEl.appendChild(o);
+  }
+  if (prevField && gearFields[prevField]) fieldEl.value = prevField;
+  if (!quickEl.children.length) {
+    for (const qt of ITEM_QUICK_TRAITS) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'q-chip';
+      btn.dataset.itemQuickTrait = qt.mod;
+      btn.textContent = qt.label;
+      quickEl.appendChild(btn);
+    }
+  }
+}
+
+function renderItemsGrid() {
+  const grid = document.getElementById('items-grid');
+  if (!grid) return;
+  const q = (document.getElementById('item-filter-search')?.value || '').trim().toLowerCase();
+  const kindF = document.getElementById('item-filter-kind')?.value || 'all';
+  const rarF = document.getElementById('item-filter-rarity')?.value || 'all';
+  const rankF = document.getElementById('item-filter-rank')?.value || 'all';
+  const sortF = document.getElementById('item-filter-sort')?.value || 'rank-desc';
+
+  const scored = state.items.map((entry) => ({ entry, sc: scoreItemEntry(entry, state.scoring, state.itemRules) }));
+  const filtered = scored.filter(({ entry, sc }) => {
+    if (kindF !== 'all' && entry.kind !== kindF) return false;
+    if (rarF !== 'all' && entry.rarity !== rarF) return false;
+    if (rankF !== 'all') {
+      const rn = Number(rankF);
+      if (rn >= 5 ? sc.rank < 5 : sc.rank !== rn) return false;
+    }
+    if (q) {
+      const hay = `${entry.name} ${entry.id} ${entry.kind} ${entry.gearType || ''} ${entry.gearGroup || ''} ${sc.convention.name} ${(entry.mods || []).join(' ')} ${(entry.props || []).join(' ')}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (sortF === 'cp-desc') return b.sc.cp - a.sc.cp || a.entry.name.localeCompare(b.entry.name);
+    if (sortF === 'cp-asc') return a.sc.cp - b.sc.cp || a.entry.name.localeCompare(b.entry.name);
+    if (sortF === 'name') return a.entry.name.localeCompare(b.entry.name);
+    return b.sc.rank - a.sc.rank || b.sc.cp - a.sc.cp || a.entry.name.localeCompare(b.entry.name);
+  });
+
+  const countEl = document.getElementById('items-count');
+  if (countEl) countEl.textContent = `${filtered.length} / ${state.items.length} items`;
+
+  grid.innerHTML = '';
+  for (const { entry, sc } of filtered) {
+    const tile = document.createElement('div');
+    tile.className = 'item-grid-tile' + (entry.key === state.selectedItemKey ? ' is-selected' : '');
+    tile.dataset.itemKey = entry.key;
+    const cardHost = document.createElement('div');
+    cardHost.style.width = '100%';
+    cardHost.style.display = 'flex';
+    cardHost.style.justifyContent = 'center';
+    renderItemCardPreview(entry, cardHost, 'glance');
+    tile.appendChild(cardHost);
+
+    const meta = document.createElement('div');
+    meta.className = 'item-tile-meta';
+    const sub = entry.kind === 'weapon'
+      ? `${entry.gearType || 'weapon'} · P${entry.poiseDamage}`
+      : entry.kind === 'armour'
+        ? `${entry.gearGroup || 'armour'} · P${entry.poise}`
+        : 'relic';
+    meta.innerHTML = `<span class="item-kind-pill">${esc(sub)}</span><span>CP <strong>${esc(sc.cp)}</strong> · ${esc(RankName(sc.rank))}</span>`;
+    tile.appendChild(meta);
+
+    tile.addEventListener('click', () => {
+      state.selectedItemKey = entry.key;
+      grid.querySelectorAll('.item-grid-tile').forEach((n) => n.classList.toggle('is-selected', n.dataset.itemKey === entry.key));
+      renderItemInspector();
+    });
+    grid.appendChild(tile);
+  }
+}
+
+function renderItemInspector() {
+  const entry = state.items.find((x) => x.key === state.selectedItemKey) || state.items[0];
+  if (!entry) return;
+  state.selectedItemKey = entry.key;
+  populateItemTraitControls();
+  const sc = scoreItemEntry(entry, state.scoring, state.itemRules);
+
+  renderItemCardPreview(entry, document.getElementById('item-preview-host'), 'inspect');
+
+  document.getElementById('item-score-raw').textContent = String(sc.raw);
+  document.getElementById('item-score-disc').textContent = sc.disc ? `-${sc.disc}` : '0';
+  document.getElementById('item-score-cp').textContent = String(sc.cp);
+  document.getElementById('item-score-rank').textContent = RankName(sc.rank);
+
+  const nameInput = document.getElementById('item-edit-name');
+  if (document.activeElement !== nameInput) nameInput.value = entry.name || '';
+  const hintEl = document.getElementById('item-convention-hint');
+  if (hintEl) hintEl.textContent = `Convention name: ${sc.convention.name}${sc.convention.dropped?.length ? ` (trimmed: ${sc.convention.dropped.join(', ')})` : ''}`;
+
+  document.getElementById('item-edit-rarity').value = entry.rarity || 'common';
+
+  // Type / Group selector
+  const typeWrap = document.getElementById('item-edit-type-wrap');
+  const typeLabel = document.getElementById('item-edit-type-label');
+  const typeSel = document.getElementById('item-edit-type');
+  const poiseDmgWrap = document.getElementById('item-edit-poise-dmg-wrap');
+  const rangeWrap = document.getElementById('item-edit-range-wrap');
+  const poiseWrap = document.getElementById('item-edit-poise-wrap');
+
+  if (entry.kind === 'weapon') {
+    typeWrap.classList.remove('hidden');
+    poiseDmgWrap.classList.remove('hidden');
+    rangeWrap.classList.remove('hidden');
+    poiseWrap.classList.add('hidden');
+    typeLabel.textContent = 'Weapon Type';
+    typeSel.innerHTML = Object.entries(GEAR_TYPES.weaponTypes || {}).map(([id, row]) => `<option value="${esc(id)}" ${entry.gearType === id ? 'selected' : ''}>${esc(row.label || id)} (Poise ${row.poiseDamage ?? 1})</option>`).join('');
+    document.getElementById('item-edit-poise-dmg').value = String(entry.poiseDamage ?? 1);
+    document.getElementById('item-edit-range').value = entry.range || 'melee';
+  } else if (entry.kind === 'armour') {
+    typeWrap.classList.remove('hidden');
+    poiseDmgWrap.classList.add('hidden');
+    rangeWrap.classList.add('hidden');
+    poiseWrap.classList.remove('hidden');
+    typeLabel.textContent = 'Armour Group';
+    typeSel.innerHTML = Object.entries(GEAR_TYPES.armourGroups || {}).map(([id, row]) => `<option value="${esc(id)}" ${entry.gearGroup === id ? 'selected' : ''}>${esc(row.label || id)}</option>`).join('');
+    document.getElementById('item-edit-poise').value = String(entry.poise ?? 0);
+  } else {
+    typeWrap.classList.add('hidden');
+    poiseDmgWrap.classList.add('hidden');
+    rangeWrap.classList.add('hidden');
+    poiseWrap.classList.add('hidden');
+  }
+
+  // Inherited Type / Group Base Traits
+  const baseList = document.getElementById('item-type-base-list');
+  const baseMods = typeModsForEntry(entry);
+  if (entry.kind === 'relic') {
+    const props = (entry.props || []).map((p) => `<span class="item-base-chip">Property: ${esc(p)}</span>`).join('');
+    baseList.innerHTML = props || '<span class="studio-muted">Passive / trigger relic</span>';
+  } else {
+    baseList.innerHTML = baseMods.length
+      ? baseMods.map((raw) => {
+        const info = describeItemMod(raw, state.scoring);
+        const cls = info.pts > 0 ? 'pos' : info.pts < 0 ? 'neg' : 'zero';
+        return `<span class="item-base-chip">Base: ${esc(info.label)} (${esc(raw)}) <span class="feature-score ${cls}">${info.pts >= 0 ? `+${info.pts}` : info.pts}</span></span>`;
+      }).join('')
+      : '<span class="studio-muted">No inherited type/group traits</span>';
+  }
+
+  // Editable Item Traits
+  const traitsWrap = document.getElementById('item-trait-editor-wrap');
+  const activeTraits = document.getElementById('item-active-traits');
+  traitsWrap.classList.toggle('hidden', entry.kind === 'relic');
+  activeTraits.innerHTML = '';
+  (entry.mods || []).forEach((raw, idx) => {
+    const info = describeItemMod(raw, state.scoring);
+    const cls = info.pts > 0 ? 'pos' : info.pts < 0 ? 'neg' : 'zero';
+    const row = document.createElement('div');
+    row.className = 'feature-chip';
+    row.innerHTML = `
+      <span class="fc-title"><strong>${esc(info.label)}</strong> <span class="studio-muted">${esc(info.key)}</span></span>
+      <span class="feature-score ${cls}">${info.pts >= 0 ? `+${info.pts}` : info.pts} pts</span>
+      <input type="number" class="fc-num" data-item-mod-idx="${idx}" value="${esc(info.value)}" step="1" aria-label="${esc(info.label)} value" />
+      <button type="button" class="s-btn s-btn-sm s-btn-warn" data-item-mod-del="${idx}" title="Remove trait">×</button>`;
+    activeTraits.appendChild(row);
+  });
+
+  // Override fields
+  const ov = state.scoring.overrides?.[entry.key] || null;
+  document.getElementById('item-override-enabled').checked = Boolean(ov);
+  document.getElementById('item-override-fields').classList.toggle('hidden', !ov);
+  document.getElementById('item-override-rank').value = ov?.rank !== undefined ? String(ov.rank) : '';
+  document.getElementById('item-override-cp').value = ov?.cp !== undefined ? String(ov.cp) : '';
+
+  // Score Breakdown
+  const partsEl = document.getElementById('item-score-parts-list');
+  const entries = Object.entries(sc.parts || {});
+  partsEl.innerHTML = entries.length
+    ? entries.map(([k, v]) => {
+      const r = Math.round(v * 10) / 10;
+      const cls = r > 0 ? 'pos' : r < 0 ? 'neg' : 'zero';
+      return `<div class="score-part-row"><span>${esc(k)}</span><strong class="feature-score ${cls}">${r >= 0 ? `+${r}` : r}</strong></div>`;
+    }).join('')
+    : '<div class="studio-muted">No scored parts (raw 0).</div>';
+}
+
+// ---------------------------------------------------------------------------
+// Art & Layers Tab (Combat Cards + Weapons/Armours/Relics)
+// ---------------------------------------------------------------------------
+function activeArtLayersObj() {
+  return state.artTarget === 'items' ? state.itemArtLayers : state.artLayers;
+}
+function activeArtLayerIdx() {
+  return state.artTarget === 'items' ? state.selectedItemLayerIdx : state.selectedLayerIdx;
+}
+function setActiveArtLayerIdx(idx) {
+  if (state.artTarget === 'items') state.selectedItemLayerIdx = idx;
+  else state.selectedLayerIdx = idx;
+}
+
+function renderArtPreviewOnly() {
+  const sel = document.getElementById('art-preview-card-select');
+  const host = document.getElementById('art-live-preview');
+  if (state.artTarget === 'items') {
+    const item = state.items.find((x) => x.key === sel.value) || state.items[0];
+    if (item) renderItemCardPreview(item, host, 'inspect');
+  } else {
+    const previewDef = state.cards.find((c) => c.id === sel.value) || state.cards[0];
+    if (previewDef) renderCardWithLayers(previewDef, host);
+  }
+}
+
 function renderArtTab() {
   const list = document.getElementById('art-layers-list');
   const assets = Object.values(reviewedCardArtCatalog.assets || {});
   document.getElementById('asset-count').textContent = String(assets.length);
+  const isItems = state.artTarget === 'items';
 
-  // Preview card selector (always synced with current card roster)
+  document.getElementById('btn-art-target-cards')?.classList.toggle('is-active', !isItems);
+  document.getElementById('btn-art-target-items')?.classList.toggle('is-active', isItems);
+  const desc = document.getElementById('art-layers-desc');
+  if (desc) {
+    desc.textContent = isItems
+      ? 'Configure layered art for weapons, armours, and relics (content/source/itemArtLayers.json). Match by trait, element, poise, weapon type, armour group, rarity, or default, and combine approved cutout PNGs with SVG motifs.'
+      : 'Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.';
+  }
+
+  // Preview selector (cards or items)
   const cardSel = document.getElementById('art-preview-card-select');
   const prevVal = cardSel.value;
   cardSel.innerHTML = '';
-  for (const c of state.cards) {
-    const o = document.createElement('option');
-    o.value = c.id;
-    o.textContent = c.name || c.id;
-    cardSel.appendChild(o);
+  if (isItems) {
+    for (const it of state.items) {
+      const o = document.createElement('option');
+      o.value = it.key;
+      o.textContent = `[${it.kind[0].toUpperCase() + it.kind.slice(1)}] ${it.name || it.id}`;
+      cardSel.appendChild(o);
+    }
+    const preferred = state.items.some((x) => x.key === state.selectedItemKey)
+      ? state.selectedItemKey
+      : (state.items.some((x) => x.key === prevVal) ? prevVal : (state.items[0]?.key || ''));
+    cardSel.value = preferred;
+  } else {
+    for (const c of state.cards) {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.name || c.id;
+      cardSel.appendChild(o);
+    }
+    const preferredId = state.cards.some((c) => c.id === state.selectedCardId)
+      ? state.selectedCardId
+      : (state.cards.some((c) => c.id === prevVal) ? prevVal : (state.cards[0]?.id || ''));
+    cardSel.value = preferredId;
   }
-  const preferredId = state.cards.some((c) => c.id === state.selectedCardId)
-    ? state.selectedCardId
-    : (state.cards.some((c) => c.id === prevVal) ? prevVal : (state.cards[0]?.id || ''));
-  cardSel.value = preferredId;
-  const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
-  if (previewDef) renderCardWithLayers(previewDef, document.getElementById('art-live-preview'));
+  renderArtPreviewOnly();
 
-  if (state.selectedLayerIdx >= state.artLayers.layers.length) state.selectedLayerIdx = Math.max(0, state.artLayers.layers.length - 1);
+  const layersObj = activeArtLayersObj();
+  const layers = layersObj.layers || [];
+  if (activeArtLayerIdx() >= layers.length) setActiveArtLayerIdx(Math.max(0, layers.length - 1));
+  const selIdx = activeArtLayerIdx();
+
   list.innerHTML = '';
-  state.artLayers.layers.forEach((layer, idx) => {
+  layers.forEach((layer, idx) => {
     const el = document.createElement('div');
-    el.className = 'layer-card' + (idx === state.selectedLayerIdx ? ' is-selected' : '');
+    el.className = 'layer-card' + (idx === selIdx ? ' is-selected' : '');
     el.dataset.layerCardIdx = String(idx);
+    const matchOptions = isItems
+      ? [
+        ['trait', 'Trait / Mod'],
+        ['element', 'Element'],
+        ['poise', 'Poise Rule'],
+        ['gearType', 'Weapon Type'],
+        ['armourGroup', 'Armour Group'],
+        ['rarity', 'Rarity'],
+        ['tag', 'Tag'],
+        ['default', 'Always (Default)'],
+      ]
+      : [
+        ['tag', 'Tag'],
+        ['status', 'Status'],
+        ['type', 'Card Type'],
+        ['default', 'Always (Default)'],
+      ];
+    const modeOptions = isItems
+      ? [['under', 'Behind item (aura)'], ['stack', 'On top (sigil)']]
+      : [['stack', 'Stack on top'], ['replace', 'Replace slot']];
+    const kindsHtml = isItems
+      ? `<div class="layer-kind-checks" style="grid-column: span 2;"><span>Applies to:</span>${['weapon', 'armour', 'relic'].map((k) => `<label class="studio-check"><input type="checkbox" data-l-kind="${k}" data-l-idx="${idx}" ${(layer.entityKinds || ['weapon', 'armour', 'relic']).includes(k) ? 'checked' : ''} /> ${k}</label>`).join('')}</div>`
+      : '';
+    const extraItemFields = isItems
+      ? `
+        <label>SVG Motif
+          <select data-l-field="motif" data-l-idx="${idx}">
+            ${ITEM_MOTIF_OPTIONS.map((m) => `<option value="${esc(m)}" ${(layer.motif || '') === m ? 'selected' : ''}>${m || '(none)'}</option>`).join('')}
+          </select>
+        </label>
+        <label>Tint Color <input type="text" data-l-field="color" data-l-idx="${idx}" value="${esc(layer.color || '#c9a227')}" placeholder="#c9a227" /></label>
+        <label>Glow Color <input type="text" data-l-field="glow" data-l-idx="${idx}" value="${esc(layer.glow || '')}" placeholder="optional #hex" /></label>`
+      : '';
     el.innerHTML = `
       <div class="layer-card-head">
         <strong>#${idx + 1} · ${esc(layer.name || layer.id)}</strong>
         <div>
           <label class="studio-toggle"><input type="checkbox" data-l-enabled="${idx}" ${layer.enabled !== false ? 'checked' : ''} /> On</label>
           <button class="s-btn s-btn-sm" data-l-up="${idx}" ${idx === 0 ? 'disabled' : ''}>↑</button>
-          <button class="s-btn s-btn-sm" data-l-down="${idx}" ${idx === state.artLayers.layers.length - 1 ? 'disabled' : ''}>↓</button>
+          <button class="s-btn s-btn-sm" data-l-down="${idx}" ${idx === layers.length - 1 ? 'disabled' : ''}>↓</button>
           <button class="s-btn s-btn-sm s-btn-warn" data-l-del="${idx}">×</button>
         </div>
       </div>
       <div class="layer-grid">
+        ${kindsHtml}
         <label>Name <input type="text" data-l-field="name" data-l-idx="${idx}" value="${esc(layer.name)}" /></label>
         <label>Match Rule
           <select data-l-field="matchKind" data-l-idx="${idx}">
-            <option value="tag" ${layer.matchKind === 'tag' ? 'selected' : ''}>Tag</option>
-            <option value="status" ${layer.matchKind === 'status' ? 'selected' : ''}>Status</option>
-            <option value="type" ${layer.matchKind === 'type' ? 'selected' : ''}>Card Type</option>
-            <option value="default" ${layer.matchKind === 'default' ? 'selected' : ''}>Always (Default)</option>
+            ${matchOptions.map(([val, lbl]) => `<option value="${val}" ${layer.matchKind === val ? 'selected' : ''}>${lbl}</option>`).join('')}
           </select>
         </label>
-        <label>Match Value <input type="text" data-l-field="matchValue" data-l-idx="${idx}" value="${esc(layer.matchValue)}" placeholder="e.g. school:fire" /></label>
+        <label>Match Value <input type="text" data-l-field="matchValue" data-l-idx="${idx}" value="${esc(layer.matchValue)}" placeholder="${isItems ? 'e.g. hitBurn,statPoise or weaponPoise>=3' : 'e.g. school:fire'}" /></label>
         <label>PNG Asset ID <input type="text" data-l-field="assetId" data-l-idx="${idx}" value="${esc(layer.assetId)}" placeholder="click thumbnail →" /></label>
         <label>Mode
           <select data-l-field="mode" data-l-idx="${idx}">
-            <option value="stack" ${layer.mode === 'stack' ? 'selected' : ''}>Stack on top</option>
-            <option value="replace" ${layer.mode === 'replace' ? 'selected' : ''}>Replace slot</option>
+            ${modeOptions.map(([val, lbl]) => `<option value="${val}" ${layer.mode === val ? 'selected' : ''}>${lbl}</option>`).join('')}
           </select>
         </label>
         <label>Blend Mode
@@ -2319,6 +2670,7 @@ function renderArtTab() {
             ${['normal', 'screen', 'multiply', 'overlay', 'color'].map((m) => `<option value="${m}" ${layer.blendMode === m ? 'selected' : ''}>${m}</option>`).join('')}
           </select>
         </label>
+        ${extraItemFields}
         <label>X % <input type="number" data-l-num="x" data-l-idx="${idx}" min="0" max="100" value="${esc(safeNum(layer.x, 50))}" /></label>
         <label>Y % <input type="number" data-l-num="y" data-l-idx="${idx}" min="0" max="100" value="${esc(safeNum(layer.y, 50))}" /></label>
         <label>Scale % <input type="number" data-l-num="scale" data-l-idx="${idx}" min="10" max="150" value="${esc(safeNum(layer.scale, 80))}" /></label>
@@ -2335,18 +2687,18 @@ function renderArtTab() {
   for (const a of assets.filter((x) => !aq || `${x.id} ${x.name}`.toLowerCase().includes(aq)).slice(0, 60)) {
     const t = document.createElement('div');
     t.className = 'asset-thumb';
-    t.title = `${a.id} — ${a.name} (click to assign to selected layer #${state.selectedLayerIdx + 1})`;
+    t.title = `${a.id} — ${a.name} (click to assign to selected layer #${selIdx + 1})`;
     t.innerHTML = `<img src="${esc(a.path)}" loading="lazy" alt="" /><div title="${esc(a.id)}">${esc(a.id)}</div>`;
     t.addEventListener('click', () => {
-      const targetLayer = state.artLayers.layers[state.selectedLayerIdx] || state.artLayers.layers[0];
+      const targetLayer = layers[activeArtLayerIdx()] || layers[0];
       if (!targetLayer) return;
       pushHistory();
       targetLayer.assetId = a.id;
       saveDraft();
       renderArtTab();
-      renderCardsGrid();
-      renderInspector();
-      toast(`Assigned ${a.id} to layer #${state.selectedLayerIdx + 1}`);
+      if (isItems) { renderItemsGrid(); renderItemInspector(); }
+      else { renderCardsGrid(); renderInspector(); }
+      toast(`Assigned ${a.id} to layer #${activeArtLayerIdx() + 1}`);
     });
     gal.appendChild(t);
   }
@@ -2529,6 +2881,10 @@ async function loadFromRepo(customPath = state.repoPath) {
       state.artLayers = clone(data.artLayers);
       state.repoArtLayers = clone(data.artLayers);
     }
+    if (data.itemArtLayers?.layers) {
+      state.itemArtLayers = clone(data.itemArtLayers);
+      state.repoItemArtLayers = clone(data.itemArtLayers);
+    }
     state.repoPath = data.scoringPath;
     localStorage.setItem(PATH_STORAGE_KEY, state.repoPath);
     document.getElementById('repo-path-input').value = state.repoPath;
@@ -2549,11 +2905,15 @@ async function loadFromRepo(customPath = state.repoPath) {
 
 const RANK_SHIFT_LIST_LIMIT = 40;
 
-// Cards whose rank differs from the repo baseline, for the export dialog.
+// Cards and items whose rank differs from the repo baseline, for the export dialog.
 function rankShifts() {
-  return state.cards
+  const cardShifts = state.cards
     .map((card) => ({ card, now: scoreCardEntry(card).rank, before: state.baselineRanks[card.id] }))
     .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
+  const itemShifts = state.items
+    .map((it) => ({ card: { name: `[${it.kind}] ${it.name}` }, now: scoreItemEntry(it, state.scoring, state.itemRules).rank, before: state.baselineItemRanks[it.key] }))
+    .filter((shift) => shift.before !== undefined && shift.now !== shift.before);
+  return [...cardShifts, ...itemShifts];
 }
 
 function renderRankShiftList(shifts = rankShifts(), countId = 'export-modal-shift-count', listId = 'export-modal-shifts') {
@@ -2734,17 +3094,24 @@ async function revertToRepo() {
   clearTimeout(draftTimer);
   try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch { /* storage unavailable */ }
   const keepSelection = state.selectedCardId;
+  const keepItem = state.selectedItemKey;
   studioCardOverrides.clear();
   state.cards = buildCardList();
+  const roster = buildItemRoster(contentBundle);
+  state.items = roster.items;
+  state.itemRules = roster.rules;
   state.selectedCardId = state.cards.some((c) => c.id === keepSelection) ? keepSelection : state.cards[0]?.id || null;
+  state.selectedItemKey = state.items.some((x) => x.key === keepItem) ? keepItem : state.items[0]?.key || null;
   state.undoStack = [];
   state.redoStack = [];
   updateUndoButtons();
   // Revert to the last loaded repo copy first, so a failed reload (server offline) still reverts.
   state.scoring = clone(state.repoScoring);
   state.artLayers = clone(state.repoArtLayers);
+  state.itemArtLayers = clone(state.repoItemArtLayers);
   const reloaded = await loadFromRepo(state.repoPath);
   state.artLayers = clone(state.repoArtLayers);
+  state.itemArtLayers = clone(state.repoItemArtLayers);
   syncAllViews();
   refreshDirtyStatus();
   toast(reloaded ? 'Reverted to the repo version' : 'Reverted to the last loaded repo copy (server offline)');
@@ -2753,6 +3120,8 @@ async function revertToRepo() {
 function recomputeBaselineRanks() {
   state.baselineRanks = {};
   for (const c of state.cards) state.baselineRanks[c.id] = scoreCardEntry(c, state.repoScoring).rank;
+  state.baselineItemRanks = {};
+  for (const it of state.items) state.baselineItemRanks[it.key] = scoreItemEntry(it, state.repoScoring, state.itemRules).rank;
 }
 
 function populateRankFilter() {
@@ -2800,6 +3169,8 @@ function syncAllViews() {
   populateAddFeatureDropdown();
   renderCardsGrid();
   renderInspector();
+  renderItemsGrid();
+  renderItemInspector();
   renderWeights();
   renderArtTab();
   // The sandbox hand's rank badges follow undo, redo, slot loads, imports and Revert too.
@@ -3318,17 +3689,209 @@ function wireEvents() {
   document.getElementById('weights-search').addEventListener('input', renderWeights);
   document.getElementById('weights-group-filter').addEventListener('change', renderWeights);
 
-  // Art & Layers events
+  // Items & Relics tab events
+  const selectedItem = () => state.items.find((x) => x.key === state.selectedItemKey) || null;
+  for (const id of ['item-filter-search', 'item-filter-kind', 'item-filter-rarity', 'item-filter-rank', 'item-filter-sort']) {
+    document.getElementById(id)?.addEventListener(id === 'item-filter-search' ? 'input' : 'change', renderItemsGrid);
+  }
+  document.getElementById('btn-rename-all-items')?.addEventListener('click', () => {
+    pushHistory();
+    for (const it of state.items) {
+      const next = scoreItemEntry(it, state.scoring, state.itemRules).convention.name;
+      if (it.name !== next) { it.name = next; it._edited = true; }
+    }
+    renderItemsGrid();
+    renderItemInspector();
+    renderArtTab();
+    saveDraft({ autoName: false });
+    toast(`Applied convention names to ${state.items.length} items`);
+  });
+  document.getElementById('btn-restore-item-names')?.addEventListener('click', () => {
+    pushHistory();
+    for (const it of state.items) {
+      const orig = state.defaultItemNames[it.key];
+      if (orig) { it.name = orig; it._edited = false; }
+    }
+    renderItemsGrid();
+    renderItemInspector();
+    renderArtTab();
+    saveDraft({ autoName: false });
+    toast('Restored shipped item names');
+  });
+  document.getElementById('btn-item-autoname')?.addEventListener('click', () => {
+    const it = selectedItem();
+    if (!it) return;
+    pushHistory();
+    it.name = scoreItemEntry(it, state.scoring, state.itemRules).convention.name;
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-name')?.addEventListener('input', (e) => {
+    const it = selectedItem();
+    if (!it) return;
+    it.name = e.target.value;
+    it._edited = true;
+    renderItemsGrid();
+    renderItemCardPreview(it, document.getElementById('item-preview-host'), 'inspect');
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-rarity')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it) return;
+    pushHistory();
+    it.rarity = e.target.value;
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-type')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it) return;
+    pushHistory();
+    if (it.kind === 'weapon') {
+      it.gearType = e.target.value;
+      const row = GEAR_TYPES.weaponTypes?.[it.gearType];
+      if (Number.isFinite(row?.poiseDamage)) it.poiseDamage = row.poiseDamage;
+    } else if (it.kind === 'armour') {
+      it.gearGroup = e.target.value;
+    }
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-poise-dmg')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it || it.kind !== 'weapon') return;
+    pushHistory();
+    it.poiseDamage = Math.max(0, Math.round(safeNum(e.target.value, 1)));
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-range')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it || it.kind !== 'weapon') return;
+    pushHistory();
+    it.range = e.target.value;
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-edit-poise')?.addEventListener('change', (e) => {
+    const it = selectedItem();
+    if (!it || it.kind !== 'armour') return;
+    pushHistory();
+    it.poise = Math.max(0, Math.round(safeNum(e.target.value, 0)));
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('btn-item-add-trait')?.addEventListener('click', () => {
+    const it = selectedItem();
+    if (!it || it.kind === 'relic') return;
+    const sel = document.getElementById('item-trait-selector').value || 'self';
+    const field = document.getElementById('item-trait-field').value;
+    const amt = safeNum(document.getElementById('item-trait-amount').value, 1);
+    if (!field) return;
+    pushHistory();
+    (it.mods ||= []).push(formatModString(`${sel}.${field}`, amt));
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-quick-traits')?.addEventListener('click', (e) => {
+    const mod = e.target.closest('[data-item-quick-trait]')?.dataset.itemQuickTrait;
+    const it = selectedItem();
+    if (!mod || !it || it.kind === 'relic') return;
+    pushHistory();
+    (it.mods ||= []).push(mod);
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-active-traits')?.addEventListener('click', (e) => {
+    const del = e.target.dataset.itemModDel;
+    const it = selectedItem();
+    if (del === undefined || !it) return;
+    pushHistory();
+    it.mods.splice(Number(del), 1);
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  document.getElementById('item-active-traits')?.addEventListener('change', (e) => {
+    const idx = e.target.dataset.itemModIdx;
+    const it = selectedItem();
+    if (idx === undefined || !it) return;
+    const i = Number(idx);
+    const [key] = String(it.mods[i] || '').split('=');
+    if (!key) return;
+    pushHistory();
+    it.mods[i] = formatModString(key, safeNum(e.target.value, 1));
+    it._edited = true;
+    renderItemsGrid();
+    renderItemInspector();
+    saveDraft({ autoName: false });
+  });
+  const updateItemOverride = () => {
+    const it = selectedItem();
+    if (!it) return;
+    pushHistory();
+    const enabled = document.getElementById('item-override-enabled').checked;
+    state.scoring.overrides ||= {};
+    if (!enabled) {
+      delete state.scoring.overrides[it.key];
+    } else {
+      const ov = {};
+      const rk = document.getElementById('item-override-rank').value;
+      const cp = document.getElementById('item-override-cp').value;
+      if (rk !== '') ov.rank = Math.max(0, Math.round(Number(rk)));
+      if (cp !== '') ov.cp = Math.round(Number(cp));
+      state.scoring.overrides[it.key] = ov;
+    }
+    renderItemsGrid();
+    renderItemInspector();
+    renderWeights();
+    saveDraft({ autoName: false });
+  };
+  document.getElementById('item-override-enabled')?.addEventListener('change', updateItemOverride);
+  document.getElementById('item-override-rank')?.addEventListener('change', updateItemOverride);
+  document.getElementById('item-override-cp')?.addEventListener('change', updateItemOverride);
+
+  // Art & Layers events (supports both Combat Cards and Equipment & Relics)
+  document.querySelectorAll('[data-art-target]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.artTarget = btn.dataset.artTarget === 'items' ? 'items' : 'cards';
+      renderArtTab();
+    });
+  });
   document.getElementById('btn-add-layer').addEventListener('click', () => {
     pushHistory();
-    state.artLayers.layers.push({ id: `layer-${Date.now().toString(36)}`, name: 'New Layer', matchKind: 'default', matchValue: '', mode: 'stack', assetId: 'Z.effect.5', zIndex: state.artLayers.layers.length + 1, x: 50, y: 50, scale: 80, opacity: 60, blendMode: 'screen', enabled: true });
-    state.selectedLayerIdx = state.artLayers.layers.length - 1;
+    const layers = activeArtLayersObj().layers;
+    if (state.artTarget === 'items') {
+      layers.push({ id: `item-layer-${Date.now().toString(36)}`, name: 'New Item Layer', enabled: true, entityKinds: ['weapon', 'armour', 'relic'], matchKind: 'trait', matchValue: 'statPoise', assetId: 'cue.unbreakable.glow', motif: '', color: '#c9a227', glow: '#c9a227', mode: 'under', blendMode: 'screen', x: 50, y: 50, scale: 100, opacity: 60, zIndex: layers.length + 1 });
+    } else {
+      layers.push({ id: `layer-${Date.now().toString(36)}`, name: 'New Layer', matchKind: 'default', matchValue: '', mode: 'stack', assetId: 'Z.effect.5', zIndex: layers.length + 1, x: 50, y: 50, scale: 80, opacity: 60, blendMode: 'screen', enabled: true });
+    }
+    setActiveArtLayerIdx(layers.length - 1);
     renderArtTab();
+    if (state.artTarget === 'items') { renderItemsGrid(); renderItemInspector(); }
     saveDraft();
   });
   document.getElementById('art-preview-card-select').addEventListener('change', (e) => {
-    state.selectedCardId = e.target.value;
-    renderArtTab();
+    if (state.artTarget === 'items') state.selectedItemKey = e.target.value;
+    else state.selectedCardId = e.target.value;
+    renderArtPreviewOnly();
   });
   document.getElementById('asset-search').addEventListener('input', renderArtTab);
   document.getElementById('art-layers-list').addEventListener('click', (e) => {
@@ -3336,21 +3899,22 @@ function wireEvents() {
     const cardEl = e.target.closest('.layer-card');
     if (cardEl && e.target.dataset.lUp === undefined && e.target.dataset.lDown === undefined && e.target.dataset.lDel === undefined) {
       const selIdx = Number(cardEl.dataset.layerCardIdx);
-      if (!Number.isNaN(selIdx) && selIdx !== state.selectedLayerIdx) {
-        state.selectedLayerIdx = selIdx;
+      if (!Number.isNaN(selIdx) && selIdx !== activeArtLayerIdx()) {
+        setActiveArtLayerIdx(selIdx);
         document.querySelectorAll('#art-layers-list .layer-card').forEach((n, i) => n.classList.toggle('is-selected', i === selIdx));
       }
       return;
     }
     const idx = Number(e.target.dataset.lUp ?? e.target.dataset.lDown ?? e.target.dataset.lDel);
     if (Number.isNaN(idx)) return;
+    const layers = activeArtLayersObj().layers;
     pushHistory();
-    if (e.target.dataset.lUp !== undefined && idx > 0) { [state.artLayers.layers[idx - 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx - 1]]; state.selectedLayerIdx = idx - 1; }
-    if (e.target.dataset.lDown !== undefined && idx < state.artLayers.layers.length - 1) { [state.artLayers.layers[idx + 1], state.artLayers.layers[idx]] = [state.artLayers.layers[idx], state.artLayers.layers[idx + 1]]; state.selectedLayerIdx = idx + 1; }
-    if (e.target.dataset.lDel !== undefined) state.artLayers.layers.splice(idx, 1);
+    if (e.target.dataset.lUp !== undefined && idx > 0) { [layers[idx - 1], layers[idx]] = [layers[idx], layers[idx - 1]]; setActiveArtLayerIdx(idx - 1); }
+    if (e.target.dataset.lDown !== undefined && idx < layers.length - 1) { [layers[idx + 1], layers[idx]] = [layers[idx], layers[idx + 1]]; setActiveArtLayerIdx(idx + 1); }
+    if (e.target.dataset.lDel !== undefined) layers.splice(idx, 1);
     renderArtTab();
-    renderCardsGrid();
-    renderInspector();
+    if (state.artTarget === 'items') { renderItemsGrid(); renderItemInspector(); }
+    else { renderCardsGrid(); renderInspector(); }
     saveDraft();
   });
   // Typing and slider drags in a layer record one undo step per focus.
@@ -3359,10 +3923,16 @@ function wireEvents() {
   document.getElementById('art-layers-list').addEventListener('input', (e) => {
     const idx = Number(e.target.dataset.lIdx ?? e.target.dataset.lEnabled);
     if (Number.isNaN(idx)) return;
-    const layer = state.artLayers.layers[idx];
+    const layer = activeArtLayersObj().layers[idx];
     if (!layer) return;
     if (!layerEditHistoryPushed) { pushHistory(); layerEditHistoryPushed = true; }
     if (e.target.dataset.lEnabled !== undefined) layer.enabled = e.target.checked;
+    else if (e.target.dataset.lKind) {
+      const k = e.target.dataset.lKind;
+      const set = new Set(layer.entityKinds || ['weapon', 'armour', 'relic']);
+      if (e.target.checked) set.add(k); else set.delete(k);
+      layer.entityKinds = [...set];
+    }
     else if (e.target.dataset.lField) layer[e.target.dataset.lField] = e.target.value;
     else if (e.target.dataset.lNum) {
       layer[e.target.dataset.lNum] = safeNum(e.target.value, 0);
@@ -3373,30 +3943,42 @@ function wireEvents() {
     }
     saveDraft();
     // Update the live preview in place without rebuilding #art-layers-list (keeps focus and slider drags).
-    const cardSel = document.getElementById('art-preview-card-select');
-    const previewDef = state.cards.find((c) => c.id === cardSel.value) || state.cards[0];
-    if (previewDef) renderCardWithLayers(previewDef, document.getElementById('art-live-preview'));
-    renderInspector();
+    renderArtPreviewOnly();
+    if (state.artTarget === 'items') renderItemInspector();
+    else renderInspector();
   });
   document.getElementById('art-layers-list').addEventListener('change', () => {
     layerEditHistoryPushed = false;
-    renderCardsGrid();
+    if (state.artTarget === 'items') renderItemsGrid();
+    else renderCardsGrid();
   });
   document.getElementById('btn-save-art').addEventListener('click', async () => {
     try {
-      const r = await fetch('/__studio/art-layers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artLayers: state.artLayers }) });
-      const data = await r.json();
-      if (!data.ok) throw new Error(data.error);
-      state.repoArtLayers = clone(state.artLayers);
-      writeDraftNow();
-      refreshDirtyStatus();
-      toast(`Saved ${data.layerCount} art layer(s) to ${data.path}`);
+      if (state.artTarget === 'items') {
+        const r = await fetch('/__studio/item-art-layers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemArtLayers: state.itemArtLayers }) });
+        const data = await r.json();
+        if (!data.ok) throw new Error(data.error);
+        state.repoItemArtLayers = clone(state.itemArtLayers);
+        writeDraftNow();
+        refreshDirtyStatus();
+        toast(`Saved ${data.layerCount} item art layer(s) to ${data.path}`);
+      } else {
+        const r = await fetch('/__studio/art-layers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ artLayers: state.artLayers }) });
+        const data = await r.json();
+        if (!data.ok) throw new Error(data.error);
+        state.repoArtLayers = clone(state.artLayers);
+        writeDraftNow();
+        refreshDirtyStatus();
+        toast(`Saved ${data.layerCount} art layer(s) to ${data.path}`);
+      }
     } catch (err) { toast(`Save failed: ${err.message}`); }
   });
   document.getElementById('btn-download-art').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(state.artLayers, null, 2) + '\n'], { type: 'application/json' });
+    const isItems = state.artTarget === 'items';
+    const payload = isItems ? state.itemArtLayers : state.artLayers;
+    const blob = new Blob([JSON.stringify(payload, null, 2) + '\n'], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'cardArtLayers.json' });
+    const a = Object.assign(document.createElement('a'), { href: url, download: isItems ? 'itemArtLayers.json' : 'cardArtLayers.json' });
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
@@ -3527,11 +4109,17 @@ function buildCardList() {
 
 async function boot() {
   state.cards = buildCardList();
+  const roster = buildItemRoster(contentBundle);
+  state.items = roster.items;
+  state.itemRules = roster.rules;
+  state.defaultItemNames = Object.fromEntries(state.items.map((it) => [it.key, it.name]));
+  state.selectedItemKey = state.items[0]?.key || null;
   // Default names are the repo's authored names, taken before any draft is restored.
   state.defaultNameSet = DefaultNameSet(state.cards);
   loadStoredNameSets();
   state.selectedCardId = state.cards[0]?.id || null;
   state.repoArtLayers = clone(state.artLayers);
+  state.repoItemArtLayers = clone(state.itemArtLayers);
 
   try {
     const ab = JSON.parse(localStorage.getItem(AB_STORAGE_KEY) || 'null');
@@ -3570,6 +4158,11 @@ async function boot() {
         state.pendingBase = RefreshRestoredNaming(draft.pendingBase, state.repoScoring);
       }
       if (draftArtLayers) state.artLayers = draftArtLayers;
+      if (Array.isArray(draft.itemArtLayers?.layers)) state.itemArtLayers = draft.itemArtLayers;
+      for (const draftItem of (Array.isArray(draft.editedItems) ? draft.editedItems : [])) {
+        const j = state.items.findIndex((x) => x.key === draftItem?.key);
+        if (j >= 0) state.items[j] = draftItem;
+      }
       for (const draftCard of draftCards) {
         const i = state.cards.findIndex((c) => c.id === draftCard.id);
         if (i >= 0) state.cards[i] = draftCard;

@@ -2,6 +2,7 @@ import { renderEquipmentCard, renderEquipmentInspection } from './equipmentCard.
 import { relicText } from './card.js';
 import { assetUrl } from '../assetmap.js';
 import { relicArtUrl } from '../assets.js';
+import { itemArtComposition } from '../itemArtComposition.js';
 import { OpenModal } from './modalShell.js';
 import { possessionVariant } from '../models/PossessionVariantModel.js';
 import { ItemRankOf, ItemRankBadge } from '../../model/itemRank.js';
@@ -11,7 +12,7 @@ import { ItemRankOf, ItemRankBadge } from '../../model/itemRank.js';
 // WC2b1/WC2b2 and WC2c1–WC2c3: the variant model reads the relic's passives and
 // triggers, or the potion's effect opcodes, and supplies the detail lines; the
 // usage label follows the same data instead of calling every relic passive.
-function presentation(registries, item, kind, { charges = null } = {}) {
+function presentation(registries, item, kind, { charges = null, itemLayerConfig = null } = {}) {
   const potion = kind === 'Potion';
   const effect = potion ? item.textTemplate : relicText(item, registries);
   const variant = possessionVariant(registries, item, { kind: potion ? 'potion' : 'relic', charges });
@@ -21,6 +22,7 @@ function presentation(registries, item, kind, { charges = null } = {}) {
   return {
     id: item.id, name: item.name, cardKind: kind.toLowerCase(), type: usage ? `${kind} · ${usage}` : kind,
     art: (!potion && relicArtUrl(item)) || (item.artAsset ? assetUrl(item.artAsset) : null),
+    itemArt: potion ? null : itemArtComposition(item, { kind: 'relic', registries, ...(itemLayerConfig ? { layerConfig: itemLayerConfig } : {}) }),
     glyph: potion ? 'flask-health' : 'skill',
     accent: item.tint || (potion ? '#87b5d0' : '#d0ac5d'),
     typeExplanation: potion ? 'A carried potion. Use it through the potion action menu.'

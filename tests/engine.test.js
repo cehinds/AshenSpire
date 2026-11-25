@@ -1726,10 +1726,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const soloStartMana = soloMagic.player.mana;
     const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
     const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
-    // A2: Starstone Shard's magic damage is +2 (was +1).
-    eq(soloPreview.value, 8, 'solo preview includes the stamped +2 magic damage');
+    // Starstone Shard's reworked magic damage bonus is +1.
+    eq(soloPreview.value, 7, 'solo preview includes the stamped +1 magic damage');
     dispatch(soloMagic, { type: 'playCard', cardInstanceId: soloSpell.instanceId, targetId: 'e1' });
-    eq(logOf(soloMagic, 'damageDealt')[0].amount, 8, 'solo live primary damage matches preview');
+    eq(logOf(soloMagic, 'damageDealt')[0].amount, 7, 'solo live primary damage matches preview');
 
 
 
@@ -3755,7 +3755,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     stampDeck(LEGACY_REG, run);
     const aStrike = run.deck.find((c) => c.cardId === 'strike');
     eq(dmgOf(resolveCard(LEGACY_REG, aStrike)), 3, 'the deck definition carries its base while runtime adds source AR');
-    eq(runMods(LEGACY_REG, run.loadout, 'reaver').startStatuses.find(row => row.status === 'strength')?.status, 'strength', 'the Oathsworn set grants Strength (a heavy set also carries Thorns 1, 2026-11-18)');
+    assert(LEGACY_REG.equipment.armour.find((a) => a.classId === 'reaver' && a.id === 'oathsworn')?.mods.includes('self.statPoise=+1'), 'the reworked Oathsworn set adds Poise bonus');
     assert(loadoutTags(LEGACY_REG, run.loadout, 'reaver').includes('blade'), 'worn pieces contribute their tags');
 
     // Swapping mid-fight: the price is paid, and the hand is re-armed.
@@ -3919,13 +3919,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('28s. equipment authors HP, Mana, and Stamina pools without healing saves or swaps', () => {
-    for (const [id, mod] of [
-      ['towerShield', 'self.maxHp=+10'],
-      ['blightRod', 'self.maxMana=+1'],
-      ['twinblade', 'self.maxStamina=+1'],
-    ]) {
-      assert(REG.equipment.armaments.find((piece) => piece.id === id)?.mods.includes(mod), `${id} authors ${mod} in generated content`);
-    }
+    assert(REG.equipment.armaments.find((piece) => piece.id === 'duskChime')?.mods.includes('self.maxMana=+1'), 'duskChime authors self.maxMana=+1 in generated content');
+    assert(REG.equipment.armour.find((piece) => piece.id === 'pilgrim' && piece.classId === 'herald')?.mods.includes('self.maxHp=+6'), 'pilgrim authors self.maxHp=+6 in generated content');
     const poolFields = {
       ...REG.equipment.modFields,
       maxMana: { field: 'maxMana', scope: 'run', apply: 'maxMana', label: 'Max Mana' },
@@ -5214,18 +5209,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     //
     // The trap Vira hit and corrected before reporting: `cost` inverts. Paying
     // more is worse, and comparing it naively invents dominance that isn't there.
-    const LOWER_IS_BETTER = new Set(['cost']);
+    const LOWER_IS_BETTER = new Set(['cost', 'cardCost', 'cardMana', 'cardEscalate', 'vulnMelee']);
     const RARITY = { common: 0, uncommon: 1, rare: 2 };
 
     const vec = (piece) => {
+      const gearType = GEAR_TYPES.items?.[piece.id] || null;
+      const typeRow = gearType ? GEAR_TYPES.weaponTypes?.[gearType] : null;
+      const poiseDamage = Number.isFinite(GEAR_TYPES.itemPoiseDamage?.[piece.id])
+        ? GEAR_TYPES.itemPoiseDamage[piece.id]
+        : (typeRow?.poiseDamage ?? 1);
       const out = {
         'impact.weight': piece.weight || 0,
+        'impact.poiseDamage': poiseDamage,
       };
       for (const [attribute, minimum] of Object.entries(piece.requirements?.attributes || {})) {
         out[`requirement.${attribute}`] = -minimum;
       }
-      for (const raw of piece.mods) {
-        const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
+      for (const raw of [...(typeRow?.mods || []), ...(piece.mods || [])]) {
+        const m = /^([A-Za-z][\w:@]*)\.([A-Za-z]\w*)=([+-]?\d+)$/.exec(raw);
         if (!m) continue;
         const key = `${m[1]}.${m[2]}`;
         const n = Number(m[3]);
@@ -6676,7 +6677,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const perPoint = 1;
     const liveHp = REG.derivedStatRules.rules.hp;
     const otherTerms = (attributes) => attributeTerms(liveHp, { ...attributes, constitution: 0 });
-    for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 14], ['rogue', 2, 0], ['herald', 2, 0]]) {
+    for (const [classId, con, flat] of [['reaver', 2, 10], ['starseer', 1, 6], ['rogue', 2, 0], ['herald', 2, 0]]) {
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(run.attributes.constitution, con, `${classId} uses the approved lean CON preset`);

@@ -50,7 +50,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
-import { readStudioConfig, saveStudioScoring, saveStudioArtLayers } from './score-studio-save.mjs';
+import { readStudioConfig, saveStudioScoring, saveStudioArtLayers, saveStudioItemArtLayers } from './score-studio-save.mjs';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
 import { authoringRoot, compositeSourcePath, isAuthoringFile } from './art-authoring.mjs';
 import { existsSync, readdirSync, statSync, watch as fsWatch } from 'node:fs';
@@ -403,7 +403,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
         } catch (error) { reply(400, { ok: false, error: error.message }); }
         return;
       }
-      if (urlPath === '/__studio/config' || urlPath === '/__studio/scoring' || urlPath === '/__studio/art-layers') {
+      if (urlPath === '/__studio/config' || urlPath === '/__studio/scoring' || urlPath === '/__studio/art-layers' || urlPath === '/__studio/item-art-layers') {
         const remote = req.socket.remoteAddress || '';
         const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(remote);
         const host = req.headers.host || '';
@@ -417,7 +417,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           if (req.method !== 'GET') { reply(405, { ok: false, error: 'Method not allowed on /__studio/config.' }); return; }
           try {
             const u = new URL(req.url, `http://${host}`);
-            reply(200, { ok: true, ...readStudioConfig(rootResolved, { scoringPath: u.searchParams.get('scoringPath') || '', artLayersPath: u.searchParams.get('artLayersPath') || '' }) });
+            reply(200, { ok: true, ...readStudioConfig(rootResolved, { scoringPath: u.searchParams.get('scoringPath') || '', artLayersPath: u.searchParams.get('artLayersPath') || '', itemArtLayersPath: u.searchParams.get('itemArtLayersPath') || '' }) });
           } catch (error) { reply(400, { ok: false, error: error.message }); }
           return;
         }
@@ -435,6 +435,8 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, editorWrite =
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
           if (urlPath === '/__studio/scoring') {
             reply(200, { ok: true, ...saveStudioScoring(rootResolved, body) });
+          } else if (urlPath === '/__studio/item-art-layers') {
+            reply(200, { ok: true, ...saveStudioItemArtLayers(rootResolved, body) });
           } else {
             reply(200, { ok: true, ...saveStudioArtLayers(rootResolved, body) });
           }

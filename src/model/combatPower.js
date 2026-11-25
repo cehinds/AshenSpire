@@ -197,13 +197,35 @@ function applyCalc(S, n, steps) {
   for (const [op, x] of steps) { const r = refValue(S, x); v = op === '*' ? v * r : v / r; }
   return v;
 }
+function parseGearModKey(key) {
+  const dot = String(key || '').lastIndexOf('.');
+  if (dot <= 0) return null;
+  const head = key.slice(0, dot), field = key.slice(dot + 1);
+  const parts = head.split('@');
+  const [selector, arg = null] = parts[0].split(':');
+  return { selector, arg, condCount: Math.max(0, parts.length - 1), field };
+}
 function modOf(S, key) {
-  const mods = S.full.items.mods;
+  const mods = S.full.items.mods || {};
   if (mods[key]) return mods[key];
   for (const [k, m] of Object.entries(mods)) if (m.prefix && key.startsWith(k)) return m;
+  const parsed = parseGearModKey(key);
+  const gearFields = S.full.items.gearFields || {};
+  if (parsed && gearFields[parsed.field]) {
+    const gf = gearFields[parsed.field];
+    const selFactors = S.full.items.selectorFactors || {};
+    const selFactor = Object.prototype.hasOwnProperty.call(selFactors, parsed.selector) ? selFactors[parsed.selector] : 1;
+    const condFactor = Math.pow(S.full.items.conditionFactor ?? 0.65, parsed.condCount);
+    const argFactor = parsed.arg ? 0.6 : 1;
+    return {
+      label: gf.label || parsed.field,
+      field: parsed.field,
+      calc: [['*', gf.weight * selFactor * condFactor * argFactor]],
+    };
+  }
   return { label: key, calc: S.full.items.unmodelledMod.calc };
 }
-/** Label of an item modifier key ("strike.damage" -> "Strike damage"). */
+/** Label of an item modifier key ("strike.damage" -> "Strike damage", "self.statPoise" -> "Poise bonus"). */
 export const ModLabel = (key, scoring = GetActiveScoring()) => modOf(slimOf(scoring), key).label;
 /** Points of one item modifier at value n. */
 export function ModValue(key, n, scoring = GetActiveScoring()) {
@@ -217,7 +239,7 @@ function opValueOf(S, op) {
   if (op.op === 'applyStatus') {
     const st = S.statuses[op.status], n = typeof op.stacks === 'number' ? op.stacks : 1;
     if (!st) return n;
-    const self = op.target === 'self';
+    const self = op.target === 'self' || op.target === 'owner' || op.target === 'player';
     return st[0] * n * ((st[1] === 'self') === self ? 1 : -1);
   }
   const table = S.full.items.propertyTriggers.opCalc;
@@ -227,7 +249,7 @@ function opValueOf(S, op) {
 /** Points of one property-rule op (restoreMana, draw, applyStatus, ...). */
 export const OpValue = (op, scoring = GetActiveScoring()) => opValueOf(slimOf(scoring), op);
 
-/** Points of a property rule ({triggers: [{on, cond, once, perTurn, do}], passives}) over 3 rounds. */
+/** Points of a property rule ({triggers: [{on, cond, once, perTurn, everyNth, do}], passives}) over 3 rounds. */
 export function PropertyValue(rule, scoring = GetActiveScoring()) {
   if (!rule) return 0;
   const S = slimOf(scoring), PT = scoring.items.propertyTriggers, freq = PT.frequencyIn3Rounds;
@@ -236,7 +258,8 @@ export function PropertyValue(rule, scoring = GetActiveScoring()) {
     let f = freq[t.on] ?? PT.defaultFrequency;
     if (t.once) f = Math.min(f, PT.onceCap);
     if (t.perTurn) f = Math.min(f, t.perTurn * S.model.R);
-    if (t.cond) f *= PT.conditionalFactor;
+    if (Number.isFinite(t.everyNth) && t.everyNth > 1) f /= t.everyNth;
+    else if (t.cond) f *= PT.conditionalFactor;
     v += f * (t.do || []).reduce((s, op) => s + opValueOf(S, op), 0);
   }
   if (rule.passives) v += PT.passiveValue * Object.keys(rule.passives).length;
@@ -250,7 +273,8 @@ export function PropertyValue(rule, scoring = GetActiveScoring()) {
 export function ScoreItem(it, scoring = GetActiveScoring(), rules = {}) {
   const S = slimOf(scoring), M = S.model, I = scoring.items, plays = I.plays;
   const parts = {};
-  for (const [k, n] of it.mods || []) { const v = ModValue(k, n, scoring); const label = ModLabel(k, scoring); if (v) parts[label] = (parts[label] || 0) + v; }
+  const allMods = [...(it.typeMods || []), ...(it.mods || [])];
+  for (const [k, n] of allMods) { const v = ModValue(k, n, scoring); const label = ModLabel(k, scoring); if (v) parts[label] = (parts[label] || 0) + v; }
   for (const t of it.props || []) { const v = PropertyValue(rules[t], scoring); if (v) parts['prop:' + t] = (parts['prop:' + t] || 0) + v; }
   for (const t of it.tags || []) { if (t.startsWith('range:')) continue; const w = S.tags[t]; if (w && w.weight) parts[t] = w.weight * (w.per === 'hit' ? plays.strike : 1); }
   if (it.kind === 'weapon') {
@@ -258,10 +282,22 @@ export function ScoreItem(it, scoring = GetActiveScoring(), rules = {}) {
     const atk = ((it.attackBase ?? I.kit.unarmedAttack) - I.kit.unarmedAttack) * atkAuth * plays.strike; if (atk) parts['Attack profile'] = atk;
     const grd = ((it.guardBase ?? I.kit.unarmedGuard) - I.kit.unarmedGuard) * M.AUTH_BLOCK / 2 * plays.defend; if (grd) parts['Guard profile'] = grd;
     if (it.art) { const a = ScoreCard(Object.assign(BaseFace(), JSON.parse(JSON.stringify(it.art))), scoring).raw * plays.weaponArt; if (a) parts['Weapon art: ' + it.art.name] = a; }
+    if (typeof it.poiseDamage === 'number' && I.weaponPoiseDamage) {
+      const wpd = (it.poiseDamage - (I.weaponPoiseDamage.baseline ?? 1)) * (I.weaponPoiseDamage.perPoint ?? 1);
+      if (wpd) parts['Weapon Poise'] = wpd;
+    }
   }
-  if (typeof it.poise === 'number' && it.poise > 0 && it.kind !== 'relic') { const pv = (it.poise - (I.poiseThreshold.baseline || 0)) * I.poiseThreshold.perPoint; if (pv > 0) parts['Poise threshold'] = pv; }
+  // Only armour's poiseThreshold is Poise (a weapon's poiseThreshold is its equip weight; SPEC §13.4k).
+  if (typeof it.poise === 'number' && it.poise > 0 && it.kind === 'armour') {
+    const pv = (it.poise - (I.poiseThreshold.baseline || 0)) * I.poiseThreshold.perPoint;
+    if (pv > 0) parts['Poise threshold'] = pv;
+  }
+  // Item range: read items.range when present (skip reach if already granted via cardReach mod so it is never double-counted).
   const rg = it.range ? 'range:' + it.range : null;
-  if (rg && S.tags[rg] && S.tags[rg].weight) parts[rg] = S.tags[rg].weight * plays.strike;
+  if (rg && !(it.range === 'reach' && parts['Reach'])) {
+    const rw = I.range && Number.isFinite(I.range[it.range]) ? I.range[it.range] : (S.tags[rg]?.weight ? S.tags[rg].weight * plays.strike : 0);
+    if (rw) parts[rg] = rw;
+  }
   const raw = Math.round(Object.values(parts).reduce((s, v) => s + v, 0)) + 0;
   const disc = S.discount[it.rarity] || 0;
   return { raw, disc, cp: raw - disc, parts };
@@ -309,8 +345,22 @@ function NamingOf(scoring)
 {
   const own = scoring.naming || {};
   // limit is optional (absent = no limit), so it never falls back.
-  const { limit, ...shippedWords } = shippedScoring.naming.card;
-  return { ...shippedScoring.naming, ...own, card: { ...shippedWords, ...(own.card || {}) } };
+  const { limit: cardLimit, ...shippedCardWords } = shippedScoring.naming.card;
+  const { limit: itemLimit, ...shippedItemWords } = shippedScoring.naming.item;
+  const ownItem = own.item || {};
+  return {
+    ...shippedScoring.naming,
+    ...own,
+    card: { ...shippedCardWords, ...(own.card || {}) },
+    item: {
+      ...shippedItemWords,
+      ...ownItem,
+      mod: { ...(shippedItemWords.mod || {}), ...(ownItem.mod || {}) },
+      op: { ...(shippedItemWords.op || {}), ...(ownItem.op || {}) },
+      base: { ...(shippedItemWords.base || {}), ...(ownItem.base || {}) },
+      rarity: { ...(shippedItemWords.rarity || {}), ...(ownItem.rarity || {}) },
+    },
+  };
 }
 
 /**
@@ -369,13 +419,13 @@ export function CardNameParts(c, ups = 0, scoring = GetActiveScoring()) {
 export const CardName = (c, ups = 0, scoring = GetActiveScoring()) => CardNameParts(c, ups, scoring).name;
 
 function propWord(tag, rules, scoring) {
-  const S = slimOf(scoring), W = scoring.naming, p = rules[tag];
-  if (!p) return 'Fabled';
+  const S = slimOf(scoring), W = NamingOf(scoring), p = rules[tag];
+  if (!p) return null;
   let best = null, bv = -1;
   for (const t of p.triggers || []) for (const op of t.do || []) { const v = Math.abs(opValueOf(S, op)); if (v > bv) { bv = v; best = op; } }
-  if (!best) return 'Fabled';
-  if (best.op === 'applyStatus') return W.card.effect[best.status] || 'Fabled';
-  return W.item.op[best.op] || 'Fabled';
+  if (!best) return p.passives ? 'Blessed' : null;
+  if (best.op === 'applyStatus') return W.card.effect[best.status] || null;
+  return W.item.op[best.op] || null;
 }
 
 // A weapon art names its item by the art card's effect word, or its element, or the plain damage word.
@@ -384,23 +434,77 @@ function weaponArtWord(art, scoring) {
   return p.effect || p.element || NamingOf(scoring).card.fallback.damage;
 }
 
-/** Parts of an item's convention name: {name, effect, base, rank, source}. */
-export function ItemNameParts(it, ups = 0, scoring = GetActiveScoring(), rules = {}) {
-  const W = scoring.naming, s = ScoreItem(it, scoring, rules);
-  const top = Object.entries(s.parts).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])[0];
-  let effect = 'Plain', source = 'none';
-  if (top) {
-    source = top[0];
-    effect = top[0].startsWith('prop:') ? propWord(top[0].slice(5), rules, scoring)
-      : top[0].startsWith('Weapon art: ') ? weaponArtWord(it.art, scoring)
-        : W.item.mod[top[0]] || W.card.effect[top[0]] || W.card.element[top[0]] || 'Fabled';
+const ITEM_ELEMENT_HINTS = Object.freeze([
+  ['fire', 'Flame'], ['burn', 'Flame'], ['ember', 'Flame'],
+  ['frost', 'Frost'], ['chill', 'Frost'],
+  ['lightning', 'Storm'], ['shock', 'Storm'],
+  ['blight', 'Blight'], ['decay', 'Blight'],
+  ['divine', 'Divine'], ['sacred', 'Divine'], ['holy', 'Divine'],
+  ['arcane', 'Arcane'], ['dark', 'Shadow'],
+]);
+
+const ELEMENT_SYNONYMS = Object.freeze({
+  Flame: ['searing', 'scorching', 'ember', 'flame', 'fire', 'burn'],
+  Frost: ['freezing', 'chilling', 'frost', 'rime', 'ice'],
+  Storm: ['shocking', 'crackling', 'storm', 'lightning', 'thunder'],
+  Blight: ['blighted', 'withering', 'blight', 'decay', 'rot'],
+  Divine: ['divine', 'sacred', 'radiant', 'holy', 'hallowed'],
+  Arcane: ['arcane', 'channeling', 'resonant'],
+  Shadow: ['shadow', 'dark', 'night'],
+});
+const sameElementConcept = (el, word) => Boolean(el && word) && (sharesStem(el, word) || (ELEMENT_SYNONYMS[el] || []).some((s) => word.toLowerCase().startsWith(s.slice(0, 4))));
+
+function itemElementWord(it, parts) {
+  const keys = [
+    ...(it.tags || []),
+    ...(it.mods || []).map(([k]) => k),
+    ...(it.typeMods || []).map(([k]) => k),
+    ...Object.keys(parts || {}),
+  ].join(' ').toLowerCase();
+  for (const [needle, word] of ITEM_ELEMENT_HINTS) {
+    if (keys.includes(needle)) return word;
   }
-  const lastWord = String(it.name || '').split(' ').pop();
-  const b = it.base || '';
-  const base = it.kind === 'armour' && W.itemArmourSuffixes.includes(lastWord) ? lastWord
-    : W.item.base[b] || (b.startsWith('staff') ? 'Staff' : it.kind === 'armour' ? 'Robes' : it.kind === 'relic' ? 'Relic' : cap(b || it.kind));
+  return null;
+}
+
+/**
+ * Parts of an item's convention name (matching CardNameParts):
+ *   <rarity word> <effect/trait word> <element word> <base word> <rank numeral><upgrade mark>
+ * Returns {name, rarityWord, effect, element, base, rank, upgrades, source, dropped}.
+ */
+export function ItemNameParts(it, ups = 0, scoring = GetActiveScoring(), rules = {}) {
+  const W = NamingOf(scoring), I = W.item, s = ScoreItem(it, scoring, rules);
+  const lastWord = String(it.name || '').trim().split(/\s+/).pop() || '';
+  const typeKey = it.gearType || it.gearGroup || it.base || '';
+  const relicSuffixes = I.relicSuffixes || [];
+  const base = it.kind === 'armour' && (W.itemArmourSuffixes || []).includes(lastWord) ? lastWord
+    : it.kind === 'relic' && relicSuffixes.includes(lastWord) ? lastWord
+      : I.base[typeKey] || I.base[it.base || '']
+        || (String(typeKey).startsWith('staff') ? 'Staff' : it.kind === 'armour' ? 'Robes' : it.kind === 'relic' ? 'Relic' : cap(typeKey || it.kind || 'Item'));
+
+  // Pick the highest-scoring positive part as the trait/effect word; skip generic baseline parts when a stronger trait exists.
+  const positive = Object.entries(s.parts).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const nonBaseline = positive.filter(([k]) => !['Attack profile', 'Guard profile', 'Weapon Poise', 'Poise threshold', 'range:reach', 'range:ranged'].includes(k));
+  const ordered = nonBaseline.length ? [...nonBaseline, ...positive.filter(([k]) => !nonBaseline.some(([nk]) => nk === k))] : positive;
+  let effect = null, source = 'none';
+  for (const [k] of ordered) {
+    const word = k.startsWith('prop:') ? propWord(k.slice(5), rules, scoring)
+      : k.startsWith('Weapon art: ') ? weaponArtWord(it.art, scoring)
+        : I.mod[k] || W.card.effect[k] || W.card.element[k] || null;
+    if (!word) continue;
+    if (sharesStem(word, base)) continue;
+    effect = word;
+    source = k;
+    break;
+  }
+  let element = itemElementWord(it, s.parts);
+  if (element && (sameElementConcept(element, base) || sameElementConcept(element, effect))) element = null;
   const rk = RankOf(s.cp, scoring);
-  return { name: [effect, base, numeral(W, rk)].filter(Boolean).join(' ') + UpgradeMark(ups), effect, base, rank: rk, source };
+  const rarityWord = (I.rarity && I.rarity[it.rarity]) || null;
+  const words = { rarity: rarityWord, effect, element, base, rank: numeral(W, rk) };
+  const limit = I.limit !== undefined ? I.limit : scoring.naming?.card?.limit;
+  const { name, dropped } = fitCardName(words, UpgradeMark(ups), limit);
+  return { name, rarityWord, effect, element, base, rank: rk, upgrades: ups, source, dropped };
 }
 /** An item's convention name. */
 export const ItemName = (it, ups = 0, scoring = GetActiveScoring(), rules = {}) => ItemNameParts(it, ups, scoring, rules).name;

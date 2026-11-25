@@ -16,7 +16,7 @@
   "twinnedArmor": { "block": 6, "n": 10 },
   "blightTouchedIdol": { "crimsonBlight": 3 },
   "warhorn": { "strength": 1 },
-  "vowOfVengeance": { "strength": 2 },
+  "vowOfVengeance": { "strength": 1 },
   "pearlOfSagacity": { "gainEnergy": 1, "n": 6 },
   "blessedDew": { "heal": 2 },
   "azureSigil": { "gainEnergy": 1 },

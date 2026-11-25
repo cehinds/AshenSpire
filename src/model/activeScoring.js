@@ -51,14 +51,16 @@ export function ValidateScoringConfig(obj) {
       }
     }
   }
-  // naming.card.limit is optional (no block, or no maxChars, = no limit): {maxChars: whole number >= 1, keep: name parts, most important first}.
-  const limit = obj.naming?.card?.limit;
-  if (limit !== undefined) {
-    if (!limit || typeof limit !== 'object' || Array.isArray(limit)) errors.push('naming.card.limit must be an object.');
-    else {
-      if (limit.maxChars !== undefined && (!Number.isInteger(limit.maxChars) || limit.maxChars < 1)) errors.push('naming.card.limit.maxChars must be a whole number of at least 1.');
-      if (!Array.isArray(limit.keep) || limit.keep.some((part) => !NAME_LIMIT_PARTS.includes(part))) errors.push(`naming.card.limit.keep must list name parts (${NAME_LIMIT_PARTS.join(', ')}).`);
-      else if (limit.keep.length === 0 || new Set(limit.keep).size !== limit.keep.length) errors.push('naming.card.limit.keep must list at least one part, each once.');
+  // naming.card.limit and naming.item.limit are optional (no block, or no maxChars, = no limit): {maxChars: whole number >= 1, keep: name parts, most important first}.
+  for (const kind of ['card', 'item']) {
+    const limit = obj.naming?.[kind]?.limit;
+    if (limit !== undefined) {
+      if (!limit || typeof limit !== 'object' || Array.isArray(limit)) errors.push(`naming.${kind}.limit must be an object.`);
+      else {
+        if (limit.maxChars !== undefined && (!Number.isInteger(limit.maxChars) || limit.maxChars < 1)) errors.push(`naming.${kind}.limit.maxChars must be a whole number of at least 1.`);
+        if (!Array.isArray(limit.keep) || limit.keep.some((part) => !NAME_LIMIT_PARTS.includes(part))) errors.push(`naming.${kind}.limit.keep must list name parts (${NAME_LIMIT_PARTS.join(', ')}).`);
+        else if (limit.keep.length === 0 || new Set(limit.keep).size !== limit.keep.length) errors.push(`naming.${kind}.limit.keep must list at least one part, each once.`);
+      }
     }
   }
   return errors;

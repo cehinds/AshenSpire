@@ -23,24 +23,19 @@
     "passives": {
       "modifiers": [
         {
-          "tag": "resource.flat",
-          "resource": "mana",
-          "amount": 1
-        },
-        {
           "tag": "damage.school.flat",
           "school": "magic",
-          "amount": 2
+          "amount": 1
         },
         {
           "tag": "resource.flat",
           "resource": "hp",
-          "amount": 14
+          "amount": 6
         }
       ]
     },
     "icon": "relic",
-    "textTemplate": "Max HP +{hpFlat}. Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.",
+    "textTemplate": "Max HP +{hpFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.",
     "flavor": "A chip of someone else’s genius. It still hums."
   },
   {
@@ -231,7 +226,7 @@
     "name": "Vow of Vengeance",
     "rarity": "uncommon",
     "icon": "attack",
-    "textTemplate": "Whenever an enemy dies, gain {strength} Strength.",
+    "textTemplate": "The first time an enemy dies each combat, gain {strength} Strength.",
     "flavor": "Every name you take is a name you carry."
   },
   {
@@ -307,7 +302,7 @@
     "name": "Titan's Cinder",
     "rarity": "rare",
     "icon": "relic",
-    "textTemplate": "At the start of each turn, gain {strength} Strength.",
+    "textTemplate": "The first time you lose HP each combat, gain {strength} Strength.",
     "flavor": "A giant died to make this. It is still furious about it."
   },
   {
@@ -395,7 +390,7 @@
     "name": "Traveler's Whetstone",
     "rarity": "common",
     "icon": "sword",
-    "textTemplate": "At the start of each combat, gain {strength} Strength.",
+    "textTemplate": "The first time you Stagger an enemy each combat, gain {strength} Strength.",
     "flavor": "It was sharpened by hands that are no longer here to use it."
   },
   {
@@ -446,7 +441,7 @@
     "name": "Watchman's Badge",
     "rarity": "rare",
     "icon": "relic",
-    "textTemplate": "At the start of each turn, if you are not Weak: gain {strength} Strength.",
+    "textTemplate": "On your first turn, if you are not Weak: gain {strength} Strength.",
     "flavor": "It is pinned to a coat that has seen more watches than the man wearing it."
   },
   {

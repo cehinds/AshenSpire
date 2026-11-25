@@ -7,24 +7,21 @@
       "label": "Dagger",
       "poiseDamage": 1,
       "mods": [
-        "zeroCost.cardMultiHit=+1"
+        "zeroCost.cardPierce=+1"
       ]
     },
     "sword": {
       "label": "Sword",
       "poiseDamage": 2,
       "mods": [
-        "attack.cardDamage=+1",
-        "sweep.cardDamage=+1"
+        "attack.cardDamage=+1"
       ]
     },
     "rapier": {
       "label": "Rapier",
       "poiseDamage": 1,
       "mods": [
-        "anyAttack.cardPierce=+1",
-        "end@stance:defend.turnCounter=+1",
-        "end@stance:counter.turnCounter=+1"
+        "anyAttack.cardPierce=+1"
       ]
     },
     "greatsword": {
@@ -39,25 +36,20 @@
       "label": "Spear, scythe or halberd",
       "poiseDamage": 2,
       "mods": [
-        "anyAttack.cardReach=+1",
-        "sweep.cardDamage=+1",
-        "anyAttack.cardPierce=+1"
+        "anyAttack.cardReach=+1"
       ]
     },
     "hammer": {
       "label": "Hammer",
       "poiseDamage": 3,
       "mods": [
-        "anyAttack.cardPoise=+1",
-        "smash.hitVulnerable=+1",
-        "smash@breaks.hitRetreat=+1"
+        "smash.cardPoise=+1"
       ]
     },
     "axe": {
       "label": "Axe",
       "poiseDamage": 2,
       "mods": [
-        "anyAttack.playStrength=+1",
         "sweep.cardDamage=+1"
       ]
     },
@@ -65,28 +57,21 @@
       "label": "Katana",
       "poiseDamage": 2,
       "mods": [
-        "attack.cardAddDex=+1",
-        "sweep.cardAddDex=+1",
-        "smash.cardAddDex=+1",
-        "smash.hitBleed=+1"
+        "attack.cardAddDex=+1"
       ]
     },
     "twinblade": {
       "label": "Twinblade",
-      "poiseDamage": 2,
+      "poiseDamage": 1,
       "mods": [
-        "anyAttack.cardMultiHit=+1"
+        "attack@first:turn.cardMultiHit=+1"
       ]
     },
     "bow": {
       "label": "Bow",
-      "poiseDamage": 2,
+      "poiseDamage": 1,
       "mods": [
         "anyAttack.cardReach=+1",
-        "anyAttack@target:retreating.cardAddDex=+1",
-        "end@stance:defend.turnRetreat=+1",
-        "start.turnReach=+1",
-        "anyAttack.cardPierce=+1",
         "self.vulnMelee=+1"
       ]
     },
@@ -94,8 +79,7 @@
       "label": "Crossbow",
       "poiseDamage": 2,
       "mods": [
-        "anyAttack.cardReach=+1",
-        "anyAttack.cardPierce=+2",
+        "anyAttack.cardPierce=+1",
         "anyAttack.cardEscalate=+1"
       ]
     },
@@ -103,15 +87,13 @@
       "label": "Mace or flail",
       "poiseDamage": 3,
       "mods": [
-        "anyAttack.cardIgnoreBlock=+1",
-        "smash.cardPoise=+1"
+        "anyAttack.cardIgnoreBlock=+1"
       ]
     },
     "whip": {
       "label": "Whip",
       "poiseDamage": 1,
       "mods": [
-        "anyAttack.cardReach=+1",
         "anyAttack.hitRemoveRetreat=+1"
       ]
     },
@@ -120,7 +102,6 @@
       "poiseDamage": 1,
       "mods": [
         "sweep.cardMultiHit=+1",
-        "anyAttack.cardCost=-1",
         "anyAttack.cardDamage=-1"
       ]
     },
@@ -129,33 +110,28 @@
       "poiseDamage": 2,
       "mods": [
         "self.statPoise=+1",
-        "end.turnBlock=+2"
+        "end.turnBlock=+1"
       ]
     },
     "staff": {
       "label": "Staff",
       "poiseDamage": 2,
       "mods": [
-        "anyAttack.cardReach=+1",
-        "spell@stance:prepared.cardMana=-1",
-        "start.turnWard=+1"
+        "spell@stance:prepared.cardMana=-1"
       ]
     },
     "sceptre": {
       "label": "Sceptre",
       "poiseDamage": 2,
       "mods": [
-        "spell.cardDamage=+1",
-        "spell@stance:prepared.cardMana=-1",
-        "start.turnWard=+1"
+        "spell.cardDamage=+1"
       ]
     },
     "tome": {
       "label": "Tome",
       "poiseDamage": 1,
       "mods": [
-        "spell@first:turn.playDraw=+1",
-        "start.turnWard=+2"
+        "start.turnWard=+1"
       ]
     },
     "talisman": {
@@ -173,43 +149,40 @@
     "chime": {
       "label": "Chime",
       "poiseDamage": 1,
-      "mods": []
+      "mods": [
+        "spell@first:turn.playWard=+1"
+      ]
     }
+  },
+  "itemPoiseDamage": {
+    "maul": 4,
+    "zweihander": 4
   },
   "armourGroups": {
     "unarmoured": {
       "label": "Unarmoured (robes)",
       "mods": [
-        "spell.cardMana=-1",
-        "self.maxMana=+1",
+        "spell@stance:prepared.cardMana=-1",
         "self.vulnMelee=+1"
       ]
     },
     "light": {
       "label": "Light (leathers)",
       "mods": [
-        "self.statDex=+1",
-        "blockCard.cardBlock=+1",
-        "self.gainEvade=+1",
-        "end@stance:defend@holding:evade.turnEvade=+1"
+        "self.statDex=+1"
       ]
     },
     "medium": {
       "label": "Medium (mail)",
       "mods": [
-        "self.statPoise=+1",
-        "blockCard.cardBlock=+2",
-        "self.gainCounter=+1",
-        "end@stance:counter@holding:counter.turnCounter=+1"
+        "self.statPoise=+1"
       ]
     },
     "heavy": {
       "label": "Heavy (plate)",
       "mods": [
         "self.statPoise=+2",
-        "self.statDex=-1",
-        "blockCard.cardBlock=+3",
-        "self.thorns=+1"
+        "self.statDex=-1"
       ]
     }
   },

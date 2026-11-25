@@ -119,7 +119,7 @@ export function equipmentCardModel(registries, piece) {
  * shrinks to stay whole instead of being cut. `idealCh` is expressed against
  * the card's own width, so the face scales with the card and not the viewport.
  */
-export function equipmentCardTokens(config = balance.ui.equipmentCard, { collapse = [], omit = [] } = {}) {
+export function equipmentCardTokens(config = balance.ui.equipmentCard, { collapse = [], omit = [], regionMinPx = null } = {}) {
   const { text, frameWidthPx, frameHeightPx, paddingPx, gapPx } = config;
   // COLLAPSE AND OMIT ARE NOT THE SAME THING, and the difference is the whole
   // value of the presentation levels (src/model/cardFields.js).
@@ -140,7 +140,11 @@ export function equipmentCardTokens(config = balance.ui.equipmentCard, { collaps
   // returns its pixels — and its gaps — to the regions that remain.
   const regions = Object.fromEntries(Object.entries(config.regions)
     .filter(([key]) => !omit.includes(key))
-    .map(([key, spec]) => [key, collapse.includes(key) ? { ...spec, minPx: 0, grow: 0 } : spec]));
+    .map(([key, spec]) => {
+      if (collapse.includes(key)) return [key, { ...spec, minPx: 0, grow: 0 }];
+      const overrideMin = regionMinPx && Number.isFinite(regionMinPx[key]) ? regionMinPx[key] : null;
+      return [key, overrideMin != null ? { ...spec, minPx: overrideMin } : spec];
+    }));
   const order = Object.keys(regions);
   const gaps = gapPx * Math.max(0, order.length - 1);
   const budget = frameHeightPx - paddingPx * 2 - gaps;
