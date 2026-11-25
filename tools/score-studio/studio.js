@@ -852,7 +852,7 @@ function previewGeneratedPool() {
     <div><strong>Rank:</strong> ${esc(line(plan.counts.rank, (k) => RankName(Number(k))))}</div>
     <div><strong>School:</strong> ${esc(line(plan.counts.school, (k) => (k === 'none' ? 'no school' : k)))}</div>
     ${plan.martialToMagic ? `<div class="gen-preview-note">${plan.martialToMagic} martial card${plan.martialToMagic === 1 ? '' : 's'} became magic to fit the school counts.</div>` : ''}
-    ${plan.misses ? `<div class="gen-preview-note">${plan.misses} card${plan.misses === 1 ? '' : 's'} cannot get down to their CP and keep the nearest.</div>` : ''}
+    ${plan.misses ? `<div class="gen-preview-note">${plan.misses === 1 ? '1 card is too strong for its CP and keeps' : `${plan.misses} cards are too strong for their CP and keep`} the nearest.</div>` : ''}
     <h4>Sample names</h4>
     <ul class="gen-sample-names">${plan.cards.slice(0, GENERATOR_SAMPLE_NAMES).map((c) => `<li>${esc(c.name)}</li>`).join('')}</ul>`;
   preview.hidden = false;
