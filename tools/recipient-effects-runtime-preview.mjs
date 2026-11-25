@@ -7,7 +7,7 @@ import { RECIPIENT_EFFECT_ATLAS } from '../src/content/recipientEffectAtlas.js';
 import { setBuiltInSource, assetUrl } from '../src/ui/assetmap.js';
 const stage=document.querySelector('#stage'),layer=document.querySelector('#effect-layer'),scene=stage.querySelector('.scene');
 const image=url=>new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>resolve(null);i.src=url});
-const path=p=>new URL('../'+p,import.meta.url).href;
+const path=p=>new URL('../'+p,location.href).href;
 for(const item of art.scenes['ashen-crown-1'].devices.desktop.layers){const im=await image(path(art.sceneLayers[item.id].path));if(im)scene.getContext('2d').drawImage(im,item.x,item.y,item.width,item.height)}
 const definitions=[['player','reaver-default',330,913,318],['enemy-1','fellWarden',825,625,252],['enemy-2','wanderingSoldier',1080,605,226],['enemy-3','blightHound',1335,628,182]];
 const actors={};
@@ -84,18 +84,17 @@ function reviewRecipes() {
     const outcome = control('outcome').value;
     const event = singleEvent(sourceId, targetId, outcome);
     const actionKey = 'preview-single-action';
-    let clips = model.RecipientEffectsForEvent(action, event).map(recipe => ({ ...recipe, actionKey, delivery: null }));
+    let clips = model.RecipientEffectsForEvent(action, event).map(recipe => ({ ...recipe, actionKey }));
     if (control('action').value === 'sweep' && outcome === 'hit' && targetId !== 'player') {
       clips = clips.map(recipe => ({ ...recipe, mount: 'group', targetType: 'aoe', targetIds: ['enemy-1', 'enemy-2', 'enemy-3'], groupKey: 'preview-sweep' }));
     }
     const prelude = [];
     const windup = model.RecipientWindupFor(action, event);
     if (windup) prelude.push({ ...windup, actionKey });
-    const delivery = model.RecipientDeliveryFor(action, event);
-    if (delivery.mode === 'reach-extension' && sourceId !== targetId) {
-      const base = model.ResolveRecipientEffect(action, event);
-      prelude.push({ ...base, impactShape: base.shape, shape: null, phase: 'delivery',
-        mount: 'target', sourceId, targetId, actionKey, claimsDamage: false, delivery });
+    const contact = clips.find(recipe => recipe.delivery?.mode === 'reach-extension');
+    if (contact && sourceId !== targetId) {
+      prelude.push({ ...contact, impactShape: contact.shape, shape: null, phase: 'delivery', claimsDamage: false });
+      clips = clips.map(recipe => ({ ...recipe, delivery: null }));
     }
     return [...prelude, ...clips];
   }
@@ -224,6 +223,7 @@ function status(message, state) {
   const note = control('timing-status');
   note.dataset.state = state;
   note.textContent = message;
+  for (const [field, id] of Object.entries(fieldIds)) control(id).disabled = busy || (field === 'overlapMs' && timing.maxConcurrent === 1);
   control('save-timing').disabled = busy || invalid !== '' || !saved.revision || !dirty();
   control('reset-timing').disabled = busy;
   control('download-timing').disabled = invalid !== '';
@@ -242,7 +242,6 @@ function showTimingStatus() {
 
 function syncFields() {
   for (const [key, id] of Object.entries(fieldIds)) control(id).value = String(timing[key]);
-  control('timing-overlap').disabled = timing.maxConcurrent === 1;
   control('opacity-value').value = Math.round(timing.opacity * 100) + '%';
 }
 

@@ -64,6 +64,12 @@ test('effect timing endpoint reads the revision and saves only the five timing v
   assert.equal((await post(origin, { revision: before.revision, timing: tuning })).status, 409);
   assert.deepEqual(await (await fetch(origin + route)).json(), saved);
   assert.equal(await readFile(path, 'utf8'), current);
+  await writeFile(generated, '// stale test fixture');
+  const repair = await post(origin, { revision: saved.revision, timing: saved.timing });
+  assert.equal(repair.status, 200);
+  assert.deepEqual(await repair.json(), saved);
+  assert.equal(await readFile(generated, 'utf8'), generate(compiled), 'saving identical values repairs stale generated output');
+  assert.equal(await readFile(path, 'utf8'), current);
 });
 
 test('effect timing refuses malformed, cross-origin, oversized and nonlocal requests', async t => {

@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { ReadRecipientEffectTiming, ValidateRecipientEffectTiming } from '../src/model/recipientEffectTiming.js';
 import { CONFIG_DIR, GENERATED, compileEntries, generate, readConfigTree } from './config-build.mjs';
 import { acquire } from './lib/build-lock.mjs';
@@ -65,34 +65,46 @@ export async function saveRecipientEffects(root, input) {
     const { text, document, revision } = readState(root);
     if (revision !== input.revision) throw fail(409, 'The game JSON changed. Restore Saved before saving again.');
     const updated = updateTiming(text, document, timing);
-    if (updated === text) return { revision, timing, file: sourceFile };
     const entries = readConfigTree(join(root, 'content')).map(entry => entry.rel === relativeFile ? { ...entry, text: updated } : entry);
     const compiled = compileEntries(entries, { requireInteractionConfigs: true });
     if (compiled.errors.length) throw fail(422, 'Configuration did not compile. ' + compiled.errors.join(' '));
 
     const source = join(root, sourceFile);
     const generated = join(root, GENERATED);
+    const generatedText = generate(compiled);
+    const sourceChanged = updated !== text;
+    const generatedChanged = !existsSync(generated) || readFileSync(generated, 'utf8').replaceAll('\r\n', '\n') !== generatedText;
+    if (!sourceChanged && !generatedChanged) return { revision, timing, file: sourceFile };
     const suffix = '.editor-' + randomUUID();
     const sourceTemp = source + suffix;
     const generatedTemp = generated + suffix;
     const backup = sourceTemp + '.original';
     let restoreFailed = false;
     try {
-      writeFileSync(sourceTemp, updated, { flag: 'wx' });
-      writeFileSync(generatedTemp, generate(compiled), { flag: 'wx' });
-      writeFileSync(backup, text, { flag: 'wx' });
+      if (sourceChanged) {
+        writeFileSync(sourceTemp, updated, { flag: 'wx' });
+        writeFileSync(backup, text, { flag: 'wx' });
+      }
+      if (generatedChanged) {
+        mkdirSync(dirname(generated), { recursive: true });
+        writeFileSync(generatedTemp, generatedText, { flag: 'wx' });
+      }
       if (readFileSync(source, 'utf8') !== text) throw fail(409, 'The game JSON changed during save. Restore Saved and try again.');
-      renameSync(sourceTemp, source);
-      try {
-        renameSync(generatedTemp, generated);
-      } catch (error) {
+      if (sourceChanged) renameSync(sourceTemp, source);
+      if (generatedChanged) {
         try {
-          renameSync(backup, source);
-        } catch (restoreError) {
-          restoreFailed = true;
-          throw new Error('Could not restore the source JSON. Original bytes are available at ' + backup, { cause: restoreError });
+          renameSync(generatedTemp, generated);
+        } catch (error) {
+          if (sourceChanged) {
+            try {
+              renameSync(backup, source);
+            } catch (restoreError) {
+              restoreFailed = true;
+              throw new Error('Could not restore the source JSON. Original bytes are available at ' + backup, { cause: restoreError });
+            }
+          }
+          throw error;
         }
-        throw error;
       }
     } finally {
       for (const file of [sourceTemp, generatedTemp]) rmSync(file, { force: true });

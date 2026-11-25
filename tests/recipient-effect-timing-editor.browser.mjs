@@ -92,6 +92,21 @@ try {
   assert.equal(reach[2].start, reach[1].end + 30);
   await page.evaluate(time => window.recipientRuntimePreview.scrub(time), reach[1].start);
   assert.equal(await page.locator('#effect-layer .recipient-delivery').count(), 1);
+  const healing = await page.evaluate(async () => {
+    const editor = window.recipientRuntimePreview;
+    await editor.configure({ outcome: 'heal' });
+    return editor.plan;
+  });
+  assert.ok(healing.some(entry => entry.recipe.shape === 'heal-plus'));
+  assert.ok(healing.every(entry => entry.recipe.phase !== 'delivery'), 'support receipts do not generate a Reach delivery');
+  const sweep = await page.evaluate(async () => {
+    const editor = window.recipientRuntimePreview;
+    await editor.configure({ action: 'sweep', camp: 'physical', range: 'reach', outcome: 'hit' });
+    return editor.plan;
+  });
+  assert.equal(sweep[0].recipe.phase, 'delivery');
+  assert.equal(sweep[0].recipe.mount, 'group');
+  assert.deepEqual(sweep[0].ids, ['enemy-1', 'enemy-2', 'enemy-3']);
 
   await page.locator('#reset-timing').click();
   await page.locator('#demo').selectOption('recipients');

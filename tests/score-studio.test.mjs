@@ -4,6 +4,8 @@ import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync, existsSync
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { alternativeArtCatalog } from '../src/ui/alternativeArtCatalog.js';
+import { RECIPIENT_EFFECT_ATLAS } from '../src/content/recipientEffectAtlas.js';
 import { scoring as shippedScoring } from '../src/content/generated/scoring.js';
 import { ValidateScoringConfig, GetActiveScoring, SetCustomScoring, ClearCustomScoring, HasCustomScoring } from '../src/model/activeScoring.js';
 import { ScoreCard, BaseFace } from '../src/model/combatPower.js';
@@ -72,9 +74,22 @@ test('pages-site publishScoreStudio extracts every module tree transitively impo
   const treesMatch = pagesSrc.match(/const SCORE_STUDIO_TREES = \[([^\]]+)\]/);
   assert.ok(treesMatch, 'SCORE_STUDIO_TREES constant must exist in tools/pages-site.mjs');
   const extractedTrees = [...treesMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  const index = readFileSync(join(root, 'tools/score-studio/index.html'), 'utf8');
+  const preview = index.match(/<iframe id="effects-timing-frame"[^>]+data-src="([^"]+)"/)?.[1];
+  assert.ok(preview, 'Score Studio loads the shared Effects Timing page');
+  const markup = readFileSync(join(root, preview), 'utf8');
+  const previewModule = resolve(dirname(join(root, preview)), markup.match(/<script type="module" src="([^"]+)"/)[1]);
+  const previewStyles = resolve(dirname(join(root, preview)), markup.match(/rel="stylesheet" href="([^"]+)"/)[1]);
+  const timings = pagesSrc.match(/const SCORE_STUDIO_TIMING_FILES = \[([^\]]+)\]/);
+  assert.ok(timings);
+  const timingFiles = [...timings[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
+  for (const path of [join(root, preview), previewModule, previewStyles]) {
+    assert.ok(timingFiles.includes(relative(root, path).replaceAll('\\', '/')), 'Published Studio includes ' + path);
+  }
+  extractedTrees.push(...timingFiles);
 
   const seen = new Set();
-  const queue = [join(root, 'tools/score-studio/studio.js')];
+  const queue = [join(root, 'tools/score-studio/studio.js'), previewModule];
   const importRe = /(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"](\.[^'"]+)['"]/g;
   while (queue.length) {
     const file = queue.pop();
@@ -92,6 +107,18 @@ test('pages-site publishScoreStudio extracts every module tree transitively impo
     }
   }
   assert.ok(seen.size > 10, `Expected transitive module closure > 10 files, got ${seen.size}`);
+
+  const scene = alternativeArtCatalog.scenes['ashen-crown-1'].devices.desktop.layers.map(({ id }) => alternativeArtCatalog.sceneLayers[id].path);
+  const actors = ['reaver-default', 'fellWarden', 'wanderingSoldier', 'blightHound'].map(id => alternativeArtCatalog.sprites[id].path);
+  const timingAssetsMatch = pagesSrc.match(/const SCORE_STUDIO_TIMING_ASSETS = new Set\(\[([^\]]+)\]\)/);
+  assert.ok(timingAssetsMatch);
+  const timingAssets = [...timingAssetsMatch[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
+  assert.deepEqual([...timingAssets].sort(), [...scene, ...actors].sort(), 'Pages hydrates exactly the fixture actors and scene');
+  const manifest = JSON.parse(readFileSync(join(root, 'art-manifest.json'), 'utf8'));
+  for (const id of [...timingAssets, ...Object.values(RECIPIENT_EFFECT_ATLAS).map(entry => entry.asset)]) {
+    assert.ok(manifest.assets[id]?.common || manifest.assets[id]?.light, id + ' is available to the Studio hydrator');
+  }
+  assert.match(pagesSrc, /id\.startsWith\('assets\/recipient-effects\/'\)/);
 });
 
 test('weights staging: Apply replays only staged differences onto the applied config, and clears only rank pins', async () => {
