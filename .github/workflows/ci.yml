@@ -490,7 +490,9 @@ jobs:
           - { os: windows-latest, shard: '3/8' }
           - { os: windows-latest, shard: '4/8' }
           - { os: windows-latest, shard: '5/8' }
-          - { os: windows-latest, shard: '6/8' }
+          # Windows 6/8 twice hit the subprocess limit. Split only that group.
+          - { os: windows-latest, shard: '6/16' }
+          - { os: windows-latest, shard: '14/16' }
           - { os: windows-latest, shard: '7/8' }
     steps:
       # Before checkout, deliberately: with autocrlf on (the Windows default) the
