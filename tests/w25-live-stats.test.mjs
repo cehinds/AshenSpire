@@ -13,7 +13,7 @@ import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { ChangeAttribute, ClearTurnAttributeBoosts, RestoreLiveStats, LiveAttribute, ElementStatScale, StatScaledNumber } from '../src/engine/liveStats.js';
 import { ratingValue } from '../src/model/combatRatings.js';
 
-const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1 } } }); // the playtest physical cut is off: this file pins its own hand-sized arithmetic
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1 } } }); // Disable both output scales so live damage deltas are directly observable.
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function live(classId = 'reaver', seed = 511) {
   const run = createRunState({ registries: reg, classId, seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -95,17 +95,17 @@ test('only DEX raises new-profile Stamina, and live attribute boosts leave the r
   assert.deepEqual(run.attributes, attrs);
 });
 
-test('live hand size and draw pay on the fourth INT point, then return', () => {
+test('live configured hand size and draw rise per Intelligence point, then return', () => {
   const { combat } = live();
   const hand = combat.handMax, draw = combat.drawPerTurn;
   ChangeAttribute(combat, combat.player, 'intelligence', 2 - LiveAttribute(combat.player, 'intelligence'));
   const atTwo = { hand: combat.handMax, draw: combat.drawPerTurn };
   ChangeAttribute(combat, combat.player, 'intelligence', 1);
-  assert.equal(combat.handMax, atTwo.hand, 'INT 2 -> 3 grants no card');
-  assert.equal(combat.drawPerTurn, atTwo.draw);
-  ChangeAttribute(combat, combat.player, 'intelligence', 1);
-  assert.equal(combat.handMax, atTwo.hand + 1, 'INT 3 -> 4 grants one card');
+  assert.equal(combat.handMax, atTwo.hand + 1, 'INT 2 -> 3 adds a card');
   assert.equal(combat.drawPerTurn, atTwo.draw + 1);
+  ChangeAttribute(combat, combat.player, 'intelligence', 1);
+  assert.equal(combat.handMax, atTwo.hand + 2, 'INT 3 -> 4 adds another card');
+  assert.equal(combat.drawPerTurn, atTwo.draw + 2);
   RestoreLiveStats(combat);
   assert.equal(combat.handMax, hand);
   assert.equal(combat.drawPerTurn, draw);

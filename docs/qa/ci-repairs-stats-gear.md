@@ -88,3 +88,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/stat-projection-pools.test.mjs` earns the real L4 point before testing Wisdom allocation and armour removal. The Mana fixture includes both the current robe control and a positive flat signature. The two genuine historical profile byte fixtures remain untouched while their pool receipts and committed gains are checked.
 - `node --test tests/stat-projection-pools.test.mjs` passed 6/6, from 2/6. Ten original stats/gear failures remained.
+
+## Live damage and hand deltas
+
+- `tests/w25-live-stats.test.mjs` disables both multiplicative damage cuts so a two-point Strength change is visible as exactly two damage. The configured hand and draw advance by one on each of two successive Intelligence points and restore on cleanup.
+- `node --test tests/w25-live-stats.test.mjs` passed 8/11, from 5/11. Three remaining checks cover the disputed live pool behavior. The lane had seven original failures remaining.
