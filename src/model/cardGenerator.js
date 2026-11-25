@@ -228,7 +228,10 @@ function riderPart(r, to, area) {
  * GenerateCard(target, {scoring, spellExposureBuildup}) -> a Core cards.json-shaped definition (id `gen.<seed>`) whose ScoreCard face lands exactly
  * on the target. `spellExposureBuildup` (5) is the Exposure per hit a generated magic attack that costs Mana is authored with; no floor applies to a card (owner ruling 2026-11-22).
  */
-export function GenerateCard(input, { scoring = shippedScoring, spellExposureBuildup = 5 } = {}) {
+export const GenerateCard = (input, options) => GenerateCardWithTarget(input, options).card;
+
+/** GenerateCardWithTarget(target, options) -> {card, cp}: GenerateCard's card and the combat power it was built to. */
+export function GenerateCardWithTarget(input, { scoring = shippedScoring, spellExposureBuildup = 5 } = {}) {
   const { face, cp, riders, target } = GenerateFace(input, { scoring });
   const { rarity, cls, camp, campKind, type, kind, area, keyword, seed } = target;
   const to = area ? 'allEnemies' : 'enemy';
@@ -247,7 +250,7 @@ export function GenerateCard(input, { scoring = shippedScoring, spellExposureBui
   for (const r of riders) parts.push(riderPart(r, to, area));
   if (face.loseHp) parts.push({ effect: { op: 'loseHp', target: 'self', amount: face.loseHp, nonlethal: true }, text: 'Lose {loseHp} HP.' });
   const keywordText = keyword ? ` ${keyword[0].toUpperCase()}${keyword.slice(1)}.` : '';
-  return {
+  const card = {
     id: `gen.${seed}`, name: CardName(face, 0, scoring), class: cls, rarity, cost: face.sp, staminaCost: face.sp, manaCost: face.mp, costRule: 'fixed', type: kind,
     icon: kind === 'attack' ? 'attack' : 'shield', keywords: keyword ? [keyword] : [], effects: parts.map((p) => p.effect), tags: face.tags,
     textTemplate: parts.map((p) => p.text).join(' ') + keywordText, ...(parts.length > 1 ? { faceTemplate: parts.slice(0, 3).map((p) => p.face || p.text) } : {}),
@@ -255,4 +258,5 @@ export function GenerateCard(input, { scoring = shippedScoring, spellExposureBui
     ...(face.magicShare ? { magicShare: face.magicShare } : {}),
     ...(kind === 'attack' ? { damageSchool: camp === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: camp === 'spell' && face.mp ? spellExposureBuildup : 0 } : {}),
   };
+  return { card, cp };
 }

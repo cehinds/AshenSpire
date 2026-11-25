@@ -19,7 +19,7 @@
 //     Area odds apply to attacks that are not sweeps (a sweep is always area). Keyword, drawback and area odds are a share of the cards.
 //   - Every random choice comes from the seed, so one seed always plans the same pool.
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
-import { GenerateCard, SeededRandom, SCHOOLS, CAMPS, CARD_TYPES, RANGES, KEYWORDS, RIDER_EFFECTS } from './cardGenerator.js';
+import { GenerateCardWithTarget, SeededRandom, SCHOOLS, CAMPS, CARD_TYPES, RANGES, KEYWORDS, RIDER_EFFECTS } from './cardGenerator.js';
 
 export const RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
 export const EFFECT_COUNTS = Object.freeze(['1', '2', '3']);
@@ -127,11 +127,14 @@ export function PoolCounts(inputs) {
   return { rarity: tally('rarity'), rank: tally('rank'), school: tally('school'), camp: tally('camp'), type: tally('type') };
 }
 
-/** PlanCardPool(options, {scoring, spellExposureBuildup}) -> {count, inputs, cards, counts}: the planned targets and the generated cards. */
+/**
+ * PlanCardPool(options, {scoring, spellExposureBuildup}) -> {count, inputs, cards, targets, counts}: the planned targets, the generated
+ * cards and the combat power each card was built to (targets[i] for cards[i]).
+ */
 export function PlanCardPool(options = {}, { scoring = shippedScoring, spellExposureBuildup } = {}) {
   const { count, inputs } = PlanCardPoolInputs(options, { scoring });
-  const cards = inputs.map((t) => GenerateCard(t, { scoring, ...(spellExposureBuildup !== undefined ? { spellExposureBuildup } : {}) }));
-  return { count, inputs, cards, counts: PoolCounts(inputs) };
+  const built = inputs.map((t) => GenerateCardWithTarget(t, { scoring, ...(spellExposureBuildup !== undefined ? { spellExposureBuildup } : {}) }));
+  return { count, inputs, cards: built.map((b) => b.card), targets: built.map((b) => b.cp), counts: PoolCounts(inputs) };
 }
 
 // The rider kind a Core effect would be on a generated card (null when it is the primary or not a rider).
