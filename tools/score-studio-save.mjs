@@ -9,6 +9,7 @@ import { ValidateScoringConfig } from '../src/model/activeScoring.js';
 
 export const DEFAULT_SCORING_PATH = 'content/source/scoring.json';
 export const DEFAULT_ART_LAYERS_PATH = 'content/source/cardArtLayers.json';
+export const DEFAULT_ITEM_ART_LAYERS_PATH = 'content/source/itemArtLayers.json';
 
 function resolveRepoPath(rootDir, relPath, fallback) {
   const chosen = typeof relPath === 'string' && relPath.trim() ? relPath.trim() : fallback;
@@ -25,11 +26,13 @@ function resolveRepoPath(rootDir, relPath, fallback) {
   return { target, rel: rel.split(sep).join('/') };
 }
 
-export function readStudioConfig(rootDir, { scoringPath, artLayersPath } = {}) {
+export function readStudioConfig(rootDir, { scoringPath, artLayersPath, itemArtLayersPath } = {}) {
   const sc = resolveRepoPath(rootDir, scoringPath, DEFAULT_SCORING_PATH);
   const al = resolveRepoPath(rootDir, artLayersPath, DEFAULT_ART_LAYERS_PATH);
+  const il = resolveRepoPath(rootDir, itemArtLayersPath, DEFAULT_ITEM_ART_LAYERS_PATH);
   const scoringExists = existsSync(sc.target);
   const artLayersExists = existsSync(al.target);
+  const itemArtLayersExists = existsSync(il.target);
   return {
     scoringPath: sc.rel,
     defaultScoringPath: DEFAULT_SCORING_PATH,
@@ -39,6 +42,10 @@ export function readStudioConfig(rootDir, { scoringPath, artLayersPath } = {}) {
     defaultArtLayersPath: DEFAULT_ART_LAYERS_PATH,
     artLayersExists,
     artLayers: artLayersExists ? JSON.parse(readFileSync(al.target, 'utf8')) : null,
+    itemArtLayersPath: il.rel,
+    defaultItemArtLayersPath: DEFAULT_ITEM_ART_LAYERS_PATH,
+    itemArtLayersExists,
+    itemArtLayers: itemArtLayersExists ? JSON.parse(readFileSync(il.target, 'utf8')) : null,
   };
 }
 
@@ -72,4 +79,22 @@ export function saveStudioArtLayers(rootDir, { path: relPath, artLayers } = {}) 
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, JSON.stringify(artLayers, null, 2) + '\n', 'utf8');
   return { path: rel, layerCount: artLayers.layers.length };
+}
+
+export function saveStudioItemArtLayers(rootDir, { path: relPath, itemArtLayers, rebuild = true } = {}) {
+  if (!itemArtLayers || typeof itemArtLayers !== 'object' || !Array.isArray(itemArtLayers.layers)) {
+    throw new Error('Item art layers config must be an object with a "layers" array.');
+  }
+  const { target, rel } = resolveRepoPath(rootDir, relPath, DEFAULT_ITEM_ART_LAYERS_PATH);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, JSON.stringify(itemArtLayers, null, 2) + '\n', 'utf8');
+  const rebuilt = [];
+  if (rebuild && rel === DEFAULT_ITEM_ART_LAYERS_PATH) {
+    const r = spawnSync(process.execPath, [resolve(rootDir, 'tools/content-build.mjs')], { cwd: rootDir, encoding: 'utf8' });
+    if (r.status !== 0) {
+      throw new Error(`Saved ${rel}, but tools/content-build.mjs failed: ${(r.stderr || r.stdout || '').trim().slice(0, 400)}`);
+    }
+    rebuilt.push('tools/content-build.mjs');
+  }
+  return { path: rel, layerCount: itemArtLayers.layers.length, rebuilt };
 }

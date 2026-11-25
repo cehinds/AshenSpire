@@ -104,8 +104,28 @@ export function weightSentence(groupKey, id, scoring, label)
         : { before: 'adds', mid: 'pts', after: '' };
     case 'tags':
       return tagSentence(scoring.tags?.[id]);
+    case 'items':
+      return itemParamSentence(id);
+    case 'gearFields':
+      return { before: '', mid: 'pts per stack / point', after: '' };
     default:
       return { before: '', mid: '', after: '' };
+  }
+}
+
+function itemParamSentence(id)
+{
+  switch (id)
+  {
+    case 'weaponPoiseDamage.perPoint': return { before: '', mid: 'pts per inherent Poise dmg', after: '' };
+    case 'weaponPoiseDamage.baseline': return { before: 'Free up to', mid: 'Poise dmg', after: '' };
+    case 'poiseThreshold.perPoint': return { before: '', mid: 'pts per armour Poise', after: '' };
+    case 'poiseThreshold.baseline': return { before: 'Free up to', mid: 'armour Poise', after: '' };
+    case 'plays.weaponArt': return { before: '×', mid: 'weapon art raw score', after: '' };
+    case 'range.reach': return { before: 'Reach weapon adds', mid: 'pts', after: '' };
+    case 'range.ranged': return { before: 'Ranged weapon adds', mid: 'pts', after: '' };
+    case 'conditionFactor': return { before: 'Conditional trait ×', mid: '', after: '' };
+    default: return { before: '', mid: 'pts', after: '' };
   }
 }
 
@@ -153,9 +173,53 @@ export function weightExample(groupKey, id, scoring, label)
       return categoryExample(id, scoring, label);
     case 'tags':
       return tagExample(id, scoring);
+    case 'items':
+      return itemParamExample(id, scoring);
+    case 'gearFields':
+      return gearFieldExample(id, scoring, label);
     default:
       return '';
   }
+}
+
+function itemParamExample(id, scoring)
+{
+  const items = scoring.items || {};
+  switch (id)
+  {
+    case 'weaponPoiseDamage.perPoint':
+    case 'weaponPoiseDamage.baseline':
+    {
+      const base = Number(items.weaponPoiseDamage?.baseline ?? 1);
+      const per = Number(items.weaponPoiseDamage?.perPoint ?? 1);
+      return `Poise dmg 3 weapon (e.g. Hammer) = ${signedPts((3 - base) * per)}`;
+    }
+    case 'poiseThreshold.perPoint':
+    case 'poiseThreshold.baseline':
+    {
+      const base = Number(items.poiseThreshold?.baseline ?? 0);
+      const per = Number(items.poiseThreshold?.perPoint ?? 0.5);
+      return `Armour Poise 6 (Plate) = ${signedPts(Math.max(0, 6 - base) * per)}`;
+    }
+    case 'plays.weaponArt':
+      return `Weapon art raw 12 = ${signedPts(12 * (Number(items.plays?.weaponArt ?? 0.25)))}`;
+    case 'range.reach':
+      return `Spear / Staff = ${signedPts(Number(items.range?.reach ?? 2))}`;
+    case 'range.ranged':
+      return `Bow / Crossbow = ${signedPts(Number(items.range?.ranged ?? 3))}`;
+    case 'conditionFactor':
+      return `Trait worth 4 pts with @stance = ${signedPts(4 * (Number(items.conditionFactor ?? 0.65)))}`;
+    default:
+      return '';
+  }
+}
+
+function gearFieldExample(id, scoring, label)
+{
+  const field = scoring.items?.gearFields?.[id];
+  if (!field) return '';
+  const w = Number(field.weight) || 0;
+  return `+1 ${field.label || label || id} (always-on) = ${signedPts(w)}; conditional = ${signedPts(w * (Number(scoring.items?.conditionFactor ?? 0.65)))}`;
 }
 
 function costExample(id, scoring)

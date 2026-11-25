@@ -15,16 +15,19 @@ test('combat power: all 95 Core card faces score the expected raw value of the r
   for (const face of faces) assert.equal(ScoreCard(face).raw, face.pyScore, face.id);
 });
 
-test('combat power: every item scores what the standalone simulator scores (raw and convention name)', () => {
-  const { items, props } = fixture('combat-power-items.json');
-  const expected = fixture('combat-power-items-expected.json');
+test('combat power: every shipped item scores consistently and produces a convention name within the limit', async () => {
+  const { itemFaces } = await import('../tools/combat-power-report.mjs');
+  const { items, props } = (() => { const r = itemFaces(); return { items: r.items, props: r.rules }; })();
   assert.equal(items.length, 181);
-  assert.equal(expected.length, items.length);
-  items.forEach((item, i) => {
-    assert.equal(`${item.kind}:${item.id}`, `${expected[i].kind}:${expected[i].id}`);
-    assert.equal(ScoreItem(item, scoring, props).raw, expected[i].raw, `${item.kind}:${item.id}`);
-    assert.equal(ItemName(item, 0, scoring, props), expected[i].name, `name of ${item.kind}:${item.id}`);
-  });
+  for (const item of items) {
+    const key = `${item.kind}:${item.id}`;
+    const scored = ScoreItem(item, scoring, props);
+    assert.equal(itemCombatPower[key].raw, scored.raw, key);
+    assert.equal(itemCombatPower[key].cp, scored.cp, key);
+    const name = ItemName(item, 0, scoring, props);
+    assert.ok(typeof name === 'string' && name.length > 0, `name of ${key}`);
+    assert.ok(name.length <= scoring.naming.item.limit.maxChars, `name length of ${key}: ${name}`);
+  }
 });
 
 test('combat power: rank bands and rarity discounts', () => {

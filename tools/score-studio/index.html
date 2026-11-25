@@ -31,6 +31,7 @@
     </div>
     <nav class="studio-tabs" role="tablist" aria-label="Score Studio workspaces">
       <button class="studio-tab is-active" data-tab="cards" role="tab" aria-selected="true"><span class="tab-long">Cards &amp; Decks</span><span class="tab-short">Cards</span></button>
+      <button class="studio-tab" data-tab="items" role="tab" aria-selected="false"><span class="tab-long">Items &amp; Relics</span><span class="tab-short">Items</span></button>
       <button class="studio-tab" data-tab="weights" role="tab" aria-selected="false">Weights <span id="shift-count-badge" class="badge hidden">0</span></button>
       <button class="studio-tab" data-tab="art" role="tab" aria-selected="false"><span class="tab-long">Art &amp; Layers</span><span class="tab-short">Art</span></button>
       <button class="studio-tab" data-tab="sandbox" role="tab" aria-selected="false"><span class="tab-long">Combat Sandbox</span><span class="tab-short">Sandbox</span></button>
@@ -265,6 +266,140 @@
       </div>
     </section>
 
+    <!-- TAB 1B: ITEMS & RELICS (WEAPONS, ARMOURS, RELICS) -->
+    <section id="tab-items" class="studio-panel">
+      <div class="cards-layout">
+        <div class="cards-gallery-pane">
+          <div class="filter-bar">
+            <div class="filter-row">
+              <input id="item-filter-search" type="search" placeholder="Search weapons, armours, relics, traits..." />
+              <select id="item-filter-kind" aria-label="Filter by item kind">
+                <option value="all">All Items</option>
+                <option value="weapon">Weapons</option>
+                <option value="armour">Armours</option>
+                <option value="relic">Relics</option>
+              </select>
+              <select id="item-filter-rarity" aria-label="Filter by rarity">
+                <option value="all">All Rarities</option>
+                <option value="starter">Starter</option>
+                <option value="common">Common</option>
+                <option value="uncommon">Uncommon</option>
+                <option value="rare">Rare</option>
+                <option value="boss">Boss</option>
+              </select>
+              <select id="item-filter-rank" aria-label="Filter by rank">
+                <option value="all">All Ranks</option>
+                <option value="0">Unranked (0)</option>
+                <option value="1">Rank 1</option>
+                <option value="2">Rank 2</option>
+                <option value="3">Rank 3</option>
+                <option value="4">Rank 4</option>
+                <option value="5">Rank 5+</option>
+              </select>
+              <select id="item-filter-sort" aria-label="Sort items">
+                <option value="rank-desc">Rank ↓</option>
+                <option value="cp-desc">CP ↓</option>
+                <option value="cp-asc">CP ↑</option>
+                <option value="name">Name A–Z</option>
+              </select>
+            </div>
+            <div class="filter-row names-row">
+              <button id="btn-rename-all-items" class="s-btn" type="button" title="Apply convention names to every weapon, armour, and relic in the studio">Rename all</button>
+              <button id="btn-restore-item-names" class="s-btn" type="button" title="Restore the shipped authored item names">Restore names</button>
+              <span id="items-count" class="studio-muted"></span>
+            </div>
+          </div>
+          <div id="items-grid" class="cards-grid items-grid"></div>
+        </div>
+
+        <div id="item-inspector-resizer" class="inspector-resizer" title="Drag to resize the inspector" role="separator" aria-orientation="vertical"></div>
+
+        <aside id="item-inspector-pane" class="card-inspector inspector-pane" aria-label="Item inspector">
+          <div id="item-preview-host" class="card-preview-host item-preview-host"></div>
+
+          <div class="score-summary-bar">
+            <div class="score-metric"><span class="m-label">Raw Power</span><strong id="item-score-raw">0</strong></div>
+            <div class="score-metric"><span class="m-label">Rarity Disc.</span><strong id="item-score-disc">0</strong></div>
+            <div class="score-metric"><span class="m-label">Final CP</span><strong id="item-score-cp">0</strong></div>
+            <div class="score-metric"><span class="m-label">Rank</span><strong id="item-score-rank" class="rank-pill">Unranked</strong></div>
+          </div>
+
+          <details class="inspector-section" data-section="item-basics" open>
+            <summary class="section-head">
+              <h3>Item Basics</h3>
+              <button id="btn-item-autoname" class="s-btn s-btn-sm" type="button" title="Set this item's name to its convention name">Auto-name</button>
+            </summary>
+            <div class="form-grid">
+              <label class="form-wide">Name
+                <input id="item-edit-name" type="text" />
+                <span id="item-convention-hint" class="studio-muted name-hint"></span>
+              </label>
+              <label>Rarity
+                <select id="item-edit-rarity">
+                  <option value="starter">Starter</option>
+                  <option value="common">Common</option>
+                  <option value="uncommon">Uncommon</option>
+                  <option value="rare">Rare</option>
+                  <option value="boss">Boss</option>
+                </select>
+              </label>
+              <label id="item-edit-type-wrap"><span id="item-edit-type-label">Weapon Type</span>
+                <select id="item-edit-type"></select>
+              </label>
+              <label id="item-edit-poise-dmg-wrap">Inherent Poise Dmg
+                <input id="item-edit-poise-dmg" type="number" min="0" max="10" step="1" />
+              </label>
+              <label id="item-edit-range-wrap">Range
+                <select id="item-edit-range">
+                  <option value="melee">Melee</option>
+                  <option value="reach">Reach</option>
+                  <option value="ranged">Ranged</option>
+                </select>
+              </label>
+              <label id="item-edit-poise-wrap">Armour Poise
+                <input id="item-edit-poise" type="number" min="0" max="20" step="1" />
+              </label>
+            </div>
+          </details>
+
+          <details class="inspector-section" data-section="item-traits" open>
+            <summary class="section-head">
+              <h3>Type Base &amp; Item Traits</h3>
+            </summary>
+            <div id="item-type-base-list" class="item-type-base-list"></div>
+            <div id="item-trait-editor-wrap">
+              <div class="add-feature-bar item-trait-bar">
+                <select id="item-trait-selector" aria-label="Trait trigger/selector"></select>
+                <select id="item-trait-field" aria-label="Trait field"></select>
+                <input id="item-trait-amount" type="number" value="1" step="1" style="width:4.5rem" aria-label="Trait value" />
+                <button id="btn-item-add-trait" class="s-btn" type="button">Add</button>
+              </div>
+              <div class="quick-add-chips" id="item-quick-traits"></div>
+              <div id="item-active-traits" class="active-features-list"></div>
+            </div>
+          </details>
+
+          <details class="inspector-section" data-section="item-override" open>
+            <summary class="section-head">
+              <h3>Scoring Override</h3>
+              <label class="studio-toggle"><input id="item-override-enabled" type="checkbox" /> Enable override</label>
+            </summary>
+            <div id="item-override-fields" class="form-grid hidden">
+              <label>Override Rank <input id="item-override-rank" type="number" min="0" max="10" placeholder="auto" /></label>
+              <label>Override CP <input id="item-override-cp" type="number" placeholder="auto" /></label>
+            </div>
+          </details>
+
+          <details class="inspector-section" data-section="item-breakdown" open>
+            <summary class="section-head">
+              <h3>Score Breakdown</h3>
+            </summary>
+            <div id="item-score-parts-list" class="score-parts-list"></div>
+          </details>
+        </aside>
+      </div>
+    </section>
+
     <!-- TAB 2: WEIGHTS -->
     <section id="tab-weights" class="studio-panel">
       <div class="weights-toolbar">
@@ -279,6 +414,8 @@
           <option value="rank">Rank Bands</option>
           <option value="categories">Categories</option>
           <option value="tags">Weighted Tags</option>
+          <option value="items">Equipment &amp; Items</option>
+          <option value="gearFields">Gear Traits</option>
           <option value="naming">Naming</option>
         </select>
         <div class="weights-actions" role="group" aria-label="Weight changes">
@@ -310,13 +447,17 @@
           <details class="studio-section" data-section="art-layers" open>
             <summary class="section-head">
               <h3>Procedural Layer Stack &amp; Priority</h3>
-              <div>
+              <div class="art-head-controls">
+                <div class="art-target-switch" role="group" aria-label="Art layer target">
+                  <button id="btn-art-target-cards" class="s-btn s-btn-sm is-active" type="button" data-art-target="cards">Combat Cards</button>
+                  <button id="btn-art-target-items" class="s-btn s-btn-sm" type="button" data-art-target="items">Equipment &amp; Relics</button>
+                </div>
                 <button id="btn-add-layer" class="s-btn">+ Add Layer</button>
                 <button id="btn-save-art" class="s-btn">Save Layers to Repo</button>
                 <button id="btn-download-art" class="s-btn">Download JSON</button>
               </div>
             </summary>
-            <p class="studio-muted">Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.</p>
+            <p id="art-layers-desc" class="studio-muted">Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.</p>
             <div id="art-layers-list" class="art-layers-list"></div>
           </details>
         </div>
