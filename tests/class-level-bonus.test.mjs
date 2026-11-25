@@ -144,3 +144,24 @@ test('a current run earns its free points and rank-up credits exactly once acros
   assert.equal(loaded.level.unspentPoints, 3);
   assert.equal(loaded.level.pendingRankUps, 19);
 });
+
+
+for (const [name, modules] of [
+  ['stats disabled', { stats: false }],
+  ['attribute points disabled', { progression: { attributePointsPerLevel: 0 } }],
+]) test(`${name}: saved and new ladders respect the free-point opt-out`, () => {
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules });
+  const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  for (const archived of [false, true]) {
+    const run = createRunState({ seed: 3, classId: 'reaver', registries: reg });
+    if (archived) delete run.levelRewardRuleSnapshot;
+    else assert.ok(run.levelRewardRuleSnapshot);
+    for (const from of [1, 2, 3]) awardLevelXp(reg, run, xpToNext(reg, from));
+    assert.equal(run.level.level, 4);
+    assert.equal(run.level.unspentPoints, 0);
+    assert.equal(run.level.pendingRankUps, 3);
+    assert.deepEqual(ClassLevelAttributeBonus(run), archived ? {} : { strength: 1 }, 'the automatic class reward is independent');
+    const ladder = characterLadder(reg, run);
+    assert.ok(ladder.rows.every(row => row.grants.every(grant => grant.kind !== 'points')));
+  }
+});

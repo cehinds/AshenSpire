@@ -289,9 +289,12 @@ export function AttributePointsEarnedBetween(fromLevel, toLevel, every = 4, poin
 }
 
 export function CharacterLevelPointCadence(registries, run, { pointsPerLevel = null, grantStats = true } = {}) {
-  const snapshot = run?.levelRewardRuleSnapshot;
-  if (snapshot) return snapshot.freeAttribute;
   const configured = gameModule(run, 'progression');
+  const free = run?.levelRewardRuleSnapshot?.freeAttribute;
+  if (free) {
+    return gameModule(run, 'stats') && configured?.characterLevels && configured.attributePointsPerLevel !== 0
+      ? free : { ...free, amount: 0 };
+  }
   const amount = configured?.entitlementPolicy === 'authored'
     ? (gameModule(run, 'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0)
     : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
