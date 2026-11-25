@@ -5,6 +5,7 @@ import { registries, profile } from './helpers/fixcore-combat-rules.mjs';
 import { projectGameCard, gameContent } from '../src/model/gameProfile.js';
 import { nextUpgradeStep } from '../src/model/cardUpgradeLimits.js';
 import { STACK_CAPS } from '../src/model/cardRank.js';
+import { FlatSteps } from '../src/model/cardUpgrade.js';
 
 const subject = { gameProfile: profile };
 const ids = gameContent(subject, 'cards').filter((c) => c.id.startsWith('core.') && registries.cards.has(c.id)).map((c) => c.id);
@@ -46,13 +47,21 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
           const given = Math.max(0, ...authored.effects.filter((p) => p.op === 'applyStatus' && p.status === e.status && Number.isFinite(p.stacks)).map((p) => p.stacks));
           assert.ok(e.stacks <= Math.max(STACK_CAPS[e.status], given), `${where}: ${e.status} ${e.stacks} over its cap`);
         }
-        const kinds = instance.upgradeSteps.map((x) => x.k);
-        assert.ok(kinds.filter((k) => k === 'cost').length <= 1 && kinds.filter((k) => k === 'hits').length <= 1, `${where}: cost or hits more than once`);
+        const flat = FlatSteps(instance.upgradeSteps);
+        for (const pool of ['sp', 'mp']) {
+          assert.ok(flat.filter((x) => x.k === 'cost' && x.pool === pool).length <= 1, `${where}: repeated ${pool} cost cut`);
+        }
+        assert.ok(flat.filter((x) => x.k === 'hits').length <= 1, `${where}: hits more than once`);
+        const swaps = flat.filter((x) => x.k === 'costSwap');
+        assert.ok(swaps.length <= 1, `${where}: cost swap more than once`);
         assert.equal(face.cost, plain.cost - (plain.staminaCost - face.staminaCost) - 0, `${where}: cost must track staminaCost`);
-        assert.ok(face.staminaCost >= 0 && face.staminaCost <= base.staminaCost, `${where}: SP never negative (no cost minimum, owner 2026-11-22)`);
-        const cantripped = instance.upgradeSteps.some((x) => x.k === 'tag' && x.tag === 'rank.cantrip');
-        // No card has a cost minimum (owner 2026-11-22): a Mana cut may reach 0 on any card; a rank-down step zeroes it.
-        if (base.manaCost > 0) assert.ok(cantripped ? face.manaCost === 0 : face.manaCost >= 0 && face.manaCost <= base.manaCost && face.cost >= 0, `${where}: MP never negative`);
+        const spLimit = base.staminaCost + (swaps[0]?.dir === 'mpToSp' ? 2 : 0);
+        const mpLimit = (base.manaCost ?? 0) + (swaps[0]?.dir === 'spToMp' ? 1 : 0);
+        assert.ok(face.staminaCost >= 0 && face.staminaCost <= spLimit, `${where}: SP outside the cost bounds`);
+        const cantripped = flat.some((x) => x.k === 'tag' && x.tag === 'rank.cantrip');
+        if (base.manaCost > 0 || swaps.length) {
+          assert.ok(cantripped ? face.manaCost === 0 : face.manaCost >= 0 && face.manaCost <= mpLimit && face.cost >= 0, `${where}: MP outside the cost bounds`);
+        }
       }
     }
   }
