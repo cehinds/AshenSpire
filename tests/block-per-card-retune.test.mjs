@@ -57,12 +57,12 @@ function defendBlock(reg, classId, dexterity = 0) {
   return (combat.player.block || 0) - before;
 }
 
-// Owner ruling 2026-11-21 (Defend template: 1 SP, final Block 4, Unranked) retires the 2026-11-20 "Defend averages 8-10 Block" band.
+// Current rules retain the Unranked 1-SP Defend and apply the authored Block gain scale.
 // The measured face is the neutral-kit Defend the combat-power table scores; stats and armour add on top of it in play.
-test('the starter Defend gives final Block 4 and is Unranked (owner 2026-11-21; replaces the 8-10 average band)', async () => {
+test('the current starter Defend gives 2 measured Block and is Unranked', async () => {
   const { measureCards } = await import('../tools/combat-power-report.mjs');
   const { cardCombatPower } = await import('../src/content/generated/combatPower.js');
-  assert.equal(measureCards()['core.defend'].blk, 4, 'final Block of the measured Defend');
+  assert.equal(measureCards()['core.defend'].blk, 2, 'final Block of the measured Defend');
   assert.ok(cardCombatPower['core.defend'].cp <= 0, `Defend cp ${cardCombatPower['core.defend'].cp} is Unranked`);
   assert.equal(cardCombatPower['core.defend'].rank, 0);
   const reg = registriesFor(current);

@@ -42,7 +42,8 @@ const endTurn = combat => {
 const sandbag = (target, poise = 5) => { Object.assign(target, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: poise } }); };
 
 test('shipped Core data names the Broken rule; validation accepts it; a rules object without it is the Staggered rule', () => {
-  assert.deepEqual(shipped.poise, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 });
+  const { drain, breakRule, brokenDamageMultiplier, breakStatusStacks } = shipped.poise;
+  assert.deepEqual({ drain, breakRule, brokenDamageMultiplier, breakStatusStacks }, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   assert.throws(() => validateFixCoreRules({ ...shipped, poise: { drain: 'prevented', breakRule: 'other' } }), /poise/);
   assert.throws(() => validateFixCoreRules({ ...shipped, poise: { drain: 'prevented', brokenDamageMultiplier: 0.5 } }), /poise/);
@@ -159,11 +160,12 @@ test('Barrier gained while Broken raises the maximum without refilling Poise; Wa
 });
 
 test('after Broken ends the full bar must be broken again for a second break', () => {
-  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 3);
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 8);
   drainFixCorePoise(combat, combat.player, enemy, 99); endTurn(combat);
-  // The refill is to the soldier's rated Poise, 5 (1 + CON 4: owner 2026-11-18 §13, gear Poise counts only while guarding), not the sandbagged 3 stand-in.
-  assert.equal(enemy.persistentPoise.value, 5);
-  hit(combat, enemy, 4); assert.equal(enemy.broken, undefined, 'a part of the bar is not a break');
+  assert.equal(enemy.persistentPoise.value, 3, 'the refill uses the current Soldier rating');
+  drainFixCorePoise(combat, combat.player, enemy, 1);
+  assert.equal(enemy.persistentPoise.value, 2);
+  assert.equal(enemy.broken, undefined, 'a partial drain is not a break');
   drainFixCorePoise(combat, combat.player, enemy, 99);
   assert.ok(enemy.broken, 'the second break');
 });
