@@ -390,3 +390,74 @@ test('Ward and Bonus Poise (barrier / gainBarrier / bonusPoise tag) are separate
   assert.match(studioSrc, /restorePoise:\s*\{\s*part:\s*'block',\s*weight:\s*'block'\s*\}/, 'restorePoise is mapped in EFFECT_SCORE_KEYS');
   assert.match(studioSrc, /eff\.op === 'gainBarrier'\s*\?\s*wanted\s*:\s*authoredAmountForFace/, 'gainBarrier edits stacks directly without x5 Poise scaling');
 });
+
+test('score-studio loading state: initial HTML shows card loading UI and loadingState helpers summarize art progress', async () => {
+  const LS = await import('../tools/score-studio/loadingState.js');
+
+  assert.equal(LS.parseLoadingShotMode(''), null);
+  assert.equal(LS.parseLoadingShotMode('?shot=loading'), 'loading');
+  assert.equal(LS.parseLoadingShotMode('?foo=1&shot=art-loading'), 'art-loading');
+  assert.equal(LS.parseLoadingShotMode('?shot=other'), null);
+
+  assert.equal(LS.artLoadingPercent(0, 0), 100);
+  assert.equal(LS.artLoadingPercent(0, 100), 0);
+  assert.equal(LS.artLoadingPercent(42, 106), 40);
+  assert.equal(LS.artLoadingPercent(200, 106), 100);
+
+  assert.equal(LS.formatArtLoadingStatus(0, 0), 'Loading card art…');
+  assert.equal(LS.formatArtLoadingStatus(1, 1), 'Loading card art… 1 / 1 card');
+  assert.equal(LS.formatArtLoadingStatus(24, 106), 'Loading card art… 24 / 106 cards');
+
+  const partial = LS.summarizeTileArtLoad([
+    [{ complete: true }, { complete: true }],
+    [{ complete: true }, { complete: false }],
+    [{ complete: false }],
+    [],
+  ]);
+  assert.deepEqual(partial, {
+    total: 3,
+    settled: 1,
+    pending: 2,
+    percent: 33,
+    complete: false,
+    text: 'Loading card art… 1 / 3 cards',
+  });
+
+  const done = LS.summarizeTileArtLoad([
+    [{ complete: true }],
+    [{ complete: true }, { complete: true }],
+  ]);
+  assert.equal(done.complete, true);
+  assert.equal(done.pending, 0);
+  assert.equal(done.percent, 100);
+
+  const html = readFileSync(new URL('../tools/score-studio/index.html', import.meta.url), 'utf8');
+  assert.match(html, /<span id="draft-status" class="studio-pill is-loading">Loading…<\/span>/, 'top bar starts in loading state before JS executes');
+  assert.match(html, /<div id="cards-loading" class="studio-loading-state" role="status" aria-live="polite" aria-busy="true">/, 'cards loading placeholder renders on first paint');
+  assert.match(html, /<div id="cards-grid" class="cards-grid" hidden><\/div>/, 'cards grid stays hidden until populated');
+  assert.match(html, /<div id="cards-art-loading" class="studio-loading-bar" role="status" aria-live="polite" hidden>/, 'art loading bar starts hidden until cards render');
+  assert.match(html, /<div id="items-loading" class="studio-loading-state studio-loading-compact" role="status" aria-live="polite" aria-busy="true">/, 'items loading state renders initially');
+
+  const studioSrc = readFileSync(new URL('../tools/score-studio/studio.js', import.meta.url), 'utf8');
+  assert.match(studioSrc, /deriveFaceFromDef:\s*def\s*=>\s*withRebalancePreviewRegistry\(\(\)\s*=>\s*cardDefToFace\(clone\(def\),\s*state\.scoring\)\)/, 'rebalance derives faces from detached cards without leaking preview cache changes');
+});
+
+test('score-studio app menubar preserves approved commands, context selectors and export actions', () => {
+  const html = readFileSync(new URL('../tools/score-studio/index.html', import.meta.url), 'utf8');
+  for (const id of ['menu-file', 'menu-edit', 'menu-view', 'menu-tools', 'menu-git', 'menu-test']) {
+    assert.match(html, new RegExp(`id="${id}"`), `menu bar exposes #${id}`);
+  }
+  for (const id of [
+    'studio-file-menu', 'studio-edit-menu', 'studio-view-menu', 'studio-tools-menu', 'studio-git-menu', 'studio-test-menu',
+    'gallery-type-cards', 'gallery-type-items',
+    'btn-auto-balance-cards', 'btn-auto-balance-items', 'btn-generate-cards',
+    'btn-batch-generate-cards', 'btn-batch-generate-items', 'btn-custom-decks',
+    'btn-export-repo', 'btn-download-json', 'btn-decks-export-json',
+    'btn-save-names', 'btn-download-art',
+    'restore-names-menu', 'btn-restore-names', 'btn-restore-names-apply',
+  ]) {
+    assert.match(html, new RegExp(`id="${id}"`), `moved menu action or panel #${id} is present`);
+  }
+  assert.match(html, /id="studio-menubar"[^>]*role="menubar"/, 'the approved command row remains the application menubar');
+  assert.doesNotMatch(html, /id="restore-names-modal"/, 'Restore names retains one live set of controls');
+});

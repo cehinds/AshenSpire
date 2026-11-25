@@ -30,6 +30,13 @@ import { ScoreGeneratedItem } from '../../src/model/itemGenerator.js';
 import { RenderPoolForm, ReadPoolForm, NormaliseSettings, UpdatePoolSums } from './cardPoolForm.js';
 import { buildItemRoster, typeModsForEntry, scoreItemEntry, livePieceFromEntry, describeItemMod, formatModString, ITEM_TRAIT_SELECTORS, ITEM_QUICK_TRAITS, ITEM_MOTIF_OPTIONS } from './itemStudio.js';
 import { initStudioToolsModals } from './studioToolsModal.js';
+import {
+  DEFAULT_ART_LOAD_TIMEOUT_MS,
+  parseLoadingShotMode,
+  artLoadingPercent,
+  formatArtLoadingStatus,
+  summarizeTileArtLoad,
+} from './loadingState.js';
 import { initSubclassCatalogUi, upgradeNames } from './subclassCatalog.js';
 import { CardDefinitionToScoreFace } from '../../src/model/cardUpgradeCp.js';
 import { ProjectCardMechanicalValues } from '../../src/model/cardMechanicalProjection.js';
@@ -390,11 +397,123 @@ function isDirty() {
 function refreshDirtyStatus() {
   const pill = document.getElementById('draft-status');
   const dirty = isDirty();
+  pill.classList.remove('is-loading');
   pill.classList.toggle('is-dirty', dirty);
   if (!dirty) pill.textContent = 'Synced with repo';
   else if (!state.autosave) pill.textContent = 'Unsaved edits';
   else if (state.draftStorageFailed) pill.textContent = 'Unsaved edits (storage full)';
   else pill.textContent = 'Draft auto-saved (local temp copy)';
+}
+
+const LOADING_SHOT_MODE = parseLoadingShotMode(location.search);
+let artLoadGeneration = 0;
+let artLoadSafetyTimer = null;
+
+function nextPaint() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+function setCardsLoading(visible, title = 'Loading cards…', detail = '', { error = false } = {}) {
+  if (visible) {
+    ++artLoadGeneration;
+    clearTimeout(artLoadSafetyTimer);
+    artLoadSafetyTimer = null;
+    setCardsArtLoadingBar(false);
+  }
+  const el = document.getElementById('cards-loading');
+  const grid = document.getElementById('cards-grid');
+  if (el) {
+    el.hidden = !visible;
+    el.setAttribute('aria-busy', visible && !error ? 'true' : 'false');
+    el.classList.toggle('is-error', Boolean(error));
+    const titleEl = document.getElementById('cards-loading-title');
+    if (titleEl && title) titleEl.textContent = title;
+    const detailEl = document.getElementById('cards-loading-detail');
+    if (detailEl && detail !== undefined) detailEl.textContent = detail;
+  }
+  if (grid) grid.hidden = visible;
+}
+
+function setItemsLoading(visible, title = 'Loading items…', detail = '', { error = false } = {}) {
+  const el = document.getElementById('items-loading');
+  const grid = document.getElementById('items-grid');
+  if (el) {
+    el.hidden = !visible;
+    el.setAttribute('aria-busy', visible && !error ? 'true' : 'false');
+    el.classList.toggle('is-error', Boolean(error));
+    const titleEl = document.getElementById('items-loading-title');
+    if (titleEl && title) titleEl.textContent = title;
+    const detailEl = document.getElementById('items-loading-detail');
+    if (detailEl && detail !== undefined) detailEl.textContent = detail;
+  }
+  if (grid) grid.hidden = visible;
+}
+
+function setCardsArtLoadingBar(visible, settled = 0, total = 0) {
+  const bar = document.getElementById('cards-art-loading');
+  if (!bar) return;
+  bar.hidden = !visible;
+  if (!visible) return;
+  const textEl = document.getElementById('cards-art-loading-text');
+  const fillEl = document.getElementById('cards-art-loading-fill');
+  if (textEl) textEl.textContent = formatArtLoadingStatus(settled, total);
+  if (fillEl) fillEl.style.width = `${artLoadingPercent(settled, total)}%`;
+}
+
+function trackCardsArtLoading(grid) {
+  const token = ++artLoadGeneration;
+  clearTimeout(artLoadSafetyTimer);
+  artLoadSafetyTimer = null;
+
+  const tiles = [...grid.querySelectorAll('.studio-card-tile')];
+  if (LOADING_SHOT_MODE === 'art-loading') {
+    const total = Math.max(1, tiles.length);
+    const settled = Math.max(1, Math.round(total * 0.4));
+    tiles.slice(settled, settled + 4).forEach((t) => t.classList.add('is-art-loading'));
+    setCardsArtLoadingBar(true, settled, total);
+    return;
+  }
+
+  const tileEntries = tiles
+    .map((tile) => ({ tile, imgs: [...tile.querySelectorAll('img')] }))
+    .filter((entry) => entry.imgs.length > 0);
+
+  const update = () => {
+    if (token !== artLoadGeneration) return;
+    for (const entry of tileEntries) {
+      const done = entry.imgs.every((img) => img.complete);
+      entry.tile.classList.toggle('is-art-loading', !done);
+    }
+    const summary = summarizeTileArtLoad(tileEntries.map((e) => e.imgs));
+    if (summary.complete) {
+      clearTimeout(artLoadSafetyTimer);
+      artLoadSafetyTimer = null;
+      setCardsArtLoadingBar(false);
+    } else {
+      setCardsArtLoadingBar(true, summary.settled, summary.total);
+    }
+  };
+
+  const initial = summarizeTileArtLoad(tileEntries.map((e) => e.imgs));
+  if (initial.complete) {
+    for (const entry of tileEntries) entry.tile.classList.remove('is-art-loading');
+    setCardsArtLoadingBar(false);
+    return;
+  }
+
+  update();
+  for (const entry of tileEntries) {
+    for (const img of entry.imgs) {
+      if (img.complete) continue;
+      img.addEventListener('load', update, { once: true });
+      img.addEventListener('error', update, { once: true });
+    }
+  }
+  artLoadSafetyTimer = setTimeout(() => {
+    if (token !== artLoadGeneration) return;
+    for (const entry of tileEntries) entry.tile.classList.remove('is-art-loading');
+    setCardsArtLoadingBar(false);
+  }, DEFAULT_ART_LOAD_TIMEOUT_MS);
 }
 
 function writeDraftNow() {
@@ -1389,6 +1508,10 @@ function renderCardsGrid() {
   }
   cardSelectionUi?.refresh();
   cardEditorDockUi?.refresh();
+  if (LOADING_SHOT_MODE !== 'loading') {
+    setCardsLoading(false);
+    trackCardsArtLoading(grid);
+  }
   computeShiftCount();
 }
 
@@ -2763,6 +2886,7 @@ function renderItemsGrid() {
     grid.appendChild(tile);
   }
   cardEditorDockUi?.refresh();
+  setItemsLoading(false);
 }
 
 function selectStudioItem(key) {
@@ -3225,7 +3349,9 @@ function buildScoringDiff() {
 
 async function loadFromRepo(customPath = state.repoPath) {
   clearPendingWeights();
+  setCardsLoading(true, 'Loading cards…', isLocalServer ? 'Reading repository configuration…' : 'Preparing card pool and scoring…');
   if (!isLocalServer) {
+    await nextPaint();
     state.repoScoring = clone(shippedScoring);
     state.scoring = clone(shippedScoring);
     recomputeBaselineRanks();
@@ -3347,6 +3473,7 @@ function downloadScoringJson() {
 
 // An imported file is staged, not applied: the owner reviews it in the Weights tab, then Applies.
 async function importScoringFile(e) {
+  closeMenus();
   const file = e.target.files?.[0];
   if (!file) return;
   try {
@@ -4702,6 +4829,16 @@ function buildCardList() {
 }
 
 async function boot() {
+  setCardsLoading(true, 'Loading cards…', 'Preparing card pool and scoring…');
+  setItemsLoading(true, 'Loading items…', 'Preparing weapons, armours, and relics…');
+  if (LOADING_SHOT_MODE === 'loading') {
+    const pill = document.getElementById('draft-status');
+    if (pill) {
+      pill.classList.add('is-loading');
+      pill.textContent = 'Loading…';
+    }
+    return;
+  }
   state.cards = buildCardList();
   const roster = buildItemRoster(contentBundle);
   state.items = roster.items;
@@ -4781,6 +4918,7 @@ async function boot() {
     onViewChange: view => { if (view === 'design') renderArtTab(); else if (view === 'weights') renderWeights(); else if (view === 'decks') deckListPanelUi?.refresh(); },
   });
   document.getElementById('btn-open-decks').addEventListener('click', () => { cardEditorDockUi?.setView?.('decks'); deckListPanelUi?.refresh(); });
+  document.getElementById('btn-custom-decks-items')?.addEventListener('click', () => studioToolsUi.openDecksModal());
 
   // Web mode (GitHub Pages): nothing can be written to the repo, so the repo controls go and
   // Download JSON in the More menu is how work leaves the studio.
@@ -4850,4 +4988,16 @@ async function boot() {
   refreshDirtyStatus();
 }
 
-boot().then(checkCardArt);
+boot()
+  .then(() => { if (LOADING_SHOT_MODE !== 'loading') return checkCardArt(); })
+  .catch((err) => {
+    const msg = err?.message || 'Unexpected error while starting Score Studio.';
+    setCardsLoading(true, 'Failed to load cards', msg, { error: true });
+    setItemsLoading(true, 'Failed to load items', msg, { error: true });
+    const pill = document.getElementById('draft-status');
+    if (pill) {
+      pill.classList.remove('is-loading');
+      pill.classList.add('is-dirty');
+      pill.textContent = 'Load failed';
+    }
+  });

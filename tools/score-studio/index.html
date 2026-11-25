@@ -31,7 +31,7 @@
 <body class="studio-body">
   <header class="studio-topbar">
     <div class="studio-brand">
-      <span id="draft-status" class="studio-pill">Synced with repo</span>
+      <span id="draft-status" class="studio-pill is-loading">Loading…</span>
       <span class="studio-title">Score Studio</span>
     </div>
     <nav id="studio-menubar" class="studio-menubar" role="menubar" aria-label="Studio commands">
@@ -50,7 +50,7 @@
       <button id="effects-tab-button" class="studio-tab" data-tab="effects" role="tab" aria-selected="false" aria-controls="tab-effects"><span class="tab-long">Effects Timing</span><span class="tab-short">Effects</span></button>
       <button class="studio-tab" data-tab="sandbox" role="tab" aria-selected="false"><span class="tab-long">Combat Sandbox</span><span class="tab-short">Sandbox</span></button>
     </nav>
-    <div class="studio-actions">
+    <div class="studio-actions" hidden>
       <button id="btn-undo" class="s-btn s-btn-icon" title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)" disabled>↶</button>
       <button id="btn-redo" class="s-btn s-btn-icon" title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)" disabled>↷</button>
       <button id="btn-export-repo" class="s-btn s-btn-primary">Export…</button>
@@ -97,7 +97,7 @@
               <button id="btn-new-card" class="s-btn s-btn-primary">+ New</button>
               <span class="studio-muted pool-label pool-label-row"></span>
             </div>
-            <div class="filter-row names-row">
+            <div class="filter-row names-row studio-toolbar-parking">
               <button id="btn-auto-balance-cards" class="s-btn s-btn-primary" type="button" title="Deterministically rebalance cards to hit rank and rarity quotas">Rebalance power…</button>
               <button id="btn-generate-cards" class="s-btn" type="button" title="Make a pool of cards at exact combat power from the weights and your settings. Nothing reaches the game until Export.">Generate cards…</button>
               <button id="btn-subclass-lists" class="s-btn" type="button" title="Generate, review, and export the twelve subclass card lists">Subclass lists…</button>
@@ -130,7 +130,29 @@
               </select>
             </div>
           </div>
-          <div id="cards-grid" class="cards-grid"></div>
+          <div id="cards-art-loading" class="studio-loading-bar" role="status" aria-live="polite" hidden>
+            <span class="studio-loading-spinner studio-loading-spinner-sm" aria-hidden="true"></span>
+            <span id="cards-art-loading-text" class="studio-loading-bar-text">Loading card art…</span>
+            <div class="studio-loading-progress" aria-hidden="true"><div id="cards-art-loading-fill" class="studio-loading-progress-fill"></div></div>
+          </div>
+          <div id="cards-loading" class="studio-loading-state" role="status" aria-live="polite" aria-busy="true">
+            <div class="studio-loading-head">
+              <div class="studio-loading-spinner" aria-hidden="true"></div>
+              <div class="studio-loading-copy">
+                <strong id="cards-loading-title">Loading cards…</strong>
+                <span id="cards-loading-detail" class="studio-muted">Loading studio modules and card pool…</span>
+              </div>
+            </div>
+            <div class="studio-loading-skeletons" aria-hidden="true">
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+            </div>
+          </div>
+          <div id="cards-grid" class="cards-grid" hidden></div>
         </div>
 
         <div id="inspector-resizer" class="inspector-resizer" title="Drag to resize the inspector" role="separator" aria-orientation="vertical"></div>
@@ -291,7 +313,7 @@
               <button id="btn-item-filters" class="s-btn" type="button" aria-haspopup="dialog" aria-controls="item-filters-modal">Filters <span id="item-filter-count" class="badge hidden">0</span></button>
               <select id="filter-item-deck" aria-label="Item deck list" title="Filter and open a deck list"><option value="all">All</option></select>
             </div>
-            <div class="filter-row names-row">
+            <div class="filter-row names-row studio-toolbar-parking">
               <button id="btn-auto-balance-items" class="s-btn s-btn-primary" type="button" title="Deterministically rebalance weapons, armours, and relics to hit rank and rarity quotas">Rebalance power…</button>
               <div class="studio-menu">
                 <button id="btn-item-tools-menu" class="s-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="item-tools-menu">Tools ▾</button>
@@ -306,7 +328,16 @@
               <span id="items-count" class="studio-muted"></span>
             </div>
           </div>
-          <div id="items-grid" class="cards-grid items-grid"></div>
+          <div id="items-loading" class="studio-loading-state studio-loading-compact" role="status" aria-live="polite" aria-busy="true">
+            <div class="studio-loading-head">
+              <div class="studio-loading-spinner" aria-hidden="true"></div>
+              <div class="studio-loading-copy">
+                <strong id="items-loading-title">Loading items…</strong>
+                <span id="items-loading-detail" class="studio-muted">Preparing weapons, armours, and relics…</span>
+              </div>
+            </div>
+          </div>
+          <div id="items-grid" class="cards-grid items-grid" hidden></div>
         </div>
 
         <div id="item-inspector-resizer" class="inspector-resizer" title="Drag to resize the inspector" role="separator" aria-orientation="vertical"></div>

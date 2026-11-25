@@ -736,7 +736,6 @@ export function initStudioToolsModals(ctx) {
   document.getElementById('btn-gen-run')?.addEventListener('click', runBatchGenerate);
 
   document.getElementById('btn-custom-decks')?.addEventListener('click', openDecksModal);
-  document.getElementById('btn-custom-decks-items')?.addEventListener('click', openDecksModal);
   document.getElementById('btn-create-class')?.addEventListener('click', () => {
     const name = document.getElementById('new-class-name').value.trim();
     if (!name) { toast('Enter a class name first.'); return; }
