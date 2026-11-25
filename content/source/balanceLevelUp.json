@@ -29,7 +29,7 @@
     },
     "cardRankUpsPerLevel": 1,
     "$note": {
-      "version": "Identifies the supported level-reward save format written at run creation.",
+      "version": { "text": "Identifies the supported level-reward save format written at run creation." },
       "cardRankUpsPerLevel": "Card rank-up credits earned with each character level in a new Core run."
     }
   },
