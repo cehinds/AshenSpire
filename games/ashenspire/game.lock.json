@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:813337fa5150ab4c4b3beac57ceefef7300d0b694cd8745949b28d0c91032633",
+      "hash": "sha256:3b9990d6c47eed6dd7abf7aab142def1f92464055baec27bf2b1a9d4d9b1f66f",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -436,7 +436,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:c7068514dba76f79213e670bc0dcecafaa0af4813b0c79431badc965eeed711d"
+          "hash": "sha256:0c47c365b82d002f43880b6150527a6b6d3df42d2bd2f94149f8a7442afb4e6c"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d"
     },
     "core": {
-      "hash": "sha256:813337fa5150ab4c4b3beac57ceefef7300d0b694cd8745949b28d0c91032633",
+      "hash": "sha256:3b9990d6c47eed6dd7abf7aab142def1f92464055baec27bf2b1a9d4d9b1f66f",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1160,7 +1160,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:c7068514dba76f79213e670bc0dcecafaa0af4813b0c79431badc965eeed711d"
+          "hash": "sha256:0c47c365b82d002f43880b6150527a6b6d3df42d2bd2f94149f8a7442afb4e6c"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
