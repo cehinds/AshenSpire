@@ -37,3 +37,16 @@ The original 35% frequency check stays in place while the owner decides policy. 
 At level 4, all seven rest-slot tests passed with the 10,000-seed full Strike menu fixture. The statistical case took 1,570.14 seconds, exceeding the 15-minute fast-shard budget. The four-family fixture uses the production resolver and actual CP eligibility. It retains all 10,000 seeds, the 17–23% band and the zero-short-list assertion. Its statistical case passed in 358.42 seconds and all seven cases in that run passed. A separate 200-seed case checks the complete authored Strike menu with the same sampler and passed in 37.88 seconds with zero short lists and 18.75% two-effect offers.
 
 The 40-file scoped oracle and content run passed 489 of 489 cases in 172.25 seconds. Rest odds and the outstanding level-one reward frequency check were run separately.
+
+## Six-shard fast diagnostic
+
+All six local fast shards finished on the intermediate integration tree before the repairs below. They reported 10,316 tests and 11 failures. Shard 2 reported 1,721 tests, 1,716 passes, four failures and one skip. Shard 3 reported 1,891 tests, 1,885 passes, two failures and four skips.
+
+| Findings | Repair and follow-up evidence |
+| --- | --- |
+| One item combat-power comparison and one tools inventory check | `d2bbb4fc154` checks every item against its authored scoring overrides and lists both Effects Timing modules. Combat power, starter policy and tools inventory passed 63/63. |
+| Two build-summary checks | `bb829878635` refreshes the canonical summary for the mechanics registry. Its full targeted suite passed 19/19. |
+| One version-metadata check | `04ff3fcc5c3` excludes level-reward format help from release version detection. Full version-schema verification was still running when this receipt was written. |
+| One saved gear entitlement check | `a7e7f747a3c` tests a legacy point across save, claim and reload without applying the new progression cadence. Focused tests passed 12/12 and independent verification passed 40/40. |
+
+The five remaining failures await three [owner choices](recipient-effects-integration-decisions.md) covering temporary attribute pools (three checks), version-1 gear (one) and reward repetition (one). This intermediate run and the focused follow-ups provide diagnostic evidence. CI on subsequent heads was still running when this receipt was written.
