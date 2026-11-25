@@ -111,7 +111,7 @@ export const cardCombatPower = {
  "core.wideSweep": {"raw":11,"cp":11,"rank":3,"rarity":"common"},
  "core.witherDraught": {"raw":14,"cp":12,"rank":3,"rarity":"uncommon"},
  "greatswordSunderingHew": {"raw":0,"cp":1,"rank":1,"rarity":"rare","overridden":true},
- "twinFang": {"raw":5,"cp":0,"rank":0,"rarity":"rare"}
+ "twinFang": {"raw":5,"cp":1,"rank":1,"rarity":"rare","overridden":true}
 };
 
 export const itemCombatPower = {

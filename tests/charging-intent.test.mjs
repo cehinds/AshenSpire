@@ -36,7 +36,7 @@ function organist() {
 test('the turn a delayed move commits: charging, turns left, the Block it gains, and its number as the later one', () => {
   const { combat, enemy } = organist();
   const intent = projectCombatIntent(combat, enemy.id);
-  assert.deepEqual(intent.charging, { moveId: 'funeralChord', turnsLeft: 1, block: 5 });
+  assert.deepEqual(intent.charging, { moveId: 'funeralChord', turnsLeft: 1, block: 2 });
   const shown = combatIntentPresentation(intent);
   assert.equal(shown.title, t('combat.intent.charging'));
   assert.equal(shown.damageClass, null, 'not tinted as incoming damage');
@@ -44,21 +44,26 @@ test('the turn a delayed move commits: charging, turns left, the Block it gains,
   const attack = shown.parts.find(part => part.icon === 'attack');
   assert.equal(attack.valueKind, 'later', 'the number is the later one');
   assert.match(attack.note, /1 turn/);
-  assert.deepEqual(shown.parts.find(part => part.icon === 'defend'), { icon: 'defend', value: '5' }, 'the Block it gains this turn');
+  assert.deepEqual(shown.parts.find(part => part.icon === 'defend'), { icon: 'defend', value: '2' }, 'the Block it gains this turn');
   assert.ok(shown.parts.every(part => part.valueKind === 'later' || part.icon === 'defend'), 'no part reads as current damage');
   // The tooltip says the same.
   const read = enemyIntentRead(combat, enemy, { preview: intent });
   assert.match(read.detail, /Charging: \S+ HP lands in 1 turn\./);
-  assert.match(read.detail, /Gains 5 Block this turn\./);
+  assert.match(read.detail, /Gains 2 Block this turn\./);
 });
 
 test('a charging turn takes no HP, and the next turn the move lands as an attack whose number is the HP lost', () => {
   const { combat, enemy } = organist();
   const hp = combat.player.hp;
+  const shownBlock = projectCombatIntent(combat, enemy.id).charging.block;
+  const eventIndex = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
   while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
   assert.equal(combat.player.hp, hp, 'the charging turn cost the player nothing');
-  assert.equal(enemy.block >= Math.floor(5 * 0.7), true, 'the Block was gained now (the authored 5 takes the Core blockGainMultiplier 0.7)');
+  const blockGains = combat.eventLog.slice(eventIndex).filter(event =>
+    event.type === 'blockGained' && event.targetId === enemy.id);
+  assert.deepEqual(blockGains.map(event => event.amount), [shownBlock], 'the forecast matches the Block gained at commitment');
+  assert.equal(enemy.block, shownBlock);
   assert.ok(enemy.pendingMove, 'the move is committed');
   // Landing turn: an ordinary attack, no charging state.
   const landing = projectCombatIntent(combat, enemy.id);
