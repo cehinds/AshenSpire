@@ -52,6 +52,8 @@ test('Pierce cannot ignore more Block than there is', () => {
 
 test('stack Pierce leaves the whole post-Block hit on the ordinary Poise split', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 100 });
+  // Match the saved Poise policy used by these split examples.
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
   enemy.block = 5;
   const receipt = hit(combat, enemy, { ...PIERCE, pierceStacks: 2 }, 40);
   assert.equal(receipt.damageReceipt.hits[0].incoming, 20);
@@ -64,6 +66,8 @@ test('stack Pierce leaves the whole post-Block hit on the ordinary Poise split',
 
 test('stack Pierce leaves a Force hit on its half-Poise split after Block', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 100 });
+  // Match the saved Poise policy used by these split examples.
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
   enemy.block = 5;
   const force = { combatProfile: { camp: 'spell', school: 'force', damageType: 'arcane' }, tags: ['school:force', 'pierce'], pierceStacks: 2 };
   const receipt = hit(combat, enemy, force, 40);
@@ -77,6 +81,8 @@ test('stack Pierce leaves a Force hit on its half-Poise split after Block', () =
 
 test('a saved fight without stack Pierce retains the fraction bypass and separate 1:1 Poise absorption', () => {
   const { combat, enemy } = fight({ enemies: 1, poise: 100 });
+  // Match the saved Poise policy used by these split examples.
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
   delete combat.fixCoreRules.pierce.blockIgnoredPerStack;
   enemy.block = 5;
   const receipt = hit(combat, enemy, { ...PIERCE, pierceStacks: 2 }, 40);
