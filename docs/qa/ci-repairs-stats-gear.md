@@ -18,3 +18,9 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 - `tests/gear-pass-deferred-strength.test.mjs` explicitly restores the former Axe's +1 Strength on one fixture weapon. Assertions still cover the reaction pause, pre-grant damage, exactly-once post-play application, save/restore, and a non-grant weapon control.
 - `tests/gear-pass-reach-decay.test.mjs` uses Waywatcher Coat's authored turn-start Reach instead of Shortbow's retired turn grant. The next-round expiry and fresh grant remain required in the real turn loop. Current, custom, and saved decay cases remain covered.
 - `node --test tests/gear-pass-deferred-strength.test.mjs tests/gear-pass-reach-decay.test.mjs` passed 15/15, from 12/15 before the fixture corrections. The lane had 76 original failures remaining.
+
+## Damage forecast fixtures
+
+- `tests/gear-pass-thorns-preview.test.mjs` equips current Cinderforged Plate and requires its authored Thorns signature. The two forecast/live checks still cover killing the attacker before later hits or Reflect.
+- `tests/gear-pass-stone-skin.test.mjs` gives the multi-hit target enough Block to test the full three-hit sequence. Its two Stone Skin stacks still must be depleted in live play, and forecast must match live HP without consuming the target's stacks.
+- `node --test tests/gear-pass-thorns-preview.test.mjs tests/gear-pass-stone-skin.test.mjs` passed 12/12, from 9/12 before the fixture corrections. The lane had 73 original failures remaining.
