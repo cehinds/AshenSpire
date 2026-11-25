@@ -35,6 +35,11 @@ const FIXCORE_POISE_KEYS = new Set([
   'smashPoiseMultiplier', 'smashVsGuardingPoiseMultiplier', 'mitigationStances',
   'mitigationPoiseFraction', 'mitigationDrainDamageFraction', 'mitigationDrainFlat',
 ]);
+// The November 24 snapshot added both named attribute damage stages and the weapon-Poise switch.
+// Presence marks that authored snapshot era; disabling weapon Poise leaves the status rules enabled.
+export function FixCoreAttributeStatusDamageEnabled(ctx) {
+  return typeof rawRules(ctx).poise?.weaponPoiseEnabled === 'boolean';
+}
 /** The JSON-configured weapon-poise & stance-gated Poise mitigation rules, or null when disabled/absent. */
 export function FixCoreWeaponPoiseRules(ctx) {
   if (!fixCoreEnabled(ctx)) return null;

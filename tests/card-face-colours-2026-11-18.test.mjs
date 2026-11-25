@@ -171,12 +171,16 @@ test('live spell power reaches the damage quote and landed hit exactly once', ()
     { cardId: 'core.cinderDart', attributes: { intelligence: 8, wisdom: 2 }, stat: 'intelligence', boost: 1, delta: 1 },
     { cardId: 'cometFragment', attributes: { intelligence: 2, wisdom: 8 }, stat: 'intelligence', boost: 1, delta: 1 },
     { cardId: 'cometFragment', attributes: { intelligence: 2, wisdom: 8 }, stat: 'intelligence', boost: 1, status: true, delta: 3 },
+    { cardId: 'cometFragment', attributes: { intelligence: 2, wisdom: 8 }, stat: 'intelligence', boost: 1, status: true, delta: 3, poisePolicy: 'disabled' },
+    { cardId: 'cometFragment', attributes: { intelligence: 2, wisdom: 8 }, stat: 'intelligence', boost: 1, status: true, delta: 1, poisePolicy: 'historical' },
   ];
   const ownProfile = unitDamageProfile({ stances: { advantageMultiplier: 1, defenseMitigation: 0 } });
-  for (const { cardId, attributes, stat, boost, status, delta } of cases) {
+  for (const { cardId, attributes, stat, boost, status, delta, poisePolicy } of cases) {
     const world = fight('starseer', { ownProfile, attributes });
     const { combat, enemy } = world;
     isolateAttributeColours(world);
+    if (poisePolicy === 'disabled') combat.fixCoreRules.poise.weaponPoiseEnabled = false;
+    if (poisePolicy === 'historical') delete combat.fixCoreRules.poise.weaponPoiseEnabled;
     enemy.block = 0;
     enemy.persistentPoise.value = 0;
     combat.player.mana = combat.player.stamina = combat.player.energy = 100;
@@ -187,14 +191,14 @@ test('live spell power reaches the damage quote and landed hit exactly once', ()
     ChangeAttribute(combat, combat.player, stat, boost);
     if (status) applyStatus(combat, combat.player, 'intelligence', 1, combat.player);
     const expected = baseline + delta;
-    const label = `${cardId} ${JSON.stringify(attributes)} +${boost} ${stat}${status ? ' and 1 Intelligence status' : ''}`;
+    const label = `${cardId} ${JSON.stringify(attributes)} +${boost} ${stat}${status ? ' and 1 Intelligence status' : ''} (${poisePolicy ?? 'current'})`;
     assert.equal(quote(), expected, label);
     const start = combat.eventLog.length;
     dispatch(combat, { type: 'playCard', cardInstanceId: 'live-spell', targetId: enemy.id, rangeRoute: 'advance' });
     const hit = combat.eventLog.slice(start).find(event => event.type === 'damageDealt' && event.targetId === enemy.id);
     assert.equal(hit?.hpLoss, expected, label);
     const namedBuff = hit.damageReceipt.hits[0].sources.find(row => row.id === 'status:intelligence');
-    assert.equal(namedBuff?.amount, status ? 2 : undefined, label);
+    assert.equal(namedBuff?.amount, status && poisePolicy !== 'historical' ? 2 : undefined, label);
   }
 });
 
