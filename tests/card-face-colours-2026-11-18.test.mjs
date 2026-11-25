@@ -163,6 +163,41 @@ for (const [label, cardId, attributes, matching, other] of [
   assert.deepEqual(reduced.classes, ['down']);
 });
 
+test('live spell power reaches the damage quote and landed hit exactly once', () => {
+  const cases = [
+    { cardId: 'core.cinderDart', attributes: { intelligence: 2, wisdom: 8 }, stat: 'intelligence', boost: 1, delta: 0 },
+    { cardId: 'core.cinderDart', attributes: { intelligence: 2, wisdom: 8 }, stat: 'intelligence', boost: 9, delta: 3 },
+    { cardId: 'core.cinderDart', attributes: { intelligence: 2, wisdom: 8 }, stat: 'wisdom', boost: 1, delta: 1 },
+    { cardId: 'core.cinderDart', attributes: { intelligence: 8, wisdom: 2 }, stat: 'intelligence', boost: 1, delta: 1 },
+    { cardId: 'cometFragment', attributes: { intelligence: 2, wisdom: 8 }, stat: 'intelligence', boost: 1, delta: 1 },
+    { cardId: 'cometFragment', attributes: { intelligence: 2, wisdom: 8 }, stat: 'intelligence', boost: 1, status: true, delta: 3 },
+  ];
+  const ownProfile = unitDamageProfile({ stances: { advantageMultiplier: 1, defenseMitigation: 0 } });
+  for (const { cardId, attributes, stat, boost, status, delta } of cases) {
+    const world = fight('starseer', { ownProfile, attributes });
+    const { combat, enemy } = world;
+    isolateAttributeColours(world);
+    enemy.block = 0;
+    enemy.persistentPoise.value = 0;
+    combat.player.mana = combat.player.stamina = combat.player.energy = 100;
+    combat.piles.hand = [{ instanceId: 'live-spell', cardId, upgraded: false }];
+    const quote = () => previewCard(combat, 'live-spell', enemy.id, undefined, { rangeRoute: 'advance' })
+      .values.find(row => row.op === 'damage').perTargetHitDamages[enemy.id][0];
+    const baseline = quote();
+    ChangeAttribute(combat, combat.player, stat, boost);
+    if (status) applyStatus(combat, combat.player, 'intelligence', 1, combat.player);
+    const expected = baseline + delta;
+    const label = `${cardId} ${JSON.stringify(attributes)} +${boost} ${stat}${status ? ' and 1 Intelligence status' : ''}`;
+    assert.equal(quote(), expected, label);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'live-spell', targetId: enemy.id, rangeRoute: 'advance' });
+    const hit = combat.eventLog.slice(start).find(event => event.type === 'damageDealt' && event.targetId === enemy.id);
+    assert.equal(hit?.hpLoss, expected, label);
+    const namedBuff = hit.damageReceipt.hits[0].sources.find(row => row.id === 'status:intelligence');
+    assert.equal(namedBuff?.amount, status ? 2 : undefined, label);
+  }
+});
+
 test('a genuine incoming Dev profile keeps its max(INT, WIS) face and live colours', () => {
   const ownProfile = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
   const hash = ownProfile.hash;

@@ -322,8 +322,8 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     if (wisBuff) raw = transition('status:wisdom', 'Wisdom buff', raw, raw + wisBuff);
     const intMagic = magicHit ? getAdd(ctx, source, 'magicDamageAdd') : 0;
     const intArcane = arcaneHit ? getAdd(ctx, source, 'arcaneDamageAdd') : 0;
-    const intLiveArcane = arcaneHit ? Math.max(0, source?.liveStats?.boosts?.intelligence || 0) : 0;
-    if (intMagic + intArcane + intLiveArcane) raw = transition('status:intelligence', 'Intelligence buff', raw, raw + intMagic + intArcane + intLiveArcane);
+    // ChangeAttribute is already included in the effective attributes read by spell power.
+    if (intMagic + intArcane) raw = transition('status:intelligence', 'Intelligence buff', raw, raw + intMagic + intArcane);
   }
   if (!modern) raw=Math.max(0,Math.floor(raw));
   // An ally's Guard interception lowers `raw` here; kept so the displayed raw hit can add it back (Guard is a defense, owner 2026-11-04).
