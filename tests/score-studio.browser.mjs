@@ -474,6 +474,21 @@ try {
   assert.equal(generate.undone, generate.before, 'undo puts the card list back');
   assert.equal(generate.genLeft, 0, 'no generated card is left after undo');
 
+  // 11b. School counts that need more magic cards than the camp counts give turn martial cards magic, and Preview says so.
+  const schoolNote = await page.evaluate(() => {
+    const modal = document.getElementById('generate-cards-modal');
+    document.getElementById('btn-generate-cards').click();
+    for (const el of modal.querySelectorAll('[data-count-school], [data-count-camp]')) el.value = '';
+    modal.querySelector('[data-count-school="fire"]').value = '6';
+    modal.querySelector('[data-count-school="frost"]').value = '4';
+    modal.querySelector('[data-count-camp="martial"]').value = '10';
+    document.getElementById('btn-gen-preview').click();
+    const text = document.getElementById('gen-preview').textContent;
+    modal.close('cancel');
+    return text;
+  });
+  assert.match(schoolNote, /10 martial cards became magic to fit the school counts/, 'Preview reports martial cards made magic');
+
   assert.deepEqual(pageErrors, [], 'no uncaught errors while editing');
   await page.evaluate((key) => localStorage.removeItem(key), DRAFT_KEY);
   await page.close();

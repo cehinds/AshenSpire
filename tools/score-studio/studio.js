@@ -558,7 +558,7 @@ function matchingCustomLayers(def) {
     .sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
 }
 
-const STUDIO_ONLY_FIELDS = ['_edited', '_custom', '_generated', 'scoringOverride', '_autoName', '_autoNameCore', '_autoNameBudget'];
+const STUDIO_ONLY_FIELDS = ['_edited', '_custom', '_generated', '_cpMiss', 'scoringOverride', '_autoName', '_autoNameCore', '_autoNameBudget'];
 
 // ---------------------------------------------------------------------------
 // Feature descriptions: what a status, keyword, tag or effect does in play, and how it scores
@@ -851,6 +851,8 @@ function previewGeneratedPool() {
     <div><strong>Rarity:</strong> ${esc(line(plan.counts.rarity, (k) => k))}</div>
     <div><strong>Rank:</strong> ${esc(line(plan.counts.rank, (k) => RankName(Number(k))))}</div>
     <div><strong>School:</strong> ${esc(line(plan.counts.school, (k) => (k === 'none' ? 'no school' : k)))}</div>
+    ${plan.martialToMagic ? `<div class="gen-preview-note">${plan.martialToMagic} martial card${plan.martialToMagic === 1 ? '' : 's'} became magic to fit the school counts.</div>` : ''}
+    ${plan.misses ? `<div class="gen-preview-note">${plan.misses} card${plan.misses === 1 ? '' : 's'} cannot get down to their CP and keep the nearest.</div>` : ''}
     <h4>Sample names</h4>
     <ul class="gen-sample-names">${plan.cards.slice(0, GENERATOR_SAMPLE_NAMES).map((c) => `<li>${esc(c.name)}</li>`).join('')}</ul>`;
   preview.hidden = false;

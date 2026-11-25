@@ -994,6 +994,7 @@ body.studio-body .gen-sum.is-off { color: var(--st-bad); font-weight: 600; }
 body.studio-body .gen-note { margin: var(--studio-gap-1) 0 0; font-size: 12px; }
 body.studio-body .gen-preview { margin-top: var(--studio-gap-2); background: #0e1117; border: 1px solid var(--st-border); border-radius: 6px; padding: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
 body.studio-body .gen-preview h4 { margin: 0; font-size: 12px; }
+body.studio-body .gen-preview-note { color: var(--st-warn); }
 body.studio-body .gen-preview ul { margin: 0; padding-left: 18px; }
 @media (max-width: 480px) {
   body.studio-body .gen-group { padding: var(--studio-gap-1) var(--studio-gap-2); }
