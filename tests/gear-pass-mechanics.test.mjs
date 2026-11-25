@@ -63,11 +63,14 @@ test('mod strings parse selectors, conditions and values; unknown ones are not p
   assert.ok(ParseGearMod('self.thorns=+1'));
 });
 
-test('a type base and a piece signature add together; an armour group base carries its Thorns', () => {
+test('a type base and a piece signature add together; Thorns is a piece signature', () => {
   const sword = registries.equipment.armaments.find(piece => piece.id === 'straightSword');
-  assert.deepEqual(GearPieceMods(sword), ['attack.cardDamage=+1', 'sweep.cardDamage=+1', ...sword.mods]);
+  assert.deepEqual(GearPieceMods(sword), ['attack.cardDamage=+1', ...sword.mods]);
   const plate = registries.equipment.armour.find(piece => piece.classId === 'reaver' && piece.id === 'default');
-  assert.ok(GearPieceMods(plate).includes('self.thorns=+1'), 'the heavy body piece carries Thorns 1');
+  assert.ok(GearPieceMods(plate).includes('self.statPoise=+2'));
+  assert.ok(!GearPieceMods(plate).includes('self.thorns=+1'));
+  const shield = registries.equipment.armaments.find(piece => piece.id === 'spikedShield');
+  assert.ok(GearPieceMods(shield).includes('self.thorns=+1'));
 });
 
 test('the Sword base adds +1 to a physical attack, on the face and in the hit (preview equals play)', () => {
