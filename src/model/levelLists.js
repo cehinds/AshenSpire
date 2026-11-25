@@ -87,3 +87,31 @@ export function FilterToBand(kind, tierId, ids, { lists = generatedLists, keyOf 
   const kept = ids.filter((id) => allowed.has(keyOf(id)) || !known.has(keyOf(id)));
   return kept.length ? kept : ids;
 }
+
+/**
+ * RankBandForLevel({ level, pool, rareBoost, maxRank }) -> { minRank, maxRank }
+ * Level 1 -> Unranked (0)..Rank 1; each level raises baseMax by 1.
+ * Elites offer up to +2 ranks higher, bosses up to +3 ranks higher, and a rare roll adds +1.
+ */
+export function RankBandForLevel({ level = 1, pool = 'normal', rareBoost = false, maxRank = shippedScoring.rank?.maxRank || 10 } = {}) {
+  const lv = Math.max(1, Math.min(maxRank, Math.trunc(Number(level) || 1)));
+  const tierBonus = pool === 'boss' ? 3 : pool === 'elite' ? 2 : 0;
+  const rareExtra = rareBoost ? 1 : 0;
+  return { minRank: 0, maxRank: Math.min(maxRank, lv + tierBonus + rareExtra) };
+}
+
+/**
+ * FilterToRankBand(kind, ids, { minRank, maxRank, keyOf, table }) -> ids whose combat-power rank
+ * falls within [minRank, maxRank] (unknown ids stay in; falls back to all ids when empty).
+ */
+export function FilterToRankBand(kind, ids, { minRank = 0, maxRank = 10, keyOf = (id) => id, table = shippedTable } = {}) {
+  if (!Array.isArray(ids) || !ids.length) return ids;
+  const rows = new Map(entriesOf(kind, table));
+  const kept = ids.filter((id) => {
+    const entry = rows.get(keyOf(id));
+    if (!entry) return true;
+    const r = Number.isInteger(entry.rank) ? entry.rank : 0;
+    return r >= minRank && r <= maxRank;
+  });
+  return kept.length ? kept : ids;
+}

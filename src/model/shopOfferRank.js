@@ -6,6 +6,8 @@ import { gameContent } from './gameProfile.js';
 import { mulberry32 } from './rng.js';
 import { upgradeSeed } from './cardUpgradeSteps.js';
 import { CardRanksOn } from './rankUpService.js';
+import { RankBandForLevel } from './levelLists.js';
+import { characterLevel } from './levelup.js';
 
 /** ShopOfferRankChances(run) -> [[rank, pct], ...] highest rank first, or [] when the profile authors none. */
 export function ShopOfferRankChances(run) {
@@ -21,11 +23,12 @@ export function ShopOfferRankChances(run) {
 export function RollShopOfferRank(run, key) {
   const chances = ShopOfferRankChances(run);
   if (!chances.length) return 0;
+  const maxRank = RankBandForLevel({ level: characterLevel(run), pool: 'normal' }).maxRank;
   const roll = mulberry32(upgradeSeed(run.seed, `shopOfferRank:${key}`, 0))() * 100;
   let edge = 0;
   for (const [rank, pct] of chances) {
     edge += pct;
-    if (roll < edge) return rank;
+    if (roll < edge) return Math.min(rank, maxRank);
   }
   return 0;
 }

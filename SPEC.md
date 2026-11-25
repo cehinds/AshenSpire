@@ -362,6 +362,19 @@ Algorithms are code; knobs are data. Every generator is a pure function of `(con
 | Rewards | rarity odds `model/rewardOdds.js`; flask decay `encounters.js` | `balance.js`: odds tables, cinder ranges (`rewards.cinders`), flask-drop decay |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
+#### Card convention names (owner, 2026-11-24)
+
+A card's convention name is built from its score (`CardNameParts` / `CardName`, `src/model/combatPower.js`); every word is data in `content/source/scoring.json` `naming.card`. Generated cards (`model/cardGenerator.js`) and Score Studio's Auto-name use it.
+- **Order:** rarity word, second-effect word, element word (magic only), base word, rank numeral, upgrade mark. Example: `Greater Searing Frost Bolt II+` in full (30 characters), shown as `Searing Frost Bolt II+` under the 24-character limit.
+- **Rarity word** (`rarity`): uncommon `Improved`, rare `Greater`; other rarities none.
+- **Base word** (`base`): a maneuver keeps its word (Smash, Sweep, Riposte, Guard, Step). Otherwise an attack takes its camp and range: martial melee `Strike`, martial reach `Shot`, magic melee `Touch`, magic reach `Bolt`. Area attacks are `Cleave` / `Wave`; skills are `Technique` / `Rite`.
+  - Range comes from the card's tags (`range`: `range:melee`/`delivery:melee` melee, `range:reach`/`delivery:area` reach, ranged tags count as reach); with none, martial is melee and magic is reach (`defaultRange`).
+  - A hybrid (martial with a magic share, or both camps) takes the magic words.
+- **Element word** (`element`, magic only, always present): the `school:` or `damage:` tag's word (fire `Flame`, divine and sacred `Divine`). With none, the tradition (`tradition`): `tradition:arcane` `Arcane`, `tradition:divine` `Divine`; both or neither `Arcane` (`defaultTradition`).
+- **Second-effect word** (`effect`): the adjective of the highest-scoring part the base word does not already name. An attack base names damage, and a range-built base (Strike, Shot, Touch, Bolt) also its range tag; Guard names Block; Riposte names Counter; maneuvers follow the same rule for their own parts. A skill's top effect is the word. No such part, no word. The word is dropped when it shares its first 4 letters with the element or base word (`Warding Rite`, not `Warded Warding Rite`).
+- **Rank and upgrades:** the Roman numeral of the card's rank (`naming.roman`), none when Unranked; then `+` for one upgrade, `+2` for two and so on, with no space (`Strike+`, `Strike II+2`). Item names use the same upgrade mark.
+- **Length limit** (`limit`, optional): `{maxChars: 24, keep: [base, rank, upgrade, element, effect, rarity]}`, most important first. While the name is longer than `maxChars` (spaces and the mark counted), parts drop from the end of `keep`; base, rank and upgrade never drop, even when still too long. No `limit` block, or one with no `maxChars`, means no limit. `CardNameParts` reports the dropped parts; the validator (`ValidateScoringConfig`) checks the block. Score Studio's Weights tab edits it (Naming group).
+
 #### Swap cost and equipment changes
 
 Closed vocabularies in `balance.equipment`:
@@ -604,15 +617,15 @@ Baseline sequence (saved stat rows and hand options override its draw and cleanu
 
 Ward and Barrier are stacked statuses (`ward`, `barrier`), not pools. The old numeric Barrier pool (`entity.barrier`, the `barrierGained` event, the `barrierMitigated` receipt line) no longer exists. Owner, 2026-11-15: the word Barrier is gone from every player-facing text; a card that adds N Barrier stacks reads "Gain N × `barrier.poisePerStack` Poise" (today 5 per stack), and the `barrier` status shows as Bonus Poise. The `barrier` status id and the `gainBarrier` opcode stay as internals so saves load.
 
-- **Ward** (`ward`) is one keyword that includes its Poise: a card reads "Ward 1", and the Ward tooltip says each stack gives `ward.poisePerStack` (data, 5) maximum and current Poise and how Ward routes damage.
-  - Each stack decays by 1 at the start of its holder's turn (the same decay hook as every per-turn status); each stack lost removes its Poise.
-  - Routing, under `ward.routing: "blockFirst"` in `content/source/fixCoreMechanics.json` (the shipped value): every hit meets Block FIRST; while Ward is above 0, Poise then absorbs the whole remainder 1:1 with no leak until Poise is empty, and only then HP. Pierce lets 1 Block per stack past Block (see Pierce below), and that part meets Poise like the rest. Ward loses 1 stack at the start of its holder's turn (`ward.decayPerTurn`), and its +5 maximum Poise with it; when the holder's Poise reaches 0 every Ward stack is removed (`ward.breaksAtZeroPoise`). A Smash against a defensive stance keeps its own rule (its Poise loss is Poise damage, not absorption). Without Ward, Poise absorbs as before: Block, then Poise's partial absorb, then HP.
-  - A fight saved without the `ward.routing` key keeps the earlier Ward routing (the whole hit to Poise first, the overflow to Block, then HP).
-  - Applies to every damage path: single and multi-hit attacks, reactions and counter returns, enemy attacks on the player. `loseHp` and damage over time ignore all of it.
-  - The damage receipt and combat log show the Block, Poise and HP split in the order they were taken. Shown = dealt: card faces, target quotes, intents, the reaction prompt, receipts and floaters read the same receipt.
+- **Ward** (`ward`) is a temporary health buffer (`ward.routing: "hpBuffer"` in `content/source/fixCoreMechanics.json`): a card reads "Ward 1", and each stack adds `ward.hpPerStack` (data, 5) Ward HP points (`entity.wardHp`) displayed on the health bar.
+  - Each stack decays by `ward.decayPerTurn` (1, or 5 Ward HP) at the start of its holder's turn; partial Ward HP points remain tracked in `entity.wardHp` until depleted or decayed.
+  - Routing, under `ward.routing: "hpBuffer"` (shipped 2026-11-24): every hit meets **Block > Ward > Poise + Health**. Block absorbs first (with Pierce bypassing 1 Block per stack); Ward then absorbs the remainder 1:1 with zero leak to Poise or HP until Ward HP reaches 0; any overflow past Ward meets Poise + Health under the normal split (25/75 physical, 50/50 Force, or 1:1 magic Poise when `ward.enabled: false`). Ward is independent of Poise break (emptying Poise does not strip Ward, and Ward can be gained while Broken).
+  - Older saved fights carrying `ward.routing: "blockFirst"` or no `ward.routing` key keep their saved Poise-based Ward routing.
+  - Applies to every damage path: single and multi-hit attacks, reactions and counter returns, enemy attacks on the player. `loseHp` and damage over time ignore Block and Ward.
+  - The damage receipt and combat log show the Block, Ward, Poise and HP split in the order they were taken (`Block → Ward → Poise → HP`). Shown = dealt: card faces, target quotes, intents, the reaction prompt, receipts and floaters read the same receipt.
 - **Barrier** (`barrier`, shown as "Gain N Poise" / Bonus Poise)
   - Each stack gives +5 maximum Poise and +5 current Poise (`barrier.poisePerStack`, data), so Poise above its base maximum is bonus Poise. It can exceed the maximum and fades: it loses 1 stack per turn at the same hook as Ward; each stack lost removes its +5 maximum Poise, and current Poise is clamped to the new maximum.
-  - The HUD (player and enemies share the mini HUD): while current Poise is above the base maximum the Poise bar's bonus part is a blue segment, and the number reads the base figure in yellow followed by the bonus in blue ("8/8 +5").
+  - The HUD (player and enemies share the mini HUD): while current Poise is above the base maximum the Poise bar's bonus part is a purple segment, and the number reads the base figure in yellow followed by the bonus in purple ("8/8 +5"); Ward is a blue segment on the HP bar with "+N" in blue.
 - The `gainBarrier` opcode stays as a card's protection grant: every point is one Barrier stack. The same holds for stance-entry `protection.barrier`, enemy `barrier` grants and Ward overflow past a full pool. Barrier stacks also come from `applyStatus` of `barrier`.
 - **Mote Shield** (`core.moteShield`) gains Ward 1 and Barrier 1 (Barrier 2 and Ward 2 upgraded).
 - **Gain and Restore.** Gain may exceed the maximum; Restore stops at it. Mana and Stamina refills, the Ward pool refill and Poise refills read "Restore N …"; `gainEnergy` (Stamina), Barrier stacks and a Poise guard read "Gain N …". HP keeps its established word, Heal.

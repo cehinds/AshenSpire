@@ -40,6 +40,7 @@ function captureEntity(combat, e, alive, projectCombatIntent)
         maxMana: e.maxMana,
         mana: e.mana,
         block: e.block,
+        ...(e.wardHp !== undefined ? { wardHp: e.wardHp } : {}),
         persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
         persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
         combatStance: e.combatStance ? { ...e.combatStance } : null,
@@ -346,6 +347,18 @@ export function ApplyCombatBeat(disp, events, {
                     }
                 }
                 break;
+            case 'wardHpChanged':
+                if (t && Number.isFinite(e.value))
+                {
+                    t.wardHp = Math.max(0, Math.floor(e.value));
+                }
+                break;
+            case 'wardBroken':
+                if (t)
+                {
+                    t.wardHp = 0;
+                }
+                break;
             case 'persistentPoiseChanged':
                 if (t?.persistentPoise)
                 {
@@ -414,6 +427,10 @@ export function ApplyCombatBeat(disp, events, {
                     if (e.poiseRemaining !== undefined && t.persistentPoise)
                     {
                         t.persistentPoise.value = e.poiseRemaining;
+                    }
+                    if (e.wardHpRemaining !== undefined)
+                    {
+                        t.wardHp = Math.max(0, Math.floor(e.wardHpRemaining));
                     }
                     if (e.wardRemaining !== undefined && t.persistentWard)
                     {

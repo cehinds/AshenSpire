@@ -776,9 +776,15 @@
         "target": "self",
         "status": "dexterity",
         "stacks": 2
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "wisdom",
+        "stacks": 2
       }
     ],
-    "textTemplate": "Gain {strength} Strength and {dexterity} Dexterity.",
+    "textTemplate": "Gain {strength} Strength, {dexterity} Dexterity, and {wisdom} Wisdom.",
     "upgrade": {
       "effects": [
         {
@@ -791,6 +797,12 @@
           "op": "applyStatus",
           "target": "self",
           "status": "dexterity",
+          "stacks": 3
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "wisdom",
           "stacks": 3
         }
       ]

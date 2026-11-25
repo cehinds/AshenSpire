@@ -5,6 +5,8 @@ import { equipmentCardModel, equipmentCardTokens } from '../../model/equipmentCa
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { litCard } from './cardSelection.js';
 import { equipmentCardArt } from '../assets.js';
+import { itemArtComposition } from '../itemArtComposition.js';
+import { itemArtLayersParts, bindItemArtLayerFailures } from '../itemArtLayers.js';
 import { imageHintAttrs } from '../imageHints.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { cardLevelWidthCss } from '../models/CardSizeModel.js';
@@ -46,10 +48,17 @@ function canvasElement(frameWidthPx) {
  */
 export function FitBonusLines(card) {
   const effects = card?.querySelector?.('.epc-effects');
-  if (!effects || effects.dataset.entries === 'many') return 0;
+  if (!effects || !(effects.clientHeight > 0)) return 0;
+  if (effects.dataset.entries === 'many') {
+    for (const fit of [1, 0.92, 0.85, 0.78, 0.72]) {
+      card.style.setProperty('--epc-bonus-fit', String(fit));
+      if (effects.scrollHeight <= effects.clientHeight + 1) break;
+    }
+    return 0;
+  }
   const bonus = effects.querySelector('.epc-bonus:not([hidden])');
   const floor = Number(card.dataset.bonusFloor) || 2;
-  if (!bonus || !(effects.clientHeight > 0)) return 0;
+  if (!bonus) return 0;
   const MAX = 12;
   // Grow the line budget while the region holds it; if the text is still cut, shrink the type a step (never
   // below 0.9 of its authored size) and grow again, so a long effect shows whole when it can.
@@ -70,6 +79,45 @@ export function FitBonusLines(card) {
     if (bonus.scrollHeight <= bonus.clientHeight + 1) break;
   }
   return lines;
+}
+
+/**
+ * Filter variant fact lines for the card face so a section never repeats what
+ * the effect body already states. On relics, passive summary / affects lines
+ * duplicate the authored Relic Effect sentence right below them, while Trigger
+ * and Limit stay as a compact horizontal metadata strip.
+ */
+function faceFactLines(model, variant) {
+  if (!variant?.lines) return null;
+  if (model.cardKind === 'relic') {
+    const hasEffectText = (model.bonuses || []).some((b) => b.label && b.label !== 'No effect text authored.');
+    if (hasEffectText) return variant.lines.filter((row) => !String(row.id || '').startsWith('WC2b1.'));
+  }
+  return variant.lines;
+}
+
+/**
+ * True when a prose bonus line (e.g. "9 Poise. Gain 1 Strength and 1 Constitution.")
+ * only restates stat pairs already shown in `.epc-facts`, so the face avoids
+ * repeating the same numbers across two adjacent sections.
+ */
+function isRedundantStatSummary(label, facts) {
+  if (!label || !facts?.length) return false;
+  const known = new Set(facts.map((f) => `${String(f.value).trim()} ${String(f.label).trim().toLowerCase()}`));
+  let matched = 0;
+  const remainder = String(label).replace(/\b(\d+)\s+([a-z]+)\b/gi, (full, num, word) => {
+    if (known.has(`${num} ${word.toLowerCase()}`)) { matched++; return ''; }
+    return full;
+  });
+  if (!matched) return false;
+  return remainder.replace(/\b(gain|and)\b|[.,;:\s]+/gi, '').length === 0;
+}
+
+/** True when an armour's requirement label merely repeats the class name already in `.epc-type`. */
+function isRedundantRequirement(model, requirement) {
+  if (!model.armor || !requirement || requirement.startsWith('Requires ')) return false;
+  const stripped = requirement.replace(/\s+outfit$/i, '').trim().toLowerCase();
+  return !!stripped && String(model.type || '').toLowerCase().includes(stripped);
 }
 
 /** Face geometry and type scale reach the stylesheet as custom properties. */
@@ -113,7 +161,7 @@ function applyCardTokens(card, tokens) {
  * level there: the creation picker shows rarity while you are choosing, the
  * combat hand does not show it at all.
  */
-export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, inspectionActions = null, commands = {}, actionOwnsTouch = false, infoBadge = false, owned = null, level = null, surface = 'none', identity: identityOverride = null } = {}) {
+export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, inspectionActions = null, commands = {}, actionOwnsTouch = false, infoBadge = false, owned = null, level = null, surface = 'none', identity: identityOverride = null, itemLayerConfig = null } = {}) {
   configureTooltipGlossary(registries);
   const model = presentation || equipmentCardModel(registries, piece);
   // `inspection: false` MEANS "no door on this face", NOT "this face says
@@ -144,9 +192,21 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   // Creation keeps its comparison shelf at glance; the info door still uses inspect.
   const levelNow = () => surface === 'creation' && floor === 'glance' ? 'glance' : resolveCardLevel({ floor, lit: litCard() === identity });
   let drawn = levelNow();
+  // WC2a1–WC2c3: which rows each region carries, from the item's own data
+  // (hand, card package, modifiers, relic modes, potion effects). A bespoke
+  // presentation without a variant (the empty hand) keeps the plain face.
+  const variant = presentation ? presentation.variant || null
+    : possessionVariant(registries, piece, { kind: 'equipment', bonuses: model.bonuses,
+      attributeRequirement: model.requirement.startsWith('Requires ') ? model.requirement : null });
+  const factLines = faceFactLines(model, variant);
+  const hasFacts = factLines ? factLines.length > 0 : model.facts.length > 0;
+  const hasTags = model.tags.length > 0;
+  const emptyOmit = [...(hasFacts ? [] : ['facts']), ...(hasTags ? [] : ['tags'])];
+  // Horizontal single-row fact lines (relic Trigger · Limit, potion effects) need one compact row, not 40px.
+  const regionMinPx = factLines && factLines.length > 0 ? { facts: 20 } : null;
   const tokensFor = (at) => equipmentCardTokens(undefined, {
-    collapse: model.tags.length ? [] : ['tags'],
-    omit: cardFields(at, { surface }).omit,
+    omit: [...new Set([...cardFields(at, { surface }).omit, ...emptyOmit])],
+    regionMinPx,
   });
   const tokens = tokensFor(drawn);
   const card = canvasElement(tokens.frameWidthPx);
@@ -171,12 +231,6 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   // tools select real pieces by `[data-item="..."]`, so that attribute has to
   // keep naming the piece.
   if (identityOverride) card.dataset.instanceId = identityOverride;
-  // WC2a1–WC2c3: which rows each region carries, from the item's own data
-  // (hand, card package, modifiers, relic modes, potion effects). A bespoke
-  // presentation without a variant (the empty hand) keeps the plain face.
-  const variant = presentation ? presentation.variant || null
-    : possessionVariant(registries, piece, { kind: 'equipment', bonuses: model.bonuses,
-      attributeRequirement: model.requirement.startsWith('Requires ') ? model.requirement : null });
   if (variant) card.dataset.possession = variant.families.join(' ');
   card.setAttribute('aria-label', `${model.name} ${model.cardKind || 'equipment'} card`);
   card.style.setProperty('--accent', model.accent);
@@ -200,15 +254,22 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   const face = variant?.face || { lines: Infinity, effects: Infinity };
   const rowsAttr = ids => (ids?.length ? ` data-wireframe-rows="${esc(ids.join(' '))}"` : '');
   const requirement = variant?.requirement || model.requirement;
+  const showRequirement = !!requirement && !isRedundantRequirement(model, requirement);
   const paint = (at) => {
     explanations.length = 0;
-    const visible = new Set(cardFields(at, { surface }).visible);
-    const facts = variant?.lines
-      ? `<span class="epc-facts" data-layout="lines"${rowsAttr(variant.regions.facts)}>${variant.lines.map((row, index) => `<span class="epc-line" data-wireframe-row="${esc(row.id)}"${row.tint ? ` style="--line-tint:${esc(row.tint)}"` : ''}${index >= face.lines ? ' hidden' : ''} ${tip(row.text, row.explanation, 'effect')}>${esc(row.text)}</span>`).join('')}</span>`
+    const visible = new Set(cardFields(at, { surface }).visible.filter((key) => !emptyOmit.includes(key)));
+    const facts = factLines
+      ? `<span class="epc-facts" data-layout="lines"${rowsAttr(factLines.map((row) => row.id))}>${factLines.map((row, index) => `<span class="epc-line" data-wireframe-row="${esc(row.id)}"${row.tint ? ` style="--line-tint:${esc(row.tint)}"` : ''}${index >= face.lines ? ' hidden' : ''} ${tip(row.text, row.explanation, 'effect')}>${esc(row.text)}</span>`).join('')}</span>`
       : `<span class="epc-facts"${rowsAttr(variant?.regions.facts)}>${model.facts.map(f => `<span class="epc-fact" ${tip(model.cardKind ? f.value : `${f.label}: ${f.value}`, f.explanation, model.cardKind ? 'tag' : 'fact')}><strong>${esc(f.label === 'DR' && f.value > 0 ? `+${f.value}` : f.value)}</strong>${esc(surface === 'creation' ? ({ Attack: 'AR', Defense: 'DR', Weight: 'Wt' }[f.label] || f.label) : f.label)}</span>`).join('')}</span>`;
-    const entries = variant?.entries || model.bonuses;
-    const effectsAttrs = variant ? `${rowsAttr(variant.regions.effects)} data-entries="${Math.min(entries.length, face.effects) > 1 ? 'many' : 'one'}"${entries.length > face.effects ? ' data-more' : ''}` : '';
-    const effects = entries.map((b, index) => `<span class="epc-bonus"${index >= face.effects ? ' hidden' : ''} ${tip(b.label, b.explanation, 'effect')}>${esc(b.label)}</span>`).join('')
+    const rawEntries = variant?.entries || model.bonuses;
+    const entries = rawEntries.filter((entry) => {
+      if (visible.has('facts') && !factLines && isRedundantStatSummary(entry.label, model.facts)) return false;
+      if (visible.has('flavor') && model.flavor && entry.label === model.flavor) return false;
+      return true;
+    });
+    const maxFaceEffects = variant ? Math.max(face.effects, 4) : Infinity;
+    const effectsAttrs = variant ? `${rowsAttr(variant.regions.effects)} data-entries="${Math.min(entries.length, maxFaceEffects) > 1 ? 'many' : 'one'}"${entries.length > maxFaceEffects ? ' data-more' : ''}` : '';
+    const effects = entries.map((b, index) => `<span class="epc-bonus"${index >= maxFaceEffects ? ' hidden' : ''} ${tip(b.label, b.explanation, 'effect')}>${esc(b.label)}</span>`).join('')
       || `<span>${esc(model.armor ? 'No additional bonuses' : variant?.empty || 'No additional bonuses')}</span>`;
     // A REGION THIS LEVEL DOES NOT SAY IS NOT IN THE MARKUP AT ALL. Not
     // `display:none` and not `hidden`: the row solver has already given its
@@ -222,15 +283,19 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     // children of the card, not of the frame, and `bindCardInspection` appended
     // them with their own listeners — `card.innerHTML =` would take both away
     // and leave a card that can no longer be read the second time it is lit.
+    const artComp = presentation
+      ? (presentation.itemArt !== undefined ? presentation.itemArt : null)
+      : (piece && piece.id !== 'empty-hand' ? itemArtComposition(piece, { kind: model.armor ? 'armour' : 'weapon', registries, ...(itemLayerConfig ? { layerConfig: itemLayerConfig } : {}) }) : null);
+    const artLayers = itemArtLayersParts(artComp);
     const frameHtml = `<span class="epc-frame">
       <span class="epc-name ec-name" style="--title-units:${Math.max(1, Array.from(String(model.name)).length * 0.62)}">${esc(model.name)}<span aria-hidden="true">◆</span></span>
-      ${region('art', `<span class="epc-art">${presentation && !model.art ? `<span class="epc-art-glyph" aria-hidden="true">${engravedIconHtml(model.glyph || piece.icon || 'equipment') || 'Item'}</span>` : `<img${imageHintAttrs({ offscreen: true })} src="${esc(presentation ? model.art : equipmentCardArt(piece))}" alt="${esc(model.name)}">`}</span>`)}
-      ${region('type', `<span class="epc-type"${rowsAttr(variant?.regions.type)}><span ${tip(model.armor ? model.type : model.type.split(' · ')[0], model.typeExplanation)}>${esc(model.type)}</span><span class="epc-requirement" ${tip(requirement, model.requirementExplanation, requirementRole)}>${esc(requirement)}</span></span>`)}
+      ${region('art', `<span class="epc-art">${artLayers.under}${presentation && !model.art ? `<span class="epc-art-glyph" aria-hidden="true">${engravedIconHtml(model.glyph || piece.icon || 'equipment') || 'Item'}</span>` : `<img class="epc-art-base"${imageHintAttrs({ offscreen: true })} src="${esc(presentation ? model.art : equipmentCardArt(piece))}" alt="${esc(model.name)}">`}${artLayers.over}</span>`)}
+      ${region('type', `<span class="epc-type"${rowsAttr(variant?.regions.type)}><span ${tip(model.armor ? model.type : model.type.split(' · ')[0], model.typeExplanation)}>${esc(model.type)}</span>${showRequirement ? `<span class="epc-requirement" ${tip(requirement, model.requirementExplanation, requirementRole)}>${esc(requirement)}</span>` : ''}</span>`)}
       ${region('facts', facts)}
       ${region('tags', `<span class="epc-tags ec-tags">${model.tags.map(t => `<span class="epc-tag" ${tip(t.label, t.explanation)}>${esc(t.label)}</span>`).join('')}</span>`)}
       ${region('effects', `<span class="epc-effects ec-mods"${effectsAttrs}><span class="epc-heading">${esc(variant?.heading || model.effectsLabel || 'Equipment bonuses')}</span>${effects}</span>`)}
       ${region('flavor', `<span class="epc-flavor" ${tip(model.flavor, model.flavor, 'flavor')}>${esc(model.flavor)}</span>`)}
-      ${region('footer', `<span class="epc-footer" data-identity-part="metadata">${metaSlot('start', band.start)}${metaSlot('end', band.end)}</span>`)}
+      ${region('footer', `<span class="epc-footer" data-identity-part="metadata">${metaSlot('start', band.start)}${model.rankBadge ? `<span class="epc-rank-badge" data-meta-kind="rank" ${tip(model.rankBadge, `Combat power rank: ${model.rankBadge}.`)}>${esc(model.rankBadge)}</span>` : ''}${metaSlot('end', band.end)}</span>`)}
     </span>`;
     const existing = card.querySelector(':scope > .epc-frame');
     if (existing) existing.outerHTML = frameHtml;
@@ -239,7 +304,8 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     applyCardTokens(card, tokensFor(at));
     card.dataset.cardLevel = at;
     card.style.setProperty('--epc-level-w', cardLevelWidthCss(at));
-    swapOnError(card.querySelector('img'), () => engravedIcon(piece.icon || 'equipment') || Object.assign(document.createElement('span'), { textContent: 'Item' }));
+    swapOnError(card.querySelector('img.epc-art-base') || card.querySelector('.epc-art > img'), () => engravedIcon(piece.icon || 'equipment') || Object.assign(document.createElement('span'), { textContent: 'Item' }));
+    bindItemArtLayerFailures(card);
     card.querySelectorAll('[data-card-tip]').forEach(target => {
       const { label, explanation } = explanations[Number(target.dataset.cardTip)];
       const html = () => label === explanation ? `<p>${esc(label)}</p>` : `<div class="tt-title">${esc(label)}</div><p>${esc(explanation)}</p>`;

@@ -137,19 +137,25 @@ test('a Broken enemy cannot be broken again and its Poise cannot be refilled unt
   assert.equal(enemy.persistentPoise.value, 0, 'Block does not refill a Broken bar');
 });
 
-test('Ward or Barrier gained while Broken raises the maximum but does not refill the bar, so it cannot break twice', () => {
-  for (const status of ['ward', 'barrier']) {
-    const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 8);
-    drainFixCorePoise(combat, combat.player, enemy, 99);
-    assert.ok(enemy.broken); assert.equal(enemy.persistentPoise.value, 0);
-    enemy.statuses[status] = { stacks: 1 };
-    syncPoiseMaximum(combat, enemy);
-    assert.equal(enemy.persistentPoise.barrierBonus, 5, `${status}: +5 maximum, kept as the bonus`);
-    assert.ok(enemy.persistentPoise.max >= 5, `${status}: +5 maximum`);
-    assert.equal(enemy.persistentPoise.value, 0, `${status}: Broken Poise is not refilled`);
-    drainFixCorePoise(combat, combat.player, enemy, 99);
-    assert.equal(combat.eventLog.filter(row => row.type === 'poiseBroken').length, 1, `${status}: one break only`);
-  }
+test('Barrier gained while Broken raises the maximum without refilling Poise; Ward grants HP buffer independently', () => {
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 8);
+  drainFixCorePoise(combat, combat.player, enemy, 99);
+  assert.ok(enemy.broken); assert.equal(enemy.persistentPoise.value, 0);
+  enemy.statuses.barrier = { stacks: 1 };
+  syncPoiseMaximum(combat, enemy);
+  assert.equal(enemy.persistentPoise.barrierBonus, 5, 'barrier: +5 maximum, kept as the bonus');
+  assert.ok(enemy.persistentPoise.max >= 5, 'barrier: +5 maximum');
+  assert.equal(enemy.persistentPoise.value, 0, 'barrier: Broken Poise is not refilled');
+  drainFixCorePoise(combat, combat.player, enemy, 99);
+  assert.equal(combat.eventLog.filter(row => row.type === 'poiseBroken').length, 1, 'barrier: one break only');
+
+  const combat2 = fight(); const enemy2 = combat2.enemies[0]; sandbag(enemy2, 8);
+  drainFixCorePoise(combat2, combat2.player, enemy2, 99);
+  assert.ok(enemy2.broken); assert.equal(enemy2.persistentPoise.value, 0);
+  enemy2.statuses.ward = { stacks: 1 };
+  syncPoiseMaximum(combat2, enemy2);
+  assert.equal(enemy2.persistentPoise.value, 0, 'ward does not refill Broken Poise');
+  assert.equal(enemy2.persistentPoise.barrierBonus || 0, 0, 'ward adds no Poise bonus');
 });
 
 test('after Broken ends the full bar must be broken again for a second break', () => {

@@ -220,7 +220,9 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-22: no card has a cost minimum (owner ruling); d5db9a... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-22: cost.manaOnly is a data mechanic now (the cost-minimum validator rule is gone) and Exhaust/Ethereal score flat (owner rulings); a5c68d... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-23: the spell Stamina surcharge is dropped (spellCosts.staminaSurcharge 0, owner ruling); 0805e9... is now in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, 'sha256:e316635810ab4101030e92e5d2169d0659ce1536caf82f1333f33b854ca4a6c3');
+  // Re-pinned 2026-11-24: Ward health buffer (ward.routing "hpBuffer", owner ruling); e31663... is now in PREVIOUS_RUNTIMES.
+  // Re-pinned 2026-11-24: Weapon poise damage & stance-gated Poise reduction (weaponPoiseEnabled, owner ruling); d24363... is now in PREVIOUS_RUNTIMES.
+  assert.equal(profile.lock.runtimeHash, 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
@@ -241,7 +243,10 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // This is a CURRENT-rules round trip: 12 -> 6, x1.5 against Defend = 9; Prepared keeps its shared x1.25 = 7.
   assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 9);
   target.combatStance.maneuver = 'prepared';
-  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 7);
+  const preparedReceipt = profileDamageReceipt(restored, restored.player, target, 12, smash);
+  assert.equal(preparedReceipt.rawHit, 7);
+  assert.equal(preparedReceipt.poiseMitigated, 7, 'Prepared target with 20 Poise mitigates up to 10 (50% of 20), reducing 7 -> 0');
+  assert.equal(preparedReceipt.amount, 0);
   assert.equal(restored.gameProfile.lock.runtimeHash, profile.lock.runtimeHash);
 });
 

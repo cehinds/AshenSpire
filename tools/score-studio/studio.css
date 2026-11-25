@@ -50,6 +50,8 @@ body.studio-body .studio-modal h3 {
 
 body.studio-body .hidden { display: none !important; }
 body.studio-body [hidden] { display: none !important; }
+body.studio-body .sandbox-ward-hp { color: #6fa8ff; font-weight: 700; }
+body.studio-body .sandbox-poise-bonus { color: #c49bff; font-weight: 700; }
 
 /* TOP BAR: title and status, tabs, then undo, redo, Export and the More menu. */
 body.studio-body .studio-topbar {
@@ -238,6 +240,7 @@ body.studio-body .filter-bar select,
 body.studio-body .form-grid input,
 body.studio-body .form-grid select,
 body.studio-body .add-feature-bar select,
+body.studio-body .add-feature-bar input,
 body.studio-body .weights-toolbar input,
 body.studio-body .weights-toolbar select,
 body.studio-body .sandbox-toolbar select,
@@ -422,6 +425,8 @@ body.studio-body .form-grid .studio-check input { width: auto; margin: 0; accent
 
 body.studio-body .add-feature-bar { display: flex; gap: var(--studio-gap-1); width: 100%; margin-bottom: var(--studio-gap-2); }
 body.studio-body .add-feature-bar select { flex: 1 1 auto; min-width: 0; }
+body.studio-body .add-feature-bar input { flex: 1 1 9em; min-width: 0; }
+@media (max-width: 480px) { body.studio-body .add-feature-bar { flex-wrap: wrap; } body.studio-body .add-feature-bar input { flex-basis: 100%; } }
 body.studio-body .add-feature-bar button { flex: none; }
 body.studio-body .quick-add-chips { display: flex; flex-wrap: wrap; gap: var(--studio-gap-1); margin-bottom: var(--studio-gap-2); }
 body.studio-body .q-chip {
@@ -757,9 +762,6 @@ body.studio-body .studio-switch input:checked { background: var(--st-accent-2); 
 body.studio-body .studio-switch input:checked::after { transform: translateX(14px); }
 body.studio-body .studio-switch input:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; }
 body.studio-body .name-hint { font-size: 11px; }
-body.studio-body .naming-word-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 6px; align-items: center; padding: 3px 0; }
-body.studio-body .naming-word-head { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--st-muted); }
-body.studio-body .naming-word-row input { width: 100%; box-sizing: border-box; min-width: 0; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 6px; }
 
 /* FEATURE DESCRIPTIONS: an ⓘ beside each feature opens what it does in play and how it scores. */
 body.studio-body .feature-row { flex-wrap: wrap; }
@@ -809,3 +811,166 @@ body.studio-body .weight-per-label input,
 body.studio-body .weight-per-label select { width: 58px; box-sizing: border-box; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 3px 4px; text-align: right; }
 body.studio-body .weight-per-label select { width: 72px; text-align: left; }
 body.studio-body .weight-per-label input.weight-mult { width: auto; margin: 0; accent-color: var(--st-accent, #6aa0ff); cursor: pointer; }
+
+/* Naming group: the card name length limit and its keep order (most important first). */
+body.studio-body .naming-keep-list { margin: 4px 0 6px; padding-left: 22px; }
+body.studio-body .naming-keep-item { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+body.studio-body .naming-keep-item > span { flex: 1 1 auto; min-width: 0; }
+body.studio-body .naming-keep-move { min-width: 28px; min-height: 28px; background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; cursor: pointer; }
+body.studio-body .naming-keep-move:disabled { opacity: 0.35; cursor: default; }
+body.studio-body .naming-limit-group.is-pending .naming-keep-list { outline: 1px dashed var(--st-border); outline-offset: 2px; }
+
+/* Rename all and Restore names: a row under the search bar, a list of name sets, and the save dialog. */
+body.studio-body .names-row { margin-top: var(--studio-gap-1); flex-wrap: wrap; }
+body.studio-body .restore-names-panel { gap: var(--studio-gap-1); }
+body.studio-body .restore-names-list { display: flex; flex-direction: column; gap: 2px; max-height: 240px; overflow-y: auto; }
+body.studio-body .name-set-row { display: flex; align-items: center; gap: var(--studio-gap-2); min-height: var(--studio-control-h); padding: 0 var(--studio-gap-1); border-radius: var(--studio-radius); font-size: 12px; cursor: pointer; }
+body.studio-body .name-set-row:hover { background: var(--st-surface-2); }
+body.studio-body .name-set-row > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+body.studio-body .name-set-delete { min-width: 28px; min-height: 28px; background: transparent; color: var(--st-muted); border: 1px solid var(--st-border); border-radius: 4px; cursor: pointer; }
+body.studio-body .name-set-delete:hover { color: var(--st-warn); border-color: var(--st-warn); }
+body.studio-body .rename-all-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; margin-top: var(--studio-gap-2); }
+body.studio-body .rename-all-label input { background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: 4px; padding: 6px 8px; }
+
+/* ---------------------------------------------------------------------------
+ * Items & Relics workspace + Equipment/Relic Layered Art controls
+ * --------------------------------------------------------------------------- */
+body.studio-body .items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+body.studio-body .item-grid-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--st-border);
+  border-radius: 8px;
+  background: var(--st-surface);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+body.studio-body .item-grid-tile:hover {
+  border-color: var(--st-accent);
+  background: var(--st-surface-2);
+}
+body.studio-body .item-grid-tile.is-selected {
+  border-color: var(--st-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--st-accent) 35%, transparent);
+}
+body.studio-body .item-grid-tile .equipment-poker-card {
+  width: 100%;
+  max-width: 170px;
+  pointer-events: none;
+}
+body.studio-body .item-tile-meta {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--st-muted);
+}
+body.studio-body .item-kind-pill {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--st-surface-2);
+  border: 1px solid var(--st-border);
+  color: var(--st-text);
+}
+body.studio-body .item-preview-host {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 10px;
+}
+body.studio-body .item-preview-host .equipment-poker-card,
+body.studio-body #art-live-preview .equipment-poker-card {
+  width: 248px;
+  max-width: 100%;
+}
+body.studio-body .score-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border: 1px solid var(--st-border);
+  border-radius: 8px;
+  background: #141822;
+}
+body.studio-body .score-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+body.studio-body .score-metric .m-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--st-muted);
+}
+body.studio-body .score-metric strong {
+  font-size: 15px;
+  color: var(--st-text);
+}
+body.studio-body .score-metric .rank-pill {
+  color: var(--st-accent);
+}
+body.studio-body .item-type-base-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+body.studio-body .item-base-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--st-surface-2);
+  border: 1px solid var(--st-border);
+  font-size: 11px;
+  color: var(--st-text);
+}
+body.studio-body .item-trait-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  gap: 6px;
+}
+body.studio-body .art-head-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+body.studio-body .art-target-switch {
+  display: inline-flex;
+  border: 1px solid var(--st-border);
+  border-radius: var(--studio-radius);
+  overflow: hidden;
+}
+body.studio-body .art-target-switch .s-btn {
+  border: 0;
+  border-radius: 0;
+}
+body.studio-body .art-target-switch .s-btn.is-active {
+  background: var(--st-accent-2);
+  color: #fff;
+}
+body.studio-body .layer-kind-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}

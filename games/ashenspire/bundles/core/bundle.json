@@ -7,7 +7,7 @@
     "cards": {
       "version": "1.0.0",
       "settings": {
-        "editorWhere": "rest"
+        "editorWhere": "restAndShop"
       }
     },
     "resources": {

@@ -14,6 +14,8 @@ import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { contentBundle as b } from '../src/content/index.js';
 import { scoring } from '../src/content/generated/scoring.js';
+import { GEAR_TYPES } from '../src/content/gearTypes.js';
+import { GearWeaponTypeOf, GearArmourGroupOf } from '../src/model/gearEffects.js';
 import { BaseFace, ScoreCard, ScoreItem, CombatPower, RankOf, ApplyScoringOverride } from '../src/model/combatPower.js';
 import { registries, holdable, measure, CLASSES, tagOf } from './lib/cardBudgetMeasure.mjs';
 
@@ -40,7 +42,8 @@ export function faceOf(def, row) {
     const amount = typeof e.amount === 'number' ? e.amount : 1;
     if (e.op === 'applyStatus') {
       if (typeof e.status === 'string' && typeof e.stacks === 'number' && statusIds.has(e.status)) f.statuses.push([e.status, e.stacks, e.target === 'self' ? 'self' : 'enemy']);
-    } else if (e.op === 'restorePoise') f.blk += amount;
+    } else if (e.op === 'gainBarrier') f.statuses.push(['barrier', amount, 'self']);
+    else if (e.op === 'restorePoise') f.blk += amount;
     else if (OP_FIELD[e.op]) f[OP_FIELD[e.op]] += amount;
     else if (e.op === 'removeStatus') { if (e.target === 'self') f.cleanse += 1; }
     else if (e.op === 'moveEngagement') f.move += 1;
@@ -80,9 +83,10 @@ export function measureCards() {
 // ---------------------------------------------------------------------------------------------------------------------
 const parseMods = mods => (mods || []).map(m => { const [k, v] = String(m).split('='); return [k, Number.isNaN(+v) ? v : +v]; });
 
-function itemFaces() {
+export function itemFaces() {
   const rules = Object.fromEntries(b.propertyRules.map(r => [r.tag, r]));
-  const ruleOf = r => ({ triggers: (r.triggers || []).map(t => ({ on: t.on, cond: !!t.if, once: !!t.once, perTurn: t.limitPerTurn || 0, do: t.do })), passives: r.passives || null });
+  const everyNthOf = pred => (pred && pred.p === 'everyNthCardThisCombat' && Number.isFinite(pred.n) ? pred.n : 0);
+  const ruleOf = r => ({ triggers: (r.triggers || []).map(t => ({ on: t.on, cond: !!t.if, once: !!t.once, perTurn: t.limitPerTurn || 0, everyNth: everyNthOf(t.if), do: t.do })), passives: r.passives || null });
   const tagFam = {};
   for (const t of b.tagging) if (['armament', 'armour', 'relic'].includes(t.family)) (tagFam[t.family + ':' + (t.scope ? t.scope + '/' : '') + t.objectId] ??= []).push(t.tagId);
   const items = [];
@@ -110,7 +114,13 @@ function itemFaces() {
   };
   for (const a of b.equipment.armaments) {
     const tags = tagFam['armament:' + a.id] || [];
-    const it = { kind: 'weapon', id: a.id, name: a.name, rarity: a.rarity, base: a.geom, sub: a.kind, mods: parseMods(a.mods),
+    const gearType = GearWeaponTypeOf(a);
+    const typeRow = gearType ? GEAR_TYPES.weaponTypes?.[gearType] : null;
+    const poiseDamage = Number.isFinite(GEAR_TYPES.itemPoiseDamage?.[a.id])
+      ? GEAR_TYPES.itemPoiseDamage[a.id]
+      : (Number.isFinite(typeRow?.poiseDamage) ? typeRow.poiseDamage : 1);
+    const it = { kind: 'weapon', id: a.id, name: a.name, rarity: a.rarity, base: a.geom, sub: a.kind, gearType,
+      typeMods: parseMods(typeRow?.mods), mods: parseMods(a.mods), poiseDamage,
       props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]), poise: a.poiseThreshold, weight: a.weight, dmgType: a.physicalDamageType, range: a.range,
       ...(a.scoringOverride ? { scoringOverride: a.scoringOverride } : {}) };
     const kit = a.weaponCardPackage?.combatKit || {};
@@ -122,14 +132,18 @@ function itemFaces() {
   }
   for (const a of b.equipment.armour) {
     const tags = tagFam['armour:' + a.classId + '/' + a.id] || tagFam['armour:' + a.id] || [];
-    items.push({ kind: 'armour', id: a.classId + '.' + a.id, name: a.name, rarity: a.unlock ? 'uncommon' : 'common', base: a.material || 'cloth', sub: a.classId, mods: parseMods(a.mods),
+    const gearGroup = GearArmourGroupOf(a);
+    const groupRow = gearGroup ? GEAR_TYPES.armourGroups?.[gearGroup] : null;
+    items.push({ kind: 'armour', id: a.classId + '.' + a.id, name: a.name, rarity: a.unlock ? 'uncommon' : 'common', base: a.material || 'cloth', sub: a.classId, gearGroup,
+      typeMods: parseMods(groupRow?.mods), mods: parseMods(a.mods),
       props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]), poise: a.poiseThreshold,
       ...(a.scoringOverride ? { scoringOverride: a.scoringOverride } : {}) });
   }
   for (const r of b.relics) {
     const tags = [...new Set([...(tagFam['relic:' + r.id] || []), ...(r.properties || [])])];
-    items.push({ kind: 'relic', id: r.id, name: r.name, rarity: r.rarity, base: r.icon,
-      mods: (r.passives?.modifiers || []).map(m => ['passive.' + m.tag + (m.resource ? '.' + m.resource : m.school ? '.' + m.school : ''), m.amount]),
+    const mods = (r.passives?.modifiers || []).map(m => ['passive.' + m.tag + (m.resource ? '.' + m.resource : m.school ? '.' + m.school : ''), m.amount]);
+    if (Number.isFinite(r.passives?.poiseThresholdAdd) && r.passives.poiseThresholdAdd !== 0) mods.push(['passive.resource.flat.poise', r.passives.poiseThresholdAdd]);
+    items.push({ kind: 'relic', id: r.id, name: r.name, rarity: r.rarity, base: r.icon, mods,
       props: tags.filter(t => rules[t]), tags: tags.filter(t => !rules[t]),
       ...(r.scoringOverride ? { scoringOverride: r.scoringOverride } : {}) });
   }
