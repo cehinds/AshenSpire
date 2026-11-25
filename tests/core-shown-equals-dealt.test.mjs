@@ -326,6 +326,45 @@ test('a predecessor lost to control does not over-promise the next enemy attack'
   assert.ok(tally.actions > 0, 'resolved enemy contacts still have exact HP quotes');
 });
 
+test('the later intent accounts for control, Freeze and Shock without drawing RNG', () => {
+  const { combat } = fixture({ classId: 'herald', enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  combat.player.block = 3;
+  const [first, later] = combat.enemies;
+  for (const enemy of [first, later]) {
+    const move = expandedEnemyMove(enemy, reg.enemies.get(enemy.enemyId).moves.slash, 'slash', combat);
+    enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 12, hits: 1,
+      combatProfile: enemyMoveCarrier(enemy, move, 'slash', combat).combatProfile };
+    enemy.plannedMoves = [];
+    enemy.knowledgeAction = { serial: 1, reads: { [combat.playerKey || 'player']: { visibility: 'exact' } } };
+  }
+  const counters = combat.rng.getCounters();
+  const forecast = () => projectCombatIntent(combat, later.id)?.projectedDamage;
+  const open = forecast();
+  assert.ok(Number.isFinite(open?.max));
+  first.statuses.sleep = { stacks: 1 };
+  const locked = forecast();
+  assert.deepEqual({ damage: locked?.max, label: locked?.label, uncertain: locked?.uncertain },
+    { damage: null, label: '?', uncertain: true });
+  first.statusControl.resolveNextTurn = true;
+  const ready = forecast();
+  assert.equal(ready?.max, open.max, 'scheduled Resolve allows the first attack to spend Block');
+  first.skipNextTurn = true;
+  const skipped = forecast();
+  assert.equal(skipped?.max, ready.max - 3, 'a known skip preserves all three Block for the later attack');
+  first.skipNextTurn = false;
+  first.statuses = { freeze: { stacks: 1 } };
+  assert.equal(forecast()?.max, skipped.max, 'Freeze deterministically skips the first attack before decay');
+  first.statuses = { shock: { stacks: 1 } };
+  const shocked = forecast();
+  assert.deepEqual({ damage: shocked?.max, label: shocked?.label, uncertain: shocked?.uncertain },
+    { damage: null, label: '?', uncertain: true });
+  const chancePerStack = combat.fixCoreRules.elements.shock.actionLossChancePerStack;
+  first.statuses.shock.stacks = Math.ceil(100 / chancePerStack);
+  assert.equal(forecast()?.max, skipped.max, 'certain Shock loss also preserves Block');
+  assert.equal(combat.player.block, 3);
+  assert.deepEqual(combat.rng.getCounters(), counters, 'previews consume no live RNG');
+});
+
 test('a lethal enemy multi-hit stops at the exact forecast prefix while a survivor takes the full intent', () => {
   for (const hp of [1, 100]) {
     const combat = fightFor('starseer', 162, ['cinderMantis']);

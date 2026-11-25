@@ -6,11 +6,12 @@ import * as Tactics from './combatCardTactics.js';
 import * as Control from './combatStatusControl.js';
 import * as Proposal from './proposalStatusRuntime.js';
 import { knowledgeIntentProjection } from './enemyKnowledge.js';
-import { decayAtTurnStart as decayStatuses, getFlag } from './statuses.js';
+import { decayAtTurnStart as decayStatuses, getFlag, getStacks } from './statuses.js';
 
 import * as Counter from './counterRule.js';
 import { IsBroken } from './brokenRule.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { ElementRulesOf } from '../model/elementIdentityRules.js';
 import { effectiveD20Percent } from './d20Chance.js';
 import { enemyMoveDamage } from '../model/state.js';
 
@@ -102,6 +103,7 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
     if (!applyMoveEffects(ctx, other, move, carrier, moveId, prepared)) return 'stop';
     return 'ok';
   };
+  const elements = ElementRulesOf(ctx);
   for (const other of ctx.enemies) {
     if (other.id === source.id) {
       // The enemy's own earlier moves this turn (a follow-up is priced after its head and the follow-ups before it).
@@ -113,16 +115,19 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
     // (brokenRule.js cancelNextAction keeps plannedMoves and planDue). The legacy Staggered enemy skips its whole turn (skipNextTurn).
     const broken = IsBroken(other) && intent?.kind === 'staggered' && other.planDue && !other.skipNextTurn && !other.pendingMove;
     if (!other.alive || (!broken && (!intent?.moveId || ['staggered', 'unknown'].includes(intent.kind) || intent.resolved)) || other.pendingMove || other.skipNextTurn) continue;
-    // An unread attacker can spend the player's Poise or change what protects it before this move.
-    if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) { prepared.unreadBefore = true; continue; }
+    // These elemental action losses run before the owner's status decay.
+    const shockChance = elements ? getStacks(other, 'shock') * elements.shock.actionLossChancePerStack : 0;
+    if (elements && (getStacks(other, 'freeze') > 0 || shockChance >= 100)) continue;
     decayAtTurnStart(ctx, other);
     if (getFlag(ctx, other, 'skipTurn')) continue;
     // The actual owner start resets Resolve and rolls recovery before choosing to act.
     // Where a lock may prevent this attack, don't price the next enemy on the assumption it lands.
     const control = other.statusControl;
-    if (!control?.resolveNextTurn && Control.controlRestrictions(ctx, {
+    if (shockChance > 0 || (!control?.resolveNextTurn && Control.controlRestrictions(ctx, {
       ...other, statusControl: { ...control, resolveActive: false },
-    }).locked) return 'controlRecovery';
+    }).locked)) return 'precedingActionUncertain';
+    // An unread attacker can spend the player's Poise or change what protects it before this move.
+    if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) { prepared.unreadBefore = true; continue; }
     if (!broken) {
       const head = advance(other, intent.moveId, intent.damage, intent.hits);
       if (head === 'stop') return 'stop';
@@ -195,7 +200,7 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null, o
     const prepared = enemyIntentDamageState(ctx, source, carrier, base, action, action ? null : state => {
       advance = advanceThroughEarlierEnemies(ctx, source, state, own?.moves);
     });
-    if (advance === 'controlRecovery' || (advance === 'stop' && own)) return null;
+    if (advance === 'precedingActionUncertain' || (advance === 'stop' && own)) return null;
     // Owner, 2026-11-14: the shown number is the HP the player loses if the move resolved now (receipt.hpLoss): after the player's Block, Poise, stance,
     // Reflect and Evade, carried hit to hit. Supersedes the 2026-11-03 raw hit. `landed` counts the hits that connected so the displayed range ignores misses.
     const poiseStart = prepared.defender?.persistentPoise?.value ?? null;

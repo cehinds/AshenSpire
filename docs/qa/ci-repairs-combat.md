@@ -40,3 +40,5 @@ The genuine archived save in `tests/fixtures/pre-registry-dev-7dff4b03-save.json
 The catalog's compiled runtime is now `sha256:5311c2f843c0f42ef94e4b8ab0f4050400fdbc383c4c2395ef14bb563453801d`. The existing compatibility checks still require a known prior fingerprint, supported ABI and numeric policy, and configured Core rules. Historical checks also reject unknown runtimes and digest damage.
 
 Verification ran the canonical mechanics and catalog checks, 8 mechanics tests, 22 compatibility tests, 61 profile, combat save and recipient-effect tests, and the native and bundled combat audits with all 120 statuses covered in each.
+
+The follow-up intent review added exact proofs for an unresolved predecessor lock, scheduled Resolve, a known skip, Freeze, probabilistic Shock, and certain Shock. Previewing leaves all named RNG counters unchanged. The full shown/dealt cohort passed 30 tests, including 75 exact static forecasts, and 71 focused intent, Poise and elemental checks passed.
