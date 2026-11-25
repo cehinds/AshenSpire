@@ -761,7 +761,181 @@ a{color:var(--acc)}a.play.dl{background:var(--acc);color:var(--card)}a.play{disp
 table{width:100%;border-collapse:collapse;margin:.5rem 0 1rem}th,td{text-align:left;padding:.45rem .5rem;border-bottom:1px solid var(--line);font-size:.92rem;vertical-align:top}
 th{color:var(--mut);font-weight:600}td.mono,th.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}footer{color:var(--mut);font-size:.85rem;margin-top:3rem}
 .note{border-left:3px solid var(--acc);padding:.4rem .8rem;color:var(--mut);font-size:.9rem;margin:1rem 0}
+.changes{margin:.55rem 0 .25rem;padding-left:1.15rem;font-size:.86rem;line-height:1.4;color:var(--fg)}
+.changes li{margin:.2rem 0}.changes .chg-sum{color:var(--mut)}.changes a.pr-ref{color:var(--mut);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem;text-decoration:none}
+.changes a.pr-ref:hover{text-decoration:underline;color:var(--acc)}
+.changes.compact{margin:.35rem 0 0;padding-left:1rem;font-size:.82rem;line-height:1.35}.changes.compact li{margin:.12rem 0}
 `;
+
+export const BUILD_CHANGES_MAX = 4;
+export const BUILD_CHANGES_MIN = 3;
+const HOUSEKEEPING_TITLE_RE = /^(development checks|the desktop render check|split\s+.*\b(tests|groups?)\b|browser checks\b|ci\b|chore:|build: stamp|version-advance|pin-bump|architecture-sync|pr-restamp)/i;
+const HOUSEKEEPING_BODY_RE = /\b(discovery group|render check script|reformatted and typed|no change in what it does|workflow.*split|check script)\b/i;
+const NOISE_COMMIT_RE = /^(build:\s*stamp|version-advance:|docs:\s*refresh current-dev architecture|Merge pull request|Merge remote-tracking|Merge branch|pr-restamp|chore\(ci\)|pin-bump)/i;
+
+function cleanInlineMarkdown(text) {
+  return String(text || '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function firstSentence(text, maxLen = 130) {
+  const clean = cleanInlineMarkdown(text);
+  if (!clean) return '';
+  const match = /^(.+?[.!?])(?:\s|$)/.exec(clean);
+  const sentence = match ? match[1] : clean;
+  if (sentence.length <= maxLen) return sentence;
+  const cut = sentence.slice(0, maxLen - 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).replace(/[.,;:\s-]+$/, '')}…`;
+}
+
+function isSubstantialEntry(title, body) {
+  if (HOUSEKEEPING_TITLE_RE.test(title)) return false;
+  if (HOUSEKEEPING_BODY_RE.test(`${title} ${body}`) && !/\b(score studio|combat|card|weapon|armour|armor|relic|upgrade|ward|poise|spell|class|enemy|shop|rest|blacksmith|builds page)\b/i.test(`${title} ${body}`)) return false;
+  return true;
+}
+
+/** Parse newest-first top-level receipt entries from a CHANGELOG.md document. Pure. */
+export function parseChangelogEntries(markdown, { maxScan = 20 } = {}) {
+  if (!markdown || typeof markdown !== 'string') return [];
+  const stripped = markdown.replace(/<details[\s\S]*?<\/details>/gi, '');
+  const entries = [];
+  for (const rawLine of stripped.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line.startsWith('- **')) continue;
+    const m = /^- \*\*(.+?)\*\*\s*(?:\(([^()]*(?:\([^()]*\)[^()]*)*)\))?\.?\s*(.*)$/.exec(line);
+    if (!m) continue;
+    const title = cleanInlineMarkdown(m[1]);
+    if (!title) continue;
+    const meta = m[2] || '';
+    const body = m[3] || '';
+    const prMatch = /\[#(\d+)\]\((https?:\/\/[^)]+)\)/.exec(meta) || /#(\d+)/.exec(meta);
+    const pr = prMatch ? Number(prMatch[1]) : null;
+    const prUrl = prMatch && prMatch[2] ? prMatch[2] : (pr ? `${REPO_URL}/pull/${pr}` : null);
+    const stampMatch = /`([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)`/.exec(meta);
+    const stamp = stampMatch ? stampMatch[1] : null;
+    entries.push({
+      title,
+      summary: firstSentence(body),
+      ...(pr ? { pr, prUrl } : {}),
+      ...(stamp ? { stamp } : {}),
+      substantial: isSubstantialEntry(title, body),
+    });
+    if (entries.length >= maxScan) break;
+  }
+  return entries;
+}
+
+function normalizeFallbackCommits(commits, limit) {
+  const out = [];
+  const seen = new Set();
+  for (const raw of commits || []) {
+    const line = cleanInlineMarkdown(String(raw || '').split(/\r?\n/)[0]);
+    if (!line || NOISE_COMMIT_RE.test(line)) continue;
+    const prMatch = /\(#(\d+)\)\s*$/.exec(line);
+    const pr = prMatch ? Number(prMatch[1]) : null;
+    const title = line.replace(/\s*\(#\d+\)\s*$/, '').replace(/^(feat|fix|refactor|perf|ui|style|docs|chore)(\([^)]*\))?:\s*/i, '').trim();
+    if (!title) continue;
+    const formatted = title[0].toUpperCase() + title.slice(1);
+    const key = formatted.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ title: formatted, summary: '', ...(pr ? { pr, prUrl: `${REPO_URL}/pull/${pr}` } : {}) });
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+/**
+ * Pick 3–4 of the most substantial recent changes for one build from its CHANGELOG.md
+ * (preferring substantial player-facing changes in the newest window, backfilling from
+ * newest entries if fewer than 3, and falling back to commit subjects when absent). Pure.
+ */
+export function selectBuildChanges(markdown, { limit = BUILD_CHANGES_MAX, fallbackCommits = [] } = {}) {
+  const max = Math.max(1, Math.min(6, Number(limit) || BUILD_CHANGES_MAX));
+  const entries = parseChangelogEntries(markdown, { maxScan: 20 });
+  if (!entries.length) return normalizeFallbackCommits(fallbackCommits, max);
+  const window = entries.slice(0, Math.max(12, max * 3));
+  const picked = new Set();
+  for (const e of window) {
+    if (picked.size >= max) break;
+    if (e.substantial) picked.add(e);
+  }
+  const targetMin = Math.min(BUILD_CHANGES_MIN, window.length, max);
+  if (picked.size < targetMin) {
+    for (const e of window) {
+      if (picked.size >= Math.min(max, window.length)) break;
+      picked.add(e);
+    }
+  }
+  return window.filter((e) => picked.has(e)).slice(0, max).map(({ substantial: _s, ...rest }) => rest);
+}
+
+function sanitizeChanges(list, limit = BUILD_CHANGES_MAX) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const item of list) {
+    if (!item) continue;
+    if (typeof item === 'string') {
+      const title = cleanInlineMarkdown(item);
+      if (title) out.push({ title, summary: '' });
+    } else if (typeof item === 'object' && typeof item.title === 'string') {
+      const title = cleanInlineMarkdown(item.title);
+      if (!title) continue;
+      const pr = Number.isInteger(Number(item.pr)) && Number(item.pr) > 0 ? Number(item.pr) : null;
+      const prUrl = pr ? (typeof item.prUrl === 'string' && /^https?:\/\//.test(item.prUrl) ? item.prUrl : `${REPO_URL}/pull/${pr}`) : null;
+      out.push({
+        title,
+        summary: typeof item.summary === 'string' ? firstSentence(item.summary) : '',
+        ...(pr ? { pr, prUrl } : {}),
+        ...(typeof item.stamp === 'string' && item.stamp ? { stamp: item.stamp } : {}),
+      });
+    }
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+/** Read 3–4 recent changes for a git commit (branch builds read CHANGELOG.md at that commit; feature branches prefer unique commits over baseRef). */
+export function changesForCommit(sha, { baseRef = null, limit = BUILD_CHANGES_MAX } = {}) {
+  if (!sha || !/^[0-9a-f]{7,40}$/i.test(String(sha))) return [];
+  if (baseRef) {
+    try {
+      const branchCommits = git(['log', '--no-merges', '-n', '16', '--format=%s', `${baseRef}..${sha}`], { stdio: ['ignore', 'pipe', 'ignore'] })
+        .trim().split('\n').filter(Boolean);
+      const fromBranch = normalizeFallbackCommits(branchCommits, limit);
+      if (fromBranch.length) return fromBranch;
+    } catch { /* commit may not be fetched locally */ }
+  }
+  let md = null;
+  try { md = showIfPresent(sha, 'CHANGELOG.md'); } catch { md = null; }
+  const fromMd = selectBuildChanges(md, { limit });
+  if (fromMd.length) return fromMd;
+  try {
+    const commits = git(['log', '--no-merges', '--first-parent', '-n', '16', '--format=%s', sha], { stdio: ['ignore', 'pipe', 'ignore'] })
+      .trim().split('\n').filter(Boolean);
+    return normalizeFallbackCommits(commits, limit);
+  } catch {
+    return [];
+  }
+}
+
+/** Render a build's short 3–4 bullet list of recent changes as HTML, or '' when none are present. Pure. */
+export function changesListHtml(changes, { compact = false } = {}) {
+  const list = sanitizeChanges(changes);
+  if (!list.length) return '';
+  const items = list.map((c) => {
+    const prHtml = c.pr ? ` <a class="pr-ref" href="${esc(c.prUrl)}">#${c.pr}</a>` : '';
+    const sumHtml = !compact && c.summary ? ` <span class="chg-sum">— ${esc(c.summary)}</span>` : '';
+    return `<li><strong>${esc(c.title)}</strong>${prHtml}${sumHtml}</li>`;
+  }).join('');
+  return `<ul class="changes${compact ? ' compact' : ''}">${items}</ul>`;
+}
 
 function stampOf(b) { return b.version ? `BUILD ${b.version}.${b.ordinal} · src ${b.digest}` : `BUILD ·${b.ordinal} · src ${b.digest}`; }
 function changelogUrl(b) { return `${REPO_URL}/blob/${b.sha}/CHANGELOG.md`; }
@@ -838,7 +1012,7 @@ function tableDownload(rel, b, edition) {
  */
 function rowsTable(builds, rel, latest = new Set()) {
   return `<table><thead><tr><th>Build</th><th class="mono">Stamp</th><th>Built</th><th>Download</th><th>Mobile download</th><th>Commit</th><th>Changelog</th></tr></thead><tbody>${
-    builds.map((b) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${latest.has(b) ? ' <em>(latest)</em>' : ''}${b.source === 'rebuild' ? ' <span class="meta">rebuilt from source</span>' : ''}${b.shape === 'pack' ? ` <span class="meta">web edition · ${esc(b.tier || 'light')} art</span>` : (b.edition === 'light' ? ' <span class="meta">light art</span>' : '')}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td>${tableDownload(rel, b, 'full')}</td><td>${tableDownload(rel, b, 'mobile')}</td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a></td></tr>`).join('')
+    builds.map((b) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${latest.has(b) ? ' <em>(latest)</em>' : ''}${b.source === 'rebuild' ? ' <span class="meta">rebuilt from source</span>' : ''}${b.shape === 'pack' ? ` <span class="meta">web edition · ${esc(b.tier || 'light')} art</span>` : (b.edition === 'light' ? ' <span class="meta">light art</span>' : '')}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td>${tableDownload(rel, b, 'full')}</td><td>${tableDownload(rel, b, 'mobile')}</td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a>${changesListHtml(b.changes, { compact: true })}</td></tr>`).join('')
   }</tbody></table>`;
 }
 
@@ -989,7 +1163,9 @@ export function readBranchPreviews(dir, skipped = []) {
       if (htmls.length !== 1) throw new Error(`expected one build .html in ${path}, found ${htmls.length}`);
       if (statSync(join(from, htmls[0])).size === 0) throw new Error('the build file is empty');
       const sha = /^[0-9a-f]{7,40}$/.test(String(entry.sha || '')) ? String(entry.sha) : '';
-      out.push({ branch: entry.branch, path, pr: Number(entry.pr) || 0, sha, file: htmls[0], from: join(from, htmls[0]) });
+      const givenChanges = sanitizeChanges(entry.changes);
+      const changes = givenChanges.length ? givenChanges : (sha ? changesForCommit(sha, { baseRef: refFor('dev') }) : []);
+      out.push({ branch: entry.branch, path, pr: Number(entry.pr) || 0, sha, file: htmls[0], from: join(from, htmls[0]), ...(changes.length ? { changes } : {}) });
     } catch (error) {
       skipped.push({ branch: entry.branch, reason: error.message });
       console.warn(`WARNING: PR #${entry.pr} (${entry.branch}) is not published: ${error.message}`);
@@ -1083,7 +1259,7 @@ export function publishBranchPreviews(outDir, previews) {
 export function branchPreviewSection(previews) {
   const head = '<h2 id="branch-builds">Feature branch builds</h2>';
   if (!previews.length) return `${head}\n<p>No feature branch has a playable build right now.</p>`;
-  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">${p.pr ? `open pull request #${p.pr} into dev` : 'feature branch build'}</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Sandboxed preview of ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/${PREVIEW_BUILD_FILE}" download="${esc(p.file)}">Download build</a></section>`).join('\n');
+  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">${p.pr ? `open pull request #${p.pr} into dev` : 'feature branch build'}</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}${changesListHtml(p.changes)}<a class="play" href="branches/${esc(p.path)}/latest/">Sandboxed preview of ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/${PREVIEW_BUILD_FILE}" download="${esc(p.file)}">Download build</a></section>`).join('\n');
   return `${head}\n<p>Current feature, fix and chore branch builds appear here, played in a sandbox that does not keep progress. Only builds matching current code are published.</p>\n<div class="grid">${cards}</div>`;
 }
 
@@ -1093,7 +1269,7 @@ export function rootIndex(branchData, generatedAt, otherPages, previews = null) 
     const b = builds[0];
     if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(branchRole(branch))}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}</section>`;
     return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(branchRole(branch))}</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}
-<p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>
+<p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>${changesListHtml(b.changes)}
 <a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a>${b.mobileBytes ? ` <a class="play" href="${branch}/${b.ordinal}/mobile/">Play mobile</a>` : ''} ${downloadButtons('', b, '')} <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
   }).join('\n');
   const all = branchData.flatMap((d) => d.builds).sort((a, b) => b.ordinal - a.ordinal);
@@ -1129,7 +1305,7 @@ ${uncommittedNote(branch, current, headTracksBuild)}
 ${skippedNote(branch)}
 ${builds.length && !current ? `<p><a class="play" href="${builds[0].ordinal}/">Play newest listed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play newest listed mobile</a>` : ''}</p>` : ''}
 ${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons(siteRoot(branch), builds[0], ` latest (${builds[0].ordinal})`)} <span class="meta">On a phone, use Play — this file is large.</span> <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
-<p class="meta">${builds[0].shape === 'pack' ? 'This is the web edition: Play loads its art from this site. A download is the light-art single file, one self-contained HTML file.' : builds[0].edition === 'light' ? 'A download is one self-contained HTML file. This is a light build: its art is the phone-sized set, so there is no separate mobile file.' : 'A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB.'} On a phone or tablet, use Play; the download is a large offline file for a desktop.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
+<p class="meta">${builds[0].shape === 'pack' ? 'This is the web edition: Play loads its art from this site. A download is the light-art single file, one self-contained HTML file.' : builds[0].edition === 'light' ? 'A download is one self-contained HTML file. This is a light build: its art is the phone-sized set, so there is no separate mobile file.' : 'A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB.'} On a phone or tablet, use Play; the download is a large offline file for a desktop.</p>${changesListHtml(builds[0].changes)}` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
 ${rowsTable(builds, siteRoot(branch), new Set(current && builds[0] ? [builds[0]] : []))}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
@@ -1540,6 +1716,7 @@ function assemble(outDir, keepOverride) {
       const a = artifactsOf(b);
       if (a.error) { skip(b, a.error); freeRebuilds([b], laterKeys); continue; }
       if (!a.web) b.downloadArchived = undefined;
+      b.changes = changesForCommit(b.sha);
       try { checks += publishBuild(outDir, b, a); builds.push(b); }
       catch (error) {
         if (!error.refused) throw error;
