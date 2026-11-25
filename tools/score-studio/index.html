@@ -25,9 +25,112 @@
 </head>
 <body class="studio-body">
   <header class="studio-topbar">
-    <div class="studio-brand">
-      <span class="studio-title">Score Studio</span>
-      <span id="draft-status" class="studio-pill">Synced with repo</span>
+    <div class="studio-menubar">
+      <div class="studio-brand">
+        <span class="studio-title">Score Studio</span>
+      </div>
+      <nav class="studio-app-menus" aria-label="Application menu">
+        <div class="studio-menu">
+          <button id="btn-menu-file" class="menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu-file">File</button>
+          <div id="menu-file" class="studio-menu-panel" hidden>
+            <button id="btn-menu-new-card" class="menu-item" type="button">New Card</button>
+            <button id="btn-custom-decks" class="menu-item" type="button" title="Create and manage custom decks, custom classes, and JSON exports">New Deck / Decks &amp; Classes…</button>
+            <hr />
+            <label class="menu-item s-file-btn">Import Scoring JSON…<input id="input-upload-json" type="file" accept=".json" hidden /></label>
+            <label class="menu-item s-file-btn" title="Load card names from a JSON file: they are added to Restore names and given to the cards">Load Card Names…<input id="input-load-names" type="file" accept=".json,application/json" hidden /></label>
+            <button id="btn-save-names" class="menu-item" type="button" title="Save every card's current name to a JSON file (same file name as last time)">Save Card Names</button>
+            <button id="btn-save-names-as" class="menu-item" type="button" title="Save every card's current name to a new JSON file you name">Save Card Names As…</button>
+            <hr class="repo-only-item" />
+            <button id="btn-revert" class="menu-item" type="button">Revert to In-Game…</button>
+            <div class="menu-section repo-only-item">
+              <label class="menu-label" for="repo-path-input">Repo file</label>
+              <div class="menu-path-row">
+                <input id="repo-path-input" type="text" value="content/source/scoring.json" spellcheck="false" />
+                <button id="btn-load-path" class="s-btn" type="button">Load</button>
+              </div>
+              <span id="path-status" class="studio-muted">Default: content/source/scoring.json</span>
+            </div>
+            <hr />
+            <label class="studio-toggle menu-item"><input id="toggle-autosave" type="checkbox" checked /> Auto-save draft</label>
+          </div>
+        </div>
+
+        <div class="studio-menu">
+          <button id="btn-menu-edit" class="menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu-edit">Edit</button>
+          <div id="menu-edit" class="studio-menu-panel" hidden>
+            <button id="btn-menu-undo" class="menu-item menu-item-split" type="button" disabled><span>Undo</span><kbd>Ctrl+Z</kbd></button>
+            <button id="btn-menu-redo" class="menu-item menu-item-split" type="button" disabled><span>Redo</span><kbd>Ctrl+Y</kbd></button>
+            <hr />
+            <button id="btn-rename-all" class="menu-item" type="button" title="Turn Auto-name on for every card, so each shows its convention name. Nothing reaches the game until Export.">Rename All Cards…</button>
+            <button id="btn-restore-names" class="menu-item" type="button" title="Put back Default names or a saved set of names">Restore Card Names…</button>
+            <hr />
+            <button id="btn-rename-all-items" class="menu-item" type="button" title="Apply convention names to every weapon, armour, and relic in the studio">Rename All Items</button>
+            <button id="btn-restore-item-names" class="menu-item" type="button" title="Restore the shipped authored item names">Restore Item Names</button>
+          </div>
+        </div>
+
+        <div class="studio-menu">
+          <button id="btn-menu-view" class="menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu-view">View</button>
+          <div id="menu-view" class="studio-menu-panel" hidden>
+            <button id="btn-menu-view-grid" class="menu-item" type="button">Grid View</button>
+            <button id="btn-menu-view-single" class="menu-item" type="button">Single Card View</button>
+            <button id="btn-menu-toggle-filters" class="menu-item" type="button">Toggle Filters Bar</button>
+            <hr />
+            <label class="studio-toggle menu-item"><input id="menu-toggle-rank-badges" type="checkbox" checked /> Show Rank Badges</label>
+            <hr />
+            <button id="btn-collapse-all" class="menu-item" type="button">Collapse All Sections</button>
+            <button id="btn-expand-all" class="menu-item" type="button">Expand All Sections</button>
+          </div>
+        </div>
+
+        <div class="studio-menu">
+          <button id="btn-menu-tools" class="menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu-tools">Tools</button>
+          <div id="menu-tools" class="studio-menu-panel" hidden>
+            <button id="btn-auto-balance-cards" class="menu-item" type="button" title="Deterministically rebalance cards to hit rank and rarity quotas">Rebalance Cards (Auto-Balance)…</button>
+            <button id="btn-auto-balance-items" class="menu-item" type="button" title="Deterministically rebalance weapons, armours, and relics to hit rank and rarity quotas">Auto-Balance Items…</button>
+            <hr />
+            <button id="btn-generate-cards" class="menu-item" type="button" title="Make a pool of cards at exact combat power from the weights and your settings. Nothing reaches the game until Export.">Generate Card Pool…</button>
+            <button id="btn-batch-generate-cards" class="menu-item" type="button" title="Batch procedurally generate cards with optional criteria">Batch Generate Cards…</button>
+            <button id="btn-batch-generate-items" class="menu-item" type="button" title="Batch procedurally generate weapons, armours, and relics with optional criteria">Batch Generate Items…</button>
+            <hr />
+            <button id="btn-menu-custom-decks" class="menu-item" type="button" title="Create and manage custom decks, custom classes, and JSON exports">Decks &amp; Classes (New Deck)…</button>
+          </div>
+        </div>
+
+        <div class="studio-menu">
+          <button id="btn-menu-window" class="menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu-window">Window</button>
+          <div id="menu-window" class="studio-menu-panel" hidden>
+            <button class="menu-item is-active" type="button" data-window-tab="cards">Cards &amp; Decks</button>
+            <button class="menu-item" type="button" data-window-tab="items">Items &amp; Relics</button>
+            <button class="menu-item" type="button" data-window-tab="weights">Weights</button>
+            <button class="menu-item" type="button" data-window-tab="art">Art &amp; Layers</button>
+            <button class="menu-item" type="button" data-window-tab="effects">Effects Timing</button>
+            <button class="menu-item" type="button" data-window-tab="sandbox">Combat Sandbox</button>
+            <hr />
+            <button id="btn-reset-inspector-width" class="menu-item" type="button">Reset Inspector Width</button>
+          </div>
+        </div>
+      </nav>
+      <div class="studio-actions">
+        <span id="draft-status" class="studio-pill is-loading">Loading…</span>
+        <button id="btn-undo" class="s-btn s-btn-icon" title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)" disabled>↶</button>
+        <button id="btn-redo" class="s-btn s-btn-icon" title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)" disabled>↷</button>
+        <div class="studio-menu">
+          <button id="btn-export-menu" class="s-btn s-btn-primary" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="export-menu">Export ▾</button>
+          <div id="export-menu" class="studio-menu-panel is-right" hidden>
+            <button id="btn-export-repo" class="menu-item" type="button">Export Scoring to Repo…</button>
+            <button id="btn-export-accept-ranks" class="menu-item repo-only-item" type="button">Accept New Ranks to Game…</button>
+            <button id="btn-export-decks-repo" class="menu-item repo-only-item" type="button">Save Custom Decks to Repo</button>
+            <hr class="repo-only-item" />
+            <button id="btn-download-json" class="menu-item" type="button">Download Scoring JSON</button>
+            <button id="btn-export-bundle-json" class="menu-item" type="button">Download Studio Bundle JSON…</button>
+            <button id="btn-export-names-json" class="menu-item" type="button">Download Card Names JSON</button>
+            <hr />
+            <button id="btn-export-art-json" class="menu-item" type="button">Download Card Art Layers JSON</button>
+            <button id="btn-export-item-art-json" class="menu-item" type="button">Download Item Art Layers JSON</button>
+          </div>
+        </div>
+      </div>
     </div>
     <nav class="studio-tabs" role="tablist" aria-label="Score Studio workspaces">
       <button class="studio-tab is-active" data-tab="cards" role="tab" aria-selected="true"><span class="tab-long">Cards &amp; Decks</span><span class="tab-short">Cards</span></button>
@@ -37,33 +140,6 @@
       <button id="effects-tab-button" class="studio-tab" data-tab="effects" role="tab" aria-selected="false" aria-controls="tab-effects"><span class="tab-long">Effects Timing</span><span class="tab-short">Effects</span></button>
       <button class="studio-tab" data-tab="sandbox" role="tab" aria-selected="false"><span class="tab-long">Combat Sandbox</span><span class="tab-short">Sandbox</span></button>
     </nav>
-    <div class="studio-actions">
-      <button id="btn-undo" class="s-btn s-btn-icon" title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)" disabled>↶</button>
-      <button id="btn-redo" class="s-btn s-btn-icon" title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)" disabled>↷</button>
-      <button id="btn-export-repo" class="s-btn s-btn-primary">Export…</button>
-      <div class="studio-menu">
-        <button id="btn-more" class="s-btn s-btn-icon" title="More" aria-label="More" aria-haspopup="true" aria-expanded="false" aria-controls="more-menu">⋯</button>
-        <div id="more-menu" class="studio-menu-panel is-right" hidden>
-          <button id="btn-revert" class="menu-item">Revert to in-game…</button>
-          <hr />
-          <button id="btn-collapse-all" class="menu-item">Collapse all sections</button>
-          <button id="btn-expand-all" class="menu-item">Expand all sections</button>
-          <hr />
-          <button id="btn-download-json" class="menu-item">Download JSON</button>
-          <label class="menu-item s-file-btn">Upload JSON…<input id="input-upload-json" type="file" accept=".json" hidden /></label>
-          <hr />
-          <div class="menu-section">
-            <label class="menu-label" for="repo-path-input">Repo file</label>
-            <div class="menu-path-row">
-              <input id="repo-path-input" type="text" value="content/source/scoring.json" spellcheck="false" />
-              <button id="btn-load-path" class="s-btn">Load</button>
-            </div>
-            <span id="path-status" class="studio-muted">Default: content/source/scoring.json</span>
-          </div>
-          <label class="studio-toggle menu-item"><input id="toggle-autosave" type="checkbox" checked /> Auto-save draft</label>
-        </div>
-      </div>
-    </div>
   </header>
 
   <div id="art-missing-banner" class="studio-banner" role="status" hidden>
@@ -79,39 +155,12 @@
           <div class="filter-bar">
             <div class="filter-row">
               <input id="card-search" type="search" placeholder="Search cards by name, tag, effect" aria-label="Search cards" />
-              <button id="btn-filters" class="s-btn" aria-expanded="false" aria-controls="filter-panel">Filters <span id="filter-count" class="badge hidden">0</span></button>
-              <button id="btn-new-card" class="s-btn s-btn-primary">+ New</button>
-              <span class="studio-muted pool-label pool-label-row"></span>
-            </div>
-            <div class="filter-row names-row">
-              <button id="btn-auto-balance-cards" class="s-btn s-btn-primary" type="button" title="Deterministically rebalance cards to hit rank and rarity quotas">Auto-balance…</button>
-              <button id="btn-generate-cards" class="s-btn" type="button" title="Make a pool of cards at exact combat power from the weights and your settings. Nothing reaches the game until Export.">Generate cards…</button>
-              <div class="studio-menu">
-                <button id="btn-card-tools-menu" class="s-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="card-tools-menu">Tools ▾</button>
-                <div id="card-tools-menu" class="studio-menu-panel" hidden>
-                  <button id="btn-batch-generate-cards" class="menu-item" type="button" title="Batch procedurally generate cards with optional criteria">Batch Generate…</button>
-                  <button id="btn-custom-decks" class="menu-item" type="button" title="Create and manage custom decks, custom classes, and JSON exports">Decks &amp; Classes…</button>
-                </div>
-              </div>
-              <div class="studio-menu">
-                <button id="btn-card-names-menu" class="s-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="card-names-menu">Names ▾</button>
-                <div id="card-names-menu" class="studio-menu-panel" hidden>
-                  <button id="btn-rename-all" class="menu-item" type="button" title="Turn Auto-name on for every card, so each shows its convention name. Nothing reaches the game until Export.">Rename all</button>
-                  <button id="btn-save-names" class="menu-item" type="button" title="Save every card's current name to a JSON file (same file name as last time)">Save names</button>
-                  <button id="btn-save-names-as" class="menu-item" type="button" title="Save every card's current name to a new JSON file you name">Save as…</button>
-                  <label class="menu-item s-file-btn" title="Load card names from a JSON file: they are added to Restore names and given to the cards">Load names…<input id="input-load-names" type="file" accept=".json,application/json" hidden /></label>
-                </div>
-              </div>
-              <div class="studio-menu">
-                <button id="btn-restore-names" class="s-btn" title="Put back Default names or a saved set of names" aria-haspopup="true" aria-expanded="false" aria-controls="restore-names-menu">Restore names ▾</button>
-                <div id="restore-names-menu" class="studio-menu-panel restore-names-panel" hidden>
-                  <div id="restore-names-list" class="restore-names-list" role="radiogroup" aria-label="Name sets"></div>
-                  <button id="btn-restore-names-apply" class="s-btn s-btn-primary" type="button" title="Give every card the chosen names and turn Auto-name off">Restore</button>
-                </div>
-              </div>
               <select id="filter-deck" aria-label="Custom deck filter" title="Filter gallery by a custom deck or active deck list">
                 <option value="all">All Decks</option>
               </select>
+              <button id="btn-filters" class="s-btn" aria-expanded="false" aria-controls="filter-panel">Filters <span id="filter-count" class="badge hidden">0</span></button>
+              <button id="btn-new-card" class="s-btn s-btn-primary">+ New</button>
+              <span class="studio-muted pool-label pool-label-row"></span>
             </div>
             <div id="filter-panel" class="filter-panel" hidden>
               <select id="filter-type" aria-label="Card type"><option value="all">All Types</option></select>
@@ -135,7 +184,29 @@
               <span class="studio-muted pool-label pool-label-panel"></span>
             </div>
           </div>
-          <div id="cards-grid" class="cards-grid"></div>
+          <div id="cards-art-loading" class="studio-loading-bar" role="status" aria-live="polite" hidden>
+            <span class="studio-loading-spinner studio-loading-spinner-sm" aria-hidden="true"></span>
+            <span id="cards-art-loading-text" class="studio-loading-bar-text">Loading card art…</span>
+            <div class="studio-loading-progress" aria-hidden="true"><div id="cards-art-loading-fill" class="studio-loading-progress-fill"></div></div>
+          </div>
+          <div id="cards-loading" class="studio-loading-state" role="status" aria-live="polite" aria-busy="true">
+            <div class="studio-loading-head">
+              <div class="studio-loading-spinner" aria-hidden="true"></div>
+              <div class="studio-loading-copy">
+                <strong id="cards-loading-title">Loading cards…</strong>
+                <span id="cards-loading-detail" class="studio-muted">Loading studio modules and card pool…</span>
+              </div>
+            </div>
+            <div class="studio-loading-skeletons" aria-hidden="true">
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+              <div class="studio-skeleton-tile"><div class="studio-skeleton-stage"></div><div class="studio-skeleton-line"></div><div class="studio-skeleton-line is-short"></div></div>
+            </div>
+          </div>
+          <div id="cards-grid" class="cards-grid" hidden></div>
         </div>
 
         <div id="inspector-resizer" class="inspector-resizer" title="Drag to resize the inspector" role="separator" aria-orientation="vertical"></div>
@@ -320,23 +391,19 @@
                 <option value="cp-asc">CP ↑</option>
                 <option value="name">Name A–Z</option>
               </select>
-            </div>
-            <div class="filter-row names-row">
-              <button id="btn-auto-balance-items" class="s-btn s-btn-primary" type="button" title="Deterministically rebalance weapons, armours, and relics to hit rank and rarity quotas">Auto-balance…</button>
-              <div class="studio-menu">
-                <button id="btn-item-tools-menu" class="s-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="item-tools-menu">Tools ▾</button>
-                <div id="item-tools-menu" class="studio-menu-panel" hidden>
-                  <button id="btn-batch-generate-items" class="menu-item" type="button" title="Batch procedurally generate weapons, armours, and relics with optional criteria">Batch Generate…</button>
-                  <button id="btn-custom-decks-items" class="menu-item" type="button" title="Manage custom decks, classes, and export/load JSON bundles">Decks &amp; Lists…</button>
-                  <hr class="menu-divider" />
-                  <button id="btn-rename-all-items" class="menu-item" type="button" title="Apply convention names to every weapon, armour, and relic in the studio">Rename all</button>
-                  <button id="btn-restore-item-names" class="menu-item" type="button" title="Restore the shipped authored item names">Restore names</button>
-                </div>
-              </div>
               <span id="items-count" class="studio-muted"></span>
             </div>
           </div>
-          <div id="items-grid" class="cards-grid items-grid"></div>
+          <div id="items-loading" class="studio-loading-state studio-loading-compact" role="status" aria-live="polite" aria-busy="true">
+            <div class="studio-loading-head">
+              <div class="studio-loading-spinner" aria-hidden="true"></div>
+              <div class="studio-loading-copy">
+                <strong id="items-loading-title">Loading items…</strong>
+                <span id="items-loading-detail" class="studio-muted">Preparing weapons, armours, and relics…</span>
+              </div>
+            </div>
+          </div>
+          <div id="items-grid" class="cards-grid items-grid" hidden></div>
         </div>
 
         <div id="item-inspector-resizer" class="inspector-resizer" title="Drag to resize the inspector" role="separator" aria-orientation="vertical"></div>
@@ -604,6 +671,17 @@
         <button value="cancel" class="s-btn" title="Keep the names as they are">Cancel</button>
         <button id="btn-rename-all-skip" value="skip" class="s-btn" title="Rename all without saving the current names">Skip</button>
         <button id="btn-rename-all-save" value="save" class="s-btn s-btn-primary" title="Save the current names, then rename all">Save</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="restore-names-modal" class="studio-modal">
+    <form method="dialog">
+      <h3>Restore card names</h3>
+      <p class="studio-muted">Choose Default names or a saved name set to restore onto every card (turns Auto-name off).</p>
+      <div id="restore-names-list" class="restore-names-list" role="radiogroup" aria-label="Name sets"></div>
+      <div class="modal-actions">
+        <button value="cancel" class="s-btn">Cancel</button>
+        <button id="btn-restore-names-apply" class="s-btn s-btn-primary" type="button" title="Give every card the chosen names and turn Auto-name off">Restore</button>
       </div>
     </form>
   </dialog>

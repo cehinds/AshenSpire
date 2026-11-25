@@ -390,3 +390,72 @@ test('Ward and Bonus Poise (barrier / gainBarrier / bonusPoise tag) are separate
   assert.match(studioSrc, /restorePoise:\s*\{\s*part:\s*'block',\s*weight:\s*'block'\s*\}/, 'restorePoise is mapped in EFFECT_SCORE_KEYS');
   assert.match(studioSrc, /eff\.op === 'gainBarrier'\s*\?\s*wanted\s*:\s*authoredAmountForFace/, 'gainBarrier edits stacks directly without x5 Poise scaling');
 });
+
+test('score-studio loading state: initial HTML shows card loading UI and loadingState helpers summarize art progress', async () => {
+  const LS = await import('../tools/score-studio/loadingState.js');
+
+  assert.equal(LS.parseLoadingShotMode(''), null);
+  assert.equal(LS.parseLoadingShotMode('?shot=loading'), 'loading');
+  assert.equal(LS.parseLoadingShotMode('?foo=1&shot=art-loading'), 'art-loading');
+  assert.equal(LS.parseLoadingShotMode('?shot=other'), null);
+
+  assert.equal(LS.artLoadingPercent(0, 0), 100);
+  assert.equal(LS.artLoadingPercent(0, 100), 0);
+  assert.equal(LS.artLoadingPercent(42, 106), 40);
+  assert.equal(LS.artLoadingPercent(200, 106), 100);
+
+  assert.equal(LS.formatArtLoadingStatus(0, 0), 'Loading card art…');
+  assert.equal(LS.formatArtLoadingStatus(1, 1), 'Loading card art… 1 / 1 card');
+  assert.equal(LS.formatArtLoadingStatus(24, 106), 'Loading card art… 24 / 106 cards');
+
+  const partial = LS.summarizeTileArtLoad([
+    [{ complete: true }, { complete: true }],
+    [{ complete: true }, { complete: false }],
+    [{ complete: false }],
+    [],
+  ]);
+  assert.deepEqual(partial, {
+    total: 3,
+    settled: 1,
+    pending: 2,
+    percent: 33,
+    complete: false,
+    text: 'Loading card art… 1 / 3 cards',
+  });
+
+  const done = LS.summarizeTileArtLoad([
+    [{ complete: true }],
+    [{ complete: true }, { complete: true }],
+  ]);
+  assert.equal(done.complete, true);
+  assert.equal(done.pending, 0);
+  assert.equal(done.percent, 100);
+
+  const html = readFileSync(new URL('../tools/score-studio/index.html', import.meta.url), 'utf8');
+  assert.match(html, /<span id="draft-status" class="studio-pill is-loading">Loading…<\/span>/, 'top bar starts in loading state before JS executes');
+  assert.match(html, /<div id="cards-loading" class="studio-loading-state" role="status" aria-live="polite" aria-busy="true">/, 'cards loading placeholder renders on first paint');
+  assert.match(html, /<div id="cards-grid" class="cards-grid" hidden><\/div>/, 'cards grid stays hidden until populated');
+  assert.match(html, /<div id="cards-art-loading" class="studio-loading-bar" role="status" aria-live="polite" hidden>/, 'art loading bar starts hidden until cards render');
+  assert.match(html, /<div id="items-loading" class="studio-loading-state studio-loading-compact" role="status" aria-live="polite" aria-busy="true">/, 'items loading state renders initially');
+
+  const studioSrc = readFileSync(new URL('../tools/score-studio/studio.js', import.meta.url), 'utf8');
+  assert.match(studioSrc, /deriveFaceFromDef:\s*\(?def\)?\s*=>\s*cardDefToFace\(def,\s*state\.scoring\)/, 'initStudioToolsModals receives a defined deriveFaceFromDef callback backed by cardDefToFace');
+});
+
+test('score-studio app menubar: File/Edit/View/Tools/Window and Export dropdown contain expected actions', () => {
+  const html = readFileSync(new URL('../tools/score-studio/index.html', import.meta.url), 'utf8');
+  for (const id of ['btn-menu-file', 'btn-menu-edit', 'btn-menu-view', 'btn-menu-tools', 'btn-menu-window', 'btn-export-menu']) {
+    assert.match(html, new RegExp(`id="${id}"`), `menu bar exposes #${id}`);
+  }
+  for (const id of [
+    'menu-file', 'menu-edit', 'menu-view', 'menu-tools', 'menu-window', 'export-menu',
+    'btn-auto-balance-cards', 'btn-auto-balance-items', 'btn-generate-cards',
+    'btn-batch-generate-cards', 'btn-batch-generate-items', 'btn-custom-decks',
+    'btn-export-repo', 'btn-download-json', 'btn-export-bundle-json',
+    'btn-export-names-json', 'btn-export-art-json', 'btn-export-item-art-json',
+    'restore-names-modal', 'btn-restore-names', 'btn-restore-names-apply',
+  ]) {
+    assert.match(html, new RegExp(`id="${id}"`), `moved menu action or panel #${id} is present`);
+  }
+  assert.doesNotMatch(html, /id="btn-more"/, 'old More overflow button is replaced by the standard app menu bar');
+});
