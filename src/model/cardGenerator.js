@@ -94,7 +94,6 @@ export const GENERATOR_STANCES = Object.freeze([
 ]);
 export const GENERATOR_CLASSES = Object.freeze(['reaver', 'starseer', 'rogue', 'herald', 'colorless']);
 export const GENERATOR_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
-export const GENERATOR_KEYWORDS = Object.freeze(['exhaust', 'retain', 'innate']);
 
 const SCHOOL_STATUS = Object.freeze({
   fire: ['burn', 'enemy'],
