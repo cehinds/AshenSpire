@@ -34,7 +34,7 @@ import { BaseFace, ScoreCard, CombatPower, RankOf, CardName } from './combatPowe
 
 const BLOCK_ADD = 6; // scoring.items.kit.weaponArt: "Block x0.49 + 6 (DR add)"
 const hash = (s) => { let h = 2166136261; for (const ch of String(s)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
-export function seededPrng(seed) {
+function seededPrng(seed) {
   let a = hash(seed);
   return () => {
     a = (a + 0x6D2B79F5) >>> 0;

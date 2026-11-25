@@ -77,7 +77,7 @@ export const MAX_CARD_UPGRADES = 10;
 export const MAX_UPGRADE_TAG_STACKS = 3;
 
 /** Format a stacking upgrade tag: stack 1 -> 'upgrade:efficient', stack 2 -> 'upgrade:efficient+', stack 3 -> 'upgrade:efficient+2'. */
-export function upgradeTagFor(family, stacks) {
+export function UpgradeTagFor(family, stacks) {
   const n = Math.max(0, Math.floor(Number(stacks) || 0));
   if (n <= 0) return null;
   if (n === 1) return `upgrade:${family}`;
@@ -86,7 +86,7 @@ export function upgradeTagFor(family, stacks) {
 }
 
 /** Read current stack count (0..MAX_UPGRADE_TAG_STACKS) of an upgrade tag family on a card definition. */
-export function upgradeTagStacks(card, family) {
+export function UpgradeTagStacks(card, family) {
   const list = [...(card?.cardTags || []), ...(card?.tags || [])];
   const prefix = `upgrade:${family}`;
   let best = 0;
@@ -105,7 +105,7 @@ export function upgradeTagStacks(card, family) {
  * Compounding 10% effect scaling for Improved stacks: 1.10^1, 1.10^2 (1.21), 1.10^3 (1.331),
  * with a floor of at least +1 per stack so small numbers never round down to +0.
  */
-export function improvedScaledAmount(baseAmount, stacks, multPerStack = 1.1) {
+export function ImprovedScaledAmount(baseAmount, stacks, multPerStack = 1.1) {
   const base = Math.max(0, Number(baseAmount) || 0);
   const n = Math.max(0, Math.floor(Number(stacks) || 0));
   if (n === 0 || base === 0) return base;
@@ -116,10 +116,10 @@ const CORE_UPGRADE_TAG_FAMILIES = new Set(['efficient', 'improved']);
 
 function bumpUpgradeTag(out, card, family, delta = 1, maxStacks = MAX_UPGRADE_TAG_STACKS) {
   if (!CORE_UPGRADE_TAG_FAMILIES.has(family) && GetActiveScoring()?.upgradeTags?.[family]?.surchargeEnabled !== true) return;
-  const cur = upgradeTagStacks(out, family);
+  const cur = UpgradeTagStacks(out, family);
   const next = Math.min(maxStacks, cur + Math.max(1, Math.floor(Number(delta) || 1)));
   if (next <= cur) return;
-  const tag = upgradeTagFor(family, next);
+  const tag = UpgradeTagFor(family, next);
   const prefix = `upgrade:${family}`;
   const keep = (t) => t !== prefix && !t.startsWith(`${prefix}+`);
   const keys = ['tags', 'cardTags'].filter((k) => Array.isArray(card[k]));

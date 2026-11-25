@@ -4,7 +4,7 @@
 // A leaf module: it imports only rng.js, cardUpgrade.js, combatRanges.js, cardRank.js and generated data.
 // Retain is offered as an `fx` step (W25): Core keeps a Retain card in hand at the end of a turn.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, MAX_CARD_UPGRADES, MAX_UPGRADE_TAG_STACKS, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps, upgradeTagStacks, improvedScaledAmount } from './cardUpgrade.js';
+import { applyUpgradeSteps, MAX_CARD_UPGRADES, MAX_UPGRADE_TAG_STACKS, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps, UpgradeTagStacks, ImprovedScaledAmount } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { EvaluateUpgradeStepCp } from './cardUpgradeCp.js';
@@ -228,7 +228,7 @@ function options(base, current, applied, limits, rarity = 0) {
   const found = {};
 
   // cost: each cost reduction adds 1 Efficient stack (Efficient / Efficient+ / Efficient+2, max 3 stacks, doubling CP surcharge 10/20/40).
-  const efficientStacks = upgradeTagStacks(current, 'efficient');
+  const efficientStacks = UpgradeTagStacks(current, 'efficient');
   const maxEffStacks = GetActiveScoring()?.upgradeTags?.efficient?.maxStacks ?? MAX_UPGRADE_TAG_STACKS;
   if (efficientStacks < maxEffStacks) {
     const pools = [];
@@ -270,14 +270,14 @@ function options(base, current, applied, limits, rarity = 0) {
   // answers (the same `maneuver` test it makes), and Core 2 replaces that payload's HP and Poise with the fixed
   // return: a range, area, damage, hits or poise step could never be honoured, so none of them is offered.
   const counterReturn = familyValue(tagsOf(current), 'maneuver:') === 'counter';
-  const improvedStacks = upgradeTagStacks(current, 'improved');
+  const improvedStacks = UpgradeTagStacks(current, 'improved');
   const impRule = GetActiveScoring()?.upgradeTags?.improved;
   const maxImpStacks = impRule?.maxStacks ?? MAX_UPGRADE_TAG_STACKS;
   const impMult = Number.isFinite(impRule?.effectMultPerStack) && impRule.effectMultPerStack > 1 ? impRule.effectMultPerStack : 1.1;
   const improvedDeltaFor = (baseAmount, curAmount) => {
     const addStacks = Math.min(rarity + 1, maxImpStacks - improvedStacks);
     if (addStacks <= 0 || baseAmount <= 0) return null;
-    const targetAmount = improvedScaledAmount(baseAmount, improvedStacks + addStacks, impMult);
+    const targetAmount = ImprovedScaledAmount(baseAmount, improvedStacks + addStacks, impMult);
     const delta = Math.max(addStacks, targetAmount - curAmount);
     return delta > 0 ? { n: delta, improvedStacks: addStacks } : null;
   };
