@@ -100,7 +100,7 @@ export function PlanCardPoolInputs(options = {}, { scoring = shippedScoring } = 
   const mps = idx.map(() => 0);
   casters.forEach((i, j) => { mps[i] = mpDealt[j]; });
   // A magic card casts, so only a martial or hybrid smash / sweep / counter keeps its attack maneuver; a magic sweep is still area.
-  const attacks = idx.filter((i) => ATTACK_TYPES.has(types[i]));
+  const attacks = idx.filter((i) => ATTACK_TYPES.has(types[i]) && !(camps[i] === 'magic' && types[i] === 'counter')); // a magic counter is a skill
   const areas = chooseShare(attacks.filter((i) => types[i] !== 'sweep'), o.areaOdds, rand);
   const single = attacks.filter((i) => types[i] !== 'sweep' && !areas.has(i));
   const rangeDealt = deal(o.range, single.length, RANGES, rand);

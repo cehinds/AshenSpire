@@ -148,6 +148,14 @@ test('card generator: no HP cost without a drawback, and never more than 6, over
   for (let seed = 1; seed <= 40; seed++) assert.equal(GenerateFace({ rarity: 'common', rank: 0, seed, camp: 'martial', type: 'counter', effects: 1 }).face.loseHp, 0);
 });
 
+test('card generator: a magic counter or defend is a skill, a magic smash or sweep an attack', () => {
+  for (const [type, kind] of [['counter', 'skill'], ['defend', 'skill'], ['smash', 'attack'], ['sweep', 'attack']]) {
+    const card = GenerateCard({ rarity: 'common', rank: 2, seed: 3, camp: 'magic', type, effects: 1 });
+    assert.equal(card.type, kind, type);
+    assert.ok(card.tags.includes('maneuver:casting'));
+  }
+});
+
 test('card generator: multi-effect cards pass the card template validator and use only real ops', () => {
   const coreCards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
   const coreOps = new Set(coreCards.flatMap(card => card.effects.map(e => e.op)));

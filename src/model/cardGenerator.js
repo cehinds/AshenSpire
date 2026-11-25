@@ -56,6 +56,7 @@ const CAMP_ALIAS = { physical: 'martial', spell: 'magic', martial: 'martial', ma
 export const RANGES = Object.freeze(['melee', 'reach']);
 export const KEYWORDS = Object.freeze(['exhaust', 'ethereal', 'retain', 'innate']);
 const HYBRID_MAGIC_SHARE = 0.5;
+const MAGIC_ATTACK_TYPES = new Set(['attack', 'smash', 'sweep']);
 /** Rider effects (beyond the primary). Statuses are riders too, named 'status:<id>' from scoring.statuses. */
 export const RIDER_EFFECTS = Object.freeze(['poise', 'block', 'damage', 'draw', 'heal', 'cleanse', 'restoreSp', 'restoreMp', 'move']);
 const ATTACK_ONLY = new Set(['poise', 'block']);
@@ -149,7 +150,7 @@ export function GenerateFace(input, { scoring = shippedScoring } = {}) {
   const raw = cp + scoring.rarity.discount[rarity];
 
   // A magic card casts: its maneuver is casting, so smash / sweep play as an attack and counter / defend as a skill.
-  const shape = campKind === 'magic' ? { type: TYPE_SHAPE[type].type, maneuver: 'maneuver:casting', area: TYPE_SHAPE[type].area } : TYPE_SHAPE[type];
+  const shape = campKind === 'magic' ? { type: MAGIC_ATTACK_TYPES.has(type) ? 'attack' : 'skill', maneuver: 'maneuver:casting', area: TYPE_SHAPE[type].area } : TYPE_SHAPE[type];
   const kind = shape.type;
   const face = Object.assign(BaseFace(), { cls, rarity, camp, type: kind });
   if (campKind === 'hybrid') face.magicShare = HYBRID_MAGIC_SHARE;
