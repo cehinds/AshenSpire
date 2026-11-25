@@ -370,8 +370,8 @@ test('only movement chevrons mirror; group sweep and delayed secondary cancel to
     const anchorFor=id=>id==='a'?a:b;
     PlayRecipientEffectLayers(layer,[{...recipe,shape:'sweep',mount:'group',groupKey:'one-action',targetIds:['a','b'],durationMs:300},{...recipe,shape:'heal-plus',targetId:'a',delayMs:200,durationMs:300}],{anchorFor,forcePlaceholder:true});
     assert.equal(layer.children.length,1);assert.equal(layer.children[0].dataset.shape,'sweep');
-    const onset=300+timing.gapMs;
-    t.mock.timers.tick(onset-1);assert.equal(layer.children.length,0);
+    t.mock.timers.tick(300);
+    t.mock.timers.tick(timing.gapMs-1);assert.equal(layer.children.length,0);
     t.mock.timers.tick(1);assert.equal(layer.children.length,1);
     assert.equal(layer.children[0].dataset.shape,'heal-plus');
     ClearRecipientEffects(layer);t.mock.timers.tick(1000);assert.equal(layer.children.length,0);
@@ -494,8 +494,8 @@ test('live result windows span separate calls and pending schedules cancel witho
     play('block-hit', 'a');
     play('weak', 'b');
     assert.deepEqual(shapes(), ['slash', 'weak']);
-    const toNext = 300 + timing.gapMs - 40;
-    t.mock.timers.tick(toNext - 1);
+    t.mock.timers.tick(260);
+    t.mock.timers.tick(timing.gapMs - 1);
     assert.deepEqual(shapes(), ['weak']);
     t.mock.timers.tick(1);
     assert.deepEqual(shapes(), ['weak', 'block-hit']);
@@ -523,7 +523,8 @@ test('the battlefield gap remains reserved between separate live calls after the
     actor.box = box;
     const options = { anchorFor: () => actor, forcePlaceholder: true };
     PlayRecipientEffectLayers(layer, [onA], options);
-    t.mock.timers.tick(305);
+    t.mock.timers.tick(300);
+    t.mock.timers.tick(5);
     assert.equal(layer.children.length, 0);
     PlayRecipientEffectLayers(layer, [onB], options);
     t.mock.timers.tick(timing.gapMs - 6);
@@ -571,6 +572,36 @@ test('live battlefield cap two allows overlap and then waits for a slot to relea
     assert.deepEqual(shapes(), ['slash', 'weak']);
     t.mock.timers.tick(1);
     assert.deepEqual(shapes(), ['weak', 'frail']);
+    ClearRecipientEffects(layer);
+  });
+});
+
+
+test('mount time is outside the clip duration and the gap begins at actual teardown', t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  withKitDom(dom => {
+    const layer = dom.document.createElement('div'), actor = dom.document.createElement('div');
+    actor.box = box;
+    const create = dom.document.createElement.bind(dom.document);
+    let first = true;
+    dom.document.createElement = tag => {
+      if (tag === 'img' && first) {
+        first = false;
+        t.mock.timers.setTime(20);
+      }
+      return create(tag);
+    };
+    const options = { anchorFor: () => actor, forcePlaceholder: true };
+    PlayRecipientEffectLayers(layer, [onA, onB], options);
+    t.mock.timers.tick(299);
+    assert.equal(layer.children[0].dataset.shape, 'slash');
+    // Overshoot both the first teardown and the second's planned timer.
+    t.mock.timers.tick(101);
+    assert.equal(layer.children.length, 0);
+    t.mock.timers.tick(timing.gapMs - 1);
+    assert.equal(layer.children.length, 0);
+    t.mock.timers.tick(1);
+    assert.equal(layer.children[0].dataset.shape, 'weak');
     ClearRecipientEffects(layer);
   });
 });

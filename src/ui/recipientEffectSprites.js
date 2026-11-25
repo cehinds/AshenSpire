@@ -215,7 +215,7 @@ export function PlayRecipientEffect(layer,box,recipe,{size,sourceBox,targetFacin
   timers.push(setTimeout(stop,ms));return stop;
 }
 
-export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUrl,forcePlaceholder=false,timing,duration}={}) {
+export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUrl,forcePlaceholder=false,timing,duration,onStop}={}) {
   if(recipe.range!=='reach'||!from||disabled()||forcePlaceholder)return ()=>{};
   const sources=sourcesFor({...recipe,shape:recipe.impactShape||'skill'},resolveAsset);
   if(!sources.every(source=>!source.absent&&loaded.get(source.url)?.ready))return ()=>{};
@@ -227,7 +227,18 @@ export function PlayRecipientDelivery(layer,from,to,recipe,{resolveAsset=assetUr
   ctx.strokeStyle=recipe.color;ctx.fillStyle=recipe.color;ctx.globalAlpha=O.delivery;
   if(recipe.camp==='spell'){ctx.lineWidth=S.spellLinkWidthPx;ctx.setLineDash(S.spellLinkDash);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(bx,by);ctx.stroke();ctx.setLineDash([]);for(let i=0;i<S.spellLinkParticles;i++){const f=i/S.spellLinkParticles;ctx.beginPath();ctx.arc(sx+(bx-sx)*f,sy+(by-sy)*f,S.spellLinkWidthPx,0,Math.PI*2);ctx.fill();}}
   else{const nx=-(by-sy)/Math.max(1,distance*fraction)*S.deliveryWidthPx,ny=(bx-sx)/Math.max(1,distance*fraction)*S.deliveryWidthPx;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+(bx-sx)*S.deliveryTipStart+nx,sy+(by-sy)*S.deliveryTipStart+ny);ctx.lineTo(bx,by);ctx.lineTo(sx+(bx-sx)*S.deliveryTipStart-nx,sy+(by-sy)*S.deliveryTipStart-ny);ctx.closePath();ctx.fill();}
-  let timer;const stop=()=>{clearTimeout(timer);c.remove();set.delete(stop);};const set=register(layer,stop);timer=setTimeout(stop,clipDuration({...recipe,phase:'delivery'},duration));return stop;
+  let stopped = false;
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    clearTimeout(timer);
+    c.remove();
+    set.delete(stop);
+    onStop?.();
+  };
+  const set = register(layer, stop);
+  const timer = setTimeout(stop, clipDuration({ ...recipe, phase: 'delivery' }, duration));
+  return stop;
 }
 
 function clipDuration(recipe, duration) {
@@ -366,14 +377,20 @@ export function PlayRecipientEffectLayers(layer, recipes, { anchorFor, sourceId,
       }
       const source = anchorFor(recipe.sourceId || sourceId);
       const sourceBox = source ? bodyBox(layer, source) : null;
+      const onStop = () => {
+        entry.end = Date.now();
+        delete entry.finish;
+        options.onStop?.();
+      };
+      const playback = { ...options, duration: durationMs, timing, onStop };
       let finish;
       if (recipe.phase === 'delivery') {
-        finish = PlayRecipientDelivery(layer, sourceBox, box, recipe, { ...options, duration: durationMs, timing });
+        finish = PlayRecipientDelivery(layer, sourceBox, box, recipe, playback);
       } else {
         const combatant = actor.closest('.combatant');
         const card = combatant?.querySelector('.combatant-card');
         const targetFacing = combatant?.classList.contains('enemy') ? 'front' : 'back';
-        finish = PlayRecipientEffect(layer, box, recipe, { ...options, duration: durationMs, timing, actor, sourceBox,
+        finish = PlayRecipientEffect(layer, box, recipe, { ...playback, actor, sourceBox,
           targetFacing, cardBox: card ? localBox(layer, card) : null });
       }
       entry.finish = () => {
@@ -381,9 +398,15 @@ export function PlayRecipientEffectLayers(layer, recipes, { anchorFor, sourceId,
         finish();
       };
       stops.push(entry.finish);
-      // Keep completed reservations through the configured gap, including
-      // between independent calls from the combat timeline.
-      timers.push(setTimeout(() => retire(entry), durationMs + (result ? timing.gapMs : 0) + M.cleanupSlackMs));
+      // Initial drawing precedes the renderer's duration timer. Keep the full
+      // clip duration after mounting, then update the reservation on teardown.
+      entry.end = Date.now() + durationMs;
+      const release = () => {
+        const waitMs = entry.end + (result ? timing.gapMs : 0) + M.cleanupSlackMs - Date.now();
+        if (waitMs > 0) timers.push(setTimeout(release, waitMs));
+        else retire(entry);
+      };
+      release();
     };
     if (delayMs > 0) timers.push(setTimeout(play, delayMs));
     else play();
