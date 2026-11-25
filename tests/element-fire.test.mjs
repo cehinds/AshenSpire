@@ -47,16 +47,17 @@ test('live: Cinder Dart reaches both enemies, each loses exactly what the quote 
   assert.ok(before.lost.e1 > played.lost.e1, 'and no x0.6');
 });
 
-test('current fire ignores max(INT, WIS) Poise, never their sum, with either casting attribute higher', () => {
+test('current Fire identifies max(INT, WIS) while an idle target uses weapon Poise, with either casting attribute higher', () => {
   for (const [attributes, ignored] of [[{ intelligence: 4, wisdom: 2 }, 4], [{ intelligence: 2, wisdom: 4 }, 4], [{ intelligence: 0, wisdom: 0 }, 0]]) {
     const { combat, enemy } = fight({ poise: 20, attributes });
     const fire = hit(combat, enemy);
     assert.equal(fire.element.poiseIgnored, ignored, JSON.stringify(attributes));
-    assert.deepEqual([fire.poiseMitigated, fire.poiseDrain, fire.hpLoss], [10, ignored, 0]);
+    assert.ok(fire.weaponPoiseDamage > 0, 'the current weapon rule supplies Poise damage');
+    assert.deepEqual([fire.poiseMitigated, fire.poiseDrain, fire.hpLoss], [0, fire.weaponPoiseDamage + ignored, 10]);
     assert.equal(enemy.persistentPoise.value, 20, 'a receipt never edits the pool');
     enemy.persistentPoise.value = 8;
     const small = hit(combat, enemy);
-    assert.deepEqual([small.poiseMitigated, small.poiseDrain, small.hpLoss], [8 - ignored, ignored, 2 + ignored], 'the higher casting stat alone determines ignored Poise; zero ignores none');
+    assert.deepEqual([small.poiseMitigated, small.poiseDrain, small.hpLoss], [0, Math.min(8, fire.weaponPoiseDamage + ignored), 10]);
   }
 });
 
