@@ -63,6 +63,9 @@ test('current Fire identifies max(INT, WIS) while an idle target uses weapon Poi
 
 test('archived 6727 fire retains WIS + INT ignored Poise with its original damage and spell Poise scales', () => {
   const { combat, enemies } = fight({ profile: archivedProfile, enemies: 1, poise: 20, attributes: { wisdom: 2, intelligence: 4 } });
+  // The standalone profile does not carry encounter rules; a fight saved on 6727a255 did.
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
+  combat.fixCoreRules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst', decayPerTurn: 1, breaksAtZeroPoise: true };
   assert.equal(combat.fixCoreRules.elements.version, 1, 'elements remain enabled');
   // The untouched archive scales player damage by 0.7: base 30 yields an integer incoming hit of 10.
   const target = enemies[0], plain = hit(combat, target, { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'poison', damageType: 'poison' }, tags: [] }, 30);
