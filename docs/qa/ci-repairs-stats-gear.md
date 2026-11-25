@@ -29,3 +29,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/a4-hand-rules.test.mjs`, `tests/turn-stamina.test.mjs` and `tests/hand-sp-mp-per-four-2026-11-18.test.mjs` now pin the owner's 2026-11-24 per-point settings in actual new fights and configured class pools. Draw remains clamped to available capacity. The old Draw fixture explicitly pins its quarter-point coefficient. Legacy combat refills, fixed draws, equipment Focus discounts, and Mana relic addends remain covered.
 - `node --test tests/a4-hand-rules.test.mjs tests/turn-stamina.test.mjs tests/hand-sp-mp-per-four-2026-11-18.test.mjs` passed 21/21, from 14/21. The lane had 66 original failures remaining.
+
+## Generic hand rows and disclosures
+
+- `tests/hand-rules.test.mjs`, `tests/hand-refresh.test.mjs` and `tests/solo-hand-display.test.mjs` pin the per-point opening and draw rows, their independent capacity, 10-card row ceiling, row receipts, the unchanged worked Settings override, and the per-point labels. Legacy fill, shuffled refresh, pile conservation, Retain, Ethereal and snapshot coverage remains in place.
+- `node --test tests/hand-rules.test.mjs tests/hand-refresh.test.mjs tests/solo-hand-display.test.mjs` passed 45/45, from 36/45. There were 61 original failures remaining, including four in two dated stat files measured separately (17/21 passed).

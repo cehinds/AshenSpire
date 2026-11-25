@@ -50,7 +50,7 @@ test('the default opening follows the shipped starting rule; unplayed cards surv
   const intelligence = { intelligence: 10 };
   const shipped = fight({}, intelligence, {}, SHIPPED_ROWS);
   assert.equal(shipped.piles.hand.length, scaledCards(SHIPPED_ROWS.openingHand, intelligence));
-  assert.equal(shipped.piles.hand.length, 7); // ruling 2026-11-18 §9: 5 + floor(10 / 4)
+  assert.equal(shipped.piles.hand.length, 10); // The opening row caps 3 + 10 at ten.
   const c = fight();
   const ids = c.piles.hand.map(c => c.instanceId);
   assert.equal(c.piles.hand.length, 3);
@@ -77,9 +77,9 @@ test('attribute choice, whole-point flooring, bounds and scaling off', () => {
 test('fixed draws are the shipped default, drawing the Draw row up to the hand size, and can be changed or scaled', () => {
   assert.equal(handRulesDefaults.drawMode, 'fixed');
   const shipped = fight({}, { intelligence: 4 }, {}, SHIPPED_ROWS);
-  assert.equal(shipped.piles.hand.length, 6); // ruling 2026-11-18 §9: 5 + floor(4 / 4)
+  assert.equal(shipped.piles.hand.length, 5); // ruling 2026-11-18 §9: 5 + floor(4 / 4)
   dispatch(shipped, { type: 'endTurn' });
-  assert.equal(shipped.piles.hand.length, 6);
+  assert.equal(shipped.piles.hand.length, 5);
   assert.equal(shipped.piles.discard.length, 0);
   const c = fight({ drawMode: 'fixed' });
   dispatch(c, { type: 'endTurn' });
@@ -215,24 +215,24 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { attributeRules } from '../src/content/attributes.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 
-const OPENING = Object.fromEntries(['reaver', 'rogue', 'herald', 'starseer'].map(id => [id, [5, 'intelligence']])); // ruling 2026-11-18 §9, §12: base 5, +1 per 4 INT
+const OPENING = Object.fromEntries(['reaver', 'rogue', 'herald', 'starseer'].map(id => [id, [3, 'intelligence']]));
 const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
 const classRow = (classId, reg = registries) => statRow(reg, { class: classId }, 'openingHand');
 
-test('each class opens on five plus floor(INT / 4)', () => {
+test('every class opening row adds one per Intelligence point up to ten', () => {
   for (const classId of Object.keys(OPENING)) {
     const row = classRow(classId);
     assert.equal(row.byClass, undefined);
     for (let intelligence = 1; intelligence <= 50; intelligence++) {
       const attributes = { ...allOnes, intelligence };
-      assert.equal(scaledCards(row, attributes), Math.min(10, 5 + Math.floor(intelligence / 4)));
+      assert.equal(scaledCards(row, attributes), Math.min(10, 3 + intelligence));
     }
   }
-  assert.deepEqual(Object.keys(OPENING).map(id => scaledCards(classRow(id), attributeRules.presets.lean[id])), [5, 5, 5, 5]);
+  assert.deepEqual(Object.keys(OPENING).map(id => scaledCards(classRow(id), attributeRules.presets.lean[id])), [4, 4, 4, 6]);
 });
 
 test('a run fight deals the class opening hand and snapshots it', () => {
-  const expected = { reaver: 5, rogue: 5, herald: 5, starseer: 5 };
+  const expected = { reaver: 4, rogue: 4, herald: 4, starseer: 5 };
   for (const [classId, count] of Object.entries(expected)) {
     const run = createRunState({ seed: 7, classId, registries });
     assert.deepEqual(run.derivedStatRuleSnapshot.rules.rules.openingHand, { ...classRow(classId), perLevel: 0 }, 'the run snapshots its class\'s row, not the table');
@@ -249,7 +249,7 @@ test('a run fight deals the class opening hand and snapshots it', () => {
   const run = createRunState({ seed: 7, classId: 'reaver', registries, attributeMode: 'assign',
     attributes: { strength: 1, dexterity: 1, constitution: 4, wisdom: 1, intelligence: 1 } });
   const combat = createRunCombat({ registries, rng: createRng(7), run, enemyIds: ['wanderingSoldier'] });
-  assert.equal(combat.piles.hand.length, 5, 'the default opening is five');
+  assert.equal(combat.piles.hand.length, 4, 'base three and one assigned Intelligence');
 });
 
 test('each class\'s opening hand is its own editor, in the row\'s own fields', () => {
@@ -258,7 +258,7 @@ test('each class\'s opening hand is its own editor, in the row\'s own fields', (
     const baseRow = rows.find(row => row.key === `gameConfig.derivedStatRules.rules.openingHand.byClass.${classId}.base`);
     const statRowSetting = rows.find(row => row.key === `gameConfig.derivedStatRules.rules.openingHand.byClass.${classId}.${stat}`);
     assert.equal(baseRow.def, base);
-    assert.equal(statRowSetting.def, 0.25);
+    assert.equal(statRowSetting.def, 1);
   }
   // Tuned through its keys, a class's row moves that class's hand only.
   const tuned = createRegistries(configuredContentBundle(contentBundle, {
@@ -268,7 +268,7 @@ test('each class\'s opening hand is its own editor, in the row\'s own fields', (
   }));
   assert.equal(scaledCards(classRow('reaver', tuned), { ...allOnes, constitution: 6 }), 8); // 5 + floor(6 x 0.5): the attribute baseline is gone (2026-11-18)
   assert.equal(scaledCards(classRow('reaver', tuned), { ...allOnes, strength: 12 }), 5);
-  assert.equal(scaledCards(classRow('rogue', tuned), attributeRules.presets.lean.rogue), 5, 'another class keeps its own');
+  assert.equal(scaledCards(classRow('rogue', tuned), attributeRules.presets.lean.rogue), 4, 'another class keeps its own');
 });
 
 // "Draw / turn and opening hand" said 3 for a Standard Rogue who opened on 5
@@ -326,9 +326,9 @@ test('character creation\'s Draw chip is capped by the hand size when the turn d
 
 test('the hand receipt carries the terms the chips print', () => {
   const receipt = scaledCardsReceipt(classRow('starseer'), { ...allOnes, intelligence: 3 });
-  assert.equal(receipt.value, 5);
-  assert.equal(receipt.bonus, 0);
-  assert.equal(receipt.terms.intelligence, 0);
+  assert.equal(receipt.value, 6);
+  assert.equal(receipt.bonus, 3);
+  assert.equal(receipt.terms.intelligence, 3);
 });
 
 // Turn-end refresh with a dry draw pile: the discard joins the returned hand
