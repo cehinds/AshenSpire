@@ -11,7 +11,7 @@ The recipient runtime, including the Ward shatter correction, was reviewed at `2
 - A separate 6-check run confirmed Charm sequencing, Ward Break and Effects Off on both viewports with normal asset resolution from the verified v30 cache.
 - The production gallery rendered all 12 frame-2 effects with their exact primary canvas and computed host opacity `0.8`. The refreshed Ward shatter peak preserved its tint and reached full authored canvas alpha before the master opacity.
 
-The combat-effects acceptance is green. The broader merge gate remains blocked by the inherited shared-WIS card-face failure. The focused card-face suite at `6f19a93eaa` passed 31 of 32 tests. In the failing check, the in-combat preview shows 13 damage while the out-of-combat baseline shows 12. The test still asserts equality.
+The combat-effects acceptance passed. At `6f19a93eaa`, the card-face suite identified a shared-WIS spell that previewed 13 in combat versus a baseline of 12. The follow-up at `12fcba8a97` corrected the double count. [Current validation and remaining baseline failures](recipient-effects-timing-validation.md)
 
 Reproduce the sandbox comparison and save its report and screenshots with:
 

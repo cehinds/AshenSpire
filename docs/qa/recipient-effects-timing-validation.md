@@ -9,7 +9,13 @@ The authored JSON defaults schedule one clip at a time across the battlefield, w
 - **Real Core2 combat.** After the teardown fix at `e1a23a6cba`, all ten viewport/action checks passed. Charm and the multi-recipient Gravity Well played without visual overlap. Measured DOM gaps were 32.3–41.0 ms for both cards in these runs. The planner test verifies an exact 30 ms gap independently of browser timer resolution. Sweep mounted once. A battlefield skip canceled pending clips. Effects Off preserved the recipient art.
 - **Production entry.** Local Score Studio was opened using a write-enabled production source server. The default authoring route served pinned v30 assets, and submitting the already saved defaults returned the same revision and left both files byte-identical. [Desktop and phone capture record](../preview/features/recipient-effect-sequences/timing-capture.md)
 
-The feature-specific checks passed. Mandatory CI remains blocked by inherited combat and stat contract failures in the legacy discovered suites. The source capture is local. Dev and Test deployment require a green integration gate.
+## Spell damage follow-up
+
+Independent review of `12fcba8a97f` confirmed the fix removes the second live Intelligence damage increment. Arcane still reads INT, Divine reads WIS, and shared spells read the greater of the two. The separate flat Intelligence status modifiers still apply. The card face, target quote and landed HP damage agree. All 33 card-face checks passed, including historical profile fixtures. [Casting rules](../ARCANE-DIVINE-RULES.md)
+
+Both focused regressions failed with the preceding runtime source, then passed with the repair. The combined card-face, spell tradition and historical save run passed 85 of 86 test entries. The Divine Poise-break Smite receipt test fails with the same missing receipt on the preceding runtime source. Historical profile validation, enemy roster pins and save migrations passed.
+
+Feature-specific checks passed. Mandatory discovered CI still includes inherited combat and stat contract failures. Dev and Test deployment require a green integration gate.
 
 ```powershell
 npm run qa:sandbox -- docs/qa/acceptance.recipient-effects-timing.json --base origin/dev --out scratch/recipient-effect-sequences/timing-sandbox
