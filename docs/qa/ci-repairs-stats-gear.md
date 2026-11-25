@@ -49,3 +49,9 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/balance-stats-2026-11-17.test.mjs` checks the governed SP, MP, and hand rows at consecutive points and still requires every starter card to be payable. The configured rows have no SP/MP level term, whereas generic rows retain the level terms covered separately.
 - `node --test --test-name-pattern 'item 5' tests/balance-stats-2026-11-17.test.mjs` passed 2/2. The lane had 47 original failures remaining.
+
+## Codex equipment and stacked variant damage
+
+- `tests/gear-pass-codex-types.test.mjs` pins all 38 updated raw signatures. Git shows the source outfit and weapon tables are unchanged from 057fbe0905a. Current sword, glaives, claws, Focus, tomes, talismans, and group/signature interactions retain exact outcome checks. The historical no-type control remains unchanged.
+- `tests/gear-pass-effect-variants.test.mjs` independently plays a no-stack control for the selected Smash branch and requires exactly three equal hits, exact total damage, and a matching face in native and bundled runtimes.
+- `node --test tests/gear-pass-codex-types.test.mjs tests/gear-pass-effect-variants.test.mjs` passed 15/15 in the two focused runs, from 7/15. The lane had 39 original failures remaining.
