@@ -7,7 +7,7 @@ import { mulberry32 } from './rng.js';
 import { applyUpgradeSteps, MAX_CARD_UPGRADES, MAX_UPGRADE_TAG_STACKS, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps, UpgradeTagStacks, ImprovedScaledAmount } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
-import { EvaluateUpgradeStepCp } from './cardUpgradeCp.js';
+import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from './cardUpgradeCp.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 import {
@@ -21,6 +21,7 @@ import {
   StatusUnlocked,
   StatusStackCapAtTier,
   NumericCeilingAtTier,
+  CompileTierCatalog,
 } from './tierUnlocks.js';
 
 export { STACK_CAPS };
@@ -619,12 +620,15 @@ function optionsByRarity(base, current, applied, limits, scoring = GetActiveScor
   const temperedStacks = UpgradeTagStacks(current, 'tempered');
   const purifiedStacks = UpgradeTagStacks(current, 'purified');
   if (Number.isFinite(tier)) {
+    const catalog = CompileTierCatalog(scoring);
+    const unlockedKinds = catalog.enabled ? catalog.kindsAtTier(tier) : null;
     for (let r = 0; r < 3; r += 1) {
+      const rarityOk = UpgradeRarityUnlocked(r, tier, scoring);
       for (const kind of Object.keys(per[r])) {
         if (menu?.includes(kind)) continue;
         if (graded && EASE_KINDS.includes(kind) && r === 0) continue;
-        if (!UpgradeKindUnlocked(kind, tier, scoring)) { delete per[r][kind]; continue; }
-        if (!UpgradeRarityUnlocked(r, tier, scoring) && !(kind in PLACED_AT)) { delete per[r][kind]; continue; }
+        if (unlockedKinds && !(unlockedKinds.has(kind) || UpgradeKindUnlocked(kind, tier, scoring))) { delete per[r][kind]; continue; }
+        if (!rarityOk && !(kind in PLACED_AT)) { delete per[r][kind]; continue; }
         if (EASE_KINDS.includes(kind)) {
           if (!UpgradeTagStackUnlocked('refined', refinedStacks + 1, tier, scoring)) { delete per[r][kind]; continue; }
         } else if (TEMPERED_KINDS.has(kind)) {
@@ -735,75 +739,139 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const allowed = (kind) => (menu ? menu.includes(kind) : !DUD_KINDS.includes(kind));
   // An ease above common is a combo of the ease and a partner step (`also`): the partner must be of a family still open, so the
   // combo never brings back a family already on offer. `optionAt` drops the closed partners; an ease with none left is closed.
-  // Memoize CP checks per (r, kind[, also]) within this roll so kindsAt/open do not re-run applyUpgradeSteps + ScoreCard
-  // thousands of times across the Blacksmith/Trader/Rest picker (was ~20,000+ calls per card).
-  const cpCache = new Map();
-  const cpCheck = (r, kind, opt, cacheKey) => {
-    if (!opt || limits.playerLevel == null) return opt;
-    const key = cacheKey || `${r}:${kind}`;
-    let allowedNow = cpCache.get(key);
-    if (allowedNow === undefined) {
-      const probe = stepOf(kind, opt, 0, r);
-      const result = EvaluateUpgradeStepCp({ baseDef, currentDef: current, instance: limits.instance || null, step: probe, playerLevel: limits.playerLevel, scoring: activeScoring });
-      allowedNow = result.allowed && (probe.k !== 'dmg' || !limits.damageChanges || limits.damageChanges(current, probe, result.rank));
-      cpCache.set(key, allowedNow);
-    }
-    return allowedNow ? opt : null;
-  };
-  const optionAt = (r, kind) => {
+  // Seeded rejection sampling (owner, 2026-11-25): evaluate EvaluateUpgradeStepCp lazily ONLY on drawn
+  // candidates (and matching node-specialty kinds first when limits.nodeSpecialty is provided), instead of
+  // eagerly scoring all ~30-60 (r, kind) permutations upfront. Precompute the card's "before" CP baseline once.
+  const checkCp = limits.playerLevel != null;
+  const cpContext = checkCp
+    ? PrepareUpgradeStepCpContext({ baseDef, currentDef: current, instance: limits.instance || null, playerLevel: limits.playerLevel, scoring: activeScoring })
+    : null;
+  const cpRejected = new Set();
+  const curRarity = limits.instance?.rarityOverride || current.rarity || baseDef.rarity || 'common';
+  const curRank = limits.cardRank ?? 0;
+
+  const optionStructAt = (r, kind) => {
     const option = perRarity[r][kind];
     if (!option) return null;
-    if (!option.also || limits.everyFamily) return cpCheck(r, kind, option, `${r}:${kind}`);
+    if (!option.also || limits.everyFamily) return { option, key: `${r}:${kind}` };
     const also = option.also.filter((partner) => !takenFamilies.has(UpgradeKindFamily(partner.kind, partner.option)));
     if (!also.length) return null;
-    const key = `${r}:${kind}:${also.map((p) => p.kind).join(',')}`;
-    return cpCheck(r, kind, { ...option, also }, key);
+    return { option: { ...option, also }, key: `${r}:${kind}:${also.map((p) => p.kind).join(',')}` };
   };
-  const open = (r, kind) => !takenKinds.has(kind) && !takenFamilies.has(UpgradeKindFamily(kind, perRarity[r][kind])) && !!optionAt(r, kind);
-  // kindsAt(r, group): the kinds still open at rarity r, in WEIGHTS order.
+  const openStruct = (r, kind) => {
+    if (takenKinds.has(kind) || takenFamilies.has(UpgradeKindFamily(kind, perRarity[r][kind]))) return false;
+    const resolved = optionStructAt(r, kind);
+    return !!resolved && !cpRejected.has(resolved.key);
+  };
+  // kindsAt(r, group): the structurally open kinds (not yet CP-rejected) at rarity r, in WEIGHTS order.
   const vendor = UPGRADE_VENDORS[limits.vendor] || null;
   const categoryAt = (r, kind) => UpgradeCategoryOf(kind, perRarity[r][kind], current);
-  const kindsAt = (r, group, category) => Object.keys(WEIGHTS).filter((kind) => perRarity[r][kind] && allowed(kind) && open(r, kind) && (!graded || r === 0)
+  const kindsAt = (r, group, category) => Object.keys(WEIGHTS).filter((kind) => perRarity[r][kind] && allowed(kind) && openStruct(r, kind) && (!graded || r === 0)
     && (!group || UpgradeGroupOf(kind) === group) && (!category || categoryAt(r, kind) === category));
+
+  const tryAcceptCandidate = (r, kind, choice) => {
+    const resolved = optionStructAt(r, kind);
+    if (!resolved || cpRejected.has(resolved.key)) return null;
+    let step = stepOf(kind, resolved.option, choice, r);
+    if (checkCp) {
+      const cpRes = EvaluateUpgradeStepCp({
+        baseDef, currentDef: current, instance: limits.instance || null, step,
+        playerLevel: limits.playerLevel, scoring: activeScoring, context: cpContext,
+      });
+      if (!cpRes.allowed || (step.k === 'dmg' && limits.damageChanges && !limits.damageChanges(current, step, cpRes.rank))) {
+        cpRejected.add(resolved.key);
+        return null;
+      }
+      if (cpRes.rarity && cpRes.rarity !== curRarity) step = { ...step, nextRarity: cpRes.rarity };
+      if (Number.isInteger(cpRes.rank) && cpRes.rank > curRank) step = { ...step, nextRank: cpRes.rank };
+    } else if (step.k === 'dmg' && limits.damageChanges && !limits.damageChanges(current, step, curRank)) {
+      cpRejected.add(resolved.key);
+      return null;
+    }
+    return step;
+  };
+
   const out = [];
   const shares = UpgradeGroupShares(stepIndex + 1);
+  const specialtyList = !limits.everyFamily && Array.isArray(limits.nodeSpecialty) && limits.nodeSpecialty.length ? limits.nodeSpecialty : null;
+  let specialtyUsed = false;
+
   // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream. `pick` is split by
   // rescaling: it picks the group, the rest of it picks the rarity, and what remains picks the kind inside both.
   for (let n = 0; n < Math.max(1, count | 0); n += 1) {
     const pick = rng();
     const choice = rng();
-    if (![0, 1, 2].some((r) => kindsAt(r).length)) break;
-    // A group with no eligible kind gives its share to the others pro rata (they are renormalised by the pick); so does a rarity.
-    const groups = UPGRADE_GROUPS.filter((group) => [0, 1, 2].some((r) => kindsAt(r, group).length)).map((group) => [group, shares[group]]);
-    const { key: group, rest: afterGroup } = pickByWeight(groups, pick);
-    // A vendor then picks the category (its multipliers over the group's kinds) and reads that category's rarity odds; without one the roll is unchanged.
-    let category = '', standing = 'base', afterCategory = afterGroup;
-    if (vendor) {
-      const seen = new Map();
-      for (const r of [0, 1, 2]) for (const kind of kindsAt(r, group)) if (!seen.has(kind)) seen.set(kind, categoryAt(r, kind));
-      const weights = ['physical', 'magic', 'neutral'].map((name) => [name, [...seen].reduce((sum, [kind, cat]) => sum + (cat === name ? WEIGHTS[kind] : 0), 0) * vendor[name]]).filter(([, weight]) => weight > 0);
-      ({ key: category, rest: afterCategory } = pickByWeight(weights, afterGroup));
-      standing = category === 'neutral' ? 'base' : category === vendor.own ? 'own' : 'off';
-    }
-    const here = (r) => kindsAt(r, group, category || undefined);
-    const rarityOdds = UpgradeRarityOdds(stepIndex + 1, standing);
-    const rarities = [0, 1, 2].filter((r) => here(r).length).map((r) => [r, rarityOdds[r]]);
-    const { key: rarity, rest: afterRarity } = pickByWeight(rarities, afterCategory);
-    const inGroup = here(rarity);
-    const { key: kind } = pickByWeight(inGroup.map((candidate) => [candidate, WEIGHTS[candidate]]), afterRarity);
-    let step = stepOf(kind, optionAt(rarity, kind), choice, rarity);
-    if (limits.playerLevel != null) {
-      const cpRes = EvaluateUpgradeStepCp({ baseDef, currentDef: current, instance: limits.instance || null, step, playerLevel: limits.playerLevel, scoring: activeScoring });
-      const curRarity = limits.instance?.rarityOverride || current.rarity || baseDef.rarity || 'common';
-      const curRank = limits.cardRank ?? 0;
-      if (cpRes.allowed) {
-        if (cpRes.rarity && cpRes.rarity !== curRarity) step = { ...step, nextRarity: cpRes.rarity };
-        if (Number.isInteger(cpRes.rank) && cpRes.rank > curRank) step = { ...step, nextRank: cpRes.rank };
+    let accepted = null;
+    let acceptedKind = '';
+    let acceptedRarity = 0;
+
+    // Hybrid node-specialty slot: on the first rolled pick at a Blacksmith/Trader/Rest node, probe the node's
+    // pre-determined seed specialty shelf starting at a card-seeded offset (1 CP eval if compatible), falling
+    // back seamlessly to per-card seeded rejection sampling.
+    if (specialtyList && !specialtyUsed) {
+      specialtyUsed = true;
+      const start = Math.floor(pick * specialtyList.length);
+      for (let i = 0; i < specialtyList.length; i += 1) {
+        const spec = specialtyList[(start + i) % specialtyList.length];
+        const kind = spec?.kind;
+        if (!kind || !allowed(kind)) continue;
+        const openRarities = [0, 1, 2].filter((r) => perRarity[r][kind] && openStruct(r, kind) && (!graded || r === 0));
+        if (!openRarities.length) continue;
+        const cat = categoryAt(openRarities[0], kind);
+        const standing = vendor ? (cat === 'neutral' ? 'base' : cat === vendor.own ? 'own' : 'off') : 'base';
+        const rarityOdds = UpgradeRarityOdds(stepIndex + 1, standing);
+        const rarities = openRarities.map((r) => [r, rarityOdds[r]]);
+        const { key: r } = pickByWeight(rarities, pick);
+        const step = tryAcceptCandidate(r, kind, choice);
+        if (step) {
+          accepted = step;
+          acceptedKind = kind;
+          acceptedRarity = r;
+          break;
+        }
       }
     }
-    out.push(step);
+
+    // Seeded rejection sampling: draw from structurally open kinds and check CP only on the drawn candidate.
+    if (!accepted) {
+      let retryRng = null;
+      for (let attempt = 0; attempt < 96; attempt += 1) {
+        if (![0, 1, 2].some((r) => kindsAt(r).length)) break;
+        const p = attempt === 0 ? pick : retryRng();
+        const c = attempt === 0 ? choice : retryRng();
+        // A group with no eligible kind gives its share to the others pro rata (they are renormalised by the pick); so does a rarity.
+        const groups = UPGRADE_GROUPS.filter((group) => [0, 1, 2].some((r) => kindsAt(r, group).length)).map((group) => [group, shares[group]]);
+        const { key: group, rest: afterGroup } = pickByWeight(groups, p);
+        // A vendor then picks the category (its multipliers over the group's kinds) and reads that category's rarity odds; without one the roll is unchanged.
+        let category = '', standing = 'base', afterCategory = afterGroup;
+        if (vendor) {
+          const seen = new Map();
+          for (const r of [0, 1, 2]) for (const kind of kindsAt(r, group)) if (!seen.has(kind)) seen.set(kind, categoryAt(r, kind));
+          const weights = ['physical', 'magic', 'neutral'].map((name) => [name, [...seen].reduce((sum, [kind, cat]) => sum + (cat === name ? WEIGHTS[kind] : 0), 0) * vendor[name]]).filter(([, weight]) => weight > 0);
+          ({ key: category, rest: afterCategory } = pickByWeight(weights, afterGroup));
+          standing = category === 'neutral' ? 'base' : category === vendor.own ? 'own' : 'off';
+        }
+        const here = (r) => kindsAt(r, group, category || undefined);
+        const rarityOdds = UpgradeRarityOdds(stepIndex + 1, standing);
+        const rarities = [0, 1, 2].filter((r) => here(r).length).map((r) => [r, rarityOdds[r]]);
+        const { key: rarity, rest: afterRarity } = pickByWeight(rarities, afterCategory);
+        const inGroup = here(rarity);
+        const { key: kind } = pickByWeight(inGroup.map((candidate) => [candidate, WEIGHTS[candidate]]), afterRarity);
+        const step = tryAcceptCandidate(rarity, kind, c);
+        if (step) {
+          accepted = step;
+          acceptedKind = kind;
+          acceptedRarity = rarity;
+          break;
+        }
+        if (!retryRng) retryRng = mulberry32(upgradeSeed(Math.floor(pick * 0x7fffffff), `${baseDef.id || ''}:${stepIndex}`, n + 1));
+      }
+    }
+
+    if (!accepted) break;
+    out.push(accepted);
     // The picked family leaves the draw: the next option is of another family (with everyFamily, only the kind).
-    if (limits.everyFamily) takenKinds.add(kind); else for (const family of [UpgradeKindFamily(kind, perRarity[rarity][kind]), ...UpgradeStepFamilies(step)]) takenFamilies.add(family);
+    if (limits.everyFamily) takenKinds.add(acceptedKind); else for (const family of [UpgradeKindFamily(acceptedKind, perRarity[acceptedRarity][acceptedKind]), ...UpgradeStepFamilies(accepted)]) takenFamilies.add(family);
   }
   return out;
 }
