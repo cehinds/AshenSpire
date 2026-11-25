@@ -10,6 +10,13 @@ each incoming hit is shown before its reaction choice, and its paid Counter
 finishes before the next hit. Historical saves retain their saved reaction
 policy. The visual catalog's `damage-feedback` miniature shows this sequence.
 
+Combat recipient sprites use confirmed outcomes to select their artwork.
+`PlayRecipientEffectLayers` schedules successive results on one recipient with
+a configurable 10 ms overlap. Different recipients can play in parallel, while
+an impact and its elemental texture stay together. The renderer applies 80%
+effect opacity to each clip. See the [recipient effects miniature](component-catalog.html#recipient-effects-title)
+and [configuration guide](RECIPIENT-EFFECTS.md).
+
 Core enemy inspection joins authored enemy cards to runtime moves through
 `EnemyDeckInspectionModel`; it shows SP, the authored deck, the public current
 action, and the last committed action's SP receipt. `enemyActionPreview` supplies

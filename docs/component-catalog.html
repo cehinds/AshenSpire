@@ -213,10 +213,25 @@
       Wisdom shows Poise and Divine magic; Intelligence shows Arcane magic. Existing saved profiles retain their own rules.</p>
   </section>
   <section class="catalog-footer" aria-labelledby="recipient-effects-title">
-    <h2 id="recipient-effects-title">Procedural combat recipient effects</h2>
-    <p><a href="../tools/recipient-effects-runtime-preview.html">Open the runtime sprite preview</a> · <a href="RECIPIENT-EFFECTS.md">Configuration and art export</a>. <code>RecipientEffectsForEvent</code> selects layered recipes from card tags and confirmed combat results; <code>DecorateRecipientEffects</code> associates actions and recipients; <code>PlayRecipientEffectLayers</code> renders them on either side. Melee and Reach share flat impact art; Sweep is one group cut. Ward and Evade use the actual actor silhouette. Buff/debuff auras fill the target card from its bottom; green healing pluses rise and red blood drops fall, beginning on the primary effect's last frame.</p>
-    <div class="mini" aria-label="Composition: caster circle, impact plus element, then the confirmed reaction or status"><span>CAST CIRCLE</span><span aria-hidden="true"> → </span><span>IMPACT + ELEMENT</span><span aria-hidden="true"> → </span><span>REACTION / STATUS</span></div>
-    <p>Visual tuning lives in <code>content/config/ui/presentation/recipientEffects.json</code>: royal-blue untyped spells, 0.9 primary/circle opacity, palettes, frame timing, movement and sizing. Missing bundled art uses a neutral, static action × self/target/area diagnostic sprite.</p>
+    <h2 id="recipient-effects-title">Combat recipient effects</h2>
+    <p><a href="../tools/recipient-effects-runtime-preview.html">Open the runtime sprite preview</a> · <a href="RECIPIENT-EFFECTS.md">Configuration and art export</a>. <code>RecipientEffectsForEvent</code> selects sprites from confirmed combat results. <code>DecorateRecipientEffects</code> associates actions and recipients, then <code>PlayRecipientEffectLayers</code> plays the clips. Spell circles remain on the caster. Impact and elemental texture play together, and Sweep uses one sprite across its targets.</p>
+    <div class="mini mini-stack" style="width:min(100%,452px)">
+      <svg viewBox="0 0 352 90" width="352" style="max-width:100%" role="img" aria-label="Enemy A shows impact and element together, then Weak starts with a 10 millisecond overlap. Enemy B starts its result in parallel.">
+        <g fill="currentColor" font-size="11">
+          <text x="3" y="24">Enemy A</text><text x="3" y="60">Enemy B</text>
+        </g>
+        <g fill="#31556b" stroke="#8fbacc">
+          <rect x="66" y="7" width="126" height="28" rx="4"/><rect x="66" y="43" width="126" height="28" rx="4"/>
+        </g>
+        <rect x="188" y="7" width="126" height="28" rx="4" fill="#77502c" stroke="#dbaa6b"/>
+        <g fill="#fff4df" font-size="11" text-anchor="middle">
+          <text x="129" y="25">Impact + element</text><text x="251" y="25">Weak</text><text x="129" y="61">Independent result</text>
+        </g>
+        <path d="M190 37v37h10" fill="none" stroke="#dbaa6b"/>
+        <text x="204" y="78" fill="currentColor" font-size="11">10 ms overlap</text>
+      </svg>
+    </div>
+    <p>Independent results on the same recipient overlap by 10 ms. Different recipients play in parallel. Ward shatter retains the protected actor's Ward tint and silhouette. Dedicated gain sprites distinguish Evade and Counter preparation from their hit reactions. The JSON sets 80% effect opacity and controls timing, palettes, movement and sizing. Missing art uses a static debug mark.</p>
   </section>
   <section class="catalog-footer" aria-labelledby="procedural-art-title">
     <h2 id="procedural-art-title">Procedural card artwork</h2>
