@@ -11,6 +11,23 @@ import { equipmentCardModel } from '../src/model/equipmentCard.js';
 import { validateContent } from '../src/model/validate.js';
 const r = createRegistries(contentBundle);
 const ids = ['wayfarerPlate', 'nightweave', 'riteVestments', 'gutterLeathers'];
+// Raw shared-armour signatures used before the equipment rework. Keep coverage
+// of their propagation in a fixture separate from today's empty raw mod rows.
+const legacySignatures = {
+  wayfarerPlate: ['defend.block=+2', 'self.maxHp=+4'],
+  nightweave: ['power.potency=+1', 'self.maxMana=+1'],
+  riteVestments: ['defend.block=+1', 'self.maxHp=+6'],
+  gutterLeathers: ['strike.damage=+1', 'self.maxStamina=+1'],
+};
+const legacy = createRegistries({
+  ...contentBundle,
+  equipment: {
+    ...contentBundle.equipment,
+    armour: contentBundle.equipment.armour.map(piece => piece.sharedSet
+      ? { ...piece, mods: legacySignatures[piece.id] }
+      : piece),
+  },
+});
 
 test('all sixteen class/outfit combinations have distinct complete sprite sets', () => {
   const menuFiles = new Set();
@@ -49,7 +66,6 @@ for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip 
   assert.ok(owned.has(piece), 'purchased armour belongs to this run');
   const ctx = { inCombat: false, classId: cls, attributes: { ...run.attributes, [attribute]: minimum - 1 } };
   const before = structuredClone(run.loadout);
-  const beforePools = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina };
   assert.equal(equipPiece(r, run.loadout, 'armor', 0, id, owned, ctx), false);
   assert.deepEqual(run.loadout, before, 'rejection cannot mutate equipment');
   ctx.attributes[attribute] = minimum;
@@ -57,31 +73,14 @@ for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip 
   assert.ok(equipPiece(r, run.loadout, 'armor', 0, id, owned, ctx));
   assert.ok(equippedPieces(r, run.loadout, cls).some(p => p.id === id && p.classId === cls));
   assert.equal(run.class, cls, 'wearing a set does not change gameplay class');
-  const mods = cardMods(r, run.loadout, cls);
-  const authoredCardMod = piece.mods.find(m => !m.startsWith('self.'));
-  assert.ok([...mods.values()].flat().includes(authoredCardMod.split('.').slice(1).join('.')));
-  const pool = piece.mods.find(m => m.startsWith('self.')).split(/[.=]/);
-  assert.equal(runMods(r, run.loadout, cls)[pool[1]], Number(pool[2]));
-  stampDeck(r, run, undefined, { adoptEquipmentBonuses: true });
-  assert.equal(run[pool[1]], beforePools[pool[1]] + Number(pool[2]), 'the actual resource maximum changes');
-  const target = authoredCardMod.split('.')[0];
-  const cardId = (r.equipment.targets.find(t => t.target === target && t.classId === cls)
-    || r.equipment.targets.find(t => t.target === target && t.classId === '*')).cardId;
-  const affected = run.deck.filter(c => c.cardId === cardId);
-  assert.ok(affected.length, 'bonus reaches a card in the real starting deck');
-  for (const card of affected) {
-    assert.ok(card.mods.includes(authoredCardMod.slice(target.length + 1)));
-    assert.ok(resolveCard(r, card).effects.length);
-  }
+  assert.deepEqual(piece.mods, [], 'the current shared outfit has no raw signature');
   const card = equipmentCardModel(r, piece);
   assert.match(card.type, /All classes/);
   // SPEC §13.4m (lean scale, 2026-09-20): every outfit minimum rebased to 3 on the 1–4 scale.
   assert.equal(minimum, 3);
   assert.match(card.requirement, new RegExp(`\\b${minimum}\\b`));
-  // An armour's additive Defend Block is shown as the card's Block fact (DR is gone, ruling 2026-11-18 §8), not as a bonus row.
-  const blockMods = piece.mods.filter(raw => /^defend\.block=[+-]/.test(raw));
-  assert.equal(card.bonuses.length, 2 - blockMods.length);
-  assert.equal(card.facts.find(f => f.label === 'Block').value, blockMods.reduce((n, raw) => n + Number(raw.split('=')[1]), 0));
+  assert.deepEqual(card.bonuses, []);
+  assert.equal(card.facts.find(f => f.label === 'Block').value, 0);
   assert.equal(card.tags.length, 2);
   assert.ok(manifestIds().has(armourMenuAsset(cls, id)));
   const visual = paintedOutfit(cls, id);
@@ -93,4 +92,30 @@ for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip 
   assert.deepEqual(visual.readiness, {}, 'no fallback to another costume for readiness');
   assert.equal(new Set(Object.values(visual.frames).map(f => f.file)).size, 7);
   for (const frame of Object.values(visual.frames)) assert.ok(manifestIds().has(frame.file), frame.file);
+});
+
+for (const cls of legacy.classes.ids()) for (const id of ids) test(`${cls} applies explicit legacy ${id} signatures to its deck and resource maximum`, () => {
+  const run = createRunState({ seed: 31, classId: cls, registries: legacy });
+  run.loadout.boughtArmour = [{ classId: cls, id }];
+  const owned = ownership(legacy, { loadout: run.loadout });
+  const [attribute, minimum] = Object.entries(legacy.equipment.armour.find(p => p.classId === cls && p.id === id).requirements.attributes)[0];
+  const context = { inCombat: false, classId: cls, attributes: { ...run.attributes, [attribute]: minimum } };
+  assert.ok(equipPiece(legacy, run.loadout, 'armor', 0, id, owned, context));
+  const [authoredCardMod, rawPool] = legacySignatures[id];
+  const [, pool, delta] = rawPool.split(/[.=]/);
+  const before = run[pool];
+  const cardRules = cardMods(legacy, run.loadout, cls);
+  const [target, bonus] = authoredCardMod.split('.');
+  assert.ok([...cardRules.values()].flat().includes(bonus));
+  assert.equal(runMods(legacy, run.loadout, cls)[pool], Number(delta));
+  stampDeck(legacy, run, undefined, { adoptEquipmentBonuses: true });
+  assert.equal(run[pool], before + Number(delta));
+  const cardId = (legacy.equipment.targets.find(row => row.target === target && row.classId === cls)
+    || legacy.equipment.targets.find(row => row.target === target && row.classId === '*')).cardId;
+  const affected = run.deck.filter(card => card.cardId === cardId);
+  assert.ok(affected.length);
+  for (const card of affected) {
+    assert.ok(card.mods.includes(bonus));
+    assert.ok(resolveCard(legacy, card).effects.length);
+  }
 });
