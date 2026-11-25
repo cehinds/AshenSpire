@@ -17,10 +17,14 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save.js';
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
-const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
+const fresh=(registries=reg)=>createRunState({seed:73,classId:'reaver',registries,runId:'unique-run'});
+// Exercise paid and free Smith transactions with a profile that grants a real tier benefit.
+const smithGear={statPoints:{perRank:1}};
+const smithProfile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{gear:smithGear}});
+const smithReg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,smithProfile)),smithProfile);
 // The pre-one-pick Core rest block (arrival heals, every service once, Level Up listed). A run pins its profile, so an old save keeps it.
 const LEGACY_RESTS={servicesPerVisit:'all',services:['smith','levelUp','upgradeCard'],recovery:{hp:'full',sp:'full',mp:'full',healingFlasks:'full',mpFlasks:'full'},smith:{free:true,tiersPerService:1}};
-const freshLegacy=()=>{const run=fresh();run.gameProfile.content.rests=structuredClone(LEGACY_RESTS);return run;};
+const freshLegacy=()=>{const run=fresh(smithReg);run.gameProfile.content.rests=structuredClone(LEGACY_RESTS);return run;};
 // A branch may open narrow, so a rest depth's lane ids vary by seed: take the first rest on the floor.
 // The old fixed rest depths 3, 6, 9 stand for the first, second and last rest depth of the act (Core now rests on one mid depth and the pre-boss depth).
 const restId=(run,floor)=>{const rests=Object.values(run.mapGraph.nodes).filter(n=>n.type==='shrine');const depths=[...new Set(rests.map(n=>n.floor))].sort((x,y)=>x-y);const at=floor===3?0:floor===6?1:depths.length-1;return rests.find(n=>n.floor===depths[Math.min(at,depths.length-1)]).id;};
@@ -176,14 +180,25 @@ test('actual core loadRun validates pinned birth gear instead of legacy baseline
 
 
 test('core Smith is a free single-tier service without stones, with paid override honored',async()=>{
- const run=fresh();visit(run);assert.equal(run.smithingStones,0);
+ const run=fresh(smithReg);visit(run);assert.equal(run.smithingStones,0);
  const {smithingPlan}=await import('../src/model/smithing.js');const item=smithingPlan(reg,run).candidates[0];assert.ok(item);
  commitGameProfileRest(reg,run,'smith',{itemRef:item.itemRef});assert.equal(run.itemUpgradeLevels[item.itemRef],1);assert.equal(run.smithingStones,0);
  assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:item.itemRef}),/spent/);
- const paid=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{rest:{smith:{free:false,tiersPerService:1}}}});
+ const paid=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{gear:smithGear,rest:{smith:{free:false,tiersPerService:1}}}});
  const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,paid)),paid);
  const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId=restId(next,3);beginGameProfileRest(next);
  const before=JSON.stringify(next);assert.throws(()=>commitGameProfileRest(r,next,'smith',{itemRef:item.itemRef}),/Insufficient/);assert.equal(JSON.stringify(next),before);
+});
+
+
+test('shipped zero-per-rank Core gear does not offer an effectless greatsword Smith upgrade',async()=>{
+ const run=fresh();visit(run);
+ const {smithingPlan}=await import('../src/model/smithing.js');
+ assert.equal(run.gameProfile.modules.gear.statPoints.perRank,0);
+ assert.equal(smithingPlan(reg,run).candidates.some(row=>row.itemRef==='armament/greatsword'),false);
+ const before=JSON.stringify(run);
+ assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:'armament/greatsword'}),/not an eligible/);
+ assert.equal(JSON.stringify(run),before);
 });
 
 
@@ -213,8 +228,8 @@ test('Smith tier bonuses share UI combat preview and real damage/block, and disa
  const {createRunCombat}=await import('../src/engine/runCombat.js');
  const {previewCard,dispatch}=await import('../src/engine/combat.js');
  const {smithingPlan}=await import('../src/model/smithing.js');
- // Owner, 2026-11-17 (gear `statPoints`): a tier adds the greatsword's attribute points; its first is CON, its second STR (so AR +1).
- const run=fresh();run.itemUpgradeLevels={'armament/greatsword':1};visit(run,reg);
+ // With per-rank points enabled, the greatsword's second tier adds another STR and raises AR by 1.
+ const run=fresh(smithReg);run.itemUpgradeLevels={'armament/greatsword':1};visit(run,reg);
  // Leave enough health to measure the full upgraded hit rather than overkill.
  const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;
  // The 11-card starter may not draw these in five cards; the test needs one of each, so put any missing one in hand.
@@ -237,7 +252,7 @@ test('configured Smith tiers follow the Core 2 tier steps per hand and honor JSO
  // Owner, 2026-11-17 (gear `statPoints`): each bonus step is statPoints.perRank (1) attribute points on the item, never AR.
  const {gameProfileRatingReceipt}=await import('../src/model/gameProfileRun.js');
  const points=(registries,subject)=>Object.values(gameProfileEffectiveAttributes(registries,subject)).reduce((a,b)=>a+b,0);
- const run=fresh(),base=points(reg,run),baseAr=gameProfileRatingReceipt(reg,run).totals.ar;
+ const run=fresh(smithReg),base=points(reg,run),baseAr=gameProfileRatingReceipt(reg,run).totals.ar;
  for(const [level,bonus] of [[1,1],[2,2],[3,4]]){run.itemUpgradeLevels={'armament/greatsword':level};assert.equal(points(reg,run),base+bonus);}
  assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,gameProfileEffectiveAttributes(reg,run).strength,'AR is the effective STR, with no tier AR');
  assert.ok(gameProfileRatingReceipt(reg,run).totals.ar>baseAr,'the tiered greatsword STR raises AR');

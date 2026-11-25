@@ -326,7 +326,7 @@ test('a predecessor lost to control does not over-promise the next enemy attack'
   assert.ok(tally.actions > 0, 'resolved enemy contacts still have exact HP quotes');
 });
 
-test('the later intent accounts for control, Freeze and Shock without drawing RNG', () => {
+test('the later intent accounts for control, Freeze, Shock and owner-start hooks without drawing RNG', () => {
   const { combat } = fixture({ classId: 'herald', enemies: ['wanderingSoldier', 'wanderingSoldier'] });
   combat.player.block = 3;
   const [first, later] = combat.enemies;
@@ -361,8 +361,23 @@ test('the later intent accounts for control, Freeze and Shock without drawing RN
   const chancePerStack = combat.fixCoreRules.elements.shock.actionLossChancePerStack;
   first.statuses.shock.stacks = Math.ceil(100 / chancePerStack);
   assert.equal(forecast()?.max, skipped.max, 'certain Shock loss also preserves Block');
+  first.hp = 2;
+  first.statuses = { crimsonBlight: { stacks: 2, duration: 2 } };
+  const beforeOwnerHook = forecast();
+  assert.deepEqual({ damage: beforeOwnerHook?.max, label: beforeOwnerHook?.label, uncertain: beforeOwnerHook?.uncertain },
+    { damage: null, label: '?', uncertain: true });
   assert.equal(combat.player.block, 3);
+  assert.equal(first.hp, 2, 'the forecast never runs the hook on the live enemy');
   assert.deepEqual(combat.rng.getCounters(), counters, 'previews consume no live RNG');
+  const mark = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  const events = combat.eventLog.slice(mark);
+  assert.ok(events.some(event => event.type === 'enemyDied' && event.targetId === first.id && event.triggeredBy?.id === 'crimsonBlight'));
+  assert.ok(!events.some(event => event.type === 'enemyMoveStarted' && event.sourceId === first.id));
+  const actual = { actions: 0 };
+  checkEnemyActions(events, new Map(), actual, 'the survivor committed attack');
+  assert.ok(actual.actions > 0, 'the surviving enemy still gets an exact committed receipt');
 });
 
 test('a lethal enemy multi-hit stops at the exact forecast prefix while a survivor takes the full intent', () => {
@@ -378,16 +393,17 @@ test('a lethal enemy multi-hit stops at the exact forecast prefix while a surviv
     combat.player.persistentPoise = { value: 18, max: 18, barrierBonus: 15 };
     combat.player.combatStance = { maneuver: 'sweep', camp: 'physical', range: 'melee' };
     const forecast = forecastBeforeTurn(combat);
-    assert.deepEqual(forecast.get(enemy.id).hits, [5, 5]);
-    assert.equal(forecast.get(enemy.id).shown, 10);
+    // Current tier tuning still produces two equal contacts, each costing 4 HP after mitigation.
+    assert.deepEqual(forecast.get(enemy.id).hits, [4, 4]);
+    assert.equal(forecast.get(enemy.id).shown, 8);
     const start = combat.eventLog.length;
     dispatch(combat, { type: 'endTurn' });
     while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
     const events = combat.eventLog.slice(start);
     const contacts = events.filter(event => event.type === 'damageDealt' && event.sourceId === enemy.id && event.targetId === 'player');
-    assert.deepEqual(contacts.map(event => event.hpLoss), hp === 1 ? [5] : [5, 5]);
-    assert.deepEqual(contacts.map(event => event.hpRemoved), hp === 1 ? [1] : [5, 5]);
-    assert.equal(combat.player.hp, hp === 1 ? 0 : 90);
+    assert.deepEqual(contacts.map(event => event.hpLoss), hp === 1 ? [4] : [4, 4]);
+    assert.deepEqual(contacts.map(event => event.hpRemoved), hp === 1 ? [1] : [4, 4]);
+    assert.equal(combat.player.hp, hp === 1 ? 0 : 92);
     assert.equal(combat.result, hp === 1 ? 'defeat' : null);
     const tally = { forecasts: 0, actions: 0, floaters: 0 };
     checkForecast(forecast, events, tally, `enemy two-hit HP ${hp}`);

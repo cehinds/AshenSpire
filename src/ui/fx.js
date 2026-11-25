@@ -4,6 +4,7 @@ import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 import { PlayRecipientEffectLayers, ClearRecipientEffects } from './recipientEffectSprites.js';
 import { RecipientEffectForEvent } from '../model/recipientEffects.js';
+import { RecipientEffectBatchForBeat } from './recipientEffectEvents.js';
 import { effectsOff, FxOff } from './performance.js';
 // src/ui/fx.js — feedback effects (SPEC §7.4)
 //
@@ -957,7 +958,6 @@ function flare(layer, anchor, color) {
  * Events are staggered COMBAT_TIMING.instantStepMs apart; clicking anywhere flushes instantly.
  */
 export function animateEvents(events, ctx, done) {
-  const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt };
   flushRequested = false;
   // Beat by beat, as the paced timeline cues them, so instant or
   // reduced-motion playback makes the same sounds as Normal pacing, in the
@@ -965,6 +965,12 @@ export function animateEvents(events, ctx, done) {
   // enemy's hits land before "your turn" stings), and beats with no visual
   // of their own sound when the walk passes them, or at the end.
   const beats = groupBeats(events);
+  const recipientBatches = new Map();
+  for (const beat of beats) {
+    const first = beat.events.find(event => event.recipientEffects?.length);
+    if (first) recipientBatches.set(first, RecipientEffectBatchForBeat(beat.events));
+  }
+  const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt, recipientBatches };
   const beatOf = new Map();
   beats.forEach((beat, b) => { for (const e of beat.events) if (!beatOf.has(e)) beatOf.set(e, b); });
   let cued = 0;
@@ -981,6 +987,7 @@ export function animateEvents(events, ctx, done) {
       if (stage?.reactionPoses?.length) stage.endReaction?.();
     }
     clearCallouts(ctx.layer);
+    ClearRecipientEffects(ctx.layer);
   };
   addEventListener('pointerdown', skip, { capture: true });
 
@@ -1185,8 +1192,12 @@ export function playTimeline(events, ctx, done) {
   const timing = actionPacing({ reduced: reducedMotionRequested() });
   const enemyTiming = actionPacing({ reduced: reducedMotionRequested(), enemy: true });
   const beats = groupBeats(events);
-  const receiptOptions = { sequential: true, reactionForReceipt: ctx.reactionForReceipt };
+  const receiptOptions = { sequential: true, reactionForReceipt: ctx.reactionForReceipt, recipientBatches: new Map() };
   const visualSafe = fn => { try { return fn(); } catch (error) { console.warn('[fx] receipt visual failed:', error?.message); } };
+  const playRecipientBatch = beat => {
+    const recipes = RecipientEffectBatchForBeat(beat.events);
+    if (recipes.length) visualSafe(() => PlayRecipientEffectLayers(ctx.layer, recipes, { anchorFor: ctx.anchorFor, sourceId: beat.actorId }));
+  };
   const parts = new Map(beats.flatMap(beat => beat.events.map(event => [event, visualSafe(() => visualPartsFor(event, beat.kind, receiptOptions))])));
   const dodgeSaid = new Set();
   const terminal = event => ['enemyDied', 'playerDied', 'combatEnded'].includes(event.type);
@@ -1346,6 +1357,7 @@ export function playTimeline(events, ctx, done) {
     },
     onContact: (beat, actor) => {
       runParts(beat, 'contact');
+      playRecipientBatch(beat);
       const hits = beat.events.filter(event => event.type === 'damageDealt');
       const holdMs = timing.scale === 0 ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
       if (holdMs && !FxOff('hitstop')) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs, ctx.combatEl); }
@@ -1405,7 +1417,10 @@ export function playTimeline(events, ctx, done) {
     },
     onNumbers: beat => {
       if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', pacingOf(beat).bannerMs));
-      if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); runParts(beat, 'numbers'); }
+      if (!beat.actorId || beat.kind === 'reveal') {
+        playRecipientBatch(beat);
+        runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); runParts(beat, 'numbers');
+      }
       else {
         // Owner 2026-11-06: the damage numbers come first, then the callouts (BLOCKED, BREAK, DODGED), then the rest (status and buff gains).
         for (const event of beat.events) if (event.type === 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
@@ -1578,7 +1593,8 @@ function visualPartsFor(e, beatKind, opts) {
     base = { ...base, reaction: ctx => { original?.(ctx); receiptReaction(ctx); } };
   }
   const recipient = e.recipientEffect || RecipientEffectForEvent({}, e);
-  const recipes = e.recipientEffects || (recipient ? [recipient] : []);
+  const recipes = Array.isArray(e.recipientEffects) && opts?.recipientBatches
+    ? opts.recipientBatches.get(e) || [] : e.recipientEffects || (recipient ? [recipient] : []);
   const effect = recipes.length ? { targetId: e.recipientTargetId || e.targetId }
     : Array.isArray(e.recipientEffects) ? null : combatEffectForEvent(e);
   if (!effect) return base;

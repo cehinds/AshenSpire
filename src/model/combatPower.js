@@ -54,12 +54,11 @@ function slimOf(full) {
     tags[k] = o;
   }
   return {
-    full, model: full.model, tags, rank: full.rank, keywords: full.keywords,
+    full, model: full.model, tags, keywords: full.keywords,
     costs: Object.fromEntries(Object.entries(full.costs).map(([k, v]) => [k, v.weight])),
     effects: Object.fromEntries(Object.entries(full.effects).map(([k, v]) => [k, [v.weight, v.per]])),
     statuses: Object.fromEntries(Object.entries(full.statuses).map(([k, v]) => [k, [v.weight, v.target]])),
     decayOne: new Set(full.cardModel.decayOneStatuses),
-    discount: { ...(full.items?.rarityDiscount || {}), ...full.rarity.discount }, // rarity.discount first; items.rarityDiscount adds boss
   };
 }
 
@@ -201,20 +200,26 @@ export function ScoreCard(c, scoring = GetActiveScoring()) {
   return { raw, parts, positive: P };
 }
 
+function rarityDiscount(scoring, rarity) {
+  const cards = scoring.rarity.discount, items = scoring.items?.rarityDiscount;
+  if (cards && Object.hasOwn(cards, rarity)) return cards[rarity] || 0;
+  return items && Object.hasOwn(items, rarity) ? items[rarity] || 0 : 0;
+}
+
 /** Combat power: raw score minus the rarity discount (cards and items share one table; boss comes from scoring.items.rarityDiscount). */
 export function CombatPower(raw, rarity, scoring = GetActiveScoring()) {
-  return raw - (slimOf(scoring).discount[rarity] || 0);
+  return raw - rarityDiscount(scoring, rarity);
 }
 
 /** Rank number from combat power: 0 = Unranked, 1..maxRank. */
 export function RankOf(cp, scoring = GetActiveScoring()) {
-  const RK = slimOf(scoring).rank;
+  const RK = scoring.rank;
   return cp <= RK.unrankedMax ? 0 : Math.min(RK.maxRank, Math.ceil(cp / RK.width));
 }
 export const RankName = (k) => (k === 0 ? 'Unranked' : 'Rank ' + k);
 /** The combat-power band of a rank, as text; it matches RankOf (Rank 1 starts just above unrankedMax, every later rank is `width` wide). */
 export function RankRange(k, scoring = GetActiveScoring()) {
-  const RK = slimOf(scoring).rank;
+  const RK = scoring.rank;
   if (k === 0) return `<= ${RK.unrankedMax}`;
   const lo = k === 1 ? RK.unrankedMax + 1 : RK.width * (k - 1) + 1;
   return k === RK.maxRank ? (RK.maxCp ? `${lo}-${RK.maxCp}` : `>= ${lo}`) : `${lo}-${RK.width * k}`;
@@ -231,7 +236,7 @@ export function ApplyScoringOverride(row, override, scoring = GetActiveScoring()
   const rarity = hasRarity ? override.rarity : row.rarity;
   const raw = hasRaw ? override.raw : row.raw;
   const cp = hasCp ? override.cp : CombatPower(raw, rarity, scoring);
-  const rank = hasRank ? Math.max(0, Math.min(slimOf(scoring).rank.maxRank, override.rank)) : RankOf(cp, scoring);
+  const rank = hasRank ? Math.max(0, Math.min(scoring.rank.maxRank, override.rank)) : RankOf(cp, scoring);
   return { ...row, raw, cp, rank, rarity, overridden: true };
 }
 
@@ -371,7 +376,7 @@ export function ScoreItem(it, scoring = GetActiveScoring(), rules = {}) {
     }
   }
   const raw = Math.round(Object.values(parts).reduce((s, v) => s + v, 0)) + 0;
-  const disc = S.discount[it.rarity] || 0;
+  const disc = rarityDiscount(scoring, it.rarity);
   return { raw, disc, cp: raw - disc, parts };
 }
 

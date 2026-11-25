@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { ResolveSmithFixtureProfile } from './helpers/smith-tier-profile.mjs';
 import { readFileSync } from 'node:fs';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
 import { resolveGameAuthor, resolveGearItem, armorBudgetFor } from '../engine/kernel/gameConfig.js';
@@ -12,7 +13,8 @@ import { gameProfileEquipmentReceipt, gameProfileRatingReceipt } from '../src/mo
 import { reconcileRunLoadoutHp } from '../src/model/loadout.js';
 import { withGameProfileService } from '../src/model/gameProfileRun.js';
 import { applyLevelUp, rederivePools } from '../src/model/levelup.js';
-const profile = resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),loadGameProfileCatalog());
+const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url)));
+const profile = resolveGameAuthor(author,loadGameProfileCatalog());
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh = () => createRunState({registries:reg,classId:'reaver',seed:429});
 // Owner, 2026-11-17: Core gear resolves through the gear module's `statPoints` (attribute points and Poise, no AR or DR), which takes
@@ -92,7 +94,9 @@ test('authored attribute gear reaches HP MP SP pools with one contribution on re
   const catalog=loadGameProfileCatalog();
   const armor=catalog.packs['ashen.core-content@2.0.0'].content.gear.find(item=>item.kind==='armor' && item.source.id==='vigil');
   armor.points={constitution:1,dexterity:1,wisdom:1};
-  const selected=resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),catalog);
+  const selected=resolveGameAuthor({ ...author, modules: { ...author.modules, gear: {
+    ...author.modules?.gear, statPoints: { attributes: { [armor.rarity]: 3 } },
+  } } },catalog);
   const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,selected)),selected);
   const run=createRunState({registries,classId:'reaver',seed:10});
   run.loadout.sets.armor[0]=null;
@@ -143,10 +147,12 @@ test('resolved gear suppresses duplicate legacy pool stats and retains independe
 });
 // Owner, 2026-11-17 (gear statPoints): a weapon Smith tier adds attribute points to its own item, not AR, so each source keeps its own gain.
 test('Core 2 weapon upgrades retain each equipped source identity', () => {
-  const run=fresh();run.loadout.sets.leftHand[0]='dagger';
-  const before=gameProfileRatingReceipt(reg,run), gearBefore=gameProfileEquipmentReceipt(reg,run);
+  const smithProfile=ResolveSmithFixtureProfile(author);
+  const smithReg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,smithProfile)),smithProfile);
+  const run=createRunState({registries:smithReg,classId:'reaver',seed:429});run.loadout.sets.leftHand[0]='dagger';
+  const before=gameProfileRatingReceipt(smithReg,run), gearBefore=gameProfileEquipmentReceipt(smithReg,run);
   run.itemUpgradeLevels={'armament/greatsword':2,'armament/dagger':1};
-  const after=gameProfileRatingReceipt(reg,run), gearAfter=gameProfileEquipmentReceipt(reg,run);
+  const after=gameProfileRatingReceipt(smithReg,run), gearAfter=gameProfileEquipmentReceipt(smithReg,run);
   const gained=id=>attributePoints(gearAfter.sources.find(row=>row.sourceId===id))-attributePoints(gearBefore.sources.find(row=>row.sourceId===id));
   assert.equal(gained('armament/greatsword'),2);
   assert.equal(gained('armament/dagger'),1);

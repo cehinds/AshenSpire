@@ -1,7 +1,7 @@
 // How many Core card upgrades are free, what the next one costs, and whether it
 // can be bought (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md, owner rulings of
 // 2026-10-28). Pure reads of the run: nothing here mutates.
-import { cardRank, VisibleCardRank } from './cardRank.js';
+import { cardRank, rankedEffectsCapped, VisibleCardRank } from './cardRank.js';
 import { mulberry32 } from './rng.js';
 import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 
@@ -11,6 +11,20 @@ import { OfferSalted } from './upgradeOffer.js';
 import { ActNodeUpgradeStock, NodeScheduleKey } from './actSeedSchedule.js';
 import { EffectiveTier } from './tierUnlocks.js';
 import { GetActiveScoring } from './activeScoring.js';
+import { staticCardTokens } from './playingCard.js';
+
+function checkDamageUpgrade(run, registries, rank, ranked) {
+  if (!Number.isFinite(run.gameProfile?.modules?.effects?.baseDamageMultiplier)) return undefined;
+  const tokens = (def, atRank) => staticCardTokens(
+    atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def, registries, run);
+  let before;
+  return (current, step, nextRank) => {
+    before ??= tokens(current, rank);
+    const after = tokens(applyUpgradeSteps(current, [step]), ranked ? Math.max(rank, nextRank || 0) : rank);
+    return !Object.values(before).some(Number.isFinite)
+      || Object.keys(after).some(key => before[key] !== after[key]);
+  };
+}
 
 /**
  * upgradeBasic(def) → whether a card is "Basic" for upgrades (owner ruling,
@@ -103,7 +117,8 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   const applied = upgradeStepsOf(instance);
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
-  const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
+  const ranked = run.gameProfile?.modules?.progression?.cardRanks === true;
+  const rank = ranked ? cardRank(instance) : 1;
   const playerLevel = Number.isInteger(run?.level?.level) && run.level.level >= 1 ? run.level.level : 1;
   const visibleRank = VisibleCardRank(instance);
   const nodeKey = !everyFamily && !salt ? NodeScheduleKey(run) : '';
@@ -113,7 +128,9 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
     const cardTier = EffectiveTier(visibleRank, instance?.rarityOverride || base.rarity || 'common', activeScoring);
     nodeSpecialty = ActNodeUpgradeStock(run.seed, nodeKey, { vendor, scoring: activeScoring }).forTier(cardTier);
   }
-  const limits = { ...mana, rank, cardRank: visibleRank, playerLevel, instance, scale, exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}), ...(nodeSpecialty ? { nodeSpecialty } : {}) };
+  const limits = { ...mana, rank, cardRank: visibleRank, playerLevel, instance, scale,
+    damageChanges: checkDamageUpgrade(run, registries, rank, ranked),
+    exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}), ...(nodeSpecialty ? { nodeSpecialty } : {}) };
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1 && authored) return [{ k: 'authored' }];
   // An authored first step occupies its family (AuthoredFamilies): the rolled alternative is of another family.

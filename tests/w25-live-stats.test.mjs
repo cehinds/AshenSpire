@@ -1,6 +1,7 @@
 // Owner, 2026-11-14 (W25-L): attributes change during a fight, everything derived follows at once, and everything returns after it.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
@@ -278,11 +279,12 @@ test('an equipment change during a boost keeps permanent level gains and survive
   };
   function swap(boosted) {
     const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+    const initialStrength = gameProfileEffectiveAttributes(registries, run).strength;
     awardLevelXp(registries, run, xpToNext(registries, 1));
     run.loadout.storage.push('boneSceptre');
     const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
     combat.swapsLeft = 99;
-    assert.equal(combat.player.attributes.strength, 7, 'the starting weapon and earned class point are active');
+    assert.equal(combat.player.attributes.strength, initialStrength + 1, 'the earned class point increases the equipped Strength');
     if (boosted) ChangeAttribute(combat, combat.player, 'wisdom', 2, { thisTurn: true });
     dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 0, pieceId: 'boneSceptre' });
     assert.equal(combat.loadout.sets.rightHand[0], 'boneSceptre');

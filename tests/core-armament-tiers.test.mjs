@@ -1,11 +1,12 @@
 // Owner ruling 2026-10-28: a Core armament (weapon, armor, shield) levels up three times. Each tier's step is
 // +1, +1, +2 (effective bonus 1/2/4), paid 1/2/3 Smithing Stones. Legacy and Current keep the single authored tier.
+import { ResolveSmithFixtureProfile } from './helpers/smith-tier-profile.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { gameContent, resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { gameContent, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { smithingPlan, commitItemUpgrade } from '../src/model/smithing.js';
 import { withGameProfileService, gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
@@ -13,7 +14,7 @@ import { itemUpgradeTiers } from '../src/model/itemUpgrades.js';
 import '../src/engine/runCombat.js';
 import { upgradeTierBonus } from '../engine/kernel/gameConfig.js';
 
-const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
+const profile = ResolveSmithFixtureProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const legacyReg = createRegistries(contentBundle);
 const WEAPON = 'armament/greatsword';

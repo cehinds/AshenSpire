@@ -4,7 +4,7 @@ import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { scoring as shippedScoring } from '../src/content/generated/scoring.js';
 import { ValidateScoringConfig } from '../src/model/activeScoring.js';
 import { BaseFace, ScoreCard, UpgradeTagLabel, UpgradeTagSurcharge } from '../src/model/combatPower.js';
-import { applyUpgradeSteps, upgradeTagStacks, upgradeStepsProblems, FlatSteps } from '../src/model/cardUpgrade.js';
+import { applyUpgradeSteps, UpgradeTagStacks, upgradeStepsProblems, FlatSteps } from '../src/model/cardUpgrade.js';
 import { rollUpgradeOptions, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 import { cardUpgradeChanges, UpgradeStepLook } from '../src/ui/models/CardUpgradeModel.js';
@@ -100,9 +100,9 @@ test('Refined (drawback easing), Tempered (combat form), and Purified (healing/c
   const r1 = applyUpgradeSteps(card, [{ k: 'fx', fx: 'unethereal' }]);
   const r2 = applyUpgradeSteps(card, [{ k: 'fx', fx: 'unethereal' }, { k: 'fx', fx: 'unexhaust' }]);
   const r3 = applyUpgradeSteps(card, [{ k: 'fx', fx: 'unethereal' }, { k: 'fx', fx: 'unexhaust' }, { k: 'stk', status: 'weak', side: 'self', n: -1 }]);
-  assert.equal(upgradeTagStacks(r1, 'refined'), 1);
-  assert.equal(upgradeTagStacks(r2, 'refined'), 2);
-  assert.equal(upgradeTagStacks(r3, 'refined'), 3);
+  assert.equal(UpgradeTagStacks(r1, 'refined'), 1);
+  assert.equal(UpgradeTagStacks(r2, 'refined'), 2);
+  assert.equal(UpgradeTagStacks(r3, 'refined'), 3);
   assert.equal(UpgradeTagLabel('upgrade:refined+'), 'Refined+');
   assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.refined, 1, 20), 6);
   assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.refined, 2, 20), 12);
@@ -111,16 +111,16 @@ test('Refined (drawback easing), Tempered (combat form), and Purified (healing/c
   // Tempered: combat form & forging steps (poise, hits, range, block, counter) stamp upgrade:tempered
   const t1 = applyUpgradeSteps(card, [{ k: 'poise', n: 2 }]);
   const t2 = applyUpgradeSteps(card, [{ k: 'poise', n: 2 }, { k: 'tag', tag: 'range:reach' }]);
-  assert.equal(upgradeTagStacks(t1, 'tempered'), 1);
-  assert.equal(upgradeTagStacks(t2, 'tempered'), 2);
+  assert.equal(UpgradeTagStacks(t1, 'tempered'), 1);
+  assert.equal(UpgradeTagStacks(t2, 'tempered'), 2);
   assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.tempered, 1, 20), 4);
   assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.tempered, 2, 20), 8);
 
   // Purified: healing & cleansing upgrade line (fx:heal, fx:cleanse) stamps upgrade:purified
   const p1 = applyUpgradeSteps(card, [{ k: 'fx', fx: 'heal', n: 3 }]);
   const p2 = applyUpgradeSteps(card, [{ k: 'fx', fx: 'heal', n: 3 }, { k: 'fx', fx: 'cleanse', status: 'weak', n: 1 }]);
-  assert.equal(upgradeTagStacks(p1, 'purified'), 1);
-  assert.equal(upgradeTagStacks(p2, 'purified'), 2);
+  assert.equal(UpgradeTagStacks(p1, 'purified'), 1);
+  assert.equal(UpgradeTagStacks(p2, 'purified'), 2);
   assert.ok(p2.effects.some((e) => e.op === 'heal' && e.amount === 3), 'fx:heal adds heal effect');
   assert.ok(p2.effects.some((e) => e.op === 'removeStatus' && e.status === 'weak'), 'fx:cleanse adds removeStatus effect');
   assert.deepEqual(upgradeStepsProblems({ upgraded: true, upgradeSteps: [{ k: 'fx', fx: 'heal', n: 3 }, { k: 'fx', fx: 'cleanse', status: 'weak', n: 1 }] }, 'card'), []);

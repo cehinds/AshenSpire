@@ -19,6 +19,7 @@
         <h2 id="preview-title">Battlefield preview</h2>
         <label>Scenario
           <select id="demo">
+            <option value="stress">All categories and queue limits</option>
             <option value="recipients">Multiple recipients</option>
             <option value="sequence">One recipient, multiple effects</option>
             <option value="single">One event</option>
@@ -62,24 +63,51 @@
     <div class="editor-column">
       <section id="timing-editor" class="panel" aria-labelledby="timing-title">
         <h2 id="timing-title">Effects Timing</h2>
+        <label class="check"><input id="category-enabled" type="checkbox"> Use category queues</label>
+        <div id="category-fields">
+          <fieldset>
+            <legend>Category order and simultaneous clips</legend>
+            <ol id="timing-categories"></ol>
+          </fieldset>
+          <div class="timing-fields">
+            <label>Same-category stagger (ms)
+              <input id="category-stagger" type="number" min="0" max="1000" step="1">
+            </label>
+            <label>Category transition overlap (ms)
+              <input id="category-overlap" type="number" min="0" max="200" step="1">
+            </label>
+            <label>Battlefield limit
+              <input id="category-global" type="number" min="1" max="12" step="1">
+            </label>
+            <label>Per-actor limit
+              <input id="category-actor" type="number" min="1" max="12" step="1">
+            </label>
+            <p class="wide hint">Clips wait when a limit is reached. Stagger and overlap change when clips start. Clip lengths stay fixed.</p>
+          </div>
+        </div>
+        <details id="legacy-timing">
+          <summary>Legacy queue timing</summary>
+          <div class="timing-fields">
+            <label class="wide">Queue scope
+              <select id="timing-scope" aria-describedby="scope-help">
+                <option value="battlefield">Battlefield</option>
+                <option value="recipient">Per recipient</option>
+              </select>
+            </label>
+            <p id="scope-help" class="wide hint">The battlefield shares one queue. Per recipient lets different actors run in parallel.</p>
+            <label class="wide">Maximum overlapping clips
+              <input id="timing-cap" type="number" min="1" max="4" step="1" aria-describedby="spacing-help">
+            </label>
+            <label>Gap (ms)
+              <input id="timing-gap" type="number" min="0" max="1000" step="any" aria-describedby="spacing-help">
+            </label>
+            <label>Overlap (ms)
+              <input id="timing-overlap" type="number" min="0" max="200" step="any" aria-describedby="spacing-help">
+            </label>
+            <p id="spacing-help" class="wide hint">Use a gap or an overlap. Overlap needs a limit of at least two. Clip lengths stay fixed.</p>
+          </div>
+        </details>
         <div class="timing-fields">
-          <label class="wide">Queue scope
-            <select id="timing-scope" aria-describedby="scope-help">
-              <option value="battlefield">Battlefield</option>
-              <option value="recipient">Per recipient</option>
-            </select>
-          </label>
-          <p id="scope-help" class="wide hint">The battlefield shares one queue. Per recipient lets different actors run in parallel.</p>
-          <label class="wide">Maximum overlapping clips
-            <input id="timing-cap" type="number" min="1" max="4" step="1" aria-describedby="spacing-help">
-          </label>
-          <label>Gap (ms)
-            <input id="timing-gap" type="number" min="0" max="1000" step="any" aria-describedby="spacing-help">
-          </label>
-          <label>Overlap (ms)
-            <input id="timing-overlap" type="number" min="0" max="200" step="any" aria-describedby="spacing-help">
-          </label>
-          <p id="spacing-help" class="wide hint">Use a gap or an overlap. Overlap needs a limit of at least two. Clip lengths stay fixed.</p>
           <label class="wide opacity-field">
             <span>Master opacity</span>
             <output id="opacity-value" for="timing-opacity"></output>

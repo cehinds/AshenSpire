@@ -11,7 +11,16 @@ const root = resolve(import.meta.dirname, '..');
 const source = 'content/config/ui/presentation/recipientEffects.json';
 const page = '/tools/recipient-effects-runtime-preview.html';
 const route = '/__editor/recipient-effects';
-const tuning = { scope: 'recipient', maxConcurrent: 3, gapMs: 0, overlapMs: 23, opacity: 0.52 };
+const legacyTiming = { scope: 'recipient', maxConcurrent: 3, gapMs: 0, overlapMs: 23, opacity: 0.52 };
+const categories = ['castingMovement', 'attackImpacts', 'defenseReactions', 'buffsStatuses'];
+const tuning = {
+  ...legacyTiming,
+  categoryQueues: {
+    enabled: true, order: [categories[1], categories[0], ...categories.slice(2)], staggerMs: 18,
+    overlapMs: 25, maxPerCategory: Object.fromEntries(categories.map((category, i) => [category, i + 1])),
+    maxGlobal: 4, maxPerActor: 1,
+  },
+};
 
 async function fixture(t, editorWrite) {
   const dir = await mkdtemp(join(tmpdir(), 'recipient-timing-'));
@@ -38,7 +47,7 @@ function post(origin, body, requestOrigin = origin, contentType = 'application/j
   });
 }
 
-test('effect timing endpoint reads the revision and saves only the five timing values', async t => {
+test('effect timing endpoint reads the revision and saves category queues and preserves unrelated authored bytes', async t => {
   const { dir, origin, path, generated } = await fixture(t, true);
   assert.match(await (await fetch(origin + page)).text(), /data-editor-write="on"/);
   const response = await fetch(origin + route);
@@ -46,6 +55,10 @@ test('effect timing endpoint reads the revision and saves only the five timing v
   const before = await response.json();
   assert.equal(before.file, source);
   assert.match(before.revision, /^[a-f0-9]{64}$/);
+  assert.deepEqual(before.timing.categoryQueues, {
+    enabled: true, order: categories, staggerMs: 10, overlapMs: 10,
+    maxPerCategory: Object.fromEntries(categories.map(category => [category, 2])), maxGlobal: 3, maxPerActor: 2,
+  });
   const original = await readFile(path, 'utf8');
 
   const written = await post(origin, { revision: before.revision, timing: tuning });
@@ -56,7 +69,9 @@ test('effect timing endpoint reads the revision and saves only the five timing v
 
   const mutableLines = /^\s*"(resultQueueScope|resultMaxConcurrent|resultGapMs|resultOverlapMs|global)"\s*:[^\n]*$/gm;
   const current = await readFile(path, 'utf8');
-  assert.equal(current.replace(mutableLines, ''), original.replace(mutableLines, ''), 'unrelated bytes are preserved');
+  const withoutSettings = text => text.replace(mutableLines, '').replace(/"categoryQueues"\s*:\s*\{[\s\S]*?\n    \}/, '"categoryQueues": {}');
+  assert.equal(withoutSettings(current), withoutSettings(original), 'unrelated bytes are preserved');
+  assert.deepEqual(JSON.parse(current).motion.categoryQueues, tuning.categoryQueues);
   const compiled = compileEntries(readConfigTree(join(dir, 'content')), { requireInteractionConfigs: true });
   assert.deepEqual(compiled.errors, []);
   assert.equal(await readFile(generated, 'utf8'), generate(compiled), 'canonical output matches the current JSON');
@@ -72,6 +87,15 @@ test('effect timing endpoint reads the revision and saves only the five timing v
   assert.equal(await readFile(path, 'utf8'), current);
 });
 
+test('a legacy timing submission preserves the authored category queues', async t => {
+  const { origin, path } = await fixture(t, true);
+  const before = await (await fetch(origin + route)).json();
+  const response = await post(origin, { revision: before.revision, timing: legacyTiming });
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).timing.categoryQueues, before.timing.categoryQueues);
+  assert.deepEqual(JSON.parse(await readFile(path, 'utf8')).motion.categoryQueues, before.timing.categoryQueues);
+});
+
 test('effect timing refuses malformed, cross-origin, oversized and nonlocal requests', async t => {
   const { origin, path } = await fixture(t, true);
   const { revision } = await (await fetch(origin + route)).json();
@@ -82,6 +106,9 @@ test('effect timing refuses malformed, cross-origin, oversized and nonlocal requ
     { ...tuning, opacity: 1.1 },
     { ...tuning, unsupported: true },
     { ...tuning, gapMs: '0' },
+    { ...tuning, categoryQueues: { ...tuning.categoryQueues, maxGlobal: 0 } },
+    { ...tuning, categoryQueues: { ...tuning.categoryQueues, unsupported: true } },
+    { ...tuning, categoryQueues: { ...tuning.categoryQueues, order: categories.map(() => categories[0]) } },
   ]) {
     assert.equal((await post(origin, { revision, timing })).status, 400);
   }

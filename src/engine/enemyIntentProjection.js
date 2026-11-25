@@ -122,6 +122,11 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
     if (getFlag(ctx, other, 'skipTurn')) continue;
     // The actual owner start resets Resolve and rolls recovery before choosing to act.
     // Where a lock may prevent this attack, don't price the next enemy on the assumption it lands.
+    // Owner-start hooks may kill the predecessor or change what its attack spends.
+    // They run after status decay in live combat, and this projection does not execute them.
+    if (Object.keys(other.statuses || {}).some(id => ctx.registries.statuses.get(id)?.hooks?.some(hook => hook.on === 'ownerTurnStart'))) {
+      return 'precedingActionUncertain';
+    }
     const control = other.statusControl;
     if (shockChance > 0 || (!control?.resolveNextTurn && Control.controlRestrictions(ctx, {
       ...other, statusControl: { ...control, resolveActive: false },

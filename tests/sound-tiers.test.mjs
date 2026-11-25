@@ -117,7 +117,29 @@ import { createRng } from '../src/engine/rng.js';
 
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('instant playback cues beat by beat, as paced playback does', () => {
+async function instantCues(events, reducedMotion = false) {
+  const originals = new Map();
+  for (const [key, value] of Object.entries({
+    addEventListener: globalThis.addEventListener ?? (() => {}),
+    removeEventListener: globalThis.removeEventListener ?? (() => {}),
+    matchMedia: query => ({ matches: reducedMotion && query === '(prefers-reduced-motion: reduce)' }),
+  })) {
+    originals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
+    globalThis[key] = value;
+  }
+  try {
+    sfx.sink = null; sfx.recent.length = 0;
+    await new Promise(resolve => animateEvents(events, { layer: null, combatEl: null, anchorFor: () => null }, resolve));
+    return [...sfx.recent];
+  } finally {
+    for (const [key, original] of originals) {
+      if (original) Object.defineProperty(globalThis, key, original);
+      else delete globalThis[key];
+    }
+  }
+}
+
+test('instant and reduced-motion playback cue each beat, as paced playback does', async () => {
   // An enemy turn that refills the hand, then the player's turn starts and a
   // later draw lands in its own beat: two draw beats, two draw sounds.
   const events = [
@@ -131,8 +153,8 @@ test('instant playback cues beat by beat, as paced playback does', () => {
   ];
   const cues = played(() => playEventCues(events));
   assert.deepEqual(cues, ['cardDiscard', 'cardDraw', 'turnStinger', 'cardDraw']);
-  assert.match(src('src/ui/fx.js'), /export function animateEvents[\s\S]{0,700}const beats = groupBeats\(events\);[\s\S]{0,400}playBeatCues\(beats\[cued\+\+\]\.events[,)]/,
-    'animateEvents (instant / reduced motion) cues the same beats the paced timeline does');
+  assert.deepEqual(await instantCues(events), cues, 'instant playback');
+  assert.deepEqual(await instantCues(events, true), cues, 'reduced-motion playback');
 });
 
 test('a fresh fight sounds its opening draw and turn stinger; a restored one replays nothing', () => {
@@ -151,24 +173,16 @@ test('a fresh fight sounds its opening draw and turn stinger; a restored one rep
 });
 
 test('instant playback keeps cue order: the enemy hit lands before "your turn" stings', async () => {
-  const restore = {};
-  for (const k of ['addEventListener', 'removeEventListener']) { restore[k] = globalThis[k]; globalThis[k] ??= () => {}; }
-  try {
-    const events = [
-      { type: 'cardDiscarded', reason: 'turnEnd' },
-      { type: 'enemyTurnStart' },
-      { type: 'enemyMoveStarted', sourceId: 'e1', kind: 'attack' },
-      { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 7, blocked: 0 },
-      { type: 'cardDrawn' }, { type: 'cardDrawn' },
-      { type: 'playerTurnStart' },
-    ];
-    sfx.sink = null; sfx.recent.length = 0;
-    await new Promise((resolve) => animateEvents(events, { layer: null, combatEl: null, anchorFor: () => null }, resolve));
-    const order = sfx.recent.filter((id) => ['cardDiscard', 'playerHurt', 'cardDraw', 'turnStinger'].includes(id));
-    assert.deepEqual(order, ['cardDiscard', 'playerHurt', 'cardDraw', 'turnStinger']);
-  } finally {
-    for (const k of Object.keys(restore)) if (restore[k] === undefined) delete globalThis[k];
-  }
+  const events = [
+    { type: 'cardDiscarded', reason: 'turnEnd' },
+    { type: 'enemyTurnStart' },
+    { type: 'enemyMoveStarted', sourceId: 'e1', kind: 'attack' },
+    { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 7, blocked: 0 },
+    { type: 'cardDrawn' }, { type: 'cardDrawn' },
+    { type: 'playerTurnStart' },
+  ];
+  const order = (await instantCues(events)).filter((id) => ['cardDiscard', 'playerHurt', 'cardDraw', 'turnStinger'].includes(id));
+  assert.deepEqual(order, ['cardDiscard', 'playerHurt', 'cardDraw', 'turnStinger']);
 });
 
 // ---- follow-ups to #1472's last review (Codex P2 threads) ------------------

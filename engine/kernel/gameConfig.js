@@ -261,14 +261,13 @@ function resolveStatPointGear(item, settings, rank) {
   const ratingsWeights = gearWeights(item, settings, 'ratings');
   const ratingsSum = Object.values(ratingsWeights).reduce((s, v) => s + Math.max(0, v), 0);
   const rawRatingsPool = settings.fillTo === 'none' ? 0 : (settings.poolSizes.ratings[item.rarity] || { min: 0, max: 0 })[settings.fillTo === 'min' ? 'min' : 'max'];
-  const attrCost = Number.isInteger(rule.attributeBudgetCost) ? rule.attributeBudgetCost : 0;
-  // Flat attributes cut significantly into the item's ratings/Poise budget when attributeBudgetCost > 0.
-  const ratingsPool = Math.max(0, rawRatingsPool - total * attrCost);
-  // Owner, 2026-11-18: max Poise = 1 + CON + other Poise bonuses. Gear that guards (armour, shields, defensive two-handers) simply ADDS
-  // its Poise; an item whose ratings weights name no Poise (a dagger, a bow, a staff) adds 0 unless it authors some, so `poiseMin`
-  // is the floor only for an item that has a Poise share at all (and only when ratingsPool wasn't consumed by attributes).
+  const budgetedAttributes = Number.isInteger(rule.attributeBudgetCost);
+  // An archived profile without an attribute budget cost retains its original Poise floor.
+  const ratingsPool = budgetedAttributes ? Math.max(0, rawRatingsPool - total * rule.attributeBudgetCost) : rawRatingsPool;
   const poiseShare = ratingsSum ? Math.max(0, ratingsWeights.poise || 0) / ratingsSum : 0;
-  const poise = authored.poise || (poiseShare > 0 && ratingsPool > 0 ? Math.max(total > 0 ? 0 : (rule.poiseMin ?? 0), Math.round(ratingsPool * poiseShare)) : 0);
+  const poiseFloor = budgetedAttributes && total > 0 ? 0 : (rule.poiseMin ?? 0);
+  const poise = authored.poise || (poiseShare > 0 && (!budgetedAttributes || ratingsPool > 0)
+    ? Math.max(poiseFloor, Math.round(ratingsPool * poiseShare)) : 0);
   const points = Object.fromEntries(GEAR_KEYS.map(k => [k, GEAR_ATTRIBUTES.includes(k) ? authored[k] + (fill[k] || 0) : k === 'poise' ? poise : 0]));
   const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * (settings.pointValues[k] ?? 0)]));
   const modifiers = (item.tags || []).map(t => settings.tags[t]).filter(r => r?.modifier).map(r => `${r.modifier}=${r.amount >= 0 ? '+' : ''}${r.amount}`);
@@ -530,6 +529,7 @@ export function enemyPools(row, settings, level = enemyLevel(row, settings), bon
   }
   // Authored `spFloor` (owner, 2026-10-25): an enemy whose attribute offset would leave it unable to pay its costliest card keeps that much SP.
   if (Number.isSafeInteger(row.spFloor) && row.spFloor > 0) pools.sp = Math.max(pools.sp, row.spFloor);
+  if (Number.isSafeInteger(row.mpFloor) && row.mpFloor > 0) pools.mp = Math.max(pools.mp, row.mpFloor);
   return pools;
 }
 // What a viewer may see of an enemy: the always-shown fields plus any field one of the viewer's

@@ -2,12 +2,13 @@
 // panel, panes grid, list rows and footer, with the preview where the editor's inspector stands. This pins
 // the structure (the card picker's twin is in card-upgrade-picker-model.test.mjs), the selection outline,
 // the Blacksmith-gated row staying listed and disabled, and the confirm path.
+import { ResolveSmithFixtureProfile } from './helpers/smith-tier-profile.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { beginGameProfileRest } from '../src/model/gameProfileRest.js';
 import { smithingPlan } from '../src/model/smithing.js';
@@ -22,7 +23,7 @@ import { createRng } from '../src/engine/rng.js';
 import '../src/engine/runCombat.js';
 import '../src/engine/combat.js';
 
-const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
+const profile = ResolveSmithFixtureProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const css = readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
 const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine').id; return beginGameProfileRest(run, '1:' + run.mapNodeId); };
