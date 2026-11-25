@@ -1461,18 +1461,6 @@
       ]
     },
     {
-      "id": "status.intelligence",
-      "tag": "status.intelligence",
-      "family": "status",
-      "portability": "legacy",
-      "modules": [
-        "cards",
-        "characters",
-        "gear",
-        "statuses"
-      ]
-    },
-    {
       "id": "status.invulnerability",
       "tag": "status.invulnerability",
       "family": "status",
@@ -1887,17 +1875,6 @@
       ]
     },
     {
-      "id": "status.wisdom",
-      "tag": "status.wisdom",
-      "family": "status",
-      "portability": "legacy",
-      "modules": [
-        "characters",
-        "gear",
-        "statuses"
-      ]
-    },
-    {
       "id": "status.zealotry",
       "tag": "status.zealotry",
       "family": "status",
@@ -2119,13 +2096,6 @@
     {
       "id": "trait_reaction",
       "tag": "trait:reaction",
-      "family": "trait",
-      "portability": "legacy",
-      "modules": []
-    },
-    {
-      "id": "trait_recurring",
-      "tag": "trait:recurring",
       "family": "trait",
       "portability": "legacy",
       "modules": []
