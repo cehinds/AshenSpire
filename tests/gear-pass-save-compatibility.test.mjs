@@ -106,7 +106,9 @@ const totalDraws = rng => Object.values(rng.getCounters()).reduce((sum, count) =
 
 test('a pre-type profile applies current bands to new shop stock and never rerolls stock already cached', () => {
   // The immutable old profile is replayed on clean origin/dev 7dff4b03a17.
-  // The previous act-band oracle remains in 65134299eca. Current offers use character bands (15d221435dc).
+  // The previous act-band oracle remains in 65134299eca. Character bands use current item scores.
+  // The gear budget retune (2c5b9645298) changed the level-one armour pool. Replaying the same seed
+  // with the earlier scoring table still draws Rite Vestments and Nightweave for the last two slots.
   const profile = resolveGameProfile(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url)))));
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 511 }), rng = createRng(41);
@@ -119,7 +121,7 @@ test('a pre-type profile applies current bands to new shop stock and never rerol
     'base.modify-card-stance', 'base.weak', 'base.restrained',
     'poiseBreaker', 'greatswordSunderingHew', 'core.reaverSpecial',
     'wondrousDraught', 'blightCoating', 'flaskOfFerocity',
-    'wayfarerPlate', 'riteVestments', 'nightweave',
+    'wayfarerPlate', 'nightweave', 'bastion',
   ]);
   for (const choice of offer.options) {
     const prefix = { weapons: 'weapon:', armor: 'armour:reaver.', relics: 'relic:' }[choice.kind];
