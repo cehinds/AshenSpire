@@ -1,5 +1,5 @@
 // tests/doorplant-shard.test.mjs — a sharded known-bad corpus still runs every
-// plant exactly once, and every sharded CI job lists every shard of its count.
+// plant exactly once, and every sharded CI job covers its full corpus once.
 //
 // WHY (owner rule, 2026-10-02: every CI job finishes in 20 minutes or less).
 // startup-gate's 26 browser plants took 41-46 minutes as one serial step, so
@@ -63,7 +63,8 @@ test('a malformed shard is refused, never read as "run everything" or "run nothi
 // THE WORKFLOW HALF. Read as text (the repo carries no YAML parser): for each
 // job whose step passes `--shard ${{ matrix.shard }}`, the job's matrix must
 // list i/n for every i in 0..n-1, once — per runner OS when the matrix is an
-// `include:` list naming one.
+// `include:` list naming one. Windows discovery splits a single group using
+// a larger denominator, so it checks for exact coverage over a full period.
 function jobs(text) {
   const out = new Map();
   const body = text.slice(text.indexOf('\njobs:\n'));
@@ -84,7 +85,24 @@ function shardLegs(job) {
   return legs;
 }
 
-test('every sharded job in ci.yml runs every shard of its count, each once', () => {
+function assertExactShardPeriod(legs, label) {
+  const period = Math.max(...legs.map(({ count }) => count));
+  assert.ok(legs.every(({ count }) => period % count === 0), `${label} has a shard count that does not divide the period ${period}`);
+  for (let position = 0; position < period; position++) {
+    const matches = legs.filter(({ index, count }) => position % count === index).length;
+    assert.equal(matches, 1, `${label} assigns index ${position} ${matches} times in a period of ${period}`);
+  }
+}
+
+test('mixed shard coverage rejects both missing and repeated indices', () => {
+  const legs = ['0/2', '1/4', '3/4'].map(parseShard);
+  assert.doesNotThrow(() => assertExactShardPeriod(legs, 'example'));
+  assert.throws(() => assertExactShardPeriod(legs.slice(0, 2), 'example'), /index 3 0 times/);
+  assert.throws(() => assertExactShardPeriod([...legs, parseShard('0/4')], 'example'), /index 0 2 times/);
+  assert.throws(() => assertExactShardPeriod([...legs, parseShard('0/3')], 'example'), /does not divide/);
+});
+
+test('every sharded job in ci.yml covers its corpus once per platform', () => {
   const text = readFileSync(`${ROOT}.github/workflows/ci.yml`, 'utf8').replace(/\r\n/g, '\n');
   const sharded = [...jobs(text)].filter(([, job]) => /--shard \$\{\{ matrix\.shard \}\}/.test(job));
   assert.ok(sharded.length >= 4, `expected the startup-gate, hintstrip, about-changelog and buildversion shards; found ${sharded.map(([n]) => n).join(', ')}`);
@@ -98,6 +116,10 @@ test('every sharded job in ci.yml runs every shard of its count, each once', () 
     }
     assert.ok(byOs.size, `${name} passes --shard but its matrix lists no shards`);
     for (const [os, legs] of byOs) {
+      if (name === 'test-discovered' && os === 'windows-latest') {
+        assertExactShardPeriod(legs, `${name} (${os})`);
+        continue;
+      }
       const counts = new Set(legs.map((l) => l.count));
       assert.equal(counts.size, 1, `${name} (${os}) mixes shard counts ${[...counts].join(', ')}`);
       const [count] = counts;

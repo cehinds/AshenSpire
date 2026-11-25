@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { catalogJSONExpression } from '../tools/catalog-json.mjs';
+import { catalogVersionScanText } from '../tools/buildversion.mjs';
 import { danglingLiteralAssets } from '../tools/literal-asset-references.mjs';
 
 const asset = 'assets/recipient-effects/v5/slash.png';
@@ -55,4 +59,50 @@ test('real generated catalog permits its 47 optional rows and no unrelated liter
   assert.deepEqual(scan(source, authored, 'src/config/generated/ui.js', manifest), []);
   const unknown = 'assets/recipient-effects/v5/not-catalogued.png';
   assert.deepEqual(scan(source + `\nconst missing = '${unknown}';`, authored, 'src/config/generated/ui.js', manifest), [`src/config/generated/ui.js → ${unknown}`]);
+});
+
+test('packed config preserves optional offsets and detects the same asset at a required site', () => {
+  const data = { presentation: { recipientEffects: config }, required: { asset } };
+  const packed = catalogJSONExpression({
+    ...data, repeated: Array.from({ length: 20 }, () => ({ repeatedProperty: 'a repeated string value' })),
+  });
+  assert.equal(packed.encoded, true);
+  const source = `export const uiConfig = deepFreeze(${packed.expression});\n`;
+  assert.deepEqual(scan(source), [`src/config/generated/ui.js → ${asset}`]);
+});
+
+test('packed art and changelog projections still expose missing literal assets', () => {
+  const path = 'assets/required.png';
+  const rows = Array.from({ length: 20 }, () => ({ path, repeatedProperty: 'a repeated string value' }));
+  for (const [id, name, wrap, data] of [
+    ['src/content/reviewedCardArt.generated.js', 'reviewedCardArtCatalog', false, { rows }],
+    ['src/content/changelog.generated.js', 'GENERATED_CHANGELOG', true, rows],
+  ]) {
+    const packed = catalogJSONExpression(data);
+    assert.equal(packed.encoded, true);
+    const expression = wrap ? `Object.freeze(${packed.expression})` : packed.expression;
+    const source = `export const ${name} = ${expression};
+`;
+    const missing = scan(source, config, id);
+    assert.equal(missing.length, rows.length, id);
+    assert.ok(missing.every(ref => ref.endsWith(path)), id);
+    assert.deepEqual(scan(source, config, id, new Set([path])), []);
+  }
+});
+
+test('generated UI, art and changelog scan as the same ordered data that the runtime imports', async () => {
+  const root = fileURLToPath(new URL('../', import.meta.url));
+  for (const [id, name, wrapper] of [
+    ['src/config/generated/ui.js', 'uiConfig', 'deepFreeze('],
+    ['src/content/reviewedCardArt.generated.js', 'reviewedCardArtCatalog', ''],
+    ['src/content/changelog.generated.js', 'GENERATED_CHANGELOG', 'Object.freeze('],
+  ]) {
+    const file = resolve(root, id);
+    const source = readFileSync(file, 'utf8');
+    const prefix = `export const ${name} = ${wrapper}`;
+    const line = catalogVersionScanText(id, source).split('\n').find(row => row.startsWith(prefix));
+    const canonicalJSON = line.slice(prefix.length, wrapper ? -2 : -1);
+    const runtime = (await import(pathToFileURL(file).href))[name];
+    assert.equal(canonicalJSON, JSON.stringify(runtime), id);
+  }
 });
