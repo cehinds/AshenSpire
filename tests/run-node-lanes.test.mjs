@@ -221,7 +221,7 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     }
     if (file === 'tests.yml') {
       const shards = [...discovery.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]);
-      assert.deepEqual(shards, ['0/6', '1/6', '2/6', '3/6', '4/12', '10/12', '5/6']);
+      assert.deepEqual(shards, ['0/6', '1/6', '2/6', '3/6', '4/12', '10/24', '22/24', '5/6']);
       const fast = discoverySpeedFiles(discoveredCorpus(), 'exclude');
       const assigned = shards.flatMap(shard => discoveryShardFiles(fast,
         parseRunNodeOptions(['--discovered-only', '--no-slow', '--shard', shard]).shard));
@@ -308,11 +308,14 @@ test('the configured discovery shards and isolated jobs cover the real corpus on
 });
 
 test('the split Dev shard covers every index of its parent exactly once', () => {
-  // Both membership patterns repeat every 12 indices for any corpus size.
-  const period = Array.from({ length: 12 }, (_, index) => index);
+  // All membership patterns repeat every 24 indices for any corpus size.
+  const period = Array.from({ length: 24 }, (_, index) => index);
   const parent = discoveryShardFiles(period, { index: 4, count: 6 });
-  const children = [4, 10].flatMap(index => discoveryShardFiles(period, { index, count: 12 }));
-  assert.deepEqual(children, parent);
+  const children = [
+    ...discoveryShardFiles(period, { index: 4, count: 12 }),
+    ...[10, 22].flatMap(index => discoveryShardFiles(period, { index, count: 24 })),
+  ];
+  assert.deepEqual(children.sort((a, b) => a - b), parent);
 });
 
 test('the split Windows shard covers every index of its parent exactly once', () => {
