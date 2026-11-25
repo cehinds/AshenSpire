@@ -15,3 +15,9 @@ The compact encoding in `5f7b760d408` reduces generated UI, reviewed artwork met
 - Official Chrome source and packed Settings/About probes passed all 1,576 receipts. Direct `file://` launch on both desktop and phone showed the same receipt count with zero uncaught page exceptions.
 - The real Chrome Flask plan probe passed 27/27, including the live room rail. The core suite passed 151/151, build-version checks 9/9 and shipped verification 12/12. Code checks passed.
 - The final full bundle parse suite and the PR jobs are tracked separately from these completed checks.
+
+## Test-stage discovery workload
+
+[Test CI 45559566448](https://github.com/cehinds/AshenSpire/actions/runs/45559566448) reached the 15-minute subprocess limit in Linux shard 2/4 and macOS shards 0/4 and 3/4. Their available output contained no assertion failures. The separate Dev shard 4/6 passed its exact retry in 11 minutes and 19 seconds of job time.
+
+The Test matrix now assigns eight discovery shards per operating system. Linux and macOS still run the full eligible corpus. Windows still runs its four slow files in isolated jobs and assigns the rest across its eight shards. The 15-minute subprocess limit, 20-minute job limit and fail-fast setting remain in force. The matrix expectations failed against the old four-way Linux and macOS layout. After the change, all 14 lane tests passed, including the real-discovery census requiring every eligible test file exactly once per platform. The hosted Test matrix still needs to run on this revision.

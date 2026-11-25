@@ -281,7 +281,7 @@ test('the configured discovery shards and isolated jobs cover the real corpus on
   walk(ROOT); files.sort();
   const eligible = files;
   const fast = discoverySpeedFiles(eligible, 'exclude');
-  const counts = { 'ubuntu-latest': 4, 'macos-latest': 4, 'windows-latest': 8 };
+  const counts = { 'ubuntu-latest': 8, 'macos-latest': 8, 'windows-latest': 8 };
   assert.deepEqual([...configured.keys()].sort(), Object.keys(counts).sort());
   for (const [os, count] of Object.entries(counts)) {
     const windows = os === 'windows-latest';

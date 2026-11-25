@@ -452,7 +452,7 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # The discovered suite took about 17 minutes on Windows at test6a903,
-  # leaving no time for the original post-suite tools. Four exhaustive shards
+  # leaving no time for the original post-suite tools. Exhaustive shards
   # preserve every discovered file; the engine and tools stay in `test`.
   # Separate checkouts also prevent a self-test mutant from reaching discovery.
   # ---------------------------------------------------------------------------
@@ -465,17 +465,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Windows discovery shard 2/4 hit the 15-minute test subprocess limit twice.
-        # Each old Windows group i/4 splits into i/8 and (i+4)/8.
+        # Linux 2/4 and macOS 0/4 and 3/4 hit the 15-minute subprocess limit
+        # in run 45559566448. Each four-way group splits into i/8 and (i+4)/8.
         include:
-          - { os: ubuntu-latest, shard: '0/4' }
-          - { os: ubuntu-latest, shard: '1/4' }
-          - { os: ubuntu-latest, shard: '2/4' }
-          - { os: ubuntu-latest, shard: '3/4' }
-          - { os: macos-latest, shard: '0/4' }
-          - { os: macos-latest, shard: '1/4' }
-          - { os: macos-latest, shard: '2/4' }
-          - { os: macos-latest, shard: '3/4' }
+          - { os: ubuntu-latest, shard: '0/8' }
+          - { os: ubuntu-latest, shard: '1/8' }
+          - { os: ubuntu-latest, shard: '2/8' }
+          - { os: ubuntu-latest, shard: '3/8' }
+          - { os: ubuntu-latest, shard: '4/8' }
+          - { os: ubuntu-latest, shard: '5/8' }
+          - { os: ubuntu-latest, shard: '6/8' }
+          - { os: ubuntu-latest, shard: '7/8' }
+          - { os: macos-latest, shard: '0/8' }
+          - { os: macos-latest, shard: '1/8' }
+          - { os: macos-latest, shard: '2/8' }
+          - { os: macos-latest, shard: '3/8' }
+          - { os: macos-latest, shard: '4/8' }
+          - { os: macos-latest, shard: '5/8' }
+          - { os: macos-latest, shard: '6/8' }
+          - { os: macos-latest, shard: '7/8' }
           - { os: windows-latest, shard: '0/8' }
           - { os: windows-latest, shard: '1/8' }
           - { os: windows-latest, shard: '2/8' }
