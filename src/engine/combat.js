@@ -2631,6 +2631,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     ...(configuredCombat(combat) && combat.gameProfile ? { faceRules: { faceAttributes: combat.player?.liveStats?.base?.attributes ?? combat.player?.attributes,
       // A saved combat's absent/disabled policy wins over its profile, without sharing mutable combat rules with the face.
       fixCoreRules: combat.fixCoreRules === undefined ? undefined : structuredClone(combat.fixCoreRules),
+      core2ActionRulesVersion: combat.core2ActionRulesVersion,
       faceDefinition: structuredClone(faceDefinition),
       // The source-type context (Codex on PR #2835): an untyped card resolves its armament's type exactly as the run and pile faces do.
       gameProfile: combat.gameProfile, loadout: combat.loadout, classId: combat.player?.classId,

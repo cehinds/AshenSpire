@@ -4,7 +4,8 @@ import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
 import { CardSpellTraditions, SpellTraditionLabel } from './spellTraditions.js';
 import { FaceCostProfile } from './faceCosts.js';
-import { evadeStackGainPhrase, fixCoreEnabled } from './fixCoreMechanics.js';
+import { evadeStackGainPhrase } from './fixCoreMechanics.js';
+import { core2MultiHitRulesEnabled } from './core2ActionPolicy.js';
 import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
@@ -426,8 +427,12 @@ export function staticCardTokens(def, registries = null, rules = null) {
   const attributes = Number.isFinite(baseDamageMultiplier) ? faceAttributes(registries, rules) : null;
   const faceShare = magicShareOf(faceProfile) || 0;
   const magicHit = faceProfile.camp === 'spell' || faceShare > 0 || cardIsMagical(def);
-  const finesseSource = def?.tags?.includes('finesse') || (fixCoreEnabled({ combatExpansionVersion: 2, ...holder })
-    && IsFinesseHit({ registries, loadout: rules?.loadout }, rules?.player, { ...def, combatProfile: faceProfile }));
+  const actionVersion = rules?.player || Object.hasOwn(rules || {}, 'core2ActionRulesVersion')
+    ? rules.core2ActionRulesVersion : faceEffects?.core2ActionRulesVersion;
+  const finesseSource = core2MultiHitRulesEnabled({
+    gameProfile: holder?.gameProfile, fixCoreRules: holder?.fixCoreRules,
+    combatExpansionVersion: holder?.combatExpansionVersion ?? 2, core2ActionRulesVersion: actionVersion,
+  }) && IsFinesseHit({ registries, loadout: rules?.loadout }, rules?.player, { ...def, combatProfile: faceProfile });
   const finesseHit = !magicHit && finesseSource;
   const magicStat = attributes && SpellTraditionsActive(holder) ? SpellScalingValue(attributes, { ...def, combatProfile: faceProfile })
     : Math.max(attributes?.intelligence || 0, attributes?.wisdom || 0);

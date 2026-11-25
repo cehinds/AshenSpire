@@ -9,6 +9,7 @@ import * as Profile from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { previewCard } from '../src/engine/combat.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
@@ -59,6 +60,23 @@ test('the face equals the combat receipt amount before any stance stage', () => 
     const withoutStance = Math.floor(attributed.effective * effects.physicalDamageMultiplier * effects.playerDamageMultiplier);
     assert.equal(number(face(run, 'core.strike')), withoutStance, `${classId}: the static face is the receipt's attack attribute stage through the cuts, without the stance stages`);
   }
+});
+
+test('a resumed version-1 dagger fight keeps Strength in its static face and receipt', () => {
+  const run = newRun('rogue');
+  const live = createRunCombat({ registries, run, rng: createRng(31), enemyIds: ['wanderingSoldier'] });
+  const snapshot = serializeCombatSnapshot(live);
+  snapshot.core2ActionRulesVersion = 1;
+  const combat = restoreCombatSnapshot({ registries, snapshot, rng: createRng(31) });
+  const strike = { instanceId: 'probe-v1', cardId: 'core.strike' };
+  combat.piles.hand.push(strike);
+  const preview = previewCard(combat, strike.instanceId, combat.enemies[0].id);
+  const source = preview.values[0].damageReceipt.hits[0].sources.find(row => row.id === 'ar:0');
+  assert.equal(source.amount, combat.player.attributes.strength);
+  assert.notEqual(combat.player.attributes.strength, combat.player.attributes.dexterity);
+  const expected = Math.floor(source.effective * effects.physicalDamageMultiplier * effects.playerDamageMultiplier);
+  assert.equal(number(face(combat, strike.cardId)), expected, 'a restored pile uses the fight action rules');
+  assert.equal(number(face(preview.faceRules, strike.cardId)), expected, 'the face baseline carries the same version');
 });
 
 // Codex review on PR #2835: the in-combat pile viewer passes the combat as `rules`; its faces keep the player's always-on attributes.
