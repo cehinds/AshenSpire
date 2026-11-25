@@ -5184,7 +5184,7 @@
       "addStatus": 1,
       "fx:copy": 1,
       "fx:boost": 1,
-      "element": 1,
+      "element": 2,
       "fx:heal": 1,
       "fx:cleanse": 1,
       "cost": 2,
@@ -5216,7 +5216,8 @@
       "decay": 2,
       "illusion": 3,
       "psychic": 3,
-      "force": 3
+      "force": 3,
+      "alteration": 3
     },
     "statuses": {
       "chill": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },

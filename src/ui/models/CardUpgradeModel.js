@@ -147,7 +147,7 @@ export function UpgradeStepLook(registries, step, before, after) {
         if (one.damage) return t('cardUpgrade.size.damageType', { type: cap(one.damage) });
         return one.tag ? t('cardUpgrade.size.tag', { value: cap(String(one.tag).split(':').pop().replace(/^rank\./, '')) }) : '';
       }
-      case 'fx': return one.fx === 'block' ? t('cardUpgrade.size.block', { n: one.n }) : ['draw', 'cycle'].includes(one.fx) ? t(`cardUpgrade.size.${one.fx}`, { n: one.n }) : one.fx === 'recurring' ? 'Recurring + Exhaust' : '';
+      case 'fx': return one.fx === 'block' ? t('cardUpgrade.size.block', { n: one.n }) : ['draw', 'cycle'].includes(one.fx) ? t(`cardUpgrade.size.${one.fx}`, { n: one.n }) : one.fx === 'heal' ? `+${one.n} HP` : one.fx === 'cleanse' ? `Cleanse ${statusName(registries, one.status || 'weak')}` : one.fx === 'recurring' ? 'Recurring + Exhaust' : '';
       default: return '';
     }
   })).filter(Boolean);
@@ -213,7 +213,7 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
 }
 
 // The effect ops the rows above already read; every other op's amount is compared by otherAmounts.
-const READ_OPS = freeze(['damage', 'block', 'poiseDamage', 'applyStatus', 'draw', 'discard', 'exhaust', 'retain', 'addCard', 'shuffleDiscardIntoDraw', 'changeAttribute', 'removeStatus', 'swapRows']);
+const READ_OPS = freeze(['damage', 'block', 'heal', 'poiseDamage', 'applyStatus', 'draw', 'discard', 'exhaust', 'retain', 'addCard', 'shuffleDiscardIntoDraw', 'changeAttribute', 'removeStatus', 'swapRows']);
 const amountOf = (effect) => num(effect.amount ?? effect.stacks ?? effect.count ?? effect.bands);
 /** Summed amounts of the effects no other row reads, by op (a hit on another or a random enemy is `secondHit`). */
 function otherAmounts(def) {

@@ -556,6 +556,7 @@ export function GenerateCardBatch(criteria = {}, { scoring = shippedScoring, spe
       keywords,
       ...(Number.isInteger(criteria.sp) ? { sp: criteria.sp } : {}),
       ...(Number.isInteger(criteria.mp) ? { mp: criteria.mp } : {}),
+      ...(criteria.enforceTierUnlocks ? { enforceTierUnlocks: true } : {}),
       seed: itemSeed,
     }, { scoring, spellExposureBuildup, idPrefix, applyNaming });
     cards.push(card);

@@ -7,6 +7,7 @@ import { BaseFace, ScoreCard, UpgradeTagLabel, UpgradeTagSurcharge } from '../sr
 import { applyUpgradeSteps, upgradeTagStacks, upgradeStepsProblems, FlatSteps } from '../src/model/cardUpgrade.js';
 import { rollUpgradeOptions, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
 import { playingCardModel } from '../src/model/playingCard.js';
+import { cardUpgradeChanges, UpgradeStepLook } from '../src/ui/models/CardUpgradeModel.js';
 import { GenerateCard, GenerateFace } from '../src/model/cardGenerator.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
@@ -261,7 +262,62 @@ test('ValidateScoringConfig accepts shipped tierUnlocks and rejects malformed ti
   assert.deepEqual(ValidateScoringConfig(shippedScoring), []);
   const bad = structuredClone(shippedScoring);
   bad.tierUnlocks.upgrades.hits = -1;
-  assert.ok(ValidateScoringConfig(bad).some((e) => e.includes('tierUnlocks.upgrades.hits')));
+  bad.tierUnlocks.rarityBonus = { rare: -1 };
+  bad.tierUnlocks.ceilings = { damage: [0] };
+  bad.tierUnlocks.statuses = { weak: { minTier: -2, maxStacksBase: 0 } };
+  const errs = ValidateScoringConfig(bad);
+  assert.ok(errs.some((e) => e.includes('tierUnlocks.upgrades.hits')));
+  assert.ok(errs.some((e) => e.includes('tierUnlocks.rarityBonus.rare')));
+  assert.ok(errs.some((e) => e.includes('tierUnlocks.ceilings.damage')));
+  assert.ok(errs.some((e) => e.includes('tierUnlocks.statuses.weak')));
+});
+
+test('stk obeys improved/purified tag-stack gates, ZeroCostUnlocked, NumericCeilingAtTier, tierUnlocks opt-out, and edge cases', () => {
+  // stk respects Improved+ gate at Tier 1 vs Tier 2
+  const statusCard = {
+    id: 'test.bleeder', name: 'Bleeder', type: 'attack', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 0,
+    damageSchool: 'physical', keywords: [], tags: ['camp:physical', 'maneuver:attack', 'classification.attack'],
+    effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 1 }],
+    textTemplate: 'Deal {damage} damage. Apply 1 Bleed.',
+  };
+  const withImp1 = [{ k: 'dmg', n: 1 }];
+  const t1Stk = rollUpgradeOptions(statusCard, withImp1, 1, upgradeStepRng(3, 's1', 1), { cardRank: 1, everyFamily: true }, 40);
+  assert.ok(!t1Stk.some((s) => s.k === 'stk'), 'Tier 1 card with Improved cannot roll stk to reach Improved+');
+  const t2Stk = rollUpgradeOptions(statusCard, withImp1, 1, upgradeStepRng(3, 's2', 1), { cardRank: 2, everyFamily: true }, 40);
+  assert.ok(t2Stk.some((s) => s.k === 'stk'), 'Tier 2 card with Improved unlocks stk (Improved+)');
+
+  // ZeroCostUnlocked gates dropping 1 SP -> 0 SP until Tier 3
+  const t2Cost = rollUpgradeOptions(statusCard, [], 0, upgradeStepRng(5, 'zc1', 0), { cardRank: 2, everyFamily: true }, 40);
+  assert.ok(!t2Cost.some((s) => s.k === 'cost'), 'Tier 2 cannot reduce 1 SP to 0 SP');
+  const t3Cost = rollUpgradeOptions(statusCard, [], 0, upgradeStepRng(5, 'zc2', 0), { cardRank: 3, everyFamily: true }, 40);
+  assert.ok(t3Cost.some((s) => s.k === 'cost'), 'Tier 3 unlocks 0-cost reduction');
+
+  // limits.tierUnlocks: false disables gating
+  const bypassed = rollUpgradeOptions(statusCard, withImp1, 1, upgradeStepRng(3, 's3', 1), { cardRank: 0, tierUnlocks: false, everyFamily: true }, 40);
+  assert.ok(bypassed.some((s) => s.k === 'dmg') && bypassed.some((s) => s.k === 'cost'), 'tierUnlocks: false bypasses tier gates');
+
+  // StatusStackCapAtTier and CompileTierCatalog edge cases
+  const custom = structuredClone(shippedScoring);
+  custom.tierUnlocks.statuses.customShorthand = 2;
+  custom.tierUnlocks.statuses.flatCap = { minTier: 1, maxStacksBase: 2, stacksPerExtraTier: 0 };
+  custom.tierUnlocks.upgrades.mythicKind = 7;
+  assert.equal(StatusStackCapAtTier('customShorthand', 1, custom), 0);
+  assert.equal(StatusStackCapAtTier('customShorthand', 2, custom), Infinity);
+  assert.equal(StatusStackCapAtTier('flatCap', Infinity, custom), Infinity);
+  assert.equal(StatusStackCapAtTier('flatCap', NaN, custom), 0);
+  const cat = CompileTierCatalog(custom);
+  assert.ok(cat.maxTier >= 7);
+  assert.ok(!cat.kindsAtTier(6).has('mythicKind') && cat.kindsAtTier(7).has('mythicKind'));
+  assert.ok(cat.kindsAtTier(NaN) instanceof Set);
+
+  // CardUpgradeModel emits a single ALSO row (no duplicate HEAL row) and non-empty sizes for fx:heal / fx:cleanse
+  const strike = registries.cards.get('core.strike');
+  const healed = applyUpgradeSteps(strike, [{ k: 'fx', fx: 'heal', n: 3 }]);
+  const healChanges = cardUpgradeChanges(registries, strike, healed);
+  assert.equal(healChanges.filter((c) => /HEAL/i.test(c.label) || /Heals/.test(c.after)).length, 1, 'fx:heal produces a single change row');
+  assert.equal(UpgradeStepLook(registries, { k: 'fx', fx: 'heal', n: 3 }, strike, healed).size, '+3 HP');
+  const cleansed = applyUpgradeSteps(strike, [{ k: 'fx', fx: 'cleanse', status: 'weak', n: 1 }]);
+  assert.match(UpgradeStepLook(registries, { k: 'fx', fx: 'cleanse', status: 'weak', n: 1 }, strike, cleansed).size, /Cleanse Weak/i);
 });
 
 test('Purified fx:heal restores HP and fx:cleanse removes Weak in real combat', () => {

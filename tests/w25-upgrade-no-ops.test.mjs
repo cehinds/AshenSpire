@@ -109,7 +109,7 @@ test('no roll offers a dud: no run attribute, no rank down, no one enemy to all,
   for (const id of ids) {
     const base = registries.cards.get(id);
     for (let seed = 1; seed <= 6; seed += 1) {
-      const steps = nextUpgradeOptions({ seed, gameProfile: profile, rangePolicy: {} }, { instanceId: `d${seed}`, cardId: id, upgraded: false }, base, registries, 40, { noAuthored: true, everyFamily: true });
+      const steps = nextUpgradeOptions({ seed, gameProfile: profile, rangePolicy: {} }, { instanceId: `d${seed}`, cardId: id, rank: 4, upgraded: false }, base, registries, 40, { noAuthored: true, everyFamily: true });
       for (const step of steps) {
         const where = `${id} ${JSON.stringify(step)}`;
         assert.notEqual(step.k, 'attr', where);
@@ -124,7 +124,7 @@ test('no roll offers a dud: no run attribute, no rank down, no one enemy to all,
 const RUN = { seed: 7, gameProfile: profile, rangePolicy: {} };
 const kindsOf = (cardId, steps = []) => {
   const base = registries.cards.get(cardId);
-  const inst = { instanceId: 'k1', cardId, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) };
+  const inst = { instanceId: 'k1', cardId, rank: 4, ...(steps.length ? { upgraded: true, upgradeSteps: steps } : { upgraded: false }) };
   return nextUpgradeOptions(RUN, inst, base, registries, 30, { noAuthored: true, everyFamily: true });
 };
 

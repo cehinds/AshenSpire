@@ -211,9 +211,9 @@ import { projectGameCard } from '../src/model/gameProfile.js';
 test('every menu step reads on the card face (no step is hidden behind the authored text)', () => {
   const text = (steps) => cardFaceLines(projectGameCard({ gameProfile: profile }, { instanceId: 'x', cardId: 'core.strike', ...withSteps(steps) }), null, registries, null)
     .map((line) => line.html.replace(/<[^>]+>/g, '')).join(' | ');
-  const expect = { block: /Block/, draw: /Draw/, cycle: /discard/i, cull: /Exhaust/, copy: /copy/, shuffle: /Shuffle/, holdOne: /Retain/, target: /random enemy|damage/ };
+  const expect = { block: /Block/, draw: /Draw/, cycle: /discard/i, cull: /Exhaust/, copy: /copy/, shuffle: /Shuffle/, holdOne: /Retain/, target: /random enemy|damage/, heal: /Heal/i, cleanse: /Remove|Cleanse|Weak/i };
   for (const [fx, pattern] of Object.entries(expect)) {
-    const step = { k: 'fx', fx, ...(['block', 'draw', 'cycle'].includes(fx) ? { n: 2 } : {}) };
+    const step = { k: 'fx', fx, ...(['block', 'draw', 'cycle', 'heal'].includes(fx) ? { n: 2 } : fx === 'cleanse' ? { status: 'weak', n: 1 } : {}) };
     assert.match(text([step]), pattern, fx);
   }
   assert.match(text([{ k: 'fx', fx: 'boost', stat: 'strength', n: 2 }]), /Strength 2 this turn/);

@@ -25,7 +25,7 @@ export function EffectiveTier(rank = 0, rarity = 'common', scoring = GetActiveSc
   const baseRank = Number.isFinite(rank) ? Math.max(0, Math.floor(rank)) : 0;
   const bonusMap = scoring?.tierUnlocks?.rarityBonus || DEFAULT_RARITY_BONUS;
   const key = typeof rarity === 'string' ? rarity.toLowerCase() : 'common';
-  const bonus = Number.isFinite(bonusMap[key]) ? bonusMap[key] : 0;
+  const bonus = Number.isFinite(bonusMap[key]) ? Math.max(0, bonusMap[key]) : 0;
   return baseRank + bonus;
 }
 
@@ -132,12 +132,19 @@ export function StatusUnlocked(statusId, tier, scoring = GetActiveScoring()) {
 export function StatusStackCapAtTier(statusId, tier, scoring = GetActiveScoring()) {
   const cfg = TierUnlocksConfig(scoring);
   if (!cfg || !statusId) return Infinity;
+  if (Number.isNaN(tier) || tier === undefined || tier === null) return 0;
   const entry = cfg.statuses?.[statusId];
-  if (!entry || typeof entry !== 'object') return Infinity;
-  const minTier = Number.isFinite(entry.minTier) ? entry.minTier : 0;
+  if (entry === undefined || entry === null) return Infinity;
+  if (typeof entry === 'number') {
+    const minTier = Number.isFinite(entry) ? Math.max(0, entry) : 0;
+    return tier < minTier ? 0 : Infinity;
+  }
+  if (typeof entry !== 'object') return Infinity;
+  const minTier = Number.isFinite(entry.minTier) ? Math.max(0, entry.minTier) : 0;
   if (tier < minTier) return 0;
   if (!Number.isFinite(entry.maxStacksBase)) return Infinity;
-  const perTier = Number.isFinite(entry.stacksPerExtraTier) ? entry.stacksPerExtraTier : 1;
+  if (!Number.isFinite(tier)) return Infinity;
+  const perTier = Number.isFinite(entry.stacksPerExtraTier) ? Math.max(0, entry.stacksPerExtraTier) : 1;
   return Math.max(1, Math.floor(entry.maxStacksBase + Math.max(0, tier - minTier) * perTier));
 }
 
@@ -149,43 +156,54 @@ export function NumericCeilingAtTier(kind, tier, scoring = GetActiveScoring()) {
   const cfg = TierUnlocksConfig(scoring);
   const list = cfg?.ceilings?.[kind];
   if (!Array.isArray(list) || !list.length) return Infinity;
-  const idx = Math.min(list.length - 1, Math.max(0, Math.floor(tier)));
+  if (tier === Infinity) {
+    const last = list[list.length - 1];
+    return Number.isFinite(last) ? last : Infinity;
+  }
+  const idx = Number.isFinite(tier) ? Math.min(list.length - 1, Math.max(0, Math.floor(tier))) : 0;
   const cap = list[idx];
   return Number.isFinite(cap) ? cap : Infinity;
 }
 
 /**
- * Pre-compiled O(1) lookup index over `scoring.tierUnlocks`, cached per scoring object reference.
+ * Pre-compiled O(1) lookup index over `scoring.tierUnlocks`, cached per scoring.tierUnlocks object reference.
  * Used by upgrade step filtering and the hybrid node-seed upgrade schedule so no per-card scan
  * repeats tier table walks.
  */
 export function CompileTierCatalog(scoring = GetActiveScoring()) {
-  if (scoring && typeof scoring === 'object' && catalogCache.has(scoring)) {
-    return catalogCache.get(scoring);
-  }
   const cfg = TierUnlocksConfig(scoring);
-  const maxTier = 5;
+  const cacheKey = cfg && typeof cfg === 'object' ? cfg : (scoring && typeof scoring === 'object' ? scoring : null);
+  if (cacheKey && catalogCache.has(cacheKey)) {
+    const cached = catalogCache.get(cacheKey);
+    if (cached._scoring === scoring) return cached;
+  }
+  const allKinds = Object.keys(cfg?.upgrades || {});
+  const allStatuses = [...new Set([...Object.keys(cfg?.statuses || {}), ...Object.keys(scoring?.statuses || {})])];
+  const allElements = Object.keys(cfg?.elements || {});
+  let maxTier = Math.max(5, Number.isFinite(scoring?.rank?.maxRank) ? Math.floor(scoring.rank.maxRank) : 5);
+  for (const k of allKinds) maxTier = Math.max(maxTier, Math.ceil(UpgradeKindMinTier(k, scoring)));
+  for (const s of allStatuses) maxTier = Math.max(maxTier, Math.ceil(StatusMinTier(s, scoring)));
+  for (const e of allElements) maxTier = Math.max(maxTier, Math.ceil(ElementMinTier(e, scoring)));
   const unlockedKindsByTier = [];
   const unlockedStatusesByTier = [];
   const unlockedElementsByTier = [];
-  const allKinds = Object.keys(cfg?.upgrades || {});
-  const allStatuses = Object.keys(cfg?.statuses || scoring?.statuses || {});
-  const allElements = Object.keys(cfg?.elements || {});
   for (let t = 0; t <= maxTier; t += 1) {
     unlockedKindsByTier.push(Object.freeze(new Set(allKinds.filter((k) => UpgradeKindUnlocked(k, t, scoring)))));
     unlockedStatusesByTier.push(Object.freeze(new Set(allStatuses.filter((s) => StatusUnlocked(s, t, scoring)))));
     unlockedElementsByTier.push(Object.freeze(new Set(allElements.filter((e) => ElementUnlocked(e, t, scoring)))));
   }
+  const safeTierIdx = (tier) => (tier === Infinity ? maxTier : (Number.isFinite(tier) ? Math.min(maxTier, Math.max(0, Math.floor(tier))) : 0));
   const catalog = Object.freeze({
+    _scoring: scoring,
     enabled: !!cfg,
     maxTier,
     unlockedKindsByTier: Object.freeze(unlockedKindsByTier),
     unlockedStatusesByTier: Object.freeze(unlockedStatusesByTier),
     unlockedElementsByTier: Object.freeze(unlockedElementsByTier),
-    kindsAtTier: (tier) => unlockedKindsByTier[Math.min(maxTier, Math.max(0, Math.floor(tier)))],
-    statusesAtTier: (tier) => unlockedStatusesByTier[Math.min(maxTier, Math.max(0, Math.floor(tier)))],
-    elementsAtTier: (tier) => unlockedElementsByTier[Math.min(maxTier, Math.max(0, Math.floor(tier)))],
+    kindsAtTier: (tier) => unlockedKindsByTier[safeTierIdx(tier)],
+    statusesAtTier: (tier) => unlockedStatusesByTier[safeTierIdx(tier)],
+    elementsAtTier: (tier) => unlockedElementsByTier[safeTierIdx(tier)],
   });
-  if (scoring && typeof scoring === 'object') catalogCache.set(scoring, catalog);
+  if (cacheKey) catalogCache.set(cacheKey, catalog);
   return catalog;
 }

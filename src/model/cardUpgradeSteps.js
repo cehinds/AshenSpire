@@ -360,10 +360,17 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
     return Math.min(baseCap, tierCap);
   };
   const seenStatus = new Set();
+  const purifiedStacks = upgradeTagStacks(current, 'purified');
+  const purifyStatuses = new Set(['re' + 'gen', 'ward']);
   const stackable = effects.find((e) => {
     if (!isPlainStatus(e) || isDrawbackStatus(e) || seenStatus.has(e.status)) return false;
     seenStatus.add(e.status);
-    if (tierGated && !StatusUnlocked(e.status, tier, scoring)) return false;
+    if (tierGated) {
+      if (!StatusUnlocked(e.status, tier, scoring)) return false;
+      const tagFam = purifyStatuses.has(e.status) ? 'purified' : 'improved';
+      const curTagStacks = tagFam === 'purified' ? purifiedStacks : improvedStacks;
+      if (!UpgradeTagStackUnlocked(tagFam, curTagStacks + 1, tier, scoring)) return false;
+    }
     const cap = effectiveStatusCap(e.status);
     if (cap === undefined || e.stacks + 1 > cap) return false;
     const stepped = applyUpgradeSteps(base, [...applied, { k: 'stk', status: e.status, n: 1 }]);
@@ -602,25 +609,16 @@ function optionsByRarity(base, current, applied, limits, scoring = GetActiveScor
       if (per[r][kind] && size(per[r][kind]) <= below) delete per[r][kind];
     }
   }
-  for (const kind of EASE_KINDS) {
-    const ease = per[0][kind];
-    if (!ease) continue;
-    // A Power takes no draw option, so its sweetener is a cost cut.
-    const partner = per[0]['fx:draw'] ? 'fx:draw' : per[0].cost ? 'cost' : '';
-    if (partner) per[1][kind] = { ...ease, remove: true, also: [{ kind: partner, option: per[0][partner] }] };
-    const rare = ['cost', 'dmg', 'blk'].filter((k) => per[2][k]).map((k) => ({ kind: k, option: per[2][k] }));
-    if (rare.length) per[2][kind] = { ...ease, remove: true, also: rare };
-  }
   // Tier unlock gating (owner, 2026-11-25): filter kinds, upgrade rarity sizes, and stacking tag lines
-  // (Improved, Efficient, Refined, Tempered, Purified) by effectiveTier = cardRank + rarityBonus[rarity].
-  // Authored card `upgradeMenu` and graded ability cards' drawback steps keep their authored menus.
+  // (Improved, Efficient, Refined, Tempered, Purified) by effectiveTier = cardRank + rarityBonus[rarity]
+  // BEFORE attaching ease-combo partners, so no tier-locked partner ever leaks into an uncommon/rare ease combo.
   const tier = resolveEffectiveTier(base, current, limits, scoring);
+  const menu = Array.isArray(base.upgradeMenu) ? base.upgradeMenu : null;
+  const graded = Array.isArray(base.gradeProfiles) && !menu;
+  const refinedStacks = upgradeTagStacks(current, 'refined');
+  const temperedStacks = upgradeTagStacks(current, 'tempered');
+  const purifiedStacks = upgradeTagStacks(current, 'purified');
   if (Number.isFinite(tier)) {
-    const menu = Array.isArray(base.upgradeMenu) ? base.upgradeMenu : null;
-    const graded = Array.isArray(base.gradeProfiles) && !menu;
-    const refinedStacks = upgradeTagStacks(current, 'refined');
-    const temperedStacks = upgradeTagStacks(current, 'tempered');
-    const purifiedStacks = upgradeTagStacks(current, 'purified');
     for (let r = 0; r < 3; r += 1) {
       for (const kind of Object.keys(per[r])) {
         if (menu?.includes(kind)) continue;
@@ -628,9 +626,7 @@ function optionsByRarity(base, current, applied, limits, scoring = GetActiveScor
         if (!UpgradeKindUnlocked(kind, tier, scoring)) { delete per[r][kind]; continue; }
         if (!UpgradeRarityUnlocked(r, tier, scoring) && !(kind in PLACED_AT)) { delete per[r][kind]; continue; }
         if (EASE_KINDS.includes(kind)) {
-          // Common ease = next Refined stack; uncommon ease = Refined+ (2nd tier); rare ease = Refined+2 (3rd tier)
-          const reqStack = Math.max(refinedStacks + 1, r + 1);
-          if (!UpgradeTagStackUnlocked('refined', reqStack, tier, scoring)) { delete per[r][kind]; continue; }
+          if (!UpgradeTagStackUnlocked('refined', refinedStacks + 1, tier, scoring)) { delete per[r][kind]; continue; }
         } else if (TEMPERED_KINDS.has(kind)) {
           if (!UpgradeTagStackUnlocked('tempered', temperedStacks + 1, tier, scoring)) { delete per[r][kind]; continue; }
         } else if (PURIFIED_KINDS.has(kind)) {
@@ -638,6 +634,17 @@ function optionsByRarity(base, current, applied, limits, scoring = GetActiveScor
         }
       }
     }
+  }
+  for (const kind of EASE_KINDS) {
+    const ease = per[0][kind];
+    if (!ease) continue;
+    // A Power takes no draw option, so its sweetener is a cost cut.
+    const partner = per[0]['fx:draw'] ? 'fx:draw' : per[0].cost ? 'cost' : '';
+    const uncOk = !Number.isFinite(tier) || (UpgradeRarityUnlocked(1, tier, scoring) && UpgradeTagStackUnlocked('refined', Math.max(refinedStacks + 1, 2), tier, scoring));
+    if (partner && uncOk) per[1][kind] = { ...ease, remove: true, also: [{ kind: partner, option: per[0][partner] }] };
+    const rare = ['cost', 'dmg', 'blk'].filter((k) => per[2][k]).map((k) => ({ kind: k, option: per[2][k] }));
+    const rareOk = !Number.isFinite(tier) || (UpgradeRarityUnlocked(2, tier, scoring) && UpgradeTagStackUnlocked('refined', Math.max(refinedStacks + 1, 3), tier, scoring));
+    if (rare.length && rareOk) per[2][kind] = { ...ease, remove: true, also: rare };
   }
   return per;
 }

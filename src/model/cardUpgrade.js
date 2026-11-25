@@ -498,7 +498,12 @@ export const DrawbackSteps = Object.freeze(['unexhaust', 'unethereal', 'steady']
 /** A ranked ability card's grade face with its drawback-removal steps applied; every other step is the grade table's to own. */
 export function ApplyDrawbackSteps(card, steps) {
   const easing = FlatSteps(steps || []).filter((step) => step && step.k === 'fx' && DrawbackSteps.includes(step.fx));
-  return easing.reduce((out, step) => applyFx(out, step), card);
+  return easing.reduce((out, step) => {
+    const next = applyFx(out, step);
+    bumpUpgradeTag(next, out, 'refined', 1);
+    bumpUpgradeTag(next, out, 'drawbackEase', 1);
+    return next;
+  }, card);
 }
 
 export function applyUpgradeSteps(base, steps) {
@@ -570,6 +575,7 @@ export function upgradeStepsProblems(instance, path) {
       if (!FX_KINDS.includes(step.fx)) bad('fx');
       if (['block', 'draw', 'cycle', 'boost', 'heal'].includes(step.fx) && !isCount(step.n, 20)) bad('n');
       if (step.fx === 'cleanse' && step.n !== undefined && !isCount(step.n, 5)) bad('n');
+      if (step.fx === 'cleanse' && step.status !== undefined && !(typeof step.status === 'string' && step.status.length > 0)) bad('status');
       if (step.fx === 'counter' && !isCount(step.n, 3)) bad('n');
       if (step.share !== undefined && !(step.fx === 'target' && step.share > 0 && step.share <= 1)) bad('share');
       if (step.fx === 'boost' && !BOOST_STATS.includes(step.stat)) bad('stat');
