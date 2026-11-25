@@ -529,6 +529,7 @@ export function enemyPools(row, settings, level = enemyLevel(row, settings), bon
   }
   // Authored `spFloor` (owner, 2026-10-25): an enemy whose attribute offset would leave it unable to pay its costliest card keeps that much SP.
   if (Number.isSafeInteger(row.spFloor) && row.spFloor > 0) pools.sp = Math.max(pools.sp, row.spFloor);
+  if (Number.isSafeInteger(row.mpFloor) && row.mpFloor > 0) pools.mp = Math.max(pools.mp, row.mpFloor);
   return pools;
 }
 // What a viewer may see of an enemy: the always-shown fields plus any field one of the viewer's
