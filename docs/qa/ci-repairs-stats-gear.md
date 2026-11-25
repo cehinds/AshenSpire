@@ -78,3 +78,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `src/model/playingCard.js` uses the same Finesse weapon reader as modern combat and includes Dexterity when the authored Block value is zero. No-character faces still show authored numbers. The two dated face suites check the current starter weapon/armour values, live receipt and saved-profile controls.
 - `node --test tests/balance-stats-2026-11-17.test.mjs tests/static-face-attributes-2026-11-18.test.mjs tests/card-face-colours-2026-11-18.test.mjs` passed 54/54, including both Arcane and Divine attribute paths. The original lane had 15 remaining failures.
+
+## Rank-up cost boundaries
+
+- `tests/rank-up-bonus.test.mjs` isolates the cost option using the supported authored menu. Cost conversion and a direct cut now compete for the same upgrade family, so the fixture selects the direct cut. It inspects both entries of a paired cut and verifies a Basic's exact Mana reduction.
+- `node --test tests/rank-up-bonus.test.mjs` passed 6/6, from 5/6.

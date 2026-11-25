@@ -8,7 +8,7 @@ import { awardSkillXp, xpToNext, raiseCardRank } from '../src/model/skills.js';
 import { rankUpBonusOptions, rankUpBonusScale } from '../src/model/rankUpBonus.js';
 import { nextUpgradeOptions, upgradeCost } from '../src/model/cardUpgradeLimits.js';
 import { rollUpgradeOptions, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
-import { upgradeStepsOf, upgradeCount, paidUpgradeCount, applyUpgradeSteps, upgradeStepsProblems } from '../src/model/cardUpgrade.js';
+import { upgradeStepsOf, upgradeCount, paidUpgradeCount, applyUpgradeSteps, upgradeStepsProblems, FlatSteps } from '../src/model/cardUpgrade.js';
 
 // Owner 2026-11-23: rank-up needs a fully upgraded card (on by default), so these runs start with every slot used.
 const newRun = (seed = 511) => {
@@ -91,7 +91,7 @@ test('the options are deterministic for a seed and survive a save and load mid-c
 
 test('edge cases: a 0-cost card gets no cost cut, and a cut stops at 0 SP or 0 Mana on every card, a cantrip and a Basic included (owner 2026-11-22)', () => {
   const rng = () => upgradeStepRng(1, 'edge', 0);
-  const kinds = (base, scale = 2) => rollUpgradeOptions(base, [], 0, rng(), { scale }, 20).filter((s) => s.k === 'cost');
+  const kinds = (base, scale = 2) => FlatSteps(rollUpgradeOptions({ ...base, upgradeMenu: ['cost'] }, [], 0, rng(), { scale }, 20));
   const attack = { id: 'x', name: 'X', type: 'attack', rarity: 'uncommon', tags: [], effects: [{ op: 'damage', target: 'enemy', amount: 6 }] };
   assert.deepEqual(kinds({ ...attack, staminaCost: 0, cost: 0, manaCost: 0 }), [], '0-cost card: no cost option');
   const one = kinds({ ...attack, staminaCost: 1, cost: 1, manaCost: 0 });
@@ -102,8 +102,11 @@ test('edge cases: a 0-cost card gets no cost cut, and a cut stops at 0 SP or 0 M
   assert.equal(cut.staminaCost, 1);
   assert.equal(applyUpgradeSteps({ ...attack, staminaCost: 2, cost: 2, manaCost: 0 }, kinds({ ...attack, staminaCost: 2, cost: 2, manaCost: 0 }, 1)).staminaCost, 1);
   assert.ok(kinds({ ...attack, tags: ['rank.cantrip'], staminaCost: 1, cost: 1, manaCost: 1 }).some((s) => s.pool === 'mp'), 'a cantrip with Mana can lose it (owner 2026-11-22)');
-  const mana = kinds({ ...attack, staminaCost: 1, cost: 1, manaCost: 2 });
-  assert.ok(mana.every((s) => s.pool === 'mp' && s.n === undefined), 'Mana 2 loses 1 only at this size');
+  const manaCard = { ...attack, rarity: 'common', staminaCost: 1, cost: 1, manaCost: 2 };
+  const mana = kinds(manaCard).filter(step => step.pool === 'mp');
+  assert.equal(mana.length, 1, 'the Basic can get a Mana cut');
+  assert.equal(mana[0].n, undefined, 'this rarity cuts exactly one Mana');
+  assert.equal(applyUpgradeSteps(manaCard, mana).manaCost, 1);
   // The plain (scale 1) roll is exactly the old one.
   assert.ok(kinds({ ...attack, staminaCost: 3, cost: 3, manaCost: 0 }, 1).every((s) => s.n === undefined));
 });
