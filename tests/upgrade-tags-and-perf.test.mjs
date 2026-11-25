@@ -6,7 +6,7 @@ import { registries, profile } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { StampOfferKey } from '../src/model/upgradeOffer.js';
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
-import { applyUpgradeSteps, improvedScaledAmount, upgradeTagFor, upgradeTagStacks } from '../src/model/cardUpgrade.js';
+import { applyUpgradeSteps, ImprovedScaledAmount, UpgradeTagStacks } from '../src/model/cardUpgrade.js';
 import { BaseFace, ScoreCard, ScoreItem, UpgradeTagFor, ParseUpgradeTag, UpgradeTagLabel, UpgradeTagSurcharge } from '../src/model/combatPower.js';
 import { scoring as shippedScoring } from '../src/content/generated/scoring.js';
 import { resolveGearItem } from '../engine/kernel/gameConfig.js';
@@ -80,20 +80,20 @@ test('Efficient tag stacks 10 / 20 / 40 CP flat, supports multiplicative mode, a
   const u1 = applyUpgradeSteps(card, [{ k: 'cost', pool: 'sp' }]);
   const u2 = applyUpgradeSteps(card, [{ k: 'cost', pool: 'sp' }, { k: 'cost', pool: 'sp' }]);
   const u3 = applyUpgradeSteps(card, [{ k: 'cost', pool: 'sp' }, { k: 'cost', pool: 'sp' }, { k: 'cost', pool: 'sp' }]);
-  assert.equal(upgradeTagStacks(u1, 'efficient'), 1);
-  assert.equal(upgradeTagStacks(u2, 'efficient'), 2);
-  assert.equal(upgradeTagStacks(u3, 'efficient'), 3);
+  assert.equal(UpgradeTagStacks(u1, 'efficient'), 1);
+  assert.equal(UpgradeTagStacks(u2, 'efficient'), 2);
+  assert.equal(UpgradeTagStacks(u3, 'efficient'), 3);
   assert.ok(u3.tags.includes('upgrade:efficient+2'));
 });
 
 test('Improved tag scales effects by 1.10^n compounding and displays cleanly on playingCardModel', () => {
-  assert.equal(improvedScaledAmount(100, 1, 1.1), 110);
-  assert.equal(improvedScaledAmount(100, 2, 1.1), 121);
-  assert.equal(improvedScaledAmount(100, 3, 1.1), 133);
+  assert.equal(ImprovedScaledAmount(100, 1, 1.1), 110);
+  assert.equal(ImprovedScaledAmount(100, 2, 1.1), 121);
+  assert.equal(ImprovedScaledAmount(100, 3, 1.1), 133);
   // Small numbers get at least +1 per stack
-  assert.equal(improvedScaledAmount(6, 1, 1.1), 7);
-  assert.equal(improvedScaledAmount(6, 2, 1.1), 8);
-  assert.equal(improvedScaledAmount(6, 3, 1.1), 9);
+  assert.equal(ImprovedScaledAmount(6, 1, 1.1), 7);
+  assert.equal(ImprovedScaledAmount(6, 2, 1.1), 8);
+  assert.equal(ImprovedScaledAmount(6, 3, 1.1), 9);
 
   const strike = registries.cards.get('core.strike');
   const upgraded = applyUpgradeSteps(strike, [{ k: 'dmg', n: 1 }, { k: 'cost', pool: 'sp' }]);

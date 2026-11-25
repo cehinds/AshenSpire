@@ -6,7 +6,7 @@
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
 import { GEAR_TYPES } from '../content/gearTypes.js';
 import { ScoreItem, CombatPower, RankOf, ItemNameParts } from './combatPower.js';
-import { seededPrng, RankBand, RankMaxCp, MaxCpOf } from './cardGenerator.js';
+import { SeededRandom, RankBand, RankMaxCp, MaxCpOf } from './cardGenerator.js';
 
 const pick = (rand, n) => Math.floor(rand() * n);
 const pickFrom = (rand, list) => list[pick(rand, list.length)];
@@ -154,7 +154,7 @@ function pickBestCandidate(candidates, targetCp, band) {
  */
 export function GenerateItem(input = {}, { scoring = shippedScoring, rules = {}, idPrefix = 'genItem' } = {}) {
   const seed = input.seed ?? 1;
-  const rand = seededPrng(`itemGen|${seed}|${input.kind || ''}|${input.rarity || ''}|${input.rank ?? ''}|${input.gearType || ''}|${input.gearGroup || ''}|${input.element || ''}`);
+  const rand = SeededRandom(`itemGen|${seed}|${input.kind || ''}|${input.rarity || ''}|${input.rank ?? ''}|${input.gearType || ''}|${input.gearGroup || ''}|${input.element || ''}`);
   const kind = input.kind && ITEM_GENERATOR_KINDS.includes(input.kind) ? input.kind : pickFrom(rand, ITEM_GENERATOR_KINDS);
   const rarity = input.rarity && (input.rarity in (scoring.items?.rarityDiscount || { common: 0, uncommon: 2, rare: 5, boss: 7, starter: 0 }))
     ? input.rarity
@@ -429,7 +429,7 @@ export function GenerateItem(input = {}, { scoring = shippedScoring, rules = {},
 export function GenerateItemBatch(criteria = {}, { scoring = shippedScoring, rules = {} } = {}) {
   const count = Math.max(1, Math.min(200, Math.round(Number(criteria.count) || 5)));
   const seedBase = criteria.seed ?? 1;
-  const rand = seededPrng(`itemBatch|${seedBase}`);
+  const rand = SeededRandom(`itemBatch|${seedBase}`);
   const idPrefix = String(criteria.idPrefix || 'genItem').replace(/[^a-zA-Z0-9_-]/g, '') || 'genItem';
   const applyNaming = criteria.applyNaming !== false;
   const aimMaxCp = criteria.aimMaxCp !== false;

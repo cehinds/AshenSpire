@@ -10,7 +10,8 @@ import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gamePr
 import { buildActMap } from '../src/engine/actmap.js';
 import { getStacks } from '../src/engine/statuses.js';
 import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
-import { rederivePools } from '../src/model/levelup.js';
+import { withGameProfileService } from '../src/model/gameProfileRun.js';
+import { applyLevelUp, rederivePools } from '../src/model/levelup.js';
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 const registries = core2Registries();
@@ -107,12 +108,18 @@ test('current robes, Focus and Prepared keep spell quotes, payment and restored 
     ['ashStaff', 'prepared', focused], ['boneSceptre', 'casting', focused],
   ]) {
     const run = fresh('starseer');
+    // Keep the highest quoted cost payable independently of starting gear points.
+    run.level.unspentPoints = 2;
+    withGameProfileService(run, 'levelUp', () => {
+      applyLevelUp(registries, run, 'wisdom');
+      applyLevelUp(registries, run, 'wisdom');
+    });
     run.loadout.sets.rightHand[0] = hand; run.loadout.sets.leftHand[0] = null;
     const combat = createRunCombat({ registries, run, rng: createRng(3), enemyIds: ['wanderingSoldier'] });
     if (!spellCosts) delete combat.fixCoreRules.spellCosts;
     if (spellCosts === 'saved') combat.fixCoreRules.spellCosts.staminaSurcharge = 1;
     assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'this is current gear integration');
-    assert.equal(combat.player.maxMana, 4, 'the current Nightweave kit starts with four MP');
+    assert.equal(combat.player.maxMana, 4, 'two earned Wisdom points make the 4 MP quote payable');
     assert.equal(getStacks(combat.player, 'ward'), 0, 'these weapon types have no automatic turn-start Ward');
     combat.piles.hand = [{ instanceId: 'robe-focus', cardId, upgraded: false }];
     combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;

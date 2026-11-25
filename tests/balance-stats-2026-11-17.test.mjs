@@ -77,12 +77,12 @@ test('item 1: static rank-up faces show base damage for the supplied run profile
   const damageLine = (def, rules, preview) => cardFaceLines(def, preview, registries, rules)
     .find(line => line.kind === 'damage').html.replace(/<[^>]+>/g, '');
 
-  // Owner, 2026-11-18: the player's side scale (x0.7, floored, min 1) follows the base halving: ceil(6 x 0.5) = 3, floor(3 x 0.7) = 2.
-  // Owner, 2026-11-18 (second cut): the physical share takes another x0.7 first: floor(3 x 0.7 x 0.7) = 1.
-  // The current starter has STR 6 with gear. It joins the authored and ranked bases before the side multipliers.
-  assert.equal(gameProfileEffectiveAttributes(registries, run).strength, 6);
-  assert.equal(damageLine(strike, run), '4 damage');
-  assert.equal(damageLine(ranked, run), '4 damage', 'rank 2 composes authored 7 before base rounding, STR and the cuts');
+  // Current gear leaves the starter at STR 3. Strike's authored 6 and ranked
+  // 7 are halved and rounded up before STR is added; physical and player
+  // scaling each multiply by 0.7 before flooring the displayed value.
+  assert.equal(gameProfileEffectiveAttributes(registries, run).strength, 3);
+  assert.equal(damageLine(strike, run), '2 damage');
+  assert.equal(damageLine(ranked, run), '3 damage', 'rank 2 composes authored 7 before base rounding, STR and the cuts');
   assert.equal(damageLine(ranked, null), '7 damage', 'a face without a run keeps the authored amount');
   assert.equal(damageLine(ranked, beforeBalance), '7 damage', 'an older pinned profile keeps the authored amount');
   assert.equal(damageLine(ranked, run, { tokens: { damage: 9 } }), '9 damage', 'a final preview value stays authoritative');
@@ -186,27 +186,30 @@ test('item 2: the attribute part of AR, DR and PR reads one stat each (STR, DEX,
   }
 });
 
-test('item 4: Core armour and armaments grant 1-3 attribute points (average 1-2) and a Poise value, never AR or DR', async () => {
+test('item 4: Core gear grants its current rarity attributes and guarding Poise, never AR or DR', async () => {
   const { resolveGearItem } = await import('../engine/kernel/gameConfig.js');
   const settings = profile.modules.gear;
-  const totals = [], guarding = [];
+  const byRarity = { common: 0, uncommon: 0, rare: 1, epic: 1 };
+  assert.deepEqual(settings.statPoints.attributes, byRarity);
+  assert.equal(settings.statPoints.perRank, 0);
+  assert.equal(settings.statPoints.attributeBudgetCost, 3);
+  const guarding = [];
+  const attributesOf = points => ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']
+    .reduce((sum, id) => sum + (points?.[id] ?? 0), 0);
   for (const item of profile.content.gear) {
     const resolved = resolveGearItem(item, settings);
-    const attributes = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].reduce((sum, id) => sum + resolved.points[id], 0);
+    const attributes = attributesOf(resolved.points);
     assert.equal(resolved.values.ar, 0, `${item.id} AR`);
     assert.equal(resolved.values.dr, 0, `${item.id} DR`);
-    assert.ok(attributes >= 1 && attributes <= 3, `${item.id}: ${attributes} attribute points`);
+    assert.equal(attributes, Math.max(attributesOf(item.points), byRarity[item.rarity] ?? 0), `${item.id} attributes`);
     // Owner, 2026-11-18 (con-poise): Poise comes from guarding gear only; a weapon or shield with no Poise weight (dagger, buckler, staffs) grants none.
     assert.ok(resolved.values.poise >= 0, `${item.id} has a non-negative Poise value`);
     if (resolved.values.poise > 0) guarding.push(item.id);
-    totals.push(attributes);
-    // A Smith tier adds an attribute point, still never AR or DR.
+    // Raising the item rank opens an upgrade slot without granting automatic attributes.
     const tiered = resolveGearItem(item, settings, { rank: (item.rank ?? 1) + 2 });
     assert.equal(tiered.values.ar + tiered.values.dr, 0, `${item.id} tiered`);
-    assert.equal(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].reduce((sum, id) => sum + tiered.points[id], 0), attributes + 2, `${item.id} +2 ranks`);
+    assert.equal(attributesOf(tiered.points), attributes, `${item.id} +2 ranks`);
   }
-  const average = totals.reduce((a, b) => a + b, 0) / totals.length;
-  assert.ok(average >= 1 && average <= 2, `average ${average}`);
   assert.ok(guarding.length > 0 && guarding.includes('armor.wayfarerPlate'), 'guarding gear (body armour, tower shield) still carries Poise');
 });
 

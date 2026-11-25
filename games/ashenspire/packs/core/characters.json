@@ -4719,7 +4719,8 @@
         }
       ]
     },
-    "spFloor": 3
+    "spFloor": 3,
+    "mpFloor": 2
   },
   {
     "id": "quarryRam",
@@ -5854,7 +5855,8 @@
           "amount": 20
         }
       ]
-    }
+    },
+    "mpFloor": 2
   },
   {
     "id": "sixleggedHearse",

@@ -19,27 +19,32 @@ test('group shares and rarity odds follow the upgrade number', () => {
   for (let n = 1; n <= 10; n += 1) { const g = UpgradeGroupShares(n); assert.equal(g.ease + g.eff + g.new + g.identity, 100); }
 });
 
-test('a damage step is x1, x2 and x4 of the common step, inside the +100% guard', () => {
+test('damage steps add one, two or three Improved stacks, inside the +100% guard', () => {
   const seen = sizes(smash(), 'dmg');
   assert.deepEqual([...seen.keys()].sort(), ['common', 'rare', 'uncommon']);
-  assert.deepEqual([seen.get('common').n, seen.get('uncommon').n, seen.get('rare').n], [2, 4, 8]);
+  assert.deepEqual([seen.get('common').n, seen.get('uncommon').n, seen.get('rare').n], [1, 3, 4]);
   assert.equal(seen.get('common').r, undefined, 'a common step stores no r');
   assert.equal(seen.get('rare').r, 'rare');
-  // A 6-damage Strike: +100% allows +6, so rare is clipped to the guard (6), still bigger than uncommon (4).
+  // Small damage starts still gain at least one point per stack.
   const strike = sizes(smash({ effects: [{ op: 'damage', target: 'enemy', amount: 6 }] }), 'dmg');
-  assert.deepEqual([strike.get('common').n, strike.get('uncommon').n, strike.get('rare').n], [2, 4, 6]);
+  assert.deepEqual([strike.get('common').n, strike.get('uncommon').n, strike.get('rare').n], [1, 2, 3]);
+  const tiny = sizes(smash({ effects: [{ op: 'damage', target: 'enemy', amount: 1 }] }), 'dmg');
+  assert.ok(tiny.size > 0);
+  assert.ok([...tiny.values()].every(step => step.n === 1), 'the +100% guard caps even a rare step at one on base one');
 });
 
-test('a status step is +1 / +2 / +3 up to the cap, a cost cut is -1, -1 SP and -1 MP, -2', () => {
+test('status rarity adds one, two or three stacks; cost cuts take one from each selected pool', () => {
   const burn = smash({ effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 1 }] });
   const stk = sizes(burn, 'stk');
   assert.deepEqual([stk.get('common').n, stk.get('uncommon').n, stk.get('rare').n], [1, 2, 3]);
   const two = smash({ manaCost: 3, cost: 3 });
   const combo = sizes(two, 'combo').get('uncommon');
   assert.deepEqual(combo.steps.map((s) => `${s.k}:${s.pool}`), ['cost:sp', 'cost:mp']);
-  const rare = sizes(smash(), 'cost').get('rare');
-  assert.equal(rare.n, 2);
-  assert.equal(applyUpgradeSteps(smash(), [rare]).staminaCost, 1);
+  const costs = sizes(smash(), 'cost');
+  assert.deepEqual([...costs.keys()], ['common']);
+  assert.equal(applyUpgradeSteps(smash(), [costs.get('common')]).staminaCost, 2);
+  const applied = applyUpgradeSteps(two, [combo]);
+  assert.deepEqual([applied.staminaCost, applied.manaCost], [2, 2]);
 });
 
 test('an ease is common as is, uncommon with a draw, rare with a rare-size step', () => {

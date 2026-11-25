@@ -4,7 +4,7 @@
 // A leaf module: it imports only rng.js, cardUpgrade.js, combatRanges.js, cardRank.js and generated data.
 // Retain is offered as an `fx` step (W25): Core keeps a Retain card in hand at the end of a turn.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, MAX_CARD_UPGRADES, MAX_UPGRADE_TAG_STACKS, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps, upgradeTagStacks, improvedScaledAmount } from './cardUpgrade.js';
+import { applyUpgradeSteps, MAX_CARD_UPGRADES, MAX_UPGRADE_TAG_STACKS, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps, UpgradeTagStacks, ImprovedScaledAmount } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { EvaluateUpgradeStepCp } from './cardUpgradeCp.js';
@@ -254,7 +254,7 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
   const tierGated = Number.isFinite(tier);
 
   // cost: each cost reduction adds 1 Efficient stack (Efficient / Efficient+ / Efficient+2, max 3 stacks, doubling CP surcharge 10/20/40).
-  const efficientStacks = upgradeTagStacks(current, 'efficient');
+  const efficientStacks = UpgradeTagStacks(current, 'efficient');
   const maxEffStacks = scoring?.upgradeTags?.efficient?.maxStacks ?? MAX_UPGRADE_TAG_STACKS;
   const minCostFloor = tierGated && !ZeroCostUnlocked(tier, scoring) ? 1 : 0;
   if (efficientStacks < maxEffStacks && (!tierGated || UpgradeTagStackUnlocked('efficient', efficientStacks + 1, tier, scoring))) {
@@ -298,7 +298,7 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
   // answers (the same `maneuver` test it makes), and Core 2 replaces that payload's HP and Poise with the fixed
   // return: a range, area, damage, hits or poise step could never be honoured, so none of them is offered.
   const counterReturn = familyValue(tagsOf(current), 'maneuver:') === 'counter';
-  const improvedStacks = upgradeTagStacks(current, 'improved');
+  const improvedStacks = UpgradeTagStacks(current, 'improved');
   const impRule = scoring?.upgradeTags?.improved;
   const maxImpStacks = impRule?.maxStacks ?? MAX_UPGRADE_TAG_STACKS;
   const impMult = Number.isFinite(impRule?.effectMultPerStack) && impRule.effectMultPerStack > 1 ? impRule.effectMultPerStack : 1.1;
@@ -312,7 +312,7 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
   const improvedDeltaFor = (baseAmount, curAmount) => {
     const addStacks = Math.min(rarity + 1, maxAllowedImpStacks - improvedStacks);
     if (addStacks <= 0 || baseAmount <= 0) return null;
-    const targetAmount = improvedScaledAmount(baseAmount, improvedStacks + addStacks, impMult);
+    const targetAmount = ImprovedScaledAmount(baseAmount, improvedStacks + addStacks, impMult);
     const delta = Math.max(addStacks, targetAmount - curAmount);
     return delta > 0 ? { n: delta, improvedStacks: addStacks } : null;
   };
@@ -360,7 +360,7 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
     return Math.min(baseCap, tierCap);
   };
   const seenStatus = new Set();
-  const purifiedStacks = upgradeTagStacks(current, 'purified');
+  const purifiedStacks = UpgradeTagStacks(current, 'purified');
   const purifyStatuses = new Set(['re' + 'gen', 'ward']);
   const stackable = effects.find((e) => {
     if (!isPlainStatus(e) || isDrawbackStatus(e) || seenStatus.has(e.status)) return false;
@@ -615,9 +615,9 @@ function optionsByRarity(base, current, applied, limits, scoring = GetActiveScor
   const tier = resolveEffectiveTier(base, current, limits, scoring);
   const menu = Array.isArray(base.upgradeMenu) ? base.upgradeMenu : null;
   const graded = Array.isArray(base.gradeProfiles) && !menu;
-  const refinedStacks = upgradeTagStacks(current, 'refined');
-  const temperedStacks = upgradeTagStacks(current, 'tempered');
-  const purifiedStacks = upgradeTagStacks(current, 'purified');
+  const refinedStacks = UpgradeTagStacks(current, 'refined');
+  const temperedStacks = UpgradeTagStacks(current, 'tempered');
+  const purifiedStacks = UpgradeTagStacks(current, 'purified');
   if (Number.isFinite(tier)) {
     for (let r = 0; r < 3; r += 1) {
       for (const kind of Object.keys(per[r])) {
@@ -744,7 +744,8 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     let allowedNow = cpCache.get(key);
     if (allowedNow === undefined) {
       const probe = stepOf(kind, opt, 0, r);
-      allowedNow = EvaluateUpgradeStepCp({ baseDef, currentDef: current, instance: limits.instance || null, step: probe, playerLevel: limits.playerLevel, scoring: activeScoring }).allowed;
+      const result = EvaluateUpgradeStepCp({ baseDef, currentDef: current, instance: limits.instance || null, step: probe, playerLevel: limits.playerLevel, scoring: activeScoring });
+      allowedNow = result.allowed && (probe.k !== 'dmg' || !limits.damageChanges || limits.damageChanges(current, probe, result.rank));
       cpCache.set(key, allowedNow);
     }
     return allowedNow ? opt : null;

@@ -9,6 +9,7 @@ import { createSaveManager, createMemoryStorage, runKey } from '../src/engine/sa
 import { createRunState } from '../src/model/state.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
+import { resolveGearItem } from '../engine/kernel/gameConfig.js';
 import { CODEX_IDS } from '../tools/enemy-roster-table.mjs';
 
 // Original saved-profile bytes, rather than today's Core with old route settings:
@@ -73,4 +74,19 @@ test('old saved profiles roll the pre-Codex encounter maps with identical RNG co
       assert.deepEqual(actualRng.getCounters(), expectedRng.getCounters(), `${context}: draw counts`);
     }
   }
+});
+
+
+test('an archived stat-point profile preserves the original Duelist armour Poise floor', () => {
+  const snapshot = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-6727a255.json.gz', import.meta.url))));
+  const profile = resolveGameProfile(snapshot);
+  const gear = profile.modules.gear;
+  assert.equal(Object.hasOwn(gear.statPoints, 'attributeBudgetCost'), false);
+  const duelist = profile.content.gear.find(item => item.source?.id === 'duelist');
+  assert.ok(duelist);
+  for (let rank = 1; rank <= 4; rank++) {
+    assert.equal(resolveGearItem(duelist, gear, { rank }).values.poise, 3, `archived Duelist rank ${rank}`);
+  }
+  const budgeted = { ...gear, statPoints: { ...gear.statPoints, attributeBudgetCost: 3 } };
+  assert.equal(resolveGearItem(duelist, budgeted).values.poise, 0, 'an explicit budget does not recreate a consumed Poise pool');
 });

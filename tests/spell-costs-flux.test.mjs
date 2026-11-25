@@ -180,10 +180,11 @@ function sequence(ids, { legacy = false, attributes = { strength: 2 } } = {}) {
   const { combat, enemy } = fight({ attributes });
   if (legacy) delete combat.fixCoreRules.elementFlux;
   combat.player.energy = 30; combat.player.mana = 30;
+  const cards = ids.map((cardId, index) => ({ instanceId: `flux-${index}`, cardId, upgraded: false }));
+  combat.piles.hand.unshift(...cards);
   const rows = [];
-  ids.forEach((id, index) => {
-    const card = combat.piles.hand[0];
-    card.cardId = id;
+  cards.forEach(card => {
+    const { cardId: id } = card;
     const target = SELF.has(id) ? undefined : enemy.id;
     primeAccuracyRolls(combat);
     const before = { hp: enemy.hp, block: combat.player.block, playerHp: combat.player.hp };

@@ -22,7 +22,7 @@ node tools/config-build.mjs --check
 
 Neutral magic is royal blue (`#4169E1`). `layering.opacity.global` defaults to `0.8` and caps each rendered recipient effect, including its composite planes, caster circles, reach delivery, silhouettes, and the debug mark. Layer and frame factors control relative strength. Card art uses its own settings. All elemental/school circles share `spell-circle` geometry and take their tint procedurally. White highlights are preserved by grayscale-before-tint mixing. Physical neutral artwork and colored element overlays retain their source color. Ward and Evade derive their ghost/mask from the actual protected/reacting actor, never the demonstration human silhouette.
 
-Healing uses a green three-plus V motif. Bleed uses red droplets. Each is a separate result clip. By default the entire battlefield shares one clip queue with a 30 ms gap, zero overlap and an 80% opacity cap. Scope, clip cap, gap and overlap live in `motion.resultQueueScope`, `motion.resultMaxConcurrent`, `motion.resultGapMs` and `motion.resultOverlapMs`. The defaults also apply between playback calls. In per-recipient mode, different recipients can play concurrently. A positive overlap requires a cap of at least two and a zero gap.
+Healing uses a green three-plus V motif. Bleed uses red droplets. Each is a separate result clip. The production scheduler advances each action through casting and movement, attack impacts, defense and reactions, then buffs and statuses. Same-category clips start at least 10 ms apart. A category may start up to 10 ms before the preceding category finishes. At most two clips per category, three across the battlefield, and two on one actor can be active. Capacity holds excess clips in the queue until they fit. A grouped clip counts once toward the battlefield and category limits and occupies one slot on each of its recipients. Master opacity defaults to 80%. The authored controls live under `motion.categoryQueues` and `layering.opacity.global`. Disabling category queues exposes the legacy scope, cap, gap and overlap settings.
 
 Elemental textures and actor silhouettes share their clip's timing. Sweep counts once across all recipients. Caster windup, delivery and impact follow that order for the same action. Every clip keeps its authored duration and frame speed. Queued clips can finish during a turn transition. Skipping or leaving combat clears active and queued clips. The static debug mark identifies the action and recipient type.
 
@@ -61,7 +61,7 @@ Start the source server and open `/tools/recipient-effects-runtime-preview.html`
 node tools/serve.mjs --host 127.0.0.1 --port 4327 --no-open --editor-write
 ```
 
-In Score Studio, open `/tools/score-studio/` and select **Effects Timing**. The tab uses the same editor and authored file as the standalone preview. Switching tabs pauses playback and keeps unsaved values in place.
+In Score Studio, open `/tools/score-studio/` and select **Effects Timing**. The tab uses the same editor and authored file as the standalone preview. Switching tabs pauses playback and keeps unsaved values in place. The All categories and queue limits scenario exercises each category with extra clips waiting for capacity. Use One event to inspect an individual sprite or delivery.
 
 The Timing panel previews scope, clip cap, gap, overlap and opacity as you edit. Use the sample sequence for one recipient or multiple recipients and compare the clip positions on the timeline. The preview uses the production planner and renderer with sample combat receipts.
 
