@@ -1356,7 +1356,7 @@
     "tint": "#6fa8ff",
     "stackMode": "add",
     "decay": "perTurnEnd",
-    "tooltip": "Ward adds a health buffer on your HP bar: each stack adds 5 Ward HP. Hits meet Block and Poise first, then Ward absorbs the rest 1:1 before HP. Lose 1 stack (5 Ward HP) at the start of your turn.",
+    "tooltip": "Ward adds a health buffer on your HP bar: each stack adds 5 Ward HP. Hits meet Block first, then Ward absorbs the rest 1:1 before Poise and HP. Lose 1 stack (5 Ward HP) at the start of your turn.",
     "sharedWord": true
   },
   {
