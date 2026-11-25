@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
-import { gameDigest } from '../engine/kernel/gameConfig.js';
+import { gameDigest, resolveGearItem } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { GEAR_TYPES } from '../src/content/gearTypes.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -20,7 +20,10 @@ import { dispatch } from '../src/engine/combat.js';
 
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 const current = () => resolveGameProfile('default');
-const fixture = name => resolveGameProfile(JSON.parse(gunzipSync(readFileSync(new URL(`./fixtures/${name}`, import.meta.url)))));
+function fixture(name) {
+  const saved = JSON.parse(gunzipSync(readFileSync(new URL(`./fixtures/${name}`, import.meta.url))));
+  return resolveGameProfile(saved.gameProfile ?? saved);
+}
 /** A saved profile with one gear row rewritten, re-hashed the way a real snapshot is. `edit(row)` mutates the clone's row. */
 function editedProfile(base, rowId, edit) {
   const saved = structuredClone(base);
@@ -125,13 +128,18 @@ test('legacy pin: a genuine pre-type-pass save keeps Sage\'s Robe at +1 max MP a
   assert.equal(wardGrant(robe.summary), 0);
 });
 
-test('an earlier type-enabled profile uses current robe tuning without acquiring an unsaved signature', () => {
-  const profile = editedProfile(current(), 'armor.sagesRobe', row => { delete row.signatureMods; });
+for (const [name, base, wisdom, mana] of [
+  ['current zero-Wisdom tuning', current, 0, 1],
+  ['archived Wisdom tuning', () => fixture('pre-registry-dev-7dff4b03-save.json.gz'), 1, 0],
+]) test(`a type-enabled Sage's Robe with no saved signature under ${name}`, () => {
+  const profile = editedProfile(base(), 'armor.sagesRobe', row => { delete row.signatureMods; });
   assert.equal(profile.modules.gear.typeEffectsVersion, 1);
+  const row = profile.content.gear.find(item => item.id === 'armor.sagesRobe');
+  assert.equal(resolveGearItem(row, profile.modules.gear).values.wisdom, wisdom, 'test the pinned Mana feeder');
   const registries = registriesFor(profile);
   assert.deepEqual(piece(registries, 'sagesRobe').mods, ['self.maxMana=+1']);
   const robe = wearing(registries, { armor: 'sagesRobe', classId: 'starseer' });
-  assert.equal(robe.mods.maxMana, 0, 'current robe group has no flat Mana; Wisdom already accounts for the old raw addend');
+  assert.equal(robe.mods.maxMana, mana, 'the raw addend applies only without a Mana feeder');
   assert.equal(wardGrant(robe.summary), 0, 'no Sage Ward');
 });
 
