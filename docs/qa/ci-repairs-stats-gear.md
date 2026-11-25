@@ -83,3 +83,8 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/rank-up-bonus.test.mjs` isolates the cost option using the supported authored menu. Cost conversion and a direct cut now compete for the same upgrade family, so the fixture selects the direct cut. It inspects both entries of a paired cut and verifies a Basic's exact Mana reduction.
 - `node --test tests/rank-up-bonus.test.mjs` passed 6/6, from 5/6.
+
+## Pool receipts
+
+- `tests/stat-projection-pools.test.mjs` earns the real L4 point before testing Wisdom allocation and armour removal. The Mana fixture includes both the current robe control and a positive flat signature. The two genuine historical profile byte fixtures remain untouched while their pool receipts and committed gains are checked.
+- `node --test tests/stat-projection-pools.test.mjs` passed 6/6, from 2/6. Ten original stats/gear failures remained.
