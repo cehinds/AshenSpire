@@ -1,8 +1,8 @@
 // A DOM-free read model for the Core card-upgrade picker (rest site and Blacksmith).
 // Every fact comes from planCardUpgrade, which is inert: the rolled step shown here
 // is the step commitCardUpgrade applies. Nothing here mutates the run.
-import { planCardUpgrade } from '../../model/cardUpgradeService.js';
-import { upgradeCount, upgradeStepsOf, upgradeSignature, FlatSteps } from '../../model/cardUpgrade.js';
+import { planCardUpgrade, RunUpgradeStateFingerprint } from '../../model/cardUpgradeService.js';
+import { upgradeCount, upgradeStepsOf, FlatSteps } from '../../model/cardUpgrade.js';
 import { RarityOfStep } from '../../model/cardUpgradeSteps.js';
 import { UpgradeOfferKey } from '../../model/upgradeOffer.js';
 import { GetActiveScoring } from '../../model/activeScoring.js';
@@ -256,12 +256,13 @@ function pickerRowsFingerprint(run, owned, blockedReason, blacksmith) {
     run?.level?.level ?? 1,
     run?.rangePolicy?.maxRange ?? '',
     Number.isSafeInteger(run?.smithingStones) ? run.smithingStones : 0,
+    RunUpgradeStateFingerprint(run),
     blockedReason || '',
     blacksmith ? 1 : 0,
   ];
   for (const { instance, inDeck } of owned) {
     if (!instance) continue;
-    parts.push(`${inDeck ? 1 : 0}:${instance.instanceId}:${instance.cardId}:${upgradeSignature(instance)}:${VisibleCardRank(instance)}:${instance.rank ?? ''}:${instance.rarityOverride ?? ''}:${instance.abilityRank ?? ''}:${instance.sourceArmamentId ?? ''}:${instance.grantedBy ?? ''}:${playsEverOf(instance)}`);
+    parts.push(`${inDeck ? 1 : 0}:${instance.instanceId}:${instance.cardId}:${JSON.stringify(upgradeStepsOf(instance))}:${VisibleCardRank(instance)}:${instance.rank ?? ''}:${instance.rarityOverride ?? ''}:${instance.abilityRank ?? ''}:${instance.sourceArmamentId ?? ''}:${instance.grantedBy ?? ''}:${playsEverOf(instance)}`);
   }
   return parts.join(';');
 }

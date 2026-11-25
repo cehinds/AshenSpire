@@ -2,7 +2,8 @@
 // planCardUpgrade reads the run and writes nothing, so a preview equals the
 // commit: the roll is the stateless mulberry32(hash(run.seed, instanceId, stepIndex)).
 import { canUpgrade, nextUpgradeStep, nextUpgradeOptions, RestUpgradeRule } from './cardUpgradeLimits.js';
-import { upgradeStepsOf, upgradeSignature, paidUpgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { upgradeStepsOf, paidUpgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { playsEverOf } from './cardRamp.js';
 import { VisibleCardRank } from './cardRank.js';
 import { UpgradeOfferKey } from './upgradeOffer.js';
 import { GetActiveScoring } from './activeScoring.js';
@@ -16,6 +17,23 @@ const planCacheByRun = new WeakMap();
 const findInstance = (run, instanceId) => [...(run.deck || []), ...(run.sideboard || [])].find((card) => card && card.instanceId === instanceId) || null;
 const face = (registries, run, instance) => projectGameCard(run, instance) || resolveCard(registries, instance);
 
+/** Compact fingerprint of run-level gear/stat/relic/skill state that affects projected faces and checkDamageUpgrade. */
+export function RunUpgradeStateFingerprint(run) {
+  if (!run || typeof run !== 'object') return '';
+  return JSON.stringify([
+    run.loadout?.active || null,
+    run.loadout?.sets || null,
+    run.itemUpgradeLevels || null,
+    run.itemUpgradePicks || null,
+    run.itemCategories || null,
+    run.relics || null,
+    run.skills || null,
+    run.attributes || null,
+    run.baseAttributes || null,
+    run.attributeBonuses || null,
+  ]);
+}
+
 function planCacheKey(run, instance, count, combos, vendor) {
   return [
     run?.seed ?? 0,
@@ -25,14 +43,17 @@ function planCacheKey(run, instance, count, combos, vendor) {
     run?.level?.level ?? 1,
     run?.rangePolicy?.maxRange ?? '',
     Number.isSafeInteger(run?.smithingStones) ? run.smithingStones : 0,
+    RunUpgradeStateFingerprint(run),
     instance.instanceId,
     instance.cardId,
-    upgradeSignature(instance),
+    JSON.stringify(upgradeStepsOf(instance)),
     VisibleCardRank(instance),
+    instance.rank ?? '',
     instance.rarityOverride ?? '',
     instance.abilityRank ?? '',
     instance.sourceArmamentId ?? '',
     instance.grantedBy ?? '',
+    playsEverOf(instance),
     count,
     combos ? 1 : 0,
     vendor || '',

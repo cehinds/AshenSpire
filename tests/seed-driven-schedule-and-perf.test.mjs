@@ -16,6 +16,7 @@ import {
   ClearScheduleCaches,
 } from '../src/model/actSeedSchedule.js';
 import { planCardUpgrade, commitCardUpgrade, ClearCardUpgradePlanCache } from '../src/model/cardUpgradeService.js';
+import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from '../src/model/cardUpgradeCp.js';
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
 import { PrecomputeActRewardSchedule, RewardScheduleForOffer, gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 
@@ -156,5 +157,60 @@ test('Blacksmith 60-card picker is fast cold (< 250ms) and instant on re-selecti
   }
   const warmAvgMs = (performance.now() - t1) / 10;
   assert.ok(warmAvgMs < 5, `Expected warm selection avg < 5ms, got ${warmAvgMs.toFixed(2)}ms`);
+
+  // Also benchmark the Blacksmith UI path passing a `quote` pricing callback (hits planCacheByRun)
+  const quoteFn = () => ({ ok: true, cost: 1, cinders: 150, reason: '' });
+  const t2 = performance.now();
+  const quoted = cardUpgradeModel(registries, run, m1.rows[0].instanceId, { blacksmith: true, quote: quoteFn });
+  const quotedMs = performance.now() - t2;
+  assert.equal(quoted.selected?.instanceId, m1.rows[0].instanceId);
+  assert.ok(quotedMs < 150, `Expected warm quoted Blacksmith picker < 150ms, got ${quotedMs.toFixed(1)}ms`);
   assert.equal(JSON.stringify(run), beforeJson, 'picker caches leave run JSON untouched');
+});
+
+test('planCardUpgrade and picker caches invalidate on playsEver, rank vs abilityRank, combo steps, and gear changes; PrepareUpgradeStepCpContext matches uncached evaluation', () => {
+  const run = createRunState({ registries, classId: 'reaver', seed: 8080, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  run.smithingStones = 10;
+  run.level.level = 5;
+  const strike = run.deck.find((c) => c.cardId === 'core.strike');
+  strike.rank = 3;
+
+  // 1. Distinct combo steps never collide in planCacheKey
+  strike.upgraded = true;
+  strike.upgradeSteps = [{ k: 'combo', steps: [{ k: 'dmg', n: 1 }, { k: 'fx', fx: 'draw', n: 1 }] }];
+  const pComboA = planCardUpgrade(run, registries, strike.instanceId, { choices: 2, vendor: 'blacksmith' });
+  strike.upgradeSteps = [{ k: 'combo', steps: [{ k: 'dmg', n: 1 }, { k: 'fx', fx: 'block', n: 4 }] }];
+  const pComboB = planCardUpgrade(run, registries, strike.instanceId, { choices: 2, vendor: 'blacksmith' });
+  assert.notDeepEqual(pComboA.before.effects, pComboB.before.effects, 'distinct combo steps produce distinct cached plans');
+
+  // 2. rank vs abilityRank distinction invalidates cache
+  const graded = { instanceId: 'g-1', cardId: 'core.ironbreaker', upgraded: false, abilityRank: 2 };
+  run.deck.push(graded);
+  const pNoRank = planCardUpgrade(run, registries, graded.instanceId);
+  graded.rank = 2;
+  const pWithRank = planCardUpgrade(run, registries, graded.instanceId);
+  assert.notEqual(pNoRank, pWithRank, 'changing instance.rank with same abilityRank invalidates plan cache');
+
+  // 3. playsEver (run-scoped ramp) invalidates plan cache
+  const rampCard = { instanceId: 'r-1', cardId: 'core.flick', rank: 2, upgraded: false, playsEver: 0 };
+  run.deck.push(rampCard);
+  const pPlay0 = planCardUpgrade(run, registries, rampCard.instanceId);
+  rampCard.playsEver = 5;
+  const pPlay5 = planCardUpgrade(run, registries, rampCard.instanceId);
+  assert.notEqual(pPlay0, pPlay5, 'playsEver change invalidates plan cache');
+
+  // 4. Gear/relic change invalidates plan & picker caches
+  const pGear0 = planCardUpgrade(run, registries, strike.instanceId, { choices: 2, vendor: 'blacksmith' });
+  run.itemUpgradeLevels = { ...(run.itemUpgradeLevels || {}), 'armament/greatsword': 3 };
+  const pGear1 = planCardUpgrade(run, registries, strike.instanceId, { choices: 2, vendor: 'blacksmith' });
+  assert.notEqual(pGear0, pGear1, 'itemUpgradeLevels change invalidates plan cache');
+
+  // 5. PrepareUpgradeStepCpContext matches uncached EvaluateUpgradeStepCp
+  const baseDef = registries.cards.get('core.strike');
+  const ctx = PrepareUpgradeStepCpContext({ baseDef, currentDef: baseDef, instance: strike, playerLevel: 5, scoring: shippedScoring });
+  for (const step of [{ k: 'dmg', n: 2 }, { k: 'fx', fx: 'block', n: 4 }, { k: 'fx', fx: 'heal', n: 3 }]) {
+    const direct = EvaluateUpgradeStepCp({ baseDef, currentDef: baseDef, instance: strike, step, playerLevel: 5, scoring: shippedScoring });
+    const cached = EvaluateUpgradeStepCp({ baseDef, currentDef: baseDef, instance: strike, step, playerLevel: 5, scoring: shippedScoring, context: ctx });
+    assert.deepEqual(cached, direct);
+  }
 });

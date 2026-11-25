@@ -805,10 +805,14 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     let acceptedKind = '';
     let acceptedRarity = 0;
 
-    // Hybrid node-specialty slot: on the first rolled pick at a Blacksmith/Trader/Rest node, try the node's
-    // pre-determined seed specialty kinds first (1 CP eval if compatible), falling back seamlessly to per-card sampling.
+    // Hybrid node-specialty slot: on the first rolled pick at a Blacksmith/Trader/Rest node, probe the node's
+    // pre-determined seed specialty shelf starting at a card-seeded offset (1 CP eval if compatible), falling
+    // back seamlessly to per-card seeded rejection sampling.
     if (specialtyList && !specialtyUsed) {
-      for (const spec of specialtyList) {
+      specialtyUsed = true;
+      const start = Math.floor(pick * specialtyList.length);
+      for (let i = 0; i < specialtyList.length; i += 1) {
+        const spec = specialtyList[(start + i) % specialtyList.length];
         const kind = spec?.kind;
         if (!kind || !allowed(kind)) continue;
         const openRarities = [0, 1, 2].filter((r) => perRarity[r][kind] && openStruct(r, kind) && (!graded || r === 0));
@@ -823,7 +827,6 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
           accepted = step;
           acceptedKind = kind;
           acceptedRarity = r;
-          specialtyUsed = true;
           break;
         }
       }

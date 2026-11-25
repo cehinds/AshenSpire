@@ -253,7 +253,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   if(source!=='shop'&&categories.includes('combatCards')&&(!groups.length||groups.some(group=>group.weight>0&&group.categories.includes('combatCards'))))for(const id of reserveStanceCards(registries,run,rng,stream,BandedRewardIds(run,'combatCards',available.combatCards,{pool}),count-options.length)) {
     options.push({kind:'combatCards',id});available.combatCards=available.combatCards.filter(value=>value!==id);
   }
-  const schedule = NodeRewardSchedule(run?.seed ?? 0, offerId, { source, pool, rareBoostChance: RARE_RANK_BOOST_CHANCE });
+  const schedule = RewardScheduleForOffer(run, offerId, { source, pool });
   // Ordinary combat draws weighted groups. Shops independently fill each shelf.
   while(options.length<count) {
     const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<shelfCap(kind)));

@@ -6,7 +6,7 @@
 // for each Combat / Elite / Boss / Treasure / Shop node, eliminating exhaustive permutation work.
 import { mulberry32 } from './rng.js';
 import { GetActiveScoring } from './activeScoring.js';
-import { CompileTierCatalog } from './tierUnlocks.js';
+import { CompileTierCatalog, UpgradeKindUnlocked } from './tierUnlocks.js';
 import { UpgradeOfferKey } from './upgradeOffer.js';
 import {
   upgradeSeed,
@@ -95,7 +95,7 @@ export function ActNodeUpgradeStock(runSeed, nodeKey, { vendor = '', scoring = G
 
   for (let tier = 0; tier <= catalog.maxTier; tier += 1) {
     const unlocked = catalog.enabled ? catalog.kindsAtTier(tier) : null;
-    const eligible = ALL_CANDIDATE_KINDS.filter((kind) => !unlocked || unlocked.has(kind));
+    const eligible = ALL_CANDIDATE_KINDS.filter((kind) => !unlocked || unlocked.has(kind) || UpgradeKindUnlocked(kind, tier, scoring));
     const rng = mulberry32(upgradeSeed(seed, `nodeStock:${key}:${vendorId || 'rest'}`, tier));
     const pool = [...eligible];
     const takenFamilies = new Set();
