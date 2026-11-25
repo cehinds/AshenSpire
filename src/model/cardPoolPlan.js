@@ -8,7 +8,8 @@
 //               allowedEffects: [...], allowedStatuses: [...], allowedKeywords: [...], keywordOdds: %, drawbackOdds: %, areaOdds: %,
 //               seed, cls }
 //
-// Rules (each count is exact, by largest-remainder rounding, so the counts add up to the card count):
+// Rules (each count is exact, by largest-remainder rounding, so the counts add up to the card count; SP and MP are the
+// costs dealt to each input: the generator may raise them to reach its CP without an HP cost, so the cards can cost more):
 //   - Card count: the per-school counts win when any is set (their sum is the count and `total` is ignored); otherwise `total`.
 //   - Camps: perCamp when any is set (scaled to the card count); otherwise a card with a school is magic and one without is martial.
 //     With neither per-school nor per-camp counts, martial and magic split evenly.

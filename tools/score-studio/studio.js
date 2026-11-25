@@ -852,6 +852,7 @@ function previewGeneratedPool() {
     <div><strong>Rank:</strong> ${esc(line(plan.counts.rank, (k) => RankName(Number(k))))}</div>
     <div><strong>School:</strong> ${esc(line(plan.counts.school, (k) => (k === 'none' ? 'no school' : k)))}</div>
     ${plan.martialToMagic ? `<div class="gen-preview-note">${plan.martialToMagic} martial card${plan.martialToMagic === 1 ? '' : 's'} became magic to fit the school counts.</div>` : ''}
+    ${costRaisedCount(plan) ? `<div class="gen-preview-note">${costRaisedCount(plan)} card${costRaisedCount(plan) === 1 ? ' costs' : 's cost'} more than planned, to stay at their CP without an HP cost.</div>` : ''}
     ${plan.misses ? `<div class="gen-preview-note">${plan.misses === 1 ? '1 card is too strong for its CP and keeps' : `${plan.misses} cards are too strong for their CP and keep`} the nearest.</div>` : ''}
     <h4>Sample names</h4>
     <ul class="gen-sample-names">${plan.cards.slice(0, GENERATOR_SAMPLE_NAMES).map((c) => `<li>${esc(c.name)}</li>`).join('')}</ul>`;
@@ -901,6 +902,15 @@ function fitGeneratedCard(def, input, target) {
   return plainGap < gap ? { def: plain, gap: plainGap } : { def, gap };
 }
 
+// Cards the generator made dearer than the plan dealt them (it raises SP, then MP, before any HP cost).
+function costRaisedCount(plan) {
+  return plan.cards.filter((card, i) => {
+    const input = plan.inputs[i] || {};
+    const sp = card.staminaCost ?? card.cost ?? 0;
+    return (Number.isFinite(input.sp) && sp > input.sp) || (Number.isFinite(input.mp) && (card.manaCost || 0) > input.mp);
+  }).length;
+}
+
 function applyGeneratedPool() {
   const settings = readGeneratorSettings({ normalise: true });
   let plan;
@@ -914,8 +924,10 @@ function applyGeneratedPool() {
   state.generatorSettings = clone(settings);
   const kept = settings.mode === 'replaceAll' ? [] : settings.mode === 'add' ? state.cards : state.cards.filter((c) => !c._generated);
   const keptIds = new Set(kept.map((c) => c.id));
-  // Removed cards leave the studio view only: their scoring overrides stay, so Export writes the same weights.
+  // Removed Core cards leave the studio view only: their scoring overrides stay, so Export writes the same weights.
+  // A removed generated card's override goes with it, so a new card that reuses its id never takes its rank pin.
   for (const gone of state.cards.filter((c) => !keptIds.has(c.id))) {
+    if (gone._generated && state.scoring.overrides) delete state.scoring.overrides[gone.id];
     studioCardOverrides.delete(gone.id);
     studioCardOverrides.delete(`${LIVE_ID_PREFIX}${gone.id}`);
   }
