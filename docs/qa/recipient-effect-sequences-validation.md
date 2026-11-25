@@ -1,5 +1,7 @@
 # Recipient effect sequence validation
 
+This historical report covers the original 10 ms, per-recipient queue. See the [Effects Timing validation](recipient-effects-timing-validation.md) for the current battlefield defaults and Score Studio editor.
+
 The recipient runtime, including the Ward shatter correction, was reviewed at `277000b1b1c3fdcd42698bdd916200412192526a`. The game pins `ashenspire-hd-assets-v30` at `02b6e34db4`. All 12 effect sheets in each released art tier match the reviewed source sheets by SHA-256.
 
 - The [sandbox acceptance](acceptance.recipient-effect-sequences.json) checks Effects On and Effects Off in real combat at 1280×800 and 390×844. All 16 checks passed on the settled source at `ac3ada4a3fd2a946684da674b91995e058387932` against `origin/dev` at `7dff4b03a1783054a4ed807f4d45db028b104343`, with normal verified v30 asset loading.

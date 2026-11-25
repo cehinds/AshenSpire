@@ -11,10 +11,12 @@ finishes before the next hit. Historical saves retain their saved reaction
 policy. The visual catalog's `damage-feedback` miniature shows this sequence.
 
 Combat recipient sprites use confirmed outcomes to select their artwork.
-`PlayRecipientEffectLayers` schedules successive results on one recipient with
-a configurable 10 ms overlap. Different recipients can play in parallel, while
-an impact and its elemental texture stay together. The renderer applies 80%
-effect opacity to each clip. See the [recipient effects miniature](component-catalog.html#recipient-effects-title)
+`PlayRecipientEffectLayers` defaults to one battlefield clip at a time, with a
+30 ms gap, zero overlap and 80% opacity. Impacts and their elemental textures
+share one clip. The Timing panel previews queue scope, cap, gap, overlap and
+opacity using the production planner. The Score Studio **Effects Timing** tab
+keeps drafts across tab switches and pauses when hidden. Save writes those
+choices without changing clip durations. See the [recipient effects miniature](component-catalog.html#recipient-effects-title)
 and [configuration guide](RECIPIENT-EFFECTS.md).
 
 Core enemy inspection joins authored enemy cards to runtime moves through
