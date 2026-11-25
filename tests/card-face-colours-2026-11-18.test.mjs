@@ -40,14 +40,26 @@ function fight(classId, { ownProfile = profile, attributes = {} } = {}) {
   enemy.hp = enemy.maxHp = 5000;
   return { run, combat, enemy, registries: reg };
 }
-const classes = (html) => [...html.matchAll(/<span class="(val[^"]*)">(\d+)<\/span>/g)].map(match => match[1].replace('val', '').trim() || 'black');
+function damageTints(html, preview) {
+  const damage = [], poise = [];
+  for (const [, tint, value, label] of html.matchAll(/<span class="val(?: (up|down))?">(\d+)<\/span>( Poise\b)?/g)) {
+    const color = tint || 'black';
+    if (label) poise.push({ color, value: Number(value) });
+    else damage.push(color);
+  }
+  const weaponPoise = preview.values.find(row => row.op === 'damage' && row.weaponPoise > 0);
+  if (weaponPoise) {
+    assert.deepEqual(poise, [{ color: 'black', value: weaponPoise.weaponPoiseBase }], 'the unchanged weapon Poise stays black and keeps its own value');
+  }
+  return damage;
+}
 function damageFace({ combat, enemy, registries: reg }, cardId, instance = {}) {
   combat.piles.hand.push({ instanceId: `c-${cardId}-${combat.piles.hand.length}`, cardId, ...instance });
   const inst = combat.piles.hand.at(-1);
   const preview = previewCard(combat, inst.instanceId, enemy.id);
   const def = reg.cards.get(cardId);
   const line = cardFaceLines(def, preview, reg, null).find(row => row.kind === 'damage');
-  return { classes: classes(line.html), value: preview.values.find(row => row.op === 'damage').faceValue,
+  return { classes: damageTints(line.html, preview), value: preview.values.find(row => row.op === 'damage').faceValue,
     baseline: staticCardTokens(def, reg, preview.faceRules).damage, preview };
 }
 const damageClasses = (world, cardId) => damageFace(world, cardId).classes;
@@ -96,9 +108,12 @@ test('the current stance bonus turns a physical attack green', () => {
 });
 
 test('Weak turns a physical attack without a stance bonus red', () => {
+  const calm = fight('reaver');
   const weak = fight('reaver');
+  isolateAttributeColours(calm);
+  isolateAttributeColours(weak);
   applyStatus(weak.combat, weak.combat.player, 'weak', 2, weak.combat.player);
-  assert.deepEqual(damageClasses(fight('reaver'), 'core.sweep'), ['black'], 'Sweep carries no stance bonus: attributes alone leave it black');
+  assert.deepEqual(damageClasses(calm, 'core.sweep'), ['black'], 'Sweep carries no stance bonus: attributes alone leave it black');
   assert.deepEqual(damageClasses(weak, 'core.sweep'), ['down'], 'Weak cuts the STR bonus below the face outside combat');
 });
 
@@ -109,6 +124,7 @@ test('the plain-text face never carries a mark', () => {
 
 test('a triggered relic effect that raises a hit turns the number green', () => {
   const world = fight('reaver');
+  isolateAttributeColours(world);
   // A relic or card trigger that fires in the fight changes a number the same way any in-combat boost does: here the Reaver's STR rises for the turn.
   assert.deepEqual(damageClasses(world, 'core.sweep'), ['black']);
   ChangeAttribute(world.combat, world.combat.player, 'strength', 3, { thisTurn: true });
@@ -191,7 +207,7 @@ test('current Sceptre damage enters the spell baseline once, while a triggered G
   assert.equal(calm.preview.resolvedDefinition.effects[0].amount, 4, 'Sceptre adds exactly one base damage');
   assert.equal(calm.baseline, calm.value);
   assert.deepEqual(calm.classes, ['black']);
-  assert.deepEqual(classes(cardFaceLines(calm.preview.resolvedDefinition, calm.preview, world.registries).find(row => row.kind === 'damage').html), ['black'], 'the renderer also accepts its already projected live definition');
+  assert.deepEqual(damageTints(cardFaceLines(calm.preview.resolvedDefinition, calm.preview, world.registries).find(row => row.kind === 'damage').html, calm.preview), ['black'], 'the renderer also accepts its already projected live definition');
   const rulesBefore = structuredClone(world.combat.player.itemProps.cardRules);
   world.combat.player.itemProps.cardRules.push({ selector: 'spell', arg: null, conds: [{ name: 'first', arg: 'fight' }], stat: 'damage', amount: 8, mode: 'add', source: 'handCrossbow' });
   const lit = damageFace(world, 'core.cinderDart');
@@ -273,14 +289,14 @@ test('the hand saved-rule context preserves the preview numeric baseline and liv
   assert.equal(rendered.baseTokens.damage, first.baseline, 'the full combat context cannot reapply Sceptre to an already projected definition');
   assert.equal(playingCardModel(world.registries, instance, { rules: world.combat }).baseTokens.damage, first.baseline, 'the outside face without a preview keeps its existing numeric path');
   const lines = cardFaceLines(first.preview.resolvedDefinition, first.preview, world.registries, world.combat);
-  assert.deepEqual(classes(lines.find(row => row.kind === 'damage').html), ['black']);
+  assert.deepEqual(damageTints(lines.find(row => row.kind === 'damage').html, first.preview), ['black']);
   ChangeAttribute(world.combat, world.combat.player, 'intelligence', 4);
   const boosted = previewCard(world.combat, instance.instanceId, world.enemy.id);
   const liveModel = playingCardModel(world.registries, instance, { preview: boosted, rules: world.combat });
   assert.equal(liveModel.baseTokens.damage, first.baseline, 'saved context and live boosts do not alter the baseline');
   assert.ok(boosted.values.find(row => row.op === 'damage').faceValue > first.value);
   const liveLines = cardFaceLines(boosted.resolvedDefinition, boosted, world.registries, world.combat);
-  assert.deepEqual(classes(liveLines.find(row => row.kind === 'damage').html), ['up']);
+  assert.deepEqual(damageTints(liveLines.find(row => row.kind === 'damage').html, boosted), ['up']);
 });
 
 for (const policy of ['current', 'saved attribute rule', 'saved disabled tradition']) test(`an Evade metric face renders its full detached ${policy} snapshot`, () => {
@@ -308,14 +324,14 @@ for (const policy of ['current', 'saved attribute rule', 'saved disabled traditi
   assert.equal(Object.hasOwn(snapshot, 'spellTraditionsVersion'), Object.hasOwn(before, 'spellTraditionsVersion'));
   const accuracyGain = policy === 'saved attribute rule' ? 5 + 2 * world.combat.player.attributes.dexterity
     : policy === 'saved disabled tradition' ? 4 : 1;
-  const expected = accuracyGain + 1;
   assert.equal(world.combat.gameProfile.modules.gear.typeEffectsVersion, 1);
-  assert.equal(preview.values[0].value, expected, 'saved accuracy plus the current Leathers +1 Evade');
+  assert.equal(world.combat.player.itemProps.gainBonus?.evade, undefined, 'ordinary Light armour has no gain bonus');
+  assert.equal(preview.values[0].value, accuracyGain, 'the saved accuracy formula sets the grant');
   assert.equal(evadeStackGainPhrase(preview.faceRules, def),
     policy === 'saved attribute rule' ? '5 plus 2× DEX' : String(accuracyGain), 'the metric reader accepts the full saved rule envelope');
   const lines = cardFaceLines(def, preview, world.registries, null);
   assert.ok(lines?.length > 0, 'the in-hand card renders');
-  assert.match(lines.map(row => row.html).join(''), new RegExp(`>${expected}</span> Evade`));
+  assert.match(lines.map(row => row.html).join(''), new RegExp(`>${accuracyGain}</span> Evade`));
   snapshot.accuracy.evadeStackBase = 999;
   snapshot.accuracy.precisionWeights.dex = 999;
   assert.deepEqual(rules, before, 'mutating nested face metadata cannot alter the saved combat');
@@ -336,14 +352,15 @@ test('an Evade face with no saved rule object keeps the historical default path'
   assert.equal(ownProfile.modules.effects.spellTraditionsVersion, undefined, 'the genuine profile keeps its historical policy');
 });
 
-test('current Light armour adds its real Evade bonus in the hand, target quote and live play', () => {
+test('an explicit gear Evade bonus applies in the hand, target quote and live play', () => {
   const world = fight('rogue');
   assert.equal(world.combat.gameProfile.modules.gear.typeEffectsVersion, 1);
-  assert.equal(world.combat.player.itemProps.gainBonus.evade, 1);
+  assert.equal(world.combat.player.itemProps.gainBonus?.evade, undefined);
+  world.combat.player.itemProps.gainBonus = { ...world.combat.player.itemProps.gainBonus, evade: 1 };
   world.combat.piles.hand = [{ instanceId: 'light-evade', cardId: 'core.evade' }];
   const before = world.combat.player.statuses.evade?.stacks || 0;
   const preview = previewCard(world.combat, 'light-evade');
-  assert.equal(preview.values[0].value, 2, 'one configured stack plus one real Light armour stack');
+  assert.equal(preview.values[0].value, 2, 'one configured stack plus one stack from the fixture gear bonus');
   const lines = cardFaceLines(world.registries.cards.get('core.evade'), preview, world.registries, null);
   assert.match(lines.map(row => row.html).join(''), />2<\/span> Evade/);
   world.combat.player.stamina = world.combat.player.energy = 100;
