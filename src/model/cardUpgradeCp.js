@@ -2,6 +2,7 @@ import { BaseFace, ScoreCard, CombatPower, RankOf } from './combatPower.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { VisibleCardRank } from './cardRank.js';
 import { applyUpgradeSteps, upgradeStepsOf } from './cardUpgrade.js';
+import { ProjectCardMechanicalValues } from './cardMechanicalProjection.js';
 
 const RARITY_LADDER = Object.freeze(['common', 'uncommon', 'rare']);
 const num = (v, fallback = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
@@ -9,9 +10,10 @@ const num = (v, fallback = 0) => (typeof v === 'number' && Number.isFinite(v) ? 
 /**
  * Convert a resolved card definition into a `ScoreCard` face for CP/rank evaluation.
  */
-export function CardDefinitionToScoreFace(def) {
+export function CardDefinitionToScoreFace(def, { scoring = GetActiveScoring(), registries, rules } = {}) {
   const face = BaseFace();
   if (!def) return face;
+  def = ProjectCardMechanicalValues(def, { registries, rules }).card;
   const tags = [...(def.cardTags || def.tags || [])];
   const camp = def.camp || (tags.includes('camp:spell') || tags.includes('source:spell') ? 'spell' : 'physical');
   face.name = def.name || '';
@@ -28,7 +30,11 @@ export function CardDefinitionToScoreFace(def) {
   const statuses = [];
   for (const eff of def.effects || []) {
     if (!eff || typeof eff !== 'object') continue;
-    const amount = num(eff.amount, 0);
+    // Conditions and a charge's later use are estimates from the authored
+    // reliability model. Keep this projection shared by authoring and upgrade
+    // eligibility; neither path may silently price these payloads as zero.
+    const reliability = eff.if ? (scoring.conditionals?.inlineIf ?? 0.7) : 1;
+    const amount = num(eff.amount, 0) * reliability;
     switch (eff.op) {
       case 'damage':
         face.dmg += amount * Math.max(1, num(eff.hits, 1));
@@ -48,7 +54,7 @@ export function CardDefinitionToScoreFace(def) {
         break;
       case 'applyStatus':
         if (typeof eff.status === 'string') {
-          statuses.push([eff.status, num(eff.stacks, 1), eff.target === 'self' || eff.target === 'ally' ? 'self' : 'enemy']);
+          statuses.push([eff.status, num(eff.stacks, 1) * reliability, eff.target === 'self' || eff.target === 'ally' ? 'self' : 'enemy']);
         }
         break;
       case 'changeAttribute':
@@ -56,16 +62,27 @@ export function CardDefinitionToScoreFace(def) {
           statuses.push([eff.attribute, num(eff.amount, 1), 'self']);
         }
         break;
-      case 'draw': face.draw += num(eff.amount, 1); break;
+      case 'draw': face.draw += num(eff.amount, 1) * reliability; break;
       case 'heal': face.heal += amount; break;
       case 'loseHp': face.loseHp += amount; break;
       case 'discard': face.discard += num(eff.amount, 1); break;
-      case 'restoreStamina': face.restoreSp += num(eff.amount, 1); break;
-      case 'restoreMana': face.restoreMp += num(eff.amount, 1); break;
-      case 'removeStatus': face.cleanse += num(eff.amount, 1); break;
-      case 'gainCounterStacks': face.counter += num(eff.amount, 1); break;
+      case 'restoreStamina': case 'gainEnergy': face.restoreSp += num(eff.amount, 1) * reliability; break;
+      case 'restoreMana': face.restoreMp += num(eff.amount, 1) * reliability; break;
+      // Spending an enemy debuff is not a cleanse benefit for the player.
+      case 'removeStatus': if (['self', 'owner', 'player', 'ally'].includes(eff.target)) face.cleanse += num(eff.amount, 1) * reliability; break;
+      case 'gainCounterStacks': face.counter += num(eff.amount, 1) * reliability; break;
+      case 'grantCardCharge': {
+        const used = reliability * (scoring.conditionals?.inlineIf ?? 0.7);
+        face.dmg += num(eff.damage) * used;
+        face.blk += num(eff.block) * used;
+        face.heal += num(eff.heal) * used;
+        face.poise += num(eff.break) * used;
+        face.restoreMp += num(eff.manaDiscount) * used;
+        if (eff.buildupStatus) statuses.push([eff.buildupStatus, num(eff.buildup) * used, 'enemy']);
+        break;
+      }
       case 'applyReflect': face.reflect += num(eff.amount, 1); break;
-      case 'pullEnemy': face.pull += 1; break;
+      case 'pullEnemy': case 'swapRows': face.pull += 1; break;
       case 'moveEngagement': face.move += 1; break;
       case 'retain': face.holdOne += num(eff.amount, 1); break;
       case 'exhaust': face.cull += num(eff.amount, 1); break;
@@ -77,6 +94,7 @@ export function CardDefinitionToScoreFace(def) {
     }
   }
   face.statuses = statuses;
+  if (def.ramp && !face.tags.includes('ramp.honed')) face.tags.push('ramp.honed');
   if (def.runAttributeBonus) {
     face.attr += Object.values(def.runAttributeBonus).reduce((sum, n) => sum + num(n, 0), 0);
   }
@@ -93,8 +111,8 @@ export function EvaluateUpgradeStepCp({ baseDef, currentDef, instance = null, st
   const afterDef = currentDef
     ? applyUpgradeSteps(currentDef, [step])
     : applyUpgradeSteps(baseDef, [...upgradeStepsOf(instance || {}), step]);
-  const rawBefore = ScoreCard(CardDefinitionToScoreFace(currentDef || baseDef), scoring).raw;
-  const rawAfter = ScoreCard(CardDefinitionToScoreFace(afterDef), scoring).raw;
+  const rawBefore = ScoreCard(CardDefinitionToScoreFace(currentDef || baseDef, { scoring }), scoring).raw;
+  const rawAfter = ScoreCard(CardDefinitionToScoreFace(afterDef, { scoring }), scoring).raw;
   const currentRarity = instance?.rarityOverride || currentDef?.rarity || baseDef.rarity || 'common';
   const startIdx = Math.max(0, RARITY_LADDER.indexOf(currentRarity));
   const scoredBeforeRank = RankOf(CombatPower(rawBefore, currentRarity, scoring), scoring);

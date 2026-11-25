@@ -159,37 +159,69 @@ function getEffectMagnitude(eff) {
  * Deterministically tune one card definition so its CP lands inside `targetRank`'s band
  * and as close as possible to `targetRank`'s maximum allowed CP (when aimMaxCp is true).
  */
-export function TuneCardToTarget(cardDef, { targetRarity, targetRank, aimMaxCp = true, applyNaming = false, scoring = shippedScoring, faceOf = null } = {}) {
+export function TuneCardToTarget(cardDef, options = {}) {
+  const search = tuneCardSearch(cardDef, options);
+  let step = search.next();
+  while (!step.done) step = search.next();
+  return step.value;
+}
+
+/** Same candidate order/results as the synchronous tuner, yielding between
+ * bounded batches so combat-preview scoring cannot freeze a browser dialog. */
+export async function TuneCardToTargetAsync(cardDef, options = {}, { yieldToUi = () => new Promise(resolve => setTimeout(resolve, 0)), shouldCancel = () => false, signal, quantum = 16 } = {}) {
+  const search = tuneCardSearch(cardDef, options);
+  const check = () => { if (signal?.aborted || shouldCancel()) { search.return(); const error = new Error('Rebalance cancelled'); error.name = 'AbortError'; throw error; } };
+  let step, count = 0;
+  check();
+  while (!(step = search.next()).done) {
+    check();
+    if (++count % Math.max(1, quantum) === 0) { await yieldToUi(); check(); }
+  }
+  return step.value;
+}
+
+function* tuneCardSearch(cardDef, { targetRarity, targetRank, aimMaxCp = true, applyNaming = false, scoring = shippedScoring, faceOf = null,
+  targetCp: requestedCp, fixedSp, fixedMp, candidateAllowed = null, searchBudget = Infinity,
+  allowExtraEffects = true, allowHpDrawback = true, scaleField = null, magnitudeMax = null, candidateBias = null, maxManaCost = 2, coarseCostSearch = false, searchAllowed = null } = {}) {
   const original = clone(cardDef);
   const rarity = targetRarity || original.rarity || 'common';
   const band = RankBand(targetRank, scoring);
-  const targetCp = aimMaxCp ? band.max : Math.round((band.min + band.max) / 2);
+  const targetCp = Number.isFinite(requestedCp) ? requestedCp : aimMaxCp ? band.max : Math.round((band.min + band.max) / 2);
 
   const base = clone(original);
   base.rarity = rarity;
+  if (Number.isInteger(fixedSp)) base.cost = base.staminaCost = fixedSp;
+  if (Number.isInteger(fixedMp)) base.manaCost = fixedMp;
   const origSp = Number(base.staminaCost ?? base.cost ?? 0) || 0;
   const origMp = Number(base.manaCost ?? 0) || 0;
   const isSpell = (base.damageSchool && base.damageSchool !== 'physical')
     || (base.tags || []).includes('camp:spell')
     || (base.tags || []).includes('maneuver:casting');
 
-  const primIdx = findPrimaryScalableEffect(base);
-  const origPrim = primIdx >= 0 ? getEffectMagnitude(base.effects[primIdx]) : null;
+  const primIdx = scaleField ? scaleField.index : findPrimaryScalableEffect(base);
+  const magnitude = effect => scaleField ? effect[scaleField.field] : getEffectMagnitude(effect);
+  const setMagnitude = (effect, value) => { if (scaleField) effect[scaleField.field] = value; else setEffectMagnitude(effect, value); };
+  const origPrim = primIdx >= 0 ? magnitude(base.effects[primIdx]) : null;
   const primOp = primIdx >= 0 ? base.effects[primIdx].op : null;
 
-  const candidates = [];
-  const consider = (cand, editCost) => {
+  const candidates = [], rejected = [];
+  let searched = 0;
+  function* consider(cand, editCost) {
+    if (searched++ >= searchBudget) return;
+    yield;
     const sc = scoreCardDef(cand, scoring, faceOf);
+    const withinSearch = searchAllowed ? searchAllowed(cand, sc) : true;
+    if (candidateAllowed && !candidateAllowed(cand, sc)) { const row = { card: cand, score: sc, penalty: Infinity, inBand: false, withinSearch }; rejected.push(row); return row; }
     const inBand = sc.cp >= band.min && sc.cp <= band.max;
     const overCeiling = sc.cp > band.max;
     const dist = Math.abs(targetCp - sc.cp);
     // Prioritize: inside band -> not over ceiling -> closest to targetCp (max allowed CP) -> minimal edit distance
-    const penalty = (inBand ? 0 : (overCeiling ? 5000 : 2500)) + dist * 25 + editCost;
-    candidates.push({ card: cand, score: sc, penalty, inBand });
-  };
+    const penalty = (inBand ? 0 : (overCeiling ? 5000 : 2500)) + dist * 25 + editCost + (candidateBias ? candidateBias(cand, sc) : 0);
+    const row = { card: cand, score: sc, penalty, inBand, withinSearch }; candidates.push(row); return row;
+  }
 
   // Evaluate untouched (rarity-updated) card first
-  consider(clone(base), 0);
+  yield* consider(clone(base), 0);
 
   const maxMag = (op) => {
     if (op === 'damage') return 60;
@@ -201,32 +233,66 @@ export function TuneCardToTarget(cardDef, { targetRarity, targetRank, aimMaxCp =
     return 5;
   };
 
-  const spRange = [...new Set([origSp, Math.max(0, origSp - 1), Math.min(3, origSp + 1), 0, 1, 2, 3])];
-  const mpRange = isSpell ? [...new Set([origMp, Math.max(0, origMp - 1), Math.min(2, origMp + 1), 0, 1, 2])] : [origMp];
+  const spRange = Number.isInteger(fixedSp) ? [fixedSp] : [...new Set([origSp, Math.max(0, origSp - 1), Math.min(3, origSp + 1), 0, 1, 2, 3])];
+  const mpRange = Number.isInteger(fixedMp) ? [fixedMp] : isSpell ? [...new Set([origMp, Math.max(0, origMp - 1), Math.min(maxManaCost, origMp + 1), 0, 1, 2, ...(maxManaCost >= 3 ? [3] : [])])] : [origMp];
 
   if (primIdx >= 0) {
-    const cap = maxMag(primOp);
+    const cap = Number.isFinite(magnitudeMax) ? magnitudeMax : maxMag(primOp);
     const step = cap >= 40 ? 2 : 1;
     // Pass 1: scale primary effect at original cost (every integer around sweet spot)
-    for (let v = 1; v <= cap; v++) {
+    for (let v = 1; !coarseCostSearch && v <= cap; v++) {
       const c = clone(base);
-      setEffectMagnitude(c.effects[primIdx], v);
-      consider(c, Math.abs(v - origPrim) * 0.25);
+      setMagnitude(c.effects[primIdx], v);
+      yield* consider(c, Math.abs(v - origPrim) * 0.25);
     }
     // Pass 2: if not hitting exact targetCp at original cost, try small SP/MP adjustments + primary scaling
-    const bestSoFar = candidates.reduce((a, b) => (a.penalty < b.penalty ? a : b));
-    if (!bestSoFar.inBand || bestSoFar.score.cp !== targetCp) {
-      for (const sp of spRange) {
-        for (const mp of mpRange) {
-          if (sp === origSp && mp === origMp) continue;
-          const costDelta = Math.abs(sp - origSp) * 4 + Math.abs(mp - origMp) * 5;
-          for (let v = 1; v <= cap; v += step) {
-            const c = clone(base);
-            c.cost = sp;
-            c.staminaCost = sp;
-            c.manaCost = mp;
-            setEffectMagnitude(c.effects[primIdx], v);
-            consider(c, costDelta + Math.abs(v - origPrim) * 0.25);
+    const bestSoFar = candidates.length ? candidates.reduce((a, b) => (a.penalty < b.penalty ? a : b)) : null;
+    if (!bestSoFar?.inBand || bestSoFar.score.cp !== targetCp) {
+      if (coarseCostSearch) {
+        // Visit every allowed cost pair before refining promising magnitudes.
+        // A bounded sequential dense search otherwise spends its entire budget
+        // on early MP/SP pairs and can falsely miss a simple later-cost fit.
+        const seen = new Map([...candidates, ...rejected].map(row => [`${row.card.staminaCost ?? row.card.cost}:${row.card.manaCost ?? 0}:${magnitude(row.card.effects[primIdx])}`, row]));
+        function* sample(sp, mp, value) {
+          const key = `${sp}:${mp}:${value}`;
+          if (seen.has(key)) return seen.get(key);
+          if (searched >= searchBudget) return;
+          const c = clone(base); c.cost = c.staminaCost = sp; c.manaCost = mp;
+          setMagnitude(c.effects[primIdx], value);
+          const row = yield* consider(c, Math.abs(sp - origSp) * 4 + Math.abs(mp - origMp) * 5 + Math.abs(value - origPrim) * .25);
+          seen.set(key, row); return row;
+        }
+        for (const sp of spRange) for (const mp of mpRange) {
+          let lower = 1, upper = cap;
+          while (lower <= upper) {
+            const value = Math.floor((lower + upper) / 2), row = yield* sample(sp, mp, value);
+            if (!row) break;
+            if (!row.withinSearch || row.score.cp >= targetCp) upper = value - 1;
+            else lower = value + 1;
+          }
+        }
+        const pairs = new Map();
+        for (const row of candidates) {
+          const key = `${row.card.staminaCost ?? row.card.cost}:${row.card.manaCost ?? 0}`;
+          if (!pairs.has(key) || row.penalty < pairs.get(key).penalty) pairs.set(key, row);
+        }
+        for (const row of [...pairs.values()].sort((a, b) => a.penalty - b.penalty).slice(0, 12)) {
+          const center = magnitude(row.card.effects[primIdx]);
+          for (let value = Math.max(1, center - 4); value <= Math.min(cap, center + 4); value++) yield* sample(row.card.staminaCost ?? row.card.cost, row.card.manaCost ?? 0, value);
+        }
+      } else {
+        for (const sp of spRange) {
+          for (const mp of mpRange) {
+            if (sp === origSp && mp === origMp) continue;
+            const costDelta = Math.abs(sp - origSp) * 4 + Math.abs(mp - origMp) * 5;
+            for (let v = 1; v <= cap; v += step) {
+              const c = clone(base);
+              c.cost = sp;
+              c.staminaCost = sp;
+              c.manaCost = mp;
+              setMagnitude(c.effects[primIdx], v);
+              yield* consider(c, costDelta + Math.abs(v - origPrim) * 0.25);
+            }
           }
         }
       }
@@ -239,22 +305,22 @@ export function TuneCardToTarget(cardDef, { targetRarity, targetRank, aimMaxCp =
         c.cost = sp;
         c.staminaCost = sp;
         c.manaCost = mp;
-        consider(c, Math.abs(sp - origSp) * 4 + Math.abs(mp - origMp) * 5);
+        yield* consider(c, Math.abs(sp - origSp) * 4 + Math.abs(mp - origMp) * 5);
       }
     }
   }
 
   // Pass 3: if still out of band (e.g. very low target rank or power card), try adding a small clean rider/drawback
-  let winner = candidates.reduce((a, b) => (a.penalty < b.penalty ? a : b));
+  let winner = candidates.length ? candidates.reduce((a, b) => (a.penalty < b.penalty ? a : b)) : rejected[0];
   if (!winner.inBand) {
-    if (winner.score.cp > band.max) {
+    if (winner.score.cp > band.max && allowHpDrawback) {
       for (let hp = 1; hp <= 14; hp++) {
         const c = clone(winner.card);
         c.effects = [...(c.effects || []), { op: 'loseHp', target: 'self', amount: hp, nonlethal: true }];
         if (c.textTemplate && !c.textTemplate.includes('loseHp')) c.textTemplate = `${c.textTemplate} Lose {loseHp} HP.`;
-        consider(c, 12 + hp * 0.5);
+        yield* consider(c, 12 + hp * 0.5);
       }
-    } else if (winner.score.cp < band.min) {
+    } else if (winner.score.cp < band.min && allowExtraEffects) {
       for (const rider of [
         { op: 'draw', amount: 1, txt: 'Draw {draw} card.' },
         { op: 'draw', amount: 2, txt: 'Draw {draw} cards.' },
@@ -264,10 +330,10 @@ export function TuneCardToTarget(cardDef, { targetRarity, targetRank, aimMaxCp =
         const c = clone(winner.card);
         c.effects = [...(c.effects || []), { op: rider.op, ...(rider.target ? { target: rider.target } : {}), amount: rider.amount }];
         if (c.textTemplate && !c.textTemplate.includes(`{${rider.op}}`)) c.textTemplate = `${c.textTemplate} ${rider.txt}`;
-        consider(c, 10);
+        yield* consider(c, 10);
       }
     }
-    winner = candidates.reduce((a, b) => (a.penalty < b.penalty ? a : b));
+    if (candidates.length) winner = candidates.reduce((a, b) => (a.penalty < b.penalty ? a : b));
   }
 
   const out = winner.card;
@@ -277,18 +343,18 @@ export function TuneCardToTarget(cardDef, { targetRarity, targetRank, aimMaxCp =
     out.name = CardName(finalScore.face, 0, scoring);
     out._autoName = true;
   }
-  return { card: out, score: finalScore, targetRank, targetRarity: rarity, targetCp };
+  return { card: out, score: finalScore, targetRank, targetRarity: rarity, targetCp, ...(candidateAllowed ? { legalCandidate: candidates.length > 0, searched: Math.min(searched, searchBudget) } : {}) };
 }
 
 /**
  * Deterministically tune one Studio item entry (weapon, armour, or relic) toward targetRarity and
  * closest CP <= targetRank's maximum allowed CP.
  */
-export function TuneItemToTarget(itemEntry, { targetRarity, targetRank, aimMaxCp = true, applyNaming = false, scoring = shippedScoring, rules = {} } = {}) {
+export function TuneItemToTarget(itemEntry, { targetRarity, targetRank, aimMaxCp = true, applyNaming = false, scoring = shippedScoring, rules = {}, targetCp: requestedCp } = {}) {
   const original = clone(itemEntry);
   const rarity = targetRarity || original.rarity || 'common';
   const band = RankBand(targetRank, scoring);
-  const targetCp = aimMaxCp ? band.max : Math.round((band.min + band.max) / 2);
+  const targetCp = Number.isFinite(requestedCp) ? requestedCp : aimMaxCp ? band.max : Math.round((band.min + band.max) / 2);
 
   const base = clone(original);
   base.rarity = rarity;

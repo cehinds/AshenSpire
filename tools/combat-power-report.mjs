@@ -6,10 +6,10 @@
 //   node tools/combat-power-report.mjs --check    # exit 1 when the generated file is stale (npm run combat-power:check)
 //   node tools/combat-power-report.mjs --print    # print the table to stdout, write nothing
 //
-// Cards: each Core card, and each starting weapon art, is measured in-engine exactly as tools/card-budget-report.mjs does (tools/lib/cardBudgetMeasure.mjs: final
-// damage, Block + Ward, Poise, counter/reflect/evade stacks, resolved SP/MP for the reference class), then turned into the scorer's card
-// face: statuses, keywords, tags and the other ops come from the card definition. Items: weapons (incl. shields and staves) carry their
-// attack/guard profile and weapon-art face, armour and relics their modifiers and property rules; the same extraction the simulator embeds.
+// Cards use the renderer's static mechanical baseline through the shared definition
+// scorer. Conditions and next-card charges retain their estimated reliability;
+// no reference fight's stance, damage receipt or temporary buff changes card CP.
+// Items keep the simulator's weapon, armour and relic extraction.
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { contentBundle as b } from '../src/content/index.js';
@@ -17,7 +17,8 @@ import { scoring } from '../src/content/generated/scoring.js';
 import { GEAR_TYPES } from '../src/content/gearTypes.js';
 import { GearWeaponTypeOf, GearArmourGroupOf } from '../src/model/gearEffects.js';
 import { BaseFace, ScoreCard, ScoreItem, CombatPower, RankOf, ApplyScoringOverride } from '../src/model/combatPower.js';
-import { registries, holdable, measure, CLASSES, tagOf } from './lib/cardBudgetMeasure.mjs';
+import { CardDefinitionToScoreFace } from '../src/model/cardUpgradeCp.js';
+import { registries, holdable, CLASSES } from './lib/cardBudgetMeasure.mjs';
 
 const OUT = fileURLToPath(new URL('../src/content/generated/combatPower.js', import.meta.url));
 const args = process.argv.slice(2);
@@ -26,54 +27,17 @@ const args = process.argv.slice(2);
 // Cards
 // ---------------------------------------------------------------------------------------------------------------------
 const statusIds = new Set(Object.keys(scoring.statuses));
-const OP_FIELD = { draw: 'draw', heal: 'heal', loseHp: 'loseHp', discard: 'discard', restoreStamina: 'restoreSp', gainEnergy: 'restoreSp', restoreMana: 'restoreMp' };
-
-/** The scorer's card face for a measured Core card. */
-export function faceOf(def, row) {
-  const f = BaseFace();
-  Object.assign(f, { name: def.name, cls: def.class, rarity: def.rarity, type: def.type, camp: (def.tags || []).includes('camp:spell') ? 'spell' : 'physical', magicShare: def.magicShare ?? 0 });
-  f.sp = row.costs.sp; f.mp = row.costs.mp;
-  f.dmg = row.final.damage || 0; f.hits = Math.max(1, row.final.hits || 1);
-  f.blk = (row.final.block || 0) + (row.final.ward || 0); f.poise = row.final.poise || 0;
-  f.counter = row.final.counter || 0; f.reflect = row.final.reflect || 0;
-  if (row.final.evade) f.statuses.push(['evade', row.final.evade, 'self']);
-  f.kw = [...(def.keywords || [])]; f.tags = [...(def.tags || [])];
-  for (const e of def.effects || []) {
-    const amount = typeof e.amount === 'number' ? e.amount : 1;
-    if (e.op === 'applyStatus') {
-      if (typeof e.status === 'string' && typeof e.stacks === 'number' && statusIds.has(e.status)) f.statuses.push([e.status, e.stacks, e.target === 'self' ? 'self' : 'enemy']);
-    } else if (e.op === 'gainBarrier') f.statuses.push(['barrier', amount, 'self']);
-    else if (e.op === 'restorePoise') f.blk += amount;
-    else if (OP_FIELD[e.op]) f[OP_FIELD[e.op]] += amount;
-    else if (e.op === 'removeStatus') { if (e.target === 'self') f.cleanse += 1; }
-    else if (e.op === 'moveEngagement') f.move += 1;
-    else if (e.op === 'pullEnemy' || e.op === 'swapRows') f.pull += 1;
-  }
-  if (def.ramp && !f.tags.includes('ramp.honed')) f.tags.push('ramp.honed');
-  return f;
+/** Shared static scorer face, independent of a sampled combat receipt. */
+export function faceOf(def) {
+  return CardDefinitionToScoreFace(def, { scoring });
 }
 
 export function measureCards() {
-  const byId = new Map();
-  const kitOwner = new Map(); // weapon-art id -> the first class whose starting weapon grants it (the reference class for its score)
-  for (const classId of CLASSES) {
-    const { ids, kit } = holdable(classId);
-    for (const id of kit) if (!kitOwner.has(id)) kitOwner.set(id, classId);
-    for (const id of ids) {
-      let row; try { row = measure(classId, id); } catch { continue; }
-      if (row.error || row.playError) continue;
-      if (!byId.has(id)) byId.set(id, {});
-      byId.get(id)[classId] = row;
-    }
-  }
-  // Reference class per card, as card-budget-report.mjs: the owning class, else Starseer for spells, else Reaver.
+  const kitIds = new Set();
+  for (const classId of CLASSES) for (const id of holdable(classId).kit) kitIds.add(id);
   const faces = {};
-  for (const [id, classes] of byId) {
-    if (!id.startsWith('core.') && !kitOwner.has(id)) continue;
-    const first = Object.values(classes)[0];
-    // Owner, 2026-11-21: the weapon art each class starts with (Sundering Hew, Twin Fang, Blight Touch) is in the table, scored as its starting class plays it.
-    const refClass = kitOwner.has(id) ? kitOwner.get(id) : first.pool !== 'colorless' ? first.pool : first.camp === 'spell' ? 'starseer' : 'reaver';
-    faces[id] = faceOf(registries.cards.get(id), classes[refClass] || first);
+  for (const def of registries.cards.all()) {
+    if (def.id.startsWith('core.') || def.id.startsWith('subclass.') || kitIds.has(def.id)) faces[def.id] = faceOf(def);
   }
   return faces;
 }

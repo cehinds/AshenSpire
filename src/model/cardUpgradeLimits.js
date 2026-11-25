@@ -6,7 +6,7 @@ import { mulberry32 } from './rng.js';
 import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 
 const MAX_CANDIDATES = 20;
-import { rollUpgradeOptions, upgradeStepRng, upgradeSeed, UpgradeStepFamilies } from './cardUpgradeSteps.js';
+import * as UpgradeSteps from './cardUpgradeSteps.js';
 import { OfferSalted } from './upgradeOffer.js';
 import { staticCardTokens } from './playingCard.js';
 
@@ -96,7 +96,7 @@ export function RestUpgradeRule(instance) {
  */
 export function upgradeChoiceCount(def, instance, { blacksmith = false, run = null } = {}) {
   if (!blacksmith) return 1;
-  if (run && instance?.instanceId) return mulberry32(upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#choices`), upgradeStepsOf(instance).length))() < 0.5 ? 2 : 3;
+  if (run && instance?.instanceId) return mulberry32(UpgradeSteps.upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#choices`), upgradeStepsOf(instance).length))() < 0.5 ? 2 : 3;
   return upgradeBasic(def, instance) ? 2 : 3;
 }
 
@@ -124,7 +124,7 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   if (count <= 1 && authored) return [{ k: 'authored' }];
   // An authored first step occupies its family (AuthoredFamilies): the rolled alternative is of another family.
   const excludeFamilies = authored && !everyFamily ? AuthoredFamilies(base) : [];
-  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, OfferSalted(run, salt ? `${instance.instanceId}#${salt}` : instance.instanceId), applied.length), { ...limits, excludeFamilies, everyFamily }, n);
+  const roll = (n) => UpgradeSteps.rollUpgradeOptions(base, applied, applied.length, UpgradeSteps.upgradeStepRng(run.seed, OfferSalted(run, salt ? `${instance.instanceId}#${salt}` : instance.instanceId), applied.length), { ...limits, excludeFamilies, everyFamily }, n);
   if (count <= 1) return roll(1);
   // Two options that resolve to the same card would be no choice: every pick after the first must differ in what
   // it does (face, tags, profile fields; the name aside) from the picks before it. Candidates come from the same
@@ -156,18 +156,18 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
 // "Two effects" (owner, 2026-11-14): each option gets a second, different effect with REST_TWO_EFFECT_CHANCE. The draw comes from
 // its own seeded stream (instance id + `#fx` + step index), so the same quote always shows the same list.
 function withSecondEffects(run, instance, applied, chosen, candidates, outcome, salt) {
-  const draw = mulberry32(upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#fx${salt}`), applied.length));
-  const offered = new Set(chosen.flatMap(UpgradeStepFamilies));
+  const draw = mulberry32(UpgradeSteps.upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#fx${salt}`), applied.length));
+  const offered = new Set(chosen.flatMap(UpgradeSteps.UpgradeStepFamilies));
   return chosen.map((step) => {
     const roll = draw();
     const pick = draw();
     if (roll >= REST_TWO_EFFECT_CHANCE || step.k === 'authored' || step.k === 'combo') return step;
     // The second effect is of a family no option on the list already has (UPGRADE_FAMILIES).
-    const partners = candidates.filter((other) => other.k !== 'authored' && other.k !== 'combo' && !UpgradeStepFamilies(other).some((family) => offered.has(family))
+    const partners = candidates.filter((other) => other.k !== 'authored' && other.k !== 'combo' && !UpgradeSteps.UpgradeStepFamilies(other).some((family) => offered.has(family))
       && !chosen.some((c) => JSON.stringify(c) === JSON.stringify(other)) && outcome(other) !== outcome(step));
     if (!partners.length) return step;
     const partner = partners[Math.min(partners.length - 1, Math.floor(pick * partners.length))];
-    for (const family of UpgradeStepFamilies(partner)) offered.add(family);
+    for (const family of UpgradeSteps.UpgradeStepFamilies(partner)) offered.add(family);
     return { k: 'combo', steps: [step, partner] };
   });
 }

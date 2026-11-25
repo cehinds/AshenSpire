@@ -1,13 +1,14 @@
 // The Core card-upgrade step generator (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md).
 // Pure and stateless: the roll is mulberry32(hash(run.seed, instanceId, stepIndex)); its callers fold the visit's
 // offer key into the instance id (upgradeOffer.js), so a preview equals the commit and no named RNG stream moves.
-// A leaf module: it imports only rng.js, cardUpgrade.js, combatRanges.js, cardRank.js and generated data.
+// Upgrade candidates share the neutral mechanical projection and CP scorer; stored steps remain authored deltas.
 // Retain is offered as an `fx` step (W25): Core keeps a Retain card in hand at the end of a turn.
 import { mulberry32 } from './rng.js';
 import { applyUpgradeSteps, MAX_CARD_UPGRADES, MAX_UPGRADE_TAG_STACKS, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps, UpgradeTagStacks, ImprovedScaledAmount } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 import { EvaluateUpgradeStepCp } from './cardUpgradeCp.js';
+import * as MechanicalProjection from './cardMechanicalProjection.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 import {
@@ -244,7 +245,68 @@ function resolveEffectiveTier(base, current, limits, scoring) {
   return Infinity;
 }
 
-function options(base, current, applied, limits, rarity = 0, scoring = GetActiveScoring()) {
+// Numeric tier limits are in the mechanic units the card face displays. The
+// saved step still stores an authored delta; never compare those input units to
+// a mechanical ceiling or offer an input-only change hidden by rounding.
+function mechanicalNumbers(card) {
+  const projected = MechanicalProjection.ProjectCardMechanicalValues(card).card;
+  const payloads = [[...(projected.effects || []), ...(card.onTurnEndInHand || [])],
+    ...(card.effectVariants || []).map(variant => [...variant.effects, ...(card.onTurnEndInHand || [])])];
+  const totals = { damage: 0, block: 0 };
+  for (const [index, payload] of payloads.entries()) {
+    const effects = index === 0 && !card.onTurnEndInHand?.length ? payload
+      : MechanicalProjection.ProjectCardMechanicalValues({ ...card, effects: index === 0 ? [...(card.effects || []), ...(card.onTurnEndInHand || [])] : payload }).card.effects;
+    const sum = { damage: 0, block: 0 };
+    const upper = value => typeof value === 'number' && Number.isFinite(value) ? Math.max(0, value) : value === undefined ? 0 : Infinity;
+    for (const effect of effects) {
+      if (effect.op in sum) sum[effect.op] += upper(effect.amount) * (effect.op === 'damage' ? Math.max(1, upper(effect.hits ?? 1)) : 1) * Math.max(1, upper(effect.repeat ?? 1));
+      if (effect.op === 'grantCardCharge') for (const op of ['damage', 'block']) sum[op] += upper(effect[op]);
+    }
+    for (const op of ['damage', 'block']) totals[op] = Math.max(totals[op], sum[op]);
+  }
+  return { projected, totals };
+}
+
+function numericUpgradeFits(baseNumbers, afterNumbers, tier, scoring) {
+  for (const op of ['damage', 'block']) {
+    const cap = NumericCeilingAtTier(op, tier, scoring);
+    if (Number.isFinite(cap) && afterNumbers.totals[op] > cap) return false;
+    const printed = totalOf(baseNumbers.projected.effects || [], op);
+    if (printed > 0 && totalOf(afterNumbers.projected.effects || [], op) > printed * 2) return false;
+  }
+  return true;
+}
+
+function mechanicalImprovement(current, op, desired, baseNumbers, currentNumbers, tier, scoring, readNumbers) {
+  const kind = op === 'damage' ? 'dmg' : 'blk', before = totalOf(currentNumbers.projected.effects || [], op);
+  const index = firstPlainIndex(currentNumbers.projected.effects || [], op), hits = hitsOf(currentNumbers.projected.effects[index]);
+  const target = before + desired.n * hits;
+  const probe = n => {
+    const numbers = readNumbers(applyUpgradeSteps(current, [{ k: kind, n, improvedStacks: desired.improvedStacks }]));
+    const total = totalOf(numbers.projected.effects || [], op);
+    return { n, total, fits: total <= target && numericUpgradeFits(baseNumbers, numbers, tier, scoring) };
+  };
+  // Most existing cards need only a few raw points to cross a visible plateau.
+  // Bracket the desired mechanic value before binary refinement, rather than
+  // projecting the full stored-step range for every small common upgrade.
+  // upgradeStepsProblems permits authored numeric deltas from 1 through 99.
+  let lower = 1, upper = 1, best = null;
+  while (true) {
+    const row = probe(upper);
+    if (!row.fits) { upper--; break; }
+    best = row;
+    if (row.total === target || upper === 99) return row.total > before ? { ...desired, n: row.n } : null;
+    lower = upper + 1; upper = Math.min(99, upper * 2);
+  }
+  while (lower <= upper) {
+    const row = probe(Math.floor((lower + upper) / 2));
+    if (row.fits) { best = row; if (row.total === target) break; lower = row.n + 1; }
+    else upper = row.n - 1;
+  }
+  return best?.total > before ? { ...desired, n: best.n } : null;
+}
+
+function options(base, current, applied, limits, rarity = 0, scoring = GetActiveScoring(), readNumbers = mechanicalNumbers) {
   const type = base.type;
   const scale = Number.isFinite(limits.scale) ? limits.scale : 1;
   const sized = (kind) => scale * SIZE_MULT[kind][rarity];
@@ -252,6 +314,7 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
   const found = {};
   const tier = resolveEffectiveTier(base, current, limits, scoring);
   const tierGated = Number.isFinite(tier);
+  const baseNumbers = tierGated ? readNumbers(base) : null, currentNumbers = tierGated ? readNumbers(current) : null;
 
   // cost: each cost reduction adds 1 Efficient stack (Efficient / Efficient+ / Efficient+2, max 3 stacks, doubling CP surcharge 10/20/40).
   const efficientStacks = UpgradeTagStacks(current, 'efficient');
@@ -322,12 +385,14 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const curTotal = totalOf(effects, 'damage');
     const hits = hitsOf(effects[dmgIndex]);
-    const basePerHit = (baseEffects[dmgIndex]?.op === 'damage' ? baseEffects[dmgIndex].amount : effects[dmgIndex].amount) || 1;
-    const hitRes = improvedDeltaFor(basePerHit, effects[dmgIndex].amount);
-    if (hitRes) {
-      const tierCeiling = tierGated ? NumericCeilingAtTier('damage', tier, scoring) : Infinity;
-      const maxTotal = Math.min(baseTotal * 2, tierCeiling);
-      const maxDelta = Math.floor((maxTotal - curTotal) / Math.max(1, hits));
+    const basePerHit = tierGated ? baseNumbers.projected.effects[dmgIndex]?.amount : (baseEffects[dmgIndex]?.op === 'damage' ? baseEffects[dmgIndex].amount : effects[dmgIndex].amount) || 1;
+    const currentPerHit = tierGated ? currentNumbers.projected.effects[dmgIndex]?.amount : effects[dmgIndex].amount;
+    const hitRes = improvedDeltaFor(basePerHit, currentPerHit);
+    if (hitRes && tierGated) {
+      const choice = mechanicalImprovement(current, 'damage', hitRes, baseNumbers, currentNumbers, tier, scoring, readNumbers);
+      if (choice) found.dmg = choice;
+    } else if (hitRes) {
+      const maxDelta = Math.floor((baseTotal * 2 - curTotal) / Math.max(1, hits));
       const clamped = Math.min(hitRes.n, maxDelta);
       if (clamped >= 1) found.dmg = { ...hitRes, n: clamped };
     }
@@ -336,11 +401,13 @@ function options(base, current, applied, limits, rarity = 0, scoring = GetActive
   // Only a Block the card was printed with grows: one an `fx` step added has no printed total to cap against.
   if (blkIndex >= 0 && totalOf(baseEffects, 'block') > 0) {
     const baseTotal = totalOf(baseEffects, 'block');
-    const blkRes = improvedDeltaFor(baseTotal, effects[blkIndex].amount);
-    if (blkRes) {
-      const tierCeiling = tierGated ? NumericCeilingAtTier('block', tier, scoring) : Infinity;
-      const maxTotal = Math.min(baseTotal * 2, tierCeiling);
-      const maxDelta = Math.max(0, maxTotal - effects[blkIndex].amount);
+    const blkRes = improvedDeltaFor(tierGated ? totalOf(baseNumbers.projected.effects || [], 'block') : baseTotal,
+      tierGated ? currentNumbers.projected.effects[blkIndex]?.amount : effects[blkIndex].amount);
+    if (blkRes && tierGated) {
+      const choice = mechanicalImprovement(current, 'block', blkRes, baseNumbers, currentNumbers, tier, scoring, readNumbers);
+      if (choice) found.blk = choice;
+    } else if (blkRes) {
+      const maxDelta = Math.max(0, baseTotal * 2 - effects[blkIndex].amount);
       const clamped = Math.min(blkRes.n, maxDelta);
       if (clamped >= 1) found.blk = { ...blkRes, n: clamped };
     }
@@ -597,7 +664,16 @@ const TEMPERED_KINDS = new Set(['hits', 'poise', 'fx:block', 'fx:counter', 'rang
 const PURIFIED_KINDS = new Set(['fx:heal', 'fx:cleanse']);
 
 function optionsByRarity(base, current, applied, limits, scoring = GetActiveScoring()) {
-  const per = [0, 1, 2].map((rarity) => options(base, current, applied, limits, rarity, scoring));
+  // The three rarity sizes probe many identical rounded deltas. Memoize only
+  // within this immutable roll so neither caller edits nor a changed profile
+  // can reuse stale numbers, and the picker avoids repeat projection work.
+  const numericCache = new Map();
+  const readNumbers = card => {
+    const key = JSON.stringify(card);
+    if (!numericCache.has(key)) numericCache.set(key, mechanicalNumbers(card));
+    return numericCache.get(key);
+  };
+  const per = [0, 1, 2].map((rarity) => options(base, current, applied, limits, rarity, scoring, readNumbers));
   for (let r = 0; r < 3; r += 1) {
     for (const kind of Object.keys(per[r])) if (kind in PLACED_AT && PLACED_AT[kind] !== r) delete per[r][kind];
     for (const kind of EASE_KINDS) if (r > 0) delete per[r][kind];
@@ -633,6 +709,25 @@ function optionsByRarity(base, current, applied, limits, scoring = GetActiveScor
           if (!UpgradeTagStackUnlocked('purified', purifiedStacks + 1, tier, scoring)) { delete per[r][kind]; continue; }
         }
       }
+    }
+  }
+  if (Number.isFinite(tier)) {
+    const baseNumbers = readNumbers(base), currentNumbers = readNumbers(current);
+    for (let r = 0; r < 3; r++) for (const kind of ['dmg', 'blk', 'hits', 'targeting', 'element', 'fx:block', 'fx:target']) {
+      const option = per[r][kind];
+      if (!option) continue;
+      const fits = value => {
+        const after = readNumbers(applyUpgradeSteps(current, [stepOf(kind, value, 0, r)]));
+        if (['hits', 'targeting'].includes(kind) && totalOf(after.projected.effects || [], 'damage') <= totalOf(currentNumbers.projected.effects || [], 'damage')) return false;
+        return numericUpgradeFits(baseNumbers, after, tier, scoring);
+      };
+      if (kind === 'hits') {
+        option.counts = option.counts.filter(hits => fits({ ...option, counts: [hits] }));
+        if (!option.counts.length) delete per[r][kind];
+      } else if (kind === 'element') {
+        option.schools = option.schools.filter(school => fits({ ...option, schools: [school] }));
+        if (!option.schools.length) delete per[r][kind];
+      } else if (!fits(option)) delete per[r][kind];
     }
   }
   for (const kind of EASE_KINDS) {
