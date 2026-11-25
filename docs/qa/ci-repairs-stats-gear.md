@@ -93,3 +93,7 @@ Baseline at `05ae1d5b5c6` ran 453 test entries in the assigned lane. 96 failed.
 
 - `tests/w25-live-stats.test.mjs` disables both multiplicative damage cuts so a two-point Strength change is visible as exactly two damage. The configured hand and draw advance by one on each of two successive Intelligence points and restore on cleanup.
 - `node --test tests/w25-live-stats.test.mjs` passed 8/11, from 5/11. Three remaining checks cover the disputed live pool behavior. The lane had seven original failures remaining.
+
+## Intermediate lane verification
+
+The 54-file stats, gear and progression run completed with 488 of 494 tests passing. The six remaining checks concern temporary Health/Stamina/Mana pool rules (three), historical Sage robe group Mana (one), and future offers under the old rank-band oracles (two). Generated content validation passes. The old save fixtures and their historical expectations remain in place.
