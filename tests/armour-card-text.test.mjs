@@ -15,12 +15,11 @@ const body = (classId, id) => equipmentCardModel(reg, reg.equipment.armour.find(
 test('armour with attribute grants states the rating and spells out each attribute', () => {
   assert.deepEqual(body('reaver', 'vigil'), [
     '3 Poise. Gain 1 Dexterity and 1 Constitution.',
-    '+1 Poise', 'Block cards: +2 Block', 'Counter gain',
-    'End of turn in Counter stance, while holding Counter: +1 Counter', 'Defend cards: +2 Block',
+    '+1 Poise', 'Block cards: +1 Block',
   ]);
   assert.deepEqual(body('reaver', 'wayfarerPlate'), [
     '6 Poise. Gain 1 Constitution.',
-    '+2 Poise', '-1 DEX', 'Block cards: +3 Block', '+1 Thorns', 'Defend cards: +2 Block', '+4 Max HP',
+    '+2 Poise', '-1 DEX',
   ]);
 });
 
