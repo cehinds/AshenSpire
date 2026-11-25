@@ -10,7 +10,7 @@ The production character sheet showed the new Core milestones on desktop (1280×
 
 ## Local source captures
 
-- [Desktop, Level 2 class milestone](../preview/features/character-level-rewards/desktop-class-milestone-level-2.png)
-- [Phone, Level 4 free allocation](../preview/features/character-level-rewards/phone-free-milestone-level-4.png)
-- [Phone, Level 6 after save restoration](../preview/features/character-level-rewards/phone-class-milestone-level-6-restored.png)
+- [Desktop, Level 2 class milestone](https://github.com/cehinds/AshenSpire/blob/f8539e3c9fbf278779d048a7fd3d7c106524a9e4/docs/preview/features/character-level-rewards/desktop-class-milestone-level-2.png)
+- [Phone, Level 4 free allocation](https://github.com/cehinds/AshenSpire/blob/f8539e3c9fbf278779d048a7fd3d7c106524a9e4/docs/preview/features/character-level-rewards/phone-free-milestone-level-4.png)
+- [Phone, Level 6 after save restoration](https://github.com/cehinds/AshenSpire/blob/f8539e3c9fbf278779d048a7fd3d7c106524a9e4/docs/preview/features/character-level-rewards/phone-class-milestone-level-6-restored.png)
 
