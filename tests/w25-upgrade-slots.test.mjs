@@ -79,24 +79,36 @@ test('rest quotes: 1 option for upgrades 1-3 and 2 for the 4th; the picker model
   assert.deepEqual(upgradeStepsProblems(card, 'deck'), []);
 });
 
-test('over 10000 seeded rolls an option from the 4th upgrade carries two effects about 20% of the time, and never before', () => {
-  const base = registries.cards.get('core.strike');
+function restComboSample(base, count) {
   const lead = [{ k: 'dmg', n: 1 }, { k: 'fx', fx: 'draw', n: 1 }, { k: 'fx', fx: 'block', n: 4 }];
   const instance = { instanceId: 'odds', cardId: 'core.strike', upgraded: true, upgradeSteps: lead };
   let options = 0, combos = 0, shortLists = 0;
-  const N = 10000;
-  for (let seed = 1; seed <= N; seed += 1) {
-    const run = { seed, gameProfile: registries.gameProfile, rangePolicy: {} };
+  for (let seed = 1; seed <= count; seed += 1) {
+    const run = { seed, level: { level: 4 }, gameProfile: registries.gameProfile, rangePolicy: {} };
     const list = nextUpgradeOptions(run, instance, base, registries, 2, { combos: true });
     if (list.length < 2) shortLists += 1;
     for (const step of list) { options += 1; if (step.k === 'combo') combos += 1; }
   }
+  return { shortLists, share: combos / options };
+}
+
+test('over 10000 seeded rolls an option from the 4th upgrade carries two effects about 20% of the time, and never before', () => {
+  const base = registries.cards.get('core.strike');
+  // Use a four-family menu to keep CP gating and valid partners, without
+  // rescoring the whole Strike menu for every statistical draw.
+  const oddsCard = { ...base, upgradeMenu: ['dmg', 'cost', 'fx:shuffle', 'fx:retain'] };
+  const { shortLists, share } = restComboSample(oddsCard, 10000);
   assert.equal(shortLists, 0);
-  const share = combos / options;
   assert.ok(share > 0.17 && share < 0.23, `two-effect share ${share}`);
   const early = nextUpgradeOptions({ seed: 5, gameProfile: registries.gameProfile }, { instanceId: 'e', cardId: 'core.strike', upgraded: false }, base, registries, 1, {});
   assert.equal(early.length, 1);
   assert.notEqual(early[0].k, 'combo');
+});
+
+test('the full Strike menu offers both single and two-effect upgrades at eligible CP', () => {
+  const { shortLists, share } = restComboSample(registries.cards.get('core.strike'), 200);
+  assert.equal(shortLists, 0);
+  assert.ok(share > 0.1 && share < 0.3, `two-effect share ${share}`);
 });
 
 test('a combo step resolves to a card with both effects', () => {

@@ -108,9 +108,12 @@ test('Frost defense, capped healing, Break and two-hit recipes have separate out
   assert.equal(frost.player.block, byName('Rime Mirror').gradeProfiles[2].effects[0].amount);
   const heal = fixture(); heal.player.hp = 99; resolveRecipe(heal, byName('Ash Benediction'), 2);
   assert.equal(heal.player.hp, 100);
-  const breaker = fixture(); resolveRecipe(breaker, byName('Breaker’s Toll'), 2);
-  assert.equal(breaker.enemies[0].poiseMeter.value, 7, 'authored paid grade preserves its previously resolved Poise; buildup is separate from HP damage');
-  assert.equal(breaker.enemies[0].hp, 1000 - byName('Breaker’s Toll').gradeProfiles[2].effects[0].amount);
+  const breaker = fixture(), toll = byName('Breaker’s Toll');
+  Object.assign(breaker.enemies[0].poiseMeter, { value: 0, max: 12 });
+  resolveRecipe(breaker, toll, 2);
+  assert.equal(toll.gradeProfiles[2].effects[1].amount, 7, 'the paid grade still authors 7 Break damage');
+  assert.equal(breaker.enemies[0].poiseMeter.value, 7, 'the Break rider builds 7 legacy Poise meter points independently of HP damage');
+  assert.equal(breaker.enemies[0].hp, 1000 - toll.gradeProfiles[2].effects[0].amount);
   const twin = fixture(); resolveRecipe(twin, byName('Twinshade'), 2);
   assert.equal(twin.eventLog.filter(e => e.type === 'damageDealt').length, 2);
   assert.equal(twin.enemies[1].hp, 1000);

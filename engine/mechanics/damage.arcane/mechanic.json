@@ -20,7 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/actions.js",
-    "symbol": "prepareExpandedDefense"
+    "file": "src/engine/gameProfileCombat.js",
+    "symbol": "profileDamageReceiptCore"
   }
 }

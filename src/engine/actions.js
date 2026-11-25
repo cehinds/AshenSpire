@@ -1380,13 +1380,14 @@ export function growPoiseMeter(ctx, entity) {
   entity.poiseMeter.growthMult = growth;
 }
 
-export function breakEnemy(ctx, enemy) {
+export function breakEnemy(ctx, enemy, origin = { kind: 'meter', id: 'poise', ownerId: enemy?.id }) {
   if (!staggerEnemy(ctx, enemy)) return false;
   // Outside Core 2 (FixCore owns the versioned riders there) the break still
   // runs balance.poise.onFill; the sim's unconfigured fights depend on it.
   if (!fixCoreEnabled(ctx)) {
     const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
-    for (const eff of cfg.onFill || []) ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
+    for (const eff of cfg.onFill || []) ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy,
+      meta: origin ? { triggeredBy: origin } : {} });
   }
   return true;
 }
@@ -2267,7 +2268,9 @@ export const OPCODE_HANDLERS = Object.freeze({
     },
     stagger: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        breakEnemy(ctx, t);
+        const origin = action.meta?.triggeredBy
+          ?? (action.card?.cardId ? { kind: 'card', id: action.card.cardId, ownerId: action.source?.id } : null);
+        breakEnemy(ctx, t, origin);
       }
       return;
     },

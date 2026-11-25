@@ -1,5 +1,5 @@
-// An upgrade never makes a card dearer to play. Core 2 charges a multi-hit card at least its hit floor (SPEC 4.3a), so
-// the +hits step may only be rolled when that floor fits the SP the card already pays; no step may raise the SP spent.
+// An upgrade cannot raise the weighted price to play a card. The cost-swap
+// step trades 1 MP for 2 SP. Other steps cannot raise Stamina spent.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
@@ -11,12 +11,14 @@ import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { planCardUpgrade, commitCardUpgrade } from '../src/model/cardUpgradeService.js';
 import { multiHitSpFloor } from '../src/model/actionCosts.js';
 import { core2MultiHitRulesEnabled } from '../src/model/core2ActionPolicy.js';
+import { FlatSteps } from '../src/model/cardUpgrade.js';
 
 const newRun = (seed) => createRunState({ registries, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 const price = (def) => Math.max(def.staminaCost ?? def.cost ?? 0, multiHitSpFloor(def, { mana: def.manaCost ?? 0 }));
+const weightedPrice = (def) => price(def) + 2 * (def.manaCost ?? 0);
 
 test('every step of every Core card in the deck, over many seeds, leaves the play price no higher', () => {
-  let steps = 0, hitsSeen = 0;
+  let steps = 0, exchanges = 0;
   for (let seed = 1; seed <= 30; seed += 1) {
     const run = newRun(seed); run.smithingStones = 99;
     for (const card of run.deck) {
@@ -24,14 +26,16 @@ test('every step of every Core card in the deck, over many seeds, leaves the pla
       for (let i = 0; i < 6; i += 1) {
         const quote = planCardUpgrade(run, registries, card.instanceId);
         if (!quote.step) break;
-        assert.ok(price(quote.after) <= price(quote.before), `${card.cardId} seed ${seed} step ${JSON.stringify(quote.step)}: ${price(quote.before)} -> ${price(quote.after)}`);
-        if (quote.step.k === 'hits') hitsSeen += 1;
+        const where = `${card.cardId} seed ${seed} step ${JSON.stringify(quote.step)}`;
+        assert.ok(weightedPrice(quote.after) <= weightedPrice(quote.before), `${where}: weighted price rose`);
+        if (FlatSteps([quote.step]).some((step) => step.k === 'costSwap')) exchanges += 1;
+        else assert.ok(price(quote.after) <= price(quote.before), `${where}: Stamina price rose`);
         commitCardUpgrade(run, registries, quote); steps += 1;
       }
     }
   }
   assert.ok(steps > 200);
-  assert.ok(hitsSeen >= 0);
+  assert.ok(exchanges > 0, 'the seeded service quotes include cost swaps');
 });
 
 test('real combat: the SP an upgraded Strike spends is never above the base Strike', () => {

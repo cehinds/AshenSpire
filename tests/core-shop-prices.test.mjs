@@ -6,6 +6,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { gameProfileShopStock, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
+import { itemCombatPower } from '../src/content/generated/combatPower.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -13,32 +14,36 @@ const table = profile.content.shops.priceTable;
 const fresh = seed => createRunState({ seed, classId: 'reaver', registries });
 const rangeOf = (option, run) => {
   // W25-R: the rank-up service is priced at the Blacksmith's own rank-up price, not from the item price table.
-  if (option.kind === 'rankUps') return [profile.content.shops.blacksmith.prices.rankUp, profile.content.shops.blacksmith.prices.rankUp];
+  if (option.kind === 'rankUps') return { range: [profile.content.shops.blacksmith.prices.rankUp, profile.content.shops.blacksmith.prices.rankUp], rank: 0 };
   const kind = { combatCards: 'card', weaponArts: 'weaponArt', relics: 'relic', weapons: 'armament', armor: 'armour', potions: 'flask' }[option.kind];
   const def = option.kind === 'combatCards' || option.kind === 'weaponArts' ? registries.cards.get(option.id)
     : option.kind === 'relics' ? registries.relics.get(option.id) : option.kind === 'potions' ? registries.flasks.get(option.id)
     : option.kind === 'weapons' ? registries.equipment.armaments.find(row => row.id === option.id)
     : registries.equipment.armour.find(row => row.id === option.id && row.classId === run.class);
   const row = table[kind];
-  return Array.isArray(row) ? row : row[def?.rarity] ?? row.common;
+  const itemKey = { weapons: `weapon:${option.id}`, armor: `armour:${run.class}.${option.id}`, relics: `relic:${option.id}` }[option.kind];
+  const rank = itemKey ? itemCombatPower[itemKey]?.rank ?? def?.rank ?? 0 : option.rank ?? 0;
+  return { range: Array.isArray(row) ? row : row[def?.rarity] ?? row.common, rank };
 };
 
 test('every Core shop offer rolls its own price inside the authored range for its kind and rarity', () => {
-  const prices = new Set(), kinds = new Set();
+  const prices = new Set(), kinds = new Set(), rankedGear = new Set();
   for (let seed = 1; seed <= 12; seed++) {
     const run = fresh(seed), stock = gameProfileShopStock(registries, run, createRng(seed), { shopId: 's' });
     for (const option of stock.options) {
       // The copy service (owner 2026-11-20) charges its own authored price (shops.json cardCopy.price), not a table range.
       if (option.kind === 'cardCopies') { assert.ok(Number.isSafeInteger(option.price) && option.price > 0); continue; }
-      // A ranked card offer (owner 2026-11-23, shopOfferRank.js) costs +25% per rank, rounded.
-      const factor = 1 + 0.25 * (option.rank || 0);
-      const [min, max] = rangeOf(option, run).map((end) => Math.round(end * factor));
+      // Ranked offers cost +25% per rank, rounded. Equipment uses its authored CP rank.
+      const { range, rank } = rangeOf(option, run);
+      if (rank > 0 && ['weapons', 'armor', 'relics'].includes(option.kind)) rankedGear.add(option.kind);
+      const [min, max] = range.map((end) => Math.round(end * (1 + 0.25 * rank)));
       assert.ok(Number.isSafeInteger(option.price) && option.price >= min && option.price <= max, `${option.kind} ${option.id} ${option.price} in ${min}-${max}`);
       prices.add(option.price); kinds.add(option.kind);
     }
   }
   assert.ok(prices.size > 20, `prices vary (${prices.size} distinct)`);
   assert.ok(kinds.size >= 5);
+  assert.ok(rankedGear.size > 0, 'at least one ranked item exercised the item price multiplier');
   assert.deepEqual(gameProfileShopStock(registries, fresh(1), createRng(1), { shopId: 's' }).options, gameProfileShopStock(registries, fresh(1), createRng(1), { shopId: 's' }).options, 'same seed, same prices');
 });
 test('a purchase charges that offer\'s own price; stock saved with one price keeps charging it', () => {

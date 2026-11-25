@@ -150,12 +150,15 @@ test('an older Core save without the card gets it on the next reconcile', () => 
 });
 
 // As a cantrip, Mana Surge stays at 1 SP. The sceptre's Focus cancels the spell's MP surcharge.
-for (const [intelligencePoints, maxMana] of [[0, 1], [1, 2]]) {
+for (const [wisdomPoints, maxMana, spent] of [[0, 4, 1], [1, 5, 5]]) {
   test(`Mana Surge costs 1 SP and restores Mana up to the Herald's ${maxMana} MP cap`, () => {
     // These 1/2 MP cap examples predate robe-type capacity; the swap/save integration below keeps current gear.
     const historical = legacyGearRegistries(reg);
     const run = createRunState({ registries: historical, classId: 'herald', seed: 511, profileMeta: meta });
-    if (intelligencePoints) spendEarnedPoints(historical, run, 'wisdom', intelligencePoints);
+    if (wisdomPoints) {
+      run.level.unspentPoints = 1; // An earned point waiting to be assigned.
+      withGameProfileService(run, 'levelUp', () => applyLevelUp(historical, run, 'wisdom'));
+    }
     const combat = createRunCombat({ registries: historical, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
     assert.equal(combat.player.maxMana, maxMana);
     const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
@@ -163,11 +166,11 @@ for (const [intelligencePoints, maxMana] of [[0, 1], [1, 2]]) {
     combat.piles.draw = combat.piles.draw.filter((c) => c !== card);
     combat.piles.discard = combat.piles.discard.filter((c) => c !== card);
     if (!combat.piles.hand.includes(card)) combat.piles.hand.push(card);
-    combat.player.mana = 0;
+    combat.player.mana = maxMana - spent;
     const sp = combat.player.stamina;
     dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
     assert.equal(combat.player.stamina, sp - 1, 'costs 1 SP');
-    assert.equal(combat.player.mana, maxMana, 'restores as much of the 2 Mana as the pool can hold');
+    assert.equal(combat.player.mana, maxMana - spent + Math.min(spent, 2), 'restores up to 2 Mana, capped at the pool maximum');
   });
 }
 
@@ -279,16 +282,15 @@ test('Core combat checkpoints preserve a set-aside Mana Surge', async () => {
   assert.equal(pileSurges(combat).length, 0);
 });
 
-// Mana's first increase is at max(INT, WIS) 4. Bone Sceptre takes the fresh Reaver to INT 3 and raises Draw.
-// The pool test starts at WIS 3 so the Blight Rod's +1 WIS crosses the Mana threshold.
+// Current Core Draw and Mana increase per effective Intelligence and Wisdom point respectively.
 const POOL_PIECE = 'blightRod';
-test('Core changeEquipment: the Bone Sceptre intelligence leaves Draw at 5 (INT 3 is under 4) and moves no pool', () => {
+test('Core changeEquipment: Bone Sceptre Intelligence raises Draw and its Wisdom raises Mana', () => {
   const { combat, run } = equipmentFight('reaver');
   const p = combat.player;
   const before = { maxHp: p.maxHp, maxMana: p.maxMana, maxStamina: p.maxStamina, draw: run.drawPerTurn };
   dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 0, pieceId: 'boneSceptre' });
-  assert.equal(p.drawPerTurn, before.draw, 'Draw is 5 + floor(INT / 4) (owner, 2026-11-18): the sceptre takes INT to 3, short of the 4 that buys a card');
-  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana, before.maxStamina], 'a sceptre moves no pool');
+  assert.equal(p.drawPerTurn, before.draw + 2, 'the Bone Sceptre grants two Intelligence');
+  assert.deepEqual([p.maxHp, p.maxMana, p.maxStamina], [before.maxHp, before.maxMana + 1, before.maxStamina], 'only its one Wisdom increases a pool');
 });
 for (const intent of ['changeEquipment', 'swapArmament']) {
   test(`Core ${intent} preserves missing pools across repeated staff swaps and saves valid stats`, () => {
@@ -308,7 +310,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
         dispatch(combat, intent === 'swapArmament'
           ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
           : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? POOL_PIECE : 'greatsword' });
-        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the rod adds one MP through WIS; its raw maxMana line is dropped, its Wisdom already feeding Mana (owner, 2026-11-20)');
+        assert.equal(p.maxMana, before.maxMana + (sceptre ? 2 : 0), 'the rod’s two Wisdom points add two MP without a raw pool bonus');
         assert.equal(p.drawPerTurn, before.draw, 'the rod carries no intelligence, so Draw holds');
         for (const field of ['hp', 'mana', 'stamina']) {
           const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];

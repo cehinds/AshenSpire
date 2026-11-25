@@ -251,15 +251,12 @@ test('a stock lean character is priced by the rows, with no scale in between', (
       sum + Math.floor((run.attributes[attributeId] || 0) * (rules[id][attributeId] || 0) + 1e-9), 0);
     return Math.min(rules[id].max ?? Infinity, Math.max(rules[id].min ?? 0, raw));
   };
-  assert.equal(run.energyMax, pool('energy'));
+  assert.equal(run.maxStamina, pool('stamina'));
+  assert.equal(run.energyMax, run.maxStamina, 'Core energy alias reads the stamina pool');
   assert.equal(run.drawPerTurn, pool('draw'));
   assert.equal(run.maxMana, pool('mana'));
-  // The numbers those rows now state for a stock lean Reaver (STR 3, DEX 1,
-  // CON 2, WIS 1, INT 1): Actions sit at their base of 3, draw at its base of 5
-  // (INT 1 is below the 4 points that buy a card: 5 + floor(INT / 4), owner 2026-11-18), and Mana at its
-  // base of 1 — WIS 1 at 0.5 a point floors to nothing, and no other term
-  // reaches a whole point on the lean span.
-  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [3, 5, 1]);
+  // Stock lean Reaver has one DEX, WIS and INT. Each adds one at level one.
+  assert.deepEqual([run.energyMax, run.drawPerTurn, run.maxMana], [4, 4, 2]);
 });
 
 test('the baseline is a dial, and it decides the total when it is set', () => {

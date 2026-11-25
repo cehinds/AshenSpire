@@ -55,9 +55,12 @@ for (const mode of ['native', 'bundled']) {
     assert.equal(value.hits, 3);
     assert.equal(result.hits.length, 3);
     assert.equal(result.quote.resolvedDefinition.activeEffectVariant, 0);
-    assert.deepEqual([...value.perTargetHitDamages[world.target.id]], [21, 21, 21]);
-    assert.equal(result.damage, value.perTargetHitDamages[world.target.id].reduce((sum, amount) => sum + amount, 0));
-    assert.match(result.face, /21.*×3/);
+    const control = quoteAndPlay(api, fixture(api, 'base.current-stance-variant'));
+    assert.equal(control.hits.length, 1, 'the unmodified Smash branch hits once');
+    assert.ok(control.damage > 0);
+    assert.deepEqual([...value.perTargetHitDamages[world.target.id]], Array(3).fill(control.damage));
+    assert.equal(result.damage, 3 * control.damage, 'the stacks repeat exactly the same selected effect');
+    assert.match(result.face, new RegExp(`${control.damage}.*×3`));
   });
   test(`Straight Sword adds its flat bonus to Reprisal Growth's unevaluated formula: ${mode}`, async () => {
     const api = await runtime(mode), equipped = fixture(api, 'base.scale-damage-taken', { sword: true });

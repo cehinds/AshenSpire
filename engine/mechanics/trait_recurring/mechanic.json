@@ -1,0 +1,27 @@
+{
+  "id": "trait_recurring",
+  "tag": "trait:recurring",
+  "version": "1.0.0",
+  "family": "trait",
+  "label": "Recurring",
+  "description": "Buff effects on this card recur at the start of each of your turns for the rest of combat. Usually paired with Exhaust.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "trait_recurring",
+    "color": "C9A227"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combat.js",
+    "symbol": "doPlayCard"
+  }
+}

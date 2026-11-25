@@ -51,6 +51,21 @@ test('no card face in the registry shows the Inspect placeholder', async () => {
   });
 });
 
+test('Nightstep keeps its effects and both per-family caps on the compact face', async () => {
+  for (const { registries, rules } of await profiles()) withKitDom(dom => {
+    const ref = { cardId: 'progression-nightstep', abilityRank: 5 };
+    assert.deepEqual(facesOf(dom, registries, ref, rules), [
+      '+2 Block once per family/turn.',
+      'Evade 2, +1 INT (turn).',
+      'Draw 1 once per family/turn.',
+    ]);
+    const def = playingCardDefinition(registries, ref, { rules });
+    const detail = cardFaceLines(def, null, registries, rules).map((line) => line.html).join(' ');
+    assert.equal(detail.match(/once per turn per family/g)?.length, 2);
+    assert.match(detail, /INT this turn/);
+  });
+});
+
 test('Foresight draws and Exile Recovery says what it returns', () => withKitDom(dom => {
   const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
   assert.deepEqual(facesOf(dom, reg, { cardId: 'base.foresight' }, rules), ['Draw 3.']); // #2936: Foresight draws 3, no status

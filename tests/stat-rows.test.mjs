@@ -42,12 +42,12 @@ test('ruleset 8 carries nine rows in ONE shape: base, five weights, perLevel, mi
   }
 });
 
-test("Mana is 1 + floor(WIS / 4); Stamina is 3 + floor(DEX / 4); each remaining rating has one primary point (owner, 2026-11-18)", () => {
+test("Mana is 1 + WIS and Stamina is 3 + DEX; ratings still read their own attributes", () => {
   const sum = (id) => ATTRIBUTES.reduce((total, attr) => total + (table.rules[id][attr] || 0), 0);
-  assert.deepEqual(ATTRIBUTES.map((attr) => table.rules.mana[attr] || 0), [0, 0, 0, 0.25, 0]);
+  assert.deepEqual(ATTRIBUTES.map((attr) => table.rules.mana[attr] || 0), [0, 0, 0, 1, 0]);
   assert.equal(table.rules.mana.base, 1);
-  assert.equal(sum('stamina'), 0.25);
-  assert.deepEqual(ATTRIBUTES.map(attr => table.rules.stamina[attr] || 0), [0, 0.25, 0, 0, 0]);
+  assert.equal(sum('stamina'), 1);
+  assert.deepEqual(ATTRIBUTES.map(attr => table.rules.stamina[attr] || 0), [0, 1, 0, 0, 0]);
   assert.equal(table.rules.stamina.perLevel, 0.1);
   assert.equal(table.rules.stamina.base, 3);
   for (const id of ['ward', 'poise']) assert.equal(sum(id), 1, `${id} sums to 1`);
@@ -63,14 +63,14 @@ test('per-term floors: a 0.125 weight adds nothing until the attribute reaches 8
   assert.equal(statRowValue({ base: 0, perLevel: 0.5 }, { attributes: {}, level: 4 }).value, 1);
 });
 
-test('hand scaling remains preserved while ratings use their single primary bonus', () => {
+test('hand scaling is per point while ratings use their single primary bonus', () => {
   for (const attrs of [at(3), at(5), at(8), at(12), at(5, { intelligence: 12 })]) {
-    const draw = Math.min(10, 5 + Math.floor(attrs.intelligence / 4));
+    const draw = Math.min(10, 3 + attrs.intelligence);
     assert.equal(statRowCount(resolvedRuleRow(table, 'draw'), attrs), draw);
     assert.equal(statRowCount(resolvedRuleRow(table, 'openingHand'), attrs), draw);
-    assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), Math.min(20, 7 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5)));
+    assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), Math.min(20, 5 + Math.max(0, attrs.intelligence - 4)));
   }
-  assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), at(14)), 9, 'hand size 7 + 2 at INT 14');
+  assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), at(14)), 15, 'hand size 5 + 10 at INT 14');
   for (const id of ['ar', 'dr', 'pr', 'ward']) {
     for (const attrs of [at(3), at(5), at(8), at(12)]) {
       assert.equal(statRowCount(resolvedRuleRow(table, id), attrs), attrs.strength + (id === 'ward' ? 1 : 0), `${id}`);

@@ -144,13 +144,19 @@ test('rule 2: another stance with Block gets no floor', () => {
   assert.equal(r.broke, true);
 });
 
+function historicalDefendPoise(rules) {
+  // 256bfc86d0e and 31cf36edcea: asserted before the weapon-Poise and HP-buffer Ward rules.
+  rules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 };
+  rules.ward = { enabled: false, poisePerStack: 5, routing: 'blockFirst' };
+}
+
 test('rule 3: in Defend with Block and Ward stacks a magic hit cannot break Poise either', () => {
-  const r = defendHit(MAGIC, { block: 2, ward: 1 });
+  const r = defendHit(MAGIC, { block: 2, ward: 1, rules: historicalDefendPoise });
   assert.equal(r.poise, 1);
   assert.equal(r.broke, false);
-  const physical = defendHit(PHYSICAL, { block: 2, ward: 1 });
+  const physical = defendHit(PHYSICAL, { block: 2, ward: 1, rules: historicalDefendPoise });
   assert.equal(physical.poise, 1, 'physical keeps the floor with Ward too');
-  const before = defendHit(MAGIC, { block: 2, ward: 1, rules: rules => { delete rules.stanceBenefits.defend.poiseFloorWardMagic; } });
+  const before = defendHit(MAGIC, { block: 2, ward: 1, rules: rules => { historicalDefendPoise(rules); delete rules.stanceBenefits.defend.poiseFloorWardMagic; } });
   assert.equal(before.poise, 0, 'without poiseFloorWardMagic magic breaks it');
 });
 
@@ -348,8 +354,8 @@ test('rule 5: the real core.strike and core.smash (no authored range: melee) mee
 
 /** Cleaving Blow (7 damage, then a 3 Poise rider) at a Defend-stance enemy holding `block` Block and `poise` Poise: the preview's Poise row and the live result. */
 // The Starseer: the Reaver's starting Forsaken Medallion adds its own triggered Poise damage to the first attack, which is not this card's rider.
-function cleave({ block, poise, classId = 'starseer', cardId = 'cleavingBlow' }) {
-  const { combat, enemy } = live({ classId });
+function cleave({ block, poise, classId = 'starseer', cardId = 'cleavingBlow', rules = null }) {
+  const { combat, enemy } = live({ classId, rules });
   Object.assign(enemy, { block, persistentPoise: { value: poise, max: 20 } });
   enemy.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
   combat.piles.hand.push({ instanceId: 'cleave', cardId });
@@ -361,7 +367,7 @@ function cleave({ block, poise, classId = 'starseer', cardId = 'cleavingBlow' })
 }
 
 test('rules 2-3: the preview keeps the Defend Poise floor the live rider keeps (Cleaving Blow, 100 Block, 3 Poise)', () => {
-  const r = cleave({ block: 100, poise: 3 });
+  const r = cleave({ block: 100, poise: 3, rules: historicalDefendPoise });
   assert.equal(r.poise, 1, 'live: the rider leaves 1 Poise');
   assert.equal(r.broke, false);
   assert.ok(r.rider, 'the preview quotes the rider');
@@ -370,14 +376,14 @@ test('rules 2-3: the preview keeps the Defend Poise floor the live rider keeps (
 });
 
 test('rules 2-3: a rider whose own hit spent the last Block still keeps the floor (Cleaving Blow, 5 Block, 4 Poise), in the preview and live', () => {
-  const r = cleave({ block: 5, poise: 4 });
+  const r = cleave({ block: 5, poise: 4, rules: historicalDefendPoise });
   assert.equal(r.poise, 1, 'live: the hit arrived while Block remained, so its rider leaves 1 Poise');
   assert.equal(r.broke, false);
   assert.equal(r.rider?.breaks, false, 'the preview agrees');
 });
 
 test('rules 2-3 edge: a rider on a hit that arrived at 0 Block breaks Poise normally', () => {
-  const r = cleave({ block: 0, poise: 4 });
+  const r = cleave({ block: 0, poise: 4, rules: historicalDefendPoise });
   assert.equal(r.poise, 0);
   assert.equal(r.broke, true);
   assert.equal(r.rider?.breaks, true);

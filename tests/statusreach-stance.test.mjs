@@ -24,14 +24,14 @@ test('stance statuses require a positive grant from an actual projected carrier'
   assert.ok(empty.unreached.includes('evade'), 'definitions without a carrier are not reach');
 });
 
-test('a gear type needs an actual piece before its status vocabulary is reachable', () => {
+test('a gear status needs an actual piece carrying its grant before it is reachable', () => {
   const bare = { ...contentBundle, cards: [], enemies: [],
     equipment: { ...contentBundle.equipment, armaments: [], armour: [] } };
   const empty = statusReach(bare, { readFile });
-  assert.ok(empty.unreached.includes('evade'), 'the global Light armour group is only a definition');
+  assert.ok(empty.unreached.includes('evade'), 'the equipment modifier vocabulary alone is only a definition');
   const lightArmour = { ...bare, equipment: { ...bare.equipment,
-    armour: [{ id: 'gutterLeathers', kind: 'armor', classId: 'rogue', mods: [] }] } };
+    armour: [{ id: 'gutterLeathers', kind: 'armor', classId: 'rogue', mods: ['start.turnEvade=+1'] }] } };
   const carried = statusReach(lightArmour, { readFile });
-  assert.ok(carried.reached.includes('evade'), 'a real Light armour piece carries its group grant');
+  assert.ok(carried.reached.includes('evade'), 'an actual armour piece carries the explicit grant');
   assert.ok(carried.witness.get('evade').some(route => route.startsWith('R4 equipMods:turnEvade via gutterLeathers')));
 });

@@ -1196,6 +1196,21 @@ function sourceAssetPlan(outDir, mainRef) {
 }
 /** Publish Score Studio from dev's tip at /score-studio/ so it can be used directly on GitHub Pages (Download JSON mode). */
 const SCORE_STUDIO_TREES = ['engine', 'src', 'styles', 'tools/score-studio'];
+const SCORE_STUDIO_TIMING_FILES = [
+  'tools/recipient-effects-runtime-preview.html',
+  'tools/recipient-effects-runtime-preview.css',
+  'tools/recipient-effects-runtime-preview.mjs',
+];
+const SCORE_STUDIO_TIMING_ASSETS = new Set([
+  'assets-display/alternative/scene-ashen-crown-far.webp',
+  'assets-display/alternative/scene-ashen-crown-1-landmark.webp',
+  'assets-display/alternative/scene-ashen-crown-ground.webp',
+  'assets-display/alternative/scene-ashen-crown-foreground.webp',
+  'assets-display/alternative/reaver-default.webp',
+  'assets-display/alternative/fellWarden.webp',
+  'assets-display/alternative/wanderingSoldier.webp',
+  'assets-display/alternative/blightHound.webp',
+]);
 const SCORE_STUDIO_ASSET_PREFIXES = [
   'assets-display/card-cutouts/',
   'assets/cards/',
@@ -1209,12 +1224,15 @@ function publishScoreStudio(outDir) {
   if (!devRef || !inTree(devRef, 'tools/score-studio/index.html')) return false;
   const studioDir = join(outDir, 'score-studio');
   mkdirSync(studioDir, { recursive: true });
-  extractTree(devRef, SCORE_STUDIO_TREES, studioDir);
+  const hasTiming = SCORE_STUDIO_TIMING_FILES.every(file => inTree(devRef, file));
+  const studioFiles = hasTiming ? [...SCORE_STUDIO_TREES, ...SCORE_STUDIO_TIMING_FILES] : SCORE_STUDIO_TREES;
+  extractTree(devRef, studioFiles, studioDir);
   let hydrated = 0;
   try {
     const manifest = JSON.parse(git(['show', `${devRef}:art-manifest.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).assets || {};
     for (const [id, row] of Object.entries(manifest)) {
-      if (!SCORE_STUDIO_ASSET_PREFIXES.some((p) => id.startsWith(p))) continue;
+      const timingAsset = hasTiming && (SCORE_STUDIO_TIMING_ASSETS.has(id) || id.startsWith('assets/recipient-effects/'));
+      if (!timingAsset && !SCORE_STUDIO_ASSET_PREFIXES.some((p) => id.startsWith(p))) continue;
       const rec = row.light || row.common;
       if (!rec || !/^[0-9a-f]{64}$/.test(rec.sha256 || '')) continue;
       const from = join(outDir, objectPath(rec.sha256, id));

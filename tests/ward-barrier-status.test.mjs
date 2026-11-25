@@ -248,11 +248,13 @@ test('Ward (hpBuffer): live combat order Block > Ward > Poise + Health, log orde
   const { combatLogEntries } = await import('../src/model/combatLog.js');
   const { serializeCombatSnapshot, restoreCombatSnapshot } = await import('../src/engine/combatSnapshot.js');
   const combat = liveCore({ wardMode: 'hpBuffer' }), target = combat.enemies[0];
-  Object.assign(target, { block: 3, persistentWard: null, persistentPoise: { value: 20, max: 20 }, gameProfilePoise: 0 });
+  Object.assign(target, { block: 3, persistentWard: null, gameProfilePoise: 0 });
   target.hp = target.maxHp = 100;
-  delete target.combatStance; delete target.weaknesses;
+  target.combatStance = { maneuver: 'counter', camp: 'physical' };
+  delete target.weaknesses;
   S.applyStatus(combat, target, 'ward', 1, combat.player); // 5 Ward HP
   assert.equal(target.wardHp, 5);
+  target.persistentPoise = { value: 6, max: 6 };
   const quote = profileDamageReceipt(combat, combat.player, target, 30, { ...physical, skipRatingBonus: true }, { roll: 0 }); // 15 incoming: 3 Block, 5 Ward, 7 overflow
   const start = combat.eventLog.length;
   A.applyAttackDamage(combat, combat.player, target, 30, [], { ...physical, skipRatingBonus: true });
@@ -261,6 +263,7 @@ test('Ward (hpBuffer): live combat order Block > Ward > Poise + Health, log orde
   assert.equal(dealt.blocked, quote.blocked);
   assert.equal(dealt.wardAbsorbed, quote.wardHpAbsorbed);
   assert.equal(dealt.poiseAbsorbed, quote.poiseMitigated);
+  assert.equal(dealt.poiseAbsorbed, 3, 'Counter stance mitigates the Ward overflow');
   assert.equal(100 - target.hp, quote.hpLoss);
   assert.equal(target.wardHp, undefined);
   assert.equal(target.statuses.ward, undefined);

@@ -56,6 +56,10 @@ for (const mode of ['native', 'bundled']) {
       'restHealMult', 'revealUnknown', 'runeGainMult', 'runeGainMult', 'runeGainMult', 'runeGainMult',
     ]);
     assert.equal(report.statuses.applyAndDecayCovered, statusCount);
+    const confused = report.statuses.rows.find(row => row.id === 'confused');
+    assert.match(confused.hookResult, /^fired/);
+    assert.ok(confused.hookEffectRows.some(row => row.op === 'poiseDamage' && row.observed && row.receiptCount > 0),
+      'Confused counts its same-owner Poise meter fill even when the meter resets');
     const stoneSkin = report.statuses.rows.find(row => row.id === 'stoneHide');
     assert.deepEqual({ before: stoneSkin.stacksBeforeDecay, after: stoneSkin.stacksAfterDecay,
       retainedAtTurnEnd: stoneSkin.ownerTurnEndRetained, removed: stoneSkin.decayReceipt?.amount },
@@ -69,7 +73,11 @@ for (const mode of ['native', 'bundled']) {
     assert.equal(report.statusModifierConsumers.declarations, 18);
     assert.equal(report.statusModifierConsumers.covered, 18);
     const meterGrowth = report.statusModifierConsumers.rows.find(row => row.statusId === 'goreblood' && row.key === 'meterMaxGrowthDisabled');
-    assert.deepEqual({ baseline: meterGrowth.baseline, observed: meterGrowth.observed, expected: meterGrowth.expected }, { baseline: 13, observed: 10, expected: 10 });
+    const authoredMeter = registries.enemies.get('wanderingSoldier').poiseMax;
+    const grownMeter = Math.ceil(authoredMeter * registries.balance.poise.growthMult);
+    assert.ok(grownMeter > authoredMeter, 'the unprotected meter would grow');
+    assert.deepEqual({ baseline: meterGrowth.baseline, observed: meterGrowth.observed, expected: meterGrowth.expected },
+      { baseline: grownMeter, observed: authoredMeter, expected: authoredMeter });
     assert.deepEqual(report.statusModifierConsumers.rows.map(row => `${row.statusId}:${row.key}`).sort(), [
       'confused:damageDealtMult', 'dexterity:blockAdd', 'entombed:damageTakenMult', 'entombed:skipTurn',
       'frail:blockGainedMult', 'goreblood:meterMaxGrowthDisabled',

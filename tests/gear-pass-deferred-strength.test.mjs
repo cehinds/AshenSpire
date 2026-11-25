@@ -20,6 +20,12 @@ const configuredContent = applyGameProfileToContent(contentBundle, profile);
 // Current Core enemies use decks. Keep the shipped legacy Guard move to exercise a deterministic reaction window on a Core card.
 const guard = contentBundle.enemies.find(enemy => enemy.id === 'gildedKnight').moves.gildedGuard;
 const registries = bindGameProfileRegistries(createRegistries({ ...configuredContent,
+  // The gear rework replaced the former Axe type-wide Strength grant. Keep it on one fixture weapon to exercise deferred delivery.
+  equipment: { ...configuredContent.equipment,
+    armaments: configuredContent.equipment.armaments.map(weapon => weapon.id === 'battleaxe'
+      ? { ...weapon, mods: [...weapon.mods, 'anyAttack.playStrength=+1'] }
+      : weapon),
+  },
   enemies: configuredContent.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, moves: { gildedGuard: guard } } : enemy),
 }), profile);
 const profileMeta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };

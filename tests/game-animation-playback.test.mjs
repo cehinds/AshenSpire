@@ -128,7 +128,6 @@ test('the specialized Reaver renderer honors module off while returning its orig
     for (const enabled of [true, false]) {
       for (const speed of [ANIM_SPEEDS.normal, ANIM_SPEEDS.slow, ANIM_SPEEDS.instant]) {
         const actor = dom.document.createElement('div'), calls = [], recipientCalls = [];
-        let recipientCancels = 0;
         const animate = runInNewContext('(' + actorSource + ')', {
           fxCtx: { figureAnimations: enabled }, run: { class: 'reaver' }, combat: {}, registries: { cards: { get() {} } },
           disp: { hand: [] }, findInst() {}, resolvePlayedCombatCard: () => null, selectedProfile: () => null,
@@ -137,23 +136,23 @@ test('the specialized Reaver renderer honors module off while returning its orig
           playReaverAttack: (node, timing) => { calls.push(node); return { ...timing, cancel() {} }; },
           // Spy only on the independent recipient layer; retain the actual
           // extracted caster wrapper and its original timing/module policy.
-          PlayRecipientEffectLayers: (_layer, effects) => { recipientCalls.push(effects); return () => { recipientCancels++; }; },
-          setTimeout, clearTimeout,
+          PlayRecipientEffectLayers: (_layer, effects) => { recipientCalls.push(effects); },
         });
         const result = animate({ actorId: 'player', kind: 'attack', events: [{ type: 'cardPlayed', cardId: 'strike', cardInstanceId: 'one',
           recipientWindup: { shape: 'spell-circle', durationMs: 300, targetIds: ['player'] },
-          recipientDelivery: { shape: 'slash', targetIds: ['enemy'], delivery: { durationMs: 80 } },
+          recipientDelivery: { shape: 'slash', range: 'reach', targetIds: ['enemy'], delivery: { durationMs: 80 } },
         }] }, actor, speed);
         const timing = reaverAttackTiming(speed);
         assert.equal(result.totalMs, timing.totalMs); assert.equal(result.impactMs, timing.impactMs);
         assert.equal(result.frameMs, timing.frameMs); assert.equal(typeof result.cancel, 'function');
         result.cancel();
         assert.equal(calls.length, enabled ? 1 : 0, 'off never enters the renderer that adds Reaver sequence DOM/classes');
-        assert.equal(recipientCalls.length, 2, 'caster wrapper schedules circle and approach independently');
-        assert.equal(recipientCancels, 2, 'cancel also stops both recipient presentation handles');
-        assert.equal(recipientCalls[0].length, timing.impactMs > 0 ? 1 : 0);
-        if (timing.impactMs > 0) assert.equal(recipientCalls[0][0].durationMs, Math.min(300, timing.impactMs));
-        assert.equal(recipientCalls[1][0].delayMs + recipientCalls[1][0].durationMs, timing.impactMs, 'approach ends at existing contact, without delaying it');
+        assert.equal(recipientCalls.length, timing.impactMs > 0 ? 1 : 0);
+        if (timing.impactMs > 0) {
+          const [circle, approach] = recipientCalls[0];
+          assert.equal(circle.durationMs, Math.min(300, timing.impactMs));
+          assert.equal(approach.delayMs + approach.durationMs, timing.impactMs, 'approach starts from actor timing without owing an actor wait');
+        }
       }
     }
   });

@@ -125,8 +125,12 @@ function hookEffectResults(combat, hook, owner, eventStart) {
     } else if (effect.op === 'gainEnergy') {
       observed = receipts.some(event => event.amount > 0);
     } else if (effect.op === 'poiseDamage') {
-      observed = (owner.poiseMeter?.value || 0) !== hook.before.ownerPoise &&
-        (receipts.some(event => event.type === 'persistentPoiseChanged' && event.targetId === owner.id) || owner.poiseMeter?.value > 0);
+      const filled = events.filter(event => event.type === 'meterFilled' && event.meter === 'poise'
+        && event.targetId === owner.id && event.threshold > 0);
+      receipts.push(...filled);
+      const meterMoved = (owner.poiseMeter?.value || 0) !== hook.before.ownerPoise;
+      observed = filled.length > 0 || (meterMoved
+        && (receipts.some(event => event.targetId === owner.id) || owner.poiseMeter?.value > 0));
     }
     return { op: effect.op, status: effect.status || null, observed, receiptCount: receipts.length };
   });

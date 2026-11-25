@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
+import { itemCombatPower } from '../src/content/generated/combatPower.js';
 import { shops as shippedShops } from '../src/content/shops.js';
 import { createRegistries } from '../src/model/registries.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
@@ -105,7 +106,7 @@ const MULT = [1, 1.4, 1.8, 2.3];
 test('stock: four to six distinct armaments (owner 2026-11-20: the rack size varies per visit), tiers within the authored weights, prices scale with the tier', () => {
   const tally = [0, 0, 0, 0];
   const sizes = new Set();
-  let n = 0;
+  let n = 0, ranked = 0;
   for (let seed = 1; seed <= 120; seed++) {
     const run = smithRun(coreOut, { seed });
     const rack = run.shopStock.armaments;
@@ -117,10 +118,14 @@ test('stock: four to six distinct armaments (owner 2026-11-20: the rack size var
       tally[row.tier]++; n++;
       const rarity = coreOut.equipment.armaments.find((piece) => piece.id === row.id).rarity;
       const [lo, hi] = RARITY_RANGE[rarity] || RARITY_RANGE.common;
-      assert.ok(row.cost >= Math.round(lo * MULT[row.tier]) && row.cost <= Math.round(hi * MULT[row.tier]), `${row.id} tier ${row.tier} price ${row.cost} outside ${lo}-${hi} x ${MULT[row.tier]}`);
+      const rank = itemCombatPower[`weapon:${row.id}`]?.rank ?? 0;
+      if (rank > 0) ranked++;
+      const [min, max] = [lo, hi].map((price) => Math.round(Math.round(price * (1 + 0.25 * rank)) * MULT[row.tier]));
+      assert.ok(row.cost >= min && row.cost <= max, `${row.id} rank ${rank} tier ${row.tier}: ${row.cost} outside ${min}–${max}`);
     }
   }
   assert.ok(sizes.size > 1, 'racks differ in size between visits');
+  assert.ok(ranked > 0, 'the pricing check exercises ranked weapons');
   // 20/40/30/10 with about 600 draws: each tier within 8 points of its weight, and "usually higher than default".
   [0.2, 0.4, 0.3, 0.1].forEach((share, tier) => assert.ok(Math.abs(tally[tier] / n - share) < 0.08, `tier ${tier}: ${tally[tier] / n}`));
   assert.ok(1 - tally[0] / n > 0.7, 'most pieces are above the default tier');

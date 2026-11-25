@@ -15,9 +15,8 @@
 // red by design. What must not have moved is every row that existed — and
 // this says exactly which rows those are.
 //
-// WHEN A NUMBER IS DELIBERATELY RETUNED, the property-rules fixture is
-// re-recorded in the pull request that retunes it. Regenerating it to make a
-// red go away is the one use it does not have.
+// Later authored changes are asserted explicitly against the historical
+// capture, with the commit that introduced each change.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -45,15 +44,36 @@ const REG = createRegistries(contentBundle);
 // The fixture is the pre-tree rules with one id re-pointed since: siphon's
 // mastery gate read `skill: focus`, a name no ledger holds, and names the focus
 // track `item:magic-focus` from plan phase 4a (the id is a track, not a number).
-test('every property rule resolves to exactly the numbers it had before its rule became a node', () => {
+test('every property rule resolves to its historical values or an explicit authored retune', () => {
   const pre = fixture('property-rules-pre-tree.json');
   const now = new Map(PROPERTY_RULES.map((r) => [r.tag, r]));
+  // 057fbe0905 retuned these four Strength relics and made them once per fight.
+  const gainStrength = { op: 'applyStatus', target: 'owner', status: 'strength', stacks: 1 };
+  const approvedRetunes = {
+    vowOfVengeance: {
+      triggers: [{ on: 'enemyDied', once: true, do: [gainStrength] }],
+    },
+    titansCinder: {
+      triggers: [{ on: 'hpLost', once: true, do: [gainStrength] }],
+    },
+    travelersWhetstone: {
+      triggers: [{ on: 'enemyStaggered', once: true, do: [gainStrength] }],
+    },
+    watchmansBadge: {
+      triggers: [{
+        on: 'playerTurnStart',
+        once: true,
+        if: { p: 'not', pred: { p: 'hasStatus', of: 'owner', status: 'weak' } },
+        do: [gainStrength],
+      }],
+    },
+  };
   assert.equal(pre.length, 50, 'the fixture holds the 50 rules that existed');
   for (const old of pre) {
     const rule = now.get(old.tag);
     assert.ok(rule, `rule '${old.tag}' is still derived`);
     for (const field of ['requires', 'excludes', 'textTemplate', 'passives', 'triggers']) {
-      assert.deepEqual(rule[field], old[field], `rule '${old.tag}'.${field} reads as it did — its numbers now come through variableBindings.csv and balance.js`);
+      assert.deepEqual(rule[field], approvedRetunes[old.tag]?.[field] ?? old[field], `rule '${old.tag}'.${field} matches its historical or explicitly retuned value`);
     }
   }
 });
@@ -91,6 +111,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     'camp:spell': { glyph: '✧' },
     'maneuver:casting': { glyph: '✧' },
     'trait:persistent': { domain: 'trait', label: 'Persistent', color: '9FC3E8', glyph: '◇', blurb: "Granted Precision survives the end of its owner's turn." },
+    // 15d221435d introduced Recurring as a start-of-turn card buff.
+    'trait:recurring': { domain: 'trait', label: 'Recurring', color: 'C9A227', glyph: '♻', blurb: 'Buff effects on this card recur at the start of each of your turns for the rest of combat. Usually paired with Exhaust.' },
+    dexDamage: { domain: 'card', label: 'Deft', color: '9FC3E8', glyph: '✧', blurb: 'Adds Dexterity to damage in addition to existing damage scaling.' },
     'damage:slashing': { blurb: 'Applies 1 Bleed on a Health hit unless the card already prints a Bleed effect.' },
     'damage:piercing': { blurb: 'Bypasses up to 2 Guard; bypasses melee Counter.' },
     'damage:blunt': { blurb: 'Adds 2 Poise damage once per action against each target.' },
@@ -177,7 +200,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     tradition: ['tradition:arcane', 'tradition:divine'],
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     range: ['range:melee', 'range:reach', 'range:ranged'],
-    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:persistent', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
+    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:persistent', 'trait:projectile', 'trait:reaction', 'trait:recurring', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
   };
   for (const [domain, ids] of Object.entries(TACTICAL_TAGS)) {
     assert.deepEqual(TAGS.filter(tag => tag.domain === domain).map(tag => tag.id).sort(), [...ids].sort(), `${domain} holds exactly its approved tactical identities`);
@@ -197,9 +220,10 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     assert.equal(tag.domain, 'technique');
     assert.ok(tag.label && tag.blurb && tag.glyph && tag.color, `${id} has visible presentation and an authored description`);
   }
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (['bow', 'finesse', 'retreat', 'pullRetreat', 'bonusPoise'].includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
+  const CARD_TAGS = ['bow', 'finesse', 'retreat', 'pullRetreat', 'bonusPoise', 'dexDamage'];
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (CARD_TAGS.includes(t.id) && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || RAMP_TAGS.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
     'every tag that joined is a framework node, named property, Bow, approved ability, named tactical identity or exact FixCore identity');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', 'finesse', 'retreat', 'pullRetreat', 'bonusPoise', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, ...CARD_TAGS, ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS, ...RAMP_TAGS].sort(), 'the visible additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 

@@ -52,8 +52,8 @@ test('the primary stat card states the opening-hand effect, and no other card do
     const row = statRow(registries, run, 'openingHand');
     const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
     const primary = cards.find((card) => card.id === PRIMARY[classId]);
-    assert.ok(primary.face.summary.includes(`+1 Opening hand per 4 pts (max ${row.max})`), `${classId}: ${primary.face.summary}`);
-    assert.ok(primary.reveal.lines.some((line) => line.startsWith('Opening hand +1 every 4 points')), `${classId}: the fold says it too`);
+    assert.ok(primary.face.summary.includes(`+1 Opening hand per pt (max ${row.max})`), `${classId}: ${primary.face.summary}`);
+    assert.ok(primary.reveal.lines.some((line) => line.startsWith('Opening hand +1 every 1 point')), `${classId}: the fold says it too`);
     for (const card of cards) {
       if (card.id !== PRIMARY[classId]) assert.ok(!/Opening hand/.test(`${card.face.summary} ${card.reveal.lines.join(' ')}`), `${classId} ${card.id}`);
     }

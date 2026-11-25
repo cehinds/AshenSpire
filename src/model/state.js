@@ -1,3 +1,4 @@
+import { ValidLevelRewardRules } from './classLevelBonus.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
 import { gameModule, gameContent } from './gameProfile.js';
@@ -215,6 +216,9 @@ export function createRunState({
   if (![null, 1, 2].includes(reactionRulesVersion) || (reactionRulesVersion >= 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
   const profileSubject = { gameProfile };
   const configured = isConfiguredRun(profileSubject);
+  const newLevelRewards = configured && gameModule(profileSubject, 'progression')?.characterLevels
+    ? registries.balance.levelUp?.characterLevelRewards : null;
+  if (newLevelRewards && !ValidLevelRewardRules(newLevelRewards)) throw new Error('Invalid character level-reward rules');
   // A configured profile (Core 2) fights expanded combat with the profile's own
   // reaction rules whatever the caller asked — engine/combat.js createCombat
   // forces the same — so the run and every checkpoint its fights write agree.
@@ -300,6 +304,7 @@ export function createRunState({
     // and the attribute points waiting to be assigned at a shrine. Written
     // only by model/levelup.js. A fresh run is level 1 with nothing waiting.
     level: { xp: 0, level: 1, unspentPoints: 0 },
+    ...(newLevelRewards ? { levelRewardRuleSnapshot: structuredClone(newLevelRewards) } : {}),
     // THE SKILL LEDGER (plan phase 4a): { [trackId]: { xp, level, pendingDrafts } },
     // written only by model/skills.js awardSkillXp. Empty until a hit lands.
     skills: {},
@@ -429,7 +434,15 @@ export function createRunState({
   if (!configured) ensureExpandedStarterCoverage(registries, run);
   initializeGameProfileRun(registries, run, { profileMeta });
   // Core: the authored deck exists now; add what the worn gear's grantedCards lend (owner 2026-10-19).
-  if (configured) reconcileGrantedCards(registries, run);
+  if (configured) {
+    reconcileGrantedCards(registries, run);
+    const starterArtRank = gameContent(run, 'starterDeck')?.weaponArtRank;
+    if (starterArtRank === 1 && gameModule(run, 'progression')?.cardRanks === true) {
+      for (const card of run.deck) {
+        if (card.equipmentRole === 'weaponArt' && registries.cards.get(card.cardId).rarity === 'rare') card.rank = starterArtRank;
+      }
+    }
+  }
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -881,6 +894,7 @@ export const RUN_SHAPE = [
   // The odd-level class bonus (model/classLevelBonus.js) is paid only to a run born with it (1); a run saved
   // before it existed has no field and keeps the pools its snapshot validated, so it loads unchanged.
   { key: 'classLevelBonusVersion', type: 'number', optional: true },
+  { key: 'levelRewardRuleSnapshot', type: 'object', optional: true },
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
   { key: 'lastSmithingReceipt', type: 'object', optional: true },
@@ -1380,6 +1394,9 @@ function checkLevelAndSmithingCounters(run, problems) {
     if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
       problems.push(`${key} must be a non-negative integer`);
     }
+  }
+  if (run.levelRewardRuleSnapshot !== undefined && !ValidLevelRewardRules(run.levelRewardRuleSnapshot)) {
+    problems.push('levelRewardRuleSnapshot is invalid');
   }
   if (run.level !== undefined) problems.push(...levelProblems(run.level));
   if (run.pendingCardCopies !== undefined && (!Number.isInteger(run.pendingCardCopies) || run.pendingCardCopies < 0)) problems.push('pendingCardCopies must be a non-negative integer');

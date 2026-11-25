@@ -156,6 +156,9 @@ test('Block gained: Defend x1.5, Counter x1.25, others unchanged; the old rules 
 test('Poise: a Smash costs the pool 50% more, a Defend target 25% less; HP lost is unchanged; the preview carries the same Poise', () => {
   const lost = (benefits, attacker, defender, base = 40) => {
     const { combat, target } = live({ benefits, poise: 20, stance: defender });
+    // d3025171372: this arithmetic predates weapon Poise.
+    combat.fixCoreRules.poise = { drain: 'prevented' };
+    combat.fixCoreRules.ward = { enabled: false };
     const preview = previewDamageHits(combat, combat.player, target, base, [], carrierOf(attacker), 1);
     strike(combat, combat.player, target, base, carrierOf(attacker));
     return { pool: 20 - target.persistentPoise.value, hp: 500 - target.hp, previewHp: preview.hitDamages[0] };

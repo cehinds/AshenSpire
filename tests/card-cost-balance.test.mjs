@@ -69,7 +69,9 @@ test('rest and blacksmith quotes offer Quickstep only the upgrade its grade appl
   const run = createRunState({ registries, classId: 'reaver', seed: 5 });
   const quickstep = { ...inst('quickstep', 'quickstep'), abilityRank: 3 };
   run.sideboard.push(quickstep);
-  const step = { k: 'fx', fx: 'unexhaust' };
+  assert.ok(!PlanRestCardUpgrade(run, registries, quickstep.instanceId).ok, 'the CP rank is above a level-one character');
+  run.level.level = 5;
+  const step = { k: 'fx', fx: 'unexhaust', nextRank: 5 };
   const rest = PlanRestCardUpgrade(run, registries, quickstep.instanceId);
   const smith = planCardUpgrade(run, registries, quickstep.instanceId, { choices: 3 });
 
@@ -85,6 +87,7 @@ test('rest and blacksmith quotes offer Quickstep only the upgrade its grade appl
   assert.deepEqual(smith.options[0].after, rest.after);
   assert.equal(commitCardUpgrade(run, registries, rest).n, 1);
   assert.deepEqual(quickstep.upgradeSteps, [step]);
+  assert.equal(quickstep.rank, 5);
 });
 
 // Puts a played copy back in hand, so the same copy can be played again this fight.

@@ -1,5 +1,5 @@
-// Owner 2026-11-21: card and item rewards come from the act's combat-power rank band (model/levelLists.js); the scoring is used only here,
-// in level lists and in the card generator, never live in combat.
+// Configured Core rewards and shop stock use the character-level combat-power
+// rank band. The legacy reward entry point still accepts an act tier.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -14,24 +14,25 @@ import { scoring } from '../src/content/generated/scoring.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-const fresh = (seed, actNumber = 1) => { const run = createRunState({ seed, classId: 'reaver', registries: reg, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } }); run.actNumber = actNumber; return run; };
-const offer = (seed, act) => gameProfileRewardOffers(reg, fresh(seed, act), createRng(seed), { offerId: `t:${seed}:${act}`, source: 'combat', pool: 'normal' });
+const fresh = (seed, level = 1) => { const run = createRunState({ seed, classId: 'reaver', registries: reg, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } }); run.level.level = level; return run; };
+const offer = (seed, level) => gameProfileRewardOffers(reg, fresh(seed, level), createRng(seed), { offerId: `t:${seed}:${level}`, source: 'combat', pool: 'normal' });
 const cardsOf = (o) => o.options.filter(x => x.kind === 'combatCards').map(x => x.id);
 const act1 = scoring.levelLists.tiers[0];
 const SEEDS = Array.from({ length: 120 }, (_, i) => i + 1);
+const LEVEL_ONE_MAX = 2; // Level 1 plus the possible normal-pool rare boost.
 
-test('act 1 offers only Rank 0-3 cards when the band has any', () => {
+test('character level 1 offers only Rank 0–2 cards when the band has any', () => {
   const seen = new Set();
   for (const seed of SEEDS) for (const id of cardsOf(offer(seed, 1))) {
     const row = cardCombatPower[id]; if (!row) continue; seen.add(id);
-    assert.ok(row.rank >= act1.minRank && row.rank <= act1.maxRank, `${id} rank ${row.rank}`);
+    assert.ok(row.rank >= 0 && row.rank <= LEVEL_ONE_MAX, `${id} rank ${row.rank}`);
   }
   assert.ok(seen.size > 5, `only ${seen.size} distinct scored cards seen`);
 });
 
-test('a higher act reaches cards the act-1 band hides', () => {
+test('level 5 reaches cards outside the level-one band in the same act', () => {
   const high = new Set();
-  for (const seed of SEEDS) for (const id of cardsOf(offer(seed, 3))) if (cardCombatPower[id]?.rank > act1.maxRank) high.add(id);
+  for (const seed of SEEDS) for (const id of cardsOf(offer(seed, 5))) if (cardCombatPower[id]?.rank > LEVEL_ONE_MAX) high.add(id);
   assert.ok(high.size > 0);
 });
 
@@ -56,13 +57,12 @@ test('an empty band falls back to the unfiltered pool (legacy door, synthetic re
   assert.deepEqual(rollCardRewardIds(mk([...high, ...low]), createRng(9), { classId: 'x', pool: 'normal', tierId: 'act1' }), rollCardRewardIds(mk([...high, ...low]), createRng(9), { classId: 'x', pool: 'normal', tierId: 'act1' }));
 });
 
-// Owner 2026-11-22: shop card stock comes from the act's rank band like rewards (owned-card exclusion and history weighting unchanged).
-test('shop card shelves hold only cards inside the act band, and a higher act reaches the cards act 1 hides', () => {
-  const stock = (seed, act) => gameProfileShopStock(reg, fresh(seed, act), createRng(seed), { shopId: 'm' }).options.filter(x => x.kind === 'combatCards').map(x => x.id);
+test('shop shelves use the same character-level rank band as rewards', () => {
+  const stock = (seed, level) => gameProfileShopStock(reg, fresh(seed, level), createRng(seed), { shopId: 'm' }).options.filter(x => x.kind === 'combatCards').map(x => x.id);
   const seen = new Set(), high = new Set();
   for (const seed of SEEDS) {
-    for (const id of stock(seed, 1)) { const row = cardCombatPower[id]; if (!row) continue; seen.add(id); assert.ok(row.rank >= act1.minRank && row.rank <= act1.maxRank, `${id} rank ${row.rank}`); }
-    for (const id of stock(seed, 3)) if (cardCombatPower[id]?.rank > act1.maxRank) high.add(id);
+    for (const id of stock(seed, 1)) { const row = cardCombatPower[id]; if (!row) continue; seen.add(id); assert.ok(row.rank >= 0 && row.rank <= LEVEL_ONE_MAX, `${id} rank ${row.rank}`); }
+    for (const id of stock(seed, 5)) if (cardCombatPower[id]?.rank > LEVEL_ONE_MAX) high.add(id);
   }
   assert.ok(seen.size > 5, `only ${seen.size} distinct scored shop cards seen`);
   assert.ok(high.size > 0);

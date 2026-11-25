@@ -1,0 +1,79 @@
+{
+  "request": "integrate thos effects, also, adjust the timing of effects so taht they aren't all playing at the same time, have maybe a 10ms overlap or something so that they move more seemlessly isntead of all populating at the same time. the speed is great it's just that too many effects overlap at the same time that it becomes visual clutter. do you know what I mean\n\ncan we also set opacity to 80% for all effects instead of 90% (make it a config option in json)",
+  "success": "Real Combat draws the approved sprites, ties gain and outcome cues to their own receipts, and sequences independent clips on the same recipient with a 10 ms overlap. Different recipients can overlap and an AoE Sweep draws once. Master opacity is 0.8 in JSON. Effects Off preserves recipient art. Reduced Motion and Reduce Flashes suppress it. Missing art falls back and cancellation clears queued layers. These fixed sandbox scenes check mounting and the settings state. The companion recipient-effects browser suite drives cards through actual combat and records receipts and rendered effects. Focused scheduling tests check exact timing in milliseconds.",
+  "failure": "A sprite is missing or uses the wrong target or receipt, sequence timing alters clip duration, a compound separates, a second target blocks the first, a group duplicates, or a queued effect appears after skip. Effects Off hides recipient art, reduced settings still animate, or a missing sheet stalls combat.",
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "scenes": [
+    {
+      "name": "effects-on",
+      "url": "?shot=combat&gameProfile=core&shotSeed=3&shotEnemies=wanderingSoldier,blightHound&shotSettings=%7B%22effects%22%3Atrue%2C%22haptics%22%3Afalse%7D",
+      "ready": ".end-turn",
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Real combat is mounted",
+          "selector": ".end-turn"
+        },
+        {
+          "kind": "count",
+          "label": "Two targets are available",
+          "selector": ".combatant.enemy",
+          "eq": 2
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No uncaught console errors",
+          "max": 0
+        },
+        {
+          "kind": "count",
+          "label": "Effects On state is applied",
+          "selector": "html[data-effects=\"on\"]",
+          "eq": 1
+        }
+      ],
+      "failure": []
+    },
+    {
+      "name": "effects-off",
+      "url": "?shot=combat&gameProfile=core&shotSeed=3&shotEnemies=wanderingSoldier,blightHound&shotSettings=%7B%22effects%22%3Afalse%2C%22haptics%22%3Afalse%7D",
+      "ready": ".end-turn",
+      "success": [
+        {
+          "kind": "visible",
+          "label": "Real combat is mounted",
+          "selector": ".end-turn"
+        },
+        {
+          "kind": "count",
+          "label": "Two targets are available",
+          "selector": ".combatant.enemy",
+          "eq": 2
+        },
+        {
+          "kind": "consoleErrors",
+          "label": "No uncaught console errors",
+          "max": 0
+        },
+        {
+          "kind": "count",
+          "label": "Effects Off state is applied",
+          "selector": "html[data-effects=\"off\"]",
+          "eq": 1
+        }
+      ],
+      "failure": []
+    }
+  ]
+}

@@ -6,12 +6,16 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyAttackDamage, executeAction, applyLoseHp } from '../src/engine/actions.js';
 import { applyStatus, removeStatus } from '../src/engine/statuses.js';
-import { applyStatusPressure } from '../src/engine/combatStatusControl.js';
+import { applyStatusPressure, spendPersistentWard, restorePersistentWard } from '../src/engine/combatStatusControl.js';
 import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { RecipientEffectsForEvent, RecipientWindupFor, RecipientDeliveryFor, RecipientStatusPolarity } from '../src/model/recipientEffects.js';
 import { DecorateRecipientEffects, CreateRecipientEffectState } from '../src/ui/recipientEffectEvents.js';
 import { RECIPIENT_EFFECT_SETTINGS as SETTINGS } from '../src/content/recipientEffectSettings.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { armCombatCounter, prepareCombatEvade } from '../src/engine/combatMatchups.js';
+import { gainCounterStacks, gainReflectStacks, spendReflectStacks } from '../src/engine/guardStacks.js';
+import { PlanRecipientEffectLayers } from '../src/ui/recipientEffectSprites.js';
 import { reactionRulesSnapshot } from '../src/content/combatCardTraits.js';
 
 const physical = { tags: ['camp:physical', 'maneuver:attack', 'damage:slashing'] };
@@ -19,9 +23,12 @@ const fire = { tags: ['camp:spell', 'maneuver:casting', 'school:fire'], effects:
 const marker = { type: 'cardPlayed', playerId: 'player', cardId: 'test' };
 const hit = { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 6, hpRemoved: 6 };
 const flatten = events => events.flatMap(event => event.recipientEffects || []);
-function fixture(expansion = false) {
-  const registries = createRegistries(contentBundle);
-  const combat = createCombat({ registries, rng: createRng(77), ...(expansion ? { combatExpansionVersion: 2 } : {}),
+function fixture(expansion = false, profileId) {
+  const gameProfile = profileId && resolveGameProfile(profileId);
+  const registries = gameProfile
+    ? bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile)
+    : createRegistries(contentBundle);
+  const combat = createCombat({ registries, ...(gameProfile ? { gameProfile } : {}), rng: createRng(77), ...(expansion ? { combatExpansionVersion: 2 } : {}),
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 50, maxHp: 100,
       mana: 10, maxMana: 50, stamina: 10, maxStamina: 50, energyMax: 10, drawPerTurn: 1, deck: [] } });
   const enemy = combat.enemies[0];
@@ -163,11 +170,12 @@ test('Sweep is one unchanged group sprite per action; a repeated action is not d
   }
 });
 
-test('actual heal/bleed secondaries overlap primary last frame, never tag-only or across boundaries', () => {
+test('actual heal/bleed secondaries follow the contact by the configured interval', () => {
   const bleed = { type: 'statusApplied', targetId: 'e1', sourceId: 'player', status: 'bleed', stacks: 2 };
   const out = DecorateRecipientEffects([marker, hit, bleed], { resolveCard: () => fire });
   assert.deepEqual(out[1].recipientEffects.map(layer => layer.shape), ['spell', 'bleed-drops']);
-  assert.equal(out[1].recipientEffects[1].delayMs, out[1].recipientEffects[0].durationMs * 2 / 3);
+  const [primary, secondary] = PlanRecipientEffectLayers(out[1].recipientEffects);
+  assert.equal(secondary.start - primary.end, SETTINGS.motion.resultGapMs);
   assert.equal(out[1].recipientEffects[1].color, SETTINGS.behavior.palettes.blood);
   assert.deepEqual(out[2].recipientEffects, []);
   assert.ok(!RecipientEffectsForEvent({ tags: ['bleed'] }, hit).some(layer => layer.shape === 'bleed-drops'));
@@ -285,12 +293,14 @@ test('prepared Reach telegraph carries only delivery, with no duplicate delivery
   assert.equal(telegraph.recipientDelivery.shape, null);
   assert.equal(telegraph.recipientDelivery.impactShape, 'spell');
   assert.equal(telegraph.recipientDelivery.claimsDamage, false);
+  assert.equal(telegraph.recipientWindup.actionKey, telegraph.recipientDelivery.actionKey);
   assert.deepEqual(telegraph.recipientDelivery.targetIds, ['seat-b']);
   assert.deepEqual(telegraph.recipientEffects, []);
   const continuation = { ...start, type: 'combatHitStarted', contactPrepared: true };
   const rows = DecorateRecipientEffects([continuation, { ...hit, sourceId: 'mage', targetId: 'seat-b' }], options);
   assert.equal(rows[0].recipientDelivery, undefined);
   assert.equal(rows[1].recipientEffect.delivery, null);
+  assert.equal(rows[1].recipientEffect.actionKey, telegraph.recipientDelivery.actionKey);
   const miss = DecorateRecipientEffects([continuation, { type: 'attackMissed', sourceId: 'mage', targetId: 'seat-b', missReason: 'evaded' }], options);
   assert.deepEqual(flatten(miss).map(layer => layer.shape), ['evade']);
 });
@@ -458,4 +468,79 @@ test('real per-hit root keys retain one Sweep/circle across batches and isolate 
   assert.equal(layers.filter(layer => layer.shape === 'sweep').length, 1, 'one Sweep for the root action');
   assert.equal(layers.filter(layer => layer.shape === 'block-hit').length, 2, 'later break preserves earlier hit reactions');
   assert.equal(layers.filter(layer => layer.shape === 'block-break').length, 1);
+});
+
+
+test('real Core 2 status grants use authored recipient motifs and polarity', () => {
+  const { combat, enemy, decorate } = fixture(true, 'core');
+  const cases = [
+    ['base.evade', 'evade-gain', 'positive'], ['base.auto-counter', 'counter-gain', 'positive'],
+    ['base.reflect', 'reflect', 'positive'], ['base.mirrors', 'mirrors', 'positive'],
+    ['base.poison', 'poison', 'negative', 'decay'], ['base.blight', 'blight', 'negative', 'decay'],
+    ['magicVulnerable', 'magic-vulnerable', 'negative', 'magic'], ['base.bind', 'bind', 'negative'],
+    ['base.restrained', 'bind', 'negative'], ['base.weak', 'weak', 'negative'],
+    ['vulnerable', 'vulnerable', 'negative'], ['frail', 'frail', 'negative'],
+  ];
+  for (const [status, shape, polarity, palette] of cases) {
+    const target = polarity === 'positive' ? combat.player : enemy;
+    applyStatus(combat, target, status, 1, combat.player);
+    const row = decorate(fire).findLast(event => event.type === 'statusApplied' && event.status === status);
+    assert.ok(row, status);
+    const [layer] = row.recipientEffects;
+    assert.equal(layer.shape, shape, status);
+    assert.equal(layer.targetId, target.id, status);
+    assert.equal(layer.polarity, polarity, status);
+    assert.equal(layer.overlay, null, status);
+    assert.equal(layer.claimsDamage, false, status);
+    if (palette) assert.equal(layer.palette, palette, status);
+  }
+});
+
+test('stack and preparation receipts animate actual new gains only', () => {
+  const { combat, decorate } = fixture(true);
+  const actor = combat.player;
+  prepareCombatEvade(combat, actor, { charges: 2 });
+  prepareCombatEvade(combat, actor, { charges: 2 });
+  prepareCombatEvade(combat, actor, { charges: 3 });
+  gainCounterStacks(combat, actor, 2);
+  gainCounterStacks(combat, actor, 0);
+  gainReflectStacks(combat, actor, 2);
+  spendReflectStacks(combat, actor, 1);
+  const rows = decorate();
+  assert.deepEqual(rows.filter(event => event.type === 'evadeGained').map(event => [
+    event.amount, event.recipientEffect?.shape, event.recipientEffect?.targetId,
+  ]), [[2, 'evade-gain', actor.id], [0, undefined, undefined], [1, 'evade-gain', actor.id]]);
+  assert.deepEqual(rows.filter(event => event.type === 'counterStacksChanged').map(event => event.recipientEffect?.shape), ['counter-gain']);
+  assert.deepEqual(rows.filter(event => event.type === 'reflectStacksChanged').map(event => event.recipientEffect?.shape), ['reflect', undefined]);
+  assert.ok(flatten(rows).every(layer => !layer.claimsDamage && layer.shape !== 'evade' && layer.shape !== 'counter'));
+
+  const legacy = fixture();
+  const action = { combatProfile: { camp: 'physical', maneuver: 'counter', range: 'melee' } };
+  armCombatCounter(legacy.combat, legacy.combat.player, action);
+  armCombatCounter(legacy.combat, legacy.combat.player, action);
+  assert.deepEqual(legacy.decorate().filter(event => event.type === 'combatCounterArmed')
+    .map(event => [event.amount, event.recipientEffect?.shape]), [[1, 'counter-gain'], [0, undefined]]);
+});
+
+test('real Ward depletion uses shatter and preserves the Ward silhouette', () => {
+  const { combat, enemy } = fixture(true);
+  enemy.persistentWard = { value: 0, max: 4 };
+  restorePersistentWard(combat, enemy, 4);
+  const grantEvents = combat.eventLog.splice(0);
+  assert.equal(spendPersistentWard(combat, enemy, 4, { sourceId: combat.player.id }).broke, true);
+  assert.ok(combat.eventLog.some(event => event.type === 'wardBroken'));
+  const layers = flatten(DecorateRecipientEffects([
+    { type: 'enemyMoveStarted', sourceId: enemy.id, enemyId: enemy.id, moveId: 'fire-ward' },
+    ...grantEvents, marker, ...combat.eventLog,
+  ], {
+    resolveEnemyMove: () => fire,
+    resolveCard: () => ({ tags: ['camp:spell', 'school:frost'] }),
+  }));
+  const breaks = layers.filter(layer => layer.shape === 'ward-shatter');
+  assert.equal(breaks.length, 1);
+  assert.equal(breaks[0].silhouette, 'ward');
+  assert.equal(breaks[0].palette, 'fire');
+  assert.equal(breaks[0].color, SETTINGS.behavior.palettes.fire);
+  assert.equal(breaks[0].claimsDamage, false);
+  assert.ok(!layers.some(layer => layer.shape === 'ward' && layer.treatment === 'absorb'));
 });
