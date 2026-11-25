@@ -121,7 +121,7 @@ test('--check passes on the real tree and fails on a drifted copy', () => {
     }
     // The tool resolves ROOT from its own location, so run a copy of it from the temp tree.
     mkdirSync(join(root, 'tools'), { recursive: true });
-    for (const name of ['tokens-css.mjs', 'config-build.mjs']) copyFileSync(join(ROOT, 'tools', name), join(root, 'tools', name));
+    for (const name of ['tokens-css.mjs', 'config-build.mjs', 'catalog-json.mjs']) copyFileSync(join(ROOT, 'tools', name), join(root, 'tools', name));
     cpSync(join(ROOT, 'tools', 'lib'), join(root, 'tools', 'lib'), { recursive: true });
     const run = () => execFileSync(process.execPath, ['tools/tokens-css.mjs', '--check'], { cwd: root, encoding: 'utf8', stdio: 'pipe' });
     assert.match(run(), /is current/);

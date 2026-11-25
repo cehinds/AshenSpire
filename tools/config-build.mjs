@@ -694,7 +694,7 @@ export function generate({ config, sources }) {
     '//',
     ...sources.map((s) => `// source ${CONFIG_DIR}/${s.rel} ${s.hash}`),
     '',
-    ...(packed.encoded ? ["import { decodeCatalogJSON } from '../../model/catalogJson.js';", ''] : []),
+    ...(packed.encoded ? ["import { DecodeCatalogJSON as decodeCatalogJSON } from '../catalogJson.js';", ''] : []),
     'const deepFreeze = (value) => {',
     "  if (value && typeof value === 'object') {",
     '    Object.values(value).forEach(deepFreeze);',

@@ -55,7 +55,7 @@
 // is VISIBLE on any screen — that is ink, not source, and it is
 // tools/buildstamp-shot.mjs with a browser.
 
-import { decodeCatalogJSONText } from '../src/model/catalogJson.js';
+import { DecodeCatalogJSONText } from '../src/config/catalogJson.js';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -385,7 +385,7 @@ export function catalogVersionScanText(file, text) {
   // The owned encoded payload is canonical JSON. Refuse duplicate keys or
   // alternate payload syntax instead of discarding hidden dictionary material.
   if (JSON.stringify(payload) !== literal) throw new Error('Noncanonical encoded generated catalog');
-  const decoded = decodeCatalogJSONText(payload);
+  const decoded = DecodeCatalogJSONText(payload);
   JSON.parse(decoded);
   return text.slice(0, start) + decoded + text.slice(start + 'decodeCatalogJSON('.length + end + 1);
 }

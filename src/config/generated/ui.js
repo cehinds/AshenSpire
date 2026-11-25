@@ -60,7 +60,7 @@
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json b778311193f1a83b
 
-import { decodeCatalogJSON } from '../../model/catalogJson.js';
+import { DecodeCatalogJSON as decodeCatalogJSON } from '../catalogJson.js';
 
 const deepFreeze = (value) => {
   if (value && typeof value === 'object') {

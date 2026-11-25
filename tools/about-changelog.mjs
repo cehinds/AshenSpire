@@ -1363,7 +1363,7 @@ async function orderCorpus(ordinalFile) {
 // Compact generated JS data keeps the standalone pack small; authored sources stay readable.
 function generatedText(entries) {
   const packed = catalogJSONExpression(entries);
-  const decoderImport = packed.encoded ? "import { decodeCatalogJSON } from '../model/catalogJson.js';\n" : '';
+  const decoderImport = packed.encoded ? "import { DecodeCatalogJSON as decodeCatalogJSON } from '../config/catalogJson.js';\n" : '';
   return `// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.\n// Do not edit: the focused check refuses any drift from the authoritative Markdown.\n\n${decoderImport}export const GENERATED_CHANGELOG = Object.freeze(${packed.expression});\n`;
 }
 
