@@ -1,5 +1,5 @@
 // Owner, 2026-10-31: magic damage hits Poise FIRST (1:1) and then Block; physical hits Block first and then Poise (75/25).
-// Pure receipts on the live Core profile, Ward off (shipped data).
+// Preserve this ordering for saved Core fights from before inherent weapon Poise.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -17,6 +17,8 @@ const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent
 function liveCore() {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.fixCoreRules.poise = { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1, breakStatusStacks: 2 };
+  combat.fixCoreRules.ward = { enabled: false };
   delete combat.player.combatStance;
   // The targets here hold no stance (Idle); this suite isolates the Poise/Block order from the Idle stance weakness (theme B, 2026-11-17).
   delete combat.fixCoreRules.stanceBenefits?.neutral?.damageTakenMultiplier;
