@@ -10,6 +10,7 @@ import { STACK_CAPS, rankedEffectsCapped, VisibleCardRank } from './cardRank.js'
 import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from './cardUpgradeCp.js';
 import * as MechanicalProjection from './cardMechanicalProjection.js';
 import { GetActiveScoring } from './activeScoring.js';
+import * as CombatPower from './combatPower.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 import {
   EffectiveTier,
@@ -880,8 +881,11 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   // candidates (and matching node-specialty kinds first when limits.nodeSpecialty is provided), instead of
   // eagerly scoring all ~30-60 (r, kind) permutations upfront. Precompute the card's "before" CP baseline once.
   const checkCp = limits.playerLevel != null;
+  if (checkCp && preparation && preparation.scorer?.scoring !== activeScoring) {
+    preparation.scorer = { scoring: activeScoring, score: CombatPower.PrepareCardScorer(activeScoring) };
+  }
   const cpContext = checkCp
-    ? prepared.cpContext ||= PrepareUpgradeStepCpContext({ baseDef, currentDef: current, instance: limits.instance || null, playerLevel: limits.playerLevel, scoring: activeScoring, registries: limits.registries, projectionScope: preparation?.projectionScope })
+    ? prepared.cpContext ||= PrepareUpgradeStepCpContext({ baseDef, currentDef: current, instance: limits.instance || null, playerLevel: limits.playerLevel, scoring: activeScoring, registries: limits.registries, projectionScope: preparation?.projectionScope, scoreCard: preparation?.scorer?.score })
     : null;
   const cpRejected = new Set();
   const curRarity = limits.instance?.rarityOverride || current.rarity || baseDef.rarity || 'common';

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { BaseFace, ScoreCard, CardCategories, CardKind, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, CardNameParts, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
+import { BaseFace, ScoreCard, PrepareCardScorer, CardCategories, CardKind, ScoreItem, CombatPower, RankOf, RankName, RankRange, CardName, CardNameParts, ItemName, ApplyScoringOverride } from '../src/model/combatPower.js';
 import { scoring } from '../src/content/generated/scoring.js';
 import { scoringContract } from './helpers/scoring-contract.mjs';
 import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
@@ -19,6 +19,25 @@ test('combat power: controlled effects, costs, riders and area score in the spec
   assert.equal(result.positive, 16);
   assert.equal(result.raw, 5);
   assert.equal(ScoreCard({ ...face, tags: [], categories: ['hybrid'] }, arithmetic).parts['category:hybrid'], 10);
+});
+
+test('a per-operation scorer preserves every score part and new operations read in-place weight edits', () => {
+  const weights = scoringContract();
+  const faces = [
+    { ...BaseFace(), sp: 2, mp: 1, dmg: 12, blk: 6, poise: 3, tags: ['targeting:area'], kw: ['retain'] },
+    { ...BaseFace(), sp: 0, draw: 2, heal: 3, statuses: [['venom', 2, 'enemy']] },
+    { ...BaseFace(), sp: 0, dmg: 3, loseHp: 1, tags: ['damage:fire'] },
+  ];
+  const source = structuredClone(faces), score = PrepareCardScorer(weights);
+  for (const face of faces) assert.deepEqual(score(face), ScoreCard(face, weights));
+  assert.deepEqual(score(faces[0]).parts, { SP: -8, MP: -8, damage: 8, block: 2, poise: 6, retain: 3, 'effect count': 2 });
+  assert.equal(score(faces[0]).raw, 5);
+  weights.effects.damage.weight = 2;
+  weights.costs.sp.weight = -5;
+  const refreshed = PrepareCardScorer(weights);
+  for (const face of faces) assert.deepEqual(refreshed(face), ScoreCard(face, weights));
+  assert.equal(refreshed(faces[0]).raw, 11, 'new damage value adds 8, changed SP price subtracts 2');
+  assert.deepEqual(faces, source);
 });
 
 test('combat power: every shipped item scores consistently and produces a convention name within the limit', async () => {

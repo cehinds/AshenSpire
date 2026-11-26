@@ -2,7 +2,7 @@ import { ProjectRetreatRuleFace } from './retreatRuleFaces.js';
 // Immutable per-run configuration snapshots. No mutable active-profile singleton.
 import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
-import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
+import { MarkCanonicalVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
 import { SUPPORTED_CORE } from './retiredProfile.js';
 import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
 import { applyUpgradeSteps, upgradeCount, upgradeStepsOf, ApplyDrawbackSteps } from './cardUpgrade.js';
@@ -16,8 +16,8 @@ export { GameConfigError };
 const resolvedById = new Map();
 const resolveOnce = (key, make) => {
   const first = resolvedById.get(key);
-  if (first) return markVerifiedProfile(freezeGameData(dataClone(first)));
-  const made = markVerifiedProfile(make()); resolvedById.set(key, made); return made;
+  if (first) return MarkCanonicalVerifiedProfile(freezeGameData(dataClone(first)));
+  const made = MarkCanonicalVerifiedProfile(freezeGameData(dataClone(make()))); resolvedById.set(key, made); return made;
 };
 export function resolveGameProfile(idOrAuthor = 'default') {
   if (typeof idOrAuthor === 'string') {

@@ -8,6 +8,7 @@ import { resolveCard } from '../src/model/registries.js';
 import { upgradeStepsOf } from '../src/model/cardUpgrade.js';
 import { rollUpgradeOptions, upgradeStepRng } from '../src/model/cardUpgradeSteps.js';
 import { GetActiveScoring } from '../src/model/activeScoring.js';
+import { cardUpgradeModel, cardUpgradeChanges } from '../src/ui/models/CardUpgradeModel.js';
 
 // Assemble the original service contract with independently unprepared reads.
 // This checks the new preparation against full quotes, not just one picked step.
@@ -70,4 +71,63 @@ test('prepared structural menus keep every seeded vendor selection and RNG draw 
   limits.scale=2;compare({},3);
   limits.maxRange='melee';compare({},3);
   limits.scoring=structuredClone(limits.scoring);limits.scoring.effects.damage.weight=2;compare({},3);
+}));
+
+test('each picker row and option retains ordinary change descriptions, current prices and source ownership',()=>withScoring(()=>{
+  const run=fresh();run.seed=73;run.level.level=5;run.smithingStones=20;
+  run.deck=[cards.plain,cards.hold,cards.rising].map((card,index)=>({instanceId:'row.'+index,cardId:card.id,rank:3,upgraded:false,upgradeSteps:[]}));
+  run.sideboard=[];
+  const snapshot=JSON.stringify(run),definitions=JSON.stringify([cards.plain,cards.hold,cards.rising]);
+  for(const price of [100,175]){
+    const quoted=[];
+    const model=cardUpgradeModel(baseRegistries,run,run.deck[0].instanceId,{blacksmith:true,
+      quote:id=>{quoted.push(id);return {ok:true,cost:1,cinders:price,reason:''};}});
+    assert.equal(model.rows.length,3);
+    assert.deepEqual(quoted,run.deck.map(card=>card.instanceId));
+    for(const row of model.rows){
+      assert.equal(row.cinders,price);
+      assert.deepEqual(row.changes,cardUpgradeChanges(baseRegistries,row.plan.before,row.plan.after));
+      for(const option of row.options)assert.deepEqual(option.changes,cardUpgradeChanges(baseRegistries,row.plan.before,option.after));
+    }
+    assert.equal(model.selected.instanceId,run.deck[0].instanceId);
+    assert.equal(JSON.stringify(run),snapshot);
+  }
+  assert.equal(JSON.stringify([cards.plain,cards.hold,cards.rising]),definitions);
+}));
+
+test('standalone change descriptions refresh mutable faces and preserve null comparisons',()=>{
+  const before=structuredClone(cards.plain),after=structuredClone(cards.plain);
+  after.effects[0].amount+=4;
+  const first=cardUpgradeChanges(baseRegistries,before,after),snapshot=structuredClone(before);
+  after.effects[0].amount+=8;
+  after.tags=after.tags.map(tag=>tag==='maneuver:attack'?'maneuver:sweep':tag);
+  const second=cardUpgradeChanges(baseRegistries,before,after);
+  assert.ok(Number(second.find(row=>row.label==='DAMAGE').after)>Number(first.find(row=>row.label==='DAMAGE').after));
+  assert.ok(second.some(row=>row.after==='Sweep'));
+  assert.deepEqual(before,snapshot);
+  assert.equal(Object.isFrozen(after.effects[0]),false);
+  assert.deepEqual(cardUpgradeChanges(baseRegistries,null,after),[]);
+  assert.deepEqual(cardUpgradeChanges(baseRegistries,before,null),[]);
+});
+
+test('a new uncached plan compiles current in-place scoring edits and never exports its scorer',()=>withScoring(()=>{
+  const run=fresh();run.seed=83;run.level.level=5;run.smithingStones=20;
+  const instance={instanceId:'current.weights',cardId:cards.plain.id,rank:3,upgraded:false,upgradeSteps:[]};
+  run.deck=[instance];run.sideboard=[];
+  const rule={choices:3,vendor:'blacksmith'},weights=GetActiveScoring();
+  const before=planCardUpgrade(run,baseRegistries,instance.instanceId,rule);
+  weights.effects.damage.weight=1000;
+  weights.costs.sp.weight=-20;
+  ClearCardUpgradePlanCache(run);
+  const after=planCardUpgrade(run,baseRegistries,instance.instanceId,rule);
+  assert.notEqual(after,before);
+  assert.deepEqual(after,unpreparedPlan(run,baseRegistries,instance,rule));
+  const inspect=value=>{
+    if(!value||typeof value!=='object')return;
+    for(const [key,child] of Object.entries(value)){
+      assert.ok(!['preparation','projectionScope','scoreCard','scorer'].includes(key));
+      assert.notEqual(typeof child,'function');inspect(child);
+    }
+  };
+  inspect(after);
 }));

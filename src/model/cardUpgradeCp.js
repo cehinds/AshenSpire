@@ -105,16 +105,17 @@ export function CardDefinitionToScoreFace(def, { scoring = GetActiveScoring(), r
  * Precompute the invariant "before" baseline for a card so evaluating multiple candidate steps
  * against the same `currentDef` does not re-run `ScoreCard(CardDefinitionToScoreFace(currentDef))`.
  */
-export function PrepareUpgradeStepCpContext({ baseDef, currentDef, instance = null, playerLevel = 1, scoring = GetActiveScoring(), registries, projectionScope }) {
+export function PrepareUpgradeStepCpContext({ baseDef, currentDef, instance = null, playerLevel = 1, scoring = GetActiveScoring(), registries, projectionScope, scoreCard }) {
   const refDef = currentDef || baseDef;
-  const rawBefore = ScoreCard(CardDefinitionToScoreFace(refDef, { scoring, registries, projectionScope }), scoring).raw;
+  const face = CardDefinitionToScoreFace(refDef, { scoring, registries, projectionScope });
+  const rawBefore = (scoreCard ? scoreCard(face) : ScoreCard(face, scoring)).raw;
   const currentRarity = instance?.rarityOverride || currentDef?.rarity || baseDef?.rarity || 'common';
   const startIdx = Math.max(0, RARITY_LADDER.indexOf(currentRarity));
   const scoredBeforeRank = RankOf(CombatPower(rawBefore, currentRarity, scoring), scoring);
   const cardRank = Math.max(VisibleCardRank(instance || baseDef), scoredBeforeRank);
   const accessibleRank = Math.max(1, Math.min(scoring?.rank?.maxRank || 10, Math.trunc(Number(playerLevel) || 1)));
   const maxAllowedRank = Math.max(cardRank, accessibleRank);
-  return { rawBefore, currentRarity, startIdx, cardRank, maxAllowedRank, ...(registries ? { registries } : {}), ...(projectionScope ? { projectionScope } : {}) };
+  return { rawBefore, currentRarity, startIdx, cardRank, maxAllowedRank, ...(registries ? { registries } : {}), ...(projectionScope ? { projectionScope } : {}), ...(scoreCard ? { scoreCard } : {}) };
 }
 
 /**
@@ -128,7 +129,8 @@ export function EvaluateUpgradeStepCp({ baseDef, currentDef, instance = null, st
     ? applyUpgradeSteps(currentDef, [step])
     : applyUpgradeSteps(baseDef, [...upgradeStepsOf(instance || {}), step]);
   const ctx = context || PrepareUpgradeStepCpContext({ baseDef, currentDef, instance, playerLevel, scoring, registries });
-  const rawAfter = ScoreCard(CardDefinitionToScoreFace(afterDef, { scoring, registries: ctx.registries || registries, projectionScope: ctx.projectionScope }), scoring).raw;
+  const face = CardDefinitionToScoreFace(afterDef, { scoring, registries: ctx.registries || registries, projectionScope: ctx.projectionScope });
+  const rawAfter = (ctx.scoreCard ? ctx.scoreCard(face) : ScoreCard(face, scoring)).raw;
   const { startIdx, cardRank, maxAllowedRank } = ctx;
 
   // Pass 1: Check if the upgraded card stays within its current rank at current or higher rarity (up to rare).

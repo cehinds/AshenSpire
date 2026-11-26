@@ -158,9 +158,27 @@ export function UpgradeStepLook(registries, step, before, after) {
 
 /** The face numbers that changed between the plan's before and after faces, as [{ label, before, after }]. */
 export function cardUpgradeChanges(registries, before, after, playsEver = 0, maxRange = undefined) {
+  return changesFromFaces(registries, before, after, playsEver, maxRange, changeFaceReader(registries));
+}
+
+// A standalone comparison owns its reader. The picker shares one reader only
+// between a row's main comparison and its option comparisons, after pricing.
+function changeFaceReader(registries) {
+  const readings = new WeakMap();
+  return def => {
+    let found = readings.get(def);
+    if (!found) {
+      found = { tokens: staticTokens(def, registries), profile: combatProfileFor(def) };
+      readings.set(def, found);
+    }
+    return found;
+  };
+}
+
+function changesFromFaces(registries, before, after, playsEver, maxRange, read) {
   if (!before || !after) return [];
   const out = [];
-  const a = staticTokens(before, registries), b = staticTokens(after, registries);
+  const { tokens: a, profile: beforeProfile } = read(before), { tokens: b, profile: afterProfile } = read(after);
   const push = (label, from, to) => { if (String(from) !== String(to)) out.push(freeze({ label, before: String(from), after: String(to) })); };
   // A ramped stat reads as its retained base plus the growth the upgrade adds, never as the formula's text (which is 0).
   const stat = (name, token, label) => {
@@ -180,10 +198,10 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.range'), cap(combatCardRange(before, maxRange) || 'none'), cap(combatCardRange(after, maxRange) || 'none'));
   const targeting = (def) => t((def?.effects || []).find((e) => e.op === 'damage' && e.target === 'allEnemies') ? 'cardUpgrade.value.area' : 'cardUpgrade.value.single');
   if ((before.effects || []).some((e) => e.op === 'damage')) push(t('cardUpgrade.change.target'), targeting(before), targeting(after));
-  push(t('cardUpgrade.change.stance'), cap(combatProfileFor(before).maneuver || 'none'), cap(combatProfileFor(after).maneuver || 'none'));
-  push(t('cardUpgrade.change.school'), cap(combatProfileFor(before).school || 'none'), cap(combatProfileFor(after).school || 'none'));
+  push(t('cardUpgrade.change.stance'), cap(beforeProfile.maneuver || 'none'), cap(afterProfile.maneuver || 'none'));
+  push(t('cardUpgrade.change.school'), cap(beforeProfile.school || 'none'), cap(afterProfile.school || 'none'));
   push(t('cardUpgrade.change.element'), cap(before.damageSchool || 'none'), cap(after.damageSchool || 'none'));
-  push(t('cardUpgrade.change.damageType'), cap(combatProfileFor(before).damageType || 'none'), cap(combatProfileFor(after).damageType || 'none'));
+  push(t('cardUpgrade.change.damageType'), cap(beforeProfile.damageType || 'none'), cap(afterProfile.damageType || 'none'));
   const cantrip = (def) => t((def?.tags || []).includes('rank.cantrip') ? 'cardUpgrade.value.cantrip' : 'cardUpgrade.value.ranked');
   push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
   // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target.
@@ -309,6 +327,8 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
       const ok = !weaponBound && (priced ? !!priced.ok : plan.ok);
       const base = registries.cards.get(instance.cardId);
       const rarity = base.rarity || 'common';
+      const read = changeFaceReader(registries);
+      const changes = after => changesFromFaces(registries, plan.before, after, playsEverOf(instance), run.rangePolicy?.maxRange, read);
       const row = {
         instanceId: instance.instanceId, instanceIds: [instance.instanceId], copies: 1, inDeck, cardId: instance.cardId,
         name: plan.before?.name || base.name, rarity,
@@ -322,10 +342,10 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
         chipLabel: t(row_upgrades(instance), { rank: RankLabel(base, VisibleCardRank(instance)), n: upgradeCount(instance) }),
         statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
         levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
-        changes: cardUpgradeChanges(registries, plan.before, plan.after, playsEverOf(instance), run.rangePolicy?.maxRange),
+        changes: changes(plan.after),
         look: plan.step ? UpgradeStepLook(registries, plan.step, plan.before, plan.after) : null,
         options: freeze((plan.options || (plan.step ? [{ step: plan.step, after: plan.after }] : [])).map((option, index) => freeze({
-          index, step: option.step, after: option.after, changes: cardUpgradeChanges(registries, plan.before, option.after, playsEverOf(instance), run.rangePolicy?.maxRange),
+          index, step: option.step, after: option.after, changes: changes(option.after),
           look: UpgradeStepLook(registries, option.step, plan.before, option.after),
         }))),
         tags: cardTags(registries, plan.before || base, rarity),

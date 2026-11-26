@@ -1,8 +1,8 @@
 // The same neutral, attributed card-face baseline used by playingCardModel.
 // Reference profiles/runs are initialized only on the first headless request.
 import { contentBundle } from '../content/index.js';
-import { createRegistries } from './registries.js';
-import { createRunState } from './state.js';
+import * as Registries from './registries.js';
+import * as State from './state.js';
 import * as Profile from './gameProfile.js';
 import { staticCardTokens } from './playingCard.js';
 import { computeTokenBindings } from './validate/tokenBindings.js';
@@ -34,7 +34,7 @@ export function CardScoreReferenceContext(def, { registries } = {}) {
   if (!registries?.gameProfile) {
     if (!defaultRegistries) {
       defaultProfile = Profile.resolveGameProfile('default');
-      defaultRegistries = Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(contentBundle, defaultProfile)), defaultProfile);
+      defaultRegistries = Profile.bindGameProfileRegistries(Registries.createRegistries(Profile.applyGameProfileToContent(contentBundle, defaultProfile)), defaultProfile);
     }
     registries = defaultRegistries;
   }
@@ -48,7 +48,7 @@ export function CardScoreReferenceContext(def, { registries } = {}) {
   const magic = def?.tags?.includes('camp:spell') || def?.damageSchool && def.damageSchool !== 'physical';
   const classId = classes.includes(def?.class) ? def.class : magic ? 'starseer' : 'reaver';
   if (!references.has(classId)) {
-    const rules = createRunState({ registries, classId, seed: 31, runId: `score-reference-${classId}`, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } } });
+    const rules = State.createRunState({ registries, classId, seed: 31, runId: `score-reference-${classId}`, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['a', 'b', 'c'] } } } });
     rules.relics = [];
     references.set(classId, { registries, rules });
   }
