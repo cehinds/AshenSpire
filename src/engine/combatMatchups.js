@@ -664,7 +664,9 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const physicalHit = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0);
   const bypass = riderGuardBypass([...(pierce && cfg.damageRiders.piercing ? [cfg.damageRiders.piercing] : []),
     ...(physicalHit ? tagRidersFor(cfg, carrier, ctx) : [])]);
+  // rawAmounts: each contact's damage before the stance multiplier (the figure a stance break compares with Block).
   return { version: 2, targetKey: targetKey(ctx, target), profile, profiles, amount, amounts, knowledgeBonus,
+    rawAmounts: contacts.map(contact => contact.effect === 'status' ? 0 : number(contact.amount)),
     guardBefore, guardBypass: !carrier?.combatReaction ? Math.min(amount, guardBefore, bypass) : 0,
     smash: profiles.some(p => p.maneuver === 'smash') && target?.combatStance?.maneuver === 'defend',
     counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
