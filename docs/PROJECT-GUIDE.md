@@ -43,6 +43,10 @@ nothing is sent automatically; review the captured messages before sharing.
 
 ## Development and design
 
+[Editor tool specification](EDITOR-SPEC.md) — canonical requirements for the
+persistent authoring workbench, reusable UI/JSON contracts and local-game acceptance.
+Current operating and mechanical-scoring guides remain supporting implementation references.
+
 [Contributing](../CONTRIBUTING.md) · [Delivery workflow](FEATURE-DELIVERY-LOOP.md)
 · [QA guide](QA-TESTING.md) · [Architecture map](ARCHITECTURE-MAP.md)
 · [Current dev inventory](ARCHITECTURE-CURRENT-DEV.md)

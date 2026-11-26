@@ -1,5 +1,9 @@
 # Score Studio mechanical scoring
 
+This note describes the implemented scoring baseline. Future editor UX and
+authoring requirements are defined in [Editor tool specification](EDITOR-SPEC.md);
+that specification does not replace the game's mechanical contracts.
+
 Card CP now uses the same neutral mechanical values as the static card face. The shared projection applies the existing profile, class reference, equipment and rounding before the authored scoring weights. Sampled combat damage, temporary stances and enemy mitigation do not define this baseline. Conditional effects and next-card charges retain their estimated reliability.
 
 An authored amount is a model input. For example, Serrated Cut authored damage 8 and 7 both display 3 damage and have the same CP; authored 16 displays 5 damage and changes CP. Rebalance comparisons show the mechanical numbers. Generation, subclass preview/download/export, upgrade eligibility and the command-line report use this shared projection.
