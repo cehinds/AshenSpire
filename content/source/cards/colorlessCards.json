@@ -601,6 +601,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage. Psychic damage leaves the target Confused.",
+    "faceTemplate": ["Deal {damage} damage.", "Target becomes Confused."],
     "upgrade": {
       "effects": [
         {
@@ -810,6 +811,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage. Earth damage leaves the target Slowed.",
+    "faceTemplate": ["Deal {damage} damage.", "Target becomes Slowed."],
     "upgrade": {
       "effects": [
         {
@@ -845,6 +847,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies. Earth damage leaves each target Slowed.",
+    "faceTemplate": ["Deal {damage} damage to all.", "Each target becomes Slowed."],
     "upgrade": {
       "effects": [
         {

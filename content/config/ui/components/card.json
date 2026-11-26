@@ -16,8 +16,8 @@
   },
   "components": { "rulesFace": {
     "rulesBoxGrow": 0.3,
-    "rulesText": { "minPx": 13, "phoneShrinkPt": 2, "lineHeightFloor": 0.92, "lineHeightStep": 0.04 },
-    "face": { "maxLines": 5, "wordsPerLine": 7, "minScale": 0.7, "minPx": 13 }
+    "rulesText": { "minPx": 13, "phoneShrinkPt": 2, "lineHeightFloor": 0.92, "lineHeightStep": 0.04, "boxLines": 4, "paddingPx": 1, "hardMinPx": 6 },
+    "face": { "maxLines": 4, "wordsPerLine": 7, "minScale": 0.7, "minPx": 13, "boxMinPx": 10 }
   } },
   "behavior": {
     "fields": {

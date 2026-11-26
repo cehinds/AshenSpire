@@ -51,15 +51,16 @@ try {
     for (const row of rows.filter(r => r.roomy === 'true')) {
       assert.ok(row.font >= row.max * 0.7 - 0.05, `${label}: ${row.id} fitted ${row.font}px, under 70% of ${row.max}px`);
       assert.ok(row.font >= Math.min(10, row.max) - 0.05, `${label}: ${row.id} fitted ${row.font}px, under the 10px floor`);
-      assert.ok(row.lines <= 5, `${label}: ${row.id} shows ${row.lines} lines`);
+      assert.ok(row.lines <= 4, `${label}: ${row.id} shows ${row.lines} lines`); // owner 2026-11-17: the box holds four lines (was five)
     }
-    assert.ok(rows.filter(r => r.roomy === 'true').length >= (width < 120 ? 50 : 200), `${label}: roomy faces are shown`);
+    // A 108 px face is under the 10 px roomy floor at full size; it shows the roomy reading only where four lines fit (dev had none).
+    assert.ok(rows.filter(r => r.roomy === 'true').length >= (width < 120 ? 20 : 200), `${label}: roomy faces are shown`);
     if (width >= 150) {
       const long = rows.find(r => r.id === 'serratedBlade');
       assert.equal(long.roomy, 'true'); assert.ok(long.lines >= 4, `${label}: serratedBlade shows ${long.lines} lines`); assert.ok(long.font < long.max, 'the long text shrank');
     }
     const one = rows.find(r => r.id === 'guardCounter');
-    assert.notEqual(one.roomy, 'true', `${label}: a one-liner has no roomy reading`); assert.ok(Math.abs(one.font - one.max) < 0.05, `${label}: a one-liner keeps its full size`);
+    assert.notEqual(one.roomy, 'true', `${label}: a one-liner has no roomy reading`); assert.ok(Math.abs(one.font - Math.max(one.max, 13)) < 0.05, `${label}: a one-liner keeps its full size (never under the 13 px floor)`);
     // A damage receipt stays inspectable after the fit, whichever reading won (nodes kept, or clones rebound).
     const probes = await page.evaluate(async () => {
       const out = [];
