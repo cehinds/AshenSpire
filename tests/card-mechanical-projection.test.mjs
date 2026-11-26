@@ -20,7 +20,7 @@ test('authored damage plateaus share exactly the displayed mechanic and CP',()=>
   assert.equal(CardDefinitionToScoreFace(card(8)).dmg,3);assert.equal(CardDefinitionToScoreFace(card(16)).dmg,5);
   for(const id of ['core.projection-probe','subclass.projection-probe']){
     const before={...card(8),id},same={...card(7),id},after={...card(16),id};
-    assert.equal(cp(before),8);assert.equal(cp(same),8);assert.equal(cp(after),9);
+    assert.equal(cp(before),13);assert.equal(cp(same),13);assert.equal(cp(after),15);
   }
 });
 
@@ -64,6 +64,18 @@ test('custom bound profiles retain their own renderer values and raw registries 
   const {gameProfile:_profile,...raw}=canonical.registries;
   assert.equal(CardScoreReferenceContext(definition,{registries:raw}),canonical);
   assert.deepEqual(ProjectCardMechanicalValues(definition,{registries:raw}),ProjectCardMechanicalValues(definition,{registries:raw,rules:canonical.rules}));
+});
+
+test('edited costs remain authoritative with disabled resources and a conflicting profile resource variant',()=>{
+  const context=CardScoreReferenceContext(base),definition={...card(16),cost:1,staminaCost:1};
+  const profile={...context.rules.gameProfile,modules:{...context.rules.gameProfile.modules,resources:{...context.rules.gameProfile.modules.resources,include:['sp']}},
+    content:{...context.rules.gameProfile.content,resourceVariants:{[definition.id]:{sp:{cost:3,staminaCost:3,manaCost:0,effects:[{op:'damage',target:'enemy',amount:99}]}}}}};
+  const rules={...context.rules,gameProfile:profile},snapshot=structuredClone(profile.content.resourceVariants);
+  const projected=ProjectCardMechanicalValues(definition,{registries:context.registries,rules});
+  assert.equal(projected.card.cost,1);assert.equal(projected.card.staminaCost,1);assert.equal(projected.card.manaCost,0);
+  assert.equal(projected.tokens.damage,ProjectCardMechanicalValues(definition).tokens.damage);
+  assert.deepEqual(profile.content.resourceVariants,snapshot);assert.equal(definition.effects[0].amount,16);
+  assert.throws(()=>ProjectCardMechanicalValues({...definition,manaCost:1},{registries:context.registries,rules}),/missing authored disabled-resource variant/);
 });
 
 test('identical full inputs reuse the frozen final projection while source and context changes invalidate it',()=>{
@@ -117,10 +129,11 @@ test('default projection equals the actual static token reader in the injected r
 });
 
 test('rebalancing fixed costs/rarity changes actual displayed damage when CP changes',async()=>{
-  const before=focusedCardMetrics(base),result=await rebalanceCardAsync(base,{targetRank:3,targetCp:before.cp+1,targetRarity:'keep',sp:0,mp:0,seed:42,reroll:1});
+  const priced={...base,cost:1,staminaCost:1};
+  const before=focusedCardMetrics(priced),result=await rebalanceCardAsync(priced,{targetRank:before.rank,targetCp:before.cp+2,targetRarity:'keep',sp:1,mp:0,seed:42,reroll:1});
   assert.equal(result.feasible,true,result.constraintErrors.join('; '));
-  assert.equal(result.card.staminaCost,0);assert.equal(result.card.manaCost,0);assert.equal(result.card.rarity,'common');
-  assert.equal(result.metrics.cp,before.cp+1);
+  assert.equal(result.card.staminaCost,1);assert.equal(result.card.manaCost,0);assert.equal(result.card.rarity,'common');
+  assert.equal(result.metrics.cp,before.cp+2);
   const original=ProjectCardMechanicalValues(base),candidate=ProjectCardMechanicalValues(result.card);
   assert.equal(original.tokens.damage,3);assert.equal(candidate.tokens.damage,5);assert.equal(candidate.tokens.bleed,1);
   assert.equal(result.card.effects[1].stacks,1);assert.equal(base.effects[0].amount,8);

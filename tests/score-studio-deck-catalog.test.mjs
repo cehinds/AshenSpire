@@ -19,8 +19,14 @@ test('class views include the actual generated and original class cards without 
   assert.equal(reaver.cardIds.filter(id => id.startsWith('subclass.')).length, 45);
   assert.equal(reaver.cardIds.length, 50); assert.equal(new Set(reaver.cardIds).size, 50);
   assert.ok(reaver.cardIds.every(id => state.cards.find(card => card.id === id).class === 'reaver'));
-  assert.equal(resolveStudioDeck(state, 'class:colorless').cardIds.length, 76);
-  assert.equal(resolveStudioDeck(state, 'all').cardIds.length, 286);
+  const native = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
+  const shared = resolveStudioDeck(state, 'class:colorless').cardIds;
+  assert.deepEqual(shared, native.filter(card => card.class === 'colorless').map(card => card.id));
+  const starseer = resolveStudioDeck(state, 'class:starseer').cardIds;
+  const manaRite = native.find(card => card.id === 'core.arcaneSiphon');
+  assert.equal(manaRite.class, 'starseer'); assert.equal(manaRite.name, 'Mana Rite');
+  assert.ok(starseer.includes(manaRite.id)); assert.ok(!shared.includes(manaRite.id));
+  assert.deepEqual(resolveStudioDeck(state, 'all').cardIds, [...new Set(state.cards.map(card => card.id))]);
   assert.equal(reaver.readOnly, true); assert.equal(reaver.virtual, true);
   assert.equal(groupedDeckCards(state, 'class:reaver').shown, 50);
   assert.deepEqual(state, snapshot);

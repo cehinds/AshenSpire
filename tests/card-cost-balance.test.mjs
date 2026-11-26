@@ -69,9 +69,9 @@ test('rest and blacksmith quotes offer Quickstep only the upgrade its grade appl
   const run = createRunState({ registries, classId: 'reaver', seed: 5 });
   const quickstep = { ...inst('quickstep', 'quickstep'), abilityRank: 3 };
   run.sideboard.push(quickstep);
-  assert.ok(!PlanRestCardUpgrade(run, registries, quickstep.instanceId).ok, 'the CP rank is above a level-one character');
+  assert.ok(PlanRestCardUpgrade(run, registries, quickstep.instanceId).ok, 'the authored weights keep this grade upgrade inside the level-one budget');
   run.level.level = 5;
-  const step = { k: 'fx', fx: 'unexhaust', nextRarity: 'rare', nextRank: 5 };
+  const step = { k: 'fx', fx: 'unexhaust' };
   const rest = PlanRestCardUpgrade(run, registries, quickstep.instanceId);
   const smith = planCardUpgrade(run, registries, quickstep.instanceId, { choices: 3 });
 
@@ -83,12 +83,14 @@ test('rest and blacksmith quotes offer Quickstep only the upgrade its grade appl
   assert.ok(rest.after.tags.includes('upgrade:refined'));
   assert.doesNotMatch(rest.after.textTemplate, /Exhaust/i);
   assert.equal(rest.after.abilityRank, 3);
+  assert.equal(rest.after.rarity, rest.before.rarity, 'a legal grade-only upgrade does not force a rarity promotion');
+  assert.equal(rest.after.rank, rest.before.rank);
   assert.deepEqual(rest.after.effects, rest.before.effects);
   assert.ok(Object.isFrozen(rest.after) && Object.isFrozen(rest.after.effects));
   assert.deepEqual(smith.options[0].after, rest.after);
   assert.equal(commitCardUpgrade(run, registries, rest).n, 1);
   assert.deepEqual(quickstep.upgradeSteps, [step]);
-  assert.equal(quickstep.rank, 5);
+  assert.equal(quickstep.rank, undefined, 'unranked Quickstep keeps its ability grade instead of receiving a fabricated CP rank');
 });
 
 // Puts a played copy back in hand, so the same copy can be played again this fight.

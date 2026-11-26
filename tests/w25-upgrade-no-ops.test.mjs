@@ -9,13 +9,15 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRegistries } from '../src/model/registries.js';
 import { contentBundle } from '../src/content/index.js';
 
-const ids = registries.cards.all().filter((c) => c.id.startsWith('core.')).map((c) => c.id);
+const nativeCustomIds = new Set(profile.content.cards.filter(card => card.id.startsWith('custom.')).map(card => card.id));
+const ids = registries.cards.all().filter((c) => c.id.startsWith('core.') || nativeCustomIds.has(c.id)).map((c) => c.id);
 // Ramp upgrades act from the second play, and Hexmark's contest fails in the single-play harness: a single play cannot show them.
 const RAMP = new Set(['core.flick', 'core.brace', 'core.temperedEdge', 'core.hexmark']);
 // Menu steps whose effect is not in the single play (end of turn, start of the next fight, a trait): tests/w25-upgrade-menu.test.mjs proves each in the engine.
 // Dropping Ethereal acts at the end of a turn the card stays in hand, and stopping a rising cost acts from the second play:
 // tests/card-cost-balance.test.mjs proves both in the engine.
-const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction', 'unethereal', 'steady', 'cleanse']);
+// Recurring repeats a self buff on the following turn; the real two-turn proof below owns that behavior.
+const DEFERRED = new Set(['retain', 'innate', 'holdOne', 'reaction', 'unethereal', 'steady', 'cleanse', 'recurring']);
 // A run-long `attr` step (+1 INT/WIS) changes no single play: it acts when the deck loads into a fight. tests/w25-live-stats-run-bonus.test.mjs
 // ('the run-long +1 INT applies to the effective attributes, the ratings, the sheet and a fight') proves it there.
 const isDeferred = (step) => (step.k === 'fx' && DEFERRED.has(step.fx)) || step.k === 'attr';
@@ -101,7 +103,7 @@ function openingHand(cardId, steps) {
   return combat.piles.hand.some((card) => card.instanceId === 'probe-1');
 }
 
-test('every deferred option (Retain, Innate, hold one, Reaction, drop Ethereal, steady cost) changes what the engine does or reads', () => {
+test('every deferred option (Retain, Innate, hold one, Reaction, drop Ethereal, steady cost, Recurring) changes what the engine does or reads', () => {
   const faults = [];
   let checked = 0;
   for (const id of ids) {
@@ -127,6 +129,27 @@ test('every deferred option (Retain, Innate, hold one, Reaction, drop Ethereal, 
   }
   assert.ok(checked > 100, `probe checked ${checked} deferred options`);
   assert.deepEqual(faults, []);
+});
+
+test('Recurring registers the buff and reapplies it on the next player turn without another card play', () => {
+  const inspect = steps => {
+    const run = createRunState({ registries, classId: 'starseer', seed: 511,
+      profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+    const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+    for (const pile of Object.values(combat.piles)) pile.length = 0;
+    Object.assign(combat.player, { hp: 500, maxHp: 500, stamina: 20, maxStamina: 20, mana: 20, maxMana: 20 });
+    combat.piles.hand.push({ instanceId: 'recurring-proof', cardId: 'core.stormBlessing', upgraded: !!steps.length, upgradeSteps: steps });
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'recurring-proof', targetId: 'player' });
+    const initial = combat.player.statuses.dexterity?.stacks;
+    const registered = combat.player.recurringBuffs?.length || 0;
+    dispatch(combat, { type: 'endTurn' });
+    assert.equal(combat.turn, 2);
+    assert.equal(combat.phase, 'player');
+    assert.equal(combat.eventLog.filter(event => event.type === 'cardPlayed').length, 1);
+    return { initial, registered, next: combat.player.statuses.dexterity?.stacks };
+  };
+  assert.deepEqual(inspect([]), { initial: 1, registered: 0, next: 1 });
+  assert.deepEqual(inspect([{ k: 'fx', fx: 'recurring' }]), { initial: 1, registered: 1, next: 2 });
 });
 
 test('no roll offers a dud: no run attribute, no rank down, no one enemy to all, no Reach to Melee', () => {

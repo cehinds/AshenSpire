@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { GenerateSubclassCatalog } from '../src/model/subclassCardGenerator.js';
 import { ProjectCardMechanicalValues } from '../src/model/cardMechanicalProjection.js';
@@ -9,6 +10,8 @@ import { ScoreCard, CombatPower, RankOf } from '../src/model/combatPower.js';
 import { NumericCeilingAtTier } from '../src/model/tierUnlocks.js';
 import { scoring } from '../src/content/generated/scoring.js';
 
+const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
+
 const base = { id:'upgrade.mechanical.fixture',name:'Mechanical fixture',class:'reaver',type:'attack',rarity:'common',cost:1,staminaCost:1,manaCost:0,damageSchool:'physical',keywords:[],tags:['camp:physical','source:weapon','maneuver:attack','classification.attack'],effects:[{op:'damage',target:'enemy',amount:8}] };
 const actual = card => ProjectCardMechanicalValues(card).card.effects;
 const roll = (card, applied = [], limits = {}) => rollUpgradeOptions(card, applied, applied.length, upgradeStepRng(7,'mechanical-review',applied.length),{cardRank:2,everyFamily:true,scoring,...limits},40);
@@ -18,12 +21,30 @@ const authoredFor = (card, wanted, op='damage') => {
   throw new Error(`No fixture for ${op} ${wanted}`);
 };
 
-test('rolled Quiet Incision damage upgrades remain available when raw inputs exceed the mechanical tier ceiling',()=>{
-  const card=GenerateSubclassCatalog({seed:'mechanical-export-integration',subclassIds:['assassin'],countPerSubclass:1}).cards[0];
+test('rolled Quiet Incision damage upgrades remain available when raw inputs exceed the mechanical tier ceiling under the historical fixture',()=>{
+  const scoring=historicalScoring;
+  const card=GenerateSubclassCatalog({seed:'mechanical-export-integration',subclassIds:['assassin'],countPerSubclass:1},{scoring}).cards[0];
   const current=applyUpgradeSteps(card,[{k:'authored'}]), before=actual(current), cap=NumericCeilingAtTier('damage',2,scoring);
   assert.ok(card.effects[0].amount>cap);assert.equal(total(before,'damage'),27);
-  const steps=roll(card,[{k:'authored'}],{playerLevel:2}).filter(step=>step.k==='dmg');assert.ok(steps.length,'a valid damage step must be offered, not merely allowed by a CP probe');
-  for(const step of steps){assert.deepEqual(upgradeStepsProblems([step]),[]);const after=applyUpgradeSteps(current,[step]), projected=actual(after);assert.ok(projected[0].amount>before[0].amount);assert.ok(total(projected,'damage')<=cap);assert.equal(UpgradeTagStacks(after,'improved'),step.improvedStacks||1);const cp=CombatPower(ScoreCard(CardDefinitionToScoreFace(after)).raw,after.rarity);assert.ok(RankOf(cp)<=2);assert.equal(EvaluateUpgradeStepCp({baseDef:card,currentDef:current,step,instance:{rank:2},playerLevel:2}).allowed,true);}
+  const steps=roll(card,[{k:'authored'}],{playerLevel:2,scoring}).filter(step=>step.k==='dmg');assert.ok(steps.length,'a valid damage step must be offered, not merely allowed by a CP probe');
+  for(const step of steps){assert.deepEqual(upgradeStepsProblems([step]),[]);const after=applyUpgradeSteps(current,[step]), projected=actual(after);assert.ok(projected[0].amount>before[0].amount);assert.ok(total(projected,'damage')<=cap);assert.equal(UpgradeTagStacks(after,'improved'),step.improvedStacks||1);const cp=CombatPower(ScoreCard(CardDefinitionToScoreFace(after,{scoring}),scoring).raw,after.rarity,scoring);assert.ok(RankOf(cp,scoring)<=2);assert.equal(EvaluateUpgradeStepCp({baseDef:card,currentDef:current,step,instance:{rank:2},playerLevel:2,scoring}).allowed,true);}
+});
+
+test('shipped Quiet Incision reaches the combined damage cap and keeps effective non-damage upgrades',()=>{
+  const card=GenerateSubclassCatalog({seed:'mechanical-export-integration',subclassIds:['assassin'],countPerSubclass:1}).cards[0];
+  const current=applyUpgradeSteps(card,[{k:'authored'}]), before=actual(current), cap=NumericCeilingAtTier('damage',2,scoring);
+  assert.ok(card.effects[0].amount>cap);
+  assert.equal(total(before,'damage'),cap,'plain and conditional contacts jointly fill the current cap');
+  const steps=roll(card,[{k:'authored'}],{playerLevel:2});
+  assert.equal(steps.some(step=>step.k==='dmg'),false,'damage cannot cross the full mechanical cap');
+  assert.ok(steps.length,'other effective families remain available');
+  for(const step of steps){
+    assert.deepEqual(upgradeStepsProblems([step]),[]);
+    const after=applyUpgradeSteps(current,[step]);
+    assert.notDeepEqual(actual(after),before,'every offered alternative changes actual mechanics');
+    assert.ok(total(actual(after),'damage')<=cap);
+    assert.equal(EvaluateUpgradeStepCp({baseDef:card,currentDef:current,step,instance:{rank:2},playerLevel:2,scoring}).allowed,true);
+  }
 });
 
 test('Block upgrades cross authored rounding plateaus and retain their mechanical ceiling and Improved stack',()=>{

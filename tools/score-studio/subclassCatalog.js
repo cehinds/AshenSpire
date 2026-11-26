@@ -3,6 +3,7 @@ import { SUBCLASS_CATALOG, GenerateSubclassCatalog, RefreshSubclassCard } from '
 import { ValidateSubclassCatalog, SerializeSubclassCatalog } from '../../src/model/subclassCatalogExport.js';
 import { CardDefinitionToScoreFace } from '../../src/model/cardUpgradeCp.js';
 import { ScoreCard, CombatPower, RankOf } from '../../src/model/combatPower.js';
+import { scoring as shippedScoring } from '../../src/content/generated/scoring.js';
 
 const clone = value => structuredClone(value);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -41,6 +42,30 @@ export function subclassListsForState(state) {
   return [...lists.values()];
 }
 
+function sameJson(left, right) {
+  if (left === right) return true;
+  if (!left || !right || typeof left !== 'object' || typeof right !== 'object') return false;
+  if (Array.isArray(left) || Array.isArray(right)) return Array.isArray(left) && Array.isArray(right)
+    && left.length === right.length && left.every((value, index) => sameJson(value, right[index]));
+  const keys = Object.keys(left);
+  return keys.length === Object.keys(right).length && keys.every(key => Object.hasOwn(right, key) && sameJson(left[key], right[key]));
+}
+
+function refreshForExport(card, prior, scoring = shippedScoring) {
+  if (Number.isInteger(prior?.requestedRank)) return RefreshSubclassCard(card, { scoring, requestedRank: prior.requestedRank, rebuildText: false });
+  const original = cleanSubclassCard(card);
+  const rankOf = definition => RankOf(CombatPower(ScoreCard(CardDefinitionToScoreFace(definition, { scoring }), scoring).raw, definition.rarity, scoring), scoring);
+  const minimum = Math.max(1, rankOf(original), original.upgrade ? rankOf({ ...original, ...original.upgrade }) : 0);
+  // Plain game cards carry their authored signature but no recipe metadata.
+  // Recover a compatible budget without changing that signature or its menu;
+  // measured rank alone can be below the mechanical budget that produced it.
+  for (let requestedRank = minimum; requestedRank <= scoring.rank.maxRank; requestedRank++) {
+    const refreshed = RefreshSubclassCard(original, { scoring, requestedRank, rebuildText: false });
+    if (sameJson(refreshed.upgrade, original.upgrade) && sameJson(refreshed.upgradeMenu, original.upgradeMenu)) return refreshed;
+  }
+  return RefreshSubclassCard(original, { scoring, requestedRank: minimum, rebuildText: false });
+}
+
 /** Always export the current edited cards. Missing list members are errors, never silently dropped. */
 export function currentSubclassCatalog(state, subclassIds = null) {
   const allowed = subclassIds ? new Set(subclassIds) : null;
@@ -51,8 +76,8 @@ export function currentSubclassCatalog(state, subclassIds = null) {
   const missing = ids.filter(id => !cardsById.has(id));
   if (missing.length) throw new Error(`List cards are missing: ${missing.slice(0, 3).join(', ')}. Restore the cards before exporting.`);
   const seed = state.subclassCatalog?.seed ?? (state.customDecks || []).find(deck => deck.id?.startsWith(DECK_PREFIX))?.subclassSeed ?? 'subclasses';
-  const catalog = { formatVersion: 1, kind: 'ashenspire.subclassCatalog', seed, cards: ids.map(id => cleanSubclassCard(RefreshSubclassCard(cardsById.get(id), { scoring: state.scoring, rebuildText: false }))), lists };
   const priorMetadata = new Map(metadataForState(state).map(row => [row.cardId, row]));
+  const catalog = { formatVersion: 1, kind: 'ashenspire.subclassCatalog', seed, cards: ids.map(id => cleanSubclassCard(refreshForExport(cardsById.get(id), priorMetadata.get(id), state.scoring))), lists };
   catalog.metadata = catalog.cards.map(card => {
     const prior = priorMetadata.get(card.id) || {};
     const raw = ScoreCard(CardDefinitionToScoreFace(card, { scoring: state.scoring }), state.scoring).raw;

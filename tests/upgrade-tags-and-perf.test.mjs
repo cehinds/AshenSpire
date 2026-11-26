@@ -15,6 +15,7 @@ import { playingCardModel } from '../src/model/playingCard.js';
 import { weightSentence, weightExample } from '../tools/score-studio/weightExamples.js';
 
 const clone = (v) => structuredClone(v);
+const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
 
 test('Blacksmith cardUpgradeModel is fast (< 500ms for 60 cards) and deterministic by run.seed + offerKey', () => {
   const runA = createRunState({ registries, classId: 'reaver', seed: 4242, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a'] } } } });
@@ -42,6 +43,7 @@ test('Blacksmith cardUpgradeModel is fast (< 500ms for 60 cards) and determinist
 });
 
 test('Efficient tag stacks 10 / 20 / 40 CP flat, supports multiplicative mode, and respects surchargeEnabled toggle', () => {
+  const shippedScoring = historicalScoring; // Explicit flat-mode arithmetic fixture.
   assert.equal(UpgradeTagFor('efficient', 1), 'upgrade:efficient');
   assert.equal(UpgradeTagFor('efficient', 2), 'upgrade:efficient+');
   assert.equal(UpgradeTagFor('efficient', 3), 'upgrade:efficient+2');
@@ -106,6 +108,7 @@ test('Improved tag scales effects by 1.10^n compounding and displays cleanly on 
 });
 
 test('surchargeEnabled toggle works across keywords, tags, categories, effectCount, and gearAttribute + weightExamples', () => {
+  const shippedScoring = historicalScoring; // Explicit flat-mode arithmetic fixture.
   const custom = clone(shippedScoring);
   // Keywords toggle
   const faceKw = { ...BaseFace(), sp: 1, dmg: 12, kw: ['retain'] };
@@ -178,14 +181,14 @@ test('flat gear attributes are rare, expensive CP-wise, cut into ratings/Poise b
   // ScoreItem prices flat attribute mod + gearAttribute surcharge heavily, and respects toggle
   const plainSword = { kind: 'weapon', id: 'w1', name: 'Sword', rarity: 'common', poiseDamage: 2, mods: [] };
   const dexSword = { kind: 'weapon', id: 'w2', name: 'Dex Sword', rarity: 'common', poiseDamage: 2, mods: [['self.statDex', 1]] };
-  const scPlain = ScoreItem(plainSword, shippedScoring);
-  const scDex = ScoreItem(dexSword, shippedScoring);
-  assert.equal(scDex.raw - scPlain.raw, shippedScoring.items.gearFields.statDex.weight + 4, 'statDex weight + gearAttribute stack 1 surcharge (+4)');
+  const scPlain = ScoreItem(plainSword, historicalScoring);
+  const scDex = ScoreItem(dexSword, historicalScoring);
+  assert.equal(scDex.raw - scPlain.raw, historicalScoring.items.gearFields.statDex.weight + 4, 'statDex weight + gearAttribute stack 1 surcharge (+4)');
 
-  const noSurcharge = clone(shippedScoring);
+  const noSurcharge = clone(historicalScoring);
   noSurcharge.upgradeTags.gearAttribute.surchargeEnabled = false;
   const scDexOff = ScoreItem(dexSword, noSurcharge);
-  assert.equal(scDexOff.raw - scPlain.raw, shippedScoring.items.gearFields.statDex.weight, 'gearAttribute surcharge off removes +4 surcharge');
+  assert.equal(scDexOff.raw - scPlain.raw, historicalScoring.items.gearFields.statDex.weight, 'gearAttribute surcharge off removes +4 surcharge');
 
   // Blacksmith SmithOptionPool caps flat attribute picks to 1 per item
   const run = createRunState({ registries, classId: 'reaver', seed: 101 });
@@ -197,4 +200,19 @@ test('flat gear attributes are rare, expensive CP-wise, cut into ratings/Poise b
   run.itemUpgradePicks = { [itemRef]: [{ id: 'attr:strength', k: 'stat', stat: 'strength', n: 1 }] };
   const pool2 = SmithOptionPool(run, itemRef);
   assert.ok(!pool2.some(isAttrOpt), 'item that already took 1 flat attribute cannot roll another');
+});
+
+
+test('shipped upgrade surcharges use authored multiplicative weights and hybrid scaling', () => {
+  const efficient = shippedScoring.upgradeTags.efficient;
+  assert.equal(efficient.mode, 'multiplicative');
+  assert.equal(efficient.pMultiplier, .5);
+  assert.deepEqual([1, 2, 3].map(n => UpgradeTagSurcharge(efficient, n, 20)), [10, 25, 47.5]);
+  assert.deepEqual(shippedScoring.categories.hybrid, { ...shippedScoring.categories.hybrid, weight: 1.25, multiplier: true });
+  assert.equal(shippedScoring.items.attributeBudgetCost, 2);
+  assert.match(weightSentence('upgradeTags', 'efficient', shippedScoring).mid, /positive score/);
+  const face = { ...BaseFace(), sp: 1, dmg: 12, magicShare: .5 };
+  const on = ScoreCard(face, shippedScoring);
+  const off = clone(shippedScoring); off.categories.hybrid.surchargeEnabled = false;
+  assert.equal(on.parts['category:hybrid'], ScoreCard(face, off).positive * .25);
 });

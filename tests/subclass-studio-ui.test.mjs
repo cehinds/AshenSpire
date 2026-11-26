@@ -159,3 +159,32 @@ test('current catalog metadata uses rendered mechanics and refreshes raw, CP, ra
   assert.equal(eight.cp, seven.cp); assert.notEqual(eight.cp, sixteen.cp);
   assert.equal(eight.cost, sixteen.cost); assert.equal(eight.rarity, sixteen.rarity); assert.deepEqual(eight.status, sixteen.status);
 });
+
+
+test('all 180 under-target and exact-target signatures survive bare-game and full Studio bundle reloads unchanged', () => {
+  const source = GenerateSubclassCatalog({ seed: 'studio-contract' });
+  assert.equal(source.cards.length, 180); assert.ok(source.metadata.some(row => row.projectedRank < row.requestedRank));
+  const bare = { cards: structuredClone(source.cards), customDecks: [], subclassCatalog: null, scoring };
+  const before = structuredClone(bare);
+  assert.deepEqual(currentSubclassCatalog(bare).cards, source.cards); assert.deepEqual(bare, before);
+  const state = { ...mergeSubclassCatalog(empty(), source), scoring };
+  const bundle = parseStudioBundle(JSON.stringify(buildStudioBundle({ cards: state.cards, customDecks: state.customDecks })));
+  const restored = { cards: bundle.cards, customDecks: bundle.customDecks, subclassCatalog: null, scoring };
+  assert.deepEqual(currentSubclassCatalog(restored).cards, source.cards);
+  const originalMetadata = new Map(source.metadata.map(row => [row.cardId, row]));
+  for (const meta of currentSubclassCatalog(restored).metadata) assert.equal(meta.requestedRank, originalMetadata.get(meta.cardId).requestedRank);
+});
+
+
+test('bare reload ignores JSON object key order while preserving all 180 authored signatures and ordered menus', () => {
+  const source = GenerateSubclassCatalog({ seed: 'studio-contract' });
+  const reorder = value => Array.isArray(value) ? value.map(reorder) : value && typeof value === 'object'
+    ? Object.fromEntries(Object.keys(value).sort().map(key => [key, reorder(value[key])])) : value;
+  const cards = source.cards.map(card => ({ ...card, upgrade: reorder(card.upgrade) }));
+  const state = { cards, customDecks: [], subclassCatalog: null, scoring }, before = structuredClone(state);
+  const exported = currentSubclassCatalog(state);
+  assert.equal(exported.cards.length, 180);
+  assert.deepEqual(exported.cards, source.cards);
+  assert.deepEqual(state, before, 'normalizing comparison keys never mutates the imported payload');
+  for (let i = 0; i < source.cards.length; i++) assert.deepEqual(exported.cards[i].upgradeMenu, source.cards[i].upgradeMenu, source.cards[i].id);
+});

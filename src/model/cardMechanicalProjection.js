@@ -85,8 +85,10 @@ export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
   if (!data) {
     let card = structuredClone(authored);
     if (profile?.content) {
-      const { [card.id]: _variants, ...resourceVariants } = profile.content.resourceVariants || {};
-      const subject = { gameProfile: { ...profile, content: { ...profile.content, cards: [card], resourceVariants } } };
+      // The subject contains only this authored card. Its resource variant is
+      // intentionally absent so edited costs remain authoritative; unrelated
+      // variants cannot be selected and need not be copied into every probe.
+      const subject = { gameProfile: { ...profile, content: { ...profile.content, cards: [card], resourceVariants: {} } } };
       card = structuredClone(Profile.projectGameCard(subject, card.id) || card);
     }
     // Apply always-on equipment exactly once, as staticCardTokens does. Its

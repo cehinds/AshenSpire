@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { TierFor, LevelList, BuildLevelLists, FilterToBand, TierRow } from '../src/model/levelLists.js';
+import { TierFor, LevelList, BuildLevelLists, FilterToBand } from '../src/model/levelLists.js';
 import { scoring } from '../src/content/generated/scoring.js';
 import { levelLists } from '../src/content/generated/levelLists.js';
 import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
@@ -40,10 +40,12 @@ test('level lists: an empty band falls back to every id of the kind', () => {
 });
 
 test('level lists: FilterToBand narrows to the band and falls back when nothing is inside', () => {
-  const inBand = levelLists.cards.act1[0], high = Object.keys(cardCombatPower).find(id => cardCombatPower[id].rank > TierRow('act1').maxRank);
-  assert.deepEqual(FilterToBand('cards', 'act1', [inBand, high]), [inBand]);
-  assert.deepEqual(FilterToBand('cards', 'act1', [high]), [high]);
-  assert.deepEqual(FilterToBand('cards', 'act1', ['unscored.card']), ['unscored.card']);
+  const inBand = 'fixture.low', high = 'fixture.high';
+  const lists = { cards: { act1: [inBand], act3: [high] }, items: {} };
+  assert.deepEqual(FilterToBand('cards', 'act1', [inBand, high], { lists }), [inBand]);
+  assert.deepEqual(FilterToBand('cards', 'act1', [high], { lists }), [high]);
+  assert.deepEqual(FilterToBand('cards', 'act1', ['unscored.card'], { lists }), ['unscored.card']);
+  assert.deepEqual(FilterToBand('cards', 'act1', levelLists.cards.act1), levelLists.cards.act1, 'all actual eligible cards remain eligible under the shipped lists');
 });
 
 test('level lists: the generated file matches the combat-power table and scoring (fresh)', () => {

@@ -13,6 +13,7 @@
 // so a preview equals the play. A rule with a target condition (Retreat-stacked, back row, front row) reads the target, so it rides the hit
 // (engine/gearHooks.js), through the same receipt the quote uses.
 import { RANGES } from './combatRanges.js';
+import * as CombatProfiles from './combatCardProfile.js';
 import { GEAR_TYPES } from '../content/gearTypes.js';
 import { parseMod } from './loadout/modStrings.js';
 import { equippedPieces, equippedIn } from './loadout/equipped.js';
@@ -264,7 +265,7 @@ export function ApplyGearCardRules(rules, def, state = {}) {
   });
   const costs = hasCost ? { cost: stamina, staminaCost: stamina } : {};
   const next = { ...def, effects: base.effects, ...(variants ? { effectVariants: variants } : {}), ...costs, ...(manaRules.length ? { gearManaRules: manaRules } : {}), keywords, gear, gearApplied: notes(base),
-    ...(costGrowth ? { costGrowth } : {}), ...(range && range !== def.range ? { range, combatProfile: { ...(def.combatProfile || {}), range } } : {}) };
+    ...(costGrowth ? { costGrowth } : {}), ...(range && range !== def.range ? { range, combatProfile: { ...CombatProfiles.combatProfileFor(def), ...(def.combatProfile || {}), range } } : {}) };
   if (def.resourceCosts && hasCost) next.resourceCosts = { ...def.resourceCosts, sp: stamina };
   return next;
 }

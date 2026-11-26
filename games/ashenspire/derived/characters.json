@@ -180,47 +180,27 @@
     ],
     "relics": [],
     "deck": {
-      "size": 11,
+      "size": 10,
       "cards": [
         {
-          "id": "core.strike",
-          "name": "Strike",
-          "copies": 3
+          "id": "custom.card_mwx2mb6p",
+          "name": "Ward",
+          "copies": 4
         },
         {
-          "id": "core.defend",
-          "name": "Defend",
-          "copies": 2
-        },
-        {
-          "id": "core.counter",
-          "name": "Counter",
+          "id": "custom.copy_mwx6hh79",
+          "name": "Arcane Bolt",
           "copies": 1
         },
         {
-          "id": "core.smash",
-          "name": "Smash",
+          "id": "core.arcaneSiphon",
+          "name": "Mana Rite",
           "copies": 1
         },
         {
-          "id": "core.sweep",
-          "name": "Sweep",
-          "copies": 1
-        },
-        {
-          "id": "core.evade",
-          "name": "Evade",
-          "copies": 1
-        },
-        {
-          "id": "base.draw",
-          "name": "Draw",
-          "copies": 1
-        },
-        {
-          "id": "core.starseerSpecial",
-          "name": "Star Spark",
-          "copies": 1
+          "id": "core.astralBolt",
+          "name": "Arcane Strike",
+          "copies": 4
         }
       ]
     }

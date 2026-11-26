@@ -18,7 +18,7 @@ import { GEAR_TYPES } from '../src/content/gearTypes.js';
 import { GearWeaponTypeOf, GearArmourGroupOf } from '../src/model/gearEffects.js';
 import { BaseFace, ScoreCard, ScoreItem, CombatPower, RankOf, ApplyScoringOverride } from '../src/model/combatPower.js';
 import { CardDefinitionToScoreFace } from '../src/model/cardUpgradeCp.js';
-import { registries, holdable, CLASSES } from './lib/cardBudgetMeasure.mjs';
+import { registries, configuredCustomCardIds, holdable, CLASSES } from './lib/cardBudgetMeasure.mjs';
 
 const OUT = fileURLToPath(new URL('../src/content/generated/combatPower.js', import.meta.url));
 const args = process.argv.slice(2);
@@ -37,7 +37,7 @@ export function measureCards() {
   for (const classId of CLASSES) for (const id of holdable(classId).kit) kitIds.add(id);
   const faces = {};
   for (const def of registries.cards.all()) {
-    if (def.id.startsWith('core.') || def.id.startsWith('subclass.') || kitIds.has(def.id)) faces[def.id] = faceOf(def);
+    if (def.id.startsWith('core.') || def.id.startsWith('subclass.') || configuredCustomCardIds.has(def.id) || kitIds.has(def.id)) faces[def.id] = faceOf(def);
   }
   return faces;
 }

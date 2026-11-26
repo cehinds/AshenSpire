@@ -266,8 +266,8 @@ test('all four unlocked core classes instantiate exact kits and decks, construct
  const {createRunCombat}=await import('../src/engine/runCombat.js');
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one','two','three']}}};
  const hands={reaver:['greatsword',null],starseer:['boneSceptre',null],rogue:['dagger','dagger'],herald:['boneSceptre',null]};
- // Every class starts with ten (owner ruling 2026-11-21) (authored list plus weapon-granted cards).
- const sizes={reaver:10,starseer:10,rogue:10,herald:10};
+ // The Starseer authors ten base copies plus its normal art; other classes retain ten total.
+ const sizes={reaver:10,starseer:11,rogue:10,herald:10};
  for(const [classId,expected] of Object.entries(hands)){
   const run=createRunState({seed:17,classId,registries:reg,profileMeta:meta});assert.equal(run.deck.length,sizes[classId],classId);
   assert.deepEqual([run.loadout.sets.rightHand[0],run.loadout.sets.leftHand[0]],expected,classId);

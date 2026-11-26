@@ -1,6 +1,10 @@
+// Original wave balance/rarity/reward contract pinned to the exact pre-authoring 10911 profile.
+// Current owner-authored replacements are asserted separately below and in starseer-authored-starter.test.mjs.
 // Owner 2026-10-28 (batch 3): ten new Core mana-cost spells (four Starseer, four Herald, two colorless). Each costs mana
 // (MP >= 1), resolves at both grades, counts as a mana card for the depth 4+ reward lean, and stays in its own class.
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -10,7 +14,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 
-const profile = resolveGameProfile('core');
+const profile = resolveGameProfile(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/core2-cleanup-profile-10911.json.gz', import.meta.url)))));
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const ids = list => list.map(id => `core.${id}`);
 const BY_CLASS = {
@@ -39,7 +43,7 @@ const offered = (classId, seed, floor, withoutCardId) => {
     .options.filter(option => option.kind === 'combatCards').map(option => option.id);
 };
 
-test('every new spell is authored in its class, costs mana, is not a cantrip, and has a rarity of uncommon or rare', () => {
+test('historical 10911: every new spell is authored in its class, costs mana, is not a cantrip, and has a rarity of uncommon or rare', () => {
   for (const [cls, list] of Object.entries(BY_CLASS)) for (const id of list) {
     const card = def(id);
     assert.equal(card.class, cls, id);
@@ -54,7 +58,7 @@ test('every new spell is authored in its class, costs mana, is not a cantrip, an
   assert.equal(new Set(ALL.map(id => def(id).name)).size, 10);
 });
 
-test('every new spell resolves at base and upgraded with its authored cost, a face and a stronger upgrade', () => {
+test('historical 10911: every new spell resolves at base and upgraded with its authored cost, a face and a stronger upgrade', () => {
   for (const id of ALL) {
     const base = resolveCard(registries, { cardId: id }), up = resolveCard(registries, { cardId: id, upgraded: true });
     assert.equal(base.cost, def(id).staminaCost, id);
@@ -67,13 +71,13 @@ test('every new spell resolves at base and upgraded with its authored cost, a fa
   }
 });
 
-test('no authored Burn exceeds the 3-stack application cap, so the face never promises more than lands', () => {
+test('historical 10911: no authored Burn exceeds the 3-stack application cap, so the face never promises more than lands', () => {
   for (const id of ALL) for (const effects of [def(id).effects, def(id).upgrade.effects]) for (const effect of effects) {
     if (effect.op === 'applyStatus' && effect.status === 'burn') assert.ok(effect.stacks <= 3, `${id}: Burn ${effect.stacks} (the engine caps Burn at 3 stacks)`);
   }
 });
 
-test('resource variants are authored for all four resource modes and agree with the fixed cost', () => {
+test('historical 10911: resource variants are authored for all four resource modes and agree with the fixed cost', () => {
   const variants = profile.content.resourceVariants;
   for (const id of ALL) {
     const card = def(id), row = variants[id];
@@ -85,7 +89,7 @@ test('resource variants are authored for all four resource modes and agree with 
   }
 });
 
-test('Healing Prayer matches the heal-rules cheap shape and no new spell is strictly better than a same-cost same-rarity peer', () => {
+test('historical 10911: Healing Prayer matches the heal-rules cheap shape and no new spell is strictly better than a same-cost same-rarity peer', () => {
   const card = def('core.healingPrayer'), shapes = profile.modules['heal-rules'].shapes;
   const shape = shapes.filter(s => s.tags.every(t => card.tags.includes(t))).sort((a, b) => b.tags.length - a.tags.length)[0];
   assert.equal(shape.id, 'cheap');
@@ -99,7 +103,7 @@ test('Healing Prayer matches the heal-rules cheap shape and no new spell is stri
   }
 });
 
-test('the reward model counts each new spell as a mana card, never as a basic or cantrip', () => {
+test('historical 10911: the reward model counts each new spell as a mana card, never as a basic or cantrip', () => {
   const matches = basicOrCantripMatcher(registries, live('starseer', 1, 1));
   for (const id of ALL) {
     assert.ok((def(id).manaCost || 0) > 0, `${id} is a mana card`);
@@ -107,7 +111,7 @@ test('the reward model counts each new spell as a mana card, never as a basic or
   }
 });
 
-test('Magic classes see their new spells more often at depth 4+ than at depth 1-3 (600 seeds per class and band)', () => {
+test('historical 10911: Magic classes see their new spells more often at depth 4+ than at depth 1-3 (600 seeds per class and band)', () => {
   const report = [];
   for (const classId of ['starseer', 'herald']) {
     const own = new Set([...BY_CLASS[classId], ...BY_CLASS.colorless]);
@@ -124,7 +128,7 @@ test('Magic classes see their new spells more often at depth 4+ than at depth 1-
   console.log(`new-spell share of card offers: ${report.join('; ')}`);
 });
 
-test('each class sees only payable spells matching its class and spell tradition', () => {
+test('historical 10911: each class sees only payable spells matching its class and spell tradition', () => {
   const magic = { starseer: BY_CLASS.starseer, herald: BY_CLASS.herald };
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
     const seen = new Set(), counts = new Map();
@@ -146,5 +150,17 @@ test('each class sees only payable spells matching its class and spell tradition
       const eligible = payable(classId, id) && matchesTradition(classId, id);
       assert.equal(seen.has(id), eligible, `${classId} colorless ${id}: offered only when payable and matching its spell tradition`);
     }
+  }
+});
+
+test('current authored Mana Rite and Arcane Sweep keep their new class, rarity and explicit prices', () => {
+  const current = resolveGameProfile('core');
+  for (const [id, expected] of [
+    ['core.arcaneSiphon', ['starseer', 'common', 2, 0]],
+    ['core.cometLance', ['starseer', 'common', 0, 1]],
+  ]) {
+    const card = current.content.cards.find(card => card.id === id);
+    assert.deepEqual([card.class, card.rarity, card.staminaCost, card.manaCost], expected, id);
+    assert.deepEqual(current.content.resourceVariants[id]['sp,mp'], { cost: expected[2], staminaCost: expected[2], manaCost: expected[3] });
   }
 });

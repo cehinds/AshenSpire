@@ -34,12 +34,18 @@ export function loadBundleCompiler({ root = ROOT, indexHtml } = {}) {
   })()`, bindings, { filename: 'production-bundle-compiler.js' });
 }
 
-export function productionBundle({ additionalModules = [] } = {}) {
+export function productionBundle({ additionalModules = [], sourceOverrides = {} } = {}) {
   const compiler = loadBundleCompiler();
   const { sources, order, entryAbs, idOf, IMPORT_RE, transformModule, guardScript, MODULE_FN, assembleRuntime } = compiler;
   // Extra entry points (e.g. the co-op server engine) initialize only after
   // the shipped main has loaded, preserving the production cycle ordering.
   for (const id of additionalModules) compiler.visit(resolve(ROOT, id));
+  // Test-only immutable historical inputs, scoped to this VM. Every override
+  // must name a module already visited by the real production import graph.
+  for (const [id, source] of Object.entries(sourceOverrides)) {
+    if (!sources.has(id) || typeof source !== 'string') throw new Error(`Invalid production-bundle source override: ${id}`);
+    sources.set(id, source);
+  }
   const entryId = idOf(entryAbs);
   // Run the real entry's imports in their authored order. Only its boot body is
   // omitted: it mounts the UI, while these tests call the headless engine API.

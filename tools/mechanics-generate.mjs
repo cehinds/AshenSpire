@@ -20,6 +20,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSy
 import { normalizeLfText, sameLfCanonicalText } from './working-tree-text.mjs';
 import { join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { CANONICAL_MECHANIC_DELEGATES, createMechanicReader } from './lib/mechanics-readers.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const OUT = join(ROOT, 'engine/mechanics');
@@ -67,23 +68,10 @@ function listJs(dir) {
 // generated cards. None of them runs a mechanic, so none is ever the "Lives in" reader.
 const NOT_READERS = new Set(['src/model/combatPower.js', 'src/model/cardGenerator.js', 'src/model/subclassCardGenerator.js', 'src/model/cardPoolPlan.js', 'src/model/itemGenerator.js']);
 const sources = ['src/engine', 'src/model'].flatMap(listJs).filter(file => !NOT_READERS.has(file)).map(file => ({ file, lines: read(file).split('\n') }));
-const isComment = line => /^\s*(\/\/|\*|\/\*)/.test(line);
-function findReader(patterns) {
-  for (const { file, lines } of sources) {
-    for (let i = 0; i < lines.length; i++) {
-      if (isComment(lines[i]) || !patterns.some(p => p.test(lines[i]))) continue;
-      let symbol;
-      for (let j = i; j >= 0 && !symbol; j--) {
-        const m = lines[j].match(/^(?:export\s+)?(?:async\s+)?function\s+\*?\s*(\w+)/) || lines[j].match(/^(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|\w+)\s*=>/)
-          // A frozen dispatch table (actions.js OPCODE_HANDLERS) owns the handlers written inside it.
-          || lines[j].match(/^(?:export\s+)?const\s+(\w+)\s*=\s*Object\.freeze\(\{\s*$/);
-        if (m) symbol = m[1];
-      }
-      return { file, ...(symbol ? { symbol } : {}) };
-    }
-  }
-  return null;
-}
+// These are real ABI entrypoints, not aliases for arbitrary old metadata. Inject
+// each implementation at its validated wrapper's source position, so extraction
+// cannot let a later same-file reader or an earlier model file steal ownership.
+const findReader = createMechanicReader(sources, CANONICAL_MECHANIC_DELEGATES);
 const esc = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const quotedPatterns = name => [new RegExp(`['"\`]${esc(name)}['"\`]`)];
 

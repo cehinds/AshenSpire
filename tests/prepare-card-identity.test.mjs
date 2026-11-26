@@ -46,17 +46,17 @@ for (const profileId of ['core']) {
     }
   });
 }
-test('each core character starts with its owner-ruled ten-card deck (2026-11-21: basics, class card, weapon art)', () => {
+test('each Core character starts with its authored base copies plus its normal weapon art', () => {
   const { registries, profile } = world('core');
   const expected = {
     reaver: { 'core.strike': 4, 'core.defend': 4, 'core.reaverSpecial': 1, 'greatswordSunderingHew': 1, 'base.draw': 0 },
     rogue: { 'core.strike': 4, 'core.defend': 4, 'core.rogueSpecial': 1, twinFang: 1, 'base.draw': 0 },
-    starseer: { 'core.cantrip': 4, 'core.starseerSpecial': 1, blightTouch: 1, 'core.smash': 0, 'base.draw': 0 },
+    starseer: { 'custom.card_mwx2mb6p': 4, 'custom.copy_mwx6hh79': 1, 'core.arcaneSiphon': 1, 'core.astralBolt': 4, blightTouch: 1, 'core.cantrip': 0, 'core.starseerSpecial': 0, 'core.smash': 0, 'base.draw': 0 },
     herald: { 'core.cantrip': 4, 'core.heraldSpecial': 1, blightTouch: 1, 'core.smash': 0, 'base.draw': 0 },
   };
   for (const classId of Object.keys(expected)) {
     const run = createRunState({ seed: 1, classId, registries, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['one', 'two', 'three'] } } } });
-    assert.equal(run.deck.length, 10);
+    assert.equal(run.deck.length, classId === 'starseer' ? 11 : 10);
     for (const [cardId, copies] of Object.entries(expected[classId])) assert.equal(run.deck.filter(card => card.cardId === cardId).length, copies, `${classId} ${cardId}`);
   }
 });

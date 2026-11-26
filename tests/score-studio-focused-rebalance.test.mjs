@@ -12,6 +12,8 @@ import { validateCardTemplates } from '../src/model/validate/templates.js';
 import { walkSchema } from '../src/model/validate/schemaWalk.js';
 import { SCHEMAS } from '../src/model/schemas.js';
 
+const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
+
 const attack = { id: 'focused.test', name: 'Hand named blade', class: 'reaver', type: 'attack', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 0, costRule: 'fixed', icon: 'attack', tags: ['camp:physical', 'source:weapon', 'maneuver:attack'], keywords: [], effects: [{ op: 'damage', target: 'enemy', amount: 6 }], textTemplate: 'Deal {damage} damage.' };
 function validate(card) {
   const errors=[];const err=(path,message)=>errors.push(`${path}: ${message}`);
@@ -57,8 +59,12 @@ test('stances compose existing statuses, while unavailable slots preserve primar
   const result=rebalanceCard(attack,{targetRank:3,effectCount:3,preferredEffects:['draw'],preferredStances:['evade'],seed:4});
   assert.equal(result.feasible,true,result.constraintErrors.join('; '));assert.deepEqual(result.card.stanceTrigger,{stance:'evade'});
   assert.ok(result.card.effects.some(e=>e.op==='applyStatus'&&e.status==='evade'));validate(result.card);
-  const noSlot=rebalanceCard(attack,{targetRank:3,effectCount:1,preferredEffects:['draw']});
+  const noSlot=rebalanceCard(attack,{targetRank:2,effectCount:1,preferredEffects:['draw']});
   assert.equal(noSlot.feasible,true);assert.equal(noSlot.card.effects.length,1);assert.equal(noSlot.card.effects[0].op,'damage');assert.match(noSlot.warnings.join(' '),/Primary.*preserved/);
+  assert.equal(noSlot.metrics.rank,2);
+  const capped=rebalanceCard(attack,{targetRank:3,effectCount:1,preferredEffects:['draw']});
+  assert.equal(capped.feasible,false);assert.match(capped.constraintErrors.join(' '),/requested Rank 3/);
+  assert.equal(capped.card.effects.length,1);assert.equal(capped.card.effects[0].op,'damage');
 });
 
 test('infeasible exact CP, locked zero cost, martial Mana and invalid preferences never masquerade as success', () => {
@@ -162,10 +168,15 @@ test('effect and stance palettes choose seeded subsets while blank count keeps t
 });
 
 test('legacy Core Force card reports its requested-tier cause without an expensive futile search', () => {
-  const card=JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json',import.meta.url))).find(c=>c.id==='core.arcaneSiphon');
+  // Historical Force identity is explicit: the live ID is now the authored Mana Rite.
+  const card={id:'fixture.legacy-force',name:'Arcane Siphon',class:'colorless',rarity:'uncommon',cost:1,staminaCost:1,manaCost:1,costRule:'fixed',type:'attack',icon:'attack',keywords:[],effects:[{op:'damage',target:'enemy',amount:14},{op:'restoreMana',target:'self',amount:2}],tags:['camp:spell','source:spell','maneuver:casting','classification.attack','school:force','tradition:arcane'],textTemplate:'Deal {damage} damage. Restore {restoreMana} Mana.',damageSchool:'magic',exposureBuildupPerHit:5};
+  const scoring=historicalScoring;
   let measures=0;const faceOf=c=>{measures++;return CardDefinitionToScoreFace(c,{scoring});};
   const result=rebalanceCard(card,{targetRank:1,targetCp:2},{scoring,faceOf});
   assert.equal(result.feasible,false);assert.match(result.constraintErrors.join(' '),/Force school requires effective tier 3/);assert.deepEqual(result.card.effects,card.effects);assert.ok(measures<=3);
+  const live=JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json',import.meta.url))).find(c=>c.id==='core.arcaneSiphon');
+  const current=rebalanceCard(live,{targetRank:1,targetCp:2});
+  assert.doesNotMatch(current.constraintErrors.join(' '),/Force school/,'the new Mana Rite does not inherit the historical Force identity');
 });
 
 test('bounded coarse search visits later cost pairs before refining a legal magnitude', () => {

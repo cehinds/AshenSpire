@@ -31,12 +31,25 @@ test('every new spell has an authored playable variant for each resource combina
   }
 });
 
-test('exclusive Core catalogs embody the Arcane 2:1 and Divine 3:1 identities with real effects', () => {
+test('authored Core catalogs include the new Arcane offense while weighted tradition identity stays normalized', () => {
   const exclusive = tradition => sourceCards.filter(card => isSpell(card)
     && card.tags.includes(`tradition:${tradition}`)
     && card.tags.filter(tag => tag.startsWith('tradition:')).length === 1);
-  assert.deepEqual(countRoles(exclusive('arcane')), { offense: 10, support: 5 });
+  assert.deepEqual(countRoles(exclusive('arcane')), { offense: 11, support: 5 });
   assert.deepEqual(countRoles(exclusive('divine')), { offense: 5, support: 15 });
+});
+
+test('native Arcane Bolt and Smash remain Arcane offense while Mana Rite is resource support', () => {
+  for (const id of ['custom.copy_mwx6hh79', 'custom.copy_mwx6xoww']) {
+    const card = registries.cards.get(id);
+    assert.equal(isSpell(card), true, id);
+    assert.deepEqual(CardSpellTraditions(card), ['arcane'], id);
+    assert.equal(SpellPoolRole(card), 'offense', id);
+  }
+  const rite = registries.cards.get('core.arcaneSiphon');
+  assert.equal(SpellPoolRole(rite), 'support');
+  assert.deepEqual(rite.effects, [{ op: 'restoreMana', target: 'self', amount: 1 }]);
+  assert.equal(isSpell(registries.cards.get('custom.card_mwx2mb6p')), false, 'physical Ward does not enter a spell-role pool');
 });
 
 test('each shared natural school includes an authored support choice with both tags', () => {
