@@ -1,0 +1,27 @@
+{
+  "useLimit": {
+    "enabled": true,
+    "countScope": "instance",
+    "onLimit": "exhaust",
+    "showsRemainingOnFace": true,
+    "upgradeEase": "remove"
+  },
+  "exhaust": {
+    "extends": "useLimit",
+    "maxPlays": 1,
+    "showsRemainingOnFace": false
+  },
+  "wither": {
+    "extends": "useLimit",
+    "maxPlays": 3
+  },
+  "wither.evade": {
+    "extends": "wither",
+    "maxPlays": 3
+  },
+  "playLimit": {
+    "extends": "useLimit",
+    "onLimit": "unplayable",
+    "showsRemainingOnFace": false
+  }
+}
