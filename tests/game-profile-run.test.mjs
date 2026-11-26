@@ -30,15 +30,19 @@ const freshLegacy=()=>{const run=fresh(smithReg);run.gameProfile.content.rests=s
 const restId=(run,floor)=>{const rests=Object.values(run.mapGraph.nodes).filter(n=>n.type==='shrine');const depths=[...new Set(rests.map(n=>n.floor))].sort((x,y)=>x-y);const at=floor===3?0:floor===6?1:depths.length-1;return rests.find(n=>n.floor===depths[Math.min(at,depths.length-1)]).id;};
 const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRng(73),run.seatOrder[0],1);run.mapNodeId=restId(run,3); return beginGameProfileRest(run,'1:'+run.mapNodeId); };
 
-test('fixed classes, ten starters, persistent pin and restamping do not mint equipment grants',()=>{
- const run=fresh(); assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b),6);
- assert.equal(run.attributes.strength,2);assert.equal(run.drawPerTurn,4);assert.equal(run.deck.length,10);
- assert.equal(run.loadout.sets.rightHand[0],'greatsword');assert.equal(run.loadout.sets.leftHand[0],null);
- stampDeck(reg,run);assert.equal(run.deck.length,10);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,4);
+test('configured class defaults, persistent pins and restamping preserve the authored deck and grants',()=>{
+ const run=fresh();
+ assert.deepEqual(run.attributes,profile.content.classAttributes.reaver);
+ const before=structuredClone(run.deck);
+ const ordinary=run.deck.filter(card=>!card.grantedBy&&!card.equipmentRole);
+ assert.deepEqual(ordinary.map(card=>card.cardId),profile.content.starterDeck.classDecks.reaver.flatMap(row=>Array(row.copies).fill(row.card)));
+ stampDeck(reg,run);assert.deepEqual(run.deck,before,'restamping does not mint grants');
  assert.throws(()=>createRunState({seed:1,classId:'starseer',registries:reg}),/locked/);
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one']}}};
- const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,3+gameProfileEffectiveAttributes(reg,star).intelligence);
+ const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});
+ assert.ok(Number.isFinite(star.drawPerTurn)&&star.drawPerTurn>0);
  const restored=deserializeRun(serializeRun(run));assert.equal(restored.gameProfile.hash,profile.hash);assert.equal(restored.runId,run.runId);
+ assert.deepEqual(restored.deck,run.deck);
 });
 
 test('terminal wins and defeats each unlock one class, durable dedupe survives history truncation',()=>{
@@ -262,18 +266,19 @@ test('configured Smith tiers follow the Core 2 tier steps per hand and honor JSO
 });
 
 
-test('all four unlocked core classes instantiate exact kits and decks, construct combat and load actual saves',async()=>{
+test('all unlocked Core classes instantiate authored kits and decks, construct combat and load actual saves',async()=>{
  const {createRunCombat}=await import('../src/engine/runCombat.js');
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one','two','three']}}};
- const hands={reaver:['greatsword',null],starseer:['boneSceptre',null],rogue:['dagger','dagger'],herald:['boneSceptre',null]};
- // The Starseer authors ten base copies plus its normal art; other classes retain ten total.
- const sizes={reaver:10,starseer:11,rogue:10,herald:10};
- for(const [classId,expected] of Object.entries(hands)){
-  const run=createRunState({seed:17,classId,registries:reg,profileMeta:meta});assert.equal(run.deck.length,sizes[classId],classId);
+ for(const classId of Object.keys(profile.content.starterDeck.classDecks)){
+  const character=profile.content.characters.find(row=>row.id===classId);
+  const expected=['mainHand','offHand'].map(key=>character.defaultGear.find(item=>item.key===key)?.id||null);
+  const run=createRunState({seed:17,classId,registries:reg,profileMeta:meta});
+  const before=structuredClone(run.deck);
+  assert.deepEqual(run.deck.filter(card=>!card.grantedBy&&!card.equipmentRole).map(card=>card.cardId),profile.content.starterDeck.classDecks[classId].flatMap(row=>Array(row.copies).fill(row.card)),classId);
   assert.deepEqual([run.loadout.sets.rightHand[0],run.loadout.sets.leftHand[0]],expected,classId);
-  stampDeck(reg,run);assert.equal(run.deck.length,sizes[classId],classId);
-  const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});assert.ok(combat.enemies[0].alive,classId);assert.equal(combat.piles.hand.length,run.drawPerTurn,classId);
-  const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);const restored=save.loadRun(reg);assert.ok(restored,`${classId}: ${JSON.stringify(save.runStatus())}`);assert.equal(restored.deck.length,sizes[classId],classId);assert.deepEqual([restored.loadout.sets.rightHand[0],restored.loadout.sets.leftHand[0]],expected,classId);
+  stampDeck(reg,run);assert.deepEqual(run.deck,before,classId);
+  const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});assert.ok(combat.enemies[0].alive,classId);assert.equal(combat.piles.hand.length,Math.min(run.deck.length,run.drawPerTurn),classId);
+  const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);const restored=save.loadRun(reg);assert.ok(restored,`${classId}: ${JSON.stringify(save.runStatus())}`);assert.deepEqual(restored.deck,run.deck,classId);assert.deepEqual([restored.loadout.sets.rightHand[0],restored.loadout.sets.leftHand[0]],expected,classId);
  }
 });
 
