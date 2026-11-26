@@ -41,7 +41,7 @@ const shorten = html => html.replace(/At the end of your turn, if this is in you
   // Two damage types of one hit read as one clause ("2 Blunt + 1 Force ×3"): the hit count and area qualify both.
   .replace(/^(?:Deal )?((?:<span[^>]*>)?\d+(?:<\/span>)?) ([A-Za-z]+), ((?:<span[^>]*>)?\d+(?:<\/span>)?) ([A-Za-z]+) damage/, '$1 $2 + $3 $4')
   .replace(/^Remove all (\w+(?:, all \w+)+)/, (match, list) => 'Remove ' + list.replace(/all /g, ''))
-  .replace(/^Your attacks apply (\d+ \w+) per stack/, 'Attacks apply $1/stack').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
+  .replace(/^Your attacks apply (\d+ \w+) per stack/, 'Attacks: +$1 per stack').replace(/\(maximum (\d+)\)/g, '(max $1)').replace(/\.\s*$/, '').trim();
 // A downside is never hidden or dropped for another line: it is listed first and kept (owner review, 2026-10-31).
 const COST_RE = /\b(?:take \d+ damage|lose \d+ HP|exhaust|one play per combat|discard|ethereal|cannot|unplayable)\b/i;
 // What a summary must never lose from the full text, by kind: a cost or downside, a discard, something consumed, a cap or
@@ -93,11 +93,14 @@ const wordCount = html => plain(html).split(/\s+/).filter(word => /[\p{L}\p{N}]/
 // phrases ("8 damage to all, 3 Poise to all") splits at its commas into one
 // clause each; a longer conditional or sentence returns null and stays whole in
 // Information rather than being cut mid-condition.
+// A clause drops its leading verb ("Deal 5 damage" reads "5 damage"), but "Deal damage equal to ..." keeps it: without
+// the verb it reads as a fragment (owner, 2026-11-17: Shield Crash).
+const LEADING_VERB = /^(?:Deal|Apply|Inflict) (?!damage\b)/;
 const CONDITIONAL_START = /^(?:When|If|Unless|While|After|Before|At|Once|Turn)\b/;
 function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
   if (wordCount(line.html) <= words) return [line];
   // A longer clause drops its leading verb ("Deal 5 Slashing damage to all" reads "5 Slashing damage to all").
-  const bare = line.html.replace(/^(?:Deal|Apply|Inflict) /, '');
+  const bare = line.html.replace(LEADING_VERB, '');
   if (bare !== line.html && wordCount(bare) <= words) return [{ ...line, html: bare }];
   // A turn trigger carrying a downside splits into two triggers, so the cost is never lost ("Turn start: take 1 damage").
   const trigger = /^(Turn (?:start|end)): (.+?)(?:,| and) ((?:take|lose) .+)$/.exec(line.html);
@@ -114,7 +117,7 @@ function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
     if (parts.length && (parts[parts.length - 1].split('(').length !== parts[parts.length - 1].split(')').length)) parts[parts.length - 1] += ', ' + piece;
     else parts.push(piece);
   }
-  for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > words) parts[i] = parts[i].replace(/^(?:Deal|Apply|Inflict) /, '');
+  for (let i = 0; i < parts.length; i++) if (wordCount(parts[i]) > words) parts[i] = parts[i].replace(LEADING_VERB, '');
   // A piece is a complete effect only when it names what the amount is of (damage, Poise, Block ...) or ends in its
   // amount ("Weak 2"); a bare damage type ("Deal 2 Blunt") shares its noun and qualifiers with the next piece.
   const whole = part => /^\d+ [A-Za-z]+ \+ \d+ [A-Za-z]+(?: ×\d+)?$/.test(plain(part).trim()) || (/\d/.test(plain(part)) && (/\d(?: \([^)]*\))?$/.test(plain(part).trim()) || /\b(?:damage|Poise|Ward|Block|HP|SP|Mana|Barrier|Evade|Draw|Strength|Dexterity)\b/i.test(plain(part)) || /^\+\d+ [A-Z]{3} (?:this turn|\(turn\))$/.test(plain(part).trim()))) || COST_RE.test(plain(part));
@@ -132,12 +135,16 @@ function clausesOf(line, { split = true, words = FACE_CLAUSE_WORDS } = {}) {
   return packed.map(html => ({ ...line, html }));
 }
 
+// A bare selection prompt ("Choose a hand card.") is not an effect: the sentence after it says what happens to that card.
+const SELECTION_PROMPT = /^Choose (?:a|an|one|up to \d+|\d+) [^.]*\bcards?\.$/i;
 // Split only complete authored sentences. A following qualification belongs
-// to the preceding sentence (caps, generated-card costs and pronoun riders).
+// to the preceding sentence (caps, generated-card costs and pronoun riders),
+// and the effect after a selection prompt belongs to that prompt.
 function authoredClauses(html) {
   const sentences = SplitAfter(html, /[.!?]\s+(?=[A-Z(])/), out = [];
   for (const sentence of sentences) {
-    if (/^(?:\(|It |This |That |In expanded combat,|Once per turn\b|Once per combat\b)/.test(sentence) && out.length) out[out.length - 1] += ' ' + sentence;
+    const previous = out.length ? plain(out[out.length - 1]).trim() : '';
+    if (out.length && (/^(?:\(|It |This |That |In expanded combat,|Once per turn\b|Once per combat\b)/.test(sentence) || SELECTION_PROMPT.test(previous))) out[out.length - 1] += ' ' + sentence;
     else out.push(sentence);
   }
   return out.map(html => ({ kind: 'effect', html: shorten(html) }));
@@ -178,6 +185,8 @@ export function cardFaceProjection(def, opts = {}) {
   const compact = compactFaceProjection(def, opts);
   const { roomy: budget, roomyLines = opts.lines ?? null, authoredHtml = '', registries = null, effects = def.effects || [] } = opts;
   if (!budget) return compact;
+  // A summary generated from every effect (`summaryComplete`) already says the whole card: the authored prose adds no fact.
+  if (opts.summaryComplete && compact.summarized) return compact;
   const wide = computedFaceProjection(def, { lines: roomyLines, authoredHtml, registries, effects,
     budget: { clauses: budget.clauses, characters: budget.characters, words: budget.clauseWords } });
   // The compact summary appends a card's Exhaust / Ethereal keyword as a cost; the authored-prose path does not, so the
@@ -287,6 +296,15 @@ function computedFaceProjection(def, { lines, authoredHtml, registries, effects,
   const addReal = entry => { if (!clauses.some(clause => clause.html === entry.line.html)) clauses.push({ kind: 'detail', html: entry.line.html }); };
   const primary = fitted.find(entry => !reserved.includes(entry));
   if (primary && !primary.parts && clauses.length && clauses.length < CLAUSES && !clauses.some(clause => clause.kind === 'detail')) addReal(primary);
+  // Owner, 2026-11-17: an authored face never keeps a short stub and silently drops the plain effect after it ("Gain 2
+  // Conceal" without "Hide X hand cards ..."). A later unconditional sentence too long to split keeps its real words while
+  // the face has room. A conditional rider ("If ...", "In Smash stance, ...", "Starstone: ...") still waits in Information.
+  const sizeOf = list => list.reduce((sum, clause) => sum + plain(clause.html).length + 2, 0);
+  const rider = html => CONDITIONAL_START.test(plain(html)) || /^In [^,]+,/.test(plain(html)) || /^[^:]{1,30}:/.test(plain(html));
+  if (!lines && clauses.length) for (const entry of fitted) {
+    if (entry.parts || chosen.has(entry) || reserved.includes(entry) || rider(entry.line.html) || clauses.length >= CLAUSES) continue;
+    if (sizeOf(clauses) + plain(entry.line.html).length <= CHARACTERS) addReal(entry);
+  }
   // A face of downsides alone would read as a card that only hurts: name the effect it could not say.
   if (clauses.length && clauses.length < CLAUSES && !clauses.some(clause => clause.kind === 'detail') && !fitted.some(entry => chosen.has(entry) && !reserved.includes(entry)) && fitted.some(entry => !reserved.includes(entry))) addReal(fitted.find(entry => !reserved.includes(entry)));
   // An unfamiliar long rule is named, never shortened mid-condition. Current

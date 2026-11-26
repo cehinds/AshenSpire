@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-26
 
+- **Clearer card faces with four-line fit and no stubbed prompts** ([#3001](https://github.com/cehinds/AshenSpire/pull/3001), `0.7.5.120`). Authored short faces for cards whose compact face dropped an effect, kept verbs like Deal and full effect text after selection prompts (such as Reframe, Envenom, automatic Counter/Sweep, and Spread X), and tightened card rules text to fit four lines with minimal padding and no orphan words.
 - **Arcane and Divine spell categories, and stance breaks for Sweep and Smash** ([#3000](https://github.com/cehinds/AshenSpire/pull/3000), `0.7.5.120`). Spells now carry explicit Arcane, Divine, Shared, or plain Spell categories based on their school: Arcane and Divine cards show their category mark beside the Spell mark in the card footer, every Spell takes Prepared's +25% damage bonus even when played into another stance, and gear selectors for Arcane and Divine spells apply the larger bonus to Shared spells without double-stacking. In combat, a landed Sweep breaks a Counter stance (clearing the armed reply) and a Smash whose pre-multiplier damage exceeds the target's positive Block breaks a Defend stance, returning the target to Idle, cancelling an enemy's queued Counter or Defend intent, and mirroring the break in multi-hit damage previews. Damage-dealing enemy reactions now answer only actions a melee Counter would cover.
 
 ## 2026-11-25
