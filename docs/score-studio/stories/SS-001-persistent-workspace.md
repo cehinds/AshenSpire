@@ -2,6 +2,8 @@
 
 Status: specified; implementation and acceptance are pending.
 
+Execution handoff: [Claude prompt for this story](SS-001-claude-execution-prompt.md).
+
 This is the first selected task from [Tool features](../FEATURE-CHECKLIST.md#first-delivery-tool-features). It implements the bounded workspace foundation in W03 and the selection-to-inspector wiring needed by W04/W05, rather than every later feature in those packages. See the [prioritized plan](../IMPLEMENTATION-PLAN.md).
 
 ## User story
