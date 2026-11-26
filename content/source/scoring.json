@@ -65,6 +65,13 @@
       "projection": "Break (2 Staggered stacks) ~ every 3 rounds of pressure",
       "why": "Pays only on Break; a third of HP damage."
     },
+    "blockBreak": {
+      "weight": 3,
+      "per": 1,
+      "basis": "flat Block removed before damage",
+      "projection": "guardInteraction -> blockBreak (content/source/mechanics/guardInteraction.json); does not hit Ward or unblocked HP",
+      "why": "Conditional anti-Block removal; worth less than raw HP damage."
+    },
     "heal": {
       "weight": 5,
       "per": 1,

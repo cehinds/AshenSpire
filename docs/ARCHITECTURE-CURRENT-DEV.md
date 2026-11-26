@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `4fc4d4a3541a949998154a4f1e89f50f7b4d272a`
+- Source commit: `e1bd43e8dd6541a7fd45fbd7e97570e33e75abe3`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -29,9 +29,9 @@
 | Component models and behavior records | `src/ui/models/` | 135 |
 | DOM components and observer adapters | `src/ui/components/` | 170 |
 | Code-side content adapters | `src/content/` | 287 |
-| Authoritative JSON/CSV content | `content/source/` | 144 |
+| Authoritative JSON/CSV content | `content/source/` | 145 |
 | Transport | `src/net/` | 0 |
-| Tests | `tests/` | 1536 |
+| Tests | `tests/` | 1537 |
 | Architecture/tooling | `tools/` | 907 |
 
 ## Current implementation signals
@@ -40,7 +40,7 @@
 - Shared presentation projection: `src/ui/viewModels/RunHudViewModel.js`.
 - Immutable presentation records: `src/ui/models/ComponentModel.js` and `BehaviorModel.js`.
 - Headless simulation boundary: `src/engine/` imports model/content, not UI/screens.
-- Authoritative content inputs: 117 JSON file(s) and 25 CSV file(s) under `content/source/`.
+- Authoritative content inputs: 118 JSON file(s) and 25 CSV file(s) under `content/source/`.
 
 ## Automated boundary checks
 
@@ -52,8 +52,8 @@
 
 ## File-shape summary
 
-Tracked files: **6657**.
-Extensions: `.bat` 1, `.cjs` 1, `.cs` 5, `.css` 47, `.csv` 51, `.editorconfig` 1, `.gitattributes` 2, `.gitignore` 3, `.gz` 16, `.html` 24, `.js` 1280, `.json` 2437, `.md` 606, `.mjs` 1936, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 152, `.ps1` 8, `.py` 32, `.sh` 4, `.txt` 20, `.yml` 27, `(none)` 1.
+Tracked files: **6659**.
+Extensions: `.bat` 1, `.cjs` 1, `.cs` 5, `.css` 47, `.csv` 51, `.editorconfig` 1, `.gitattributes` 2, `.gitignore` 3, `.gz` 16, `.html` 24, `.js` 1280, `.json` 2438, `.md` 606, `.mjs` 1937, `.mmd` 1, `.nojekyll` 1, `.nsi` 1, `.png` 152, `.ps1` 8, `.py` 32, `.sh` 4, `.txt` 20, `.yml` 27, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the

@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
@@ -30,10 +32,10 @@ function authoredRules() {
 const context = (patch = {}) => ({ combatMechanics: ResolveMechanicsTable({ ...authoredRules(), ...patch }) });
 
 test('compiled mechanics exactly project every current raw JSON entry, value and field provenance', () => {
-  const dir = new URL('../content/source/mechanics/', import.meta.url);
+  const dir = fileURLToPath(new URL('../content/source/mechanics/', import.meta.url));
   const raw = {};
   for (const name of readdirSync(dir).filter(name => name.endsWith('.json')).sort()) {
-    for (const [id, entry] of Object.entries(JSON.parse(readFileSync(new URL(name, dir), 'utf8')))) {
+    for (const [id, entry] of Object.entries(JSON.parse(readFileSync(join(dir, name), 'utf8')))) {
       assert.equal(Object.hasOwn(raw, id), false, name + ': duplicate mechanic ID ' + id);
       raw[id] = entry;
     }

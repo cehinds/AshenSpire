@@ -27,6 +27,7 @@ export function CardDefinitionToScoreFace(def, { scoring = GetActiveScoring(), r
   face.tags = tags;
   if (def.wither !== undefined) face.wither = def.wither;
   if (def.costGrowth !== undefined) face.costGrowth = structuredClone(def.costGrowth);
+  if (def.blockBreak !== undefined) face.blockBreak = num(def.blockBreak);
   face.magicShare = num(def.magicShare, 0);
 
   const statuses = [];
