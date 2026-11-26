@@ -15,7 +15,7 @@
 // property rules its `props` name are passed as `rules` ({tag: {triggers, passives}}).
 import { GetActiveScoring } from './activeScoring.js';
 import { scoring as shippedScoring } from '../content/generated/scoring.js';
-import { EffectiveCostGrowth, EffectiveWitherLimit } from './combatMechanics.js';
+import { EffectiveCostGrowth, EffectiveWitherLimit, MechanicRule } from './combatMechanics.js';
 
 /** Round half away from zero (the simulator's `rnd`). */
 export const Rnd = (x) => (x >= 0 ? Math.floor(x + 0.5) : -Math.floor(-x + 0.5) + 0); // + 0 keeps -0 out
@@ -137,6 +137,10 @@ export function ScoreCard(c, scoring = GetActiveScoring(), context = null) {
   const area = c.tags.includes(CM.areaTag) ? M.ENEMIES : 1;
   add('SP', S.costs.sp * c.sp); add('MP', S.costs.mp * c.mp);
   addFx('damage', ew(S, 'damage', c.dmg) * area);
+  const blockBreakRule = MechanicRule('blockBreak', context);
+  if (c.blockBreak && (!blockBreakRule || blockBreakRule.enabled !== false) && S.effects.blockBreak) {
+    addFx('blockBreak', ew(S, 'blockBreak', c.blockBreak) * area);
+  }
   addFx('block', ew(S, 'block', c.blk));
   addFx('poise', ew(S, 'poiseDamage', c.poise) * area);
   for (const [s, n, tgt] of c.statuses) {

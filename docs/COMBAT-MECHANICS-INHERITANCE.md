@@ -19,19 +19,18 @@
 - **Parent fields:** `enabled`, `scope` (`"instance" | "card"`), `perUse`, `stamina`, `mana`, `maxSteps`, `uncapped`, `showOnFace`, `easedBySteady`
 - **Status:** Shipped in PR #3005 (`src/engine/cardBehavior.js`, `content/source/scoring.json`).
 
----
-
-## Planned Families (Tackle One by One)
-
 ### 3. `guardInteraction.json` — Anti-Guard & Smash Modes
 - **Hierarchy:** `guardInteraction` → `pierce`, `blockBreak`, `smashVsDefensive`
 - **Parent fields:** `enabled`, `appliesTo: ["block"]`, `affectsWard: false`, `triggersBlockBroken: true`, `previewMatchesLive: true`
 - **Children:**
-  - `pierce`: `{ mode: "bypass", blockIgnoredPerStack: 1, blockedByStatus: "stoneHide" }`
+  - `pierce`: `{ mode: "bypass", blockIgnoredPerStack: 1, blockBypassFraction: 0.2, builtInElements: ["lightning"], skinStatus: "stoneHide", earthSource: "earth" }`
   - `blockBreak`: `{ mode: "destroyBeforeDamage", damageScale: 0.6667, blockBreakRatio: 0.6667 }`
   - `smashVsDefensive`: `{ mode: "multiplier", damageMultiplier: 1.25, defendDamageMultiplier: 1.5, blockFraction: 0.25, poiseFraction: 0.5 }`
-- **Why:** Unifies all anti-guard mechanics and lets you A/B test multiplier Smash vs. flat `Break N Block` Smash without rewriting card pools.
-- **Score Studio & tuning notes:** Add `effects.blockBreak` weight in `content/source/scoring.json` (priced lower than raw damage since it does not touch Ward or unblocked HP); default `defendDamageMultiplier: 1.0` when `blockBreak` mode is active to avoid double-dipping.
+- **Status:** Shipped (`src/model/combatMechanics.js`, `src/engine/gameProfileCombat.js`, `content/source/scoring.json`, `src/model/combatPower.js`).
+
+---
+
+## Planned Families (Tackle One by One)
 
 ### 4. `stanceBreak.json` — Stance Disruption
 - **Hierarchy:** `stanceBreak` → `stanceBreak.sweepVsCounter`, `stanceBreak.smashVsDefend`

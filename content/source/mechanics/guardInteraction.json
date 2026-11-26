@@ -1,0 +1,32 @@
+{
+  "guardInteraction": {
+    "enabled": true,
+    "appliesTo": ["block"],
+    "affectsWard": false,
+    "triggersBlockBroken": true,
+    "previewMatchesLive": true
+  },
+  "pierce": {
+    "extends": "guardInteraction",
+    "mode": "bypass",
+    "blockIgnoredPerStack": 1,
+    "blockBypassFraction": 0.2,
+    "builtInElements": ["lightning"],
+    "skinStatus": "stoneHide",
+    "earthSource": "earth"
+  },
+  "blockBreak": {
+    "extends": "guardInteraction",
+    "mode": "destroyBeforeDamage",
+    "damageScale": 0.6667,
+    "blockBreakRatio": 0.6667
+  },
+  "smashVsDefensive": {
+    "extends": "guardInteraction",
+    "mode": "multiplier",
+    "damageMultiplier": 1.25,
+    "defendDamageMultiplier": 1.5,
+    "blockFraction": 0.25,
+    "poiseFraction": 0.5
+  }
+}
