@@ -91,7 +91,10 @@ export function planCardUpgrade(run, registries, instanceId, { choices = 1, comb
     if (hit && hit.scoring === activeScoring && hit.registries === registries && hit.gameProfile === run.gameProfile) return hit.quote;
   }
 
-  const verdict = canUpgrade(registries, run, instance || { instanceId, cardId: '' });
+  // Eligibility and the offered roll use the same structural menu. This
+  // preparation lives for this synchronous plan only, never in a run cache.
+  const preparation = { projectionScope: new WeakMap() };
+  const verdict = canUpgrade(registries, run, instance || { instanceId, cardId: '' }, { preparation });
   const quote = { ok: verdict.ok, code: verdict.code, reason: verdict.reason, instanceId, n: verdict.n, cost: verdict.cost, free: verdict.free, step: null, before: null, after: null };
   let result = quote;
   if (instance && (verdict.ok || verdict.code === 'stones')) {
@@ -99,10 +102,10 @@ export function planCardUpgrade(run, registries, instanceId, { choices = 1, comb
     const applied = upgradeStepsOf(instance);
     const after = (step) => face(registries, run, { ...instance, upgraded: true, upgradeSteps: [...applied, step] });
     if (count === 1) {
-      const step = vendor ? nextUpgradeOptions(run, instance, base, registries, 1, { vendor })[0] || null : nextUpgradeStep(run, instance, base, registries);
+      const step = vendor ? nextUpgradeOptions(run, instance, base, registries, 1, { vendor, preparation })[0] || null : nextUpgradeStep(run, instance, base, registries, { preparation });
       result = { ...quote, ...(vendor ? { vendor } : {}), step, before: face(registries, run, instance), after: after(step) };
     } else {
-      const options = nextUpgradeOptions(run, instance, base, registries, count, { combos, vendor }).map((step) => ({ step, after: after(step) }));
+      const options = nextUpgradeOptions(run, instance, base, registries, count, { combos, vendor, preparation }).map((step) => ({ step, after: after(step) }));
       result = { ...quote, choices: count, combos, ...(vendor ? { vendor } : {}), step: options[0].step, options, before: face(registries, run, instance), after: options[0].after };
     }
   }

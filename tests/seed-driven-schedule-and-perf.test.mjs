@@ -52,12 +52,15 @@ test('ActUpgradeSchedule and ActRewardSchedule pre-compute an entire Act map det
   const mapGraph = buildActMap(registries, createRng(777), run.seatOrder[0], 1);
   run.mapGraph = mapGraph;
 
+  const cpuStart = process.cpuUsage();
   const t0 = performance.now();
   const upgSchedA = ActUpgradeSchedule(run.seed, mapGraph, { actNumber: 1, scoring: shippedScoring });
   const rewSchedA = PrecomputeActRewardSchedule(run, mapGraph);
   const elapsed = performance.now() - t0;
+  const cpuElapsed = process.cpuUsage(cpuStart);
+  const cpuMs = (cpuElapsed.user + cpuElapsed.system) / 1000;
 
-  assert.ok(elapsed < 50, `Expected full Act upgrade+reward precompute < 50ms, got ${elapsed.toFixed(1)}ms`);
+  assert.ok(elapsed < 50, `Expected full Act upgrade+reward precompute < 50ms, got ${elapsed.toFixed(1)}ms (cpuMs=${cpuMs.toFixed(1)})`);
   assert.ok(Object.keys(upgSchedA.nodes).length > 0, 'pre-computed upgrade nodes');
   assert.ok(Object.keys(rewSchedA.nodes).length > 0, 'pre-computed reward nodes');
 
@@ -142,11 +145,14 @@ test('Blacksmith 60-card picker is fast cold (< 250ms) and instant on re-selecti
   ];
   const beforeJson = JSON.stringify(run);
 
+  const cpuStart = process.cpuUsage();
   const t0 = performance.now();
   const m1 = cardUpgradeModel(registries, run, null, { blacksmith: true });
   const coldMs = performance.now() - t0;
+  const cpuElapsed = process.cpuUsage(cpuStart);
+  const cpuMs = (cpuElapsed.user + cpuElapsed.system) / 1000;
   assert.ok(m1.rows.length >= 40, `expected >= 40 rows, got ${m1.rows.length}`);
-  assert.ok(coldMs < 250, `Expected cold 60-card Blacksmith picker < 250ms, got ${coldMs.toFixed(1)}ms`);
+  assert.ok(coldMs < 250, `Expected cold 60-card Blacksmith picker < 250ms, got ${coldMs.toFixed(1)}ms (cpuMs=${cpuMs.toFixed(1)})`);
 
   // Clicking 10 different cards in the picker hits the WeakMap row cache
   const t1 = performance.now();

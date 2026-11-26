@@ -169,7 +169,7 @@ export function upgradeChoiceCount(def, instance, { blacksmith = false, run = nu
  * (several of one family), for a probe or test that walks the whole menu; no offer uses it. `vendor` ('blacksmith' | 'arcane') weights
  * the kinds by category and reads the vendor's own rarity odds (proposal section 11); none is a rest site, a free upgrade or any other source.
  */
-export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false, everyFamily = false, vendor = '' } = {}) {
+export function nextUpgradeOptions(run, instance, base, registries, count = 1, { scale = 1, salt = '', noAuthored = false, combos = false, everyFamily = false, vendor = '', preparation = {} } = {}) {
   const applied = upgradeStepsOf(instance);
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
@@ -184,7 +184,7 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
     const cardTier = EffectiveTier(visibleRank, instance?.rarityOverride || base.rarity || 'common', activeScoring);
     nodeSpecialty = ActNodeUpgradeStock(run.seed, nodeKey, { vendor, scoring: activeScoring }).forTier(cardTier);
   }
-  const limits = { ...mana, rank, cardRank: visibleRank, playerLevel, instance, scale, registries,
+  const limits = { ...mana, rank, cardRank: visibleRank, playerLevel, instance, scale, registries, preparation,
     damageChanges: checkDamageUpgrade(run, registries, rank, ranked),
     exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}), ...(nodeSpecialty ? { nodeSpecialty } : {}) };
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
@@ -279,8 +279,8 @@ const OTHER_OP_FAMILY = 'form';
  * else the seeded roll; null when no kind is eligible (the card is maxed).
  * Stateless: the same run, instance and count always give the same step.
  */
-export function nextUpgradeStep(run, instance, base, registries) {
-  return nextUpgradeOptions(run, instance, base, registries, 1)[0] || null;
+export function nextUpgradeStep(run, instance, base, registries, { preparation } = {}) {
+  return nextUpgradeOptions(run, instance, base, registries, 1, { preparation })[0] || null;
 }
 
 /**
@@ -288,10 +288,10 @@ export function nextUpgradeStep(run, instance, base, registries) {
  * upgrade costs: 0 while its number n (1-based) is within F, else 1; null when
  * the card is at the 10-upgrade cap or maxed (no step is eligible any more).
  */
-export function upgradeCost(run, instance, def, registries) {
+export function upgradeCost(run, instance, def, registries, { preparation } = {}) {
   // The cap counts slot-using upgrades only, like the slots check: a rank-up bonus step is a gift (paidUpgradeCount).
   if (paidUpgradeCount(instance) + 1 > MAX_CARD_UPGRADES) return null;
-  if (def && instance && nextUpgradeStep(run, instance, def, registries) === null) return null;
+  if (def && instance && nextUpgradeStep(run, instance, def, registries, { preparation }) === null) return null;
   // A rank-up bonus step does not use a free upgrade (paidUpgradeCount).
   return paidUpgradeCount(instance) + 1 <= freeAllowance(instance, def) ? 0 : 1;
 }
@@ -303,7 +303,7 @@ const stonesOf = (run) => (Number.isSafeInteger(run && run.smithingStones) ? run
  * Codes: 'missing' (not a known card), 'armament' (an armament's own cards upgrade
  * with their armament), 'slots' (all the card's slots are used), 'cap' (10 upgrades), 'maxed' (no step is eligible any more), 'stones'.
  */
-export function canUpgrade(registries, run, instance) {
+export function canUpgrade(registries, run, instance, { preparation } = {}) {
   const def = instance && registries.cards.has(instance.cardId) ? registries.cards.get(instance.cardId) : null;
   const n = upgradeCount(instance) + 1;
   const refuse = (code, reason, cost = null) => ({ ok: false, code, reason, cost, n, free: null });
@@ -316,7 +316,7 @@ export function canUpgrade(registries, run, instance) {
   if (paid > slots && paid <= MAX_CARD_UPGRADES) {
     return refuse('slots', `${def.name} has ${slots} upgrade ${slots === 1 ? 'slot' : 'slots'} (rank + 1); raise its rank for more.`);
   }
-  const cost = upgradeCost(run, instance, def, registries);
+  const cost = upgradeCost(run, instance, def, registries, { preparation });
   if (cost === null) {
     return paid > MAX_CARD_UPGRADES ? refuse('cap', `${def.name} is already at ${MAX_CARD_UPGRADES} upgrades.`)
       : refuse('maxed', `${def.name} is fully upgraded.`);

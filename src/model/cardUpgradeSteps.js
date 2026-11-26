@@ -6,7 +6,7 @@
 import { mulberry32 } from './rng.js';
 import { applyUpgradeSteps, MAX_CARD_UPGRADES, MAX_UPGRADE_TAG_STACKS, UPGRADE_RARITIES, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, PHYSICAL_DAMAGE_TYPES, HoldsPacket, RUN_ATTRIBUTE_STATS, hitFloor, currentHits, DrawbackSteps, UpgradeTagStacks, ImprovedScaledAmount } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
-import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
+import { STACK_CAPS, rankedEffectsCapped, VisibleCardRank } from './cardRank.js';
 import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from './cardUpgradeCp.js';
 import * as MechanicalProjection from './cardMechanicalProjection.js';
 import { GetActiveScoring } from './activeScoring.js';
@@ -249,14 +249,14 @@ function resolveEffectiveTier(base, current, limits, scoring) {
 // Numeric tier limits are in the mechanic units the card face displays. The
 // saved step still stores an authored delta; never compare those input units to
 // a mechanical ceiling or offer an input-only change hidden by rounding.
-function mechanicalNumbers(card, registries) {
-  const projected = MechanicalProjection.ProjectCardMechanicalValues(card, { registries }).card;
+function mechanicalNumbers(card, registries, projectionScope) {
+  const projected = MechanicalProjection.ProjectCardMechanicalValues(card, { registries, projectionScope }).card;
   const payloads = [[...(projected.effects || []), ...(card.onTurnEndInHand || [])],
     ...(card.effectVariants || []).map(variant => [...variant.effects, ...(card.onTurnEndInHand || [])])];
   const totals = { damage: 0, block: 0 };
   for (const [index, payload] of payloads.entries()) {
     const effects = index === 0 && !card.onTurnEndInHand?.length ? payload
-      : MechanicalProjection.ProjectCardMechanicalValues({ ...card, effects: index === 0 ? [...(card.effects || []), ...(card.onTurnEndInHand || [])] : payload }, { registries }).card.effects;
+      : MechanicalProjection.ProjectCardMechanicalValues({ ...card, effects: index === 0 ? [...(card.effects || []), ...(card.onTurnEndInHand || [])] : payload }, { registries, projectionScope }).card.effects;
     const sum = { damage: 0, block: 0 };
     const upper = value => typeof value === 'number' && Number.isFinite(value) ? Math.max(0, value) : value === undefined ? 0 : Infinity;
     for (const effect of effects) {
@@ -685,7 +685,7 @@ function optionsByRarity(base, current, applied, limits, scoring = GetActiveScor
   const readNumbers = card => {
     if (byDefinition.has(card)) return byDefinition.get(card);
     const key = JSON.stringify(card);
-    if (!numericCache.has(key)) numericCache.set(key, mechanicalNumbers(card, limits.registries));
+    if (!numericCache.has(key)) numericCache.set(key, mechanicalNumbers(card, limits.registries, limits.preparation?.projectionScope));
     const numbers = numericCache.get(key);
     byDefinition.set(card, numbers);
     return numbers;
@@ -846,7 +846,21 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const applied = FlatSteps(appliedSteps);
   const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
   const activeScoring = limits.scoring || GetActiveScoring();
-  const perRarity = optionsByRarity(baseDef, current, applied, limits, activeScoring);
+  // A service plan asks generic eligibility before selecting vendor offers,
+  // and may retry a short offer with a larger count. Only their pure menu and
+  // CP baseline are shared. Every roll below still owns its RNG/rejections.
+  const preparation = limits.preparation;
+  const preparationKey = preparation ? JSON.stringify([baseDef, current, applied,
+    limits.rank, limits.cardRank, VisibleCardRank(limits.instance || baseDef), limits.instance?.rarityOverride,
+    limits.playerLevel, limits.scale, limits.tier, limits.tierUnlocks, limits.maxRange, limits.exposure]) : '';
+  let prepared = preparation?.value;
+  if (!prepared || prepared.key !== preparationKey || prepared.scoring !== activeScoring
+    || prepared.registries !== limits.registries) {
+    prepared = { key: preparationKey, scoring: activeScoring, registries: limits.registries,
+      perRarity: optionsByRarity(baseDef, current, applied, limits, activeScoring), cpContext: undefined };
+    if (preparation) preparation.value = prepared;
+  }
+  const perRarity = prepared.perRarity;
   // An authored `upgradeMenu` limits the rolled options to the kinds it names (Star Seer's Ethereal: Reaction, drop Ethereal or more Block).
   // A ranked ability card's grade table owns its numbers, so it applies only drawback-removal steps (cardUpgrade.js DrawbackSteps):
   // it is offered only those, at the common size (a combo's second step would be one the grade table ignores), so the offer equals the
@@ -867,7 +881,7 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   // eagerly scoring all ~30-60 (r, kind) permutations upfront. Precompute the card's "before" CP baseline once.
   const checkCp = limits.playerLevel != null;
   const cpContext = checkCp
-    ? PrepareUpgradeStepCpContext({ baseDef, currentDef: current, instance: limits.instance || null, playerLevel: limits.playerLevel, scoring: activeScoring, registries: limits.registries })
+    ? prepared.cpContext ||= PrepareUpgradeStepCpContext({ baseDef, currentDef: current, instance: limits.instance || null, playerLevel: limits.playerLevel, scoring: activeScoring, registries: limits.registries, projectionScope: preparation?.projectionScope })
     : null;
   const cpRejected = new Set();
   const curRarity = limits.instance?.rarityOverride || current.rarity || baseDef.rarity || 'common';

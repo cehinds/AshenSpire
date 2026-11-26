@@ -57,7 +57,7 @@ export function CardScoreReferenceContext(def, { registries } = {}) {
 
 /** Frozen projected definition, per-effect mechanic-unit values, and the exact
  * visible token map. No combat stance, enemy mitigation, or invented CP pins. */
-export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
+export function ProjectCardMechanicalValues(def, { registries, rules, projectionScope } = {}) {
   const previous = projectedDefinitions.get(def);
   if (previous) def = previous.source;
   if (!registries || !rules) {
@@ -66,7 +66,15 @@ export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
   }
   let byRules = contextCaches.get(registries);
   if (!byRules) contextCaches.set(registries, byRules = new WeakMap());
-  const signature = contextSignature(rules), profile = rules.gameProfile || registries.gameProfile;
+  const profile = rules.gameProfile || registries.gameProfile;
+  // Only the service's single synchronous, read-only plan supplies a scope.
+  // Ordinary calls always fingerprint again, including in-place rule edits.
+  let scoped = projectionScope?.get(rules);
+  if (!scoped || scoped.profile !== profile || scoped.registries !== registries) {
+    scoped = { signature: contextSignature(rules), profile, registries };
+    projectionScope?.set(rules, scoped);
+  }
+  const signature = scoped.signature;
   if (previous && previous.registries === registries && previous.rules === rules && previous.signature === signature && previous.profile === profile) return previous.result;
   let context = byRules.get(rules);
   if (!context || context.signature !== signature || context.profile !== profile) {
@@ -83,14 +91,22 @@ export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
   const key = JSON.stringify(authored);
   let data = cache.get(key);
   if (!data) {
-    let card = structuredClone(authored);
+    // Keep one detached source snapshot for later context re-projection. The
+    // clone also normalizes inputs crossing the classic bundle's VM boundary.
+    const source = structuredClone(authored);
+    let card;
     if (profile?.content) {
       // The subject contains only this authored card. Its resource variant is
       // intentionally absent so edited costs remain authoritative; unrelated
       // variants cannot be selected and need not be copied into every probe.
-      const subject = { gameProfile: { ...profile, content: { ...profile.content, cards: [card], resourceVariants: {} } } };
-      card = structuredClone(Profile.projectGameCard(subject, card.id) || card);
+      const subject = { gameProfile: { ...profile, content: { ...profile.content, cards: [source], resourceVariants: {} } } };
+      const projected = Profile.projectGameCard(subject, source.id);
+      // projectGameCard already clones and freezes its entire result. Only
+      // these effect records receive numeric assignments below; leave the
+      // independently owned frozen metadata shared with that detached result.
+      if (projected) card = { ...projected, ...(Array.isArray(projected.effects) ? { effects: projected.effects.map(effect => ({ ...effect })) } : {}) };
     }
+    card ||= structuredClone(source);
     // Apply always-on equipment exactly once, as staticCardTokens does. Its
     // appended effects must participate in bindings and scoring as well.
     if (gear?.rules?.length) card = ApplyGearCardRules(gear.rules, card, gear.state);
@@ -115,7 +131,7 @@ export function ProjectCardMechanicalValues(def, { registries, rules } = {}) {
     }
     for (const [index, fields] of values.entries()) Object.assign(card.effects[index], fields);
     data = freeze({ card, values, tokens, bindings });
-    projectedDefinitions.set(card, { source: structuredClone(authored), registries, rules, profile, signature, result: data });
+    projectedDefinitions.set(card, { source, registries, rules, profile, signature, result: data });
     cache.set(key, data);
     if (cache.size > 512) cache.delete(cache.keys().next().value);
   }
