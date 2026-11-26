@@ -257,30 +257,28 @@ test('item 4: an equipped, Smith-tiered weapon adds no AR; AR is the effective S
   }
 });
 
-test('item 6: enemy fights read the current authored act levels and HP scale; normal enemies retain their authored range', async () => {
+test('item 6: enemy fights read current authored act/floor levels and HP rules', async () => {
   const { createRng } = await import('../src/engine/rng.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');
-  const { characterSettings, enemyPools, enemyItemBonuses } = await import('../engine/kernel/gameConfig.js');
+  const { characterSettings, enemyPools, enemyItemBonuses, enemyFightLevel, enemyEffectiveLevel, enemyAttributeBudget } = await import('../engine/kernel/gameConfig.js');
   const settings = characterSettings(profile.modules);
-  const LEVELS = settings.effectiveLevelByAct || {};
   for (const act of [1, 2, 3]) {
     for (const row of profile.content.enemies) {
       const run = newRun('reaver', 5);
       run.actNumber = act;
       const enemy = createRunCombat({ registries, run, rng: createRng(5), enemyIds: [row.id] }).enemies[0];
       const def = registries.enemies.get(row.id);
-      if (!LEVELS[row.tier]) {
-        // A normal enemy keeps its own level and its authored range, scaled by its tier (enemies.hpScaleByTier, #2820 review).
+      const expected = enemyFightLevel(row, settings, { act, floor: run.floor });
+      const level = settings.enemyLevelScaling ? expected.level : enemyEffectiveLevel(row, settings, act);
+      if (level !== null) assert.equal(enemy.level, level, `act ${act} ${row.tier} ${row.id} level`);
+      const own = enemy.ownAttributes;
+      assert.equal(Object.values(own).reduce((a, b) => a + b, 0), enemyAttributeBudget({ ...row, level: enemy.level }, settings), `${row.id} follows its attribute budget`);
+      if (!settings.effectiveLevelHp || enemyEffectiveLevel(row, settings, 1) === null) {
+        // Enemies without level-row HP keep their authored range at the first floor step.
         const scale = settings.hpScaleByTier?.[row.tier] ?? 1;
         assert.ok(enemy.maxHp >= Math.max(1, Math.round(def.hp[0] * scale)) && enemy.maxHp <= Math.max(1, Math.round(def.hp[1] * scale)), `${row.id} keeps its authored HP range, scaled ${scale}`);
-        assert.ok(enemy.level === undefined || Number.isSafeInteger(enemy.level) && enemy.level > 0, `${row.id} keeps a valid authored level`);
         continue;
       }
-      const level = LEVELS[row.tier][act - 1];
-      assert.equal(enemy.level, level, `act ${act} ${row.tier} ${row.id} level`);
-      // The fight's own seeded spread (variance moves points, never the total).
-      const own = enemy.ownAttributes;
-      assert.equal(Object.values(own).reduce((a, b) => a + b, 0), 5 + level, `${row.id}: budget 5 + level`);
       const pools = enemyPools({ ...row, level, resolvedAttributes: own }, settings, level, enemyItemBonuses(row, profile.content, profile.modules.gear));
       const scale = settings.hpScaleByTier?.[row.tier] ?? 1;
       assert.equal(enemy.maxHp, Math.max(1, Math.round(pools.hp * scale)), `act ${act} ${row.id}: HP is the level's HP row, scaled ${scale}`);

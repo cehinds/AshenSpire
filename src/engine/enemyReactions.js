@@ -17,13 +17,14 @@ import './normalPreview.js';
 import { MeleeCounterCovers, combatProfileOf } from './combatMatchups.js';
 import { reactionPaused } from './reactionState.js';
 import { BandsEnemyHeldBack } from './bandRows.js';
+import { EnemyDefinitionOf, EnemyMoveOf } from '../model/enemyMoveSet.js';
 
 // Version 2 with the flag. Absent (or a version-1 snapshot) means no enemy reactions.
 export const enemyReactionsActive = ctx => ctx.reactionRulesVersion === 2 && ctx.reactionRules?.enemyReactions === true;
 
 // The enemy's reaction moves that list `window`, in authored order.
 export function reactionMovesOf(ctx, enemy, reactionWindow) {
-  const def = ctx.registries?.enemies?.get(enemy.enemyId);
+  const def = EnemyDefinitionOf(ctx.registries, enemy);
   return Object.entries(def?.moves || {}).filter(([id, move]) => move.reaction?.on?.includes(reactionWindow)
     && (!move.locked || (enemy.unlockedMoves || []).includes(id)));
 }
@@ -110,7 +111,7 @@ function entityOf(ctx, ref) {
 export function pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hooks) {
   let spPayment;
   if (core2ActionPolicyEnabled(ctx)) {
-    const move = ctx.registries.enemies.get(enemy.enemyId).moves[moveId];
+    const move = EnemyMoveOf(ctx.registries, enemy, moveId);
     const quote = Rounds.enemyMoveQuote(move, { enemy, moveId, combat: ctx });
     if (quote.totalSp > Rounds.enemyAvailableSp(enemy)) return null;
     if (quote.advanceSp > 0 && BandsEnemyHeldBack(ctx, enemy)) return null; // a held back-row enemy's melee reaction cannot reach (its Advance would only spend a stack)

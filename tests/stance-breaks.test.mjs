@@ -11,21 +11,33 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 // Owner 2026-11-13: Sweep breaks Counter, Smash breaks Defend (damage greater than the Block held before the hit).
 function fight({ maneuver = 'smash', amount = 21, block = 19, stance = 'defend', armCounter = false } = {}) {
   const profile = { camp: 'physical', maneuver, damageType: 'slashing' };
+  const strike = { id: 'fixture.stanceStrike', name: 'Stance fixture', class: 'colorless', rarity: 'common', type: 'attack',
+    cost: 0, manaCost: 0, costRule: 'fixed', keywords: [], tags: ['classification.attack', 'camp:physical', `maneuver:${maneuver}`],
+    effects: [{ op: 'damage', target: 'enemy', amount, combatProfile: profile }], textTemplate: 'Deal {damage} damage.' };
+  const enemy = id => ({ id, name: id, hp: [500, 500], poiseMax: 1000, spPool: 2, firstMove: 'parry', startingRange: 'melee',
+    attributes: { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0 },
+    moves: {
+      parry: { id: 'parry', enemyId: id, intent: 'block', block: 0, counterDamage: 0, sp: 1, weight: 1,
+        tags: ['camp:physical', 'maneuver:counter', 'counter:melee', 'range:melee'] },
+      thrust: { id: 'thrust', enemyId: id, intent: 'attack', damage: 1, sp: 1, weight: 1,
+        tags: ['camp:physical', 'maneuver:attack', 'range:melee'] },
+    } });
   const registries = createRegistries({ ...contentBundle,
-    cards: contentBundle.cards.map(card => card.id === 'kilnCleave' ? { ...card, costRule: 'fixed',
-      effects: [{ op: 'damage', target: 'enemy', amount, combatProfile: profile }] } : card),
-    enemies: contentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy),
+    cards: [...contentBundle.cards, strike],
+    tagging: [...contentBundle.tagging, ...strike.tags.map(tagId => ({ family: 'card', scope: '', objectId: strike.id, tagId }))],
+    enemies: [enemy('gildedKnight'), enemy('wanderingSoldier')],
   });
   const player = { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
-    deck: [{ instanceId: 'hit1', cardId: 'kilnCleave' }], relicIds: [] };
+    deck: [{ instanceId: 'hit1', cardId: strike.id }], relicIds: [] };
   const c = createCombat({ registries, rng: createRng(50), combatExpansionVersion: 2, enemyIds: ['gildedKnight', 'wanderingSoldier'], player });
-  const enemy = c.enemies[0];
-  delete enemy.combatCounter;
-  enemy.combatStance = { camp: 'physical', maneuver: stance };
-  if (armCounter) enemy.combatCounter = { charges: 1, mode: 'melee', damage: 6, poiseDamage: 0, bonus: 0, carrier: { combatProfile: { camp: 'physical', maneuver: 'counter', damageType: 'slashing' } } };
-  enemy.block = block; enemy.wardBlock = 0; enemy.hp = enemy.maxHp = 500;
-  enemy.poiseMeter = { value: 0, max: 1000 }; if (enemy.persistentPoise) enemy.persistentPoise.value = enemy.persistentPoise.max = 1000;
-  return { c, enemy, play: () => dispatch(c, { type: 'playCard', cardInstanceId: 'hit1', targetId: enemy.id }),
+  const target = c.enemies[0];
+  target.plannedMoves = []; // A follow-up is supplied only by the cases that exercise intent advancement.
+  delete target.combatCounter;
+  target.combatStance = { camp: 'physical', maneuver: stance };
+  if (armCounter) target.combatCounter = { charges: 1, mode: 'melee', damage: 6, poiseDamage: 0, bonus: 0, carrier: { combatProfile: { camp: 'physical', maneuver: 'counter', damageType: 'slashing' } } };
+  target.block = block; target.wardBlock = 0; target.hp = target.maxHp = 500;
+  target.poiseMeter = { value: 0, max: 1000 }; if (target.persistentPoise) target.persistentPoise.value = target.persistentPoise.max = 1000;
+  return { c, enemy: target, play: () => dispatch(c, { type: 'playCard', cardInstanceId: 'hit1', targetId: target.id }),
     broken: () => c.eventLog.filter(event => event.type === 'combatStanceBroken') };
 }
 
@@ -67,7 +79,7 @@ test('a Sweep does not break a Defend stance and a Smash does not break a Counte
 test('the Block comparison is strict: more breaks, equal or less holds (21 vs 20, 21 vs 21, 21 vs 23)', () => {
   // The fixture's Smash has 21 damage before matchups; the pool the hit meets is read back from the receipt.
   const seen = {};
-  for (const block of [14, 15, 17]) {
+  for (const block of [20, 21, 23]) {
     const f = fight({ amount: 21, block }); f.play();
     const d = f.c.eventLog.find(e => e.type === 'damageDealt' && e.sourceId === 'player');
     const held = d.blocked + d.blockRemaining;
@@ -116,5 +128,43 @@ test('a broken Counter move with no follow-up leaves the enemy with no move', ()
   assert.equal(enemy.intent.kind, 'idle');
   assert.equal(enemy.combatStance, undefined);
   assert.equal(c.eventLog.filter(event => event.type === 'enemyMoveUnavailable').length, 1);
+});
+
+test('breaking an instance-only level Counter cancels its intent without changing the shared definition or drawing AI', () => {
+  const { c, enemy, play } = fight({ maneuver: 'sweep', amount: 5, block: 0, stance: 'counter', armCounter: true });
+  const definition = c.registries.enemies.get(enemy.enemyId);
+  const before = structuredClone(definition);
+  const moveId = 'level.fixtureCounter';
+  enemy.extraMoves = { [moveId]: { id: moveId, enemyId: enemy.enemyId, intent: 'block', sp: 1,
+    counterDamage: 2, block: 0, weight: 1, tags: ['camp:physical', 'maneuver:counter', 'counter:melee', 'range:melee'] } };
+  enemy.intent = { ...enemy.intent, moveId };
+  enemy.plannedMoves = [];
+  const ai = c.rng.getCounters().enemyAI || 0;
+  play();
+  assert.deepEqual([enemy.intent.moveId, enemy.intent.kind], [null, 'idle']);
+  const gone = c.eventLog.find(event => event.type === 'enemyMoveUnavailable' && event.sourceId === enemy.id);
+  assert.deepEqual([gone.moveId, gone.resource, gone.reason], [moveId, 'stance', 'stanceBroken']);
+  assert.equal(c.rng.getCounters().enemyAI || 0, ai);
+  assert.deepEqual(definition, before);
+  assert.equal(Object.hasOwn(definition.moves, moveId), false);
+});
+
+test('a broken base Counter advances to its instance-only level follow-up without a new AI pick or registry mutation', () => {
+  const { c, enemy, play } = fight({ maneuver: 'sweep', amount: 5, block: 0, stance: 'counter', armCounter: true });
+  const definition = c.registries.enemies.get(enemy.enemyId);
+  const before = structuredClone(definition);
+  const moveId = 'level.fixtureFollowup';
+  enemy.extraMoves = { [moveId]: { id: moveId, enemyId: enemy.enemyId, intent: 'attack', sp: 1,
+    damage: 4, weight: 1, tags: ['camp:physical', 'maneuver:attack', 'range:melee'] } };
+  enemy.plannedMoves = [{ moveId, sp: 1 }];
+  const ai = c.rng.getCounters().enemyAI || 0;
+  assert.doesNotThrow(play);
+  assert.equal(enemy.intent.moveId, moveId);
+  assert.deepEqual(enemy.plannedMoves, []);
+  const gone = c.eventLog.find(event => event.type === 'enemyMoveUnavailable' && event.sourceId === enemy.id);
+  assert.deepEqual([gone.moveId, gone.resource, gone.reason], ['parry', 'stance', 'stanceBroken']);
+  assert.equal(c.rng.getCounters().enemyAI || 0, ai);
+  assert.deepEqual(definition, before);
+  assert.equal(Object.hasOwn(definition.moves, moveId), false);
 });
 

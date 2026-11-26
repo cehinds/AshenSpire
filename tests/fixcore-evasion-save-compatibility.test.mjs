@@ -23,7 +23,8 @@ import { GearSelectorMatches } from '../src/model/gearEffects.js';
 
 const preRegistryRuntime = 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd';
 const registryRuntime = 'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831';
-const catalogRuntime = 'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216';
+const preScalingRuntime = 'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216';
+const catalogRuntime = 'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d';
 const preRegistrySave = () => gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url))).toString('utf8');
 
 test('the real Dev 7dff4b03 save resumes its active fight without changing the old profile or policy', () => {
@@ -84,6 +85,50 @@ function capturedRegistryProfile() {
   assert.equal(profile.lock.runtimeHash, registryRuntime);
   return profile;
 }
+
+test('the exact pre-scaling Dev profile resumes without inheriting enemy floor scaling or level-card moves', () => {
+  // Captured from c5c5ec4a's committed author/catalog. Its resolved hash was
+  // checked against that commit's game.lock.json before storing this archive.
+  const bytes = readFileSync(new URL('./fixtures/pre-enemy-level-scaling-c5c5ec4a-profile.json.gz', import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), 'c186c135c3ac6e870335b9b96a3157fbf3b37bc02bc44019ac28f8398fc3a918');
+  const { sourceCommit, profile } = JSON.parse(gunzipSync(bytes));
+  assert.equal(sourceCommit, 'c5c5ec4a58df620410914a483c042989ea93707b');
+  assert.equal(profile.hash, 'sha256:53f1aebaeafea90ac78083b07b5f3ff1785bf047895c5e314030b771dbb5ea4a');
+  assert.equal(profile.lock.runtimeHash, preScalingRuntime);
+  assert.equal(profile.modules.characters.enemyLevelScaling, undefined);
+  assert.equal(profile.content.enemyLevelCards, undefined);
+  const before = structuredClone(profile);
+  const validated = validateGameProfileSnapshot(profile);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
+  const originalRuntime = coreEvasionCompatibleRuntime(profile, catalogRuntime);
+  assert.equal(originalRuntime, preScalingRuntime);
+  for (const tier of ['minion', 'elite', 'boss']) {
+    const enemyId = profile.content.enemies.find(row => row.tier === tier)?.id;
+    assert.ok(enemyId, `the recorded profile contains ${tier}`);
+    const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+    run.actNumber = 2;
+    run.floor = 2;
+    const low = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [enemyId] });
+    run.floor = 8;
+    const high = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [enemyId] });
+    assert.deepEqual(high.enemies, low.enemies, `${tier}: floor does not change the recorded level, stats or moves`);
+    assert.equal('levelStep' in high.enemies[0], false);
+    assert.equal('extraMoves' in high.enemies[0], false);
+    const snapshot = serializeCombatSnapshot(high);
+    run.combatEntered = { nodeId: 'n1_4', encounterId: 'patrol', snapshot };
+    const manager = createSaveManager(createMemoryStorage());
+    manager.saveRun(run, createRng(511));
+    const loaded = manager.loadRun(registries);
+    assert.ok(loaded, manager.runStatus().reason);
+    assert.deepEqual(loaded.gameProfile, before);
+    const restored = restoreStripped({ registries, snapshot: loaded.combatEntered.snapshot,
+      rng: createRng(511), expectedGameProfile: loaded.gameProfile });
+    assert.deepEqual(restored.gameProfile, before);
+    assert.deepEqual(JSON.parse(JSON.stringify(restored.enemies)), JSON.parse(JSON.stringify(high.enemies)));
+    assert.deepEqual(restored.fixCoreRules, high.fixCoreRules);
+  }
+  assert.deepEqual(profile, before);
+});
 
 test('the genuine c77d profile retains its recorded schoolless Shared spell through save and combat round trips', () => {
   const profile = capturedRegistryProfile();

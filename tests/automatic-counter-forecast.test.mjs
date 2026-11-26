@@ -15,7 +15,8 @@ const { dispatch } = require('src/engine/combat.js');
 // A three-contact Slash needs two SP, including during its initial forecast.
 // Neutral JSON records cross the fixture VM boundary without host prototypes.
 const author = JSON.parse(JSON.stringify({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
-  characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+  // The minion SP cap (characters.enemyLevelScaling.spCap, owner 2026-11-20) is lifted with the pool so the Slash stays funded.
+  characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } }, enemyLevelScaling: { spCap: { minion: 4 } } },
 } }), (_key, value) => value && typeof value === 'object' ? Object.assign(Object.create(null), value) : value);
 const profile = resolveGameProfile(author);
 const base = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
