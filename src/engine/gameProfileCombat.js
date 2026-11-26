@@ -10,6 +10,7 @@ import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { ScaleCardBaseDamage, isSpellCard } from '../model/combatCardProfile.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreWardHpBuffer, EffectiveWardHp, FixCoreWeaponPoiseRules, ReceiptPoiseLoss } from '../model/fixCoreMechanics.js';
+import { EffectivePierceRules, EffectiveSmashGuardRules, EffectiveBlockBreakAmount } from '../model/combatMechanics.js';
 import { WeaponPoiseDamage, StanceHasPoiseMitigation } from '../model/weaponPoise.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
@@ -55,7 +56,9 @@ export function PierceStacks(ctx, target, carrier, profile = carrier?.combatProf
 /** Each current Pierce stack ignores configured Block. A saved fraction-based fight retains its original pricing and Poise split. */
 export function PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak = Infinity, out = null) {
   if (carrier?.combatReaction || !(total > 0)) return 0;
-  const rules = fixCorePierceRules(fixCoreRules(ctx, target));
+  const effectivePierce = EffectivePierceRules(fixCoreRules(ctx, target), ctx);
+  if (!effectivePierce) return 0;
+  const rules = { ...fixCorePierceRules(fixCoreRules(ctx, target)), ...effectivePierce };
   const ignored = Math.max(0, carrier?.gear?.ignoreBlock || 0);
   let bypass;
   if (rules.blockIgnoredPerStack > 0) {
@@ -218,10 +221,18 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const defense = stanceMitigation(ctx, attacking, defending);
   // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals the configured multiplier of its normal damage in place of the
   // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
-  const smashRule = modern && advantage && attacking === 'smash' ? fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)) : null;
+  // Controlled via content/source/mechanics/guardInteraction.json (`smashVsDefensive.mode`: "multiplier" | "flatBreak" | "both").
+  const rawSmashRule = modern && advantage && attacking === 'smash' ? EffectiveSmashGuardRules(fixCoreRules(ctx, target), ctx) : null;
+  const smashRule = rawSmashRule ? { ...fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)), ...rawSmashRule } : null;
+  const smashFlatOnly = smashRule?.mode === 'flatBreak';
+  const flatBlockBreakRequested = modern ? EffectiveBlockBreakAmount(carrier, raw, smashRule, ctx) : 0;
+  if (smashFlatOnly && smashRule.flatBreak && Number.isFinite(smashRule.flatBreak.damageScale) && smashRule.flatBreak.damageScale !== 1) {
+    raw = transition('smash-flat-scale', 'Smash flat-break damage scale', raw, raw * smashRule.flatBreak.damageScale, 'stance', smashRule.flatBreak.damageScale);
+  }
   // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
-  const smashMultiplier = smashRule && defending === 'defend'
-    ? smashRule.defendDamageMultiplier ?? smashRule.damageMultiplier : smashRule?.damageMultiplier;
+  const smashMultiplier = smashRule && !smashFlatOnly
+    ? (defending === 'defend' ? smashRule.defendDamageMultiplier ?? smashRule.damageMultiplier : smashRule.damageMultiplier)
+    : 1;
   const matchupMultiplier = smashRule ? smashMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
   // Owner, 2026-11-17 (stance decisions): a stance advantage and the target's stance weakness (Attack or Smash beating Prepared, and Prepared's melee
   // weakness) never stack: the hit takes the larger of the two. The weakness already sits in `raw`, so the advantage stage adds only what it exceeds.
@@ -242,10 +253,17 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   const evaded = roll !== null ? roll >= hitChance : forecast && fixCoreEnabled(ctx) && hitChance === 0;
   if (evaded) amount = 0;
   let smashBlockBonus = 0;
-  if (smashRule && !evaded && target) {
+  if (smashRule && !smashFlatOnly && !evaded && target) {
     // Read from the Block held before this hit's own absorption.
     smashBlockBonus = Math.floor(smashRule.blockFraction * Math.max(0, target.block || 0));
     if (smashBlockBonus > 0) { sources.push({id:'smash-block-bonus',label:'Smash vs defensive stance: bonus from target Block',amount:smashBlockBonus,requested:amount,effective:amount+smashBlockBonus,stage:'stance',operation:'add'}); amount += smashBlockBonus; }
+  }
+  // Flat Block removal (`guardInteraction` -> `blockBreak`): destroys flat Block before normal Block absorption (never touches Ward).
+  const initialBlockPool = Math.max(0, target?.block || 0);
+  const flatBlockBroken = !evaded && flatBlockBreakRequested > 0 ? Math.min(initialBlockPool, flatBlockBreakRequested) : 0;
+  const effectiveBlockPool = Math.max(0, initialBlockPool - flatBlockBroken);
+  if (flatBlockBroken > 0) {
+    sources.push({ id: 'flat-block-break', label: 'Flat Block break', amount: flatBlockBroken, requested: initialBlockPool, effective: effectiveBlockPool, stage: 'mitigation', operation: 'subtract' });
   }
   // Reflect (owner 2026-10-31, SPEC §17): the target's Reflect stacks cut this hit before Block; the stacks and the pre-cut
   // figure ride on the receipt so the landed hit can send its share back. A reflected, countered or unreflectable hit is not cut.
@@ -271,8 +289,8 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   if (wardBlockFirst) {
     const total = physical + magical;
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
-    const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
-    blockSpent = blockSoak;
+    const blockSoak = Math.min(effectiveBlockPool, total);
+    blockSpent = flatBlockBroken + blockSoak;
     const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
@@ -289,8 +307,8 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
     // A Smash against a defensive stance has no absorption (its Poise loss is Poise damage, below).
     const toPoise = smashRule ? 0 : Math.min(total, poisePool);
-    const blockSoak = Math.min(Math.max(0, target?.block || 0), total - toPoise);
-    blockSpent = blockSoak;
+    const blockSoak = Math.min(effectiveBlockPool, total - toPoise);
+    blockSpent = flatBlockBroken + blockSoak;
     const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
@@ -304,8 +322,8 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     // - After Block and Ward, Poise can mitigate the overflow while Countering, Preparing or Smashing.
     // - Poise damage comes from the attacking weapon (1-3 base, +20% for sceptres/bows/staves, 1.25x Smash, 2x Smash vs Guarding), plus any card poiseDamage effects.
     const total = physical + magical;
-    const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
-    blockSpent = blockSoak;
+    const blockSoak = Math.min(effectiveBlockPool, total);
+    blockSpent = flatBlockBroken + blockSoak;
     const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
@@ -334,8 +352,8 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     }
   } else if (wardHpMode && wardHpPool > 0) {
     const total = physical + magical;
-    const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
-    blockSpent = blockSoak;
+    const blockSoak = Math.min(effectiveBlockPool, total);
+    blockSpent = flatBlockBroken + blockSoak;
     const bypassAmount = PierceBlockIgnored(ctx, target, carrier, profile, total, blockSoak, pierceOut);
     pierceBypassed = Math.min(bypassAmount, blockSoak);
     blocked = blockSoak - pierceBypassed;
@@ -367,7 +385,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     // Owner: Block soaks the whole hit (physical first, then magic); the magic Block leaves meets Barrier, then Ward.
     // Block is spent exactly as the same hit without pierce would spend it (so the invariant holds over a whole action). A pierce hit then
     // lets up to floor(fraction x its damage) of what Block soaked go through instead (owner, 2026-10-26); a reaction carries none.
-    const blockPool = Math.max(0,target?.block || 0);
+    const blockPool = effectiveBlockPool;
     // Owner, 2026-10-31: with Ward off, magic hits Poise FIRST (1:1) and then Block; physical keeps Block first, then Poise.
     const poiseMeetsMagic = fixCoreWardDisabled(ctx);
     const plainPhysicalBlocked = Math.min(blockPool,physical);
@@ -381,9 +399,10 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
       const plainMagicPoise = smashRule ? 0 : Math.min(magical,Math.max(0,poisePoolFull-plainPoise.reduced));
       plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical-plainMagicPoise);
     } else plainMagicBlocked = Math.min(blockPool-plainPhysicalBlocked,magical);
-    blockSpent = plainPhysicalBlocked+plainMagicBlocked;
-    const bypassAmount = PierceBlockIgnored(ctx,target,carrier,profile,physical+magical, blockSpent, pierceOut);
-    pierceBypassed = Math.min(bypassAmount,blockSpent);
+    const plainSoaked = plainPhysicalBlocked+plainMagicBlocked;
+    blockSpent = flatBlockBroken + plainSoaked;
+    const bypassAmount = PierceBlockIgnored(ctx,target,carrier,profile,physical+magical, plainSoaked, pierceOut);
+    pierceBypassed = Math.min(bypassAmount,plainSoaked);
     const piercedPhysicalPart = Math.min(pierceBypassed,plainPhysicalBlocked);
     const physicalBlocked = plainPhysicalBlocked-piercedPhysicalPart;
     const magicBypass = pierceBypassed-piercedPhysicalPart;
@@ -459,7 +478,8 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     ...(wardRouted ? { wardRouted: true } : {}), ...(wardBlockFirst ? { wardBlockFirst: true } : {}),
     hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null && !evaded,
     hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain, ...(poiseMitigationCost !== undefined ? { poiseMitigationCost } : {}), ...(weaponPoiseDamage > 0 ? { weaponPoiseDamage } : {}), ...(poiseSpared ? { poiseSpared } : {}),
-    blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
+    blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? (flatBlockBroken + blocked))), evaded, advantage,
+    ...(flatBlockBroken > 0 ? { blockBrokenFlat: flatBlockBroken } : {}),
     ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,

@@ -108,3 +108,56 @@ export function EffectiveCostGrowth(def, ctx = null) {
     scope: isShared ? 'card' : 'instance',
   };
 }
+
+/**
+ * Effective Pierce guard-interaction rules, inheriting from `guardInteraction` -> `pierce`.
+ * Returns null when disabled via `guardInteraction.enabled === false` or `pierce.enabled === false`.
+ * Preserves historical per-fight saved `fixCoreRules.pierce` defaults without backfilling newer keys.
+ */
+export function EffectivePierceRules(fixCoreRulesObj = null, ctx = null) {
+  const rule = MechanicRule('pierce', ctx);
+  if (rule && rule.enabled === false) return null;
+  if (fixCoreRulesObj) return { enabled: true, mode: rule?.mode || 'bypass', ...(fixCoreRulesObj.pierce || {}) };
+  return { ...(rule || {}) };
+}
+
+/**
+ * Effective Smash-vs-Defensive guard-interaction rules, inheriting from `guardInteraction` -> `smashVsDefensive`.
+ * Returns null when disabled via `guardInteraction.enabled === false` or `smashVsDefensive.enabled === false`.
+ * Preserves historical per-fight saved `fixCoreRules.smashVsDefensive` defaults without backfilling newer keys.
+ * Attaches the resolved `blockBreak` sibling rule as `flatBreak` for `"flatBreak"` and `"both"` modes.
+ */
+export function EffectiveSmashGuardRules(fixCoreRulesObj = null, ctx = null) {
+  const rule = MechanicRule('smashVsDefensive', ctx);
+  if (rule && rule.enabled === false) return null;
+  const flatBreak = MechanicRule('blockBreak', ctx);
+  const resolvedFlat = flatBreak && flatBreak.enabled !== false ? flatBreak : null;
+  if (fixCoreRulesObj) {
+    return {
+      enabled: true,
+      mode: rule?.mode || 'multiplier',
+      ...(fixCoreRulesObj.smashVsDefensive || {}),
+      flatBreak: resolvedFlat,
+    };
+  }
+  return {
+    ...(rule || {}),
+    flatBreak: resolvedFlat,
+  };
+}
+
+/**
+ * Flat Block removed before normal Block absorption (when `blockBreak` is enabled).
+ * Reads explicit `carrier.blockBreak` (if > 0) or derives from `smashRule.mode` (`"flatBreak"` | `"both"`).
+ */
+export function EffectiveBlockBreakAmount(carrier, rawAmount = 0, smashRule = null, ctx = null) {
+  const rule = MechanicRule('blockBreak', ctx);
+  if (rule && rule.enabled === false) return 0;
+  const explicit = Number(carrier?.blockBreak);
+  if (Number.isFinite(explicit) && explicit > 0) return Math.floor(explicit);
+  if (smashRule && (smashRule.mode === 'flatBreak' || smashRule.mode === 'both') && smashRule.flatBreak) {
+    const ratio = Number(smashRule.flatBreak.blockBreakRatio) || 0;
+    return Math.max(0, Math.floor(Math.max(0, Number(rawAmount) || 0) * ratio));
+  }
+  return 0;
+}
