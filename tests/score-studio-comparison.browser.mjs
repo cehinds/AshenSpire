@@ -9,6 +9,9 @@ import { serve } from '../tools/serve.mjs';
 import { scoring } from '../src/content/generated/scoring.js';
 import { GenerateSubclassCatalog } from '../src/model/subclassCardGenerator.js';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
+// Browser plugin not available; use private Playwright contexts with shipped weights.
+const targetRank = 3;
+const targetCp = (targetRank - 1) * scoring.rank.width + 1;
 const evidence = await mkdtemp(join(tmpdir(), 'score-comparison-final-'));
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox'] });
@@ -28,7 +31,7 @@ try {
     // Test instrumentation is served only to this private context; production source stays private.
     await page.route('**/tools/score-studio/studio.js', async route => {
       const response = await route.fetch();
-      await route.fulfill({ response, body: `${await response.text()}\nglobalThis.__comparisonQa={capture:()=>JSON.parse(snapshotState()),seed:(id)=>{state.baselineRanks[id]=3;(state.scoring.overrides ||= {})[id]={rank:4,rarity:'common'};}};` });
+      await route.fulfill({ response, body: `${await response.text()}\nglobalThis.__comparisonQa={capture:()=>JSON.parse(snapshotState()),measure:(id)=>{const card=state.cards.find(row=>row.id===id),face=withRebalancePreviewRegistry(()=>cardDefToFace(clone(card),state.scoring)),raw=ScoreCard(face,state.scoring).raw;return {damage:face.dmg,cp:CombatPower(raw,card.rarity,state.scoring),rank:RankOf(CombatPower(raw,card.rarity,state.scoring),state.scoring)};},seed:(id)=>{state.baselineRanks[id]=3;(state.scoring.overrides ||= {})[id]={rank:4,rarity:'common'};}};` });
     });
     await page.addInitScript(({ scoring, cards }) => localStorage.setItem('ashenspire:scoreStudioDraft:v1', JSON.stringify({ scoring, customCards: cards })), { scoring, cards });
     await page.goto(`${server.url}tools/score-studio/`, { waitUntil: 'domcontentloaded' });
@@ -36,21 +39,22 @@ try {
     await page.locator('#card-selection-mode').check();
     await page.locator('input[data-card-selection="subclass.qa.compact-a"]').check();
     const before = await page.evaluate(() => __comparisonQa.capture());
+    const original = await page.evaluate(id => __comparisonQa.measure(id), cards[0].id);
     await page.locator('#btn-quick-balance-cards').click();
     await page.locator('#rebalance-modal').waitFor();
     assert.equal(await page.locator('#rebal-navigation').isVisible(), false, 'one card without history has no empty navigation row');
     assert.equal(await page.locator('#rebal-card-before .illustrated-card-face').count(), 1);
-    await page.locator('#rebal-target-rank').selectOption('3');
-    await page.locator('#rebal-target-cp').fill('9');
+    await page.locator('#rebal-target-rank').selectOption(String(targetRank));
+    await page.locator('#rebal-target-cp').fill(String(targetCp));
     await page.locator('#rebal-costs-section summary').click();
     await page.locator('#rebal-sp').fill('0'); await page.locator('#rebal-mp').fill('0');
     await page.locator('#rebal-costs-section summary').click();
     await page.locator('#rebal-generate-names').check();
     await page.locator('#btn-rebal-preview').click();
     await page.waitForFunction(() => document.querySelector('#rebal-variation-position').textContent.includes('Variation 1'));
-    assert.match(await page.locator('#rebal-diff').innerText(), /Damage: 3 → 5/);
-    assert.match(await page.locator('#rebal-before-metrics').innerText(), /CP 8/);
-    assert.match(await page.locator('#rebal-after-metrics').innerText(), /CP 9/);
+    assert.match(await page.locator('#rebal-diff').innerText(), new RegExp(`Damage: ${original.damage} → (?!${original.damage}(?:\\s|$))\\d+`), 'preview shows a real damage change under shipped weights');
+    assert.match(await page.locator('#rebal-before-metrics').innerText(), new RegExp(`CP ${original.cp}(?:\\s|$)`));
+    assert.match(await page.locator('#rebal-after-metrics').innerText(), new RegExp(`CP ${targetCp}(?:\\s|$)`), 'preview reaches the requested CP in the real Rank 3 band');
     assert.equal(await page.locator('#rebal-card-navigation').isVisible(), false);
     assert.equal(await page.locator('#rebal-version-navigation').isVisible(), true);
     assert.deepEqual(await page.evaluate(() => __comparisonQa.capture()), before, 'preview does not mutate draft or pins');
@@ -58,7 +62,7 @@ try {
     assert.match(await page.locator('#rebal-variation-position').innerText(), /Original/);
     assert.equal(await page.locator('#rebal-version-navigation').isVisible(), true, 'reverting keeps history reachable');
     await page.locator('#btn-rebal-next-variation').click();
-    assert.match(await page.locator('#rebal-diff').innerText(), /Damage: 3 → 5/);
+    assert.match(await page.locator('#rebal-diff').innerText(), new RegExp(`Damage: ${original.damage} → (?!${original.damage}(?:\\s|$))\\d+`), 'preview shows a real damage change under shipped weights');
     await page.locator('#btn-rebal-reroll').click();
     await page.waitForFunction(() => document.querySelector('#rebal-variation-position').textContent.includes('Variation 2'));
     await page.locator('#btn-rebal-prev-variation').click();
@@ -78,6 +82,10 @@ try {
     await page.waitForFunction(() => !document.querySelector('#rebalance-modal').open);
     const applied = await page.evaluate(() => __comparisonQa.capture());
     assert.notDeepEqual(applied.cards.find(c => c.id === cards[0].id).effects, before.cards.find(c => c.id === cards[0].id).effects);
+    const appliedMetrics = await page.evaluate(id => __comparisonQa.measure(id), cards[0].id);
+    assert.equal(appliedMetrics.cp, targetCp);
+    assert.equal(appliedMetrics.rank, targetRank);
+    assert.notEqual(appliedMetrics.damage, original.damage);
     assert.deepEqual(applied.cards.filter(c => c.id !== cards[0].id), before.cards.filter(c => c.id !== cards[0].id), 'unselected cards remain byte-equivalent');
     await page.locator('#btn-undo').evaluate(node => node.click());
     assert.deepEqual(await page.evaluate(() => __comparisonQa.capture()), before, 'one Undo restores applied card, scoring and baseline ranks');
@@ -108,7 +116,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   await page.route('**/tools/score-studio/studio.js', async route => {
     const response = await route.fetch();
-    await route.fulfill({ response, body: `${await response.text()}\nglobalThis.__comparisonQa={capture:()=>JSON.parse(snapshotState()),seed:(id)=>{state.baselineRanks[id]=3;(state.scoring.overrides ||= {})[id]={rank:4,rarity:'common'};}};` });
+    await route.fulfill({ response, body: `${await response.text()}\nglobalThis.__comparisonQa={capture:()=>JSON.parse(snapshotState()),measure:(id)=>{const card=state.cards.find(row=>row.id===id),face=withRebalancePreviewRegistry(()=>cardDefToFace(clone(card),state.scoring)),raw=ScoreCard(face,state.scoring).raw;return {damage:face.dmg,cp:CombatPower(raw,card.rarity,state.scoring),rank:RankOf(CombatPower(raw,card.rarity,state.scoring),state.scoring)};},seed:(id)=>{state.baselineRanks[id]=3;(state.scoring.overrides ||= {})[id]={rank:4,rarity:'common'};}};` });
   });
   await page.goto(`${server.url}tools/score-studio/`);
   await page.locator('.studio-card-tile').first().waitFor({ timeout: 120000 });

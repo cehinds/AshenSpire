@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { scoring as shippedScoring } from '../src/content/generated/scoring.js';
@@ -28,6 +29,8 @@ import {
   NumericCeilingAtTier,
   CompileTierCatalog,
 } from '../src/model/tierUnlocks.js';
+
+const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
 
 test('EffectiveTier grants +1 tier to Rare cards (Rank 1 Rare == Rank 2 Common == Tier 2)', () => {
   assert.equal(EffectiveTier(0, 'common', shippedScoring), 0);
@@ -104,17 +107,17 @@ test('Refined (drawback easing), Tempered (combat form), and Purified (healing/c
   assert.equal(UpgradeTagStacks(r2, 'refined'), 2);
   assert.equal(UpgradeTagStacks(r3, 'refined'), 3);
   assert.equal(UpgradeTagLabel('upgrade:refined+'), 'Refined+');
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.refined, 1, 20), 6);
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.refined, 2, 20), 12);
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.refined, 3, 20), 24);
+  assert.equal(UpgradeTagSurcharge(historicalScoring.upgradeTags.refined, 1, 20), 6);
+  assert.equal(UpgradeTagSurcharge(historicalScoring.upgradeTags.refined, 2, 20), 12);
+  assert.equal(UpgradeTagSurcharge(historicalScoring.upgradeTags.refined, 3, 20), 24);
 
   // Tempered: combat form & forging steps (poise, hits, range, block, counter) stamp upgrade:tempered
   const t1 = applyUpgradeSteps(card, [{ k: 'poise', n: 2 }]);
   const t2 = applyUpgradeSteps(card, [{ k: 'poise', n: 2 }, { k: 'tag', tag: 'range:reach' }]);
   assert.equal(UpgradeTagStacks(t1, 'tempered'), 1);
   assert.equal(UpgradeTagStacks(t2, 'tempered'), 2);
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.tempered, 1, 20), 4);
-  assert.equal(UpgradeTagSurcharge(shippedScoring.upgradeTags.tempered, 2, 20), 8);
+  assert.equal(UpgradeTagSurcharge(historicalScoring.upgradeTags.tempered, 1, 20), 4);
+  assert.equal(UpgradeTagSurcharge(historicalScoring.upgradeTags.tempered, 2, 20), 8);
 
   // Purified: healing & cleansing upgrade line (fx:heal, fx:cleanse) stamps upgrade:purified
   const p1 = applyUpgradeSteps(card, [{ k: 'fx', fx: 'heal', n: 3 }]);
@@ -127,10 +130,10 @@ test('Refined (drawback easing), Tempered (combat form), and Purified (healing/c
 
   // ScoreCard applies surcharges for refined, tempered, purified
   const baseFace = { ...BaseFace(), sp: 1, dmg: 12 };
-  const s0 = ScoreCard(baseFace, shippedScoring).raw;
-  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:refined'] }, shippedScoring).raw - s0, 6);
-  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:tempered'] }, shippedScoring).raw - s0, 4);
-  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:purified'] }, shippedScoring).raw - s0, 4);
+  const s0 = ScoreCard(baseFace, historicalScoring).raw;
+  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:refined'] }, historicalScoring).raw - s0, 6);
+  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:tempered'] }, historicalScoring).raw - s0, 4);
+  assert.equal(ScoreCard({ ...baseFace, tags: ['upgrade:purified'] }, historicalScoring).raw - s0, 4);
 
   // playingCardModel renders labels & tooltips cleanly
   const strike = registries.cards.get('core.strike');
@@ -338,4 +341,13 @@ test('Purified fx:heal restores HP and fx:cleanse removes Weak in real combat', 
   dispatch(combat, { type: 'playCard', cardInstanceId: 'pur-play' });
   assert.equal(combat.player.hp, 34, 'fx:heal restores 4 HP');
   assert.equal(combat.player.statuses.weak?.stacks, 1, 'fx:cleanse removes 1 stack of Weak');
+});
+
+
+test('shipped refined, tempered and purified surcharges retain their authored multiplicative policy', () => {
+  for (const [family, multiplier, expected] of [['refined', .25, [5, 11.25, 19.0625]], ['tempered', .15, [3, 6.45, 10.4175]], ['purified', .15, [3, 6.45, 10.4175]]]) {
+    assert.equal(shippedScoring.upgradeTags[family].mode, 'multiplicative');
+    assert.equal(shippedScoring.upgradeTags[family].pMultiplier, multiplier);
+    for (let n = 1; n <= 3; n++) assert.ok(Math.abs(UpgradeTagSurcharge(shippedScoring.upgradeTags[family], n, 20) - expected[n - 1]) < 1e-10);
+  }
 });

@@ -3,7 +3,7 @@
 // 2026-10-28). Pure reads of the run: nothing here mutates.
 import { cardRank, rankedEffectsCapped, VisibleCardRank } from './cardRank.js';
 import { mulberry32 } from './rng.js';
-import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES, firstPlainIndex, isPlainEffect } from './cardUpgrade.js';
 
 const MAX_CANDIDATES = 20;
 import * as UpgradeSteps from './cardUpgradeSteps.js';
@@ -12,17 +12,73 @@ import { ActNodeUpgradeStock, NodeScheduleKey } from './actSeedSchedule.js';
 import { EffectiveTier } from './tierUnlocks.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { staticCardTokens } from './playingCard.js';
+// Upgrade planning is reached while these engine/model cycles initialize in
+// the classic bundle. Read the pure receipt dependencies only when invoked.
+import * as Offense from './profileDamageOffense.js';
+import * as StanceRead from './stanceBenefitsRead.js';
+import * as ElementStages from './elementReceiptStages.js';
+import * as ProfileRun from './gameProfileRun.js';
+import * as Gear from './gearEffects.js';
+import * as ItemProperties from './itemProperties.js';
+import * as Stances from './stanceRules.js';
+import * as CardProfile from './combatCardProfile.js';
+import * as CarrierDamage from './carrierDamageType.js';
+import * as FixCore from './fixCoreRulesCache.js';
 
 function checkDamageUpgrade(run, registries, rank, ranked) {
   if (!Number.isFinite(run.gameProfile?.modules?.effects?.baseDamageMultiplier)) return undefined;
   const tokens = (def, atRank) => staticCardTokens(
     atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def, registries, run);
-  let before;
+  let before, intrinsicBefore, receiptContext;
+  const intrinsicDamage = (def, atRank) => {
+    // Conditional payloads, charges and Counter returns have their own runtime
+    // context. Retain the existing static fallback rather than guessing it.
+    if (!run.class || !run.attributes || !registries?.gameProfile || def.effectVariants?.length || def.comboHook
+      || (def.effects || []).some(effect => effect.op === 'grantCardCharge' || effect.op === 'damage' && !isPlainEffect(effect, 'damage'))) return null;
+    const index = firstPlainIndex(def.effects, 'damage');
+    if (index < 0 || CardProfile.combatProfileFor(def).maneuver === 'counter') return null;
+    // The source is detached and first-play only: no statuses, enemy, flux or
+    // prior stance. Construct it lazily, only after a numeric damage candidate
+    // has already passed the shared static-face increase check.
+    if (receiptContext === undefined) {
+      const ratings = ProfileRun.gameProfileRatingReceipt(registries, run);
+      if (!ratings) { receiptContext = null; return null; }
+      const attributes = ProfileRun.gameProfileEffectiveAttributes(registries, run);
+      const source = { id: 'player', kind: 'player', classId: run.class, attributes,
+        ratings: ratings.totals, ratingSources: ratings.sources, statuses: {}, alive: true,
+        itemProps: { ...ItemProperties.ItemPropertySummary(run), ...Gear.GearItemProps(Gear.GearSummary(registries, run.loadout, run.class, run)) } };
+      receiptContext = { source, gear: Gear.GearAlwaysOn(registries, run),
+        ctx: { ...run, registries, fixCoreRules: FixCore.fixCoreRules(run), attributes, enemies: [], phase: 'player', elementFlux: null } };
+    }
+    if (!receiptContext) return null;
+    const { source, ctx, gear } = receiptContext;
+    const rankedDef = atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def;
+    const shown = Gear.ApplyGearCardRules(gear.rules, rankedDef, gear.state);
+    const carrier = CarrierDamage.ResolveCarrierDamageType({ ...shown, cardId: shown.id,
+      combatProfile: { ...CardProfile.combatProfileFor(shown) }, fixCoreSameStance: false }, registries, run.loadout, run.class);
+    const attacker = { ...source, combatStance: Stances.stanceOf(carrier, source) };
+    return Offense.ProfileDamageOffense({ ...ctx, player: attacker }, attacker, null,
+      shown.effects[index].amount, carrier, {
+        getAdd: () => 0, FluxMultiplier: () => 1, defensiveCombatStance: () => undefined,
+        hitWeaknessTriggers: () => [], matchingHitWeaknesses: () => [], weaknessLabel: () => '',
+        AttackDamageMultiplier: StanceRead.AttackDamageMultiplier,
+        StanceWeaknessMultiplier: StanceRead.StanceWeaknessMultiplier,
+        ElementReceiptStages: (...args) => ElementStages.ElementReceiptStages(...args,
+          { stacksOf: () => 0, hasTag: () => false, opponents: () => [], bandsActive: () => false }),
+      }).rawHit;
+  };
   return (current, step, nextRank) => {
     before ??= tokens(current, rank);
-    const after = tokens(applyUpgradeSteps(current, [step]), ranked ? Math.max(rank, nextRank || 0) : rank);
-    return !Object.values(before).some(Number.isFinite)
-      || Object.keys(after).some(key => before[key] !== after[key]);
+    const afterDef = applyUpgradeSteps(current, [step]), afterRank = ranked ? Math.max(rank, nextRank || 0) : rank;
+    const after = tokens(afterDef, afterRank);
+    if (!Object.values(before).some(Number.isFinite)) return true;
+    if (!Object.keys(after).some(key => before[key] !== after[key])) return false;
+    // A real static increase can still disappear in the intrinsic stance and
+    // element chain's final rounding. CP remains on the shared neutral face;
+    // only eligibility uses the engine's pure pre-defense incoming quantity.
+    if (intrinsicBefore === undefined) intrinsicBefore = intrinsicDamage(current, rank);
+    const intrinsicAfter = intrinsicBefore === null ? null : intrinsicDamage(afterDef, afterRank);
+    return intrinsicBefore === null || intrinsicAfter === null || intrinsicAfter > intrinsicBefore;
   };
 }
 

@@ -149,7 +149,7 @@ test('5. Level-correlated rank rewards: L1 -> 0..1, elite +2 -> 0..3, boss +3 ->
   assert.deepEqual(RankBandForLevel({ level: 1, pool: 'normal', rareBoost: true }), { minRank: 0, maxRank: 2 });
   assert.deepEqual(RankBandForLevel({ level: 1, pool: 'elite', rareBoost: false }), { minRank: 0, maxRank: 3 });
   assert.deepEqual(RankBandForLevel({ level: 1, pool: 'boss', rareBoost: false }), { minRank: 0, maxRank: 4 });
-  assert.deepEqual(RankBandForLevel({ level: 3, pool: 'boss', rareBoost: true }), { minRank: 0, maxRank: 7 });
+  assert.deepEqual(RankBandForLevel({ level: 3, pool: 'boss', rareBoost: true }), { minRank: 0, maxRank: 5 }, 'the authored five-rank ceiling clamps higher-level bonuses');
 });
 
 test('6. Cost swap upgrade option (-1 MP +2 SP and -2 SP +1 MP)', () => {
@@ -249,15 +249,16 @@ test('13c. Temporary Core attributes raise maximum HP, SP and MP without refilli
   }
 });
 
-test('14. Recurring buff tag costs +15 CP and pairs with Exhaust', () => {
-  assert.equal(scoring.tags['trait:recurring'].weight, 15);
+test('14. Recurring buff tag costs +10 CP and pairs with Exhaust', () => {
+  assert.equal(scoring.tags['trait:recurring'].weight, 10);
   const base = { id: 'test.buff', name: 'War Stance', rarity: 'common', type: 'skill', cost: 1, staminaCost: 1, manaCost: 0, effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 }] };
   const upgraded = applyUpgradeSteps(base, [{ k: 'fx', fx: 'recurring' }]);
   assert.ok(upgraded.tags.includes('trait:recurring'));
   assert.ok(upgraded.keywords.includes('exhaust'));
 });
 
-test('15. Card upgrades respect rank, CP, and rarity', () => {
+test('15. Card upgrades respect rank, CP, and rarity under the historical budget fixture', () => {
+  const scoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
   // 0-rank common card at CP 0 trying to get -1 SP (+4 CP) -> bumps to uncommon (CP 2 -> Rank 1), allowed if playerLevel >= 1
   // Trying to add recurring (+15 CP) at level 1 -> even at rare (-5 discount -> CP ~10 -> Rank 3), player at level 1 cannot reach Rank 3 -> disallowed!
   const base = { id: 'test.buff', name: 'War Stance', rarity: 'common', type: 'skill', cost: 1, staminaCost: 1, manaCost: 0, effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 }] };
@@ -349,4 +350,18 @@ test('18. Dynamic poise damage appears on the card when attacking and updates vs
   assert.equal(smashGuardingWp, 4, 'Smash vs Guarding dynamically jumps to 2x weapon poise (4)');
   const smashGuardLines = cardFaceLines(smashGuarding.resolvedDefinition, smashGuarding, combat.registries, smashGuarding.faceRules);
   assert.ok(smashGuardLines.some(l => /4.*Poise/i.test(l.html)), 'Smash card face dynamically displays 4 Poise vs Guarding target');
+});
+
+
+test('shipped upgrade budgets retain a common step at the rank edge and promote rarity for the next damage step', () => {
+  const base = { id: 'custom.rarity-budget.fixture', class: 'reaver', rarity: 'common', type: 'attack', cost: 1, staminaCost: 1, manaCost: 0,
+    tags: ['camp:physical', 'source:weapon', 'maneuver:attack', 'trait:unavoidable'], effects: [{ op: 'damage', target: 'enemy', amount: 8 }] };
+  const evaluate = n => EvaluateUpgradeStepCp({ baseDef: base, currentDef: base, instance: { rank: 1 }, step: { k: 'dmg', n }, playerLevel: 1, scoring });
+  const edge = evaluate(1), promoted = evaluate(4);
+  assert.equal(edge.allowed, true); assert.equal(edge.rarity, 'common'); assert.equal(edge.rank, 1);
+  assert.equal(edge.cp, scoring.rank.width);
+  assert.equal(promoted.allowed, true); assert.equal(promoted.rarity, 'uncommon'); assert.equal(promoted.rank, 1);
+  assert.ok(promoted.raw > scoring.rank.width, 'the common printing exceeds the accessible rank');
+  assert.equal(promoted.cp, promoted.raw - scoring.rarity.discount.uncommon);
+  assert.ok(promoted.cp <= scoring.rank.width, 'the authored uncommon discount keeps the upgrade legal');
 });

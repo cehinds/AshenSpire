@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { GenerateSubclassCatalog, SUBCLASS_CATALOG, RefreshSubclassCard } from '../src/model/subclassCardGenerator.js';
 import { ValidateSubclassCatalog } from '../src/model/subclassCatalogExport.js';
@@ -18,6 +19,18 @@ import { botCardTargetId } from '../tools/simbot.mjs';
 import { beginAbilityTurn } from '../src/engine/abilityRiders.js';
 import { planCardUpgrade, commitCardUpgrade } from '../src/model/cardUpgradeService.js';
 import { validateCardTemplates } from '../src/model/validate/templates.js';
+
+const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
+
+function assertMeasuredTarget(meta) {
+  assert.equal(meta.projectedRank,RankOf(meta.projectedCp,scoring),meta.cardId);
+  assert.equal(meta.miss,meta.projectedCp!==meta.targetCp,meta.cardId);
+  if(!meta.miss) assert.equal(meta.projectedRank,meta.requestedRank,meta.cardId);
+  else {
+    assert.ok(meta.projectedRank<=meta.requestedRank,meta.cardId);
+    if(meta.projectedRank<meta.requestedRank) assert.ok(meta.adaptations.includes(`Requested Rank ${meta.requestedRank} is infeasible for this signature at the selected rarity and mechanical ceilings; closest legal result is CP ${meta.projectedCp}, Rank ${meta.projectedRank}. Raise rank or rarity, or revise the signature.`),meta.cardId);
+  }
+}
 
 const catalog = GenerateSubclassCatalog({ seed: 7 });
 
@@ -54,7 +67,7 @@ test('all default recipes share scoring with upgrades and keep authored signatur
     const raw = ScoreCard(CardDefinitionToScoreFace(card, { scoring }), scoring).raw;
     assert.equal(raw, meta.projectedRaw, card.id);
     assert.equal(CombatPower(raw, card.rarity, scoring), meta.projectedCp, card.id);
-    assert.equal(meta.projectedRank, meta.requestedRank, card.id);
+    assertMeasuredTarget(meta);
     assert.equal(meta.miss, meta.projectedCp !== meta.targetCp, card.id);
     assert.ok(card.upgrade, card.id);
     const after = applyUpgradeSteps(card, [{ k: 'authored' }]);
@@ -213,9 +226,25 @@ test('default-rank generation keeps real authored upgrade headroom on the neares
     assert.ok(card.upgrade, card.id);
     const after = applyUpgradeSteps(card, [{ k: 'authored' }]);
     assert.notDeepEqual(ProjectCardMechanicalValues(after).card.effects, ProjectCardMechanicalValues(card).card.effects, card.id);
-    assert.equal(result.metadata[index].projectedRank, result.metadata[index].requestedRank, card.id);
+    assertMeasuredTarget(result.metadata[index]);
     const cp = CombatPower(ScoreCard(CardDefinitionToScoreFace(after, { scoring }), scoring).raw, after.rarity, scoring);
     assert.ok(RankOf(cp, scoring) <= result.metadata[index].requestedRank, card.id);
+  }
+});
+
+test('historical defaults retain exact requested ranks and the Quiet Incision rounded CP plateau',()=>{
+  const scoring=historicalScoring;
+  const result=GenerateSubclassCatalog({seed:'mechanical-export-integration'},{scoring});
+  assert.equal(result.cards.length,180);
+  for(const [index,card] of result.cards.entries()){
+    const meta=result.metadata[index];
+    assert.equal(meta.projectedRank,meta.requestedRank,card.id);
+    assert.equal(meta.miss,meta.projectedCp!==meta.targetCp,card.id);
+    assert.ok(card.upgrade,card.id);
+    const after=applyUpgradeSteps(card,[{k:'authored'}]);
+    assert.notDeepEqual(ProjectCardMechanicalValues(after).card.effects,ProjectCardMechanicalValues(card).card.effects,card.id);
+    const cp=CombatPower(ScoreCard(CardDefinitionToScoreFace(after,{scoring}),scoring).raw,after.rarity,scoring);
+    assert.ok(RankOf(cp,scoring)<=meta.requestedRank,card.id);
   }
   const quiet = result.cards.find(card => card.name === 'Quiet Incision');
   const meta = result.metadata.find(row => row.cardId === quiet.id);

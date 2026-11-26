@@ -65,6 +65,8 @@ const isLocalServer = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 
 // Bootstrap real game registries
 const profile = Profile.resolveGameProfile('default');
+const configuredCustomCardIds = new Set(Profile.gameModule(profile, 'cards')?.mode === 'configured'
+  ? (Profile.gameContent(profile, 'cards') || []).filter(card => card.id.startsWith('custom.')).map(card => card.id) : []);
 const registries = Profile.bindGameProfileRegistries(
   createRegistries(Profile.applyGameProfileToContent(contentBundle, profile)),
   profile
@@ -4823,7 +4825,7 @@ async function checkCardArt() {
 // The studio works on the core card pool only (owner, 2026-11-22).
 function buildCardList() {
   return registries.cards.all()
-    .filter((c) => c && c.id && c.name && !c.ruleTemplate && (c.id.startsWith('core.') || c.id.startsWith('subclass.')))
+    .filter((c) => c && c.id && c.name && !c.ruleTemplate && (c.id.startsWith('core.') || c.id.startsWith('subclass.') || configuredCustomCardIds.has(c.id)))
     .map((c) => clone(c))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

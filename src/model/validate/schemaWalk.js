@@ -168,6 +168,8 @@ export function walkSchema(value, node, path, vctx) {
     case 'num':
       if (typeof value !== 'number' || Number.isNaN(value)) {
         err(path, `Expected number, got ${describe(value)}`);
+      } else if (node.finite && !Number.isFinite(value)) {
+        err(path, `Expected finite number, got ${describe(value)}`);
       } else if (node.int && !Number.isInteger(value)) {
         err(path, `Expected integer, got ${value}`);
       }
@@ -203,7 +205,7 @@ export function walkSchema(value, node, path, vctx) {
         return;
       }
       for (const key of Object.keys(value)) {
-        if (!(key in node.fields)) err(`${path}.${key}`, `Unknown field '${key}'`);
+        if (!Object.hasOwn(node.fields, key)) err(`${path}.${key}`, `Unknown field '${key}'`);
       }
       for (const [key, fieldNode] of Object.entries(node.fields)) {
         if (value[key] === undefined) {
