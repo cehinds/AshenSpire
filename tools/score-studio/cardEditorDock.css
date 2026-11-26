@@ -61,6 +61,8 @@ body.studio-body #studio-customization-pane:not([data-scope="card"]) .inspector-
 body.studio-body #studio-customization-pane:not([data-scope="card"]) :is(.inspector-score-summary, .subclass-upgrade-summary) { display: none; }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host { max-height: 220px; overflow: hidden; }
 body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host .equipment-poker-card { width: 150px; }
+body.studio-body .customization-empty { margin: 0; padding: 16px 12px; }
+body.studio-body .customization-empty[hidden] { display: none; }
 body.studio-body #customization-content { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 body.studio-body .customization-view { min-width: 0; }
 body.studio-body .customization-view[hidden],

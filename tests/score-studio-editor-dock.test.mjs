@@ -249,3 +249,29 @@ test('docked Edit selects and shows Properties in place without opening the dial
   doc.querySelector('#cards-grid [data-card-id="b"] .card-editor-edit-button').click();
   assert.ok(!modal.open);
 }));
+
+test('an invalid or missing selection shows the empty state and disables card actions', () => withKitDom(dom => {
+  const { api, doc, state, calls } = fixture(dom);
+  const pane = doc.getElementById('studio-customization-pane'), empty = doc.getElementById('customization-empty');
+  assert.equal(pane.getAttribute('data-empty'), 'false'); assert.equal(empty.hidden, true);
+  for (const selected of ['gone', null]) {
+    state.selectedCardId = selected;
+    assert.doesNotThrow(() => api.refresh());
+    assert.equal(pane.getAttribute('data-empty'), 'true', String(selected));
+    assert.equal(empty.hidden, false);
+    assert.equal(empty.textContent, 'No card selected. Choose a card in the library.');
+    assert.equal(doc.getElementById('card-inspector').hidden, true, 'stale inspector is hidden');
+    assert.equal(doc.querySelector('.inspector-preview-wrap').hidden, true, 'stale preview is hidden');
+    assert.equal(doc.getElementById('customization-entity-name').textContent, 'No card selected');
+    assert.equal(doc.getElementById('card-editor-rename').disabled, true);
+    assert.equal(doc.getElementById('card-editor-balance').disabled, true);
+    assert.equal(doc.querySelectorAll('#cards-grid .card-editor-edit-button').length, 0, 'no Edit on any tile');
+  }
+  const before = calls.length;
+  doc.getElementById('card-editor-rename').disabled = false; doc.getElementById('card-editor-rename').click();
+  assert.equal(calls.length, before, 'a forced click still cannot act on an invalid card');
+  state.selectedCardId = 'b'; api.refreshEntity();
+  assert.equal(pane.getAttribute('data-empty'), 'false');
+  assert.equal(doc.getElementById('card-inspector').hidden, false);
+  assert.equal(doc.querySelectorAll('#cards-grid [data-card-id="b"] .card-editor-edit-button').length, 1, 'an inspector render alone restores Edit');
+}));

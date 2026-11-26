@@ -38,6 +38,14 @@ export function initCardEditorDock(ctx) {
     node.addEventListener('click', action); return node;
   };
   const selectedId = kind => kind === 'items' ? ctx.getSelectedItemId?.() ?? ctx.state?.selectedItemKey : ctx.getSelectedId?.() ?? ctx.state?.selectedCardId;
+  // A selection is valid only while its definition still exists; card actions
+  // read it at click time so they never act on a stale or different entity.
+  const isValid = kind => {
+    const id = selectedId(kind);
+    if (!id) return false;
+    if (kind === 'items') return ctx.getSelectedItemName ? ctx.getSelectedItemName(id) !== undefined : true;
+    return ctx.state?.cards ? ctx.state.cards.some(card => card.id === id) : true;
+  };
   const selectedName = () => context === 'cards' ? ctx.state?.cards?.find(card => card.id === selectedId(context))?.name : ctx.getSelectedItemName?.(selectedId(context));
   const pane = doc.createElement('aside'); pane.id = 'studio-customization-pane'; pane.className = 'studio-customization-pane';
   pane.setAttribute('aria-label', 'Customization');
@@ -61,6 +69,8 @@ export function initCardEditorDock(ctx) {
   const slots = Object.fromEntries(VIEWS.map(id => {
     const slot = doc.createElement('div'); slot.className = 'customization-view'; slot.dataset.customizationView = id; content.append(slot); return [id, slot];
   }));
+  const empty = doc.createElement('p'); empty.id = 'customization-empty'; empty.className = 'studio-muted customization-empty'; empty.hidden = true;
+  slots.properties.append(empty);
   for (const node of Object.values(properties)) if (node) slots.properties.append(node);
   const attached = new Set();
   function attachViews() {
@@ -92,8 +102,9 @@ export function initCardEditorDock(ctx) {
   const head = doc.createElement('header'); head.className = 'card-editor-modal-head';
   const title = doc.createElement('h2'); title.id = 'card-editor-modal-title';
   const actions = doc.createElement('div'); actions.className = 'card-editor-modal-actions';
-  const rename = button('Rename', () => (context === 'items' ? ctx.renameItem : ctx.renameCard)?.(selectedId(context))); rename.id = 'card-editor-rename';
-  const balance = button('Rebalance power', () => (context === 'items' ? ctx.balanceItem : ctx.balanceCard)?.(selectedId(context))); balance.id = 'card-editor-balance';
+  const actOnSelection = (cardAction, itemAction) => () => { if (isValid(context)) (context === 'items' ? itemAction : cardAction)?.(selectedId(context)); };
+  const rename = button('Rename', actOnSelection(ctx.renameCard, ctx.renameItem)); rename.id = 'card-editor-rename';
+  const balance = button('Rebalance power', actOnSelection(ctx.balanceCard, ctx.balanceItem)); balance.id = 'card-editor-balance';
   const modalDock = button('Dock', () => setDocked(true)); modalDock.id = 'card-editor-modal-dock';
   const closeButton = button('Close', close); closeButton.id = 'card-editor-modal-close';
   actions.append(rename, balance, modalDock, closeButton); head.append(title, actions);
@@ -169,7 +180,7 @@ export function initCardEditorDock(ctx) {
     const stage = kind === 'items' ? tile.querySelector('.studio-item-card-stage') || tile.firstElementChild || tile : tile.querySelector('.studio-card-stage') || tile;
     stage.classList.add('card-editor-art-stage');
     if (kind === 'items') stage.classList.add('studio-item-card-stage');
-    if (id !== selectedId(kind)) { existing?.remove(); return; }
+    if (!isValid(kind) || id !== selectedId(kind)) { existing?.remove(); return; }
     if (existing) { if (existing.parentNode !== stage) stage.append(existing); return; }
     const node = button('', event => { event.stopPropagation(); edit(id, kind); }, 's-btn card-editor-edit-button');
     node.setAttribute('aria-label', `Edit ${def.name || (kind === 'items' ? 'item' : 'card')}`);
@@ -185,23 +196,35 @@ export function initCardEditorDock(ctx) {
     node.addEventListener('keydown', event => event.stopPropagation()); stage.append(node);
   }
   function renderEntity() {
-    const noun = context === 'items' ? 'item' : 'card', name = selectedName() || selectedId(context) || 'none';
+    const noun = context === 'items' ? 'item' : 'card', valid = isValid(context), name = valid ? selectedName() || selectedId(context) : 'none';
     entity.setAttribute('aria-label', context === 'items' ? 'Active item' : 'Active card');
-    entityName.textContent = name;
+    entityName.textContent = valid ? name : `No ${noun} selected`;
     scope.textContent = SCOPE_TEXT[view](noun, name);
+    if (!valid && view === 'properties') scope.textContent = `Choose a ${noun} in the library to edit it.`;
     pane.setAttribute('data-scope', VIEW_SCOPES[view]);
-    for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context;
+    pane.setAttribute('data-empty', String(!valid));
+    // The empty state replaces stale content rather than leaving the last card on show.
+    empty.textContent = `No ${noun} selected. Choose a ${noun} in the library.`; empty.hidden = valid;
+    for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context || !valid;
+    for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context || !valid;
+    rename.disabled = balance.disabled = !valid;
+    // A selection change seen only here (an inspector render) still moves Edit.
+    if (selectionKey() !== decoratedKey) decorateAll();
+  }
+  let decoratedKey = null;
+  const selectionKey = () => ['cards', 'items'].map(kind => `${selectedId(kind)}:${isValid(kind)}`).join('|');
+  function decorateAll() {
+    decoratedKey = selectionKey();
+    for (const tile of doc.querySelectorAll('#cards-grid .studio-card-tile')) decorate(tile, ctx.state?.cards?.find(card => card.id === tile.dataset.cardId) || { id: tile.dataset.cardId }, 'cards');
+    for (const tile of doc.querySelectorAll('#items-grid .item-grid-tile')) decorate(tile, { key: tile.dataset.itemKey, name: ctx.getSelectedItemName?.(tile.dataset.itemKey) }, 'items');
   }
   function refresh() {
     attachViews(); select.value = view;
     for (const [key, slot] of Object.entries(slots)) slot.hidden = key !== view;
-    for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context;
-    renderEntity();
+    decorateAll(); renderEntity();
     title.textContent = view === 'properties' ? `Edit ${selectedName() || (context === 'cards' ? 'card' : 'item')}` : `Customize ${select.querySelector(`option[value="${view}"]`)?.textContent || view}`;
-    rename.hidden = balance.hidden = view !== 'properties'; rename.disabled = balance.disabled = !selectedId(context);
+    rename.hidden = balance.hidden = view !== 'properties';
     for (const node of toggles) { node.textContent = docked ? (node === paneToggle ? 'Undock' : 'Undock editor') : (node === paneToggle ? 'Dock' : 'Dock editor'); node.setAttribute('aria-pressed', String(docked)); }
-    for (const tile of doc.querySelectorAll('#cards-grid .studio-card-tile')) decorate(tile, ctx.state?.cards?.find(card => card.id === tile.dataset.cardId) || { id: tile.dataset.cardId }, 'cards');
-    for (const tile of doc.querySelectorAll('#items-grid .item-grid-tile')) decorate(tile, { key: tile.dataset.itemKey, name: ctx.getSelectedItemName?.(tile.dataset.itemKey) }, 'items');
   }
   select.addEventListener('change', () => setView(select.value));
   dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });

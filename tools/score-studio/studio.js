@@ -1620,7 +1620,14 @@ function renderAddFeatureOptions({ pickBest = false } = {}) {
 
 function renderInspector() {
   const def = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[0];
-  if (!def) return;
+  if (!def) {
+    // No card left to show: clear the stale preview and let the pane show its empty state.
+    document.getElementById('inspector-card-preview').replaceChildren();
+    document.getElementById('inspector-sheet-title').textContent = '';
+    state.selectedCardId = null;
+    cardEditorDockUi?.refresh();
+    return;
+  }
   state.selectedCardId = def.id;
   cardEditorDockUi?.refreshEntity?.();
 
@@ -2903,7 +2910,12 @@ function selectStudioItem(key) {
 
 function renderItemInspector() {
   const entry = state.items.find((x) => x.key === state.selectedItemKey) || state.items[0];
-  if (!entry) return;
+  if (!entry) {
+    document.getElementById('item-preview-host')?.replaceChildren();
+    state.selectedItemKey = null;
+    cardEditorDockUi?.refresh();
+    return;
+  }
   state.selectedItemKey = entry.key;
   cardEditorDockUi?.refreshEntity?.();
   populateItemTraitControls();
