@@ -4,7 +4,7 @@ import { withKitDom } from './helpers/dom.mjs';
 import { initCardEditorDock, CARD_EDITOR_DOCK_KEY } from '../tools/score-studio/cardEditorDock.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from '../tools/score-studio/addCardTile.js';
 
-function fixture(dom, stored = new Map()) {
+function fixture(dom, stored = new Map(), extra = {}) {
   const { document: doc } = dom;
   const create = doc.createElement;
   doc.createElement = tag => {
@@ -33,6 +33,7 @@ function fixture(dom, stored = new Map()) {
     renameCard: id => calls.push(['renameCard', id]), balanceCard: id => calls.push(['balanceCard', id]),
     renameItem: id => calls.push(['renameItem', id]), balanceItem: id => calls.push(['balanceItem', id]),
     onViewChange: view => calls.push(['view', view]),
+    ...extra,
   };
   const cardInput = doc.getElementById('edit-name'), itemInput = doc.getElementById('item-edit-name');
   const api = initCardEditorDock(ctx);
@@ -274,4 +275,32 @@ test('an invalid or missing selection shows the empty state and disables card ac
   assert.equal(pane.getAttribute('data-empty'), 'false');
   assert.equal(doc.getElementById('card-inspector').hidden, false);
   assert.equal(doc.querySelectorAll('#cards-grid [data-card-id="b"] .card-editor-edit-button').length, 1, 'an inspector render alone restores Edit');
+}));
+
+test('narrow screens switch between the library and the editor without losing the active card', () => withKitDom(dom => {
+  const media = { matches: true, addEventListener() {} };
+  const { api, doc, state } = fixture(dom, new Map(), { matchMedia: query => { media.query = query; return media; }, narrowQuery: '(max-width: 900px)' });
+  assert.equal(media.query, '(max-width: 900px)');
+  const body = doc.body, nav = doc.getElementById('customization-narrow-nav');
+  const [library, editor] = nav.querySelectorAll('button');
+  assert.ok(body.classList.contains('customize-narrow'));
+  assert.ok(!body.classList.contains('customize-panel-editor'), 'the library is the default panel');
+  assert.equal(library.textContent, 'Library'); assert.equal(editor.textContent, 'Card: Alpha');
+  assert.equal(library.getAttribute('aria-pressed'), 'true'); assert.equal(editor.getAttribute('aria-pressed'), 'false');
+  assert.ok(doc.getElementById('customization-narrow-nav-items'), 'items get their own nav');
+  // Selecting a tile only selects; it does not jump to the editor.
+  state.selectedCardId = 'b'; api.refresh();
+  assert.ok(!body.classList.contains('customize-panel-editor'));
+  assert.equal(editor.textContent, 'Card: Beta');
+  editor.click();
+  assert.ok(body.classList.contains('customize-panel-editor'));
+  assert.equal(editor.getAttribute('aria-pressed'), 'true');
+  assert.equal(doc.activeElement, doc.getElementById('customization-entity-name'));
+  library.click();
+  assert.ok(!body.classList.contains('customize-panel-editor'));
+  assert.equal(state.selectedCardId, 'b', 'returning keeps the active card');
+  assert.equal(doc.activeElement.dataset.cardId, 'b', 'focus returns to the active tile');
+  doc.querySelector('#cards-grid [data-card-id="b"] .card-editor-edit-button').click();
+  assert.ok(body.classList.contains('customize-panel-editor'), 'Edit opens the editor panel');
+  assert.ok(!doc.getElementById('card-editor-modal').open);
 }));

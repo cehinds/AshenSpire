@@ -122,3 +122,18 @@ body.studio-body #card-editor-modal textarea { max-width: 100%; box-sizing: bord
   body.studio-body #card-editor-modal .inspector-preview-wrap { flex-wrap: wrap; min-width: 0; }
   body.studio-body #card-editor-modal .form-grid { grid-template-columns: minmax(0, 1fr); }
 }
+/* Narrow: one coordinated panel at a time, chosen by the sticky nav. */
+body.studio-body .customization-narrow-nav { display: none; }
+body.studio-body.customize-narrow .customization-narrow-nav {
+  display: flex; flex-wrap: wrap; gap: 8px; position: sticky; top: var(--customization-nav-top, 0px); z-index: 15;
+  padding: 8px max(var(--studio-gap-2, 8px), env(safe-area-inset-right, 0px)) 8px max(var(--studio-gap-2, 8px), env(safe-area-inset-left, 0px));
+  background: var(--st-surface); border-bottom: 1px solid var(--st-border);
+}
+body.studio-body.customize-narrow .customization-narrow-nav .s-btn { flex: 1 1 0; min-width: 0; min-height: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.studio-body.customize-narrow .customization-narrow-nav .s-btn[aria-pressed="true"] { border-color: var(--st-accent); color: var(--st-accent); }
+body.studio-body.customize-narrow:not(.customize-panel-editor) .cards-layout > .studio-customization-pane { display: none; }
+body.studio-body.customize-narrow.customize-panel-editor .cards-layout > .cards-gallery-pane { display: none; }
+body.studio-body.customize-narrow.customize-panel-editor .cards-layout > .studio-customization-pane { width: 100%; height: auto; max-height: none; overflow: visible; border-top: 0; }
+body.studio-body.customize-narrow.customize-panel-editor #studio-customization-pane #customization-content { overflow: visible; }
+body.studio-body.customize-narrow #studio-customization-pane .card-inspector:not([hidden]) { display: flex; position: static; inset: auto; height: auto; overflow: visible; }
+body.studio-body.customize-narrow .cards-layout > .inspector-resizer { display: none; }

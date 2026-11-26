@@ -46,7 +46,8 @@ export function initCardEditorDock(ctx) {
     if (kind === 'items') return ctx.getSelectedItemName ? ctx.getSelectedItemName(id) !== undefined : true;
     return ctx.state?.cards ? ctx.state.cards.some(card => card.id === id) : true;
   };
-  const selectedName = () => context === 'cards' ? ctx.state?.cards?.find(card => card.id === selectedId(context))?.name : ctx.getSelectedItemName?.(selectedId(context));
+  const nameOf = kind => kind === 'cards' ? ctx.state?.cards?.find(card => card.id === selectedId(kind))?.name : ctx.getSelectedItemName?.(selectedId(kind));
+  const selectedName = () => nameOf(context);
   const pane = doc.createElement('aside'); pane.id = 'studio-customization-pane'; pane.className = 'studio-customization-pane';
   pane.setAttribute('aria-label', 'Customization');
   const toolbar = doc.createElement('div'); toolbar.className = 'customization-toolbar';
@@ -96,6 +97,20 @@ export function initCardEditorDock(ctx) {
       node.setAttribute('aria-controls', 'studio-customization-pane'); row.append(node); toggles.push(node);
     }
   }
+  // Narrow screens show the library or the editor, never both squeezed. The
+  // panel is page state only; the active card is kept across switches.
+  const narrowMedia = (ctx.matchMedia || (query => globalThis.matchMedia?.(query)))(ctx.narrowQuery || '(max-width: 900px)');
+  let panel = 'library';
+  const navs = [];
+  for (const [key, layout] of Object.entries(layouts)) {
+    if (!layout) continue;
+    const nav = doc.createElement('nav'); nav.id = key === 'cards' ? 'customization-narrow-nav' : 'customization-narrow-nav-items';
+    nav.className = 'customization-narrow-nav'; nav.setAttribute('aria-label', key === 'cards' ? 'Card workspace' : 'Item workspace');
+    const library = button('Library', () => showLibrary(key), 's-btn customization-nav-library'); library.dataset.narrowPanel = 'library';
+    const editor = button('', () => showEditor(key), 's-btn customization-nav-editor'); editor.dataset.narrowPanel = 'editor';
+    editor.setAttribute('aria-controls', 'studio-customization-pane');
+    nav.append(library, editor); layout.prepend(nav); navs.push({ key, library, editor });
+  }
 
   const dialog = doc.createElement('dialog'); dialog.id = 'card-editor-modal'; dialog.className = 'card-editor-modal';
   dialog.setAttribute('aria-labelledby', 'card-editor-modal-title');
@@ -111,13 +126,44 @@ export function initCardEditorDock(ctx) {
   const modalBody = doc.createElement('div'); modalBody.className = 'card-editor-modal-body';
   dialog.append(head, modalBody); doc.body.append(dialog);
 
-  function focusReturn() {
-    const kind = returnTarget?.kind || context, id = returnTarget?.id || selectedId(kind);
+  function tileTarget(kind, id) {
     const grid = doc.getElementById(kind === 'items' ? 'items-grid' : 'cards-grid');
     const tile = [...(grid?.querySelectorAll(kind === 'items' ? '.item-grid-tile' : '.studio-card-tile') || [])].find(node => (node.dataset.itemKey || node.dataset.cardId) === id);
     // Item tiles are plain divs. Their Edit action is a real focusable button,
     // unlike the tile itself (whose focus() is ignored by native browsers).
-    const target = kind === 'items' ? tile?.querySelector('.card-editor-edit-button') || tile : tile;
+    return kind === 'items' ? tile?.querySelector('.card-editor-edit-button') || tile : tile;
+  }
+  function focusReturn() {
+    const kind = returnTarget?.kind || context, id = returnTarget?.id || selectedId(kind);
+    tileTarget(kind, id)?.focus?.({ preventScroll: true });
+  }
+  function applyPanel() {
+    const narrow = !!narrowMedia?.matches, editing = narrow && docked && panel === 'editor';
+    doc.body.classList.toggle('customize-narrow', narrow);
+    // The nav sticks just below the sticky Studio top bar.
+    if (narrow) doc.body.style?.setProperty?.('--customization-nav-top', `${Math.round(doc.querySelector('.studio-topbar')?.getBoundingClientRect?.().height || 0)}px`);
+    doc.body.classList.toggle('customize-panel-editor', editing);
+    for (const nav of navs) {
+      nav.library.setAttribute('aria-pressed', String(!editing));
+      nav.editor.setAttribute('aria-pressed', String(editing));
+    }
+  }
+  function setPanel(value) {
+    if (!['library', 'editor'].includes(value)) return;
+    panel = value; applyPanel();
+  }
+  function showEditor(kind) {
+    setContext(kind);
+    if (!docked) { openModal(); return; }
+    setPanel('editor');
+    pane.scrollIntoView?.({ block: 'nearest' });
+    entityName.focus?.({ preventScroll: true });
+  }
+  // Back to the library, with the active card in view and focused.
+  function showLibrary(kind) {
+    setPanel('library');
+    const target = tileTarget(kind, selectedId(kind));
+    target?.scrollIntoView?.({ block: 'center' });
     target?.focus?.({ preventScroll: true });
   }
   function dockPane() {
@@ -170,7 +216,7 @@ export function initCardEditorDock(ctx) {
   // Docked editing never opens a dialog: show Properties in place and move
   // focus to the entity heading, never into a form field.
   function showProperties() {
-    setView('properties');
+    setView('properties'); setPanel('editor');
     pane.scrollIntoView?.({ block: 'nearest' });
     entityName.focus?.({ preventScroll: true });
   }
@@ -208,6 +254,10 @@ export function initCardEditorDock(ctx) {
     for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context || !valid;
     for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context || !valid;
     rename.disabled = balance.disabled = !valid;
+    for (const nav of navs) {
+      const navName = isValid(nav.key) ? nameOf(nav.key) || selectedId(nav.key) : 'none';
+      nav.editor.textContent = `${nav.key === 'items' ? 'Item' : 'Card'}: ${navName}`;
+    }
     // A selection change seen only here (an inspector render) still moves Edit.
     if (selectionKey() !== decoratedKey) decorateAll();
   }
@@ -221,7 +271,7 @@ export function initCardEditorDock(ctx) {
   function refresh() {
     attachViews(); select.value = view;
     for (const [key, slot] of Object.entries(slots)) slot.hidden = key !== view;
-    decorateAll(); renderEntity();
+    decorateAll(); renderEntity(); applyPanel();
     title.textContent = view === 'properties' ? `Edit ${selectedName() || (context === 'cards' ? 'card' : 'item')}` : `Customize ${select.querySelector(`option[value="${view}"]`)?.textContent || view}`;
     rename.hidden = balance.hidden = view !== 'properties';
     for (const node of toggles) { node.textContent = docked ? (node === paneToggle ? 'Undock' : 'Undock editor') : (node === paneToggle ? 'Dock' : 'Dock editor'); node.setAttribute('aria-pressed', String(docked)); }
@@ -265,6 +315,7 @@ export function initCardEditorDock(ctx) {
       event.preventDefault(); setContext(key); setWidth(width + (event.key === 'ArrowLeft' ? 20 : -20));
     });
   }
+  narrowMedia?.addEventListener?.('change', applyPanel);
   setContext('cards'); setDocked(docked); setView(view);
-  return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, showProperties, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
+  return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, showProperties, setPanel, getPanel: () => panel, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
 }

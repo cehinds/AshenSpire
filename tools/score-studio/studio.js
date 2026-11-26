@@ -4924,7 +4924,7 @@ async function boot() {
     onOpen: () => cardEditorDockUi?.setView('decks'),
     onRowSelect: () => cardEditorDockUi?.showProperties(),
   });
-  cardEditorDockUi = initCardEditorDock({ state, selectCard: selectStudioCard,
+  cardEditorDockUi = initCardEditorDock({ state, selectCard: selectStudioCard, narrowQuery: NARROW_LAYOUT_QUERY,
     renameCard: () => { const input = document.getElementById('edit-name'); input.focus(); input.select(); },
     balanceCard: id => studioToolsUi.openBalanceSelection([id]),
     selectItem: selectStudioItem, getSelectedItemId: () => state.selectedItemKey,
