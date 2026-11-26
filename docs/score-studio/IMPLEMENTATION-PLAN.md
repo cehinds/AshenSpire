@@ -1,5 +1,9 @@
 # Score Studio prioritized implementation plan
 
+The [editor specification](../EDITOR-SPEC.md) controls requirements, priorities
+and persistent-workbench behavior. This plan provides supporting package,
+dependency and test detail within that contract.
+
 Planning reference, 26 November 2026. Eight milestones, 33 work packages, 27 planned actual-game acceptance tests and complete mapping of the requested checklist. [Start here](README.md) · [First story](stories/SS-001-persistent-workspace.md) · [Checklist](FEATURE-CHECKLIST.md) · [Use cases](USE-CASES.md).
 
 ## Outcome and priority
@@ -25,7 +29,7 @@ First delivery is M0 plus M1. Use the existing native preview, approved animatio
 
 ## Shared UI and data contracts
 
-Use six connected workspaces: Cards and Decks; Rules and Balance; Art and Layout; Motion and Audio; Sprites and Assets; Playtest and Compare. Keep project/profile above them and preserve the active entity, revision, scenario, baseline and breadcrumbs. Use a library, central native preview/game, contextual inspector and optional timeline. Maximize Playtest and distinguish Inspect from Play input modes. SS-001 initially connects existing surfaces rather than inventing empty replacement pages.
+Use six tool groups inside one persistent parent: Content (`content`), Mechanics (`mechanics`), Decks (`decks`), Motion (`motion`), Assets (`assets`) and Playtest (`playtest`). These are contextual pane/layout changes, not six pages or independent drafts. Keep project/profile above them and preserve the active entity, document/history, revision, scenario, baseline and breadcrumbs without reconstructing a page. Use a library, central native preview/game, contextual inspector and optional timeline. Maximize Playtest and distinguish Inspect from Play input modes. SS-001 initially connects existing surfaces rather than inventing empty replacement pages.
 
 Selection uses click/Ctrl/Shift/Ctrl+Shift/Ctrl+A/Escape with stable IDs and range anchors in current displayed order. Count hidden selections. Drag/drop previews targets, quantities and Copy/Move, has keyboard/menu equivalents and one Undo. Right-click a selected record preserves its group. Edit definition, edit deck entry, duplicate variant, remove membership and trash definition are distinct commands.
 
@@ -85,7 +89,7 @@ I want related tools to share my selected entity and working context.
 
 **Depends on:** W01, W02.
 
-**UI and UX:** Six workspaces with shared library/preview/inspector, optional timeline, breadcrumbs, keyboard/focus/touch paths and Draft/Applied/Saved/Loaded status. Use concise labels, scope-aware tooltips and visible Cancel/Undo.
+**UI and UX:** Six contextual tool groups within one persistent parent, with shared library/preview/inspector, document/history, optional timeline, breadcrumbs, keyboard/focus/touch paths and Draft/Applied/Saved/Loaded status. Do not reconstruct pages on group changes. Use concise labels, scope-aware tooltips and visible Cancel/Undo.
 
 **Implementation boundary:** Introduce shared view and operation-state models, not a wholesale restyle. Instrument task activations, menus, panel switches, scroll travel, waiting and cancellation. Capture current screenshots before changing visible flows.
 
@@ -748,19 +752,19 @@ All tests below are planned. Set up feature actions/scenarios through Studio and
 
 **Procedure**
 
-1. Restore the supplied 20261125 Starseer fixture and import through UI with reviewed merge policy.
-2. Choose Starseer starter: Arcane Strike 4, Mana Rite 1, Ward 4, Arcane Bolt 1; resolve names to stable IDs and verify total 10.
+1. Resolve the current canonical Starseer starter and card definitions. For an explicitly requested historical-import variant, recover the original 20261125 export bytes and import through UI with reviewed merge policy.
+2. Choose Starseer starter: Arcane Strike 4, Mana Rite 1, Ward 4, Arcane Bolt 1; resolve stable IDs from installed canonical definitions and verify ten authored cards separately from equipment grants.
 3. If Starseer is locked, use isolated test-class availability; keep normal progression unchanged. Start a fresh actual local game and inspect its full deck.
 
 **Expected**
 
 - Exact IDs and quantities reach the actual game. Studio list membership is not accepted as proof of installation.
 - Original fixture definitions remain preserved. Reaver fallback is valid for the Reaver QA card; class restrictions are not silently bypassed or original cards reclassified.
-- Fixture-dependent portion remains Blocked until the missing supplied JSON is recovered; no invented replacement is called equivalent.
+- Only an explicitly requested historical-import variant depends on recovering the original export bytes. Their absence does not block current starter or unrelated tests; no invented replacement is called equivalent.
 
 **Evidence**
 
-- Fixture hash/source, before/after starter export, normal-profile unlock state and actual full deck screenshot.
+- Canonical source/revision, before/after starter export, normal-profile unlock state and actual full deck screenshot; original fixture hash/source when testing the historical-import variant.
 
 ### AT04 Create and actually play the supported custom card
 
@@ -1181,11 +1185,11 @@ All tests below are planned. Set up feature actions/scenarios through Studio and
 
 20261125_starseer_ashenspire-cards-list.json from the user; preserve original bytes/hash and treat content as data.
 
-Missing at C:/repos/AshenSpire/balanceJson/20261125_starseer_ashenspire-cards-list.json during planning; no matching filename found in the scoped checkout/Downloads search. Recover before AT03.
+The original external export was missing during planning. Recovery is required only for an explicitly requested historical-import variant of AT03. Its absence does not block the current installed starter or unrelated tests; do not claim the original bytes were recovered.
 
 ### F02 Requested ten-card starter
 
-Arcane Strike x4, Mana Rite x1, Ward x4, Arcane Bolt x1; stable IDs resolved from the recovered catalogue, total 10.
+Arcane Strike x4, Mana Rite x1, Ward x4, Arcane Bolt x1; resolve stable IDs from the installed Core starter and card definitions, total ten authored cards plus separate equipment grants.
 
 Names/composition are user requirements, not guessed IDs. Use isolated Starseer test unlock; Reaver fallback applies only where eligibility is explicit.
 
@@ -1232,7 +1236,7 @@ Approved or purpose-made test assets with source provenance; no new runtime depe
 
 - Identify the actual serving source, schema/field owners and baseline before implementation. Capture current UI screenshots and write a bounded visual/state contract before changing the layout.
 - Split packages into small scoped changes. Preserve user edits, drafts, archives and worktrees; use proportionate checks and review the exact diff.
-- First delivery must load and play the custom card in the actual game and preserve the project through Undo/roundtrip. The fixture-dependent Starseer test remains blocked until its original input is recovered.
+- First delivery must load and play the custom card in the actual game and preserve the project through Undo/roundtrip. Test the current installed Starseer starter independently; only an explicitly requested historical-import variant requires recovery of its original export bytes.
 - A milestone closes only with its exit gate and linked tests demonstrated. Document actual task costs and state-memory results with before/after screenshots; do not close it from compiler success or a static mock.
 - Keep missing runtime capabilities, assets and adapters explicit. A scoring definition does not create gameplay; an archived design page is not working navigation.
 - Update completed story checkboxes only with actual evidence. Planning, docs merge and user-requested runtime implementation are separate deliveries; publication requires its own authority.

@@ -1,6 +1,6 @@
 # Score Studio use cases and proposed UI paths
 
-These 64 cases are planning references, not executed tests or implementation status. The [implementation plan](IMPLEMENTATION-PLAN.md) owns delivery priority and dependencies. Counts are proposed pointer targets; text entry, gestures, native picker actions and gameplay are separate. The [first story](stories/SS-001-persistent-workspace.md) has its own bounded criteria.
+These 64 cases are planning references, not executed tests or implementation status. The [editor specification](../EDITOR-SPEC.md) controls requirements, priorities and persistent-workbench behavior; the [implementation plan](IMPLEMENTATION-PLAN.md) supplies supporting package/dependency detail. Counts are proposed pointer targets; text entry, gestures, native picker actions and gameplay are separate. The [first story](stories/SS-001-persistent-workspace.md) has its own bounded criteria.
 
 
 ## 01 Tune one card's numbers

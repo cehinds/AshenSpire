@@ -168,7 +168,7 @@
         "W01",
         "W02"
       ],
-      "ui_ux": "Six workspaces with shared library/preview/inspector, optional timeline, breadcrumbs, keyboard/focus/touch paths and Draft/Applied/Saved/Loaded status. Use concise labels, scope-aware tooltips and visible Cancel/Undo.",
+      "ui_ux": "Six contextual tool groups within one persistent parent, with shared library/preview/inspector, document/history, optional timeline, breadcrumbs, keyboard/focus/touch paths and Draft/Applied/Saved/Loaded status. Do not reconstruct pages on group changes. Use concise labels, scope-aware tooltips and visible Cancel/Undo.",
       "implementation": "Introduce shared view and operation-state models, not a wholesale restyle. Instrument task activations, menus, panel switches, scroll travel, waiting and cancellation. Capture current screenshots before changing visible flows.",
       "reuse": [
         "R01",
@@ -1085,17 +1085,17 @@
       "id": "AT03",
       "title": "Build the exact requested ten-card Starseer starter",
       "procedure": [
-        "Restore the supplied 20261125 Starseer fixture and import through UI with reviewed merge policy.",
-        "Choose Starseer starter: Arcane Strike 4, Mana Rite 1, Ward 4, Arcane Bolt 1; resolve names to stable IDs and verify total 10.",
+        "Resolve the current canonical Starseer starter and card definitions. For an explicitly requested historical-import variant, recover the original 20261125 export bytes and import through UI with reviewed merge policy.",
+        "Choose Starseer starter: Arcane Strike 4, Mana Rite 1, Ward 4, Arcane Bolt 1; resolve stable IDs from installed canonical definitions and verify ten authored cards separately from equipment grants.",
         "If Starseer is locked, use isolated test-class availability; keep normal progression unchanged. Start a fresh actual local game and inspect its full deck."
       ],
       "expected": [
         "Exact IDs and quantities reach the actual game. Studio list membership is not accepted as proof of installation.",
         "Original fixture definitions remain preserved. Reaver fallback is valid for the Reaver QA card; class restrictions are not silently bypassed or original cards reclassified.",
-        "Fixture-dependent portion remains Blocked until the missing supplied JSON is recovered; no invented replacement is called equivalent."
+        "Only an explicitly requested historical-import variant depends on recovering the original export bytes. Their absence does not block current starter or unrelated tests; no invented replacement is called equivalent."
       ],
       "evidence": [
-        "Fixture hash/source, before/after starter export, normal-profile unlock state and actual full deck screenshot."
+        "Canonical source/revision, before/after starter export, normal-profile unlock state and actual full deck screenshot; original fixture hash/source when testing the historical-import variant."
       ],
       "status": "Planned; not run by this implementation-plan task"
     },
@@ -1610,12 +1610,12 @@
       "id": "F01",
       "title": "Original requested Starseer import",
       "definition": "20261125_starseer_ashenspire-cards-list.json from the user; preserve original bytes/hash and treat content as data.",
-      "availability": "Missing at C:/repos/AshenSpire/balanceJson/20261125_starseer_ashenspire-cards-list.json during planning; no matching filename found in the scoped checkout/Downloads search. Recover before AT03."
+      "availability": "The original external export was missing during planning. Recovery is required only for an explicitly requested historical-import variant of AT03. Its absence does not block the current installed starter or unrelated tests; do not claim the original bytes were recovered."
     },
     {
       "id": "F02",
       "title": "Requested ten-card starter",
-      "definition": "Arcane Strike x4, Mana Rite x1, Ward x4, Arcane Bolt x1; stable IDs resolved from the recovered catalogue, total 10.",
+      "definition": "Arcane Strike x4, Mana Rite x1, Ward x4, Arcane Bolt x1; resolve stable IDs from the installed Core starter and card definitions, total ten authored cards plus separate equipment grants.",
       "availability": "Names/composition are user requirements, not guessed IDs. Use isolated Starseer test unlock; Reaver fallback applies only where eligibility is explicit."
     },
     {
@@ -4142,5 +4142,6 @@
     }
   ],
   "repository_reference": "docs/score-studio/README.md",
-  "first_story": "docs/score-studio/stories/SS-001-persistent-workspace.md"
+  "first_story": "docs/score-studio/stories/SS-001-persistent-workspace.md",
+  "specification_ref": "../EDITOR-SPEC.md"
 }

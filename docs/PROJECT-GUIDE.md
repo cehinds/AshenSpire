@@ -43,6 +43,10 @@ nothing is sent automatically; review the captured messages before sharing.
 
 ## Development and design
 
+[Editor tool specification](EDITOR-SPEC.md) — canonical requirements for the
+persistent authoring workbench, reusable UI/JSON contracts and local-game acceptance.
+Current operating and mechanical-scoring guides remain supporting implementation references.
+
 [Score Studio implementation reference](score-studio/README.md) · [First workspace story](score-studio/stories/SS-001-persistent-workspace.md)
 
 [Contributing](../CONTRIBUTING.md) · [Delivery workflow](FEATURE-DELIVERY-LOOP.md)

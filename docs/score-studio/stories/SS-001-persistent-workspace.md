@@ -2,7 +2,9 @@
 
 Status: specified; implementation and acceptance are pending.
 
-Execution handoff: [Claude prompt for this story](SS-001-claude-execution-prompt.md).
+The [editor specification](../../EDITOR-SPEC.md) controls the persistent parent
+workbench. SS-001 delivers a bounded foundation within that parent; it does not
+redefine the complete workbench or the later tool groups.
 
 This is the first selected task from [Tool features](../FEATURE-CHECKLIST.md#first-delivery-tool-features). It implements the bounded workspace foundation in W03 and the selection-to-inspector wiring needed by W04/W05, rather than every later feature in those packages. See the [prioritized plan](../IMPLEMENTATION-PLAN.md).
 

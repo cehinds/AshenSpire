@@ -1,5 +1,8 @@
 # Score Studio feature checklist
 
+The [editor specification](../EDITOR-SPEC.md) controls requirements, priorities
+and persistent-workbench behavior; this checklist preserves supporting coverage.
+
 All unchecked items are requested/planned scope, not implementation claims. See the [prioritized plan](IMPLEMENTATION-PLAN.md) for dependencies and the [first user story](stories/SS-001-persistent-workspace.md) before starting the first task.
 
 ## First delivery tool features
