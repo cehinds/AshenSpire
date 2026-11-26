@@ -322,3 +322,18 @@ test('the resizer is a named separator with Home and End limits and an understan
   assert.equal(resize.getAttribute('aria-valuetext'), '780 pixels, minimum 340');
   assert.equal(press('Tab').defaultPrevented, false, 'other keys pass through');
 }));
+
+test('repeated refresh, view and context changes build the header once and add no listeners', () => withKitDom(dom => {
+  const { api, doc } = fixture(dom);
+  const edit = doc.querySelector('#cards-grid .card-editor-edit-button');
+  const navEditor = doc.querySelector('#customization-narrow-nav .customization-nav-editor');
+  const listenerCount = node => [...node.listeners.values()].reduce((sum, list) => sum + list.length, 0);
+  const before = [edit, navEditor, doc.getElementById('customization-view')].map(listenerCount);
+  for (let run = 0; run < 5; run++) { api.refresh(); api.refreshEntity(); api.setView(['design', 'weights', 'decks', 'properties'][run % 4]); }
+  api.setContext('items'); api.setContext('cards'); api.setView('properties');
+  for (const id of ['customization-entity', 'customization-entity-name', 'customization-scope', 'customization-empty', 'customization-narrow-nav', 'customization-narrow-nav-items', 'inspector-card-preview', 'item-preview-host']) assert.equal(doc.querySelectorAll(`#${id}`).length, 1, id);
+  assert.equal(doc.querySelectorAll('.inspector-preview-wrap').length, 1);
+  assert.equal(doc.querySelectorAll('#cards-grid .card-editor-edit-button').length, 1);
+  assert.equal(doc.querySelector('#cards-grid .card-editor-edit-button'), edit, 'the same Edit node is kept');
+  assert.deepEqual([edit, navEditor, doc.getElementById('customization-view')].map(listenerCount), before);
+}));
