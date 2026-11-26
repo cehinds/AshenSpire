@@ -2,7 +2,7 @@ import { ApplyGearCardRules, GearAlwaysOn } from './gearEffects.js';
 import { t } from './strings.js';
 import { projectGameCard } from './gameProfile.js';
 import { configuredModule } from './profileModule.js';
-import { CardSpellTraditions, SpellTraditionLabel } from './spellTraditions.js';
+import { CardSpellTraditions, SpellCategory, SpellTraditionLabel } from './spellTraditions.js';
 import { FaceCostProfile } from './faceCosts.js';
 import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 import { core2MultiHitRulesEnabled } from './core2ActionPolicy.js';
@@ -156,7 +156,7 @@ export function CardPresentationSigils(def, { registries = null, rules = null, p
   if (presentationRules && !SpellTraditionsActive(presentationRules)
     || identity.action !== 'spell' && profile.camp !== 'spell') return identity;
   const card = { ...def, combatProfile: profile };
-  return freeze({ ...identity, traditions: freeze(CardSpellTraditions(card)), displayLabel: SpellTraditionLabel(card) });
+  return freeze({ ...identity, traditions: freeze(CardSpellTraditions(card)), category: SpellCategory(card), displayLabel: SpellTraditionLabel(card) });
 }
 
 /** Live saved policy plus the matching quote's detached baseline metadata. */

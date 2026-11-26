@@ -93,10 +93,12 @@ test('weapon-art source metadata preserves every authored Counter identity on th
     const card = renderCard(registries, ref, { inspection: false });
     assert.equal(card.dataset.combatManeuver, 'counter', cardId);
     assert.match(markupFor(card), new RegExp(`data-primary-sigil="${mode === 'spell' ? 'spell' : 'counter'}"`), cardId);
-    const labels = mode !== 'spell' ? ['Counter'] : cardId === 'progression-rime-mirror' ? ['Arcane', 'Divine'] : ['Arcane'];
+    // A Shared Spell (Rime Mirror, Frost) wears the Spell mark alone; an Arcane one adds its category mark (owner 2026-11-20).
+    const shared = cardId === 'progression-rime-mirror';
+    const labels = mode !== 'spell' ? ['Counter'] : shared ? ['Spell'] : ['Spell', 'Arcane'];
     for (const label of labels) assert.match(markupFor(card), new RegExp(`role="img" aria-label="${label}"`), cardId);
     const traditions = card.querySelectorAll('.combat-sigil-tradition');
-    assert.equal(traditions.length, mode === 'spell' ? labels.length : 0, `${cardId}: exact tradition icon count`);
+    assert.equal(traditions.length, mode === 'spell' && !shared ? 1 : 0, `${cardId}: exact tradition icon count`);
     const rules = { gameProfile: { modules: { effects: { mode: 'legacy' } } } };
     const legacy = renderCard(registries, ref, { inspection: false, rules });
     assert.match(markupFor(legacy), new RegExp(`role="img" aria-label="${mode === 'spell' ? 'Spell' : 'Counter'}"`), `${cardId}: saved legacy identity`);

@@ -18,6 +18,7 @@ import { GEAR_TYPES } from '../content/gearTypes.js';
 import { parseMod } from './loadout/modStrings.js';
 import { equippedPieces, equippedIn } from './loadout/equipped.js';
 import { isFormula } from './formulas.js';
+import { SpellCategory, SpellTraditionsActive } from './spellTraditions.js';
 
 const TARGET_CONDS = new Set(['target']);
 
@@ -63,6 +64,7 @@ export const GearVocabularyEnabled = (subject, spec) => GearTypeEffectsEnabled(s
 
 export function GearSummary(registries, loadout, classId, subject = registries) {
   const typeEffects = GearTypeEffectsEnabled(subject);
+  const traditions = SpellTraditionsActive({ gameProfile: subject?.gameProfile });
   const fields = registries?.equipment?.modFields || {};
   const worn = loadout ? equippedPieces(registries, loadout, classId) : [];
   const out = { cardRules: [], hitRules: [], turnGrants: [], playGrants: [], resist: {}, statPoints: {}, flags: {}, startStatuses: {},
@@ -72,6 +74,8 @@ export function GearSummary(registries, loadout, classId, subject = registries) 
   for (const piece of worn) for (const [modIndex, raw] of GearPieceMods(piece, typeEffects).entries()) {
     const mod = ParseGearMod(raw), spec = mod && fields[mod.field];
     if (!spec) continue;
+    // Arcane and Divine selectors match nothing on a profile saved without spell traditions.
+    if (!traditions && GEAR_TYPES.selectors[mod.selector]?.spellCategory) continue;
     // The built-in staff/sceptre Focus is one shared effect. Piece signatures and robe discounts remain independent.
     const type = GearTypeRow(piece);
     const focus = modIndex < (type?.mods?.length || 0) && ['staff', 'sceptre'].includes(type?.id) && mod.field === 'cardMana' && mod.conds.some(cond => cond.name === 'stance' && cond.arg === 'prepared');
@@ -130,7 +134,28 @@ export function GearSelectorMatches(selector, arg, def) {
   if (row.argTag && arg && !tags.includes(row.argTag.replace('{arg}', arg))) return false;
   if (row.totalCost !== undefined && Array.isArray(def?.effects) && totalCostOf(def) !== row.totalCost) return false;
   if (row.hasEffect && !(def?.effects || []).some(effect => effect?.op === row.hasEffect)) return false;
+  // An Arcane or Divine selector also names a Shared Spell (docs/plans/spell-categories.md, section 5).
+  if (row.spellCategory && ![row.spellCategory, 'shared'].includes(SpellCategory(def))) return false;
   return true;
+}
+
+const categoryOf = rule => GEAR_TYPES.selectors[rule.selector]?.spellCategory || null;
+const groupTotal = (rules, category, key, field) => rules.filter(rule => categoryOf(rule) === category && key(rule) === field)
+  .reduce((sum, rule) => sum + (Number(rule.amount ?? rule.stacks) || 0), 0);
+
+/**
+ * A Shared Spell draws on Arcane and Divine bonuses, but they do not stack: per field (`key`), only the larger group total counts
+ * (ties keep Arcane); bonuses from every other selector still add on top (owner 2026-11-20). `rules` already match the card.
+ */
+export function GearCategoryOverlap(rules, def, key = rule => rule.stat) {
+  if (SpellCategory(def) !== 'shared') return rules;
+  const fields = new Set(rules.filter(rule => categoryOf(rule)).map(key));
+  const dropped = new Set();
+  for (const field of fields) {
+    const arcane = groupTotal(rules, 'arcane', key, field), divine = groupTotal(rules, 'divine', key, field);
+    dropped.add(`${Math.abs(divine) > Math.abs(arcane) ? 'arcane' : 'divine'}|${field}`);
+  }
+  return rules.filter(rule => !categoryOf(rule) || !dropped.has(`${categoryOf(rule)}|${key(rule)}`));
 }
 
 /** A rule is triggered (it reads the fight: a stance, a first play, a target) rather than always-on; triggered numbers colour on the face. */
@@ -209,8 +234,9 @@ function projectGearEffects(rules, def) {
  * Block, DEX and a second STR travel on `def.gear` to the hit carrier.
  */
 export function ApplyGearCardRules(rules, def, state = {}) {
-  const eligible = (rules || []).filter(rule => !GearRuleNeedsTarget(rule) && rule.conds.every(cond => GearCondMet(cond, state)));
-  if (!eligible.length || !def) return def;
+  const conditioned = (rules || []).filter(rule => !GearRuleNeedsTarget(rule) && rule.conds.every(cond => GearCondMet(cond, state)));
+  if (!conditioned.length || !def) return def;
+  const eligible = GearCategoryOverlap(conditioned.filter(rule => !categoryOf(rule) || GearSelectorMatches(rule.selector, rule.arg, def)), def);
   const live = eligible.filter(rule => GearSelectorMatches(rule.selector, rule.arg, def));
   if (!live.length && !(def.effectVariants || []).some(variant => eligible.some(rule => EFFECT_STATS.has(rule.stat) && GearSelectorMatches(rule.selector, rule.arg, { ...def, effects: variant.effects })))) return def;
   const base = projectGearEffects(eligible, def), common = new Set();
@@ -244,16 +270,20 @@ export function ApplyGearCardRules(rules, def, state = {}) {
   return next;
 }
 
+/** A rule condition that may read the target. */
+const GearRuleCondMet = (cond, target, state) => (GEAR_TYPES.conditions[cond.name]?.kind === 'target' ? GearTargetCondMet(cond, target) : GearCondMet(cond, state));
+/** The field a hit rider changes: the status it applies or removes, or a push. */
+const riderField = rule => rule.push ? 'push' : rule.remove ? 'remove:' + rule.remove : 'status:' + rule.status;
+
 /**
  * GearHitAdds(rules, carrier, target, state) -> { damage, addDex } from the rules that read the target (Retreat-stacked, back row, front row).
  * `carrier` holds the card's tags; a rule's other conditions still apply.
  */
 export function GearHitAdds(rules, carrier, target, state = {}) {
   const out = { damage: 0, addDex: 0, triggered: false };
-  for (const rule of rules || []) {
-    if (!GearRuleNeedsTarget(rule) || !['damage', 'addDex'].includes(rule.stat)) continue;
-    if (!GearSelectorMatches(rule.selector, rule.arg, carrier)) continue;
-    if (!rule.conds.every(cond => (GEAR_TYPES.conditions[cond.name]?.kind === 'target' ? GearTargetCondMet(cond, target) : GearCondMet(cond, state)))) continue;
+  const live = (rules || []).filter(rule => GearRuleNeedsTarget(rule) && ['damage', 'addDex'].includes(rule.stat)
+    && GearSelectorMatches(rule.selector, rule.arg, carrier) && rule.conds.every(cond => GearRuleCondMet(cond, target, state)));
+  for (const rule of GearCategoryOverlap(live, carrier)) {
     if (rule.stat === 'damage') out.damage += rule.amount; else out.addDex += rule.amount;
     out.triggered = true;
   }
@@ -263,10 +293,10 @@ export function GearHitAdds(rules, carrier, target, state = {}) {
 /** Hit riders: the statuses a matching hit applies and the stacks it removes, for `proposalHitRules`. */
 export function GearHitRiders(rules, carrier, target, state = {}) {
   const applies = [], removes = [], pushes = [];
-  for (const rule of rules || []) {
-    if (state.poiseBreak && !rule.conds.some(cond => cond.name === 'breaks')) continue; // the break pass runs the break riders only
-    if (!GearSelectorMatches(rule.selector, rule.arg, carrier)) continue;
-    if (!rule.conds.every(cond => (GEAR_TYPES.conditions[cond.name]?.kind === 'target' ? GearTargetCondMet(cond, target) : GearCondMet(cond, state)))) continue;
+  // The break pass runs the break riders only.
+  const live = (rules || []).filter(rule => !(state.poiseBreak && !rule.conds.some(cond => cond.name === 'breaks'))
+    && GearSelectorMatches(rule.selector, rule.arg, carrier) && rule.conds.every(cond => GearRuleCondMet(cond, target, state)));
+  for (const rule of GearCategoryOverlap(live, carrier, riderField)) {
     if (rule.push) pushes.push({ bands: rule.push });
     else if (rule.remove) removes.push({ status: rule.remove, stacks: rule.stacks }); else applies.push({ status: rule.status, stacks: rule.stacks });
   }
@@ -291,7 +321,7 @@ const COND_WORDS = { stance: arg => `in ${arg[0].toUpperCase()}${arg.slice(1)} s
   holding: arg => `while holding ${arg[0].toUpperCase()}${arg.slice(1)}`,
   weapon: arg => `with a ${humanize(arg)}`, breaks: () => 'that break Poise', target: arg => ({ retreating: 'against a Retreat-stacked target', backRow: 'against a back-row enemy', frontRow: 'against a front-row enemy' })[arg] || arg };
 const SELECTOR_WORDS = { any: 'cards', attack: 'attacks', sweep: 'Sweeps', smash: 'Smashes', counter: 'Counter cards', defend: 'Defend cards', anyAttack: 'physical attacks',
-  zeroCost: '0-cost attacks', blockCard: 'Block cards', spell: 'spells', healSpell: 'healing spells' };
+  zeroCost: '0-cost attacks', blockCard: 'Block cards', spell: 'spells', healSpell: 'healing spells', arcaneSpell: 'Arcane spells', divineSpell: 'Divine spells' };
 
 /** GearModText(registries, raw) -> one line of item text generated from the mod string and the vocabulary row ("Smashes: +1 Poise damage"). */
 export function GearModText(registries, raw) {

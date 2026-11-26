@@ -68,10 +68,44 @@ function counterEligible(ctx, target, carrier, profile) {
   if (profile.maneuver === 'sweep') return false;
   if (mode === 'spell' || mode === 'magic') return isSpell(profile) || physicalProjectile(profile);
   if (mode === 'ranged') return physicalProjectile(profile);
+  return meleeCounterCovers(ctx, profile);
+}
+
+/** True when a melee Counter would cover this incoming profile: physical Attack/Smash, not Force/Piercing, not a projectile. */
+export function meleeCounterCovers(ctx, profile) {
+  if (!profile) return false;
+  const rules = matchupRules(ctx);
+  const cfg = rules.counter;
   return profile.camp === 'physical'
     && cfg.meleeIncomingManeuvers.includes(profile.maneuver)
     && !physicalProjectile(profile)
     && !cfg.meleeBypassDamageTypes.includes(rules.damageAliases?.[profile.damageType] || profile.damageType);
+}
+
+/**
+ * Stance breaks (owner, 2026-11-13). A landed Sweep breaks a Counter stance (armed reply cleared); a Smash whose damage is
+ * greater than the (non-zero) Block the target held before the hit breaks a Defend stance. The stance becomes Idle (none). Same for
+ * players and enemies. `incoming` is the damage that met Block; `blockBefore` is the Block held before this hit.
+ * Returns { from, by } or null. A stagger that already replaced the stance is not broken twice.
+ */
+export function breakStanceOnHit(ctx, source, target, carrier, { blockBefore = 0, incoming = 0, silent = false } = {}) {
+  const profile = combatProfileOf(carrier);
+  const stance = target?.combatStance;
+  if (!profile || !stance || !(incoming > 0) || !(target.hp > 0)) return null;
+  let from = null;
+  if (profile.maneuver === 'sweep' && stance.maneuver === 'counter') from = 'counter';
+  else if (profile.maneuver === 'smash' && stance.maneuver === 'defend' && blockBefore > 0 && incoming > blockBefore) from = 'defend';
+  if (!from) return null;
+  if (from === 'counter') clearCombatCounter(target, silent ? null : ctx);
+  const rest = (target.concurrentStances || []).filter(row => row && row.maneuver !== from);
+  if (rest.length) target.concurrentStances = rest; else delete target.concurrentStances;
+  delete target.combatStance;
+  if (silent) return { from, by: profile.maneuver };
+  const event = { targetId: target.id, sourceId: source?.id, from, by: profile.maneuver,
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(target) } : {}) };
+  if (target.kind === 'enemy') target.stanceBrokenFrom = from;
+  ctx.emit?.('combatStanceBroken', event);
+  return event;
 }
 
 export function armCombatCounter(ctx, entity, carrier, options = {}) {
@@ -630,7 +664,9 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const physicalHit = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0);
   const bypass = riderGuardBypass([...(pierce && cfg.damageRiders.piercing ? [cfg.damageRiders.piercing] : []),
     ...(physicalHit ? tagRidersFor(cfg, carrier, ctx) : [])]);
+  // rawAmounts: each contact's damage before the stance multiplier (the figure a stance break compares with Block).
   return { version: 2, targetKey: targetKey(ctx, target), profile, profiles, amount, amounts, knowledgeBonus,
+    rawAmounts: contacts.map(contact => contact.effect === 'status' ? 0 : number(contact.amount)),
     guardBefore, guardBypass: !carrier?.combatReaction ? Math.min(amount, guardBefore, bypass) : 0,
     smash: profiles.some(p => p.maneuver === 'smash') && target?.combatStance?.maneuver === 'defend',
     counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,

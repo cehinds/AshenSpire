@@ -266,7 +266,10 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       }
       const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
       receipts.push(receipt);
+      const blockBefore = defender?.block || 0;
       if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt, attacker || source); if (receipt.evaded) SpendPreviewEvade(defender); }
+      // A Sweep or Smash that breaks a stance changes what the card's later hits meet, as live (detached, no events).
+      if (defender && !receipt.evaded) Matchups.breakStanceOnHit(previewCtx, attacker || source, defender, carrier, { blockBefore, incoming: receipt.raw, silent: true });
       // No damage-type rider here: a configured (Core) hit resolves in actions.js applyProfileDamage, which applies no matchup rider, so the
       // only Poise a hit takes is its receipt's (absorbed and drained). Pricing a blunt rider took Poise live never took (fellWarden caneStrike).
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
@@ -297,10 +300,12 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     const receipt = Matchups.prepareMatchupHit(previewCtx, source, defender, attack, raw);
     hitDamages.push(receipt.amount);
     if (!defender) continue;
+    const blockBefore = defender.block || 0;
     const blocked = Math.min(Math.max(0, defender.block || 0), Math.max(0, receipt.amount - receipt.guardBypass));
     defender.block = Math.max(0, (defender.block || 0) - blocked);
     reconcileWardBlock(defender);
     if (receipt.counterEligible) delete defender.combatCounter;
+    if (receipt.amount > 0) Matchups.breakStanceOnHit(previewCtx, source, defender, attack, { blockBefore, incoming: receipt.rawAmounts?.[0] ?? raw, silent: true });
     // Typed penetration and synchronous Ward stripping use the same once-per-
     // target budget as execution. Queued statuses/impact do not run in preview.
     const type = rules.damageAliases?.[receipt.profile?.damageType] || receipt.profile?.damageType;

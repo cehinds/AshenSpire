@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/combatMatchups.js",
-    "symbol": "setCombatStance"
+    "file": "src/engine/combat.js",
+    "symbol": "settleBrokenEnemyStances"
   }
 }

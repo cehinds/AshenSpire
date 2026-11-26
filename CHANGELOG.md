@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-26
+
+- **Arcane and Divine spell categories, and stance breaks for Sweep and Smash** ([#3000](https://github.com/cehinds/AshenSpire/pull/3000), `0.7.5.116`). Spells now carry explicit Arcane, Divine, Shared, or plain Spell categories based on their school: Arcane and Divine cards show their category mark beside the Spell mark in the card footer, every Spell takes Prepared's +25% damage bonus even when played into another stance, and gear selectors for Arcane and Divine spells apply the larger bonus to Shared spells without double-stacking. In combat, a landed Sweep breaks a Counter stance (clearing the armed reply) and a Smash whose pre-multiplier damage exceeds the target's positive Block breaks a Defend stance, returning the target to Idle, cancelling an enemy's queued Counter or Defend intent, and mirroring the break in multi-hit damage previews. Damage-dealing enemy reactions now answer only actions a melee Counter would cover.
+
 ## 2026-11-25
 
 - **Subclass card lists and a simpler Score Studio workspace** ([#2998](https://github.com/cehinds/AshenSpire/pull/2998), `0.7.5.118`). Generate twelve subclass lists with fifteen cards each, matching upgrades, and export them for the game. A compact, dockable editor keeps card and item galleries beside properties, artwork, weights, and deck lists. Select cards together, manage custom decks, and zoom each gallery. Rebalance previews show actual effect changes before applying them, and combat power follows displayed values. Deleting or trimming cards cleans their deck and list references, with Undo restoring them. Preserve saved-run compatibility while applying the authored scoring weights and Starseer list; new Starseer runs start with four Ward, one Arcane Bolt, one Mana Rite, and four Arcane Strike, alongside the normal equipment art.

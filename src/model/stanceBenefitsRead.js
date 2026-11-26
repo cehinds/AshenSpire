@@ -3,6 +3,8 @@ import { fixCoreEnabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 import { stanceOf } from './stanceRules.js';
 import { configuredStance } from './profileStance.js';
+import { isSpellCard } from './combatCardProfile.js';
+import { SpellTraditionsActive } from './spellTraditions.js';
 
 export const STANCE_ALIASES = Object.freeze({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack', evade: 'defend' });
 const count = value => Number.isFinite(value) ? value : 0;
@@ -23,11 +25,18 @@ export function HeldStance(entity, carrier = null) {
 
 const isReturn = carrier => !!(carrier?.counterReturnAttack || carrier?.reflectedHit);
 
+/**
+ * The stance row whose damage bonus a hit reads: under spell traditions a Spell played into a stance (a mirrored Strike, Smash or
+ * Sweep included) reads Prepared, never the basic's row; anything else reads the stance it acts from.
+ */
+const damageStance = (ctx, source, carrier) => SpellTraditionsActive(ctx) && isSpellCard(carrier) && stanceOf(carrier, source)
+  ? 'prepared' : HeldStance(source, carrier);
+
 /** Attack +20%, Prepared +25%: the multiplier on a hit's damage before the defender's stance, Block and Poise. 1 for a return hit. */
 export function AttackDamageMultiplier(ctx, source, carrier) {
   const rules = StanceBenefitRules(ctx);
   if (!rules || isReturn(carrier)) return 1;
-  return count(rules[HeldStance(source, carrier)]?.damageMultiplier) || 1;
+  return count(rules[damageStance(ctx, source, carrier)]?.damageMultiplier) || 1;
 }
 
 /**

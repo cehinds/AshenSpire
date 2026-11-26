@@ -7,18 +7,39 @@ import { t } from './strings.js';
 const traditionIds = Object.freeze(Object.keys(rules.traditions));
 const tagIds = card => (card?.cardTags ?? card?.tags ?? []).map(tag => typeof tag === 'string' ? tag : tag.id);
 
-export function SpellSchool(card) {
+// The school the card actually names, or null for a schoolless card.
+export function RealSpellSchool(card) {
   const tags = tagIds(card);
   return card?.combatProfile?.school || card?.school
     || tags.find(tag => tag.startsWith('school:'))?.slice(7)
     || (Object.hasOwn(rules.schools, card?.damageSchool) ? card.damageSchool : null)
-    || 'arcane';
+    || null;
 }
 
+// Scaling and pools treat a schoolless card as raw arcane magic (both traditions).
+export function SpellSchool(card) {
+  return RealSpellSchool(card) || 'arcane';
+}
+
+const explicitTraditions = card => tagIds(card).filter(tag => tag.startsWith('tradition:')).map(tag => tag.slice(10));
+
 export function CardSpellTraditions(card) {
-  const explicit = tagIds(card).filter(tag => tag.startsWith('tradition:')).map(tag => tag.slice(10));
+  const explicit = explicitTraditions(card);
   return explicit.length ? traditionIds.filter(id => explicit.includes(id))
     : [...(rules.schools[SpellSchool(card)] || rules.schools.arcane)];
+}
+
+// The tradition:* tags a profile stamps on a Spell: none for a schoolless plain Spell, so stamping never makes it Shared.
+export function CardTraditionTags(card) {
+  return SpellCategory(card) ? CardSpellTraditions(card).map(id => 'tradition:' + id) : [];
+}
+
+// 'arcane' | 'divine' | 'shared' | null. A schoolless card with no tradition tag is a plain Spell (null):
+// it takes Spell bonuses only, never Arcane or Divine ones (docs/plans/spell-categories.md).
+export function SpellCategory(card) {
+  if (!RealSpellSchool(card) && !explicitTraditions(card).length) return null;
+  const traditions = CardSpellTraditions(card);
+  return traditions.length === 1 ? traditions[0] : 'shared';
 }
 
 export function SpellTraditionsActive(ctx) {
@@ -66,8 +87,8 @@ export function TraditionSpellPower(ctx, entity, card, previous) {
 // The words live in uiStrings.csv (card.tradition.*), not in spellTraditions.json:
 // a one-tradition card wears that tradition's name, a shared card wears "Spell".
 export function SpellTraditionLabel(card) {
-  const traditions = CardSpellTraditions(card);
-  return t(traditions.length === 1 ? `card.tradition.${traditions[0]}` : 'card.tradition.shared');
+  const category = SpellCategory(card);
+  return t(category === 'arcane' || category === 'divine' ? `card.tradition.${category}` : 'card.tradition.shared');
 }
 
 

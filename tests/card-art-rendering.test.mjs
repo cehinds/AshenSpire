@@ -21,7 +21,8 @@ test('authored and legacy Spell sparkle remains intact while current mounted car
     assert.notEqual(layout.symbols.tags.fire.svg.body, ACTION_SIGILS.spell.shape);
   }
   withModalDom(()=>{
-    for (const [cardId, traditions] of [['starstonePebble', ['arcane']], ['starSpark', ['arcane', 'divine']]]) {
+    // A Shared Spell (starSpark) wears the Spell mark alone; an Arcane one adds its category mark (owner 2026-11-20).
+    for (const [cardId, traditions] of [['starstonePebble', ['arcane']], ['starSpark', []]]) {
       const card = renderCard(registries, { cardId }, { inspection: false });
       document.body.append(card);
       const primary = card.querySelector('[data-primary-sigil]');

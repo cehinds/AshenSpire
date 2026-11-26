@@ -15,8 +15,11 @@ test('compact and inspection use the same projected Counter definition and canon
   assert.match(compact, /Gain 25 Poise/);
   assert.match(detail, /SPELL/);
   assert.doesNotMatch(detail, /SPELL · Prepare/);
-  assert.match(detail, /Arcane magic scales with Intelligence/);
-  assert.match(detail, /Divine magic scales with Wisdom/);
+  // Fire is Shared: the sigil rows show the Spell mark, not both tradition marks (owner 2026-11-20); the tag rail still names both traditions.
+  assert.match(detail, /data-sigil="spell"[\s\S]*data-sigil="fire"/);
+  assert.doesNotMatch(detail, /Arcane magic scales with Intelligence|Divine magic scales with Wisdom/);
+  assert.match(detail, /Magic governed by Intelligence/);
+  assert.match(detail, /Magic governed by Wisdom/);
   assert.match(detail, /Counter coverage:.*Spell/);
   assert.match(detail, /Defense range:.*Ranged/);
   assert.equal(combatCardRange(playingCardDefinition(registries, ref, { rules })), 'reach');
