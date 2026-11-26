@@ -1889,7 +1889,7 @@
     {
       "id": 12,
       "group": "Selection",
-      "request": "Double-click or explicit Edit opens the inspector separately from selection.",
+      "request": "Selection updates the visible inspector; double-click or explicit Edit may focus or expand it without being required for ordinary inspection.",
       "research_cases": [
         41
       ],

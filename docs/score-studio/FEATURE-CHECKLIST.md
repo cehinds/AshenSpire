@@ -39,7 +39,7 @@ REQ numbers preserve the original 180-item reference. Package mappings are plann
 - [ ] REQ-009 Count selected cards, including filtered-out selections. (W05)
 - [ ] REQ-010 Select visible/matching, invert, clear and show selected. (W05)
 - [ ] REQ-011 Optional rectangle selection. (W05)
-- [ ] REQ-012 Double-click or explicit Edit opens the inspector separately from selection. (W05)
+- [ ] REQ-012 Selection updates the visible inspector; double-click or explicit Edit may focus or expand it without being required for ordinary inspection. (W05)
 
 ### Bulk editing
 
