@@ -41,6 +41,26 @@ body.studio-body .studio-customization-pane { display: flex; flex-direction: col
 body.studio-body .customization-toolbar { display: flex; align-items: center; flex-wrap: wrap; flex: 0 0 auto; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--st-border); }
 body.studio-body .customization-toolbar label { color: var(--st-muted); font-size: 12px; }
 body.studio-body #customization-view { flex: 1 1 120px; min-width: 0; height: var(--studio-control-h, 32px); background: var(--st-surface-2); color: var(--st-text); border: 1px solid var(--st-border); border-radius: var(--studio-radius, 4px); }
+/* Active entity: one name, its scope and the one native preview in every view. */
+body.studio-body .customization-entity {
+  display: flex; flex-direction: column; flex: 0 0 auto; gap: 6px; min-width: 0;
+  padding: 10px 12px; border-bottom: 1px solid var(--st-border); border-left: 3px solid var(--st-accent);
+}
+body.studio-body .customization-entity-name { margin: 0; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
+body.studio-body .customization-entity-name:focus-visible { outline: 2px solid var(--st-accent); outline-offset: 2px; border-radius: 2px; }
+body.studio-body .customization-scope { margin: 0; color: var(--st-muted); font-size: 12px; overflow-wrap: anywhere; }
+body.studio-body .customization-entity-preview { min-width: 0; }
+body.studio-body .customization-entity-preview > [hidden] { display: none !important; }
+body.studio-body .customization-entity-preview .inspector-preview-wrap { min-width: 0; }
+body.studio-body #studio-customization-pane[data-scope="shared"] .customization-entity { border-left-color: var(--st-warn); }
+body.studio-body #studio-customization-pane[data-scope="global"] .customization-entity { border-left-color: var(--st-bad); }
+body.studio-body #studio-customization-pane[data-scope="deck"] .customization-entity { border-left-color: var(--st-good); }
+/* Outside Properties the preview is compact so the shared and global editors keep their room. */
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .inspector-preview-wrap { padding: 6px; }
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .inspector-card-preview { width: auto; height: min(220px, 40dvh); }
+body.studio-body #studio-customization-pane:not([data-scope="card"]) :is(.inspector-score-summary, .subclass-upgrade-summary) { display: none; }
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host { max-height: 220px; overflow: hidden; }
+body.studio-body #studio-customization-pane:not([data-scope="card"]) .item-preview-host .equipment-poker-card { width: 150px; }
 body.studio-body #customization-content { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 body.studio-body .customization-view { min-width: 0; }
 body.studio-body .customization-view[hidden],

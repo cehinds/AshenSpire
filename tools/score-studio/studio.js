@@ -1622,6 +1622,7 @@ function renderInspector() {
   const def = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[0];
   if (!def) return;
   state.selectedCardId = def.id;
+  cardEditorDockUi?.refreshEntity?.();
 
   renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
   document.getElementById('inspector-sheet-title').textContent = def.name || '';
@@ -2904,6 +2905,7 @@ function renderItemInspector() {
   const entry = state.items.find((x) => x.key === state.selectedItemKey) || state.items[0];
   if (!entry) return;
   state.selectedItemKey = entry.key;
+  cardEditorDockUi?.refreshEntity?.();
   populateItemTraitControls();
   const sc = scoreItemEntry(entry, state.scoring, state.itemRules);
 

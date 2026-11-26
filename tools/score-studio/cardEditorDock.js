@@ -3,6 +3,15 @@
 export const CARD_EDITOR_DOCK_KEY = 'ashenspire:scoreStudioEditorDocked:v1';
 const VIEW_KEY = 'ashenspire:scoreStudioCustomizationView:v1';
 const VIEWS = ['properties', 'design', 'weights', 'decks'];
+// What an edit in each view reaches: the selected card only, shared art rules,
+// global scoring or one deck's membership.
+const VIEW_SCOPES = { properties: 'card', design: 'shared', weights: 'global', decks: 'deck' };
+const SCOPE_TEXT = {
+  properties: (noun, name) => `Selected ${noun} · edits change only ${name}`,
+  design: (noun, name) => `Shared art layers · rules apply to every matching card. Preview: ${name}`,
+  weights: (noun, name) => `Global scoring · changes rescore every card. Preview: ${name}`,
+  decks: (noun, name) => `Deck membership · changes only the chosen deck. Preview: ${name}`,
+};
 
 export function initCardEditorDock(ctx) {
   const doc = ctx.document || document;
@@ -38,6 +47,16 @@ export function initCardEditorDock(ctx) {
   for (const [value, text] of [['properties', 'Properties'], ['design', 'Design'], ['weights', 'Weights'], ['decks', 'Deck lists']]) {
     const option = doc.createElement('option'); option.value = value; option.setAttribute('value', value); option.textContent = text; select.append(option);
   }
+  // One active entity for every view: its name, an honest scope line and the
+  // one native preview, moved here from the inspector rather than cloned.
+  const entity = doc.createElement('section'); entity.id = 'customization-entity'; entity.className = 'customization-entity';
+  entity.setAttribute('role', 'region'); entity.setAttribute('aria-label', 'Active card');
+  const entityName = doc.createElement('h2'); entityName.id = 'customization-entity-name'; entityName.className = 'customization-entity-name'; entityName.tabIndex = -1;
+  const scope = doc.createElement('p'); scope.id = 'customization-scope'; scope.className = 'customization-scope';
+  const previewSlot = doc.createElement('div'); previewSlot.className = 'customization-entity-preview';
+  const previews = { cards: properties.cards.querySelector('.inspector-preview-wrap'), items: properties.items?.querySelector('#item-preview-host') || null };
+  for (const node of Object.values(previews)) if (node) { rememberHome(node); previewSlot.append(node); }
+  entity.append(entityName, scope, previewSlot);
   const content = doc.createElement('div'); content.id = 'customization-content';
   const slots = Object.fromEntries(VIEWS.map(id => {
     const slot = doc.createElement('div'); slot.className = 'customization-view'; slot.dataset.customizationView = id; content.append(slot); return [id, slot];
@@ -58,7 +77,7 @@ export function initCardEditorDock(ctx) {
     if (wasDocked) openModal();
   };
   const paneToggle = button('Undock', toggle); paneToggle.id = 'customization-dock-toggle'; toggles.push(paneToggle);
-  toolbar.append(label, select, paneToggle); pane.append(toolbar, content);
+  toolbar.append(label, select, paneToggle); pane.append(toolbar, entity, content);
   for (const [key, layout] of Object.entries(layouts)) {
     const row = layout?.querySelector('.cards-gallery-pane .names-row') || layout?.querySelector('.cards-gallery-pane .filter-row');
     if (row) {
@@ -157,10 +176,19 @@ export function initCardEditorDock(ctx) {
     pill.append(pencil, text); node.append(pill);
     node.addEventListener('keydown', event => event.stopPropagation()); stage.append(node);
   }
+  function renderEntity() {
+    const noun = context === 'items' ? 'item' : 'card', name = selectedName() || selectedId(context) || 'none';
+    entity.setAttribute('aria-label', context === 'items' ? 'Active item' : 'Active card');
+    entityName.textContent = name;
+    scope.textContent = SCOPE_TEXT[view](noun, name);
+    pane.setAttribute('data-scope', VIEW_SCOPES[view]);
+    for (const [key, node] of Object.entries(previews)) if (node) node.hidden = key !== context;
+  }
   function refresh() {
     attachViews(); select.value = view;
     for (const [key, slot] of Object.entries(slots)) slot.hidden = key !== view;
     for (const [key, node] of Object.entries(properties)) if (node) node.hidden = key !== context;
+    renderEntity();
     title.textContent = view === 'properties' ? `Edit ${selectedName() || (context === 'cards' ? 'card' : 'item')}` : `Customize ${select.querySelector(`option[value="${view}"]`)?.textContent || view}`;
     rename.hidden = balance.hidden = view !== 'properties'; rename.disabled = balance.disabled = !selectedId(context);
     for (const node of toggles) { node.textContent = docked ? (node === paneToggle ? 'Undock' : 'Undock editor') : (node === paneToggle ? 'Dock' : 'Dock editor'); node.setAttribute('aria-pressed', String(docked)); }
@@ -207,5 +235,5 @@ export function initCardEditorDock(ctx) {
     });
   }
   setContext('cards'); setDocked(docked); setView(view);
-  return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
+  return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
 }

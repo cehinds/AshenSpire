@@ -16,8 +16,8 @@ function fixture(dom, stored = new Map()) {
     return node;
   };
   doc.body.innerHTML = `<main class="studio-main">
-    <section id="tab-cards"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="cards-grid"><div class="studio-card-tile" data-card-id="a"><div class="studio-card-stage"></div></div><div class="studio-card-tile" data-card-id="b"><div class="studio-card-stage"></div></div></div></div><div id="inspector-resizer" class="inspector-resizer"></div><aside id="card-inspector" class="card-inspector"><input id="edit-name"></aside></div></section>
-    <section id="tab-items"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="items-grid"><div class="item-grid-tile" data-item-key="weapon:one"><div></div></div><div class="item-grid-tile" data-item-key="weapon:two"><div></div></div></div></div><div id="item-inspector-resizer" class="inspector-resizer"></div><aside id="item-inspector-pane" class="card-inspector"><input id="item-edit-name"></aside></div></section>
+    <section id="tab-cards"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="cards-grid"><div class="studio-card-tile" data-card-id="a"><div class="studio-card-stage"></div></div><div class="studio-card-tile" data-card-id="b"><div class="studio-card-stage"></div></div></div></div><div id="inspector-resizer" class="inspector-resizer"></div><aside id="card-inspector" class="card-inspector"><div class="inspector-preview-wrap"><div id="inspector-card-preview"></div></div><input id="edit-name"></aside></div></section>
+    <section id="tab-items"><div class="cards-layout"><div class="cards-gallery-pane"><div class="names-row"></div><div id="items-grid"><div class="item-grid-tile" data-item-key="weapon:one"><div></div></div><div class="item-grid-tile" data-item-key="weapon:two"><div></div></div></div></div><div id="item-inspector-resizer" class="inspector-resizer"></div><aside id="item-inspector-pane" class="card-inspector"><div id="item-preview-host" class="item-preview-host"></div><input id="item-edit-name"></aside></div></section>
     <section id="tab-weights" class="studio-panel"><input id="weight-value"></section>
     <section id="tab-art" class="studio-panel"><input id="art-value"></section>
     <div id="deck-panel"><input id="deck-name"></div>
@@ -189,4 +189,44 @@ test('insertion animation moves existing cards from their prior positions and re
   assert.match(calls.find(call => call.id === 'a').frames[0].transform, /-200px/);
   assert.equal(calls.find(call => call.id === 'new').frames[0].opacity, 0);
   assert.ok(calls.every(call => call.options.duration === 180));
+}));
+
+test('one native preview moves into the active entity header and stays there in every view', () => withKitDom(dom => {
+  const { api, doc } = fixture(dom);
+  const entity = doc.getElementById('customization-entity');
+  const wrap = doc.querySelector('.inspector-preview-wrap'), itemHost = doc.getElementById('item-preview-host');
+  assert.equal(entity.getAttribute('role'), 'region');
+  assert.equal(wrap.closest('#customization-entity'), entity);
+  assert.equal(doc.getElementById('card-inspector').querySelector('.inspector-preview-wrap'), null, 'moved, not cloned');
+  for (const view of ['design', 'weights', 'decks', 'properties']) {
+    api.setView(view);
+    assert.equal(doc.querySelectorAll('.inspector-preview-wrap').length, 1, view);
+    assert.equal(doc.querySelector('.inspector-preview-wrap'), wrap, view);
+    assert.equal(doc.querySelectorAll('#inspector-card-preview').length, 1, view);
+    assert.equal(wrap.hidden, false, view);
+  }
+  api.setContext('items');
+  assert.equal(itemHost.closest('#customization-entity'), entity);
+  assert.equal(itemHost.hidden, false); assert.equal(wrap.hidden, true);
+  assert.equal(entity.getAttribute('aria-label'), 'Active item');
+  assert.equal(doc.getElementById('customization-entity-name').textContent, 'First weapon');
+}));
+
+test('the scope line names what each view changes and labels the pane scope', () => withKitDom(dom => {
+  const { api, doc } = fixture(dom);
+  const pane = doc.getElementById('studio-customization-pane'), scope = doc.getElementById('customization-scope');
+  const expected = {
+    properties: ['card', 'Selected card · edits change only Alpha'],
+    design: ['shared', 'Shared art layers · rules apply to every matching card. Preview: Alpha'],
+    weights: ['global', 'Global scoring · changes rescore every card. Preview: Alpha'],
+    decks: ['deck', 'Deck membership · changes only the chosen deck. Preview: Alpha'],
+  };
+  for (const [view, [kind, text]] of Object.entries(expected)) {
+    api.setView(view);
+    assert.equal(pane.getAttribute('data-scope'), kind, view);
+    assert.equal(scope.textContent, text, view);
+    assert.equal(doc.getElementById('customization-entity-name').textContent, 'Alpha', view);
+  }
+  api.setView('properties'); api.setContext('items');
+  assert.equal(scope.textContent, 'Selected item · edits change only First weapon');
 }));
