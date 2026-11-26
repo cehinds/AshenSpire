@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
 import { gameDigest } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveGameProfile, validateGameProfileSnapshot, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { resolveGameProfile, validateGameProfileSnapshot, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
 import { coreEvasionCompatibleRuntime } from '../src/model/coreEvasionCompatibility.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRunCombat, withoutWeaknesses } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
@@ -17,9 +18,12 @@ import { cardPlainText } from '../src/ui/components/card.js';
 import { fixCoreSmashVsDefensiveRules } from '../src/model/fixCoreMechanics.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
+import { RealSpellSchool, SpellCategory, SpellScalingValue } from '../src/model/spellTraditions.js';
+import { GearSelectorMatches } from '../src/model/gearEffects.js';
 
 const preRegistryRuntime = 'sha256:777939d6ee4065a02491fcd7ff21fc2d9f44271a0d7f10ec3b2435d1786a72cd';
 const registryRuntime = 'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831';
+const catalogRuntime = 'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216';
 const preRegistrySave = () => gunzipSync(readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url))).toString('utf8');
 
 test('the real Dev 7dff4b03 save resumes its active fight without changing the old profile or policy', () => {
@@ -71,6 +75,84 @@ test('the registry transition retains a closed Core-specific edge and rejects ch
 
 const oldRuntime = 'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9';
 const digest = profile => { delete profile.hash; profile.hash = gameDigest(profile); return profile; };
+
+function capturedRegistryProfile() {
+  const bytes = readFileSync(new URL('./fixtures/core2-cleanup-profile-10911.json.gz', import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), '2d23a93ffc5c778f08c86bd6a76914a51347df0a62ca8adab362cd95b5a2cd2d');
+  const profile = JSON.parse(gunzipSync(bytes));
+  assert.equal(profile.hash, 'sha256:9b5f7a725112f76a65f8037f4313f886b95a2d4ad3b8b705eb63d59a820c65a5');
+  assert.equal(profile.lock.runtimeHash, registryRuntime);
+  return profile;
+}
+
+test('the genuine c77d profile retains its recorded schoolless Shared spell through save and combat round trips', () => {
+  const profile = capturedRegistryProfile();
+  const before = structuredClone(profile);
+  // The newly introduced category selectors have no operands in this archived
+  // gear vocabulary; its existing generic Spell/element modifiers stay intact.
+  assert.doesNotMatch(JSON.stringify(profile), /arcaneSpell|divineSpell/);
+  assert.equal(coreEvasionCompatibleRuntime(profile, catalogRuntime), registryRuntime);
+  const validated = validateGameProfileSnapshot(profile);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
+  const assertRecordedSpell = saved => {
+    const recorded = saved.content.cards.find(card => card.id === 'core.cantrip');
+    assert.equal(RealSpellSchool(recorded), null);
+    assert.deepEqual(recorded.tags.filter(tag => tag.startsWith('tradition:')), ['tradition:arcane', 'tradition:divine']);
+    const projected = projectGameCard(saved, recorded.id);
+    assert.deepEqual(projected.tags, recorded.tags);
+    assert.equal(SpellCategory(projected), 'shared');
+    assert.equal(GearSelectorMatches('arcaneSpell', null, projected), true);
+    assert.equal(GearSelectorMatches('divineSpell', null, projected), true);
+    assert.equal(SpellScalingValue({ intelligence: 3, wisdom: 7 }, projected), 7);
+    assert.deepEqual(projected.effects, recorded.effects);
+  };
+  assertRecordedSpell(validated);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const snapshot = serializeCombatSnapshot(combat);
+  run.combatEntered = { nodeId: 'n1_4', encounterId: 'patrol', snapshot };
+  const manager = createSaveManager(createMemoryStorage());
+  manager.saveRun(run, createRng(511));
+  const loaded = manager.loadRun(registries);
+  assert.ok(loaded, manager.runStatus().reason);
+  assert.deepEqual(loaded.gameProfile, before);
+  assertRecordedSpell(loaded.gameProfile);
+  const restored = restoreCombatSnapshot({ registries, snapshot: loaded.combatEntered.snapshot,
+    rng: createRng(511), expectedGameProfile: loaded.gameProfile });
+  assert.deepEqual(restored.gameProfile, before);
+  assert.deepEqual(restored.fixCoreRules, snapshot.fixCoreRules);
+  assertRecordedSpell(restored.gameProfile);
+  assert.deepEqual(profile, before);
+});
+
+test('the regenerated host admits only exact Core envelopes and still validates their original digest', () => {
+  const genuine = capturedRegistryProfile();
+  assert.equal(resolveGameProfile('default').lock.runtimeHash, catalogRuntime);
+  for (const [name, change] of [
+    ['unknown runtime', p => { p.lock.runtimeHash = 'sha256:' + 'f'.repeat(64); }],
+    ['malformed runtime', p => { p.lock.runtimeHash = 'sha256:not-a-digest'; }],
+    ['foreign ABI', p => { p.lock.runtimeABI = 'ashen.runtime@999'; }],
+    ['foreign numeric policy', p => { p.lock.numericPolicy = 'ashen.adapter-numbers@999'; }],
+    ['foreign core', p => { p.lock.core = 'ashen.core@1.0.0'; }],
+    ['unconfigured foundation', p => { p.foundation.mode = 'legacy'; }],
+    ['foreign effects version', p => { p.modules.effects.fixCoreVersion = 2; }],
+  ]) {
+    const wrong = structuredClone(genuine);
+    change(wrong);
+    digest(wrong);
+    assert.equal(coreEvasionCompatibleRuntime(wrong, catalogRuntime), catalogRuntime, name);
+    assert.throws(() => validateGameProfileSnapshot(wrong), /unsupported runtime artifact/, name);
+  }
+  for (const malformed of [null, {}, { lock: null }, { lock: { runtimeHash: registryRuntime } }]) {
+    assert.equal(coreEvasionCompatibleRuntime(malformed, catalogRuntime), catalogRuntime);
+    assert.throws(() => validateGameProfileSnapshot(malformed));
+  }
+  assert.equal(coreEvasionCompatibleRuntime(genuine, 'sha256:' + 'f'.repeat(64)), 'sha256:' + 'f'.repeat(64));
+  const damaged = structuredClone(genuine);
+  damaged.modules.cards.handBase++;
+  assert.throws(() => validateGameProfileSnapshot(damaged), /digest mismatch/);
+});
+
 function priorRuntimeEnvelope() {
   const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { effects: { physicalDamageMultiplier: 1, playerDamageMultiplier: 1, enemyDamageMultiplier: 1, blockGainMultiplier: 1 } } }));
   profile.lock.runtimeHash = oldRuntime;
@@ -273,7 +355,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-23: the spell Stamina surcharge is dropped (spellCosts.staminaSurcharge 0, owner ruling); 0805e9... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-24: Ward health buffer (ward.routing "hpBuffer", owner ruling); e31663... is now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-24: Weapon poise damage & stance-gated Poise reduction (weaponPoiseEnabled, owner ruling); d24363... is now in PREVIOUS_RUNTIMES.
-  assert.equal(profile.lock.runtimeHash, registryRuntime);
+  assert.equal(profile.lock.runtimeHash, catalogRuntime);
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

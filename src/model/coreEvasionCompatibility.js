@@ -41,6 +41,8 @@
 // Prepared-only Focus wording and the shared Evade grant source reference move only the runtime artifact identity.
 // The 2026-11-19 deferred Axe Strength grant repoints its generated mechanic reader to finishAbilityPlay; the preceding runtime keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
+  // Before catalog regeneration 7c32f9ef4bc: keep the exact recorded profile and its tradition tags.
+  'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
   'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
   'sha256:b49503d593056a588d5ae9a25ac214fc801c7b7eaea22093d601f76afe9d27f8',
   'sha256:d2993c77a6e8a5ff16dc1b5edf11d30cb924d790e7875af0452a4e8f0183ef63',
@@ -185,6 +187,9 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
   // Same rules compiled from the repository's canonical LF kernel bytes.
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
+  // 7c32f9ef4bc compiles spell-category/stamping changes and the stance reader repoint;
+  // archived profiles retain their explicit tradition tags, rules and integrity digest.
+  'sha256:eff6f5c38dcdba3c78d012bf55c8baf6fe703f664bc3f3416244b15d1fa07216',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

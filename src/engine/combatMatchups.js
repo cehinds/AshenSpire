@@ -68,11 +68,11 @@ function counterEligible(ctx, target, carrier, profile) {
   if (profile.maneuver === 'sweep') return false;
   if (mode === 'spell' || mode === 'magic') return isSpell(profile) || physicalProjectile(profile);
   if (mode === 'ranged') return physicalProjectile(profile);
-  return meleeCounterCovers(ctx, profile);
+  return MeleeCounterCovers(ctx, profile);
 }
 
 /** True when a melee Counter would cover this incoming profile: physical Attack/Smash, not Force/Piercing, not a projectile. */
-export function meleeCounterCovers(ctx, profile) {
+export function MeleeCounterCovers(ctx, profile) {
   if (!profile) return false;
   const rules = matchupRules(ctx);
   const cfg = rules.counter;
@@ -88,7 +88,7 @@ export function meleeCounterCovers(ctx, profile) {
  * players and enemies. `incoming` is the damage that met Block; `blockBefore` is the Block held before this hit.
  * Returns { from, by } or null. A stagger that already replaced the stance is not broken twice.
  */
-export function breakStanceOnHit(ctx, source, target, carrier, { blockBefore = 0, incoming = 0, silent = false } = {}) {
+export function BreakStanceOnHit(ctx, source, target, carrier, { blockBefore = 0, incoming = 0, silent = false } = {}) {
   const profile = combatProfileOf(carrier);
   const stance = target?.combatStance;
   if (!profile || !stance || !(incoming > 0) || !(target.hp > 0)) return null;

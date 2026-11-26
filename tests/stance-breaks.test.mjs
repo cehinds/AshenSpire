@@ -78,21 +78,21 @@ test('the Block comparison is strict: more breaks, equal or less holds (21 vs 20
 });
 
 test('the same break applies to a player target and never to a staggered stance', async () => {
-  const { breakStanceOnHit } = await import('../src/engine/combatMatchups.js');
+  const { BreakStanceOnHit } = await import('../src/engine/combatMatchups.js');
   const { c } = fight();
   const carrier = maneuver => ({ combatProfile: { camp: 'physical', maneuver, damageType: 'slashing' } });
   const enemy = c.enemies[0];
   c.player.combatStance = { camp: 'physical', maneuver: 'counter' };
   c.player.combatCounter = { charges: 1, mode: 'melee' };
-  const event = breakStanceOnHit(c, enemy, c.player, carrier('sweep'), { blockBefore: 0, incoming: 5 });
+  const event = BreakStanceOnHit(c, enemy, c.player, carrier('sweep'), { blockBefore: 0, incoming: 5 });
   assert.deepEqual([event.from, event.by, event.targetId], ['counter', 'sweep', 'player']);
   assert.equal(c.player.combatStance, undefined);
   assert.equal(c.player.combatCounter, undefined);
   c.player.combatStance = { camp: 'physical', maneuver: 'defend' };
-  assert.equal(breakStanceOnHit(c, enemy, c.player, carrier('smash'), { blockBefore: 19, incoming: 19 }), null);
-  assert.equal(breakStanceOnHit(c, enemy, c.player, carrier('smash'), { blockBefore: 19, incoming: 21 })?.from, 'defend');
+  assert.equal(BreakStanceOnHit(c, enemy, c.player, carrier('smash'), { blockBefore: 19, incoming: 19 }), null);
+  assert.equal(BreakStanceOnHit(c, enemy, c.player, carrier('smash'), { blockBefore: 19, incoming: 21 })?.from, 'defend');
   c.player.combatStance = { maneuver: 'staggered' };
-  assert.equal(breakStanceOnHit(c, enemy, c.player, carrier('sweep'), { blockBefore: 0, incoming: 9 }), null);
+  assert.equal(BreakStanceOnHit(c, enemy, c.player, carrier('sweep'), { blockBefore: 0, incoming: 9 }), null);
 });
 
 test('a broken Counter move leaves the enemy intent at once: the next planned follow-up becomes the intent', () => {
