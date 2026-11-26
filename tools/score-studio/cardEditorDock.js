@@ -153,7 +153,15 @@ export function initCardEditorDock(ctx) {
     setContext(kind); returnTarget = { kind, id };
     (kind === 'items' ? ctx.selectItem : ctx.selectCard)?.(id);
     if (kind === 'cards' && !ctx.selectCard && ctx.state) ctx.state.selectedCardId = id;
-    setView('properties'); openModal();
+    if (docked) showProperties();
+    else { setView('properties'); openModal(); }
+  }
+  // Docked editing never opens a dialog: show Properties in place and move
+  // focus to the entity heading, never into a form field.
+  function showProperties() {
+    setView('properties');
+    pane.scrollIntoView?.({ block: 'nearest' });
+    entityName.focus?.({ preventScroll: true });
   }
   function decorate(tile, def, kind) {
     const id = kind === 'items' ? def.key || def.id : def.id;
@@ -235,5 +243,5 @@ export function initCardEditorDock(ctx) {
     });
   }
   setContext('cards'); setDocked(docked); setView(view);
-  return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
+  return { edit: id => edit(id, 'cards'), editItem: id => edit(id, 'items'), decorateTile: (tile, def) => decorate(tile, def, 'cards'), decorateItemTile: (tile, def) => decorate(tile, def, 'items'), open: openModal, refresh, refreshEntity: renderEntity, showProperties, setDocked, setContext, setView, isDocked: () => docked, getView: () => view, element: pane };
 }

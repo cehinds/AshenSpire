@@ -93,8 +93,9 @@ test('floating card and item Edit actions do not trigger their gallery selection
   assert.equal(selected, 0);
 }));
 
-test('Edit opens the one pane in a modal, native cancel returns focus, docking restores its current home', () => withKitDom(dom => {
+test('undocked Edit opens the one pane in a modal, native cancel returns focus, docking restores its current home', () => withKitDom(dom => {
   const { api, doc, cardInput, stored } = fixture(dom);
+  api.setDocked(false); // Docked Edit stays in place (see the docked Edit test below).
   let edits = 0; cardInput.addEventListener('input', () => edits++);
   api.edit('b');
   const modal = doc.getElementById('card-editor-modal');
@@ -114,6 +115,7 @@ test('Edit opens the one pane in a modal, native cancel returns focus, docking r
 
 test('card and item modal actions address only the selected object, including item focus return', () => withKitDom(dom => {
   const { api, doc, calls, state } = fixture(dom);
+  api.setDocked(false);
   api.edit('b'); doc.getElementById('card-editor-rename').click(); doc.getElementById('card-editor-balance').click();
   assert.ok(calls.some(row => row[0] === 'renameCard' && row[1] === 'b'));
   assert.ok(calls.some(row => row[0] === 'balanceCard' && row[1] === 'b'));
@@ -229,4 +231,21 @@ test('the scope line names what each view changes and labels the pane scope', ()
   }
   api.setView('properties'); api.setContext('items');
   assert.equal(scope.textContent, 'Selected item · edits change only First weapon');
+}));
+
+test('docked Edit selects and shows Properties in place without opening the dialog', () => withKitDom(dom => {
+  const { api, doc, state, calls } = fixture(dom);
+  api.setView('weights');
+  api.edit('b');
+  const modal = doc.getElementById('card-editor-modal');
+  assert.ok(!modal.open, 'no dialog while docked');
+  assert.equal(api.isDocked(), true);
+  assert.equal(api.getView(), 'properties');
+  assert.equal(state.selectedCardId, 'b');
+  assert.ok(calls.some(row => row[0] === 'selectCard' && row[1] === 'b'));
+  assert.ok(doc.getElementById('tab-cards').querySelector('#studio-customization-pane'));
+  assert.equal(doc.activeElement, doc.getElementById('customization-entity-name'), 'focus goes to the heading, not a field');
+  assert.equal(doc.getElementById('customization-entity-name').textContent, 'Beta');
+  doc.querySelector('#cards-grid [data-card-id="b"] .card-editor-edit-button').click();
+  assert.ok(!modal.open);
 }));
