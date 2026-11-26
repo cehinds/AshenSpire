@@ -3510,7 +3510,7 @@ The attacker rolls d20 + Precision; the defender does not roll. Hit when the tot
 - Core 2 only: legacy keeps the previous formulas (Precision = 1 + mix × (stacks + 1); Evasion = 1 + DEX + Evade stacks × (1 + DEX)) and no Precision decay.
 - Hit-chance preview enumerates exact d20 outcomes (20; 400 with advantage/disadvantage), floored.
 - Versioned migration: the former default gain pair (base 1, DEX 1), or an identical custom pair, becomes (1, 0) in existing Core runs; other saved pairs and versioned overrides keep their values.
-- Enemy attributes come from their stats. Enemy level = its authored `level` when set, else its resolved `levelProfile` bound (`enemyLevel`), else 0; in Core every enemy's level is 1–5 (*Enemy levels and stat budget*).
+- Enemy attributes come from their stats. Enemy level = its authored `level` when set, else its resolved `levelProfile` bound (`enemyLevel`), else 0; in Core a fight sets it from act, tier and floor step, 1–11 (*Enemy levels and stat budget*).
 
 ### Perception and hit-chance display
 
@@ -3604,25 +3604,31 @@ Core 2 only. `reflectStacks`: whole number 0 to 10 (absent = 0) on the combat en
 
 ### Enemy levels and stat budget
 
-Core 2 only. Enemy levels 1–5; an enemy's stat budget follows the player's rule.
+Core 2 only. Enemy levels 1–11 by act, tier and floor step; an enemy's stat budget follows the player's rule.
 
-- **Levels 1–5.** Every Core enemy's `stats.levelProfile` and every encounter's `targetBand` lie within 1–5; the fight uses the bound `characters.levelFrom` names (`levelProfile.min`).
-  - Exact `{min, max}` pairs, both ends:
+- **Levels by act, tier and floor step** (owner, 2026-11-20; `characters.enemyLevelScaling`). A fight built by `createRunCombat` sets each enemy's level from `run.actNumber`, its floor within the act (`run.floor`) and its tier (`enemyFightLevel`). No RNG is drawn.
+  - Floor step = floor((floor − 1) / `floorsPerStep` 3), at most 2: floors 1–3 step 0, 4–6 step 1, 7–9 step 2. A boss sits at `bossSteps` (2).
 
-    | Act | Minion | Elite | Boss |
+    | Act | Minion (step 0 / 1 / 2) | Elite (step 0 / 1 / 2) | Boss |
     |---|---|---|---|
-    | 1 (Weald) | 1–2 | 2–3 | 3–3 |
-    | 2 (Marches) | 2–3 | 3–4 | 4–4 |
-    | 3 (Reach) | 3–4 | 4–5 | 5–5 |
+    | 1 (Weald) | 1 / 2 / 3 | 2 / 3 / 4 | 5 |
+    | 2 (Marches) | 3 / 4 / 5 | 4 / 5 / 6 | 8 |
+    | 3 (Reach) | 5 / 6 / 7 | 6 / 7 / 8 | 11 |
+  - Past act 3 the act 3 row holds. Every Core enemy's `levelProfile` spans its home act's row (act 1 minion 1–3, act 2 boss 8–8); a fight made without levels keeps the `levelFrom` bound (`levelProfile.min`).
+  - Encounter `targetBand`s keep their 1–5 map: they feed only the retired profile's level roll, so its levels do not move.
+  - It supersedes the 2026-11-17 by-act levels below for every tier when a profile carries it; an older snapshot without it keeps them.
+- **What a floor step buys.** Each level adds one attribute point (the budget below). Each step is also a gear upgrade: +`gearPerStep` 1 AR and +1 DR (a boss at `bossSteps`, so +2). An enemy still on its rolled HP range (minions) gains `hpPerStep` +8% HP a step, after Custom Climb `hpMult` and before the tier HP scale, rounded. Elites and bosses take no HP step: their HP is the level row (`effectiveLevelHp`), which already climbs with level. The step is on the enemy as `levelStep`.
+- **SP cap** (`spCap`): after gear and relics an enemy's SP is at most 2 for a minion and 3 for an elite or boss, so a high-level boss keeps two or three actions.
+- **Dex and Wis cap** (`attributeCaps`): an elite's or boss's own Dexterity and Wisdom are at most 4 before gear; held points spill to its other priorities (Strength, Constitution, Intelligence).
 - **Budget.** The Core player's starting budget (upper bound of `tagRules["character.player"].attributeBudget`, `[6, 6]`) + `progression.attributePointsPerLevel` (1) per level after the first: a level-L enemy carries 5 + L points (6 at level 1, 10 at level 5).
   - Both numbers are read from config, not copied.
   - Tiers no longer set a stat budget; they still differ in pools, hand and deck.
   - An authored `attributePoints` still wins.
 - **Floors.** Every enemy attribute starts at 1 (`characters.attributeFill.floor`); the remaining points follow `attributePriority`.
   - The enemy `attributeOffset` (−2 Strength, Dexterity, Constitution) and the Constitution fill cap are removed, so no enemy reads 0 in a stat before gear and relics.
-- **Act levels for elites and bosses** (owner, 2026-11-17; `enemies.effectiveLevelByAct`): an elite or boss fights at its tier's level for the act it is fought in, whatever its `levelProfile`: **elites 2 / 4 / 6, bosses 4 / 6 / 8 in Acts 1 / 2 / 3**; normal enemies keep their own level. The budget above (5 + level), SP, MP, AR and DR follow that level, and with `enemies.effectiveLevelHp` its HP is the `characters` HP row at that level instead of the inflated authored range. Custom Climb `hpMult` still scales it. Only fights built by `createRunCombat` are act-levelled; a fight made without levels keeps the `levelFrom` bound.
+- **Act levels for elites and bosses** (owner, 2026-11-17; `enemies.effectiveLevelByAct`; superseded for levels by the 2026-11-20 table above whenever `characters.enemyLevelScaling` is present, and kept only for older snapshots; under the table, the tiers with a row here are still the ones whose HP is the level row): an elite or boss fights at its tier's level for the act it is fought in, whatever its `levelProfile`: **elites 2 / 4 / 6, bosses 4 / 6 / 8 in Acts 1 / 2 / 3**; normal enemies keep their own level. The budget above (5 + level), SP, MP, AR and DR follow that level, and with `enemies.effectiveLevelHp` its HP is the `characters` HP row at that level instead of the inflated authored range. Custom Climb `hpMult` still scales it. Only fights built by `createRunCombat` are act-levelled; a fight made without levels keeps the `levelFrom` bound.
 - **Tier HP scale** (#2820 review, 2026-11-17; `enemies.hpScaleByTier`): after that, an enemy's HP is scaled by its tier, the level HP of an elite or boss and the rolled authored range of a normal enemy alike, rounded, at least 1. Core: **minion 0.55, elite 0.6, boss 0.65**, tuned with `tools/coresim.mjs` so that every class's Act 1 win rate is at least dev's under the halved damage and the smaller player HP. Normal enemies' levels and stats are otherwise unchanged.
-- *Falsify (once built):* `tests/enemy-level-budget.test.mjs` fails a Core enemy whose `levelProfile` is not exactly its act/tier pair, an encounter `targetBand` outside 1–5, an own attribute total other than 5 + level (no authored `attributePoints`), or any own attribute below 1; raising `attributePointsPerLevel` to 2 makes a level-3 enemy carry 10.
+- *Falsify (once built):* `tests/enemy-level-scaling.test.mjs` fails an act-1 minion on floors 2 / 5 / 8 that is not level 1 / 2 / 3 with HP ×1.00 / 1.08 / 1.16 and AR and DR +0 / +1 / +2, an act-2 boss not at level 8, a minion over SP 2, an elite or boss over SP 3 or over 4 own Dex or Wis, or an older snapshot whose fight changes with the floor. `tests/enemy-level-budget.test.mjs` fails a Core enemy whose `levelProfile` is not exactly its act/tier range, an encounter `targetBand` outside 1–5, an own attribute total other than 5 + level (no authored `attributePoints`), or any own attribute below 1; raising `attributePointsPerLevel` to 2 makes a level-3 enemy carry 10.
 
 ### Core clarity, progression and editing amendment
 

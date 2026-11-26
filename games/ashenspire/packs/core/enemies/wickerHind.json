@@ -18,7 +18,7 @@
     ],
     "levelProfile": {
       "min": 2,
-      "max": 3
+      "max": 4
     },
     "poiseMax": 6
   },
@@ -28,7 +28,7 @@
     "deckSize": 6,
     "reserveSize": 0,
     "distinctCards": 6,
-    "levelRange": "2-3"
+    "levelRange": "2-4"
   },
   "equipment": [
     {

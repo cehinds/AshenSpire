@@ -22,6 +22,7 @@
     "shops": "shops.json",
     "enemyCards": "enemyCards.json",
     "enemyRelics": "enemyRelics.json",
+    "enemyLevelCards": "enemyLevelCards.json",
     "gear": "gear.json"
   }
 }

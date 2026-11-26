@@ -1,5 +1,6 @@
-// SPEC §17, Enemy levels and stat budget (owner, 2026-11-07): Core enemies are level 1-5 and carry the
-// player's starting budget plus attributePointsPerLevel per level after the first, every attribute at least 1.
+// SPEC §17, Enemy levels and stat budget (owner, 2026-11-07; levels owner, 2026-11-20): Core enemies are level 1-11 by act, tier
+// and floor step (characters.enemyLevelScaling) and carry the player's starting budget plus attributePointsPerLevel per level
+// after the first, every attribute at least 1.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -13,9 +14,9 @@ const enemies = profile.content.enemies;
 const sum = a => Object.values(a).reduce((x, y) => x + y, 0);
 
 const acts = {
-  1: { minion: [1, 2], elite: [2, 3], boss: [3, 3], ids: 'wanderingSoldier blightHound huskBrute graveWisp lanternMoth briarHermit chainScavenger wyrmAspirant fellWarden bellKeeper thornMatriarch brackenTusker fenwickToad reedpipePoacher wickerTitheman siltCrownNewt wickerHind blackrushStork pearlbackSnail alderMaskHarvester woundwoodTusker mireProcessional' },
-  2: { minion: [2, 3], elite: [3, 4], boss: [4, 4], ids: 'gildedKnight courtSurgeon stitchedHound courtMarionette livingArmor mirrorScribe stitchCrab courtDuelist stitchedKing glassRegent marrowOrganist quarryRam tollgateHookman waxsealBailiff carrionHeadsman knellcapSentinel pallidOathCamel inkveilNautilus mirrorFanAbbess saltChoirWalrus rimewheelPenitent veiledJusticiar sixleggedHearse' },
-  3: { minion: [3, 4], elite: [4, 5], boss: [5, 5], ids: 'ashRevenant emberStarvedPilgrim valkyrieShade charredColossus cinderMantis eclipseCantor wyrmLord blightedValkyrie furnaceSaint hollowAstronomer ashheartDragon kilnshellTortoise slagtongImp sootwingBat brassThroatIbex kilnbackTerrapin slagwingHeron ashSilkWeaver ferrumVotary crucibleNewt' }
+  1: { minion: [1, 3], elite: [2, 4], boss: [5, 5], ids: 'wanderingSoldier blightHound huskBrute graveWisp lanternMoth briarHermit chainScavenger wyrmAspirant fellWarden bellKeeper thornMatriarch brackenTusker fenwickToad reedpipePoacher wickerTitheman siltCrownNewt wickerHind blackrushStork pearlbackSnail alderMaskHarvester woundwoodTusker mireProcessional' },
+  2: { minion: [3, 5], elite: [4, 6], boss: [8, 8], ids: 'gildedKnight courtSurgeon stitchedHound courtMarionette livingArmor mirrorScribe stitchCrab courtDuelist stitchedKing glassRegent marrowOrganist quarryRam tollgateHookman waxsealBailiff carrionHeadsman knellcapSentinel pallidOathCamel inkveilNautilus mirrorFanAbbess saltChoirWalrus rimewheelPenitent veiledJusticiar sixleggedHearse' },
+  3: { minion: [5, 7], elite: [6, 8], boss: [11, 11], ids: 'ashRevenant emberStarvedPilgrim valkyrieShade charredColossus cinderMantis eclipseCantor wyrmLord blightedValkyrie furnaceSaint hollowAstronomer ashheartDragon kilnshellTortoise slagtongImp sootwingBat brassThroatIbex kilnbackTerrapin slagwingHeron ashSilkWeaver ferrumVotary crucibleNewt' }
 };
 const expected = new Map();
 for (const [n, act] of Object.entries(acts)) for (const id of act.ids.split(' ')) expected.set(id, { act: Number(n), act_: act });
@@ -28,7 +29,7 @@ test('every Core enemy levelProfile is exactly its act and tier pair', () => {
     const [min, max] = want.act_[e.tier];
     assert.deepEqual({ min: e.levelProfile.min, max: e.levelProfile.max }, { min, max }, `${e.id} (act ${want.act}, ${e.tier})`);
     const level = enemyLevel(e, settings);
-    assert.ok(level >= 1 && level <= 5, `${e.id} level ${level}`);
+    assert.ok(level >= 1 && level <= 11, `${e.id} level ${level}`);
   }
 });
 
@@ -64,6 +65,7 @@ test('seeded variance never moves a stat below 1 or changes the total', () => {
   }
 });
 
+// The target bands feed only the retired profile's level roll now (Core reads enemyLevelScaling), so they keep their 1-5 map.
 test('every Core-route encounter targetBand lies within levels 1-5', () => {
   for (const file of ['wealdEncounters', 'marchesEncounters', 'reachEncounters']) {
     for (const enc of JSON.parse(readFileSync(new URL(`../content/source/${file}.json`, import.meta.url)))) {

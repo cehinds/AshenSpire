@@ -147,6 +147,8 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.ratings !== undefined && (!record(entity.ratings) || ['ar', 'dr', 'pr', 'poise', 'ward'].some(id => !Number.isFinite(entity.ratings[id]) || entity.ratings[id] < 0))) problems.push(`${path}.ratings must contain finite non-negative ratings`);
   if (entity.wardMeter !== undefined && (!record(entity.wardMeter) || !Number.isInteger(entity.wardMeter.max) || entity.wardMeter.max <= 0 || !Number.isFinite(entity.wardMeter.value) || entity.wardMeter.value < 0 || entity.wardMeter.value >= entity.wardMeter.max)) problems.push(`${path}.wardMeter is invalid`);
   if (typeof entity.alive !== 'boolean') problems.push(`${path}.alive must be boolean`);
+  // An enemy's level-card moves (owner, 2026-11-20) are saved on the instance: each an enemy move with an intent and its own SP.
+  if (entity.extraMoves !== undefined && (!record(entity.extraMoves) || Object.values(entity.extraMoves).some(move => !record(move) || typeof move.intent !== 'string' || !Number.isSafeInteger(move.sp) || move.sp < 0))) problems.push(`${path}.extraMoves must map move ids to enemy moves with an intent and SP`);
   // A skill feat's critical-hit rules (SPEC §13.4o): refused by name, never
   // left to throw mid-play or to multiply a blow without bound.
   if (entity.critRules !== undefined && !critRulesOk(entity.critRules)) problems.push(`${path}.critRules must be a list of { tags, base, weights, divisor, cap ≤ 1, multiplier 1–10 }`);
