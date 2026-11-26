@@ -853,7 +853,7 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
   const preparation = limits.preparation;
   const preparationKey = preparation ? JSON.stringify([baseDef, current, applied,
     limits.rank, limits.cardRank, VisibleCardRank(limits.instance || baseDef), limits.instance?.rarityOverride,
-    limits.playerLevel, limits.scale, limits.tier, limits.tierUnlocks, limits.maxRange, limits.exposure]) : '';
+    limits.mechanicsContext, limits.playerLevel, limits.scale, limits.tier, limits.tierUnlocks, limits.maxRange, limits.exposure]) : '';
   let prepared = preparation?.value;
   if (!prepared || prepared.key !== preparationKey || prepared.scoring !== activeScoring
     || prepared.registries !== limits.registries) {
@@ -885,7 +885,7 @@ export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits
     preparation.scorer = { scoring: activeScoring, score: CombatPower.PrepareCardScorer(activeScoring) };
   }
   const cpContext = checkCp
-    ? prepared.cpContext ||= PrepareUpgradeStepCpContext({ baseDef, currentDef: current, instance: limits.instance || null, playerLevel: limits.playerLevel, scoring: activeScoring, registries: limits.registries, projectionScope: preparation?.projectionScope, scoreCard: preparation?.scorer?.score })
+    ? prepared.cpContext ||= PrepareUpgradeStepCpContext({ baseDef, currentDef: current, instance: limits.instance || null, playerLevel: limits.playerLevel, scoring: activeScoring, registries: limits.registries, mechanicsContext: limits.mechanicsContext, projectionScope: preparation?.projectionScope, scoreCard: preparation?.scorer?.score })
     : null;
   const cpRejected = new Set();
   const curRarity = limits.instance?.rarityOverride || current.rarity || baseDef.rarity || 'common';

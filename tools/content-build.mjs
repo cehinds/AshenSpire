@@ -90,6 +90,14 @@ const MUTATE = process.argv.includes('--mutate');
 // the exact same stderr line and exit(1) they always had.
 class BuildError extends Error {}
 function bthrow(msg) { throw new BuildError(msg); }
+function assertMechanicKeys(value, path, seen = new WeakSet()) {
+  if (!value || typeof value !== 'object' || seen.has(value)) return;
+  seen.add(value);
+  for (const [key, child] of Object.entries(value)) {
+    if (key === '__proto__') bthrow(path + ': unsupported own __proto__ key');
+    assertMechanicKeys(child, path + '.' + key, seen);
+  }
+}
 function fail(msg) {
   console.error('content-build: ' + msg);
   process.exit(1);
@@ -258,6 +266,67 @@ function compileDir(srcDir, outDir, { write } = {}) {
       stale += place(cardsOut, name, emit(name, data, `cards/${file}`, 2), write, cardsProduced);
       results.push({ file: `cards/${file}`, name: `cards/${name}`, rows: data.length });
     }
+  }
+  // content/source/mechanics/*.json → <outDir>/combatMechanics.js.
+  // Each JSON file declares one or more mechanic entries `{ [id]: { extends?, ...fields } }`.
+  // Parent -> child inheritance is resolved at build time with cycle and unknown-parent refusal.
+  const mechanicsSrc = join(srcDir, 'mechanics');
+  if (existsSync(mechanicsSrc)) {
+    const rawEntries = {};
+    const owners = {};
+    const mechFiles = readdirSortedSync(mechanicsSrc).filter((f) => extname(f).toLowerCase() === '.json');
+    for (const file of mechFiles) {
+      let data;
+      try { data = JSON.parse(readFileSync(join(mechanicsSrc, file), 'utf8')); } catch (e) { bthrow(`mechanics/${file}: ${e.message}`); }
+      if (!data || typeof data !== 'object' || Array.isArray(data)) bthrow(`mechanics/${file}: a mechanics file must be a JSON object of mechanic entries`);
+      assertMechanicKeys(data, 'mechanics/' + file);
+      for (const [id, entry] of Object.entries(data)) {
+        if (Object.hasOwn(rawEntries, id)) bthrow(`mechanics/${file}: duplicate mechanic id '${id}' (already defined in mechanics/${owners[id]})`);
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) bthrow(`mechanics/${file}: mechanic '${id}' must be a JSON object`);
+        if (entry.extends !== undefined && entry.extends !== null && (typeof entry.extends !== 'string' || !entry.extends.trim())) {
+          bthrow(`mechanics/${file}: mechanic '${id}' has invalid 'extends'`);
+        }
+        rawEntries[id] = entry;
+        owners[id] = file;
+      }
+    }
+    const resolved = {};
+    const inheritedFrom = {};
+    const parents = {};
+    const visiting = new Set();
+    for (const [id, entry] of Object.entries(rawEntries)) parents[id] = entry.extends || null;
+    const resolveMechanic = (id) => {
+      if (Object.hasOwn(resolved, id)) return resolved[id];
+      if (visiting.has(id)) bthrow(`mechanics/${owners[id]}: inheritance cycle involving '${id}'`);
+      const parentId = parents[id];
+      if (parentId && !Object.hasOwn(rawEntries, parentId)) {
+        bthrow(`mechanics/${owners[id]}: mechanic '${id}' extends unknown parent '${parentId}'`);
+      }
+      visiting.add(id);
+      const pRes = parentId ? resolveMechanic(parentId) : null;
+      const pFrom = parentId ? inheritedFrom[parentId] : null;
+      visiting.delete(id);
+      const out = {};
+      const from = {};
+      if (pRes) {
+        for (const [k, v] of Object.entries(pRes)) {
+          out[k] = structuredClone(v);
+          from[k] = pFrom && Object.hasOwn(pFrom, k) ? pFrom[k] : parentId;
+        }
+      }
+      for (const [k, v] of Object.entries(rawEntries[id])) {
+        if (k === 'extends') continue;
+        out[k] = structuredClone(v);
+        delete from[k];
+      }
+      resolved[id] = out;
+      inheritedFrom[id] = from;
+      return out;
+    };
+    for (const id of Object.keys(rawEntries)) resolveMechanic(id);
+    const compiled = { resolved, authored: rawEntries, inheritedFrom, parents };
+    stale += place(outDir, 'combatMechanics', emit('combatMechanics', compiled, 'mechanics/*.json'), write, produced);
+    results.push({ file: 'mechanics/*.json', name: 'combatMechanics', rows: Object.keys(resolved).length });
   }
   // THE TREE'S DERIVATIONS. Seven modules used to have sources of their own
   // (tags/tagDomains/tagFamilyDomains/propertyRules/propertyRuleEffects under
@@ -562,6 +631,7 @@ function sweepStraySources(contentRoot) {
       if (ent.isDirectory()) walk(abs);
       else if (/\.json$/i.test(ent.name) && abs.startsWith(configDir + sep)) continue;
       else if (/\.json$/i.test(ent.name) && dir === join(contentRoot, 'source', 'cards')) continue;
+      else if (/\.json$/i.test(ent.name) && dir === join(contentRoot, 'source', 'mechanics')) continue;
       else if (/\.json$/i.test(ent.name) && dir === hudLayoutDir) {
         if (!HUD_FORM_FACTORS.includes(ent.name.replace(/\.json$/i, ''))) {
           errors.push(`content/hud-layout/${ent.name}: STRAY SOURCE FILE — tools/hud-layout-css.mjs reads only ${HUD_FORM_FACTORS.map((name) => `${name}.json`).join(', ')}; this file compiles to nothing`);
@@ -1034,6 +1104,28 @@ async function selftest() {
         && !plainJs.includes('withNotes') && plainJs.includes('export const plain = {"a":1};')
         && got.a[sym]?.n === 'one' && got.rows[0][sym]?.x === 'y' && !('$note' in got.a) && got.a.n === 1,
       'K14-notes [S2] a "$note" source compiles to a withNotes module whose result carries the NOTE symbol; a source without one stays plain');
+    }
+    {
+      // The mechanics compiler must preserve valid ordinary member names, and
+      // refuse keys whose JS literal representation would change prototypes.
+      const msrc = join(tmp, 'src-mechanics'), mout = join(tmp, 'out-mechanics');
+      mkdirSync(join(msrc, 'mechanics'), { recursive: true });
+      const source = join(msrc, 'mechanics', 'probe.json');
+      writeFileSync(source, '{"constructor":{"enabled":true,"payload":{"v":2}},"toString":{"extends":"constructor","enabled":false}}');
+      compileDir(msrc, mout, { write: true });
+      const moduleText = readFileSync(join(mout, 'combatMechanics.js'), 'utf8');
+      const { combatMechanics: actual } = await import('data:text/javascript;base64,' + Buffer.from(moduleText).toString('base64'));
+      ok(JSON.stringify(actual.resolved.constructor) === '{"enabled":true,"payload":{"v":2}}'
+        && JSON.stringify(actual.resolved.toString) === '{"enabled":false,"payload":{"v":2}}'
+        && actual.inheritedFrom.toString.payload === 'constructor',
+      'mechanics compiler: constructor/toString IDs resolve and retain exact values in emitted module');
+      for (const raw of ['{"__proto__":{}}', '{"base":{"payload":{"__proto__":{"marker":7}}}}']) {
+        writeFileSync(source, raw);
+        let message = '';
+        try { compileDir(msrc, mout, { write: false }); } catch (error) { message = error.message; }
+        ok(message.includes('mechanics/probe.json') && message.includes('unsupported own __proto__ key'),
+          'mechanics compiler: own prototype key refused by file/path before output: ' + (message || 'NOT CAUGHT'));
+      }
     }
     {
       // K15 — eight causal missing-key plants. Three must pass through

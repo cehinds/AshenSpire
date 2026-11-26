@@ -798,7 +798,7 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 // Optional authored behavior attachments. The shared compiler validates tag
 // registration, attachment eligibility and parameter schemas at the boot door.
 const rampNode = obj({ scope: en('combat', 'run'), stat: en('damage', 'block'), per: int });
-const costGrowthSchema = obj({ stamina: opt(num), mana: opt(num), perUse: opt(num), max: opt(num), perCard: opt(bool), uncapped: opt(bool) });
+const costGrowthSchema = obj({ stamina: opt(num), mana: opt(num), perUse: opt(num), max: opt(num), perCard: opt(bool), scope: opt(en('instance', 'card')), uncapped: opt(bool) });
 const choiceModeSchema = obj({ id: str, name: str, tooltip: opt(str), icon: opt(str), costGrowth: opt(costGrowthSchema) });
 const retreatRuleFaceSchema = obj({ keywords: opt(arr(str)), textTemplate: opt(str), choiceModes: opt(arr(choiceModeSchema)) });
 const mechanicAttachmentFields = {
@@ -917,6 +917,8 @@ export const SCHEMAS = Object.freeze({
     legacyFace: opt(any),
     requirements: opt(any),
     playLimit:opt(int),
+    // Wither N (content/source/mechanics/useLimit.json): each copy exhausts on its Nth play this fight.
+    wither: opt(int),
     burden: opt(obj({skipActions:opt(int),staminaTax:opt(int),manaTax:opt(int),status:opt(ref('statuses')),ranges:opt(arr(str)),cardTypes:opt(arr(str))})),
     costGrowth: opt(costGrowthSchema),
     retreatRuleFaces: opt(obj({ legacy: retreatRuleFaceSchema, current: retreatRuleFaceSchema })),
@@ -958,6 +960,7 @@ export const SCHEMAS = Object.freeze({
         faceTemplate: opt(arr(str)),
         ramp: opt(rampNode),
         contest: opt(str),
+        wither: opt(int),
         // An upgrade may ease a rising cost (playtest 2026-11-17, theme C): `{ stamina: 0, mana: 0 }` stops the growth.
         costGrowth: opt(costGrowthSchema),
       })

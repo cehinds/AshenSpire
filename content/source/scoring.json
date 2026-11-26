@@ -372,6 +372,15 @@
       "why": "Lost for the fight: a flat price, not a share of the card's power (owner 2026-11-22, 'flat rate'; -4 is the starting value to tune).",
       "multiplier": -0.5
     },
+    "wither": {
+      "why": "Exhausts after N plays this fight (content/source/mechanics/useLimit.json); scaled by 1/N so Wither 3 discounts one-third of Exhaust.",
+      "multiplier": -0.5
+    },
+    "costGrowth": {
+      "why": "Rising cost per play (content/source/mechanics/costGrowth.json); toggle surchargeEnabled in Score Studio to price rising-cost drawbacks.",
+      "flat": -1,
+      "surchargeEnabled": false
+    },
     "ethereal": {
       "why": "Lost if not played the turn drawn: a flat price, not a share of the card's power (owner 2026-11-22, 'flat rate'; -4 is the starting value to tune).",
       "multiplier": -0.25

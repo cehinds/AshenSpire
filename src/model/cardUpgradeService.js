@@ -31,6 +31,7 @@ export function RunUpgradeStateFingerprint(run) {
     run.attributes || null,
     run.baseAttributes || null,
     run.attributeBonuses || null,
+    run.combatMechanics || run.gameProfile?.combatMechanics || null,
   ]);
 }
 

@@ -61,8 +61,8 @@ export function createFrameworkBridge() {
     viewFor,
 
     /** After-play placement (framework contract: Card lifecycle). */
-    afterPlayDestination(def) {
-      return destinationAfterPlay(viewFor(def), { cancelled: false, legal: true });
+    afterPlayDestination(def, { withered = false } = {}) {
+      return destinationAfterPlay(viewFor(def), { cancelled: false, legal: true }, { withered });
     },
 
     /** End-of-turn fate of one card in hand: 'keep' | 'exhaust' | 'discard'. */
