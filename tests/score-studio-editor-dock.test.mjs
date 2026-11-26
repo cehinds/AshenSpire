@@ -304,3 +304,21 @@ test('narrow screens switch between the library and the editor without losing th
   assert.ok(body.classList.contains('customize-panel-editor'), 'Edit opens the editor panel');
   assert.ok(!doc.getElementById('card-editor-modal').open);
 }));
+
+test('the resizer is a named separator with Home and End limits and an understandable minimum', () => withKitDom(dom => {
+  const { doc, stored } = fixture(dom);
+  const resize = doc.getElementById('inspector-resizer');
+  assert.equal(resize.getAttribute('role'), 'separator');
+  assert.equal(resize.getAttribute('aria-label'), 'Resize customization pane');
+  assert.equal(resize.tabIndex, 0);
+  const press = key => { const event = new dom.Event('keydown', { key, cancelable: true }); resize.dispatchEvent(event); return event; };
+  assert.equal(press('Home').defaultPrevented, true);
+  assert.equal(stored.get('ashenspire:studioInspectorW'), '340');
+  assert.equal(resize.getAttribute('aria-valuenow'), '340');
+  assert.equal(resize.getAttribute('aria-valuetext'), '340 pixels, minimum 340');
+  press('ArrowRight'); assert.equal(stored.get('ashenspire:studioInspectorW'), '340', 'never below the minimum');
+  press('End');
+  assert.equal(stored.get('ashenspire:studioInspectorW'), '780');
+  assert.equal(resize.getAttribute('aria-valuetext'), '780 pixels, minimum 340');
+  assert.equal(press('Tab').defaultPrevented, false, 'other keys pass through');
+}));

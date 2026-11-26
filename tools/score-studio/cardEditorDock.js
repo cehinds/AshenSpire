@@ -283,13 +283,16 @@ export function initCardEditorDock(ctx) {
   // Both galleries share one remembered width and the same live pane. The old
   // card-only resizer is replaced by these handlers at the composition root.
   const WIDTH_KEY = 'ashenspire:studioInspectorW';
+  const MIN_WIDTH = 340, MAX_WIDTH = 780;
   let width = 420;
-  try { const saved = Number(storage?.getItem(WIDTH_KEY)); if (saved >= 340 && saved <= 780) width = saved; } catch { /* Optional persistence. */ }
+  try { const saved = Number(storage?.getItem(WIDTH_KEY)); if (saved >= MIN_WIDTH && saved <= MAX_WIDTH) width = saved; } catch { /* Optional persistence. */ }
   const setWidth = next => {
-    width = Math.max(340, Math.min(780, Math.round(next)));
+    width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, Math.round(next)));
     for (const layout of Object.values(layouts)) {
       layout?.style.setProperty('--inspector-width', `${width}px`);
-      layout?.querySelector('.inspector-resizer')?.setAttribute('aria-valuenow', String(width));
+      const resizer = layout?.querySelector('.inspector-resizer');
+      resizer?.setAttribute('aria-valuenow', String(width));
+      resizer?.setAttribute('aria-valuetext', `${width} pixels, minimum ${MIN_WIDTH}`);
     }
     try { storage?.setItem(WIDTH_KEY, String(width)); } catch { /* Optional persistence. */ }
   };
@@ -300,7 +303,8 @@ export function initCardEditorDock(ctx) {
     let dragging = false;
     resizer.tabIndex = 0; resizer.setAttribute('aria-label', 'Resize customization pane');
     resizer.setAttribute('role', 'separator'); resizer.setAttribute('aria-orientation', 'vertical');
-    resizer.setAttribute('aria-valuemin', '340'); resizer.setAttribute('aria-valuemax', '780');
+    resizer.setAttribute('aria-valuemin', String(MIN_WIDTH)); resizer.setAttribute('aria-valuemax', String(MAX_WIDTH));
+    resizer.title = `Drag or use arrow keys to resize. Home is the minimum (${MIN_WIDTH} pixels), End the maximum (${MAX_WIDTH}).`;
     resizer.setAttribute('aria-controls', 'studio-customization-pane');
     resizer.addEventListener('pointerdown', event => { if (!docked) return; dragging = true; resizer.classList.add('is-dragging'); resizer.setPointerCapture?.(event.pointerId); event.preventDefault(); });
     resizer.addEventListener('pointermove', event => {
@@ -310,9 +314,11 @@ export function initCardEditorDock(ctx) {
     });
     const stop = () => { dragging = false; resizer.classList.remove('is-dragging'); };
     resizer.addEventListener('pointerup', stop); resizer.addEventListener('pointercancel', stop);
+    // The pane sits right of the separator: ArrowLeft widens it, Home and End jump to the limits.
+    const keyWidths = { ArrowLeft: () => width + 20, ArrowRight: () => width - 20, Home: () => MIN_WIDTH, End: () => MAX_WIDTH };
     resizer.addEventListener('keydown', event => {
-      if (!docked || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
-      event.preventDefault(); setContext(key); setWidth(width + (event.key === 'ArrowLeft' ? 20 : -20));
+      if (!docked || !keyWidths[event.key]) return;
+      event.preventDefault(); setContext(key); setWidth(keyWidths[event.key]());
     });
   }
   narrowMedia?.addEventListener?.('change', applyPanel);

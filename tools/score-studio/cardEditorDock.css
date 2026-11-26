@@ -1,6 +1,7 @@
 body.studio-body .cards-layout.card-editor-undocked { grid-template-columns: minmax(0, 1fr); }
 body.studio-body .card-editor-undocked > .inspector-resizer { display: none; }
 body.studio-body .card-editor-undocked > .cards-gallery-pane { border-right: 0; }
+body.studio-body .cards-layout > .inspector-resizer:focus-visible { outline: 2px solid var(--st-accent); outline-offset: -2px; }
 body.studio-body .card-editor-dock-toolbar { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 body.studio-body .card-editor-art-stage { position: relative; isolation: isolate; }
 body.studio-body .card-editor-art-stage > .card { position: relative; z-index: 0; }
