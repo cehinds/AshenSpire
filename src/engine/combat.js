@@ -22,7 +22,7 @@ import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
-import { selectCardVariant, PlayConditionEnemies, PlayConditionMet, ChoiceModeCard } from './cardBehavior.js';
+import { selectCardVariant, PlayConditionEnemies, PlayConditionMet, ChoiceModeCard, Withered } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile, PacketFaceSplit } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
@@ -2094,12 +2094,15 @@ function finishAbilityPlay(combat) {
   // Expanded Powers carry Exhaust; legacy Powers without it leave play.
   // The destination is the framework's call; this engine moves the card.
   if (!combat.result) {
+    // Wither N (content/source/mechanics/useLimit.json): the copy's Nth play this fight exhausts it. Exhaust keeps precedence.
+    const exhausts = def.keywords?.includes('exhaust');
+    const withered = !exhausts && Withered(combat.player, inst, def, combat);
     const destination = configuredCombat(combat)
-      ? (def.keywords?.includes('exhaust') ? 'EXHAUST_PILE' : def.type === 'power' ? 'REMOVED_FROM_PLAY' : 'DISCARD_PILE')
-      : combat.registries.framework.afterPlayDestination(def);
+      ? (exhausts || withered ? 'EXHAUST_PILE' : def.type === 'power' ? 'REMOVED_FROM_PLAY' : 'DISCARD_PILE')
+      : combat.registries.framework.afterPlayDestination(def, { withered });
     if (destination === 'EXHAUST_PILE') {
       combat.piles.exhaust.push(inst);
-      combat.emit('cardExhausted', { cardInstanceId: inst.instanceId, cardId: inst.cardId, reason: 'played' });
+      combat.emit('cardExhausted', { cardInstanceId: inst.instanceId, cardId: inst.cardId, reason: withered ? 'withered' : 'played' });
     } else if (destination === 'HAND') {
       combat.piles.hand.push(inst); // Recall After Use (no shipped card carries it yet)
     } else if (destination !== 'REMOVED_FROM_PLAY') {

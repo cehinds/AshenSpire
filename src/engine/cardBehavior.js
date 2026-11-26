@@ -5,18 +5,37 @@ import { gameContent } from '../model/gameProfile.js';
 import * as Triggers from './triggers.js';
 import { GearCardDefinition } from './gearHooks.js';
 import { RetreatRulesActive } from '../model/fixCoreMechanics.js';
+import { EffectiveCostGrowth, EffectiveWitherLimit, MechanicRule } from '../model/combatMechanics.js';
 const growthSteps = (growth, uses) => growth.uncapped ? Math.floor(uses / (growth.perUse || 1))
   : Math.min(growth.max ?? 3, Math.floor(uses / (growth.perUse || 1)));
+
+/** Plays left before Wither exhausts this copy, or null when Wither is inactive or absent. */
+export function WitherRemaining(entity, instance, def, ctx = null) {
+  const limit = EffectiveWitherLimit(def, ctx);
+  if (!limit) return null;
+  const rule = MechanicRule('wither', ctx);
+  const riders = entity?.abilityRiders;
+  const plays = (rule?.countScope === 'card' || !instance?.instanceId
+    ? riders?.cardUsesCombat?.[instance?.cardId || def?.id]
+    : riders?.instanceUsesCombat?.[instance.instanceId]) || 0;
+  return Math.max(0, limit - plays);
+}
+
+/** True once this copy has reached its Wither limit (exhausts instead of discarding). */
+export function Withered(entity, instance, def, ctx = null) {
+  const left = WitherRemaining(entity, instance, def, ctx);
+  return left !== null && left <= 0;
+}
 export function projectCardBehavior(ctx, instance, def, { applyGear = true } = {}) {
   let result=applyGear ? GearCardDefinition(ctx,def) : def;
   if(def.playLimit && (ctx.player.abilityRiders?.instanceUsesCombat?.[instance.instanceId] || 0)>=def.playLimit) result={...result,keywords:[...new Set([...(result.keywords || []),'unplayable'])]};
   const changes=instance.proposalChanges;
   if (changes) result={...result,...(changes.range ? {range:changes.range,combatProfile:{...result.combatProfile,range:changes.range}} : {}),...(changes.maneuver ? {combatProfile:{...result.combatProfile,maneuver:changes.maneuver,...(changes.range ? {range:changes.range} : {})}} : {}),...(changes.retain && (changes.retainUntilTurn ?? ctx.turn)>=ctx.turn ? {keywords:[...new Set([...(result.keywords || []),'retain'])]} : {})};
-  if (result.costGrowth) {
+  const growth = EffectiveCostGrowth(result, ctx);
+  if (growth) {
     // Plays of this copy (review of #2819): an upgraded copy's plays never raise an unupgraded copy's cost. A projection with no instance id counts by card.
-    // `perCard` (core.retreat, owner 2026-11-19): the count is the plays of this card id in the fight, not of one copy, since each granted copy is a fresh Exhausting
-    // instance. `uncapped` drops the default three-step ceiling (section 23: no hidden caps). Both live in the fight's saved rider counters.
-    const riders=ctx.player.abilityRiders, growth=result.costGrowth;
+    // `perCard` / `scope: 'card'` (costGrowth.shared): counts plays of this card id across the fight.
+    const riders=ctx.player.abilityRiders;
     const plays=((instance.instanceId && !growth.perCard) ? riders?.instanceUsesCombat?.[instance.instanceId] : riders?.cardUsesCombat?.[instance.cardId]) || 0;
     const steps=growthSteps(growth,plays);
     const baseStamina=result.resourceCosts?.sp ?? result.staminaCost ?? result.cost;
