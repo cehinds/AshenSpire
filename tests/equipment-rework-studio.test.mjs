@@ -29,7 +29,7 @@ test('CP module scores inherent weapon poise damage, armour poise bonuses, and g
   // Armour poise threshold and self.statPoise BOTH contribute weighted Poise CP.
   const plate = ScoreItem({ kind: 'armour', id: 'p', rarity: 'common', poise: 6, typeMods: [['self.statPoise', 2]], mods: [] }, scoring);
   assert.equal(plate.parts['Poise threshold'], 3);
-  assert.equal(plate.parts['Poise bonus'], 4);
+  assert.equal(plate.parts['Poise bonus'], 10, 'two self.statPoise use the authored 5 CP weight');
 
   // Gear-vocabulary mods resolve through scoring.items.gearFields with selector & condition factors.
   assert.equal(ModLabel('smash.hitBurn', scoring), 'Burn on hit');

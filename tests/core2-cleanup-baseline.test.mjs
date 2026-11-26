@@ -104,6 +104,11 @@ const currentFixture = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup
 const currentIdentity = JSON.parse(readFileSync(new URL('./fixtures/core2-cleanup-current-reward-fallback-identity.json', import.meta.url), 'utf8'));
 const archivedCurrentSave = readFileSync(new URL('./fixtures/pre-registry-dev-7dff4b03-save.json.gz', import.meta.url));
 const archivedCurrentGear = JSON.parse(gunzipSync(archivedCurrentSave)).gameProfile;
+// Source 10911b810d5: the default profile used by the unchanged identity oracle.
+// Current authored cards may change independently; this saved-profile replay
+// must keep testing the original profile, including every identity hash.
+const capturedDefaultBytes = readFileSync(new URL('./fixtures/core2-cleanup-profile-10911.json.gz', import.meta.url));
+const capturedDefaultJson = gunzipSync(capturedDefaultBytes).toString('utf8');
 // The compiled runtime and profile commitments move through registry and
 // startup changes. Gear inputs stay pinned below. Only identity leaves are
 // advanced here; the independent 7dff4b03 behavior digests remain the oracle.
@@ -154,7 +159,10 @@ function openFight(api, enemyId, encounterId, profileId, contentVersion) {
     profile = api.resolveGameProfile(api.createSaveManager(storage).peekRunGameProfile(1));
     assert.equal(profile.hash, historicalHash);
   } else {
-    profile = plain(api.resolveGameProfile('default'));
+    const capturedStorage = memoryStorage();
+    capturedStorage.setItem(api.runKey(1), `{"gameProfile":${capturedDefaultJson}}`);
+    profile = plain(api.resolveGameProfile(api.createSaveManager(capturedStorage).peekRunGameProfile(1)));
+    assert.equal(profile.hash, 'sha256:9b5f7a725112f76a65f8037f4313f886b95a2d4ad3b8b705eb63d59a820c65a5');
     // The current lanes replay their archived gear inputs. Modern equipment
     // tuning and typed equipment effects are covered by the gear suites.
     profile.modules.gear.statPoints = plain(archivedCurrentGear.modules.gear.statPoints);
@@ -372,6 +380,7 @@ test('the original historical profile fixture keeps its provenance', () => {
   assert.equal(digest(historicalBytes), fixture.historicalProfileSha256);
   assert.equal(digest(archivedCurrentSave), 'fb2cdb88f5072d509738716968fed042977e75d2cc8c36eb2af17543a00a14e5');
   assert.equal(digest(historicalDerivedStatsBytes), '236c8e3c474ca126884f5edf1acaa8b57e9d02b8c00c9bea5e4d4a030bc7a4a5');
+  assert.equal(digest(capturedDefaultBytes), '2d23a93ffc5c778f08c86bd6a76914a51347df0a62ca8adab362cd95b5a2cd2d');
 });
 
 test('the tradition-policy recapture preserves preceding events, RNG, receipts and continuations', () => {

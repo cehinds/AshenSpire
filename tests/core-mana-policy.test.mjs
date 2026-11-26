@@ -90,23 +90,26 @@ test('Star Spark pays two MP (one printed, one spell surcharge) and applies no V
 test('current robes, Focus and Prepared keep spell quotes, payment and restored snapshots in agreement', () => {
   // Independent worked prices: spells add 1 MP and no SP (the +1 SP on non-cantrip spells was dropped by the owner on 2026-11-23);
   // Prepared cuts SP by 1 (floor 0) and positive printed MP by 1. Robes and Focus each cut another MP only while Prepared.
-  const prices = [
-    ['core.cometLance', [1, 2], [0, 0], [0, 0]], // Prepared: Graduate cut 1 -> 0 (owner 2026-11-22), then +1 surcharge, -1 robe
-    ['core.meteor', [1, 4], [0, 2], [0, 1]],
-    ['core.cantrip', [1, 2], [0, 0], [0, 0]], // Arcane Spark prints 1 MP (owner 2026-11-22): plain 1 + 1 surcharge - 1 robe
-    // A current gear profile without spellCosts has neither surcharge nor its SP cut.
-    // Meteor stays 3 MP plain / 2 MP with Adept, before robe -1 and Prepared Focus -1.
-    ['core.meteor', [1, 3], [1, 1], [1, 0], false],
-    // A fight saved before 2026-11-23 keeps staminaSurcharge 1 in its rules snapshot, so its spells still pay +1 SP.
-    ['core.cometLance', [2, 2], [1, 0], [1, 0], 'saved'],
-    ['core.meteor', [2, 4], [1, 2], [1, 1], 'saved'],
-    ['core.cantrip', [1, 2], [0, 0], [0, 0], 'saved'],
+  const cases = [
+    ['core.cometLance', true], ['core.meteor', true], ['core.cantrip', true],
+    ['core.meteor', false],
+    ['core.cometLance', 'saved'], ['core.meteor', 'saved'], ['core.cantrip', 'saved'],
   ];
-  for (const [cardId, plain, prepared, focused, spellCosts = true] of prices) for (const [hand, stance, expected] of [
-    ['greatsword', null, plain], ['ashStaff', null, plain], ['boneSceptre', null, plain],
-    ['greatsword', 'casting', prepared], ['ashStaff', 'casting', focused],
-    ['ashStaff', 'prepared', focused], ['boneSceptre', 'casting', focused],
+  for (const [cardId, spellCosts] of cases) for (const [hand, stance, focus] of [
+    ['greatsword', null, 0], ['ashStaff', null, 0], ['boneSceptre', null, 0],
+    ['greatsword', 'casting', 0], ['ashStaff', 'casting', 1],
+    ['ashStaff', 'prepared', 1], ['boneSceptre', 'casting', 1],
   ]) {
+    // Prices come from this run's authored profile; discounts remain independently
+    // worked expectations. New authoring changes Comet to 0 SP and Meteor to 2 SP/2 MP.
+    const authored = registries.gameProfile.content.cards.find(card => card.id === cardId);
+    const prepared = stance !== null;
+    const exempt = authored.tags.includes('rank.cantrip') || authored.tags.includes('cost.manaOnly');
+    const surcharge = spellCosts === 'saved' && !exempt ? 1 : 0;
+    const stamina = Math.max(0, authored.staminaCost + surcharge - (spellCosts && prepared ? 1 : 0));
+    const graduateMana = Math.max(0, authored.manaCost - (prepared ? 1 : 0));
+    const mana = Math.max(0, graduateMana + (spellCosts ? 1 : 0) - (prepared ? 1 + focus : 0));
+    const expected = [stamina, mana];
     const run = fresh('starseer');
     // Keep the highest quoted cost payable independently of starting gear points.
     run.level.unspentPoints = 2;

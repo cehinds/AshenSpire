@@ -12,6 +12,8 @@ The owner-approved Studio weights and authoring bundle are retained in `content/
 
 The active eleven-card Starseer list is installed in the Core pack, including the three custom card IDs. New Starseer runs start with four Ward, one Arcane Bolt, one Mana Rite, and four Arcane Strike, plus the existing equipment-granted art. Authored base effects, upgrades and rating values are preserved; all resource variants use the updated prices. Existing saved profiles retain their own content and starter deck. The raw Studio bundle also preserves other decks and unfinished authoring cards, without installing its blank placeholder into the game.
 
+Gear range projection preserves the complete card identity, including spell camp and school, before applying authored overrides. Reach spells therefore keep the same Prepared discounts in their face, quote and payment. Subclass exports retain their requested generation budget; a truthful target miss cannot silently remove the card's existing signature upgrade during a full-bundle or game-card reload.
+
 The 180 subclass cards remain an opt-in Studio catalog. They were not installed into the task checkout's canonical game content. A separate temporary fixture verifies export, both content pipelines, all four builders, idempotency and score agreement after reload. Forced low-rank recipes report an actionable miss or unavailable signature upgrade when their actual mechanical ceilings cannot accommodate the request; no CP pins hide that result.
 
 Verification includes 900 requested-rank variants, 180 default authored upgrades with actual mechanical changes, shared renderer/export metadata checks, and the official freshness checks.

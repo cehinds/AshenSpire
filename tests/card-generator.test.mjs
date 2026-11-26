@@ -7,6 +7,8 @@ import { contentBundle } from '../src/content/index.js';
 import { validateCardTemplates } from '../src/model/validate/templates.js';
 import { scoring } from '../src/content/generated/scoring.js';
 
+const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
+
 const RARITIES = ['common', 'uncommon', 'rare'];
 const shapes = [];
 for (const type of ['attack', 'skill']) for (const camp of ['physical', 'spell']) shapes.push({ type, camp });
@@ -78,10 +80,10 @@ test('card generator: deterministic by seed, different seeds differ, unknown inp
 
 // Owner, 2026-11-24: 1-3 effects, statuses, schools, costs, range, area, keyword and drawback, still at the exact target CP.
 const RIDER_STATUSES = Object.keys(scoring.statuses);
-const richTarget = (seed) => {
+const richTarget = (seed, rankCount = 8) => {
   const at = (list) => list[seed % list.length];
   return {
-    rarity: at(RARITIES), rank: seed % 8, seed: `rich.${seed}`,
+    rarity: at(RARITIES), rank: seed % rankCount, seed: `rich.${seed}`,
     camp: at(CAMPS), type: at(CARD_TYPES), school: at(SCHOOLS), range: at([...RANGES, undefined]),
     sp: seed % 4, mp: (seed >> 2) % 4, effects: 1 + (seed % 3),
     allowedEffects: RIDER_EFFECTS, allowedStatuses: RIDER_STATUSES,
@@ -89,13 +91,14 @@ const richTarget = (seed) => {
   };
 };
 
-test('card generator: multi-effect cards land exactly on their target combat power over many seeds', () => {
+test('card generator: multi-effect cards land exactly on their target combat power over many seeds under the historical scoring fixture', () => {
+  const scoring = historicalScoring;
   let riders = 0, twoRiders = 0;
   for (let seed = 0; seed < 1500; seed++) {
     const target = richTarget(seed);
-    const { face, cp, riders: kept } = GenerateFace(target);
-    assert.equal(CombatPower(ScoreCard(face).raw, target.rarity), cp, `seed ${seed}: ${JSON.stringify(target)}`);
-    assert.equal(RankOf(cp), target.rank, `seed ${seed}: rank`);
+    const { face, cp, riders: kept } = GenerateFace(target, { scoring });
+    assert.equal(CombatPower(ScoreCard(face, scoring).raw, target.rarity, scoring), cp, `seed ${seed}: ${JSON.stringify(target)}`);
+    assert.equal(RankOf(cp, scoring), target.rank, `seed ${seed}: rank`);
     assert.ok(kept.length <= target.effects - 1, `seed ${seed}: at most effects-1 riders`);
     riders += kept.length; if (kept.length === 2) twoRiders++;
   }
@@ -136,14 +139,35 @@ test('card generator: a target below the base raises costs and drops riders befo
 });
 
 test('card generator: no HP cost without a drawback, and never more than 6, over many seeds', () => {
+  let under = 0, over = 0;
+  for (const policy of [historicalScoring, scoring]) {
   for (let seed = 0; seed < 400; seed++) for (const type of CARD_TYPES) for (const drawback of [false, true]) {
     const target = { rarity: RARITIES[seed % 3], rank: 0, seed: `hp.${seed}`, camp: CAMPS[seed % 3], type, effects: 1 + (seed % 3), allowedEffects: RIDER_EFFECTS, allowedStatuses: RIDER_STATUSES, drawback };
-    const { face, cp, wanted, miss } = GenerateFace(target);
+    const generated = GenerateFace(target, { scoring: policy });
+    const { face, cp, wanted, miss } = generated;
+    assert.equal(cp, CombatPower(ScoreCard(face, policy).raw, target.rarity, policy));
+    assert.equal(miss, cp !== wanted, 'the miss flag states the actual target difference');
     if (!drawback) assert.equal(face.loseHp, 0, `seed ${seed} ${type}: HP without a drawback`);
     assert.ok(face.loseHp <= 6, `seed ${seed} ${type}: HP ${face.loseHp} over the cap`);
     if (!miss) assert.equal(cp, wanted);
-    else assert.ok(cp > wanted, 'a miss is only ever too strong');
+    else if (policy === historicalScoring) assert.ok(cp > wanted, 'the historical additive-weight miss is too strong');
+    else {
+      const key = face.type === 'attack' ? 'dmg' : 'blk';
+      assert.equal(face[key], 1, 'a bounded fallback keeps its minimum primary');
+      assert.equal(face.sp, 3); assert.equal(face.mp, target.camp === 'martial' ? 0 : 3);
+      assert.deepEqual(generated, GenerateFace(structuredClone(target), { scoring: policy }), 'misses remain deterministic');
+      if (cp < wanted) {
+        under++;
+        // Multiplicative category weights can skip an integer target. Verify the
+        // exact target is absent throughout the permitted primary search.
+        for (let amount = 1; amount <= 999; amount++) assert.notEqual(CombatPower(ScoreCard({ ...face, [key]: amount }, policy).raw, target.rarity, policy), wanted);
+      } else over++;
+      const card = GenerateCard(target, { scoring: policy });
+      assert.equal(card._cpMiss, wanted, 'exported cards expose the missed target instead of a score pin');
+    }
   }
+  }
+  assert.ok(under > 0 && over > 0, 'current weights exercise truthful misses on both sides');
   // the reviewer's case: a common martial counter at Rank 0
   for (let seed = 1; seed <= 40; seed++) assert.equal(GenerateFace({ rarity: 'common', rank: 0, seed, camp: 'martial', type: 'counter', effects: 1 }).face.loseHp, 0);
 });
@@ -156,13 +180,14 @@ test('card generator: a magic counter or defend is a skill, a magic smash or swe
   }
 });
 
-test('card generator: multi-effect cards pass the card template validator and use only real ops', () => {
+test('card generator: multi-effect cards pass the card template validator and use only real ops under the historical scoring fixture', () => {
+  const scoring = historicalScoring;
   const coreCards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
   const coreOps = new Set(coreCards.flatMap(card => card.effects.map(e => e.op)));
   const problems = [];
   const err = (path, msg) => problems.push({ path, msg });
   for (let seed = 0; seed < 400; seed++) {
-    const card = GenerateCard(richTarget(seed));
+    const card = GenerateCard(richTarget(seed), { scoring });
     for (const e of card.effects) assert.ok(coreOps.has(e.op), `${card.id}: op ${e.op}`);
     if (card.faceTemplate) assert.ok(card.faceTemplate.length <= 3);
     assert.ok(card.name.length > 0);
@@ -171,11 +196,34 @@ test('card generator: multi-effect cards pass the card template validator and us
   assert.deepEqual(problems, []);
 });
 
-test('card generator: multi-effect output is deterministic by seed and differs across seeds', () => {
-  for (let seed = 0; seed < 60; seed++) assert.deepEqual(GenerateCard(richTarget(seed)), GenerateCard(structuredClone(richTarget(seed))));
-  const names = new Set(Array.from({ length: 60 }, (_, i) => JSON.stringify(GenerateCard({ ...richTarget(1), seed: `x${i}` }).effects)));
+test('card generator: multi-effect output is deterministic by seed and differs across seeds under the historical scoring fixture', () => {
+  const scoring = historicalScoring;
+  for (let seed = 0; seed < 60; seed++) assert.deepEqual(GenerateCard(richTarget(seed), { scoring }), GenerateCard(structuredClone(richTarget(seed)), { scoring }));
+  const names = new Set(Array.from({ length: 60 }, (_, i) => JSON.stringify(GenerateCard({ ...richTarget(1), seed: `x${i}` }, { scoring }).effects)));
   assert.ok(names.size > 10, `different seeds give different cards (${names.size})`);
   assert.throws(() => GenerateCard({ rarity: 'common', rank: 1, effects: 4 }), /effects must be/);
   assert.throws(() => GenerateCard({ rarity: 'common', rank: 1, school: 'water' }), /unknown school/);
   assert.throws(() => GenerateCard({ rarity: 'common', rank: 1, type: 'dance' }), /type must be/);
+});
+
+
+test('shipped multi-effect generation covers every supported rank with truthful scores, legal effects and seeded variation', () => {
+  const problems = [], ranks = new Set(), variants = new Set(); let riders = 0, twoRiders = 0;
+  for (let seed = 0; seed < 400; seed++) {
+    const target = richTarget(seed, scoring.rank.maxRank + 1), result = GenerateFace(target);
+    ranks.add(target.rank);
+    assert.equal(result.cp, CombatPower(ScoreCard(result.face, scoring).raw, target.rarity, scoring));
+    assert.equal(result.miss, result.cp !== result.wanted);
+    if (!result.miss) assert.equal(RankOf(result.cp, scoring), target.rank);
+    assert.ok(result.riders.length <= target.effects - 1);
+    riders += result.riders.length; if (result.riders.length === 2) twoRiders++;
+    const card = GenerateCard(target); validateCardTemplates(card, card.id, (path, msg) => problems.push({ path, msg }));
+    assert.equal(card._cpMiss, result.miss ? result.wanted : undefined);
+    if (seed < 60) assert.deepEqual(GenerateCard(structuredClone(target)), card);
+    variants.add(JSON.stringify(card.effects));
+  }
+  assert.deepEqual([...ranks].sort(), [0, 1, 2, 3, 4, 5]);
+  assert.ok(riders > 100 && twoRiders > 20, 'real shipped weights retain multi-effect mechanics');
+  assert.ok(variants.size > 100); assert.deepEqual(problems, []);
+  assert.throws(() => GenerateCard({ rarity: 'common', rank: 6, effects: 3 }), /outside 0\.\.5/);
 });

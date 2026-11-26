@@ -77,12 +77,12 @@ test('the card is Mana Surge: 1 SP, no Mana cost, gains 2 Mana, reads "Gain 2 Ma
   if (cardFaceText) assert.match(JSON.stringify(cardFaceText(def)), /Gain 2 Mana/);
 });
 
-test('the shipped Core grants no Mana Surge: fresh casters start with ten cards, and older saves holding it still load (owner 2026-11-21)', () => {
+test('the shipped Core grants no Mana Surge: fresh casters keep their authored starter counts, and older saves holding it still load', () => {
   const shippedStart = (classId) => createRunState({ registries: shippedReg, classId, seed: 511, profileMeta: meta });
   for (const id of ['starseer', 'herald', 'reaver', 'rogue']) {
     const run = shippedStart(id);
     assert.equal(run.deck.filter((c) => c.cardId === 'core.manaSurge').length, 0, id);
-    assert.equal(run.deck.length, 10, `${id} starts with ten cards`);
+    assert.equal(run.deck.length, id === 'starseer' ? 11 : 10, `${id} keeps its authored base copies plus normal weapon art`);
     assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
   }
   // An older save whose deck holds the granted card still loads and keeps playing.

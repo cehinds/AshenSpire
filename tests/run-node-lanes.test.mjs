@@ -5,7 +5,7 @@ import { join, resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { readSourceTextSync } from './helpers/read-source.mjs';
-import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
+import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, ISOLATED_TIMING_DISCOVERED, discoveryExecutionBatches, reporterSummaryCounts, runDiscoveryBatches, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const RUNNER = readSourceTextSync(join(ROOT, 'tests/run-node.mjs'));
@@ -76,6 +76,38 @@ test('every SLOW_DISCOVERED entry names a discovered test file with a reason', (
   }
 });
 
+test('timing-sensitive files run alone first while every file stays exactly once in its assigned shard', () => {
+  const timing = [...ISOLATED_TIMING_DISCOVERED.keys()];
+  const files = ['tests/a.test.mjs', timing[0], 'tests/b.test.mjs', timing[1], 'tests/z.test.mjs'];
+  assert.deepEqual(discoveryExecutionBatches(files), [[timing[0]], [timing[1]], ['tests/a.test.mjs', 'tests/b.test.mjs', 'tests/z.test.mjs']]);
+  for (let count = 1; count <= files.length; count++) {
+    const assigned = [];
+    for (let index = 0; index < count; index++) {
+      const shard = discoveryShardFiles(files, { index, count });
+      const batches = discoveryExecutionBatches(shard);
+      assert.deepEqual(batches.flat().sort(), [...shard].sort());
+      for (const file of timing) if (shard.includes(file)) assert.deepEqual(batches.find(batch => batch.includes(file)), [file]);
+      assigned.push(...batches.flat());
+    }
+    assert.deepEqual(assigned.sort(), [...files].sort());
+  }
+  assert.deepEqual(discoveryExecutionBatches(timing), timing.map(file => [file]));
+  assert.deepEqual(discoveryExecutionBatches(['ordinary']), [['ordinary']]);
+  assert.throws(() => discoveryExecutionBatches([]), /nonempty/);
+  assert.throws(() => discoveryExecutionBatches(['duplicate', 'duplicate']), /unique/);
+});
+
+test('the closed timing-isolation list names real discovered files and gives each its measured reason', () => {
+  assert.deepEqual([...ISOLATED_TIMING_DISCOVERED.keys()], [
+    'tests/seed-driven-schedule-and-perf.test.mjs', 'tests/upgrade-tags-and-perf.test.mjs',
+  ]);
+  const discovered = discoveredCorpus();
+  for (const [file, reason] of ISOLATED_TIMING_DISCOVERED) {
+    assert.ok(discovered.includes(file), `${file} is gone or excluded; remove its timing-isolation entry`);
+    assert.ok(reason.length > 10);
+  }
+});
+
 test('every existing selftest site participates in the exhaustive link/other partition', () => {
   // Selftest sites are table rows (`lane: 'selftest', group: '<tool>'`, run by the
   // one loop that applies selftestInGroup to the row's group) plus the lanes
@@ -115,6 +147,7 @@ function fixture(run) {
     writeFileSync(join(dir, `tests/${file}.test.mjs`), 'throw new Error("EXCLUDED_TEST_MUST_NOT_RUN");');
   }
   writeFileSync(join(dir, 'tools/bundle.test.mjs'), 'throw new Error("EXCLUDED_TEST_MUST_NOT_RUN");');
+  for (const file of ISOLATED_TIMING_DISCOVERED.keys()) writeFileSync(join(dir, file), "import test from 'node:test'; test('isolated timing fixture',()=>{});");
   const tools = new Set([...RUNNER.matchAll(/['"]tools\/([^'"]+\.mjs)['"]/g)].map(match => match[1]));
   for (const name of tools) {
     if (name !== 'bundle.test.mjs') writeFileSync(join(dir, 'tools', name), 'throw new Error("TOOL_LANE_MUST_NOT_RUN");');
@@ -143,14 +176,34 @@ test('actual discovery-only subprocess runs its shard without engine, excluded t
     writeFileSync(receipt, '');
     const result = invoke(dir, ['--discovered-only', '--shard', `${index}/2`]);
     assert.equal(result.status, 0, result.output);
-    assert.match(result.output, /2 files, 2 tests, 0 failed/);
+    assert.match(result.output, /3 files, 3 tests, 0 failed/);
     assert.deepEqual(readFileSync(receipt, 'utf8').trim().split('\n').sort(), index === 0 ? ['0', '2'] : ['1', '3']);
     assert.doesNotMatch(result.output, /LANE_MUST_NOT_RUN|EXCLUDED_TEST_MUST_NOT_RUN/);
   }
-  const empty = invoke(dir, ['--discovered-only', '--shard', '4/5']);
+  const empty = invoke(dir, ['--discovered-only', '--shard', '6/7']);
   assert.equal(empty.status, 2, empty.output);
   assert.match(empty.output, /zero-work/);
   assert.doesNotMatch(empty.output, /PASS/);
+}));
+
+test('the real runner continues after a failed isolated file and truthfully totals every batch', () => fixture(dir => {
+  const timing = [...ISOLATED_TIMING_DISCOVERED.keys()];
+  writeFileSync(join(dir, timing[0]), "import test from 'node:test'; import assert from 'node:assert/strict'; import {appendFileSync} from 'node:fs'; test('ISOLATED_FAILURE',()=>{appendFileSync('visited.txt','first\\n');assert.fail('failure stays red');});");
+  writeFileSync(join(dir, timing[1]), "import test from 'node:test'; import {appendFileSync} from 'node:fs'; test('ISOLATED_SECOND',()=>appendFileSync('visited.txt','second\\n'));");
+  writeFileSync(join(dir, 'tests/a.test.mjs'), "import test from 'node:test'; import {appendFileSync} from 'node:fs'; test('ORDINARY_REMAINDER',()=>appendFileSync('visited.txt','ordinary\\n'));");
+  const result = invoke(dir, ['--discovered-only']);
+  assert.equal(result.status, 1, result.output);
+  assert.match(result.output, /3 files, 3 tests, 1 failed/);
+  assert.match(result.output, /ISOLATED_FAILURE/);
+  assert.match(result.output, /ORDINARY_REMAINDER/);
+  assert.deepEqual(readFileSync(join(dir, 'visited.txt'), 'utf8').trim().split('\n'), ['first', 'second', 'ordinary']);
+}));
+
+test('a stale timing-isolation entry fails discovery rather than silently changing scheduling', () => fixture(dir => {
+  rmSync(join(dir, [...ISOLATED_TIMING_DISCOVERED.keys()][0]));
+  const result = invoke(dir, ['--discovered-only']);
+  assert.equal(result.status, 1, result.output);
+  assert.match(result.output, /ISOLATED_TIMING_DISCOVERED names tests\/seed-driven-schedule-and-perf\.test\.mjs/);
 }));
 
 test('discovery-only keeps failed assertions, syntax errors and stale exclusions red', () => fixture(dir => {
@@ -300,8 +353,12 @@ test('the configured discovery shards and isolated jobs cover the real corpus on
     const windows = os === 'windows-latest';
     const shards = configured.get(os);
     assert.deepEqual([...shards].sort(), [...expectedShards].sort(), os);
-    const assigned = shards.flatMap(shard => discoveryShardFiles(windows ? fast : eligible,
-      parseRunNodeOptions(['--discovered-only', '--shard', shard]).shard));
+    const assigned = shards.flatMap(shard => {
+      const original = discoveryShardFiles(windows ? fast : eligible, parseRunNodeOptions(['--discovered-only', '--shard', shard]).shard);
+      const batches = discoveryExecutionBatches(original);
+      assert.deepEqual(batches.flat().sort(), [...original].sort(), `${os} ${shard} retains its exact assigned corpus`);
+      return batches.flat();
+    });
     if (windows) assigned.push(...slow);
     assert.deepEqual(assigned.sort(), eligible, `${os} runs every eligible file exactly once`);
   }
@@ -353,8 +410,61 @@ test('shard summary counts name a time stop, a missing count, or print the norma
   assert.doesNotMatch(shardSummaryCounts({ out: '', timedOut: false, limitMinutes: 15, files: 3 }), /NaN/);
 });
 
+const footer = (tests, failed = 0) => `ℹ tests ${tests}\nℹ suites 0\nℹ pass ${tests - failed}\nℹ fail ${failed}\nℹ duration_ms 1\n`;
+test('multiple reporter summaries aggregate every batch and incomplete summaries stay unknown', () => {
+  const output = footer(3, 1) + footer(5) + footer(7, 2);
+  assert.deepEqual(reporterSummaryCounts(output), { tests: 15, failed: 3, summaries: 3 });
+  assert.equal(shardSummaryCounts({ out: output, timedOut: false, files: 9, expectedSummaries: 3 }), '9 files, 15 tests, 3 failed');
+  assert.equal(shardSummaryCounts({ out: output, timedOut: false, files: 9 }), '9 files, 15 tests, 3 failed');
+  for (const out of [footer(3) + 'ℹ tests 5\n', 'ℹ tests 3\n' + footer(5), 'ℹ tests invalid\n5\nℹ fail 0\n', footer(2, 3)]) assert.equal(reporterSummaryCounts(out), null);
+  assert.equal(shardSummaryCounts({ out: footer(3), timedOut: false, files: 9, expectedSummaries: 3 }), '9 files, counts unavailable');
+});
+
+test('batch failures and missing ordinary footers remain red without hiding the remaining corpus', () => {
+  let elapsed = 0;
+  const timeouts = [], visited = [];
+  const results = [{ status: 1, stdout: footer(2, 1) }, { status: 0, stdout: 'ordinary child printed no footer' }, { status: 0, stdout: footer(4) }];
+  const result = runDiscoveryBatches([['isolated-first'], ['ordinary-no-footer'], ['remaining']], { timeoutMs: 900000, now: () => elapsed, runBatch: (files, timeout) => {
+    visited.push(...files); timeouts.push(timeout); elapsed += 12;
+    return results.shift();
+  } });
+  assert.deepEqual(visited, ['isolated-first', 'ordinary-no-footer', 'remaining']);
+  assert.deepEqual(timeouts, [900000, 899988, 899976]);
+  assert.equal(result.ok, false);
+  assert.equal(result.timedOut, false);
+  assert.deepEqual(result.results.map(batch => batch.ok), [false, false, true]);
+  assert.equal(shardSummaryCounts({ out: result.out, files: 3, expectedSummaries: 3 }), '3 files, counts unavailable');
+  for (const child of [{ status: 1, stdout: footer(1) }, { status: 0, stdout: footer(1), error: { code: 'EIO' } }, { status: 0, stdout: footer(0) }, { status: 0, stdout: footer(1) + footer(1) }]) {
+    assert.equal(runDiscoveryBatches([['file']], { timeoutMs: 1, now: () => 0, runBatch: () => child }).ok, false);
+  }
+});
+
+test('one fifteen-minute deadline bounds all batches and timeout prevents further launches', () => {
+  let elapsed = 0;
+  const timeouts = [];
+  const result = runDiscoveryBatches([['first'], ['timeout'], ['must-not-run']], { timeoutMs: 900000, now: () => elapsed, runBatch: (files, timeout) => {
+    timeouts.push(timeout);
+    if (files[0] === 'first') { elapsed += 35; return { status: 0, stdout: footer(1) }; }
+    elapsed += timeout;
+    return { status: null, error: { code: 'ETIMEDOUT' }, stdout: 'partial' };
+  } });
+  assert.deepEqual(timeouts, [900000, 899965]);
+  assert.equal(result.ok, false); assert.equal(result.timedOut, true);
+  assert.equal(result.results.length, 2);
+  assert.match(shardSummaryCounts({ out: result.out, timedOut: true, limitMinutes: 15, files: 3 }), /stopped after 15 minutes/);
+  let launches = 0; elapsed = 0;
+  const exhausted = runDiscoveryBatches([['first'], ['never']], { timeoutMs: 10, now: () => elapsed, runBatch: () => {
+    launches++; elapsed = 10; return { status: 0, stdout: footer(1) };
+  } });
+  assert.equal(launches, 1); assert.equal(exhausted.timedOut, true); assert.equal(exhausted.ok, false);
+  assert.throws(() => runDiscoveryBatches([], { timeoutMs: 1 }), /nonempty/);
+  assert.throws(() => runDiscoveryBatches([['one'], ['one']], { timeoutMs: 1 }), /unique/);
+});
+
 test('the discovered summary line uses the shard counts helper, so a time stop never prints NaN', () => {
-  assert.match(RUNNER, /shardSummaryCounts\(\{ out, timedOut: result\.error\?\.code === 'ETIMEDOUT'/);
+  assert.match(RUNNER, /shardSummaryCounts\(\{ out, timedOut: result\.timedOut/);
+  assert.match(RUNNER, /expectedSummaries: batches\.length/);
+  assert.match(RUNNER, /timeout: remaining/);
   assert.match(RUNNER, /\$\{counts\}/);
   assert.doesNotMatch(RUNNER, /\$\{count\('tests'\)\} tests/);
 });

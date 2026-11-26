@@ -27,6 +27,8 @@ import {
 } from '../tools/score-studio/customDecks.js';
 import { saveStudioDecks, readStudioConfig } from '../tools/score-studio-save.mjs';
 
+const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
+
 test('ResolveQuotaCounts allocates exact totals deterministically for percent and flat modes', () => {
   const pct = ResolveQuotaCounts({ 0: 5, 1: 30, 2: 35, 3: 20, 4: 10, 5: 0 }, 20, 'percent');
   assert.equal(Object.values(pct).reduce((a, b) => a + b, 0), 20);
@@ -85,7 +87,8 @@ test('GenerateCard and GenerateCardBatch honour schools, stances, effectCount, k
   }
 });
 
-test('GenerateItem and GenerateItemBatch create balanced weapons, armours, and relics deterministically', () => {
+test('GenerateItem and GenerateItemBatch create balanced weapons, armours, and relics deterministically under the historical scoring fixture', () => {
+  const scoring = historicalScoring;
   for (const [kind, rank, rarity] of [['weapon', 2, 'uncommon'], ['armour', 1, 'common'], ['relic', 3, 'rare']]) {
     const a = GenerateItem({ kind, rank, rarity, aimMaxCp: true, seed: 'item_det' }, { scoring });
     const b = GenerateItem({ kind, rank, rarity, aimMaxCp: true, seed: 'item_det' }, { scoring });
@@ -100,7 +103,8 @@ test('GenerateItem and GenerateItemBatch create balanced weapons, armours, and r
   assert.equal(new Set(batch.items.map((x) => x.key)).size, 9);
 });
 
-test('AutoBalanceCards hits quotas deterministically, aims near rank max CP, generates shortage, and optionally trims', () => {
+test('AutoBalanceCards hits quotas deterministically, aims near rank max CP, generates shortage, and optionally trims under the historical scoring fixture', () => {
+  const scoring = historicalScoring;
   const sample = Array.from({ length: 10 }, (_, i) => GenerateCard({
     rarity: 'common',
     rank: 1,
@@ -214,4 +218,61 @@ test('customDecks helpers and saveStudioDecks round-trip custom classes, decks, 
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
+});
+
+
+test('shipped generated items report actual scores when a bounded passive relic cannot reach its requested rank', () => {
+  for (const [kind, rank, rarity] of [['weapon', 2, 'uncommon'], ['armour', 1, 'common'], ['relic', 3, 'rare']]) {
+    const target = { kind, rank, rarity, aimMaxCp: true, seed: 'item_det' };
+    const result = GenerateItem(target, { scoring });
+    assert.deepEqual(GenerateItem(structuredClone(target), { scoring }), result);
+    const measured = ScoreGeneratedItem(result.entry, scoring);
+    assert.deepEqual([result.score.raw, result.score.cp, result.score.rank, result.score.parts], [measured.raw, measured.cp, measured.rank, measured.parts]);
+    assert.equal(result.score.rank, RankOf(result.score.cp, scoring));
+    assert.ok(result.score.cp <= RankBand(rank, scoring).max);
+    assert.ok(result.entry.name.length <= 24);
+    if (kind !== 'relic') { assert.equal(result.score.rank, rank); continue; }
+    assert.deepEqual(result.entry.triggers, []);
+    // This seed chooses the passive-only pool. Independently price every legal
+    // passive magnitude rather than treating the requested rank as achieved.
+    const pool = [['maxHp', 'relic.maxHp', 3, 20], ['poiseThresholdAdd', 'relic.poise', 1, 8], ['maxMana', 'relic.mana', 1, 4],
+      ['maxStamina', 'relic.stamina', 1, 3], ['magicDamageAdd', 'relic.magicDamage', 1, 5], ['physicalDamageAdd', 'relic.physicalDamage', 1, 5], ['blockAdd', 'relic.block', 1, 6]];
+    const scores = pool.flatMap(([key, mod, min, max]) => Array.from({ length: max - min + 1 }, (_, i) =>
+      ScoreGeneratedItem({ ...result.entry, passives: { [key]: min + i }, mods: [`${mod}=+${min + i}`] }, scoring).cp));
+    const maximum = Math.max(...scores);
+    assert.ok(maximum < RankBand(rank, scoring).min, 'the complete bounded passive pool cannot reach requested Rank 3');
+    assert.equal(result.score.cp, maximum, 'the returned measured result reaches the finite pool ceiling');
+    assert.ok(result.entry.name.endsWith(` ${'I'.repeat(result.score.rank)}`), 'the convention name uses the actual rank');
+  }
+});
+
+test('shipped auto-balance reports actual quotas and preserves a bounded tuning miss below its requested CP ceiling', () => {
+  const sample = Array.from({ length: 10 }, (_, i) => GenerateCard({ rarity: 'common', rank: 1, cls: 'reaver', camp: 'physical', type: i % 3 === 0 ? 'skill' : 'attack', seed: `src_${i}` }, { scoring }));
+  const original = structuredClone(sample);
+  const options = { mode: 'flat', targetCount: 12, rankQuotas: { 0: 1, 1: 4, 2: 4, 3: 3 }, rarityQuotas: { common: 6, uncommon: 4, rare: 2 },
+    aimMaxCp: true, applyNaming: true, generateShortage: true, trimSurplus: false, seed: 123, scoring };
+  const result = AutoBalanceCards(sample, options);
+  assert.deepEqual(result, AutoBalanceCards(sample, options)); assert.deepEqual(sample, original);
+  assert.equal(result.updated.length, 10); assert.equal(result.created.length, 2);
+  const ranks = {}, rarities = {};
+  for (const card of [...result.updated, ...result.created]) {
+    const cp = CombatPower(ScoreCard(HeadlessCardFace(card, scoring), scoring).raw, card.rarity, scoring), rank = RankOf(cp, scoring);
+    ranks[rank] = (ranks[rank] || 0) + 1; rarities[card.rarity] = (rarities[card.rarity] || 0) + 1;
+    assert.ok(cp <= RankBand(rank, scoring).max);
+  }
+  assert.deepEqual(result.report.afterRanks, ranks); assert.deepEqual(result.report.afterRarities, rarities);
+  assert.deepEqual(ranks, options.rankQuotas); assert.deepEqual(rarities, options.rarityQuotas);
+  const source = sample.find(card => card.id === 'gen.src_4');
+  const tuned = TuneCardToTarget(source, { targetRank: 2, targetRarity: 'common', aimMaxCp: true, scoring });
+  assert.equal(tuned.targetCp, RankBand(2, scoring).max);
+  assert.equal(tuned.score.rank, 2); assert.ok(tuned.score.cp < tuned.targetCp - 1);
+  // The existing damage-only magnitude search stops at 60. Price its full
+  // SP 0..3 domain to show this miss follows the bounded mechanical envelope.
+  const cpOf = card => CombatPower(ScoreCard(HeadlessCardFace(card, scoring), scoring).raw, card.rarity, scoring);
+  const reachable = [];
+  for (let sp = 0; sp <= 3; sp++) for (let amount = 1; amount <= 60; amount++) reachable.push(cpOf({ ...source, cost: sp, staminaCost: sp, effects: source.effects.map((effect, i) => i === 0 ? { ...effect, amount } : effect) }));
+  assert.equal(tuned.score.cp, Math.max(...reachable), 'the actual result reaches the bounded primary ceiling');
+  assert.ok(Math.max(...reachable) < tuned.targetCp);
+  assert.deepEqual(tuned.card.effects.map(effect => effect.op), source.effects.map(effect => effect.op));
+  assert.equal(cpOf(result.updated.find(card => card.id === source.id)), tuned.score.cp);
 });

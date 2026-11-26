@@ -1,0 +1,2628 @@
+{
+  "sourceCommit": "10911b810d5b1a6023466e9185d7f806e379c19c",
+  "sourceProfile": {
+    "path": "src/content/generated/gameProfiles.js",
+    "sourceSha256": "bfa210f75c63b7807e66007e7e2025103c4537130bcbe4a448415631249f16e3",
+    "hash": "sha256:9b5f7a725112f76a65f8037f4313f886b95a2d4ad3b8b705eb63d59a820c65a5"
+  },
+  "modules": {
+    "src/content/generated/scoring.js": {
+      "sourceSha256": "585d2e1bd0edbb9eeb2d8eb8963c6a3690af11a7f7cbb85cd155067662de6847",
+      "exportsFixture": "scoring-pre-starseer.json",
+      "exportName": "scoring",
+      "fixtureSha256": "e876860060cf04f2feaa76d0e9b906e24235abdf39ddbc79654bf38b529448f8"
+    },
+    "src/content/generated/combatPower.js": {
+      "sourceSha256": "8771cd8b3cb477e99823b6adc8f4801b784e27f347044375d31479cc0b5907db",
+      "exports": {
+        "cardCombatPower": {
+          "blightTouch": {
+            "raw": 12,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "rare",
+            "overridden": true
+          },
+          "core.acidSplash": {
+            "raw": 13,
+            "cp": 13,
+            "rank": 4,
+            "rarity": "common"
+          },
+          "core.advance": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.arcaneSiphon": {
+            "raw": 2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.arcaneWard": {
+            "raw": -4,
+            "cp": -4,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.ashenShell": {
+            "raw": -6,
+            "cp": -6,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.astralBolt": {
+            "raw": -4,
+            "cp": -6,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.backstep": {
+            "raw": 16,
+            "cp": 14,
+            "rank": 4,
+            "rarity": "uncommon"
+          },
+          "core.batteringGale": {
+            "raw": 4,
+            "cp": 2,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "core.brace": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.brittleTouch": {
+            "raw": 12,
+            "cp": 12,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "core.cantrip": {
+            "raw": -11,
+            "cp": -11,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.censure": {
+            "raw": 9,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "core.cinderDart": {
+            "raw": 7,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.cinderWard": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "core.cleansingEmbers": {
+            "raw": 11,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "core.closingDodge": {
+            "raw": 5,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "core.cometLance": {
+            "raw": 2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.conflagration": {
+            "raw": -4,
+            "cp": -9,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.counter": {
+            "raw": 9,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "core.dawnBulwark": {
+            "raw": -10,
+            "cp": -15,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.dawnFlame": {
+            "raw": 10,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "core.dazzleFlare": {
+            "raw": 10,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "core.defend": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.drivingThrust": {
+            "raw": 14,
+            "cp": 14,
+            "rank": 4,
+            "rarity": "common"
+          },
+          "core.eclipse": {
+            "raw": -3,
+            "cp": -8,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.emberFlick": {
+            "raw": 7,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.emberWave": {
+            "raw": -5,
+            "cp": -7,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.evade": {
+            "raw": -2,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.expose": {
+            "raw": 10,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "core.feint": {
+            "raw": 8,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "core.flick": {
+            "raw": 1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.forkedBolt": {
+            "raw": 2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.frostNip": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "core.galePull": {
+            "raw": 6,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.galePush": {
+            "raw": -4,
+            "cp": -4,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.gash": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.glacialSpike": {
+            "raw": 5,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "core.glimmerVeil": {
+            "raw": -4,
+            "cp": -4,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.glimpse": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "core.graveToll": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "core.guidingWhisper": {
+            "raw": 20,
+            "cp": 20,
+            "rank": 5,
+            "rarity": "common"
+          },
+          "core.hallowedWard": {
+            "raw": 11,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "core.hammerBlow": {
+            "raw": 9,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "core.healingPrayer": {
+            "raw": 8,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "core.heraldSpecial": {
+            "raw": -3,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.hexmark": {
+            "raw": 5,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "core.hitAndRun": {
+            "raw": 8,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "core.ironbreaker": {
+            "raw": 15,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "rare"
+          },
+          "core.jab": {
+            "raw": 7,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.jolt": {
+            "raw": -3,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.judgment": {
+            "raw": 5,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.manaLash": {
+            "raw": 2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.manaSurge": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "core.mendingTouch": {
+            "raw": 17,
+            "cp": 17,
+            "rank": 5,
+            "rarity": "common"
+          },
+          "core.meteor": {
+            "raw": -22,
+            "cp": -27,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.mindLance": {
+            "raw": -1,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.mirrorGuard": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.moteShield": {
+            "raw": 28,
+            "cp": 28,
+            "rank": 7,
+            "rarity": "common"
+          },
+          "core.openArchive": {
+            "raw": 3,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.palmFlame": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "core.pebbleThrow": {
+            "raw": 3,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "core.pommelStrike": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.purifyingLight": {
+            "raw": 19,
+            "cp": 17,
+            "rank": 5,
+            "rarity": "uncommon"
+          },
+          "core.pyreLash": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.quickGuard": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.radiantVerdict": {
+            "raw": 10,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "core.rakingSweep": {
+            "raw": 12,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "core.rallyingRoar": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "core.reapingArc": {
+            "raw": 1,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "core.reaverSpecial": {
+            "raw": -12,
+            "cp": -14,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.rendingHex": {
+            "raw": 9,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "core.rendingSmash": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.retreat": {
+            "raw": -5,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.rimeBite": {
+            "raw": 9,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "core.rimeVeil": {
+            "raw": -4,
+            "cp": -6,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.rogueSpecial": {
+            "raw": -3,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.rootedShelter": {
+            "raw": 2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.sanctifiedWard": {
+            "raw": -3,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.searingRay": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "core.shockingGrasp": {
+            "raw": 0,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.skullsplitter": {
+            "raw": 14,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "rare"
+          },
+          "core.smash": {
+            "raw": -6,
+            "cp": -6,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.smite": {
+            "raw": 9,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "core.smokeVeil": {
+            "raw": 1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.spark": {
+            "raw": -3,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.starfall": {
+            "raw": -4,
+            "cp": -9,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.starseerSpecial": {
+            "raw": -10,
+            "cp": -12,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.steadyGuard": {
+            "raw": 7,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.steadyHands": {
+            "raw": 14,
+            "cp": 14,
+            "rank": 4,
+            "rarity": "common"
+          },
+          "core.stoneSigil": {
+            "raw": -5,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.stormBlessing": {
+            "raw": 9,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "core.stormLash": {
+            "raw": 5,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.stormcall": {
+            "raw": -6,
+            "cp": -11,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.strike": {
+            "raw": -3,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "common",
+            "overridden": true
+          },
+          "core.stunningBlow": {
+            "raw": -3,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.sweep": {
+            "raw": -5,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "core.temperedEdge": {
+            "raw": -4,
+            "cp": -9,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.upsetRanks": {
+            "raw": -1,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.venomSpray": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "core.venomedEdge": {
+            "raw": 2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "core.wardingGlance": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "core.wearyingTouch": {
+            "raw": 13,
+            "cp": 13,
+            "rank": 4,
+            "rarity": "common"
+          },
+          "core.whetstoneNick": {
+            "raw": -3,
+            "cp": -8,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "core.whirlwind": {
+            "raw": 11,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "core.wideSweep": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "core.witherDraught": {
+            "raw": 22,
+            "cp": 20,
+            "rank": 5,
+            "rarity": "uncommon"
+          },
+          "greatswordSunderingHew": {
+            "raw": -1,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "rare",
+            "overridden": true
+          },
+          "twinFang": {
+            "raw": 11,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "rare",
+            "overridden": true
+          }
+        },
+        "itemCombatPower": {
+          "armour:herald.default": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:herald.emberhabit": {
+            "raw": 4,
+            "cp": 2,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "armour:herald.gutterLeathers": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "armour:herald.nightweave": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:herald.ossuary": {
+            "raw": 3,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "armour:herald.pilgrim": {
+            "raw": 5,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "armour:herald.ringmailHauberk": {
+            "raw": 5,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "armour:herald.riteVestments": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:herald.wayfarerPlate": {
+            "raw": -2,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:reaver.bastion": {
+            "raw": -2,
+            "cp": -4,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "armour:reaver.cinderforgedPlate": {
+            "raw": 3,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "armour:reaver.default": {
+            "raw": -2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "common",
+            "overridden": true
+          },
+          "armour:reaver.gutterLeathers": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "armour:reaver.nightweave": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:reaver.oathsworn": {
+            "raw": 1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "armour:reaver.riteVestments": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:reaver.vigil": {
+            "raw": 5,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "armour:reaver.warden": {
+            "raw": 7,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "armour:reaver.wayfarerPlate": {
+            "raw": -2,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:reaver.wyrmscaleMail": {
+            "raw": 7,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "armour:rogue.default": {
+            "raw": 8,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "common",
+            "overridden": true
+          },
+          "armour:rogue.duelist": {
+            "raw": 10,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "armour:rogue.gutterLeathers": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "armour:rogue.huntersHide": {
+            "raw": 21,
+            "cp": 19,
+            "rank": 5,
+            "rarity": "uncommon"
+          },
+          "armour:rogue.nightveil": {
+            "raw": 12,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "armour:rogue.nightweave": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:rogue.riteVestments": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:rogue.shadow": {
+            "raw": 13,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "armour:rogue.wayfarerPlate": {
+            "raw": -2,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:rogue.waywatcher": {
+            "raw": 11,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "armour:starseer.astral": {
+            "raw": 7,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "armour:starseer.default": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:starseer.eclipse": {
+            "raw": 2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "armour:starseer.gutterLeathers": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "armour:starseer.nightweave": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:starseer.rimeweave": {
+            "raw": 4,
+            "cp": 2,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "armour:starseer.riteVestments": {
+            "raw": -1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "armour:starseer.sagesRobe": {
+            "raw": 7,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "armour:starseer.starlit": {
+            "raw": 13,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "armour:starseer.wayfarerPlate": {
+            "raw": -2,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "relic:ancestralHorn": {
+            "raw": 0,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:asceticsCord": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:ashenGrip": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "starter"
+          },
+          "relic:ashOfRemembrance": {
+            "raw": 13,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "boss"
+          },
+          "relic:azureSigil": {
+            "raw": 3,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "relic:basicTraining": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:blessedDew": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "relic:blightTouchedIdol": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "relic:bloodiedTalisman": {
+            "raw": -2,
+            "cp": -4,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:bloodstainedChalice": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:brimmingGourd": {
+            "raw": 0,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "relic:carrionMorsel": {
+            "raw": 1,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:carrionTalon": {
+            "raw": 2,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:cinderOfTheFallen": {
+            "raw": 4,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "boss"
+          },
+          "relic:cinderPouch": {
+            "raw": 0,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "relic:crackedLantern": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:crackedTear": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:crimsonCovenant": {
+            "raw": 12,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "boss"
+          },
+          "relic:crownOfStitches": {
+            "raw": 26,
+            "cp": 19,
+            "rank": 5,
+            "rarity": "boss"
+          },
+          "relic:curedHide": {
+            "raw": 2,
+            "cp": 2,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:cutpursesCoin": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "starter"
+          },
+          "relic:emberFragment": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:emberIdol": {
+            "raw": 5,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:emberwickCharm": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:fellWardenBrand": {
+            "raw": 3,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "relic:feralEye": {
+            "raw": 0,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "relic:flayersCenser": {
+            "raw": 9,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "rare"
+          },
+          "relic:forsakenMedallion": {
+            "raw": 6,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "starter"
+          },
+          "relic:forsakenWarflag": {
+            "raw": 6,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "rare"
+          },
+          "relic:gildedTear": {
+            "raw": 3,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "relic:goldboughSapling": {
+            "raw": 2,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:goldenSprout": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:goldFigurine": {
+            "raw": 0,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "starter"
+          },
+          "relic:goldleafCharm": {
+            "raw": 1,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:graduate": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:gravetendersBell": {
+            "raw": 2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:hollowedHorn": {
+            "raw": 2,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:howlingStandard": {
+            "raw": 8,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "rare"
+          },
+          "relic:ivoryComb": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:kindlingCharm": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:lodestarShard": {
+            "raw": 5,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "starter"
+          },
+          "relic:moonlitVial": {
+            "raw": 1,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:paupersDiadem": {
+            "raw": 0,
+            "cp": -7,
+            "rank": 0,
+            "rarity": "boss"
+          },
+          "relic:pearlOfSagacity": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "relic:prismaticThorn": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:progression-cinderbound-crown": {
+            "raw": 2,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:progression-cracked-war-anvil": {
+            "raw": 4,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:progression-ember-alms-bowl": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:progression-emberjaw-token": {
+            "raw": 3,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "relic:progression-fragment-of-the-third-sky": {
+            "raw": 3,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:progression-moonwell-lens": {
+            "raw": 1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:progression-nightglass-rosary": {
+            "raw": 10,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "relic:progression-ossuary-prayer-wheel": {
+            "raw": 2,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:progression-purse-of-borrowed-shadows": {
+            "raw": 0,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:progression-whisperglass-die": {
+            "raw": 1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:pruningHook": {
+            "raw": 0,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:radiantAegis": {
+            "raw": 2,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:restlessClasp": {
+            "raw": 0,
+            "cp": -5,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:sacrificialKnife": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:saltedRelic": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:scribesMirror": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:sealstoneKey": {
+            "raw": 0,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:sentinelsOath": {
+            "raw": 11,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "relic:starstoneShard": {
+            "raw": 11,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "starter"
+          },
+          "relic:threadbareSatchel": {
+            "raw": 0,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "relic:titansCinder": {
+            "raw": 15,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "rare"
+          },
+          "relic:travelersWhetstone": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "relic:twinnedArmor": {
+            "raw": 1,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "uncommon"
+          },
+          "relic:vigilantHalo": {
+            "raw": 3,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:vowOfVengeance": {
+            "raw": 11,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "relic:wardenHorn": {
+            "raw": 7,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "boss"
+          },
+          "relic:wardensLantern": {
+            "raw": 2,
+            "cp": 2,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:warhorn": {
+            "raw": 15,
+            "cp": 13,
+            "rank": 4,
+            "rarity": "uncommon"
+          },
+          "relic:watchmansBadge": {
+            "raw": 11,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "relic:waxenSeal": {
+            "raw": 2,
+            "cp": 2,
+            "rank": 1,
+            "rarity": "starter"
+          },
+          "relic:wayfarersKnot": {
+            "raw": 0,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "common"
+          },
+          "relic:whetstoneFragment": {
+            "raw": 1,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "relic:whetstonePouch": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "starter"
+          },
+          "relic:wrathCoil": {
+            "raw": 2,
+            "cp": -3,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "relic:wyrmHeart": {
+            "raw": 12,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "weapon:arbalest": {
+            "raw": 4,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "weapon:ashenClaymore": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "weapon:ashStaff": {
+            "raw": 8,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "weapon:battleaxe": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "weapon:beardedAxe": {
+            "raw": 5,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "weapon:beastClaws": {
+            "raw": 5,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "weapon:blightRod": {
+            "raw": 9,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "weapon:boneSceptre": {
+            "raw": 14,
+            "cp": 12,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:boneTalisman": {
+            "raw": 7,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "weapon:broadsword": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "weapon:buckler": {
+            "raw": 7,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "weapon:cinderAxe": {
+            "raw": 11,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:dagger": {
+            "raw": 6,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "weapon:duelistsFoil": {
+            "raw": 10,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "weapon:duskChime": {
+            "raw": 16,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "rare"
+          },
+          "weapon:emberlightSceptre": {
+            "raw": 14,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "rare"
+          },
+          "weapon:estoc": {
+            "raw": 11,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:flail": {
+            "raw": 12,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "weapon:flamberge": {
+            "raw": 6,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "rare"
+          },
+          "weapon:frostSpear": {
+            "raw": 11,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:goldboughBranch": {
+            "raw": 26,
+            "cp": 21,
+            "rank": 6,
+            "rarity": "rare"
+          },
+          "weapon:gorefireBrand": {
+            "raw": 13,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "weapon:greatsword": {
+            "raw": 13,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:grimoire": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "weapon:halberd": {
+            "raw": 7,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "weapon:handCrossbow": {
+            "raw": 9,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "weapon:huntersRecurve": {
+            "raw": 5,
+            "cp": 0,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "weapon:ironKnuckles": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "weapon:katana": {
+            "raw": 12,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:kiteShield": {
+            "raw": 5,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "weapon:kris": {
+            "raw": 7,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "weapon:lantern": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "weapon:leatherWhip": {
+            "raw": 11,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "weapon:longbow": {
+            "raw": 5,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "weapon:mace": {
+            "raw": 7,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "weapon:maul": {
+            "raw": 8,
+            "cp": 6,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "weapon:moonGlaives": {
+            "raw": 4,
+            "cp": -1,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "weapon:moonlitKatana": {
+            "raw": 13,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "weapon:morningStar": {
+            "raw": 11,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:parryDagger": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "weapon:pike": {
+            "raw": 11,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "weapon:prayerBook": {
+            "raw": 11,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "weapon:rapier": {
+            "raw": 9,
+            "cp": 9,
+            "rank": 3,
+            "rarity": "common"
+          },
+          "weapon:reapersCrescent": {
+            "raw": 10,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "weapon:roundShield": {
+            "raw": 5,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "weapon:scythe": {
+            "raw": 6,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "uncommon"
+          },
+          "weapon:shortbow": {
+            "raw": 4,
+            "cp": 4,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "weapon:spikedShield": {
+            "raw": 10,
+            "cp": 8,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "weapon:starstoneStaff": {
+            "raw": 13,
+            "cp": 11,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:stiletto": {
+            "raw": 7,
+            "cp": 2,
+            "rank": 1,
+            "rarity": "rare"
+          },
+          "weapon:stormSceptre": {
+            "raw": 12,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:straightSword": {
+            "raw": 7,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "common"
+          },
+          "weapon:sunTalisman": {
+            "raw": 12,
+            "cp": 10,
+            "rank": 3,
+            "rarity": "uncommon"
+          },
+          "weapon:thornWhip": {
+            "raw": 9,
+            "cp": 7,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "weapon:thunderMallet": {
+            "raw": 7,
+            "cp": 2,
+            "rank": 1,
+            "rarity": "rare"
+          },
+          "weapon:torch": {
+            "raw": 3,
+            "cp": 3,
+            "rank": 1,
+            "rarity": "common"
+          },
+          "weapon:towerShield": {
+            "raw": 3,
+            "cp": -2,
+            "rank": 0,
+            "rarity": "rare"
+          },
+          "weapon:twinblade": {
+            "raw": 6,
+            "cp": 1,
+            "rank": 1,
+            "rarity": "rare"
+          },
+          "weapon:warhammer": {
+            "raw": 7,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "uncommon"
+          },
+          "weapon:wyrmhornStaff": {
+            "raw": 10,
+            "cp": 5,
+            "rank": 2,
+            "rarity": "rare"
+          },
+          "weapon:zweihander": {
+            "raw": 7,
+            "cp": 2,
+            "rank": 1,
+            "rarity": "rare"
+          }
+        }
+      }
+    },
+    "src/content/generated/levelLists.js": {
+      "sourceSha256": "49a3ffd084f13792f0e091f7afbbaa3dbff60058a5d684a3b5adfc3760eb0589",
+      "exports": {
+        "levelLists": {
+          "cards": {
+            "act1": [
+              "blightTouch",
+              "core.advance",
+              "core.arcaneSiphon",
+              "core.arcaneWard",
+              "core.ashenShell",
+              "core.astralBolt",
+              "core.batteringGale",
+              "core.brace",
+              "core.cantrip",
+              "core.censure",
+              "core.cinderDart",
+              "core.cinderWard",
+              "core.closingDodge",
+              "core.cometLance",
+              "core.conflagration",
+              "core.dawnBulwark",
+              "core.defend",
+              "core.eclipse",
+              "core.emberFlick",
+              "core.emberWave",
+              "core.evade",
+              "core.feint",
+              "core.flick",
+              "core.forkedBolt",
+              "core.frostNip",
+              "core.galePull",
+              "core.galePush",
+              "core.gash",
+              "core.glacialSpike",
+              "core.glimmerVeil",
+              "core.glimpse",
+              "core.graveToll",
+              "core.healingPrayer",
+              "core.heraldSpecial",
+              "core.hexmark",
+              "core.hitAndRun",
+              "core.jab",
+              "core.jolt",
+              "core.judgment",
+              "core.manaLash",
+              "core.manaSurge",
+              "core.meteor",
+              "core.mindLance",
+              "core.mirrorGuard",
+              "core.openArchive",
+              "core.palmFlame",
+              "core.pebbleThrow",
+              "core.pommelStrike",
+              "core.pyreLash",
+              "core.quickGuard",
+              "core.radiantVerdict",
+              "core.rallyingRoar",
+              "core.reapingArc",
+              "core.reaverSpecial",
+              "core.rendingSmash",
+              "core.retreat",
+              "core.rimeVeil",
+              "core.rogueSpecial",
+              "core.rootedShelter",
+              "core.sanctifiedWard",
+              "core.searingRay",
+              "core.shockingGrasp",
+              "core.smash",
+              "core.smite",
+              "core.smokeVeil",
+              "core.spark",
+              "core.starfall",
+              "core.starseerSpecial",
+              "core.steadyGuard",
+              "core.stoneSigil",
+              "core.stormBlessing",
+              "core.stormLash",
+              "core.stormcall",
+              "core.strike",
+              "core.stunningBlow",
+              "core.sweep",
+              "core.temperedEdge",
+              "core.upsetRanks",
+              "core.venomSpray",
+              "core.venomedEdge",
+              "core.wardingGlance",
+              "core.whetstoneNick",
+              "core.whirlwind",
+              "core.wideSweep",
+              "greatswordSunderingHew",
+              "twinFang"
+            ],
+            "act2": [
+              "blightTouch",
+              "core.acidSplash",
+              "core.advance",
+              "core.arcaneSiphon",
+              "core.arcaneWard",
+              "core.ashenShell",
+              "core.astralBolt",
+              "core.backstep",
+              "core.batteringGale",
+              "core.brace",
+              "core.brittleTouch",
+              "core.cantrip",
+              "core.censure",
+              "core.cinderDart",
+              "core.cinderWard",
+              "core.cleansingEmbers",
+              "core.closingDodge",
+              "core.cometLance",
+              "core.conflagration",
+              "core.counter",
+              "core.dawnBulwark",
+              "core.dawnFlame",
+              "core.dazzleFlare",
+              "core.defend",
+              "core.drivingThrust",
+              "core.eclipse",
+              "core.emberFlick",
+              "core.emberWave",
+              "core.evade",
+              "core.expose",
+              "core.feint",
+              "core.flick",
+              "core.forkedBolt",
+              "core.frostNip",
+              "core.galePull",
+              "core.galePush",
+              "core.gash",
+              "core.glacialSpike",
+              "core.glimmerVeil",
+              "core.glimpse",
+              "core.graveToll",
+              "core.guidingWhisper",
+              "core.hallowedWard",
+              "core.hammerBlow",
+              "core.healingPrayer",
+              "core.heraldSpecial",
+              "core.hexmark",
+              "core.hitAndRun",
+              "core.ironbreaker",
+              "core.jab",
+              "core.jolt",
+              "core.judgment",
+              "core.manaLash",
+              "core.manaSurge",
+              "core.mendingTouch",
+              "core.meteor",
+              "core.mindLance",
+              "core.mirrorGuard",
+              "core.openArchive",
+              "core.palmFlame",
+              "core.pebbleThrow",
+              "core.pommelStrike",
+              "core.purifyingLight",
+              "core.pyreLash",
+              "core.quickGuard",
+              "core.radiantVerdict",
+              "core.rakingSweep",
+              "core.rallyingRoar",
+              "core.reapingArc",
+              "core.reaverSpecial",
+              "core.rendingHex",
+              "core.rendingSmash",
+              "core.retreat",
+              "core.rimeBite",
+              "core.rimeVeil",
+              "core.rogueSpecial",
+              "core.rootedShelter",
+              "core.sanctifiedWard",
+              "core.searingRay",
+              "core.shockingGrasp",
+              "core.skullsplitter",
+              "core.smash",
+              "core.smite",
+              "core.smokeVeil",
+              "core.spark",
+              "core.starfall",
+              "core.starseerSpecial",
+              "core.steadyGuard",
+              "core.steadyHands",
+              "core.stoneSigil",
+              "core.stormBlessing",
+              "core.stormLash",
+              "core.stormcall",
+              "core.strike",
+              "core.stunningBlow",
+              "core.sweep",
+              "core.temperedEdge",
+              "core.upsetRanks",
+              "core.venomSpray",
+              "core.venomedEdge",
+              "core.wardingGlance",
+              "core.wearyingTouch",
+              "core.whetstoneNick",
+              "core.whirlwind",
+              "core.wideSweep",
+              "core.witherDraught",
+              "greatswordSunderingHew",
+              "twinFang"
+            ],
+            "act3": [
+              "blightTouch",
+              "core.acidSplash",
+              "core.advance",
+              "core.arcaneSiphon",
+              "core.arcaneWard",
+              "core.ashenShell",
+              "core.astralBolt",
+              "core.backstep",
+              "core.batteringGale",
+              "core.brace",
+              "core.brittleTouch",
+              "core.cantrip",
+              "core.censure",
+              "core.cinderDart",
+              "core.cinderWard",
+              "core.cleansingEmbers",
+              "core.closingDodge",
+              "core.cometLance",
+              "core.conflagration",
+              "core.counter",
+              "core.dawnBulwark",
+              "core.dawnFlame",
+              "core.dazzleFlare",
+              "core.defend",
+              "core.drivingThrust",
+              "core.eclipse",
+              "core.emberFlick",
+              "core.emberWave",
+              "core.evade",
+              "core.expose",
+              "core.feint",
+              "core.flick",
+              "core.forkedBolt",
+              "core.frostNip",
+              "core.galePull",
+              "core.galePush",
+              "core.gash",
+              "core.glacialSpike",
+              "core.glimmerVeil",
+              "core.glimpse",
+              "core.graveToll",
+              "core.guidingWhisper",
+              "core.hallowedWard",
+              "core.hammerBlow",
+              "core.healingPrayer",
+              "core.heraldSpecial",
+              "core.hexmark",
+              "core.hitAndRun",
+              "core.ironbreaker",
+              "core.jab",
+              "core.jolt",
+              "core.judgment",
+              "core.manaLash",
+              "core.manaSurge",
+              "core.mendingTouch",
+              "core.meteor",
+              "core.mindLance",
+              "core.mirrorGuard",
+              "core.moteShield",
+              "core.openArchive",
+              "core.palmFlame",
+              "core.pebbleThrow",
+              "core.pommelStrike",
+              "core.purifyingLight",
+              "core.pyreLash",
+              "core.quickGuard",
+              "core.radiantVerdict",
+              "core.rakingSweep",
+              "core.rallyingRoar",
+              "core.reapingArc",
+              "core.reaverSpecial",
+              "core.rendingHex",
+              "core.rendingSmash",
+              "core.retreat",
+              "core.rimeBite",
+              "core.rimeVeil",
+              "core.rogueSpecial",
+              "core.rootedShelter",
+              "core.sanctifiedWard",
+              "core.searingRay",
+              "core.shockingGrasp",
+              "core.skullsplitter",
+              "core.smash",
+              "core.smite",
+              "core.smokeVeil",
+              "core.spark",
+              "core.starfall",
+              "core.starseerSpecial",
+              "core.steadyGuard",
+              "core.steadyHands",
+              "core.stoneSigil",
+              "core.stormBlessing",
+              "core.stormLash",
+              "core.stormcall",
+              "core.strike",
+              "core.stunningBlow",
+              "core.sweep",
+              "core.temperedEdge",
+              "core.upsetRanks",
+              "core.venomSpray",
+              "core.venomedEdge",
+              "core.wardingGlance",
+              "core.wearyingTouch",
+              "core.whetstoneNick",
+              "core.whirlwind",
+              "core.wideSweep",
+              "core.witherDraught",
+              "greatswordSunderingHew",
+              "twinFang"
+            ]
+          },
+          "items": {
+            "act1": {
+              "weapon": [
+                "arbalest",
+                "ashenClaymore",
+                "ashStaff",
+                "battleaxe",
+                "beardedAxe",
+                "beastClaws",
+                "blightRod",
+                "boneTalisman",
+                "broadsword",
+                "buckler",
+                "dagger",
+                "duelistsFoil",
+                "flail",
+                "flamberge",
+                "gorefireBrand",
+                "grimoire",
+                "halberd",
+                "huntersRecurve",
+                "ironKnuckles",
+                "kiteShield",
+                "kris",
+                "lantern",
+                "longbow",
+                "mace",
+                "maul",
+                "moonGlaives",
+                "moonlitKatana",
+                "parryDagger",
+                "reapersCrescent",
+                "roundShield",
+                "scythe",
+                "shortbow",
+                "spikedShield",
+                "stiletto",
+                "straightSword",
+                "thornWhip",
+                "thunderMallet",
+                "torch",
+                "towerShield",
+                "twinblade",
+                "warhammer",
+                "wyrmhornStaff",
+                "zweihander"
+              ],
+              "armour": [
+                "herald.default",
+                "herald.emberhabit",
+                "herald.gutterLeathers",
+                "herald.nightweave",
+                "herald.ossuary",
+                "herald.pilgrim",
+                "herald.ringmailHauberk",
+                "herald.riteVestments",
+                "herald.wayfarerPlate",
+                "reaver.bastion",
+                "reaver.cinderforgedPlate",
+                "reaver.default",
+                "reaver.gutterLeathers",
+                "reaver.nightweave",
+                "reaver.oathsworn",
+                "reaver.riteVestments",
+                "reaver.vigil",
+                "reaver.warden",
+                "reaver.wayfarerPlate",
+                "reaver.wyrmscaleMail",
+                "rogue.default",
+                "rogue.duelist",
+                "rogue.gutterLeathers",
+                "rogue.nightweave",
+                "rogue.riteVestments",
+                "rogue.wayfarerPlate",
+                "starseer.astral",
+                "starseer.default",
+                "starseer.eclipse",
+                "starseer.gutterLeathers",
+                "starseer.nightweave",
+                "starseer.rimeweave",
+                "starseer.riteVestments",
+                "starseer.sagesRobe",
+                "starseer.wayfarerPlate"
+              ],
+              "relic": [
+                "ancestralHorn",
+                "asceticsCord",
+                "ashenGrip",
+                "ashOfRemembrance",
+                "azureSigil",
+                "basicTraining",
+                "blessedDew",
+                "blightTouchedIdol",
+                "bloodiedTalisman",
+                "bloodstainedChalice",
+                "brimmingGourd",
+                "carrionMorsel",
+                "carrionTalon",
+                "cinderOfTheFallen",
+                "cinderPouch",
+                "crackedLantern",
+                "crackedTear",
+                "crimsonCovenant",
+                "curedHide",
+                "cutpursesCoin",
+                "emberFragment",
+                "emberIdol",
+                "emberwickCharm",
+                "fellWardenBrand",
+                "feralEye",
+                "flayersCenser",
+                "forsakenMedallion",
+                "forsakenWarflag",
+                "gildedTear",
+                "goldboughSapling",
+                "goldenSprout",
+                "goldFigurine",
+                "goldleafCharm",
+                "graduate",
+                "gravetendersBell",
+                "hollowedHorn",
+                "howlingStandard",
+                "ivoryComb",
+                "kindlingCharm",
+                "lodestarShard",
+                "moonlitVial",
+                "paupersDiadem",
+                "pearlOfSagacity",
+                "prismaticThorn",
+                "progression-cinderbound-crown",
+                "progression-cracked-war-anvil",
+                "progression-ember-alms-bowl",
+                "progression-emberjaw-token",
+                "progression-fragment-of-the-third-sky",
+                "progression-moonwell-lens",
+                "progression-nightglass-rosary",
+                "progression-ossuary-prayer-wheel",
+                "progression-purse-of-borrowed-shadows",
+                "progression-whisperglass-die",
+                "pruningHook",
+                "radiantAegis",
+                "restlessClasp",
+                "sacrificialKnife",
+                "saltedRelic",
+                "scribesMirror",
+                "sealstoneKey",
+                "threadbareSatchel",
+                "travelersWhetstone",
+                "twinnedArmor",
+                "vigilantHalo",
+                "wardenHorn",
+                "wardensLantern",
+                "watchmansBadge",
+                "waxenSeal",
+                "wayfarersKnot",
+                "whetstoneFragment",
+                "whetstonePouch",
+                "wrathCoil",
+                "wyrmHeart"
+              ]
+            },
+            "act2": {
+              "weapon": [
+                "arbalest",
+                "ashenClaymore",
+                "ashStaff",
+                "battleaxe",
+                "beardedAxe",
+                "beastClaws",
+                "blightRod",
+                "boneSceptre",
+                "boneTalisman",
+                "broadsword",
+                "buckler",
+                "cinderAxe",
+                "dagger",
+                "duelistsFoil",
+                "duskChime",
+                "emberlightSceptre",
+                "estoc",
+                "flail",
+                "flamberge",
+                "frostSpear",
+                "gorefireBrand",
+                "greatsword",
+                "grimoire",
+                "halberd",
+                "handCrossbow",
+                "huntersRecurve",
+                "ironKnuckles",
+                "katana",
+                "kiteShield",
+                "kris",
+                "lantern",
+                "leatherWhip",
+                "longbow",
+                "mace",
+                "maul",
+                "moonGlaives",
+                "moonlitKatana",
+                "morningStar",
+                "parryDagger",
+                "pike",
+                "prayerBook",
+                "rapier",
+                "reapersCrescent",
+                "roundShield",
+                "scythe",
+                "shortbow",
+                "spikedShield",
+                "starstoneStaff",
+                "stiletto",
+                "stormSceptre",
+                "straightSword",
+                "sunTalisman",
+                "thornWhip",
+                "thunderMallet",
+                "torch",
+                "towerShield",
+                "twinblade",
+                "warhammer",
+                "wyrmhornStaff",
+                "zweihander"
+              ],
+              "armour": [
+                "herald.default",
+                "herald.emberhabit",
+                "herald.gutterLeathers",
+                "herald.nightweave",
+                "herald.ossuary",
+                "herald.pilgrim",
+                "herald.ringmailHauberk",
+                "herald.riteVestments",
+                "herald.wayfarerPlate",
+                "reaver.bastion",
+                "reaver.cinderforgedPlate",
+                "reaver.default",
+                "reaver.gutterLeathers",
+                "reaver.nightweave",
+                "reaver.oathsworn",
+                "reaver.riteVestments",
+                "reaver.vigil",
+                "reaver.warden",
+                "reaver.wayfarerPlate",
+                "reaver.wyrmscaleMail",
+                "rogue.default",
+                "rogue.duelist",
+                "rogue.gutterLeathers",
+                "rogue.huntersHide",
+                "rogue.nightveil",
+                "rogue.nightweave",
+                "rogue.riteVestments",
+                "rogue.shadow",
+                "rogue.wayfarerPlate",
+                "rogue.waywatcher",
+                "starseer.astral",
+                "starseer.default",
+                "starseer.eclipse",
+                "starseer.gutterLeathers",
+                "starseer.nightweave",
+                "starseer.rimeweave",
+                "starseer.riteVestments",
+                "starseer.sagesRobe",
+                "starseer.starlit",
+                "starseer.wayfarerPlate"
+              ],
+              "relic": [
+                "ancestralHorn",
+                "asceticsCord",
+                "ashenGrip",
+                "ashOfRemembrance",
+                "azureSigil",
+                "basicTraining",
+                "blessedDew",
+                "blightTouchedIdol",
+                "bloodiedTalisman",
+                "bloodstainedChalice",
+                "brimmingGourd",
+                "carrionMorsel",
+                "carrionTalon",
+                "cinderOfTheFallen",
+                "cinderPouch",
+                "crackedLantern",
+                "crackedTear",
+                "crimsonCovenant",
+                "crownOfStitches",
+                "curedHide",
+                "cutpursesCoin",
+                "emberFragment",
+                "emberIdol",
+                "emberwickCharm",
+                "fellWardenBrand",
+                "feralEye",
+                "flayersCenser",
+                "forsakenMedallion",
+                "forsakenWarflag",
+                "gildedTear",
+                "goldboughSapling",
+                "goldenSprout",
+                "goldFigurine",
+                "goldleafCharm",
+                "graduate",
+                "gravetendersBell",
+                "hollowedHorn",
+                "howlingStandard",
+                "ivoryComb",
+                "kindlingCharm",
+                "lodestarShard",
+                "moonlitVial",
+                "paupersDiadem",
+                "pearlOfSagacity",
+                "prismaticThorn",
+                "progression-cinderbound-crown",
+                "progression-cracked-war-anvil",
+                "progression-ember-alms-bowl",
+                "progression-emberjaw-token",
+                "progression-fragment-of-the-third-sky",
+                "progression-moonwell-lens",
+                "progression-nightglass-rosary",
+                "progression-ossuary-prayer-wheel",
+                "progression-purse-of-borrowed-shadows",
+                "progression-whisperglass-die",
+                "pruningHook",
+                "radiantAegis",
+                "restlessClasp",
+                "sacrificialKnife",
+                "saltedRelic",
+                "scribesMirror",
+                "sealstoneKey",
+                "sentinelsOath",
+                "starstoneShard",
+                "threadbareSatchel",
+                "titansCinder",
+                "travelersWhetstone",
+                "twinnedArmor",
+                "vigilantHalo",
+                "vowOfVengeance",
+                "wardenHorn",
+                "wardensLantern",
+                "warhorn",
+                "watchmansBadge",
+                "waxenSeal",
+                "wayfarersKnot",
+                "whetstoneFragment",
+                "whetstonePouch",
+                "wrathCoil",
+                "wyrmHeart"
+              ]
+            },
+            "act3": {
+              "weapon": [
+                "arbalest",
+                "ashenClaymore",
+                "ashStaff",
+                "battleaxe",
+                "beardedAxe",
+                "beastClaws",
+                "blightRod",
+                "boneSceptre",
+                "boneTalisman",
+                "broadsword",
+                "buckler",
+                "cinderAxe",
+                "dagger",
+                "duelistsFoil",
+                "duskChime",
+                "emberlightSceptre",
+                "estoc",
+                "flail",
+                "flamberge",
+                "frostSpear",
+                "goldboughBranch",
+                "gorefireBrand",
+                "greatsword",
+                "grimoire",
+                "halberd",
+                "handCrossbow",
+                "huntersRecurve",
+                "ironKnuckles",
+                "katana",
+                "kiteShield",
+                "kris",
+                "lantern",
+                "leatherWhip",
+                "longbow",
+                "mace",
+                "maul",
+                "moonGlaives",
+                "moonlitKatana",
+                "morningStar",
+                "parryDagger",
+                "pike",
+                "prayerBook",
+                "rapier",
+                "reapersCrescent",
+                "roundShield",
+                "scythe",
+                "shortbow",
+                "spikedShield",
+                "starstoneStaff",
+                "stiletto",
+                "stormSceptre",
+                "straightSword",
+                "sunTalisman",
+                "thornWhip",
+                "thunderMallet",
+                "torch",
+                "towerShield",
+                "twinblade",
+                "warhammer",
+                "wyrmhornStaff",
+                "zweihander"
+              ],
+              "armour": [
+                "herald.default",
+                "herald.emberhabit",
+                "herald.gutterLeathers",
+                "herald.nightweave",
+                "herald.ossuary",
+                "herald.pilgrim",
+                "herald.ringmailHauberk",
+                "herald.riteVestments",
+                "herald.wayfarerPlate",
+                "reaver.bastion",
+                "reaver.cinderforgedPlate",
+                "reaver.default",
+                "reaver.gutterLeathers",
+                "reaver.nightweave",
+                "reaver.oathsworn",
+                "reaver.riteVestments",
+                "reaver.vigil",
+                "reaver.warden",
+                "reaver.wayfarerPlate",
+                "reaver.wyrmscaleMail",
+                "rogue.default",
+                "rogue.duelist",
+                "rogue.gutterLeathers",
+                "rogue.huntersHide",
+                "rogue.nightveil",
+                "rogue.nightweave",
+                "rogue.riteVestments",
+                "rogue.shadow",
+                "rogue.wayfarerPlate",
+                "rogue.waywatcher",
+                "starseer.astral",
+                "starseer.default",
+                "starseer.eclipse",
+                "starseer.gutterLeathers",
+                "starseer.nightweave",
+                "starseer.rimeweave",
+                "starseer.riteVestments",
+                "starseer.sagesRobe",
+                "starseer.starlit",
+                "starseer.wayfarerPlate"
+              ],
+              "relic": [
+                "ancestralHorn",
+                "asceticsCord",
+                "ashenGrip",
+                "ashOfRemembrance",
+                "azureSigil",
+                "basicTraining",
+                "blessedDew",
+                "blightTouchedIdol",
+                "bloodiedTalisman",
+                "bloodstainedChalice",
+                "brimmingGourd",
+                "carrionMorsel",
+                "carrionTalon",
+                "cinderOfTheFallen",
+                "cinderPouch",
+                "crackedLantern",
+                "crackedTear",
+                "crimsonCovenant",
+                "crownOfStitches",
+                "curedHide",
+                "cutpursesCoin",
+                "emberFragment",
+                "emberIdol",
+                "emberwickCharm",
+                "fellWardenBrand",
+                "feralEye",
+                "flayersCenser",
+                "forsakenMedallion",
+                "forsakenWarflag",
+                "gildedTear",
+                "goldboughSapling",
+                "goldenSprout",
+                "goldFigurine",
+                "goldleafCharm",
+                "graduate",
+                "gravetendersBell",
+                "hollowedHorn",
+                "howlingStandard",
+                "ivoryComb",
+                "kindlingCharm",
+                "lodestarShard",
+                "moonlitVial",
+                "paupersDiadem",
+                "pearlOfSagacity",
+                "prismaticThorn",
+                "progression-cinderbound-crown",
+                "progression-cracked-war-anvil",
+                "progression-ember-alms-bowl",
+                "progression-emberjaw-token",
+                "progression-fragment-of-the-third-sky",
+                "progression-moonwell-lens",
+                "progression-nightglass-rosary",
+                "progression-ossuary-prayer-wheel",
+                "progression-purse-of-borrowed-shadows",
+                "progression-whisperglass-die",
+                "pruningHook",
+                "radiantAegis",
+                "restlessClasp",
+                "sacrificialKnife",
+                "saltedRelic",
+                "scribesMirror",
+                "sealstoneKey",
+                "sentinelsOath",
+                "starstoneShard",
+                "threadbareSatchel",
+                "titansCinder",
+                "travelersWhetstone",
+                "twinnedArmor",
+                "vigilantHalo",
+                "vowOfVengeance",
+                "wardenHorn",
+                "wardensLantern",
+                "warhorn",
+                "watchmansBadge",
+                "waxenSeal",
+                "wayfarersKnot",
+                "whetstoneFragment",
+                "whetstonePouch",
+                "wrathCoil",
+                "wyrmHeart"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
