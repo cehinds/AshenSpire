@@ -6,7 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, gameContent, projectGameCard } from '../src/model/gameProfile.js';
 import { validateContent } from '../src/model/validate.js';
-import { CardSpellTraditions, SpellPoolRole, SpellPoolWeights } from '../src/model/spellTraditions.js';
+import { CardSpellTraditions, CardTraditionTags, SpellPoolRole, SpellPoolWeights } from '../src/model/spellTraditions.js';
 import { gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
 
 const sourceCards = JSON.parse(readFileSync(new URL('../games/ashenspire/packs/core/cards.json', import.meta.url), 'utf8'));
@@ -73,8 +73,8 @@ test('resolved Core content has valid effect references, tokens and canonical sp
   const spells = registries.cards.all().filter(isSpell);
   assert.ok(spells.length > sourceCards.filter(isSpell).length, 'audit includes base, legacy and enemy-projected spells');
   for (const card of spells) {
-    const actual = card.tags.filter(tag => tag.startsWith('tradition:')).map(tag => tag.slice(10)).sort();
-    assert.deepEqual(actual, [...CardSpellTraditions(card)].sort(), card.id);
+    const actual = card.tags.filter(tag => tag.startsWith('tradition:')).sort();
+    assert.deepEqual(actual, [...CardTraditionTags(card)].sort(), card.id);
   }
 });
 

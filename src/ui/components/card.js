@@ -275,7 +275,6 @@ export function renderCard(registries, ref, opts = {}) {
     model.range = opts.range ? combatCardRange(def, opts.maxRange) : null;
     damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
     accessibleLabel = [model.name, model.sigils.displayLabel || ACTION_SIGILS[model.sigils.action].label,
-      model.sigils.traditions?.length === 2 && t('card.tradition.both'),
       model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
       model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
       damageWords.length && `Damage: ${damageWords.join(', ')}`,
