@@ -4910,6 +4910,7 @@ async function boot() {
     selectItem: key => { document.querySelector('.studio-tab[data-tab="items"]').click(); selectStudioItem(key); },
     openDeckManager: () => studioToolsUi.openDecksModal(),
     onOpen: () => cardEditorDockUi?.setView('decks'),
+    onRowSelect: () => cardEditorDockUi?.showProperties(),
   });
   cardEditorDockUi = initCardEditorDock({ state, selectCard: selectStudioCard,
     renameCard: () => { const input = document.getElementById('edit-name'); input.focus(); input.select(); },
