@@ -64,28 +64,20 @@
     ],
     "starseer": [
       {
-        "card": "core.cantrip",
+        "card": "custom.card_mwx2mb6p",
         "copies": 4
       },
       {
-        "card": "core.arcaneWard",
+        "card": "custom.copy_mwx6hh79",
         "copies": 1
       },
       {
-        "card": "core.glimmerVeil",
+        "card": "core.arcaneSiphon",
         "copies": 1
       },
       {
-        "card": "core.stoneSigil",
-        "copies": 1
-      },
-      {
-        "card": "core.ashenShell",
-        "copies": 1
-      },
-      {
-        "card": "core.starseerSpecial",
-        "copies": 1
+        "card": "core.astralBolt",
+        "copies": 4
       }
     ],
     "herald": [

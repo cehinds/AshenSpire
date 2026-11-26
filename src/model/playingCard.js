@@ -39,12 +39,12 @@ import { SpellScalingValue, SpellTraditionsActive } from './spellTraditions.js';
 import { cardTagExplanation } from './cardTagExplanation.js';
 import { coreSmashClause } from './smashClause.js';
 import { cardClassification } from './cardClassification.js';
-import { resolveCard } from './registries.js';
+import * as RegistryModel from './registries.js';
 import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
 import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
 import { ParseUpgradeTag, UpgradeTagLabel } from './combatPower.js';
-import { computeTokenBindings, cardTokenEffects } from './validate.js';
+import { computeTokenBindings, cardTokenEffects } from './validate/tokenBindings.js';
 
 /** A stance as it reads in a condition: "Idle", "in Defense", "in Prepared". */
 const STANCE_WORDS = Object.freeze({ idle: 'Idle', casting: 'in Prepared', prepared: 'in Prepared', defend: 'in Defense', defense: 'in Defense' });
@@ -531,7 +531,7 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
   const configured = projectGameCard(rules?.gameProfile ? rules : registries, ref);
   if (configured) return configured;
   const def = rules?.breakMeterVersion == null
-    ? resolveCard(registries, ref, undefined, rules || registries) : resolveCard(registries, ref, rules.breakMeterVersion, rules || registries);
+    ? RegistryModel.resolveCard(registries, ref, undefined, rules || registries) : RegistryModel.resolveCard(registries, ref, rules.breakMeterVersion, rules || registries);
   if (rules?.combatExpansionVersion !== 2) return def;
   const expanded = applyCombatExpansionCard(def);
   return rules.reactionRulesVersion === 2 ? applyCardTraits(expanded, rules.reactionRules) : expanded;

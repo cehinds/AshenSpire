@@ -25,18 +25,20 @@ const legacyReg = legacyCoreRegistries();
 const startLegacy = (classId) => createRunState({ registries: legacyReg, classId, seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 
 // Owner ruling 2026-11-21: ten cards each. Martial: 4 Strike-type attacks, 4 Defends, a class specialty and the weapon art.
-// Casters: 4 attack cantrips, 4 defensive cantrips, a class spell and the weapon art.
+// Herald: 4 attack cantrips, 4 defensive cantrips, a class spell and the weapon art.
+// Starseer (2026-11-26): 4 Ward, 1 Arcane Bolt, 1 Mana Rite, 4 Arcane Strike, plus the normal sceptre art.
 const DECKS = {
   reaver: { 'core.strike': 4, 'core.defend': 4, 'core.reaverSpecial': 1, greatswordSunderingHew: 1 },
   rogue: { 'core.strike': 4, 'core.defend': 4, 'core.rogueSpecial': 1, twinFang: 1 },
-  starseer: { 'core.cantrip': 4, 'core.arcaneWard': 1, 'core.glimmerVeil': 1, 'core.stoneSigil': 1, 'core.ashenShell': 1, 'core.starseerSpecial': 1, blightTouch: 1 },
+  starseer: { 'custom.card_mwx2mb6p': 4, 'custom.copy_mwx6hh79': 1, 'core.arcaneSiphon': 1, 'core.astralBolt': 4, blightTouch: 1 },
   herald: { 'core.cantrip': 4, 'core.arcaneWard': 1, 'core.glimmerVeil': 1, 'core.stoneSigil': 1, 'core.ashenShell': 1, 'core.heraldSpecial': 1, blightTouch: 1 },
 };
 
 for (const [classId, expected] of Object.entries(DECKS)) {
-  test(`Core ${classId} starts with its exact 10-card deck (owner ruling 2026-11-21)`, () => {
+  const total = Object.values(expected).reduce((sum, copies) => sum + copies, 0);
+  test(`Core ${classId} starts with its exact ${total}-card deck`, () => {
     const run = start(classId);
-    assert.equal(run.deck.length, 10);
+    assert.equal(run.deck.length, total);
     assert.deepEqual(counts(run.deck), expected);
     assert.deepEqual(run.sideboard, []);
     // The ledger is seeded from the authored list; the weapon-granted art (Sundering Hew, Twin Fang, Blight Touch) are not in it.
@@ -63,23 +65,32 @@ for (const [classId, expected] of Object.entries(DECKS)) {
     for (const badge of rendered) assert.deepEqual([badge.rank, badge.text, badge.shown], [1, 'Rank 1', false]);
   });
 
-  test(`Core ${classId} starter is exactly the recipe: 4 basic attacks, 4 defences, 1 own-class card, 1 weapon art, none costing more MP than it starts with (owner ruling 2026-11-21)`, () => {
+  test(`Core ${classId} starter matches its authored class recipe and every card fits the starting MP pool`, () => {
     const run = start(classId);
     const defs = run.deck.map(c => reg.cards.get(c.cardId));
     const caster = classId === 'starseer' || classId === 'herald';
     const art = defs.filter(d => d.rarity === 'rare');
     assert.equal(art.length, 1, 'one rare weapon art');
-    const own = defs.filter(d => d.class === classId && d.rarity !== 'rare');
-    assert.equal(own.length, 1, 'one own-class card');
-    assert.equal(own[0].rarity, 'uncommon', 'the class card is uncommon');
-    const basics = defs.filter(d => d.rarity === 'common');
-    assert.equal(basics.length, 8, 'eight common basics');
-    const isDefence = d => (d.type === 'skill' && (d.effects || []).some(e => e.op === 'block'));
-    assert.equal(basics.filter(isDefence).length, 4, 'four defences');
-    assert.equal(basics.filter(d => d.type === 'attack').length, 4, 'four attacks');
-    for (const d of basics) assert.equal(d.tags.includes('rank.cantrip') || d.tags.includes('maneuver:casting') || d.tags.includes('maneuver:attack') || d.tags.includes('maneuver:defend'), true, `${d.id} is a basic, a cantrip or a 1 MP starter spell (owner 2026-11-21: Ward and Veil cost 1 MP)`);
-    if (caster) for (const d of basics) assert.ok(d.tags.includes('camp:spell'), `${d.id} is a cantrip`);
-    else for (const d of basics) assert.ok(d.tags.includes('camp:physical'), `${d.id} is a Strike or Defend type`);
+    if (classId === 'starseer') {
+      const ordinary = run.deck.filter(card => !card.grantedBy && !card.equipmentRole).map(card => reg.cards.get(card.cardId));
+      assert.equal(ordinary.length, 10, 'ten authored base copies plus the normal weapon art');
+      assert.ok(ordinary.every(card => card.class === 'starseer' && card.rarity === 'common'));
+      assert.equal(ordinary.filter(card => card.type === 'attack').length, 5, 'four Arcane Strike and one Arcane Bolt');
+      assert.equal(ordinary.filter(card => card.effects.some(effect => effect.op === 'block')).length, 4, 'four Ward copies');
+      assert.equal(ordinary.filter(card => card.type === 'skill' && card.effects.some(effect => effect.op === 'restoreMana')).length, 1, 'one Mana Rite');
+    } else {
+      const own = defs.filter(d => d.class === classId && d.rarity !== 'rare');
+      assert.equal(own.length, 1, 'one own-class card');
+      assert.equal(own[0].rarity, 'uncommon', 'the class card is uncommon');
+      const basics = defs.filter(d => d.rarity === 'common');
+      assert.equal(basics.length, 8, 'eight common basics');
+      const isDefence = d => (d.type === 'skill' && (d.effects || []).some(e => e.op === 'block'));
+      assert.equal(basics.filter(isDefence).length, 4, 'four defences');
+      assert.equal(basics.filter(d => d.type === 'attack').length, 4, 'four attacks');
+      for (const d of basics) assert.equal(d.tags.includes('rank.cantrip') || d.tags.includes('maneuver:casting') || d.tags.includes('maneuver:attack') || d.tags.includes('maneuver:defend'), true, `${d.id} is a basic, a cantrip or a 1 MP starter spell (owner 2026-11-21: Ward and Veil cost 1 MP)`);
+      if (caster) for (const d of basics) assert.ok(d.tags.includes('camp:spell'), `${d.id} is a cantrip`);
+      else for (const d of basics) assert.ok(d.tags.includes('camp:physical'), `${d.id} is a Strike or Defend type`);
+    }
     const maxMana = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.maxMana;
     for (const d of defs) assert.ok((d.manaCost || 0) <= maxMana, `${d.id} costs ${d.manaCost} MP, class starts with ${maxMana}`);
   });
@@ -134,7 +145,7 @@ test('Core editor offers only collected definitions under the matching Adept (le
   // Owner ruling 2026-11-21: Arcane Ward and Glimmer Veil cost 1 MP and are no longer rank.cantrip, so they are not unlimited basics.
   const CASTER_BASICS = ['core.cantrip', 'core.stoneSigil', 'core.ashenShell'];
   const expected = { reaver: ['core.strike', 'core.defend'],
-    rogue: ['core.strike', 'core.defend'], starseer: CASTER_BASICS, herald: CASTER_BASICS };
+    rogue: ['core.strike', 'core.defend'], starseer: [], herald: CASTER_BASICS };
   for (const id of Object.keys(expected)) assert.deepEqual(unlimitedCardIds(startLegacy(id)), expected[id]);
 });
 
@@ -332,12 +343,13 @@ for (const classId of Object.keys(DECKS)) {
     for (const r of rows) assert.ok(r.rank <= b.maxRankPerCard, `${r.id} rank ${r.rank}`);
     const rawTotal = rows.reduce((sum, r) => sum + Math.max(r.raw, b.rawFloorPerCard), 0);
     assert.ok(rawTotal <= b.rawTotalMax, `raw total ${rawTotal} > ${b.rawTotalMax}`);
-    // The recipe: every card but the weapon art is Unranked (cp <= 0); the art is rare at Rank 1.
+    // The shipped recipe keeps ordinary starters Unranked and the rare art at Rank 1.
+    // Starseer authors ten common copies; the other classes retain an uncommon specialty.
     const art = rows.filter(r => r.rarity === 'rare');
     assert.equal(art.length, 1, 'exactly one rare weapon art');
     assert.equal(art[0].rank, 1, `${art[0].id} is Rank 1 (cp ${art[0].cp})`);
     for (const r of rows.filter(x => x !== art[0])) assert.ok(r.cp <= 0, `${r.id} cp ${r.cp} is Unranked`);
-    assert.equal(rows.filter(r => r.rarity === 'uncommon').length, 1, 'one uncommon specialty');
+    assert.equal(rows.filter(r => r.rarity === 'uncommon').length, classId === 'starseer' ? 0 : 1, 'Starseer has ten common authored copies; other classes keep one uncommon specialty');
   });
 
   test(`Core ${classId} starting armour is Unranked`, () => {

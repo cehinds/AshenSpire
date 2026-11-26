@@ -70,14 +70,27 @@ test('played as a reaction, Jab pays 1 Stamina and strikes the attacker before t
 // Owner ruling 2026-11-21 (starter budget): Arcane Spark prints 3 (was 6) so the starter cantrips stay Unranked.
 const SPELL_DAMAGE_BEFORE = {"starseerSpecial":[[9],[]],"cantrip":[[3],[]],"cinderDart":[[3],[4]],"galePush":[[3],[5]],"galePull":[[3],[5]],"starfall":[[8],[11]],"cometLance":[[12],[16]],"searingRay":[[9],[13]],"meteor":[[30],[38]],"judgment":[[10],[13]],"arcaneSiphon":[[7],[10]],"emberWave":[[3],[5]],"eclipse":[[6],[9]],"astralBolt":[[7],[10]],"censure":[[5],[7]],"smite":[[8],[10]],"manaLash":[[6],[8]],"frostNip":[[3],[4]],"spark":[[3],[4]],"emberFlick":[[2],[3]],"dazzleFlare":[[2],[3]],"palmFlame":[[4],[5]],"rimeBite":[[2],[3]],"brittleTouch":[[1],[2]],"dawnFlame":[[4],[6]],"venomSpray":[[2],[4]],"graveToll":[[3],[4]],"rendingHex":[[2],[3]],"acidSplash":[[3],[4]],"jolt":[[4],[6]],"shockingGrasp":[[3],[4]],"stormLash":[[3],[5]]};
 
+// Explicit owner-authored 2026-11-26 replacements supersede the historical
+// blanket doubling for these IDs. Numbers are asserted directly, including
+// the intentional Arcane Bolt/Smash upgrade damage reductions.
+const AUTHORED_STARSEER_DAMAGE = {
+  'core.arcaneSiphon': [[], [20]], 'core.astralBolt': [[17], [20]],
+  'core.cometLance': [[13], [32]], 'core.eclipse': [[11], [18]],
+  'core.glacialSpike': [[17], [22]], 'core.meteor': [[37], [76]],
+  'core.pyreLash': [[69], [29]], 'core.searingRay': [[18], [26]],
+  'custom.card_mwx2mb6p': [[], []], 'custom.copy_mwx6hh79': [[37], [20]],
+  'custom.copy_mwx6xoww': [[29], [20]],
+};
+
 // Owner, 2026-11-15: "Halve cantrip damage": a `rank.cantrip` card is back at its pre-doubling damage (floor, at least 1); every other spell keeps the doubling.
 test('retained legacy Spell damage keeps its doubling and cantrip baseline while tradition rebalances are explicit', () => {
   const damages = effects => (effects || []).filter(effect => effect.op === 'damage').map(effect => effect.amount);
   // The nine cost.manaOnly spells are new in batch 4 and authored at their final damage: neither doubled nor halved.
-  const spells = cards.filter(row => row.tags.includes('camp:spell') && !row.tags.includes('cost.manaOnly') && (damages(row.effects).length || damages(row.upgrade?.effects).length));
+  const spells = cards.filter(row => !Object.hasOwn(AUTHORED_STARSEER_DAMAGE, row.id) && row.tags.includes('camp:spell') && !row.tags.includes('cost.manaOnly') && (damages(row.effects).length || damages(row.upgrade?.effects).length));
   const repurposed = ['censure', 'graveToll', 'rendingHex', 'acidSplash'];
   const added = { glimpse: [[4], [6]], mindLance: [[12], [16]] };
-  assert.equal(spells.length, Object.keys(SPELL_DAMAGE_BEFORE).length - repurposed.length + Object.keys(added).length);
+  const retained = Object.keys(SPELL_DAMAGE_BEFORE).filter(id => !repurposed.includes(id) && !Object.hasOwn(AUTHORED_STARSEER_DAMAGE, `core.${id}`)).concat(Object.keys(added)).map(id => `core.${id}`);
+  assert.deepEqual(spells.map(row => row.id).sort(), retained.sort(), 'every untouched historical spell remains covered');
   for (const id of repurposed) {
     const row = card(`core.${id}`);
     assert.deepEqual(damages(row.effects), [], `${id}: Divine support replaces its former damage`);
@@ -93,6 +106,15 @@ test('retained legacy Spell damage keeps its doubling and cantrip baseline while
     const scale = row.tags.includes('rank.cantrip') ? 1 : 2;
     assert.deepEqual(damages(row.effects), base.map(n => Math.max(1, n * scale)), row.id);
     assert.deepEqual(damages(row.upgrade?.effects), upgraded.map(n => Math.max(1, n * scale)), `${row.id} upgraded`);
+  }
+});
+
+test('the authored Starseer replacements retain their exact base and upgrade damage', () => {
+  const damages = effects => (effects || []).filter(effect => effect.op === 'damage').map(effect => effect.amount);
+  for (const [id, expected] of Object.entries(AUTHORED_STARSEER_DAMAGE)) {
+    const row = card(id);
+    assert.ok(row, id);
+    assert.deepEqual([damages(row.effects), damages(row.upgrade?.effects)], expected, id);
   }
 });
 

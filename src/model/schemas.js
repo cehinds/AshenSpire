@@ -3,7 +3,7 @@
 // Plain-JS validator descriptors (no libraries). Each schema is a tree of
 // descriptor nodes interpreted by model/validate.js:
 //
-//   { k: 'str' } | { k: 'num', int?: true } | { k: 'bool' } | { k: 'any' }
+//   { k: 'str' } | { k: 'num', int?: true, finite?: true } | { k: 'bool' } | { k: 'any' }
 //   { k: 'enum', values: [...] }
 //   { k: 'arr', of: node, len?: n }
 //   { k: 'map', of: node }                    // { anyKey: node }
@@ -23,6 +23,7 @@
 
 // Effect DSL opcodes (SPEC §3.4).
 import { NODE_TYPES, ANCHOR_KINDS } from './floorplan.js';
+import { ratingIds } from './ratingFormula.js';
 
 /** Presentation schools carried explicitly by equipment-bound card profiles. */
 export const DAMAGE_SCHOOLS = Object.freeze(['physical', 'magic', 'arcane', 'holy', 'fire']);
@@ -672,6 +673,8 @@ const floorAnchor = (extra = {}) => obj({
 });
 
 const costNode = union(int, en('X'));
+// Printed/runtime impact values use the same closed rating keys as their readers.
+const cardRatingValuesSchema = obj(Object.fromEntries(ratingIds.map(id => [id, opt({ ...num, finite: true })])));
 
 // DERIVED FROM MODIFIER_TYPES, never re-typed. `obj` is strict about unknown
 // keys, so this node is what actually refuses a mis-spelled modifier — which is
@@ -880,6 +883,7 @@ export const SCHEMAS = Object.freeze({
     counterPayload: opt(any),
     evade: opt(any),
     traitValues: opt(any),
+    cardRatingValues: opt(cardRatingValuesSchema),
     upcast: opt(any),
     usableWhile: opt(arr(str)),
     projectile: opt(bool),
@@ -947,6 +951,7 @@ export const SCHEMAS = Object.freeze({
         cost: opt(costNode),
         manaCost: opt(int),
         staminaCost: opt(int),
+        cardRatingValues: opt(cardRatingValuesSchema),
         effects: opt(effects),
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),

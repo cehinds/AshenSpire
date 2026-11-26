@@ -13,6 +13,8 @@ import { primeAccuracyRolls } from '../../tests/accuracyFixture.mjs';
 
 
 const shipped = Profile.resolveGameProfile('default');
+const configuredCustomCardIds = new Set(Profile.gameModule(shipped, 'cards')?.mode === 'configured'
+  ? (Profile.gameContent(shipped, 'cards') || []).filter(card => card.id.startsWith('custom.')).map(card => card.id) : []);
 const registries = Profile.bindGameProfileRegistries(createRegistries(Profile.applyGameProfileToContent(contentBundle, shipped)), shipped);
 const META = { gameProfileUnlocks: { [shipped.id]: { completedRunIds: ['a', 'b', 'c'] } } };
 const CLASSES = ['reaver', 'starseer', 'rogue', 'herald'];
@@ -51,14 +53,14 @@ const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const tagOf = (tags, prefix) => (tags || []).filter(t => t.startsWith(prefix)).map(t => t.slice(prefix.length));
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Which cards each class holds: every colorless Core card, the class's own Core cards, and the non-Core cards of its baseline deck
+// Which cards each class holds: colorless/class Core cards, configured custom cards, and the non-Core cards of its baseline deck
 // (the weapon arts and kit cards the class starts with).
 // ---------------------------------------------------------------------------------------------------------------------
 function holdable(classId) {
   const { run } = begin(classId);
   const ids = new Set();
   for (const card of registries.cards.all()) {
-    if (!card.id.startsWith('core.')) continue;
+    if (!card.id.startsWith('core.') && !configuredCustomCardIds.has(card.id)) continue;
     if (card.class === 'colorless' || card.class === classId) ids.add(card.id);
   }
   const kit = new Set();
@@ -263,4 +265,4 @@ function measure(classId, cardId) {
   return row;
 }
 
-export { registries, shipped, begin, holdable, measure, CLASSES, SHIPPED_SETTINGS, tagOf, num, round };
+export { registries, shipped, configuredCustomCardIds, begin, holdable, measure, CLASSES, SHIPPED_SETTINGS, tagOf, num, round };

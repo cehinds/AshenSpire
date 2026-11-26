@@ -1,0 +1,21 @@
+body.studio-body .studio-add-card-tile {
+  display: flex; flex-direction: column; align-self: stretch; min-width: 0;
+  box-sizing: border-box; padding: 8px; border: 2px solid #679fef; border-radius: 10px;
+  background: #112b4a;
+}
+body.studio-body .studio-add-card-button {
+  display: flex; flex: 1 1 auto; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-width: 0; aspect-ratio: var(--card-ratio, 2 / 3); padding: 12px; box-sizing: border-box;
+  border: 1px dashed #a8c9ff; border-radius: 7px; color: #fff; background: #163b69;
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+body.studio-body .studio-add-card-button:hover { background: #204c80; }
+body.studio-body .studio-add-card-button:focus-visible { outline: 3px solid #fff; outline-offset: -5px; }
+body.studio-body .studio-add-card-plus { font-size: 48px; font-weight: 300; line-height: 1; }
+body.studio-body .studio-card-tile.is-new-draft,
+body.studio-body .studio-card-tile.is-new-draft.is-selected {
+  border-color: var(--st-good, #4cc38a); box-shadow: 0 0 0 2px rgb(76 195 138 / .3);
+}
+@media (max-width: 700px) {
+  body.studio-body .studio-add-card-tile { padding: var(--studio-gap-1, 4px); }
+}

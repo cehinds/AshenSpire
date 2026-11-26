@@ -10,6 +10,7 @@ import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfil
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { blacksmithVisitStock } from '../src/engine/shopKinds.js';
+import { itemCombatPower } from '../src/content/generated/combatPower.js';
 import { gameProfileShopSalePlan, commitGameProfileShopSale } from '../src/model/gameProfileShopSales.js';
 import '../src/engine/runCombat.js';
 
@@ -59,7 +60,10 @@ test('a ranked relic sells at the ordinary fraction of its rank-adjusted basis',
   if (!run.relics.includes(relic.id)) run.relics = [...run.relics, relic.id];
   const row = gameContent(run, 'shops').priceTable.relic;
   const basis = (Array.isArray(row) ? row : row[relic.rarity] ?? row.common)[0];
-  assert.equal(gameProfileShopSalePlan(registries, run, SHOP, 'relics', relic.id).price, Math.floor(Math.round(basis * 1.5) * 0.5));
+  const rank = itemCombatPower[`relic:${relic.id}`].rank;
+  assert.ok(Number.isInteger(rank) && rank > 0, 'the current scoring table gives this relic a visible rank');
+  const rankedBasis = Math.round(basis * (1 + 0.25 * rank));
+  assert.equal(gameProfileShopSalePlan(registries, run, SHOP, 'relics', relic.id).price, Math.floor(rankedBasis * 0.5));
 });
 
 test('a multiplier of 1 sells cards like everything else', () => {

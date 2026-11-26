@@ -19,7 +19,7 @@ const NEW = {
   'core.conflagration': { cls: 'starseer', rarity: 'rare', mana: 2, element: 'fire' },
   'core.forkedBolt': { cls: 'colorless', rarity: 'uncommon', mana: 1, element: 'lightning' },
   'core.stormcall': { cls: 'starseer', rarity: 'rare', mana: 2, element: 'lightning' },
-  'core.glacialSpike': { cls: 'starseer', rarity: 'uncommon', mana: 1, element: 'frost' },
+  'core.glacialSpike': { cls: 'starseer', rarity: 'common', mana: 2, element: 'frost' },
   'core.radiantVerdict': { cls: 'herald', rarity: 'rare', mana: 2, element: 'divine' },
   'core.witherDraught': { cls: 'herald', rarity: 'uncommon', mana: 1, element: 'necrotic' },
   'core.batteringGale': { cls: 'colorless', rarity: 'uncommon', mana: 1, element: 'force' },
@@ -76,15 +76,15 @@ test('effective cost table: 0 SP and 2 or 3 MP plain and Prepared; a Focus item 
   }
 });
 
-test('a card without the mark pays its printed Stamina (no surcharge since 2026-11-23: Comet Lance is 1 SP / 2 MP); a fight saved before that keeps 2 SP / 2 MP', () => {
+test('unmarked Arcane Sweep keeps its authored zero SP; retained surcharge rules add exactly one SP', () => {
   const costs = costsOf('core.cometLance', { hand: 'greatsword', stance: null });
-  assert.deepEqual([costs.stamina, costs.mana], [1, 2]);
+  assert.deepEqual([costs.stamina, costs.mana], [0, 2]);
   const { combat } = fight({ registries: printedCostRegistries });
   combat.loadout.sets.rightHand[0] = 'greatsword';
   combat.fixCoreRules.spellCosts.staminaSurcharge = 1; // the rules snapshot of a fight saved before the owner ruling of 2026-11-23
   const card = combat.piles.hand[0]; card.cardId = 'core.cometLance';
   const saved = cardPlayCosts(combat, card.instanceId);
-  assert.deepEqual([saved.stamina, saved.mana], [2, 2], 'a saved fight keeps the +1 Stamina surcharge on an unmarked spell');
+  assert.deepEqual([saved.stamina, saved.mana], [1, 2], 'a saved fight keeps the +1 Stamina surcharge on an unmarked spell');
 });
 
 test('a fight created before the mark (no manaOnlyTag key) has no exemption: the +1 Stamina surcharge lands on a mana-only card', () => {
@@ -125,7 +125,7 @@ test(`every mana-only spell has at least ${MARGIN}x the power per Mana of the me
   const peers = rarity => profile.content.cards.filter(card => card.rarity === rarity && card.staminaCost >= 1 && card.manaCost >= 1 && !card.tags.includes('cost.manaOnly')
     && !card.tags.includes('rank.cantrip') && cardManaCategory(reg, reg.cards.get(card.id)) === 'spell' && card.upgrade?.effects && card.class !== 'enemy' && card.effects.some(effect => ['damage', 'block', 'draw', 'applyStatus', 'heal'].includes(effect.op)));
   const rows = [];
-  for (const rarity of ['uncommon', 'rare']) {
+  for (const rarity of [...new Set(Object.values(NEW).map(card => card.rarity))]) {
     const list = peers(rarity);
     assert.ok(list.length >= 3, `${rarity}: enough peers (${list.length})`);
     for (const grade of ['base', 'up']) {

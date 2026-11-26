@@ -8,7 +8,9 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, serializeRun, deserializeRun, validateRunShape } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { gameProfileRewardOffers, gameProfileShopStock } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardOffers, gameProfileShopStock, gameProfileRewardPools } from '../src/model/gameProfileRewards.js';
+import { reserveStanceCards, missingBasicStances, basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
+import { FilterToRankBand, RankBandForLevel } from '../src/model/levelLists.js';
 import { stanceOf } from '../src/model/stanceRules.js';
 
 const build = (weight, core = 'ashen.core@2.0.0') => {
@@ -126,9 +128,13 @@ function reservedStances(registries, keepHistory = true) {
   const base = stanceRun(registries);
   if (!keepHistory) delete base.rewardOfferHistory;
   return SEEDS_200.map(seed => {
-    const offer = gameProfileRewardOffers(registries, structuredClone(base), createRng(seed), { offerId: `s${seed}`, source: 'combat' });
-    const stance = stanceOfId(registries, offer.options[0].id);
-    assert.ok(stance === 'sweep' || stance === 'casting', `seed ${seed}: reserved ${offer.options[0].id} is of stance ${stance}`);
+    // Probability fixture: hold the two eligible stance families constant.
+    // The shipped CP band is tested separately below and may admit Counter too.
+    const isBasic = basicOrCantripMatcher(registries, base);
+    const eligible = registries.cards.all().filter(card => isBasic(card.id) && ['sweep', 'casting'].includes(stanceOfId(registries, card.id))).map(card => card.id);
+    const [id] = reserveStanceCards(registries, structuredClone(base), createRng(seed), 'cardRewards', eligible, 1);
+    const stance = stanceOfId(registries, id);
+    assert.ok(stance === 'sweep' || stance === 'casting', `seed ${seed}: reserved ${id} is of stance ${stance}`);
     return stance;
   });
 }
@@ -141,4 +147,21 @@ test('the reserved stance slot favours the stance never offered, and is not skew
   assert.ok(neutral.includes('sweep') && neutral.includes('casting'), 'both eligible stances are exercised');
   assert.deepEqual(neutral, neutralWithoutHistory, 'the history never changes the reserved stance at weight 1');
   assert.ok(share(skewed, 'casting') > share(neutral, 'casting'), 'history increases the casting share within the same rank band');
+});
+
+
+test('shipped reserved offers draw a missing basic stance from the actual character-level band', () => {
+  const registries = build(), base = stanceRun(registries);
+  const missing = new Set(missingBasicStances(base, registries));
+  const isBasic = basicOrCantripMatcher(registries, base);
+  const available = gameProfileRewardPools(registries, base).combatCards;
+  const eligible = new Set(FilterToRankBand('cards', available, RankBandForLevel({ level: base.level.level })).filter(id => isBasic(id) && missing.has(stanceOfId(registries, id))));
+  assert.ok(eligible.size > 0); assert.ok(missing.has('counter'), 'the current Reaver starter also lacks Counter');
+  const seen = new Set();
+  for (const seed of SEEDS_200) {
+    const options = gameProfileRewardOffers(registries, structuredClone(base), createRng(seed), { offerId: `current.${seed}`, source: 'combat' }).options;
+    assert.equal(options[0].kind, 'combatCards'); assert.ok(eligible.has(options[0].id), `seed ${seed}: ${options[0].id}`);
+    seen.add(options[0].id);
+  }
+  assert.ok(seen.size > 1, 'the legal current pool exercises actual seeded alternatives');
 });

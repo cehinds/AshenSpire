@@ -192,8 +192,9 @@ test('every overtuned unupgraded damage card pays a penalty', async () => {
 
 test('cards with authored HP penalties drop them on upgrade', async () => {
   const { upgradedDefinition } = await import('../src/model/cardUpgrade.js');
-  assert.equal(registries.cards.get('core.pyreLash').effects.find((effect) => effect.op === 'loseHp')?.amount, 2, 'Pyre Lash keeps its authored HP cost independently of the damage ratio');
-  for (const id of ['core.pyreLash', 'core.forkedBolt', 'core.batteringGale', 'core.witherDraught', 'core.glacialSpike', 'core.radiantVerdict', 'core.meteor', 'colossusSmash']) {
+  for (const id of ['core.pyreLash', 'core.glacialSpike', 'core.meteor']) assert.ok(!drawbacksOf(registries.cards.get(id)).includes('selfDamage'), `${id}: the owner-authored replacement carries no HP cost`);
+  assert.ok(drawbacksOf(registries.cards.get('core.pyreLash')).includes('exhaust'), 'Pyre Lash retains its authored Exhaust drawback');
+  for (const id of ['core.forkedBolt', 'core.batteringGale', 'core.witherDraught', 'core.radiantVerdict', 'colossusSmash']) {
     const card = registries.cards.get(id);
     assert.ok(drawbacksOf(card).includes('selfDamage'), id);
     assert.ok(!drawbacksOf(upgradedDefinition(card)).includes('selfDamage'), `${id}+ keeps no self-damage`);
@@ -216,7 +217,7 @@ async function lowHpFight(hp) {
   const run = createRunState({ registries, classId: 'starseer', seed: 511, profileMeta: unlocked });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   for (const pile of Object.values(combat.piles)) pile.length = 0;
-  combat.piles.hand.push({ instanceId: 'p', cardId: 'core.pyreLash', upgraded: false });
+  combat.piles.hand.push({ instanceId: 'p', cardId: 'core.forkedBolt', upgraded: false });
   combat.player.stamina = combat.player.maxStamina = 20;
   combat.player.mana = combat.player.maxMana = 20;
   combat.player.hp = hp;
@@ -226,18 +227,18 @@ async function lowHpFight(hp) {
 test('an HP cost that would kill refuses the play and leaves every HP as it was', async () => {
   const { dispatch } = await import('../src/engine/combat.js');
   const { NonlethalHpRefusal } = await import('../src/model/cardHpCost.js');
-  for (const id of ['core.pyreLash', 'core.forkedBolt', 'core.batteringGale', 'core.witherDraught', 'core.glacialSpike', 'core.radiantVerdict', 'core.meteor', 'colossusSmash']) {
+  for (const id of ['core.forkedBolt', 'core.batteringGale', 'core.witherDraught', 'core.radiantVerdict', 'colossusSmash']) {
     assert.ok(registries.cards.get(id).effects.some((e) => e.op === 'loseHp' && e.nonlethal === true), `${id}: its HP cost is nonlethal`);
   }
   const combat = await lowHpFight(2);
   const enemyHp = combat.enemies[0].hp;
-  assert.match(NonlethalHpRefusal(registries.cards.get('core.pyreLash'), combat.player), /Not enough HP: it costs 2 HP/);
+  assert.match(NonlethalHpRefusal(registries.cards.get('core.forkedBolt'), combat.player), /Not enough HP: it costs 2 HP/);
   assert.throws(() => dispatch(combat, { type: 'playCard', cardInstanceId: 'p', targetId: combat.enemies[0].id }), /Not enough HP/);
   assert.equal(combat.player.hp, 2, 'the player keeps their HP');
   assert.equal(combat.enemies[0].hp, enemyHp, 'the enemy is untouched');
   assert.ok(combat.piles.hand.some((card) => card.instanceId === 'p'), 'the card stays in hand');
   const enough = await lowHpFight(3);
-  assert.equal(NonlethalHpRefusal(registries.cards.get('core.pyreLash'), enough.player), '');
+  assert.equal(NonlethalHpRefusal(registries.cards.get('core.forkedBolt'), enough.player), '');
   dispatch(enough, { type: 'playCard', cardInstanceId: 'p', targetId: enough.enemies[0].id });
   assert.equal(enough.player.hp, 1, 'at 3 HP the card is paid down to 1');
   assert.ok(enough.enemies[0].hp < enough.enemies[0].maxHp, 'and the hit lands');
@@ -246,7 +247,7 @@ test('an HP cost that would kill refuses the play and leaves every HP as it was'
 test('the simbot never offers a play whose HP cost would kill', async () => {
   const { affordableCards } = await import('../tools/simbot.mjs');
   assert.deepEqual(affordableCards(registries, await lowHpFight(2)).map((card) => card.cardId), []);
-  assert.deepEqual(affordableCards(registries, await lowHpFight(10)).map((card) => card.cardId), ['core.pyreLash']);
+  assert.deepEqual(affordableCards(registries, await lowHpFight(10)).map((card) => card.cardId), ['core.forkedBolt']);
 });
 
 // Review of #2819: a step that eases a drawback drops its words from the rules text, the face and the picker shows the change.

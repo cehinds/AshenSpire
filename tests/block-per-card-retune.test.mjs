@@ -12,6 +12,8 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
+import { CardScoreReferenceContext, ProjectCardMechanicalValues } from '../src/model/cardMechanicalProjection.js';
+import { staticCardTokens } from '../src/model/playingCard.js';
 
 const registriesFor = profile => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const current = resolveGameProfile('default');
@@ -58,11 +60,17 @@ function defendBlock(reg, classId, dexterity = 0) {
 }
 
 // Current rules retain the Unranked 1-SP Defend and apply the authored Block gain scale.
-// The measured face is the neutral-kit Defend the combat-power table scores; stats and armour add on top of it in play.
-test('the current starter Defend gives 2 measured Block and is Unranked', async () => {
+// The combat-power table prices the neutral static face rather than a fight's
+// guard/stance receipt. Combat bonuses are checked separately below.
+test('the current starter Defend shows 0 neutral static Block and is Unranked', async () => {
   const { measureCards } = await import('../tools/combat-power-report.mjs');
   const { cardCombatPower } = await import('../src/content/generated/combatPower.js');
-  assert.equal(measureCards()['core.defend'].blk, 2, 'final Block of the measured Defend');
+  const context = CardScoreReferenceContext({ class: 'reaver' });
+  const definition = context.registries.cards.get('core.defend');
+  const displayed = staticCardTokens(definition, context.registries, context.rules).block;
+  assert.equal(displayed, 0, 'the neutral static Defend face');
+  assert.equal(ProjectCardMechanicalValues(definition, context).card.effects.find(effect => effect.op === 'block').amount, displayed);
+  assert.equal(measureCards()['core.defend'].blk, displayed, 'the report prices the displayed Block');
   assert.ok(cardCombatPower['core.defend'].cp <= 0, `Defend cp ${cardCombatPower['core.defend'].cp} is Unranked`);
   assert.equal(cardCombatPower['core.defend'].rank, 0);
   const reg = registriesFor(current);

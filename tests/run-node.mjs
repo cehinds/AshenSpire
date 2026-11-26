@@ -14,7 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { runTests } from './engine.test.js';
 import { loadRunNodeFixtures } from './helpers/run-node-fixtures.mjs';
-import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
+import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, ISOLATED_TIMING_DISCOVERED, discoveryExecutionBatches, runDiscoveryBatches, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
 let options;
 try {
@@ -89,6 +89,7 @@ if (DISCOVER) {
   found.sort();
   const stale = [...NOT_SPAWNED.keys()].filter(file => !existsSync(join(root, file)));
   const eligible = found.filter(file => !NOT_SPAWNED.has(file));
+  const staleIsolated = [...ISOLATED_TIMING_DISCOVERED.keys()].filter(file => !eligible.includes(file));
   let files;
   try {
     files = discoveryShardFiles(discoverySpeedFiles(eligible, options.slow), options.shard);
@@ -107,16 +108,20 @@ if (DISCOVER) {
   // A shard that hangs would otherwise be cut by the CI job's timeout with no output at all
   // (spawnSync buffers it). Stop it first and print what it wrote, so the hung test is named.
   const SHARD_LIMIT_MS = 15 * 60 * 1000;
-  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...workerArgs, ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, timeout: SHARD_LIMIT_MS });
-  if (result.error?.code === 'ETIMEDOUT') console.log(`run-node: the test run passed ${SHARD_LIMIT_MS / 60000} minutes and was stopped; its output so far follows, and the last test named is where it hung.`);
-  const out = `${result.stdout || ''}${result.stderr || ''}`;
-  const count = (label) => Number(out.match(new RegExp(`^ℹ ${label} (\\d+)$`, 'm'))?.[1] ?? NaN);
-  const ok = result.status === 0 && !stale.length && count('fail') === 0;
+  const batches = discoveryExecutionBatches(files);
+  const result = runDiscoveryBatches(batches, { timeoutMs: SHARD_LIMIT_MS, runBatch: (batch, remaining) => {
+    if (batch.length === 1 && ISOLATED_TIMING_DISCOVERED.has(batch[0])) console.log(`run-node: isolated timing batch ${batch[0]}`);
+    return spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...workerArgs, ...batch], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, timeout: remaining });
+  } });
+  if (result.timedOut) console.log(`run-node: the test run passed ${SHARD_LIMIT_MS / 60000} minutes and was stopped; its output so far follows, and the last test named is where it hung.`);
+  const out = result.out;
+  const ok = result.ok && !stale.length && !staleIsolated.length;
   if (!ok) {
-    console.log(out || String(result.error));
+    console.log(out || result.results.map(batch => String(batch.error || '')).join('\n'));
     for (const file of stale) console.log(`  NOT_SPAWNED names ${file}, which no longer exists — remove the entry`);
+    for (const file of staleIsolated) console.log(`  ISOLATED_TIMING_DISCOVERED names ${file}, which is no longer discovered — remove the entry`);
   }
-  const counts = shardSummaryCounts({ out, timedOut: result.error?.code === 'ETIMEDOUT', limitMinutes: SHARD_LIMIT_MS / 60000, files: files.length });
+  const counts = shardSummaryCounts({ out, timedOut: result.timedOut, limitMinutes: SHARD_LIMIT_MS / 60000, files: files.length, expectedSummaries: batches.length });
   console.log(`${ok ? 'PASS' : 'FAIL'}  every discovered test file passes — ${counts}` +
     ` (${NOT_SPAWNED.size} run elsewhere, each with its reason in NOT_SPAWNED)` +
     (options.slow === 'exclude' ? ` (${SLOW_DISCOVERED.size} slow files left to --slow-only)` : options.slow === 'only' ? ' [slow files only]' : '') +

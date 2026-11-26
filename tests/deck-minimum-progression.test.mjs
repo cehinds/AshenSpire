@@ -126,12 +126,16 @@ test('a Starseer with Basic Training cannot add Skullsplitter or an enemy move; 
 });
 
 test('Graduate opens collected cantrips only', async () => {
+  const { createRng } = await import('../src/engine/rng.js');
+  const { executeRunEffects } = await import('../src/engine/actions.js');
   const { ItemUnlimitedCardIds } = await import('../src/model/deckCopyLimit.js');
   const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
   const run = createRunState({ seed: 11, classId: 'starseer', registries, runId: 'grad-starseer', profileMeta: meta });
   run.relics = [...(run.relics || []), 'graduate'];
+  assert.deepEqual(ItemUnlimitedCardIds(run), [], 'the new Starseer starter has no collected cantrip to mint');
+  executeRunEffects({ run, registries, rng: createRng(11) }, [{ op: 'addCardToDeck', card: 'core.cantrip' }]);
   const ids = ItemUnlimitedCardIds(run);
-  assert.ok(ids.includes('core.cantrip'), 'the starting cantrip');
+  assert.ok(ids.includes('core.cantrip'), 'a legitimately collected cantrip becomes unlimited');
   assert.ok(ids.every((id) => run.collectedCardIds.includes(id)));
 });
 

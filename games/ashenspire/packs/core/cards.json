@@ -563,7 +563,10 @@
       "classification.skill"
     ],
     "textTemplate": "Retreat foes. Costs 1 more each play.",
-    "faceTemplate": ["Retreat foes.", "Costs 1 more each play."],
+    "faceTemplate": [
+      "Retreat foes.",
+      "Costs 1 more each play."
+    ],
     "costGrowth": {
       "stamina": 1,
       "perUse": 1,
@@ -2025,11 +2028,11 @@
   },
   {
     "id": "core.cometLance",
-    "name": "Comet Lance",
+    "name": "Arcane Sweep",
     "class": "starseer",
-    "rarity": "uncommon",
-    "cost": 1,
-    "staminaCost": 1,
+    "rarity": "common",
+    "cost": 0,
+    "staminaCost": 0,
     "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
@@ -2038,31 +2041,11 @@
     "effects": [
       {
         "op": "damage",
-        "target": "enemy",
-        "amount": 24
-      },
-      {
-        "op": "poiseDamage",
-        "target": "enemy",
-        "amount": 4
-      },
-      {
-        "op": "applyStatus",
-        "target": "enemy",
-        "status": "chill",
-        "stacks": 2
+        "target": "allEnemies",
+        "amount": 13
       }
     ],
-    "tags": [
-      "camp:spell",
-      "source:spell",
-      "maneuver:casting",
-      "classification.attack",
-      "school:frost",
-      "tradition:arcane",
-      "tradition:divine"
-    ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill.",
+    "textTemplate": "Deal {damage} damage to ALL enemies.",
     "upgrade": {
       "effects": [
         {
@@ -2081,11 +2064,22 @@
           "status": "chill",
           "stacks": 2
         }
-      ]
+      ],
+      "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill."
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 6
+    "exposureBuildupPerHit": 6,
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "damage:arcane",
+      "targeting:area",
+      "targeting.allEnemies",
+      "school:force",
+      "maneuver:sweep",
+      "classification.attack"
+    ]
   },
   {
     "id": "core.searingRay",
@@ -2112,15 +2106,6 @@
         "stacks": 3
       }
     ],
-    "tags": [
-      "camp:spell",
-      "source:spell",
-      "maneuver:casting",
-      "classification.attack",
-      "school:fire",
-      "tradition:arcane",
-      "tradition:divine"
-    ],
     "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
     "upgrade": {
       "effects": [
@@ -2135,53 +2120,54 @@
           "status": "burn",
           "stacks": 3
         }
-      ]
+      ],
+      "cardRatingValues": {
+        "ward": 3
+      }
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
+    "exposureBuildupPerHit": 5,
+    "cardRatingValues": {
+      "ward": 3
+    },
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "school:fire",
+      "tradition:arcane",
+      "tradition:divine",
+      "range:reach",
+      "classification.attack"
+    ]
   },
   {
     "id": "core.meteor",
     "name": "Meteor",
     "class": "starseer",
-    "rarity": "rare",
-    "cost": 1,
-    "staminaCost": 1,
-    "manaCost": 3,
+    "rarity": "uncommon",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 2,
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": ["exhaust"],
+    "keywords": [],
     "effects": [
       {
-        "op": "loseHp",
-        "target": "self",
-        "amount": 8,
-        "nonlethal": true
-      },
-      {
         "op": "damage",
-        "target": "enemy",
-        "amount": 60
+        "target": "allEnemies",
+        "amount": 37
       },
       {
         "op": "applyStatus",
-        "target": "enemy",
+        "target": "allEnemies",
         "status": "burn",
-        "stacks": 1
+        "stacks": 2
       }
     ],
-    "tags": [
-      "camp:spell",
-      "source:spell",
-      "maneuver:casting",
-      "classification.attack",
-      "school:fire",
-      "tradition:arcane",
-      "tradition:divine"
-    ],
-    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP. Exhaust.",
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
     "upgrade": {
       "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
       "effects": [
@@ -2196,11 +2182,29 @@
           "status": "burn",
           "stacks": 3
         }
-      ]
+      ],
+      "cardRatingValues": {
+        "ward": 7
+      }
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 10
+    "exposureBuildupPerHit": 10,
+    "cardRatingValues": {
+      "ward": 7
+    },
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "school:fire",
+      "tradition:arcane",
+      "tradition:divine",
+      "targeting:area",
+      "targeting.allEnemies",
+      "range:reach",
+      "classification.attack"
+    ]
   },
   {
     "id": "core.sanctifiedWard",
@@ -2416,37 +2420,24 @@
   },
   {
     "id": "core.arcaneSiphon",
-    "name": "Arcane Siphon",
-    "class": "colorless",
-    "rarity": "uncommon",
-    "cost": 1,
-    "staminaCost": 1,
-    "manaCost": 1,
+    "name": "Mana Rite",
+    "class": "starseer",
+    "rarity": "common",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
     "costRule": "fixed",
-    "type": "attack",
+    "type": "skill",
     "icon": "attack",
     "keywords": [],
     "effects": [
       {
-        "op": "damage",
-        "target": "enemy",
-        "amount": 14
-      },
-      {
         "op": "restoreMana",
         "target": "self",
-        "amount": 2
+        "amount": 1
       }
     ],
-    "tags": [
-      "camp:spell",
-      "source:spell",
-      "maneuver:casting",
-      "classification.attack",
-      "school:force",
-      "tradition:arcane"
-    ],
-    "textTemplate": "Deal {damage} damage. Restore {restoreMana} Mana.",
+    "textTemplate": "Gain {restoreMana} MP.",
     "upgrade": {
       "effects": [
         {
@@ -2459,11 +2450,24 @@
           "target": "self",
           "amount": 2
         }
-      ]
+      ],
+      "cardRatingValues": {
+        "ward": 4
+      },
+      "textTemplate": "Deal {damage} damage. Restore {restoreMana} Mana."
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
+    "exposureBuildupPerHit": 5,
+    "cardRatingValues": {
+      "ward": 4
+    },
+    "tags": [
+      "targeting:single",
+      "targeting.enemy",
+      "camp:spell",
+      "classification.skill"
+    ]
   },
   {
     "id": "core.emberWave",
@@ -2476,7 +2480,9 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": ["exhaust"],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "damage",
@@ -2732,7 +2738,7 @@
     "id": "core.eclipse",
     "name": "Eclipse",
     "class": "starseer",
-    "rarity": "rare",
+    "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
     "manaCost": 2,
@@ -2744,7 +2750,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 12
+        "amount": 11
       },
       {
         "op": "applyStatus",
@@ -2752,15 +2758,6 @@
         "status": "weak",
         "stacks": 2
       }
-    ],
-    "tags": [
-      "camp:spell",
-      "source:spell",
-      "maneuver:casting",
-      "classification.attack",
-      "targeting:area",
-      "school:illusion",
-      "tradition:arcane"
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies. Apply {weak} Weak to ALL enemies.",
     "upgrade": {
@@ -2776,20 +2773,35 @@
           "status": "weak",
           "stacks": 3
         }
-      ]
+      ],
+      "cardRatingValues": {
+        "ward": 5
+      }
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 6
+    "exposureBuildupPerHit": 6,
+    "cardRatingValues": {
+      "ward": 5
+    },
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "targeting:area",
+      "school:illusion",
+      "tradition:arcane",
+      "classification.attack"
+    ]
   },
   {
     "id": "core.astralBolt",
-    "name": "Astral Bolt",
+    "name": "Arcane Strike",
     "class": "starseer",
-    "rarity": "uncommon",
+    "rarity": "common",
     "cost": 1,
     "staminaCost": 1,
-    "manaCost": 1,
+    "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
@@ -2798,22 +2810,10 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 14
-      },
-      {
-        "op": "draw",
-        "amount": 1
+        "amount": 17
       }
     ],
-    "tags": [
-      "camp:spell",
-      "source:spell",
-      "maneuver:casting",
-      "classification.attack",
-      "school:force",
-      "tradition:arcane"
-    ],
-    "textTemplate": "Deal {damage} damage. Draw {draw} card.",
+    "textTemplate": "Deal {damage} damage.",
     "upgrade": {
       "effects": [
         {
@@ -2825,11 +2825,26 @@
           "op": "draw",
           "amount": 1
         }
-      ]
+      ],
+      "cardRatingValues": {
+        "ward": 4
+      },
+      "textTemplate": "Deal {damage} damage. Draw {draw} card."
     },
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 5
+    "exposureBuildupPerHit": 5,
+    "cardRatingValues": {
+      "ward": 4
+    },
+    "tags": [
+      "school:force",
+      "tradition:arcane",
+      "camp:spell",
+      "source:spell",
+      "maneuver:attack",
+      "classification.attack"
+    ]
   },
   {
     "id": "core.censure",
@@ -4504,37 +4519,23 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": ["exhaust"],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
-      {
-        "op": "loseHp",
-        "target": "self",
-        "amount": 2,
-        "nonlethal": true
-      },
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 21
+        "amount": 69
       },
       {
         "op": "applyStatus",
         "target": "enemy",
         "status": "burn",
-        "stacks": 2
+        "stacks": 4
       }
     ],
-    "tags": [
-      "camp:spell",
-      "source:spell",
-      "maneuver:casting",
-      "classification.attack",
-      "school:fire",
-      "cost.manaOnly",
-      "tradition:arcane",
-      "tradition:divine"
-    ],
-    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Lose {loseHp} HP. Exhaust.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
     "upgrade": {
       "textTemplate": "Deal {damage} damage. Apply {burn} Burn. Exhaust.",
       "effects": [
@@ -4549,11 +4550,27 @@
           "status": "burn",
           "stacks": 3
         }
-      ]
+      ],
+      "cardRatingValues": {
+        "ward": 1
+      }
     },
     "flavor": "A whip of pyre-smoke, drawn from the Spire's lowest hearth.\nIt costs no breath, only the Mana the flame was promised.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 6
+    "exposureBuildupPerHit": 6,
+    "cardRatingValues": {
+      "ward": 1
+    },
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "school:fire",
+      "cost.manaOnly",
+      "tradition:arcane",
+      "tradition:divine",
+      "classification.attack"
+    ]
   },
   {
     "id": "core.conflagration",
@@ -4687,7 +4704,9 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": ["exhaust"],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "loseHp",
@@ -4741,51 +4760,30 @@
   },
   {
     "id": "core.glacialSpike",
-    "name": "Glacial Spike",
+    "name": "Chilling Wave",
     "class": "starseer",
-    "rarity": "uncommon",
+    "rarity": "common",
     "cost": 0,
     "staminaCost": 0,
-    "manaCost": 1,
+    "manaCost": 2,
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
     "keywords": [],
     "effects": [
       {
-        "op": "loseHp",
-        "target": "self",
-        "amount": 2,
-        "nonlethal": true
+        "op": "applyStatus",
+        "status": "chill",
+        "stacks": 5,
+        "target": "allEnemies"
       },
       {
         "op": "damage",
-        "target": "enemy",
+        "target": "allEnemies",
         "amount": 17
-      },
-      {
-        "op": "poiseDamage",
-        "target": "enemy",
-        "amount": 4
-      },
-      {
-        "op": "applyStatus",
-        "target": "enemy",
-        "status": "chill",
-        "stacks": 3
       }
     ],
-    "tags": [
-      "camp:spell",
-      "source:spell",
-      "maneuver:casting",
-      "classification.attack",
-      "school:frost",
-      "cost.manaOnly",
-      "tradition:arcane",
-      "tradition:divine"
-    ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill. Lose {loseHp} HP.",
+    "textTemplate": "Apply {chill} Chill to ALL enemies. Deal {damage} damage to ALL enemies.",
     "upgrade": {
       "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill.",
       "effects": [
@@ -4809,7 +4807,17 @@
     },
     "flavor": "One needle of the deep winter, thrown by a hand that stayed warm.",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 6
+    "exposureBuildupPerHit": 6,
+    "tags": [
+      "maneuver:casting",
+      "school:frost",
+      "cost.manaOnly",
+      "camp:spell",
+      "source:spell",
+      "targeting:area",
+      "targeting.allEnemies",
+      "classification.attack"
+    ]
   },
   {
     "id": "core.radiantVerdict",
@@ -4822,7 +4830,9 @@
     "costRule": "fixed",
     "type": "attack",
     "icon": "attack",
-    "keywords": ["exhaust"],
+    "keywords": [
+      "exhaust"
+    ],
     "effects": [
       {
         "op": "loseHp",
@@ -5414,5 +5424,149 @@
       ]
     },
     "flavor": "A veil of cold turns aside the blow and numbs the hand that struck it."
+  },
+  {
+    "id": "custom.card_mwx2mb6p",
+    "name": "Ward",
+    "class": "starseer",
+    "rarity": "common",
+    "type": "skill",
+    "icon": "skill",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "damageSchool": "physical",
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 11
+      },
+      {
+        "op": "applyStatus",
+        "status": "ward",
+        "stacks": 1,
+        "target": "self"
+      }
+    ],
+    "keywords": [],
+    "tags": [
+      "targeting.self",
+      "maneuver:defend",
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {block} Block. Gain {ward} Ward."
+  },
+  {
+    "id": "custom.copy_mwx6hh79",
+    "name": "Arcane Bolt",
+    "class": "starseer",
+    "rarity": "common",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 37
+      }
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 20
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ],
+      "cardRatingValues": {
+        "ward": 4
+      },
+      "textTemplate": "Deal {damage} damage. Draw {draw} card."
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5,
+    "cardRatingValues": {
+      "ward": 4
+    },
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "school:force",
+      "tradition:arcane",
+      "range:reach",
+      "classification.attack"
+    ]
+  },
+  {
+    "id": "custom.copy_mwx6xoww",
+    "name": "Arcane Smash",
+    "class": "starseer",
+    "rarity": "common",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 29
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 2
+      }
+    ],
+    "textTemplate": "Deal {damage} damage. Deal {poiseDamage} Poise damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 20
+        },
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ],
+      "cardRatingValues": {
+        "ward": 4
+      },
+      "textTemplate": "Deal {damage} damage. Draw {draw} card."
+    },
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5,
+    "cardRatingValues": {
+      "ward": 4
+    },
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "school:force",
+      "tradition:arcane",
+      "maneuver:smash",
+      "classification.attack"
+    ]
   }
 ]

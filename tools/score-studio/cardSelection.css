@@ -1,0 +1,23 @@
+/* Keep the empty selection state to one compact gallery control row. */
+body.studio-body section.card-selection-toolbar { display: none !important; }
+body.studio-body .card-selection-toolbar [hidden] { display: none; }
+body.studio-body .card-selection-toolbar[hidden] { display: none; }
+body.studio-body .card-selection-toolbar .filter-row { flex-wrap: wrap; }
+body.studio-body .card-selection-toolbar #card-selection-deck { min-width: 0; max-width: 100%; flex: 1 1 130px; }
+body.studio-body .card-selection-mode-control { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; white-space: nowrap; cursor: pointer; }
+body.studio-body .card-selection-mode-control input { width: 18px; height: 18px; accent-color: #32b86b; }
+body.studio-body .card-selection-count-slot { display: inline-flex; width: 32px; min-width: 32px; flex: 0 0 32px; align-items: center; justify-content: center; }
+body.studio-body #card-selection-count { min-width: 18px; max-width: 32px; box-sizing: border-box; padding: 0 4px; border-radius: 9px; background: rgba(50,184,107,.2); color: var(--st-text); font-size: 11px; line-height: 18px; text-align: center; }
+body.studio-body #card-selection-count[hidden] { display: none; }
+body.studio-body .studio-card-stage, body.studio-body .studio-card-tile { position: relative; }
+/* 2px tile border + -6.5px offset + 9.5px hit-area centering = a 5px checkbox inset. */
+body.studio-body .studio-card-tile > .card-select-control { position: absolute; top: -6.5px; right: -6.5px; z-index: 30; display: flex; align-items: center; justify-content: center; width: 35px; height: 35px; min-height: 35px; box-sizing: border-box; margin: 0; padding: 0; border: 0; border-radius: 5px; background: transparent; outline: none; outline-offset: 0; cursor: pointer; }
+body.studio-body .studio-card-tile > .card-select-control[hidden] { display: none; }
+body.studio-body .card-select-control span { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+body.studio-body .card-select-control input { width: 16px; height: 16px; margin: 0; outline: 0; accent-color: #32b86b; cursor: pointer; }
+body.studio-body .card-select-control.is-checked { border: 0; box-shadow: none; }
+body.studio-body .card-select-control input:checked { outline: 2px solid #32b86b; outline-offset: -2px; }
+body.studio-body .card-select-control input:focus-visible { outline: 2px solid #b7f4d0; outline-offset: -2px; }
+body.studio-body .studio-card-tile.is-bulk-selected,
+body.studio-body .studio-card-tile.is-bulk-selected.is-selected { border-color: #32b86b; outline: 2px solid #32b86b; outline-offset: -2px; box-shadow: 0 0 0 2px rgba(50,184,107,.35); }
+body.studio-body .studio-card-tile.is-bulk-selected .studio-card-stage { outline: 2px solid #32b86b; outline-offset: 2px; border-radius: 8px; }

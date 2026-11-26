@@ -3,26 +3,82 @@
 // 2026-10-28). Pure reads of the run: nothing here mutates.
 import { cardRank, rankedEffectsCapped, VisibleCardRank } from './cardRank.js';
 import { mulberry32 } from './rng.js';
-import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES, firstPlainIndex, isPlainEffect } from './cardUpgrade.js';
 
 const MAX_CANDIDATES = 20;
-import { rollUpgradeOptions, upgradeStepRng, upgradeSeed, UpgradeStepFamilies } from './cardUpgradeSteps.js';
+import * as UpgradeSteps from './cardUpgradeSteps.js';
 import { OfferSalted } from './upgradeOffer.js';
 import { ActNodeUpgradeStock, NodeScheduleKey } from './actSeedSchedule.js';
 import { EffectiveTier } from './tierUnlocks.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { staticCardTokens } from './playingCard.js';
+// Upgrade planning is reached while these engine/model cycles initialize in
+// the classic bundle. Read the pure receipt dependencies only when invoked.
+import * as Offense from './profileDamageOffense.js';
+import * as StanceRead from './stanceBenefitsRead.js';
+import * as ElementStages from './elementReceiptStages.js';
+import * as ProfileRun from './gameProfileRun.js';
+import * as Gear from './gearEffects.js';
+import * as ItemProperties from './itemProperties.js';
+import * as Stances from './stanceRules.js';
+import * as CardProfile from './combatCardProfile.js';
+import * as CarrierDamage from './carrierDamageType.js';
+import * as FixCore from './fixCoreRulesCache.js';
 
 function checkDamageUpgrade(run, registries, rank, ranked) {
   if (!Number.isFinite(run.gameProfile?.modules?.effects?.baseDamageMultiplier)) return undefined;
   const tokens = (def, atRank) => staticCardTokens(
     atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def, registries, run);
-  let before;
+  let before, intrinsicBefore, receiptContext;
+  const intrinsicDamage = (def, atRank) => {
+    // Conditional payloads, charges and Counter returns have their own runtime
+    // context. Retain the existing static fallback rather than guessing it.
+    if (!run.class || !run.attributes || !registries?.gameProfile || def.effectVariants?.length || def.comboHook
+      || (def.effects || []).some(effect => effect.op === 'grantCardCharge' || effect.op === 'damage' && !isPlainEffect(effect, 'damage'))) return null;
+    const index = firstPlainIndex(def.effects, 'damage');
+    if (index < 0 || CardProfile.combatProfileFor(def).maneuver === 'counter') return null;
+    // The source is detached and first-play only: no statuses, enemy, flux or
+    // prior stance. Construct it lazily, only after a numeric damage candidate
+    // has already passed the shared static-face increase check.
+    if (receiptContext === undefined) {
+      const ratings = ProfileRun.gameProfileRatingReceipt(registries, run);
+      if (!ratings) { receiptContext = null; return null; }
+      const attributes = ProfileRun.gameProfileEffectiveAttributes(registries, run);
+      const source = { id: 'player', kind: 'player', classId: run.class, attributes,
+        ratings: ratings.totals, ratingSources: ratings.sources, statuses: {}, alive: true,
+        itemProps: { ...ItemProperties.ItemPropertySummary(run), ...Gear.GearItemProps(Gear.GearSummary(registries, run.loadout, run.class, run)) } };
+      receiptContext = { source, gear: Gear.GearAlwaysOn(registries, run),
+        ctx: { ...run, registries, fixCoreRules: FixCore.fixCoreRules(run), attributes, enemies: [], phase: 'player', elementFlux: null } };
+    }
+    if (!receiptContext) return null;
+    const { source, ctx, gear } = receiptContext;
+    const rankedDef = atRank > 1 ? { ...def, effects: rankedEffectsCapped(def, atRank - 1) } : def;
+    const shown = Gear.ApplyGearCardRules(gear.rules, rankedDef, gear.state);
+    const carrier = CarrierDamage.ResolveCarrierDamageType({ ...shown, cardId: shown.id,
+      combatProfile: { ...CardProfile.combatProfileFor(shown) }, fixCoreSameStance: false }, registries, run.loadout, run.class);
+    const attacker = { ...source, combatStance: Stances.stanceOf(carrier, source) };
+    return Offense.ProfileDamageOffense({ ...ctx, player: attacker }, attacker, null,
+      shown.effects[index].amount, carrier, {
+        getAdd: () => 0, FluxMultiplier: () => 1, defensiveCombatStance: () => undefined,
+        hitWeaknessTriggers: () => [], matchingHitWeaknesses: () => [], weaknessLabel: () => '',
+        AttackDamageMultiplier: StanceRead.AttackDamageMultiplier,
+        StanceWeaknessMultiplier: StanceRead.StanceWeaknessMultiplier,
+        ElementReceiptStages: (...args) => ElementStages.ElementReceiptStages(...args,
+          { stacksOf: () => 0, hasTag: () => false, opponents: () => [], bandsActive: () => false }),
+      }).rawHit;
+  };
   return (current, step, nextRank) => {
     before ??= tokens(current, rank);
-    const after = tokens(applyUpgradeSteps(current, [step]), ranked ? Math.max(rank, nextRank || 0) : rank);
-    return !Object.values(before).some(Number.isFinite)
-      || Object.keys(after).some(key => before[key] !== after[key]);
+    const afterDef = applyUpgradeSteps(current, [step]), afterRank = ranked ? Math.max(rank, nextRank || 0) : rank;
+    const after = tokens(afterDef, afterRank);
+    if (!Object.values(before).some(Number.isFinite)) return true;
+    if (!Object.keys(after).some(key => before[key] !== after[key])) return false;
+    // A real static increase can still disappear in the intrinsic stance and
+    // element chain's final rounding. CP remains on the shared neutral face;
+    // only eligibility uses the engine's pure pre-defense incoming quantity.
+    if (intrinsicBefore === undefined) intrinsicBefore = intrinsicDamage(current, rank);
+    const intrinsicAfter = intrinsicBefore === null ? null : intrinsicDamage(afterDef, afterRank);
+    return intrinsicBefore === null || intrinsicAfter === null || intrinsicAfter > intrinsicBefore;
   };
 }
 
@@ -99,7 +155,7 @@ export function RestUpgradeRule(instance) {
  */
 export function upgradeChoiceCount(def, instance, { blacksmith = false, run = null } = {}) {
   if (!blacksmith) return 1;
-  if (run && instance?.instanceId) return mulberry32(upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#choices`), upgradeStepsOf(instance).length))() < 0.5 ? 2 : 3;
+  if (run && instance?.instanceId) return mulberry32(UpgradeSteps.upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#choices`), upgradeStepsOf(instance).length))() < 0.5 ? 2 : 3;
   return upgradeBasic(def, instance) ? 2 : 3;
 }
 
@@ -128,14 +184,14 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
     const cardTier = EffectiveTier(visibleRank, instance?.rarityOverride || base.rarity || 'common', activeScoring);
     nodeSpecialty = ActNodeUpgradeStock(run.seed, nodeKey, { vendor, scoring: activeScoring }).forTier(cardTier);
   }
-  const limits = { ...mana, rank, cardRank: visibleRank, playerLevel, instance, scale,
+  const limits = { ...mana, rank, cardRank: visibleRank, playerLevel, instance, scale, registries,
     damageChanges: checkDamageUpgrade(run, registries, rank, ranked),
     exposure: registries?.balance?.exposure?.elementUpgradeBuildup, maxRange: run.rangePolicy?.maxRange, ...(vendor ? { vendor } : {}), ...(nodeSpecialty ? { nodeSpecialty } : {}) };
   const authored = applied.length === 0 && base.upgrade && !Array.isArray(base.gradeProfiles) && !noAuthored;
   if (count <= 1 && authored) return [{ k: 'authored' }];
   // An authored first step occupies its family (AuthoredFamilies): the rolled alternative is of another family.
   const excludeFamilies = authored && !everyFamily ? AuthoredFamilies(base) : [];
-  const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, OfferSalted(run, salt ? `${instance.instanceId}#${salt}` : instance.instanceId), applied.length), { ...limits, excludeFamilies, everyFamily }, n);
+  const roll = (n) => UpgradeSteps.rollUpgradeOptions(base, applied, applied.length, UpgradeSteps.upgradeStepRng(run.seed, OfferSalted(run, salt ? `${instance.instanceId}#${salt}` : instance.instanceId), applied.length), { ...limits, excludeFamilies, everyFamily }, n);
   if (count <= 1) return roll(1);
   // Two options that resolve to the same card would be no choice: every pick after the first must differ in what
   // it does (face, tags, profile fields; the name aside) from the picks before it. Candidates come from the same
@@ -167,18 +223,18 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
 // "Two effects" (owner, 2026-11-14): each option gets a second, different effect with REST_TWO_EFFECT_CHANCE. The draw comes from
 // its own seeded stream (instance id + `#fx` + step index), so the same quote always shows the same list.
 function withSecondEffects(run, instance, applied, chosen, candidates, outcome, salt) {
-  const draw = mulberry32(upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#fx${salt}`), applied.length));
-  const offered = new Set(chosen.flatMap(UpgradeStepFamilies));
+  const draw = mulberry32(UpgradeSteps.upgradeSeed(run.seed, OfferSalted(run, `${instance.instanceId}#fx${salt}`), applied.length));
+  const offered = new Set(chosen.flatMap(UpgradeSteps.UpgradeStepFamilies));
   return chosen.map((step) => {
     const roll = draw();
     const pick = draw();
     if (roll >= REST_TWO_EFFECT_CHANCE || step.k === 'authored' || step.k === 'combo') return step;
     // The second effect is of a family no option on the list already has (UPGRADE_FAMILIES).
-    const partners = candidates.filter((other) => other.k !== 'authored' && other.k !== 'combo' && !UpgradeStepFamilies(other).some((family) => offered.has(family))
+    const partners = candidates.filter((other) => other.k !== 'authored' && other.k !== 'combo' && !UpgradeSteps.UpgradeStepFamilies(other).some((family) => offered.has(family))
       && !chosen.some((c) => JSON.stringify(c) === JSON.stringify(other)) && outcome(other) !== outcome(step));
     if (!partners.length) return step;
     const partner = partners[Math.min(partners.length - 1, Math.floor(pick * partners.length))];
-    for (const family of UpgradeStepFamilies(partner)) offered.add(family);
+    for (const family of UpgradeSteps.UpgradeStepFamilies(partner)) offered.add(family);
     return { k: 'combo', steps: [step, partner] };
   });
 }

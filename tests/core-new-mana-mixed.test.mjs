@@ -1,7 +1,11 @@
+// Original wave balance/rarity/reward contract pinned to the exact pre-authoring 10911 profile.
+// Current owner-authored replacements are asserted separately below and in starseer-authored-starter.test.mjs.
 // Owner 2026-10-28 (batch 4): ten mixed Core mana-cost cards (two each Reaver, Rogue, Starseer, Herald, colorless). Martial classes
 // have MP in Core (Reaver 1, Rogue 2), so they get mana cards too, sized to their pool. Each costs SP >= 1 and MP >= 1, resolves at
 // both grades, counts as a mana card for the depth 4+ reward lean, and stays in its own class.
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -11,7 +15,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 
-const profile = resolveGameProfile('core');
+const profile = resolveGameProfile(JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/core2-cleanup-profile-10911.json.gz', import.meta.url)))));
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const ids = list => list.map(id => `core.${id}`);
 const BY_CLASS = {
@@ -49,7 +53,7 @@ const offered = (classId, seed, floor) => {
   return offers.get(key);
 };
 
-test('every card is authored in its class, costs SP and MP, is not a cantrip, and is uncommon or rare (at most 3 rares)', () => {
+test('historical 10911: every card is authored in its class, costs SP and MP, is not a cantrip, and is uncommon or rare (at most 3 rares)', () => {
   for (const [cls, list] of Object.entries(BY_CLASS)) for (const id of list) {
     const card = def(id);
     assert.equal(card.class, cls, id);
@@ -67,14 +71,14 @@ test('every card is authored in its class, costs SP and MP, is not a cantrip, an
   for (const id of ALL) if (def(id).effects.some(e => e.op === 'damage') && def(id).damageSchool === 'magic') assert.ok(def(id).exposureBuildupPerHit >= 5, id);
 });
 
-test('each class can afford its cards: a card never costs more MP than its class has', () => {
+test('historical 10911: each class can afford its cards: a card never costs more MP than its class has', () => {
   for (const classId of CLASSES) {
     const maxMana = live(classId, 1, 1).maxMana;
     for (const id of [...BY_CLASS[classId], ...BY_CLASS.colorless]) assert.ok(def(id).manaCost <= maxMana, `${classId} (${maxMana} MP) cannot play ${id} (${def(id).manaCost} MP)`);
   }
 });
 
-test('every card resolves at base and upgraded with its authored cost, a face and a stronger upgrade', () => {
+test('historical 10911: every card resolves at base and upgraded with its authored cost, a face and a stronger upgrade', () => {
   for (const id of ALL) {
     const base = resolveCard(registries, { cardId: id }), up = resolveCard(registries, { cardId: id, upgraded: true });
     assert.equal(base.cost, def(id).staminaCost, id);
@@ -88,13 +92,13 @@ test('every card resolves at base and upgraded with its authored cost, a face an
   }
 });
 
-test('no authored Burn exceeds the 3-stack application cap', () => {
+test('historical 10911: no authored Burn exceeds the 3-stack application cap', () => {
   for (const id of ALL) for (const effects of [def(id).effects, def(id).upgrade.effects]) for (const effect of effects) {
     if (effect.op === 'applyStatus' && effect.status === 'burn') assert.ok(effect.stacks <= 3, `${id}: Burn ${effect.stacks}`);
   }
 });
 
-test('resource variants are authored for all four resource modes and agree with the fixed cost', () => {
+test('historical 10911: resource variants are authored for all four resource modes and agree with the fixed cost', () => {
   const variants = profile.content.resourceVariants;
   for (const id of ALL) {
     const card = def(id), row = variants[id];
@@ -123,7 +127,7 @@ const covers = (x, y) => {
     && Object.keys(sy).every(s => (sx[s] || 0) >= sy[s]) && x.keywords.length <= y.keywords.length;
 };
 
-test('the dominance check counts self-damage as a cost, not a benefit', () => {
+test('historical 10911: the dominance check counts self-damage as a cost, not a benefit', () => {
   const card = effects => ({ keywords: [], effects });
   const weak = stacks => ({ op: 'applyStatus', target: 'enemy', status: 'weak', stacks });
   const selfHp = amount => ({ op: 'loseHp', target: 'self', amount, nonlethal: true });
@@ -139,7 +143,7 @@ test('the dominance check counts self-damage as a cost, not a benefit', () => {
   assert.equal(covers(card([{ op: 'damage', target: 'self', amount: 6 }]), card([{ op: 'damage', target: 'self', amount: 5 }])), false);
 });
 
-test('no card is strictly better than a peer it shares a reward pool with, in either direction', () => {
+test('historical 10911: no card is strictly better than a peer it shares a reward pool with, in either direction', () => {
   const all = profile.content.cards.filter(card => card.id.startsWith('core.'));
   const samePool = (x, y) => x.class === y.class || x.class === 'colorless' || y.class === 'colorless';
   for (const id of ALL) for (const other of all) {
@@ -152,7 +156,7 @@ test('no card is strictly better than a peer it shares a reward pool with, in ei
   }
 });
 
-test('the reward model counts each card as a mana card, never as a basic or cantrip', () => {
+test('historical 10911: the reward model counts each card as a mana card, never as a basic or cantrip', () => {
   for (const classId of CLASSES) {
     const matches = basicOrCantripMatcher(registries, live(classId, 1, 1));
     for (const id of [...BY_CLASS[classId], ...BY_CLASS.colorless]) {
@@ -162,7 +166,7 @@ test('the reward model counts each card as a mana card, never as a basic or cant
   }
 });
 
-test('every class sees its new cards more often at depth 4+ than at depth 1-3 (600 seeds per class and band)', () => {
+test('historical 10911: every class sees its new cards more often at depth 4+ than at depth 1-3 (600 seeds per class and band)', () => {
   const report = [];
   for (const classId of CLASSES) {
     const own = new Set([...BY_CLASS[classId], ...BY_CLASS.colorless].filter(id => payable(classId, id)));
@@ -180,7 +184,7 @@ test('every class sees its new cards more often at depth 4+ than at depth 1-3 (6
   console.log(`new-card share of card offers: ${report.join('; ')}`);
 });
 
-test('offers respect class, affordability and the stock class spell tradition', () => {
+test('historical 10911: offers respect class, affordability and the stock class spell tradition', () => {
   for (const classId of CLASSES) {
     const seen = new Set(), counts = new Map();
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) { seen.add(id); counts.set(id, (counts.get(id) || 0) + 1); }
@@ -194,4 +198,10 @@ test('offers respect class, affordability and the stock class spell tradition', 
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }
   }
+});
+
+test('current authored Eclipse is a common 1 SP / 2 MP Starseer area spell', () => {
+  const current = resolveGameProfile('core'), card = current.content.cards.find(card => card.id === 'core.eclipse');
+  assert.deepEqual([card.class, card.rarity, card.staminaCost, card.manaCost], ['starseer', 'common', 1, 2]);
+  assert.deepEqual(card.effects, [{ op: 'damage', target: 'allEnemies', amount: 11 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 2 }]);
 });

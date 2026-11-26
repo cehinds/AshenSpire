@@ -7,12 +7,14 @@ import { BaseFace, ScoreCard, CardCategories, CardKind, ScoreItem, CombatPower, 
 import { scoring } from '../src/content/generated/scoring.js';
 import { cardCombatPower, itemCombatPower } from '../src/content/generated/combatPower.js';
 
+// Exact historical configuration paired with the Python reference faces and naming examples.
+const historicalScoring = JSON.parse(readFileSync(new URL('./fixtures/scoring-pre-starseer.json', import.meta.url), 'utf8'));
 const fixture = name => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8'));
 
 test('combat power: all 95 Core card faces score the expected raw value of the reference scorer', () => {
   const faces = fixture('combat-power-core-faces.json');
   assert.equal(faces.length, 95);
-  for (const face of faces) assert.equal(ScoreCard(face).raw, face.pyScore, face.id);
+  for (const face of faces) assert.equal(ScoreCard(face, historicalScoring).raw, face.pyScore, face.id);
 });
 
 test('combat power: every shipped item scores consistently and produces a convention name within the limit', async () => {
@@ -35,17 +37,18 @@ test('combat power: every shipped item scores consistently and produces a conven
 });
 
 test('combat power: rank bands and rarity discounts', () => {
-  assert.equal(RankOf(0), 0); assert.equal(RankOf(-7), 0);
+  const legacy = historicalScoring;
+  assert.equal(RankOf(0, legacy), 0); assert.equal(RankOf(-7, legacy), 0);
   assert.equal(RankName(0), 'Unranked');
-  assert.deepEqual([1, 4, 5, 8, 36, 37, 40, 99].map(cp => RankOf(cp)), [1, 1, 2, 2, 9, 10, 10, 10]);
-  assert.equal(RankName(RankOf(4)), 'Rank 1');
-  assert.equal(RankRange(0), '<= 0'); assert.equal(RankRange(4), '13-16'); assert.equal(RankRange(10), '37-40');
-  assert.equal(scoring.rank.maxCp, 40);
-  assert.equal(CombatPower(10, 'common'), 10);
-  assert.equal(CombatPower(10, 'uncommon'), 8);
-  assert.equal(CombatPower(10, 'rare'), 5);
-  assert.equal(CombatPower(10, 'boss'), 3);
-  assert.equal(CombatPower(10, 'starter'), 10);
+  assert.deepEqual([1, 4, 5, 8, 36, 37, 40, 99].map(cp => RankOf(cp, legacy)), [1, 1, 2, 2, 9, 10, 10, 10]);
+  assert.equal(RankName(RankOf(4, legacy)), 'Rank 1');
+  assert.equal(RankRange(0, legacy), '<= 0'); assert.equal(RankRange(4, legacy), '13-16'); assert.equal(RankRange(10, legacy), '37-40');
+  assert.equal(legacy.rank.maxCp, 40);
+  assert.equal(CombatPower(10, 'common', legacy), 10);
+  assert.equal(CombatPower(10, 'uncommon', legacy), 8);
+  assert.equal(CombatPower(10, 'rare', legacy), 5);
+  assert.equal(CombatPower(10, 'boss', legacy), 3);
+  assert.equal(CombatPower(10, 'starter', legacy), 10);
 });
 
 test('combat power: scoring overrides change the result and the shipped table is not mutated', () => {
@@ -55,15 +58,15 @@ test('combat power: scoring overrides change the result and the shipped table is
   assert.equal(ScoreCard(face, edited).raw, ScoreCard(face).raw + face.sp * (-10 - scoring.costs.sp.weight)); // follows the shipped SP weight
   edited.rarity.discount.rare = 9;
   assert.equal(CombatPower(10, 'rare', edited), 1);
-  assert.equal(scoring.rarity.discount.rare, 5);
+  assert.equal(scoring.rarity.discount.rare, 20);
   assert.match(CardName(face), /^\S+ \S+( [IVX]+)?$/);
 });
 
 test('combat power: rounding is half away from zero for cards', () => {
   const face = { ...fixture('combat-power-core-faces.json')[0], statuses: [], kw: [], tags: [], sp: 0, mp: 0, dmg: 0, blk: 1, poise: 0, draw: 0, heal: 0, loseHp: 0 };
-  // a face worth exactly half a point under the shipped weights (damage 1 per 3, HP cost -1 per 2)
-  assert.equal(ScoreCard({ ...face, blk: 0, dmg: 3, loseHp: 1 }).raw, 1); // 0.5 -> 1
-  assert.equal(ScoreCard({ ...face, blk: 0, loseHp: 1 }).raw, -1); // -0.5 -> -1
+  // a face worth exactly half a point under the historical fixture weights (damage 1 per 3, HP cost -1 per 2)
+  assert.equal(ScoreCard({ ...face, blk: 0, dmg: 3, loseHp: 1 }, historicalScoring).raw, 1); // 0.5 -> 1
+  assert.equal(ScoreCard({ ...face, blk: 0, loseHp: 1 }, historicalScoring).raw, -1); // -0.5 -> -1
 });
 
 test('combat power: the generated table is fresh and covers every Core card and item', () => {
@@ -82,18 +85,18 @@ test('combat power: the generated table is fresh and covers every Core card and 
 });
 
 test('RankRange labels agree with RankOf when unrankedMax is not 0', () => {
-  const custom = { ...scoring, rank: { ...scoring.rank, unrankedMax: 2 } };
+  const custom = { ...historicalScoring, rank: { ...historicalScoring.rank, unrankedMax: 2 } };
   const parse = label => { const m = /^(\d+)-(\d+)$/.exec(label); return m ? [Number(m[1]), Number(m[2])] : null; };
   assert.equal(RankRange(0, custom), '<= 2');
   assert.equal(RankRange(1, custom), '3-4', 'Rank 1 starts at unrankedMax + 1');
   assert.equal(RankRange(2, custom), '5-8');
-  for (let cp = -1; cp <= scoring.rank.maxCp; cp++) {
+  for (let cp = -1; cp <= historicalScoring.rank.maxCp; cp++) {
     const k = RankOf(cp, custom);
     if (k === 0) { assert.ok(cp <= 2, `cp ${cp}`); continue; }
     const [lo, hi] = parse(RankRange(k, custom));
     assert.ok(cp >= lo && cp <= hi, `cp ${cp} is Rank ${k} but its label is ${RankRange(k, custom)}`);
   }
-  assert.equal(RankRange(1), '1-4', 'the shipped table (unrankedMax 0) is unchanged');
+  assert.equal(RankRange(1, historicalScoring), '1-4', 'the historical table (unrankedMax 0) is unchanged');
 });
 
 test('the effect count sees a status even when a tag shares its part key', async () => {
@@ -105,13 +108,13 @@ test('the effect count sees a status even when a tag shares its part key', async
 });
 
 test('ApplyScoringOverride leaves rows untouched when absent and overrides rank, cp, or rarity when set', () => {
-  const base = { raw: 64, cp: 59, rank: 10, rarity: 'rare' };
+  const base = { raw: 64, cp: CombatPower(64, 'rare'), rank: RankOf(CombatPower(64, 'rare')), rarity: 'rare' };
   assert.equal(ApplyScoringOverride(base, null), base);
   assert.equal(ApplyScoringOverride(base, {}), base);
   assert.deepEqual(ApplyScoringOverride(base, { rank: 5 }), { ...base, rank: 5, overridden: true });
   assert.deepEqual(ApplyScoringOverride(base, { rank: 99 }), { ...base, rank: scoring.rank.maxRank, overridden: true });
   assert.deepEqual(ApplyScoringOverride(base, { cp: 14 }), { raw: 64, cp: 14, rank: RankOf(14), rarity: 'rare', overridden: true });
-  assert.deepEqual(ApplyScoringOverride(base, { rarity: 'common' }), { raw: 64, cp: 64, rank: 10, rarity: 'common', overridden: true });
+  assert.deepEqual(ApplyScoringOverride(base, { rarity: 'common' }), { raw: 64, cp: 64, rank: RankOf(64), rarity: 'common', overridden: true });
 });
 
 test('combat power: category weights add flat or scale the positive score, and default to no change', () => {
@@ -134,7 +137,7 @@ test('combat power: category weights add flat or scale the positive score, and d
 // Owner 2026-11-24: <rarity> <second effect> <element (magic only)> <base> <rank numeral><upgrade mark>.
 const nameFace = (o) => Object.assign(BaseFace(), o);
 // The full convention, before naming.card.limit trims it (a config with no limit block has no limit).
-const noLimit = JSON.parse(JSON.stringify(scoring)); delete noLimit.naming.card.limit;
+const noLimit = structuredClone(historicalScoring); delete noLimit.naming.card.limit;
 const FullName = (face, ups = 0) => CardName(face, ups, noLimit);
 const martialHit = (o = {}) => nameFace({ sp: 1, dmg: 3, tags: ['camp:physical', 'maneuver:attack', 'range:melee'], ...o });
 const magicHit = (tags, o = {}) => nameFace({ camp: 'spell', sp: 0, mp: 1, dmg: 3, tags: ['camp:spell', ...tags], ...o });
@@ -177,7 +180,7 @@ test('card names: a skill names its top effect; a heal-only divine rite is "Mend
 });
 
 // Owner 2026-11-24: naming.card.limit {maxChars, keep}. Over maxChars, parts drop from the end of keep; base, rank and upgrade never drop.
-const limitScoring = (limit) => { const s = JSON.parse(JSON.stringify(scoring)); s.naming.card.limit = limit; return s; };
+const limitScoring = (limit) => { const s = structuredClone(historicalScoring); s.naming.card.limit = limit; return s; };
 const KEEP = ['base', 'rank', 'upgrade', 'element', 'effect', 'rarity'];
 // A rare Rank 2 frost bolt that burns: 'Greater Searing Frost Bolt II+' in full (30 characters).
 const frostBolt = magicHit(['school:frost'], { rarity: 'rare', mp: 0, dmg: 6, statuses: [['burn', 2, 'enemy']] });
@@ -195,7 +198,7 @@ test('card names: the length limit trims rarity, then effect, then element', () 
   const p2 = CardNameParts(frostBolt, 1, limitScoring({ maxChars: 20, keep: KEEP }));
   assert.equal(p2.name, 'Frost Bolt II+');
   assert.deepEqual(p2.dropped, ['rarity', 'effect']);
-  assert.equal(CardName(frostBolt, 1), 'Searing Frost Bolt II+'); // the shipped limit (24)
+  assert.equal(CardName(frostBolt, 1, historicalScoring), 'Searing Frost Bolt II+'); // the shipped limit (24)
 });
 
 test('card names: base, rank and upgrade are never dropped, even when still too long', () => {
@@ -239,8 +242,20 @@ test('card names: a limit with a keep order but no maxChars is no limit', () => 
 });
 
 test('CardNameParts: a custom scoring table saved before the newer naming tables still names cards', () => {
-  const old = JSON.parse(JSON.stringify(scoring));
+  const old = structuredClone(historicalScoring);
   for (const table of ['range', 'defaultRange', 'tradition', 'defaultTradition', 'limit']) delete old.naming.card[table];
   assert.equal(CardName(frostBolt, 0, old), CardName(frostBolt, 0, limitScoring(undefined)), 'missing tables fall back to the shipped words');
   assert.match(CardName({ ...BaseFace(), dmg: 6 }, 0, old), /Strike/);
+});
+
+
+test('shipped Starseer scoring uses five 20-point ranks and the authored rarity discounts', () => {
+  assert.deepEqual(scoring.rank, { ...scoring.rank, width: 20, maxRank: 5, maxCp: 100 });
+  assert.deepEqual([0, 1, 20, 21, 80, 81, 100].map(cp => RankOf(cp)), [0, 1, 1, 2, 4, 5, 5]);
+  assert.equal(RankRange(5), '81-100');
+  assert.deepEqual(['common', 'uncommon', 'rare', 'starter'].map(rarity => CombatPower(30, rarity)), [30, 20, 10, 27]);
+  assert.equal(scoring.effects.damage.per, 1);
+  assert.equal(scoring.effects.block.per, 1);
+  assert.equal(scoring.costs.sp.weight, -5);
+  assert.equal(scoring.costs.mp.weight, -15);
 });

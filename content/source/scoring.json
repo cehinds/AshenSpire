@@ -17,11 +17,11 @@
   },
   "costs": {
     "sp": {
-      "weight": -4,
+      "weight": -5,
       "why": "SP is 3 per turn; 1 SP = 1/3 of a turn = D/3 = 5 points."
     },
     "mp": {
-      "weight": -8,
+      "weight": -15,
       "why": "MP is worth twice SP (owner 2026-11-22): mp weight = 2 x sp weight."
     },
     "action": {
@@ -32,20 +32,20 @@
   "effects": {
     "damage": {
       "weight": 1,
-      "per": 3,
+      "per": 1,
       "basis": "final damage, hits summed",
       "projection": "unit",
       "why": "The unit. Strike: 1 SP -> 5 final damage."
     },
     "block": {
       "weight": 1,
-      "per": 3,
+      "per": 1,
       "basis": "final Block",
       "projection": "Defend 1 SP -> 10 Block = Strike 1 SP -> 5 damage",
       "why": "Parity per SP; Block over I in a round is wasted, so it is worth half a damage point."
     },
     "ward": {
-      "weight": 2,
+      "weight": 5,
       "per": 1,
       "basis": "Ward HP",
       "projection": "temporary HP buffer (no Poise)",
@@ -66,35 +66,35 @@
       "why": "Pays only on Break; a third of HP damage."
     },
     "heal": {
-      "weight": 3,
+      "weight": 5,
       "per": 1,
       "basis": "HP healed",
       "projection": "HP persists between fights",
       "why": "Worth as much as damage."
     },
     "loseHp": {
-      "weight": -1,
+      "weight": -5,
       "per": 2,
       "basis": "self HP lost",
       "projection": "mirror of heal",
       "why": "Nonlethal still costs run HP."
     },
     "draw": {
-      "weight": 2,
+      "weight": 5,
       "per": 1,
       "basis": "per card",
       "projection": "V x 0.6 (an average card, minus the cost to play it)",
       "why": "A drawn card is about 60% of a play."
     },
     "restoreMana": {
-      "weight": 4,
+      "weight": 10,
       "per": 1,
       "basis": "per MP",
       "projection": "MP cost x 0.7",
       "why": "Under MP's price so mana engines cannot loop for free."
     },
     "restoreStamina": {
-      "weight": 5,
+      "weight": 15,
       "per": 1,
       "basis": "per SP",
       "projection": "SP cost x 0.8",
@@ -187,115 +187,115 @@
   },
   "statuses": {
     "vulnerable": {
-      "weight": 4,
+      "weight": 5,
       "target": "enemy",
       "projection": "D x 0.25 per round active; 1 stack = 1 round; >3 stacks add 0 in 3R",
       "why": "x1.25 damage taken (FixCore), decays 1/turn."
     },
     "weak": {
-      "weight": 2,
+      "weight": 5,
       "target": "enemy",
       "projection": "I x 0.25 per round active",
       "why": "Enemy AR x0.75 (FixCore weakARMultiplier), decays 1/turn."
     },
     "frail": {
-      "weight": 4,
+      "weight": 5,
       "target": "enemy",
       "projection": "EB x pEB x 0.25 per round",
       "why": "Enemy Block x0.75, decays 1/turn; enemies Block about 30% of turns."
     },
     "burn": {
-      "weight": 4,
+      "weight": 5,
       "target": "enemy",
       "projection": "ticks N, N-1, N-2 HP + 5% damage taken per stack-round",
       "why": "loseHp = stacks at turn start, decays 1; +5% damage taken per stack (FixCore elements.burn)."
     },
     "venom": {
-      "weight": 4,
+      "weight": 5,
       "target": "enemy",
       "projection": "ticks N, N-1, N-2 HP",
       "why": "loseHp = stacks at turn start, decays 1."
     },
     "crimsonBlight": {
-      "weight": 3,
+      "weight": 5,
       "target": "enemy",
       "projection": "N HP per round for 3 rounds = 3N",
       "why": "loseHp = stacks each turn, duration 3."
     },
     "necroticBlight": {
-      "weight": 8,
+      "weight": 10,
       "target": "enemy",
       "projection": "3N x necrotic 0.7",
       "why": "As Crimson Blight at the necrotic x0.7 multiplier."
     },
     "bleed": {
-      "weight": 2,
+      "weight": 5,
       "target": "enemy",
       "projection": "burst 8 (burstMin) + 3 Poise per 7 stacks (threshold)",
       "why": "No decay; bursts at 7 stacks. Scored per stack toward the burst."
     },
     "frost": {
-      "weight": 4,
+      "weight": 7,
       "target": "enemy",
       "projection": "burst 4 + 1 Weak per 10 stacks",
       "why": "No decay; bursts at 10 stacks into Weak + Frost-exposed."
     },
     "chill": {
-      "weight": 1,
+      "weight": 4,
       "target": "enemy",
       "projection": "5% enemy damage per stack-round + 1 enemy SP per 3 stacks",
       "why": "FixCore frost.chillDamageDealtPerStack 0.05, chillStacksPerStaminaLoss 3; decays 1."
     },
     "shock": {
-      "weight": 2,
+      "weight": 4,
       "target": "enemy",
       "projection": "5% action-loss x I + 5% lightning taken x D per stack-round",
       "why": "FixCore shock: actionLossChancePerStack 5, lightningTakenPerStack 0.05; decays 1."
     },
     "confused": {
-      "weight": 2,
+      "weight": 3,
       "target": "enemy",
       "projection": "40% chance the enemy action misfires, 1 round",
       "why": "Psychic rider: misdirected action."
     },
     "dazed": {
-      "weight": 2,
+      "weight": 5,
       "target": "enemy",
       "projection": "a dead draw slot for 1 round",
       "why": "Clogs one draw."
     },
     "silenced": {
-      "weight": 2,
+      "weight": 5,
       "target": "enemy",
       "projection": "spell damage x0.5 for 2 rounds x 30% of enemies cast",
       "why": "decay duration 2; spellDamageDealtMult 0.5."
     },
     "paralysis": {
-      "weight": 6,
+      "weight": 7,
       "target": "enemy",
       "projection": "one skipped enemy action",
       "why": "Action loss."
     },
     "sleep": {
-      "weight": 9,
+      "weight": 4,
       "target": "enemy",
       "projection": "skipped actions until hit, about 1.5",
       "why": "Action loss, broken on damage."
     },
     "entombed": {
-      "weight": 12,
+      "weight": 30,
       "target": "enemy",
       "projection": "two skipped actions",
       "why": "Earth: stops enemy turns."
     },
     "staggered": {
-      "weight": 14,
+      "weight": 30,
       "target": "enemy",
       "projection": "skipped action + x1.5 damage taken for 1 round",
       "why": "statuses.json staggered."
     },
     "regen": {
-      "weight": 8,
+      "weight": 13,
       "target": "self",
       "projection": "heal N per round, no decay: 3N",
       "why": "Heals stacks each turn start."
@@ -319,7 +319,7 @@
       "why": "unique, decays at turn end."
     },
     "ward": {
-      "weight": 8,
+      "weight": 5,
       "target": "self",
       "projection": "+5 temporary Ward HP per stack on HP bar (no Poise); Block > Poise > Ward > HP; loses 1 stack/turn",
       "why": "Temporary HP buffer stacks (no Poise)."
@@ -331,7 +331,7 @@
       "why": "Adds temporary Bonus Poise stacks, separate from Ward."
     },
     "stoneskin": {
-      "weight": 8,
+      "weight": 7,
       "target": "self",
       "projection": "retain ~4 final Block for 2 rounds, / 2 per Block point",
       "why": "retainBlock, duration 2."
@@ -369,26 +369,26 @@
   },
   "keywords": {
     "exhaust": {
-      "flat": -4,
-      "why": "Lost for the fight: a flat price, not a share of the card's power (owner 2026-11-22, 'flat rate'; -4 is the starting value to tune)."
+      "why": "Lost for the fight: a flat price, not a share of the card's power (owner 2026-11-22, 'flat rate'; -4 is the starting value to tune).",
+      "multiplier": -0.5
     },
     "ethereal": {
-      "flat": -4,
-      "why": "Lost if not played the turn drawn: a flat price, not a share of the card's power (owner 2026-11-22, 'flat rate'; -4 is the starting value to tune)."
+      "why": "Lost if not played the turn drawn: a flat price, not a share of the card's power (owner 2026-11-22, 'flat rate'; -4 is the starting value to tune).",
+      "multiplier": -0.25
     },
     "retain": {
-      "multiplier": 0.25,
+      "multiplier": 0.5,
       "min": 1,
       "why": "Holds for the right turn: about +25% effectiveness."
     },
     "innate": {
-      "multiplier": 0.2,
+      "multiplier": 0.5,
       "min": 1,
       "why": "Guaranteed in the opening hand."
     },
     "unplayable": {
-      "flat": -3,
-      "why": "A dead draw: minus one draw (3) each time it is drawn, ~once in 3R."
+      "why": "A dead draw: minus one draw (3) each time it is drawn, ~once in 3R.",
+      "multiplier": -1
     }
   },
   "effectCount": {
@@ -398,7 +398,8 @@
       "poise"
     ],
     "rule": "Owner 2026-11-21: + weight for each distinct real effect type on a card that scores > 0, beyond the first. Real effects: damage, Block, each status, draw, heal, restores, cleanse, counter, reflect, pull, move, utility. Not counted: SP/MP costs, tag bonuses, keywords, multipliers, and riders (Poise counts only on a card that deals no damage).",
-    "why": "A card that does several different things is worth more than its parts: it fits more turns and more decks."
+    "why": "A card that does several different things is worth more than its parts: it fits more turns and more decks.",
+    "surchargeEnabled": true
   },
   "categories": {
     "rule": "Owner 2026-11-23: each category a card belongs to (Martial, Magic, Hybrid when it is both, and its card type) adds weight to the raw score; with multiplier on, the positive score is scaled by weight instead (1 = no change).",
@@ -411,8 +412,8 @@
       "multiplier": false
     },
     "hybrid": {
-      "weight": 10,
-      "multiplier": false
+      "weight": 1.25,
+      "multiplier": true
     },
     "attack": {
       "weight": 0,
@@ -424,50 +425,52 @@
     },
     "spell": {
       "weight": 0,
-      "multiplier": false
+      "multiplier": false,
+      "surchargeEnabled": true
     },
     "sweep": {
-      "weight": 0,
-      "multiplier": false
+      "weight": 1.25,
+      "multiplier": true
     },
     "counter": {
-      "weight": 0,
-      "multiplier": false
+      "weight": 1.25,
+      "multiplier": true
     },
     "defend": {
       "weight": 0,
       "multiplier": false
     },
     "power": {
-      "weight": 0,
-      "multiplier": false
+      "weight": 1.25,
+      "multiplier": true
     },
     "curse": {
-      "weight": 0,
-      "multiplier": false
+      "weight": -0.5,
+      "multiplier": true
     },
     "status": {
-      "weight": 0,
-      "multiplier": false
+      "weight": 0.5,
+      "multiplier": true,
+      "surchargeEnabled": true
     }
   },
   "tags": {
     "maneuver:smash": {
-      "weight": 1,
+      "weight": 5,
       "projection": "+50% Poise vs Guard (~1 Poise point) + extra vs physical Guard",
       "why": "Smash stance edge.",
       "domain": "maneuver",
       "label": "Smash"
     },
     "maneuver:sweep": {
-      "weight": 2,
+      "weight": 5,
       "projection": "bypasses melee Counter (~20% of hits) x V",
       "why": "Sweep stance edge.",
       "domain": "maneuver",
       "label": "Sweep"
     },
     "maneuver:counter": {
-      "weight": 4,
+      "weight": 5,
       "projection": "Counter Block x1.25 stance benefit",
       "why": "Counter stance edge.",
       "domain": "maneuver",
@@ -488,21 +491,21 @@
       "label": "Melee"
     },
     "range:reach": {
-      "weight": 3,
+      "weight": 5,
       "projection": "no row tax: + the 1 melee pays",
       "why": "Hits either row.",
       "domain": "range",
       "label": "Reach"
     },
     "range:ranged": {
-      "weight": 5,
+      "weight": 15,
       "projection": "as reach",
       "why": "Hits any enemy.",
       "domain": "range",
       "label": "Ranged"
     },
     "counter:spell": {
-      "weight": 3,
+      "weight": 5,
       "projection": "covers spells and ranged moves (~20% of enemy moves) x I",
       "why": "Wider Counter.",
       "domain": "counterMode",
@@ -516,15 +519,15 @@
       "label": "Ranged counter"
     },
     "damage:blunt": {
-      "weight": 2,
+      "weight": 5,
       "projection": "+2 Poise per action / 3",
       "why": "FixCore rider.",
-      "per": "action",
+      "per": "hit",
       "domain": "damageType",
       "label": "Blunt"
     },
     "damage:slashing": {
-      "weight": 1,
+      "weight": 5,
       "projection": "1 Bleed per Health hit",
       "why": "Rider = Bleed weight.",
       "per": "hit",
@@ -532,7 +535,7 @@
       "label": "Slashing"
     },
     "damage:fire": {
-      "weight": 4,
+      "weight": 5,
       "projection": "1 Burn per Health hit",
       "why": "Rider = Burn weight.",
       "per": "hit",
@@ -548,7 +551,7 @@
       "label": "Poison"
     },
     "damage:frost": {
-      "weight": 3,
+      "weight": 5,
       "projection": "1 Frost per Health hit",
       "why": "Rider = Frost weight.",
       "per": "hit",
@@ -556,7 +559,7 @@
       "label": "Cold"
     },
     "damage:lightning": {
-      "weight": 3,
+      "weight": 5,
       "projection": "1 Weak per Health hit",
       "why": "Rider = Weak weight.",
       "per": "hit",
@@ -580,7 +583,7 @@
       "label": "Necrotic"
     },
     "damage:earth": {
-      "weight": 1,
+      "weight": 2,
       "projection": "1 Slowed per Health hit (~0.2 I)",
       "why": "Rider.",
       "per": "hit",
@@ -604,7 +607,7 @@
       "label": "Force"
     },
     "damage:piercing": {
-      "weight": 2,
+      "weight": 5,
       "projection": "bypasses 2 Guard (x pEB ~1) + melee Counter (~1)",
       "why": "Rider.",
       "per": "action",
@@ -612,28 +615,28 @@
       "label": "Piercing"
     },
     "trait:reaction": {
-      "weight": 3,
+      "weight": 5,
       "projection": "played on the enemy turn: Block matches the telegraphed hit, ~0.4 V saved",
       "why": "Timing.",
       "domain": "trait",
       "label": "Reaction"
     },
     "trait:unavoidable": {
-      "weight": 5,
+      "weight": 20,
       "projection": "ignores Evasion: ~0.4 V on evasive enemies",
       "why": "",
       "domain": "trait",
       "label": "Unavoidable"
     },
     "trait:unreflectable": {
-      "weight": 3,
+      "weight": 5,
       "projection": "ignores Reflect: rare enemy trait",
       "why": "",
       "domain": "trait",
       "label": "Unreflectable"
     },
     "trait:impact": {
-      "weight": 2,
+      "weight": 5,
       "projection": "adds or doubles Poise damage (~6 Poise / 3)",
       "why": "",
       "domain": "trait",
@@ -754,14 +757,14 @@
       "label": "Ash"
     },
     "finesse": {
-      "weight": 2,
+      "weight": 5,
       "projection": "multi-hit without per-hit SP: saves ~0.4 SP",
       "why": "",
       "domain": "card",
       "label": "Finesse"
     },
     "target": {
-      "weight": 1,
+      "weight": 0,
       "projection": "bypasses Evasion without spending it",
       "why": "",
       "domain": "card",
@@ -805,7 +808,7 @@
       "label": "Retreat"
     },
     "pullRetreat": {
-      "weight": 2,
+      "weight": 5,
       "projection": "as pullEnemy",
       "why": "",
       "domain": "card",
@@ -1129,7 +1132,7 @@
       "label": "Guard"
     },
     "bonusPoise": {
-      "weight": 0,
+      "weight": 2,
       "projection": "identity",
       "why": "Card grants Bonus Poise (+5 temporary Poise per stack), separate from Ward; stacks score under the barrier status.",
       "domain": "card",
@@ -2235,14 +2238,14 @@
       "label": "manaCharge"
     },
     "dexDamage": {
-      "weight": 3,
+      "weight": 5,
       "projection": "adds DEX to existing damage",
       "why": "strictly adds Dexterity damage without replacing Strength.",
       "domain": "card",
       "label": "Deft"
     },
     "trait:recurring": {
-      "weight": 15,
+      "weight": 10,
       "projection": "buffs recur at the start of every turn for the fight",
       "why": "Owner ruling: default cost +15 CP, usually paired with Exhaust.",
       "domain": "trait",
@@ -2351,9 +2354,9 @@
   "rarity": {
     "discount": {
       "common": 0,
-      "uncommon": 2,
-      "rare": 5,
-      "starter": 0,
+      "uncommon": 10,
+      "rare": 20,
+      "starter": 3,
       "special": 0
     },
     "adjustedBand": [
@@ -3670,24 +3673,19 @@
     "maxUpgrades": 10
   },
   "rank": {
-    "rule": "combat power = raw - rarity discount; Unranked <= 0; Rank k = 4k-3..4k (Rank 1 = 1-4 ... Rank 10 = 37+); maxCp (40) bounds generated cards while authored Rank 10 is open-ended (owner, 2026-11-22)",
+    "rule": "combat power = raw - rarity discount; Unranked <= 0; Rank k = 20k-19..20k (Rank 1 = 1-20 ... Rank 5 = 81+); maxCp (100) bounds generated cards while authored Rank 5 is open-ended",
     "unrankedMax": 0,
-    "width": 4,
-    "maxRank": 10,
+    "width": 20,
+    "maxRank": 5,
     "bands": {
       "Unranked": "<= 0",
-      "Rank 1": "1..4",
-      "Rank 2": "5..8",
-      "Rank 3": "9..12",
-      "Rank 4": "13..16",
-      "Rank 5": "17..20",
-      "Rank 6": "21..24",
-      "Rank 7": "25..28",
-      "Rank 8": "29..32",
-      "Rank 9": "33..36",
-      "Rank 10": "37+"
+      "Rank 1": "1..20",
+      "Rank 2": "21..40",
+      "Rank 3": "41..60",
+      "Rank 4": "61..80",
+      "Rank 5": "81+"
     },
-    "maxCp": 40
+    "maxCp": 100
   },
   "items": {
     "rule": "item power = kit (weapons) + Poise threshold + range + modifiers/stats + property rules + damage-type tags, all over 3 rounds; combat power = item power - rarity discount (boss 7); rank from combat power, same bands as cards",
@@ -3734,32 +3732,32 @@
     "gearFields": {
       "statPoise": {
         "label": "Poise bonus",
-        "weight": 2,
+        "weight": 5,
         "why": "+1 Poise stat delays Stagger every fight."
       },
       "statStr": {
         "label": "STR bonus",
-        "weight": 5,
+        "weight": 15,
         "why": "+1 STR permanently boosts physical damage across every attack."
       },
       "statDex": {
         "label": "DEX bonus",
-        "weight": 8,
+        "weight": 15,
         "why": "+1 DEX grants +1 max SP every turn (budgeted around ~6 SP max)."
       },
       "statCon": {
         "label": "CON bonus",
-        "weight": 5,
+        "weight": 15,
         "why": "+1 CON permanently boosts max HP and Poise."
       },
       "statInt": {
         "label": "INT bonus",
-        "weight": 7,
+        "weight": 15,
         "why": "+1 INT grants +1 hand size and arcane power."
       },
       "statWis": {
         "label": "WIS bonus",
-        "weight": 7,
+        "weight": 15,
         "why": "+1 WIS grants +1 max MP and +1 Poise (budgeted around ~8 MP max)."
       },
       "thorns": {
@@ -3769,32 +3767,32 @@
       },
       "thornsFire": {
         "label": "Fire Thorns",
-        "weight": 2,
+        "weight": 5,
         "why": "Blocked hits deal Fire damage back."
       },
       "twoHanded": {
         "label": "Two-handed",
-        "weight": -2,
+        "weight": -10,
         "why": "Occupies both hands (forfeits off-hand slot)."
       },
       "vulnMelee": {
         "label": "Vulnerable to melee",
-        "weight": -4,
+        "weight": -10,
         "why": "Takes extra melee physical damage."
       },
       "firstTurnSp": {
         "label": "First-turn SP",
-        "weight": 4,
+        "weight": 15,
         "why": "+/-1 SP on turn 1 (Encumbered is -4)."
       },
       "gainCounter": {
         "label": "Counter gain",
-        "weight": 2.5,
+        "weight": 10,
         "why": "Extra Counter stack on every Counter gain."
       },
       "gainEvade": {
         "label": "Evade gain",
-        "weight": 4,
+        "weight": 15,
         "why": "Extra Evade stack on every Evade gain."
       },
       "resistFire": {
@@ -3829,172 +3827,172 @@
       },
       "cardPoise": {
         "label": "Card Poise damage",
-        "weight": 1.5,
+        "weight": 2,
         "why": "+1 Poise damage per matching card."
       },
       "cardBlock": {
         "label": "Card Block",
-        "weight": 1.5,
+        "weight": 5,
         "why": "+1 Block per matching Block/Defend card."
       },
       "cardPierce": {
         "label": "Pierce",
-        "weight": 1.5,
+        "weight": 8,
         "why": "Bypasses Block on matching attacks."
       },
       "cardIgnoreBlock": {
         "label": "Ignore Block",
-        "weight": 2,
+        "weight": 15,
         "why": "Ignores Block regardless of Stone Skin."
       },
       "cardMultiHit": {
         "label": "Multi-hit",
-        "weight": 5,
+        "weight": 15,
         "why": "Repeats matching attacks an extra time."
       },
       "cardReach": {
         "label": "Reach",
-        "weight": 2,
+        "weight": 15,
         "why": "Matching attacks strike the back row without tax."
       },
       "cardCost": {
         "label": "Card SP cost",
-        "weight": -6,
+        "weight": -10,
         "why": "Changes SP cost on matching cards."
       },
       "cardMana": {
         "label": "Card MP cost",
-        "weight": -5,
+        "weight": -15,
         "why": "Changes MP cost on matching spells."
       },
       "cardAddDex": {
         "label": "DEX to damage",
-        "weight": 3,
+        "weight": 10,
         "why": "Adds DEX to matching physical attacks."
       },
       "cardAddStr": {
         "label": "STR again",
-        "weight": 3,
+        "weight": 10,
         "why": "Adds STR a second time to matching attacks."
       },
       "cardRetain": {
         "label": "Retain",
-        "weight": 2,
+        "weight": 5,
         "why": "Matching cards stay in hand at turn end."
       },
       "cardEscalate": {
         "label": "Escalating",
-        "weight": -2,
+        "weight": -10,
         "why": "Matching cards cost +1 SP each repeat."
       },
       "cardHeal": {
         "label": "Card Healing",
-        "weight": 2.5,
+        "weight": 10,
         "why": "+1 HP healed on matching healing spells."
       },
       "hitBleed": {
         "label": "Bleed on hit",
-        "weight": 2,
+        "weight": 10,
         "why": "Matching hits apply Bleed."
       },
       "hitBurn": {
         "label": "Burn on hit",
-        "weight": 3,
+        "weight": 5,
         "why": "Matching hits apply Burn."
       },
       "hitWeak": {
         "label": "Weak on hit",
-        "weight": 2,
+        "weight": 5,
         "why": "Matching hits apply Weak."
       },
       "hitVulnerable": {
         "label": "Vulnerable on hit",
-        "weight": 3,
+        "weight": 10,
         "why": "Matching hits apply Vulnerable."
       },
       "hitShock": {
         "label": "Shock on hit",
-        "weight": 2.5,
+        "weight": 5,
         "why": "Matching hits apply Shock."
       },
       "hitFrost": {
         "label": "Frost on hit",
-        "weight": 2.5,
+        "weight": 7,
         "why": "Matching hits apply Frost."
       },
       "hitFireVulnerable": {
         "label": "Fire Vulnerable on hit",
-        "weight": 2.5,
+        "weight": 5,
         "why": "Matching hits apply Fire Vulnerable."
       },
       "hitBlight": {
         "label": "Blight on hit",
-        "weight": 2.5,
+        "weight": 10,
         "why": "Matching hits apply Crimson Blight."
       },
       "hitRemoveRetreat": {
         "label": "Remove Retreat",
-        "weight": 2,
+        "weight": 5,
         "why": "Matching hits pull Retreat stacks off targets."
       },
       "hitRetreat": {
         "label": "Push to back row",
-        "weight": 2,
+        "weight": 5,
         "why": "Matching hits push the target back with Retreat."
       },
       "turnBlock": {
         "label": "Turn Block",
-        "weight": 1.5,
+        "weight": 5,
         "why": "Block granted each turn (over 3 rounds)."
       },
       "turnCounter": {
         "label": "Turn Counter",
-        "weight": 3,
+        "weight": 7,
         "why": "Counter stack granted each turn."
       },
       "turnRetreat": {
         "label": "Turn Retreat",
-        "weight": 2,
+        "weight": 7,
         "why": "Retreat stack granted each turn."
       },
       "turnHeal": {
         "label": "Turn Heal",
-        "weight": 3,
+        "weight": 10,
         "why": "HP healed each turn."
       },
       "turnEvade": {
         "label": "Turn Evade",
-        "weight": 5,
+        "weight": 15,
         "why": "Evade stack granted each turn."
       },
       "turnWard": {
         "label": "Turn Ward",
-        "weight": 3,
+        "weight": 7,
         "why": "Ward stack granted each turn."
       },
       "turnReach": {
         "label": "Turn Reach",
-        "weight": 2,
+        "weight": 7,
         "why": "Reach stack granted each turn."
       },
       "playEvade": {
         "label": "Evade on play",
-        "weight": 4,
+        "weight": 15,
         "why": "Playing a matching card grants Evade."
       },
       "playWard": {
         "label": "Ward on play",
-        "weight": 2.5,
+        "weight": 7,
         "why": "Playing a matching card grants Ward."
       },
       "playDraw": {
         "label": "Draw on play",
-        "weight": 3.5,
+        "weight": 5,
         "why": "Playing a matching card draws."
       },
       "playStrength": {
         "label": "STR this turn",
-        "weight": 2.5,
+        "weight": 5,
         "why": "Playing a matching card grants temporary STR."
       }
     },
@@ -4492,7 +4490,7 @@
       "why": "unmodelled: 1 per point (label is the key)"
     },
     "weaponArtScale": "Weapon art faces are the card model: SP, MP and every effect scored by the card rules, times plays.weaponArt",
-    "attributeBudgetCost": 3
+    "attributeBudgetCost": 2
   },
   "cardModel": {
     "rule": "Constants of the card scorer that are not per-effect weights; read by src/model/combatPower.js",
@@ -4979,18 +4977,30 @@
   },
   "overrides": {
     "$comment": "The starter policy pins only the combat-power classification. Raw scores, combat effects and saved upgrade ranks still come from their own sources.",
-    "core.strike": { "cp": 0 },
-    "greatswordSunderingHew": { "cp": 1 },
-    "twinFang": { "cp": 1 },
-    "blightTouch": { "cp": 1 },
-    "armour:reaver.default": { "cp": 0 },
-    "armour:rogue.default": { "cp": 0 }
+    "core.strike": {
+      "cp": 0
+    },
+    "greatswordSunderingHew": {
+      "cp": 1
+    },
+    "twinFang": {
+      "cp": 1
+    },
+    "blightTouch": {
+      "cp": 1
+    },
+    "armour:reaver.default": {
+      "cp": 0
+    },
+    "armour:rogue.default": {
+      "cp": 0
+    }
   },
   "upgradeTags": {
     "efficient": {
       "label": "Efficient (cost reduction)",
       "surchargeEnabled": true,
-      "mode": "flat",
+      "mode": "multiplicative",
       "base": 10,
       "escalate": "double",
       "stacks": [
@@ -4998,20 +5008,20 @@
         20,
         40
       ],
-      "pMultiplier": 0.25,
+      "pMultiplier": 0.5,
       "maxStacks": 3,
       "why": "Added when an upgrade reduces SP or MP cost (Efficient, Efficient+, Efficient+2). Doubling CP surcharge (10 / 20 / 40) prevents cheap 0-cost spam."
     },
     "improved": {
       "label": "Improved (+10% compounding effect)",
       "surchargeEnabled": true,
-      "mode": "flat",
-      "base": 2,
+      "mode": "multiplicative",
+      "base": 5,
       "escalate": "double",
       "stacks": [
-        2,
-        4,
-        8
+        5,
+        10,
+        20
       ],
       "effectMultPerStack": 1.1,
       "pMultiplier": 0.1,
@@ -5021,28 +5031,28 @@
     "refined": {
       "label": "Refined (drawback eased)",
       "surchargeEnabled": true,
-      "mode": "flat",
-      "base": 6,
+      "mode": "multiplicative",
+      "base": 10,
       "escalate": "double",
       "stacks": [
-        6,
-        12,
-        24
+        10,
+        20,
+        40
       ],
-      "pMultiplier": 0.15,
+      "pMultiplier": 0.25,
       "maxStacks": 3,
       "why": "Added when a higher-rank upgrade softens or removes a card drawback (Refined, Refined+, Refined+2): self-debuffs, rising cost, Ethereal, or Exhaust."
     },
     "tempered": {
       "label": "Tempered (combat form & forging)",
       "surchargeEnabled": true,
-      "mode": "flat",
-      "base": 4,
+      "mode": "multiplicative",
+      "base": 5,
       "escalate": "double",
       "stacks": [
-        4,
-        8,
-        16
+        5,
+        10,
+        20
       ],
       "pMultiplier": 0.15,
       "maxStacks": 3,
@@ -5051,13 +5061,13 @@
     "purified": {
       "label": "Purified (healing & cleansing)",
       "surchargeEnabled": true,
-      "mode": "flat",
-      "base": 4,
+      "mode": "multiplicative",
+      "base": 10,
       "escalate": "double",
       "stacks": [
-        4,
-        8,
-        16
+        10,
+        20,
+        40
       ],
       "pMultiplier": 0.15,
       "maxStacks": 3,
@@ -5065,8 +5075,8 @@
     },
     "extraEffect": {
       "label": "Added Effect (upgrade)",
-      "surchargeEnabled": false,
-      "mode": "flat",
+      "surchargeEnabled": true,
+      "mode": "multiplicative",
       "base": 3,
       "escalate": "double",
       "stacks": [
@@ -5074,14 +5084,14 @@
         6,
         12
       ],
-      "pMultiplier": 0.15,
+      "pMultiplier": 0.25,
       "maxStacks": 3,
       "why": "Optional CP surcharge when upgrades add new effects or statuses onto a card."
     },
     "drawbackEase": {
       "label": "Drawback Eased (upgrade)",
-      "surchargeEnabled": false,
-      "mode": "flat",
+      "surchargeEnabled": true,
+      "mode": "multiplicative",
       "base": 2,
       "escalate": "double",
       "stacks": [
@@ -5089,14 +5099,14 @@
         4,
         8
       ],
-      "pMultiplier": 0.1,
+      "pMultiplier": 0.5,
       "maxStacks": 3,
       "why": "Optional CP surcharge when upgrades remove or soften card drawbacks."
     },
     "identityShift": {
       "label": "Range / Targeting / Stance Shift",
-      "surchargeEnabled": false,
-      "mode": "flat",
+      "surchargeEnabled": true,
+      "mode": "multiplicative",
       "base": 3,
       "escalate": "double",
       "stacks": [
@@ -5104,14 +5114,14 @@
         6,
         12
       ],
-      "pMultiplier": 0.15,
+      "pMultiplier": 0.25,
       "maxStacks": 3,
       "why": "Optional CP surcharge when upgrades alter range, targeting, school, or stance."
     },
     "gearAttribute": {
       "label": "Flat Gear Attribute (+1 stat)",
       "surchargeEnabled": true,
-      "mode": "flat",
+      "mode": "multiplicative",
       "base": 4,
       "escalate": "double",
       "stacks": [
@@ -5119,7 +5129,7 @@
         8,
         16
       ],
-      "pMultiplier": 0.25,
+      "pMultiplier": 0.5,
       "maxStacks": 3,
       "why": "Escalating CP surcharge per flat attribute point on weapons/armour so attribute-bearing gear is rare and expensive."
     }
@@ -5221,36 +5231,156 @@
       "alteration": 3
     },
     "statuses": {
-      "chill": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },
-      "weak": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },
-      "bleed": { "minTier": 0, "maxStacksBase": 3, "stacksPerExtraTier": 1 },
-      "dazed": { "minTier": 0, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "prepared": { "minTier": 0, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "shock": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "confused": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "silenced": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "crimsonBlight": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "vulnerable": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "frail": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "burn": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "venom": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "frost": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "barrier": { "minTier": 1, "maxStacksBase": 2, "stacksPerExtraTier": 1 },
-      "decoy": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "paralysis": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "necroticBlight": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "regen": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "ward": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "stoneskin": { "minTier": 2, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "sleep": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "evade": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "entombed": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "staggered": { "minTier": 3, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "strength": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "dexterity": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "intelligence": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "wisdom": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 },
-      "invulnerability": { "minTier": 4, "maxStacksBase": 1, "stacksPerExtraTier": 1 }
+      "chill": {
+        "minTier": 0,
+        "maxStacksBase": 3,
+        "stacksPerExtraTier": 1
+      },
+      "weak": {
+        "minTier": 0,
+        "maxStacksBase": 3,
+        "stacksPerExtraTier": 1
+      },
+      "bleed": {
+        "minTier": 0,
+        "maxStacksBase": 3,
+        "stacksPerExtraTier": 1
+      },
+      "dazed": {
+        "minTier": 0,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "prepared": {
+        "minTier": 0,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "shock": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "confused": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "silenced": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "crimsonBlight": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "vulnerable": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "frail": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "burn": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "venom": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "frost": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "barrier": {
+        "minTier": 1,
+        "maxStacksBase": 2,
+        "stacksPerExtraTier": 1
+      },
+      "decoy": {
+        "minTier": 2,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "paralysis": {
+        "minTier": 2,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "necroticBlight": {
+        "minTier": 2,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "regen": {
+        "minTier": 2,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "ward": {
+        "minTier": 2,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "stoneskin": {
+        "minTier": 2,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "sleep": {
+        "minTier": 3,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "evade": {
+        "minTier": 3,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "entombed": {
+        "minTier": 3,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "staggered": {
+        "minTier": 3,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "strength": {
+        "minTier": 4,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "dexterity": {
+        "minTier": 4,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "intelligence": {
+        "minTier": 4,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "wisdom": {
+        "minTier": 4,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      },
+      "invulnerability": {
+        "minTier": 4,
+        "maxStacksBase": 1,
+        "stacksPerExtraTier": 1
+      }
     },
     "ceilings": {
       "damage": [

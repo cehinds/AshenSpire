@@ -48,7 +48,13 @@ test('Starseer and Herald swap Strike for Arcane Spark; Reaver and Rogue keep St
     assert.equal(registries.cards.get('core.cantrip').name, 'Arcane Spark');
   }
   for (const classId of ['reaver', 'rogue']) assert.equal(StartingPoolIds(make(classId))[0], 'core.strike', classId);
-  assert.equal(StartingPoolCounts(make('starseer'))['core.cantrip'], 4, "the Starseer's four starting Arcane Sparks (owner ruling 2026-11-21)");
+  const starseer = make('starseer');
+  assert.equal(StartingPoolCounts(starseer)['core.cantrip'], 0, 'the authored Starseer starter no longer includes Arcane Spark');
+  const authored = starseer.deck.map(card => card.cardId);
+  ApplyStartingDeckChoice(starseer, { ...StartingPoolCounts(starseer), 'core.cantrip': 1 });
+  assert.deepEqual(starseer.deck.filter(card => card.cardId !== 'core.cantrip').map(card => card.cardId), authored, 'adding a pool cantrip preserves all ten authored base copies and the art');
+  assert.equal(starseer.deck.filter(card => card.cardId === 'core.cantrip').length, 1);
+  assert.ok(starseer.collectedCardIds.includes('core.cantrip'));
   const herald = make('herald');
   assert.equal(StartingPoolCounts(herald)['core.cantrip'], 4);
   ApplyStartingDeckChoice(herald, { ...StartingPoolCounts(herald), 'core.cantrip': 5 });
