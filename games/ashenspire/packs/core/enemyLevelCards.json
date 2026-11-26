@@ -1,0 +1,7112 @@
+{
+  "wanderingSoldier": [
+    {
+      "id": "wanderingSoldier.level.heavySlash",
+      "name": "Soldier's Crushing Slash",
+      "source": "unique",
+      "from": "wanderingSoldier.slash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wanderingSoldier.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wanderingSoldier.level.riderSlash",
+      "name": "Soldier's Cruel Slash",
+      "source": "unique",
+      "from": "wanderingSoldier.slash",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wanderingSoldier.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wanderingSoldier.level.guardGuard",
+      "name": "Soldier's Stout Guard",
+      "source": "unique",
+      "from": "wanderingSoldier.guard",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wanderingSoldier.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "blightHound": [
+    {
+      "id": "blightHound.level.heavyBite",
+      "name": "Hound's Crushing Bite",
+      "source": "unique",
+      "from": "blightHound.bite",
+      "move": {
+        "intent": "attack",
+        "damage": 9,
+        "sp": 2,
+        "weight": 60,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blightHound.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blightHound.level.riderLunge",
+      "name": "Hound's Cruel Lunge",
+      "source": "unique",
+      "from": "blightHound.lunge",
+      "move": {
+        "intent": "attack",
+        "damage": 3,
+        "hits": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blightHound.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blightHound.level.counter",
+      "name": "Counter",
+      "source": "shared",
+      "from": "core.counter",
+      "move": {
+        "intent": "attack",
+        "block": 5,
+        "damage": 4,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "huskBrute": [
+    {
+      "id": "huskBrute.level.heavyClub",
+      "name": "Brute's Crushing Club",
+      "source": "unique",
+      "from": "huskBrute.club",
+      "move": {
+        "intent": "attack",
+        "damage": 23,
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "huskBrute.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "huskBrute.level.riderClub",
+      "name": "Brute's Cruel Club",
+      "source": "unique",
+      "from": "huskBrute.club",
+      "move": {
+        "intent": "attack",
+        "damage": 15,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "huskBrute.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "huskBrute.level.guardBrace",
+      "name": "Brute's Stout Brace",
+      "source": "unique",
+      "from": "huskBrute.brace",
+      "move": {
+        "intent": "block",
+        "block": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "huskBrute.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "graveWisp": [
+    {
+      "id": "graveWisp.level.heavyDrain",
+      "name": "Wisp's Crushing Drain",
+      "source": "unique",
+      "from": "graveWisp.drain",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "graveWisp.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "graveWisp.level.riderDrain",
+      "name": "Wisp's Cruel Drain",
+      "source": "unique",
+      "from": "graveWisp.drain",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 4
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "graveWisp.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "graveWisp.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "wyrmAspirant": [
+    {
+      "id": "wyrmAspirant.level.heavyHalberdSweep",
+      "name": "Aspirant's Crushing Halberd Sweep",
+      "source": "unique",
+      "from": "wyrmAspirant.halberdSweep",
+      "move": {
+        "intent": "attack",
+        "damage": 26,
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmAspirant.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmAspirant.level.riderTailSlam",
+      "name": "Aspirant's Cruel Tail Slam",
+      "source": "unique",
+      "from": "wyrmAspirant.tailSlam",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmAspirant.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmAspirant.level.guardGoldenGuard",
+      "name": "Aspirant's Stout Golden Guard",
+      "source": "unique",
+      "from": "wyrmAspirant.goldenGuard",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmAspirant.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "fellWarden": [
+    {
+      "id": "fellWarden.level.heavyHammerToss",
+      "name": "Warden's Crushing Hammer Toss",
+      "source": "unique",
+      "from": "fellWarden.hammerToss",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "hits": 2,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "fellWarden.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "fellWarden.level.riderCaneStrike",
+      "name": "Warden's Cruel Cane Strike",
+      "source": "unique",
+      "from": "fellWarden.caneStrike",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "fellWarden.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "fellWarden.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "lanternMoth": [
+    {
+      "id": "lanternMoth.level.heavyWingSparks",
+      "name": "Moth's Crushing Wing Sparks",
+      "source": "unique",
+      "from": "lanternMoth.wingSparks",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "hits": 2,
+        "sp": 2,
+        "weight": 65,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "lanternMoth.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "lanternMoth.level.riderWingSparks",
+      "name": "Moth's Cruel Wing Sparks",
+      "source": "unique",
+      "from": "lanternMoth.wingSparks",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "hits": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 65,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "lanternMoth.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "lanternMoth.level.debuffLanternDust",
+      "name": "Moth's Bitter Lantern Dust",
+      "source": "unique",
+      "from": "lanternMoth.lanternDust",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 35,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "lanternMoth.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "briarHermit": [
+    {
+      "id": "briarHermit.level.heavyBriarCast",
+      "name": "Hermit's Crushing Briar Cast",
+      "source": "unique",
+      "from": "briarHermit.briarCast",
+      "move": {
+        "intent": "attack",
+        "damage": 24,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "briarHermit.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "briarHermit.level.riderBriarCast",
+      "name": "Hermit's Cruel Briar Cast",
+      "source": "unique",
+      "from": "briarHermit.briarCast",
+      "move": {
+        "intent": "attack",
+        "damage": 16,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "briarHermit.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "briarHermit.level.guardRootShelter",
+      "name": "Hermit's Stout Root Shelter",
+      "source": "unique",
+      "from": "briarHermit.rootShelter",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "briarHermit.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "chainScavenger": [
+    {
+      "id": "chainScavenger.level.heavyHookCast",
+      "name": "Scavenger's Crushing Hook Cast",
+      "source": "unique",
+      "from": "chainScavenger.hookCast",
+      "move": {
+        "intent": "attack",
+        "damage": 30,
+        "sp": 2,
+        "weight": 60,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "chainScavenger.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "chainScavenger.level.riderHookCast",
+      "name": "Scavenger's Cruel Hook Cast",
+      "source": "unique",
+      "from": "chainScavenger.hookCast",
+      "move": {
+        "intent": "attack",
+        "damage": 20,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 60,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "chainScavenger.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "chainScavenger.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "bellKeeper": [
+    {
+      "id": "bellKeeper.level.heavyClapperSwing",
+      "name": "Keeper's Crushing Clapper Swing",
+      "source": "unique",
+      "from": "bellKeeper.clapperSwing",
+      "move": {
+        "intent": "attack",
+        "damage": 14,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "bellKeeper.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "bellKeeper.level.guardMuffledPrayer",
+      "name": "Keeper's Stout Muffled Prayer",
+      "source": "unique",
+      "from": "bellKeeper.muffledPrayer",
+      "move": {
+        "intent": "block",
+        "block": 14,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "bellKeeper.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "bellKeeper.level.riderClapperSwing",
+      "name": "Keeper's Cruel Clapper Swing",
+      "source": "unique",
+      "from": "bellKeeper.clapperSwing",
+      "move": {
+        "intent": "attack",
+        "damage": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "bellKeeper.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "thornMatriarch": [
+    {
+      "id": "thornMatriarch.level.heavyThornNeedles",
+      "name": "Matriarch's Crushing Thorn Needles",
+      "source": "unique",
+      "from": "thornMatriarch.thornNeedles",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "hits": 3,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "thornMatriarch.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "thornMatriarch.level.riderThornNeedles",
+      "name": "Matriarch's Cruel Thorn Needles",
+      "source": "unique",
+      "from": "thornMatriarch.thornNeedles",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "hits": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "thornMatriarch.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "thornMatriarch.level.guardRootCrown",
+      "name": "Matriarch's Stout Root Crown",
+      "source": "unique",
+      "from": "thornMatriarch.rootCrown",
+      "move": {
+        "intent": "block",
+        "block": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "thornMatriarch.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "gildedKnight": [
+    {
+      "id": "gildedKnight.level.heavyThrust",
+      "name": "Knight's Crushing Thrust",
+      "source": "unique",
+      "from": "gildedKnight.thrust",
+      "move": {
+        "intent": "attack",
+        "damage": 17,
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "gildedKnight.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "gildedKnight.level.riderThrust",
+      "name": "Knight's Cruel Thrust",
+      "source": "unique",
+      "from": "gildedKnight.thrust",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "gildedKnight.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "gildedKnight.level.buffRally",
+      "name": "Knight's Fierce Rally",
+      "source": "unique",
+      "from": "gildedKnight.rally",
+      "move": {
+        "intent": "buff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "gildedKnight.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "courtSurgeon": [
+    {
+      "id": "courtSurgeon.level.debuffSedate",
+      "name": "Surgeon's Bitter Sedate",
+      "source": "unique",
+      "from": "courtSurgeon.sedate",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtSurgeon.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtSurgeon.level.heavyScalpel",
+      "name": "Surgeon's Crushing Scalpel",
+      "source": "unique",
+      "from": "courtSurgeon.scalpel",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "effects": [
+          {
+            "op": "addCard",
+            "target": "player",
+            "card": "wound",
+            "pile": "discard"
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtSurgeon.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtSurgeon.level.riderScalpel",
+      "name": "Surgeon's Cruel Scalpel",
+      "source": "unique",
+      "from": "courtSurgeon.scalpel",
+      "move": {
+        "intent": "attack",
+        "damage": 7,
+        "effects": [
+          {
+            "op": "addCard",
+            "target": "player",
+            "card": "wound",
+            "pile": "discard"
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtSurgeon.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "stitchedHound": [
+    {
+      "id": "stitchedHound.level.riderRend",
+      "name": "Hound's Cruel Rend",
+      "source": "unique",
+      "from": "stitchedHound.rend",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchedHound.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchedHound.level.heavyMaul",
+      "name": "Hound's Crushing Maul",
+      "source": "unique",
+      "from": "stitchedHound.maul",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "hits": 2,
+        "sp": 2,
+        "weight": 60,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchedHound.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchedHound.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "courtMarionette": [
+    {
+      "id": "courtMarionette.level.heavyDart",
+      "name": "Marionette's Crushing Dart",
+      "source": "unique",
+      "from": "courtMarionette.dart",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "hits": 2,
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtMarionette.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtMarionette.level.riderBlowdart",
+      "name": "Marionette's Cruel Blowdart",
+      "source": "unique",
+      "from": "courtMarionette.blowdart",
+      "move": {
+        "intent": "attack",
+        "damage": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtMarionette.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtMarionette.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "livingArmor": [
+    {
+      "id": "livingArmor.level.heavyCrush",
+      "name": "Armour's Heavy Crush",
+      "source": "unique",
+      "from": "livingArmor.crush",
+      "move": {
+        "intent": "attack",
+        "damage": 21,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "livingArmor.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "livingArmor.level.riderSlam",
+      "name": "Armour's Cruel Slam",
+      "source": "unique",
+      "from": "livingArmor.slam",
+      "move": {
+        "intent": "attack",
+        "damage": 10,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frost",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "livingArmor.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "livingArmor.level.guardFortify",
+      "name": "Armour's Stout Fortify",
+      "source": "unique",
+      "from": "livingArmor.fortify",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "livingArmor.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "courtDuelist": [
+    {
+      "id": "courtDuelist.level.heavyFlurry",
+      "name": "Duelist's Crushing Flurry",
+      "source": "unique",
+      "from": "courtDuelist.flurry",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "hits": 3,
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtDuelist.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtDuelist.level.riderLunge",
+      "name": "Duelist's Cruel Lunge",
+      "source": "unique",
+      "from": "courtDuelist.lunge",
+      "move": {
+        "intent": "attack",
+        "damage": 14,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtDuelist.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtDuelist.level.buffEnGarde",
+      "name": "Duelist's Fierce En Garde",
+      "source": "unique",
+      "from": "courtDuelist.enGarde",
+      "move": {
+        "intent": "buff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 10,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "courtDuelist.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "stitchedKing": [
+    {
+      "id": "stitchedKing.level.heavyGraspingHands",
+      "name": "King's Crushing Grasping Hands",
+      "source": "unique",
+      "from": "stitchedKing.graspingHands",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "hits": 3,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchedKing.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchedKing.level.guardCourtlyDecree",
+      "name": "King's Stout Courtly Decree",
+      "source": "unique",
+      "from": "stitchedKing.courtlyDecree",
+      "move": {
+        "intent": "block",
+        "block": 17,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchedKing.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchedKing.level.riderScepterBlow",
+      "name": "King's Cruel Scepter Blow",
+      "source": "unique",
+      "from": "stitchedKing.scepterBlow",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchedKing.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "mirrorScribe": [
+    {
+      "id": "mirrorScribe.level.heavyShardVolley",
+      "name": "Scribe's Crushing Shard Volley",
+      "source": "unique",
+      "from": "mirrorScribe.shardVolley",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "hits": 2,
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mirrorScribe.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mirrorScribe.level.riderShardVolley",
+      "name": "Scribe's Cruel Shard Volley",
+      "source": "unique",
+      "from": "mirrorScribe.shardVolley",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "hits": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mirrorScribe.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mirrorScribe.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "stitchCrab": [
+    {
+      "id": "stitchCrab.level.heavyScuttleRush",
+      "name": "Crab's Crushing Scuttle Rush",
+      "source": "unique",
+      "from": "stitchCrab.scuttleRush",
+      "move": {
+        "intent": "attack",
+        "damage": 20,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchCrab.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchCrab.level.guardShellFold",
+      "name": "Crab's Stout Shell Fold",
+      "source": "unique",
+      "from": "stitchCrab.shellFold",
+      "move": {
+        "intent": "block",
+        "block": 17,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchCrab.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchCrab.level.riderSeamShears",
+      "name": "Crab's Cruel Seam Shears",
+      "source": "unique",
+      "from": "stitchCrab.seamShears",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "hits": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "stitchCrab.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "glassRegent": [
+    {
+      "id": "glassRegent.level.heavySplinterRain",
+      "name": "Regent's Crushing Splinter Rain",
+      "source": "unique",
+      "from": "glassRegent.splinterRain",
+      "move": {
+        "intent": "attack",
+        "damage": 9,
+        "hits": 3,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "glassRegent.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "glassRegent.level.guardPrismGuard",
+      "name": "Regent's Stout Prism Guard",
+      "source": "unique",
+      "from": "glassRegent.prismGuard",
+      "move": {
+        "intent": "block",
+        "block": 18,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "glassRegent.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "glassRegent.level.riderCrystalRapier",
+      "name": "Regent's Cruel Crystal Rapier",
+      "source": "unique",
+      "from": "glassRegent.crystalRapier",
+      "move": {
+        "intent": "attack",
+        "damage": 15,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "glassRegent.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "marrowOrganist": [
+    {
+      "id": "marrowOrganist.level.heavyIvoryKeys",
+      "name": "Organist's Crushing Ivory Keys",
+      "source": "unique",
+      "from": "marrowOrganist.ivoryKeys",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "hits": 3,
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "marrowOrganist.level.judgment",
+      "name": "Judgment",
+      "source": "shared",
+      "from": "core.judgment",
+      "move": {
+        "intent": "attack",
+        "damage": 20,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "marrowOrganist.level.riderIvoryKeys",
+      "name": "Organist's Cruel Ivory Keys",
+      "source": "unique",
+      "from": "marrowOrganist.ivoryKeys",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "hits": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "marrowOrganist.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "marrowOrganist.level.debuffBonePrelude",
+      "name": "Organist's Bitter Bone Prelude",
+      "source": "unique",
+      "from": "marrowOrganist.bonePrelude",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "marrowOrganist.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "ashRevenant": [
+    {
+      "id": "ashRevenant.level.heavyCinderSlash",
+      "name": "Revenant's Crushing Cinder Slash",
+      "source": "unique",
+      "from": "ashRevenant.cinderSlash",
+      "move": {
+        "intent": "attack",
+        "damage": 18,
+        "sp": 2,
+        "weight": 55,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashRevenant.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashRevenant.level.riderCinderSlash",
+      "name": "Revenant's Cruel Cinder Slash",
+      "source": "unique",
+      "from": "ashRevenant.cinderSlash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 55,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashRevenant.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashRevenant.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "emberStarvedPilgrim": [
+    {
+      "id": "emberStarvedPilgrim.level.debuffWail",
+      "name": "Pilgrim's Bitter Wail",
+      "source": "unique",
+      "from": "emberStarvedPilgrim.wail",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "insanity",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "emberStarvedPilgrim.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "emberStarvedPilgrim.level.heavyDesperateClaw",
+      "name": "Pilgrim's Crushing Desperate Claw",
+      "source": "unique",
+      "from": "emberStarvedPilgrim.desperateClaw",
+      "move": {
+        "intent": "attack",
+        "damage": 14,
+        "sp": 2,
+        "weight": 60,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "emberStarvedPilgrim.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "emberStarvedPilgrim.level.riderDesperateClaw",
+      "name": "Pilgrim's Cruel Desperate Claw",
+      "source": "unique",
+      "from": "emberStarvedPilgrim.desperateClaw",
+      "move": {
+        "intent": "attack",
+        "damage": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 60,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "emberStarvedPilgrim.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "valkyrieShade": [
+    {
+      "id": "valkyrieShade.level.riderBloodFeather",
+      "name": "Shade's Cruel Blood Feather",
+      "source": "unique",
+      "from": "valkyrieShade.bloodFeather",
+      "move": {
+        "intent": "attack",
+        "damage": 5,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "valkyrieShade.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "valkyrieShade.level.heavySpiralLance",
+      "name": "Shade's Crushing Spiral Lance",
+      "source": "unique",
+      "from": "valkyrieShade.spiralLance",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "hits": 2,
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "valkyrieShade.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "valkyrieShade.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "charredColossus": [
+    {
+      "id": "charredColossus.level.heavySmash",
+      "name": "Colossus's Crushing Smash",
+      "source": "unique",
+      "from": "charredColossus.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 24,
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "charredColossus.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "charredColossus.level.riderSmash",
+      "name": "Colossus's Cruel Smash",
+      "source": "unique",
+      "from": "charredColossus.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 16,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "charredColossus.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "charredColossus.level.guardHarden",
+      "name": "Colossus's Stout Harden",
+      "source": "unique",
+      "from": "charredColossus.harden",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "charredColossus.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "wyrmLord": [
+    {
+      "id": "wyrmLord.level.heavyHalberdReign",
+      "name": "Lord's Crushing Halberd Reign",
+      "source": "unique",
+      "from": "wyrmLord.halberdReign",
+      "move": {
+        "intent": "attack",
+        "damage": 23,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmLord.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmLord.level.guardGoldenBulwark",
+      "name": "Lord's Stout Golden Bulwark",
+      "source": "unique",
+      "from": "wyrmLord.goldenBulwark",
+      "move": {
+        "intent": "block",
+        "block": 18,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 6
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmLord.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmLord.level.buffConsecration",
+      "name": "Lord's Fierce Consecration",
+      "source": "unique",
+      "from": "wyrmLord.consecration",
+      "move": {
+        "intent": "buff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 5
+          }
+        ],
+        "sp": 2,
+        "weight": 10,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wyrmLord.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "blightedValkyrie": [
+    {
+      "id": "blightedValkyrie.level.heavyWhirlwind",
+      "name": "Valkyrie's Crushing Whirlwind",
+      "source": "unique",
+      "from": "blightedValkyrie.whirlwind",
+      "move": {
+        "intent": "attack",
+        "damage": 15,
+        "hits": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blightedValkyrie.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blightedValkyrie.level.guardRotWings",
+      "name": "Valkyrie's Stout Rot Wings",
+      "source": "unique",
+      "from": "blightedValkyrie.rotWings",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blightedValkyrie.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blightedValkyrie.level.riderSpiralThrust",
+      "name": "Valkyrie's Cruel Spiral Thrust",
+      "source": "unique",
+      "from": "blightedValkyrie.spiralThrust",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 35,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blightedValkyrie.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "cinderMantis": [
+    {
+      "id": "cinderMantis.level.heavyScythePair",
+      "name": "Mantis's Crushing Scythe Pair",
+      "source": "unique",
+      "from": "cinderMantis.scythePair",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "hits": 2,
+        "sp": 2,
+        "weight": 55,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "cinderMantis.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "cinderMantis.level.riderScythePair",
+      "name": "Mantis's Cruel Scythe Pair",
+      "source": "unique",
+      "from": "cinderMantis.scythePair",
+      "move": {
+        "intent": "attack",
+        "damage": 5,
+        "hits": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 55,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "cinderMantis.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "cinderMantis.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "eclipseCantor": [
+    {
+      "id": "eclipseCantor.level.heavyLunarRay",
+      "name": "Cantor's Crushing Lunar Ray",
+      "source": "unique",
+      "from": "eclipseCantor.lunarRay",
+      "move": {
+        "intent": "attack",
+        "damage": 17,
+        "sp": 2,
+        "weight": 50,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "eclipseCantor.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "eclipseCantor.level.riderFadingEcho",
+      "name": "Cantor's Cruel Fading Echo",
+      "source": "unique",
+      "from": "eclipseCantor.fadingEcho",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "effects": [
+          {
+            "op": "addCard",
+            "card": "dazed",
+            "pile": "discard"
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "insanity",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "eclipseCantor.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "eclipseCantor.level.debuffDarkHymn",
+      "name": "Cantor's Bitter Dark Hymn",
+      "source": "unique",
+      "from": "eclipseCantor.darkHymn",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "insanity",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "eclipseCantor.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "furnaceSaint": [
+    {
+      "id": "furnaceSaint.level.heavyCenserSweep",
+      "name": "Saint's Crushing Censer Sweep",
+      "source": "unique",
+      "from": "furnaceSaint.censerSweep",
+      "move": {
+        "intent": "attack",
+        "damage": 33,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "furnaceSaint.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "furnaceSaint.level.riderCenserSweep",
+      "name": "Saint's Cruel Censer Sweep",
+      "source": "unique",
+      "from": "furnaceSaint.censerSweep",
+      "move": {
+        "intent": "attack",
+        "damage": 22,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "furnaceSaint.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "furnaceSaint.level.guardCoolingAsh",
+      "name": "Saint's Stout Cooling Ash",
+      "source": "unique",
+      "from": "furnaceSaint.coolingAsh",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "furnaceSaint.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "hollowAstronomer": [
+    {
+      "id": "hollowAstronomer.level.heavyOrbitalShards",
+      "name": "Astronomer's Crushing Orbital Shards",
+      "source": "unique",
+      "from": "hollowAstronomer.orbitalShards",
+      "move": {
+        "intent": "attack",
+        "damage": 17,
+        "hits": 3,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "hollowAstronomer.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "hollowAstronomer.level.riderOrbitalShards",
+      "name": "Astronomer's Cruel Orbital Shards",
+      "source": "unique",
+      "from": "hollowAstronomer.orbitalShards",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "hits": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "insanity",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "hollowAstronomer.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "hollowAstronomer.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "ashheartDragon": [
+    {
+      "id": "ashheartDragon.level.heavyObsidianClaws",
+      "name": "Dragon's Crushing Obsidian Claws",
+      "source": "unique",
+      "from": "ashheartDragon.obsidianClaws",
+      "move": {
+        "intent": "attack",
+        "damage": 18,
+        "hits": 2,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashheartDragon.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashheartDragon.level.riderObsidianClaws",
+      "name": "Dragon's Cruel Obsidian Claws",
+      "source": "unique",
+      "from": "ashheartDragon.obsidianClaws",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "hits": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashheartDragon.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashheartDragon.level.guardTailBastion",
+      "name": "Dragon's Stout Tail Bastion",
+      "source": "unique",
+      "from": "ashheartDragon.tailBastion",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashheartDragon.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "brackenTusker": [
+    {
+      "id": "brackenTusker.level.heavyGore",
+      "name": "Tusker's Crushing Gore",
+      "source": "unique",
+      "from": "brackenTusker.gore",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "brackenTusker.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "brackenTusker.level.guardBristle",
+      "name": "Tusker's Stout Bristle",
+      "source": "unique",
+      "from": "brackenTusker.bristle",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "brackenTusker.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "brackenTusker.level.riderTrample",
+      "name": "Tusker's Cruel Trample",
+      "source": "unique",
+      "from": "brackenTusker.trample",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "brackenTusker.level.gash",
+      "name": "Gash",
+      "source": "shared",
+      "from": "core.gash",
+      "move": {
+        "intent": "attack",
+        "damage": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "fenwickToad": [
+    {
+      "id": "fenwickToad.level.riderBileSpit",
+      "name": "Toad's Cruel Bile Spit",
+      "source": "unique",
+      "from": "fenwickToad.bileSpit",
+      "move": {
+        "intent": "attack",
+        "damage": 5,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 35,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "fenwickToad.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "fenwickToad.level.heavyTongueLash",
+      "name": "Toad's Crushing Tongue Lash",
+      "source": "unique",
+      "from": "fenwickToad.tongueLash",
+      "move": {
+        "intent": "attack",
+        "damage": 9,
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "fenwickToad.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "fenwickToad.level.guardPuffUp",
+      "name": "Toad's Stout Puff Up",
+      "source": "unique",
+      "from": "fenwickToad.puffUp",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "fenwickToad.level.gash",
+      "name": "Gash",
+      "source": "shared",
+      "from": "core.gash",
+      "move": {
+        "intent": "attack",
+        "damage": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "reedpipePoacher": [
+    {
+      "id": "reedpipePoacher.level.riderDart",
+      "name": "Poacher's Cruel Dart",
+      "source": "unique",
+      "from": "reedpipePoacher.dart",
+      "move": {
+        "intent": "attack",
+        "damage": 5,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frost",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 55,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "reedpipePoacher.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "reedpipePoacher.level.debuffSnare",
+      "name": "Poacher's Bitter Snare",
+      "source": "unique",
+      "from": "reedpipePoacher.snare",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frost",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "reedpipePoacher.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "reedpipePoacher.level.heavyDart",
+      "name": "Poacher's Crushing Dart",
+      "source": "unique",
+      "from": "reedpipePoacher.dart",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "sp": 2,
+        "weight": 55,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "reedpipePoacher.level.counter",
+      "name": "Counter",
+      "source": "shared",
+      "from": "core.counter",
+      "move": {
+        "intent": "attack",
+        "block": 5,
+        "damage": 4,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "wickerTitheman": [
+    {
+      "id": "wickerTitheman.level.heavyTithe",
+      "name": "Titheman's Crushing Tithe",
+      "source": "unique",
+      "from": "wickerTitheman.tithe",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wickerTitheman.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wickerTitheman.level.guardKindleWard",
+      "name": "Titheman's Stout Kindle Ward",
+      "source": "unique",
+      "from": "wickerTitheman.kindleWard",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wickerTitheman.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wickerTitheman.level.riderTithe",
+      "name": "Titheman's Cruel Tithe",
+      "source": "unique",
+      "from": "wickerTitheman.tithe",
+      "move": {
+        "intent": "attack",
+        "damage": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wickerTitheman.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "siltCrownNewt": [
+    {
+      "id": "siltCrownNewt.level.heavyTailCrush",
+      "name": "Newt's Heavy Tail Crush",
+      "source": "unique",
+      "from": "siltCrownNewt.tailCrush",
+      "move": {
+        "intent": "attack",
+        "damage": 26,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "siltCrownNewt.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "siltCrownNewt.level.guardSiltShroud",
+      "name": "Newt's Stout Silt Shroud",
+      "source": "unique",
+      "from": "siltCrownNewt.siltShroud",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "siltCrownNewt.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "siltCrownNewt.level.riderMireSpit",
+      "name": "Newt's Cruel Mire Spit",
+      "source": "unique",
+      "from": "siltCrownNewt.mireSpit",
+      "move": {
+        "intent": "attack",
+        "damage": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "siltCrownNewt.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "wickerHind": [
+    {
+      "id": "wickerHind.level.heavyHoofStamp",
+      "name": "Hind's Crushing Hoof Stamp",
+      "source": "unique",
+      "from": "wickerHind.hoofStamp",
+      "move": {
+        "intent": "attack",
+        "damage": 26,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wickerHind.level.judgment",
+      "name": "Judgment",
+      "source": "shared",
+      "from": "core.judgment",
+      "move": {
+        "intent": "attack",
+        "damage": 20,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wickerHind.level.riderHallowSpark",
+      "name": "Hind's Cruel Hallow Spark",
+      "source": "unique",
+      "from": "wickerHind.hallowSpark",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wickerHind.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "wickerHind.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "blackrushStork": [
+    {
+      "id": "blackrushStork.level.heavySpearDive",
+      "name": "Stork's Crushing Spear Dive",
+      "source": "unique",
+      "from": "blackrushStork.spearDive",
+      "move": {
+        "intent": "attack",
+        "damage": 27,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blackrushStork.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blackrushStork.level.guardWadeGuard",
+      "name": "Stork's Stout Wade Guard",
+      "source": "unique",
+      "from": "blackrushStork.wadeGuard",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blackrushStork.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blackrushStork.level.riderBeakJab",
+      "name": "Stork's Cruel Beak Jab",
+      "source": "unique",
+      "from": "blackrushStork.beakJab",
+      "move": {
+        "intent": "attack",
+        "damage": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "blackrushStork.level.counter",
+      "name": "Counter",
+      "source": "shared",
+      "from": "core.counter",
+      "move": {
+        "intent": "attack",
+        "block": 5,
+        "damage": 4,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "pearlbackSnail": [
+    {
+      "id": "pearlbackSnail.level.heavyShellSlam",
+      "name": "Snail's Crushing Shell Slam",
+      "source": "unique",
+      "from": "pearlbackSnail.shellSlam",
+      "move": {
+        "intent": "attack",
+        "damage": 24,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pearlbackSnail.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pearlbackSnail.level.guardPearlGuard",
+      "name": "Snail's Stout Pearl Guard",
+      "source": "unique",
+      "from": "pearlbackSnail.pearlGuard",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pearlbackSnail.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pearlbackSnail.level.riderSlimeBash",
+      "name": "Snail's Cruel Slime Bash",
+      "source": "unique",
+      "from": "pearlbackSnail.slimeBash",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 35,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pearlbackSnail.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "alderMaskHarvester": [
+    {
+      "id": "alderMaskHarvester.level.heavyHarvestArc",
+      "name": "Harvester's Crushing Harvest Arc",
+      "source": "unique",
+      "from": "alderMaskHarvester.harvestArc",
+      "move": {
+        "intent": "attack",
+        "damage": 20,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "alderMaskHarvester.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "alderMaskHarvester.level.guardAlderVeil",
+      "name": "Harvester's Stout Alder Veil",
+      "source": "unique",
+      "from": "alderMaskHarvester.alderVeil",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 15,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "alderMaskHarvester.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "alderMaskHarvester.level.riderScytheCut",
+      "name": "Harvester's Cruel Scythe Cut",
+      "source": "unique",
+      "from": "alderMaskHarvester.scytheCut",
+      "move": {
+        "intent": "attack",
+        "damage": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "alderMaskHarvester.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "woundwoodTusker": [
+    {
+      "id": "woundwoodTusker.level.heavyTimberCharge",
+      "name": "Tusker's Crushing Timber Charge",
+      "source": "unique",
+      "from": "woundwoodTusker.timberCharge",
+      "move": {
+        "intent": "attack",
+        "damage": 30,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "woundwoodTusker.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "woundwoodTusker.level.riderRootPlow",
+      "name": "Tusker's Cruel Root Plow",
+      "source": "unique",
+      "from": "woundwoodTusker.rootPlow",
+      "move": {
+        "intent": "attack",
+        "damage": 13,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "woundwoodTusker.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "woundwoodTusker.level.guardBarkHide",
+      "name": "Tusker's Stout Bark Hide",
+      "source": "unique",
+      "from": "woundwoodTusker.barkHide",
+      "move": {
+        "intent": "block",
+        "block": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "woundwoodTusker.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "mireProcessional": [
+    {
+      "id": "mireProcessional.level.heavyPallBearers",
+      "name": "Processional's Crushing Pall Bearers",
+      "source": "unique",
+      "from": "mireProcessional.pallBearers",
+      "move": {
+        "intent": "attack",
+        "damage": 27,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mireProcessional.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mireProcessional.level.riderMournersChorus",
+      "name": "Processional's Cruel Mourners' Chorus",
+      "source": "unique",
+      "from": "mireProcessional.mournersChorus",
+      "move": {
+        "intent": "attack",
+        "damage": 13,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mireProcessional.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mireProcessional.level.debuffGraveMurk",
+      "name": "Processional's Bitter Grave Murk",
+      "source": "unique",
+      "from": "mireProcessional.graveMurk",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 15,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mireProcessional.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "quarryRam": [
+    {
+      "id": "quarryRam.level.heavyHeadbutt",
+      "name": "Ram's Crushing Headbutt",
+      "source": "unique",
+      "from": "quarryRam.headbutt",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "quarryRam.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "quarryRam.level.guardStonyStand",
+      "name": "Ram's Stout Stony Stand",
+      "source": "unique",
+      "from": "quarryRam.stonyStand",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "quarryRam.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "quarryRam.level.riderQuarryCharge",
+      "name": "Ram's Cruel Quarry Charge",
+      "source": "unique",
+      "from": "quarryRam.quarryCharge",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "quarryRam.level.gash",
+      "name": "Gash",
+      "source": "shared",
+      "from": "core.gash",
+      "move": {
+        "intent": "attack",
+        "damage": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "tollgateHookman": [
+    {
+      "id": "tollgateHookman.level.riderHookHaul",
+      "name": "Hookman's Cruel Hook Haul",
+      "source": "unique",
+      "from": "tollgateHookman.hookHaul",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "tollgateHookman.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "tollgateHookman.level.heavyTollJab",
+      "name": "Hookman's Crushing Toll Jab",
+      "source": "unique",
+      "from": "tollgateHookman.tollJab",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "tollgateHookman.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "tollgateHookman.level.guardGateBar",
+      "name": "Hookman's Stout Gate Bar",
+      "source": "unique",
+      "from": "tollgateHookman.gateBar",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "tollgateHookman.level.gash",
+      "name": "Gash",
+      "source": "shared",
+      "from": "core.gash",
+      "move": {
+        "intent": "attack",
+        "damage": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "waxsealBailiff": [
+    {
+      "id": "waxsealBailiff.level.debuffWritOfDebt",
+      "name": "Bailiff's Bitter Writ of Debt",
+      "source": "unique",
+      "from": "waxsealBailiff.writOfDebt",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "waxsealBailiff.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "waxsealBailiff.level.heavyWaxBrand",
+      "name": "Bailiff's Crushing Wax Brand",
+      "source": "unique",
+      "from": "waxsealBailiff.waxBrand",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "waxsealBailiff.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "waxsealBailiff.level.guardLedgerGuard",
+      "name": "Bailiff's Stout Ledger Guard",
+      "source": "unique",
+      "from": "waxsealBailiff.ledgerGuard",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "waxsealBailiff.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "carrionHeadsman": [
+    {
+      "id": "carrionHeadsman.level.riderCleaveStroke",
+      "name": "Headsman's Cruel Cleave Stroke",
+      "source": "unique",
+      "from": "carrionHeadsman.cleaveStroke",
+      "move": {
+        "intent": "attack",
+        "damage": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "carrionHeadsman.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "carrionHeadsman.level.heavyExecutionDrop",
+      "name": "Headsman's Crushing Execution Drop",
+      "source": "unique",
+      "from": "carrionHeadsman.executionDrop",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "carrionHeadsman.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "carrionHeadsman.level.guardHoodGuard",
+      "name": "Headsman's Stout Hood Guard",
+      "source": "unique",
+      "from": "carrionHeadsman.hoodGuard",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "carrionHeadsman.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "knellcapSentinel": [
+    {
+      "id": "knellcapSentinel.level.guardCapGuard",
+      "name": "Sentinel's Stout Cap Guard",
+      "source": "unique",
+      "from": "knellcapSentinel.capGuard",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "knellcapSentinel.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "knellcapSentinel.level.heavyKnellStrike",
+      "name": "Sentinel's Crushing Knell Strike",
+      "source": "unique",
+      "from": "knellcapSentinel.knellStrike",
+      "move": {
+        "intent": "attack",
+        "damage": 9,
+        "sp": 2,
+        "weight": 35,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "knellcapSentinel.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "knellcapSentinel.level.riderBellRing",
+      "name": "Sentinel's Cruel Bell Ring",
+      "source": "unique",
+      "from": "knellcapSentinel.bellRing",
+      "move": {
+        "intent": "attack",
+        "damage": 5,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "knellcapSentinel.level.gash",
+      "name": "Gash",
+      "source": "shared",
+      "from": "core.gash",
+      "move": {
+        "intent": "attack",
+        "damage": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "pallidOathCamel": [
+    {
+      "id": "pallidOathCamel.level.heavyPackCrush",
+      "name": "Camel's Heavy Pack Crush",
+      "source": "unique",
+      "from": "pallidOathCamel.packCrush",
+      "move": {
+        "intent": "attack",
+        "damage": 27,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pallidOathCamel.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pallidOathCamel.level.guardOathWater",
+      "name": "Camel's Stout Oath Water",
+      "source": "unique",
+      "from": "pallidOathCamel.oathWater",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pallidOathCamel.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pallidOathCamel.level.riderHallowSpit",
+      "name": "Camel's Cruel Hallow Spit",
+      "source": "unique",
+      "from": "pallidOathCamel.hallowSpit",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "pallidOathCamel.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "inkveilNautilus": [
+    {
+      "id": "inkveilNautilus.level.debuffVeilCloud",
+      "name": "Nautilus's Bitter Veil Cloud",
+      "source": "unique",
+      "from": "inkveilNautilus.veilCloud",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "insanity",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "inkveilNautilus.level.judgment",
+      "name": "Judgment",
+      "source": "shared",
+      "from": "core.judgment",
+      "move": {
+        "intent": "attack",
+        "damage": 20,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "inkveilNautilus.level.heavyInkJet",
+      "name": "Nautilus's Crushing Ink Jet",
+      "source": "unique",
+      "from": "inkveilNautilus.inkJet",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "inkveilNautilus.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "inkveilNautilus.level.guardShellGuard",
+      "name": "Nautilus's Stout Shell Guard",
+      "source": "unique",
+      "from": "inkveilNautilus.shellGuard",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "inkveilNautilus.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "mirrorFanAbbess": [
+    {
+      "id": "mirrorFanAbbess.level.heavyGlassGlare",
+      "name": "Abbess's Crushing Glass Glare",
+      "source": "unique",
+      "from": "mirrorFanAbbess.glassGlare",
+      "move": {
+        "intent": "attack",
+        "damage": 26,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mirrorFanAbbess.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mirrorFanAbbess.level.guardWardingFan",
+      "name": "Abbess's Stout Warding Fan",
+      "source": "unique",
+      "from": "mirrorFanAbbess.wardingFan",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 15,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mirrorFanAbbess.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mirrorFanAbbess.level.riderFanSlash",
+      "name": "Abbess's Cruel Fan Slash",
+      "source": "unique",
+      "from": "mirrorFanAbbess.fanSlash",
+      "move": {
+        "intent": "attack",
+        "damage": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 35,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "mirrorFanAbbess.level.counter",
+      "name": "Counter",
+      "source": "shared",
+      "from": "core.counter",
+      "move": {
+        "intent": "attack",
+        "block": 5,
+        "damage": 4,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "saltChoirWalrus": [
+    {
+      "id": "saltChoirWalrus.level.heavyBlubberSlam",
+      "name": "Walrus's Crushing Blubber Slam",
+      "source": "unique",
+      "from": "saltChoirWalrus.blubberSlam",
+      "move": {
+        "intent": "attack",
+        "damage": 27,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "saltChoirWalrus.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "saltChoirWalrus.level.guardFrozenBulwark",
+      "name": "Walrus's Stout Frozen Bulwark",
+      "source": "unique",
+      "from": "saltChoirWalrus.frozenBulwark",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "saltChoirWalrus.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "saltChoirWalrus.level.debuffChoirChorus",
+      "name": "Walrus's Bitter Choir Chorus",
+      "source": "unique",
+      "from": "saltChoirWalrus.choirChorus",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frost",
+            "stacks": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "saltChoirWalrus.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "rimewheelPenitent": [
+    {
+      "id": "rimewheelPenitent.level.heavyWheelScourge",
+      "name": "Penitent's Crushing Wheel Scourge",
+      "source": "unique",
+      "from": "rimewheelPenitent.wheelScourge",
+      "move": {
+        "intent": "attack",
+        "damage": 30,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "rimewheelPenitent.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "rimewheelPenitent.level.guardFrostGuard",
+      "name": "Penitent's Stout Frost Guard",
+      "source": "unique",
+      "from": "rimewheelPenitent.frostGuard",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "rimewheelPenitent.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "rimewheelPenitent.level.riderPenanceLash",
+      "name": "Penitent's Cruel Penance Lash",
+      "source": "unique",
+      "from": "rimewheelPenitent.penanceLash",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "rimewheelPenitent.level.counter",
+      "name": "Counter",
+      "source": "shared",
+      "from": "core.counter",
+      "move": {
+        "intent": "attack",
+        "block": 5,
+        "damage": 4,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "veiledJusticiar": [
+    {
+      "id": "veiledJusticiar.level.heavyGavelFall",
+      "name": "Justiciar's Crushing Gavel Fall",
+      "source": "unique",
+      "from": "veiledJusticiar.gavelFall",
+      "move": {
+        "intent": "attack",
+        "damage": 30,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "veiledJusticiar.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "veiledJusticiar.level.riderRighteousLight",
+      "name": "Justiciar's Cruel Righteous Light",
+      "source": "unique",
+      "from": "veiledJusticiar.righteousLight",
+      "move": {
+        "intent": "attack",
+        "damage": 18,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "veiledJusticiar.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "veiledJusticiar.level.guardVeilGuard",
+      "name": "Justiciar's Stout Veil Guard",
+      "source": "unique",
+      "from": "veiledJusticiar.veilGuard",
+      "move": {
+        "intent": "block",
+        "block": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "veiledJusticiar.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "sixleggedHearse": [
+    {
+      "id": "sixleggedHearse.level.heavyHearseCharge",
+      "name": "Crushing Hearse Charge",
+      "source": "unique",
+      "from": "sixleggedHearse.hearseCharge",
+      "move": {
+        "intent": "attack",
+        "damage": 30,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "sixleggedHearse.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "sixleggedHearse.level.riderPallTrample",
+      "name": "Hearse's Cruel Pall Trample",
+      "source": "unique",
+      "from": "sixleggedHearse.pallTrample",
+      "move": {
+        "intent": "attack",
+        "damage": 13,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "sixleggedHearse.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "sixleggedHearse.level.debuffGraveReek",
+      "name": "Hearse's Bitter Grave Reek",
+      "source": "unique",
+      "from": "sixleggedHearse.graveReek",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "crimsonBlight",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 15,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "sixleggedHearse.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "kilnshellTortoise": [
+    {
+      "id": "kilnshellTortoise.level.guardKilnPlate",
+      "name": "Tortoise's Stout Kiln Plate",
+      "source": "unique",
+      "from": "kilnshellTortoise.kilnPlate",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnshellTortoise.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnshellTortoise.level.heavyKilnBreath",
+      "name": "Tortoise's Crushing Kiln Breath",
+      "source": "unique",
+      "from": "kilnshellTortoise.kilnBreath",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnshellTortoise.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnshellTortoise.level.riderShellBash",
+      "name": "Tortoise's Cruel Shell Bash",
+      "source": "unique",
+      "from": "kilnshellTortoise.shellBash",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 35,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnshellTortoise.level.gash",
+      "name": "Gash",
+      "source": "shared",
+      "from": "core.gash",
+      "move": {
+        "intent": "attack",
+        "damage": 3,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "slagtongImp": [
+    {
+      "id": "slagtongImp.level.heavySlagSpit",
+      "name": "Imp's Crushing Slag Spit",
+      "source": "unique",
+      "from": "slagtongImp.slagSpit",
+      "move": {
+        "intent": "attack",
+        "damage": 11,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagtongImp.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagtongImp.level.riderTongueBrand",
+      "name": "Imp's Cruel Tongue Brand",
+      "source": "unique",
+      "from": "slagtongImp.tongueBrand",
+      "move": {
+        "intent": "attack",
+        "damage": 6,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagtongImp.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagtongImp.level.debuffCinderCackle",
+      "name": "Imp's Bitter Cinder Cackle",
+      "source": "unique",
+      "from": "slagtongImp.cinderCackle",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagtongImp.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "sootwingBat": [
+    {
+      "id": "sootwingBat.level.riderAshWingBeat",
+      "name": "Bat's Cruel Ash Wing Beat",
+      "source": "unique",
+      "from": "sootwingBat.ashWingBeat",
+      "move": {
+        "intent": "attack",
+        "damage": 5,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "sootwingBat.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "sootwingBat.level.heavySootFlurry",
+      "name": "Bat's Crushing Soot Flurry",
+      "source": "unique",
+      "from": "sootwingBat.sootFlurry",
+      "move": {
+        "intent": "attack",
+        "damage": 3,
+        "hits": 3,
+        "sp": 2,
+        "weight": 45,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "sootwingBat.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "sootwingBat.level.counter",
+      "name": "Counter",
+      "source": "shared",
+      "from": "core.counter",
+      "move": {
+        "intent": "attack",
+        "block": 5,
+        "damage": 4,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "brassThroatIbex": [
+    {
+      "id": "brassThroatIbex.level.heavyThunderLeap",
+      "name": "Ibex's Crushing Thunder Leap",
+      "source": "unique",
+      "from": "brassThroatIbex.thunderLeap",
+      "move": {
+        "intent": "attack",
+        "damage": 29,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "brassThroatIbex.level.judgment",
+      "name": "Judgment",
+      "source": "shared",
+      "from": "core.judgment",
+      "move": {
+        "intent": "attack",
+        "damage": 20,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "brassThroatIbex.level.riderBrassCall",
+      "name": "Ibex's Cruel Brass Call",
+      "source": "unique",
+      "from": "brassThroatIbex.brassCall",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 35,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "brassThroatIbex.level.censure",
+      "name": "Censure",
+      "source": "shared",
+      "from": "core.censure",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 3
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "brassThroatIbex.level.wearyingTouch",
+      "name": "Wearying Touch",
+      "source": "shared",
+      "from": "core.wearyingTouch",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "kilnbackTerrapin": [
+    {
+      "id": "kilnbackTerrapin.level.heavyShellRam",
+      "name": "Terrapin's Crushing Shell Ram",
+      "source": "unique",
+      "from": "kilnbackTerrapin.shellRam",
+      "move": {
+        "intent": "attack",
+        "damage": 27,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnbackTerrapin.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnbackTerrapin.level.riderSiegeLob",
+      "name": "Terrapin's Cruel Siege Lob",
+      "source": "unique",
+      "from": "kilnbackTerrapin.siegeLob",
+      "move": {
+        "intent": "attack",
+        "damage": 18,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnbackTerrapin.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnbackTerrapin.level.guardSiegePlate",
+      "name": "Terrapin's Stout Siege Plate",
+      "source": "unique",
+      "from": "kilnbackTerrapin.siegePlate",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "kilnbackTerrapin.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "slagwingHeron": [
+    {
+      "id": "slagwingHeron.level.heavyEmberDive",
+      "name": "Heron's Crushing Ember Dive",
+      "source": "unique",
+      "from": "slagwingHeron.emberDive",
+      "move": {
+        "intent": "attack",
+        "damage": 29,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagwingHeron.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagwingHeron.level.guardHeronWard",
+      "name": "Stout Heron Ward",
+      "source": "unique",
+      "from": "slagwingHeron.heronWard",
+      "move": {
+        "intent": "block",
+        "block": 11,
+        "sp": 2,
+        "weight": 15,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagwingHeron.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagwingHeron.level.riderSlagJab",
+      "name": "Heron's Cruel Slag Jab",
+      "source": "unique",
+      "from": "slagwingHeron.slagJab",
+      "move": {
+        "intent": "attack",
+        "damage": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 40,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "slagwingHeron.level.counter",
+      "name": "Counter",
+      "source": "shared",
+      "from": "core.counter",
+      "move": {
+        "intent": "attack",
+        "block": 5,
+        "damage": 4,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "ashSilkWeaver": [
+    {
+      "id": "ashSilkWeaver.level.heavyCocoonCrush",
+      "name": "Weaver's Heavy Cocoon Crush",
+      "source": "unique",
+      "from": "ashSilkWeaver.cocoonCrush",
+      "move": {
+        "intent": "attack",
+        "damage": 24,
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashSilkWeaver.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashSilkWeaver.level.debuffSilkSnare",
+      "name": "Weaver's Bitter Silk Snare",
+      "source": "unique",
+      "from": "ashSilkWeaver.silkSnare",
+      "move": {
+        "intent": "debuff",
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frost",
+            "stacks": 3
+          },
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashSilkWeaver.level.rimeVeil",
+      "name": "Rime Veil",
+      "source": "shared",
+      "from": "core.rimeVeil",
+      "move": {
+        "intent": "block",
+        "block": 9,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashSilkWeaver.level.riderVenomFang",
+      "name": "Weaver's Cruel Venom Fang",
+      "source": "unique",
+      "from": "ashSilkWeaver.venomFang",
+      "move": {
+        "intent": "attack",
+        "damage": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frost",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 35,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ashSilkWeaver.level.counter",
+      "name": "Counter",
+      "source": "shared",
+      "from": "core.counter",
+      "move": {
+        "intent": "attack",
+        "block": 5,
+        "damage": 4,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "ferrumVotary": [
+    {
+      "id": "ferrumVotary.level.heavyAnvilBrand",
+      "name": "Votary's Crushing Anvil Brand",
+      "source": "unique",
+      "from": "ferrumVotary.anvilBrand",
+      "move": {
+        "intent": "attack",
+        "damage": 27,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ferrumVotary.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ferrumVotary.level.guardIronLitany",
+      "name": "Votary's Stout Iron Litany",
+      "source": "unique",
+      "from": "ferrumVotary.ironLitany",
+      "move": {
+        "intent": "block",
+        "block": 15,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ferrumVotary.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ferrumVotary.level.riderVoltaicPrayer",
+      "name": "Votary's Cruel Voltaic Prayer",
+      "source": "unique",
+      "from": "ferrumVotary.voltaicPrayer",
+      "move": {
+        "intent": "attack",
+        "damage": 8,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "ferrumVotary.level.smash",
+      "name": "Smash",
+      "source": "shared",
+      "from": "core.smash",
+      "move": {
+        "intent": "attack",
+        "damage": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ],
+  "crucibleNewt": [
+    {
+      "id": "crucibleNewt.level.heavyCrucibleTail",
+      "name": "Newt's Crushing Crucible Tail",
+      "source": "unique",
+      "from": "crucibleNewt.crucibleTail",
+      "move": {
+        "intent": "attack",
+        "damage": 30,
+        "sp": 2,
+        "weight": 30,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "crucibleNewt.level.reaverSpecial",
+      "name": "Sundering Art",
+      "source": "shared",
+      "from": "core.reaverSpecial",
+      "move": {
+        "intent": "attack",
+        "damage": 32,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "crucibleNewt.level.riderSlagBreath",
+      "name": "Newt's Cruel Slag Breath",
+      "source": "unique",
+      "from": "crucibleNewt.slagBreath",
+      "move": {
+        "intent": "attack",
+        "damage": 13,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ],
+        "sp": 2,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "crucibleNewt.level.venomedEdge",
+      "name": "Venomed Edge",
+      "source": "shared",
+      "from": "core.venomedEdge",
+      "move": {
+        "intent": "attack",
+        "damage": 4,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 4
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "crucibleNewt.level.guardMoltenHide",
+      "name": "Newt's Stout Molten Hide",
+      "source": "unique",
+      "from": "crucibleNewt.moltenHide",
+      "move": {
+        "intent": "block",
+        "block": 12,
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    {
+      "id": "crucibleNewt.level.smokeVeil",
+      "name": "Smoke Veil",
+      "source": "shared",
+      "from": "core.smokeVeil",
+      "move": {
+        "intent": "block",
+        "block": 7,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 2
+          }
+        ],
+        "sp": 2,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    }
+  ]
+}

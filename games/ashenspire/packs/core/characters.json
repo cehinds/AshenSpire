@@ -295,7 +295,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "wanderingSoldier.slash",
@@ -390,7 +390,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "blightHound.bite",
@@ -467,7 +467,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "huskBrute.club",
@@ -554,7 +554,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "graveWisp.curse",
@@ -637,7 +637,7 @@
     ],
     "levelProfile": {
       "min": 2,
-      "max": 3
+      "max": 4
     },
     "defaultDeck": [
       "wyrmAspirant.consecrate",
@@ -727,8 +727,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 3
+      "min": 5,
+      "max": 5
     },
     "defaultDeck": [
       "fellWarden.caneStrike",
@@ -865,7 +865,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "lanternMoth.lanternDust",
@@ -949,7 +949,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "briarHermit.rootShelter",
@@ -1037,7 +1037,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "chainScavenger.hookCast",
@@ -1127,8 +1127,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 3
+      "min": 5,
+      "max": 5
     },
     "defaultDeck": [
       "bellKeeper.bronzeToll",
@@ -1245,8 +1245,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 3
+      "min": 5,
+      "max": 5
     },
     "defaultDeck": [
       "thornMatriarch.rootCrown",
@@ -1362,8 +1362,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "gildedKnight.thrust",
@@ -1447,8 +1447,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "courtSurgeon.scalpel",
@@ -1536,8 +1536,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "stitchedHound.maul",
@@ -1612,8 +1612,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "courtMarionette.dart",
@@ -1687,8 +1687,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "livingArmor.slam",
@@ -1780,8 +1780,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 4,
+      "max": 6
     },
     "defaultDeck": [
       "courtDuelist.enGarde",
@@ -1876,8 +1876,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 4
+      "min": 8,
+      "max": 8
     },
     "defaultDeck": [
       "stitchedKing.scepterBlow",
@@ -2002,8 +2002,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "mirrorScribe.silverScript",
@@ -2092,8 +2092,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "stitchCrab.shellFold",
@@ -2176,8 +2176,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 4
+      "min": 8,
+      "max": 8
     },
     "defaultDeck": [
       "glassRegent.prismGuard",
@@ -2303,8 +2303,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 4
+      "min": 8,
+      "max": 8
     },
     "defaultDeck": [
       "marrowOrganist.bonePrelude",
@@ -2425,8 +2425,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 5,
+      "max": 7
     },
     "defaultDeck": [
       "ashRevenant.cinderSlash",
@@ -2503,8 +2503,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 5,
+      "max": 7
     },
     "defaultDeck": [
       "emberStarvedPilgrim.desperateClaw",
@@ -2579,8 +2579,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 5,
+      "max": 7
     },
     "defaultDeck": [
       "valkyrieShade.spiralLance",
@@ -2654,8 +2654,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 5,
+      "max": 7
     },
     "defaultDeck": [
       "charredColossus.smash",
@@ -2745,8 +2745,8 @@
     ],
     "spFloor": 3,
     "levelProfile": {
-      "min": 4,
-      "max": 5
+      "min": 6,
+      "max": 8
     },
     "defaultDeck": [
       "wyrmLord.consecration",
@@ -2844,8 +2844,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 5,
-      "max": 5
+      "min": 11,
+      "max": 11
     },
     "defaultDeck": [
       "blightedValkyrie.spiralThrust",
@@ -2993,8 +2993,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 5,
+      "max": 7
     },
     "defaultDeck": [
       "cinderMantis.scythePair",
@@ -3080,8 +3080,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 5,
+      "max": 7
     },
     "defaultDeck": [
       "eclipseCantor.darkHymn",
@@ -3169,8 +3169,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 5,
-      "max": 5
+      "min": 11,
+      "max": 11
     },
     "defaultDeck": [
       "furnaceSaint.openFurnace",
@@ -3286,8 +3286,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 5,
-      "max": 5
+      "min": 11,
+      "max": 11
     },
     "defaultDeck": [
       "hollowAstronomer.starChart",
@@ -3406,8 +3406,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 5,
-      "max": 5
+      "min": 11,
+      "max": 11
     },
     "defaultDeck": [
       "ashheartDragon.obsidianClaws",
@@ -3548,7 +3548,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "brackenTusker.gore",
@@ -3633,7 +3633,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "fenwickToad.tongueLash",
@@ -3724,7 +3724,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "reedpipePoacher.dart",
@@ -3807,7 +3807,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 2
+      "max": 3
     },
     "defaultDeck": [
       "wickerTitheman.tithe",
@@ -3899,7 +3899,7 @@
     ],
     "levelProfile": {
       "min": 2,
-      "max": 3
+      "max": 4
     },
     "defaultDeck": [
       "siltCrownNewt.mireSpit",
@@ -4000,7 +4000,7 @@
     ],
     "levelProfile": {
       "min": 2,
-      "max": 3
+      "max": 4
     },
     "defaultDeck": [
       "wickerHind.antlerRake",
@@ -4110,7 +4110,7 @@
     ],
     "levelProfile": {
       "min": 2,
-      "max": 3
+      "max": 4
     },
     "defaultDeck": [
       "blackrushStork.beakJab",
@@ -4211,7 +4211,7 @@
     ],
     "levelProfile": {
       "min": 2,
-      "max": 3
+      "max": 4
     },
     "defaultDeck": [
       "pearlbackSnail.slimeBash",
@@ -4314,7 +4314,7 @@
     ],
     "levelProfile": {
       "min": 2,
-      "max": 3
+      "max": 4
     },
     "defaultDeck": [
       "alderMaskHarvester.scytheCut",
@@ -4419,8 +4419,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 3
+      "min": 5,
+      "max": 5
     },
     "defaultDeck": [
       "woundwoodTusker.woundGore",
@@ -4558,8 +4558,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 3
+      "min": 5,
+      "max": 5
     },
     "defaultDeck": [
       "mireProcessional.pallLash",
@@ -4721,8 +4721,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "quarryRam.headbutt",
@@ -4806,8 +4806,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "tollgateHookman.tollJab",
@@ -4898,8 +4898,8 @@
       "dexterity"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "waxsealBailiff.waxBrand",
@@ -4994,8 +4994,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "carrionHeadsman.cleaveStroke",
@@ -5087,8 +5087,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 3
+      "min": 3,
+      "max": 5
     },
     "defaultDeck": [
       "knellcapSentinel.knellStrike",
@@ -5182,8 +5182,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 4,
+      "max": 6
     },
     "defaultDeck": [
       "pallidOathCamel.oathKick",
@@ -5296,8 +5296,8 @@
       "dexterity"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 4,
+      "max": 6
     },
     "defaultDeck": [
       "inkveilNautilus.inkJet",
@@ -5405,8 +5405,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 4,
+      "max": 6
     },
     "defaultDeck": [
       "mirrorFanAbbess.fanSlash",
@@ -5507,8 +5507,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 4,
+      "max": 6
     },
     "defaultDeck": [
       "saltChoirWalrus.saltDirge",
@@ -5612,8 +5612,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 4,
+      "max": 6
     },
     "defaultDeck": [
       "rimewheelPenitent.penanceLash",
@@ -5709,8 +5709,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 4
+      "min": 8,
+      "max": 8
     },
     "defaultDeck": [
       "veiledJusticiar.verdictStrike",
@@ -5857,8 +5857,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 4
+      "min": 8,
+      "max": 8
     },
     "defaultDeck": [
       "sixleggedHearse.legStomp",
@@ -5999,8 +5999,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 5,
+      "max": 7
     },
     "defaultDeck": [
       "kilnshellTortoise.shellBash",
@@ -6096,8 +6096,8 @@
       "dexterity"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 5,
+      "max": 7
     },
     "defaultDeck": [
       "slagtongImp.slagSpit",
@@ -6188,8 +6188,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 3,
-      "max": 4
+      "min": 5,
+      "max": 7
     },
     "defaultDeck": [
       "sootwingBat.sootFlurry",
@@ -6273,8 +6273,8 @@
       "dexterity"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 5
+      "min": 6,
+      "max": 8
     },
     "defaultDeck": [
       "brassThroatIbex.brassCall",
@@ -6381,8 +6381,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 5
+      "min": 6,
+      "max": 8
     },
     "defaultDeck": [
       "kilnbackTerrapin.shellRam",
@@ -6492,8 +6492,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 5
+      "min": 6,
+      "max": 8
     },
     "defaultDeck": [
       "slagwingHeron.slagJab",
@@ -6593,8 +6593,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 5
+      "min": 6,
+      "max": 8
     },
     "defaultDeck": [
       "ashSilkWeaver.venomFang",
@@ -6694,8 +6694,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 5
+      "min": 6,
+      "max": 8
     },
     "defaultDeck": [
       "ferrumVotary.ironCensure",
@@ -6809,8 +6809,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 5,
-      "max": 5
+      "min": 11,
+      "max": 11
     },
     "defaultDeck": [
       "crucibleNewt.moltenBite",

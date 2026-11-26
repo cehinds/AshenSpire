@@ -144,6 +144,7 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:58cd1d56ba6007b40be607b77077ca7df0ac3f29e14600f32aabd48c41cc4085',
   'sha256:6ef5d30c3d03a486ab6dafa5756463219cd801324544beedfa76d170066865eb',
   'sha256:edb03b160d360fcbd7ac312134fc535bc1e2b90ad45d6bcbfcff780c6dc8ec06',
+  'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
 // the statusCaps rule key (W25-NC); the Counter stack rule (batch 5); the bands rules (W25-BANDS) with the swapRows op, Upset the Ranks, formation Block and spell lanes (rules 6-9). Then W25-EvadeCards (Evade card data, card modes, the self Advance). Then the Evade card faces, the Quickstep Counter stack and the Evade-grant face phrase (src/model/fixCoreMechanics.js, playingCard.js). Pinned once at the batch-5 + bands + Evade cards merge; 8c57f3... is now in PREVIOUS_RUNTIMES.
@@ -185,6 +186,8 @@ const COMPATIBLE_HOST_RUNTIMES = new Set([
   'sha256:0c4e9eae226108858dcb937000b0992a33b778f650bb3e3e17a1c369ba51a0b3',
   // Same rules compiled from the repository's canonical LF kernel bytes.
   'sha256:c77d4f30494cb821fc66b9b9ef19b91fbb2c699633fe0137b72ab89d261ec831',
+  // Enemy level scaling (spCap in engine/kernel/gameConfig.js) moves the host runtime; prior saves keep their own rules.
+  'sha256:659730689c3f0675a28b5ecbf6ef6c2bcbefa32b77c4794a5a5f9c14f0b8f07d',
 ]);
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return COMPATIBLE_HOST_RUNTIMES.has(currentRuntime)

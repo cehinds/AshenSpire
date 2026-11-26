@@ -100,10 +100,21 @@ const cases = [
   ['every encounter target overlaps every enemy it can author', () => {
     // Core's enemies carry their own levels 1-5 (SPEC §17, owner 2026-11-07), and the encounters' target bands are the same map;
     // the legacy act*Enemies.json profiles are the retired profile's. Check the enemies Core fights, falling back to the bundle's own.
-    const core = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }).content.enemies;
+    // Owner, 2026-11-20 (characters.enemyLevelScaling): a Core enemy's fight level comes from the act, tier and floor-step table, not the
+    // encounter's target band (the retired profile's input, left unchanged so its level rolls stay put). Such an enemy's levelProfile
+    // must instead span levels of its tier's table row.
+    const coreProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+    const core = coreProfile.content.enemies, scaling = coreProfile.modules.characters?.enemyLevelScaling;
+    const tableLevels = (tier) => new Set(Object.values(scaling?.levels || {}).flatMap((act) => [act[tier]].flat()));
+    for (const enemy of scaling ? core : []) {
+      const levels = tableLevels(enemy.tier);
+      assert(levels.has(enemy.levelProfile.min) && levels.has(enemy.levelProfile.max), `${enemy.id} levelProfile ${enemy.levelProfile.min}-${enemy.levelProfile.max} is not a ${enemy.tier} table range`);
+    }
+    const scaled = new Set(scaling ? core.map((enemy) => enemy.id) : []);
     const enemies = new Map([...contentBundle.enemies, ...core].map((enemy) => [enemy.id, enemy]));
     for (const encounter of contentBundle.encounters) {
       for (const enemyId of encounter.enemies) {
+        if (scaled.has(enemyId)) continue;
         const profile = enemies.get(enemyId).levelProfile;
         const overlaps = Math.max(profile.min, encounter.targetBand.min) <= Math.min(profile.max, encounter.targetBand.max);
         assert(overlaps, `${encounter.id}/${enemyId} has no profile/target overlap`);

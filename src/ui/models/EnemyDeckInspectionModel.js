@@ -4,12 +4,13 @@ import { t } from '../strings.js';
 import { gameContent } from '../../model/gameProfile.js';
 import { enemyActionEffectText } from '../../model/enemyMoveCards.js';
 import { enemyMoveSp } from '../../engine/combatRoundsAdapter.js';
+import { enemyDefinitionOf } from '../../model/enemyMoveSet.js';
 
 export function enemyDeckInspection(combat, enemy, moves, preview) {
   const authored = gameContent(combat, 'enemies')?.find(row => row.id === enemy.enemyId);
   if (!authored) return null;
   const definitions = new Map((gameContent(combat, 'enemyCards') || []).map(card => [card.id, card]));
-  const runtime = combat.registries.enemies.get(enemy.enemyId);
+  const runtime = enemyDefinitionOf(combat.registries, enemy);
   const lastMoveId = enemy.performedMoves?.at(-1);
   const copies = new Map();
   for (const cardId of authored.defaultDeck || []) copies.set(cardId, (copies.get(cardId) || 0) + 1);
@@ -31,6 +32,17 @@ export function enemyDeckInspection(combat, enemy, moves, preview) {
       // tier scaling may differ from the printed base card definition.
       detail: move.detail };
   }).filter(Boolean);
+  // Level cards (owner, 2026-11-20): the cards this instance gained for its floor step, one copy each, under the card's name.
+  for (const [moveId, extra] of Object.entries(enemy.extraMoves || {})) {
+    const move = moves.find(row => row.moveId === moveId);
+    if (!move || !runtime.moves?.[moveId]) continue;
+    const cost = enemyMoveSp(runtime.moves[moveId], { enemy, moveId, combat });
+    const active = !preview?.hidden && preview?.moveId === moveId;
+    const last = moveId === lastMoveId;
+    const state = [active && 'Current action', last && 'Last played'].filter(Boolean).join(' · ');
+    rows.push({ ...move, id: extra.levelCard || moveId, cardId: extra.levelCard || moveId, copies: 1, name: extra.name || move.name, active, last,
+      meta: [state || 'Level card', `Action cost: ${cost} Stamina`, move.meta].filter(Boolean).join(' · '), detail: move.detail });
+  }
   const last = rows.find(row => row.last) || null;
   const receipt = [...(combat.eventLog || [])].reverse().find(event => event.type === 'enemyMoveStarted' && event.sourceId === enemy.id && event.moveId === lastMoveId)?.actionPreview;
   const played = last && receipt ? { ...last, meta: `Last played · Paid ${receipt.totalSp ?? receipt.spCost} Stamina · ${last.cardId}`,

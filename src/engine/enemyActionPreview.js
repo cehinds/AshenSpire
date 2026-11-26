@@ -7,6 +7,7 @@ import * as Triggers from './triggers.js';
 // Tactics' import cycle. Read its exports when invoked, not during bundling.
 import * as Tactics from './combatCardTactics.js';
 import { enemyMoveDamage } from '../model/state.js';
+import { enemyMoveOf } from '../model/enemyMoveSet.js';
 
 // Random predicates belong to execution. Do not sample even a detached stream:
 // that would present an uncommitted outcome as a known conditional result.
@@ -30,7 +31,7 @@ function previewPredicate(combat, predicate, action) {
 }
 
 export function previewEnemyAction(combat, enemy, moveId) {
-  const authored = combat.registries.enemies.get(enemy.enemyId)?.moves?.[moveId];
+  const authored = enemyMoveOf(combat.registries, enemy, moveId);
   if (!authored) return null;
   const move = Tactics.expandedEnemyMove(enemy, authored, moveId, combat);
   const carrier = Tactics.enemyMoveCarrier(enemy, authored, moveId, combat);

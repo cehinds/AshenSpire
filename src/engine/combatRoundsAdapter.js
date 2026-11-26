@@ -15,6 +15,7 @@ import { evaluate } from '../model/formulas.js';
 import { createRng } from './rng.js';
 import { stanceFor, playerKind, moveKind } from './combatRounds/stance.js';
 import { branchHitCount, multiHitFloorFor, enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
+import { enemyMoveOf } from '../model/enemyMoveSet.js';
 // A move with no stance costs 1 SP unless the move defines its own `sp` (SPEC §4.6a).
 export const MOVE_SP = 1;
 // Guard for zero-cost moves, which would otherwise never run the SP pool out.
@@ -236,7 +237,7 @@ function projectRetreatSpent(enemy) {
 
 function projectEnemyMovement(pricing, enemy, moveId) {
   if (!pricing.rangeState?.policy.enabled) return;
-  const move = expandedEnemyMove(enemy, pricing.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, pricing);
+  const move = expandedEnemyMove(enemy, enemyMoveOf(pricing.registries, enemy, moveId), moveId, pricing);
   if (move.delay) return;
   // Rows (owner 2026-11-18): a back-row enemy holding Retreat stacks is not brought closer by the Advance an attack carries; the shown
   // step forward (its own moveEngagement, below) is what spends a stack, one per approach, and only the stackless one steps to the front.

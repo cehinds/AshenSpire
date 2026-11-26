@@ -229,12 +229,14 @@ test('item 4: an equipped, Smith-tiered weapon adds no AR; AR is the effective S
   }
 });
 
-test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bosses 4/6/8); normal enemies keep their own level', async () => {
+// Owner, 2026-11-20: characters.enemyLevelScaling supersedes the 2026-11-17 by-act levels; on a run's first floor (step 0) elites
+// still fight at 2 / 4 / 6, and bosses now at 5 / 8 / 11 (SPEC §17).
+test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bosses 5/8/11 on step 0); normal enemies keep their own level', async () => {
   const { createRng } = await import('../src/engine/rng.js');
   const { createRunCombat } = await import('../src/engine/runCombat.js');
   const { characterSettings, enemyPools, enemyItemBonuses } = await import('../engine/kernel/gameConfig.js');
   const settings = characterSettings(profile.modules);
-  const LEVELS = { elite: [2, 4, 6], boss: [4, 6, 8] };
+  const LEVELS = { elite: [2, 4, 6], boss: [5, 8, 11] };
   for (const act of [1, 2, 3]) {
     for (const row of profile.content.enemies) {
       const run = newRun('reaver', 5);
@@ -245,7 +247,7 @@ test('item 6: Core elites and bosses fight at their act level (elites 2/4/6, bos
         // A normal enemy keeps its own level and its authored range, scaled by its tier (enemies.hpScaleByTier, #2820 review).
         const scale = settings.hpScaleByTier?.[row.tier] ?? 1;
         assert.ok(enemy.maxHp >= Math.max(1, Math.round(def.hp[0] * scale)) && enemy.maxHp <= Math.max(1, Math.round(def.hp[1] * scale)), `${row.id} keeps its authored HP range, scaled ${scale}`);
-        assert.equal(enemy.level === undefined || enemy.level <= 5, true, `${row.id} keeps its own level`);
+        assert.equal(enemy.level === undefined || enemy.level <= 5, true, `${row.id} keeps its step-0 level`);
         continue;
       }
       const level = LEVELS[row.tier][act - 1];
