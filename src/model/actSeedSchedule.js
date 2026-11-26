@@ -8,14 +8,7 @@ import { mulberry32 } from './rng.js';
 import { GetActiveScoring } from './activeScoring.js';
 import { CompileTierCatalog, UpgradeKindUnlocked } from './tierUnlocks.js';
 import { UpgradeOfferKey } from './upgradeOffer.js';
-import {
-  upgradeSeed,
-  UPGRADE_KIND_WEIGHTS,
-  UPGRADE_VENDORS,
-  DUD_KINDS,
-  UpgradeKindFamily,
-  UpgradeCategoryOf,
-} from './cardUpgradeSteps.js';
+import * as UpgradeSteps from './cardUpgradeSteps.js';
 
 const MAX_CACHE_ENTRIES = 512;
 const upgradeStockCache = new Map();
@@ -30,8 +23,11 @@ function putBounded(map, key, value) {
   return value;
 }
 
-const DUD_SET = new Set(DUD_KINDS);
-const ALL_CANDIDATE_KINDS = Object.freeze(Object.keys(UPGRADE_KIND_WEIGHTS).filter((k) => !DUD_SET.has(k)));
+// The static CP projection can reach this module while upgrade steps are
+// initializing in the shipped classic bundle. Read their live vocabulary only
+// when a stock is requested, after module initialization has completed.
+let candidateKinds;
+const allCandidateKinds = () => candidateKinds ||= Object.freeze(Object.keys(UpgradeSteps.UPGRADE_KIND_WEIGHTS).filter(kind => !UpgradeSteps.DUD_KINDS.includes(kind)));
 const NEUTRAL_CARD_STUB = Object.freeze({ tags: Object.freeze([]) });
 
 /**
@@ -65,9 +61,9 @@ function weightedPickIndex(weights, u) {
 }
 
 function vendorWeightForKind(kind, vendorConfig) {
-  const base = UPGRADE_KIND_WEIGHTS[kind] || 1;
+  const base = UpgradeSteps.UPGRADE_KIND_WEIGHTS[kind] || 1;
   if (!vendorConfig) return base;
-  const cat = UpgradeCategoryOf(kind, null, NEUTRAL_CARD_STUB);
+  const cat = UpgradeSteps.UpgradeCategoryOf(kind, null, NEUTRAL_CARD_STUB);
   const mult = vendorConfig[cat] ?? 1;
   return base * mult;
 }
@@ -78,37 +74,37 @@ function vendorWeightForKind(kind, vendorConfig) {
  * Returns `{ runSeed, nodeKey, vendor, maxTier, byTier, forTier(tier), signatureKinds }`.
  *
  * Each tier `0..maxTier` gets up to `slotsPerTier` distinct-family upgrade kinds unlocked at that tier,
- * weighted by `UPGRADE_KIND_WEIGHTS` and `UPGRADE_VENDORS[vendor]`.
+ * weighted by `UpgradeSteps.UPGRADE_KIND_WEIGHTS` and `UpgradeSteps.UPGRADE_VENDORS[vendor]`.
  */
 export function ActNodeUpgradeStock(runSeed, nodeKey, { vendor = '', scoring = GetActiveScoring(), slotsPerTier = 5 } = {}) {
   const seed = Number.isFinite(runSeed) ? runSeed : 0;
   const key = String(nodeKey || 'global');
-  const vendorId = vendor && UPGRADE_VENDORS[vendor] ? vendor : '';
+  const vendorId = vendor && UpgradeSteps.UPGRADE_VENDORS[vendor] ? vendor : '';
   const slots = Math.max(1, Math.min(8, Math.floor(Number(slotsPerTier) || 5)));
   const cacheKey = `${seed}|${key}|${vendorId}|${slots}`;
   const cached = upgradeStockCache.get(cacheKey);
   if (cached && cached._scoring === scoring) return cached;
 
   const catalog = CompileTierCatalog(scoring);
-  const vendorConfig = vendorId ? UPGRADE_VENDORS[vendorId] : null;
+  const vendorConfig = vendorId ? UpgradeSteps.UPGRADE_VENDORS[vendorId] : null;
   const byTier = [];
 
   for (let tier = 0; tier <= catalog.maxTier; tier += 1) {
     const unlocked = catalog.enabled ? catalog.kindsAtTier(tier) : null;
-    const eligible = ALL_CANDIDATE_KINDS.filter((kind) => !unlocked || unlocked.has(kind) || UpgradeKindUnlocked(kind, tier, scoring));
-    const rng = mulberry32(upgradeSeed(seed, `nodeStock:${key}:${vendorId || 'rest'}`, tier));
+    const eligible = allCandidateKinds().filter((kind) => !unlocked || unlocked.has(kind) || UpgradeKindUnlocked(kind, tier, scoring));
+    const rng = mulberry32(UpgradeSteps.upgradeSeed(seed, `nodeStock:${key}:${vendorId || 'rest'}`, tier));
     const pool = [...eligible];
     const takenFamilies = new Set();
     const picked = [];
 
     while (picked.length < slots && pool.length) {
       // Prefer distinct families first so a node's specialty shelf offers varied options
-      let choices = pool.filter((k) => !takenFamilies.has(UpgradeKindFamily(k)));
+      let choices = pool.filter((k) => !takenFamilies.has(UpgradeSteps.UpgradeKindFamily(k)));
       if (!choices.length) choices = pool;
       const weights = choices.map((k) => vendorWeightForKind(k, vendorConfig));
       const idx = weightedPickIndex(weights, rng());
       const kind = choices[idx];
-      const family = UpgradeKindFamily(kind);
+      const family = UpgradeSteps.UpgradeKindFamily(kind);
       picked.push(Object.freeze({ kind, family }));
       takenFamilies.add(family);
       const poolIdx = pool.indexOf(kind);
@@ -191,7 +187,7 @@ export function NodeRewardSchedule(
   const cached = rewardScheduleCache.get(cacheKey);
   if (cached) return cached;
 
-  const baseRng = mulberry32(upgradeSeed(seed, `rewardNode:${key}:${source}:${pool}`, 0));
+  const baseRng = mulberry32(UpgradeSteps.upgradeSeed(seed, `rewardNode:${key}:${source}:${pool}`, 0));
   const offerCount = minCount > 0 && maxCount >= minCount
     ? minCount + Math.floor(baseRng() * (maxCount - minCount + 1))
     : null;
@@ -200,9 +196,9 @@ export function NodeRewardSchedule(
   const draftBoostSlots = [];
   const slotSeeds = [];
   for (let i = 0; i < slots; i += 1) {
-    rareBoostSlots.push(mulberry32(upgradeSeed(seed, `rankBoost:${key}:${i}`, 0))() < boostChance);
-    draftBoostSlots.push(mulberry32(upgradeSeed(seed, `rankBoost:${key}:draft:${i}`, 0))() < boostChance);
-    slotSeeds.push(upgradeSeed(seed, `rewardSlot:${key}:${source}:${pool}`, i));
+    rareBoostSlots.push(mulberry32(UpgradeSteps.upgradeSeed(seed, `rankBoost:${key}:${i}`, 0))() < boostChance);
+    draftBoostSlots.push(mulberry32(UpgradeSteps.upgradeSeed(seed, `rankBoost:${key}:draft:${i}`, 0))() < boostChance);
+    slotSeeds.push(UpgradeSteps.upgradeSeed(seed, `rewardSlot:${key}:${source}:${pool}`, i));
   }
 
   const schedule = Object.freeze({
@@ -216,7 +212,7 @@ export function NodeRewardSchedule(
     slotSeeds: Object.freeze(slotSeeds),
     slotRng: (slotIndex) => {
       const idx = Number.isInteger(slotIndex) && slotIndex >= 0 ? slotIndex : 0;
-      const s = idx < slotSeeds.length ? slotSeeds[idx] : upgradeSeed(seed, `rewardSlot:${key}:${source}:${pool}`, idx);
+      const s = idx < slotSeeds.length ? slotSeeds[idx] : UpgradeSteps.upgradeSeed(seed, `rewardSlot:${key}:${source}:${pool}`, idx);
       return mulberry32(s);
     },
   });

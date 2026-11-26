@@ -2,7 +2,7 @@
 // drains Poise (engine/actions.js), so card text reads it as Poise damage. This is a display projection only:
 // the effects, previews and engine are untouched, and any profile that keeps Ward (Current, v2) reads as authored.
 import { fixCoreWardDisabled } from './fixCoreMechanics.js';
-import { computeTokenBindings, cardTokenEffects } from './validate.js';
+import { computeTokenBindings, cardTokenEffects } from './validate/tokenBindings.js';
 
 /** True when the run's profile has Core rules with Ward off; the same predicate the engine uses. */
 export const wardReadsAsPoise = registries => fixCoreWardDisabled({ combatExpansionVersion: 2, gameProfile: registries?.gameProfile });

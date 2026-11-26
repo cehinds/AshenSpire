@@ -439,23 +439,25 @@ test('score-studio loading state: initial HTML shows card loading UI and loading
   assert.match(html, /<div id="items-loading" class="studio-loading-state studio-loading-compact" role="status" aria-live="polite" aria-busy="true">/, 'items loading state renders initially');
 
   const studioSrc = readFileSync(new URL('../tools/score-studio/studio.js', import.meta.url), 'utf8');
-  assert.match(studioSrc, /deriveFaceFromDef:\s*\(?def\)?\s*=>\s*cardDefToFace\(def,\s*state\.scoring\)/, 'initStudioToolsModals receives a defined deriveFaceFromDef callback backed by cardDefToFace');
+  assert.match(studioSrc, /deriveFaceFromDef:\s*def\s*=>\s*withRebalancePreviewRegistry\(\(\)\s*=>\s*cardDefToFace\(clone\(def\),\s*state\.scoring\)\)/, 'rebalance derives faces from detached cards without leaking preview cache changes');
 });
 
-test('score-studio app menubar: File/Edit/View/Tools/Window and Export dropdown contain expected actions', () => {
+test('score-studio app menubar preserves approved commands, context selectors and export actions', () => {
   const html = readFileSync(new URL('../tools/score-studio/index.html', import.meta.url), 'utf8');
-  for (const id of ['btn-menu-file', 'btn-menu-edit', 'btn-menu-view', 'btn-menu-tools', 'btn-menu-window', 'btn-export-menu']) {
+  for (const id of ['menu-file', 'menu-edit', 'menu-view', 'menu-tools', 'menu-git', 'menu-test']) {
     assert.match(html, new RegExp(`id="${id}"`), `menu bar exposes #${id}`);
   }
   for (const id of [
-    'menu-file', 'menu-edit', 'menu-view', 'menu-tools', 'menu-window', 'export-menu',
+    'studio-file-menu', 'studio-edit-menu', 'studio-view-menu', 'studio-tools-menu', 'studio-git-menu', 'studio-test-menu',
+    'gallery-type-cards', 'gallery-type-items',
     'btn-auto-balance-cards', 'btn-auto-balance-items', 'btn-generate-cards',
     'btn-batch-generate-cards', 'btn-batch-generate-items', 'btn-custom-decks',
-    'btn-export-repo', 'btn-download-json', 'btn-export-bundle-json',
-    'btn-export-names-json', 'btn-export-art-json', 'btn-export-item-art-json',
-    'restore-names-modal', 'btn-restore-names', 'btn-restore-names-apply',
+    'btn-export-repo', 'btn-download-json', 'btn-decks-export-json',
+    'btn-save-names', 'btn-download-art',
+    'restore-names-menu', 'btn-restore-names', 'btn-restore-names-apply',
   ]) {
     assert.match(html, new RegExp(`id="${id}"`), `moved menu action or panel #${id} is present`);
   }
-  assert.doesNotMatch(html, /id="btn-more"/, 'old More overflow button is replaced by the standard app menu bar');
+  assert.match(html, /id="studio-menubar"[^>]*role="menubar"/, 'the approved command row remains the application menubar');
+  assert.doesNotMatch(html, /id="restore-names-modal"/, 'Restore names retains one live set of controls');
 });

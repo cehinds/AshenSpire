@@ -12,7 +12,7 @@ import { paidUpgradeCount } from './cardUpgrade.js';
 import { UpgradeSlots } from './cardUpgradeLimits.js';
 import { mulberry32 } from './rng.js';
 import { OwnCardRank } from './cardRank.js';
-import { upgradeSeed } from './cardUpgradeSteps.js';
+import * as UpgradeSteps from './cardUpgradeSteps.js';
 import { blacksmithPrices } from './blacksmithConfig.js';
 
 /** The rank a card cannot pass (state.js MAX_CARD_RANK; not imported, state.js pulls the whole run schema into this module). */
@@ -67,7 +67,7 @@ export function RaiseCardRank(registries, run, instanceId) {
 export function RollRankUp(run, key, chancePct) {
   if (!(chancePct > 0)) return false;
   if (chancePct >= 100) return true;
-  return mulberry32(upgradeSeed(run.seed, `rankUp:${key}`, 0))() * 100 < chancePct;
+  return mulberry32(UpgradeSteps.upgradeSeed(run.seed, `rankUp:${key}`, 0))() * 100 < chancePct;
 }
 
 const wholePct = (n) => (Number.isFinite(n) && n > 0 ? Math.min(100, n) : 0);

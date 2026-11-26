@@ -315,10 +315,24 @@ try {
   assert.equal(featureSearch.kept, featureSearch.second, 'a rebuild keeps the picked feature');
   assert.equal(featureSearch.cleared, featureSearch.all, 'Escape restores the whole list');
 
-  // 7. Auto-name gives the convention name (CardName, trimmed to naming.card.limit): a new card starts with it on, adding
-  //    a status renames it, the name matches the hint's convention name, stays within the limit and fits its title box.
+  // 7. A blank draft starts as the owner's Skill named/texted "New card", with Auto-name off.
+  //    Explicitly enabling Auto-name then follows the convention when a status is added, and fits the title box.
   const autoName = await page.evaluate(async () => {
     document.getElementById('btn-new-card').click();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const defaults = {
+      name: document.getElementById('edit-name').value,
+      text: document.getElementById('edit-text').value,
+      type: document.getElementById('edit-type').value,
+      classId: document.getElementById('edit-class').value,
+      rarity: document.getElementById('edit-rarity').value,
+      sp: document.getElementById('edit-sp').value,
+      mp: document.getElementById('edit-mp').value,
+      autoName: document.getElementById('toggle-auto-name').checked,
+    };
+    const toggle = document.getElementById('toggle-auto-name');
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event('change', { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 300));
     const before = document.getElementById('edit-name').value;
     const toggleOn = document.getElementById('toggle-auto-name').checked;
@@ -329,11 +343,12 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 300));
     const title = document.querySelector('#inspector-card-preview [data-card-binding="name"]');
     const hint = document.getElementById('name-hint').textContent;
-    return { before, after: document.getElementById('edit-name').value, hint, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
+    return { defaults, before, after: document.getElementById('edit-name').value, hint, toggleOn, scrollWidth: title?.scrollWidth ?? 0, clientWidth: title?.clientWidth ?? 0 };
   });
   const NAME_LIMIT = 24;
-  assert.ok(autoName.toggleOn, 'a new card starts with Auto-name on');
-  assert.match(autoName.before, /Strike/, `a new martial melee card is a Strike (${autoName.before})`);
+  assert.deepEqual(autoName.defaults, { name: 'New card', text: 'New card', type: 'skill', classId: 'colorless', rarity: 'common', sp: '1', mp: '0', autoName: false }, 'a new blank draft keeps the requested Skill defaults');
+  assert.ok(autoName.toggleOn, 'Auto-name turns on only after the explicit choice');
+  assert.notEqual(autoName.before, 'New card', 'enabling Auto-name immediately applies the convention');
   assert.notEqual(autoName.after, autoName.before, `adding a status renames an auto-named card (${autoName.before} -> ${autoName.after})`);
   assert.ok(autoName.hint.startsWith(`Convention: ${autoName.after} `), `the auto name is the convention name (${autoName.hint})`);
   assert.ok(autoName.after.length <= NAME_LIMIT, `the auto name keeps to the limit (${autoName.after})`);
