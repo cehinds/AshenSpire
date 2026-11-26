@@ -9,6 +9,7 @@ Use this directory as the shared reference for the approved planning sequence an
 ## Start here
 
 - [First story SS-001: persistent library preview and inspector](stories/SS-001-persistent-workspace.md) — user story, twelve acceptance criteria and implementation tasks written before code changes.
+- [Claude execution prompt for SS-001](stories/SS-001-claude-execution-prompt.md) — copyable implementation handoff using the story's scope and acceptance reference.
 - [Feature checklist](FEATURE-CHECKLIST.md) — tool features first, followed by the complete 180-item requested scope.
 - [Prioritized implementation plan](IMPLEMENTATION-PLAN.md) — eight milestones, 33 work packages, reuse boundaries and 27 future local-game acceptance tests.
 - [Use cases and proposed UI paths](USE-CASES.md) — all 64 researched cases, interaction targets and package mapping.

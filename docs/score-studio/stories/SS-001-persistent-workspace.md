@@ -2,6 +2,8 @@
 
 Status: specified; implementation and acceptance are pending.
 
+Execution handoff: [Claude prompt for this story](SS-001-claude-execution-prompt.md).
+
 The [editor specification](../../EDITOR-SPEC.md) controls the persistent parent
 workbench. SS-001 delivers a bounded foundation within that parent; it does not
 redefine the complete workbench or the later tool groups.
