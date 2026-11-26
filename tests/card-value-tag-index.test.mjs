@@ -7,10 +7,12 @@ import * as model from '../src/model/attackCardDamage.js';
 
 // Full output parity comes from the independently pinned pre-index model. Only
 // the small fixture is recorded; authored catalogs never enter this oracle.
+// After controlled operand changes, regenerate with node tools/card-value-index-oracle.mjs.
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/card-value-index-controlled.json', import.meta.url)));
 const digest = value => createHash('sha256').update(JSON.stringify(value) ?? 'undefined').digest('hex');
 test('the independent parity oracle records this controlled fixture', () => {
-  assert.equal(baseline.fixtureSha256, digest(cardValueContract()));
+  assert.equal(baseline.fixtureSha256, digest(cardValueContract()),
+    'Controlled operands changed: regenerate with node tools/card-value-index-oracle.mjs');
   assert.equal(baseline.modelSha256, '0ff1b72895151ead0a62edd338da3c80a1c84daaab306fb760ddc3f85c416dc1');
 });
 for (const [name, bundle] of cardValueIndexCases()) for (const method of ['materializeCardValueBonuses', 'projectAttackCardDamageBundle', 'attackCardDamageConfigProblems']) {
