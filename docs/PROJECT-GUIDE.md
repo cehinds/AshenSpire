@@ -43,6 +43,8 @@ nothing is sent automatically; review the captured messages before sharing.
 
 ## Development and design
 
+[Score Studio implementation reference](score-studio/README.md) · [First workspace story](score-studio/stories/SS-001-persistent-workspace.md)
+
 [Contributing](../CONTRIBUTING.md) · [Delivery workflow](FEATURE-DELIVERY-LOOP.md)
 · [QA guide](QA-TESTING.md) · [Architecture map](ARCHITECTURE-MAP.md)
 · [Current dev inventory](ARCHITECTURE-CURRENT-DEV.md)
