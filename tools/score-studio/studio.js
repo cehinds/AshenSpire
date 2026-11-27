@@ -3854,6 +3854,8 @@ function setupStudioMenubar() {
   if (advanced) { panel('file').append(advanced); document.getElementById('btn-more').textContent = 'Advanced settings…'; document.getElementById('btn-more').classList.add('menu-item'); document.getElementById('btn-more').classList.remove('s-btn-icon'); }
   move('edit', 'btn-undo', 'Undo'); move('edit', 'btn-redo', 'Redo');
   command('edit', 'menu-rename-current', 'Rename card…', () => {
+    // The docked pane lives in the gallery panel; show it first when Sandbox or Effects is active.
+    document.querySelector(`.studio-tab[data-tab="${activeGallery}"]`)?.click();
     if (activeGallery === 'items') cardEditorDockUi.editItem(state.selectedItemKey); else cardEditorDockUi.edit(state.selectedCardId);
     const input = document.getElementById(activeGallery === 'items' ? 'item-edit-name' : 'edit-name'); input.focus(); input.select();
   });
