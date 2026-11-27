@@ -158,7 +158,7 @@ function tagSentence(tag)
   switch (tagKind(tag))
   {
     case 'times': return { before: '×', mid: 'positive score', after: '' };
-    case 'share': return { before: 'adds', mid: '× positive score', after: '' };
+    case 'share': return { before: 'adds', mid: tag?.per !== undefined ? '× positive score per' : '× positive score', after: '' };
     case 'per': return { before: '', mid: 'pts per', after: '' };
     default: return { before: 'adds', mid: 'pts', after: '' };
   }
@@ -197,7 +197,7 @@ export function weightExample(groupKey, id, scoring, label, card = null)
     case 'categories':
       return categoryExample(id, scoring, label);
     case 'tags':
-      return tagExample(id, scoring);
+      return tagExample(id, scoring, example);
     case 'upgradeTags':
       return upgradeTagExample(id, scoring);
     case 'items':
@@ -376,7 +376,7 @@ function categoryExample(id, scoring, label)
 }
 
 // ScoreCard's tag value: weight once, or once per hit; multiplier tags scale the positive score.
-function tagExample(id, scoring)
+function tagExample(id, scoring, example)
 {
   const tag = scoring.tags?.[id];
   if (!tag) return '';
@@ -393,7 +393,12 @@ function tagExample(id, scoring)
       return `Positive score ${EXAMPLE_POSITIVE_SCORE}: ${signedPts(EXAMPLE_POSITIVE_SCORE * ((Number(tag.multiplier) || 0) - 1))}`;
     }
     case 'share':
-      return `Positive score ${EXAMPLE_POSITIVE_SCORE}: ${signedPts(EXAMPLE_POSITIVE_SCORE * (Number(tag.pMultiplier) || 0))}`;
+    {
+      // ScoreCard counts a per-hit pMultiplier tag once per hit, as its flat form does.
+      const share = example.positive * (Number(tag.pMultiplier) || 0);
+      if (tag.per === 'hit') return `${positiveLead(example)}: ${EXAMPLE_HITS} hits = ${signedPts(share * EXAMPLE_HITS)}`;
+      return `${positiveLead(example)}: ${signedPts(share)}`;
+    }
     case 'per':
       return tag.per === 'hit'
         ? `${EXAMPLE_HITS} hits = ${pts((Number(tag.weight) || 0) * EXAMPLE_HITS)}`

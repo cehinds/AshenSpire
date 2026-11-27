@@ -2285,7 +2285,8 @@ function renderWeights({ shifts = true } = {}) {
       const bv = R.tags?.[k];
       const isMult = v.multiplier !== undefined || v.pMultiplier !== undefined;
       // Which multiplier this tag uses when switched on: its own, else the repo's.
-      const multKey = TagMultiplierKey(v, bv);
+      // Every weighted tag can multiply: a tag with no multiplier of its own (or in the repo) switches to pMultiplier (P x n).
+      const multKey = TagMultiplierKey(v, bv) || 'pMultiplier';
       return {
         id: k,
         label: `${v.label || k} (${k})`,
@@ -2427,7 +2428,7 @@ function renderWeights({ shifts = true } = {}) {
         const now = weightSentence(g.key, r.id, scoring, r.label);
         for (const part of row.querySelectorAll('.weight-sentence > .weight-words')) part.textContent = now[part.dataset.part];
         // Only a multiplier-form cost, effect or status reads the selected card's positive score.
-        const multForm = WEIGHT_FORM_GROUPS.has(g.key) ? scoring[g.key]?.[r.id]?.multiplier === true : (g.key === 'rank' && r.id === 'effectCount' && scoring.effectCount?.multiplier === true);
+        const multForm = WEIGHT_FORM_GROUPS.has(g.key) ? scoring[g.key]?.[r.id]?.multiplier === true : (g.key === 'rank' && r.id === 'effectCount' && scoring.effectCount?.multiplier === true) || (g.key === 'tags' && scoring.tags?.[r.id]?.pMultiplier !== undefined);
         const card = multForm ? exampleCard(scoring) : null;
         exampleEl.textContent = weightExample(g.key, r.id, scoring, r.label, card);
       };

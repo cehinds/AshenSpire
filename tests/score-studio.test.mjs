@@ -317,6 +317,22 @@ test('weights tab: cost, effect and status rows switch to the multiplier form an
   assert.equal(weightExample('rank', 'effectCount', counted, 'Multi-Effect Bonus', { name: 'Strike', positive: 10 }), 'Strike (positive score 10): 3 effects = 2 pts');
   SetWeightForm(counted.effectCount, repo.effectCount, false);
   assert.deepEqual(counted, applied);
+  // Every weighted tag multiplies: a flat tag with no multiplier key switches to pMultiplier (P x n, per hit when it counts hits).
+  const { SetTagForm, TagMultiplierKey } = await import('../tools/score-studio/weightExamples.js');
+  const tagged = structuredClone(applied);
+  const blunt = tagged.tags['damage:blunt'];
+  const key = TagMultiplierKey(blunt, repo.tags['damage:blunt']) || 'pMultiplier';
+  assert.equal(key, 'pMultiplier');
+  SetTagForm(blunt, key, true);
+  assert.deepEqual([blunt.weight, blunt.pMultiplier, blunt.per], [0, 0, 'hit']);
+  blunt.pMultiplier = 0.1;
+  assert.deepEqual(ValidateScoringConfig(tagged), []);
+  assert.deepEqual(weightSentence('tags', 'damage:blunt', tagged), { before: 'adds', mid: '× positive score per', after: '' });
+  assert.equal(weightExample('tags', 'damage:blunt', tagged, 'Blunt', { name: 'Strike', positive: 10 }), 'Strike (positive score 10): 3 hits = +3 pts');
+  const hit = ScoreCard({ ...BaseFace(), dmg: 10, hits: 2, tags: ['damage:blunt'] }, tagged);
+  assert.equal(hit.parts['damage:blunt'], hit.positive * 0.1 * 2);
+  SetTagForm(blunt, key, false);
+  assert.deepEqual([blunt.weight, 'pMultiplier' in blunt], [0, false], 'off is flat weight 0, as the other tag switches');
   // Switching back restores the repo's flat weight and drops the flag, so nothing is left staged.
   SetWeightForm(pending.costs.sp, repo.costs.sp, false);
   SetWeightForm(pending.effects.block, repo.effects.block, false);
