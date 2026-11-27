@@ -219,6 +219,19 @@ test('the Starseer and Herald starting robes carry the Arcane and Divine Initiat
   }
 });
 
+test('Dusk Chime carries a Decay Initiate (owner, 2026-11-27)', () =>
+{
+  const loadout = {
+    sets: { rightHand: ['duskChime'] },
+    active: {},
+  };
+  const summary = GearSummary(registries, loadout, 'starseer', TRADITIONS_ON);
+  const chime = summary.cardRules.filter(rule => rule.initiate && rule.source === 'duskChime');
+  assert.deepEqual(chime.map(rule => `${rule.selector}:${rule.arg}`), ['schoolSpell:decay']);
+  assert.equal(manaPaid(chime, spell('decay')), PRINTED_MANA - 1, 'a Decay spell');
+  assert.equal(manaPaid(chime, spell('fire')), PRINTED_MANA, 'another school');
+});
+
 test('every Initiate property names a registered gear mod, and the equipment tables validate', () =>
 {
   const initiates = ITEM_PROPERTIES.filter(row => row.id.startsWith('initiate'));

@@ -252,7 +252,7 @@ export const itemCombatPower = {
  "weapon:cinderAxe": {"raw":23,"cp":13,"rank":1,"rarity":"uncommon"},
  "weapon:dagger": {"raw":16,"cp":16,"rank":1,"rarity":"common"},
  "weapon:duelistsFoil": {"raw":25,"cp":5,"rank":1,"rarity":"rare"},
- "weapon:duskChime": {"raw":29,"cp":9,"rank":1,"rarity":"rare"},
+ "weapon:duskChime": {"raw":33,"cp":13,"rank":1,"rarity":"rare"},
  "weapon:emberlightSceptre": {"raw":21,"cp":1,"rank":1,"rarity":"rare"},
  "weapon:estoc": {"raw":30,"cp":20,"rank":1,"rarity":"uncommon"},
  "weapon:flail": {"raw":44,"cp":24,"rank":2,"rarity":"rare"},

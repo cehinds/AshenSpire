@@ -130,9 +130,16 @@ test('current deck and pile Mana faces share final gear pricing with quotes, pay
         // Staffs and robes no longer cut Prepared Mana by type; the Starseer's Nightweave carries an Arcane Initiate (owner, 2026-11-27).
         const preparedRules = (combat.player.itemProps.cardRules || []).filter(row => row.stat === 'manaCost' && row.conds.some(cond => cond.name === 'stance'));
         const wornWeaponIds = [right, left].filter(Boolean);
-        assert.equal(preparedRules.filter(row => wornWeaponIds.includes(row.source)).length, 0, `${label}: weapons carry no Prepared Mana cut`);
-        assert.equal(preparedRules.filter(row => row.initiate).length, classId === 'starseer' ? 1 : 0, `${label}: the robe's Initiate`);
-        const initiate = classId === 'starseer' && GearSelectorMatches('arcaneSpell', null, def) ? 1 : 0;
+        // Dusk Chime carries a Decay Initiate; no other weapon cuts Prepared Mana.
+        const chime = wornWeaponIds.includes('duskChime');
+        const weaponCuts = preparedRules.filter(row => wornWeaponIds.includes(row.source));
+        assert.equal(weaponCuts.length, chime ? 1 : 0, `${label}: only Dusk Chime cuts Prepared Mana`);
+        assert.ok(preparedRules.every(row => row.initiate), `${label}: every Prepared Mana cut is an Initiate`);
+        const robeInitiate = classId === 'starseer' && GearSelectorMatches('arcaneSpell', null, def);
+        const chimeInitiate = chime && GearSelectorMatches('schoolSpell', 'decay', def);
+        const initiate = robeInitiate || chimeInitiate
+          ? 1
+          : 0;
         const base = classId === 'starseer' && printedMana > 0 ? Math.max(0, printedMana - 1) : printedMana; // Starseer is a Graduate; Reaver is not.
         const chainCut = cardId === 'core.cantrip' ? 1 : 0; // a mirrored cantrip takes the successive-Spell cut, and with no cost minimum (owner 2026-11-22) it may reach 0 for a non-Graduate too
         const preparedCut = 0; // Prepared itself takes no Mana; staff, robe and other gear tags own the Prepared Mana cut (owner, 2026-11-26)
