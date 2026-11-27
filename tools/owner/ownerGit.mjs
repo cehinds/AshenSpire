@@ -81,7 +81,17 @@ function unstage(path, cwd)
     });
 }
 
-/** Every changed path in a working tree: [{ path, deleted, untracked, renamed }]. */
+function renameSource(path)
+{
+    return {
+        path,
+        deleted: true,
+        untracked: false,
+        renamed: false,
+    };
+}
+
+/** Every changed path in a working tree; a rename yields its new path and its deleted source. */
 export function ChangedPaths(cwd = REPO_ROOT)
 {
     const entries = statusEntries(cwd);
@@ -90,10 +100,12 @@ export function ChangedPaths(cwd = REPO_ROOT)
     {
         const change = changeOf(entries[index]);
         changes.push(change);
-        if (change.renamed)
+        if (!change.renamed)
         {
-            index++;
+            continue;
         }
+        index++;
+        changes.push(renameSource(entries[index]));
     }
     return changes;
 }
