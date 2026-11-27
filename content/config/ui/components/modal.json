@@ -133,6 +133,14 @@
     "drawPile": {
       "extends": "pileViewer",
       "shuffleForDisplay": true
+    },
+    "spentPile": {
+      "extends": "pileViewer",
+      "className": "pile-modal spent-pile-modal",
+      "titleKey": "piles.spent.title",
+      "navAriaKey": "piles.spent.nav",
+      "showMenuButton": false,
+      "defaultTab": "discard"
     }
   }
 }
