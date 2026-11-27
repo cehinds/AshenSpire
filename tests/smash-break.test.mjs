@@ -61,7 +61,23 @@ test('breakPoise removes that much Poise on top of the hit', () => {
   const plain = profileDamageReceipt(combat, combat.player, target, 8, smash);
   const receipt = profileDamageReceipt(combat, combat.player, target, 8, HitBreakCarrier(smash, { op: 'damage', amount: 8, breakPoise: 4 }));
   assert.deepEqual(receipt.broken, { block: 0, poise: 4 });
-  assert.equal(receipt.poiseDrain - (plain.poiseDrain || 0) + receipt.poiseMitigated - plain.poiseMitigated >= 4, true);
+  const plainLoss = (plain.poiseDrain || 0) + plain.poiseMitigated;
+  const breakingLoss = receipt.poiseDrain + receipt.poiseMitigated;
+  assert.equal(breakingLoss - plainLoss, 4);
+});
+
+test('the receipt lists a Poise break once, beside the hit\'s own Poise damage', () => {
+  const { combat, target } = live({ block: 0, poise: 10 });
+  const plain = profileDamageReceipt(combat, combat.player, target, 8, smash);
+  const breakCarrier = HitBreakCarrier(smash, { op: 'damage', amount: 8, breakPoise: 4 });
+  const receipt = profileDamageReceipt(combat, combat.player, target, 8, breakCarrier);
+  const [entry] = receipt.damageReceipt.hits;
+  assert.equal(entry.poiseBroken, 4);
+  assert.equal(entry.poiseDamage, plain.poiseDrain);
+  assert.equal(entry.poiseBroken + entry.poiseDamage, receipt.poiseDrain);
+  const summary = damageReceiptLines(receipt.damageReceipt).find(line => line.includes('Break Poise −'));
+  assert.equal(summary.match(/Break Poise −4/g).length, 1);
+  assert.equal(summary.includes(`Poise damage ${plain.poiseDrain}`), true);
 });
 
 test('a multi-hit Smash breaks once: the preview and the live play agree', () => {

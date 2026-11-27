@@ -938,11 +938,6 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     const poise = PoiseLossAdjust(ctx,source,carrier,defending,{taken:poiseMitigated+poiseDrain,pool:target?.persistentPoise?.value || 0});
     poiseDrain += poise.extra; poiseSpared = poise.spared;
   }
-  if (broken?.poise > 0)
-  {
-    poiseDrain += broken.poise;
-  }
-
   const hitEntry = buildDamageReceiptHitEntry({
     incoming,
     physical,
@@ -959,6 +954,11 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
     magicPoise,
     poiseDrain,
   });
+  // The receipt lists a flat Poise break once, as Break Poise; the drain still applies it.
+  if (broken?.poise > 0)
+  {
+    poiseDrain += broken.poise;
+  }
 
   const isUncertain = fixCoreEnabled(ctx) && hitChance < 1 && roll === null && !evaded;
   const hasMissRange = fixCoreEnabled(ctx) && hitChance < 1 && !evaded;
