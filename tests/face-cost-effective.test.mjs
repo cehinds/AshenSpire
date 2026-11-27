@@ -23,6 +23,7 @@ import { cardPlayCosts, dispatch } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
+import { GearSelectorMatches } from '../src/model/gearEffects.js';
 import {
     CardSpellCostExceptions,
     ExpectedSpellPrice,
@@ -58,18 +59,25 @@ const faceInstanceId = 'face-mana';
 const spells = profile.content.cards
     .map(card => reg.cards.get(card.id))
     .filter(definition => cardManaCategory(reg, definition) === spellCategory);
-// [class, right hand, left hand, robe Prepared cut, Focus Prepared cut]
+// [class, right hand, left hand]
 const gearCases = [
-    ['reaver', 'ashStaff', null, 0, 1],
-    ['starseer', 'greatsword', null, 1, 0],
-    ['starseer', 'ashStaff', null, 1, 1],
-    ['starseer', 'boneSceptre', 'emberlightSceptre', 1, 1],
-    ['starseer', 'emberlightSceptre', 'boneSceptre', 1, 1],
-    ['starseer', 'boneSceptre', 'blightRod', 1, 1],
-    ['starseer', 'gorefireBrand', 'emberlightSceptre', 1, 1],
-    ['starseer', 'duskChime', null, 1, 1],
-    ['starseer', 'duskChime', 'boneSceptre', 1, 1],
+    ['reaver', 'ashStaff', null],
+    ['starseer', 'greatsword', null],
+    ['starseer', 'ashStaff', null],
+    ['starseer', 'boneSceptre', 'emberlightSceptre'],
+    ['starseer', 'emberlightSceptre', 'boneSceptre'],
+    ['starseer', 'boneSceptre', 'blightRod'],
+    ['starseer', 'gorefireBrand', 'emberlightSceptre'],
+    ['starseer', 'duskChime', null],
+    ['starseer', 'duskChime', 'boneSceptre'],
 ];
+// Prepared Mana cuts come only from Initiates: the Starseer robe's Arcane Initiate and Dusk Chime's
+// Decay Initiate; at most one applies to a spell.
+const initiateManaCut = 1;
+const arcaneSelector = 'arcaneSpell';
+const schoolSelector = 'schoolSpell';
+const chimeWeaponId = 'duskChime';
+const chimeSchool = 'decay';
 const gearCardIds = [
     'core.meteor',
     'core.cantrip',
@@ -143,18 +151,26 @@ function gearFight(run, cardId)
     return combat;
 }
 
-function preparedGearRules(combat, wornWeaponIds)
+function preparedManaRules(combat)
 {
-    const prepared = combat.player.itemProps.cardRules.filter(row =>
+    const cardRules = combat.player.itemProps.cardRules ?? [];
+    return cardRules.filter(row =>
         row.stat === 'manaCost' && row.conds.some(cond => cond.name === 'stance')
     );
-    return {
-        focus: prepared.filter(row => wornWeaponIds.includes(row.source)).length,
-        robe: prepared.filter(row => !wornWeaponIds.includes(row.source)).length,
-    };
 }
 
-function expectedPileMana(classId, cardId, definition, cuts)
+function initiateCut(classId, wornWeaponIds, definition)
+{
+    const robeInitiate = classId === graduateClassId
+        && GearSelectorMatches(arcaneSelector, null, definition);
+    const chimeInitiate = wornWeaponIds.includes(chimeWeaponId)
+        && GearSelectorMatches(schoolSelector, chimeSchool, definition);
+    return robeInitiate || chimeInitiate
+        ? initiateManaCut
+        : 0;
+}
+
+function expectedPileMana(classId, cardId, definition, initiate)
 {
     const printedMana = currentReg.framework.costProfile(definition).mana;
     const graduateCut = classId === graduateClassId && printedMana > 0
@@ -167,7 +183,7 @@ function expectedPileMana(classId, cardId, definition, cuts)
         stamina: definition.staminaCost,
         mana: printedMana - graduateCut,
     }).mana;
-    return Math.max(0, spellMana - cuts.robe - cuts.focus - chainCut);
+    return Math.max(0, spellMana - initiate - chainCut);
 }
 
 function assertResumedPayment(combat, snapshot, counters, paidMana)
@@ -190,7 +206,7 @@ function assertResumedPayment(combat, snapshot, counters, paidMana)
     assert.equal(live.events.find(event => event.type === 'cardPlayed').manaSpent, paidMana);
 }
 
-function assertGearFaces(cardId, [classId, right, left, robe, focus])
+function assertGearFaces(cardId, [classId, right, left])
 {
     const label = `${classId}/${right}/${left}/${cardId}`;
     const run = createRunState({ registries: currentReg, classId, seed: 5, profileMeta: meta });
@@ -213,10 +229,20 @@ function assertGearFaces(cardId, [classId, right, left, robe, focus])
     const projected = resolveCombatCard(combat, combat.piles.hand[0]);
     assert.equal(FaceCostProfile(currentReg, projected).mana, quote.mana, `${label}: priced once`);
     assert.equal(pile.mana, quote.mana, `${label}: Prepared pile equals the live quote`);
-    const cuts = preparedGearRules(combat, [right, left].filter(Boolean));
-    assert.deepEqual(cuts, { robe, focus }, `${label}: one shared Focus and a separate robe`);
-    const pileMana = expectedPileMana(classId, cardId, definition, cuts);
-    assert.equal(pile.mana, pileMana, `${label}: Prepared, one Focus plus independent robe`);
+    const wornWeaponIds = [right, left].filter(Boolean);
+    const preparedRules = preparedManaRules(combat);
+    const weaponCuts = preparedRules.filter(row => wornWeaponIds.includes(row.source));
+    const chimeCuts = wornWeaponIds.includes(chimeWeaponId)
+        ? 1
+        : 0;
+    assert.equal(weaponCuts.length, chimeCuts, `${label}: only Dusk Chime cuts Prepared Mana`);
+    assert.ok(
+        preparedRules.every(row => row.initiate),
+        `${label}: every Prepared cut is an Initiate`,
+    );
+    const initiate = initiateCut(classId, wornWeaponIds, definition);
+    const pileMana = expectedPileMana(classId, cardId, definition, initiate);
+    assert.equal(pile.mana, pileMana, `${label}: Prepared, one Initiate cut`);
     assert.deepEqual(serializeCombatSnapshot(combat), snapshot, `${label}: faces are pure`);
     assertResumedPayment(combat, snapshot, counters, pile.mana);
 }

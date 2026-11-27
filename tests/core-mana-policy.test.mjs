@@ -14,6 +14,7 @@ import { withGameProfileService } from '../src/model/gameProfileRun.js';
 import { applyLevelUp, rederivePools } from '../src/model/levelup.js';
 import { legacyGearRegistries } from './helpers/legacy-gear.mjs';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { GearSelectorMatches } from '../src/model/gearEffects.js';
 import {
     CardSpellCostExceptions,
     ExpectedSpellPrice,
@@ -65,19 +66,21 @@ const robeFocusCases = [
     ['core.meteor', 'saved'],
     ['core.cantrip', 'saved'],
 ];
-// [right hand, stance maneuver, Focus Mana cut in Prepared]
+// [right hand, stance maneuver]
 const robeFocusContexts = [
-    ['greatsword', null, 0],
-    ['ashStaff', null, 0],
-    ['boneSceptre', null, 0],
-    ['greatsword', 'casting', 0],
-    ['ashStaff', 'casting', 1],
-    ['ashStaff', 'prepared', 1],
-    ['boneSceptre', 'casting', 1],
+    ['greatsword', null],
+    ['ashStaff', null],
+    ['boneSceptre', null],
+    ['greatsword', 'casting'],
+    ['ashStaff', 'casting'],
+    ['ashStaff', 'prepared'],
+    ['boneSceptre', 'casting'],
 ];
-// Worked gear and class cuts in Prepared: the Graduate takes one positive printed MP, the robe one.
+// Worked class and gear cuts in Prepared: the Graduate takes one positive printed MP, and the
+// Starseer robe's Arcane Initiate one more off an Arcane spell. Weapons carry no type-level cut.
 const graduateManaCut = 1;
-const robeManaCut = 1;
+const arcaneInitiateCut = 1;
+const arcaneSelector = 'arcaneSpell';
 const quoteInstanceId = 'robe-focus';
 
 function setSpellCostBlock(combat, block)
@@ -90,7 +93,7 @@ function setSpellCostBlock(combat, block)
     combat.fixCoreRules.spellCosts = block;
 }
 
-function expectedRobeFocusPrice(authored, block, stance, focusCut)
+function expectedRobeFocusPrice(authored, block, stance)
 {
     const prepared = stance !== null;
     const graduateCut = prepared && authored.manaCost > 0
@@ -111,8 +114,9 @@ function expectedRobeFocusPrice(authored, block, stance, focusCut)
             exceptions: CardSpellCostExceptions(block, authored),
             price: printed,
         });
-    const gearCut = prepared
-        ? robeManaCut + focusCut
+    const arcane = GearSelectorMatches(arcaneSelector, null, registries.cards.get(authored.id));
+    const gearCut = prepared && arcane
+        ? arcaneInitiateCut
         : 0;
     return [
         spellPrice.stamina,
@@ -295,7 +299,7 @@ test('robes, Focus and Prepared: spell quote, payment and restored snapshot agre
     for (const [cardId, mode] of robeFocusCases)
     {
         const authored = registries.gameProfile.content.cards.find(card => card.id === cardId);
-        for (const [hand, stance, focusCut] of robeFocusContexts)
+        for (const [hand, stance] of robeFocusContexts)
         {
             const label = `${cardId}/${hand}/${stance}/spellCosts=${mode}`;
             const block = spellCostModes[mode]();
@@ -303,7 +307,7 @@ test('robes, Focus and Prepared: spell quote, payment and restored snapshot agre
             assert.equal(combat.gameProfile.modules.gear.typeEffectsVersion, 1, 'current gear');
             assert.equal(combat.player.maxMana, 4, 'two earned Wisdom points make 4 MP payable');
             assert.equal(getStacks(combat.player, 'ward'), 0, 'no automatic turn-start Ward');
-            const expected = expectedRobeFocusPrice(authored, block, stance, focusCut);
+            const expected = expectedRobeFocusPrice(authored, block, stance);
             assertQuotePayResume(combat, expected, label);
         }
     }

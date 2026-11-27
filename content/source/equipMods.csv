@@ -84,6 +84,7 @@ cardMultiHit,gear,cardStat,multiHit,,,Multi-hit,,"Each stack repeats the attack 
 cardReach,gear,cardStat,reach,,,Reach,,"Matching attacks gain Reach."
 cardCost,gear,cardStat,cost,,,SP cost,,"Stamina cost of matching cards (never below 0)."
 cardMana,gear,cardStat,manaCost,,,MP cost,,"Mana cost of matching cards (never below 0)."
+cardInitiate,gear,cardStat,manaCost,,,Initiate,,"In Prepared stance, matching spells cost this much Mana less (never below 0). A spell takes one Initiate cut, however many pieces carry one."
 cardAddDex,gear,cardStat,addDex,,,DEX to damage,,"Adds DEX to matching hits, as STR is added."
 cardAddStr,gear,cardStat,addStr,,,STR again,,"Adds STR to matching hits a second time."
 cardRetain,gear,cardStat,retain,,,Retain,,"Matching cards are kept at turn end."

@@ -71,7 +71,8 @@ function activeConditions(context)
 /**
  * @summary The spell cost rules this fight plays under.
  * @param {object} context The fight.
- * @returns {{ tags: object, rules: object[] } | null} The rule block, or null without Core 2 or `spellCosts`.
+ * @returns {{ tags: object, rules: object[] } | null} The rule block,
+ *     or null without Core 2 or `spellCosts`.
  */
 export function SpellCostRules(context)
 {

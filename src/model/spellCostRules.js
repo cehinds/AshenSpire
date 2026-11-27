@@ -136,10 +136,10 @@ function validateRule(rule)
     {
         fail(`${label} accepts only ${ruleKeys.join(', ')}`);
     }
-    if (
-        !isNonEmptyText(rule.id) || typeof rule.enabled !== 'boolean'
-        || !Number.isInteger(rule.change)
-    )
+    const hasIdentity = isNonEmptyText(rule.id)
+        && typeof rule.enabled === 'boolean'
+        && Number.isInteger(rule.change);
+    if (!hasIdentity)
     {
         fail(`${label} needs an id, enabled true or false, and a whole-number change`);
     }
@@ -173,11 +173,8 @@ function validateRuleBlock(block)
 {
     if (Object.keys(block).some(key => !blockKeys.includes(key)) || !Array.isArray(block.rules))
     {
-        fail(
-            `version ${SpellCostRulesVersion} accepts only ${
-                blockKeys.join(', ')
-            }, with a rules list`,
-        );
+        const allowed = blockKeys.join(', ');
+        fail(`version ${SpellCostRulesVersion} accepts only ${allowed}, with a rules list`);
     }
     validateTags(block.tags);
     block.rules.forEach(validateRule);
@@ -266,7 +263,8 @@ export function ValidateSpellCostRules(block)
 /**
  * @summary Reads any supported `spellCosts` block as a rule list.
  * @param {object | null | undefined} block The block from a fight's rules.
- * @returns {{ tags: object, rules: object[] } | null} The rule block, or null when absent or unknown.
+ * @returns {{ tags: object, rules: object[] } | null} The rule block,
+ *     or null when absent or unknown.
  */
 export function NormalizeSpellCostRules(block)
 {

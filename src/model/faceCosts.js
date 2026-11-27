@@ -27,7 +27,15 @@ export function SetFaceCostPricer(fn) { pricer = typeof fn === 'function' ? fn :
 export function FaceCostProfile(registries, def, run = faceRun ?? runSource?.() ?? null) {
   if (!pricer) return registries.framework.costProfile(def);
   const fight = faceCombat && !faceCombat.result ? faceCombat : null;
-  const ctx = fight || (run && { registries, combatExpansionVersion: run.combatExpansionVersion, fixCoreRules: run.fixCoreRules, gameProfile: run.gameProfile, loadout: run.loadout, player: { classId: run.class } });
+  const ctx = fight || (run && {
+    registries,
+    combatExpansionVersion: run.combatExpansionVersion,
+    fixCoreRules: run.fixCoreRules,
+    gameProfile: run.gameProfile,
+    loadout: run.loadout,
+    relics: run.relics,
+    player: { classId: run.class },
+  });
   if (!ctx) return registries.framework.costProfile(def);
   if (GearTypeEffectsEnabled(ctx) && !def.gearManaRules && !def.gearApplied?.some(row => row.stat === 'cost' || row.stat === 'manaCost')) {
     const summary = GearSummary(registries, ctx.loadout, ctx.player?.classId, ctx);

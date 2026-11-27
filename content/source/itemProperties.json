@@ -859,6 +859,150 @@
       "fx": {
         "unlimited": "Cantrip"
       }
+    },
+    {
+      "id": "initiateArcane",
+      "name": "Arcane Initiate",
+      "text": "In Prepared stance, Arcane spells cost 1 less Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "gearMods": [
+          "arcaneSpell.cardInitiate=-1"
+        ]
+      }
+    },
+    {
+      "id": "initiateDivine",
+      "name": "Divine Initiate",
+      "text": "In Prepared stance, Divine spells cost 1 less Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "gearMods": [
+          "divineSpell.cardInitiate=-1"
+        ]
+      }
+    },
+    {
+      "id": "initiateFire",
+      "name": "Fire Initiate",
+      "text": "In Prepared stance, Fire spells cost 1 less Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "gearMods": [
+          "schoolSpell:fire.cardInitiate=-1"
+        ]
+      }
+    },
+    {
+      "id": "initiateLightning",
+      "name": "Lightning Initiate",
+      "text": "In Prepared stance, Lightning spells cost 1 less Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "gearMods": [
+          "schoolSpell:lightning.cardInitiate=-1"
+        ]
+      }
+    },
+    {
+      "id": "initiateFrost",
+      "name": "Frost Initiate",
+      "text": "In Prepared stance, Frost spells cost 1 less Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "gearMods": [
+          "schoolSpell:frost.cardInitiate=-1"
+        ]
+      }
+    },
+    {
+      "id": "initiateForce",
+      "name": "Force Initiate",
+      "text": "In Prepared stance, Force spells cost 1 less Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "gearMods": [
+          "schoolSpell:force.cardInitiate=-1"
+        ]
+      }
+    },
+    {
+      "id": "initiateDecay",
+      "name": "Decay Initiate",
+      "text": "In Prepared stance, Decay spells cost 1 less Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "gearMods": [
+          "schoolSpell:decay.cardInitiate=-1"
+        ]
+      }
+    },
+    {
+      "id": "initiateNecrotic",
+      "name": "Necrotic Initiate",
+      "text": "In Prepared stance, Necrotic spells cost 1 less Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "gearMods": [
+          "schoolSpell:necrotic.cardInitiate=-1"
+        ]
+      }
+    },
+    {
+      "id": "initiateDivineSchool",
+      "name": "Holy Initiate",
+      "text": "In Prepared stance, Divine spells cost 1 less Mana",
+      "weights": {
+        "martial": 0,
+        "magic": 0,
+        "armor": 0,
+        "relic": 0
+      },
+      "fx": {
+        "gearMods": [
+          "schoolSpell:divine.cardInitiate=-1"
+        ]
+      }
     }
   ],
   "$note": {
