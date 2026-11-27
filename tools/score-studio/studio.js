@@ -48,6 +48,7 @@ import { filterMembership, deckCatalogOptions, resolveStudioDeck } from './deckC
 import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
+import { OpenContentEditor } from './contentEditor/contentEditor.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const AB_STORAGE_KEY = 'ashenspire:scoreStudioAB:v1';
@@ -4311,6 +4312,8 @@ function setupStudioMenubar() {
   const restore = document.getElementById('btn-restore-names')?.closest('.studio-menu'); if (restore) { panel('edit').append(restore); document.getElementById('btn-restore-names').classList.add('menu-item'); }
   command('view', 'menu-view-cards', 'Cards', () => document.querySelector('.studio-tab[data-tab="cards"]').click());
   command('view', 'menu-view-items', 'Items', () => document.querySelector('.studio-tab[data-tab="items"]').click());
+  const contentTab = '.studio-tab[data-tab="content"]';
+  command('view', 'menu-view-content', 'Game content', () => document.querySelector(contentTab).click());
   group('view', 'Customization pane');
   for (const [view, text] of [['properties', 'Properties'], ['design', 'Design and art layers'], ['weights', 'Weights'], ['decks', 'Deck lists']]) command('view', `menu-view-${view}`, text, () => setCustomizationView(view));
   command('view', 'menu-view-dock', 'Dock customization pane', () => cardEditorDockUi?.setDocked(true));
@@ -4556,6 +4559,7 @@ function wireEvents() {
         deckListPanelUi?.refresh();
       }
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
+      if (tab === 'content') OpenContentEditor(document.getElementById('tab-content'));
       if (tab === 'art') renderArtTab();
       if (tab === 'effects') {
         if (!effectsFrame.hasAttribute('src')) effectsFrame.src = effectsFrame.dataset.src;
