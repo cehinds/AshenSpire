@@ -1245,8 +1245,19 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
     padding-inline: 0.15rem;
   }
 
+  /* Prevent dropdown rows from expanding past the 375px phone panel width. */
   :root [data-settings-host] .set-row-dropdown {
     grid-template-columns: minmax(0, 1fr) minmax(0, 48%);
+  }
+
+  :root [data-settings-host] .set-row-dropdown > * {
+    min-width: 0;
+  }
+
+  :root [data-settings-host] .set-choice-select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 }
 

@@ -349,8 +349,15 @@
   ],
   "treasureRewardGroups": [
     {
+      "id": "relics",
+      "weight": 100,
+      "categories": [
+        "relics"
+      ]
+    },
+    {
       "id": "cards",
-      "weight": 60,
+      "weight": 0,
       "categories": [
         "combatCards",
         "weaponArts"
@@ -358,16 +365,15 @@
     },
     {
       "id": "equipment",
-      "weight": 10,
+      "weight": 0,
       "categories": [
         "weapons",
-        "armor",
-        "relics"
+        "armor"
       ]
     },
     {
       "id": "consumables",
-      "weight": 30,
+      "weight": 0,
       "categories": [
         "potions"
       ]

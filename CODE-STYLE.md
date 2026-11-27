@@ -27,7 +27,7 @@ config, so the owner can change the game without reading code, and in time from 
 
 ## Layout
 
-- **Allman braces:** every `{` on its own line, and every block braced.
+- **Allman braces:** every `{` on its own line, and every block braced — never single-line `if (condition) statement;`.
 - **One thing per line:** one declaration or statement per line.
 - **Vertical lists:** a list of more than 2 items (arguments, properties, array elements) and every
   nested object goes one item per line, with trailing commas.

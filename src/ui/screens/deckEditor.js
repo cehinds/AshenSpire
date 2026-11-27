@@ -36,7 +36,7 @@ import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit, rankZeroLabelId } from '../models/DeckEditorModel.js';
 import { t, tFull } from '../strings.js';
-import { renderCard, cardPlainText, cardDetailHtml, scheduleCardFits } from '../components/card.js';
+import { renderCard, cardPlainText, cardDetailHtml, scheduleCardFits, CardInspectorFlavor } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
@@ -316,7 +316,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));
-    if (def.flavor) face.querySelector('.cd-body')?.appendChild(el('p', { class: 'deck-editor-flavor', text: def.flavor }));
+    const flavor = CardInspectorFlavor(def.flavor);
+    if (flavor) face.querySelector('.cd-body')?.appendChild(el('p', { class: 'deck-editor-flavor', text: flavor }));
     // The native face keeps its authored shape. Long readings scroll inside
     // their band instead of stretching the whole card; keyboard users can
     // reach that reading without needing to open a second inspection door.
