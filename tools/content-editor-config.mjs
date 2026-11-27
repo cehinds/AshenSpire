@@ -1,11 +1,14 @@
 // The /__content/ API settings, shared with the Score Studio Game content tab.
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { FillTemplate } from './score-studio/contentEditor/textTemplate.js';
 
-const API_CONFIG_URL = new URL('./score-studio/contentEditor/contentApi.json', import.meta.url);
+const API_CONFIG_PATH = fileURLToPath(
+    new URL('./score-studio/contentEditor/contentApi.json', import.meta.url),
+);
 
 /** Routes, the body size limit and plain messages, from contentApi.json. */
-export const CONTENT_API = JSON.parse(readFileSync(API_CONFIG_URL, 'utf8'));
+export const CONTENT_API = JSON.parse(readFileSync(API_CONFIG_PATH, 'utf8'));
 
 /** A configured message with `{name}` tokens filled from `values`. */
 export function ApiMessage(name, values = {})
