@@ -47,10 +47,21 @@ const ONE_FREE_ELITE_FLOOR = {
   8: 'fight',
   10: 'fight',
 };
-// Core guaranteed shops sit on depth 4 or 8 (5 to 7 can be rests); pinning both away leaves none.
-const NO_BRANCH_SHOP = { 4: 'event', 8: 'fight' };
-const ONE_FREE_SHOP_FLOOR = { 4: 'event' };
+// With no random shops, a branch's only shop is its guaranteed one.
+const NO_RANDOM_SHOPS = { typeWeights: { shop: 0 } };
+// Core's middle rest lands on one of depths 5 to 7, so two of them are always free for a shop.
+const MOVING_REST_SHOP_ROOM = { floorTypes: { 4: 'event', 8: 'fight' } };
 // restFloorSpread 0 rests only on depth 6, so shops can use 4, 5, 7 and 8 (PR #3025 review).
+const FIXED_RESTS_TWO_SHOP_FLOORS = {
+  restFloorSpread: 0,
+  floorTypes: {
+    3: 'fight',
+    4: 'event',
+    5: 'fight',
+    9: 'fight',
+    10: 'fight',
+  },
+};
 const FIXED_RESTS_NO_SHOP = {
   restFloorSpread: 0,
   floorTypes: {
@@ -58,6 +69,18 @@ const FIXED_RESTS_NO_SHOP = {
     5: 'fight',
     7: 'fight',
     8: 'fight',
+  },
+};
+// Depth 8 is the only free depth for both the elites and the shop (PR #3025 review).
+const FIXED_RESTS_SHARED_SLOT = {
+  restFloorSpread: 0,
+  floorTypes: {
+    3: 'fight',
+    4: 'event',
+    5: 'fight',
+    7: 'fight',
+    9: 'fight',
+    10: 'fight',
   },
 };
 const LANE_ID = /^n(\d+)_(\d+)$/;
@@ -177,25 +200,33 @@ test('every lane keeps its elite when pins leave it one free floor', () =>
   assert.throws(() => SetupCore({ floorTypes: NO_LANE_ELITE }), isLaneError);
 });
 
-test('every branch keeps its shop when pins leave it one free floor', () =>
+test('every branch keeps its shop when pins leave it room', () =>
 {
-  const core = SetupCore({ floorTypes: ONE_FREE_SHOP_FLOOR });
-  for (const seed of SEEDS) for (const act of ACTS)
+  for (const routes of [MOVING_REST_SHOP_ROOM, FIXED_RESTS_TWO_SHOP_FLOORS])
   {
-    const { map } = BuildMap(core, seed, act);
-    const shopBranches = new Set(Object.values(map.nodes)
-      .filter(node => node.actualType === 'shop')
-      .map(node => node.branch));
-    map.bossIds.forEach((bossId, branch) =>
+    const core = SetupCore({ ...NO_RANDOM_SHOPS, ...routes });
+    for (const seed of SEEDS) for (const act of ACTS)
     {
-      assert.ok(shopBranches.has(branch), `seed ${seed} act ${act} branch ${branch} has a shop`);
-    });
+      const { map } = BuildMap(core, seed, act);
+      const shopBranches = new Set(Object.values(map.nodes)
+        .filter(node => node.actualType === 'shop')
+        .map(node => node.branch));
+      map.bossIds.forEach((bossId, branch) =>
+      {
+        const label = `${JSON.stringify(routes)} seed ${seed} act ${act} branch ${branch}`;
+        assert.ok(shopBranches.has(branch), `${label} has a shop`);
+      });
+    }
   }
-  const refusal = /leaves a branch no floor for its shop\. Keep one of depths 4, 8 unpinned/;
-  const isShopError = error => error.path === FLOOR_TYPES_PATH && refusal.test(error.message);
-  assert.throws(() => SetupCore({ floorTypes: NO_BRANCH_SHOP }), isShopError);
-  const fixedRestsRefusal = /no floor for its shop\. Keep one of depths 4, 5, 7, 8 unpinned/;
-  assert.throws(() => SetupCore(FIXED_RESTS_NO_SHOP), fixedRestsRefusal);
+});
+
+test('pins that leave a branch no shop floor, alone or beside its elites, are refused', () =>
+{
+  const noShop = /no floor for its shop\. Keep one of depths 4, 5, 7, 8 unpinned/;
+  assert.throws(() => SetupCore(FIXED_RESTS_NO_SHOP), noShop);
+  const sharedSlot = /shop one floor that its elites can take\. Keep two of depths 4, 5, 7, 8/;
+  const isSharedSlot = error => error.path === FLOOR_TYPES_PATH && sharedSlot.test(error.message);
+  assert.throws(() => SetupCore(FIXED_RESTS_SHARED_SLOT), isSharedSlot);
 });
 
 const INVALID = [
