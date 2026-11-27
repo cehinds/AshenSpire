@@ -145,13 +145,13 @@ export function buildToolsFor(rel) {
   if (tool === 'config-build.mjs' && TOKENS_JSON_AND_ANCESTORS.includes(rel)) {
     return [tool, 'tokens-css.mjs'];
   }
-  if (tool === 'game-config.mjs build') return [ENEMY_LEVEL_CARDS_TOOL, tool, ...BALANCE_TABLE_TOOLS];
-  if (BALANCE_TABLE_SOURCES.includes(tool)) return [tool, ...BALANCE_TABLE_TOOLS];
+  // Enemy level cards read the Core cards and the shared enemy lists; the game packs embed them.
+  if (BALANCE_TABLE_SOURCES.includes(tool)) return [...new Set([tool, ENEMY_LEVEL_CARDS_TOOL, 'game-config.mjs build', ...BALANCE_TABLE_TOOLS])];
   return tool ? [tool] : [];
 }
 // Content and game-pack edits move item ranks and reward bands, so their tables are rebuilt too
 // (skipped where a trimmed root, such as a test fixture, has no such tool).
-const FOLLOW_ON_TOOLS = [ENEMY_LEVEL_CARDS_TOOL, ...BALANCE_TABLE_TOOLS];
+const FOLLOW_ON_TOOLS = [ENEMY_LEVEL_CARDS_TOOL, 'game-config.mjs build', ...BALANCE_TABLE_TOOLS];
 const BALANCE_TABLE_SOURCES = ['content-build.mjs', 'game-config.mjs build'];
 const TOKENS_JSON_AND_ANCESTORS = ['content/config', 'content/config/ui', 'content/config/ui/tokens.json'];
 

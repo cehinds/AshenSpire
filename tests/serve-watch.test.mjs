@@ -61,8 +61,9 @@ test('a change to ui/tokens.json (or a replaced content/config) owes config-buil
   assert.deepEqual(buildToolsFor('content/hud-layout/tablet.json'), ['hud-layout-css.mjs']);
   assert.deepEqual(buildToolsFor('src/main.js'), []);
   const balanceTables = ['combat-power-report.mjs', 'level-lists.mjs'];
-  assert.deepEqual(buildToolsFor('content/source/weapons.csv'), ['content-build.mjs', ...balanceTables], 'content edits refresh item ranks and reward bands');
-  assert.deepEqual(buildToolsFor('games/ashenspire/packs/core/cards.json'), ['enemy-level-cards.mjs --write', 'game-config.mjs build', ...balanceTables]);
+  const packChain = ['enemy-level-cards.mjs --write', 'game-config.mjs build'];
+  assert.deepEqual(buildToolsFor('content/source/weapons.csv'), ['content-build.mjs', ...packChain, ...balanceTables], 'content edits refresh level cards, packs, ranks and bands');
+  assert.deepEqual(buildToolsFor('games/ashenspire/packs/core/cards.json'), ['game-config.mjs build', 'enemy-level-cards.mjs --write', ...balanceTables]);
 });
 
 function makeTree() {
@@ -398,7 +399,8 @@ test('--watch: a builder an earlier failure skipped runs in the next round, and 
   const reload = stream.next('reload', 3000);
   writeFileSync(join(root, 'content', 'config', 'a.json'), '{"fixed":1}\n');
   await reload;
-  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['config-build', 'config-build', 'content-build']);
+  // A content edit also rebuilds the game packs, which embed content-derived tables.
+  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['config-build', 'config-build', 'content-build', 'game-config']);
   const reload2 = stream.next('reload', 3000);
   writeFileSync(join(root, 'engine', 'kernel', 'kernel.json'), '{}\n');
   await reload2;

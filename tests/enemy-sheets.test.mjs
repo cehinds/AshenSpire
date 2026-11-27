@@ -107,6 +107,62 @@ test('unknown sheet and stats keys are rejected, naming file and key', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('stats.hp carries to the row as hpOverride and back; absent leaves the row unchanged', () =>
+{
+    const dir = clone();
+    try
+    {
+        const before = rows(dir).find(row => row.id === 'huskBrute');
+        assert.equal(before.hpOverride, undefined);
+        edit(dir, 'huskBrute', sheet =>
+        {
+            sheet.stats.hp = 50;
+        });
+        assert.deepEqual(write(dir).problems, []);
+        const after = rows(dir).find(row => row.id === 'huskBrute');
+        assert.equal(after.hpOverride, 50);
+        assert.deepEqual(check(dir), []);
+        rmSync(join(dir, 'enemies'), { recursive: true });
+        extract(dir);
+        const sheet = JSON.parse(readFileSync(join(dir, 'enemies', 'huskBrute.json'), 'utf8'));
+        assert.equal(sheet.stats.hp, 50);
+        assert.deepEqual(write(dir).problems, []);
+        assert.deepEqual(check(dir), []);
+    }
+    finally
+    {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('a stats.hp that is not a whole number of 1 or more is rejected, naming the enemy', () =>
+{
+    const dir = clone();
+    try
+    {
+        const badValues = [
+            0,
+            -5,
+            12.5,
+            '40',
+        ];
+        for (const value of badValues)
+        {
+            edit(dir, 'huskBrute', sheet =>
+            {
+                sheet.stats.hp = value;
+            });
+            const problems = plan(dir).problems.join('\n');
+            assert.match(problems, /huskBrute\.json stats\.hp: huskBrute has HP /);
+            assert.match(problems, /Use a whole number of 1 or more/);
+        }
+    }
+    finally
+    {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});
+
 test('a JSON syntax error names the file', () => {
   const dir = clone();
   try {
