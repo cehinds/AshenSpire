@@ -20,6 +20,35 @@ import { EvaluateUpgradeStepCp, PrepareUpgradeStepCpContext } from '../src/model
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
 import { PrecomputeActRewardSchedule, RewardScheduleForOffer, gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 
+// The first text sort on a fresh CI runner waits ~200 ms on disk (run 45945847782).
+// Pay that one-time host cost before any timed region.
+const IcuWarmupLeft = 'n1_0';
+const IcuWarmupRight = 'n10_0';
+IcuWarmupLeft.localeCompare(IcuWarmupRight);
+
+const MicrosecondsPerMillisecond = 1000;
+const ReportedDecimals = 1;
+
+// Wall time plus the CPU, fault and wait counts that explain a slow run.
+function Measure(work)
+{
+  const usageStart = process.resourceUsage();
+  const cpuStart = process.cpuUsage();
+  const startMs = performance.now();
+  const result = work();
+  const ms = performance.now() - startMs;
+  const cpu = process.cpuUsage(cpuStart);
+  const usage = process.resourceUsage();
+  const cpuMs = (cpu.user + cpu.system) / MicrosecondsPerMillisecond;
+  const why = [
+    `cpuMs=${cpuMs.toFixed(ReportedDecimals)}`,
+    `majorFaults=${usage.majorPageFault - usageStart.majorPageFault}`,
+    `blockedSwitches=${usage.voluntaryContextSwitches - usageStart.voluntaryContextSwitches}`,
+    `preemptedSwitches=${usage.involuntaryContextSwitches - usageStart.involuntaryContextSwitches}`,
+  ].join(', ');
+  return { result, ms, why };
+}
+
 test('ActNodeUpgradeStock is deterministic by (seed, nodeKey, vendor), respects tier unlocks, and varies by seed/node', () => {
   ClearScheduleCaches();
   const s1a = ActNodeUpgradeStock(12345, '1:n4', { vendor: 'blacksmith', scoring: shippedScoring });
@@ -52,15 +81,13 @@ test('ActUpgradeSchedule and ActRewardSchedule pre-compute an entire Act map det
   const mapGraph = buildActMap(registries, createRng(777), run.seatOrder[0], 1);
   run.mapGraph = mapGraph;
 
-  const cpuStart = process.cpuUsage();
-  const t0 = performance.now();
-  const upgSchedA = ActUpgradeSchedule(run.seed, mapGraph, { actNumber: 1, scoring: shippedScoring });
-  const rewSchedA = PrecomputeActRewardSchedule(run, mapGraph);
-  const elapsed = performance.now() - t0;
-  const cpuElapsed = process.cpuUsage(cpuStart);
-  const cpuMs = (cpuElapsed.user + cpuElapsed.system) / 1000;
+  const precompute = Measure(() => ({
+    upgSchedA: ActUpgradeSchedule(run.seed, mapGraph, { actNumber: 1, scoring: shippedScoring }),
+    rewSchedA: PrecomputeActRewardSchedule(run, mapGraph),
+  }));
+  const { upgSchedA, rewSchedA } = precompute.result;
 
-  assert.ok(elapsed < 50, `Expected full Act upgrade+reward precompute < 50ms, got ${elapsed.toFixed(1)}ms (cpuMs=${cpuMs.toFixed(1)})`);
+  assert.ok(precompute.ms < 50, `Expected full Act upgrade+reward precompute < 50ms, got ${precompute.ms.toFixed(1)}ms (${precompute.why})`);
   assert.ok(Object.keys(upgSchedA.nodes).length > 0, 'pre-computed upgrade nodes');
   assert.ok(Object.keys(rewSchedA.nodes).length > 0, 'pre-computed reward nodes');
 
@@ -145,14 +172,10 @@ test('Blacksmith 60-card picker is fast cold (< 250ms) and instant on re-selecti
   ];
   const beforeJson = JSON.stringify(run);
 
-  const cpuStart = process.cpuUsage();
-  const t0 = performance.now();
-  const m1 = cardUpgradeModel(registries, run, null, { blacksmith: true });
-  const coldMs = performance.now() - t0;
-  const cpuElapsed = process.cpuUsage(cpuStart);
-  const cpuMs = (cpuElapsed.user + cpuElapsed.system) / 1000;
+  const cold = Measure(() => cardUpgradeModel(registries, run, null, { blacksmith: true }));
+  const m1 = cold.result;
   assert.ok(m1.rows.length >= 40, `expected >= 40 rows, got ${m1.rows.length}`);
-  assert.ok(coldMs < 250, `Expected cold 60-card Blacksmith picker < 250ms, got ${coldMs.toFixed(1)}ms (cpuMs=${cpuMs.toFixed(1)})`);
+  assert.ok(cold.ms < 250, `Expected cold 60-card Blacksmith picker < 250ms, got ${cold.ms.toFixed(1)}ms (${cold.why})`);
 
   // Clicking 10 different cards in the picker hits the WeakMap row cache
   const t1 = performance.now();

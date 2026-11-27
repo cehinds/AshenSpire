@@ -4,7 +4,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
-import { RankUpCandidates } from '../src/model/rankUpService.js';
+import { RankUpCandidates, RankUpBlock } from '../src/model/rankUpService.js';
+import { CardUpgradeRules } from '../src/model/cardUpgradeRules.js';
 import { ChoiceUnmetRequirement } from '../src/engine/quests.js';
 import { RankUpUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
 import { resolveCard } from '../src/model/registries.js';
@@ -48,4 +49,27 @@ test('an event that ranks up a random card needs a ready card', () => {
   assert.equal(ChoiceUnmetRequirement(smithChoice(), run, registries), 'rankableCard');
   FillUpgradeSlots(run, [run.deck[0]]);
   assert.equal(ChoiceUnmetRequirement(smithChoice(), run, registries), null);
+});
+
+test('a configured extra upgrade slot holds rank-up until that slot is used too', () =>
+{
+  const run = newRun();
+  const [ready] = RankUpCandidates(registries, run);
+  FillUpgradeSlots(run, [ready]);
+  const rules = CardUpgradeRules(registries);
+  const moreSlots = {
+    ...registries,
+    balance: {
+      ...registries.balance,
+      cardUpgrades: {
+        ...rules,
+        slots: {
+          ...rules.slots,
+          aboveVisibleRank: rules.slots.aboveVisibleRank + 1,
+        },
+      },
+    },
+  };
+  assert.equal(RankUpBlock(run, ready, registries), '');
+  assert.equal(RankUpBlock(run, ready, moreSlots), REASON);
 });
