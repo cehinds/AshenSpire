@@ -236,7 +236,9 @@ function scorePrepared(c, scoring, S, context) {
     const notEffect = new Set(['SP', 'MP', 'HP cost', 'discard']);
     const riders = new Set(EC.riders || []);
     const n = Object.entries(fx).filter(([k, v]) => v > 0 && !notEffect.has(k) && !(riders.has(k) && fx.damage > 0)).length;
-    add('effect count', EC.weight * Math.max(0, n - (EC.skipFirst ? 1 : 0)));
+    const extra = Math.max(0, n - (EC.skipFirst ? 1 : 0));
+    // With `multiplier: true` each extra effect adds P x weight (owner, 2026-11-27).
+    add('effect count', EC.multiplier === true ? P * EC.weight * extra : EC.weight * extra);
   }
   // Owner 2026-11-23 (scoring.categories): each category the card belongs to adds its weight, or with `multiplier` on
   // scales the positive score by it (1 = no change).

@@ -86,6 +86,21 @@ test('multiplier form: multiplier parts read P only, never each other', () => {
   assert.equal(scored.parts.strength, 4 * 0.25 * 2);
 });
 
+test('multiplier form: the multi-effect bonus scores P x weight per extra effect', () => {
+  const flat = ScoreCard(face(), scoringContract());
+  // Damage and Block: one extra effect (skipFirst) at weight 2.
+  assert.equal(flat.parts['effect count'], 2);
+  const scoring = scoringContract();
+  Object.assign(scoring.effectCount, { weight: 0.1, multiplier: true });
+  const scored = ScoreCard(face({ draw: 1 }), scoring);
+  // Damage 4 + Block 2 + Draw 2 = P 8; two extra effects.
+  assert.equal(scored.positive, 8);
+  assert.equal(scored.parts['effect count'], 8 * 0.1 * 2);
+  const off = scoringContract();
+  off.effectCount.multiplier = false;
+  assert.deepEqual(ScoreCard(face({ draw: 1 }), off), ScoreCard(face({ draw: 1 }), scoringContract()));
+});
+
 test('scoring validation: multiplier on a cost, effect or status must be a boolean', () => {
   const ok = scoringContract();
   Object.assign(ok, { keywords: {}, rank: ok.rank, rarity: ok.rarity, tags: {} });
@@ -98,6 +113,9 @@ test('scoring validation: multiplier on a cost, effect or status must be a boole
     bad[section][key].multiplier = value;
     assert.deepEqual(ValidateScoringConfig(bad), [`${section}.${key}.multiplier must be true or false.`]);
   }
+  const badCount = structuredClone(ok);
+  badCount.effectCount.multiplier = 'on';
+  assert.deepEqual(ValidateScoringConfig(badCount), ['effectCount.multiplier must be true or false.']);
 });
 
 // No shipped data uses the multiplier form, so every card and item keeps its raw, CP, rank and parts.
@@ -111,6 +129,7 @@ test('multiplier form: the shipped scoring scores every authored card and item a
   for (const section of ['costs', 'effects', 'statuses']) {
     for (const [id, entry] of Object.entries(scoring[section])) assert.ok(!(entry && 'multiplier' in entry), `${section}.${id} ships without multiplier`);
   }
+  assert.ok(!('multiplier' in scoring.effectCount), 'effectCount ships without multiplier');
   // The generated table was written before the multiplier form existed: the scorer still reproduces it exactly.
   const table = buildTable();
   assert.deepEqual(table.cardCombatPower, cardCombatPower);
@@ -118,6 +137,7 @@ test('multiplier form: the shipped scoring scores every authored card and item a
   // Spelling the default out (multiplier: false everywhere) changes no part of any card or item.
   const explicit = structuredClone(scoring);
   for (const section of ['costs', 'effects', 'statuses']) for (const entry of Object.values(explicit[section])) if (entry && typeof entry === 'object') entry.multiplier = false;
+  explicit.effectCount.multiplier = false;
   let cards = 0;
   for (const def of registries.cards.all()) {
     const f = CardDefinitionToScoreFace(def, { scoring });
