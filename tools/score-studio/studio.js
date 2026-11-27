@@ -49,6 +49,26 @@ import { initGalleryZoom } from './galleryZoom.js';
 import { focusedEffectOptions } from './focusedRebalance.js';
 import { createAddCardTile, CaptureCardTilePositions, animateCardInsertion } from './addCardTile.js';
 import { initStudioSaveUi, STUDIO_SAVE_MENU_LABEL } from './studioSaveUi.js';
+import {
+  GalleryKind,
+  Galleries,
+  TileIdAttribute,
+  TileIdDatasetKey,
+  GalleryEntity,
+  PerGallery,
+  ToGalleryKind,
+  FindGalleryEntity,
+  DataAttributePrefix,
+  CreateActiveEntities,
+  CreateEditBursts,
+  NextInDisplayedOrder,
+  ReadWorkingContext,
+  WriteWorkingContext,
+  ResolveWorkingContext,
+  CaptureTileFocus,
+  RestoreTileFocus,
+  SelectionOptions,
+} from './workingContext.js';
 
 const DRAFT_STORAGE_KEY = 'ashenspire:scoreStudioDraft:v1';
 const SAVE_SHORTCUT_KEY = 's';
@@ -64,6 +84,53 @@ const UNDO_DEPTH = 40;
 const INSPECTOR_WIDTH_KEY = 'ashenspire:studioInspectorW';
 const INSPECTOR_WIDTH_MIN = 340;
 const INSPECTOR_WIDTH_MAX = 780;
+const GalleryGridId = Object.freeze({
+  [GalleryKind.Cards]: 'cards-grid',
+  [GalleryKind.Items]: 'items-grid',
+});
+const GallerySearchId = Object.freeze({
+  [GalleryKind.Cards]: 'card-search',
+  [GalleryKind.Items]: 'item-filter-search',
+});
+const GalleryTileClass = Object.freeze({
+  [GalleryKind.Cards]: 'studio-card-tile',
+  [GalleryKind.Items]: 'item-grid-tile',
+});
+const GalleryFilterSelectIds = Object.freeze({
+  [GalleryKind.Cards]: Object.freeze([
+    'filter-type',
+    'filter-class',
+    'filter-rank',
+    'filter-shift',
+    'filter-deck',
+  ]),
+  [GalleryKind.Items]: Object.freeze([
+    'item-filter-kind',
+    'item-filter-rarity',
+    'item-filter-rank',
+    'filter-item-deck',
+  ]),
+});
+const ITEM_INSPECT_LEVEL = 'inspect';
+const FILTER_ALL = 'all';
+const SELECTED_TILE_CLASS = 'is-selected';
+const STUDIO_TAB_SELECTOR = '.studio-tab';
+const ACTIVE_STUDIO_TAB_SELECTOR = '.studio-tab.is-active';
+const STUDIO_TAB_DATA_ATTRIBUTE = 'data-tab';
+const ART_PREVIEW_SELECT_ID = 'art-preview-card-select';
+const ART_LIVE_PREVIEW_ID = 'art-live-preview';
+// The picker's placeholder value when no card or item is active.
+const NO_ENTITY_OPTION_VALUE = '';
+const CHANGE_EVENT = 'change';
+const REVEAL_SCROLL_OPTIONS = Object.freeze({ block: 'nearest' });
+const NoActiveEntityOption = Object.freeze({
+  [GalleryKind.Cards]: 'No card selected',
+  [GalleryKind.Items]: 'No item selected',
+});
+const DeletedCardToast = Object.freeze({
+  withNext: (removedName, nextName) => `Deleted "${removedName}". Now editing "${nextName}".`,
+  withoutNext: (removedName) => `Deleted "${removedName}". No card selected.`,
+});
 // On GitHub Pages there is no local server: the studio runs on shipped scoring and exports by Download JSON.
 const isLocalServer = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 
@@ -585,8 +652,7 @@ function restoreSnapshot(snapStr) {
   if (Array.isArray(snap.customDecks)) state.customDecks = snap.customDecks;
   state.subclassCatalog = snap.subclassCatalog || null;
   studioCardOverrides.clear();
-  if (!state.cards.some((c) => c.id === state.selectedCardId)) state.selectedCardId = state.cards[0]?.id || null;
-  if (!state.items.some((x) => x.key === state.selectedItemKey)) state.selectedItemKey = state.items[0]?.key || null;
+  // syncAllViews reconciles the active card and item with the restored content.
   syncAllViews();
   saveDraft();
 }
@@ -800,6 +866,7 @@ function syncAutoNames({ render = true } = {}) {
     document.getElementById('inspector-sheet-title').textContent = selected.name;
     renderCardWithLayers(selected, document.getElementById('inspector-card-preview'));
     renderNameHint(selected);
+    cardEditorDockUi?.refreshEntity?.();
   }
   return renamed;
 }
@@ -1012,7 +1079,10 @@ function applyGeneratedPool() {
   const fresh = fitted.map((f) => f.def);
   const exact = fitted.filter((f) => f.gap === 0).length;
   state.cards = [...fresh, ...kept];
-  state.selectedCardId = fresh[0]?.id || state.cards[0]?.id || null;
+  if (fresh.length)
+  {
+    selectStudioCard(fresh[0].id, SelectionOptions.DeferredReveal);
+  }
   syncAllViews();
   saveDraft();
   toast(`Generated ${fresh.length} card(s), ${exact} at their exact CP. Undo puts the list back.`);
@@ -1492,6 +1562,11 @@ function renderCardsGrid() {
   const grid = document.getElementById('cards-grid');
   grid.classList.toggle('is-single', state.viewMode === 'single');
   const filtered = getFilteredCards();
+  const galleryView = beginGalleryRender(
+    GalleryKind.Cards,
+    grid,
+    filtered.map((def) => def.id),
+  );
 
   grid.innerHTML = '';
   grid.appendChild(createAddCardTile({ onAdd: () => document.getElementById('btn-new-card').click() }));
@@ -1523,17 +1598,216 @@ function renderCardsGrid() {
     trackCardsArtLoading(grid);
   }
   computeShiftCount();
+  finishGalleryRender(
+    GalleryKind.Cards,
+    grid,
+    galleryView,
+  );
 }
 
-function selectStudioCard(id) {
-  if (!state.cards.some(card => card.id === id)) return;
-  state.selectedCardId = id;
-  for (const tile of document.querySelectorAll('.studio-card-tile')) tile.classList.toggle('is-selected', tile.dataset.cardId === id);
-  renderInspector();
+// selectStudioCard and selectStudioItem are the only writers of the active card and item.
+// A missing id gives the empty state, never the first card.
+const activeEntities = CreateActiveEntities({
+  state,
+  onChange: () =>
+  {
+    editBursts.endAll();
+    saveWorkingContext();
+  },
+});
+
+// View state for reload, under its own key. Writes start once boot has restored it.
+let workingContextReady = false;
+
+function saveWorkingContext()
+{
+  if (!workingContextReady)
+  {
+    return;
+  }
+  WriteWorkingContext(localStorage, {
+    gallery: activeGallery,
+    cardId: state.selectedCardId,
+    itemKey: state.selectedItemKey,
+  });
+}
+
+// Each gallery's ids in displayed order, as of its last render.
+const displayedIds = PerGallery(null);
+
+function isHiddenByFilters(kind, id)
+{
+  const displayed = displayedIds[kind];
+  if (!id || !Array.isArray(displayed))
+  {
+    return false;
+  }
+  return !displayed.includes(id);
+}
+
+// An item's picker label: its kind in brackets, then its name.
+function itemOptionLabel(item)
+{
+  const kindLabel = item.kind[0].toUpperCase() + item.kind.slice(1);
+  return `[${kindLabel}] ${item.name || item.id}`;
+}
+
+// Each gallery's own renderers. Function declarations are hoisted, so they can be named here.
+const GalleryView = Object.freeze({
+  [GalleryKind.Cards]: Object.freeze({
+    renderGrid: renderCardsGrid,
+    renderInspector: renderInspector,
+    renderPreview: (card, host) => renderCardWithLayers(card, host),
+    optionLabel: card => card.name || card.id,
+    updateFilterCount: updateFilterCount,
+  }),
+  [GalleryKind.Items]: Object.freeze({
+    renderGrid: renderItemsGrid,
+    renderInspector: renderItemInspector,
+    renderPreview: (item, host) => renderItemCardPreview(
+      item,
+      host,
+      ITEM_INSPECT_LEVEL,
+    ),
+    optionLabel: itemOptionLabel,
+    updateFilterCount: updateItemFilterCount,
+  }),
+});
+
+function clearGalleryFilters(kind)
+{
+  resetGalleryFilters(kind);
+  GalleryView[kind].renderGrid();
+}
+
+const pendingReveal = new Set();
+
+// The rebuild destroys the tiles, so keep focus and scroll.
+function beginGalleryRender(
+  kind,
+  grid,
+  ids,
+)
+{
+  displayedIds[kind] = ids;
+  return {
+    focused: CaptureTileFocus(grid, TileIdAttribute[kind]),
+    scrollTop: grid.scrollTop,
+  };
+}
+
+function finishGalleryRender(
+  kind,
+  grid,
+  { focused, scrollTop },
+)
+{
+  if (grid.scrollTop !== scrollTop)
+  {
+    grid.scrollTop = scrollTop;
+  }
+  RestoreTileFocus(
+    grid,
+    TileIdAttribute[kind],
+    focused,
+    document.getElementById(GallerySearchId[kind]),
+  );
+  consumeReveal(kind);
+}
+
+function galleryTileSelector(kind, id)
+{
+  const tileClass = GalleryTileClass[kind];
+  const idAttribute = `${DataAttributePrefix}${TileIdAttribute[kind]}`;
+  return `.${tileClass}[${idAttribute}="${CSS.escape(id)}"]`;
+}
+
+function activeTile(kind)
+{
+  const id = activeEntities.get(kind);
+  if (!id)
+  {
+    return null;
+  }
+  const grid = galleryGrid(kind);
+  return grid?.querySelector(galleryTileSelector(kind, id)) || null;
+}
+
+function revealActiveTile(kind)
+{
+  const tile = activeTile(kind);
+  tile?.scrollIntoView?.(REVEAL_SCROLL_OPTIONS);
+}
+
+// A setter called before a render shows its tile once that render lands.
+function consumeReveal(kind)
+{
+  if (!pendingReveal.delete(kind))
+  {
+    return;
+  }
+  revealActiveTile(kind);
+}
+
+function markActiveTile(kind, activeId)
+{
+  const datasetKey = TileIdDatasetKey[kind];
+  for (const tile of document.querySelectorAll(`.${GalleryTileClass[kind]}`))
+  {
+    tile.classList.toggle(SELECTED_TILE_CLASS, tile.dataset[datasetKey] === activeId);
+  }
+}
+
+// Without render, a reveal waits for the next gallery render.
+function selectGalleryEntity(
+  kind,
+  id,
+  { render = true, reveal = false } = {},
+)
+{
+  const { id: activeId } = activeEntities.set(kind, id);
+  if (!render)
+  {
+    if (reveal)
+    {
+      pendingReveal.add(kind);
+    }
+    return activeId;
+  }
+  markActiveTile(kind, activeId);
+  GalleryView[kind].renderInspector();
   renderArtTab();
   deckListPanelUi?.refresh();
   cardEditorDockUi?.refresh();
-  if (isNarrowLayout() && !cardEditorDockUi) openInspectorSheet();
+  if (reveal)
+  {
+    revealActiveTile(kind);
+  }
+  return activeId;
+}
+
+function selectStudioCard(id, options = {})
+{
+  const activeId = selectGalleryEntity(
+    GalleryKind.Cards,
+    id,
+    options,
+  );
+  const rendered = options.render !== false;
+  if (rendered && activeId && isNarrowLayout() && !cardEditorDockUi)
+  {
+    openInspectorSheet();
+  }
+  return activeId;
+}
+
+function selectStudioItem(key, options = {})
+{
+  return selectGalleryEntity(
+    GalleryKind.Items,
+    key,
+    options,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -1627,16 +1901,15 @@ function renderAddFeatureOptions({ pickBest = false } = {}) {
 }
 
 function renderInspector() {
-  const def = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[0];
-  if (!def) {
-    // No card left to show: clear the stale preview and let the pane show its empty state.
+  const def = selectedCardDef();
+  if (!def)
+  {
+    // No active card: clear the stale preview; never fall back to the first card.
     document.getElementById('inspector-card-preview').replaceChildren();
     document.getElementById('inspector-sheet-title').textContent = '';
-    state.selectedCardId = null;
     cardEditorDockUi?.refresh();
     return;
   }
-  state.selectedCardId = def.id;
   cardEditorDockUi?.refreshEntity?.();
 
   renderCardWithLayers(def, document.getElementById('inspector-card-preview'));
@@ -1938,7 +2211,7 @@ const RARITY_ORDER = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'bo
 function cardMenuActions() {
   const def = selectedCardDef();
   if (!def) return [];
-  const added = isAddedCard(def), inGame = !!registries.cards.get(def.id);
+  const added = isAddedCard(def), inGame = registries.cards.has(def.id);
   const openDecks = () => {
     cardSelectionUi?.select([def.id], { replace: true });
     setCustomizationView('decks');
@@ -1995,6 +2268,7 @@ function cardJsonProblem(card) {
   }
   if (card.tags !== undefined && (!Array.isArray(card.tags) || card.tags.some((tag) => typeof tag !== 'string'))) return '"tags" must be a list of text.';
   if (card.name !== undefined && typeof card.name !== 'string') return '"name" must be text.';
+  if (card.textTemplate !== undefined && typeof card.textTemplate !== 'string') return '"textTemplate" must be text.';
   return '';
 }
 
@@ -2009,7 +2283,8 @@ function applyCardJson() {
   // Dry run on a copy first: the live card is only touched by JSON that scores.
   try { scoreCardEntry(normalizeStudioCard(clone(next))); } catch (err) { error.textContent = `Not a valid card: ${err.message}`; return; }
   if (state.selectedCardId !== id) selectStudioCard(id);
-  const index = state.cards.findIndex((card) => card.id === id), before = clone(state.cards[index]), history = state.undoStack.length;
+  const index = state.cards.findIndex((card) => card.id === id), before = clone(state.cards[index]);
+  const history = { undo: [...state.undoStack], redo: [...state.redoStack] };
   // An explicit name or text in the JSON wins, exactly like typing in the Name or Text field:
   // it switches that generation off instead of being overwritten by it.
   const nameChanged = (next.name ?? '') !== (before.name ?? ''), textChanged = (next.textTemplate ?? '') !== (before.textTemplate ?? '');
@@ -2029,10 +2304,14 @@ function applyCardJson() {
     }, { autoName: !nameChanged, autoText: !textChanged });
   } catch (err) {
     // Roll back everything the edit touched: all cards, the history entry, the Auto-text setting and the views.
-    restoreSnapshot(snapshot);
-    if (state.undoStack.length > history) { state.undoStack.length = history; updateUndoButtons(); }
-    const autoTextToggle = document.getElementById('toggle-auto-text');
-    if (autoTextToggle && autoTextBefore !== undefined && autoTextToggle.checked !== autoTextBefore) { autoTextToggle.checked = autoTextBefore; writeStoredJson(AUTO_TEXT_KEY, autoTextBefore); }
+    try { restoreSnapshot(snapshot); } catch { /* Snapshot data is restored before the views; retain the original apply error. */ }
+    finally {
+      state.undoStack = history.undo;
+      state.redoStack = history.redo;
+      const autoTextToggle = document.getElementById('toggle-auto-text');
+      if (autoTextToggle && autoTextBefore !== undefined && autoTextToggle.checked !== autoTextBefore) { autoTextToggle.checked = autoTextBefore; writeStoredJson(AUTO_TEXT_KEY, autoTextBefore); }
+      updateUndoButtons();
+    }
     error.textContent = `Not applied: ${err.message}`;
     return;
   }
@@ -2041,11 +2320,19 @@ function applyCardJson() {
 }
 
 // The card as it ships in the game, scored with the game's weights; null for cards the game does not have.
-function inGameScore(def) {
+function inGameScore(def)
+{
+  if (!registries.cards.has(def.id))
+  {
+    return null;
+  }
   const original = registries.cards.get(def.id);
-  if (!original) return null;
-  const sc = scoreCardEntry(clone(original), state.repoScoring);
-  return { cp: sc.cp, rank: sc.rank, rarity: original.rarity || sc.rarity };
+  const scored = scoreCardEntry(clone(original), state.repoScoring);
+  return {
+    cp: scored.cp,
+    rank: scored.rank,
+    rarity: original.rarity || scored.rarity,
+  };
 }
 
 function trendClass(now, then) {
@@ -2276,24 +2563,14 @@ function selectedCardDef() {
   return state.cards.find((c) => c.id === state.selectedCardId);
 }
 
-// One undo step per burst of typing or spinner ticks; the burst ends after a pause or a new focus.
-function createEditBurst() {
-  let open = false;
-  let timer = null;
-  return {
-    begin() {
-      if (!open) {
-        pushHistory();
-        open = true;
-      }
-      clearTimeout(timer);
-      timer = setTimeout(() => { open = false; }, TEXT_EDIT_BURST_MS);
-    },
-    end() {
-      open = false;
-      clearTimeout(timer);
-    },
-  };
+// One undo step per typing burst. A change of active entity ends every open burst.
+const editBursts = CreateEditBursts({
+  pushHistory: () => pushHistory(),
+  delayMs: TEXT_EDIT_BURST_MS,
+});
+function createEditBurst()
+{
+  return editBursts.create();
 }
 
 // Applies a typed or spun number without rebuilding the inspector, then rescores in place.
@@ -3202,6 +3479,11 @@ function renderItemsGrid() {
 
   const countEl = document.getElementById('items-count');
   if (countEl) countEl.textContent = `${filtered.length} / ${state.items.length} items`;
+  const galleryView = beginGalleryRender(
+    GalleryKind.Items,
+    grid,
+    filtered.map(({ entry }) => entry.key),
+  );
 
   grid.innerHTML = '';
   for (const { entry, sc } of filtered) {
@@ -3231,26 +3513,26 @@ function renderItemsGrid() {
   }
   cardEditorDockUi?.refresh();
   setItemsLoading(false);
-}
-
-function selectStudioItem(key) {
-  if (!state.items.some(item => item.key === key)) return;
-  state.selectedItemKey = key;
-  for (const tile of document.querySelectorAll('.item-grid-tile')) tile.classList.toggle('is-selected', tile.dataset.itemKey === key);
-  renderItemInspector();
-  renderArtTab();
-  cardEditorDockUi?.refresh();
+  finishGalleryRender(
+    GalleryKind.Items,
+    grid,
+    galleryView,
+  );
 }
 
 function renderItemInspector() {
-  const entry = state.items.find((x) => x.key === state.selectedItemKey) || state.items[0];
-  if (!entry) {
+  const entry = FindGalleryEntity(
+    state,
+    GalleryKind.Items,
+    state.selectedItemKey,
+  );
+  if (!entry)
+  {
+    // No active item: the pane shows its empty state rather than the first item.
     document.getElementById('item-preview-host')?.replaceChildren();
-    state.selectedItemKey = null;
     cardEditorDockUi?.refresh();
     return;
   }
-  state.selectedItemKey = entry.key;
   cardEditorDockUi?.refreshEntity?.();
   populateItemTraitControls();
   const sc = scoreItemEntry(entry, state.scoring, state.itemRules);
@@ -3466,7 +3748,7 @@ function mirrorArtListControls(idx, layer) {
 
 // Edit beside the card: select that card layer in the Art layers list, open its section and bring it into view.
 function showArtLayerInList(idx) {
-  state.artTarget = 'cards';
+  showGallery(GalleryKind.Cards);
   setActiveArtLayerIdx(idx);
   renderArtTab();
   const cardEl = document.querySelector(`#art-layers-list .layer-card[data-layer-card-idx="${idx}"]`);
@@ -3477,16 +3759,46 @@ function showArtLayerInList(idx) {
   cardEl.querySelector('[data-l-field="name"]')?.focus({ preventScroll: true });
 }
 
-function renderArtPreviewOnly() {
-  const sel = document.getElementById('art-preview-card-select');
-  const host = document.getElementById('art-live-preview');
-  if (state.artTarget === 'items') {
-    const item = state.items.find((x) => x.key === sel.value) || state.items[0];
-    if (item) renderItemCardPreview(item, host, 'inspect');
-  } else {
-    const previewDef = state.cards.find((c) => c.id === sel.value) || state.cards[0];
-    if (previewDef) renderCardWithLayers(previewDef, host);
+function renderArtPreviewOnly()
+{
+  const pickerSelect = document.getElementById(ART_PREVIEW_SELECT_ID);
+  const host = document.getElementById(ART_LIVE_PREVIEW_ID);
+  const kind = ToGalleryKind(state.artTarget);
+  const entity = FindGalleryEntity(
+    state,
+    kind,
+    pickerSelect.value,
+  );
+  if (!entity)
+  {
+    host.replaceChildren();
+    return;
   }
+  GalleryView[kind].renderPreview(entity, host);
+}
+
+// The Design picker follows the gallery's active card or item.
+function renderArtPicker()
+{
+  const pickerSelect = document.getElementById(ART_PREVIEW_SELECT_ID);
+  pickerSelect.innerHTML = '';
+  const pickerKind = ToGalleryKind(state.artTarget);
+  const pickerEntities = GalleryEntity[pickerKind];
+  const options = pickerEntities.list(state).map((entity) => [
+    pickerEntities.idOf(entity),
+    GalleryView[pickerKind].optionLabel(entity),
+  ]);
+  const activeId = activeEntities.get(pickerKind);
+  if (!activeId)
+  {
+    const placeholder = NoActiveEntityOption[pickerKind];
+    pickerSelect.appendChild(new Option(placeholder, NO_ENTITY_OPTION_VALUE));
+  }
+  for (const [value, text] of options)
+  {
+    pickerSelect.appendChild(new Option(text, value));
+  }
+  pickerSelect.value = activeId || NO_ENTITY_OPTION_VALUE;
 }
 
 function renderArtTab() {
@@ -3504,33 +3816,7 @@ function renderArtTab() {
       : 'Assign PNG assets to card components, set priority match rules (tag, school, status, type, or default), reorder Z-index layers, and adjust position, scale, opacity, and blend mode. Changes reflect live on the selected card and gallery.';
   }
 
-  // Preview selector (cards or items)
-  const cardSel = document.getElementById('art-preview-card-select');
-  const prevVal = cardSel.value;
-  cardSel.innerHTML = '';
-  if (isItems) {
-    for (const it of state.items) {
-      const o = document.createElement('option');
-      o.value = it.key;
-      o.textContent = `[${it.kind[0].toUpperCase() + it.kind.slice(1)}] ${it.name || it.id}`;
-      cardSel.appendChild(o);
-    }
-    const preferred = state.items.some((x) => x.key === state.selectedItemKey)
-      ? state.selectedItemKey
-      : (state.items.some((x) => x.key === prevVal) ? prevVal : (state.items[0]?.key || ''));
-    cardSel.value = preferred;
-  } else {
-    for (const c of state.cards) {
-      const o = document.createElement('option');
-      o.value = c.id;
-      o.textContent = c.name || c.id;
-      cardSel.appendChild(o);
-    }
-    const preferredId = state.cards.some((c) => c.id === state.selectedCardId)
-      ? state.selectedCardId
-      : (state.cards.some((c) => c.id === prevVal) ? prevVal : (state.cards[0]?.id || ''));
-    cardSel.value = preferredId;
-  }
+  renderArtPicker();
   renderArtPreviewOnly();
 
   const layersObj = activeArtLayersObj();
@@ -4046,8 +4332,6 @@ function discardSummaryHtml() {
 async function revertToRepo() {
   clearTimeout(draftTimer);
   try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch { /* storage unavailable */ }
-  const keepSelection = state.selectedCardId;
-  const keepItem = state.selectedItemKey;
   studioCardOverrides.clear();
   state.cards = buildCardList();
   state.subclassCatalog = null;
@@ -4055,8 +4339,7 @@ async function revertToRepo() {
   const roster = buildItemRoster(contentBundle);
   state.items = roster.items;
   state.itemRules = roster.rules;
-  state.selectedCardId = state.cards.some((c) => c.id === keepSelection) ? keepSelection : state.cards[0]?.id || null;
-  state.selectedItemKey = state.items.some((x) => x.key === keepItem) ? keepItem : state.items[0]?.key || null;
+  // syncAllViews keeps a still-valid active card or item and clears a removed one.
   state.undoStack = [];
   state.redoStack = [];
   updateUndoButtons();
@@ -4110,8 +4393,57 @@ let studioSaveUi = null;
 let cardSelectionUi = null;
 let cardEditorDockUi = null;
 let deckListPanelUi = null;
-let activeGallery = 'cards';
+// The Cards and Items tabs set activeGallery, state.artTarget and the dock context together.
+let activeGallery = GalleryKind.Cards;
 let artGalleryFrame = null;
+
+function showGallery(kind)
+{
+  if (kind === activeGallery)
+  {
+    return;
+  }
+  const tabSelector = `${STUDIO_TAB_SELECTOR}[${STUDIO_TAB_DATA_ATTRIBUTE}="${kind}"]`;
+  document.querySelector(tabSelector)?.click();
+}
+
+// Each gallery keeps its own place: the grid scrolls on desktop, the page on narrow screens.
+const galleryScroll = PerGallery(null);
+
+function galleryGrid(kind)
+{
+  return document.getElementById(GalleryGridId[kind]);
+}
+
+function rememberGalleryScroll(kind)
+{
+  const gridScrollTop = galleryGrid(kind)?.scrollTop || 0;
+  galleryScroll[kind] = {
+    grid: gridScrollTop,
+    page: window.scrollY,
+  };
+}
+
+function restoreSavedGalleryScroll(kind)
+{
+  const saved = galleryScroll[kind];
+  const grid = galleryGrid(kind);
+  if (!saved || !grid)
+  {
+    return;
+  }
+  grid.scrollTop = saved.grid;
+  if (isNarrowLayout())
+  {
+    window.scrollTo(0, saved.page);
+  }
+}
+
+function restoreGalleryScroll(kind)
+{
+  restoreSavedGalleryScroll(kind);
+  revealActiveTile(kind);
+}
 
 function refreshGalleryArtSoon() {
   if (artGalleryFrame !== null) return;
@@ -4140,6 +4472,8 @@ function populateCardOptions() {
 }
 
 function syncAllViews() {
+  // Content changed: keep a still-valid active entity, clear a removed one.
+  activeEntities.reconcile();
   populateRebalanceStatusOptions();
   populateRankFilter();
   populateCardOptions();
@@ -4438,6 +4772,17 @@ function updateFilterCount() {
   badge.classList.toggle('hidden', count === 0);
 }
 
+// The caller re-renders the gallery.
+function resetGalleryFilters(kind)
+{
+  document.getElementById(GallerySearchId[kind]).value = '';
+  for (const filterId of GalleryFilterSelectIds[kind])
+  {
+    document.getElementById(filterId).value = FILTER_ALL;
+  }
+  GalleryView[kind].updateFilterCount();
+}
+
 function updateItemFilterCount() {
   const count = ['item-filter-kind', 'item-filter-rarity', 'item-filter-rank', 'filter-item-deck'].filter(id => document.getElementById(id).value !== 'all').length
     + Number(document.getElementById('item-filter-sort').value !== 'rank-desc');
@@ -4562,6 +4907,12 @@ function wireEvents() {
         if (tab === 'art') renderArtTab(); else renderWeights();
         return;
       }
+      const previousTabButton = document.querySelector(ACTIVE_STUDIO_TAB_SELECTOR);
+      const previousTab = previousTabButton?.dataset.tab;
+      if (Galleries.includes(previousTab) && previousTab !== tab)
+      {
+        rememberGalleryScroll(previousTab);
+      }
       document.querySelectorAll('.studio-tab').forEach((b) => { b.classList.toggle('is-active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
       document.querySelectorAll('.studio-main > .studio-panel').forEach((p) => p.classList.toggle('is-active', p.id === `tab-${tab}`));
       if (tab === 'cards' || tab === 'items') {
@@ -4571,6 +4922,11 @@ function wireEvents() {
         cardEditorDockUi?.setContext?.(tab);
         renderArtTab();
         deckListPanelUi?.refresh();
+        if (previousTab !== tab)
+        {
+          restoreGalleryScroll(tab);
+        }
+        saveWorkingContext();
       }
       if (tab === 'sandbox' && !state.sandbox.combat) startSandboxCombat();
       if (tab === 'art') renderArtTab();
@@ -4615,14 +4971,11 @@ function wireEvents() {
       textTemplate: 'New card', _custom: true, _edited: true, _autoName: false, _autoText: false, _newDraft: true,
     });
     state.cards.unshift(card);
-    state.selectedCardId = id;
-    document.getElementById('card-search').value = '';
-    for (const key of ['filter-type', 'filter-class', 'filter-rank', 'filter-shift', 'filter-deck']) document.getElementById(key).value = 'all';
-    updateFilterCount();
+    resetGalleryFilters(GalleryKind.Cards);
     document.querySelector('.studio-tab[data-tab="cards"]').click();
     cardEditorDockUi?.setView('properties');
     renderCardsGrid();
-    renderInspector();
+    selectStudioCard(id, SelectionOptions.Reveal);
     animateCardInsertion(grid, id, { before });
     saveDraft({ autoName: false });
     toast('Added a new card. Edit its properties to begin.');
@@ -4634,9 +4987,8 @@ function wireEvents() {
     pushHistory();
     const copy = normalizeStudioCard({ ...clone(src), id: `custom.copy_${Date.now().toString(36)}`, name: `${src.name} (Copy)`, _custom: true, _edited: true, _autoName: true });
     state.cards.unshift(copy);
-    state.selectedCardId = copy.id;
     renderCardsGrid();
-    renderInspector();
+    selectStudioCard(copy.id, SelectionOptions.Reveal);
     saveDraft();
     toast(`Duplicated "${src.name}"`);
   });
@@ -4662,14 +5014,23 @@ function wireEvents() {
     if (idx < 0 || !isAddedCard(state.cards[idx])) return;
     const removed = state.cards[idx], plan = removeAddedCardsFromState(state, [removed.id]);
     if (!plan.removedIds.length) { toast('Original cards are protected.'); return; }
+    const nextId = NextInDisplayedOrder(
+      displayedIds[GalleryKind.Cards] || [],
+      removed.id,
+      state.cards.map((card) => card.id),
+    );
     pushHistory();
     Object.assign(state, plan.nextState);
     studioCardOverrides.delete(removed.id);
     studioCardOverrides.delete(`${LIVE_ID_PREFIX}${removed.id}`);
-    state.selectedCardId = state.cards[Math.min(idx, state.cards.length - 1)]?.id || null;
+    const activeId = selectStudioCard(nextId, SelectionOptions.DeferredReveal);
+    const next = state.cards.find((card) => card.id === activeId);
     syncAllViews();
     saveDraft({ autoName: false });
-    toast(`Deleted "${removed.name}"`);
+    const deletedMessage = next
+      ? DeletedCardToast.withNext(removed.name, next.name)
+      : DeletedCardToast.withoutNext(removed.name);
+    toast(deletedMessage);
   });
 
   // Card inspector edits
@@ -5071,10 +5432,23 @@ function wireEvents() {
   document.getElementById('item-override-cp')?.addEventListener('change', updateItemOverride);
 
   // Art & Layers events (supports both Combat Cards and Equipment & Relics)
+  // The Design target is the gallery context, so it switches the gallery too.
   document.querySelectorAll('[data-art-target]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      state.artTarget = btn.dataset.artTarget === 'items' ? 'items' : 'cards';
-      renderArtTab();
+      const kind = ToGalleryKind(btn.dataset.artTarget);
+      if (kind !== activeGallery)
+      {
+        showGallery(kind);
+      }
+      else
+      {
+        renderArtTab();
+      }
+      // The pane moved with the gallery; keep focus on the button, not the page body.
+      if (document.activeElement !== btn)
+      {
+        btn.focus({ preventScroll: true });
+      }
     });
   });
   document.getElementById('btn-add-layer').addEventListener('click', () => {
@@ -5090,10 +5464,19 @@ function wireEvents() {
     if (state.artTarget === 'items') { renderItemsGrid(); renderItemInspector(); }
     saveDraft();
   });
-  document.getElementById('art-preview-card-select').addEventListener('change', (e) => {
-    if (state.artTarget === 'items') state.selectedItemKey = e.target.value;
-    else state.selectedCardId = e.target.value;
-    renderArtPreviewOnly();
+  document.getElementById(ART_PREVIEW_SELECT_ID).addEventListener(CHANGE_EVENT, (event) => {
+    if (!event.target.value)
+    {
+      return;
+    }
+    if (state.artTarget === GalleryKind.Items)
+    {
+      selectStudioItem(event.target.value, SelectionOptions.Reveal);
+    }
+    else
+    {
+      selectStudioCard(event.target.value, SelectionOptions.Reveal);
+    }
   });
   document.getElementById('asset-search').addEventListener('input', renderArtTab);
   document.getElementById('art-layers-list').addEventListener('click', (e) => {
@@ -5306,11 +5689,12 @@ async function boot() {
   state.items = roster.items;
   state.itemRules = roster.rules;
   state.defaultItemNames = Object.fromEntries(state.items.map((it) => [it.key, it.name]));
-  state.selectedItemKey = state.items[0]?.key || null;
+  // The first card and item until restoreWorkingContext runs after the draft.
+  selectStudioItem(state.items[0]?.key, SelectionOptions.Deferred);
   // Default names are the repo's authored names, taken before any draft is restored.
   state.defaultNameSet = DefaultNameSet(state.cards);
   loadStoredNameSets();
-  state.selectedCardId = state.cards[0]?.id || null;
+  selectStudioCard(state.cards[0]?.id, SelectionOptions.Deferred);
   state.repoArtLayers = clone(state.artLayers);
   state.repoItemArtLayers = clone(state.itemArtLayers);
 
@@ -5365,8 +5749,20 @@ async function boot() {
     getFilteredItems,
     studioCardOverrides,
     prepareSubclassEdit: prepareCardEdit,
+    selectCard: selectStudioCard,
+    selectItem: selectStudioItem,
   });
-  subclassCatalogUi = initSubclassCatalogUi({ state, isLocalServer, pushHistory, saveDraft, syncAllViews, toast, normalizeStudioCard, studioCardOverrides });
+  subclassCatalogUi = initSubclassCatalogUi({
+    state,
+    isLocalServer,
+    pushHistory,
+    saveDraft,
+    syncAllViews,
+    toast,
+    normalizeStudioCard,
+    studioCardOverrides,
+    selectCard: selectStudioCard,
+  });
   cardSelectionUi = initCardSelectionUi({ state, pushHistory, saveDraft, syncAllViews, toast, getFilteredCards, normalizeStudioCard,
     prepareSubclassEdit: prepareCardEdit, applyAutoNames: autoNameSelectedCards,
     openBalanceSelection: ids => studioToolsUi.openBalanceSelection(ids),
@@ -5393,6 +5789,10 @@ async function boot() {
     balanceItem: key => studioToolsUi.openBalanceItems([key]),
     views: { design: document.getElementById('tab-art'), weights: document.getElementById('tab-weights'), decks: () => deckListPanelUi?.element },
     renderContextFields,
+    isHiddenByFilters,
+    clearFilters: clearGalleryFilters,
+    // A context change from inside the dock moves the gallery with it.
+    onContextChange: kind => showGallery(kind),
     onViewChange: view => { if (view === 'design') renderArtTab(); else if (view === 'weights') renderWeights(); else if (view === 'decks') deckListPanelUi?.refresh(); },
   });
   document.getElementById('btn-open-decks').addEventListener('click', () => { setCustomizationView('decks'); deckListPanelUi?.refresh(); });
@@ -5413,6 +5813,7 @@ async function boot() {
   await studioSaveUi.loadSavedFiles();
 
   // Restore local draft temp copy if present. Everything is checked first; state changes only after.
+  let restoredDraft = false;
   try {
     const draft = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
     if (draft?.scoring && ValidateScoringConfig(draft.scoring).length === 0) {
@@ -5462,12 +5863,49 @@ async function boot() {
       {
         document.getElementById('draft-status').textContent = 'Restored local draft temp copy';
       }
-      return;
+      restoredDraft = true;
     }
   } catch { /* ignore */ }
-  studioSaveUi.applySavedFiles({ draftApplies: false });
-  syncAllViews();
-  refreshDirtyStatus();
+  if (!restoredDraft)
+  {
+    studioSaveUi.applySavedFiles({ draftApplies: false });
+    syncAllViews();
+    refreshDirtyStatus();
+  }
+  restoreWorkingContext();
+}
+
+// After boot: the stored gallery, card and item.
+// A stored id that is gone falls back to the default.
+function restoreWorkingContext()
+{
+  const saved = ReadWorkingContext(localStorage);
+  const defaults = {
+    gallery: activeGallery,
+    cardId: state.selectedCardId ?? state.cards[0]?.id,
+    itemKey: state.selectedItemKey ?? state.items[0]?.key,
+  };
+  const {
+    gallery,
+    cardId,
+    itemKey,
+  } = ResolveWorkingContext(
+    saved,
+    state,
+    defaults,
+  );
+  selectStudioItem(itemKey);
+  selectStudioCard(cardId);
+  if (gallery !== activeGallery)
+  {
+    showGallery(gallery);
+  }
+  else
+  {
+    revealActiveTile(gallery);
+  }
+  workingContextReady = true;
+  saveWorkingContext();
 }
 
 /** Puts saved or drafted cards over the loaded list: removes the removed Core ids, then replaces by id or adds. */
