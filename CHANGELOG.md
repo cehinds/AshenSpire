@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-27
 
-- **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.159`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Stamina off a spell, never below 1, and no Mana; Mana cuts in Prepared come from a staff or robes. Arcane Strike and Mana Rite cost Stamina only.
+- **Spell costs match their cards** ([#3022](https://github.com/cehinds/AshenSpire/pull/3022), `0.7.5.161`). A spell now costs the Mana and Stamina printed on it; the hidden extra Mana on every spell is gone. Prepared stance takes 1 Stamina off a spell, never below 1, and no Mana; Mana cuts in Prepared come from a staff or robes. Arcane Strike and Mana Rite cost Stamina only.
 - **Owner editing commands** ([#3021](https://github.com/cehinds/AshenSpire/pull/3021), `0.7.5.159`). New npm run play, check, ship and sync let the owner edit JSON, test with live reload, and open a pull request with one commit per file.
 - **Score Studio saves cards and art** ([#3027](https://github.com/cehinds/AshenSpire/pull/3027), `0.7.5.157`). File > Save or Ctrl+S writes them to `content/source/studio/`, and the game never reads them.
 - **Heavier tests run on review** ([#3029](https://github.com/cehinds/AshenSpire/pull/3029), `0.7.5.155`). Pull requests into dev now run the core suite only. The discovered test shards run when dev is promoted to review.
