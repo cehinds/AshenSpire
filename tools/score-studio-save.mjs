@@ -155,23 +155,60 @@ export function saveStudioSubclassCatalog(rootDir, { catalog, rebuild = true } =
   finally { release(); }
 }
 
-function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
+function isInsideDirectory(baseDirectory, targetPath)
+{
+  const relativePath = relative(baseDirectory, targetPath);
+  return !isAbsolute(relativePath) && relativePath !== '..' && !relativePath.startsWith(`..${sep}`);
+}
+
+/**
+ * A resolver for repository-relative paths that refuses an escape, a symbolic link anywhere on the
+ * path, or a part whose real path lies outside the repository. `label` starts every refusal.
+ */
+function guardedRepoPath(rootDir, label)
+{
   const root = resolve(rootDir);
   const realRoot = realpathSync(root);
-  const inside = (base, target) => { const rel = relative(base, target); return !isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`); };
-  const pathOf = rel => {
-    const target = resolve(root, rel);
-    if (!inside(root, target)) throw new Error(`Subclass export path escapes the repository: ${rel}`);
-    for (let part = target; part !== root; part = dirname(part)) {
+  return (relativePath) =>
+  {
+    const target = resolve(root, relativePath);
+    if (!isInsideDirectory(root, target))
+    {
+      throw new Error(`${label} path escapes the repository: ${relativePath}`);
+    }
+    for (let part = target; part !== root; part = dirname(part))
+    {
       // lstat must run before any existence check: existsSync follows a link,
       // so a dangling link looks absent even though a later write follows it.
       let stat;
-      try { stat = lstatSync(part); } catch (error) { if (error.code === 'ENOENT') continue; throw error; }
-      if (stat.isSymbolicLink()) throw new Error(`Subclass export refuses symbolic-link path: ${rel}`);
-      if (!inside(realRoot, realpathSync(part))) throw new Error(`Subclass export path resolves outside the repository: ${rel}`);
+      try
+      {
+        stat = lstatSync(part);
+      }
+      catch (error)
+      {
+        if (error.code === 'ENOENT')
+        {
+          continue;
+        }
+        throw error;
+      }
+      if (stat.isSymbolicLink())
+      {
+        throw new Error(`${label} refuses symbolic-link path: ${relativePath}`);
+      }
+      if (!isInsideDirectory(realRoot, realpathSync(part)))
+      {
+        throw new Error(`${label} path resolves outside the repository: ${relativePath}`);
+      }
     }
     return target;
   };
+}
+
+function saveSubclassCatalogLocked(rootDir, { catalog, rebuild, env }) {
+  const root = resolve(rootDir);
+  const pathOf = guardedRepoPath(rootDir, 'Subclass export');
   const read = rel => readFileSync(pathOf(rel), 'utf8');
   const json = rel => JSON.parse(read(rel));
   const initialErrors = ValidateSubclassCatalog(catalog);
